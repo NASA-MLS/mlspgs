@@ -11,13 +11,11 @@ module L1BData
     & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
-  use HDF5, only: HSIZE_T
+  ! use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN, NameLen
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
-  use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
-    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
   use MLSStrings, only: CompressString, NumStringElements
@@ -126,10 +124,12 @@ module L1BData
 
   type L1BData_T
     character (len=name_len) :: L1BName ! Name of field in file
+    character (len=16) :: data_type     ! 'character', 'double', or 'integer'
     integer :: FirstMAF                 ! First major frame read
     integer :: NoMAFs                   ! # of MAFs read
     integer :: MaxMIFs                  ! Max # of MIFs/MAF in SD array
     integer :: NoAuxInds                ! # of auxilliary indices
+    integer :: TrueRank                 ! # necessary indices (e.g., 1 for MAFs)
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
 
@@ -174,6 +174,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, intent(in)          :: isTngtQty   ! T or F
     character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
     character(len=NameLen)       :: QtyName
+    logical, parameter           :: DEEBUG = .FALSE.
 
     ! Private
     character(len=1) :: head
@@ -184,6 +185,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical          :: is_a_signal
     ! Executable code
     is_a_signal = (NumStringElements(trim(name), .true., ':') > 2)
+    if ( DEEBUG ) then
+      print *, 'name: ', trim(name)
+      print *, 'hdfVersion: ', hdfVersion
+      print *, 'isTngtQty: ', isTngtQty
+      print *, 'is a signal: ', is_a_signal
+      if ( present(InstrumentName) ) print *, 'Instrument: ', trim(InstrumentName)
+    endif
     if ( hdfVersion == HDFVERSION_5 ) then
       head = '/'
       instr_tail = '/'
@@ -233,6 +241,9 @@ contains ! ============================ MODULE PROCEDURES ======================
           & '/' // trim(the_rest(3:))
       endif
       ! We're done
+      if ( DEEBUG ) then
+        print *, 'converted name: ', trim(QtyName)
+      endif
       return
     endif
     if ( isTngtQty ) then
@@ -244,6 +255,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     QtyName = trim(QtyName) // trim(name)
     QtyName = CompressString(QtyName)
+    if ( DEEBUG ) then                            
+      print *, 'more converted name: ', trim(QtyName)  
+    endif                                         
   end function AssembleL1BQtyName
 
   !-------------------------------------------  DeallocateL1BData  -----
@@ -320,6 +334,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   ! -------------------------------------------------  FindL1BData  ----
   integer function FindL1BData ( files, fieldName, hdfVersion )
+
+  use MLSHDF5, only: IsHDF5DSPresent
+
     integer, dimension(:), intent(in) :: files ! File handles
     character (len=*), intent(in) :: fieldName ! Name of field
     integer, optional, intent(in) :: hdfVersion
@@ -374,7 +391,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: SD_ID                    ! From HDF
     integer :: the_hdf_version
 
-    ! Exectuable code
+    ! Executable code
     error = 0
     ! Collect data from the fields. (only one legal field: file='...')
     do i = 2, nsons(root)
@@ -507,6 +524,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       call ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
       & FirstMAF, LastMAF, NEVERFAIL )
+      !Unfortunately, hdf5-formatted l1b data have different shapes from hdf4
+      ! E.g., for MAFStartTimeTAI we obtain the following
+      !  hdfVERSION      shape
+      !     4           1   1   5
+      !     5           5   1   1
+      call Reshape_for_hdf4(L1bData)
     endif
   end subroutine ReadL1BData
 
@@ -624,6 +647,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Fill in "indexing" values of l1b object
 
     l1bData%L1BName = quantityName
+    l1bData%TrueRank = rank
 
     if ( rank < 2 ) then
       l1bData%maxMIFs = 1
@@ -707,6 +731,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & MLSMSG_allocate // ' charField pointer.' )
       endif
       nullify (l1bData%intField, l1bData%dpField)
+      l1bdata%data_type = 'character'
       status = sfrcdata ( sds2_id, start, stride, edge, &
         & l1bData%charField )
 
@@ -715,6 +740,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
         & 'l1bData%intField', ModuleName )
       nullify ( l1bData%charField, l1bData%dpField )
+      l1bdata%data_type = 'integer'
       status = sfrdata_f90 ( sds2_id, start, stride, edge, &
           l1bData%intField )
 
@@ -723,6 +749,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
         & 'l1bData%dpField', ModuleName )
       nullify ( l1bData%charField, l1bData%intField )
+      l1bdata%data_type = 'double'
       status = sfrdata_f90 ( sds2_id, start, stride, edge, &
           l1bData%dpField )
 
@@ -731,6 +758,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
         & 'l1bData%dpField', ModuleName )
       nullify ( l1bData%charField, l1bData%intField )
+      l1bdata%data_type = 'double'
 
       call allocate_test ( tmpr4Field, &
         & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
@@ -789,6 +817,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   !-------------------------------------------------  ReadL1BData_hdf5  -----
   subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL )
+  use HDF5, only: HSIZE_T
+  use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
+    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
 ! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
     
     ! Dummy arguments
@@ -850,6 +881,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Find Qtype, rank and dimensions of QuantityName
     print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
+    l1bData%TrueRank = rank
     allocate(dims(rank), maxDims(rank))
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
@@ -979,6 +1011,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
       endif                                                                  
+      l1bdata%data_type = 'double'
     case ('real2')
       allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -987,6 +1020,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
       endif                                                                  
+      l1bdata%data_type = 'double'
     case ('real3')
       allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -996,6 +1030,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
 !      l1bData%DpField = MLSAuxData%RealField
+      l1bdata%data_type = 'double'
     case ('double1')
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -1004,6 +1039,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
       endif                                                                  
+      l1bdata%data_type = 'double'
     case ('double2')
       allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -1012,6 +1048,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
       endif                                                                  
+      l1bdata%data_type = 'double'
     case ('double3')    
       allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
       if ( present(FirstMAF) ) then                                          
@@ -1021,6 +1058,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
 !      l1bData%DpField = MLSAuxData%DpField
+      l1bdata%data_type = 'double'
     case ('integer3')  
 ! > >       allocate( l1bdata%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
 ! > >       if ( present(FirstMAF) ) then                                          
@@ -1032,6 +1070,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 ! > !      l1bdata%IntField = MLSAuxData%IntField
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
+      l1bdata%data_type = 'integer'
     case ('character3') 
 ! > >       allocate ( l1bData%charField(dims(1),dims(2),dims(3)), STAT=alloc_err )
 ! > >       if ( present(FirstMAF) ) then                                          
@@ -1043,10 +1082,12 @@ contains ! ============================ MODULE PROCEDURES ======================
 !      l1bData%charField = MLSAuxData%CharField
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
+      l1bdata%data_type = 'integer'
     case default 
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type: ' &
         & // trim(Qtype) // Char_rank)
+      l1bdata%data_type = 'unknown'
     end select
     call dump(l1bData, 0)
     
@@ -1055,10 +1096,127 @@ contains ! ============================ MODULE PROCEDURES ======================
 ! > >      call Deallocate_MLSAuxData(MLSAuxData)
   end subroutine ReadL1BData_hdf5
 
+  ! ---------------------------------------------  reshape_for_hdf4  -----
+  subroutine reshape_for_hdf4(L1bData)
+
+    ! Here's what we'll assume:
+    ! If the true rank of l1bdata is 3 or 0, no need to reshape
+    ! If it's 1 or 2 then one of the following apply
+    !  hdfVERSION         rank 1       rank 2(a)     rank 2(b)   
+    !      4               1 1 5         10 1 5       1 10 5   
+    !      5               5 1 1         10 5 1       10 5 1   
+    !   reorder            2 3 1         1  3 2       3  1 2   
+    ! (depending on whether it's (a) or (b) methods that apply; 
+    !   not sure which so we'll code for either; uh-oh, looking like it's (b))
+    ! Arguments
+    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
+    ! Local variables
+    character, dimension(:,:,:), pointer :: CharField => NULL()
+    real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
+    integer,   dimension(:,:,:), pointer :: IntField => NULL()
+    integer, dimension(3)                :: old_shape    
+    integer, dimension(3)                :: new_shape
+    integer, dimension(3)                :: new_order
+    integer, dimension(3, 3), parameter  :: reorder = &
+      & reshape( source = (/ 2, 3, 1, 1, 3, 2, 3, 1, 2 /), &
+      & shape = (/ 3, 3 /) )
+    integer                              :: status
+    logical, parameter           :: DEEBUG = .TRUE.
+    character(len=1), parameter  :: method = 'b'
+    integer                      :: mord
+    
+    ! Executable
+    if ( DEEBUG ) then
+      print *, 'l1b data_type: ', trim(l1bData%data_type)
+      print *, 'rank: ', l1bData%TrueRank
+    endif
+    if ( l1bData%TrueRank > 2 .or. l1bData%TrueRank < 1 ) return
+    new_shape = 1
+    if ( method == 'a' .or. l1bData%TrueRank == 1 ) then
+      new_order = reorder(:,l1bData%TrueRank)
+      mord = 1
+    else
+      new_order = reorder(:,l1bData%TrueRank+1)
+      mord = 2
+    endif
+    select case (l1bData%data_type)
+    case('character')
+      if ( .not. associated(l1bData%CharField) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 found ' // trim(l1bData%data_type) // &
+        & 'unassociated')
+      old_shape = shape(l1bData%CharField)
+      new_shape(3) = old_shape(l1bData%TrueRank)
+      if ( l1bData%TrueRank == 2 ) new_shape(mord) = old_shape(1)
+      allocate(CharField(new_shape(1), new_shape(2), new_shape(3)), stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not allocate ' // &
+        & trim(l1bData%data_type))
+      CharField = reshape(source=l1bData%CharField, &
+        & shape=new_shape, order=new_order)
+      deallocate(l1bData%CharField, stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not deallocate ' // &
+        & trim(l1bData%data_type))
+      l1bData%CharField => CharField
+    case('double')
+      if ( .not. associated(l1bData%DpField) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 found ' // trim(l1bData%data_type) // &
+        & 'unassociated')
+      old_shape = shape(l1bData%DpField)
+      new_shape(3) = old_shape(l1bData%TrueRank)
+      if ( l1bData%TrueRank == 2 ) new_shape(mord) = old_shape(1)
+      allocate(DpField(new_shape(1), new_shape(2), new_shape(3)), stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not allocate ' // &
+        & trim(l1bData%data_type))
+      DpField = reshape(source=l1bData%DpField, &
+        & shape=new_shape, order=new_order)
+      deallocate(l1bData%DpField, stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not deallocate ' // &
+        & trim(l1bData%data_type))
+      l1bData%DpField => DpField
+      if ( DEEBUG ) then
+        print *, 'old_shape: ', old_shape
+        print *, 'new_shape: ', new_shape
+      endif
+    case('integer')
+      if ( .not. associated(l1bData%IntField) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 found ' // trim(l1bData%data_type) // &
+        & 'unassociated')
+      old_shape = shape(l1bData%IntField)
+      new_shape(3) = old_shape(l1bData%TrueRank)
+      if ( l1bData%TrueRank == 2 ) new_shape(mord) = old_shape(1)
+      allocate(IntField(new_shape(1), new_shape(2), new_shape(3)), stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not allocate ' // &
+        & trim(l1bData%data_type))
+      IntField = reshape(source=l1bData%IntField, &
+        & shape=new_shape, order=new_order)
+      deallocate(l1bData%IntField, stat=status)
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 could not deallocate ' // &
+        & trim(l1bData%data_type))
+      l1bData%IntField => IntField
+    case default 
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 has encountered an unknown data type: ' &
+        & // trim(l1bData%data_type))
+    end select
+  end subroutine reshape_for_hdf4
+
   ! ---------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
     & error_number )
-
     ! Arguments
 
     integer, intent(in)    :: lcf_where
@@ -1122,6 +1280,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.32  2002/12/05 19:43:47  pwagner
+! Unsuccessful at reading hdf5 so far; speeds up compiling tree-walker, however
+!
 ! Revision 2.31  2002/12/04 01:15:11  pwagner
 ! Many changes; closer to be able to read hdf5 successfully
 !
