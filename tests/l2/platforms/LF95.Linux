@@ -45,6 +45,13 @@ dir4 = $(clouddir)/
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../../blas/$(MLSCONFG)
 
+UTILDIR=../../../util
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -58,8 +65,12 @@ FC = lf95
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
 
-INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
-	 -I $(itmdir) -I $(fwdmdldir) -I $(clouddir) -I $(blaslib)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+     -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
+     -I $(fwdmdldir) -I $(clouddir) -I $(blaslib) -I $(itmdir)
 
 # Define some suffix rules
 
@@ -81,6 +92,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.8  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.7  2001/10/23 16:59:08  pwagner
 # l_specials set as in mlspgs/l2
 #

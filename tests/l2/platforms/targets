@@ -1,3 +1,11 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 include ../Makefile.dep
 
 # "$Id$"
@@ -39,11 +47,6 @@ include ../Makefile.dep
 # if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
-MLSBIN=../../../util
-# This will filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-REECHO=$(MLSBIN)/reecho.sh
-
 ALLOBJS = $(OBJS)
 
 PROG_NAME=test
@@ -126,6 +129,10 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
+ifdef HDFVERSIONS
+   he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
+   he5lib_message=mlsl2 will support files with either hdf version
+endif
    hdf5_message=Building test of mlsl2 with hdf5
 else
    hdf5_linker_line=
@@ -146,6 +153,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
+		@echo "$(he5lib_message)"
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
 		@echo "$(mlspack_message)"
@@ -153,6 +161,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
                       -L./ -ll2 \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
+        $(he5lib_linker_line) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -180,6 +189,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
 # Revision 1.13  2001/11/16 19:15:32  pwagner
 # Added stuff to work with mlspack
 #

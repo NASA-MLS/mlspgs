@@ -47,6 +47,13 @@ dir4 = $(clouddir)/
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../../blas/$(MLSCONFG)
 
+UTILDIR=../../../util
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -62,12 +69,13 @@ DUSTY = $(FOPTS) -dusty
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) \
- -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(itmdir) -I$(fwdmdldir) \
- -I$(clouddir) -I$(blaslib)\
- -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(itmdir) -M$(fwdmdldir) \
- -M$(clouddir) -M$(blaslib)
-	 
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+     -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
+     -M$(fwdmdldir) -M$(clouddir) -M$(blaslib) -M$(itmdir) \
+     -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
+     -I$(fwdmdldir) -I$(clouddir) -I$(blaslib) -I$(itmdir)
 
 # Define some suffix rules
 
@@ -89,6 +97,9 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials = -lnsl -lsocket
 
 # $Log$
+# Revision 1.2  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.1  2001/09/10 20:36:02  pwagner
 # First commit
 #
