@@ -19,6 +19,8 @@ module MACHINE
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private :: IO_ERROR_
 
+  public :: SHELL_COMMAND
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -58,9 +60,31 @@ contains
     return
   end subroutine IO_ERROR_
 
+  subroutine SHELL_COMMAND ( Command, Status )
+  ! Submit a character variable to the system as a shell command.
+
+    character(len=*), intent(in) :: Command  ! The command
+    integer, intent(out), optional :: Status ! Its status, if the system
+                                        !  has such a concept, else zero
+
+    integer :: MyStatus
+
+    interface
+      integer function system ( CH )
+        character(len=*), intent(in) :: CH
+      end function system
+    end interface
+
+    myStatus = system(command)
+    if ( present(status) ) status = myStatus
+  end subroutine SHELL_COMMAND
+
 end module MACHINE
 
 ! $Log$
+! Revision 1.3  2001/07/25 19:36:18  vsnyder
+! Added an interface for GETARG
+!
 ! Revision 1.2  2001/05/04 23:25:10  vsnyder
 ! Added Exit_With_Status routine
 !
