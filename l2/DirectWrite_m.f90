@@ -187,7 +187,7 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
-    use MLSCommon, only: MLSCHUNK_T
+    use Chunks_m, only: MLSChunk_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T, Dump
 
@@ -260,10 +260,11 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
+    use Chunks_m, only: MLSChunk_T
     use Hdf, only: SFN2INDEX, SFSELECT, SFCREATE, &
       & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
     use Intrinsic, only: L_None
-    use MLSCommon, only: MLSCHUNK_T, R4, R8
+    use MLSCommon, only: R4, R8
     use MLSFiles, only: HDFVERSION_4
     use VectorsModule, only: VectorValue_T
 
@@ -372,10 +373,10 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
+    use Chunks_m, only: MLSChunk_T
     use Intrinsic, only: L_None
     use L2AUXData, only:  L2AUXData_T, DestroyL2AUXContents, &
       & SetupNewL2AUXRecord, WriteL2AUXAttributes
-    use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_5
     use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
     use PCFHdr, only: h5_writeglobalattr
@@ -887,6 +888,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.24  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.23  2004/05/05 21:31:48  pwagner
 ! More debug printing
 !
