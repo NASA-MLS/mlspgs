@@ -107,11 +107,16 @@ else
 endif
 
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT) 
+OMIT_SRCS := $(OMIT) MLSL1.f90
 
-PROG=mlsl1
+PROG=mlsl1log mlsl1g mlsl1t
+# PROG=mlsl1
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#These are the source files for the drivers; they should be excluded from OBJS
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90
+DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
 #CASCADE determines whether to create/use .mod dependencies:
 #if CASCADE, use older .o dependencies, which entail cascades
@@ -130,7 +135,7 @@ ifdef WE_CAN
 NOHUNTING := yes
 endif
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90
+CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
@@ -166,7 +171,10 @@ $(PROG):  $(PROG_prereqs)
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
 
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+# $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+$(PLATFORMS)/$(MLSCONFG)/mlsl1log \
+$(PLATFORMS)/$(MLSCONFG)/mlslg \
+$(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
         return_status=`expr $$?` ; \
@@ -211,15 +219,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 
 depends:
 ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep $(OMIT_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib) 
+	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep \
+      $(OMIT_PREFXD) $(DRIVERS_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(DRIVERS_PREFXD) \
+      $(libmls_sources) $(srclib) 
 else
 	$(MAKE) depends--mod
 endif
 
 depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
-    $(OMIT_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
+    $(OMIT_PREFXD) $(DRIVERS_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
 	    $(libmls_sources) $(srclib)
 
 ghostbuster:
@@ -263,6 +273,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.38  2003/01/31 23:52:42  pwagner
+# Changed for new l1 with 3 executables
+#
 # Revision 2.37  2002/11/18 19:26:16  pwagner
 # Added Output_HDF4.f90 to CUSTOM_BUILDS
 #
