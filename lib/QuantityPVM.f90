@@ -87,20 +87,39 @@ contains ! ================================== Module procedures ============
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
 
-    call GetSignalName( lit_indices(q%template%signal), &
-      & word, sideband=q%template%sideband )
+    if ( q%template%signal /= 0 ) then
+      call GetSignalName( q%template%signal, &
+        & word, sideband=q%template%sideband )
+    else
+      word = ''
+    endif
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing signal" )
 
-    call Get_String( lit_indices(q%template%instrumentModule), word, noError=.true. )
+    if ( q%template%instrumentModule >= lbound(lit_indices,1) .and. &
+      &  q%template%instrumentModule <= ubound(lit_indices,1) ) then
+      call Get_String( lit_indices(q%template%instrumentModule), word, noError=.true. )
+    else
+      word = ''
+    endif
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing instrumentModule" )
 
-    call Get_String( lit_indices(q%template%radiometer), word, noError=.true. )
+    if ( q%template%radiometer >= lbound(lit_indices,1) .and. &
+      &  q%template%radiometer <= ubound(lit_indices,1) ) then
+      call Get_String( lit_indices(q%template%radiometer), word, noError=.true. )
+    else
+      word = ''
+    endif
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing radiometer" )
 
-    call Get_String( lit_indices(q%template%molecule), word, noError=.true. )
+    if ( q%template%molecule >= lbound(lit_indices,1) .and. &
+      &  q%template%molecule <= ubound(lit_indices,1) ) then
+      call Get_String( lit_indices(q%template%molecule), word, noError=.true. )
+    else
+      word = ''
+    endif
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
 
