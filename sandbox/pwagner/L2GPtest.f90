@@ -47,6 +47,8 @@ PROGRAM L2GPtest ! tests L2GPData routines
    character(len=8), dimension(2) :: int_chars
    integer, dimension(2)        :: the_ints
    real(r8)                     :: diff
+   ! Executable
+   call h5open_f(returnStatus)
 
    hdfVersion = HDFVERSION_5
    print *, 'How many profiles (e.g., 100), hdf version (4 or 5)'
@@ -132,9 +134,13 @@ PROGRAM L2GPtest ! tests L2GPData routines
      enddo
    enddo
    print *, 'diff: ', diff
+   call h5close_f(returnStatus)
 !==================
 END PROGRAM L2GPtest
 !==================
 
 ! $Log$
+! Revision 1.1  2003/01/15 19:25:56  pwagner
+! First commit
+!
 
