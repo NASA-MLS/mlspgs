@@ -37,10 +37,10 @@ contains ! ====     Public Procedures     ==============================
     call output ( 'Enter ' ); call output ( name )
     call date_and_time ( values=values )
     call output ( ' at ' )
-    call output ( values(5) ); call output ( ':' ) ! The hour
-    call output ( values(6) ); call output ( ':' ) ! The minute
-    call output ( values(7) ); call output ( '.' ) ! The second
-    call output ( values(8), places=3 )            ! The milliseconds
+    call output ( values(5) ); call output ( ':' )     ! The hour
+    call output ( values(6) ); call output ( ':' )     ! The minute
+    call output ( values(7) ); call output ( '.' )     ! The second
+    call output ( values(8), places=3, fill=.true. )   ! The milliseconds
     if ( present(root) ) then
       call output ( ' with ' );
       call dump_tree_node ( root, 0 )
@@ -68,11 +68,14 @@ contains ! ====     Public Procedures     ==============================
     call output ( values(5) ); call output ( ':' )     ! The hour
     call output ( values(6) ); call output ( ':' )     ! The minute
     call output ( values(7) ); call output ( '.' )     ! The second
-    call output ( values(8), advance='yes', places=3 ) ! The milliseconds
+    call output ( values(8), 3, 'yes', .true. )        ! The milliseconds
   end subroutine TRACE_END
 end module TRACE_M
 
 ! $Log$
+! Revision 2.6  2001/04/25 00:08:26  vsnyder
+! Use 'fill' argument of 'output' to get leading zeroes on milliseconds
+!
 ! Revision 2.5  2001/04/24 23:33:56  vsnyder
 ! Add timing
 !
