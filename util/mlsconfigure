@@ -60,6 +60,43 @@ UserPrompt()
     read user_response
 }
 
+#------------------------------- mega_buck ------------
+#
+# Function to force multiple-evaluation of its second arg
+# i.e., $$..$color (where the number of $ signs is n)
+# usage: mega_buck n color
+
+mega_buck()
+{
+
+   # Trivial case (n is 0)
+   if [ "$1" -lt 1 ]
+      then
+         mega_buck_result="$2"
+   elif [ "$2" = "" ]
+      then
+         mega_buck_result="$2"
+   # Do we have write permission in ./?
+   elif [ ! -w "./" ]
+      then
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+   else
+      
+      rm -f temp.mega_buck
+
+      number=0
+      mega_buck_result=$2
+      while [ "$number" -lt "$1" ]
+      do
+         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > temp.mega_buck
+         mega_buck_result=`. temp.mega_buck`
+         rm -f temp.mega_buck
+         number=`expr $number + 1`
+      done
+   fi
+}
+
 #------------------------------- GetPlatform ------------
 
 GetPlatform()
@@ -614,9 +651,9 @@ MLS_default_LDOPTS=
 #HDF        path to the hdf(4) library libmfhdf.a, etc.
 #HDF5       path to the hdf(5) library libhdf5_fortran.a, etc.
 #GCTP       path to the gctp library libGctp.a
-#PGSLIB     PGSTK
-#HDFEOS_LIB HDFEOS
-#HDFLIB     HDF
+#PGSLIB     PGSTK (duplicate)
+#HDFEOS_LIB HDFEOS (duplicate)
+#HDFLIB     HDF (duplicate)
 #BLAS       root of path to the blas library BLAS/libblas.a,
 #           if blank, then use internally supplied library
 #LIB_BLAS   name x of the blas library BLAS/libx.a,
@@ -632,6 +669,11 @@ MLS_default_LDOPTS=
 #MLSCFILE     name of the .configure file; defaults to .configure
 
 #---------------------- 
+
+# List all settings (some are duplicates--see above)
+all_my_opts="MLSF95 MLSPLAT MLSCONFG PGSINC PGSTK HDFEOS HDFEOS5 \
+HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS PVM_ROOT PVM_ARCH \
+FFTW_ROOT FOPTS LDOPTS"
 
 MLSCFILE=.configure
 
@@ -665,24 +707,14 @@ add_FOPTS="false"
 current_FOPTS=$FOPTS
 current_LDOPTS=$LDOPTS
 
-# Debugging
+# Debugging--reveal starting values
 if [ "$debugging" = "on" ] ; then
-	echo "MLSF95=$MLSF95"
-	echo "MLSPLAT=$MLSPLAT"
-	echo "PGSINC=$PGSINC"
-	echo "PGSLIB=$PGSLIB"
-	echo "HDFEOS_LIB=$HDFEOS_LIB"
-	echo "HDFEOS5=$HDFEOS5"
-	echo "HDFLIB=$HDFLIB"
-	echo "HDF5=$HDF5"
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+      echo "$path=$mega_buck_result"
+   done
 	echo "add_PVM_PATH=$add_PVM_PATH"
-	echo "BLAS=$BLAS"
-	echo "LIB_BLAS=$LIB_BLAS"
-	echo "PVM_ROOT=$PVM_ROOT"
-	echo "PVM_ARCH=$PVM_ARCH"
-	echo "FFTW_ROOT=$FFTW_ROOT"
-	echo "FOPTS=$FOPTS"
-	echo "LDOPTS=$LDOPTS"
 	echo "MLSCFILE=$MLSCFILE"
 fi
 
@@ -855,51 +887,24 @@ if [ $write_confg = "true" ] ; then
 	fi
 	
 	echo "#	.configure for mls" > $conf_dir/$MLSCFILE
-	echo "MLSF95=$compiler" >> $conf_dir/$MLSCFILE
-	echo "MLSPLAT=$platform" >> $conf_dir/$MLSCFILE
-	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/$MLSCFILE
-	echo "PGSINC=$PGSINC" >> $conf_dir/$MLSCFILE
-	echo "PGSTK=$PGSTK" >> $conf_dir/$MLSCFILE
-	echo "HDFEOS=$HDFEOS" >> $conf_dir/$MLSCFILE
-	echo "HDFEOS5=$HDFEOS5" >> $conf_dir/$MLSCFILE
-	echo "HDF=$HDF" >> $conf_dir/$MLSCFILE
-	echo "HDF5=$HDF5" >> $conf_dir/$MLSCFILE
-	echo "GCTP=$GCTP" >> $conf_dir/$MLSCFILE
-	echo "PGSLIB=$PGSTK" >> $conf_dir/$MLSCFILE
-	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/$MLSCFILE
-	echo "HDFLIB=$HDF" >> $conf_dir/$MLSCFILE
-	echo "BLAS=$BLAS" >> $conf_dir/$MLSCFILE
-	echo "LIB_BLAS=$LIB_BLAS" >> $conf_dir/$MLSCFILE
-	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/$MLSCFILE
-	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/$MLSCFILE
-	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/$MLSCFILE
-	echo "FOPTS=$FOPTS" >> $conf_dir/$MLSCFILE
-	echo "LDOPTS=$LDOPTS" >> $conf_dir/$MLSCFILE
-	echo "export MLSF95" >> $conf_dir/$MLSCFILE
-	echo "export MLSPLAT" >> $conf_dir/$MLSCFILE
-	echo "export MLSCONFG" >> $conf_dir/$MLSCFILE
-	echo "export PGSINC" >> $conf_dir/$MLSCFILE
-	echo "export PGSLIB" >> $conf_dir/$MLSCFILE
-	echo "export HDFEOS_LIB" >> $conf_dir/$MLSCFILE
-	echo "export HDFLIB" >> $conf_dir/$MLSCFILE
-	echo "export PGSTK" >> $conf_dir/$MLSCFILE
-	echo "export HDFEOS" >> $conf_dir/$MLSCFILE
-	echo "export HDFEOS5" >> $conf_dir/$MLSCFILE
-	echo "export HDF" >> $conf_dir/$MLSCFILE
-	echo "export HDF5" >> $conf_dir/$MLSCFILE
-	echo "export GCTP" >> $conf_dir/$MLSCFILE
-	echo "export PVM_ROOT" >> $conf_dir/$MLSCFILE
-	echo "export PVM_ARCH" >> $conf_dir/$MLSCFILE
-	echo "export FFTW_ROOT" >> $conf_dir/$MLSCFILE
-	echo "export FOPTS" >> $conf_dir/$MLSCFILE
-	echo "export LDOPTS" >> $conf_dir/$MLSCFILE
+   # duplicate some settings (shouldn't you find a cleaner fix?)
+   PGSLIB=$PGSTK
+   HDFEOS_LIB=$HDFEOS
+   HDFLIB=$HDF
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+      echo "$path=$mega_buck_result" >> $conf_dir/$MLSCFILE
+   done
+   for path in $all_my_opts
+   do
+      echo "export $path" >> $conf_dir/$MLSCFILE
+   done
 else
 #	just re-use current settings
 	compiler=$current_compiler
 	platform=$current_platform
 fi
-
-all_my_paths="PGSINC PGSTK HDFEOS HDFEOS5 HDF HDF5 GCTP"
 
 MLSF95=$compiler
 MLSPLAT=$platform
@@ -908,31 +913,13 @@ export MLSF95
 export MLSPLAT
 export MLSCONFG
 
-if [ $get_confg = "true" ] ; then
-	echo "MLSF95 is now $MLSF95"
-	echo "MLSPLAT is now $MLSPLAT"
-	echo "MLSCONFG is now $MLSCONFG"
-#   for path in $all_my_paths
-#   do
-#	echo "$path is now ${$path}"
-#   done
-fi
-
-if [ $add_PVM_PATH = "true" ] ; then
-	echo "BLAS root is now $BLAS"
-	if [ "$LIB_BLAS" = "" ] ; then
-		echo "BLAS library name is libx.a where x is blas"
-   else
-		echo "BLAS library name is libx.a where x is $LIB_BLAS"
-	fi
-	echo "PVM_ROOT is now $PVM_ROOT"
-	echo "PVM_ARCH is now $PVM_ARCH"
-	echo "FFTW_ROOT is now $FFTW_ROOT"
-fi
-
-if [ $add_FOPTS = "true" ] ; then
-	echo "FOPTS is now $FOPTS"
-	echo "LDOPTS is now $LDOPTS"
+if [ $get_confg = "true" -o $add_PVM_PATH = "true" -o $add_FOPTS = "true" ]
+then
+   for path in $all_my_opts
+   do
+      mega_buck 1 $path
+	   echo "$path is now $mega_buck_result"
+   done
 fi
 
 #Don't create object-file directory if platforms not a directory
@@ -989,6 +976,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.18  2001/07/12 22:39:24  pwagner
+# Now exports HDFEOS5
+#
 # Revision 1.17  2001/06/29 23:58:39  pwagner
 # Added LIB_BLAS and HDFEOS5
 #
