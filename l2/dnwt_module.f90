@@ -475,7 +475,7 @@ contains
       sq = c0
       axmax = aj%axmax
    20 ifl = nf_evalf
-      nflag = nflag
+      nflag = ifl
       return
 
 ! Re-enter after evaluating F.
@@ -929,6 +929,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.5  2001/04/28 01:47:39  vsnyder
+! Get correct initial value for nflag
+!
 ! Revision 2.4  2001/04/12 00:03:21  vsnyder
 ! Put 'Total Levenberg-Marquart' in AJ
 !
