@@ -59,7 +59,7 @@ contains
 !
   Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IND, IERR )
     real(r8), intent(inout) :: RADIANCE(:)
-    real(r8), intent(in) :: AAAP(:)
+    real(r8), intent(in) :: AAAP(*)
     integer(i4), intent(in) :: M, IAS, IND
     integer(i4), intent(out) :: IERR
     Integer, parameter :: MAXP=12, MAX2P=2**MAXP
@@ -198,7 +198,7 @@ contains
 !     Pasadena, Calif.   August 1, 1969.
 !     Revised by Krogh at JPL -- January 19, 1988 -- For portability
 !
-      DOUBLE PRECISION AR(:), AI(:), S(:)
+      DOUBLE PRECISION AR(*), AI(*), S(*)
 !     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
 !     and NT are defined in the common block below.
 !
@@ -488,7 +488,7 @@ contains
 !     the Cooley-Tukey fast Fourier transform.
 !
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(:), S(:)
+      DOUBLE PRECISION A(*), S(*)
       INTEGER          M, MS
       CHARACTER        MODE
 !
@@ -647,7 +647,7 @@ contains
             KEE(L+1) = KEE(L) / 2
    30    CONTINUE
 !
-         CALL DFFT (A(IR:N1), A(II:N1), S)
+         CALL DFFT (A(IR), A(II), S)
 !                              End of computing complex transform
 !
          IF(.NOT. ANAL) RETURN
@@ -709,6 +709,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.8  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
 ! Revision 1.7  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
