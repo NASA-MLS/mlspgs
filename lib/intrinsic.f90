@@ -125,6 +125,11 @@ module INTRINSIC
   integer, parameter :: L_ZETA          = l_xyz + 1
   integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
 
+  ! Specifications
+  integer, parameter :: Spec_First = 1
+  integer, parameter :: S_TIME          = Spec_First
+  integer, parameter :: Last_Intrinsic_Spec = S_Time
+
   ! The following parameters are for building trees:
   integer, parameter :: BEGIN = -1       ! Start of a tree
   integer, parameter :: D = 1000000      ! Decoration
@@ -236,6 +241,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_xyz) =                   add_ident ( 'xyz' )
     lit_indices(l_zeta) =                  add_ident ( 'zeta' )
 
+    ! Put spec names into the symbol table
+    spec_indices(s_time) =                 add_ident ( 'time' )
+
     ! Put abstract physical quantities into the symbol table
     phyq_indices(phyq_invalid) =           add_ident ( 'invalid' )
     phyq_indices(phyq_dimensionless) =     add_ident ( 'dimensionless' )
@@ -298,6 +306,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.21  2001/04/23 20:57:42  vsnyder
+! Move the first spec (time) to 'intrinsic'
+!
 ! Revision 2.20  2001/04/09 20:59:35  vsnyder
 ! Add C (for Celsius) unit and l_c name for it
 !
