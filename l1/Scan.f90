@@ -189,3 +189,6 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 1.1  2000/02/10 16:54:27  nakamura
+! Module that models the MLS scan program.
+!

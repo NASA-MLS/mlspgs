@@ -68,4 +68,7 @@ END MODULE SortQualify
 
 !
 ! $Log$
+! Revision 1.1  2000/02/08 21:24:48  perun
+! Initial version
+!
 !

@@ -57,6 +57,9 @@ clean:
 
 #
 # $Log$
+# Revision 1.7  2000/03/24 21:33:16  perun
+# Added MLSLIB dependency
+#
 # Revision 1.6  2000/03/22 19:57:51  perun
 # Added HDF_LIB_PATH variable
 #

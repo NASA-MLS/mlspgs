@@ -53,3 +53,6 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 1.1  2000/09/02 02:05:04  vsnyder
+! Initial entry
+!

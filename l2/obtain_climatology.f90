@@ -521,6 +521,9 @@ CONTAINS
 END MODULE ObtainClimatology
 !============================
 ! $Log$
+! Revision 1.2  2000/06/19 22:36:13  lungu
+! Replced call to  ParseVertCoordSpec with explicit axes creation code. Fixed minor typos.
+!
 
 
 

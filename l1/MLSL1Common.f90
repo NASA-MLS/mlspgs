@@ -76,3 +76,6 @@ END MODULE MLSL1Common
 
 !
 ! $Log$
+! Revision 1.1  2000/02/08 20:31:07  perun
+! Initial version
+!

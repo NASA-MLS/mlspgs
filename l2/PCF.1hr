@@ -169,8 +169,8 @@
 # (DO NOT REMOVE THESE ENTRIES)
 #------------------------------------------------------------------------
 10250|MCF|||||1
-10252|GetAttr.temp|/users/lungu/mlspgs/l2||||1
-10254|MCFWrite.temp|/users/lungu/mlspgs/l2||||1
+10252|GetAttr.temp|/home/ahanzel/mlspgs/l2||||1
+10254|MCFWrite.temp|/home/ahanzel/mlspgs/l2||||1
 40260|MCF_temp|/users/lungu/mlspgs/l2||||1
 40261|MCF_gph|/users/lungu/mlspgs/l2||||1
 40262|MCF_h2o|/users/lungu/mlspgs/l2||||1
@@ -238,27 +238,27 @@
 #------------------
 # Test output files
 #------------------
-#100|temp_metawrite|/users/lungu/mlspgs/l2||||1
-21000|mls_l2gp_temp_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21001|mls_l2gp_gph_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21002|mls_l2gp_h2o_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21003|mls_l2gp_hno3_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21004|mls_l2gp_o3_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21005|mls_l2gp_hcl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21006|mls_l2gp_clo_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21007|mls_l2gp_n2o_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21008|mls_l2gp_co_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21009|mls_l2gp_oh_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21010|mls_l2gp_rhi_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21011|mls_l2gp_so2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21012|mls_l2gp_ho2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1  
-21013|mls_l2gp_bro_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21014|mls_l2gp_hocl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1   
-21015|mls_l2gp_hcn_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1  
-#22517|mls_l2gp_o3-strat-column_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-#22550|mls_l2gp_others_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21440|mls_l2aux_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+#100|temp_metawrite|/home/ahanzel/mlspgs/l2||||1
+21000|mls_l2gp_temp_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21001|mls_l2gp_gph_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21002|mls_l2gp_h2o_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21003|mls_l2gp_hno3_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21004|mls_l2gp_o3_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21005|mls_l2gp_hcl_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21006|mls_l2gp_clo_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21007|mls_l2gp_n2o_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21008|mls_l2gp_co_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21009|mls_l2gp_oh_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21010|mls_l2gp_rhi_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21011|mls_l2gp_so2_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21012|mls_l2gp_ho2_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1  
+21013|mls_l2gp_bro_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21014|mls_l2gp_hocl_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1   
+21015|mls_l2gp_hcn_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1  
+#22517|mls_l2gp_o3-strat-column_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+#22550|mls_l2gp_others_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
+21440|mls_l2aux_v01_1hr.2000-001|/home/ahanzel/mlspgs/l2||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -437,13 +437,13 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/users/lungu/mlspgs/l2||||1
-10101|LogReport|/users/lungu/mlspgs/l2||||1
-10102|LogUser|/users/lungu/mlspgs/l2||||1
-10103|TmpStatus|/users/lungu/mlspgs/l2||||1
-10104|TmpReport|/users/lungu/mlspgs/l2||||1
-10105|TmpUser|/users/lungu/mlspgs/l2||||1
-10110|MailFile|/users/lungu/mlspgs/l2||||1
+10100|LogStatus|/home/ahanzel/mlspgs/l2||||1
+10101|LogReport|/home/ahanzel/mlspgs/l2||||1
+10102|LogUser|/home/ahanzel/mlspgs/l2||||1
+10103|TmpStatus|/home/ahanzel/mlspgs/l2||||1
+10104|TmpReport|/home/ahanzel/mlspgs/l2||||1
+10105|TmpUser|/home/ahanzel/mlspgs/l2||||1
+10110|MailFile|/home/ahanzel/mlspgs/l2||||1
 #
 # -----------------------------------------------------------------------
 # ASCII file which stores pointers to runtime SMF files in lieu of 
@@ -618,3 +618,7 @@
 #
 #
 ?   END
+
+# 7/18/00-ahanzel- Directed output & log files to /home/ahanzel/mlspgs/l2
+# 7/19/00-ahanzel- Directed files 10252 and 10254 (metadata output) 
+#			to /home/ahanzel/mlspgs/l2.	 
