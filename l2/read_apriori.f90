@@ -11,7 +11,7 @@ module ReadAPriori
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_HDFVERSION, &
     & F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
-    & L_GLORIA, S_L2AUX, S_L2GP
+    & L_GLORIA, S_L2AUX, S_L2GP, F_QUANTITYTYPE
   use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
@@ -97,6 +97,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
     integer :: pcf_indx            ! loop index of climatology pcf numbers
+    integer :: QUANTITYTYPE             ! Lit index of quantity type
     integer :: record_length
     integer :: ReturnStatus
     integer :: SON              ! Of root, an n_spec_args or a n_named
@@ -172,6 +173,8 @@ contains ! =====     Public Procedures     =============================
           fieldName = sub_rosa(subtree(2,field))
         case ( f_origin )
           griddedOrigin = decoration(subtree(2,subtree(j,key)))
+        case ( f_quantityType )
+          quantityType = decoration(subtree(2,subtree(j,key)))
         case ( f_hdfVersion )           
           call expr ( subtree(2,field), units, value, type )             
           if ( units(1) /= phyq_dimensionless ) &                        
@@ -261,7 +264,7 @@ contains ! =====     Public Procedures     =============================
           & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
         endif
-        if ( .not. all(got((/f_sdName, f_file/)))) &
+        if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
           & call announce_error ( son, &
             & 'file/sd name must both be specified in read a priori' )
         
@@ -287,7 +290,7 @@ contains ! =====     Public Procedures     =============================
 
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
-        call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index), &
+        call ReadL2AUXData ( sd_id, sdNameString, quantityType, L2AUXDatabase(l2Index), &
           & hdfVersion=hdfVersion, checkDimNames=.true. )
 
         if( index(switches, 'apr') /= 0 ) &
@@ -512,6 +515,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.39  2003/01/18 02:37:34  livesey
+! Added the quantityType stuff to L2Aux issues
+!
 ! Revision 2.38  2002/12/10 00:40:27  pwagner
 ! Overrides defaults; forcing check of l2auxdimNames
 !
