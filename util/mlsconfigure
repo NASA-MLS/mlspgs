@@ -884,6 +884,7 @@ if [ $write_confg = "true" ] ; then
 	echo "export HDFLIB" >> $conf_dir/$MLSCFILE
 	echo "export PGSTK" >> $conf_dir/$MLSCFILE
 	echo "export HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS5" >> $conf_dir/$MLSCFILE
 	echo "export HDF" >> $conf_dir/$MLSCFILE
 	echo "export HDF5" >> $conf_dir/$MLSCFILE
 	echo "export GCTP" >> $conf_dir/$MLSCFILE
@@ -988,6 +989,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.17  2001/06/29 23:58:39  pwagner
+# Added LIB_BLAS and HDFEOS5
+#
 # Revision 1.16  2001/06/11 20:52:41  pwagner
 # Fixed tiny error in blank assignment of HDF5
 #
