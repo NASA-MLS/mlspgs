@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L1BData
@@ -619,10 +619,12 @@ contains ! ============================ MODULE PROCEDURES ======================
         call output ( error_number, places=9, advance='yes' )
       end if
     else
-      print*, '***Error in module ', ModuleName
-      print*, trim(full_message)
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
-        print*, 'error number ', error_number
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
       end if
     end if
   end subroutine announce_error
@@ -630,6 +632,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.16  2002/01/09 23:42:23  pwagner
+! Replaced discouraged print statements with favored calls to output
+!
 ! Revision 2.15  2001/11/01 21:02:31  pwagner
 ! Willing to read l2aux files as if l1brad (untested); alphabetized procedures; added toc
 !
