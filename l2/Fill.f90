@@ -1366,7 +1366,8 @@ contains ! =====     Public Procedures     =============================
             & 'Missing aprioriPrecision field for negativePrecision fill' )
           aprioriPrecision => GetVectorQtyByTemplateIndex ( &
             & vectors(aprPrecVctrIndex), aprPrecQtyIndex )
-          where ( quantity%values >= aprioriPrecision%values*precisionFactor )
+          where ( quantity%values >= aprioriPrecision%values*precisionFactor .and. &
+            & aprioriPrecision%values > 0.0_r8 )
             quantity%values = - quantity%values
           end where
 
@@ -6844,6 +6845,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.265  2004/04/13 21:19:10  livesey
+! Bug fix in negative precision flagging.
+!
 ! Revision 2.264  2004/04/02 01:06:46  livesey
 ! Got the status filling working.
 !
