@@ -105,14 +105,14 @@ contains
       son = subtree(i_sons,root)
       if ( toggle(gen) ) call trace_begin ( 'Algebra loop', son )
       if ( node_id(son) /= n_equal ) then
-        ! emit an error message?
+        ! Error message not needed -- caught in Check_Tree.
       else
         ! Evaluate the RHS
         rhs = subtree(2,son)
         call expr ( rhs, what, dValue, vector, matrix, matrix_c, matrix_k, matrix_s )
-        ! Lookup the LHS.  It could be a label or the LHS of another expr.
         if ( what == w_nothing ) &
-    cycle
+    go to 200
+        ! Lookup the LHS.  It could be a label or the LHS of another expr.
         lhs = subtree(1,son)
         string = sub_rosa(lhs)
         decl = get_my_decl(lhs)
@@ -147,7 +147,7 @@ contains
             if ( decl%type /= exprn .and. decl%type /= num_value ) then
               call announce_error ( son, incompatible )
               what = w_nothing
-    cycle
+   go to 100
             end if
           case ( w_vector )
             if ( decl%type == label ) then
@@ -155,12 +155,12 @@ contains
               if ( spec /= s_vector ) then
                 call announce_error ( son, incompatible )
                 what = w_nothing
-    cycle
+   go to 100
               end if
             else if ( decl%type /= exprn_v ) then
               call announce_error ( son, incompatible )
               what = w_nothing
-    cycle
+   go to 100
             end if
             call copyVector ( vectorDatabase(decl%units), vector, clone=.true. )
           case ( w_matrix, w_matrix_c, w_matrix_k, w_matrix_s )
@@ -169,18 +169,18 @@ contains
               if ( spec /= s_matrix ) then
                 call announce_error ( son, incompatible )
                 what = w_nothing
-    cycle
+   go to 100
               end if
             else if ( decl%type /= exprn_m ) then
               call announce_error ( son, incompatible )
               what = w_nothing
-    cycle
+   go to 100
             end if
             call getActualMatrixFromDatabase ( matrixDatabase(decl%units), &
               & LHSMatrix )
             select case ( what )
             case ( w_matrix )
-              call copyMatrix ( LHSmatrix, matrix ) ! deep copy
+              call copyMatrix ( LHSmatrix, matrix )     ! deep copy
             case ( w_matrix_c )
               call copyMatrix ( LHSmatrix, matrix_c%m ) ! deep copy
             case ( w_matrix_k )
@@ -189,10 +189,9 @@ contains
               call copyMatrix ( LHSmatrix, matrix_s%m ) ! deep copy
             end select
           end select
-          call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
-          if ( what /= w_nothing ) &
-            & call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
+          call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
           value = decl%units ! in case switches contains 'alg'
+100       call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
         end if
         if ( index(switches,'alg') /= 0 ) then
           select case ( what )
@@ -207,7 +206,7 @@ contains
           end select
         end if
       end if
-      if ( toggle(gen) ) call trace_end ( 'Algebra loop' )
+200   if ( toggle(gen) ) call trace_end ( 'Algebra loop' )
     end do ! i_sons
     if ( toggle(gen) ) call trace_end ( 'Algebra' )
 
@@ -720,6 +719,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.4  2004/01/20 23:19:41  vsnyder
+! Better error handling, plug some memory leaks
+!
 ! Revision 2.3  2004/01/20 19:33:35  vsnyder
 ! Correct bug in identifier handling; delete unused variable declaration
 !
