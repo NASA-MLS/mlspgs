@@ -5,7 +5,7 @@
 module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
-  use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
+  use Hdf, only: DFACC_RDWR
   use HDFEOS5, only: HE5_SWATTACH, HE5_SWDETACH, &
     & HE5_SWCLOSE
   use INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
@@ -26,12 +26,7 @@ module WriteMetadata ! Populate metadata and write it out
     & GlobalAttributes
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
-    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
-    & WARNIFCANTPGSMETREMOVE !, &
-!    & PGS_PC_getconfigdata, &
-!    & PGS_MET_init, PGS_MET_setattr_d, &
-!      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
-!      &  PGS_MET_write, PGS_MET_remove
+    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
   use TOGGLES, only: switches
   use TREE, only: SOURCE_REF
 
@@ -223,7 +218,8 @@ contains
 
     attrName = 'ReprocessingActual'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'processed once')
+         'unknown')
+         ! 'processed once')
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
         & "Error in writing ReprocessingActual attribute." )
@@ -246,7 +242,6 @@ contains
     end if
 
     attrName = 'LocalVersionID'
-    ! call expandFileTemplate ( '$cycle', sval, cycle=l2pcf%cycle )
     sval = 'c' // l2pcf%cycle
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
@@ -347,40 +342,6 @@ contains
 
     ! QAFlags Group
     ! These have been moved to the MCF files
-    ! You should delete them in the next version
-
-!     attrName = 'AutomaticQualityFlag' // '.' // class
-!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-!          'Passed')
-!     if ( returnStatus /= PGS_S_SUCCESS ) then
-!       call announce_error ( 0, &
-!         & "Error in writing AutomaticQualityFlag attribute." )
-!     end if
-! 
-!     attrName = 'AutomaticQualityFlagExplanation' // '.' // class
-!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-!          'pending algorithm update')
-!     if ( returnStatus /= PGS_S_SUCCESS ) then
-!       call announce_error ( 0, &
-!         & "Error in writing AutomaticQualityFlagExplanation attribute." )
-!     end if
-! 
-!     attrName = 'OperationalQualityFlag' // '.' // class
-!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-!          'Not Investigated')
-!     if ( returnStatus /= PGS_S_SUCCESS ) then
-!       call announce_error ( 0, &
-!       & "Error in writing OperationalQualityFlag attribute." )
-!     end if
-! 
-!     attrName = 'OperationalQualityFlagExplanation' // '.' // class
-!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-!          'Not Investigated')
-!     if ( returnStatus /= PGS_S_SUCCESS ) then
-!       call announce_error ( 0, &
-!         & "Error in writing OperationalQualityFlagExplanation attribute.") 
-!     end if
-! 
     ! QAStats Group
 
     attrName = 'QAPercentInterpolatedData' // '.' // class
@@ -700,7 +661,6 @@ contains
       & "Error in setting PGEVersion attribute.") 
     end if
 
-!    hdf_sdid = sfstart (physical_fileName, DFACC_RDWR) 
     hdf_sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
       & hdfVersion=hdfVersion, addingMetaData=.true.) 
 
@@ -727,7 +687,6 @@ contains
       end if
     end if
 
-!    hdfReturn = sfend(hdf_sdid)
     if ( SFINBETWEENSTARTEND ) then
       hdfReturn = mls_sfend(hdf_sdid, hdfVersion=hdfVersion)
       if ( hdfReturn /= 0 ) then
@@ -737,11 +696,6 @@ contains
       end if
 
       returnStatus = pgs_met_remove() 
-      ! if (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-      !  write(sval, *) returnStatus
-      !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-      !        "Calling pgs_met_remove() failed with value " // trim(sval) )
-      ! endif          
     endif
 
   end subroutine Third_grouping
@@ -836,7 +790,6 @@ contains
     call third_grouping (HDF_FILE, hdf_sdid, groups, &
       & hdfVersion, filetype)
 
-!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
       sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
         & hdfVersion=hdfVersion, addingMetaData=.true.)
@@ -866,11 +819,6 @@ contains
     end if
 
     returnStatus = pgs_met_remove() 
-    ! if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
-    !    write(errmsg, *) returnStatus
-    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-    !          "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -969,7 +917,6 @@ contains
     call third_grouping (HDF_FILE, hdf_sdid, groups, &
       & hdfVersion, filetype)
 
-!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
       sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
         & hdfVersion=hdfVersion, addingMetaData=.true.)
@@ -983,22 +930,6 @@ contains
       return
     end if
 
-!    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
-
-!    if ( returnStatus /= PGS_S_SUCCESS .AND. &
-!         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
-!      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-!        call announce_error ( 0, &
-!        & "Error: Some of the mandatory parameters were not set in populate_metadata_oth.")
-!      else
-!        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-!        call MLSMessage (MLSMSG_WARNING, ModuleName, &
-!             "Metadata write failed in populate_metadata_oth " &
-!             & //trim(attrname)//trim(errmsg))
-!      end if
-!    end if
-
-!    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
     if ( hdfReturn /= 0 ) then
         call announce_error ( 0, &
@@ -1015,14 +946,6 @@ contains
     end if
 
     returnStatus = pgs_met_remove() 
-    ! if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
-        ! call announce_error ( 0, &
-        ! & "Error: metadata removal in populate_metadata_oth.", &
-        ! & error_number=hdfReturn) 
-    !    write(errmsg, *) returnStatus
-    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-    !          "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1146,7 +1069,6 @@ contains
       ! e.g., 'h2o', or else a much longer one like 'mls-aura_...'
       if ( index(sd_full, 'mls-aura_') > 0 ) then
         ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
-        !call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
         call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
       else
         sd_name = sd_full
@@ -1155,8 +1077,6 @@ contains
       if ( DEBUG ) then
         call output('sd_full: ', advance='no')
         call output(trim(sd_full), advance='yes')
-        ! call output('sd_path: ', advance='no')
-        ! call output(trim(sd_path), advance='yes')
         call output('sd_name: ', advance='no')
         call output(trim(sd_name), advance='yes')
       end if
@@ -1312,7 +1232,6 @@ contains
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
                                l2pcf%logGranID)
 
-    ! call expandFileTemplate('$cycle', sval, cycle=l2pcf%cycle)
     sval = 'c' // l2pcf%cycle
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
                                sval)
@@ -1357,16 +1276,6 @@ contains
     end if
 
     result = pgs_met_remove()
-    ! if ( result /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
-        ! call announce_error ( 0, &
-        ! & "Error: metadata removal in WriteMetaLog.", &
-        ! & error_number=result) 
-    !  if (result /= PGS_S_SUCCESS) THEN 
-    !    write(sval, *) result
-    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-    !          "Calling pgs_met_remove() failed with value " // trim(sval) )
-    !  endif          
-    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1385,117 +1294,6 @@ contains
     nullify ( p%AnText )
     nullify ( p%L1BRADPCFIds )
   end subroutine NullifyPCFData
-
-  ! -----------------------------------------  ExpandFileTemplate  -----
-   subroutine ExpandFileTemplate ( Template, Filename, Level, Version, Cycle, &
-     &                            Day )
-
-     ! Brief description of subroutine
-     ! This subroutine expands the version, cycle, and day fields in a file
-     ! name template.  Note: CYCLE is a STRING here, which is how it's read
-     ! from the PCF.
-
-     ! Arguments
-
-     character (len=*), intent(in) :: Template
-
-     character (len=*), intent(in), optional :: Cycle, Day, Level, Version
-
-     character (len=*), intent(out) :: Filename
-
-    ! Parameters
-
-    ! Functions
-
-    ! Variables
-
-    character (len=4) :: Field, zCy
-
-    integer :: I, iCy, Indx, NumFields
-
-    ! Initializations
-
-    numFields = 4
-
-    fileName = template
-
-    ! Loop through the expandable fields in the template
-
-    do i = 1, numFields
-
-      ! Search for $
-
-      indx = INDEX(fileName,'$')
-
-      ! Exit, if there are no expandable fields 
-
-      if ( indx == 0) exit
-
-      ! Match the field name to the input argument
-
-      field = fileName(indx:indx+3)
-
-      if ( field == '$lev' ) then
-
-        if ( present(level) ) then
-          fileName = fileName(:(indx-1)) // TRIM(level) // &
-            &        fileName((indx+6):)
-        else
-          call MLSMessage(MLSMSG_Error, ModuleName, 'Input level &
-            &required to expand the template.')
-        end if
-
-      else if ( field == '$ver' ) then
-
-        if ( present(version) ) then
-          fileName = fileName(:(indx-1)) // TRIM(version) // &
-            &        fileName((indx+8):)
-        else
-          call MLSMessage(MLSMSG_Error, ModuleName, 'Input version &
-            &required to expand the template.')
-        end if
-
-      else if ( field == '$cyc' ) then
-
-        if ( present(cycle) ) then
-
-        ! Convert from CHARACTER to INTEGER
-
-          read ( cycle, '(I2)' ) iCy
-
-          ! Add a leading zero, if less than 10
-
-          if ( iCy < 10 ) then
-            zCy = '0' // trim(cycle)
-          else
-            zCy = cycle
-          end if
-
-          fileName = fileName(:(indx-1)) // 'c' // TRIM(zCy) // &
-                            fileName((indx+6):)
-
-        else
-
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Input cycle required to expand the template.')
-
-        end if
-
-      else if ( field == '$day' ) then
-
-        if ( present(day) ) then
-          fileName = fileName(:(indx-1)) // TRIM(day) // &
-            &        fileName((indx+4):)
-        else
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Input day required to expand the template.')
-        end if
-
-      end if
-
-    end do
-
-   end subroutine ExpandFileTemplate
 
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, mcf, l2_type )
@@ -1578,6 +1376,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.55  2004/12/15 23:34:32  pwagner
+! Change REPROCESSINGACTUAL to unknown; light housecleaning
+!
 ! Revision 2.54  2004/12/14 21:41:53  pwagner
 ! Repaired double-0 cycle; automaticQ.. and OperationalQ.. shifted to mcf
 !
