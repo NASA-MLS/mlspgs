@@ -38,7 +38,7 @@ libl3_f90 := $(shell echo $(libl3_sources)/*.f90)
 
 libl3_objs := $(shell echo $(itmdir)/*.o)
 
-l3_driver = MLSL3.o
+l3_driver = MLSL3D.o
 
 # "yes" is safer--
 # in case modules have been deleted or excluded since the last build
@@ -89,19 +89,21 @@ else
 endif
 
 # ========================================================================
-libl3.a: $(libl3_objs)
-ifeq ($(delete_lib_first),yes)
-		rm -f $@
-endif
-	ar ru $@ $?
-	ar d $@ $(itmdir)/$(l3_driver)
+# Now that we build libmlsl3.a for use by l3 and l3m, the following is outmoded
+#libl3.a: $(libl3_objs)
+#ifeq ($(delete_lib_first),yes)
+#		rm -f $@
+#endif
+#	ar ru $@ $?
+#	ar d $@ $(itmdir)/$(l3_driver)
 
-test: $(ALLOBJS) $(PVM_OBJS) libl3.a $(libdir)/libmls.a
+#test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
+test: $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
 		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
-                      -L./ -ll3 \
+                      -L$(itmdir)/ -lmlsl3 \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -122,11 +124,14 @@ clean:
 	rm -f *.o *.mod test
 
 tar:
-	rm -f libtest.tgz
-	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+	rm -f l3test.tgz
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.7  2001/06/06 23:51:27  pwagner
 # hdf5 linker line if needed
 #
