@@ -19,67 +19,70 @@ esac
 while [ -n "$(echo $1)" ]; do
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
 	fi
     fi
     if [ $1 == "--output" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
-	    echo "/bigdata/livesey/v1.0.1"
+	    echo "/bigdata/livesey/v1.1.9"
 	fi
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "/work3/livesey/"
 	else
-	    echo "/bigdata/livesey/v1.0.1"
+	    echo "/bigdata/livesey/v1.1.9"
 	fi
     fi
     if [ $1 == "--truthl2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
 	    echo "/data/emls/l2gp/s5--t/1996"
 	fi
     fi
     if [ $1 == "--corel2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
-	    echo "/bigdata/livesey/v1.0.1"
+	    echo "/bigdata/livesey/v1.1.9"
 	fi
     fi
     if [ $1 == "--l1boa" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
 	    echo "/data/emls/l1boa/s5--t/1996"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
-	    echo "/bigdata/livesey/v1.0.1"
+	    echo "/bigdata/livesey/v1.1.9"
 	fi
     fi
     if [ $1 == "--l2cal" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "$HOME/v1.1.9"
 	else
 	    echo "/data/emls/l2cal"
 	fi
     fi
     if [ $1 == "--leapsec" ]; then
-	echo "$HOME/emls/v1.0.1"
+	echo "$HOME/emls/v1.1.9"
     fi
     shift
 done
 
 # $Log$
+# Revision 1.6  2003/05/06 00:54:21  livesey
+# Moved DAO data for the moment.
+#
 # Revision 1.5  2003/05/03 22:01:11  livesey
 # Added DAO
 #
