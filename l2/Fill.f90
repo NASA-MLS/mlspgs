@@ -12,14 +12,14 @@ module Fill                     ! Create vectors and fill them.
   use INIT_TABLES_MODULE, only: F_Columns, F_GEOCALTITUDEQUANTITY, &
     & F_EXPLICITVALUES, F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, &
     & F_REFGPHQUANTITY, F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, &
-    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, &
-    & F_TEMPERATUREQUANTITY, F_TNGTECI, F_Type, FIELD_FIRST, FIELD_LAST
+    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, &
+    & F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_CHOLESKY, L_EXPLICIT, L_GPH, L_GRIDDED, &
-    & L_HYDROSTATIC, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, L_LOSVEL, L_PLAIN, &
+    & L_HYDROSTATIC, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, L_ZETA
+    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_FILL, S_MATRIX, S_SNOOP, S_TIME, S_VECTOR
   ! Now some arrays
@@ -53,6 +53,7 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
     & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
   use SnoopMLSL2, only: SNOOP
+  use VGridsDatabase, only: VGRID_T
 
   implicit none
   private
@@ -130,7 +131,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( Root, L1bInfo, GriddedData, VectorTemplates, Vectors, &
-    & QtyTemplates , Matrices, L2GPDatabase, L2AUXDatabase, Chunks, ChunkNo )
+    & QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
@@ -143,6 +144,7 @@ contains ! =====     Public Procedures     =============================
     type (vector_T), dimension(:), pointer :: Vectors
     type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (matrix_database_T), dimension(:), pointer :: Matrices
+    type (VGrid_T), dimension(:), intent(in) :: vGrids
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (mlSChunk_T), dimension(:), intent(in) :: Chunks
@@ -173,6 +175,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Descendant of Son
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
+    integer :: INSTANCE                 ! Loop counter
     integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: IND                      ! Temoprary index
     integer :: KEY                      ! Definitely n_named
@@ -207,7 +210,8 @@ contains ! =====     Public Procedures     =============================
     integer :: VALUESNODE               ! For the parser
     integer :: VECTORINDEX              ! In the vector database
     integer :: VECTORNAME               ! Name of vector to create
-                                        !
+    integer :: VGRIDINDEX               ! Index of sourceVGrid
+
     logical :: TIMING
     logical :: SPREAD           ! Do we spread values accross instances in explict
 
@@ -349,6 +353,8 @@ contains ! =====     Public Procedures     =============================
             valuesNode=subtree(j,key)
           case (f_sourceGrid)
             gridIndex=decoration(decoration(gson))
+          case (f_sourceVGrid)
+            vGridIndex=decoration(decoration(gson))
           case (f_maxIterations)      ! For hydrostatic fill
             call expr(subtree(2,subtree(j,key)), unitAsArray,valueAsArray)
             if (all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/))) &
@@ -422,6 +428,24 @@ contains ! =====     Public Procedures     =============================
           case default
             call Announce_error(key, noSpecialFill)
           end select
+
+        case (l_vGrid) ! ---------------------- Fill from vGrid ---------
+          if (.not. ValidateVectorQuantity(quantity, &
+            & quantityType=(/l_ptan/), &
+            & frequencyCoordinate = (/l_none/) ) ) &
+            & call MLSMessage(MLSMSG_Error,ModuleName,&
+            &   'vGrids can only be used to fill ptan quantities')
+          if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
+            & call MLSMessage (MLSMSG_Error,ModuleName, &
+            &  'Vertical coordinate in vGrid is not zeta')
+          if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
+            & call MLSMessage (MLSMSG_Error,ModuleName, &
+            &  'VGrid is not of the same size as the quantity')
+          do instance = 1, quantity%template%noInstances
+            quantity%values(:,instance) = vGrids(vGridIndex)%surfs
+          end do
+          !quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
+          !  & quantity%template%noInstances )
 
         case (l_gridded) ! --------------------- Fill from gridded data --
           if (.not. got(f_sourceGrid)) call Announce_Error(key,noSourceGridGiven)
@@ -1512,6 +1536,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.40  2001/04/20 17:12:24  livesey
+! Add fill from l2gp
+!
 ! Revision 2.39  2001/04/19 00:09:34  pwagner
 ! Longer error messages; halts if problem in fill
 !
