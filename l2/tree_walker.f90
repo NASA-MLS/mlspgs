@@ -17,6 +17,7 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
+  use L2Parallel, only: PARALLEL, INITPARALLEL, GETCHUNKFROMMASTER
   use L2PC_m, only: DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
@@ -90,6 +91,8 @@ contains ! ====     Public Procedures     ==============================
       & matrices, vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
       & mifGeolocation, vectorTemplates )
 
+    call InitParallel
+
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
@@ -113,10 +116,14 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
-        call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
+        if ( .not. parallel%slave ) then
+          call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
+        else
+          call GetChunkFromMaster ( chunks )
+        endif
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
       case ( z_construct, z_fill, z_join, z_retrieve )
-        do chunkNo = 1, size(chunks)
+        do chunkNo = lbound(chunks,1), ubound(chunks,1)
           j = i
 subtrees: do while ( j <= howmany )
             son = subtree(j,root)
@@ -193,6 +200,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.48  2001/04/28 01:31:46  livesey
+! Changes for new l2pc / matrix handling.
+!
 ! Revision 2.47  2001/04/26 20:02:09  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
