@@ -1117,9 +1117,15 @@ contains
         call output(trim(mcf_name), advance='yes')
       end if
 
-      ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
-      !call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
-      call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
+      ! Either we were given a short version of the sd_full
+      ! e.g., 'h2o', or else a much longer one like 'mls-aura_...'
+      if ( index(sd_full, 'mls-aura_') > 0 ) then
+        ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
+        !call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
+        call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
+      else
+        sd_name = sd_full
+      endif
 
       if ( DEBUG ) then
         call output('sd_full: ', advance='no')
@@ -1135,8 +1141,8 @@ contains
       ! lib/l2gpData and unknown fragment l2/l2cf/lib
 
       if ( trim(sd_name) == 'ch3cn' ) then
-	mcf = -999
-	return
+	     mcf = -999
+	     return
       end if
 
       if ( len(trim(sd_name)) <= 0 ) then
@@ -1546,6 +1552,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.49  2003/09/03 23:56:24  pwagner
+! Can get species name from trivial file name fragment
+!
 ! Revision 2.48  2003/08/11 17:29:36  cvuu
 ! Change to output attributes StartOrbitNumber and StopOrbitNumber instead of OrbitNumber
 !
