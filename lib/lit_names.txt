@@ -93,6 +93,7 @@ mif
 mifs
 minutes
 
+nameFragment
 none
 noiseBandwidth
 
@@ -129,6 +130,7 @@ sizeDistribution
 spaceRadiance
 surfaceType
 systemTemperature
+sza
 
 temperature
 temperature_prec temperature_precision
@@ -151,6 +153,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.18  2003/02/06 00:44:55  livesey
+# Added nameFragment and sza for binSelector
+#
 # Revision 2.17  2003/01/26 04:41:38  livesey
 # Added profiles
 #
