@@ -4,8 +4,13 @@
 module MLSHDF5
 
   ! This module contains MLS specific routines to do lowish level common HDF5
-  ! tasks.  Initially mainly to do with simple attributes, but more will no
-  ! doubt be added.
+  ! tasks.
+  
+  ! Usage note: due to idiosyncrasy (euphemism for bug) in Lahey f95 compiler,
+  ! don't put a "USE MLSHDF5" statement at module level in any modules that
+  ! will use this. Instead bury each "USE MLSHDF5" down inside the
+  ! procedures that need them. Otherwise, Lahey will take nearly forever
+  ! to finish compiling the highest modules.
 
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   ! Lets break down our use, parameters first
@@ -40,7 +45,7 @@ module MLSHDF5
     & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
     & IsHDF5DSInFile, IsHDF5AttributeInFile, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
-    & ReadLitIndexFromHDF5Attribute, ReadStringIndexFromHDF5Attribute, &
+    & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -2527,8 +2532,8 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_snglarr4
 
-  ! ------------------------------------------ ReadLitIndexFromHDF5Attribute ---
-  subroutine ReadLitIndexFromHDF5Attribute ( itemID, name, index )
+  ! ------------------------------------------ ReadLitIndexFromHDF5Attr ---
+  subroutine ReadLitIndexFromHDF5Attr ( itemID, name, index )
     use MoreTree, only: GetLitIndexFromString
     ! Dummy arguments
     integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
@@ -2543,10 +2548,10 @@ contains ! ======================= Public Procedures =========================
     else
       index = 0
     end if
-  end subroutine ReadLitIndexFromHDF5Attribute
+  end subroutine ReadLitIndexFromHDF5Attr
 
-  ! ------------------------------------------ ReadStringIndexFromHDF5Attribute ---
-  subroutine ReadStringIndexFromHDF5Attribute ( itemID, name, index )
+  ! ------------------------------------------ ReadStringIndexFromHDF5Attr ---
+  subroutine ReadStringIndexFromHDF5Attr ( itemID, name, index )
     use MoreTree, only: GetStringIndexFromString
     ! Dummy arguments
     integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
@@ -2561,7 +2566,7 @@ contains ! ======================= Public Procedures =========================
     else
       index = 0
     end if
-  end subroutine ReadStringIndexFromHDF5Attribute
+  end subroutine ReadStringIndexFromHDF5Attr
 
   ! --------------------------------------- WriteStringIndexAsHDF5Attribute
   subroutine WriteLitIndexAsHDF5Attribute ( itemID, name, index )
@@ -2816,6 +2821,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.26  2003/05/19 22:06:31  pwagner
+! Shortened names to Read..IndexFromHDF5Attr to comply with namelength standard
+!
 ! Revision 2.25  2003/05/13 04:46:42  livesey
 ! Bug fix, added more specifics to generic
 !
