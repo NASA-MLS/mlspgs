@@ -70,59 +70,48 @@ TYPE L2cfEntry
 
    !Cells holder 
 
-   TYPE (L2cfCell), DIMENSION(L2cfEntryNoKeys) :: Cells
+   TYPE (L2cfCell), DIMENSION(MaxNoKeysPerEntry) :: Cells
 
 END TYPE L2cfEntry
 
 
+TYPE L2cfSection
 
 
+   ! For each section:
+   ! Name, Number of entries within section
+   CHARACTER (len=L2cfEntryLen) L2cfSectionName
+   INTEGER NoSectionEntries
+
+   ! The actual entries:
+
+   TYPE (L2cfEntry), DIMENSION(MaxNoEntriesPerSection) :: Entries ! (NoSectionEntries)
 
 
+END TYPE L2cfSection
 
 
 
 
 TYPE L2cf
 
-   ! This datatype defines the l2cf and its sections
+! This datatype defines the l2cf as an array of L2cfSections
 
-   ! For each section:
-   ! Number of entries within section
+  INTEGER NoSections
 
-   INTEGER NoGlobalSettingsEntries
-
-   ! The actual entries:
-
-   TYPE (L2cfEntry), DIMENSION(NoGlobalSettingsEntries) :: GlobalSettings
-
-   INTEGER NoReadAprioriEntries
-   TYPE (L2cfEntry), DIMENSION(NoReadAprioriEntries) :: ReadApriori
-
-   INTEGER NoMergeAprioriEntries
-   TYPE (L2cfEntry), DIMENSION(NoMergeAprioriEntries) :: MergeApriori
-
-   INTEGER NoChunkDivideEntries
-   TYPE (L2cfEntry), DIMENSION(NoChunkDivideEntries) :: ChunkDivide
-
-   INTEGER NoProfileLayoutEntries
-   TYPE (L2cfEntry), DIMENSION(NoProfileLayoutEntries) :: ProfileLayout
-
-   INTEGER NoConstructEntries
-   TYPE (L2cfEntry), DIMENSION(NoConstructEntries) :: Construct
-
-   INTEGER NoFillEntries
-   TYPE (L2cfEntry), DIMENSION(NoFillEntries) :: Fill
-
-   INTEGER NoJoinEntries
-   TYPE (L2cfEntry), DIMENSION(NoJoinEntries) :: Join
-
-   INTEGER NoOutputEntries
-   TYPE (L2cfEntry), DIMENSION(NoOutputEntries) :: Output
+  TYPE (L2cfSection), POINTER, DIMENSION (:) :: Sections ! (NoSections) 
 
 END TYPE l2cf
 
 end module l2cf
+
+
+
+
+
+
+
+
 
 
 
