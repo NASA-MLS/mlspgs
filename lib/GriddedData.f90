@@ -10,14 +10,14 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
 
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
   & gdopen, gdattach, gddetach, gdclose, &
-  & gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
   use Hdf, only: SUCCEED, DFACC_RDONLY
   USE MLSCommon, only: R8, LineLen, NameLen
   USE MLSFiles, only: GetPCFromRef
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
   & MLSMSG_Deallocate, MLSMSG_Warning
   USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-  & Count_words, ReadCompleteLineWithoutComments
+  & Count_words, ReadCompleteLineWithoutComments, GetIntHashElement
   USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
   & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
 
@@ -33,15 +33,22 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
 
  
 
+  public::GriddedData_T
+  public::SetupNewGridTemplate, DestroyGridTemplateContents, &
+	&   AddGridTemplateToDatabase, DestroyGridTemplateDatabase
+  public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::l3ascii_open,l3ascii_read_field,l3ascii_interp_field,make_log_axis
   public::l3ascii_get_multiplier
   !private::get_next_noncomment_line, 
   private :: make_linear_axis
   private::read_explicit_axis,ilocate
+  public::ReadGriddedData
+  private::announce_error
 
 
   ! First we'll define some global parameters and data types.
 
+   CHARACTER (len=*), PARAMETER :: DEFAULTFIELDNAME = 'TMPU'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Height'
@@ -1145,6 +1152,14 @@ END TYPE GriddedData_T
     ! This routine reads a Gridded Data file, returning a filled data structure and the !
 	! appropriate for 'ncep' or 'dao'
 
+	! FileName and the_g_data are required args
+	! GeoDimList, if present, should be the Dimensions' short names
+	! as a comma-delimited character string in the order:
+	! longitude, latitude, vertical level, time
+	
+	! fieldName, if present, should be the rank 3 or higher object
+	! like temperature
+
     ! Arguments
 
     CHARACTER (LEN=*), INTENT(IN) :: FileName ! Name of the file containing the grid(s)
@@ -1161,20 +1176,25 @@ END TYPE GriddedData_T
   integer :: nentries, ngrids, ndims, nfields
   integer :: strbufsize
   character (len=80) :: msg, mnemonic
-  integer :: start(4)
   integer :: status
-  integer :: stride(4)
 
     LOGICAL,  PARAMETER       :: CASESENSITIVE = .FALSE.
   integer, parameter :: GRIDORDER=1				! What order grid written to file
   integer, parameter :: MAXLISTLENGTH=LineLen		! Max length list of grid names
   integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
   character (len=MAXLISTLENGTH) :: gridlist
-  character (len=MAXLISTLENGTH) :: dimlist
+  character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
   character (len=MAXLISTLENGTH) :: fieldlist
   integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
-  character (len=MAXNAMELENGTH) :: gridname
-  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType
+  character (len=MAXNAMELENGTH) :: gridname, actual_field_name, the_dim
+  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType, start, stride
+  INTEGER                        :: our_rank, size
+	!                                  These start out initialized to one
+  INTEGER                        :: nlon=1, nlat=1, nlev=1, ntime=1
+  INTEGER, PARAMETER             :: i_longitude=1
+  INTEGER, PARAMETER             :: i_latitude=i_longitude+1
+  INTEGER, PARAMETER             :: i_vertical=i_latitude+1
+  INTEGER, PARAMETER             :: i_time=i_vertical+1
   ! External functions
 !  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
 !  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
@@ -1185,7 +1205,7 @@ END TYPE GriddedData_T
 
   file_id = gdopen(FileName, DFACC_RDONLY)
 
-  IF (file_id /= SUCCEED) THEN
+  IF (file_id < 0) THEN
 !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"Could not open "// FileName//" "//mnemonic//" "//msg)
@@ -1194,7 +1214,7 @@ END TYPE GriddedData_T
 
 ! Find list of grid names on this file
   inq_success = gdinqgrid(FileName, gridlist, strbufsize)
-  IF (inq_success /= SUCCEED) THEN
+  IF (inq_success < 0) THEN
 !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"Could not inquire gridlist "// FileName//" "//mnemonic//" "//msg)
@@ -1208,6 +1228,10 @@ END TYPE GriddedData_T
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"NumStringElements of gridlist <= 0")
 		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist <= 0")
+	ELSEIF(ngrids /= inq_success) THEN
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"NumStringElements of gridlist < GRIDORDER")
+		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist /= inq_success")
 	ELSEIF(ngrids < GRIDORDER) THEN
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"NumStringElements of gridlist < GRIDORDER")
@@ -1217,7 +1241,7 @@ END TYPE GriddedData_T
 	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
 
   gd_id = gdattach(file_id, gridname)
-  IF (gd_id /= SUCCEED) THEN
+  IF (gd_id < 0) THEN
 !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !               "Could not attach "//FileName//" "//mnemonic//" "//msg)
@@ -1266,10 +1290,58 @@ END TYPE GriddedData_T
 	ENDIF
 
 	IF(PRESENT(fieldName)) THEN
+		actual_field_name=fieldName
 	ELSE
+		actual_field_name=DEFAULTFIELDNAME
 	ENDIF
 
-    !-----------------------------
+	IF(PRESENT(GeoDimList)) THEN
+		actual_dim_list=GeoDimList
+	ELSE
+		actual_dim_list=GEO_FIELD1 // ',' // &
+		& GEO_FIELD2 // ',' // &
+		& GEO_FIELD3 // ',' // &
+		& GEO_FIELD4
+	ENDIF
+
+	! Now find the rank of our field
+	
+	our_rank = GetIntHashElement(fieldlist, rank, actual_field_name, status, &
+  & countEmpty)
+  IF (status /= 0) THEN
+		CALL announce_error(MLSMSG_Error, &
+		& actual_field_name // " not in " // fieldlist)
+  END IF
+
+	! The following accounts for possibly different ordering between dimlist
+	! and actual_dim_list
+	DO i=1, our_rank
+		CALL GetStringElement(actual_dim_list, the_dim, i, countEmpty)
+		size = gddiminfo(gd_id, the_dim)
+	  IF (size <= 0) THEN
+			CALL announce_error(MLSMSG_Error, &
+			& the_dim // " size <= 0")
+	  END IF
+	  
+        select case ( i )
+        case ( i_longitude )
+          nlon=size
+        case ( i_latitude )
+          nlat=size
+        case ( i_vertical )
+          nlev=size
+        case ( i_time )
+          ntime=size
+        end select
+	  
+	ENDDO
+
+	the_g_data%noLons = nlon
+	the_g_data%noLats = nlat
+	the_g_data%noHeights = nlev
+	the_g_data%noLsts = ntime
+
+  !-----------------------------
   END SUBROUTINE ReadGriddedData
   !-----------------------------
 
@@ -1518,6 +1590,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.6  2001/03/10 00:33:16  pwagner
+! Some corrections in ReadGriddedData
+!
 ! Revision 2.5  2001/03/09 01:02:55  pwagner
 ! Fixed announce_error
 !
