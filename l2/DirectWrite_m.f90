@@ -19,9 +19,10 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
-  use MLSCommon, only: FindFirst, RV
+  use MLSCommon, only: RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
+  use MLSSets, only: FindFirst
   use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
@@ -888,6 +889,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.25  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.24  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
