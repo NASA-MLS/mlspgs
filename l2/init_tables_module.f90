@@ -353,7 +353,8 @@ contains ! =====     Public procedures     =============================
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
              l+l_magneticModel, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
-             l+l_scaleOverlaps, l+l_special, l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
+             l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
+             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
@@ -998,6 +999,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.297  2003/04/04 23:54:04  livesey
+! Added split sideband fill
+!
 ! Revision 2.296  2003/04/04 22:01:10  livesey
 ! Added updateMask stuff
 !
