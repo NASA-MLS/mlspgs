@@ -51,9 +51,9 @@ contains
     use MLSCommon, only: FINDFIRST
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Toggles, only: SWITCHES
-    use PVM, only: PVMDATADEFAULT, MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
+    use PVM, only: MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
       & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
-      & PVMTASKHOST, PVMTASKEXIT
+      & PVMTASKHOST, PVMTASKEXIT, PVMRAW
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
 
@@ -175,8 +175,8 @@ contains
     use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, INFOTAG, &
       & SIG_SENDRESULTS, NOTIFYTAG
     use MorePVM, only: PVMUNPACKSTRINGINDEX
-    use PVM, only: PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
-      & PVMF90UNPACK
+    use PVM, only: PVMERRORMESSAGE, PVMFINITSEND, &
+      & PVMF90UNPACK, PVMRAW
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
@@ -354,50 +354,56 @@ contains
             & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmw, fmStat, jacobian )
         end do
 
-        ! Now we sit patiently and wait for an instruction to 'dump' our results
+        ! Pack up our results in anticipation of sending them off
+        call PVMFInitSend ( PVMRAW, bufferID )
+        if ( bufferID <= 0 ) &
+          & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
+        call PVMIDLPack ( fmStat%rows, info ) 
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
+        do i = 1, jacobian%row%nb
+          ! Send corresponding values of fwmOut
+          if ( fmStat%rows ( i ) ) then
+            call PVMIDLPack ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values ( :, &
+              & jacobian%row%inst(i) ), info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'row of fwmOut' )
+            ! Send non empty blocks of jacobian
+            do j = 1, jacobian%col%nb
+              b => jacobian%block ( i, j )
+              call PVMIDLPack ( b%kind, info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'b%kind' )
+              if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+                call PVMIDLPack ( size ( b%values, 1 ), info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'noValues for block' )
+                call PVMIDLPack ( b%r1, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r1' )
+                call PVMIDLPack ( b%r2, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r2' )
+              end if
+              if ( b%kind /= M_Absent ) then
+                call PVMIDLPack ( b%values, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
+              end if
+            end do
+          end if                      ! Any rows here?
+        end do
+
+        ! OK, now wait patiently for the request to send the results off
         call IntelligentPVMFrecv ( parallel%masterTid, infoTag, bufferID )
         if ( bufferID <= 0 ) &
           & call PVMErrorMessage ( bufferID, 'Receiveing go-ahead from master' )
         call PVMF90Unpack ( signal, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
         if ( signal == SIG_SendResults ) then
-          call PVMFInitSend ( PVMDataDefault, bufferID )
-          if ( bufferID <= 0 ) &
-            & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
-          call PVMIDLPack ( fmStat%rows, info ) 
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
-          do i = 1, jacobian%row%nb
-            ! Send corresponding values of fwmOut
-            if ( fmStat%rows ( i ) ) then
-              call PVMIDLPack ( vectors(fwmOut)%quantities ( &
-                & jacobian%row%quant(i) ) % values ( :, &
-                & jacobian%row%inst(i) ), info )
-              if ( info /= 0 ) call PVMErrorMessage ( info, 'row of fwmOut' )
-              ! Send non empty blocks of jacobian
-              do j = 1, jacobian%col%nb
-                b => jacobian%block ( i, j )
-                call PVMIDLPack ( b%kind, info )
-                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%kind' )
-                if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
-                  call PVMIDLPack ( size ( b%values, 1 ), info )
-                  if ( info /= 0 ) call PVMErrorMessage ( info, 'noValues for block' )
-                  call PVMIDLPack ( b%r1, info )
-                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r1' )
-                  call PVMIDLPack ( b%r2, info )
-                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r2' )
-                end if
-                if ( b%kind /= M_Absent ) then
-                  call PVMIDLPack ( b%values, info )
-                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
-                end if
-              end do
-            end if                      ! Any rows here?
-          end do
           ! OK, now send the results off
           call PVMFSend ( parallel%masterTid, InfoTag, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending results' )
         else if ( signal == SIG_Finished ) then
           finished = .true.
+          ! Might as well clear our send buffer then.
+          call PVMFInitSend ( PVMRAW, bufferID )
+          if ( bufferID <= 0 ) &
+            & call PVMErrorMessage ( bufferID, 'Clearing out results buffer' )
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, 'Got unexpected message from master' )
         end if
@@ -484,8 +490,8 @@ contains
   ! ----------------------------------------------- RequestSlavesOutput ---
   subroutine RequestSlavesOutput ( maf )
     ! The master uses this routine to ask a slave to pack its output up
-    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, PVMDATADEFAULT, &
-      & PVMERRORMESSAGE
+    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, &
+      & PVMERRORMESSAGE, PVMRAW
     use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
@@ -498,7 +504,7 @@ contains
       call output ( 'Requesting output from slave ' )
       call output ( maf, advance='yes' )
     end if
-    call PVMFInitSend ( PVMDataDefault, bufferID )
+    call PVMFInitSend ( PVMRAW, bufferID )
     if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Setting up output request' )
     call PVMF90Pack ( SIG_SendResults, info )
     if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Packing output request signal' )
@@ -513,8 +519,8 @@ contains
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
     use VectorsModule, only: VECTOR_T
-    use PVM, only: PVMFINITSEND, PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90PACK, &
-      & PVMFBCAST
+    use PVM, only: PVMFINITSEND, PVMERRORMESSAGE, PVMF90PACK, &
+      & PVMFBCAST, PVMRAW
     use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
     use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
     use QuantityPVM, only: PVMSENDQUANTITY
@@ -540,7 +546,7 @@ contains
     ! Executable code
     if ( index ( switches, 'mas' ) /= 0 ) &
       & call output ( 'Setting up forward model slaves', advance='yes' )
-    call PVMFInitSend ( PVMDataDefault, bufferID )
+    call PVMFInitSend ( PVMRaw, bufferID )
     if ( bufferID <= 0 ) &
       & call PVMErrorMessage ( bufferID, 'Setting up buffer for FWMSlaveSetup' )
     call PVMF90Pack ( SIG_NewSetup, info )
@@ -652,7 +658,7 @@ contains
   subroutine TriggerSlaveRun ( state, maf )
     ! This routine is used by the master to launch one run
     use VectorsModule, only: VECTOR_T
-    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK, &
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK, &
       & PVMErrorMessage
     use PVMIDL, only: PVMIDLPACK
     use L2ParInfo, only: SIG_RUNMAF, INFOTAG
@@ -666,7 +672,7 @@ contains
     integer :: J                        ! Loop counter
 
     ! Executable code
-    call PVMFInitSend ( PVMDataDefault, bufferID )
+    call PVMFInitSend ( PVMRaw, bufferID )
     if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
       & 'Setting up buffer for TriggerSlaveRun' )
     call PVMF90Pack ( SIG_RunMAF, info )
@@ -726,6 +732,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.9  2002/12/05 02:21:29  livesey
+! Changes to improve performance (hopefully)
+!
 ! Revision 2.8  2002/10/08 20:34:02  livesey
 ! Added notify stuff for fwm parallel
 !
