@@ -2321,6 +2321,61 @@ contains ! =====     Public Procedures     =============================
   end subroutine OutputL2GP_writeData_hdf5
   !-------------------------------------
 
+  !----------------------------------------  OutputL2GP_attributes_hdf5  -----
+  subroutine OutputL2GP_attributes_hdf5(l2gp, l2FileHandle, swathName)
+
+  use HDFEOS5, only: HE5_SWattach, HE5_SWdetach
+  use PCFHdr, only:  sw_writeglobalattr
+    ! Brief description of subroutine
+    ! This subroutine writes the data fields to an L2GP output file.
+    ! For now, you have to write all of l2gp, but you can choose to write
+    ! it at some offset into the file
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+    ! Parameters
+
+    character (len=*), parameter :: WR_ERR = 'Failed to write attribute field '
+
+    ! Variables
+
+    character (len=480) :: msr
+    character (len=132) :: name     ! Either swathName or l2gp%name
+
+    integer :: status
+    integer :: swid
+    
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+
+    swid = HE5_SWattach (l2FileHandle, name)
+    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
+    !status = he5_swwrattr(swid, 'Instrument Name', H5T_NATIVE_CHARACTER, &
+    !  & 1, 'MLS Aura')
+    ! if ( status == -1 ) then
+    !   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    !        & 'Failed to write swath attribute' )
+    !     Detach from the swath interface.
+    call sw_writeglobalattr(swid)
+
+    status = HE5_SWdetach(swid)
+    !print*,"Detatched from swath -- error=",status
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+
+
+    !-------------------------------------
+  end subroutine OutputL2GP_attributes_hdf5
+  !-------------------------------------
+
   ! --------------------------------------------------------------------------
 
   ! This subroutine is an amalgamation of the last three
@@ -2356,6 +2411,7 @@ contains ! =====     Public Procedures     =============================
       call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
     endif
 
   end subroutine WriteL2GPData
@@ -2517,6 +2573,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.27  2003/01/15 23:23:34  pwagner
+! data types for L2GPData_T now adjustable
+!
 ! Revision 1.26  2003/01/15 19:13:30  pwagner
 ! Smane no monkeying fix, but for hdf5
 !
