@@ -432,7 +432,6 @@ contains ! ================================ FullForwardModel routine ======
       & quantityType=l_scGeocAlt )
     sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.true. )
-
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
@@ -1238,9 +1237,19 @@ contains ! ================================ FullForwardModel routine ======
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
         if ( FwdModelConf%do_freq_avg ) then
-          frequencies =>  &
+! billsdebug
+        nofreqs = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
+          &            grids(ptg_i))%frequencies)
+        call allocate_test ( frequencies,nofreqs, "frequencies", &
+          &   ModuleName )
+! velocity shift correction to frequency grid
+          frequencies =  &
          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-          noFreqs = size(frequencies)
+          frequencies = frequencies * (1.0_r8 - losvel%values(1,maf) &
+         &  / 2.9979d08)
+!          frequencies =>  &
+!         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
+!          noFreqs = size(frequencies)
         end if ! If not, we dealt with this outside the loop
 
         ! Loop over frequencies ----------------------------------------------
@@ -1530,6 +1539,7 @@ contains ! ================================ FullForwardModel routine ======
               & size(FilterShapes(shapeInd)%FilterGrid(channel,:)), &
               & Radiances(ptg_i,i) )
           end do
+             
         else
           Radiances(ptg_i,1:noUsedChannels) = RadV
         end if
@@ -1792,6 +1802,9 @@ contains ! ================================ FullForwardModel routine ======
           & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
 
         ! End of pointing loop -------------------------------------------------
+! billsdebug
+        if ( FwdModelConf%do_freq_avg ) &
+           & CALL DEALLOCATE_TEST(frequencies,'frequencies',ModuleName )
       end do
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
@@ -2089,6 +2102,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.33  2002/02/15 22:52:29  livesey
+! Bug fix in antenna pattern selection
+!
 ! Revision 2.32  2002/02/14 19:05:01  bill
 ! Fixed no spectral avg bug--wgr
 !
