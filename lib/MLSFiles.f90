@@ -1942,6 +1942,10 @@ contains
 ! ---------------------------------------------- unSplitName ------
 
 ! This function returns the name minus its splitting number
+! Which transforms strings like
+! /long/path/MLS-Aura_L2GP-DGG16_v01-31_c01.he5
+! into
+! /long/path/MLS-Aura_L2GP-DGG_v01-31_c01.he5
 ! It assumes the split name takes one of the following forms
 ! (dgg)   ...L2GP-DGGnn_...
 ! (l2aux) ...L2AUX-DGMnn_...
@@ -1950,26 +1954,36 @@ contains
   character(len=*), intent(in)     :: inName        ! Name to be unsplit
   character(len=len(inName)) :: outName             ! unsplit name
   ! Local variables
-  character(len=len(inName)) :: tempName
-  character(len=*), parameter :: dgg_type = 'l2gp-dgg'
-  character(len=*), parameter :: l2aux_type = 'l2aux-dgm'
-  character(len=*), parameter :: sub2 = '_'
+  ! character(len=len(inName)) :: tempName
+  character(len=*), parameter :: dgg_type = 'L2GP-DGG'
+  character(len=*), parameter :: l2aux_type = 'L2AUX-DGM'
+  character(len=*), parameter :: underscore = '_'
   character(len=16)           :: sub1
+  character(len=16)           :: sub2
   character(len=8)            :: nn
   ! Executable
   outName = ''
   if ( len_trim(inName)  < 1 ) return
-  tempName = lowerCase(inName)
-  if (index(tempName, dgg_type) > 0) then
+  ! tempName = lowerCase(inName)
+  if (index(inName, dgg_type) > 0) then
     sub1 = dgg_type
-  elseif (index(tempName, l2aux_type) > 0) then
+  elseif (index(inName, l2aux_type) > 0) then
     sub1 = l2aux_type
+  elseif (index(inName, lowerCase(dgg_type)) > 0) then
+    sub1 = lowerCase(dgg_type)
+  elseif (index(inName, lowerCase(l2aux_type)) > 0) then
+    sub1 = lowerCase(l2aux_type)
   else
     return
   endif
-  call ExtractSubString (tempName, nn, trim(sub1), sub2)
+  ! print *, 'sub1: ', trim(sub1)
+  call ExtractSubString (inName, nn, trim(sub1), underscore)
+  ! print *, 'nn: ', trim(nn)
   if ( len_trim(nn) < 1 ) return
-  call ReplaceSubString(trim(inName), outName, trim(nn), '')
+  sub2 = trim(sub1) // trim(nn)
+  ! print *, 'sub2: ', trim(sub2)
+  call ReplaceSubString(trim(inName), outName, trim(sub2), trim(sub1))
+  ! print *, 'outName: ', trim(outName)
   end function unSplitName
 
 !-----------------------------------------------
@@ -1985,6 +1999,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.57  2004/01/27 21:34:57  pwagner
+! Fixed bugs in unSplitName
+!
 ! Revision 2.56  2004/01/23 01:13:11  pwagner
 ! Added unSplitName
 !
