@@ -19,7 +19,7 @@ blas_srcdir = ../../../../blas
 
 # The following are any compiled sources from blas_srcdir you will need
 # to link this test program
-blas_objs = ddot.o
+blas_objs = ddot.o isort.o
 
 # The following are any libraries, perhaps compiler-supplied,
 # to link this test program; e.g. BLASLIB = -L/path/ -lblas
@@ -30,7 +30,7 @@ BLASLIB =
 vpath %.o ./
 vpath %.f90 ../
 vpath %.f9h ../
-vpath %.f $(blas_srcdir)
+vpath %.f ../ $(blas_srcdir)
 
 FC = f95
 
@@ -84,6 +84,9 @@ DUSTY = -g -dusty -abi=n32
 #GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
 
 # $Log$
+# Revision 1.2  2000/11/11 00:24:44  pwagner
+# in accord with van's recent changes
+#
 # Revision 1.1  2000/10/24 21:01:01  pwagner
 # first commit
 #
