@@ -169,6 +169,7 @@ scVelECI
 scVelECR
 secondary
 seconds
+singleChannelRadiance
 sizeDistribution
 spaceRadiance
 status
@@ -200,6 +201,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.34  2004/04/16 00:44:04  livesey
+# Added singleChannelRadiance
+#
 # Revision 2.33  2004/03/17 17:14:48  livesey
 # Added cloudMinMax
 #
