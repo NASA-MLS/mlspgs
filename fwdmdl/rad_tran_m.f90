@@ -91,7 +91,7 @@ contains
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
   subroutine Rad_tran_Pol ( gl_inds, e_rflty, z_path_c, alpha_path_c, ref_cor, &
-                     &  do_gl, incoptdepth_pol, alpha_path_gl, &
+                     &  do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
                      &  ds_dh_gl, dh_dz_gl, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
 
@@ -109,6 +109,9 @@ contains
     real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
     complex(rp), intent(in) :: alpha_path_c(-1:,:)  ! absorption coefficient
   !                                            on coarse grid.
+    complex(rp), intent(inout) :: deltau_pol(:,:,:) ! 2 X 2 X path.  Incremental
+  !                                            transmissivity on the coarse path.
+  !                                            Called E in some notes.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
   !                                            length ratios.
     logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
@@ -141,7 +144,6 @@ contains
   ! Internals
 
     real(rp) :: del_zeta(size(gl_inds)/ng)
-    complex(rp) :: deltau_pol(2,2,size(z_path_c))
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     complex(rp) :: gl_delta_polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: incoptdepth_pol_gl(2,2,size(gl_inds)/ng)
@@ -189,8 +191,9 @@ contains
       ! of Real(incoptdepth_pol) < e_stop, we can stop.
       if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
         &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
-      call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
-        &              deltau_pol(:,:,p_stop+1), status )
+      if ( do_gl(p_stop+1) ) &
+        & call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
+        &                  deltau_pol(:,:,p_stop+1), status )
       if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
     end do
 
@@ -896,6 +899,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.19  2003/08/15 18:50:22  vsnyder
+! Preparing the way for polarized vmr derivatives
+!
 ! Revision 2.18  2003/06/27 22:05:48  vsnyder
 ! Check status from cs_expmat
 !
