@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -331,18 +331,27 @@ contains ! =====     Public Procedures     =============================
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
             & 'XDim,YDim,Height,TIME', TRIM(fieldNameString) )
-          
+          if(index(switches, 'pro') /= 0) then                            
+            call announce_success(FilenameString, 'ncep', &                    
+             & fieldNameString, hdfVersion=hdfVersion)    
+          endif
         case ( l_dao ) ! ---------------------------- DAO Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
             & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString) )
-
+          if(index(switches, 'pro') /= 0) then                            
+            call announce_success(FilenameString, 'dao', &                    
+             & fieldNameString, hdfVersion=hdfVersion)    
+          endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call decorate ( key, &
             & AddGriddedDataToDatabase ( griddedDatabase, &
             & ReadGloriaFile ( FilenameString ) ) )
-          
+          if(index(switches, 'pro') /= 0) then                            
+            call announce_success(FilenameString, 'Gloria', &                    
+             & swathNameString)    
+          endif
         case ( l_climatology ) ! -------------------- Climatology data
           ! Identify file (maybe from PCF if no name given)
           if ( .NOT. got(f_file) .and. PCF) then
@@ -377,6 +386,10 @@ contains ! =====     Public Procedures     =============================
 
           if ( gridIndex <= size(griddedDatabase) ) then
             call decorate ( key, gridIndex )
+            if(index(switches, 'pro') /= 0) then                          
+              call announce_success(FilenameString, 'climatology', &                  
+               & fieldNameString)    
+            endif
           else
             call announce_error ( son, 'Field ' // trim(fieldNameString) // &
               & ' not found in clim. file ' // trim(fileNameString) )
@@ -515,6 +528,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.40  2003/02/19 19:16:21  pwagner
+! More sensible output when proclaiming successful file inputs
+!
 ! Revision 2.39  2003/01/18 02:37:34  livesey
 ! Added the quantityType stuff to L2Aux issues
 !
