@@ -180,7 +180,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------- DirectWrite_L2Aux_FileName --------
   subroutine DirectWrite_L2Aux ( fileID, quantity, precision, sdName, &
-    & hdfVersion, chunkNo, chunks )
+    & hdfVersion, chunkNo, chunks, FWModelConfig )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -189,9 +189,11 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     use Chunks_m, only: MLSChunk_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T, Dump
 
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
@@ -244,10 +246,10 @@ contains ! ======================= Public Procedures =========================
         & trim(sdName) // 'precision', fileID, chunkNo, chunks )
     case (HDFVERSION_5)
       call DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
-        & chunkNo, chunks )
+        & chunkNo, chunks, FWModelConfig )
       if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_hdf5 ( precision, &
-        & trim(sdName) // 'precision', fileID, chunkNo, chunks )
+        & trim(sdName) // 'precision', fileID, chunkNo, chunks, FWModelConfig )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
@@ -372,9 +374,11 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2Aux_hdf5 --------
   subroutine DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
-    & chunkNo, chunks )
+    & chunkNo, chunks, FWModelConfig )
 
     use Chunks_m, only: MLSChunk_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelSupport, only: ShowFwdModelNames
     use HDF5, only: h5gclose_f, h5gopen_f
     use Intrinsic, only: L_None
     use L2AUXData, only:  L2AUXData_T, PHASENAMEATTRIBUTES, &
@@ -382,7 +386,7 @@ contains ! ======================= Public Procedures =========================
       & SetupNewL2AUXRecord, WriteL2AUXAttributes
     use MLSFiles, only: HDFVERSION_5
     use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
-      & MakeHDF5Attribute, SaveAsHDF5DS
+      & MakeHDF5Attribute, SaveAsHDF5DS, GetHDF5Attribute
     use MLSL2Timings, only: showTimingNames
     use PCFHdr, only: h5_writeglobalattr
     use VectorsModule, only: VectorValue_T
@@ -393,6 +397,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: FILEID       ! ID of output file
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
 
     ! Local parameters
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
@@ -413,6 +418,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRIDE(3)                ! HDF array stride
     integer :: total_DS_size
     logical, parameter :: MAYCOLLAPSEDIMS = .false.
+    character (len=2000) :: value1
 
     ! executable code
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
@@ -493,6 +499,15 @@ contains ! ======================= Public Procedures =========================
     endif
 
     ! Now some attribute stuff
+    if ( PHASENAMEATTRIBUTES ) then
+      call h5gopen_f(fileID, '/', grp_id, returnstatus)
+      call MakeHDF5Attribute(grp_id, &
+          & 'ForwardModel Names', trim(ShowFwdModelNames(FWModelConfig)), .false.)
+      call MakeHDF5Attribute(grp_id, &
+          & 'Phase Names', trim(showTimingNames('phases', .true.)), .false.)
+      call h5gclose_f(grp_id, returnstatus)
+    endif
+
     if ( already_there ) return
     ! sd-level attributes
     call SetupNewL2AUXRecord ( L2AUX, quantity%template, &
@@ -508,10 +523,10 @@ contains ! ======================= Public Procedures =========================
     call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
     if ( PHASENAMEATTRIBUTES ) then
       call h5gopen_f(fileID, '/', grp_id, returnstatus)
-      if ( .not. &
-        & IsHDF5AttributePresent('/', fileID, 'Phase Names') ) &
-        & call MakeHDF5Attribute(grp_id, &
-        & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
+      !if ( .not. &
+      !  & IsHDF5AttributePresent('/', fileID, 'Phase Names') ) &
+      !  & call MakeHDF5Attribute(grp_id, &
+      !  & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
       if ( .not. &
         & IsHDF5AttributePresent('/', fileID, 'Section Names') ) &
         & call MakeHDF5Attribute(grp_id, &
@@ -907,6 +922,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.27  2004/07/22 20:42:57  cvuu
+! May write ForwardModel Names as file-level attributes and fix the phase names
+!
 ! Revision 2.26  2004/06/29 18:05:26  pwagner
 ! May write phase, section names as file-level attributes
 !
