@@ -7,10 +7,6 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
-! We need this  because the  i n c l u d e  line below hides the
-! following  u s e  statement
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-
   implicit NONE
   public
 
@@ -149,6 +145,9 @@ contains ! =====     Public procedures     =============================
   subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
     & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
 
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(inout) :: DATA_TYPE_INDICES(:)
@@ -297,6 +296,10 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.18  2001/04/04 17:56:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
 ! Revision 2.17  2001/04/04 17:21:12  pwagner
 ! Added extra use tree line to tweak dependencies
 !
