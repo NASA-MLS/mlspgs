@@ -10,9 +10,9 @@ module Parse_Signal_M
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
   use String_table, only: Display_string, Get_String
-  use Symbol_Table, only: Dump_symbol_class
+  use Symbol_Table, only: Dump_Symbol_Class, Enter_Terminal
   use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
-    & T_Minus
+    & T_Minus, T_Plus
   use Tree, only: Decoration, Source_Ref
 
   implicit NONE
@@ -30,10 +30,14 @@ module Parse_Signal_M
 contains
 
   subroutine Parse_Signal ( Signal_String, Signal_Indices, Spec_indices, &
-    & Tree_Index )
+    & Tree_Index, Sideband, Channels )
 
-  ! Parse a signal string.  Return the index of the signal in the signal
-  ! database.
+  ! Parse a signal string.  Return the indices in the signal database of
+  ! signals that match the signal string.
+
+  ! A signal string is of the form:
+  ! [Radiometer[:suffix].] [Band[:suffix].] [S switch-number.] [Spectrometer.]
+  ! [C channel_number[:|+channel_number]*
 
     character(len=*), intent(in) :: Signal_String ! Input
     integer, pointer :: Signal_Indices(:)         ! In the signals database
@@ -44,14 +48,25 @@ contains
     !                                               table; For error messages
     integer, intent(in), optional :: Tree_Index   ! To get line and column
     !                                               numbers for messages
+    integer, intent(out), optional :: Sideband    ! Zero if no band is
+    ! specified, or if a band is specified but it has none of [UuLl] in it.
+    ! +1 if a band is specified and it has [Uu] in it.  -1 if a band is
+    ! specified and it has [Ll] in it.
+    logical, pointer, dimension(:), optional :: Channels    ! Output: Channel
+    ! numbers mentioned after the .C part of the signal specification. They
+    ! are allocated here using Allocate_Test, so don't start with an
+    ! undefined pointer!
 
     integer :: Band_i         ! Database index
-    integer :: Channel        ! Channel number, from the token text
     type(decls) :: Decl       ! Declaration of an identifier
     integer :: Error          ! >0 indicates an error
     integer :: I              ! Temporary, loop inductor, subscript
+    integer, dimension(len(signal_string),2) :: MyChannelNumbers
+    logical, pointer, dimension(:) :: MyChannels
+    integer :: MySideBand     ! Index of [UuLl] in band, then 0 or +/- 1.
     integer :: Next           ! One of Saw... parameters below, to indicate
     !                           the category of the next identifier
+    integer :: NumChannelNums ! How many elements of MyChannelNumbers are used
     integer :: Radiometer_i   ! Database index
     integer :: SawWhat        ! What has been seen so far.  See Saw... below
     integer :: Spectrometer_i ! Database index
@@ -71,9 +86,12 @@ contains
     integer, parameter :: SawSwitch = sawBand + 1
     integer, parameter :: SawSpectrometerType = sawSwitch + 1
     integer, parameter :: SawChannel = sawSpectrometerType + 1
+    integer, parameter :: SawChannelColon = sawChannel + 1
+    integer, parameter :: SawChannelPlus = SawChannelColon + 1
 
     ! Parameters for error message codes
-    integer, parameter :: Invalid = 1                ! Invalid combination
+    integer, parameter :: ChannelsDecrease = 1       ! Channel numbers not in order
+    integer, parameter :: Invalid = ChannelsDecrease + 1 ! Invalid combination
     integer, parameter :: Malformed = invalid + 1    ! Expected Letter Digits+
     integer, parameter :: OutOfOrder = malformed + 1 ! Identifiers not in order
     integer, parameter :: NoSuffix = outOfOrder + 1  ! Suffix not allowed
@@ -85,9 +103,11 @@ contains
 
     ! Initialize
     band_i = -1
-    channel = -1
     error = 0
+    nullify ( myChannels )
+    mySideband = 0
     next = sawNothing
+    numChannelNums = 0
     radiometer_i = -1
     sawWhat = sawNothing
     call deallocate_test ( signal_indices, moduleName, "Signal_Indices" )
@@ -97,10 +117,10 @@ contains
     where = 0
 
     ! Get the tokens; verify they are the correct kinds of thing-o's.
-    do
+o:  do
       call lex_signal ( signal_string, where, the_token )
       if ( the_token%class == t_end_of_input ) &
-    exit
+    exit o
       if ( the_token%class /= t_identifier ) &
         & call announce_error ( unexpected, signal_string, tree_index, &
           & expected = (/ t_identifier /) )
@@ -114,13 +134,72 @@ contains
           switch = i
         else if ( verify(tokenText(1:1), 'Cc') == 0 ) then
           next = sawChannel
-          channel = i
+          numChannelNums = 1
+          MyChannelNumbers(1,:) = i
+          ! Process [":"<number>](("+"<number>)+[":"<number>])*
+          do
+            call lex_signal ( signal_string, where, the_token )
+            if ( the_token%class == t_end_of_input ) &
+    exit o
+            if ( the_token%class == t_colon ) then
+              next = sawChannelColon
+            else if ( the_token%class == t_plus ) then
+              next = sawChannelPlus
+            else
+              call announce_error ( unexpected, signal_string, tree_index, &
+                & expected = (/ t_colon, t_plus /) )
+            end if
+            if ( next <= sawWhat ) &
+              & call announce_error ( outOfOrder, signal_string, tree_index )
+            call lex_signal ( signal_string, where, the_token )
+            if ( the_token%class /= t_identifier ) then
+              call announce_error ( unexpected, signal_string, tree_index, &
+                & expected = (/ t_identifier /) )
+          exit
+            end if
+            call get_string ( the_token%string_index, tokenText, strip=.true. )
+            read ( tokenText, *, iostat=status ) i
+            if ( status /= 0 ) &
+              & call announce_error ( malformed, signal_string, tree_index )
+            if ( next == sawChannelColon ) then
+              if ( i < myChannelNumbers(numChannelNums,1) ) &
+                & call announce_error ( channelsDecrease, signal_string, &
+                  & tree_index )
+              myChannelNumbers(numChannelNums,2) = i
+              sawWhat = sawChannelColon
+            else if ( next == sawChannelplus ) then
+              if ( i <= myChannelNumbers(numChannelNums,2) ) &
+                & call announce_error ( channelsDecrease, signal_string, &
+                  & tree_index )
+              numChannelNums = numChannelNums + 1
+              myChannelNumbers(numChannelNums,:) = i
+              sawWhat = sawChannel
+            end if
+          end do
         else
           call announce_error ( notLabel, signal_string, tree_index, &
             & expected = spec_indices((/ s_band, s_radiometer, &
             &                            s_spectrometerType /)) )
         end if
       else
+        if ( verify(tokenText(1:1), 'Bb') == 0 ) then
+          ! Maybe we need to splice out the sideband identifier.
+          ! First, try it as-is.
+          decl = get_decl ( the_token%string_index, type=label )
+          if ( decl%type /= label ) then
+            mySideband = scan(tokenText,'UuLl')
+            if ( mySideband /= 0 ) then
+              the_token%string_index = &
+                & enter_terminal(tokenText(:mySideband-1) // &
+                & trim(tokenText(mySideband+1:)), t_identifier)
+              if ( verify(tokenText(mySideband:mySideband),'Uu') == 0 ) then
+                mySideband = 1
+              else
+                mySideband = -1
+              end if
+            end if
+          end if
+        end if
         decl = get_decl ( the_token%string_index, type=label )
         if ( decl%type /= label ) then
           call announce_error ( notLabel, signal_string, tree_index, &
@@ -148,22 +227,25 @@ contains
       ! Verify they've come in the correct order
       if ( error == 0 .and. next <= sawWhat ) &
         & call announce_error ( outOfOrder, signal_string, tree_index )
+      sawWhat = next
 
       ! Check for a suffix; if there is one, verify that it's OK.
       call lex_signal ( signal_string, where, the_token )
       if ( the_token%class == t_colon ) then
         call lex_signal ( signal_string, where, the_token )
-        if ( the_token%class /= t_identifier ) &
-          & call announce_error ( unexpected, signal_string, tree_index, &
+        if ( the_token%class /= t_identifier ) then
+          call announce_error ( unexpected, signal_string, tree_index, &
             & expected = (/ t_identifier /) )
+    exit
+        end if
         call get_string ( the_token%string_index, tokenText, .true., .true. )
         select case ( next )
-        case ( sawBand )
+        case ( sawBand )           ! Band:Suffix
           call get_string ( bands(band_i)%suffix, testText, .true., .true. )
           if ( testText /= tokenText ) &
             & call announce_error ( wrongSuffix, signal_string, tree_index, &
               & expected = (/ the_token%string_index /) )
-        case ( sawRadiometer )
+        case ( sawRadiometer )     ! Radiometer:Suffix
           call get_string ( radiometers(radiometer_i)%suffix, testText, &
             & .true., .true. )
           if ( testText /= tokenText ) &
@@ -193,13 +275,34 @@ contains
       if ( the_token%class /= t_dot ) &
         & call announce_error ( unexpected, signal_string, tree_index, &
           & expected = (/ t_dot /) )
-    end do
+    end do o
 
+    if ( error == 0 .and. numChannelNums > 0 ) then
+      call allocate_test ( myChannels, &
+        & maxval(myChannelNumbers(:numChannelNums,:)), &
+        & "MyChannels", moduleName, &
+        & lowBound=minval(myChannelNumbers(:numChannelNums,:)) )
+      myChannels = .false.
+      do i = 1, numChannelNums
+        myChannels(myChannelNumbers(i,1):myChannelNumbers(i,2)) = .true.
+      end do
+    end if
     ! Now we have all of the pieces assembled and identified.  Find the
     ! set of signals that satisfy the specified criteria.
     if ( radiometer_i < 0 .and. band_i < 0 .and. spectrometer_i < 0 ) &
       call announce_error ( notEnough, signal_string, tree_index )
     if ( error == 0 ) call scanSignals
+
+    if ( present(sideband) ) sideband = mySideband
+    if ( present(channels) ) then
+      if ( associated(channels ) ) &
+        & call deallocate_test ( channels, "Channels", moduleName )
+      call allocate_test ( channels, ubound(myChannels,1), "Channels", &
+        & moduleName, lowBound=lbound(myChannels,1) )
+      channels = myChannels
+    end if
+    if ( associated(myChannels) ) &
+      & call deallocate_test ( myChannels, "MyChannels", moduleName )
 
   contains
 
@@ -224,16 +327,19 @@ contains
       call output ( trim(string) )
       call output ( ', ' )
       select case ( code )
+      case ( channelsDecrease )
+        call output ( 'the channel numbers are not monotone nondecreasing', &
+          & advance='yes' )
       case ( invalid )
-        call output ( 'does not specify a valid signal.', 'yes' )
+        call output ( 'does not specify a valid signal.', advance='yes' )
       case ( malformed )
-        call output ( 'expected digits after the first letter.', 'yes' )
+        call output ( 'expected digits after the first letter.', advance='yes' )
       case ( outOfOrder )
-        call output ( 'the token is out-of-order.', 'yes' )
+        call output ( 'the token is out-of-order.', advance='yes' )
       case ( noSuffix )
-        call output ( 'a suffix is not permitted at this point.', 'yes' )
+        call output ( 'a suffix is not permitted at this point.', advance='yes' )
       case ( notEnough )
-        call output ( 'not enough information given.', 'yes' )
+        call output ( 'not enough information given.', advance='yes' )
       case ( notLabel )
         call output ( 'the token is not the label of a ' )
         do i = 1, size(expected)
@@ -241,9 +347,9 @@ contains
           call display_string ( expected(i) )
           call output ( '", ' )
         end do
-        call output ( '"switch" or "channel".', advance = 'yes' )
+        call output ( '"switch" or "channel".', advance='yes' )
       case ( notNumber )
-        call output ( 'expected a number.', 'yes' )
+        call output ( 'expected a number.', advance='yes' )
       case ( unexpected )
         call output ( 'the input was incorrect.  Expected ' )
         do i = 1, size(expected)
@@ -253,7 +359,13 @@ contains
             if ( i == size(expected) - 1 ) call output ( ' or ' )
           end if
         end do
-        call output ( '.', advance = 'yes' )
+        call output ( '.', advance='yes' )
+      case ( wrongSuffix )
+        call output ('the wrong suffix is specified.', advance='yes' )
+      case default
+        call output ( 'No code for error code ' )
+        call output ( code )
+        call output ( ' in Parse_signal_m%Announce_Error', advance='yes' )
       end select
     end subroutine Announce_Error
 
@@ -275,7 +387,7 @@ contains
 
       ! Initialize
       bandMatch = band_i < 0
-      channelMatch = channel < 0
+      channelMatch = numChannelNums <= 0
       radiometerMatch = radiometer_i < 0
       spectrometerMatch = spectrometer_n < 0
       spectrometerTypeMatch = spectrometer_i < 0
@@ -284,9 +396,11 @@ contains
       do i = 1, size(signals)
         spectrometer = signals(i)%spectrometerType
         if ( band_i >= 0 ) bandMatch(i) = band_i == signals(i)%band
-        if ( channel >= 0 ) channelMatch(i) = &
-          & channel >= lbound(spectrometerTypes(spectrometer)%frequencies,1) .and. &
-          & channel <= ubound(spectrometerTypes(spectrometer)%frequencies,1)
+        if ( numChannelNums > 0 ) &
+          & channelMatch(i) = lbound(myChannels,1) >= &
+            & lbound(spectrometerTypes(spectrometer)%frequencies,1) .and. &
+            & ubound(myCHannels,1) <= &
+            & ubound(spectrometerTypes(spectrometer)%frequencies,1)
         if ( radiometer_i >= 0 ) radiometerMatch(i) = &
           & radiometer_i == signals(i)%radiometer
         if ( spectrometer_n >= 0 ) spectrometerMatch(i) = &
@@ -321,6 +435,9 @@ contains
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.4  2001/04/06 20:15:36  vsnyder
+! Implement syntax for specifying several channels
+!
 ! Revision 2.3  2001/03/16 00:34:50  vsnyder
 ! Correct handling of the Band database
 !
