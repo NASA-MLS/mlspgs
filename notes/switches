@@ -21,6 +21,7 @@ Switches (set by -S option in mlsl2's command line):
   glo[n] => Global settings, info on l1b files [higher the n, more the info]
   grid =>   Gridded data quantities
   gvec =>   Gradient vector during Newton iteration
+  hgrid =>  Information on HGrid construction (at least for regular)
   jac =>    Jacobian during retriever iterations
   l1b =>    l1b quantities dumped (only when filled from)
   l2aux =>  l2aux quantities (all) dumped
@@ -75,6 +76,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.21  2002/03/20 00:49:44  pwagner
+ chi1 dumps only 1st chunk, unlike chi
+
  Revision 1.20  2002/02/12 00:26:39  pwagner
  Added -opt[n] to print runtime settings
 
