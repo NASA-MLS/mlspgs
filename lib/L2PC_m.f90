@@ -11,7 +11,7 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
-    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY
+    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH
   use machine, only: io_error
   use MLSCommon, only: R8, RM, R4, FindFirst
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
@@ -42,6 +42,7 @@ module L2PC_m
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
   public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
+  public :: CreateDefaultBinSelectors, DefaultSelector_Latitude, DefaultSelector_FieldAzimuth
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -75,6 +76,10 @@ module L2PC_m
     integer, dimension(:,:), pointer :: BLOCKID => NULL()
   end type L2PCINFO_T
   type ( L2PCInfo_T), dimension(:), pointer, save :: L2PCINFO => NULL()
+
+  ! Default bin selectors (see CreateDefaultBinSelectors below)
+  integer, parameter :: DEFAULTSELECTOR_LATITUDE = 1
+  integer, parameter :: DEFAULTSELECTOR_FIELDAZIMUTH = 2
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -118,6 +123,35 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: lun
     close ( lun )
   end subroutine Close_L2PC_File
+
+  ! -------------------------------------- CreateDefaultBinSelectors --
+  subroutine CreateDefaultBinSelectors
+    ! This routine creates two bin selectors we know we need even
+    ! if the user doesn't supply them in the l2cf.  If you add more
+    ! here please make sure to also add DefaultSelector_... parmeters
+    ! above.
+    ! Local variables
+    type (BinSelector_T) :: SEL
+    integer :: DUMMY
+    ! Executable code
+    ! Create a latitude based one.  This is the one used by default if no
+    ! other is supplied
+    sel%selectorType = l_latitude
+    sel%molecule = 0
+    sel%nameFragment = 0
+    sel%heightRange = 0.0_r8
+    sel%cost = 1.0_r8
+    dummy = AddBinSelectorToDatabase ( binSelectors, sel )
+
+    ! Create a template for a field_azimith one for the polarLinear model
+    sel%selectorType = l_fieldAzimuth
+    sel%molecule = 0
+    sel%nameFragment = 0
+    sel%heightRange = 0.0_r8
+    sel%cost = sqrt ( huge ( 0.0_r8 ) )
+    dummy = AddBinSelectorToDatabase ( binSelectors, sel )
+    
+  end subroutine CreateDefaultBinSelectors
 
   ! -------------------------------------- DestroyBinSelectorDatabase
   subroutine DestroyBinSelectorDatabase 
@@ -1533,6 +1567,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.64  2003/08/13 00:47:34  livesey
+! Added the default bin selectors stuff
+!
 ! Revision 2.63  2003/08/08 23:04:45  livesey
 ! Added the dontPack stuff for output.
 !
