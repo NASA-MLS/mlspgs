@@ -7,6 +7,9 @@ module PVM ! Interface to the f77 pvm library.
   ! MLS code (mainly aimed at level 2
 
   use MLSCommon, only: r8
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+
+  implicit none
 
   !------------------------------- RCS Ident Info ------------------------------
   character(LEN=130), private :: Id = & 
@@ -180,6 +183,20 @@ module PVM ! Interface to the f77 pvm library.
 
   interface
 
+     subroutine pvmfspawn ( task, flag, whr, ntask, tids, numt )
+       character(len=*), intent(in) :: task
+       integer, intent(in) :: flag
+       character(len=*), intent(in) :: whr
+       integer, intent(in) :: ntask
+       integer, dimension(ntask), intent(out) :: tids
+       integer, intent(out) :: numt
+     end subroutine pvmfspawn
+
+     subroutine pvmfcatchout ( onoff, info )
+       integer, intent(in) :: ONOFF
+       integer, intent(out) :: INFO
+     end subroutine pvmfcatchout
+
      subroutine pvmfmytid(tid)
        integer, intent(OUT) :: tid
      end subroutine pvmfmytid
@@ -194,6 +211,14 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(IN) :: msgtag
        integer, intent(OUT) :: info
      end subroutine pvmfbcast
+
+     subroutine pvmfbufinfo(bufid, bytes, msgtag, tid, info)
+       integer, intent(in) :: bufID
+       integer, intent(out) :: bytes
+       integer, intent(out) :: msgtag
+       integer, intent(out) :: tid
+       integer, intent(out) :: info
+     end subroutine pvmfbufinfo
 
      subroutine pvmfsend(tid, msgtag, info)
        integer, intent(IN) :: tid
@@ -254,6 +279,27 @@ module PVM ! Interface to the f77 pvm library.
        character (LEN=*), intent(IN) :: group
        integer, intent(OUT) :: inum
      end subroutine pvmfjoingroup
+
+     ! These ones are to get around the irritating inability of pvmfspawn
+     ! to pass arguments
+
+     subroutine ClearPVMArgs()
+     end subroutine ClearPVMArgs
+
+     subroutine FreePVMArgs()
+     end subroutine FreePVMArgs
+     
+     subroutine NextPVMArg(arg)
+       character (len=*), intent(in) :: arg
+     end subroutine NextPVMArg
+     
+     integer function MyPVMSpawn ( task, flag, whr, ntask, tids )
+       character (len=*), intent(in) :: task
+       integer, intent(in) :: flag
+       character (len=*), intent(in) :: whr
+       integer, intent(in) :: ntask
+       integer, dimension(ntask), intent(out) :: tids
+     end function MyPVMSpawn
 
   end interface
 
@@ -389,9 +435,25 @@ contains
     info=pvm_upkdouble(reshape(values,(/size(values)/)),size(values),1)
   end subroutine pvmf90unpackRealarr3
 
+  ! --------------------------------------------  PVMERRORMESSAGE  -----
+  subroutine PVMErrorMessage ( INFO, PLACE )
+    ! This routine is called to log a PVM error
+    integer, intent(IN) :: INFO
+    character (LEN=*) :: PLACE
+
+    character (LEN=132) :: LINE
+
+    write (line, * ) info
+    call MLSMessage(MLSMSG_Error,ModuleName,'PVM error '//trim(place)//&
+      ' Info='//trim(adjustl(line)))
+  end subroutine PVMErrorMessage
+
 end module PVM
 
 ! $Log$
+! Revision 2.4  2001/05/23 01:42:54  livesey
+! Various new changes, wrappers etc.
+!
 ! Revision 2.3  2001/03/15 05:21:52  livesey
 ! Added pvmfrecv
 !
