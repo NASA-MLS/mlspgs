@@ -39,7 +39,7 @@ METHOD
 (1) Choose which of the levels {l1 l2 l3 l3m fwdmdl cloudfwdm lib} contains what
     needs to be tested; call this _level_
 
-(2) Write a test program that USE's the modules of _level_ to be tested
+(2) Write a test program that USEs the modules of _level_ to be tested
 
 (3) Copy that test program to tests/_level_ 
     (if there are any sources there already, hide or remove them)
@@ -57,7 +57,7 @@ small utility, or a program that doesn't USE any of the mls modules, copy the
 program's source(s) into tests/misc (after hiding or removing any sources
 already there) and carry out (4)-(6) above. Note that from misc you can access
 the toolkit and its full panoply. You will not "see" any of the mls lib or any
-other level, however If you need any modules out of any mls level, you should
+other level, however. If you need any modules out of any mls level, you should
 probably be building in the tests counterpart of that level.
 
 An alternative and even more automated way to build such a utility is the
@@ -77,7 +77,7 @@ two variables, MLSCONFG and INSTALLDIR, via e.g.
 
 WARNINGS
 Since the modules of level to be USE'd by test will not include _level_'s own
-driver, any internal subprograms inside that driver may have to copied to the
+driver, any internal subprograms inside that driver may have to be copied to the
 test program if they are needed during the test. Don't forget to make any
 needed declarations, assignments, allocations, and so on.
 
@@ -121,6 +121,9 @@ perhaps be elevated to being a bug.
 EOF
 exit
 # $Log$
+# Revision 1.6  2001/08/16 17:19:50  pwagner
+# Mentions build_f90_in_misc.sh
+#
 # Revision 1.5  2001/07/24 23:05:29  pwagner
 # Notes about l3m, bug in substituting modules
 #
