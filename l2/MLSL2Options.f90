@@ -28,31 +28,32 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! --------------------------------------------------------------------------
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! Set each of the following to TRUE before delivering level 2 to sips
-  logical            :: PUNISH_FOR_INVALID_PCF=.false. 
-  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
-  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
-  logical            :: PCF_FOR_INPUT = .false.      ! Open L2CF using PCF ?
-  logical            :: PCF = .true.            ! Use PCF ?
-  logical            :: CREATEMETADATA = .true. ! Create .met files ?
-  logical            :: TOOLKIT = .true.        ! Use PGS_... routines?
+  ! Set the following to TRUE before delivering level 2 to sips
+  logical, private, parameter :: SIPS_VERSION =  .false. 
+  logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
+  logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
+  logical            :: PCF_FOR_INPUT =          SIPS_VERSION ! Open L2CF using PCF ?
+  logical            :: PCF =                    SIPS_VERSION ! Use PCF ?
+  logical            :: CREATEMETADATA =         SIPS_VERSION ! Create .met files ?
+  logical            :: TOOLKIT =                SIPS_VERSION ! Use PGS_... routines?
   ! PCF controls whether the input and output file names are obtained
   ! from the PCF or the l2cf; if .false., the l2cf must supply every
   ! file name (L1B..) plus all the global settings (start, end times, ..)
   ! Note the following cascade of automatic negations:
-  ! TOOLKIT=.false. => PCF=.false.
+  ! TOOLKIT=.false. =>  PCF=.false.
   ! PCF=.false.     =>  PCF_FOR_INPUT=.false.
   ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
   ! PCF=.false.     =>  CREATEMETADATA=.false.
   ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
 
   ! Must files named in PCF have same case as short names used in l2cf?
-  logical, parameter :: PCFL2CFSAMECASE = .false.
+  logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
    ! Set the following to 1 before delivering to sips;
    ! when set to 0, it allows program to run w/o creating metadata
-   integer            :: PENALTY_FOR_NO_METADATA = 0
+   integer            ::                         PENALTY_FOR_NO_METADATA = 0
 
    ! Set the following to -2 before delivering to sips;
    ! (its possible values and their effects on normal output:
@@ -72,7 +73,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! as well as some abnormal ones (e.g. in parser)
    ! if 2, status will be 2 only if run complete
    ! and without error
-   integer, parameter :: NORMAL_EXIT_STATUS = 0
+   integer, parameter :: NORMAL_EXIT_STATUS = 2
 
 !=============================================================================
 END MODULE MLSL2Options
@@ -80,6 +81,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.11  2001/09/28 17:57:47  pwagner
+! SIPS_VERSION controls other logical options
+!
 ! Revision 2.10  2001/07/16 23:43:15  pwagner
 ! With settable NORMAL_EXIT_STATUS
 !
