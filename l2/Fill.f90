@@ -395,6 +395,14 @@ CHARACTER*(*), INTENT(IN) ::                      QuantityName
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
 !TYPE(L2GPData_T) ::                               L2GPData
 ! INTEGER ::                                        Qty
+
+REAL(r8) ::                                       TOLERANCE
+PARAMETER(TOLERANCE=0.05)
+
+! A wrong version compared ChunkNo to OLDL2GPData%ChunkNumbers
+LOGICAL ChunkNumberIsTrustworthy
+PARAMETER(ChunkNumberIsTrustworthy=.FALSE.)
+
 type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
 INTEGER ::                                        i
 INTEGER ::                                        ONTimes
@@ -402,18 +410,51 @@ INTEGER ::                                        alloc_err
 INTEGER ::                                        firstProfile, lastProfile
 INTEGER ::                                        noL2GPValues=1
 LOGICAL ::                                        TheyMatch
+REAL(r8) ::                                       phiMin, phiMax
+REAL(r8) ::                                       phi_TOLERANCE
 
 OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+
+IF(OQTemplate%noInstances <= 0) THEN
+   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Vector geolocations are 0 profiles or instances')
+	RETURN
+ENDIF
 ! Chunk-by-chunk, or all chunks at once?
 IF(chunkNo == -1) THEN
 	firstProfile = 1
    lastProfile = OldL2GPData%nTimes
-ELSE
-	firstProfile = 1
-   lastProfile = OldL2GPData%nTimes
+ELSEIF(ChunkNumberIsTrustworthy) THEN
+	lastProfile = 1
+   firstProfile = OldL2GPData%nTimes
 	DO i=1, OldL2GPData%nTimes
         	IF(chunkNo == OldL2GPData%chunkNumber(i)) THEN
 				firstProfile = MIN(firstProfile, i)
+				lastProfile = MAX(lastProfile, i)
+         ENDIF
+   ENDDO
+ELSE
+! Instead of comparing OldL2GPData%chunkNumbers to ChunkNo
+! we will compare geodetic angles to phi
+	phiMin = OQTemplate%phi(1, 1)
+	phiMax = OQTemplate%phi(1, 1)
+	DO i=1, OQTemplate%noInstances
+		phiMin = MIN(phiMin, OQTemplate%phi(1, i))
+		phiMax = MAX(phiMax, OQTemplate%phi(1, i))
+	ENDDO
+	phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
+	IF(phi_TOLERANCE <= 0.D0) THEN
+   	CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'phiMin==phiMax')
+		RETURN
+	ENDIF
+	lastProfile = 1
+   firstProfile = OldL2GPData%nTimes
+	DO i=1, OldL2GPData%nTimes
+        	IF(phiMin <= (OldL2GPData%geodAngle(i) + phi_TOLERANCE)) THEN
+				firstProfile = MIN(firstProfile, i)
+         ENDIF
+        	IF(phiMax >= (OldL2GPData%geodAngle(i) - phi_TOLERANCE)) THEN
 				lastProfile = MAX(lastProfile, i)
          ENDIF
    ENDDO
@@ -792,6 +833,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.12  2001/01/10 21:47:45  pwagner
+! Chunk bounds determined by geodet.ang.
+!
 ! Revision 2.11  2001/01/03 18:15:13  pwagner
 ! Changed types of t1, t2 to real
 !
