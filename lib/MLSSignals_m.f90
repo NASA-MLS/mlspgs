@@ -141,6 +141,7 @@ module MLSSignals_M
 
     integer :: Band                     ! Index in Bands database
     logical :: Deferred = .false.       ! "Frequencies/widths are deferred"
+    integer :: Direction                ! +1 Channel 1 closest to lo, -1 reverse.
     integer :: Index                    ! Index into master signals database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
@@ -314,6 +315,9 @@ contains
             signal%band = decoration(decoration(gson))
           case ( f_channels )
             channels = son
+          case ( f_direction )
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
+            signal%direction = nint(value(1))
           case ( f_spectrometer )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%spectrometer = value(1)
@@ -360,7 +364,6 @@ contains
         ! Now nullify pointers so they don't get hosed later by allocate_test
         nullify ( signal%frequencies )
         nullify ( signal%widths )
-
 
       case ( s_spectrometerType ) ! ...........  SPECTROMETERTYPE  .....
         spectrometerType%name = name
@@ -415,7 +418,7 @@ contains
               & moduleName, lowBound = first )
             do k = 2, nsons(channels)
               call expr ( subtree(k,channels), units, value )
-              spectrometerType%frequencies(k-2+first) = value(1)
+              spectrometerType%frequencies(k-2 +first) = value(1)
               spectrometerType%widths(k-2+first) = value(2)
             end do
             if ( any(units /= phyq_frequency) ) &
@@ -1339,6 +1342,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.46  2002/05/03 22:38:41  livesey
+! Added direction field to bands.
+!
 ! Revision 2.45  2002/02/14 23:00:45  livesey
 ! Added justChannels optional argument to destroySignal
 !
