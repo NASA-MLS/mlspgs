@@ -30,6 +30,8 @@ module Comp_Sps_Path_Frq_m
     use Load_sps_data_m, only: Grids_T
     use Dump_0, only: Dump
 
+    use output_m, only: Output
+
 ! Input:
 
     type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
@@ -44,12 +46,12 @@ module Comp_Sps_Path_Frq_m
 
 ! Output:
 
-    real(rp), intent(out) :: Sps_Path(:,:) ! vmr values along the path
+    real(rp), intent(inout) :: Sps_Path(:,:) ! vmr values along the path
 !                          by species number
-    real(rp), intent(out) :: Eta_Fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
+    real(rp), intent(inout) :: Eta_Fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
 !                          state vector element. This is the same length as
 !                          sps_values.
-    logical, intent(out) :: Do_Calc_Fzp(:,:) ! indicates whether there
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
 !                         is a contribution for this state vector element
 !                         This is the same length as sps_values.
 ! Notes:
@@ -110,12 +112,14 @@ module Comp_Sps_Path_Frq_m
           call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1), &
             & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
         end if
-          
+
         do sv_i = 0 , nfzp - 1
           f_len = f_len + 1
           sv_j = v_inda + sv_i
           sv_f = 1 + MODULO(sv_i,n_f)
           sv_zp = w_inda + sv_i / n_f
+          eta_fzp ( :, sv_j ) = 0.0_r8
+          do_calc_fzp ( :, sv_j ) = .false.
           if ( not_zero_f(1,sv_f) ) then
             where ( do_calc_zp(:,sv_zp) )
               eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
@@ -147,6 +151,10 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.13  2002/11/14 00:52:24  livesey
+! Bug fix, changed arguments to intent(inout) and improved initialization
+! steps. (Nathaniel and Bill worked on this one together).
+!
 ! Revision 2.12  2002/10/08 17:08:01  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
