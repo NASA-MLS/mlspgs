@@ -78,7 +78,6 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     integer :: BlockCol                 ! Index
     integer :: BlockRow                 ! Index
-    integer :: Instance                 ! Loop counter
     integer :: Quantity                 ! Loop counter
     integer :: Vector                   ! Loop counter
 
@@ -198,8 +197,6 @@ contains ! ============= Public Procedures ==========================
     integer :: TESTBLOCKROW             ! Test index
     integer :: TESTBLOCKCOL             ! Test index
 
-    integer :: I                        ! Test inex
-
     logical :: COLINSTFIRST             ! Matrix order
     logical :: ROWINSTFIRST             ! Matrix order
 
@@ -208,8 +205,6 @@ contains ! ============= Public Procedures ==========================
     type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
     integer :: XSTAR                    ! Linearisation state vector index
     integer :: YSTAR                    ! Radiances for xStar vector index
-
-    type (QuantityTemplate_T), pointer :: TMP
 
     ! executable code
 
@@ -279,7 +274,6 @@ contains ! ============= Public Procedures ==========================
     integer :: STATUS                   ! Flag
     integer :: STRINGINDEX              ! Index of string
     integer :: NOQUANTITIES             ! Number of quantities in a vector
-    integer :: INSTANCE                 ! Loop counter
     integer :: NOINSTANCESOR1           ! For allocates
     integer :: NOSURFSOR1               ! For allocates
     integer :: VTINDEX                  ! Index for this vector template
@@ -507,6 +501,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.18  2001/05/02 20:24:03  livesey
+! Removed some unused variables.
+!
 ! Revision 2.17  2001/05/02 20:23:10  vsnyder
 ! Specify a name for a created vector
 !
