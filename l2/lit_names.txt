@@ -85,6 +85,8 @@ lowcloud
 ncep
 newtonian
 norm
+numF # Number of function values used by the Newtonian solver
+numJ # Number of Jacobian values used by the Newtonian solver
 
 orbital
 
@@ -104,6 +106,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.6  2001/11/17 02:29:47  vsnyder
+# Add L_numF and L_numJ
+#
 # Revision 2.5  2001/11/14 01:50:26  livesey
 # Removed neither
 #
