@@ -164,6 +164,7 @@ contains
     integer, dimension(:), pointer :: GL_INDS  ! Index of GL indices
     integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
 
+    integer(ip), dimension(:,:), pointer :: GL_INDGEN ! Temp. array of indeces
     integer :: I, NO_GL_NDX, N_PATH
 
     integer, parameter :: NGP1 = NG + 1
@@ -184,6 +185,7 @@ contains
 
     call allocate_test ( gl_inds, Ng * no_gl_ndx, 'gl_inds', moduleName )
     call allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', moduleName )
+    call allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', moduleName )
 
   ! Indices where GL is needed are ones where do_gl is true.
 
@@ -194,12 +196,18 @@ contains
     do i = 1 , no_gl_ndx
       if ( gl_ndx(i,1) > n_path/2 ) then
         gl_ndx(i,2) = 1 - Ng + Ngp1 * (gl_ndx(i,1) - 1)
-        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glir
+        gl_indgen(:,i) = glir
       else
         gl_ndx(i,2) = 1 +      Ngp1 * (gl_ndx(i,1) - 1)
-        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glil
+        gl_indgen(:,i) = glil
       end if
     end do
+
+    gl_inds = reshape(spread(gl_ndx(:,2),1,Ng) + gl_indgen, (/Ng*no_gl_ndx/))
+
+  ! Dispose of the temp array
+
+    call deallocate_test ( gl_indgen, 'gl_indgen', moduleName )
 
   end subroutine Get_GL_inds
 
@@ -211,6 +219,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.3  2003/01/18 02:22:58  vsnyder
+! IMAG should have been AIMAG
+!
 ! Revision 2.2  2003/01/18 01:42:42  vsnyder
 ! Added complex 3-quantity path_contrib subroutine.
 ! Separated Get_GL_Inds into a separate subroutine.
