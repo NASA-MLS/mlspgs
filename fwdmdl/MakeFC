@@ -78,14 +78,16 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
 
+ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(REECHO)
+   $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f) $(REECHO)
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -165,12 +167,12 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 l2_test: $(PLATFORMS)/$(MLSCONFG)/$(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
-   MARK_ALL_AS_UPTODATE=no
+   MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
  l2_test ghostbuster update
@@ -249,6 +251,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.17  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 2.16  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #

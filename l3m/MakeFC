@@ -121,14 +121,12 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmlsl3_objs)/libmlsl3.a  $(REECHO)   \
      $(INSTALLDIR)/libutctotai.a
 
-libmlsl3_prereqs := $(libmlsl3_f90) $(libmls_objs)/libmls.a \
-               $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
-
 ifdef HDFVERSIONS
    libmlsl3_prereqs := $(libmlsl3_prereqs) $(he5lib_objs)/libhe5.a
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
 endif
 
+ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
@@ -137,6 +135,10 @@ else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
    $(blaslib_f) $(REECHO)
+endif
+HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
+libmlsl3_prereqs := $(libmlsl3_f90) $(libmls_objs)/libmls.a \
+               $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -226,19 +228,22 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 $(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmlsl3_objs)/libmlsl3.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
@@ -354,6 +359,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.23  2003/05/19 23:43:06  pwagner
+# Defined MLSHOME used by install command
+#
 # Revision 1.22  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #

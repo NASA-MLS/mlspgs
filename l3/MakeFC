@@ -116,14 +116,17 @@ ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
 endif
 
+ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(REECHO)
+   $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f) $(REECHO)
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
+HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -205,17 +208,19 @@ $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 		;; \
 	esac 
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
@@ -330,6 +335,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.43  2003/05/19 23:43:06  pwagner
+# Defined MLSHOME used by install command
+#
 # Revision 1.42  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #

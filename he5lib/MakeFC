@@ -80,14 +80,16 @@ SHELL = /bin/sh
 #----------------------------------------------------------
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
 
+ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(REECHO)
+   $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f) $(REECHO)
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -141,12 +143,12 @@ $(OBJ_DIR)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG) \
    UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
-   MARK_ALL_AS_UPTODATE=no
+   MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
 	@sed 's/^C/!/' $(HDFEOS5)/../../include/hdfeos5.inc > temp ; \
@@ -226,6 +228,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.7  2002/06/21 00:15:27  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.6  2002/05/28 23:08:47  pwagner
 # Crafts an f95-compatible hdfeos5.f9h
 #

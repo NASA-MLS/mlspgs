@@ -94,14 +94,19 @@ blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
+ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(REECHO)
+   $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f) $(REECHO)
+   $(blaslib_f) $(REECHO) $(libmls_objs)
+endif
+
+FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)
+HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
 endif
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
@@ -110,10 +115,6 @@ depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
 #Any sources to explicitly exclude from dependency list?
 OMIT_SRCS := $(OMIT)
 
-#FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
-FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a
-
-#PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
 PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(libfwdmdl_objs)/libfwdmdl.a
 
 ifdef HDFVERSIONS
@@ -183,25 +184,26 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
            MARK_ALL_AS_UPTODATE= ;\
          fi
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
-    MARK_ALL_AS_UPTODATE=no
+    MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs) $(libfwdmdl_objs)
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) \
-   MARK_ALL_AS_UPTODATE=no
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
-$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
+     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 .PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
   tar targ tarz update
@@ -280,6 +282,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.23  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 1.22  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #
