@@ -439,9 +439,10 @@ contains ! ============= Public procedures ===================================
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSSignals_m, only:  IsModuleSpacecraft, GetModuleName
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
-
     use Output_m, only: OUTPUT
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+    use TOGGLES, only: SWITCHES
+
     ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
@@ -548,8 +549,10 @@ contains ! ============= Public procedures ===================================
         qty%verticalCoordinate = l_geodAltitude
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
         qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
-        call output ( "Instance offset for minor frame quantity is:" )
-        call output ( qty%instanceOffset, advance='yes' )
+        if ( index(switches,'qtmp') /= 0 ) then
+          call output ( "Instance offset for minor frame quantity is:" )
+          call output ( qty%instanceOffset, advance='yes' )
+        endif
 
         call DeallocateL1BData(l1bfield)
 
@@ -1170,3 +1173,305 @@ contains ! ============= Public procedures ===================================
   end subroutine SetupEmptyVGridForQuantity
 
 end module ConstructQuantityTemplates
+!
+! $Log$
+! Revision 2.101  2003/06/27 00:07:07  pwagner
+! Made print offset depend on qtmp switch; restored some logs
+!
+! (logging disabled from Rev. 2.92-2.100)
+! Revision 2.91  2003/05/22 04:04:07  livesey
+! elevOffset is now a channel dependent rather than radiometer dependent
+! quantity.
+!
+! Revision 2.90  2003/05/10 23:39:25  livesey
+! Fixed problems with chisqs and noRads
+!
+! Revision 2.89  2003/05/07 01:00:03  livesey
+! More stuff got missed in the merge, was I asleep or something?
+!
+! Revision 2.88  2003/02/13 19:05:39  vsnyder
+! Move USEs from module to procedure scope, cosmetic changes
+!
+! Revision 2.87  2003/02/12 21:53:48  pwagner
+! Fix to errant ANY_GOOD_SIGNALDATA in case of hdf5 files
+!
+! Revision 2.86  2003/02/07 03:42:50  vsnyder
+! Fill NATURAL_UNITS on first call only -- it's a SAVE variable now
+!
+! Revision 2.85  2003/02/07 03:38:05  vsnyder
+! Cosmetic change
+!
+! Revision 2.84  2003/02/07 00:41:41  livesey
+! Bug fix/workaround
+!
+! Revision 2.83  2003/02/06 23:31:00  livesey
+! New approach to Forge
+!
+! Revision 2.82  2003/01/14 00:40:29  pwagner
+! Moved GetQuantityAttributes to L2AUXData
+!
+! Revision 2.81  2003/01/09 00:09:15  pwagner
+! routine GetQuantityAttributes added
+!
+! Revision 2.80  2003/01/08 23:50:44  livesey
+! Added irregular argument
+!
+! Revision 2.79  2003/01/07 23:46:53  livesey
+! Added magnetic field stuff
+!
+! Revision 2.78  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
+! Revision 2.77  2002/11/26 23:37:50  livesey
+! Better handling of major frame quantities
+!
+! Revision 2.76  2002/11/22 12:16:08  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
+! Revision 2.75  2002/11/13 01:05:03  pwagner
+! Actually reads hdf5 radiances
+!
+! Revision 2.74  2002/10/08 17:36:19  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.73  2002/09/26 18:03:06  livesey
+! Changed extinction to a vmr
+!
+! Revision 2.72  2002/09/25 20:07:55  livesey
+! Made -g less verbose
+!
+! Revision 2.71  2002/09/24 21:37:44  livesey
+! Added minValue stuff
+!
+! Revision 2.70  2002/09/24 00:27:16  pwagner
+! Wont bomb if no l1brads; nor whine if no good signals
+!
+! Revision 2.69  2002/09/18 22:48:32  pwagner
+! Chooses signals first band with any good data
+!
+! Revision 2.68  2002/08/04 16:01:19  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
+! Revision 2.67  2002/06/14 16:39:49  livesey
+! Orbital inclination now minor frame
+!
+! Revision 2.66  2002/06/04 22:07:35  livesey
+! Added phiTan as a state vector element
+!
+! Revision 2.65  2002/05/22 19:06:32  jonathan
+! added units for cloudextinction(m-1), totalextinction(m-1), and
+! massmeandiameterice(micron m) as dimentionless for now, may define
+! more clear later
+!
+! Revision 2.64  2002/05/14 00:27:42  livesey
+! New code for system temperatures and noise bandwidths
+!
+! Revision 2.63  2002/05/07 20:02:54  livesey
+! Added noise bandwidth
+!
+! Revision 2.62  2002/04/10 17:44:22  pwagner
+! Added rhi quantity (but is this enough?)
+!
+! Revision 2.61  2002/03/19 00:51:32  pwagner
+! Added new scVel quantity types
+!
+! Revision 2.60  2002/02/09 21:35:52  livesey
+! Added optical depth stuff
+!
+! Revision 2.59  2001/11/08 00:13:38  livesey
+! Sorted out extinction stuff
+!
+! Revision 2.58  2001/10/31 19:07:25  livesey
+! Added fGrid stuff
+!
+! Revision 2.57  2001/10/12 23:15:05  pwagner
+! Fixed biggest erros in diagnostic quantity templates
+!
+! Revision 2.56  2001/10/02 23:12:50  pwagner
+! More chi^2 fixes
+!
+! Revision 2.55  2001/10/02 20:50:54  livesey
+! No longer asserts baseline to be minor frame
+!
+! Revision 2.54  2001/09/17 23:11:50  pwagner
+! Tiny changes for chi^2
+!
+! Revision 2.53  2001/09/17 21:58:50  livesey
+! Added allocate of frequencies if needed
+!
+! Revision 2.52  2001/09/14 23:30:33  pwagner
+! Now constructs major frame quantity templates
+!
+! Revision 2.51  2001/08/01 00:04:29  dwu
+! add qty%frequencies = VGrids(sGridIndex)%surfs for quantity l_losTransFunc
+!
+! Revision 2.50  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
+! Revision 2.49  2001/07/26 17:34:25  jonathan
+! add DTcir, etc, jonathan
+!
+! Revision 2.48  2001/07/19 22:17:44  jonathan
+! add cloud stuff , jonathan/dwu
+!
+! Revision 2.47  2001/07/19 17:42:31  dwu
+! add sGrid field
+!
+! Revision 2.46  2001/07/18 23:17:30  dwu
+! rename l_radiusofearth as l_earthradius
+!
+! Revision 2.45  2001/07/18 18:42:19  dwu
+! add radiusofearth quantity type
+!
+! Revision 2.44  2001/07/17 23:23:05  dwu
+! make l_losTransFunc as non-minorframe but minorframe-like quantity
+!
+! Revision 2.43  2001/07/16 18:24:45  dwu
+! add feature for losTransFunc type of quantities
+!
+! Revision 2.42  2001/07/13 18:41:59  dwu
+! fix problem after adding losTransFunc
+!
+! Revision 2.41  2001/07/13 18:10:03  dwu
+! add quantity losTransFunc
+!
+! Revision 2.40  2001/07/11 21:40:00  livesey
+! More bug fixes
+!
+! Revision 2.39  2001/07/10 23:45:16  jonathan
+! added cloudicedensity and template for cloudsfwm, paul/jonathan
+!
+! Revision 2.38  2001/07/09 22:37:23  livesey
+! Embarassing memory leak caught!  It's our old friend
+! mifGeolocation again.  I'm going to regret trying
+! to be this clever!
+!
+! Revision 2.37  2001/05/31 19:53:56  livesey
+! Whoops, debug stuff left in.
+!
+! Revision 2.36  2001/05/30 23:59:51  livesey
+! Thought I'd made this change already.  I'm confused
+!
+! Revision 2.35  2001/05/30 23:55:28  livesey
+! Previous one was debug version, this is correct one.
+!
+! Revision 2.34  2001/05/30 23:53:01  livesey
+! For new version of L1Bdata
+!
+! Revision 2.33  2001/05/29 23:21:35  livesey
+! Changed l_orbitincline to l_orbitinclination
+!
+! Revision 2.32  2001/05/26 00:20:20  livesey
+! Cosmetic changes
+!
+! Revision 2.31  2001/05/10 01:08:53  livesey
+! Changed hGrids and vGrids to pointers, rather than intent(in)
+! to allow them to be empty.
+!
+! Revision 2.30  2001/05/03 23:08:36  livesey
+! Added stuff to support scan model items.
+!
+! Revision 2.29  2001/05/03 20:30:09  vsnyder
+! Add a 'nullify' and some cosmetic changes
+!
+! Revision 2.28  2001/04/26 02:45:25  vsnyder
+! Fix up CVS stuff
+!
+! Revision 2.27  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.26  2001/04/25 20:33:07  livesey
+! Minor bug fix, Forge now also zeros surfs.
+!
+! Revision 2.25  2001/04/25 19:29:49  livesey
+! Fixed bug in forge, now sets mafCounter and mafIndex correctly.
+!
+! Revision 2.24  2001/04/25 00:01:23  livesey
+! Bug fix, no default units for scGeocAlt
+!
+! Revision 2.23  2001/04/24 22:21:17  livesey
+! Gave up on latitude for forge
+!
+! Revision 2.22  2001/04/23 23:25:10  livesey
+! Fixed bug in forge
+!
+! Revision 2.21  2001/04/20 23:11:39  livesey
+! Added forge stuff for minor frames
+!
+! Revision 2.20  2001/04/19 20:30:06  livesey
+! Added specific stuff for sideband ratio
+!
+! Revision 2.19  2001/04/12 23:25:29  vsnyder
+! Give "Sideband" an initial value
+!
+! Revision 2.18  2001/04/12 21:41:42  livesey
+! Signal now a string.
+!
+! Revision 2.17  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
+! Revision 2.16  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
+! Revision 2.15  2001/03/28 23:48:13  livesey
+! Bug fixes zero out some stuff.
+!
+! Revision 2.14  2001/03/28 18:33:19  livesey
+! Fixed bug with logBasis (wasn't initialised!)
+!
+! Revision 2.13  2001/03/21 02:13:30  livesey
+! Bug with logBasis, put in a work around. Will need to fix later
+!
+! Revision 2.12  2001/03/17 02:23:55  livesey
+! Added logBasis (and set value for badData)
+!
+! Revision 2.11  2001/03/15 21:07:47  vsnyder
+! Cross-references between databases are by database index, not tree index
+!
+! Revision 2.10  2001/03/15 18:41:17  livesey
+! Tidied up the frequency coordinate stuff.
+!
+! Revision 2.9  2001/03/08 21:49:26  livesey
+! Added elev_offset
+!
+! Revision 2.8  2001/03/03 00:08:09  livesey
+! Lots of changes mostly with minor frame quantities
+!
+! Revision 2.7  2001/03/02 01:28:23  livesey
+! New quantity types etc.
+!
+! Revision 2.6  2001/02/28 01:17:04  livesey
+! Interim version, on the way to using proper signals stuff
+!
+! Revision 2.5  2001/02/22 23:37:24  livesey
+! Really removed all references to firstIndexChannel
+!
+! Revision 2.4  2001/02/21 01:09:00  livesey
+! Allowed for quantities with no h/v grid
+!
+! Revision 2.3  2001/02/20 18:43:50  livesey
+! Removed all references to firstIndexChannel
+!
+! Revision 2.2  2001/02/14 00:12:45  livesey
+! Removed firstIndexChannel
+!
+! Revision 2.1  2001/02/09 00:38:22  livesey
+! Various updates
+!
+! Revision 2.0  2000/09/05 18:57:02  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.1  2000/09/02 02:05:03  vsnyder
+! Initial entry
+!
+! Revision 1.13  2000/05/17 23:19:07  lungu
+! Added "." between MLSInstrumentModuleNames and l1bItemName.
+! Made hGridIndex=0 and vGridIndex=0 upon entry, so it does not "inherit" attributes from previous call.
+! Made caseInsensitive=.TRUE. for all searches.
+! Added type for QTY_Gph.
+! Made stacked=.TRUE. so that CopyHGridInfoIntoQuantity works.
+!
