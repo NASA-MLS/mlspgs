@@ -417,12 +417,12 @@ contains ! =============== Subroutines and functions ==========================
           ptanVals = ptan%template%badValue
 
           ! Below the bottom
-        else where ( geometricGPH < thisBasisGPH(1) )
+        elsewhere ( geometricGPH < thisBasisGPH(1) )
           ptanVals = tempBasis(1) - (thisBasisGPH(1) - geometricGPH) * &
             & (g0 / (ln10*rtLower))
 
           ! Above the top
-        else where ( geometricGPH >= thisBasisGPH(temp%template%noSurfs) )
+        elsewhere ( geometricGPH >= thisBasisGPH(temp%template%noSurfs) )
           ptanVals = tempBasis(temp%template%noSurfs) + &
             & (geometricGPH-thisBasisGPH(upper)) * &
             & (g0 / (ln10*rtUpper))
@@ -1167,6 +1167,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.21  2001/05/10 00:46:49  livesey
+! Changed else where to elsewhere (NAG problem?)
+!
 ! Revision 2.20  2001/05/09 17:43:44  vsnyder
 ! Use UpdateDiagonal to store PTAN derivatives; cosmetic changes
 !
