@@ -35,7 +35,8 @@ module VGridsDatabase
     module procedure Dump_VGrids, Dump_a_VGrid
   end interface Dump
 
-  public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
+  public :: AddVgridIfNecessary, AddVGridToDatabase
+  public :: DestroyVGridContents, DestroyVGridDatabase
   public :: DoVGridsMatch, DoVGridsMatch_VG
   public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
   public :: NullifyVGrid
@@ -52,6 +53,31 @@ module VGridsDatabase
   !---------------------------------------------------------------------------
 
 contains
+
+
+  !-----------------------------------------  AddVGridIfNecessary  -----
+  integer function AddVgridIfNecessary ( VGrid, VGrids, RelErr )
+    type(vGrid_t), intent(inout) :: VGrid
+    type(vGrid_t), pointer :: VGrids(:)
+    real(rs), intent(in), optional :: RelErr
+    ! If there is a vGrid in vGrids that matches vGrid according to
+    ! doVGridsMatch, destroy vGrid and return the index of the matching one.
+    ! Otherwise, add VGrid to the database of VGrids and return the index
+    ! of the added one.
+
+    integer :: I
+
+    do i = 1, size(vGrids)
+      if ( doVGridsMatch(vGrid,vGrids(i),relerr) ) then
+        call destroyVGridContents ( vGrid )
+        addVgridIfNecessary = i
+        return
+      end if
+    end do
+
+    addVgridIfNecessary = addVGridToDatabase ( vGrids, vGrid )
+
+  end function AddVgridIfNecessary
 
   !------------------------------------------  AddVGridToDatabase  -----
   integer function AddVGridToDatabase ( DATABASE, ITEM )
@@ -111,17 +137,26 @@ contains
   end subroutine DestroyVGridDatabase
 
   ! -------------------------------------------  DoVGridsMatch_VG  -----
-  logical function DoVGridsMatch_VG ( A, B )
+  logical function DoVGridsMatch_VG ( A, B, RelErr )
     ! Returns true if A and B are essentially the same VGrid.
     use MLSNumerics, only: EssentiallyEqual
     type (vGrid_T), intent(in) :: A
     type (vGrid_T), intent(in) :: B
+    real(rs), intent(in), optional :: RelErr ! "essentially equal" means
+      ! "all(abs(a%surfs-b%surfs) <=
+      ! relerr*max(maxval(abs(a%surfs)),maxval(abs(b%surfs))))"
+    real(rs) :: Test
 
     ! Executable code
     doVGridsMatch_VG = .false.
     if ( a%verticalCoordinate /= b%verticalCoordinate ) return
     if ( a%noSurfs /= b%noSurfs ) return
-    if ( any ( .not. essentiallyEqual ( a%surfs, b%surfs ) ) ) return
+    if ( .not. present(relErr) ) then
+      if ( any ( .not. essentiallyEqual ( a%surfs, b%surfs ) ) ) return
+    else
+      test = relerr*max(maxval(abs(a%surfs)),maxval(abs(b%surfs)))
+      if ( any(abs(a%surfs-b%surfs) > test) ) return
+    end if
     doVGridsMatch_VG = .true.
 
   end function DoVGridsMatch_VG
@@ -140,7 +175,11 @@ contains
     myDetails = 1
     if ( present(details) ) myDetails = details
     call output ( ' Name = ' )
-    call display_string ( vgrid%name )
+    if ( vGrid%name /= 0 ) then
+      call display_string ( vgrid%name )
+    else
+      call output ( '<none>' )
+    end if
     call output ( ' noSurfs = ' )
     call output ( vgrid%noSurfs )
     call output ( ' Coordinate = ' )
@@ -284,6 +323,10 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.17  2005/01/12 03:06:08  vsnyder
+! Added AddVGridIfNecessary and relative error test option to DoVGridsMatch.
+! Don't try to dump VGrid's name if its string index is zero.
+!
 ! Revision 2.16  2005/01/07 00:38:53  vsnyder
 ! Call the kind for the Surfs field RS
 !
