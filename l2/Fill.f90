@@ -634,10 +634,11 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
-    noMAFs=qty%template%noInstances
+    noMAFs = qty%template%noInstances
+    noMIFs = qty%template%noSurfs
 
-    do mif = 1, noMIFs
-      do maf = 1, noMAFs
+    do maf = 1, noMAFs
+      do mif = 1, noMIFs
 
         ! First compute the tangent point velocity in ECI coordinates due 
         ! to the rotation of the earth.  This no doubt makes approximations
@@ -645,9 +646,9 @@ contains ! =====     Public Procedures     =============================
         ! the ECI z axis, but I'm going to ignore this.
 
         ! Work out the indices in 3*mif,maf space
-        x=1 + 3*(mif-1)
-        y=x+1
-        z=x+2
+        x = 1 + 3*(mif-1)
+        y = x+1
+        z = x+2
 
         tngtVel= omega* (/ -tngtECI%values(y,maf), &
           &                 tngtECI%values(x,maf), 0.0_r8 /)
@@ -660,7 +661,7 @@ contains ! =====     Public Procedures     =============================
         ! assume +ve means the sc and tp are moving apart, and -ve that they're
         ! getting closer.
 
-        qty%values(x:z,maf) = dot_product(tngtVel, los) - &
+        qty%values(mif,maf) = dot_product(tngtVel, los) - &
           &                   dot_product(scVel%values(x:z,maf), los)
 
         ! Note that even though x,y,z have been used up to now for a GHz/THz
@@ -1349,6 +1350,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.32  2001/03/15 23:28:23  livesey
+! Bug fix
+!
 ! Revision 2.31  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
 !
