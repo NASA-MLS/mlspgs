@@ -56,6 +56,15 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l1b_oa_start = 21110
    INTEGER, PARAMETER :: mlspcf_l1b_oa_end = 21139
    !
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 22000
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 22099
+   !
+   INTEGER, PARAMETER :: mlspcf_l2dao_start = 22100
+   INTEGER, PARAMETER :: mlspcf_l2dao_end = 22199
+   !
+   INTEGER, PARAMETER :: mlspcf_l2clim_start = 22200
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
+   !
    INTEGER, PARAMETER :: mlspcf_l2gp_start = 30000
    INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569
    !
@@ -67,6 +76,9 @@ MODULE MLSPCF2
    !
    INTEGER, PARAMETER :: mlspcf_l2fwm_full_start = 30630
    INTEGER, PARAMETER :: mlspcf_l2fwm_full_end = 30659
+   !
+   INTEGER, PARAMETER :: mlspcf_l2parsf_start = 30660
+   INTEGER, PARAMETER :: mlspcf_l2parsf_end = 30660
    !
    INTEGER, PARAMETER :: mlspcf_mcf_l2log_start = 4000
    INTEGER, PARAMETER :: mlspcf_mcf_l2log_end = 4000
@@ -88,6 +100,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.12  2003/05/29 17:54:28  pwagner
+! Able to read dao, ncep files w/o knowing name fragment
+!
 ! Revision 2.11  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
