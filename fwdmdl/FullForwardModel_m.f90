@@ -169,9 +169,6 @@ contains
 
     logical :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array
 
-    integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
-    integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
-
     integer, dimension(:), pointer :: GRIDS !Heights in ptgGrid for each tangent
     integer, dimension(:), pointer :: CHANNELORIGINS ! Does this band start at 0 or 1
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
@@ -1323,8 +1320,7 @@ contains
         where ( superset < 0 )
           superset = maxSuperset + 1
         end where
-        whichPointingGridAsArray = minloc ( superset )
-        whichPointingGrid = whichPointingGridAsArray(1)
+        whichPointingGrid = minloc ( superset, 1 )
         Call deallocate_test ( superset, 'superset', ModuleName )
 
         ! Now we've identified the pointing grids.  Locate the tangent grid
@@ -2172,8 +2168,7 @@ contains
           where ( superset < 0 )
             superset = maxSuperset + 1
           end where
-          whichPatternAsArray = minloc ( superset )
-          whichPattern = whichPatternAsArray(1)
+          whichPattern = minloc ( superset, 1 )
 
    ! Now change channel from starting at 0 or 1 to definately 1
 
@@ -2498,6 +2493,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.84  2002/08/26 20:02:22  livesey
+! Checks whether the jacobian is present when setting internal
+! temp/atmos_der
+!
 ! Revision 2.83  2002/08/22 23:13:03  livesey
 ! New intermediate frequency based frq_bases
 !
