@@ -1,10 +1,11 @@
+
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use L2PARALLEL, only: PARALLEL, INITPARALLEL
+  use L2PARINFO, only: PARALLEL, INITPARALLEL
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
@@ -308,11 +309,13 @@ contains
     print *, '  glo => Global settings'
     print *, '  jac => Jacobian during retriever iterations'
     print *, '  log => Log file messages'
-    print *, '  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta'
+    print *, '  mas => Activities of the PVM master task'
     print *, '  neq => Normal equations during retriever iterations'
     print *, '  nwt => Action flag at each return from Newton solver'
+    print *, '  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta'
     print *, '  rad => Radiances in ForwardModelInterface'
     print *, '  sca => Scalars of interest to the Newton method'
+    print *, '  slv => Output from slave processes (using pvmfcatchout)'
     print *, '  spa => Sparsity structure of fac, jac, neq'
     print *, '  tps => Test_Parse_Signals'
     stop
@@ -383,6 +386,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.45  2001/05/23 21:59:43  livesey
+! Interim version, almost there
+!
 ! Revision 2.44  2001/05/23 01:44:24  livesey
 ! Parallel code starting to fit into place
 !
