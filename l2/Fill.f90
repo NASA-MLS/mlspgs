@@ -984,8 +984,8 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer :: l  ! Length
     type (VectorValue_T), pointer :: f  ! Fraction
     type (QuantityTemplate_T), pointer :: qt ! One quantity template
-    type (Vector_T), pointer :: DMASKED ! Masked diagonal
-    type (Vector_T), pointer :: LMASKED ! Masked length scale
+    type (Vector_T) :: DMASKED ! Masked diagonal
+    type (Vector_T) :: LMASKED ! Masked length scale
     integer :: B                        ! Block index
     integer :: I                        ! Instance index
     integer :: J                        ! Loop index
@@ -1003,7 +1003,9 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     ! Apply mask to diagonal
-    call CopyVector ( Dmasked, vectors(diagonal) )
+    nullify ( m, condition )
+    call CopyVector ( Dmasked, vectors(diagonal), clone=.true., &
+      & vectorNameText='_Dmasked' )
     call ClearUnderMask ( Dmasked )
     
     if ( lengthScale == 0 ) then
@@ -1013,9 +1015,11 @@ contains ! =====     Public Procedures     =============================
     else ! Do a more complex fill.
 
       ! Setup some stuff
-      nullify ( m )
-      call CopyVector ( Lmasked, vectors(lengthScale) ) 
+      call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
+        & vectorNameText='_Lmasked' ) 
       call ClearUnderMask ( Lmasked )
+      
+      call Dump ( LMasked )
 
       ! Check the validity of the supplied vectors
       if ( covariance%m%row%vec%template%id /= &
@@ -2448,12 +2452,12 @@ contains ! =====     Public Procedures     =============================
     dest%globalUnit = source%globalUnit
     do sqi = 1, size ( source%quantities )
       ! Try to find this in dest
-      sq => dest%quantities(sqi)
+      sq => source%quantities(sqi)
       dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
       if ( associated ( dq ) ) then
         dq%values = sq%values
-        if (associated(dq%mask)) then
-          if (.not. associated(sq%mask)) call CreateMask ( dq )
+        if (associated(sq%mask)) then
+          if (.not. associated(dq%mask)) call CreateMask ( dq )
           dq%mask = sq%mask
         else
           if ( associated(dq%mask) ) &
@@ -2607,6 +2611,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.88  2001/10/18 23:06:05  livesey
+! Tidied up some bugs in transfer, must have been asleep or something!
+!
 ! Revision 2.87  2001/10/18 22:30:30  livesey
 ! Added s_dump and more functionality to fillCovariance
 !
