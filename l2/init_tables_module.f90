@@ -700,8 +700,6 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
-             begin, f+f_channels, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &
@@ -809,6 +807,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.72  2001/04/12 19:48:45  livesey
+! Removed channels from forwardModel, signal string now conveys that information.
+!
 ! Revision 2.71  2001/04/10 23:19:03  livesey
 ! Changed signals in forward model config to string
 !
