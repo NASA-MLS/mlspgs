@@ -17,12 +17,20 @@
 # -m test_dir_name   use tests/test_dir_name instead of tests/misc
 # -t test_dir_path   use test_dir_path/misc instead of tests/misc
 # -c MLSCONFG        use arg for MLSCONFG instead of any current setting
-# -I PATH            add "-I PATH" to INC_PATHS
-# -i INC_PATHS       let arg override calculated value for INC_PATHS
+# -i INC_PATHS       let arg override usual value for INC_PATHS
 #                     used for search paths when compiling
-#                     e.g., -i "-I ../ -I /software/SRC..."
-#                     these values should be relative or absolute
-#                     if relative, ralative to tests/misc/MLSCONFG directory
+#                     e.g., -i "../ /software/SRC..."
+#                     these values can be relative or absolute
+#                     relative means w.r.t the current working directory
+#                     e.g., '../other/directory'
+#                     absolute means the path begins with "/"
+#                     e.g., '/usr/lib/gl'
+# -I PATH            add "-I PATH" to EXTRA_PATHS
+#                     you may have multiple occurrences of '-I PATH'
+#                     that assemble a longer EXTRA_PATHS
+#                     e.g., '-I path1 -I path2 ..'
+#                     however '-i INC_PATHS' would override these
+#                     therefore don't use the -i  and -I options simultaneously
 # --------------- End build_f90_in_misc.sh help
 
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
@@ -32,10 +40,7 @@
 
 # Known bugs and limitations
 # (1) Doesn't pick up MLSCONFG from .configure if run directly from command-line
-# (2) Doesn't add extra_INC_PATHS to pre-existing ones in platforms/targets
-# (3) Doesn't allow you to override other .configure or make variables
-# (4) Requires you to calculate relative paths from tests/misc/MLSCONFG
-#     rather than from current working directory, which is awkward, confusing
+# (2) Doesn't allow you to override other .configure or make variables
 #----------------------- Implementation -----------------------
 #
 
@@ -78,6 +83,46 @@ mkdir_cascade()
 
 }
 
+#
+# Function to repair each relative subpath among the args
+#
+
+repair_subpaths()
+{
+
+   repaired_subpaths=
+   # 1st delete all -I prefixes
+   unprefixed=`$REECHO -d $@`
+
+   # Trivial case ($# = 0)
+   if [ "$unprefixed" != "" ]
+   then
+      for file in $unprefixed
+      do
+
+         # Does path start with "/" or not?
+         # (in other words is it absolute or relative?)
+
+         is_absolute=`echo "$file" | grep '^\/'`
+
+         the_pn=`echo $file | sed 's;/; ;g'`
+
+         if [ "$is_absolute" = "" ]
+         then
+         # Relative--Need to repair path
+            repaired_subpaths="`pwd`/$file $repaired_subpaths"
+        else
+         # Absolute path--no need to repair
+            repaired_subpaths="$file $repaired_subpaths"
+         fi
+
+      done
+   # Now that the sub_paths are repaired, re-prefix them
+   repaired_subpaths=`$REECHO -d -prefix=-I $repaired_subpaths`
+   fi
+
+}
+
 #****************************************************************
 #                                                               *
 #                  * * * Main Program  * * *                    *
@@ -100,6 +145,7 @@ fi
 
 # Initialize settings to defaults
 DEEBUG=off
+BUILD=on
 prog_name=test
 test_dir_name=misc
 hidden_dir_name=hideme
@@ -108,11 +154,12 @@ test_dir_path=../tests
 prog_path=../bin/$MLSCONFG
 override_INC_PATHS="no"
 INC_PATHS=""
-extra_INC_PATHS=""
+EXTRA_PATHS=""
 
 me="$0"
 my_name=build_f90_in_misc.sh
 args_dir=`pwd`
+REECHO="`echo $0 | sed 's/build_f90_in_misc.sh/reecho.sh/'`"
 
 arglist=
 
@@ -145,8 +192,7 @@ while [ "$1" != "" ] ; do
 	    shift
 	;;
 	-I )
-	    extra_INC_PATHS="-I $2 $extra_INC_PATHS"
-       override_INC_PATHS="yes"
+	    EXTRA_PATHS="-I $2 $EXTRA_PATHS"
 	    shift
 	;;
 	-i )
@@ -178,13 +224,19 @@ then
    echo "MLSCONFG: $MLSCONFG"
    echo "override_INC_PATHS: $override_INC_PATHS"
    echo "INC_PATHS: $INC_PATHS"
+   echo "EXTRA_PATHS: $EXTRA_PATHS"
    echo "arglist: $arglist"
 fi
 
+# Check on args--need any more? ARe they self-consistent?
 if [ "$NEED_MLSCONFG" = "yes" ]
 then
-   echo "Sorry-- MLSCONFG must be defined"
+   echo "Sorry--MLSCONFG must be defined"
    echo "(Try running with -h option for help)"
+   exit 1
+elif [ "override_INC_PATHS" = "yes" -a "$EXTRA_PATHS" != "" ]
+then
+   echo "Warning--attempt to specify both -i and -I arguments"
    exit 1
 fi
 
@@ -206,7 +258,14 @@ fi
 # Check whether a hidden directory exists yet; if not make one
 if [ ! -d "$test_dir_path/$test_dir_name/$hidden_dir_name" ]
 then
-   mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+   fi
+   if [ "$BUILD" = "on" ]
+   then
+      mkdir $test_dir_path/$test_dir_name/$hidden_dir_name
+   fi
 fi
 
 cd $test_dir_path/$test_dir_name
@@ -223,7 +282,14 @@ do
    do
       if [ -f $file ]
       then
-         mv $file $hidden_dir_name
+         if [ "$BUILD" = "on" ]
+         then
+            mv $file $hidden_dir_name
+         fi
+         if [ "$DEEBUG" = "on" ]
+         then
+            echo mv $file $hidden_dir_name
+         fi
       fi
    done
 done
@@ -239,7 +305,14 @@ for file in $arglist
 do
    if [ -r $file ]
    then
-      cp $file $test_dir_path/$test_dir_name
+      if [ "$BUILD" = "on" ]
+      then
+         cp $file $test_dir_path/$test_dir_name
+      fi
+      if [ "$DEEBUG" = "on" ]
+      then
+         echo cp $file $test_dir_path/$test_dir_name
+      fi
    fi
 done
 
@@ -248,13 +321,42 @@ if [ $DEEBUG = "on" ]
 then
    echo "Building the executable"
 fi
-cd $test_dir_path/$test_dir_name
-make depends ghostbuster
-if [ $override_INC_PATHS = "no" ]
+
+if [ "$EXTRA_PATHS" != "" ]
 then
-   make
+   repair_subpaths $EXTRA_PATHS
+   EXTRA_PATHS=$repaired_subpaths
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+      make depends ghostbuster
+      make EXTRA_PATHS="$EXTRA_PATHS"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo make EXTRA_PATHS="$EXTRA_PATHS"
+   fi
+elif [ "$override_INC_PATHS" = "no" ]
+then
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+      make depends ghostbuster
+      make
+   fi
 else
-   make INC_PATHS="$INC_PATHS $extra_INC_PATHS"
+   repair_subpaths $INC_PATHS
+   INC_PATHS=$repaired_subpaths
+   if [ "$BUILD" = "on" ]
+   then
+      cd $test_dir_path/$test_dir_name
+      make depends ghostbuster
+      make INC_PATHS="$INC_PATHS"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo make INC_PATHS="$INC_PATHS"
+   fi
 fi
 
 # (4) Install
@@ -265,12 +367,12 @@ fi
 cd $args_dir
 
 # Check whether the final directory exists yet; if not make it
-if [ ! -d "$prog_path" ]
+if [ ! -d "$prog_path" -a "$BUILD" = "on" ]
 then
    mkdir_cascade $prog_path
 fi
 
-if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/test" ]
+if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/test" -a "$BUILD" = "on" ]
 then
    mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
 fi
@@ -278,6 +380,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.6  2001/08/14 23:45:41  pwagner
+# CHanged file requirement before hiding from -w to just -r
+#
 # Revision 1.5  2001/08/13 23:57:53  pwagner
 # Forgot ot turn DEEBUG off
 #
