@@ -130,6 +130,7 @@ contains
     integer :: L                        ! Loop index and other uses ..
     integer :: M                        ! Loop index and other uses ..
     integer :: MAF                      ! MAF under consideration
+    integer :: MAX_ELE                  ! Length of longest possible path (all no_ele<max_ele)
     integer :: MAXNOFFREQS              ! Max. no. frequencies for any molecule
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXNOPTGFREQS            ! Used for sizing arrays
@@ -398,7 +399,7 @@ contains
     type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_M ! ***
     type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_P ! ***
 
-    type (catalog_T), dimension(:), pointer :: MY_CATALOG ! ***
+    type (catalog_T), dimension(:,:), pointer :: MY_CATALOG ! ***
 
     type (Grids_T) :: Grids_dn  ! All the spectroscopy(N) coordinates
     type (Grids_T) :: Grids_dv  ! All the spectroscopy(V) coordinates
@@ -808,16 +809,7 @@ contains
 
     ! Allocate path quantities -----------------------------------------------
 
-    no_ele = 2*maxVert     ! maximum possible
-
-    ! First, Allocate gl_slab arrays....
-
-    call allocateSlabs ( gl_slabs, no_ele, my_catalog, moduleName )
-
-    if ( temp_der ) then
-      call allocateSlabs ( gl_slabs_p, no_ele, my_catalog, moduleName )
-      call allocateSlabs ( gl_slabs_m, no_ele, my_catalog, moduleName )
-    end if
+    max_ele = 2*maxVert     ! maximum possible
 
     ! Now allocate all path related... with maximum length..
 
@@ -828,59 +820,59 @@ contains
     ! This can be put outside the mmaf loop
 
     call allocate_test ( alpha_path_c,        npc, 'alpha_path_c',     moduleName )
-    call allocate_test ( alpha_path_f,     no_ele, 'alpha_path_f',     moduleName )
+    call allocate_test ( alpha_path_f,     max_ele, 'alpha_path_f',     moduleName )
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c', moduleName ) !JJ
     call allocate_test ( beta_path_w0_c,      npc, 'beta_path_w0_c',   moduleName ) !JJ
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
-    call allocate_test ( dhdz_path,        no_ele, 'dhdz_path',        moduleName )
+    call allocate_test ( dhdz_path,        max_ele, 'dhdz_path',        moduleName )
     call allocate_test ( do_gl,               npc, 'do_gl',            moduleName )
-    call allocate_test ( gl_inds,          no_ele, 'gl_inds',          moduleName )
+    call allocate_test ( gl_inds,          max_ele, 'gl_inds',          moduleName )
     call allocate_test ( h_path_c,            npc, 'h_path_c',         moduleName )
-    call allocate_test ( h_path_f,         no_ele, 'h_path_f',         moduleName )
-    call allocate_test ( h_path,           no_ele, 'h_path',           moduleName )
+    call allocate_test ( h_path_f,         max_ele, 'h_path_f',         moduleName )
+    call allocate_test ( h_path,           max_ele, 'h_path',           moduleName )
     call allocate_test ( incoptdepth,         npc, 'incoptdept',       moduleName )
     call allocate_test ( indices_c,           npc, 'indices_c',        moduleName )
     call allocate_test ( n_path,              npc, 'n_path',           moduleName )
-    call allocate_test ( path_dsdh,        no_ele, 'path_dsdh',        moduleName )
-    call allocate_test ( phi_path,         no_ele, 'phi_path',         moduleName )
+    call allocate_test ( path_dsdh,        max_ele, 'path_dsdh',        moduleName )
+    call allocate_test ( phi_path,         max_ele, 'phi_path',         moduleName )
     call allocate_test ( p_path_c,            npc, 'p_path_c',         moduleName )
-    call allocate_test ( p_path,           no_ele, 'p_path',           moduleName )
+    call allocate_test ( p_path,           max_ele, 'p_path',           moduleName )
     call allocate_test ( ref_corr,            npc, 'ref_corr',         moduleName )
     call allocate_test ( sps_beta_dbeta_c,    npc, 'sps_beta_dbeta_c', moduleName )
-    call allocate_test ( sps_beta_dbeta_f, no_ele, 'sps_beta_dbeta_f', moduleName )
+    call allocate_test ( sps_beta_dbeta_f, max_ele, 'sps_beta_dbeta_f', moduleName )
     call allocate_test ( tanh1_c,             npc, 'tanh1_c',          moduleName )
-    call allocate_test ( tanh1_f,          no_ele, 'tanh1_f',          moduleName )
+    call allocate_test ( tanh1_f,          max_ele, 'tanh1_f',          moduleName )
     call allocate_test ( tau,                 npc, 'tau',              moduleName )
     call allocate_test ( t_path_c,            npc, 't_path_c',         moduleName )
-    call allocate_test ( t_path_f,         no_ele, 't_path_f',         moduleName )
-    call allocate_test ( t_path_m,         no_ele, 't_path_m',         moduleName )
-    call allocate_test ( t_path_p,         no_ele, 't_path_p',         moduleName )
-    call allocate_test ( t_path,           no_ele, 't_path',           moduleName )
+    call allocate_test ( t_path_f,         max_ele, 't_path_f',         moduleName )
+    call allocate_test ( t_path_m,         max_ele, 't_path_m',         moduleName )
+    call allocate_test ( t_path_p,         max_ele, 't_path_p',         moduleName )
+    call allocate_test ( t_path,           max_ele, 't_path',           moduleName )
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
     call allocate_test ( z_path_c,            npc, 'z_path_c',         moduleName )
-    call allocate_test ( z_path,           no_ele, 'z_path',           moduleName )
+    call allocate_test ( z_path,           max_ele, 'z_path',           moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
     call allocate_test ( beta_path_phh_c,  npc, fwdModelConf%num_scattering_angles,     'beta_path_phh_c', moduleName ) !JJ
-    call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
-    call allocate_test ( do_calc_fzp,   no_ele, size(grids_f%values),  'do_calc_fzp',   moduleName )
-    call allocate_test ( do_calc_zp,    no_ele, grids_f%p_len,  'do_calc_zp',     moduleName )
-    call allocate_test ( eta_fzp,       no_ele, size(grids_f%values),  'eta_fzp', moduleName )
-    call allocate_test ( eta_zp,        no_ele, grids_f%p_len,  'eta_zp', moduleName )
-    call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',       moduleName )
-    CALL allocate_test ( true_path_flags, no_ele, 'true_path_flags',moduleName)
+    call allocate_test ( beta_path_f,   max_ele, no_mol, 'beta_path_f',   moduleName )
+    call allocate_test ( do_calc_fzp,   max_ele, size(grids_f%values),  'do_calc_fzp',   moduleName )
+    call allocate_test ( do_calc_zp,    max_ele, grids_f%p_len,  'do_calc_zp',     moduleName )
+    call allocate_test ( eta_fzp,       max_ele, size(grids_f%values),  'eta_fzp', moduleName )
+    call allocate_test ( eta_zp,        max_ele, grids_f%p_len,  'eta_zp', moduleName )
+    call allocate_test ( sps_path,      max_ele, no_mol, 'sps_path',       moduleName )
+    CALL allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
     true_path_flags = .true.
     if ( fwdModelConf%Incl_Cld ) then !JJ
-      call allocate_test ( do_calc_iwc,    no_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
-      call allocate_test ( eta_iwc,        no_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
-      call allocate_test ( eta_iwc_zp,     no_ele, grids_iwc%p_len,  'eta_iwc_zp',    moduleName )
-      call allocate_test ( iwc_path,       no_ele, 1, 'iwc_path',           moduleName )
-      call allocate_test ( ipsd,           no_ele, 'IPSD', moduleName )
-      call allocate_test ( wc,         fwdModelConf%no_cloud_species, no_ele, 'WC', moduleName )
+      call allocate_test ( do_calc_iwc,    max_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
+      call allocate_test ( eta_iwc,        max_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
+      call allocate_test ( eta_iwc_zp,     max_ele, grids_iwc%p_len,  'eta_iwc_zp',    moduleName )
+      call allocate_test ( iwc_path,       max_ele, 1, 'iwc_path',           moduleName )
+      call allocate_test ( ipsd,           max_ele, 'IPSD', moduleName )
+      call allocate_test ( wc,         fwdModelConf%no_cloud_species, max_ele, 'WC', moduleName )
     end if
     if ( FwdModelConf%polarized ) then
-      call allocate_test ( eta_mag_zp,     no_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
-      call allocate_test ( mag_path,       no_ele, magfield%template%noChans+1, 'mag_path', &
+      call allocate_test ( eta_mag_zp,     max_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
+      call allocate_test ( mag_path,       max_ele, magfield%template%noChans+1, 'mag_path', &
         & moduleName )
       if ( temp_der ) then
         allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
@@ -903,33 +895,33 @@ contains
                                                               & moduleName )
       call allocate_test ( dbeta_dt_path_c,    npc, no_mol,   'dbeta_dt_path_c', &
                                                               & moduleName )
-      call allocate_test ( dbeta_dt_path_f, no_ele, no_mol,   'dbeta_dt_path_f', &
+      call allocate_test ( dbeta_dt_path_f, max_ele, no_mol,   'dbeta_dt_path_f', &
                                                               & moduleName )
-      call allocate_test ( dh_dt_path,      no_ele, sv_t_len, 'dh_dt_path', &
+      call allocate_test ( dh_dt_path,      max_ele, sv_t_len, 'dh_dt_path', &
                                                               & moduleName )
       call allocate_test ( dh_dt_path_c,       npc, sv_t_len, 'dh_dt_path_c', &
                                                               & moduleName )
-      call allocate_test ( dh_dt_path_f,    no_ele, sv_t_len, 'dh_dt_path_f', &
+      call allocate_test ( dh_dt_path_f,    max_ele, sv_t_len, 'dh_dt_path_f', &
                                                               & moduleName )
-      call allocate_test ( do_calc_hyd,     no_ele, sv_t_len, 'do_calc_hyd', &
+      call allocate_test ( do_calc_hyd,     max_ele, sv_t_len, 'do_calc_hyd', &
                                                               & moduleName )
       call allocate_test ( do_calc_hyd_c,      npc, sv_t_len, 'do_calc_hyd_c', &
                                                               & moduleName )
-      call allocate_test ( do_calc_t,       no_ele, sv_t_len, 'do_calc_t', &
+      call allocate_test ( do_calc_t,       max_ele, sv_t_len, 'do_calc_t', &
                                                               & moduleName )
       call allocate_test ( do_calc_t_c,        npc, sv_t_len, 'do_calc_t_c', &
                                                               & moduleName )
-      call allocate_test ( do_calc_t_f,     no_ele, sv_t_len, 'do_calc_t_f', &
+      call allocate_test ( do_calc_t_f,     max_ele, sv_t_len, 'do_calc_t_f', &
                                                               & moduleName )
-      call allocate_test ( eta_zxp_t,       no_ele, sv_t_len, 'eta_zxp_t', &
+      call allocate_test ( eta_zxp_t,       max_ele, sv_t_len, 'eta_zxp_t', &
                                                               & moduleName )
       call allocate_test ( eta_zxp_t_c,        npc, sv_t_len, 'eta_zxp_t_c', &
                                                               & moduleName )
-      call allocate_test ( eta_zxp_t_f,     no_ele, sv_t_len, 'eta_zxp_t_f', &
+      call allocate_test ( eta_zxp_t_f,     max_ele, sv_t_len, 'eta_zxp_t_f', &
                                                               & moduleName )
       call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
-      call allocate_test ( t_der_path_flags, no_ele,          't_der_path_flags', &
+      call allocate_test ( t_der_path_flags, max_ele,          't_der_path_flags', &
                                                               & moduleName )
 
     end if ! temp_der
@@ -946,57 +938,57 @@ contains
 
       call allocate_test ( dbeta_dw_path_c,    npc, no_mol, &
         & 'dbeta_dw_path_c', moduleName )
-      call allocate_test ( dbeta_dw_path_f, no_ele, no_mol, &
+      call allocate_test ( dbeta_dw_path_f, max_ele, no_mol, &
         & 'dbeta_dw_path_f', moduleName )
       call allocate_test ( dbeta_dn_path_c,    npc, no_mol, &
         & 'dbeta_dn_path_c', moduleName )
-      call allocate_test ( dbeta_dn_path_f, no_ele, no_mol, &
+      call allocate_test ( dbeta_dn_path_f, max_ele, no_mol, &
         & 'dbeta_dn_path_f', moduleName )
       call allocate_test ( dbeta_dv_path_c,    npc, no_mol, &
         & 'dbeta_dv_path_c', moduleName )
-      call allocate_test ( dbeta_dv_path_f, no_ele, no_mol, &
+      call allocate_test ( dbeta_dv_path_f, max_ele, no_mol, &
         & 'dbeta_dv_path_f', moduleName )
 
       f_len_dw = grids_dw%l_v(ubound(grids_dw%l_v,1))
       f_len_dn = grids_dn%l_v(ubound(grids_dn%l_v,1))
       f_len_dv = grids_dv%l_v(ubound(grids_dv%l_v,1))
 
-      call allocate_test ( do_calc_dw, no_ele, f_len_dw, 'do_calc_dw', &
+      call allocate_test ( do_calc_dw, max_ele, f_len_dw, 'do_calc_dw', &
                         &  moduleName )
-      call allocate_test ( do_calc_dw_c, no_ele, f_len_dw, 'do_calc_dw_c', &
+      call allocate_test ( do_calc_dw_c, max_ele, f_len_dw, 'do_calc_dw_c', &
                         &  moduleName )
-      call allocate_test ( do_calc_dw_f, no_ele, f_len_dw, 'do_calc_dw_f', &
+      call allocate_test ( do_calc_dw_f, max_ele, f_len_dw, 'do_calc_dw_f', &
                         &  moduleName )
-      call allocate_test ( do_calc_dn, no_ele, f_len_dn, 'do_calc_dn', &
+      call allocate_test ( do_calc_dn, max_ele, f_len_dn, 'do_calc_dn', &
                         &  moduleName )
-      call allocate_test ( do_calc_dn_c, no_ele, f_len_dn, 'do_calc_dn_c', &
+      call allocate_test ( do_calc_dn_c, max_ele, f_len_dn, 'do_calc_dn_c', &
                         &  moduleName )
-      call allocate_test ( do_calc_dn_f, no_ele, f_len_dn, 'do_calc_dn_f', &
+      call allocate_test ( do_calc_dn_f, max_ele, f_len_dn, 'do_calc_dn_f', &
                         &  moduleName )
-      call allocate_test ( do_calc_dv, no_ele, f_len_dv, 'do_calc_dv', &
+      call allocate_test ( do_calc_dv, max_ele, f_len_dv, 'do_calc_dv', &
                         &  moduleName )
-      call allocate_test ( do_calc_dv_c, no_ele, f_len_dv, 'do_calc_dv_c', &
+      call allocate_test ( do_calc_dv_c, max_ele, f_len_dv, 'do_calc_dv_c', &
                         &  moduleName )
-      call allocate_test ( do_calc_dv_f, no_ele, f_len_dv, 'do_calc_dv_f', &
+      call allocate_test ( do_calc_dv_f, max_ele, f_len_dv, 'do_calc_dv_f', &
                         &  moduleName )
 
-      call allocate_test ( eta_zxp_dw, no_ele, f_len_dw, 'eta_zxp_dw', &
+      call allocate_test ( eta_zxp_dw, max_ele, f_len_dw, 'eta_zxp_dw', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dw_c, no_ele, f_len_dw, 'eta_zxp_dw_c', &
+      call allocate_test ( eta_zxp_dw_c, max_ele, f_len_dw, 'eta_zxp_dw_c', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dw_f, no_ele, f_len_dw, 'eta_zxp_dw_f', &
+      call allocate_test ( eta_zxp_dw_f, max_ele, f_len_dw, 'eta_zxp_dw_f', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dn, no_ele, f_len_dn, 'eta_zxp_dn', &
+      call allocate_test ( eta_zxp_dn, max_ele, f_len_dn, 'eta_zxp_dn', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dn_c, no_ele, f_len_dn, 'eta_zxp_dn_c', &
+      call allocate_test ( eta_zxp_dn_c, max_ele, f_len_dn, 'eta_zxp_dn_c', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dn_f, no_ele, f_len_dn, 'eta_zxp_dn_f', &
+      call allocate_test ( eta_zxp_dn_f, max_ele, f_len_dn, 'eta_zxp_dn_f', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dv, no_ele, f_len_dv, 'eta_zxp_dv', &
+      call allocate_test ( eta_zxp_dv, max_ele, f_len_dv, 'eta_zxp_dv', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dv_c, no_ele, f_len_dv, 'eta_zxp_dv_c', &
+      call allocate_test ( eta_zxp_dv_c, max_ele, f_len_dv, 'eta_zxp_dv_c', &
                         &  moduleName )
-      call allocate_test ( eta_zxp_dv_f, no_ele, f_len_dv, 'eta_zxp_dv_f', &
+      call allocate_test ( eta_zxp_dv_f, max_ele, f_len_dv, 'eta_zxp_dv_f', &
                         &  moduleName )
 
       call allocate_test ( drad_dw, f_len_dw, 'drad_dw', moduleName )
@@ -1013,13 +1005,13 @@ contains
       allocate ( beta_path_polarized(-1:1,npc,no_mol), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'beta_path_polarized' )
-      allocate ( alpha_path_polarized_f(-1:1,no_ele), stat=ier )
+      allocate ( alpha_path_polarized_f(-1:1,max_ele), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'alpha_path_polarized_f' )
-      allocate ( beta_path_polarized_f(-1:1,no_ele,no_mol), stat=ier )
+      allocate ( beta_path_polarized_f(-1:1,max_ele,no_mol), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'beta_path_polarized_f' )
-      allocate ( gl_delta_polarized(-1:1,no_ele), stat=ier )
+      allocate ( gl_delta_polarized(-1:1,max_ele), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'gl_delta_polarized' )
       allocate ( incoptdepth_pol(2,2,npc), stat=ier )
@@ -1063,6 +1055,13 @@ contains
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call Trace_Begin ( 'ForwardModel.Sideband ', index=thisSideband )
+
+      ! Now, allocate gl_slabs arrays
+      call allocateSlabs ( gl_slabs, max_ele, my_catalog(thisSideband,:), moduleName )
+      if ( temp_der ) then
+        call allocateSlabs ( gl_slabs_p, max_ele, my_catalog(thisSideband,:), moduleName )
+        call allocateSlabs ( gl_slabs_m, max_ele, my_catalog(thisSideband,:), moduleName )
+      end if
 
       ! Work out which pointing frequency grid we're going to need if ----------
       ! frequency averaging
@@ -1411,15 +1410,15 @@ contains
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
 
-        call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+        call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
           &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
           &  fwdModelConf%Do_1D, true_path_flags(1:no_ele) )
 
         if ( temp_der ) then
-          call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+          call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
             &  t_path_p(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
             &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
-          call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+          call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
             &  t_path_m(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
             &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
         end if
@@ -1489,7 +1488,7 @@ contains
 
           call get_beta_path ( Frq,                               &    
             &  p_path(1:no_ele), t_path_c(1:npc), tanh1_c(1:npc), &    
-            &  my_Catalog, beta_group, FwdModelConf%polarized,    &    
+            &  my_Catalog(thisSideband,:), beta_group, FwdModelConf%polarized,    &    
             &  gl_slabs, indices_c(1:npc), beta_path_c(1:npc,:),  &    
             &  gl_slabs_m, t_path_m(1:no_ele),                    &
             &  gl_slabs_p, t_path_p(1:no_ele),                    &
@@ -1537,7 +1536,7 @@ contains
 
             else ! extra stuff for polarized case
 
-              call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, &
+              call get_beta_path_polarized ( frq, h, my_Catalog(thisSideband,:), beta_group, &
                 & gl_slabs, indices_c(1:npc), beta_path_polarized )
 
               ! We put an explicit extent of -1:1 for the first dimension in
@@ -1600,7 +1599,8 @@ contains
 
           call get_beta_path ( Frq,                                   &
             & p_path(1:no_ele), t_path_f(:ngl), tanh1_f(1:ngl),       &
-            & my_Catalog, beta_group, FwdModelConf%polarized,         &
+            & my_Catalog(thisSideband,:), beta_group, &
+            & FwdModelConf%polarized,                                 &
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
             & gl_slabs_m, t_path_m(1:no_ele),                         &
             & gl_slabs_p, t_path_p(1:no_ele),                         &
@@ -1648,8 +1648,8 @@ alpha_path_f = 0.0
 
             ! get the corrections to integrals for layers that need gl for
             ! the polarized species
-            call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs, &
-              & gl_inds(:ngl), beta_path_polarized_f )
+            call get_beta_path_polarized ( frq, h, my_Catalog(thisSideband,:), &
+              & beta_group, gl_slabs, gl_inds(:ngl), beta_path_polarized_f )
 
             ! The explicit -1:1 is written in the hope that a clever compiler
             ! can exploit it to optimize.
@@ -1744,7 +1744,7 @@ alpha_path_f = 0.0
               ! into DE_DT.
 
               call get_d_deltau_pol_dT ( frq, npc/2, h, ct, stcp, stsp,       &
-                & my_catalog, beta_group, gl_slabs_m, gl_slabs_p,             &
+                & my_catalog(thisSideband,:), beta_group, gl_slabs_m, gl_slabs_p, &
                 & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
                 & beta_path_polarized(:,1:p_stop,:), sps_path,                &
                 & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
@@ -2159,6 +2159,12 @@ alpha_path_f = 0.0
         call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq', moduleName )
         call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq', moduleName )
       end if
+      
+      call DestroyCompleteSlabs ( gl_slabs )
+      if ( temp_der ) then
+        call DestroyCompleteSlabs ( gl_slabs_p )
+        call DestroyCompleteSlabs ( gl_slabs_m )
+      end if
 
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call trace_end ( 'ForwardModel.Sideband ',index=thisSideband )
@@ -2252,7 +2258,6 @@ alpha_path_f = 0.0
 !   call deallocate_test ( tan_temps,     'tan_temps',     moduleName )
 !   call deallocate_test ( reqs,          'reqs',          moduleName )
 
-    call DestroyCompleteSlabs ( gl_slabs )
     call destroygrids_t ( grids_f )
     call destroygrids_t ( grids_iwc )          !JJ
     call destroygrids_t ( grids_mag )
@@ -2338,10 +2343,8 @@ alpha_path_f = 0.0
       call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
       call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
-      CALL deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
-      CALL deallocate_test ( true_path_flags, 'true_path_flags',moduleName )
-      call DestroyCompleteSlabs ( gl_slabs_p )
-      call DestroyCompleteSlabs ( gl_slabs_m )
+      call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
+      call deallocate_test ( true_path_flags, 'true_path_flags',moduleName )
     end if
 
     if ( atmos_der ) then
@@ -2596,6 +2599,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.160  2003/07/09 23:40:13  vsnyder
+! Use new AllocateSlabs routine
+!
 ! Revision 2.159  2003/07/09 22:27:42  vsnyder
 ! More futzing
 !
