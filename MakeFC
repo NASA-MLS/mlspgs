@@ -142,8 +142,6 @@ SHELL = /bin/sh
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
 # CondenseLeakLog-- build and install this prog out of util directory
-# convert_spectroscopy
-#                -- build and install this prog out of util directory
 # end_stmts      -- build and install this prog out of util directory
 # f90tex         -- build and install this prog out of util directory
 # init_gen       -- build and install this prog out of util directory
@@ -403,9 +401,9 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
-convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+#convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
+#	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+#   -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -676,6 +674,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.52  2001/10/10 23:29:14  pwagner
+# Fixed bug when upfating sids
+#
 # Revision 1.51  2001/10/10 23:24:51  pwagner
 # sids/l1boa added to list of extra directories to be updated
 #
