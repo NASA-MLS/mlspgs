@@ -328,6 +328,11 @@ If these settings are wrong, or you wish to change them in order to prepare
 multiple installations at your site, you will be given an opportunity to
 (re)set them momentarily.
 
+Note that if you wish to "unset" any, that is to give them blank values, you
+cannot simply hit enter when asked to supply the new value because that means
+"continue using the existing value" which is what you want only if the existing
+value is already blank. Instead, to unset a non-blank exisiting value, enter
+"<b>" (w/o the " marks).
 EOF_4
 
  UserPrompt "Are these paths correct [Y[es] or N[o]]"
@@ -364,23 +369,12 @@ if [ $change_paths = "true" ] ; then
 	PVM_ROOT=""
    fi
 
-#Change PVM architecture-dependent path
-# UserPrompt "PVM arch.-dep. path [$current_PVM_ARCH]"
-#   if [ "$user_response" != "" ] ; then
-#	 PVM_ARCH=$user_response
-#   elif [ "$current_PVM_ARCH" != "" ] ; then
-#	echo "PVM architecture path is still $current_PVM_ARCH."
-#        PVM_ARCH=$current_PVM_ARCH
-#   else
-#	echo "Warning: No PVM architecture path selected; none found"
-#	echo "mls software may not link properly "
-#	echo "unless you reconfigure; enter 'make configure'."
-#	PVM_ARCH=""
-#   fi
-
 #Change FFTW root path
- UserPrompt "FFTW root [$current_FFTW_ROOT]"
-   if [ "$user_response" != "" ] ; then
+ UserPrompt "FFTW root (enter <b> to force back to blank) [$current_FFTW_ROOT]"
+   if [ "$user_response" = "<b>" ] ; then
+	 FFTW_ROOT=""
+	 echo "You will build a mls software version without FFTW support"
+   elif [ "$user_response" != "" ] ; then
 	 FFTW_ROOT=$user_response
    elif [ "$current_FFTW_ROOT" != "" ] ; then
 	echo "FFTW path is still $current_FFTW_ROOT."
@@ -424,19 +418,26 @@ GetFOPTS()
 You may change the current options passed to the compiler and linker. Normally
 the default options work well, but you may wish to set debugging, turn on
 warning messages, or choose advanced optimizations. Consult your manual for
-the precise format before changing these.
+the precise format before changing these. 
+
+To reset an option to its default enter the word "default" (w/o the " marks)
+at the prompt.
 
 EOF_5
 
 #accept user compiler/linker options to be written to file .configure
 
  UserPrompt "Fortran 95 Compiler options [$current_FOPTS]"
-   if [ "$user_response" != "" ] ; then
+   if [ "$user_response" = "default" ] ; then
+		current_FOPTS=
+   elif [ "$user_response" != "" ] ; then
 		current_FOPTS="$user_response"
 	fi
 
  UserPrompt "Fortran 95 Linker options [$current_LDOPTS]"
-   if [ "$user_response" != "" ] ; then
+   if [ "$user_response" = "default" ] ; then
+		current_LDOPTS=
+   elif [ "$user_response" != "" ] ; then
 		current_LDOPTS="$user_response"
 	fi
 
@@ -444,17 +445,42 @@ EOF_5
 
 #------------------------------- Help ------------
 #
-# Function to output help message and exit
+# Function to output brief help message and exit
 #
 
 Help()
 {
 
-#No help available yet
+        more << EOF_6
+                    *        *        *
+
+In order to properly build the mls software, a configuration step is required.
+Normally this is done only once: immediately after un-tarring or copying the
+source onto your machine. However in case of trouble, to optimize speed, or for
+other reasons this may need to be done again.
+
+The configuration step can be subdivided into three sub-steps: the first is
+basic and an absolute prerequisite; the other two are optional
+(i)    Identify your compiler, platform type, and paths to installed libraries
+       of HDF, HDFEOS, and Toolkits. This is the most basic info and you will
+       automatically be prompted for it. To change these settings later,
+       enter "make -f MakeFC configure"
+(ii)   Decide if you want to build the software with support for PVM and FFTW.
+       The first may improve performance,  while the second is needed to build
+       level 3. These require setting paths to installed libraries of PVM and
+       FFTW software. To learn where to obtain them, enter "BEFORE.mls". To 
+       change these settings later, enter "make -f MakeFC configure_pvm"
+(iii)  Choose compiler and linker options. Although these are automatically
+       set to default values that work well, you may have a reason to prefer
+       different options.To change these settings later,
+       enter "make -f MakeFC configure_fopts"
+		 
+EOF_6
+
+#No further help available yet
     exit
 }
 
-#!/bin/sh
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -528,7 +554,7 @@ while [ "$1" != "" ] ; do
     case "$1" in
 
 	-h | -help )
-            sed -n '2, 35 p' $me
+#            sed -n '2, 35 p' $me
 	    Help
             exit
 	;;
@@ -683,6 +709,8 @@ if [ $write_confg = "true" ] ; then
 	echo "export PVM_ROOT" >> $conf_dir/.configure
 	echo "export PVM_ARCH" >> $conf_dir/.configure
 	echo "export FFTW_ROOT" >> $conf_dir/.configure
+	echo "export FOPTS" >> $conf_dir/.configure
+	echo "export LDOPTS" >> $conf_dir/.configure
 else
 #	just re-use current settings
 	compiler=$current_compiler
@@ -700,6 +728,17 @@ if [ $get_confg = "true" ] ; then
 	echo "MLSF95 is now $MLSF95"
 	echo "MLSPLAT is now $MLSPLAT"
 	echo "MLSCONFG is now $MLSCONFG"
+fi
+
+if [ $add_PVM_PATH = "true" ] ; then
+	echo "PVM_ROOT is now $PVM_ROOT"
+	echo "PVM_ARCH is now $PVM_ARCH"
+	echo "FFTW_ROOT is now $FFTW_ROOT"
+fi
+
+if [ $add_FOPTS = "true" ] ; then
+	echo "FOPTS is now $FOPTS"
+	echo "LDOPTS is now $LDOPTS"
 fi
 
 #Don't create object-file directory if platforms not a directory
@@ -756,6 +795,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.7  2001/02/26 18:39:15  pwagner
+# Fixed problem with older .configure files
+#
 # Revision 1.6  2001/02/26 00:26:49  pwagner
 # default FOPTS and LDOPTS can be set,  saved to .configure
 #
