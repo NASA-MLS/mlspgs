@@ -22,6 +22,7 @@ module SidsModule
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
   use Dump_0, only: dump
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=130), private :: Id = &
@@ -52,6 +53,9 @@ contains
     integer :: IxJacobian               ! Index of Jacobian in matrix database
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: Son                      ! Of ROOT
+
+    type (ForwardModelIntermediate_T) :: ifm ! Work space for forward model
+    type (ForwardModelStatus_T) :: fmStat ! Status for forward model
 
     ! Error message codes
     integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
@@ -84,15 +88,28 @@ contains
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
       if ( .not. associated(jacobian) ) call announceError ( notPlain )
-      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                   Jacobian, FwdModelOut=FwdModelOut)
+      fmStat%newHydros = .true.
+      fmStat%maf = 1
+      do
+        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
+          & FwdModelOut, ifm, fmStat, Jacobian)
+        if (fmStat%finished) exit
+      end do
+
     else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
-      print*,'Calling forward model without derivatives'
-      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                   FwdModelOut=FwdModelOut)
-      print*,'Got back from forward model'
+      fmStat%newHydros = .true.
+!      fmStat%maf = 2 ! DEBUG
+      fmStat%maf = 1
+!      config%signals(1)%channels=.false.
+!      config%signals(1)%channels(1)=.true.
+      do
+        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
+          & FwdModelOut, ifm, fmStat)
+        if (fmStat%finished) exit
+!        if (fmStat%maf == 4) stop
+      end do
     end if
     print*,'Done the forward model!!!'
     if ( toggle(gen) ) call trace_end ( "SIDS" )
@@ -121,6 +138,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.15  2001/04/10 23:28:10  livesey
+! Interim working version
+!
 ! Revision 2.14  2001/04/10 02:46:17  livesey
 ! Working version, no more FMI/TFMI
 !
