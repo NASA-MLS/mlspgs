@@ -8,8 +8,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use Hdf, only: DFACC_CREATE, DFNT_FLOAT64, SFCREATE, SFDIMID, SFEND, &
-    & SFENDACC, SFSTART, SFWDATA
+  use Hdf, only: DFACC_CREATE, SFEND, &
+    & SFSTART
   use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
     & FIELD_FIRST, FIELD_LAST, L_L2AUX, L_L2GP, S_OUTPUT, S_TIME
@@ -21,11 +21,11 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, &
-	 & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, mlspcf_mcf_l2log_start, &
+	 & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, &
 	 & mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
-  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
+  use SDPToolkit, only: PGS_S_SUCCESS, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
@@ -98,12 +98,13 @@ contains ! =====     Public Procedures     =============================
 
   ! - - - External Procedures
 
-    interface
-      integer function SFSDMNAME ( DIM_ID, DIM_NAME ) ! An HDF function
-        integer, intent(in) :: DIM_ID
-        character(len=*), intent(in) :: DIM_NAME
-      end function SFSDMNAME
-    end interface
+! Not needed any longer
+!    interface
+!      integer function SFSDMNAME ( DIM_ID, DIM_NAME ) ! An HDF function
+!        integer, intent(in) :: DIM_ID
+!        character(len=*), intent(in) :: DIM_NAME
+!      end function SFSDMNAME
+!    end interface
 
   ! - - - Local declarations - - -
 
@@ -111,12 +112,8 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     character (len=132) :: FILE_BASE    ! From the FILE= field
-    integer :: FLAG
-    logical :: FOUND
     logical :: GOT(field_first:field_last)
     integer :: GSON                     ! Son of Son -- an assign node
-    integer :: I
-    integer :: IN_FIELD                 ! A son of an assign vertex
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     integer :: KEY                      ! Index of spec_args node
     integer :: l2auxFileHandle, l2aux_Version
@@ -136,7 +133,6 @@ contains ! =====     Public Procedures     =============================
     integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
-    integer(i4) :: START(3), STRIDE(3), DIM_SIZES(3)
     integer :: SWFID
     REAL :: T1, T2     ! for timing
     logical :: TIMING
@@ -204,14 +200,14 @@ contains ! =====     Public Procedures     =============================
  
   				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
 				& mlspcf_l2gp_end, &
-  & .TRUE., returnStatus, l2gp_Version, .true.)
+  & .TRUE., returnStatus, l2gp_Version, .true., exactName=l2gpPhysicalFilename)
  
             if ( returnStatus == 0 ) then
-					if(DEBUG) call output('file name: ' // TRIM(file_base), advance='yes')
+					if(DEBUG) call output('file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
                 ! Open the HDF-EOS file and write swath data
                 
 					if(DEBUG) call output('Attempting swopen', advance='yes')
-                swfid = swopen(file_base, DFACC_CREATE)
+                swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
 
                 ! Loop over the segments of the l2cf line
                 
@@ -253,17 +249,33 @@ contains ! =====     Public Procedures     =============================
 					& == QuantityNames(1) ) then
 
 					! Typical homogeneous l2gp file: e.g., BrO is ML2BRO.001.MCF
-					if(DEBUG) call output('preparing to populate metadata_std', advance='yes')
+					if(DEBUG) then
+						call output('preparing to populate metadata_std', advance='yes')
+						call output('l2gpFileHandle: ', advance='no')
+						call output(l2gpFileHandle , advance='no')
+						call output('   l2gp_mcf: ', advance='no')
+						call output(l2gp_mcf , advance='no')
+						call output('   swfid: ', advance='no')
+						call output(swfid , advance='yes')
+					endif
 						call populate_metadata_std &
-						& (swfid, l2gp_mcf, l2pcf, QuantityNames(1), anText)
+						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText)
 						l2gp_mcf = l2gp_mcf + 1
 
 					else
 
 					! Type l2gp file 'other'
-					if(DEBUG) call output('preparing to populate metadata_oth', advance='yes')
+					if(DEBUG) then
+						call output('preparing to populate metadata_oth', advance='yes')
+						call output('l2gpFileHandle: ', advance='no')
+						call output(l2gpFileHandle , advance='no')
+						call output('   l2gp_mcf: ', advance='no')
+						call output(l2gp_mcf , advance='no')
+						call output('   swfid: ', advance='no')
+						call output(swfid , advance='yes')
+					endif
 						call populate_metadata_oth &
-						& (swfid, l2gp_mcf, l2pcf, &
+						& (l2gpFileHandle, l2gp_mcf, l2pcf, &
 						& numquantitiesperfile, QuantityNames, anText)
 
 					endif
@@ -276,7 +288,7 @@ contains ! =====     Public Procedures     =============================
 !              call MLSMessage ( MLSMSG_Error, ModuleName, &
 !                &  "Error finding l2gp file:  "//mnemonic//" "//msg )
               call announce_error ( ROOT, &
-                &  "Error finding l2gp file:  "//file_base, returnStatus)
+                &  "Error finding l2gp file matching:  "//file_base, returnStatus)
 
             end if
             
@@ -302,11 +314,11 @@ contains ! =====     Public Procedures     =============================
                 
   				l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
 				& mlspcf_l2dgm_end, &
-  & .TRUE., returnStatus, l2aux_Version, .true.)
+  & .TRUE., returnStatus, l2aux_Version, .true., exactName=l2auxPhysicalFilename)
  
             if ( returnStatus == 0 ) then
 				
-					if(DEBUG) call output('file name: ' // TRIM(file_base), advance='yes')
+					if(DEBUG) call output('file name: ' // TRIM(l2auxPhysicalFilename), advance='yes')
                 ! Create the HDF file and initialize the SD interface
 					if(DEBUG) call output('Attempting sfstart', advance='yes')
                 sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
@@ -353,7 +365,7 @@ contains ! =====     Public Procedures     =============================
  !                 call MLSMessage ( MLSMSG_Error, ModuleName, &
  !                   &  "Error closing l2aux file:  "//mnemonic//" "//msg )
               		 call announce_error ( ROOT, &
-               	 &  "Error closing l2aux file:  "//file_base, returnStatus)
+               	 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
                end if
 
 				! Write the metadata file
@@ -363,9 +375,17 @@ contains ! =====     Public Procedures     =============================
 					else
 
 					! We will need to think harder about this; until then reuse
-					if(DEBUG) call output('preparing to populate metadata_oth', advance='yes')
+					if(DEBUG) then
+						call output('preparing to populate metadata_oth', advance='yes')
+						call output('l2auxFileHandle: ', advance='no')
+						call output(l2auxFileHandle , advance='no')
+						call output('   l2aux_mcf: ', advance='no')
+						call output(l2aux_mcf , advance='no')
+						call output('   sdfId: ', advance='no')
+						call output(sdfId , advance='yes')
+					endif
 						call populate_metadata_oth &
-						& (swfid, l2aux_mcf, l2pcf, &
+						& (l2auxFileHandle, l2aux_mcf, l2pcf, &
 						& numquantitiesperfile, QuantityNames, anText)
 
 					endif
@@ -378,7 +398,7 @@ contains ! =====     Public Procedures     =============================
 !              call MLSMessage ( MLSMSG_Error, ModuleName, &
 !                &  "Error finding l2aux file:  "//mnemonic//" "//msg )
               call announce_error ( ROOT, &
-                &  "Error finding l2aux file:  "//file_base, returnStatus)
+                &  "Error finding l2aux file matching:  "//file_base, returnStatus)
             end if
             
 !          end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
@@ -395,19 +415,27 @@ contains ! =====     Public Procedures     =============================
     end do  ! spec_no
     if ( timing ) call sayTime
 
-    if ( toggle(gen) ) call trace_end ( "Output_Close")
-
 ! Write the log file metadata
+
+		if(DEBUG) then
+			call output('About to write log file metadata' , advance='yes')
+		endif
 
       CALL WriteMetaLog(l2pcf)
 
 ! Done with text of PCF file at last
+
+		if(DEBUG) then
+			call output('About to deallocate text of PCF file' , advance='yes')
+		endif
 
       DEALLOCATE(anText, STAT=returnStatus)
 		if(returnStatus /= 0) then
 			call announce_error(0, &
 			& 'Failed to deallocate anText of PCF file')
 		endif
+
+    if ( toggle(gen) ) call trace_end ( "Output_Close")
 
   contains
     subroutine SayTime
@@ -437,6 +465,13 @@ contains ! =====     Public Procedures     =============================
 		endif
     call output ( ' OutputAndClose complained: ' )
 
+    call output ( ': ' )
+    call output ( "The " );
+	if(where > 0) then
+    call dump_tree_node ( where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
 
 		CALL output("Caused the following error:", advance='yes', &
 		& from_where=ModuleName)
@@ -451,6 +486,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.18  2001/04/09 23:44:34  pwagner
+! Fewer mistakes, more debug-type output
+!
 ! Revision 2.17  2001/04/07 00:13:44  pwagner
 ! Extra error checks
 !
