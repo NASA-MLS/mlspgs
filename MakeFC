@@ -87,7 +87,7 @@ endif
 #   split_path.sh          Splits path/name into "path name"
 #   updatemf.sh            Updates Makefile in object file directory
 #   uptodate.make          Ensure that custom machine files are up-to-date
-#   which_fftw.sh          Construct correct fftw link lines for level 3
+#   which_fftw.sh          Construct correct fftw link lines for levels 1, 3
 #
 #  More info on some of these scripts is available via
 #  Command                      for help on 
@@ -205,6 +205,7 @@ SHELL = /bin/sh
 # heconvert      -- build and install this prog
 # hl             -- build and install this prog
 # init_gen       -- build and install this prog
+# MLS_h5ls          -- build and install this prog
 # utctotai       -- build and install this lib
 #
 #    The following are useful if you stored multiple configurations
@@ -627,13 +628,6 @@ f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
-	@case "$(HDF5)" in \
-	"") \
-		echo "Sorry--you must define HDF5 before building heconvert" ; \
-		echo "Try make configure" ; \
-		exit 2 ; \
-		;; \
-	*) \
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) $(MLSBIN)/convert.c \
@@ -641,9 +635,7 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
       -I $(HDFEOS5)/../../include \
       -I $(HDFEOS)/../../include \
       -I $(HDF)/../include -I $(HDF5)/../include -I $(HDF5)/../src \
-      $(UTIL_OPTS) -main convert.c\
-		;; \
-	esac 
+      $(UTIL_OPTS) -main convert.c
    
 #EXTRA_PATHS="-I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos5.0/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/src"
 
@@ -653,44 +645,31 @@ init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
-	@case "$(HDF5)" in \
-	"") \
-		echo "Sorry--you must define HDF5 before building h5subset" ; \
-		echo "Try make configure" ; \
-		exit 2 ; \
-		;; \
-	*) \
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
       -i "-I $(HDF5)/../include" \
       $(UTIL_OPTS) -main h5subset.c\
-      $(MLSBIN)/$@.c \
-		;; \
-	esac 
+      $(MLSBIN)/$@.c
 
 h5cat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5cat.c
-	@case "$(HDF5)" in \
-	"") \
-		echo "Sorry--you must define HDF5 before building h5cat" ; \
-		echo "Try make configure" ; \
-		exit 2 ; \
-		;; \
-	*) \
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
       -i "-I $(HDF5)/../include" \
       $(MLSBIN)/$@.c \
-      $(UTIL_OPTS) -main h5cat.c\
-		;; \
-	esac 
+      $(UTIL_OPTS) -main h5cat.c
 
 hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main hl.c
+
+MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
 		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -994,10 +973,15 @@ update:
   internaladd_copy internalreset_copy show_copy internalupdate levels\
   lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5 lib--hdf4\
   makefile mostlyclean $(SUBDIRS) subdirs\
-  tar substar tarz substarz targ substarg substars update
+  tar substar tarz substarz targ substarg substars update\
+  CondenseLeakLog end_stmts f90tex heconvert init_gen h5subset h5cat \
+  hl MLS_h5ls utctotai
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.76  2002/08/23 20:34:25  pwagner
+# Uses temp_name instead of temp.dep
+#
 # Revision 1.75  2002/08/05 18:07:46  pwagner
 # turns main to MAIN__ if MLSF95 is Lahey
 #
