@@ -72,7 +72,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DECAY               = f_criteria + 1
-  integer, parameter :: F_DIAGONAL            = f_decay + 1
+  integer, parameter :: F_DESTROYJACOBIAN     = f_decay + 1
+  integer, parameter :: F_DIAGONAL            = f_destroyJacobian + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
   integer, parameter :: F_DO_CONV             = f_diagonalOut + 1
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
@@ -397,6 +398,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_decay) =               add_ident ( 'decay' )
+    field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
@@ -839,6 +841,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
+             begin, f+f_destroyJacobian, t+t_boolean, n+n_field_type, &
              begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
@@ -919,6 +922,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.98  2001/05/10 01:08:02  livesey
+! Added destroyJacobian option to sids
+!
 ! Revision 2.97  2001/05/08 21:53:05  livesey
 ! Added precision field to join.  Got rid of xStar, yStar and kStar
 !
