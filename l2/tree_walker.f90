@@ -109,8 +109,7 @@ subtrees: do while ( j <= howmany )
                 & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
                 & chunks, chunkNo)
             case ( z_join )
-              call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, &
-                & qtyTemplates, chunks, chunkNo )
+              call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
             case ( z_retrieve )
               call retrieve ( son, vectors, matrices )
             case default
@@ -145,6 +144,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.8  2001/02/23 02:51:44  vsnyder
+! Improve progress messages triggered by -g option
+!
 ! Revision 2.7  2001/02/08 01:40:53  vsnyder
 ! Don't know what I have done, but "cvs update" said M instead of U
 !
