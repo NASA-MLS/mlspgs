@@ -73,9 +73,22 @@ contains
 
 !      CALL HEADER(2)
 
-      CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
-                  &      GAMMA,N2,MOL,NMOL,NCNT)
+      QLG   = 0.0_r8
+      V0    = 0.0_r8
+      GSE   = 0.0_r8
+      IST   = 0.0_r8
+      WTH   = 0.0_r8
+      NTH   = 0.0_r8
+      DELTA = 0.0_r8
+      N1    = 0.0_r8
+      GAMMA = 0.0_r8
+      N2    = 0.0_r8
 
+      If ( .not. Bill_Spectra ) then
+
+        CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
+                    &      GAMMA,N2,MOL,NMOL,NCNT)
+      Endif
 !-------------------------------------------------
 !     GET SURFACE REFLECTIVITY
 !-------------------------------------------------
@@ -142,6 +155,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.14  2001/11/16 00:40:52  jonathan
+! add losVel
+!
 ! Revision 1.13  2001/11/15 23:53:02  jonathan
 ! clean log
 !
