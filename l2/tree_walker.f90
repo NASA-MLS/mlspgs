@@ -20,6 +20,8 @@ module TREE_WALKER
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+  logical :: GLOBALSETTINGSONLY = .false.
+  logical :: CHUNKDIVIDEONLY = .false.
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
@@ -35,7 +37,7 @@ contains ! ====     Public Procedures     ==============================
       & ConstructMIFGeolocation
     use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
     use EmpiricalGeometry, only: ForgetOptimumLon0
-    use FGrid, only: FGrid_T, DestroyFGridDatabase
+    use FGrid, only: FGrid_T, DestroyFGridDatabase, DUMP
     use Fill, only: MLSL2Fill
     use FilterShapes_m, only: Destroy_Filter_Shapes_Database
     use ForwardModelConfig, only: ForwardModelConfig_T, &
@@ -64,7 +66,8 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
-    use MLSL2Options, only: CHECKPATHS
+    use MLSL2Options, only: CHECKPATHS, &
+      & SKIPRETRIEVAL, STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -118,7 +121,9 @@ contains ! ====     Public Procedures     ==============================
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
+    logical ::                                   REDUCEDCHUNKS
     integer ::                                   SON              ! Son of Root
+    logical ::                                   STOPEARLY
     real    ::                                   t1, t2, tChunk
     integer ::                                   totalNGC   ! Total num garbage colls.
     logical ::                                   show_totalNGC = .true.
@@ -134,6 +139,10 @@ contains ! ====     Public Procedures     ==============================
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
+    globalsettingsonly = STOPAFTERGLOBAL
+    chunkdivideonly    = STOPAFTERCHUNKDIVIDE
+    stopearly          = globalsettingsonly .or. chunkdivideonly
+    reducedChunks      = .false.
     depth = 0
     totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -159,6 +168,10 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
           & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
+        if ( GLOBALSETTINGSONLY .and. .not. parallel%slave ) then
+          call finishUp(.true.)
+          return
+        endif
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) then
@@ -171,10 +184,10 @@ contains ! ====     Public Procedures     ==============================
         call spectroscopy ( son )
         call add_to_section_timing ( 'spectroscopy', t1)
       case ( z_readapriori )
-        call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedDataBase )
+        if ( .not. stopearly ) call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedDataBase )
         call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeGrids )
-        call mergeGrids ( son, griddedDataBase )
+        if ( .not. stopearly ) call mergeGrids ( son, griddedDataBase )
 
         ! --------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -186,7 +199,7 @@ contains ! ====     Public Procedures     ==============================
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
         else
-          if ( .not. checkPaths) then
+          if ( .not. checkPaths ) then
             call ChunkDivide ( son, processingRange, l1bInfo, chunks )
             call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, &
             & l2gpDatabase, processingRange )
@@ -225,6 +238,10 @@ contains ! ====     Public Procedures     ==============================
         end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'chunk_divide', t1)
+        if ( CHUNKDIVIDEONLY .or. GLOBALSETTINGSONLY ) then
+          call finishUp(.true.)
+          return
+        endif
 
       case ( z_algebra )
         call algebra ( son, vectors, matrices, chunks(1), forwardModelConfigDatabase )
@@ -237,8 +254,9 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
-            if ( singleChunk /= 0 ) then
+            if ( singleChunk /= 0 .and. .not. reducedChunks ) then
               call ReduceChunkDatabase(chunks, singleChunk, lastChunk )
+              reducedChunks = .true.  ! So we don't try this more than once
             endif
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
@@ -284,7 +302,7 @@ subtrees:   do while ( j <= howmany )
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
               case ( z_construct )
-                if ( .not. checkPaths) &
+                if ( .not. checkPaths ) &
                 & call MLSL2Construct ( son, l1bInfo, processingRange, &
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, &
                   & fGrids, vGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
@@ -296,13 +314,13 @@ subtrees:   do while ( j <= howmany )
                   call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
-		  & chunks, chunkNo )
-		endif
+		            & chunks, chunkNo )
+		          endif
                 call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
-		  & forwardModelConfigDatabase )
+		            & forwardModelConfigDatabase )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -378,17 +396,21 @@ subtrees:   do while ( j <= howmany )
          & .and. associated(griddedDataBase) ) then
           call Dump(griddedDataBase)
         end if
+        ! print *, 'About to destroy gridded databse'
         call DestroyGriddedDataDatabase ( griddedDataBase )
         if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
         elseif ( index(switches,'cab') /= 0 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase, ColumnsOnly=.true.)
         end if
+        ! print *, 'About to destroy l2gp databse'
         call DestroyL2GPDatabase ( l2gpDatabase )
         if ( index(switches,'l2aux') /= 0 .and. .not. parallel%slave) then
           call Dump(l2auxDatabase)
         end if
+        ! print *, 'About to destroy l2aux databse'
         call DestroyL2AUXDatabase ( l2auxDatabase )
+        ! print *, 'About to destroy direct databse'
         call DestroyDirectDatabase ( DirectDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
@@ -399,28 +421,42 @@ subtrees:   do while ( j <= howmany )
     end do
 
     ! Now finish up
-    call CloseParallel(size(Chunks))
-    call DestroyChunkDatabase ( chunks )
-    call destroy_ant_patterns_database
-    call DestroyBinSelectorDatabase
-    call DestroyL2PCDatabase
-    call destroy_filter_shapes_database
-    call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
-    call destroy_line_database
-    call destroy_pointing_grid_database
-    call destroy_spectcat_database
-    call DestroyBandDatabase ( Bands )
-    call DestroyModuleDatabase ( Modules )
-    call DestroyRadiometerDatabase ( Radiometers )
-    call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
-    call DestroySignalDatabase ( Signals )
-    call destroyVGridDatabase ( vGrids )
-    call destroyFGridDatabase ( fGrids )
-    call DestroyL1BInfo ( l1bInfo )
-    error_flag = 0
-    if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
+    call finishUp
 
   contains
+    subroutine finishUp(early)
+      logical, intent(in), optional :: early
+      logical :: myEarly
+      integer :: numChunks
+      myEarly = .false.
+      if ( present(early) ) myEarly = early
+      numChunks = 0
+      if ( associated(Chunks) ) numChunks = size(Chunks)
+      call CloseParallel(numChunks, early)
+      if ( .not. (myEarly .or. skipRetrieval) ) then
+        call DestroyChunkDatabase ( chunks )
+        call destroy_ant_patterns_database
+        call DestroyBinSelectorDatabase
+        call DestroyL2PCDatabase
+        call destroy_filter_shapes_database
+        call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
+        call destroy_line_database
+        call destroy_pointing_grid_database
+        call destroy_spectcat_database
+        call DestroyBandDatabase ( Bands )
+        call DestroyModuleDatabase ( Modules )
+        call DestroyRadiometerDatabase ( Radiometers )
+        call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
+        call DestroySignalDatabase ( Signals )
+        call destroyVGridDatabase ( vGrids )
+        call destroyFGridDatabase ( fGrids )
+        ! call dump(fGrids, destroy=.true.)
+        call DestroyL1BInfo ( l1bInfo )
+      endif
+      error_flag = 0
+      if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
+    end subroutine finishUp
+
     subroutine SayTime ( What, startTime )
       character(len=*), intent(in) :: What
       real, intent(in), optional :: startTime
@@ -463,6 +499,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.128  2004/07/22 20:49:58  cvuu
+! Add forwardModelConfigDatabase to the call MLSL2Join and MLSL2Fill
+!
 ! Revision 2.127  2004/05/19 19:16:12  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
