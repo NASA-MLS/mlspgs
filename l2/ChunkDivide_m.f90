@@ -16,7 +16,7 @@ module ChunkDivide_m
   use Init_Tables_Module, only: F_OVERLAP, F_MAXLENGTH, F_NOCHUNKS, &
     & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, F_SCANLOWERLIMIT, &
     & F_SCANUPPERLIMIT, F_NOSLAVES, FIELD_FIRST, FIELD_LAST, L_EVEN, &
-    & L_FIXED, F_MAXGAP, L_ORBITAL, S_CHUNKDIVIDE, L_BOTH, L_EITHER
+    & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
   use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, PHYQ_ANGLE, &
     & PHYQ_LENGTH, PHYQ_DIMENSIONLESS
@@ -70,6 +70,8 @@ module ChunkDivide_m
   ! The chunk divide methods are:
   !
   ! Fixed - Ignore the L1B file, just give a fixed set of chunks as described
+  !
+  ! PE - One chunk centred on the given orbit geodetic angle.
   !
   ! Orbital - Chunks are some ideal fraction of an orbit.  The algorithm
   !           desires to keep the chunk boundaries at the same positions each
@@ -137,6 +139,9 @@ contains ! =================================== Public Procedures==============
     select case ( config%method )
     case ( l_fixed )
       call ChunkDivide_Fixed ( config, chunks )
+    case ( l_PE )
+      call ChunkDivide_PE ( config, mafRange, l1bInfo, &
+        & obstructions, chunks )
     case ( l_orbital )
       call ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
         & obstructions, chunks )
@@ -238,6 +243,134 @@ contains ! =================================== Public Procedures==============
     end do
 
   end subroutine ChunkDivide_Fixed
+
+  !----------------------------------------- ChunkDivide_PE --------
+  subroutine ChunkDivide_PE ( config, mafRange, l1bInfo, &
+    & obstructions, chunks )
+    type (ChunkDivideConfig_T), intent(in) :: CONFIG
+    integer, dimension(2), intent(in) :: MAFRANGE
+    type (L1BInfo_T), intent(in) :: L1BINFO
+    type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
+    type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+
+    ! Local parameters
+    real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
+
+    ! Local variables
+    type (L1BData_T) :: TAITIME         ! From L1BOA
+    type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
+
+    character(len=10) :: MODNAMESTR     ! Home module name as string
+
+    integer :: CHUNK                    ! Loop counter
+    integer :: FLAG                     ! From ReadL1B
+    integer :: HOMEMAF                  ! first MAF after homeGeodAngle
+    integer :: HOME                     ! Index of home MAF in array
+    integer :: M1, M2                   ! MafRange + 1
+    integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
+    integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
+    integer :: NOMAFS                   ! Number of MAFs to consider
+    integer :: NOMAFSREAD               ! From ReadL1B
+    integer :: ORBIT                    ! Used to locate homeMAF
+    integer :: STATUS                   ! From allocate etc.
+    integer :: NOCHUNKS                 ! Number of chunks
+    integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
+    integer :: MAXLENGTH                ! Max length as integer (MAFs)
+
+    integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
+    integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
+
+    real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
+    real(r8) :: MAXANGLE                ! Of range in data
+    real(r8) :: MAXTIME                 ! Time range in data
+    real(r8) :: MAXV                    ! Either minTime or minAngle
+    real(r8) :: MINANGLE                ! Of range in data
+    real(r8) :: MINTIME                 ! Time range in data
+    real(r8) :: MINV                    ! Either minTime or minAngle
+    real(r8) :: TESTANGLE               ! Angle to check for
+    real(r8) :: HOMEV                   ! Value of angle/time at home
+
+    real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
+    real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
+
+    ! Exectuable code
+    
+    ! Read in the data we're going to need
+    call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
+    call ReadL1BData ( l1bInfo%l1bOAId, trim(modNameStr)//'.tpGeodAngle', &
+      & tpGeodAngle, noMAFsRead, flag )
+    call ReadL1BData ( l1bInfo%l1bOAId, 'MAFStartTimeTAI', &
+      & taiTime, noMAFsRead, flag )
+    noMAFs = mafRange(2) - mafRange(1) + 1
+    m1 = mafRange(1) + 1
+    m2 = mafRange(2) + 1
+
+    minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    minTime = minval ( taiTime%dpField(1,1,m1:m2) )
+    maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! First try to locate the last MAF before the homeGeodAngle
+    orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
+    if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
+    testAngle = config%homeGeodAngle + orbit*360.0
+    if ( config%maxLengthFamily == PHYQ_Angle ) then
+      angleIncrement = config%maxLength
+    else
+      angleIncrement = 360.0
+    end if
+    
+    maxLength = nint ( config%maxLength )
+    
+    homeHuntLoop: do
+      if ( testAngle < minAngle ) then
+        testAngle = testAngle + angleIncrement
+        cycle
+      endif
+      if ( testAngle > maxAngle ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to establish a home major frame, using the first' )
+        home = 1
+        exit homeHuntLoop
+      end if
+      ! Find MAF which starts before this test angle
+      call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
+        & allowTopValue = .true. )
+      ! Now if this is close enough, and has enough MAFs around it, accept it
+      if ( ( abs ( tpGeodAngle%dpField(1,1,home) - &
+        & testAngle ) < HomeAccuracy ) &
+        & .and. ( home - maxLength/2 >= 1 ) &
+        & .and. ( home + maxLength/2 <= noMAFs ) ) exit homeHuntLoop
+      ! Otherwise, keep looking
+      testAngle = testAngle + angleIncrement
+    end do homeHuntLoop
+    homeMAF = home + m1 - 1
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! OK, now we have a home MAF, get a first cut for the chunks
+    ! We work out the chunk ends for each chunk according to how the
+    ! maxLength field is specified.
+    ! config%maxLengthFamily == PHYQ_MAFs
+    noChunks = 1
+      
+    ! Allocate the chunk
+    allocate ( chunks(noChunks), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'chunks (maxLength/MAFs)' )
+    
+    ! Work out its position (in the file)
+    chunks(1)%firstMAFIndex = homeMAF - maxLength/2 - 1
+    chunks(1)%lastMAFIndex = homeMAF + maxLength/2 - 1
+
+    chunks(1)%noMAFsUpperOverlap = 0
+    chunks(1)%noMAFsLowerOverlap = 0
+    chunks(1)%accumulatedMAFs = chunks(1)%firstMAFIndex
+        
+    call DeallocateL1BData ( tpGeodAngle )
+    call DeallocateL1BData ( taiTime )
+
+  end subroutine ChunkDivide_PE
 
   !----------------------------------------- ChunkDivide_Orbital --------
   subroutine ChunkDivide_Orbital ( config, mafRange, l1bInfo, &
@@ -498,6 +631,12 @@ contains ! =================================== Public Procedures==============
       & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
       &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
 
+    integer, target, dimension(3) :: NeededForPE = &
+      & (/ f_maxLength, f_homeModule, f_homeGeodAngle /)
+    integer, target, dimension(7) :: NotWantedForPE = &
+      & (/ f_noChunks, f_overlap, f_noSlaves, f_scanLowerLimit, &
+      &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
+
     integer, target, dimension(6) :: NeededForOrbital = &
       & (/ f_maxLength, f_overlap, f_homeModule, f_homeGeodAngle, &
       &    f_criticalModules, f_maxGap /)
@@ -594,6 +733,9 @@ contains ! =================================== Public Procedures==============
     case ( l_fixed )
       needed => NeededForFixed
       notWanted => NotWantedForFixed
+    case ( l_PE )
+      needed => NeededForPE
+      notWanted => NotWantedForPE
     case ( l_orbital )
       needed => NeededForOrbital
       notWanted => NotWantedForOrbital
@@ -630,17 +772,21 @@ contains ! =================================== Public Procedures==============
     if ( got(f_maxgap) .and. all ( config%maxGapFamily /= &
       & (/ PHYQ_MAFs, PHYQ_Angle, PHYQ_Time /))) &
       & call AnnounceError ( root, badUnits, f_maxGap )
-    if ( config%method == l_orbital ) then
+    select case ( config%method )
+    case ( l_PE )
+      if ( config%maxLengthFamily /= PHYQ_MAFs ) &
+        & call AnnounceError ( root, badUnits, f_maxLength )
+    case ( l_orbital )
       if (all(config%maxLengthFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
         & call AnnounceError ( root, badUnits, f_maxLength )
       if (all(config%overlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
         & call AnnounceError ( root, badUnits, f_overlap )
-    else
+    case ( l_fixed, l_even )
       if ( config%maxLengthFamily /= PHYQ_MAFs ) &
         & call AnnounceError ( root, badUnits, f_maxLength )
       if ( config%overlapFamily /= PHYQ_MAFs ) &
         & call AnnounceError ( root, badUnits, f_overlap )
-    end if
+    end select
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Problem with ChunkDivide command' )
@@ -1172,6 +1318,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.21  2002/08/04 15:59:45  mjf
+! New method "PE" for a single chunk centred on (or near) a given phi.
+!
 ! Revision 2.20  2002/05/24 20:57:34  livesey
 ! More revisions associated with being able to have a specific number of chunks
 !
