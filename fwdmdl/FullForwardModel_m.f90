@@ -47,7 +47,7 @@ contains
       & Get_Beta_Path_Polarized
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
-    use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_dT
+    use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
     use GLnp, only: NG
@@ -333,6 +333,7 @@ contains
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
 
+    complex(rp), pointer :: D_RAD_POL_DF(:,:,:) ! From mcrt_der
     complex(rp), pointer :: D_RAD_POL_DT(:,:,:) ! From mcrt_der
     complex(rp) :: RAD_POL(2,2)  ! polarized radiance output of mcrt for one freq and pointing
 
@@ -341,6 +342,7 @@ contains
       ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED_F
+    complex(rp), dimension(:,:,:,:), pointer :: DE_DF    ! DE/Df in Michael's notes
     complex(rp), dimension(:,:,:,:), pointer :: DE_DT    ! DE/DT in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DELTAU_POL ! E in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DINCOPTDEPTH_POL_DT ! D Incoptdepth_Pol / DT
@@ -463,11 +465,11 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & channelOrigins, d_rad_pol_dt, d_delta_df, d_delta_dt, d_t_scr_dt, &
-      & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
+      & channelOrigins, d_rad_pol_df, d_rad_pol_dt, d_delta_df, d_delta_dt, &
+      & d_t_scr_dt, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
-      & ddhidhidtl0, de_dt, del_s, deltau_pol, &
+      & ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_f, dh_dt_path_c, &
       & dhdz_glgrid, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_dn, do_calc_dn_c, do_calc_dn_F, &
@@ -792,22 +794,6 @@ contains
       call Trace_Begin ( 'ForwardModel.Allocate' )
     end if
 
-    if ( spect_der ) then
-      !??? Temperature's windowStart:windowFinish are probably not correct here ???
-      allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'k_spect_dw' )
-      allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'k_spect_dn' )
-      allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'k_spect_dv' )
-    end if
-
     call allocate_test ( tan_temp, no_tan_hts, 'tan_temp', moduleName )
 
     ! Allocate path quantities -----------------------------------------------
@@ -863,7 +849,7 @@ contains
     call allocate_test ( eta_fzp,       max_ele, size(grids_f%values),  'eta_fzp', moduleName )
     call allocate_test ( eta_zp,        max_ele, grids_f%p_len,  'eta_zp', moduleName )
     call allocate_test ( sps_path,      max_ele, no_mol, 'sps_path',       moduleName )
-    CALL allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
+    call allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
     true_path_flags = .true.
     if ( fwdModelConf%Incl_Cld ) then !JJ
       call allocate_test ( do_calc_iwc,    max_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
@@ -872,16 +858,6 @@ contains
       call allocate_test ( iwc_path,       max_ele, 1, 'iwc_path',           moduleName )
       call allocate_test ( ipsd,           max_ele, 'IPSD', moduleName )
       call allocate_test ( wc,         fwdModelConf%no_cloud_species, max_ele, 'WC', moduleName )
-    end if
-    if ( FwdModelConf%polarized ) then
-      call allocate_test ( eta_mag_zp,     max_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
-      call allocate_test ( mag_path,       max_ele, magfield%template%noChans+1, 'mag_path', &
-        & moduleName )
-      if ( temp_der ) then
-        allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
-        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Allocate//'d_rad_pol_dt' )
-      end if
     end if
     if ( temp_der ) then
 
@@ -935,11 +911,23 @@ contains
       call allocate_test ( k_atmos, noUsedChannels, no_tan_hts, size(grids_f%values), &
         & 'k_atmos', moduleName )
       k_atmos = 0.0
-    end if
+    end if ! atmos_der
 
     if ( spect_der ) then
 
-      ! Allocation when spectral derivative are needed:
+      !??? Temperature's windowStart:windowFinish are probably not correct here ???
+      allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'k_spect_dw' )
+      allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'k_spect_dn' )
+      allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+        & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'k_spect_dv' )
 
       call allocate_test ( dbeta_dw_path_c,    npc, no_mol, &
         & 'dbeta_dw_path_c', moduleName )
@@ -1003,7 +991,9 @@ contains
     end if
 
     if ( FwdModelConf%polarized ) then
-      ! Allocate some necessary arrays
+      call allocate_test ( eta_mag_zp,     max_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
+      call allocate_test ( mag_path,       max_ele, magfield%template%noChans+1, 'mag_path', &
+        & moduleName )
       allocate ( alpha_path_polarized(-1:1,npc), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'alpha_path_polarized' )
@@ -1034,7 +1024,18 @@ contains
       allocate ( deltau_pol(2,2,npc), stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'deltau_pol' )
+      if ( atmos_der ) then
+        allocate ( d_rad_pol_df(2,2,size(grids_f%values)), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'d_rad_pol_df' )
+        allocate ( de_df(2,2,npc,size(grids_f%values)), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'de_df' )
+      end if
       if ( temp_der ) then
+        allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'d_rad_pol_dt' )
         allocate ( de_dt(2,2,npc,sv_t_len), stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_Allocate//'de_dt' )
@@ -1724,6 +1725,32 @@ contains
               &  path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc), &
               &  i_stop, d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
 
+            if ( FwdModelConf%polarized ) then
+
+              ! VMR derivatives for polarized radiance.
+              ! Compute DE / Df from D Incoptdepth_pol / Df and put
+              ! into DE_DF.
+              call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, indices_c, z_path_c, &
+                &  Grids_f, beta_path_polarized(:,1:p_stop,:), eta_fzp, &
+                &  do_calc_zp(1:no_ele,:), sps_path, del_s(1:npc), &
+                &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop), &
+                &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
+         
+              ! Compute D radiance / Df from Tau, Prod, T_Script
+              ! and DE / Df.
+
+              call mcrt_der ( t_script(1:npc), de_dt(:,:,1:npc,:),      &
+                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
+                & p_stop, d_rad_pol_df )
+
+              if ( index(switches,'crosspol') == 0 ) then
+                k_atmos_frq(frq_i,:) = real(d_rad_pol_df(1,1,:))
+              else
+                k_atmos_frq(frq_i,:) = real(d_rad_pol_df(2,2,:))
+              end if
+
+            end if
+
           end if
 
           if ( temp_der ) then
@@ -1785,9 +1812,9 @@ contains
               ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
               ! and DE / DT.
 
-              call mcrt_der ( t_script(1:npc), d_t_scr_dt(1:npc,:),      &
-                & de_dt(:,:,1:npc,:), prod_pol(:,:,1:npc),               &
-                & tau_pol(:,:,1:npc), p_stop, d_rad_pol_dt )
+              call mcrt_der ( t_script(1:npc), de_dt(:,:,1:npc,:),      &
+                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
+                & p_stop, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
 
               if ( index(switches,'crosspol') == 0 ) then
                 k_temp_frq(frq_i,:) = real(d_rad_pol_dt(1,1,:))
@@ -2444,7 +2471,18 @@ contains
       deallocate ( incoptdepth_pol_gl, stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'incoptdepth_pol_gl' )
+      if ( atmos_der ) then
+        deallocate ( d_rad_pol_df, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'d_rad_pol_df' )
+        deallocate ( de_df, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'de_df' )
+      end if
       if ( temp_der ) then
+        deallocate ( d_rad_pol_dt, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'d_rad_pol_dt' )
         deallocate ( de_dt, stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_DeAllocate//'de_dt' )
@@ -2624,6 +2662,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.167  2003/08/15 18:50:21  vsnyder
+! Preparing the way for polarized vmr derivatives
+!
 ! Revision 2.166  2003/08/12 23:07:32  vsnyder
 ! Futzing with comments
 !

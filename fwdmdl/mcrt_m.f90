@@ -159,8 +159,8 @@ contains
   end subroutine Mcrt
 
 ! -----------------------------------------------------  Mcrt_Der  -----
-  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, P_Stop, &
-    & D_Radiance )
+  subroutine Mcrt_Der ( T_script, D_E, Prod, Tau, P_Stop, D_Radiance, &
+    & D_T_script )
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
@@ -212,13 +212,15 @@ contains
 
     ! SVE == state_vector_elements
     real(rk), intent(in) :: T_script(:)     ! sve.  Called Delta B above
-    real(rk), intent(in) :: D_T_script(:,:) ! path x sve. D Delta B
     complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.
                                             ! D (deltau) / D (Whatever)
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
+    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. ak.k.a D Delta B
+    ! T script or Delta B depends only on temperature and frequency, so it's
+    ! only needed for temperature derivatives.
 
     integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
     integer :: I_Tan                        ! Tangent point
@@ -250,30 +252,56 @@ contains
     ! NP-1 is the index of the last computed PINV
 
     d_radiance = 0.0_rk
-    do i_sv = 1, size(d_radiance,3)      ! state vector elements
-      d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
-      d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
-      w = 0.0_rk
-      i_pp = 2
-      do i_p = 2, np - 1                 ! path elements
-        ! w = w + P_k DE_k P_{k+1}^{-1}
-        if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
-          w = w + matmul ( matmul ( &
-          &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
-          &       pinv(:,:,i_p) )
-        else
-          i_pp = i_p - 1
-        end if
-        q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
-        q(1,2) =                              t_script(i_p) * w(1,2)
-        q(2,1) =                              t_script(i_p) * w(2,1)
-        q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
-        q_tau = matmul(q,tau(1:2,1:2,i_p))
-        d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-                                 &   q_tau + conjg(transpose(q_tau))
-        i_pp = i_pp + 1
-      end do ! i_p
-    end do ! i_sv
+
+    if ( present(d_t_script) ) then
+      do i_sv = 1, size(d_radiance,3)      ! state vector elements
+        d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
+        d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
+        w = 0.0_rk
+        i_pp = 2
+        do i_p = 2, np - 1                 ! path elements
+          ! w = w + P_k DE_k P_{k+1}^{-1}
+          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+            w = w + matmul ( matmul ( &
+            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+            &       pinv(:,:,i_p) )
+          else
+            i_pp = i_p - 1
+          end if
+          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+          q(1,2) =                              t_script(i_p) * w(1,2)
+          q(2,1) =                              t_script(i_p) * w(2,1)
+          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
+          i_pp = i_pp + 1
+        end do ! i_p
+      end do ! i_sv
+    else
+      do i_sv = 1, size(d_radiance,3)      ! state vector elements
+        w = 0.0_rk
+        i_pp = 2
+        do i_p = 2, np - 1                 ! path elements
+          ! w = w + P_k DE_k P_{k+1}^{-1}
+          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+            w = w + matmul ( matmul ( &
+            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+            &       pinv(:,:,i_p) )
+          else
+            i_pp = i_p - 1
+          end if
+          q(1,1) = t_script(i_p) * w(1,1)
+          q(1,2) = t_script(i_p) * w(1,2)
+          q(2,1) = t_script(i_p) * w(2,1)
+          q(2,2) = t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
+          i_pp = i_pp + 1
+        end do ! i_p
+      end do ! i_sv
+    end if
 
   end subroutine Mcrt_Der
 
@@ -284,6 +312,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.9  2003/08/14 19:37:55  vsnyder
+! Futzing with comments
+!
 ! Revision 2.8  2003/06/09 20:52:37  vsnyder
 ! More work on polarized derivatives
 !
