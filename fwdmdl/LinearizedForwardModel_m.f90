@@ -387,6 +387,7 @@ contains ! =====     Public Procedures     =============================
                 call CreateBlock ( jBlock, &
                   & noChans*noMIFs, instanceLen, &
                   & M_Full )
+                jBlock%values = 0.0_r8
               case ( M_Banded, M_Column_Sparse )
                 call MLSMessage( MLSMSG_Error, ModuleName, &
                   & "Not written code for adding to non full blocks" )
@@ -400,18 +401,11 @@ contains ! =====     Public Procedures     =============================
                 upper = (mifPointingsUpper(mif)-1)*noChans + 1
                   do chan = 1, noChans
                     if ( doChannel(chan) ) then
-                      if ( sideband == sidebandStart ) then
-                        jBlock%values ( i , : ) = &
-                          &   thisRatio(chan) * ( &
-                          &     lowerWeight(mif) * kBit( lower , : ) + &
-                          &     upperWeight(mif) * kBit( upper, : ) )
-                      else
-                        jBlock%values ( i , : ) = &
-                          & jBlock%values ( i , : ) + &
-                          &   thisRatio(chan) * ( &
-                          &     lowerWeight(mif) * kBit( lower , : ) + &
-                          &     upperWeight(mif) * kBit( upper, : ) )
-                      endif
+                      jBlock%values ( i , : ) = &
+                        & jBlock%values ( i , : ) + &
+                        &   thisRatio(chan) * ( &
+                        &     lowerWeight(mif) * kBit( lower , : ) + &
+                        &     upperWeight(mif) * kBit( upper, : ) )
                     endif
                     i = i + 1
                     lower = lower + 1
@@ -580,6 +574,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.19  2001/05/25 19:12:21  livesey
+! Embarassing bug fix.  Was using quantity basis as framework for interpolation,
+! not pointings in the l2pc file!
+!
 ! Revision 1.18  2001/05/19 01:21:33  livesey
 ! Bug fix, was only storing derivatives for second sideband.
 !
