@@ -399,7 +399,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables ----------------------------------------------------------
 
     ! First the old stuff which we hope to get rid of or redefine
-    integer(i4) :: i, j, k, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
+    integer(i4) :: i, j, k, ht_i, mnz, no_tan_hts, ch, Spectag, &
       m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
       mid, ilo, ihi, k_info_count, ld, &
       max_phi_dim, max_zeta_dim
@@ -655,7 +655,6 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
-!   fmStat%maf = 3       ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
@@ -818,7 +817,6 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------- Begin loop over sidebands -----------------------
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
-!  print*,'Doing sideband:', thisSideband, '( ',sidebandStart,sidebandStop,')'
 
       print 901,thisSideband,sidebandStart,sidebandStop
 901   format(' Doing sideband: ',i2,' (',i2,', ',i2,')')
@@ -859,7 +857,6 @@ contains ! =====     Public Procedures     =============================
         
         ! For the moment take the first match, later we'll be cleverer and choose
         ! the smallest.  Or maybe we'll turn this whole section into another routine.
-        print*,'All match:',allMatch
         do i = 1, totalSignals
           if ( allMatch(i) ) exit
         end do
@@ -1005,7 +1002,7 @@ contains ! =====     Public Procedures     =============================
         k = ptg_i
         h_tan = ifm%tan_hts(k,mafTInstance)
 
-   ! Compute the beta's along the path, for this tanget hight and this mmaf:
+        ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
         no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
 
@@ -1025,7 +1022,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Need to allocate this even if no derivatives as we pass it
 
-        call allocate_test ( dh_dt_path, no_ele, temp%template%noInstances, &
+        call allocate_test ( dh_dt_path, no_ele, phiWindow, &
           & temp%template%noSurfs, "dh_dt_path", ModuleName )
 
         if ( forwardModelConfig%temp_der ) then
@@ -1035,11 +1032,12 @@ contains ! =====     Public Procedures     =============================
             goto 99
           else
             do j = 1,  temp%template%noSurfs
-              do i = 1, temp%template%noInstances
+              do i = 1, phiWindow
+                m = i + windowStart - 1
                 call Lintrp ( ifm%z_glgrid, ifm%z_path(ptg_i,maf)%values,&
-                  &           ifm%dh_dt_glgrid(:,i,j), dum, ifm%gl_count,&
-                  &           no_ele )
-                dh_dt_path(:,i,j) = dum(:) * ifm%eta_phi(ptg_i,maf)%values(:,i)
+                  &           ifm%dh_dt_glgrid(:,m,j), dum, &
+                  &           ifm%gl_count, no_ele )
+                dh_dt_path(:,i,j) = dum(:) * ifm%eta_phi(ptg_i,maf)%values(:,m)
               end do
             end do
             deallocate ( dum, stat=i )
@@ -1376,6 +1374,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.110  2001/04/24 00:03:36  livesey
+! Bug fix
+!
 ! Revision 2.109  2001/04/23 22:22:50  livesey
 ! Working version.  Can now have no_phi_t /= noMAFs
 !
