@@ -42,6 +42,11 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
 
   ! First we'll define some global parameters and data types.
 
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Height'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'Time'
+
 ! This datatype stores a single gridded atmospheric quantity.  For example
 ! temperature, if an uncertainty field is also required, this is stored in a
 ! separate quantity.
@@ -1134,16 +1139,18 @@ END TYPE GriddedData_T
 !----------------- Beginning of Paul's code ------------------
 
     !---------------------------- ReadGriddedData ---------------------
-  SUBROUTINE ReadGriddedData(FileName, the_g_data, fieldName)
+  SUBROUTINE ReadGriddedData(FileName, the_g_data, GeoDimList, fieldName)
     !------------------------------------------------------------------------
 
     ! This routine reads a Gridded Data file, returning a filled data structure and the !
+	! appropriate for 'ncep' or 'dao'
 
     ! Arguments
 
     CHARACTER (LEN=*), INTENT(IN) :: FileName ! Name of the file containing the grid(s)
      TYPE( GriddedData_T ), INTENT(OUT) :: the_g_data ! Result
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: fieldName ! Name of gridded field
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: GeoDimList ! Comma-delimited dim names
+	 CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
 
@@ -1158,13 +1165,14 @@ END TYPE GriddedData_T
   integer :: status
   integer :: stride(4)
 
+    LOGICAL,  PARAMETER       :: CASESENSITIVE = .FALSE.
   integer, parameter :: GRIDORDER=1				! What order grid written to file
-  integer, parameter :: MAXLISTLENGTH=80		! Max length list of grid names
+  integer, parameter :: MAXLISTLENGTH=LineLen		! Max length list of grid names
   integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
   character (len=MAXLISTLENGTH) :: gridlist
   character (len=MAXLISTLENGTH) :: dimlist
   character (len=MAXLISTLENGTH) :: fieldlist
-  integer, parameter :: MAXNAMELENGTH=16		! Max length of grid name
+  integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
   character (len=MAXNAMELENGTH) :: gridname
   INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType
   ! External functions
@@ -1178,69 +1186,88 @@ END TYPE GriddedData_T
   file_id = gdopen(FileName, DFACC_RDONLY)
 
   IF (file_id /= SUCCEED) THEN
-    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"Could not open "// FileName//" "//mnemonic//" "//msg)
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"Could not open "// FileName//" "//mnemonic//" "//msg)
+	CALL announce_error(MLSMSG_Error, "Could not open "// FileName)
   END IF
 
 ! Find list of grid names on this file
   inq_success = gdinqgrid(FileName, gridlist, strbufsize)
   IF (inq_success /= SUCCEED) THEN
-    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"Could not inquire gridlist "// FileName//" "//mnemonic//" "//msg)
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"Could not inquire gridlist "// FileName//" "//mnemonic//" "//msg)
+	CALL announce_error(MLSMSG_Error, "Could not inquire gridlist "// FileName)
   END IF
 
 ! Find grid name corresponding to the GRIDORDER'th one
 	ngrids = NumStringElements(gridlist, COUNTEMPTY)
 	
 	IF(ngrids <= 0) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"NumStringElements of gridlist <= 0")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"NumStringElements of gridlist <= 0")
+		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist <= 0")
 	ELSEIF(ngrids < GRIDORDER) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"NumStringElements of gridlist < GRIDORDER")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"NumStringElements of gridlist < GRIDORDER")
+		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist < GRIDORDER")
 	ENDIF
 	
 	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
 
   gd_id = gdattach(file_id, gridname)
   IF (gd_id /= SUCCEED) THEN
-    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-               "Could not attach "//FileName//" "//mnemonic//" "//msg)
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!               "Could not attach "//FileName//" "//mnemonic//" "//msg)
+		CALL announce_error(MLSMSG_Error, "Could not attach "//FileName)
   END IF
 
 ! Now find dimsize(), dimname(), etc.
 	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
 
 	IF(nentries <= 0) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"nentries of gd_id <= 0")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"nentries of gd_id <= 0")
+		CALL announce_error(MLSMSG_Error, "nentries of gd_id <= 0")
 	ELSEIF(nentries > NENTRIESMAX) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"nentries of gd_id > NENTRIESMAX")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"nentries of gd_id > NENTRIESMAX")
+		CALL announce_error(MLSMSG_Error, "nentries of gd_id > NENTRIESMAX")
 	ENDIF
 
 	ndims = gdinqdims(gd_id, dimlist, dims)
 
 	IF(ndims <= 0) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"ndims of gd_id <= 0")
-	ELSEIF(ndims > NENTRIESMAX) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"ndims of gd_id > NENTRIESMAX")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"ndims of gd_id <= 0")
+		CALL announce_error(MLSMSG_Error, "ndims of gd_id <= 0")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"ndims of gd_id > NENTRIESMAX")
+		CALL announce_error(MLSMSG_Error, "ndims of gd_id > NENTRIESMAX")
 	ENDIF
 
 	nfields = gdinqflds(gd_id, fieldlist, rank, numberType)
 
 	IF(nfields <= 0) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"nfields of gd_id <= 0")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"nfields of gd_id <= 0")
+		CALL announce_error(MLSMSG_Error, "nfields of gd_id <= 0")
 	ELSEIF(nfields > NENTRIESMAX) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"nfields of gd_id > NENTRIESMAX")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"nfields of gd_id > NENTRIESMAX")
+		CALL announce_error(MLSMSG_Error, "nfields of gd_id > NENTRIESMAX")
 	ENDIF
+	
+	IF(.NOT. CASESENSITIVE) THEN
+		fieldlist = Capitalize(fieldlist)
+	ENDIF
+
+	IF(PRESENT(fieldName)) THEN
+	ELSE
+	ENDIF
+
     !-----------------------------
   END SUBROUTINE ReadGriddedData
   !-----------------------------
@@ -1449,12 +1476,50 @@ END TYPE GriddedData_T
   end subroutine Obtain_NCEP
 !===========================
 
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( level, full_message, use_toolkit )
+  
+   ! Arguments
+	
+	integer, intent(in)    :: level
+	logical, intent(in), optional :: use_toolkit
+	character(LEN=*), intent(in)    :: full_message
+	! Local
+  character (len=80) :: msg, mnemonic
+  integer :: status
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .false.
+	
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+    CALL MLSMessage (level, ModuleName, &
+              &trim(full_message)//" "//mnemonic//" "//msg)
+	else
+		print*, '***Error: level ', level, ' in module ', ModuleName
+		print*, trim(full_message)//" "//mnemonic//" "//msg
+	endif
+
+!===========================
+  end subroutine announce_error
+!===========================
+
 !=============================================================================
 END MODULE GriddedData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.4  2001/03/08 01:08:35  pwagner
+! Added announce_error
+!
 ! Revision 2.3  2001/03/07 01:03:19  pwagner
 ! ReadGriddedData added
 !
