@@ -4,9 +4,17 @@
 !===============================================================================
 MODULE MLSFiles               ! Utility file routines
 !===============================================================================
-   USE MLSCommon, only: i4
-   USE MLSStrings, only: Capitalize
-  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
+   USE HDFEOS, only: gdopen, swopen
+   USE MLSCommon, only: i4, NameLen
+   USE MLSStrings, only: Capitalize, LowerCase
+  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
+  & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
+  & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
+  & PGSd_IO_Gen_WSeqFrm, PGSd_IO_Gen_WSeqUnf, & 
+  & PGSd_IO_Gen_WDirFrm, PGSd_IO_Gen_WDirUnf, & 
+  & PGSd_IO_Gen_USeqFrm, PGSd_IO_Gen_USeqUnf, & 
+  & PGSd_IO_Gen_UDirFrm, PGSd_IO_Gen_UDirUnf, & 
+  & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, PGS_IO_GEN_OpenF
    IMPLICIT NONE
    PUBLIC
 
@@ -16,6 +24,11 @@ MODULE MLSFiles               ! Utility file routines
    CHARACTER(LEN=130) :: Id = &
    "$Id$"
 !----------------------------------------------------------
+
+  ! Now we have the legal unit numbers that files may be assigned
+
+  INTEGER, PARAMETER :: bottom_unit_num=1
+  INTEGER, PARAMETER :: top_unit_num=99
 
   CONTAINS
 
@@ -44,7 +57,7 @@ MODULE MLSFiles               ! Utility file routines
     ! Local variables
 	INTEGER, PARAMETER :: NAMENOTFOUND=-1
 	INTEGER, PARAMETER :: INVALIDPCRANGE=NAMENOTFOUND-1
-	INTEGER, PARAMETER :: MAXNAMELENGTH=132
+	INTEGER, PARAMETER :: MAXNAMELENGTH=NameLen
 	
 	CHARACTER (LEN=MAXNAMELENGTH) :: MatchName, TryName
 	INTEGER                       :: version, returnStatus
@@ -92,12 +105,238 @@ MODULE MLSFiles               ! Utility file routines
 
   END FUNCTION GetPCFromRef
 	
+  ! ---------------------------------------------  mls_io_gen_openF  -----
+
+  ! This function opens a generic file using either the toolbox
+  ! or else a Fortran OPEN statement
+  ! according to toolbox_mode
+  ! It returns theFileHandle corresponding to the FileName or the PC
+
+  ! If given a FileName as an arg and a range of PC numbers
+  ! [PCBottom, PCTop] which are integers
+  ! it will attempt to find a corresponding PC
+  
+  ! If given a PC it will attempt to find the corresponding FileName
+  
+  ! toolbox_mode                  meaning
+  ! PGS_IO_GEN_OpenF              use PGS_IO_Gen_OpenF or fail
+  !      swopen                   use swopen or fail
+  !      gdopen                   use gdopen or fail
+  !       open                    use Fortran or fail
+  
+  ! If the FileName is not found, it sets ErrType=NAMENOTFOUND
+  ! otherwise ErrType=0
+  
+  ! This is useful because all the Toolbox routines refer to files
+  ! by their PC numbers, not their names
+  
+  FUNCTION mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
+  & record_length, FileAccessType, &
+  & FileName, PCBottom, PCTop, versionNum, thePC) &
+  &  RESULT (theFileHandle)
+
+    ! Dummy arguments
+    INTEGER(i4),  INTENT(OUT)  :: ErrType
+    INTEGER(i4),  INTENT(OUT)  :: record_length
+    LOGICAL,  INTENT(IN)       :: caseSensitive
+    CHARACTER (LEN=*), INTENT(IN)   :: toolbox_mode
+    INTEGER(i4), INTENT(IN)                :: FileAccessType
+    INTEGER(i4)  :: theFileHandle
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)   :: FileName
+    INTEGER(i4),  OPTIONAL, INTENT(IN)   :: PCBottom, PCTop
+    INTEGER(i4), OPTIONAL, INTENT(IN)                :: thePC
+    INTEGER(i4),  OPTIONAL     :: versionNum
+  
+    ! Local variables
+
+	INTEGER, PARAMETER :: UNKNOWNFILEACCESSTYPE=-999
+	INTEGER, PARAMETER :: NOFREEUNITS=UNKNOWNFILEACCESSTYPE+1
+	CHARACTER (LEN=NameLen) :: myName
+	INTEGER(i4) :: myPC
+	INTEGER                       :: version, returnStatus
+   LOGICAL       :: tiedup
+	CHARACTER (LEN=9) :: access, action, form, position, status
+	INTEGER                       :: unit
+
+	IF(PRESENT(versionNum)) THEN
+		version = versionNum
+	ELSE
+		version = 1
+	ENDIF
+
+	if(PRESENT(thePC)) then
+		myPC = thePC
+		returnStatus = Pgs_pc_getReference(thePC, version, &
+              & myName)
+	ELSE
+		myName = FileName
+		myPC = GetPCFromRef(FileName, PCBottom, PCTop, &
+  & caseSensitive, returnStatus, versionNum)
+	ENDIF
+	
+	select case (LowerCase(toolbox_mode(1:2)))
+	
+	case('pg')
+		if(returnStatus == 0) then
+			ErrType = PGS_IO_Gen_OpenF(myPC, FileAccessType, record_length, &
+			& theFileHandle, version)
+		endif
+	
+	case('sw')
+		if(returnStatus == 0) then
+			theFileHandle = swopen(myName, FileAccessType)
+			if(theFileHandle <= 0) then
+				ErrType = min(theFileHandle, -1)
+			else
+				ErrType = 0
+			endif
+		else
+			ErrType = returnStatus
+		endif
+	
+	case('gd')
+		if(returnStatus == 0) then
+			theFileHandle = gdopen(myName, FileAccessType)
+			if(theFileHandle <= 0) then
+				ErrType = min(theFileHandle, -1)
+			else
+				ErrType = 0
+			endif
+		else
+			ErrType = returnStatus
+		endif
+	
+	case('op')
+	
+	case default
+		if(FileAccessType == PGSd_IO_Gen_RSeqFrm) then
+			status = 'old'
+			access = 'sequential'
+			form = 'formatted'
+			action = 'read'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_RSeqUnf) then
+			status = 'old'
+			access = 'sequential'
+			form = 'unformatted'
+			action = 'read'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_RDirFrm) then
+			status = 'old'
+			access = 'direct'
+			form = 'formatted'
+			action = 'read'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_RDirUnf) then
+			status = 'old'
+			access = 'direct'
+			form = 'unformatted'
+			action = 'read'
+			position = 'rewind'
+
+		elseif(FileAccessType == PGSd_IO_Gen_WSeqFrm) then
+			status = 'new'
+			access = 'sequential'
+			form = 'formatted'
+			action = 'write'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_WSeqUnf) then
+			status = 'new'
+			access = 'sequential'
+			form = 'unformatted'
+			action = 'write'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_WDirFrm) then
+			status = 'new'
+			access = 'direct'
+			form = 'formatted'
+			action = 'write'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_WDirUnf) then
+			status = 'new'
+			access = 'direct'
+			form = 'unformatted'
+			action = 'write'
+			position = 'rewind'
+
+		elseif(FileAccessType == PGSd_IO_Gen_USeqFrm) then
+			status = 'old'
+			access = 'sequential'
+			form = 'formatted'
+			action = 'readwrite'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_USeqUnf) then
+			status = 'old'
+			access = 'sequential'
+			form = 'unformatted'
+			action = 'readwrite'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_UDirFrm) then
+			status = 'old'
+			access = 'direct'
+			form = 'formatted'
+			action = 'readwrite'
+			position = 'rewind'
+		elseif(FileAccessType == PGSd_IO_Gen_UDirUnf) then
+			status = 'old'
+			access = 'direct'
+			form = 'unformatted'
+			action = 'readwrite'
+			position = 'rewind'
+
+		elseif(FileAccessType == PGSd_IO_Gen_ASeqFrm) then
+			status = 'old'
+			access = 'sequential'
+			form = 'formatted'
+			action = 'readwrite'
+			position = 'append'
+		elseif(FileAccessType == PGSd_IO_Gen_ASeqUnf) then
+			status = 'old'
+			access = 'sequential'
+			form = 'unformatted'
+			action = 'readwrite'
+			position = 'append'
+
+		else
+			ErrType = UNKNOWNFILEACCESSTYPE
+			return
+		endif
+		
+		tiedup = .TRUE.
+
+		do unit = bottom_unit_num, top_unit_num
+      	inquire ( unit=unit, opened=tiedup )
+			if (.not. tiedup) then
+				exit
+			endif
+		enddo
+
+		if(tiedup) THEN
+			ErrType = NOFREEUNITS
+			return
+		endif
+			
+		if(access /= 'direct') then
+			open(unit=unit, access=access, action=action, form=form, &
+			& position=position, status=status)
+		else
+			open(unit=unit, access=access, action=action, form=form, &
+			& status=status)
+		endif
+			
+	end select
+
+  END FUNCTION mls_io_gen_openF
+
 !====================
 END MODULE MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.2  2001/03/20 00:41:28  pwagner
+! Added mls_io_gen_openF
+!
 ! Revision 2.1  2001/03/07 01:02:37  pwagner
 ! First commit
 !
