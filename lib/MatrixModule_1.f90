@@ -11,10 +11,11 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
-    & ColumnScale, CreateBlock, DestroyBlock, Dump, M_Absent, M_Full, &
-    & MatrixElement_T, MaxAbsVal, MinDiag, MultiplyMatrixBlocks, &
-    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
-    & operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
+    & ColumnScale, CopyBlock, CreateBlock, DestroyBlock, Dump, GetDiagonal, &
+    & GetVectorFromColumn, M_Absent, M_Full, MatrixElement_T, MaxAbsVal, &
+    & MinDiag, MultiplyMatrixBlocks, MultiplyMatrixVector, &
+    & MultiplyMatrixVectorNoT, operator(+), operator(.TX.), RowScale, &
+    & ScaleBlock, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error
@@ -24,18 +25,22 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, AddMatrixToDatabase, AddToMatrix, Assignment(=)
-  public :: ClearRows, ClearRows_1, CopyMatrix, CreateEmptyMatrix
-  public :: CholeskyFactor, CholeskyFactor_1, ColumnScale, ColumnScale_1
-  public :: DestroyMatrix, DestroyMatrixDatabase, Dump, FindBlock
-  public :: GetFromMatrixDatabase
+  public :: AddMatrices, AddToMatrixDatabase, AddToMatrix
+  public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
+  public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
+  public :: CopyMatrix, CopyMatrixValue, CreateEmptyMatrix
+  public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, FillExtraCol
+  public :: FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
+  public :: GetFromMatrixDatabase, GetVectorFromColumn, GetVectorFromColumn_1
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
-  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_1
+  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
+  public :: MinDiag_SPD
   public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
   public :: MultiplyMatrixVectorSPD_1, NewMultiplyMatrixVector, NormalEquations
   public :: operator(.TX.), operator(+), RC_Info, RowScale, RowScale_1
-  public :: SolveCholesky, SolveCholesky_1
+  public :: ScaleMatrix, SolveCholesky, SolveCholesky_1
   public :: UpdateDiagonal, UpdateDiagonal_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
@@ -61,8 +66,21 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure ColumnScale_1
   end interface
 
+  interface DestroyBlock
+    module procedure DestroyBlock_1
+  end interface
+
+  interface DestroyMatrix
+    module procedure DestroyMatrix
+    module procedure DestroyMatrixInDatabase
+  end interface
+
   interface DUMP
     module procedure DUMP_MATRIX
+  end interface
+
+  interface GetDiagonal
+    module procedure GetDiagonal_1
   end interface
 
   interface GetFromMatrixDatabase
@@ -70,12 +88,16 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure GetKroneckerFromDatabase, GetSPDFromDatabase
   end interface
 
+  interface GetVectorFromColumn
+    module procedure GetVectorFromColumn_1
+  end interface
+
   interface MaxAbsVal
     module procedure MaxAbsVal_1
   end interface
 
   interface MinDiag
-    module procedure MinDiag_1
+    module procedure MinDiag_Cholesky, MinDiag_SPD
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -328,6 +350,18 @@ contains ! =====     Public Procedures     =============================
     end do ! i = 1, n
   end subroutine CholeskyFactor_1
 
+  ! ------------------------------------------------  ClearMatrix  -----
+  subroutine ClearMatrix ( X )     ! Delete all of the blocks, but keep the
+                                   ! structural information
+    type(matrix_T), intent(inout) :: X
+    integer :: I, J                ! Subscripts and row indices
+    do i = 1, x%row%nb
+      do j = 1, x%col%nb
+        call destroyBlock ( x%block(i,j) )
+      end do ! j
+    end do ! i
+  end subroutine ClearMatrix
+
   ! ------------------------------------------------  ClearRows_1  -----
   subroutine ClearRows_1 ( X )
   ! Clear the rows of X for which the mask in X's row-defining vector
@@ -391,6 +425,37 @@ contains ! =====     Public Procedures     =============================
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
   end subroutine CopyMatrix
+
+  ! --------------------------------------------  CopyMatrixValue  -----
+  subroutine CopyMatrixValue ( Z, X )   ! Copy the elements of X to Z
+  ! Z and X must have the same template, but it's OK if they don't both
+  ! have row%extra or col%extra.  If Z has extra and X does not, Z's
+  ! extra is deleted.
+    type(matrix_T), intent(inout) :: Z
+    type(matrix_T), intent(in) :: X
+    integer :: I, J ! Subscripts and loop inductors
+    if ( x%col%vec%template%id /= z%col%vec%template%id &
+      & .or. x%row%vec%template%id /= z%row%vec%template%id &
+      & .or. (x%col%instFirst .neqv. z%col%instFirst) &
+      & .or. (x%row%instFirst .neqv. z%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in CopyMatrixValue" )
+    do i = 1, min(x%row%nb,z%row%nb)
+      do j = 1, min(x%col%nb,z%col%nb)
+        call copyBlock ( z%block(i,j), x%block(i,j) )
+      end do ! j
+    end do ! i
+    if ( z%col%nb > x%col%nb ) then
+      do i = 1, z%row%nb
+        call destroyBlock ( z%block(i, z%col%nb) )
+      end do ! i
+    end if
+    if ( z%row%nb > x%row%nb ) then
+      do j = 1, z%col%nb
+        call destroyBlock ( z%block(z%row%nb, j) )
+      end do ! j
+    end if
+  end subroutine CopyMatrixValue
 
   ! ----------------------------------------------  CreateBlock_1  -----
   subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros )
@@ -497,26 +562,48 @@ contains ! =====     Public Procedures     =============================
     end subroutine DefineInfo
   end subroutine CreateEmptyMatrix
 
+  ! ---------------------------------------------  DestroyBlock_1  -----
+  subroutine DestroyBlock_1 ( A )
+  ! Destroy the "block" component of a matrix.  This leaves its structure
+  ! intact, but releases the space for its values.  This is useful when
+  ! forming normal equations little-by-little.
+    type(matrix_T), intent(inout) :: A
+
+    integer :: STATUS              ! From deallocate
+
+    call clearMatrix ( a )
+    deallocate ( a%block, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
+  end subroutine DestroyBlock_1
+
   ! ----------------------------------------------  DestroyMatrix  -----
   subroutine DestroyMatrix ( A )
   ! Destroy a matrix -- deallocate its pointer components, don't change the
   ! name
     type(matrix_T), intent(inout) :: A
 
-    integer :: I, J                ! Subscripts and look inductors
-    integer :: STATUS              ! From deallocate
-
-    do j = 1, a%col%nb
-      do i = 1, a%row%nb
-        call destroyBlock ( a%block(i,j) )
-      end do ! i
-    end do ! j
-    deallocate ( a%block, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
+    call destroyBlock ( a )
     call destroyRCInfo ( a%row )
     call destroyRCInfo ( a%col )
   end subroutine DestroyMatrix
+
+  ! ------------------------------------  DestroyMatrixInDatabase  -----
+  subroutine DestroyMatrixInDatabase ( Database )
+  ! Destroy a matrix in the database -- deallocate its pointer components,
+  ! don't change the name
+    type(matrix_database_T), intent(inout) :: Database
+
+    if ( associated(database%matrix) ) then
+      call destroyMatrix ( database%matrix )
+    else if ( associated(database%cholesky) ) then
+      call destroyMatrix ( database%cholesky%m )
+    else if ( associated(database%kronecker) ) then
+      call destroyMatrix ( database%kronecker%m )
+    else if ( associated(database%spd) ) then
+      call destroyMatrix ( database%spd%m )
+    end if
+  end subroutine DestroyMatrixInDatabase
 
   ! --------------------------------------  DestroyMatrixDatabase  -----
   subroutine DestroyMatrixDatabase ( D )
@@ -538,27 +625,61 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyMatrixDatabase
 
   ! -----------------------------------------------  FillExtraCol  -----
-  subroutine FillExtraCol ( A, X )
+  subroutine FillExtraCol ( A, X, ROW )
   ! Fill the "extra" column of A (see type RC_Info) from the vector X.
-  ! Assume it is full -- i.e. don't bother to sparsify it.
+  ! Assume it is full -- i.e. don't bother to sparsify it.  If ROW is
+  ! specified, it refers to a block-row, and only that row of the extra
+  ! column is filled.
     type(Matrix_T), intent(inout) :: A
     type(Vector_T), intent(in) :: X
+    integer, intent(in), optional :: ROW
 
     integer :: I
 
     ! Check compatibility of X with the row template for A
-    if ( a%col%vec%template%id /= x%template%id ) &
+    if ( a%row%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Vector incompatible with matrix in FillExtraCol" )
-    if ( .not. a%col%extra ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( .not. a%col%extra ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "No extra column to fill in FillExtraCol" )
-    do i = 1, a%row%nb
-      call destroyBlock ( a%block(i,a%col%nb) )
-      call createBlock ( a%block(i,a%col%nb), a%row%nelts(i), 1, m_full )
-      a%block(i,a%col%nb)%values(:,i) = &
-        & x%quantities(a%row%quant(i))%values(:,a%row%inst(i))
-    end do ! i
+    if ( present(row) ) then
+      if ( row < 1 .or. row > a%row%nb ) call MLSMessage ( MLSMSG_Error, &
+        & moduleName, "Row number out-of-range in FillExtraCol" )
+      a%block(row,a%col%nb)%values(:,1) = &
+          & x%quantities(a%row%quant(row))%values(:,a%row%inst(row))
+    else
+      do i = 1, a%row%nb
+        call destroyBlock ( a%block(i,a%col%nb) )
+        call createBlock ( a%block(i,a%col%nb), a%row%nelts(i), 1, m_full )
+        if ( a%row%quant(i) /= 0 ) &
+          & a%block(i,a%col%nb)%values(:,1) = &
+            & x%quantities(a%row%quant(i))%values(:,a%row%inst(i))
+      end do ! i
+    end if
   end subroutine FillExtraCol
+
+  ! -----------------------------------------------  FillExtraRow  -----
+  subroutine FillExtraRow ( A, X )
+  ! Fill the "extra" row of A (see type RC_Info) from the vector X.
+    type(Matrix_T), intent(inout) :: A
+    type(Vector_T), intent(in) :: X
+
+    integer :: J
+
+    ! Check compatibility of X with the column template for A
+    if ( a%col%vec%template%id /= x%template%id ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Vector incompatible with matrix in FillExtraRow" )
+    if ( .not. a%row%extra ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "No extra column to fill in FillExtraRow" )
+    do j = 1, a%row%nb
+      call destroyBlock ( a%block(a%row%nb,j) )
+      call createBlock ( a%block(a%row%nb,j), 1, a%col%nelts(j), m_full )
+      if ( a%col%quant(j) /= 0 ) &
+        & a%block(a%row%nb,j)%values(:,1) = &
+          & x%quantities(a%col%quant(j))%values(:,a%col%inst(j))
+    end do ! i
+  end subroutine FillExtraRow
 
   ! --------------------------------------------------  FindBlock  -----
   integer function FindBlock ( RC, Quantity, Instance )
@@ -588,6 +709,24 @@ contains ! =====     Public Procedures     =============================
     cholesky => databaseElement%cholesky
   end subroutine GetCholeskyFromDatabase
 
+  ! ----------------------------------------------  GetDiagonal_1  -----
+  subroutine GetDiagonal_1 ( A, X )
+  ! Get X from the diagonal of A.  Don't get the extra row or column.
+  ! Destroy X and re-create it by cloning the row-defining vector of A.
+    type(Matrix_SPD_T), intent(in) :: A
+    type(vector_T), intent(inout) :: X
+
+    integer :: I, N
+
+    call cloneVector ( x, a%m%row%vec )
+    n = max(a%m%row%nb,a%m%col%nb)
+    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
+    do i = 1, n
+      call getDiagonal ( a%m%block(i,i), &
+        & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)) )
+    end do
+  end subroutine GetDiagonal_1
+
   ! -----------------------------------  GetKroneckerFromDatabase  -----
   subroutine GetKroneckerFromDatabase ( DatabaseElement, Kronecker )
   ! Get a POINTER to a Kronecker object from DatabaseElement.
@@ -612,17 +751,39 @@ contains ! =====     Public Procedures     =============================
     SPD => databaseElement%SPD
   end subroutine GetSPDFromDatabase
 
-  ! ----------------------------------------  GetVectorFromColumn  -----
-  subroutine GetVectorFromColumn ( Matrix, Column, Vector )
+  ! --------------------------------------  GetVectorFromColumn_1  -----
+  subroutine GetVectorFromColumn_1 ( Matrix, Column, Vector )
   ! Fill the Vector from the Column of the Matrix
     type(matrix_T), intent(in) :: Matrix
     integer, intent(in) :: Column
     type(vector_T), intent(inout) :: Vector  ! Must already be "created"
 
+    integer :: Block          ! Which block of columns contains Column?
+    integer :: ColInBlock     ! Which column in Block is column
+    integer :: Ncols          ! How many columns in blocks < Block?
+    integer :: Row            ! Which row is being extracted?
+
+    if ( column < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'In "GetVectorFromColumn", "Column" < 1' )
     if ( matrix%col%vec%template%id /= vector%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Vector incompatible with matrix in GetVectorFromColumn" )
-  end subroutine GetVectorFromColumn
+    ncols = 0
+    do block = 1, matrix%col%nb
+      if ( ncols + matrix%col%nelts(block) >= column ) then
+        colInBlock = column - ncols
+        do row = 1, matrix%row%nb
+          call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
+            & vector%quantities(matrix%row%quant(row))% &
+              & values(:,matrix%row%inst(row)) )
+        end do ! row = 1, matrix%row%nb
+        return
+      end if
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'In "GetVectorFromColumn", "Column" is greater than number&
+        & of columns in "Matrix"')
+    end do ! block = 1, matrix%col%nb
+  end subroutine GetVectorFromColumn_1
 
   ! ------------------------------------  LevenbergUpdateCholesky  -----
 ! subroutine LevenbergUpdateCholesky ( Z, LAMBDA )
@@ -646,17 +807,21 @@ contains ! =====     Public Procedures     =============================
     end do
   end function MaxAbsVal_1
 
-  ! --------------------------------------------------  MinDiag_1  -----
-  real(r8) function MinDiag_1 ( A )
+  ! -------------------------------------------  MinDiag_Cholesky  -----
+  real(r8) function MinDiag_Cholesky ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
-  ! smallest magnitude.
+  ! smallest magnitude.  If A has an extra column, ignore it.
+    type(Matrix_Cholesky_T), intent(in) :: A
+    minDiag_Cholesky = minDiag_1 ( a%m )
+  end function MinDiag_Cholesky
+
+  ! ------------------------------------------------  MinDiag_SPD  -----
+  real(r8) function MinDiag_SPD ( A )
+  ! Return the magnitude of the element on the diagonal of A that has the
+  ! smallest magnitude.  If A has an extra column, ignore it.
     type(Matrix_SPD_T), intent(in) :: A
-    integer :: I
-    minDiag_1 = minDiag(a%m%block(1,1))
-    do i = 2, a%m%row%nb
-      minDiag_1 = min(minDiag_1,minDiag(a%m%block(i,i)))
-    end do
-  end function MinDiag_1
+    minDiag_SPD = minDiag_1 ( a%m )
+  end function MinDiag_SPD
 
   ! -------------------------------------------  MultiplyMatrices  -----
   function MultiplyMatrices ( X, Y ) result ( Z ) ! Z = X^T Y
@@ -771,8 +936,8 @@ contains ! =====     Public Procedures     =============================
   ! Only the upper triangle of A^T A is formed or updated.
     type(Matrix_T), intent(in) :: A
     type(Matrix_SPD_T), intent(inout) :: Z
-    type(Vector_T), intent(in) :: RHS_IN
-    type(Vector_T), intent(inout) :: RHS_OUT
+    type(Vector_T), intent(in), optional :: RHS_IN
+    type(Vector_T), intent(inout), optional :: RHS_OUT
     logical, intent(in), optional :: UPDATE  ! True (default false) means
     !                                          to update Z and RHS_OUT
 
@@ -828,7 +993,8 @@ contains ! =====     Public Procedures     =============================
       end do ! i = 1, a%col%nb
     end do ! j = 1, a%col%nb
 
-    call multiplyMatrixVector ( a, rhs_in, rhs_out, my_update )
+    if ( present(rhs_in) .and. present(rhs_out) ) &
+      & call multiplyMatrixVector ( a, rhs_in, rhs_out, my_update )
   end subroutine NormalEquations
 
   ! -------------------------------------------------  RowScale_1  -----
@@ -862,6 +1028,18 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine RowScale_1
 
+  ! ------------------------------------------------  ScaleMatrix  -----
+  subroutine ScaleMatrix ( Z, A )       ! Z := A * Z, where A is scalar
+    type(matrix_T), intent(inout) :: Z
+    real(r8), intent(in) :: A
+    integer :: I, J                     ! Subscripts and loop inductors
+    do i = 1, z%row%nb
+      do j = 1, z%col%nb
+        call scaleBlock ( z%block(i,j), a )
+      end do ! j
+    end do ! i
+  end subroutine ScaleMatrix
+
   ! --------------------------------------------  SolveCholesky_1  -----
   subroutine SolveCholesky_1 ( Z, X, RHS, TRANSPOSE )
   ! Given the Cholesky-factored normal equations Z and the corresponding
@@ -870,12 +1048,14 @@ contains ! =====     Public Procedures     =============================
   ! RHS may be the same as X.  RHS may be absent, in which case X is
   ! assumed to contain the right-hand side on input, and the solution
   ! replaces it on output.
+  ! If Z has an extra column, extract it into a vector bu using
+  ! GetVectorFromColumn, and pass it in as X.
     type(Matrix_Cholesky_T), intent(in) :: Z
     type(Vector_T), intent(inout), target :: X
     type(Vector_T), intent(in), target, optional :: RHS
     logical, optional, intent(in) :: TRANSPOSE
 
-    integer :: I, J                ! Subscripts and loop inductors
+    integer :: I, J, N             ! Subscripts and loop inductors
     integer :: IC, IR, QC, QR      ! Instance and quantity indices
     type(Vector_T), pointer :: MY_RHS   ! RHS if present, else X
     logical My_transpose           ! TRANSPOSE if present, else .false.
@@ -893,8 +1073,10 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
+    n = z%m%col%nb
+    if ( z%m%col%extra ) n = n - 1
     if ( my_transpose ) then       ! Solve Z^T X = RHS for X
-      do i = 1, z%m%col%nb
+      do i = 1, n
         ic = z%m%col%inst(i)
         qc = z%m%col%quant(i)
         do j = 1, i-1
@@ -908,12 +1090,12 @@ contains ! =====     Public Procedures     =============================
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
-      end do ! i = 1, z%m%col%nb
+      end do ! i = 1, n
     else                           ! Solve Z X = RHS for X
-      do i = z%m%row%nb, 1, -1
+      do i = n, 1, -1
         ic = z%m%row%inst(i)
         qc = z%m%row%quant(i)
-        do j = i+1, z%m%col%nb
+        do j = i+1, n
           ir = z%m%col%inst(j)
           qr = z%m%col%quant(j)
           my_rhs%quantities(qc)%values(:,ic) = &
@@ -924,19 +1106,21 @@ contains ! =====     Public Procedures     =============================
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
-      end do ! i = 1, z%m%col%nb
+      end do ! i = n, 1, -1
     end if
   end subroutine SolveCholesky_1
 
   ! -------------------------------------------  UpdateDiagonal_1  -----
   subroutine UpdateDiagonal_1 ( A, LAMBDA )
-  ! Add LAMBDA to the diagonal of A.
+  ! Add LAMBDA to the diagonal of A.  Don't update the extra row or column.
     type(Matrix_SPD_T), intent(inout) :: A
     real(r8), intent(in) :: LAMBDA
 
-    integer :: I
+    integer :: I, N
 
-    do i = 1, a%m%row%nb
+    n = max(a%m%row%nb,a%m%col%nb)
+    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
+    do i = 1, n
       call updateDiagonal ( a%m%block(i,i), lambda )
     end do
   end subroutine UpdateDiagonal_1
@@ -1051,9 +1235,26 @@ contains ! =====     Public Procedures     =============================
       call dump ( rc%quant )
     end if
   end subroutine Dump_RC
+
+  ! --------------------------------------------------  MinDiag_1  -----
+  real(r8) function MinDiag_1 ( A )
+  ! Return the magnitude of the element on the diagonal of A that has the
+  ! smallest magnitude.  If A has an extra column, ignore it.
+    type(Matrix_T), intent(in) :: A
+    integer :: I, N
+    n = a%col%nb
+    if ( a%col%extra ) n = n - 1
+    minDiag_1 = minDiag(a%block(1,1))
+    do i = 2, n
+      minDiag_1 = min(minDiag_1,minDiag(a%block(i,i)))
+    end do
+  end function MinDiag_1
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.7  2001/01/26 19:00:02  vsnyder
+! Periodic commit
+!
 ! Revision 2.6  2001/01/19 23:53:26  vsnyder
 ! Add FillExtraCol, GetVectorFromColumn (incomplete); SolveCholesky_1
 ! still needs work, too.
