@@ -46,6 +46,7 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
+  public :: NullifyBinSelector
   public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
@@ -408,7 +409,7 @@ contains ! ============= Public Procedures ==========================
           call MakeHDF5Attribute ( blockGroupID, 'kind', m0%kind )
           ! Write the datasets
           if ( m0%kind /= m_absent ) then
-            call SaveAsHDF5DS ( blockGroupID, 'values', real ( m0%values, r4 ) )
+            call SaveAsHDF5DS ( blockGroupID, 'values', m0%values )
             if ( m0%kind /= m_full ) then
               call MakeHDF5Attribute ( blockGroupID, 'noValues', size(m0%values) )
               call SaveAsHDF5DS ( blockGroupID, 'r1', m0%r1 )
@@ -687,6 +688,16 @@ contains ! ============= Public Procedures ==========================
     end do
     
   end subroutine MakeMatrixPackMap
+
+  ! ----------------------------------------NullifyBinSelector -----
+  subroutine NullifyBinSelector ( B )
+    ! Given a bin selector, nullify all the pointers associated with it
+    type ( BinSelector_T ), intent(out) :: B
+
+    ! Executable code
+    nullify ( b%signals )
+    nullify ( b%sidebands )
+  end subroutine NullifyBinSelector
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
@@ -1530,6 +1541,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.53  2002/11/22 12:47:47  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.52  2002/11/20 21:06:25  livesey
 ! Various bug fixes to make the packed storage work.
 !
