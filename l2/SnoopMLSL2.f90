@@ -52,6 +52,11 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  interface SnooperRequestedArray
+    module procedure SnooperRequestedArrayR1, SnooperRequestedArrayR2, &
+      & SnooperRequestedArrayR3
+  end interface
+
   ! =============================================================================
 
   ! The first main thing is a data type that describes each of the active
@@ -150,6 +155,87 @@ contains ! ========  Public Procedures =========================================
       if ( info /= 0 ) call PVMErrorMessage ( info, "Sending 'No Matrices'" )
     endif
   end subroutine SendMatrixListToSnooper
+
+  ! ------------------------------------ SendArrayListToSnooper --------
+  subroutine SendArrayListToSnooper ( SNOOPER, &
+    & r1a, r1b, r1c, r1d, &
+    & r2a, r2b, r2c, r2d, &
+    & r3a, r3b, r3c, r3d, &
+    & r1aName, r1bName, r1cName, r1dName, &
+    & r2aName, r2bName, r2cName, r2dName, &
+    & r3aName, r3bName, r3cName, r3dName )
+
+    ! Arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER
+    real (r8), dimension(:), intent(in), optional :: R1A, R1B, R1C, R1D
+    real (r8), dimension(:,:), intent(in), optional :: R2A, R2B, R2C, R2D
+    real (r8), dimension(:,:,:), intent(in), optional :: R3A, R3B, R3C, R3D
+    character(len=*), intent(in), optional :: &
+      & R1ANAME, R1BNAME, R1CNAME, R1DNAME, &
+      & R2ANAME, R2BNAME, R2CNAME, R2DNAME, &
+      & R3ANAME, R3BNAME, R3CNAME, R3DNAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: NOARRAYS                 ! Nummber of arrays supplied
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    noArrays = 0
+    noArrays = count ( (/ &
+      & present(r1a), present(r1b), present(r1c), present(r1d), &
+      & present(r2a), present(r2b), present(r2c), present(r2d), &
+      & present(r3a), present(r3b), present(r3c), present(r3d) /) )
+    if ( noArrays > 0 ) then
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending arrays list', advance='yes' )
+
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+
+      call PVMIDLPack ( "Arrays", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Arrays'" )
+
+      call PVMIDLPack ( noArrays, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing noArrays" )
+
+      if ( present ( r1a ) ) call PVMIDLPack ( 'R1A:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1b ) ) call PVMIDLPack ( 'R1B:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1c ) ) call PVMIDLPack ( 'R1C:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r1d ) ) call PVMIDLPack ( 'R1D:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2a ) ) call PVMIDLPack ( 'R2A:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2b ) ) call PVMIDLPack ( 'R2B:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2c ) ) call PVMIDLPack ( 'R2C:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r2d ) ) call PVMIDLPack ( 'R2D:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3a ) ) call PVMIDLPack ( 'R3A:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3b ) ) call PVMIDLPack ( 'R3B:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3c ) ) call PVMIDLPack ( 'R3C:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+      if ( present ( r3d ) ) call PVMIDLPack ( 'R3D:'//r1aName, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
+
+      ! Now send this buffer
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
+      
+    else
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending "No Arrays"', advance='yes' )
+
+      call PVMIDLSend ( "No Arrays", snooper%tid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Arrays'" )
+    end if
+
+  end subroutine SendArrayListToSnooper
 
   ! ------------------------------------- SendVectorsListToSnooper -----
   subroutine SendVectorsListToSnooper ( SNOOPER, VectorDatabase, &
@@ -346,8 +432,18 @@ contains ! ========  Public Procedures =========================================
   ! within the code, and takes optional arguments which the user can supply
   ! to pass to and from the IDL end of the snooper.
 
+  ! The r1a etc. variables are arrays one can pass around to do some
+  ! more intensive debugging.  Make sure to modify MaxArrayArguments if you
+  ! add or delete from these.
+
   subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase, &
-    & AnotherComment, AnotherPhaseName, matrixDatabase )
+    & AnotherComment, AnotherPhaseName, matrixDatabase,&
+    & r1a, r1b, r1c, r1d, &
+    & r2a, r2b, r2c, r2d, &
+    & r3a, r3b, r3c, r3d, &
+    & r1aName, r1bName, r1cName, r1dName, &
+    & r2aName, r2bName, r2cName, r2dName, &
+    & r3aName, r3bName, r3cName, r3dName )
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
@@ -357,11 +453,21 @@ contains ! ========  Public Procedures =========================================
     !    Replaces comment field of "snoop" command if present.
     character(len=*), intent(in), optional :: AnotherPhaseName 
     type (Matrix_T), dimension(:), optional :: MatrixDatabase
+
+    ! Rather boring arguments
+    real (r8), dimension(:), intent(in), optional :: R1A, R1B, R1C, R1D
+    real (r8), dimension(:,:), intent(in), optional :: R2A, R2B, R2C, R2D
+    real (r8), dimension(:,:,:), intent(in), optional :: R3A, R3B, R3C, R3D
+    character(len=*), intent(in), optional :: &
+      & R1ANAME, R1BNAME, R1CNAME, R1DNAME, &
+      & R2ANAME, R2BNAME, R2CNAME, R2DNAME, &
+      & R3ANAME, R3BNAME, R3CNAME, R3DNAME
     
     ! Local parameters
     integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
     character(len=*), parameter :: UNPACKERROR = &
       & 'unpacking response from snooper'
+    integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
     ! External (C) function
     external :: Usleep
 
@@ -435,7 +541,14 @@ contains ! ========  Public Procedures =========================================
       call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
         & anotherVectorDatabase )
       call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase ) 
-   end do
+      call SendArrayListToSnooper ( snoopers(snooper), &
+        & r1a, r1b, r1c, r1d, &
+        & r2a, r2b, r2c, r2d, &
+        & r3a, r3b, r3c, r3d, &
+        & r1aName, r1bName, r1cName, r1dName, &
+        & r2aName, r2bName, r2cName, r2dName, &
+        & r3aName, r3bName, r3cName, r3dName )
+    end do
 
     snoopEventLoop: do ! ---------------------------- Snoop event loop -----
 
@@ -460,6 +573,24 @@ contains ! ========  Public Procedures =========================================
         end if
 
         select case ( trim(line) )
+
+        case ( 'Array' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          select case ( trim(nextLine) )
+          case ( 'R1A' ) ; call SnooperRequestedArray ( snoopers(snooper), r1a, trim(r1aName) )
+          case ( 'R1B' ) ; call SnooperRequestedArray ( snoopers(snooper), r1b, trim(r1bName) )
+          case ( 'R1C' ) ; call SnooperRequestedArray ( snoopers(snooper), r1c, trim(r1cName) )
+          case ( 'R1D' ) ; call SnooperRequestedArray ( snoopers(snooper), r1d, trim(r1dName) )
+          case ( 'R2A' ) ; call SnooperRequestedArray ( snoopers(snooper), r2a, trim(r2aName) )
+          case ( 'R2B' ) ; call SnooperRequestedArray ( snoopers(snooper), r2b, trim(r2bName) )
+          case ( 'R2C' ) ; call SnooperRequestedArray ( snoopers(snooper), r2c, trim(r2cName) )
+          case ( 'R2D' ) ; call SnooperRequestedArray ( snoopers(snooper), r2d, trim(r2dName) )
+          case ( 'R3A' ) ; call SnooperRequestedArray ( snoopers(snooper), r3a, trim(r3aName) )
+          case ( 'R3B' ) ; call SnooperRequestedArray ( snoopers(snooper), r3b, trim(r3bName) )
+          case ( 'R3C' ) ; call SnooperRequestedArray ( snoopers(snooper), r3c, trim(r3cName) )
+          case ( 'R3D' ) ; call SnooperRequestedArray ( snoopers(snooper), r3d, trim(r3dName) )
+          end select
 
         case ( 'Continue' )
           if ( snoopers(snooper)%mode == SnooperControling ) &
@@ -506,6 +637,14 @@ contains ! ========  Public Procedures =========================================
             & anotherVectorDatabase )
           ! Send it matrices
           call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase )
+          ! Send it arrays
+          call SendArrayListToSnooper ( snoopers(snooper), &
+            & r1a, r1b, r1c, r1d, &
+            & r2a, r2b, r2c, r2d, &
+            & r3a, r3b, r3c, r3d, &
+            & r1aName, r1bName, r1cName, r1dName, &
+            & r2aName, r2bName, r2cName, r2dName, &
+            & r3aName, r3bName, r3cName, r3dName )
           
         case ( 'Quantity' )
           call PVMIDLUnpack ( nextLine, info )
@@ -562,6 +701,81 @@ contains ! ========  Public Procedures =========================================
     end do
     
   end subroutine Snoop
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR1 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR1
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR2 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:,:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR2
+
+  ! ------------------------------------- SnooperRequestedArrayR1 ------------
+  subroutine SnooperRequestedArrayR3 ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    real(r8), dimension(:,:,:), intent(in) :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPACK ( 'Array', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    call PVMIDLPack ( trim(name), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    call PVMIDLPack ( M, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SnooperRequestedArrayR3
 
   ! ------------------------------------- SnooperRequestedMatrixBlockMap -----
   subroutine SnooperRequestedMatrixMap ( SNOOPER, LINE, MATRIXDATABASE )
@@ -789,6 +1003,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.35  2004/01/07 23:49:49  livesey
+! Added the ability to snoop simple arrays
+!
 ! Revision 2.34  2002/12/06 22:33:28  livesey
 ! Added the snoop name stuff
 !
