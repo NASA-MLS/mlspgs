@@ -22,12 +22,12 @@ M = $(HOME)/mlspgs/lib/LF95
 #SDP = 
 SDP = Substitute
 
-machine.o: machine.f90
-	$(FC) -c $(FOPTS) machine.f90
-
 include ../Makefile.inc
 
 # $Log$
+# Revision 2.1  2000/10/09 23:25:35  vsnyder
+# Introduce SDP variable
+#
 # Revision 2.0  2000/09/05 17:42:01  dcuddy
 # Change revision to 2.0
 #
