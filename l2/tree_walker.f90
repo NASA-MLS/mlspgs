@@ -63,7 +63,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
-    use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
+    use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK, CHECKPATHS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -186,9 +186,15 @@ contains ! ====     Public Procedures     ==============================
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
         else
-          call ChunkDivide ( son, processingRange, l1bInfo, chunks )
-          call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, l2gpDatabase, &
-            & processingRange )
+          if ( .not. checkPaths) then
+            call ChunkDivide ( son, processingRange, l1bInfo, chunks )
+            call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, &
+            & l2gpDatabase, processingRange )
+          else
+            allocate(chunks(1), stat=error_flag)
+            if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'unable to allocate chunks' )
+          endif
           if ( singleChunk /= 0 ) then
             if ( singleChunk < 0 ) then
               call output ( " single chunk " )
@@ -272,13 +278,15 @@ subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
-                call MLSL2Construct ( son, l1bInfo, processingRange, &
+                if ( .not. checkPaths) &
+                & call MLSL2Construct ( son, l1bInfo, processingRange, &
                   & chunks(chunkNo), qtyTemplates, vectorTemplates, &
                   & fGrids, vGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
-                call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
+                if ( .not. checkPaths) &
+                & call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
                   & l2gpDatabase, l2auxDatabase, chunks, chunkNo )
                 call add_to_section_timing ( 'fill', t1)
@@ -287,7 +295,8 @@ subtrees:   do while ( j <= howmany )
                   & l2auxDatabase, DirectDatabase, chunkNo, chunks )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
-                call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
+                if ( .not. checkPaths) &
+                & call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
                   & chunks(chunkNo) )
                 call add_to_section_timing ( 'retrieve', t1)
               case default
@@ -434,6 +443,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.118  2003/11/05 21:27:54  pwagner
+! Can enter range of chunks to be processed instead of single
+!
 ! Revision 2.117  2003/10/09 23:31:26  pwagner
 ! Changed grid switch to gridd
 !
