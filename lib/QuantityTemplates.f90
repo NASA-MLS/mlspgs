@@ -189,7 +189,6 @@ contains ! =====     Public Procedures     =============================
 
     include "addItemToDatabase.f9h"
 
-    database(newSize) = item
     AddQuantityTemplateToDatabase = newSize
   end function AddQuantityTemplateToDatabase
 
@@ -403,6 +402,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.1  2000/10/13 00:00:37  vsnyder
+! Moved from mlspgs/l2 to mlspgs/lib
+!
 ! Revision 2.0  2000/09/05 18:57:04  ahanzel
 ! Changing file revision to 2.0.
 !

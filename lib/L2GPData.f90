@@ -276,7 +276,6 @@ CONTAINS ! =====     Public Procedures     =============================
     !directory.
     INCLUDE "addItemToDatabase.f9h" 
 
-    database(newSize) = item
     AddL2GPToDatabase = newSize
   END FUNCTION AddL2GPToDatabase
 
@@ -1142,6 +1141,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.7  2000/09/22 14:29:42  pumphrey
+! OutputL2GP_createFile was setting LocalSolarTime as byte (should be
+! REAL)  and Time as REAL (should be Double prec.). Fixed.
+!
 ! Revision 2.6  2000/09/21 13:48:18  pumphrey
 ! fixed a bug in the write routine.
 !

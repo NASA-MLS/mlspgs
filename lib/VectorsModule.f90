@@ -50,7 +50,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=130), private :: Id = &
     & "$Id$"
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
@@ -151,7 +151,6 @@ contains ! =====     Public Procedures     =============================
 
     include "addItemToDatabase.f9h"
 
-    database(newSize) = item
     AddVectorTemplateToDatabase = newSize
   end function AddVectorTemplateToDatabase
 
@@ -170,7 +169,6 @@ contains ! =====     Public Procedures     =============================
 
     include "addItemToDatabase.f9h"
 
-    database(newSize) = item
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
 
@@ -612,15 +610,20 @@ contains ! =====     Public Procedures     =============================
 
   !-----------------------------------------------------  SetMask  -----
   subroutine SetMask ( MASK, TO_SET )
-  ! Set bits of MASK indexed by elements of TO_CLEAR.
+  ! Set bits of MASK indexed by elements of TO_SET.  If TO_SET is absent,
+  ! set all of the bits of MASK.
     integer, intent(inout), dimension(:) :: MASK
-    integer, intent(in), dimension(:) :: TO_SET
+    integer, intent(in), dimension(:), optional :: TO_SET
     integer :: I, W, P
-    do i = 1, size(to_set)
-      w = to_set(i) / b
-      p = mod(to_set(i), b)
-      mask(w+1) = ibset(mask(w+1),p)
-    end do
+    if ( present(to_set) ) then
+      do i = 1, size(to_set)
+        w = to_set(i) / b
+        p = mod(to_set(i), b)
+        mask(w+1) = ibset(mask(w+1),p)
+      end do
+    else
+      mask = not(0)
+    end if
   end subroutine SetMask
 
   !---------------------------------------------  SubtractVectors  -----
@@ -666,6 +669,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.4  2000/11/23 01:10:27  vsnyder
+! Add "mask" field to specify columns to ignore when vector is row- or
+! column-specifier for a matrix.
+!
 ! Revision 2.3  2000/11/15 01:33:58  vsnyder
 ! Added copyVector, assignment(=)
 !
