@@ -80,6 +80,7 @@ fwdModelOut
 geocAltitudeQuantity
 geodAngle
 gph
+gphQuantity
 
 h2oquantity
 h2oPrecisionQuantity
@@ -195,6 +196,7 @@ refGPHPrecisionquantity
 refract
 regAfter
 regApriori               ! Regularization is to apriori, not zero
+reset
 resetSeed
 rhiQuantity
 rowChannels
@@ -269,6 +271,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.63  2003/01/07 23:46:14  livesey
+# Added reset for subset, and stuff for magnetic model
+#
 # Revision 2.62  2003/01/06 20:12:57  livesey
 # Added new fields for upper/lower overlap stuff
 #
