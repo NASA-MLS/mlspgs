@@ -25,6 +25,7 @@ module ReadAPriori
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
@@ -103,7 +104,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
 
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
     error = 0
 
     ! Will we be dumping info? To what level of detail?
@@ -328,7 +329,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -406,6 +407,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.26  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.25  2001/10/30 00:35:27  pwagner
 ! Tidied up small things
 !
