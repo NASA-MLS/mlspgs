@@ -10,7 +10,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
-    & v_is_gph, v_is_theta
+    & v_is_gph, v_is_theta, AddGriddedDataToDatabase, DumpGriddedData
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
@@ -33,7 +33,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
-  public
+  private
 
   private :: Id,ModuleName
   !------------------------------- RCS Ident Info ------------------------------
@@ -44,15 +44,11 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
 
 
-  public::SetupNewGridTemplate, DestroyGridTemplateContents, &
-    &   AddGridTemplateToDatabase, DestroyGridTemplateDatabase, &
-    & Dump_Gridded_Database, source_file_already_read
+  public:: source_file_already_read
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::ReadGriddedData
-  private::announce_error
-  private::DEFAULTFIELDNAME, GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, GEO_FIELD4
-  private::lit_dao, lit_ncep, lit_clim
-  integer, private :: ERROR
+
+  integer :: ERROR
 
   ! First we'll define some global parameters and data types.
 
@@ -74,156 +70,6 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   ! --------------------------------------------------------------------------
 
 contains
-
-  ! Now we have some subroutines to deal with these quantitites
-
-  ! This first routine sets up a new quantity template according to the user
-  ! input.  This may be based on a previously supplied template (with possible
-  ! modifications), or created from scratch.
-
-  subroutine SetupNewGridTemplate(qty, source, noHeights, noLats, noLons, noLsts, noSzas, noDates)
-
-    ! Dummy arguments
-    type (GriddedData_T), intent(OUT) :: qty ! Result
-
-    type (GriddedData_T), optional, intent(IN) :: source ! Template
-
-    integer, optional, intent(IN) :: noHeights, noLats, noLons, noLsts, noSzas, noDates
-
-    ! Local variables
-    integer :: status           ! Status from allocates etc.
-
-    ! Executable code
-
-    ! First, if we have a template setup according to that
-    if (present(source)) then
-      qty%noHeights=source%noHeights
-      qty%noLats=source%noLats
-      qty%noLons=source%noLons
-      qty%noLsts=source%noLsts
-      qty%noSzas=source%noSzas
-      qty%noDates=source%noDates
-
-
-    else ! We have no template, setup a very bare quantity
-      qty%noHeights=1
-      qty%noLats=1
-      qty%noLons=1
-      qty%noLsts=1
-      qty%noSzas=1
-      qty%noDates=1
-
-    endif
-
-    ! Now, see if the user asked for modifications to this
-    if (present(noHeights)) qty%noHeights=noHeights
-    if (present(noLats)) qty%noLats=noLats
-    if (present(noLons)) qty%noLons=noLons
-    if (present(noLsts)) qty%noLsts=noLsts
-    if (present(noSzas)) qty%noSzas=noSzas
-    if (present(noDates)) qty%noDates=noDates
-
-    ! First the vertical/horizontal coordinates
-    call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
-    call Allocate_test ( qty%lats, qty%noLats, "qty%lats", ModuleName )
-    call Allocate_test ( qty%lons, qty%noLons, "qty%lons", ModuleName )
-    call Allocate_test ( qty%lsts, qty%noLsts, "qty%lsts", ModuleName )
-    call Allocate_test ( qty%szas, qty%noSzas, "qty%szas", ModuleName )
-
-    ! Now the temporal coordinates
-    call Allocate_test ( qty%dateStarts, qty%noDates, "qty%dateStarts", ModuleName )
-    call Allocate_test ( qty%dateEnds, qty%noDates, "qty%dateEnds", ModuleName )
-
-    ! Now the data itself
-    allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
-      qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"field")
-
-  end subroutine SetupNewGridTemplate
-
-  ! --------------------------------------------------------------------------
-
-  ! This subroutine destroys a quantity template
-
-  subroutine DestroyGridTemplateContents(qty)
-
-    ! Dummy argument
-    type (GriddedData_T), intent(INOUT) :: qty
-
-    ! Local variables
-    integer :: STATUS
-
-    ! Executable code
-    call Deallocate_test ( qty%heights, "qty%heights", ModuleName )
-    call Deallocate_test ( qty%lats, "qty%lats", ModuleName )
-    call Deallocate_test ( qty%lons, "qty%lons", ModuleName )
-    call Deallocate_test ( qty%lsts, "qty%lsts", ModuleName )
-    call Deallocate_test ( qty%szas, "qty%szas", ModuleName )
-
-    ! Now the temporal coordinates
-    call Deallocate_test ( qty%dateStarts, "qty%dateStarts", ModuleName )
-    call Deallocate_test ( qty%dateEnds, "qty%dateEnds", ModuleName )
-
-    ! Now the data itself
-    deallocate(qty%field, STAT=status)
-
-    if (status /= 0) call announce_error(0,  &
-      & MLSMSG_Allocate//"field")
-
-  end subroutine DestroyGridTemplateContents
-
-  ! --------------------------------------------------------------------------
-
-  ! This subroutine adds a quantity template to a database, or creates the
-  ! database if it doesn't yet exist
-
-  !  SUBROUTINE AddGridTemplateToDatabase(database,qty)
-  integer function AddGridTemplateToDatabase(database,item)
-
-    ! Dummy arguments
-    type (GriddedData_T), dimension(:), pointer :: database
-    type (GriddedData_T), intent(IN) :: item
-
-    ! Local variables
-    type (GriddedData_T), dimension(:), pointer :: tempDatabase
-
-    ! Executable code
-
-    include "addItemToDatabase.f9h"
-    AddGridTemplateToDatabase = newSize
-
-  end function AddGridTemplateToDatabase
-
-  ! --------------------------------------------------------------------------
-
-  ! This subroutine destroys a quantity template database
-
-  subroutine DestroyGridTemplateDatabase(database)
-
-    ! Dummy argument
-    type (GriddedData_T), dimension(:), pointer :: database
-
-    ! Local variables
-    integer :: qtyIndex, status
-
-    if ( toggle(gen) ) call trace_begin ( "DestroyGridTemplateDatabase" )
-
-    if (associated(database)) then
-      do qtyIndex=1,size(database)
-        call DestroyGridTemplateContents(database(qtyIndex))
-      enddo
-      deallocate(database, stat=status)
-      if (status /= 0) call announce_error(0,  &
-        & MLSMSG_DeAllocate//"database")
-    endif
-    if ( toggle(gen) ) then
-      call trace_end ( "DestroyGridTemplateDatabase" )
-    end if
-  end subroutine DestroyGridTemplateDatabase
-
-
   !----------------- Beginning of Paul's code ------------------
 
   !---------------------------- ReadGriddedData ---------------------
@@ -453,7 +299,7 @@ contains
         do while (.not. end_of_file)
 
           call l3ascii_read_field ( processCli, qty, end_of_file)
-          returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+          returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
 
           nullify (qty%lats)
           nullify (qty%lons)
@@ -592,10 +438,10 @@ contains
           endif
 
           if(dump) then
-            call Dump_Gridded_Data(gddata, root)
+            call DumpGriddedData(gddata, root)
           endif
 
-          ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
+          ErrType = AddGriddedDataToDatabase(aprioriData, gddata)
 
           nullify (gddata%heights)
           nullify (gddata%lats)
@@ -685,7 +531,7 @@ contains
       if ( returnStatus == PGS_S_SUCCESS ) then
 
         ! Open the HDF-EOS file and read gridded data
-        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+        returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
 
         !        call read_dao ( DAOphysicalFilename, vname, data_array )
         if(returnStatus > 0) then
@@ -746,7 +592,7 @@ contains
 
         ! Open the HDF-EOS file and read gridded data
 
-        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+        returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
 
         !        call read_ncep ( NCEPphysicalFilename, data_array )
         if(returnStatus > 0) then
@@ -760,103 +606,6 @@ contains
     !===========================
   end subroutine Obtain_NCEP
   !===========================
-
-  ! --------------------------------  Dump_Gridded_Database  -----
-  subroutine Dump_Gridded_Database(GriddedData, root)
-    use Dump_0, only: Dump
-
-    ! Imitating what dump_pointing_grid_database does, but for gridded data
-    ! which may come from climatology, ncep, dao
-
-    type (GriddedData_T), dimension(:), pointer :: GriddedData 
-
-    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-
-    ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .false.
-    integer            :: i
-
-    if ( .not. associated(GriddedData)) then
-      call announce_error(ROOT, 'Gridded database still null')
-      return
-    endif
-
-    call output ( 'database: a priori grids: SIZE = ' )
-    call output ( size(GriddedData), advance='yes' )
-    do i = 1, size(GriddedData)
-
-      call output ( 'item number ' )
-      call output ( i, advance='yes' )
-
-      call Dump_Gridded_Data(GriddedData(i), root)
-    end do ! i
-  end subroutine Dump_Gridded_Database
-
-  ! --------------------------------  Dump_Gridded_Data  -----
-  subroutine Dump_Gridded_Data(GriddedData, root)
-    use Dump_0, only: Dump
-
-    ! Imitating what dump_pointing_grid_database does, but for gridded data
-    ! which may come from climatology, ncep, dao
-
-    type (GriddedData_T) :: GriddedData 
-
-    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-
-    ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .false.
-
-    call output('quantity name ' // GriddedData%quantityName, advance='yes')
-    call output('description ' // GriddedData%description, advance='yes')
-    call output('units ' // GriddedData%units, advance='yes')
-
-    call output ( ' ************ Geometry ********** ' ,advance='yes')
-
-    call output ( ' Vertical coordinate = ' )
-    call output ( GriddedData%verticalCoordinate, advance='yes' )
-    call output ( ' No. of heights = ' )
-    call output ( GriddedData%noHeights, advance='yes' )
-    call dump ( GriddedData%heights, &
-      & '    Heights =' )
-
-    call output ( ' Equivalent latitude = ' )
-    call output ( GriddedData%equivalentLatitude, advance='yes' )
-    call output ( ' No. of latitudes = ' )
-    call output ( GriddedData%noLats, advance='yes' )
-    call dump ( GriddedData%lats, &
-      & '    latitudes =' )
-
-    call output ( ' No. of longitudes = ' )
-    call output ( GriddedData%noLons, advance='yes' )
-    call dump ( GriddedData%lons, &
-      & '    longitudes =' )
-
-    call output ( ' No. of local times = ' )
-    call output ( GriddedData%noLsts, advance='yes' )
-    call dump ( GriddedData%lsts, &
-      & '    local times =' )
-
-    call output ( ' No. of solar zenith angles = ' )
-    call output ( GriddedData%noSzas, advance='yes' )
-    call dump ( GriddedData%szas, &
-      & '    solar zenith angles =' )
-
-    call output ( ' No. of dates = ' )
-    call output ( GriddedData%noDates, advance='yes' )
-    call dump ( GriddedData%dateStarts, &
-      & '    starting dates =' )
-    call dump ( GriddedData%dateEnds, &
-      & '    ending dates =' )
-
-    if(MAYDUMPFIELDVALUES) then
-      call output ( ' ************ tabulated field values ********** ' ,advance='yes')
-
-      ! No dump for 6-dimensional double arrays yet, anyway
-      !     call dump ( GriddedData%field, &
-      !      & '    gridded field values =' )
-    endif
-
-  end subroutine Dump_Gridded_Data
 
   ! --------------------------------  source_file_already_read  -----
   function source_file_already_read(GriddedDataBase, source_file, field_name &
@@ -985,6 +734,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.15  2001/09/10 23:37:10  livesey
+! Tidied up a bit, moved much stuff to GriddedData.f90
+!
 ! Revision 2.14  2001/07/12 22:03:55  livesey
 ! Some minor ish changes.  Needs an overhaul at some point.
 !
