@@ -83,8 +83,10 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: MAXNUML1BRADIDS=&
   & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
-  ! Whether to explicitly collect garbage at end of each chunk                
+  ! Whether to explicitly collect garbage at end of each chunk
   logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
+  ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+  logical            :: SKIPRETRIEVAL = .false.         
 
   logical            :: TOOLKIT =                SIPS_VERSION 
   ! --------------------------------------------------------------------------
@@ -100,6 +102,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.22  2003/09/05 23:22:52  pwagner
+! Has new SKIPRETRIEVAL option
+!
 ! Revision 2.21  2003/06/09 22:49:32  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
