@@ -79,7 +79,7 @@ CONTAINS
 
        CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, L1BFileInfo%RADTid, &
             HDFversion)
-       CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion)
+       CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion=HDFversion)
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L1BRAD T file: '//L1BFileInfo%RADTFileName)
 
@@ -93,7 +93,7 @@ CONTAINS
 
     CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, L1BFileInfo%RADDid, &
          HDFversion)
-    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
@@ -101,14 +101,14 @@ CONTAINS
 
     CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, L1BFileInfo%RADFid, &
          HDFversion)
-    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
     ! Write Hdr Annotations and Close L1BOA file
 
     CALL WriteHdrAnnots (L1BFileInfo%OAFileName, L1BFileInfo%OAid, HDFversion)
-    CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
 
@@ -138,6 +138,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.10  2003/02/28 19:11:35  pwagner
+! In accord with new MLS_closeFile interface
+!
 ! Revision 2.9  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
