@@ -27,6 +27,9 @@ module INTRINSIC
   integer, public, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
   integer, public, parameter :: ALL_FIELDS = 2    ! All fields required
   integer, public, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
+! A "field_type", "field_spec" or "dot" vertex may be decorated with the
+! following flag:
+  integer, public, parameter :: REQ_FLD = 1       ! Required field
 ! Data types that don't have enumerated literals:
   integer, public, parameter :: T_FIRST          = 1
   integer, public, parameter :: T_NUMERIC        = t_first
@@ -222,6 +225,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.8  2001/02/09 18:37:37  vsnyder
+! Add REQ_FLD flag for specification definitions
+!
 ! Revision 2.7  2001/02/09 01:05:18  livesey
 ! Thought I'd done this
 !
