@@ -340,10 +340,6 @@ program MLSL2
      penalty_for_no_metadata = 0
   end if
 
-  if( index(switches, 'opt') /= 0 ) then
-    call dump_settings
-  end if
-
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%slave ) call InitParallel ( singleChunk )
@@ -379,6 +375,10 @@ program MLSL2
   end if
   error = status
   call time_now ( t1 )
+
+  if( index(switches, 'opt') /= 0 ) then
+    call dump_settings
+  end if
 
   !---------------- Task (5) ------------------
   if (error == 0) then
@@ -492,6 +492,7 @@ contains
    ! (This incorporates automatic source code replacement by
    !  a custom build command in the Makefile --
    !  Please don't edit/remove the following 3 lines)
+   !  See mlspgs/notes/switches
    ! === (start of automatic usage lines) ===
     print *, '  A => AntennaPatterns'
    ! === (end of automatic usage lines) ===
@@ -505,6 +506,7 @@ contains
    ! (This incorporates automatic source code replacement by
    !  a custom build command in the Makefile --
    !  Please don't edit/remove the following 3 lines)
+   !  See mlspgs/notes/options
    ! === (start of automatic option lines) ===
     print *, '  -A: Dump the un-decorated abstract syntax tree.'
    ! === (end of automatic option lines) ===
@@ -581,6 +583,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.77  2002/07/23 23:15:05  pwagner
+! Moved dump_settings call after learning name of l2cf file
+!
 ! Revision 2.76  2002/07/18 21:59:28  vsnyder
 ! Cosmetic changes, move some stuff around so PRUNIT is stdout in init_tables
 !
