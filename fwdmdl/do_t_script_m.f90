@@ -17,71 +17,32 @@ module DO_T_SCRIPT_M
 contains
 !----------------------------------------------------  DO_T_SCRIPT  -----
 
-  subroutine DO_T_SCRIPT ( Ngp1, Frq, sp_tmp, brkpt, no_ele, t_path, mid, &
-    &                      t_script)
+  subroutine DO_T_SCRIPT ( t_path, sp_tmp, Frq, t_script )
 
-! This routine builds the t_script array
+! This routine builds the t_script array.  In some notes it's called Delta B.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSCommon, only: IP, RP
 
-! 'sp_tmp' is space temperature.
+    real(rp), intent(in) :: T_PATH(:)    ! path temperatures            
+    real(rp), intent(in) :: Frq          ! Frequency                    
+    real(rp), intent(in) :: sp_tmp       ! farside boundary temperature 
+    !                                      usually cosmic space (2.7K). 
 
-    integer(ip), intent(in) :: Ngp1, brkpt, no_ele
+    real(rp), intent(out) :: t_script(:) ! path differential temperatures
 
-    real(rp), intent(in) :: Frq, sp_tmp
-
-    real(rp), intent(in) :: T_PATH(:)
-
-    integer(ip), intent(out) :: mid
-    real(rp), intent(out) :: t_script(:)
-
-    integer(ip) :: i, j, m
+    integer(ip) :: I, N_path
     real(rp)    :: Tb(Size(t_script))
 
-    tb(1:) = 0.0_rp
-    t_script(1:) = 0.0_rp
+    n_path = size(t_path)
 
-! 'brkpt' is the index of the path break-point (when it changes from
-!         incoming ray to outgoing ray)
-! 'no_ele' is the total number of entries in t_path(1...no_ele)
-
-    m = 0
-    j = 1 - Ngp1
-
-    do
-      j = j + Ngp1
-      if ( j > brkpt ) exit
-      m = m + 1
-      Tb(m) = stat_temp(t_path(j),Frq)
-    end do
-
-    mid = m
-    j = brkpt + 1 - Ngp1
-
-    do
-      j = j + Ngp1
-      if ( j > no_ele ) exit
-      m = m + 1
-      Tb(m) = stat_temp(t_path(j),Frq)
-    end do
+    tb = stat_temp(t_path,Frq)
 
     t_script(1) = 0.5_rp * (Tb(1) + Tb(2))
-    do i = 2, mid-1
+    do i = 2, n_path-1
       t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
     end do
-
-    t_script(mid  ) = 0.5_rp * (Tb(mid+1) - Tb(mid-1))
-    t_script(mid+1) = 0.5_rp * (Tb(mid+2) - Tb(mid  ))
-
-! Note that Tb(mid) = Tb(mid+1) because this index is redundant
-! at the tangent vertical (or center phi)
-
-    do i = mid+2, m-1
-      t_script(i) = 0.5_rp * (Tb(i+1) - Tb(i-1))
-    end do
-
-    t_script(m) = stat_temp(sp_tmp,Frq) - 0.5_rp * (Tb(m-1) + Tb(m))
+    t_script(n_path) = stat_temp(sp_tmp,Frq) - 0.5_rp * (Tb(n_path-1) + Tb(n_path))
 
     return
   end subroutine DO_T_SCRIPT
@@ -89,6 +50,8 @@ contains
 !------------------------------------------------  Two_D_T_Script  -----
 
   subroutine Two_D_T_Script ( t_grid, t_space, nu, t_scr )
+
+! This routine builds the t_script array.  In some notes it's called Delta B.
 
     use D_STAT_TEMP_M, only: STAT_TEMP
     use MLSCommon, only: R8, RP
@@ -128,6 +91,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.3  2003/06/06 20:38:25  vsnyder
+! Add some comments about dummy arguments
+!
 ! Revision 2.2  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
