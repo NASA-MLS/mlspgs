@@ -60,7 +60,7 @@ contains
 
   subroutine Get_D_Deltau_Pol_DT ( Frq, H, CT, STCP, STSP, My_Catalog, &
                 & Beta_group, GL_slabs_M, GL_slabs_P, &
-                & T_Path, T_Path_M, T_Path_P, Tanh_Path, &
+                & T_Path_C, T_Path_M, T_Path_P, Tanh_Path, &
                 & Beta_Path, SPS_Path, Eta_zxp, Del_S, Path_inds, &
                 & Incoptdepth, D_Deltau_Pol_DT )
 
@@ -89,9 +89,9 @@ contains
     type(catalog_t), intent(in) :: My_Catalog(:)
     type (beta_group_T), intent(in) :: Beta_group(:)
     type (slabs_struct), intent(in) :: GL_slabs_m(:,:), GL_slabs_p(:,:) ! for T -/+ del_T
-    real(rp), intent(in) :: T_Path(:)    ! path temperatures
+    real(rp), intent(in) :: T_Path_C(:)  ! path temperatures on coarse grid
     real(rp), intent(in) :: T_Path_M(:), T_Path_P(:) ! path temperatures -/+ del_temp
-    real(rp), intent(in) :: Tanh_Path(:) ! tanh(h \nu / 2 k T_Path)
+    real(rp), intent(in) :: Tanh_Path(:) ! tanh ( h \nu / 2 k T_Path_C )
     complex(rp), intent(in) :: Beta_Path(-1:,:,:) ! -1:1 x path x sps
     real(rp), intent(in) :: SPS_Path(:,:) ! species on path, path x sps
     real(rp), intent(in) :: Eta_zxp(:,:) ! representation basis function
@@ -106,7 +106,9 @@ contains
     complex(rp) :: Alpha_Path_N(-1:1)    ! alpha_path_n * N
     complex(rp) :: Beta(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
       ! Beta_Path, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
-    complex(rp), dimension(-1:1,size(beta_path,2),size(beta_path,3)) :: Beta_Path_M, Beta_Path_P
+    complex(rp), dimension(-1:1,size(path_inds,1),size(beta_group)) :: &
+      & Beta_Path_M, &  ! At T_path_M on coarse path
+      & Beta_Path_P     ! At T_path_P on coarse path
     complex(rp):: D_Alpha_DT(-1:1,size(path_inds,1)) ! n/T * Alpha on the path
     complex(rp) :: D_Incoptdepth_dT(2,2,size(path_inds,1))
     real(r8) :: FrqHK                    ! 0.5 * Frq * H_Over_K
@@ -131,9 +133,9 @@ contains
       alpha_path_n = (0.0_rp,0.0_rp)
       k = path_inds(i)
 
-      l_ttm = log(t_path(k)/t_path_m(k))
+      l_ttm = log(t_path_c(k)/t_path_m(k))
       l_tptm = log(t_path_p(k)/t_path_m(k))
-      l_tpt = log(t_path_p(k)/t_path(k))
+      l_tpt = log(t_path_p(k)/t_path_c(k))
 
       tanh_m = tanh( frqhk / t_path_m(k) )
       tanh_p = tanh( frqhk / t_path_p(k) )
@@ -141,8 +143,8 @@ contains
       do j = 1, n_sps
         ! Solve for n
         beta = beta_path(:,k,j) * tanh_path(k)
-        beta_m = beta_path_m(:,k,j) * tanh_m
-        beta_p = beta_path_p(:,k,j) * tanh_p
+        beta_m = beta_path_m(:,i,j) * tanh_m
+        beta_p = beta_path_p(:,i,j) * tanh_p
         n = 0.25 * (      log(beta/beta_m)   / l_ttm +    &
           &         2.0 * log(beta_p/beta_m) / l_tptm +   &
           &               log(beta_p/beta)   / l_tpt )
@@ -156,7 +158,7 @@ contains
 
       ! Now it's more than D alpha, because we've multiplied by del_s, but
       ! this is OK, because OPACITY is linear.
-      d_alpha_dT(:,i) = alpha_path_n * del_s(k) / t_path(k)
+      d_alpha_dT(:,i) = alpha_path_n * del_s(k) / t_path_c(k)
 
     end do ! i
 
@@ -188,6 +190,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.2  2003/05/15 20:50:34  vsnyder
+! Correct some subscript errors -- coarse vs. fine path
+!
 ! Revision 2.1  2003/05/15 03:27:56  vsnyder
 ! Initial commit
 !
