@@ -766,6 +766,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -824,6 +829,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -881,6 +891,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -938,6 +953,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -995,6 +1015,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -1052,6 +1077,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -1109,6 +1139,11 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
@@ -1226,6 +1261,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.12  2002/10/11 23:42:04  pwagner
+! Remembered to close hyperslab memspaceID if created one
+!
 ! Revision 2.11  2002/10/10 23:51:57  pwagner
 ! Optional hyperslab args to LoadFromHDF5DS
 !
