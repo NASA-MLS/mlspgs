@@ -11,7 +11,7 @@ module GLOBAL_SETTINGS
 !??? Begin temporary stuff to start up the forward model
   use ForwardModelInterface, only: AddForwardModelConfigToDatabase, &
     ConstructForwardModelConfig, ForwardModelGlobalSetup, ForwardModelConfig_T
-  use INIT_TABLES_MODULE, only: F_BILL, F_ZVI, S_ForwardModelGlobal, S_L2LOAD
+  use INIT_TABLES_MODULE, only: F_ZVI, S_ForwardModelGlobal, S_L2LOAD
   use L2_Load_M, only: L2_Load
   use L2_test_structures_m, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
     & TEMPORARY_FWD_MDL_INFO
@@ -43,25 +43,21 @@ module GLOBAL_SETTINGS
 contains
 
 ! subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase ) !??? Restore when l2load isn't needed
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, FMC, FMI, TFMI )
+  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, FMC )
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: FORWARDMODELCONFIGDATABASE
 
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
-  type(fwd_mdl_info), dimension(:), pointer :: FMI
-  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
   integer :: IER
 !??? End of temporary stuff to start up the forward model
 
     integer :: GSON                !??? Temporary for l2load
-    integer :: J, K                !??? Temporary for l2load
     character(len=255) :: LINE     !??? Temporary for l2load
 
     integer :: I         ! Index of son of root
     integer :: SON       ! Son of root
-    integer :: N                        ! Size of forwardModelConfigDatabase
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
@@ -82,38 +78,16 @@ contains
         if ( node_id(son) == n_named ) son = subtree(2,son)
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          ! Nothing here yet
+          call forwardModelGlobalSetup ( son )
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son ) ) )
         case ( s_l2load ) !??? More temporary stuff for l2load
-          do j = 2, nsons(son)
-            gson = subtree(j,son)
-            if ( get_field_id(gson) == f_zvi ) then
-              call get_string ( sub_rosa(subtree(2,gson)), line ) ! ZVI file
-              fmc%z = line(2:len_trim(line)-1)
-              call l2_load ( fmc, ier=ier )
-          exit
-            end if
-          end do
-          do j = 2, nsons(son)
-            gson = subtree(j,son)
-            if ( get_field_id(gson) == f_bill ) then
-              if ( associated(fmi) ) deallocate ( fmi, stat=ier )
-              if ( associated(tfmi) ) deallocate ( tfmi, stat=ier )
-              allocate ( fmi(nsons(son)-1), stat=ier )
-              if ( ier /= 0 ) call MLSMessage ( MLSmsg_Error, moduleName, &
-                & MLSmsg_allocate // "fmi" )
-              allocate ( tfmi(nsons(son)-1), stat=ier )
-              if ( ier /= 0 ) call MLSMessage ( MLSmsg_Error, moduleName, &
-                & MLSmsg_allocate // "tfmi" )
-              do k = 2, nsons(gson)
-                call get_string ( sub_rosa(subtree(k,gson)), line ) ! Bill file
-                fmc%b = line(2:len_trim(line)-1)
-                call l2_load ( fmc, fmi(k-1), tfmi(k-1), ier=ier )
-              end do
-            end if
-          end do
+          ! The only allowed field is the required ZVI field
+          gson = subtree(2,son)
+          call get_string ( sub_rosa(subtree(2,gson)), line ) ! ZVI file
+          fmc%z = line(2:len_trim(line)-1)
+          call l2_load ( fmc, ier=ier )
           !??? End temporary stuff for l2load
         end select
       end if
@@ -126,6 +100,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.8  2001/03/17 00:57:36  livesey
+! Removed dump.
+!
 ! Revision 2.7  2001/03/17 00:45:38  livesey
 ! Added ForwardModelConfigDatabase
 !
