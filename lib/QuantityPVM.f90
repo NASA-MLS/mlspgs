@@ -80,7 +80,7 @@ contains ! ================================== Module procedures ============
 
     call PVMIDLPack ( (/ q%template%coherent, &
       & q%template%stacked, q%template%regular, q%template%minorFrame, &
-      & q%template%logBasis /), info ) 
+      & q%template%majorFrame, q%template%logBasis /), info ) 
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity flags" )
 
     call PVMIDLPack ( (/ q%template%noInstancesLowerOverlap, &
@@ -122,7 +122,8 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
 
     ! Now pack the arrays
-    if ( .not. q%template%minorFrame .or. .not. mySkipMIFGeolocation ) then
+    if ( .not. (q%template%minorFrame .or. q%template%majorFrame) &
+      & .or. .not. mySkipMIFGeolocation ) then
       call PVMIDLPack ( q%template%surfs, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
       
@@ -239,7 +240,7 @@ contains ! ================================== Module procedures ============
     integer :: I4(4)                    ! Unpacked stuff
     integer :: I12(12)                  ! Unpacked stuff
     logical :: L2(2)                    ! Unpacked stuff
-    logical :: L5(5)                    ! Unpacked stuff
+    logical :: L6(6)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
     character(len=132) :: WORD          ! Result of get_string etc.
     logical :: MYJUSTUNPACK             ! Copy of justUnPack
@@ -263,7 +264,7 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantity dimensions." )
 
-    call PVMIDLUnPack ( l5, info ) 
+    call PVMIDLUnPack ( l6, info ) 
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantity flags" )
 
@@ -271,12 +272,13 @@ contains ! ================================== Module procedures ============
       & noInstances  = i4(1), &
       & noSurfs      = i4(2), &
       & noChans      = i4(3), &
-      & coherent     = l5(1), &
-      & stacked      = l5(2), &
-      & regular      = l5(3), &
+      & coherent     = l6(1), &
+      & stacked      = l6(2), &
+      & regular      = l6(3), &
       & instanceLen  = i4(4), &
-      & minorFrame   = l5(4) )
-    qt%logBasis = l5(5)
+      & minorFrame   = l6(4), &
+      & majorFrame   = l6(5) )
+    qt%logBasis = l6(6)
 
     call PVMIDLUnPack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
@@ -326,7 +328,8 @@ contains ! ================================== Module procedures ============
     ! Juest ignore it, we got it as an integer already
 
     ! Now unpack the arrays
-    if ( .not. qt%minorFrame .or. .not. present ( mifGeolocation ) ) then
+    if ( .not. ( qt%minorFrame .or. qt%majorFrame ) .or. &
+      & .not. present ( mifGeolocation ) ) then
 
       call PVMIDLUnpack ( qt%surfs, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
@@ -368,15 +371,29 @@ contains ! ================================== Module procedures ============
       end if
     else
       ! If it's minor frame and we've got mif geolocation information just point to that.
-      qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
-      qt%phi => mifGeolocation(qt%instrumentModule)%phi
-      qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat
-      qt%lon => mifGeolocation(qt%instrumentModule)%lon
-      qt%time => mifGeolocation(qt%instrumentModule)%time
-      qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
-      qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
-      qt%mafIndex => mifGeolocation(qt%instrumentModule)%mafIndex
-      qt%mafCounter => mifGeolocation(qt%instrumentModule)%mafCounter
+      if ( qt%minorFrame ) then
+        qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
+        qt%phi => mifGeolocation(qt%instrumentModule)%phi
+        qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat
+        qt%lon => mifGeolocation(qt%instrumentModule)%lon
+        qt%time => mifGeolocation(qt%instrumentModule)%time
+        qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
+        qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
+      end if
+      if ( qt%majorFrame ) then
+        nullify ( qt%surfs )
+        qt%phi => mifGeolocation(qt%instrumentModule)%phi(1:1,:)
+        qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat(1:1,:)
+        qt%lon => mifGeolocation(qt%instrumentModule)%lon(1:1,:)
+        qt%time => mifGeolocation(qt%instrumentModule)%time(1:1,:)
+        qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime(1:1,:)
+        qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith(1:1,:)
+      end if
+      if ( qt%minorFrame .or. qt%majorFrame ) then
+        qt%mafIndex => mifGeolocation(qt%instrumentModule)%mafIndex
+        qt%mafCounter => mifGeolocation(qt%instrumentModule)%mafCounter
+      end if
+      
     end if
 
     call PVMIDLUnpack ( flag, info )
@@ -443,6 +460,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.14  2002/11/27 00:24:01  livesey
+! Better handling of major frame quantities
+!
 ! Revision 2.13  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
