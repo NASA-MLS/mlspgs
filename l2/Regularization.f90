@@ -97,9 +97,11 @@ contains
     nb = a%col%nb
     if ( a%col%extra ) nb = nb - 1
     if ( nsons(orders) /= 2 ) then
-      if ( quants == 0 ) call announceError ( regQuantsReq, orders )
-      if ( nsons(orders) /= nsons(quants) ) &
-        & call announceError ( fieldSizes, orders )
+      if ( quants == 0 ) then
+        call announceError ( regQuantsReq, orders )
+      else if ( nsons(orders) /= nsons(quants) ) then
+        call announceError ( fieldSizes, orders )
+      end if
     end if
 
     if ( error == 0 ) then
@@ -217,6 +219,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.6  2001/06/26 20:16:41  vsnyder
+! Don't look at nsons(0)
+!
 ! Revision 2.5  2001/06/26 20:13:24  vsnyder
 ! Fixed a blunder -- call call announceError
 !
