@@ -59,7 +59,8 @@ contains ! =====     Public Procedures     =============================
       & L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_EXTINCTION, &
       & L_GEODALTITUDE, L_GPH, L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
       & L_MAGNETICFIELD, L_MASSMEANDIAMETERICE, L_MATRIX3X3, L_NOISEBANDWIDTH, L_NONE, &
-      & L_OPTICALDEPTH, L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, &
+      & L_NORADSPERMIF, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+      & L_PHITAN, L_PTAN, L_RADIANCE, &
       & L_REFGPH, L_RHI, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
       & L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SPACERADIANCE, &
       & L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, &
@@ -313,7 +314,7 @@ contains ! =====     Public Procedures     =============================
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
       & l_scanResidual, l_chisqmmif, l_opticalDepth, l_orbitInclination, &
-      & l_ECRtoFOV /) )
+      & l_ECRtoFOV, l_noRadsPerMIF /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
  
@@ -351,16 +352,15 @@ contains ! =====     Public Procedures     =============================
         frequencyCoordinate = l_matrix3X3
       end if
 
+      ! Make absolutely certain template's dimensions are what we want
+      if ( any ( quantityType == (/ l_chiSqMMIF, l_noRadsPerMIF /) ) ) then
+        noChans = 1
+        frequencyCoordinate = l_none
+      end if
+
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation, regular=regular )
-
-      ! Make absolutely certain template's dimensions are what we want
-      if ( quantityType == l_chiSqMMIF ) then
-        qty%noChans = 1
-        qty%instanceLen = qty%NoSurfs
-        qty%frequencyCoordinate = l_none
-      end if
         
     else if ( majorFrame ) then
 
@@ -1124,6 +1124,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.90  2003/05/10 23:39:25  livesey
+! Fixed problems with chisqs and noRads
+!
 ! Revision 2.89  2003/05/07 01:00:03  livesey
 ! More stuff got missed in the merge, was I asleep or something?
 !
