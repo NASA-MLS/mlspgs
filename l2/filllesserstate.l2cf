@@ -34,7 +34,7 @@ BEGIN Fill
     ;; Now the more minor stuff
     Fill, quantity = _b.earthReflectivity, $
       method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
-    Fill, quantity = _b.orbitIncline, $
+    Fill, quantity = _b.orbitInclination, $
       method = explicit, explicitValues = 98.145 degrees
     Fill, quantity = _b.spaceRadiance, $
       method =explicit, explicitValues = 2.735 K
