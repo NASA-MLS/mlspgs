@@ -239,11 +239,11 @@ BEGIN ReadApriori
     ;; 1 January 2000.  Later we should use gridded data, or at least
     ;; stuff for 1996
 
-    l2gpTempInput: l2gp, file='/bigdata/livesey/misc/temp_input.l2gp', $
+    l2gpTempInput: l2gp, file='/nas/bigdata/livesey/misc/temp_input.l2gp', $
       swath='Temperature'
-    l2gpH2OInput: l2gp, file='/bigdata/livesey/misc/h2o_input.l2gp', $
+    l2gpH2OInput: l2gp, file='/nas/bigdata/livesey/misc/h2o_input.l2gp', $
       swath='H2O'
-    l2gpREFGPHInput: l2gp, file='/bigdata/livesey/misc/refgph_input.l2gp', $
+    l2gpREFGPHInput: l2gp, file='/nas/bigdata/livesey/misc/refgph_input.l2gp', $
       swath='refGPH'
     
 END ReadApriori
@@ -392,6 +392,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.3  2001/03/09 00:54:00  zvi
+; *** empty log message ***
+;
 ; Revision 2.2  2001/03/08 22:00:23  vsnyder
 ; Add stuff to start up forward model using L2_Load, put in a "sids" spec.
 ;
