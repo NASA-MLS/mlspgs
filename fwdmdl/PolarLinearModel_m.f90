@@ -33,7 +33,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
-    use Intrinsic, only: L_LINEAR, L_FULL, L_RADIANCE, L_FIELDAZIMUTH
+    use Intrinsic, only: L_LINEAR, L_FULL, L_RADIANCE, L_FIELDAZIMUTH, L_OPTICALDEPTH
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_FIELDAZIMUTH
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
@@ -103,7 +103,7 @@ contains ! =====     Public Procedures     =============================
     ! radiance.
     if ( .not. associated ( radiance ) ) then
       radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
-        & signal=signal%index, sideband=signal%sideband, noError=.true. )
+        & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
     end if
 
     phi => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
