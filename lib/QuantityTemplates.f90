@@ -211,7 +211,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
-  subroutine DestroyQuantityTemplateDatabase ( database, ingnoreMinorFrame )
+  subroutine DestroyQuantityTemplateDatabase ( database, ignoreMinorFrame )
 
   ! Destroy a quantity template database
 
@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( associated(database) ) then
       do qtyIndex = 1, SIZE(database)
-        if ( .not. (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) &
+        if (.not. (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) ) &
           &   call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       deallocate ( database, stat=status )
@@ -393,6 +393,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.12  2001/04/23 23:50:41  livesey
+! *** empty log message ***
+!
 ! Revision 2.11  2001/04/12 21:43:06  livesey
 ! Added sideband field
 !
