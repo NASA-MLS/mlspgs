@@ -11,10 +11,11 @@ module PFADataBase_m
 
   implicit NONE
   private
-  public :: PFAData_t, PFAData, RK
+  public :: PFAData_t, PFAData, RK, SortPFAData
   public :: AddPFADatumToDatabase
-  public :: Destroy_PFADataBase, Dump_PFADataBase, Dump
-  public :: Write_PFADatum, Write_PFADataBase, Read_PFADataBase
+  public :: Destroy_PFADataBase, Dump, Dump_PFADataBase, Dump_PFADatum
+  public :: PFADataOrder, PFADataOrderIndexed, Sort_PFADataBase
+  public :: Read_PFADataBase, Write_PFADatum, Write_PFADataBase
 
   interface Dump
     module procedure Dump_PFADatum
@@ -39,6 +40,9 @@ module PFADataBase_m
   end type PFAData_T
 
   type(PFAData_t), pointer,save :: PFAData(:) => NULL()
+  ! PFAData(SortPFAData(i)) < PFAData(SortPFAData(j)) if i < j, with "<"
+  ! defined by PFADataOrder.
+  integer, pointer, save :: SortPFAData(:) => NULL()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -74,6 +78,7 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------  Destroy_PFADataBase  -----
   subroutine Destroy_PFADataBase
     use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
     integer :: I
     if ( .not. associated(pfaData) ) return
     do i = 1, size(pfaData)
@@ -85,6 +90,10 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( pfaData(i)%dAbsDnc, 'pfaData%dAbsDnc', moduleName )
       call deallocate_test ( pfaData(i)%dAbsDnu, 'pfaData%dAbsDnu', moduleName )
     end do
+    deallocate ( PFAData, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'PDAData' )
+    call deallocate_test ( SortPFAData, 'SortPFAData', moduleName )
   end subroutine Destroy_PFADataBase
 
   ! -------------------------------------------  Dump_PFADataBase  -----
@@ -97,13 +106,12 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Cannot dump unallocated PFA data base" )
     do i = 1, size(pfaData)
-      call output ( i, before='PFA database item ', after=':' )
-      call dump_PFADatum ( pfaData(i), details )
+      call dump_PFADatum ( pfaData(i), details, i )
     end do
   end subroutine Dump_PFADataBase
 
   ! ----------------------------------------------  Dump_PFADatum  -----
-  subroutine Dump_PFADatum ( PFADatum, Details )
+  subroutine Dump_PFADatum ( PFADatum, Details, Index )
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_Indices
@@ -113,6 +121,7 @@ contains ! =====     Public Procedures     =============================
 
     type(PFAData_t), intent(in) :: PFADatum
     integer, intent(in), optional :: Details ! >0 => Dump arrays, 0 => Don't
+    integer, intent(in), optional :: Index   ! In PFA Database
 
     integer :: I, L, W
     character(len=*), parameter :: Molecules = ' Molecules:'
@@ -121,8 +130,10 @@ contains ! =====     Public Procedures     =============================
     myDetails = 1
     if ( present(details) ) myDetails = details
 
+    call output ( 'PDA Datum ' )
+    if ( present(index) ) call output ( index )
     if ( pfaDatum%name /= 0 ) then
-      call output ( ' ' )
+      if ( present(index) ) call output ( ': ' )
       call display_string ( pfaDatum%name )
     end if
     call newLine
@@ -151,14 +162,13 @@ contains ! =====     Public Procedures     =============================
     end if
     call displaySignalName ( pfaDatum%theSignal, advance='yes' )
 
-
     call output ( ' TGrid: ' )
     call display_string ( pfaDatum%tGrid%name )
 
     call output ( ', VGrid: ' )
-    call display_string ( pfaDatum%vGrid%name, advance='yes' )
+    call display_string ( pfaDatum%vGrid%name )
 
-    call output ( pfaDatum%vel_rel, before=' Velocity linearization / C: ', &
+    call output ( pfaDatum%vel_rel, before=', Velocity linearization / C: ', &
       & advance='yes' )
 
     if ( myDetails <= 0 ) return
@@ -170,10 +180,66 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Dump_PFADatum
 
+  ! ------------------------------------------------- PFADataOrder -----
+  pure integer function PFADataOrder ( A, B ) result ( N )
+    type (PFAData_t), intent(in) :: A, B
+    integer :: I
+    do i = 1, min(size(a%molecules),size(b%molecules))
+      n = a%molecules(i) - b%molecules(i)
+      if ( n /= 0 ) return
+    end do
+    n = size(a%molecules) - size(b%molecules)
+    if ( n /= 0 ) return
+    n = a%theSignal%band - b%theSignal%band
+    if ( n /= 0 ) return
+    n = a%theSignal%instrumentModule - b%theSignal%instrumentModule
+    if ( n /= 0 ) return
+    n = a%theSignal%radiometer - b%theSignal%radiometer
+    if ( n /= 0 ) return
+    n = a%theSignal%spectrometer - b%theSignal%spectrometer
+    if ( n /= 0 ) return
+    n = a%theSignal%sideband - b%theSignal%sideband
+  end function PFADataOrder
+
+  ! ------------------------------------------ PFADataOrderIndexed -----
+  pure integer function PFADataOrderIndexed ( A, B )
+    integer, intent(in) :: A, B
+    PFADataOrderIndexed = PFADataOrder ( PFAData(a), PFAData(b) )
+  end function PFADataOrderIndexed
+
   ! -------------------------------------------  Read_PFADatabase  -----
   subroutine Read_PFADatabase ( FileName )
     character(len=*), intent(in) :: FileName
   end subroutine Read_PFADatabase
+
+  ! -------------------------------------------  Sort_PFADatabase  -----
+  subroutine Sort_PFADatabase
+  ! Create the array SortPFAData such that PFAData(i) < PFAData(j) if i < j.
+  ! "<" is defined by PFADataOrder: First the molecules, then the
+  ! signal's fields, with sideband last.  The order isn't really
+  ! important.  What we're trying to do is make sure that we find stuff in
+  ! the same order when we're processing the upper and lower sidebands.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use Sort_m, only: ISORT, GSORTP
+
+    integer :: I, J, K, N
+
+    if ( associated(sortPFAData) ) return ! only do it once
+
+    n = size(PFAData)
+
+    call allocate_test ( sortPFAData, n, 'SortPFAData', moduleName )
+
+    ! First sort the Molecules field of every PFA datum.
+    do i = 1, n
+      call isort ( pfaData(i)%molecules, 1, size(pfaData(i)%molecules) )
+    end do
+
+    ! Now sort the database
+    call gsortp ( PFADataOrderIndexed, n, sortPFAData )
+
+  end subroutine Sort_PFADatabase
 
   ! ------------------------------------------  Write_PFADatabase  -----
   subroutine Write_PFADatabase ( FileName )
@@ -247,11 +313,14 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.8  2004/10/06 21:19:50  vsnyder
+! Add sorting and comparing, some cannonball polishing
+!
 ! Revision 2.7  2004/09/04 01:50:31  vsnyder
-! get_beta_path_m.f90
+! Got checked in with get_beta_path_m.f90 for some reason
 !
 ! Revision 2.6  2004/09/02 00:50:15  vsnyder
-! Replace vslLin with vel_cor
+! Replace velLin with vel_cor
 !
 ! Revision 2.5  2004/09/01 00:28:54  vsnyder
 ! Make kind parameters more abstract, improve some comments
