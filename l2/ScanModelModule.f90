@@ -251,6 +251,25 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(:,:), pointer :: EARTHRADIUS ! Earth radius (minor frame)
 
     ! Executable code
+    ! Get a really simple first guess, assuming a uniform log scale height of
+    ! 16km
+    nullify ( geocLat, earthRadius )
+    call Allocate_test ( geocLat, &
+      & ptan%template%noSurfs, ptan%template%noInstances, &
+      & 'geocLat', ModuleName )
+    call Allocate_test ( earthRadius, &
+      & ptan%template%noSurfs, ptan%template%noInstances, &
+      & 'geocLat', ModuleName )
+    geocLat=GeodToGeocLat(ptan%template%geodLat)
+    earthRadius= earthRadA*earthRadB/sqrt(&
+      & (earthRadA*sin(geocLat))**2+ &
+      & (earthRadB*cos(geocLat))**2)
+    ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
+    if ( index ( switches, 'pguess' ) /= 0 ) &
+      & call dump ( ptan%values, 'Initial ptan guess' )
+    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
+    call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
+
     fmConf%phiWindow = 4.0
     fmConf%instrumentModule = ptan%template%instrumentModule
     fmConf%differentialScan = .false.
@@ -293,25 +312,6 @@ contains ! =============== Subroutines and functions ==========================
     ! Create the matrix
     call CreateEmptyMatrix ( jacobian, 0, residual, state )
 
-    ! Get a really simple first guess, assuming a uniform log scale height of
-    ! 16km
-    nullify ( geocLat, earthRadius )
-    call Allocate_test ( geocLat, &
-      & ptan%template%noSurfs, ptan%template%noInstances, &
-      & 'geocLat', ModuleName )
-    call Allocate_test ( earthRadius, &
-      & ptan%template%noSurfs, ptan%template%noInstances, &
-      & 'geocLat', ModuleName )
-    geocLat=GeodToGeocLat(ptan%template%geodLat)
-    earthRadius= earthRadA*earthRadB/sqrt(&
-      & (earthRadA*sin(geocLat))**2+ &
-      & (earthRadB*cos(geocLat))**2)
-    ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
-    if ( index ( switches, 'pguess' ) /= 0 ) &
-      & call dump ( ptan%values, 'Initial ptan guess' )
-    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
-    call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
-
     ! Now do the iterations
     do i = 1, maxIterations
       ! Get residual for all mafs
@@ -343,6 +343,9 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Put the result back in state
     ptan%values = state%quantities(1)%values
+
+    if ( index (switches, 'pguess' ) /= 0 ) &
+      & call dump ( ptan%values, 'Final ptan guess' )
 
     ! Destroy our vectors
     call DestroyMatrix ( jacobian )
@@ -1871,6 +1874,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.40  2002/06/26 20:59:25  livesey
+! Fixed bug in 2d pressure guesser, was ignoring very first guess
+!
 ! Revision 2.39  2002/06/26 19:18:53  livesey
 ! Merge of Bills fixes and my diagnostics
 !
