@@ -13,6 +13,31 @@ SHELL = /bin/sh
 # where a.sh is stored
 MLSBIN=.
 
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# This is how big COPY_NUMBER may grow before being reset
+MAX_COPIES = 10
+ONE = 1
+
+# This keeps track of the number of times MakeFC -> Makefile
+COPY_NUMBER = 2
+NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
+
+
+# This determines the command by which MakeFC looks like Makefile
+# Choose either "link" or "copy"; warning--link once caused cvs probs
+LOOKS_LIKE_MakeFC = copy
+
+ifeq ($(LOOKS_LIKE_MakeFC),copy)
+	LOOKS_LIKE_line = cp MakeFC Makefile
+else
+	LOOKS_LIKE_line = ln -s MakeFC Makefile
+endif
+
 #
 FOPTS=-gline -gc
 
@@ -66,13 +91,47 @@ $(CONFDIR)/.configure:
 	if [ -f Makefile ] ; then \
 		mv Makefile Makefile.old ;\
 	fi ; \
-	ln -s MakeFC Makefile
+	$(LOOKS_LIKE_line)
 
 makefile:
-	if [ -f Makefile ] ; then \
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalreset_copy ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internalmakefile
+
+show_copy:
+	@echo "copy number $(COPY_NUMBER)"
+	@echo "next copy number will be $(NEXT_COPY)"
+
+add_copy:
+	@$(MAKE) -f $(MakeFName) internaladd_copy
+	$@(MAKE) -f $(MakeFName) internalmakefile
+
+reset_copy:
+	@$(MAKE) -f $(MakeFName) internalreset_copy
+	@$(MAKE) -f $(MakeFName) internalmakefile
+
+# For internal use
+internalmakefile:
+	@if [ -f Makefile ] ; then \
 		mv Makefile Makefile.old ;\
 	fi ; \
-	ln -s MakeFC Makefile
+	$(LOOKS_LIKE_line)
+
+internalreset_copy:
+	@rm -f temp.Makefile
+	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
+	 $(MakeFName) > temp.Makefile
+	@mv temp.Makefile $(MakeFName)
+
+internaladd_copy:
+	@rm -f temp.Makefile
+	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+	 $(MakeFName) > temp.Makefile
+	@mv temp.Makefile $(MakeFName)
 
 #
 	
