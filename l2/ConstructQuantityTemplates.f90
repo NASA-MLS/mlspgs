@@ -402,74 +402,36 @@ contains ! =====     Public Procedures     =============================
 
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
-
       ! We have geolocation information, setup the quantity as a clone of that.
-      call SetupNewQuantityTemplate ( qty, &
-        & source=mifGeolocation(instrumentModule), &
-        & noChans=noChans,  regular=regular, instanceLen=instanceLen )
-
-      ! Now we're going to deal with a VGrid for this quantity
-
-      qty%verticalCoordinate = l_geodAltitude
-      qty%surfs=>mifGeolocation(instrumentModule)%surfs
-
-      ! Now we're going to fill in the hGrid information
-
-      qty%time =>        MIFGeolocation(instrumentModule)%time
-      qty%geodLat =>     MIFGeolocation(instrumentModule)%geodLat
-      qty%lon =>         MIFGeolocation(instrumentModule)%lon
-      qty%phi =>         MIFGeolocation(instrumentModule)%phi
-      qty%solarZenith => MIFGeolocation(instrumentModule)%solarZenith
-      qty%solarTime =>   MIFGeolocation(instrumentModule)%solarTime
-      qty%losAngle =>    MIFGeolocation(instrumentModule)%losAngle
-      qty%MAFCounter =>  MIFGeolocation(instrumentModule)%mafCounter
-      qty%mafIndex =>    MIFGeolocation(instrumentModule)%mafIndex
-      qty%noInstancesLowerOverlap = &
-        & MIFGeolocation(instrumentModule)%noInstancesLowerOverlap
-      qty%noInstancesUpperOverlap = &
-        & MIFGeolocation(instrumentModule)%noInstancesUpperOverlap
+      qty = mifGeolocation(instrumentModule)
 
     else
       ! -------------------------------------- Not Got mifGeolocation ------------
       ! We have no geolocation information, we have to read it ourselves
       ! from the L1BOA file.
 
-      ! First we read tpGeodalt to get the size of the quantity.
-
+      ! First we read xxGeodalt to get the size of the quantity.
       if ( IsModuleSpacecraft(instrumentModule) ) then
-        l1bItemName = 'scGeocAlt' ! For some reason crashes NAG if use quoted string
-        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_L1BRead//l1bItemName )
-       
-        ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
-        call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
-          & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
-          & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
-          & minorFrame=.TRUE. )
-        qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
-        qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+        l1bItemName = 'scGeocAlt' 
+      else
+        call GetModuleName ( instrumentModule, l1bItemName )
+        l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
+      endif
 
-        ! Later we'll put something here for lat/lon etc, for the moment
-        ! just zero it out.
-        qty%surfs = 0.0
-        qty%phi = 0.0
-        qty%geodLat = 0.0
-        qty%lon = 0.0
-        qty%time = 0.0
-        qty%solarTime = 0.0
-        qty%solarZenith = 0.0
-        qty%losAngle = 0.0
+      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_L1BRead//l1bItemName )
+      
+      ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
+      call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
+        & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
+        & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
+        & minorFrame=.TRUE. )
+      qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+      qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
 
-        qty%mafCounter = l1bField%counterMAF
-        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
-          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
-        end do
-
-        call DeallocateL1BData(l1bfield)
-        
-      else                                    ! For THz/GHz things
+      if ( .not. IsModuleSpacecraft(instrumentModule) ) then
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
@@ -551,8 +513,27 @@ contains ! =====     Public Procedures     =============================
           end select
 
           call DeallocateL1BData ( l1bField )
-        end do                      ! Loop over l1b quantities
+        end do                          ! Loop over l1b quantities
+      else                              ! Spacecraft module
+        ! just zero stuff out.
+        qty%surfs = 0.0
+        qty%phi = 0.0
+        qty%geodLat = 0.0
+        qty%lon = 0.0
+        qty%time = 0.0
+        qty%solarTime = 0.0
+        qty%solarZenith = 0.0
+        qty%losAngle = 0.0
+        
+        qty%mafCounter = l1bField%counterMAF
+        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
+          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
+        end do
+        
+        call DeallocateL1BData(l1bfield)
+        
       end if
+      
     end if
     qty%frequencyCoordinate = L_None
     qty%instrumentModule = instrumentModule
@@ -699,6 +680,11 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.38  2001/07/09 22:37:23  livesey
+! Embarassing memory leak caught!  It's our old friend
+! mifGeolocation again.  I'm going to regret trying
+! to be this clever!
+!
 ! Revision 2.37  2001/05/31 19:53:56  livesey
 ! Whoops, debug stuff left in.
 !
