@@ -912,8 +912,10 @@ contains ! =====     Public Procedures     =============================
     integer :: myNoMAFS, MAF
     integer :: myL2AUXRANK
     integer, dimension(:), pointer :: CounterMAF ! bogus array
+    real(r8) :: HUGER4
 
     ! Executable code
+    hugeR4 = real ( huge ( 0.0_r4), r8 )
     myWriteCounterMAF = .false.
     if ( present(WriteCounterMAF) ) myWriteCounterMAF = WriteCounterMAF
     myReuse_dimNames = .false.
@@ -1000,10 +1002,12 @@ contains ! =====     Public Procedures     =============================
     endif
 
     ! Now write the data
+    ! Make sure the data can be placed in a real
     status= SFWDATA_F90(sdId, start(1:noDimensionsUsed), &
-      & stride(1:noDimensionsUsed), dimSizes, real(l2aux%values))
+      & stride(1:noDimensionsUsed), dimSizes, real ( &
+      & max ( -hugeR4, min ( hugeR4, l2aux%values ) ) ) )
     if ( status /= 0 ) then
-	   call announce_error (0,&
+	   call announce_error (0, &
       & "Error writing SDS data to  l2aux file:  " )
     endif
 
@@ -1503,6 +1507,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.52  2003/05/12 02:06:32  livesey
+! Bound r8->r4 conversion
+!
 ! Revision 2.51  2003/04/25 19:55:09  livesey
 ! Added more useful error message
 !
