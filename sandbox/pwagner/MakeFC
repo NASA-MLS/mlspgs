@@ -23,6 +23,28 @@ MakeFName = MakeFC
 MAX_COPIES = 10
 ONE = 1
 
+.SUFFIXES:
+
+%:: %,v
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: RCS/%,v
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: RCS/%
+#  commands to execute (built-in):
+#	$(CHECKOUT,v)
+
+%:: s.%
+#  commands to execute (built-in):
+#	$(GET) $(GFLAGS) $(SCCS_OUTPUT_OPTION) $<
+
+%:: SCCS/s.%
+#  commands to execute (built-in):
+#	$(GET) $(GFLAGS) $(SCCS_OUTPUT_OPTION) $<
+
 # This keeps track of the number of times MakeFC -> Makefile
 USE_internal_copynum = no
 
@@ -172,6 +194,9 @@ testreecho:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.4  2001/09/07 23:08:22  pwagner
+# Whatever change I made, this is the latest
+#
 # Revision 1.3  2001/03/23 21:39:32  pwagner
 # Stopped using internal_copy_number
 #
