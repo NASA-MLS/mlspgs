@@ -136,7 +136,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
     lit_indices(l_ghz) =                   add_ident ( 'GHz' )
     lit_indices(l_gph) =                   add_ident ( 'gph' )
-    lit_indices(l_gph) =                   add_ident ( 'gph_precision' )
+    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
     lit_indices(l_hours) =                 add_ident ( 'hours' )
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
@@ -172,7 +172,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
     lit_indices(l_tangentheight) =         add_ident ( 'tangentHeight' )
     lit_indices(l_temperature) =           add_ident ( 'temperature' )
-    lit_indices(l_temperature) =           add_ident ( 'temperature_prec' )
+    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
     lit_indices(l_thz) =                   add_ident ( 'THz' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
@@ -204,6 +204,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.4  2001/02/01 20:18:50  vsnyder
+! Correct index and spelling for gph_precision and temperature_precision
+!
 ! Revision 2.3  2001/02/01 01:23:18  vsnyder
 ! Account for the Molecules module
 !
