@@ -36,7 +36,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FlushLockedBins
 
   ! -------------------------------------  LinearizedForwardModel  -----
-  subroutine LinearizedForwardModel ( ForwardModelConfigData, FwdModelIn, FwdModelExtra,&
+  subroutine LinearizedForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
     & FwdModelOut, Ifm, fmStat, Jacobian )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -73,7 +73,7 @@ contains ! =====     Public Procedures     =============================
       & VALIDATEVECTORQUANTITY, M_LINALG
 
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: ForwardModelConfigData
+    type(forwardModelConfig_T), intent(inout) :: fmConf
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
@@ -178,11 +178,11 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Linear model doing maf: ' )
       call output ( maf, advance='yes' )
     end if
-    if ( size ( forwardModelConfigData%signals ) /= 1 ) call MLSMessage ( &
+    if ( size ( fmConf%signals ) /= 1 ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Can only have one signal for linearized models')
 
-    signal = forwardModelConfigData%signals(1)
+    signal = fmConf%signals(1)
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband, noError=.true. )
 
@@ -212,7 +212,7 @@ contains ! =====     Public Procedures     =============================
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
 
-    call SelectL2PCBins ( radiance, maf, forwardModelConfigData, l2pcBins, &
+    call SelectL2PCBins ( radiance, maf, l2pcBins, &
       & sidebandStart, sidebandStop, sidebandStep )
 
     ! If we're doing a split calculation then get the relevant
@@ -319,15 +319,15 @@ contains ! =====     Public Procedures     =============================
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
         if ( l2pcQ%template%quantityType == l_vmr ) then
-          if (.not. associated(forwardModelConfigData%molecules) ) cycle
+          if (.not. associated(fmConf%molecules) ) cycle
           if ( .not. any (l2pcQ%template%molecule == &
-            &   forwardModelConfigData%molecules)) cycle
+            &   fmConf%molecules)) cycle
           if ( l2pcQ%template%molecule == l_extinction .and. &
             & l2pcQ%template%radiometer /= signal%radiometer ) cycle
         end if
 
         ! Identify this quantity in x
-        call FindMatchForL2PCQ ( l2pcQ, fwdModelIn, fwdModelExtra, &
+        call FindMatchForL2PCQ ( l2pcQ, fmConf, fwdModelIn, fwdModelExtra, &
           & stateQ, foundInFirst )
 
         ! If it's not in the state vector, and the l2pc does contain
@@ -362,14 +362,13 @@ contains ! =====     Public Procedures     =============================
         ! Do we need derivatives for this?
         doDerivatives = present(jacobian) .and. foundInFirst
         if (doDerivatives .and. (l2pcQ%template%quantityType==l_temperature) ) &
-          & doDerivatives = forwardModelConfigData%temp_der
+          & doDerivatives = fmConf%temp_der
         if (doDerivatives .and. &
           & (l2pcQ%template%quantityType==l_vmr) .and. &
-          & associated(forwardModelConfigData%molecules) ) then
-          doDerivatives = forwardModelConfigData%atmos_der
+          & associated(fmConf%molecules) ) then
+          doDerivatives = fmConf%atmos_der
           if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
-            & pack(ForwardModelConfigData%molecules, &
-            &      ForwardModelConfigData%moleculeDerivatives))) &
+            & pack(fmConf%molecules, fmConf%moleculeDerivatives))) &
             & doDerivatives = .false.
         end if
 
@@ -377,7 +376,7 @@ contains ! =====     Public Procedures     =============================
         center = l2pcQ%template%noInstances/2 + 1
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
-          if ( forwardModelConfigData%phiWindow == 0.0 ) then
+          if ( fmConf%phiWindow == 0.0 ) then
             ! If 0, user wants 1D, always choose the closest instance
             deltaInstance = 0
           else
@@ -386,9 +385,9 @@ contains ! =====     Public Procedures     =============================
             phiWindowLoop: do
               deltaPhi = l2pcQ%template%phi(1,center+deltaInstance) - &
                 & l2pcQ%template%phi(1,center)
-              if ( deltaPhi > forwardModelConfigData%phiWindow ) then
+              if ( deltaPhi > fmConf%phiWindow ) then
                 deltaInstance = deltaInstance - 1
-              else if ( deltaPhi < -forwardModelConfigData%phiWindow ) then
+              else if ( deltaPhi < -fmConf%phiWindow ) then
                 deltaInstance = deltaInstance + 1
               else
                 exit phiWindowLoop
@@ -602,7 +601,7 @@ contains ! =====     Public Procedures     =============================
       if ( radiance%template%quantityType == l_opticalDepth ) then
         ! Get temperature and interpolate to tangent points
         temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_temperature, config=ForwardModelConfigData )
+          & quantityType=l_temperature, config=fmConf )
         closestInstance = FindOneClosestInstance ( temp, radiance, maf )
         call Allocate_test ( tangentTemperature, noMIFs, &
           & 'tangentTemperature', ModuleName )
@@ -645,9 +644,10 @@ contains ! =====     Public Procedures     =============================
     ! ======================================== Internal procudures =====
 
     ! ------------------------------------------ FindMatchForL2PCQ ---
-    subroutine FindMatchForL2PCQ ( l2pcQ, FwdModelIn, FwdModelExtra, &
+    subroutine FindMatchForL2PCQ ( l2pcQ, fmConf, FwdModelIn, FwdModelExtra, &
       & stateQ, foundInFirst )
       type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
+      type (ForwardModelConfig_T), intent(in) :: fmConf ! Forward model config
       type (Vector_T), intent(in), target :: FWDMODELIN ! State vector
       type (Vector_T), intent(in), target :: FWDMODELEXTRA ! Extra state vector
       type (VectorValue_T), pointer :: STATEQ ! Result
@@ -665,13 +665,13 @@ contains ! =====     Public Procedures     =============================
       select case ( l2pcQ%template%quantityType )
       case ( l_temperature )
         stateQ => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_temperature, config=ForwardModelConfigData, &
+          & quantityType=l_temperature, config=fmConf, &
           & foundInFirst = foundInFirst, noError=.true. )
       case ( l_vmr )
         ! Here we may need to be a little more intelligent
         if ( l2pcQ%template%molecule /= l_extinction ) then
           stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
-            & quantityType = l_vmr, config=ForwardModelConfigData, &
+            & quantityType = l_vmr, config=fmConf, &
             & molecule = l2pcQ%template%molecule, &
             & foundInFirst = foundInFirst, noError=.true. )
         else
@@ -729,13 +729,14 @@ contains ! =====     Public Procedures     =============================
     end function NormalizePhi
 
     ! --------------------------------------------- SelectL2PCBins -----
-    subroutine SelectL2PCBins ( radiance, maf, fmConf, l2pcBins, &
+    subroutine SelectL2PCBins ( radiance, maf, l2pcBins, &
       & sidebandStart, sidebandStop, sidebandStep )
       use MLSSignals_m, only: signals
+      use L2PC_M, only: BINSELECTORS, BINSELECTOR_T
+      use Intrinsic, only: L_NAMEFRAGMENT, L_SZA
 
       type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
       integer, intent(in) :: MAF                      ! MAF index
-      type (ForwardModelConfig_T), intent(in) :: FMCONF ! The forwardmodel configuration
       integer, dimension(-1:1), intent(out) :: L2PCBINS ! Result
       integer, intent(out) :: SIDEBANDSTART ! Resulting loop indices
       integer, intent(out) :: SIDEBANDSTOP
@@ -745,23 +746,32 @@ contains ! =====     Public Procedures     =============================
       character (len=132) :: BINNAME      ! The name of the bin
       character (len=132) :: NAMEFRAGMENT ! Fragment of name to try to match
 
-      integer :: BIN                      ! Loop counter
-      integer :: MAF1                     ! Subset limit
-      integer :: MAFN                     ! Subset limit
-      integer :: NOBINS                   ! Number of l2pc bins
-      integer :: SIDEBAND                 ! This sideband
-      integer :: SIGNAL                   ! Signal index
-      integer :: STATUS                   ! Flag
-      logical :: SPLIT                    ! Need a split calculation
+      integer :: BIN                    ! Loop counter
+      integer :: L2PCINSTANCE           ! Instance index
+      integer :: MAF1                   ! Subset limit
+      integer :: MAFN                   ! Subset limit
+      integer :: MYMAF                  ! A loop counter
+      integer :: NOBINS                 ! Number of l2pc bins
+      integer :: NOSELECTORS            ! A loop limit
+      integer :: SIDEBAND               ! This sideband
+      integer :: SELECTOR               ! Bin selector index
+      integer :: SIGNAL                 ! Signal index
+      integer :: STATEINSTANCE          ! Instance index
+      integer :: STATUS                 ! Flag
+      logical :: SPLIT                  ! Need a split calculation
+      logical :: FAKESELECTORS          ! No selectors, so fake one
+      logical :: FOUNDINFIRST           ! Flag, not used
+      real(r8) :: THISCOST              ! Interim cost
 
-      logical, dimension(:), pointer :: NAMEMATCHES ! Flags for each bin
-      real(r8), dimension(:), pointer :: DELTAPHI ! How far are we away in phi
-      real(r8), dimension(-1:1) :: BESTCOST ! Best cost for this sideband
-      logical, dimension(:,:), pointer :: SIDEBANDSMATCH ! Flags for each bin/sideband
+      integer, dimension(1) :: S1, S2   ! Results of minloc
+      logical, dimension(:,:), pointer :: POSSIBLE ! Flags for each bin
+      real(r8), dimension(:), pointer :: COST ! Cost of each bin
+      real(r8), dimension(-1:1) :: BESTCOST
       type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
+      type (BinSelector_T), pointer :: SEL ! One bin selector
 
       ! Executable code
-      
+
       ! Firstly, if we're in locked bins mode, then just return the locked bin
       signal = radiance%template%signal
       sideband = radiance%template%sideband
@@ -786,64 +796,142 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-      ! Code will only get to here if the bins are unlocked, or are
-      ! locked but as yet not nailed down.
+      ! Code will only get to here if the bins are unlocked, or will be locked
+      ! once we've decided on them.
 
-      ! Setup the arrays we need
-      nullify ( deltaPhi, nameMatches )
-      call Allocate_test ( deltaPhi, noBins, 'deltaPhi', ModuleName )
-      call Allocate_test ( nameMatches, noBins, 'nameMatches', ModuleName )
-      allocate ( sidebandsMatch ( -1:1, nobins ), STAT=status )
+      ! Setup the arrays we need possible is a flag to indicate (for
+      ! each sideband) whether a bin is even worth considering, cost is
+      ! the associated cost.
+      nullify ( possible, cost )
+      allocate ( possible ( -1:1, nobins ), STAT=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'sidebandsMatch' )
-      deltaPhi = huge ( 0.0_r8 )
-      nameMatches = .false.
-      sidebandsMatch = .false.
+        & MLSMSG_Allocate//'possible' )
+      call Allocate_test ( cost, noBins, 'cost', ModuleName )
+
+      ! Get a first cut at the 'possible' flag
+      possible = .false.
+      do bin = 1, noBins
+        binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
+        possible ( binRad%sideband, bin ) = ( binRad%signal == signal )
+      end do
+      ! Set the cost to zero by default
+      cost = 0.0_r8
+
+      ! Setup some stuff we'll need from time to time
+      if ( fmConf%lockBins ) then
+        maf1 = 1 + radiance%template%noInstancesLowerOverlap
+        mafN = radiance%template%noInstances - &
+          & radiance%template%noInstancesUpperOverlap
+      else
+        maf1 = maf
+        mafN = maf
+      end if
+
+      ! OK, now we have to loop over the bin selectors for each bin and
+      ! apply the rules they give.
+
+      ! We have a bit of a hack here to ensure that in the absence of any
+      ! other information, it will choose the closest latitude one (the
+      ! previous behavior)
+      fakeSelectors = .true.
+      noSelectors = 1
+      if ( associated ( fmConf%binSelectors ) ) then
+        noSelectors = size ( fmConf%binSelectors )
+        fakeSelectors = noSelectors == 0
+      end if
+      if ( fakeSelectors ) then
+        allocate ( sel, STAT=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'sel' )
+        sel%selectorType = l_latitude
+        sel%cost = 1.0
+      end if
 
       do bin = 1, noBins
-        ! Get this radiance quantity
         binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
+        ! This is a bit of a hack, but if there
+        do selector = 1, noSelectors
+          if ( .not. fakeSelectors ) &
+            & sel => binSelectors ( fmConf%binSelectors(selector) )
+          select case ( sel%selectorType )
+          case ( l_nameFragment )
+            call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
+            call get_string ( sel%nameFragment, nameFragment, strip=.true. )
+            if ( len_trim(nameFragment) /= 0 ) then
+              possible ( :, bin ) = index ( trim(binName), trim(nameFragment) ) /= 0
+            end if
+          case ( l_latitude )
+            ! When we say latitude, we really mean an empirical phi.
+            cost(bin) = sqrt ( sum ( &
+              & (NormalizePhi(radiance%template%phi(1,maf1:mafN)) - &  
+              &  NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1) ) / &
+              & sel%cost
+          case ( l_sza )
+            cost(bin) = sqrt ( sum ( &
+              & ( radiance%template%solarZenith(1,maf1:mafN) - &
+              &   binRad%solarZenith(1,1) )**2 ) / &
+              & (mafN-maf1+1) ) / sel%cost
+          case ( l_temperature, l_vmr )
+            ! This one requires more thought, I'll do it later
+            select case ( sel%selectorType )
+            case ( l_temperature )
+              l2pcQ => GetVectorQuantityByType ( &
+                & l2pcDatabase(bin)%col%vec, quantityType=l_temperature, &
+                & noError=.true. )
+            case ( l_vmr )
+              l2pcQ => GetVectorQuantityByType ( &
+                & l2pcDatabase(bin)%col%vec, quantityType=l_vmr, &
+                & molecule=sel%molecule, noError=.true. )
+            end select
+            if ( .not. ValidateVectorQuantity ( l2pcQ,&
+              & verticalCoordinate = (/ l_zeta /) ) ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Expected zeta coordinate for quantity in binSelector' )
+            ! Find the relevant corresponding quantity in the state vector
+            call FindMatchForL2PCQ ( l2pcQ, fmConf, fwdModelIn, &
+              & fwdModelExtra, stateQ, foundInFirst )
+            ! If we've got both of them make sure they match
+            if ( associated(stateQ) .and. associated(l2pcQ) ) then
+              ! OK, identify height range
+              s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                & log10(binSelectors(selector)%heightRange(1) ) ) )
+              s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                & log10(binSelectors(selector)%heightRange(2) ) ) )
+              ! Here we'll just compare the central profile in the
+              ! l2pc with the state profile closest to each maf.
+              l2pcInstance = l2pcQ%template%noInstances/2 + 1
+              thisCost = 0.0_r8
+              do myMaf = maf1, mafN
+                ! Only compare the closest profile to the maf
+                stateInstance = FindOneClosestInstance ( stateQ, radiance, myMaf )
+                thisCost = thisCost + sum ( &
+                  & ( stateQ%values ( s1(1):s2(1), stateInstance ) - &
+                  &   l2pcQ%values  ( s1(1):s2(1), l2pcInstance  ) ) **2 )
+              end do
+              cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
+                &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
+            end if
+          end select                  ! Bin selector type
+        end do                        ! Loop over selectors
+      end do                          ! Loop over bins
 
-        ! Do the sidebands match
-        sidebandsMatch ( binRad%sideband, bin ) = ( binRad%signal == signal )
-
-        ! Does the 'name' match
-        nameMatches ( bin ) = .true.
-!         if ( fmConf%nameFragment /= 0 ) then
-!           call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
-!           call get_string ( fmConf%nameFragment, nameFragment, strip=.true. )
-!           if ( len_trim(nameFragment) /= 0 ) then
-!             nameMatches ( bin ) = index ( trim(binName), trim(nameFragment) ) /= 0
-!           end if
-!         end if
-
-        ! Does the phi match.  This one is more complicated as we may
-        ! have to consider it for all MAFs that are not overlapped, and
-        ! then take the most 'popular' match. We'll base this on the
-        ! first mif each maf.  That will probably be good enough
-        if ( fmConf%lockBins ) then
-          maf1 = 1 + radiance%template%noInstancesLowerOverlap
-          mafN = radiance%template%noInstances - &
-            & radiance%template%noInstancesUpperOverlap
-        else
-          maf1 = maf
-          mafN = maf
-        end if
-        deltaPhi(bin) = sum( (NormalizePhi(radiance%template%phi(1,maf1:mafN)) - &  
-          & NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1)
-      end do                              ! End loop over Bins
+      if ( fakeSelectors ) then
+        deallocate ( sel, STAT=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'sel' )
+      end if
 
       ! OK, now we've surveyed the bins, let's cut things down.
       ! When computing folded radiances I'll always choose folded bins
-      ! over unfolded ones, even if that means the phi is way off.  I
-      ! think this is all a fairly unlikely circumstance anyway.
+      ! over unfolded ones, even if they cost more.  I think it's
+      ! unlikely that this will really be an issue anyway.
       split = .false.
       if ( sideband == 0 ) then
         ! If we've got a match for the folded case, forget the others.
-        if ( any ( sidebandsMatch(0,:) ) ) then
-          where ( sidebandsMatch(0,:) ) 
-            sidebandsMatch(-1,:) = .false.
-            sidebandsMatch(1,:) = .false.
+        if ( any ( possible(0,:) ) ) then
+          where ( possible(0,:) ) 
+            possible(-1,:) = .false.
+            possible(1,:) = .false.
           end where
         else
           split = .true.
@@ -855,15 +943,15 @@ contains ! =====     Public Procedures     =============================
         & sidebandStart, sidebandStop, sidebandStep )
 
       ! Choose the bin(s)
-      bestCost = huge ( deltaPhi(1) )
-      l2pcBins = (/ 0, 0, 0 /)
+      bestCost = huge ( cost(1) )
+      l2pcBins = 0
       do bin = 1, noBins
         ! Reuse the sideband variable here, we don't need it's old
         ! definition anymore
         do sideband = sidebandStart, sidebandStop
-          if ( sidebandsMatch(sideband,bin) .and. nameMatches(bin) .and. &
-            & deltaPhi(bin) < bestCost(sideband) ) then
-            bestCost(sideband) = deltaPhi(bin)
+          if ( possible(sideband,bin) .and. &
+            & cost(bin) < bestCost(sideband) ) then
+            bestCost(sideband) = cost(bin)
             l2pcBins(sideband) = bin
           end if
         end do
@@ -888,6 +976,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.35  2003/02/05 21:58:31  livesey
+! Just a tidy up in preparation for the new bin selectors stuff
+!
 ! Revision 2.34  2003/01/29 22:43:25  livesey
 ! More intelligent setting of rows flags.
 !
