@@ -9,6 +9,7 @@ module BaselineForwardModel_m
   use MLSSignals_m, only: SIGNALS, SIGNAL_T
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
     & VALIDATEVECTORQUANTITY
+  use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
   use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
   use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
@@ -164,17 +165,28 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( instWt0, noMIFs, 'instWt0', ModuleName )
       call Allocate_test ( instWt1, noMIFs, 'instWt1', ModuleName )
       
-      call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
-      inst1 = min ( inst0+1, baseline%template%noInstances )
-      where ( inst1 /= inst0 )
-        instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
-          & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
-      elsewhere
+      ! Unless phiWindow is exactly 1 then do 2D calculation
+      if ( fwdModelConf%phiWindow /= 1 ) then
+        call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
+        inst1 = min ( inst0+1, baseline%template%noInstances )
+        where ( inst1 /= inst0 )
+          instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
+            & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
+        elsewhere
+          instWt1 = 0.0
+        end where
+        instWt0 = 1 - instWt1
+        instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
+        instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+      else
+        ! 1D, choose closest instance
+        inst0(1) = FindOneClosestInstance ( baseline, ptan, maf )
+        ! Apply to all MIFs
+        inst0 = inst0(1)
+        inst1 = inst0
+        instWt0 = 1.0
         instWt1 = 0.0
-      end where
-      instWt0 = 1 - instWt1
-      instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
-      instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+      end if
 
       ! Vertical coordinate ---------------------
       call Allocate_test ( surf0, noMIFs, 'surf0', ModuleName )
@@ -391,6 +403,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.9  2002/06/04 23:45:55  livesey
+! Added optional 1D nature for it.
+!
 ! Revision 2.8  2002/05/03 23:29:04  livesey
 ! Added direction stuff
 !
