@@ -27,7 +27,8 @@ module TREE_TYPES
   integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
   integer, parameter :: N_FIELD_SPEC = n_equal + 1
   integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
-  integer, parameter :: N_LESS_COLON = n_field_type + 1 ! Range open on left
+  integer, parameter :: N_INTO = n_field_type + 1      ! A divided into B: A\B
+  integer, parameter :: N_LESS_COLON = n_into + 1      ! Range open on left
   integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1 ! Open range
   integer, parameter :: N_MINUS =      n_less_colon_less + 1
   integer, parameter :: N_MULT =       n_minus + 1
@@ -81,6 +82,7 @@ contains
     case ( n_Equal );      call add_char ( 'equal' )
     case ( n_Field_Spec ); call add_char ( 'field_spec' )
     case ( n_Field_Type ); call add_char ( 'field_type' )
+    case ( n_Into );       call add_char ( 'into' )
     case ( n_Less_colon ); call add_char ( 'less_colon' )
     case ( n_Less_colon_less ); call add_char ( 'less_colon_less' )
     case ( n_Minus );      call add_char ( 'minus' )
@@ -107,6 +109,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.5  2004/01/14 18:32:58  vsnyder
+! Stuff for Algebra module
+!
 ! Revision 2.4  2002/10/08 00:09:15  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
