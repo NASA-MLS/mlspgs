@@ -160,7 +160,7 @@ endif
 
 $(PROG): $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -170,7 +170,7 @@ $(PROG): $(PROG_prereqs)
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -270,6 +270,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.18  2002/07/02 00:14:00  pwagner
+# Skips marking uptodate after an error
+#
 # Revision 1.17  2002/06/21 23:24:08  pwagner
 # More steps enroute to ending cascades of recompiles
 #

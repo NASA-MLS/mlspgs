@@ -139,12 +139,15 @@ SHELL = /bin/sh
 # lib            -- libmls.a; a prerequisite for the others
 # blas           -- libmlspack.a; prerequisite for the others and for lib
 # l1, l2, ..     -- pges named mlsl1, mlsl2, ..
+#      (the following nonsense still here for backward compatibility
+#         but not for long--will be deleted in some future revision)
 # lib--hdf5      -- a whittled-down set; minus the routines in he5lib
 # l1--hdf5       -- mlsl1 built using he5lib, too; can read/write hdf5 files
 # l2--hdf5 l3--hdf5 l3m--hdf5
 #                -- like l1--hdf5 but for mlsl2, mlsl3d, or mlsl3m
 # all--hdf5      -- like l1--hdf5 but for all the levels
 # lib--hdf4      -- restores the routines in he5lib back into lib
+#        (end of backward-compatible nonsense)
 
 #                           (functional)
 # clean          -- deletes only *.o, *.mod from sub-subs
@@ -282,7 +285,7 @@ LEVELS = l1 l2 l3 l3m
 
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
-OTHER_SUBDIRS = fwdmdl cloudfwdm he5lib
+OTHER_SUBDIRS = fwdmdl cloudfwdm
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
@@ -384,37 +387,43 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
-# Strips lib of any modules supplied by he5lib
+# No longer strips lib of any modules supplied by he5lib
 lib--hdf5:
-	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
-	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS= ; \
-   $(MAKE) -f $(MakeFName) depends HDFVERSIONS=2; \
-   rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) lib
+#	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
+#	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS= ; \
+#   $(MAKE) -f $(MakeFName) depends HDFVERSIONS=2; \
+#   rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
-# For now, these require he5lib
+# These require he5lib no longer
 l1--hdf5:
-	$(MAKE) -f $(MakeFName) lib--hdf5; \
-	cd l1;\
-	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) l1
+#	$(MAKE) -f $(MakeFName) lib--hdf5; \
+#	cd l1;\
+#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
 l2--hdf5:
-	$(MAKE) -f $(MakeFName) lib--hdf5; \
-	cd l2;\
-	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) l2
+#	$(MAKE) -f $(MakeFName) lib--hdf5; \
+#	cd l2;\
+#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
 l3--hdf5:
-	$(MAKE) -f $(MakeFName) lib--hdf5; \
-	cd l3;\
-	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) l3
+#	$(MAKE) -f $(MakeFName) lib--hdf5; \
+#	cd l3;\
+#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
 l3m--hdf5:
-	$(MAKE) -f $(MakeFName) lib--hdf5; \
-	cd l3m;\
-	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) l3m
+#	$(MAKE) -f $(MakeFName) lib--hdf5; \
+#	cd l3m;\
+#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
 all--hdf5:
-	$(MAKE) -f $(MakeFName) lib--hdf5; \
-	$(MAKE) -f $(MakeFName) l1 l2 l3 l3m HDFVERSIONS=2
+	$(MAKE) -f $(MakeFName) all
+#	$(MAKE) -f $(MakeFName) lib--hdf5; \
+#	$(MAKE) -f $(MakeFName) l1 l2 l3 l3m HDFVERSIONS=2
 
 # Restores to lib stuff stripped out by lib--hdf5
 lib--hdf4:
@@ -906,9 +915,9 @@ show_copy:
 
 $(LEVELS): lib
 
-ifdef HDFVERSIONS
-   $(LEVELS): he5lib
-endif
+#ifdef HDFVERSIONS
+#   $(LEVELS): he5lib
+#endif
 
 $(OTHER_SUBDIRS): lib
 
@@ -935,11 +944,14 @@ update:
   help--reecho help--scripts help--toolkit \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate\
-  lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5\
+  lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5 lib--hdf4\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.70  2002/06/13 18:11:36  pwagner
+# Updates he5lib/CONFG/Makfile instead of rming it
+#
 # Revision 1.69  2002/05/13 17:59:45  pwagner
 # lib--hdf4 restores to lib stuff lost to l2--hdf5
 #

@@ -129,7 +129,8 @@ endif
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -138,7 +139,8 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) \
          fi
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -229,6 +231,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.9  2002/07/02 00:14:00  pwagner
+# Skips marking uptodate after an error
+#
 # Revision 2.8  2002/06/21 23:24:08  pwagner
 # More steps enroute to ending cascades of recompiles
 #
