@@ -140,18 +140,21 @@ contains ! =================================== Public procedures
   ! ----------------------------------------- MergeOneGrid
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Tree, only: NSONS, SUBTREE, DECORATION
     use Units, only: PHYQ_Length, PHYQ_Pressure
     use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
-      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE
+      & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
+    use MLSNumerics, only: ESSENTIALLYEQUAL
     use L3ASCII, only: L3ASCII_INTERP_FIELD
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE
     use MLSCommon, only: R8
     use Toggles, only: GEN, TOGGLE
     use Expr_m, only: EXPR
+    use Dump_0, only: DUMP
 
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -180,15 +183,14 @@ contains ! =================================== Public procedures
     integer :: LON                      ! Loop counter
     integer :: LST                      ! Loop counter
     integer :: SON                      ! Tree node
+    integer :: STATUS                   ! Flag from allocate
     integer :: SURF                     ! Loop counter
     integer :: SZA                      ! Loop counter
     integer :: EXPRUNITS(2)             ! Units for expr
     integer :: VALUE                    ! Value of tree node
 
-    real (rgr) :: CLIVAL                 ! Value from climatological grid
     real (r8) :: CLIWEIGHT              ! Climatological 'weight'
     real (r8) :: HEIGHT                 ! Transition height
-    real (rgr) :: OPVAL                  ! Value from operational grid
     real (r8) :: OPWEIGHT               ! Operational 'weight'
     real (r8) :: SCALE                  ! Transition scale
     real (r8) :: TOTALWEIGHT            ! Total weight
@@ -196,6 +198,12 @@ contains ! =================================== Public procedures
     real (r8) :: ZTRANS                 ! Transition 'height'
     real (r8) :: Z                      ! One 'height'
     real (r8) :: Z1, Z2                 ! Range of transition region
+
+    real (rgr) :: CLIVAL                ! One interpolated value
+    real (rgr) :: OPVAL                 ! One interpolated value
+    real (rgr), pointer, dimension(:,:,:,:,:,:) :: CLIMAPPED
+    real (rgr), pointer, dimension(:,:,:,:,:,:) :: OPERMAPPED
+    real (r8), dimension(:), pointer :: MEANDATES ! Mean dates for new grid
 
     type (griddedData_T), pointer :: OPERATIONAL
     type (griddedData_T), pointer :: CLIMATOLOGY
@@ -280,9 +288,37 @@ contains ! =================================== Public procedures
     newGrid%dateStarts = operational%dateStarts
     newGrid%dateEnds = operational%dateEnds
 
+    ! Get the 'mean' dates for the result
+    nullify ( meanDates )
+    call Allocate_test ( meanDates, newGrid%noDates, 'meanDates', ModuleName )
+    meanDates = ( newGrid%dateStarts + newGrid%dateEnds ) / 2.0
+
+    ! Now create two fields the same shape as the new field that contain
+    ! the operational and climatological data interpolated to our new locations.
+    allocate ( operMapped ( &
+      & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped' )
+    allocate ( cliMapped ( &
+      & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped' )
+
+    call SliceGriddedData ( operational, operMapped, &
+      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
+    call SliceGriddedData ( climatology, cliMapped, &
+      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
+
     zTrans = scaleHeight * ( 3.0 - log10 ( height ) )
     z1 = zTrans - scale/2.0
     z2 = zTrans + scale/2.0
+
+    call dump ( operMapped ( :,:,1,1,1,1 ), 'Operational slice' )
+    call dump ( cliMapped ( :,:,1,1,1,1 ), 'Cli slice' )
 
     ! Now we're going to fill in the rest of the field
     do day = 1, newGrid%noDates
@@ -291,25 +327,9 @@ contains ! =================================== Public procedures
           do lon = 1, newGrid%noLons
             do lat = 1, newGrid%noLats
               do surf = 1, newGrid%noHeights
-                call l3ascii_interp_field ( &
-                  & climatology, &
-                  & cliVal, &
-                  & newGrid%heights(surf), &
-                  & newGrid%lats(lat), &
-                  & newGrid%lons(lon), &
-                  & newGrid%lsts(lst), &
-                  & newGrid%szas(sza), &
-                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
-                call l3ascii_interp_field ( &
-                  & operational, &
-                  & opVal, &
-                  & newGrid%heights(surf), &
-                  & newGrid%lats(lat), &
-                  & newGrid%lons(lon), &
-                  & newGrid%lsts(lst), &
-                  & newGrid%szas(sza), &
-                  & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
-
+                ! Get the values
+                cliVal = cliMapped ( surf, lat, lon, lst, sza, day )
+                opVal = operMapped ( surf, lat, lon, lst, sza, day )
                 ! Weight them by height
                 z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
                 if ( scale /= 0.0 ) then
@@ -321,17 +341,12 @@ contains ! =================================== Public procedures
                 opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
 
                 ! Check for bad data in operational dataset
-                if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
-                  &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
-                  opWeight = 0.0
-                endif
+                if ( EssentiallyEqual ( opVal, newGrid%missingValue ) ) opWeight = 0.0
 
                 ! Check for bad data in the climatology
-                if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
-                  &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
-                  call MLSMessage ( MLSMSG_Error, ModuleName, &
-                    & 'There is a bad data point in the climatology field' )
-                end if
+                if ( EssentiallyEqual ( cliVal, newGrid%missingValue ) ) &
+                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  & 'There is a bad data point in the climatology field' )
 
                 totalWeight = cliWeight + opWeight
                 if ( totalWeight == 0.0 ) then
@@ -350,6 +365,13 @@ contains ! =================================== Public procedures
         end do
       end do
     end do
+
+    ! Tidy up
+    call Deallocate_test ( meanDates, 'meanDates', ModuleName )
+    deallocate ( cliMapped, operMapped, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'operMapped or cliMapped' )
+
     if ( toggle(gen) ) call trace_end ( "MergeOneGrid" )
   end function MergeOneGrid
 
@@ -360,6 +382,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.11  2003/05/09 01:55:14  livesey
+! Sped up Merge by using new SliceGriddedData routine.
+!
 ! Revision 2.10  2003/04/04 00:08:26  livesey
 ! Added Concatenate capability, various reorganizations.
 !
