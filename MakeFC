@@ -60,13 +60,9 @@ configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
 
-$(CONFDIR)/.configure: $(MakeFName)
+$(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
-
-#$(MLSCONFG):  $(MakeFName)
-#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-#          -c "$(MLSF95)" -p "$(MLSPLAT)"
 
 depends:
 	@echo "Making dependencies for $(SUBDIRS)"; \
@@ -80,12 +76,21 @@ clean:
 	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
 	done
 
+clean_objs:
+	@echo "Cleaning objects from $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean_objs; \
+	done
+
 tar:
 	@echo "tar-ing $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
 	done
 # $Log$
+# Revision 1.3  2000/10/24 21:08:22  pwagner
+# Added tar option
+#
 # Revision 1.2  2000/10/23 17:16:34  pwagner
 # Remove extra echo commands
 #
