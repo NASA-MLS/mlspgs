@@ -167,10 +167,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation,&
-            & status ) ) )
-          if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Failed to create quantity template from MLSCF info' )
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -246,6 +243,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.39  2003/05/28 04:39:32  livesey
+! Removed some obsolete checking
+!
 ! Revision 2.38  2002/10/08 17:36:19  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
