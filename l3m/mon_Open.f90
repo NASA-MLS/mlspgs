@@ -179,9 +179,9 @@ CONTAINS
    END SUBROUTINE GetPCFParams
 !-----------------------------
 
-!-----------------------------------------------------------
-   SUBROUTINE OpenMON (l3pcf, cf, l3cf, cfDef, cfDg, anText)
-!-----------------------------------------------------------
+!------------------------------------------------------------
+   SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
+!------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
@@ -194,9 +194,7 @@ CONTAINS
 
       TYPE( PCFMData_T ), INTENT(OUT) :: l3pcf
 
-      TYPE( L3CFDg_T ), POINTER :: cfDg(:)
-
-      TYPE( L3CFMProd_T ), POINTER :: l3cf(:)
+      TYPE( L3CFMProd_T ), POINTER :: cfDg(:), cfStd(:)
 
       CHARACTER (LEN=1), POINTER :: anText(:)
 
@@ -241,7 +239,7 @@ CONTAINS
 
 ! Check the parser output; fill L3CFProd_T
 
-      CALL FillL3CFM(cf, l3pcf%outputVersion, l3cf, cfDef, cfDg)
+      CALL FillL3CFM(cf, l3pcf%outputVersion, cfStd, cfDg, cfDef)
 
 !------------------------
    END SUBROUTINE OpenMON
@@ -252,6 +250,9 @@ END MODULE mon_Open
 !==================
 
 ! $Log$
+! Revision 1.2  2001/07/20 19:29:20  nakamura
+! Corrected to use the parser.
+!
 ! Revision 1.1  2001/07/18 15:43:44  nakamura
 ! Module for the Monthly Open/Init task.
 !

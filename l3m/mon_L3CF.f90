@@ -27,7 +27,6 @@ MODULE mon_L3CF
 
 ! Definitions -- L3CFMDef_T
 !                L3CFMProd_T
-!                L3CFDg_T
 ! Subroutines -- FillL3CFM
 
 ! Remarks:  This module defines a data type to hold L3CF input and contains
@@ -90,27 +89,11 @@ MODULE mon_L3CF
 
    END TYPE L3CFMProd_T
 
-! This data type stores information related to diagnostic product processing.
-
-   TYPE L3CFDg_T
-
-     CHARACTER (LEN=GridNameLen) :: prodName		! diagnostic product name
-
-     REAL(r8):: minPresLvl				! min pressure level
-
-     REAL(r8):: maxPresLvl				! max pressure level
-
-     INTEGER :: nLon			! number of points in longitude grid
-
-     REAL(r8), DIMENSION(maxGridPoints) :: lonGrid	! dimensioned (nLons)
-
-   END TYPE L3CFDg_T
-
 CONTAINS
 
-!--------------------------------------------------------
-   SUBROUTINE FillL3CFM (cf, pcfL3Ver, l3cf, cfDef, cfDg)
-!--------------------------------------------------------
+!---------------------------------------------------------
+   SUBROUTINE FillL3CFM (cf, pcfL3Ver, cfStd, cfDg, cfDef)
+!---------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine checks the parser output and fills L3CFMProd_T & L3CFMDef_T.
@@ -123,9 +106,7 @@ CONTAINS
 
       TYPE( L3CFMDef_T ), INTENT(OUT) :: cfDef
 
-      TYPE( L3CFDg_T ), POINTER :: cfDg(:)
-
-      TYPE( L3CFMProd_T ), POINTER  :: l3cf(:)
+      TYPE( L3CFMProd_T ), POINTER  :: cfDg(:), cfStd(:)
 
 ! Parameters
 
@@ -183,6 +164,7 @@ CONTAINS
       ENDDO
       nNon = i
       cfDef%nNom = 2*nNon - 1
+      cfDef%l2nomLats = 0.0
       cfDef%l2nomLats(nNon:cfDef%nNom) = non(:nNon)
 
       DO i = 1, nNon-1
@@ -249,7 +231,7 @@ CONTAINS
 
       numProds = cf%Sections(iMap)%NoSectionEntries
 
-      ALLOCATE (l3cf(numProds), STAT=err)
+      ALLOCATE (cfStd(numProds), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' array of L3CFMProd_T pointers.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -265,7 +247,7 @@ CONTAINS
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodName')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
              'Missing keyword L3PRODNAME in the Standard section of the l3cf.')
-         l3cf(i)%l3prodName = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+         cfStd(i)%l3prodName = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
 
 ! Find/save mode
 
@@ -273,12 +255,12 @@ CONTAINS
                                  cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'mode')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                     'Missing keyword MODE in the Standard section of the l3cf.')
-         l3cf(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+         cfStd(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
 
 ! Save the latitude grid quantities
 
-         l3cf(i)%latGridMap = latGrid
-         l3cf(i)%nLats = nLat
+         cfStd(i)%latGridMap = latGrid
+         cfStd(i)%nLats = nLat
 
 ! Find the boundaries of the longitude grid
 
@@ -299,7 +281,7 @@ CONTAINS
 
 ! Calculate the array containing the longitude grid
 
-         CALL CalculateArray(start, end, delta, l3cf(i)%longGrid, l3cf(i)%nLons)
+         CALL CalculateArray(start, end, delta, cfStd(i)%longGrid, cfStd(i)%nLons)
 
 ! Find/save the min & max for the pressure levels
 
@@ -307,24 +289,24 @@ CONTAINS
                             cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                   'Missing keyword L3PRESLVL in the Standard section of the l3cf.')
-         l3cf(i)%l3presLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-         l3cf(i)%l3presLvl(2) = &
+         cfStd(i)%l3presLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+         cfStd(i)%l3presLvl(2) = &
                             cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
          indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'ascPresLvl')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
               'Missing keyword ASCPRESLVL in the Standard section of the l3cf.')
-         l3cf(i)%ascPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-         l3cf(i)%ascPresLvl(2) = &
+         cfStd(i)%ascPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+         cfStd(i)%ascPresLvl(2) = &
                             cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
          indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'desPresLvl')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                   'Missing keyword DESPRESLVL in the Standard section of the l3cf.')
-         l3cf(i)%desPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-         l3cf(i)%desPresLvl(2) = &
+         cfStd(i)%desPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
+         cfStd(i)%desPresLvl(2) = &
                             cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
 ! Find the label in the Standard section
@@ -350,7 +332,7 @@ CONTAINS
                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
          IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                     'Missing keyword FILE in the Output section of the l3cf.') 
-         l3cf(i)%fileTemplate = &
+         cfStd(i)%fileTemplate = &
                                cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
       ENDDO
@@ -369,13 +351,19 @@ CONTAINS
 
       DO i = 1, numProds
 
+! Set the unused fields to default values
+
+         cfDg(i)%mode = 'com'
+         cfDg(i)%latGridMap = latGrid
+         cfDg(i)%nLats = nLat
+
 ! Find/save the product name
 
         indx = LinearSearchStringArray( &
                             cf%Sections(iDg)%Entries(i)%Cells%Keyword, 'l3prodName')
         IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                         &keyword L3PRODNAME in the Diagnostic section of the l3cf.')
-        cfDg(i)%prodName = cf%Sections(iDg)%Entries(i)%Cells(indx)%CharValue
+        cfDg(i)%l3prodName = cf%Sections(iDg)%Entries(i)%Cells(indx)%CharValue
 
 ! Find/save the min & max of the pressure levels
 
@@ -383,8 +371,10 @@ CONTAINS
                             cf%Sections(iDg)%Entries(i)%Cells%Keyword, 'l3presLvl')
         IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                         &keyword L3PRESLVL in the Diagnostic section of the l3cf.')
-        cfDg(i)%minPresLvl = cf%Sections(iDg)%Entries(i)%Cells(indx)%RealValue
-        cfDg(i)%maxPresLvl = cf%Sections(iDg)%Entries(i)%Cells(indx)%RangeUpperBound
+        cfDg(i)%l3presLvl(1) = cf%Sections(iDg)%Entries(i)%Cells(indx)%RealValue
+        cfDg(i)%l3presLvl(2) = cf%Sections(iDg)%Entries(i)%Cells(indx)%RangeUpperBound
+        cfDg(i)%ascPresLvl = cfDg(i)%l3PresLvl
+        cfDg(i)%desPresLvl = cfDg(i)%l3PresLvl
 
 ! Find the boundaries of the longitude grid
 
@@ -405,7 +395,7 @@ CONTAINS
 
 ! Calculate the array containing the longitude grid
 
-        CALL CalculateArray(start, end, delta, cfDg(i)%lonGrid, cfDg(i)%nLon)
+        CALL CalculateArray(start, end, delta, cfDg(i)%longGrid, cfDg(i)%nLons)
 
       ENDDO
 
@@ -418,4 +408,7 @@ END MODULE mon_L3CF
 !==================
 
 ! $Log$
+! Revision 1.1  2001/07/18 15:45:08  nakamura
+! Module for customizing the CF parser output to the L3 Monthly program.
+!
 !
