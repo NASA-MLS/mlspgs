@@ -113,13 +113,13 @@ contains
          ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2._r8
       END DO
 
-      call INTERPOLATEVALUES(zh,deltau,za,beta,method='Linear')
-      call INTERPOLATEVALUES(zh,deltauc,za,betac,method='Linear')
-      call INTERPOLATEVALUES(zh,ddz,za,dz,method='Linear')
+      call INTERPOLATEVALUES(zh,deltau,za,beta(1:NZ-1),method='Linear')
+      call INTERPOLATEVALUES(zh,deltauc,za,betac(1:NZ-1),method='Linear')
+      call INTERPOLATEVALUES(zh,ddz,za,dz(1:NZ-1),method='Linear')
       call INTERPOLATEVALUES(zh,reshape(ddm(1,:),(/nh-1/)),&
-        & za,dm(1,:),method='Linear')
+        & za,dm(1,1:NZ-1),method='Linear')
       call INTERPOLATEVALUES(zh,reshape(ddm(2,:),(/nh-1/)),&
-        & za,dm(2,:),method='Linear')
+        & za,dm(2,1:NZ-1),method='Linear')
 
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
@@ -191,6 +191,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.9  2001/10/19 19:16:14  dwu
+! change Nz-1 to NZ
+!
 ! Revision 1.8  2001/10/19 17:11:52  dwu
 ! revise teff calculation
 !
