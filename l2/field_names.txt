@@ -33,6 +33,7 @@ cloud_der
 i_saturation
 cloud_fov
 cloudChannels
+cloudHeight
 cloudRadiance
 cloudRadianceCutOff
 colChannels
@@ -281,6 +282,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.73  2003/02/05 04:07:25  dwu
+# add cloudheight
+#
 # Revision 2.72  2003/01/30 17:28:45  jonathan
 # add logical incl_cld
 #
