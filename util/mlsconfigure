@@ -379,7 +379,7 @@ if [ $change_paths = "true" ] ; then
    else
 	echo "Warning: No PVM ROOT path selected; none found"
 	echo "You will build a mls software version without PVM support"
-	echo "unless you reconfigure; enter 'make configure'."
+	echo "unless you reconfigure; enter 'make configure_pvm'."
 	PVM_ROOT=""
    fi
 
@@ -396,7 +396,7 @@ if [ $change_paths = "true" ] ; then
    else
 	echo "Warning: No FFTW root path selected; none found"
 	echo "The level 3 mls software will not link properly"
-	echo "unless you reconfigure; enter 'make configure'."
+	echo "unless you reconfigure; enter 'make configure_pvm'."
 	FFTW_ROOT=""
    fi
 
@@ -864,6 +864,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.10  2001/03/16 18:53:28  pwagner
+# Resets FOPTS, LDOPTS if chngd_config; also automatically full queries
+#
 # Revision 1.9  2001/03/06 00:16:14  pwagner
 # Added Absoft compiler
 #
