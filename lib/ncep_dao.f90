@@ -223,10 +223,16 @@ contains
     ! Executable code
     ! Find list of grid names on this file (This has been core dumping on me)
     if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
+    gridlist = ''
     inq_success = gdinqgrid(FileName, gridlist, strbufsize)
     if (inq_success < 0) then
       call announce_error(lcf_where, "Could not inquire gridlist "// trim(FileName))
-    end if
+    elseif ( strbufsize > MAXLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in Read_dao ' // trim(filename) )
+    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
+      gridlist = gridlist(1:strbufsize) // ' '
+    endif
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
 
     error = 0
@@ -263,6 +269,7 @@ contains
       call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
     endif
 
+    dimlist = ''
     ndims = gdinqdims(gd_id, dimlist, dims)
 
     if(ndims <= 0) then
@@ -271,6 +278,7 @@ contains
       call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
     endif
 
+    fieldlist = ''
     nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
 
     if(nfields <= 0) then
@@ -565,6 +573,7 @@ contains
           & 'nentries:', nentries)
       end if
 
+      dimlist = ''
       ndims = gdinqdims(gd_id, dimlist, dims)
 
       if(ndims <= 0) then
@@ -588,6 +597,7 @@ contains
     if(DEEBUG) print *, 'upLeft  : ', upLeft
     if(DEEBUG) print *, 'lowRight: ', lowRight
 
+    fieldlist = ''
     nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
     if(DEEBUG) print *, 'nfields: ', nfields
 
@@ -856,11 +866,17 @@ contains
     ! Executable code
     ! Find list of grid names on this file (This has been core dumping on me)
     if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
+    gridlist = ''
     inq_success = he5_gdinqgrid(FileName, gridlist, strbufsize)
     if (inq_success < 0) then
       call announce_error(lcf_where, &
-	& "Could not inquire gridlist "// trim(FileName))
-    end if
+	     & "Could not inquire gridlist "// trim(FileName))
+    elseif ( strbufsize > MAXLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in Read_dao ' // trim(filename) )
+    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
+      gridlist = gridlist(1:strbufsize) // ' '
+    endif
 
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
     error = 0
@@ -906,6 +922,7 @@ contains
            call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
         endif
 
+        dimlist = ''
         ndims = he5_gdinqdims(gd_id(i), dimlist, dims)
         if(ndims <= 0) then
            call announce_error(lcf_where, "ndims of gd_id <= 0")
@@ -913,6 +930,7 @@ contains
            call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
         endif
 
+        fieldlist = ''
         nfields = he5_gdinqflds(gd_id(i), fieldlist, rank, numberTypes)
         if(nfields <= 0) then
            call announce_error(lcf_where, "nfields of gd_id <= 0")
@@ -1187,10 +1205,16 @@ contains
     if(DEEBUG) print *, "proceed (yes) or (no)"
     ! read *, gridlist
     ! if ( index(gridlist, 'y') < 1 ) stop
+    gridlist = ''
     inq_success = gdinqgrid(FileName, gridlist, strbufsize)
     if (inq_success < 0) then
       call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
-    end if
+    elseif ( strbufsize > MAXLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in Read_dao ' // trim(filename) )
+    elseif ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
+      gridlist = gridlist(1:strbufsize) // ' '
+    endif
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
 
     error = 0
@@ -1227,6 +1251,7 @@ contains
       call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
     endif
 
+    dimlist = ''
     ndims = gdinqdims(gd_id, dimlist, dims)
 
     if(ndims <= 0) then
@@ -1235,6 +1260,7 @@ contains
       call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
     endif
 
+    fieldlist = ''
     nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
 
     if(nfields <= 0) then
@@ -1742,6 +1768,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.34  2004/01/23 01:12:27  pwagner
+! Some care taken in handling ...inq.. functions
+!
 ! Revision 2.33  2003/10/06 13:30:40  cvuu
 ! Modified to handle reading the ncep data for origin=strat
 !
