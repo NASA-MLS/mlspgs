@@ -29,7 +29,7 @@ module RetrievalModule
     & L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
     & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
     & L_dnwt_gradn,  L_dnwt_sq,  L_dnwt_sq,  L_dnwt_sqt,&
-    & L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
+    & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
     & L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
     & S_subset, S_time
@@ -2080,6 +2080,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.103  2001/10/22 22:34:47  dwu
+! oops
+!
 ! Revision 2.102  2001/10/22 22:25:17  dwu
 ! prepare for high cloud retrieval
 !
