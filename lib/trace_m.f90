@@ -7,11 +7,12 @@ module TRACE_M
   use OUTPUT_M, only: OUTPUT
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
-  integer, public :: DEPTH   ! Depth in tree.  Used for trace printing.
+  integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -24,6 +25,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: ROOT
     integer :: I              ! Loop inductor
+    integer :: Values(8)      ! For Date_and_time
     if ( present(root) ) then
       call output ( root, 4 ); call output ( ': ' )
     else
@@ -32,7 +34,13 @@ contains ! ====     Public Procedures     ==============================
     do i = 1, depth
       call output ( '.' )
     end do
-    call output ( 'Enter ' ); call output ( name );
+    call output ( 'Enter ' ); call output ( name )
+    call date_and_time ( values=values )
+    call output ( ' at ' )
+    call output ( values(5) ); call output ( ':' ) ! The hour
+    call output ( values(6) ); call output ( ':' ) ! The minute
+    call output ( values(7) ); call output ( '.' ) ! The second
+    call output ( values(8), places=3 )            ! The milliseconds
     if ( present(root) ) then
       call output ( ' with ' );
       call dump_tree_node ( root, 0 )
@@ -48,16 +56,26 @@ contains ! ====     Public Procedures     ==============================
   ! Decrement DEPTH.  Print "EXIT NAME with DEPTH dots in front.
     character(len=*), intent(in) :: NAME
     integer :: I              ! Loop inductor
+    integer :: Values(8)      ! For Date_and_time
     depth = depth - 1
     call output ( '      ' )
     do i = 1, depth
       call output ( '.' )
     end do
-    call output ( 'Exit ' ); call output ( name, advance='yes' );
+    call output ( 'Exit ' ); call output ( name )
+    call date_and_time ( values=values )
+    call output ( ' at ' )
+    call output ( values(5) ); call output ( ':' )     ! The hour
+    call output ( values(6) ); call output ( ':' )     ! The minute
+    call output ( values(7) ); call output ( '.' )     ! The second
+    call output ( values(8), advance='yes', places=3 ) ! The milliseconds
   end subroutine TRACE_END
 end module TRACE_M
 
 ! $Log$
+! Revision 2.5  2001/04/24 23:33:56  vsnyder
+! Add timing
+!
 ! Revision 2.4  2001/04/24 20:12:47  vsnyder
 ! Emit blanks before 'Enter' if no tree node supplied
 !
