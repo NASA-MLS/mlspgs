@@ -191,10 +191,11 @@ contains
       ! of Real(incoptdepth_pol) < e_stop, we can stop.
       if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
         &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
-      if ( do_gl(p_stop+1) ) &
-        & call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
+      if ( do_gl(p_stop+1) ) then
+        call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
         &                  deltau_pol(:,:,p_stop+1), status )
-      if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
+        if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
+      end if
     end do
 
     call mcrt ( t_script, sqrt(e_rflty), deltau_pol, &
@@ -899,6 +900,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.20  2003/09/09 00:02:55  vsnyder
+! Make deltau_pol inout, only compute it where needed
+!
 ! Revision 2.19  2003/08/15 18:50:22  vsnyder
 ! Preparing the way for polarized vmr derivatives
 !
