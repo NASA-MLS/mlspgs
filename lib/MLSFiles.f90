@@ -448,7 +448,7 @@ contains
 
     ! Dummy arguments
     integer(i4),  intent(OUT)  :: ErrType
-    integer(i4),  intent(OUT)  :: record_length
+    integer(i4),  intent(IN)  :: record_length
     logical,  intent(IN)       :: caseSensitive
     character (LEN=*), intent(IN) :: toolbox_mode
     integer(i4), intent(IN)       :: FileAccessType
@@ -492,7 +492,7 @@ contains
    returnStatus = 0           ! In case using Toolkit but supplied FileName
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
-    record_length = DEFAULTRECLEN
+    ! record_length = DEFAULTRECLEN
 
     if(present(versionNum)) then
       version = versionNum
@@ -1473,6 +1473,9 @@ contains
     endif
 
     ! begin
+    if(myhdfVersion == WILDCARDHDFVERSION) then
+      myhdfVersion = mls_hdf_version(trim(FileName))
+    endif
     if(myhdfVersion == HDFVERSION_5) then
       mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
     elseif(myhdfVersion == HDFVERSION_4) then
@@ -1536,6 +1539,9 @@ contains
      myhdfVersion = hdfVersion
    else
      myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if(myhdfVersion == WILDCARDHDFVERSION) then
+     myhdfVersion = mls_hdf_version(trim(FileName))
    endif
    if ( myhdfVersion == HDFVERSION_4) then
      mls_sfstart = sfstart (FileName, FileAccess)
@@ -1639,6 +1645,11 @@ contains
      myhdfVersion = hdfVersion
    else
      myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if(myhdfVersion == WILDCARDHDFVERSION) then
+     ! myhdfVersion = mls_hdf_version(trim(FileName))
+     call MLSMessage ( MLSMSG_Error, moduleName,  &
+     & "You cannot mls_sfend a file with wildcardhdfversion w/o a file name" ) 
    endif
    if ( myhdfVersion == HDFVERSION_4) then
      mls_sfend = sfend (sdid)
@@ -1835,6 +1846,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.48  2003/02/26 17:34:39  pwagner
+! mls_inqswath, mls_sfstart, and mls_sfend act sensibly when passed WILDCARDHDFVERSION
+!
 ! Revision 2.47  2002/12/10 00:43:44  pwagner
 ! At last can h5fcreate an extant file with H5F_ACC_TRUNC_F
 !
