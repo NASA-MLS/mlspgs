@@ -114,7 +114,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_ADDNOISE             = last_Spectroscopy_Lit + 1
   integer, parameter :: L_ANGLE                = l_addnoise + 1
   integer, parameter :: L_APRIORI              = l_angle + 1
-  integer, parameter :: L_BOTH 	              = l_apriori + 1
+  integer, parameter :: L_BOTH 	               = l_apriori + 1
   integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
   integer, parameter :: L_CHISQCHAN            = l_boundarypressure + 1
   integer, parameter :: L_CHISQMMAF            = l_chisqchan + 1
@@ -124,7 +124,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_CLOUDFULL            = l_climatology + 1
   integer, parameter :: L_COLUMNABUNDANCE      = l_cloudFull + 1
   integer, parameter :: L_COVARIANCE           = l_columnabundance + 1
-  integer, parameter :: L_DAO 	              = l_covariance + 1
+  integer, parameter :: L_DAO 	               = l_covariance + 1
   integer, parameter :: L_DIRECT               = l_dao + 1
   integer, parameter :: L_EITHER               = l_direct + 1
   integer, parameter :: L_ESTIMATEDNOISE       = l_either + 1
@@ -140,12 +140,12 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_L1B                  = l_kronecker + 1
   integer, parameter :: L_L2AUX                = l_l1b + 1
   integer, parameter :: L_L2DGG                = l_l2aux + 1
-  integer, parameter :: L_L2GP 	              = l_l2dgg + 1
+  integer, parameter :: L_L2GP 	               = l_l2dgg + 1
   integer, parameter :: L_L2PC                 = l_l2gp + 1
   integer, parameter :: L_LINEAR               = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC          = l_linear + 1
   integer, parameter :: L_LOWCLOUD             = l_logarithmic + 1
-  integer, parameter :: L_NCEP 	              = l_lowcloud+ 1
+  integer, parameter :: L_NCEP 	               = l_lowcloud+ 1
   integer, parameter :: L_NEITHER              = l_ncep + 1
   integer, parameter :: L_NEWTONIAN            = l_neither + 1
   integer, parameter :: L_NORM                 = l_newtonian + 1
@@ -457,7 +457,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
              l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
-             l+l_cloudWater, l+l_columnabundance, &
+             l+l_cloudWater, l+l_columnabundance, l+l_degreesOfFreedom, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
@@ -746,6 +746,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
+             begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
@@ -880,6 +881,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.166  2001/10/02 23:40:37  vsnyder
+! Add F_Diagnostics
+!
 ! Revision 2.165  2001/10/02 20:34:34  livesey
 ! Added f_do_baseline
 !
