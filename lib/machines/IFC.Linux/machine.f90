@@ -19,6 +19,10 @@ module MACHINE
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private :: IO_ERROR_
 
+  logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
+
+  private :: NOT_USED_HERE
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -28,6 +32,50 @@ module MACHINE
 !---------------------------------------------------------------------------
 
 contains
+
+  ! -------------------------------------------------  CRASH_BURN  -----
+  subroutine CRASH_BURN ( CODE, MSG, OPT )
+  ! Print CODE and MSG if they're present.
+  ! Try to make the processor crash, so it produces a walkback if it
+  ! supports such a thing.
+  ! DON'T put an optional argument corresponding to OPT.  It may be
+  ! referenced on some systems in an attempt to make the processor crash.
+  ! STOP as a last resort.
+  ! Compile everything with -gline to get a walkback -- even with -O.
+  
+  ! Crash is provoked by one of available methods:
+  ! (a) rewind illegal unit number (default)
+  ! (b) acos(2.)
+  ! You may select which method to use by setting msg = '!x (rest of message)'
+  ! where x is the method
+    integer, intent(in), optional :: CODE
+    character(len=*), intent(in), optional :: MSG
+    integer, intent(in), optional :: OPT(:)
+    integer :: I = -huge(0)
+    real :: arg
+    character(len=*), parameter :: DEFAULTMETHOD = 'b' ! 'a' or 'b'
+    character(len=1) :: method
+    if ( present(code) ) print *, 'In ifc MACHINE%CRASH_BURN, CODE =', code
+    if ( present(msg) ) print *, 'In ifc MACHINE%CRASH_BURN, MSG = ', trim(msg)
+    method = DEFAULTMETHOD
+    if ( NEVERCRASH ) then
+      method = 's' ! Just stop, don't crash nor burn
+    elseif ( present(msg) ) then
+      if ( msg(1:1) == '!' ) method = adjustl(msg(2:))
+    endif
+    select case (method)
+    case (' ', 'a', 'A')
+      rewind i
+    case ('b', 'B')
+      arg = 1.
+      if ( .not. present(opt) ) arg = arg + 1.
+      arg = acos(arg)
+      if ( arg > 0. ) print *, 'arg ', arg
+    case default
+      ! When you just want to land safely; e.g., a sips production run
+    end select
+    stop
+  end subroutine CRASH_BURN
 
   subroutine EXIT_WITH_STATUS ( STATUS )
   ! Exit and return STATUS to the invoking process
@@ -117,9 +165,17 @@ contains
 !---------- End no -gc section
 
 
+  ! ----------------------------------------------  not_used_here  -----
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MACHINE
 
 ! $Log$
+! Revision 1.3  2003/04/01 22:53:02  pwagner
+! Chucked stub getarg--the v7.0 ifc has getarg
+!
 ! Revision 1.2  2002/05/02 09:49:55  hcp
 ! Just syncing up
 !
