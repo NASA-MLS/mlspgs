@@ -9,12 +9,13 @@ module HDFEOS               ! F90 interface to HDF-EOS.
   public
 
 
-  !------------------- RCS Ident Info -----------------------
-  character(len=130), private :: Id = &
-    & "$Id$"&
-  character(len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !----------------------------------------------------------
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
   ! Now define f90 interfaces for some HDF-EOS.
 
@@ -170,6 +171,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.13  2002/10/01 22:03:54  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.12  2002/10/01 20:27:26  bwknosp
 ! Fixed problem
 !
