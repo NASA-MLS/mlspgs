@@ -9,8 +9,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use DirectWrite_m, only: DirectData_T
-  use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
-    & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
+  use Hdf, only: DFACC_CREATE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
@@ -153,836 +152,673 @@ contains ! =====     Public Procedures     =============================
     call output ( ' ', advance='yes' )
    end if
 
-    ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
-    l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
+   ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
+   l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
 
-    l2aux_mcf = mlspcf_mcf_l2dgm_start
-    l2dgg_mcf = mlspcf_mcf_l2dgg_start
+   l2aux_mcf = mlspcf_mcf_l2dgm_start
+   l2dgg_mcf = mlspcf_mcf_l2dgg_start
 
-    ! Loop over the lines in the l2cf
+   ! Loop over the lines in the l2cf
 
-    do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
+   do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
 
-      l2gp_Version = 1
-      l2aux_Version = 1
-      hdfVersion = DEFAULT_HDFVERSION_WRITE
-      meta_name = ''
-      writeCounterMAF = .false.
-      writeMetaDataOnly = .false.
+     l2gp_Version = 1
+     l2aux_Version = 1
+     hdfVersion = DEFAULT_HDFVERSION_WRITE
+     meta_name = ''
+     writeCounterMAF = .false.
+     writeMetaDataOnly = .false.
 
-      son = subtree(spec_no,root)
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        name = sub_rosa(subtree(1,son))
-      else ! Son is n_spec_args
-        key = son
-        name = 0
-      end if
+     son = subtree(spec_no,root)
+     if ( node_id(son) == n_named ) then ! Is spec labeled?
+       key = subtree(2,son)
+       name = sub_rosa(subtree(1,son))
+     else ! Son is n_spec_args
+       key = son
+       name = 0
+     end if
 
-      select case( get_spec_id(key) )
-      case ( s_output )
-        do field_no = 2, nsons(key)       ! Skip the command name
-          gson = subtree(field_no, key)   ! An assign node
-          if ( nsons(gson) > 1 ) then
-            fieldValue = decoration(subtree(2,gson)) ! The field's value
-          else
-            fieldValue = gson
-          end if
-          field_index = decoration(subtree(1,gson))
-          select case ( field_index )   ! Field name
-          case ( f_file )
-            call get_string ( sub_rosa(subtree(2,gson)), file_base )
-            file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
-          case ( f_metaName )
-            call get_string ( sub_rosa(subtree(2,gson)), meta_name )
-            meta_name = meta_name(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
-          case ( f_type )
-            output_type = decoration(subtree(2,gson))
-          case ( f_writeCounterMAF )
-            writeCounterMAF = get_boolean ( fieldValue )
-          case ( f_MetaDataOnly )
-            writeMetaDataOnly = get_boolean ( fieldValue )
-          case ( f_hdfVersion )
-            call expr ( subtree(2,gson), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call Announce_error ( gson, &
-                & 'No units allowed for hdfVersion: just integer 4 or 5')
-            hdfVersion = value(1)
-          case default                  ! Everything else processed later
-          end select
-        end do
+     select case( get_spec_id(key) )
+     case ( s_output )
+       do field_no = 2, nsons(key)       ! Skip the command name
+         gson = subtree(field_no, key)   ! An assign node
+         if ( nsons(gson) > 1 ) then
+           fieldValue = decoration(subtree(2,gson)) ! The field's value
+         else
+           fieldValue = gson
+         end if
+         field_index = decoration(subtree(1,gson))
+         select case ( field_index )   ! Field name
+         case ( f_file )
+           call get_string ( sub_rosa(subtree(2,gson)), file_base )
+           file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
+         case ( f_metaName )
+           call get_string ( sub_rosa(subtree(2,gson)), meta_name )
+           meta_name = meta_name(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
+         case ( f_type )
+           output_type = decoration(subtree(2,gson))
+         case ( f_writeCounterMAF )
+           writeCounterMAF = get_boolean ( fieldValue )
+         case ( f_MetaDataOnly )
+           writeMetaDataOnly = get_boolean ( fieldValue )
+         case ( f_hdfVersion )
+           call expr ( subtree(2,gson), units, value, type )
+           if ( units(1) /= phyq_dimensionless ) &
+             & call Announce_error ( gson, &
+               & 'No units allowed for hdfVersion: just integer 4 or 5')
+           hdfVersion = value(1)
+         case default                  ! Everything else processed later
+         end select
+       end do
 
-      if ( DEBUG ) call output('l2gp type number: ', advance='no')
-      if ( DEBUG ) call output(l_l2gp, advance='yes')
+       if ( DEBUG ) call output('l2gp type number: ', advance='no')
+       if ( DEBUG ) call output(l_l2gp, advance='yes')
 
-      if ( DEBUG ) call output('l2aux type number: ', advance='no')
-      if ( DEBUG ) call output(l_l2gp, advance='yes')
+       if ( DEBUG ) call output('l2aux type number: ', advance='no')
+       if ( DEBUG ) call output(l_l2gp, advance='yes')
 
-      if ( DEBUG ) call output('l2dgg type number: ', advance='no')
-      if ( DEBUG ) call output(l_l2dgg, advance='yes')
+       if ( DEBUG ) call output('l2dgg type number: ', advance='no')
+       if ( DEBUG ) call output(l_l2dgg, advance='yes')
 
-      if ( DEBUG ) call output('output type number: ', advance='no')
-      if ( DEBUG ) call output(output_type, advance='yes')
+       if ( DEBUG ) call output('output type number: ', advance='no')
+       if ( DEBUG ) call output(output_type, advance='yes')
 
-      if ( DEBUG ) call output('file_base: ', advance='no')
-      if ( DEBUG ) call output(trim(file_base), advance='yes')
+       if ( DEBUG ) call output('file_base: ', advance='no')
+       if ( DEBUG ) call output(trim(file_base), advance='yes')
 
-      if ( WriteMetaDataOnly ) then
-        if ( .not. TOOLKIT ) cycle
-      ! Skip regular data
-        select case ( output_type )
-        case ( l_l2gp ) ! --------------------- Writing l2gp files -----
-          if ( DEBUG ) call output('output file type l2gp', advance='yes')
-          ! Get the l2gp file name from the PCF
+       ! Otherwise--normal output commands
+       select case ( output_type )
+       case ( l_l2gp ) ! --------------------- Writing l2gp files -----
+         if ( DEBUG ) call output('output file type l2gp', advance='yes')
+         ! Get the l2gp file name from the PCF
 
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-           if ( DEBUG ) call output('file_base after split: ', advance='no')
-           if ( DEBUG ) call output(trim(file_base), advance='yes')
+         if ( TOOLKIT ) then
+           call split_path_name(file_base, path, file_base)
+          if ( DEBUG ) call output('file_base after split: ', advance='no')
+          if ( DEBUG ) call output(trim(file_base), advance='yes')
 
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-            & mlspcf_l2gp_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-          ! Write the metadata file
+           l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+           & mlspcf_l2gp_end, &
+           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+           & exactName=l2gpPhysicalFilename)
+         else
+           l2gpPhysicalFilename = file_base
+           returnStatus = 0
+         end if
 
-          call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
+         if ( returnStatus == 0 ) then
+           if ( DEBUG ) call output(&
+             & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
+           ! Open the HDF-EOS file and write swath data
 
-          if ( l2gp_mcf <= 0 ) then
+           if ( DEBUG ) call output('Attempting swopen', advance='yes')
+!           swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+           swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+            & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
+            & hdfVersion=hdfVersion, debugOption=.false. )
 
-            ! Error in finding mcf number
-            call announce_error ( son, &
-              & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
-              & PENALTY_FOR_NO_METADATA )
+           ! Loop over the segments of the l2cf line
 
-          else if ( numquantitiesperfile <= 0 ) then
+           numquantitiesperfile = 0
+           do field_no = 2, nsons(key) ! Skip "output" name
+             gson = subtree(field_no,key)
+             select case ( decoration(subtree(1,gson)) )
+             case ( f_quantities )
+               do in_field_no = 2, nsons(gson)
+                 db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                 if ( db_index >= 1 ) then
+                   call writeL2GPData ( l2gpDatabase(db_index), swfid, &
+                    & hdfVersion=hdfVersion )
+                   numquantitiesperfile = numquantitiesperfile+1
+                   if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                     call announce_error ( son, &
+                       & 'Attempt to write too many l2gp quantities to a file', &
+                       & numquantitiesperfile )
+                     numquantitiesperfile = MAXQUANTITIESPERFILE
+                   end if
+                   quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+                 else
+                   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                     & 'Unable to write quantity to l2gp file, perhaps no chunks processed' )
+                 end if
+               end do ! in_field_no = 2, nsons(gson)
+             case ( f_overlaps )
+               ! ??? More work needed here
+             end select
+           end do ! field_no = 2, nsons(key)
 
-            ! Error in number of quantities
-            call announce_error ( son, &
-              & 'No quantities written for this l2gp file')
-
-          else if ( QuantityNames(numquantitiesperfile) &
-            & == QuantityNames(1) ) then
-
-            ! Typical homogeneous l2gp file: 
-            ! e.g., associated with BrO is ML2BRO.001.MCF
-            if ( DEBUG ) then
-              call output('preparing to populate metadata_std', advance='yes')
-              call output('l2gpFileHandle: ', advance='no')
-              call output(l2gpFileHandle , advance='no')
-              call output('   l2gp_mcf: ', advance='no')
-              call output(l2gp_mcf , advance='no')
-              call output('   swfid: ', advance='no')
-              call output(swfid , advance='yes')
-            end if
-
-            call populate_metadata_std &
-              & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
-              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='sw' )
-            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-
-          else
-
-            ! Type l2gp file 'other'
-            if ( DEBUG ) then
-              call output ( 'preparing to populate metadata_oth', advance='yes' )
-              call output ( 'l2gpFileHandle: ', advance='no' )
-              call output ( l2gpFileHandle , advance='no' )
-              call output ( '   l2gp_mcf: ', advance='no' )
-              call output ( l2gp_mcf , advance='no' )
-              call output ( '   swfid: ', advance='no' )
-              call output ( swfid , advance='yes' )
-            end if
-
-            call populate_metadata_oth &
-              & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
-              & numquantitiesperfile, QuantityNames, &
-              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='sw'  )
-            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-          end if
-        case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
-
-          if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
-          ! Get the l2aux file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-            & mlspcf_l2dgm_end, &
-            & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
-            & exactName=l2auxPhysicalFilename)
-          else
-            l2auxPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-          if ( DEBUG ) then
-            call output ( 'preparing to populate metadata_oth', advance='yes' )
-            call output ( 'l2auxFileHandle: ', advance='no' )
-            call output ( l2auxFileHandle , advance='no' )
-            call output ( '   l2aux_mcf: ', advance='no' )
-            call output ( l2aux_mcf , advance='no' )
-            call output ( '   sdfId: ', advance='no' )
-            call output ( sdfId , advance='yes' )
-            call output ( '   number of quantities: ', advance='no' )
-            call output ( numquantitiesperfile , advance='yes' )
-            do field_no=1, numquantitiesperfile
-              call output ( field_no , advance='no' )
-              call output ( '       ', advance='no' )
-              call output ( trim(QuantityNames(field_no)) , advance='yes' )
-            end do
-          end if
-          call populate_metadata_oth &
-            & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
-            & numquantitiesperfile, QuantityNames,&
-            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-            & filetype='hdf'  )
-          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-        case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
-          ! I intend to completely ignore the PCF file in this case,
-          ! it's not worth the effort!
-          call MLSMessage(MLSMSG_Error,ModuleName,&
-            & "Cannot write metadata to l2pc files ")
-        case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
-
-          if ( DEBUG ) call output('output file type l2dgg', advance='yes')
-          ! Get the l2gp file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-            & mlspcf_l2dgg_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-          if ( DEBUG ) then
-            call output ( 'preparing to populate metadata_oth', advance='yes' )
-            call output ( 'l2gpFileHandle: ', advance='no' )
-            call output ( l2gpFileHandle , advance='no' )
-            call output ( '   l2dgg_mcf: ', advance='no' )
-            call output ( mlspcf_mcf_l2dgg_start , advance='no' )
-            call output ( '   swfid: ', advance='no' )
-            call output ( swfid , advance='yes' )
-          end if
-
-          call populate_metadata_oth &
-            & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
-            & numquantitiesperfile, QuantityNames, &
-            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-            & filetype='sw'  )
-          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-        case default
-          call announce_error ( ROOT, &
-            &  "Error--unknown output type: parser should have caught this")
-
-        end select
-        cycle        ! Skip to next Output command
-      end if
-        
-      ! Otherwise--normal output commands
-        select case ( output_type )
-        case ( l_l2gp ) ! --------------------- Writing l2gp files -----
-          if ( DEBUG ) call output('output file type l2gp', advance='yes')
-          ! Get the l2gp file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-           if ( DEBUG ) call output('file_base after split: ', advance='no')
-           if ( DEBUG ) call output(trim(file_base), advance='yes')
-
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-            & mlspcf_l2gp_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-
-          if ( returnStatus == 0 ) then
-            if ( DEBUG ) call output(&
-              & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
-            ! Open the HDF-EOS file and write swath data
-
-            if ( DEBUG ) call output('Attempting swopen', advance='yes')
-!            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
-            swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-             & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-             & hdfVersion=hdfVersion, debugOption=.false. )
-
-            ! Loop over the segments of the l2cf line
-
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  if ( db_index >= 1 ) then
-                    call writeL2GPData ( l2gpDatabase(db_index), swfid, &
-                     & hdfVersion=hdfVersion )
-                    numquantitiesperfile = numquantitiesperfile+1
-                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                      call announce_error ( son, &
-                        & 'Attempt to write too many l2gp quantities to a file', &
-                        & numquantitiesperfile )
-                      numquantitiesperfile = MAXQUANTITIESPERFILE
-                    end if
-                    quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
-                  else
-                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                      & 'Unable to write quantity to l2gp file, perhaps no chunks processed' )
-                  end if
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
-
-            if ( DEBUG ) call output('Attempting swclose', advance='yes')
-!            returnStatus = swclose(swfid)
-            returnStatus = mls_io_gen_closeF('swclose', swfid, &
-             & hdfVersion=hdfVersion)
-            if ( returnStatus /= PGS_S_SUCCESS ) then
-              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
-            else if (index(switches, 'pro') /= 0) then
-               call announce_success(l2gpPhysicalFilename, 'l2gp', &
-               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
-
-            if ( .not. TOOLKIT ) cycle
-
-            ! Write the metadata file
-
-            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
-
-            if ( l2gp_mcf <= 0 ) then
-
-              ! Error in finding mcf number
-              call announce_error ( son, &
-                & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
-                & PENALTY_FOR_NO_METADATA )
-
-            else if ( numquantitiesperfile <= 0 ) then
-
-              ! Error in number of quantities
-              call announce_error ( son, &
-                & 'No quantities written for this l2gp file')
-
-            else if ( QuantityNames(numquantitiesperfile) &
-              & == QuantityNames(1) ) then
-
-              ! Typical homogeneous l2gp file: 
-              ! e.g., associated with BrO is ML2BRO.001.MCF
-              if ( DEBUG ) then
-                call output('preparing to populate metadata_std', advance='yes')
-                call output('l2gpFileHandle: ', advance='no')
-                call output(l2gpFileHandle , advance='no')
-                call output('   l2gp_mcf: ', advance='no')
-                call output(l2gp_mcf , advance='no')
-                call output('   swfid: ', advance='no')
-                call output(swfid , advance='yes')
-              end if
-
-              call populate_metadata_std &
-                & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw' )
-              error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-
-            else
-
-              ! Type l2gp file 'other'
-              if ( DEBUG ) then
-                call output ( 'preparing to populate metadata_oth', advance='yes' )
-                call output ( 'l2gpFileHandle: ', advance='no' )
-                call output ( l2gpFileHandle , advance='no' )
-                call output ( '   l2gp_mcf: ', advance='no' )
-                call output ( l2gp_mcf , advance='no' )
-                call output ( '   swfid: ', advance='no' )
-                call output ( swfid , advance='yes' )
-              end if
-
-              call populate_metadata_oth &
-                & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
-                & numquantitiesperfile, QuantityNames, &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw'  )
-              error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-            end if
-
-          else
-            call announce_error ( ROOT, &
-              &  "Error finding l2gp file matching:  "//file_base, returnStatus)
-          end if
-
-        case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
-
-          if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
-          ! Get the l2aux file name from the PCF
-
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-            & mlspcf_l2dgm_end, &
-            & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
-            & exactName=l2auxPhysicalFilename)
-          else
-            l2auxPhysicalFilename = file_base
-            returnStatus = 0
-          end if
-
-          if ( returnStatus == 0 ) then
-
-            if ( DEBUG ) call output ( 'file name: ' // TRIM(l2auxPhysicalFilename), &
-              & advance='yes' )
-            ! Create the HDF file and initialize the SD interface
-            if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
-  ! (((( This will have to be changed to incorporate hdf5 ))))
-           sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
+           if ( DEBUG ) call output('Attempting swclose', advance='yes')
+!           returnStatus = swclose(swfid)
+           returnStatus = mls_io_gen_closeF('swclose', swfid, &
             & hdfVersion=hdfVersion)
-  !         sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
+           if ( returnStatus /= PGS_S_SUCCESS ) then
+             call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+             call MLSMessage ( MLSMSG_Error, ModuleName, &
+               &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
+           else if (index(switches, 'pro') /= 0) then
+              call announce_success(l2gpPhysicalFilename, 'l2gp', &
+              & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
+           end if
 
-            if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  if ( DEBUG ) &
-                    & call output ( "computing db index", advance='yes')
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  if ( db_index >= 1 ) then
-                    call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, returnStatus,&
-                      & WriteCounterMAF = &
-                      &   (writeCounterMAF .and. numquantitiesperfile == 0), &
-                      & hdfVersion=hdfVersion )
-                    error = max(error, returnStatus)
-                    numquantitiesperfile = numquantitiesperfile+1
-                    if ( DEBUG ) call output(&
-                      & "attempting to fill quantity name", advance='yes')
-                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                      call announce_error ( son, &
-                        & 'Attempt to write too many l2aux quantities to a file', &
-                        & numquantitiesperfile )
-                      numquantitiesperfile = MAXQUANTITIESPERFILE
-                    end if
-                    call get_string &
-                      & ( l2auxDatabase(db_index)%name, &
-                      &     QuantityNames(numquantitiesperfile) )
-                  else
-                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                      & 'Unable to save l2aux quantity, perhaps no chunks processed' )
-                  end if
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
+           if ( .not. TOOLKIT ) cycle
 
-            ! Now close the file
-  ! ((((( This, too, will have to be changed for hdf5 )))))
-  !                  conversion
-            returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
-  !         returnStatus = sfend(sdfid)
-            
-            if ( returnStatus /= PGS_S_SUCCESS ) then
-              call announce_error ( root, &
-                &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
-            else if (index(switches, 'pro') /= 0) then
-               call announce_success(l2auxPhysicalFilename, 'l2aux', &
-               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
+           ! Write the metadata file
 
-            if ( .not. TOOLKIT ) cycle
+           call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
 
-            ! Write the metadata file
-            if ( numquantitiesperfile <= 0 ) then
-	      call announce_error ( son, &
-	        & 'No quantities written for this l2aux file')
-            else
+           if ( l2gp_mcf <= 0 ) then
 
-              ! We may need to think more about this; until then reuse
-              ! populate_metadata_oth, but with l2aux_mcf
-              if ( DEBUG ) then
-                call output ( 'preparing to populate metadata_oth', advance='yes' )
-                call output ( 'l2auxFileHandle: ', advance='no' )
-                call output ( l2auxFileHandle , advance='no' )
-                call output ( '   l2aux_mcf: ', advance='no' )
-                call output ( l2aux_mcf , advance='no' )
-                call output ( '   sdfId: ', advance='no' )
-                call output ( sdfId , advance='yes' )
-                call output ( '   number of quantities: ', advance='no' )
-                call output ( numquantitiesperfile , advance='yes' )
-                do field_no=1, numquantitiesperfile
-                  call output ( field_no , advance='no' )
-                  call output ( '       ', advance='no' )
-                  call output ( trim(QuantityNames(field_no)) , advance='yes' )
-                end do
-              end if
-              call populate_metadata_oth &
-                & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
-                & numquantitiesperfile, QuantityNames,&
-                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='hdf'  )
-              error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-            end if
+             ! Error in finding mcf number
+             call announce_error ( son, &
+               & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
+               & PENALTY_FOR_NO_METADATA )
 
-          else
-            call announce_error ( root, &
-              &  "Error finding l2aux file matching:  "//file_base, returnStatus)
-          end if
+           else if ( numquantitiesperfile <= 0 ) then
 
-        case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
-          ! I intend to completely ignore the PCF file in this case,
-          ! it's not worth the effort!
-          if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
-            & "Cannot write l2pc files with multi chunk l2cf's")
-          recLen = 0
-          packed = .false.
-          ascii = .false.
-          do field_no = 2, nsons(key) ! Skip "output" name
-            gson = subtree(field_no,key)
-            select case ( decoration(subtree(1,gson)) )
-            case ( f_quantities )
-              quantitiesNode = gson
-            case ( f_overlaps )
-              ! ??? More work needed here
-            case ( f_packed )
-              packed = get_boolean ( gson )
-            case ( f_ascii )
-              ascii = get_boolean ( gson )
-            end select
-          end do ! field_no = 2, nsons(key)
+             ! Error in number of quantities
+             call announce_error ( son, &
+               & 'No quantities written for this l2gp file')
 
-          ! Open file
-          if ( ascii ) then
-            ! ASCII l2pc file
-            l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
-              & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
-            if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
-              & 'Failed to open l2pc file:'//trim(file_base))
-            
-            do in_field_no = 2, nsons(quantitiesNode)
-              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-              call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-              call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
-            end do ! in_field_no = 2, nsons(gson)
+           else if ( QuantityNames(numquantitiesperfile) &
+             & == QuantityNames(1) ) then
 
-            error = mls_io_gen_closef ( 'cl', l2pcUnit)
-            if ( error /= 0 ) then
-              call MLSMessage(MLSMSG_Error,ModuleName,&
-                & 'Failed to close l2pc file:'//trim(file_base))
-            else if ( index(switches, 'pro') /= 0) then
-              call announce_success(file_base, 'l2pc', &
-                & 0, quantityNames)
-            end if
-          else
-            ! For the moment call a routine
-            call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed )
-            ! Later on when HDF5 is 'blessed' I want to move all this code
-            ! here instead
-!             call H5FCreate_F ( trim(file_base), H5F_ACC_TRUNC, l2pcUnit, &
-!               & returnStatus )
-!             if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-!               & 'Unable to open hdf5 l2pc file for output.' )
-!             do in_field_no = 2, nsons(quantitiesNode)
-!               db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-!               call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-!               call writeOneHDF5L2PC ( tmpMatrix, l2pcUnit, packed )
-!             end do ! in_field_no = 2, nsons(gson)
-!             call H5FClose ( l2pcUnit, returnStatus )
-!             if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-!               & 'Unable to close hdf5 l2pc file.' )
+             ! Typical homogeneous l2gp file: 
+             ! e.g., associated with BrO is ML2BRO.001.MCF
+             if ( DEBUG ) then
+               call output('preparing to populate metadata_std', advance='yes')
+               call output('l2gpFileHandle: ', advance='no')
+               call output(l2gpFileHandle , advance='no')
+               call output('   l2gp_mcf: ', advance='no')
+               call output(l2gp_mcf , advance='no')
+               call output('   swfid: ', advance='no')
+               call output(swfid , advance='yes')
+             end if
 
-          end if
+             call populate_metadata_std &
+               & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+               & filetype='sw' )
+             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
-        case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+           else
 
-          if ( DEBUG ) call output('output file type l2dgg', advance='yes')
-          ! Get the l2gp file name from the PCF
+             ! Type l2gp file 'other'
+             if ( DEBUG ) then
+               call output ( 'preparing to populate metadata_oth', advance='yes' )
+               call output ( 'l2gpFileHandle: ', advance='no' )
+               call output ( l2gpFileHandle , advance='no' )
+               call output ( '   l2gp_mcf: ', advance='no' )
+               call output ( l2gp_mcf , advance='no' )
+               call output ( '   swfid: ', advance='no' )
+               call output ( swfid , advance='yes' )
+             end if
 
-          if ( TOOLKIT ) then
-            call split_path_name(file_base, path, file_base)
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-            & mlspcf_l2dgg_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          else
-            l2gpPhysicalFilename = file_base
-            returnStatus = 0
-          end if
+             call populate_metadata_oth &
+               & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
+               & numquantitiesperfile, QuantityNames, &
+               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+               & filetype='sw'  )
+             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+           end if
 
-          if ( returnStatus == 0 ) then
-            if ( DEBUG ) call output(&
-              & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
-            ! Open the HDF-EOS file and write swath data
+         else
+           call announce_error ( ROOT, &
+             &  "Error finding l2gp file matching:  "//file_base, returnStatus)
+         end if
 
-            if ( DEBUG ) call output('Attempting swopen', advance='yes')
-!            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
-            swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-             & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-             & hdfVersion=hdfVersion, debugOption=.false. )
+       case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
 
-            ! Loop over the segments of the l2cf line
+         if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
+         ! Get the l2aux file name from the PCF
 
-            numquantitiesperfile = 0
-            do field_no = 2, nsons(key) ! Skip "output" name
-              gson = subtree(field_no,key)
-              select case ( decoration(subtree(1,gson)) )
-              case ( f_quantities )
-                do in_field_no = 2, nsons(gson)
-                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  call writeL2GPData ( l2gpDatabase(db_index), swfid, &
-                   & hdfVersion=hdfVersion )
-                  numquantitiesperfile = numquantitiesperfile+1
-                  if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                    call announce_error ( son, &
-                      & 'Attempt to write too many l2dgg quantities to a file', &
-                      & numquantitiesperfile )
-                    numquantitiesperfile = MAXQUANTITIESPERFILE
-                  end if
-                  quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
-                end do ! in_field_no = 2, nsons(gson)
-              case ( f_overlaps )
-                ! ??? More work needed here
-              end select
-            end do ! field_no = 2, nsons(key)
+         if ( TOOLKIT ) then
+           call split_path_name(file_base, path, file_base)
+           l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+           & mlspcf_l2dgm_end, &
+           & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
+           & exactName=l2auxPhysicalFilename)
+         else
+           l2auxPhysicalFilename = file_base
+           returnStatus = 0
+         end if
 
-            if ( DEBUG ) call output('Attempting swclose', advance='yes')
-!            returnStatus = swclose(swfid)
-            returnStatus = mls_io_gen_closeF('swclose', swfid, &
-             & hdfVersion=hdfVersion)
-            if ( returnStatus /= PGS_S_SUCCESS ) then
-              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
-            else if (index(switches, 'pro') /= 0) then
-               call announce_success(l2gpPhysicalFilename, 'l2dgg', &
-               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
-            end if
+         if ( returnStatus == 0 ) then
 
-            if ( .not. TOOLKIT ) cycle
+           if ( DEBUG ) call output ( 'file name: ' // TRIM(l2auxPhysicalFilename), &
+             & advance='yes' )
+           ! Create the HDF file and initialize the SD interface
+           if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
+           sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
+           & hdfVersion=hdfVersion)
+  !        sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
 
-            ! Write the metadata file
+           if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
+           numquantitiesperfile = 0
+           do field_no = 2, nsons(key) ! Skip "output" name
+             gson = subtree(field_no,key)
+             select case ( decoration(subtree(1,gson)) )
+             case ( f_quantities )
+               do in_field_no = 2, nsons(gson)
+                 if ( DEBUG ) &
+                   & call output ( "computing db index", advance='yes')
+                 db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                 if ( db_index >= 1 ) then
+                   call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, returnStatus,&
+                     & WriteCounterMAF = &
+                     &   (writeCounterMAF .and. numquantitiesperfile == 0), &
+                     & hdfVersion=hdfVersion )
+                   error = max(error, returnStatus)
+                   numquantitiesperfile = numquantitiesperfile+1
+                   if ( DEBUG ) call output(&
+                     & "attempting to fill quantity name", advance='yes')
+                   if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                     call announce_error ( son, &
+                       & 'Attempt to write too many l2aux quantities to a file', &
+                       & numquantitiesperfile )
+                     numquantitiesperfile = MAXQUANTITIESPERFILE
+                   end if
+                   call get_string &
+                     & ( l2auxDatabase(db_index)%name, &
+                     &     QuantityNames(numquantitiesperfile) )
+                 else
+                   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                     & 'Unable to save l2aux quantity, perhaps no chunks processed' )
+                 end if
+               end do ! in_field_no = 2, nsons(gson)
+             case ( f_overlaps )
+               ! ??? More work needed here
+             end select
+           end do ! field_no = 2, nsons(key)
 
-            if ( numquantitiesperfile <= 0 ) then
+           ! Now close the file
+           returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
+  !        returnStatus = sfend(sdfid)
+           
+           if ( returnStatus /= PGS_S_SUCCESS ) then
+             call announce_error ( root, &
+               &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
+           else if (index(switches, 'pro') /= 0) then
+              call announce_success(l2auxPhysicalFilename, 'l2aux', &
+              & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
+           end if
 
-              ! Error in number of quantities
-              call announce_error ( son, &
-                & 'No quantities written for this l2dgg file')
+           if ( .not. TOOLKIT ) cycle
 
-            else
+           ! Write the metadata file
+           if ( numquantitiesperfile <= 0 ) then
+	     call announce_error ( son, &
+	       & 'No quantities written for this l2aux file')
+           else
 
-              ! Similar to type l2gp file 'other'
-              if ( DEBUG ) then
-                call output ( 'preparing to populate metadata_oth', advance='yes' )
-                call output ( 'l2gpFileHandle: ', advance='no' )
-                call output ( l2gpFileHandle , advance='no' )
-                call output ( '   l2dgg_mcf: ', advance='no' )
-                call output ( mlspcf_mcf_l2dgg_start , advance='no' )
-                call output ( '   swfid: ', advance='no' )
-                call output ( swfid , advance='yes' )
-              end if
+             ! We may need to think more about this; until then reuse
+             ! populate_metadata_oth, but with l2aux_mcf
+             if ( DEBUG ) then
+               call output ( 'preparing to populate metadata_oth', advance='yes' )
+               call output ( 'l2auxFileHandle: ', advance='no' )
+               call output ( l2auxFileHandle , advance='no' )
+               call output ( '   l2aux_mcf: ', advance='no' )
+               call output ( l2aux_mcf , advance='no' )
+               call output ( '   sdfId: ', advance='no' )
+               call output ( sdfId , advance='yes' )
+               call output ( '   number of quantities: ', advance='no' )
+               call output ( numquantitiesperfile , advance='yes' )
+               do field_no=1, numquantitiesperfile
+                 call output ( field_no , advance='no' )
+                 call output ( '       ', advance='no' )
+                 call output ( trim(QuantityNames(field_no)) , advance='yes' )
+               end do
+             end if
+             call populate_metadata_oth &
+               & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
+               & numquantitiesperfile, QuantityNames,&
+               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+               & filetype='hdf'  )
+             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+           end if
 
-              call populate_metadata_oth &
-                & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
-                & numquantitiesperfile, QuantityNames, &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw'  )
-              error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-            end if
+         else
+           call announce_error ( root, &
+             &  "Error finding l2aux file matching:  "//file_base, returnStatus)
+         end if
 
-          else
-            call announce_error ( ROOT, &
-              &  "Error finding l2gp file matching:  "//file_base, returnStatus)
-          end if
+       case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
+         ! I intend to completely ignore the PCF file in this case,
+         ! it's not worth the effort!
+         if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
+           & "Cannot write l2pc files with multi chunk l2cf's")
+         recLen = 0
+         packed = .false.
+         ascii = .false.
+         do field_no = 2, nsons(key) ! Skip "output" name
+           gson = subtree(field_no,key)
+           select case ( decoration(subtree(1,gson)) )
+           case ( f_quantities )
+             quantitiesNode = gson
+           case ( f_overlaps )
+             ! ??? More work needed here
+           case ( f_packed )
+             packed = get_boolean ( gson )
+           case ( f_ascii )
+             ascii = get_boolean ( gson )
+           end select
+         end do ! field_no = 2, nsons(key)
+
+         ! Open file
+         if ( ascii ) then
+           ! ASCII l2pc file
+           l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
+             & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
+           if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+             & 'Failed to open l2pc file:'//trim(file_base))
+           
+           do in_field_no = 2, nsons(quantitiesNode)
+             db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+             call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+             call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
+           end do ! in_field_no = 2, nsons(gson)
+
+           error = mls_io_gen_closef ( 'cl', l2pcUnit)
+           if ( error /= 0 ) then
+             call MLSMessage(MLSMSG_Error,ModuleName,&
+               & 'Failed to close l2pc file:'//trim(file_base))
+           else if ( index(switches, 'pro') /= 0) then
+             call announce_success(file_base, 'l2pc', &
+               & 0, quantityNames)
+           end if
+         else
+           ! For the moment call a routine
+           call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed )
+           ! Later on when HDF5 is 'blessed' I want to move all this code
+           ! here instead
+!            call H5FCreate_F ( trim(file_base), H5F_ACC_TRUNC, l2pcUnit, &
+!              & returnStatus )
+!            if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!              & 'Unable to open hdf5 l2pc file for output.' )
+!            do in_field_no = 2, nsons(quantitiesNode)
+!              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+!              call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+!              call writeOneHDF5L2PC ( tmpMatrix, l2pcUnit, packed )
+!            end do ! in_field_no = 2, nsons(gson)
+!            call H5FClose ( l2pcUnit, returnStatus )
+!            if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+!              & 'Unable to close hdf5 l2pc file.' )
+
+         end if
+
+       case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+
+         if ( DEBUG ) call output('output file type l2dgg', advance='yes')
+         ! Get the l2gp file name from the PCF
+
+         if ( TOOLKIT ) then
+           call split_path_name(file_base, path, file_base)
+           l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+           & mlspcf_l2dgg_end, &
+           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+           & exactName=l2gpPhysicalFilename)
+         else
+           l2gpPhysicalFilename = file_base
+           returnStatus = 0
+         end if
+
+         if ( returnStatus == 0 ) then
+           if ( DEBUG ) call output(&
+             & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
+           ! Open the HDF-EOS file and write swath data
+
+           if ( DEBUG ) call output('Attempting swopen', advance='yes')
+!           swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+           swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+            & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
+            & hdfVersion=hdfVersion, debugOption=.false. )
+
+           ! Loop over the segments of the l2cf line
+
+           numquantitiesperfile = 0
+           do field_no = 2, nsons(key) ! Skip "output" name
+             gson = subtree(field_no,key)
+             select case ( decoration(subtree(1,gson)) )
+             case ( f_quantities )
+               do in_field_no = 2, nsons(gson)
+                 db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                 call writeL2GPData ( l2gpDatabase(db_index), swfid, &
+                  & hdfVersion=hdfVersion )
+                 numquantitiesperfile = numquantitiesperfile+1
+                 if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                   call announce_error ( son, &
+                     & 'Attempt to write too many l2dgg quantities to a file', &
+                     & numquantitiesperfile )
+                   numquantitiesperfile = MAXQUANTITIESPERFILE
+                 end if
+                 quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+               end do ! in_field_no = 2, nsons(gson)
+             case ( f_overlaps )
+               ! ??? More work needed here
+             end select
+           end do ! field_no = 2, nsons(key)
+
+           if ( DEBUG ) call output('Attempting swclose', advance='yes')
+!           returnStatus = swclose(swfid)
+           returnStatus = mls_io_gen_closeF('swclose', swfid, &
+            & hdfVersion=hdfVersion)
+           if ( returnStatus /= PGS_S_SUCCESS ) then
+             call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+             call MLSMessage ( MLSMSG_Error, ModuleName, &
+               &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
+           else if (index(switches, 'pro') /= 0) then
+              call announce_success(l2gpPhysicalFilename, 'l2dgg', &
+              & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
+           end if
+
+           if ( .not. TOOLKIT ) cycle
+
+           ! Write the metadata file
+
+           if ( numquantitiesperfile <= 0 ) then
+
+             ! Error in number of quantities
+             call announce_error ( son, &
+               & 'No quantities written for this l2dgg file')
+
+           else
+
+             ! Similar to type l2gp file 'other'
+             if ( DEBUG ) then
+               call output ( 'preparing to populate metadata_oth', advance='yes' )
+               call output ( 'l2gpFileHandle: ', advance='no' )
+               call output ( l2gpFileHandle , advance='no' )
+               call output ( '   l2dgg_mcf: ', advance='no' )
+               call output ( mlspcf_mcf_l2dgg_start , advance='no' )
+               call output ( '   swfid: ', advance='no' )
+               call output ( swfid , advance='yes' )
+             end if
+
+             call populate_metadata_oth &
+               & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+               & numquantitiesperfile, QuantityNames, &
+               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+               & filetype='sw'  )
+             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+           end if
+
+         else
+           call announce_error ( ROOT, &
+             &  "Error finding l2gp file matching:  "//file_base, returnStatus)
+         end if
 
 
-         case default
-            call announce_error ( ROOT, &
-              &  "Error--unknown output type: parser should have caught this")
-
-        end select
-
-      case ( s_time )
-        if ( timing ) then
-          call sayTime
-        else
-          call time_now ( t1 )
-          timing = .true.
-        end if
-
-      case default
-            call announce_error ( ROOT, &
-              &  "Error--unknown spec_no: parser should have caught this")
-
-      end select
-
-    end do  ! spec_no
-
-    ! Write metadata for any directdata files
-    if ( size(DirectDatabase) > 0 .and. TOOLKIT ) then
-     do DB_index=1, size(DirectDatabase)
-        file_base = DirectDatabase(DB_index)%fileNameBase
-        output_type = DirectDatabase(DB_index)%type
-        numquantitiesperfile = size(DirectDatabase(DB_index)%sdNames)
-        do quantitiesnode=1, numquantitiesperfile
-          QuantityNames(quantitiesnode) = &
-            & DirectDatabase(DB_index)%sdNames(quantitiesnode)
-        enddo
-        select case ( output_type )
-        case ( l_l2gp ) ! --------------------- Writing l2gp files -----
-          if ( DEBUG ) call output('output file type l2gp', advance='yes')
-          ! Get the l2gp file name from the PCF
-
-           if ( DEBUG ) call output('file_base after split: ', advance='no')
-           if ( DEBUG ) call output(trim(file_base), advance='yes')
-
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-            & mlspcf_l2gp_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          ! Write the metadata file
-
-          call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
-
-          if ( l2gp_mcf <= 0 ) then
-
-            ! Error in finding mcf number
-            call announce_error ( son, &
-              & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
-              & PENALTY_FOR_NO_METADATA )
-
-          else if ( numquantitiesperfile <= 0 ) then
-
-            ! Error in number of quantities
-            call announce_error ( son, &
-              & 'No quantities written for this l2gp file')
-
-          else if ( QuantityNames(numquantitiesperfile) &
-            & == QuantityNames(1) ) then
-
-            ! Typical homogeneous l2gp file: 
-            ! e.g., associated with BrO is ML2BRO.001.MCF
-            if ( DEBUG ) then
-              call output('preparing to populate metadata_std', advance='yes')
-              call output('l2gpFileHandle: ', advance='no')
-              call output(l2gpFileHandle , advance='no')
-              call output('   l2gp_mcf: ', advance='no')
-              call output(l2gp_mcf , advance='no')
-              call output('   swfid: ', advance='no')
-              call output(swfid , advance='yes')
-            end if
-
-            call populate_metadata_std &
-              & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
-              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='sw' )
-            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-
-          else
-
-            ! Type l2gp file 'other'
-            if ( DEBUG ) then
-              call output ( 'preparing to populate metadata_oth', advance='yes' )
-              call output ( 'l2gpFileHandle: ', advance='no' )
-              call output ( l2gpFileHandle , advance='no' )
-              call output ( '   l2gp_mcf: ', advance='no' )
-              call output ( l2gp_mcf , advance='no' )
-              call output ( '   swfid: ', advance='no' )
-              call output ( swfid , advance='yes' )
-            end if
-
-            call populate_metadata_oth &
-              & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
-              & numquantitiesperfile, QuantityNames, &
-              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='sw'  )
-            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-          end if
-        case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
-
-          if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
-          ! Get the l2aux file name from the PCF
-
-            call split_path_name(file_base, path, file_base)
-            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-            & mlspcf_l2dgm_end, &
-            & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
-            & exactName=l2auxPhysicalFilename)
-          if ( DEBUG ) then
-            call output ( 'preparing to populate metadata_oth', advance='yes' )
-            call output ( 'l2auxFileHandle: ', advance='no' )
-            call output ( l2auxFileHandle , advance='no' )
-            call output ( '   l2aux_mcf: ', advance='no' )
-            call output ( l2aux_mcf , advance='no' )
-            call output ( '   sdfId: ', advance='no' )
-            call output ( sdfId , advance='yes' )
-            call output ( '   number of quantities: ', advance='no' )
-            call output ( numquantitiesperfile , advance='yes' )
-            do field_no=1, numquantitiesperfile
-              call output ( field_no , advance='no' )
-              call output ( '       ', advance='no' )
-              call output ( trim(QuantityNames(field_no)) , advance='yes' )
-            end do
-          end if
-          call populate_metadata_oth &
-            & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
-            & numquantitiesperfile, QuantityNames,&
-            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-            & filetype='hdf'  )
-          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-        case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
-          ! I intend to completely ignore the PCF file in this case,
-          ! it's not worth the effort!
-          call MLSMessage(MLSMSG_Error,ModuleName,&
-            & "Cannot write metadata to l2pc files ")
-        case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
-
-          if ( DEBUG ) call output('output file type l2dgg', advance='yes')
-          ! Get the l2gp file name from the PCF
-
-            call split_path_name(file_base, path, file_base)
-            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-            & mlspcf_l2dgg_end, &
-            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
-            & exactName=l2gpPhysicalFilename)
-          if ( DEBUG ) then
-            call output ( 'preparing to populate metadata_oth', advance='yes' )
-            call output ( 'l2gpFileHandle: ', advance='no' )
-            call output ( l2gpFileHandle , advance='no' )
-            call output ( '   l2dgg_mcf: ', advance='no' )
-            call output ( mlspcf_mcf_l2dgg_start , advance='no' )
-            call output ( '   swfid: ', advance='no' )
-            call output ( swfid , advance='yes' )
-          end if
-
-          call populate_metadata_oth &
-            & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
-            & numquantitiesperfile, QuantityNames, &
-            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-            & filetype='sw'  )
-          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
         case default
-          call announce_error ( ROOT, &
-            &  "Error--unknown output type: parser should have caught this")
+           call announce_error ( ROOT, &
+             &  "Error--unknown output type: parser should have caught this")
 
-        end select
-      enddo
-    end if
+       end select
+
+     case ( s_time )
+       if ( timing ) then
+         call sayTime
+       else
+         call time_now ( t1 )
+         timing = .true.
+       end if
+
+     case default
+           call announce_error ( ROOT, &
+             &  "Error--unknown spec_no: parser should have caught this")
+
+     end select
+
+   end do  ! spec_no
+
+   ! Write metadata for any directdata files
+   if ( size(DirectDatabase) > 0 .and. TOOLKIT ) then
+    do DB_index=1, size(DirectDatabase)
+       file_base = DirectDatabase(DB_index)%fileNameBase
+       output_type = DirectDatabase(DB_index)%type
+       numquantitiesperfile = size(DirectDatabase(DB_index)%sdNames)
+       do quantitiesnode=1, numquantitiesperfile
+         QuantityNames(quantitiesnode) = &
+           & DirectDatabase(DB_index)%sdNames(quantitiesnode)
+       enddo
+       select case ( output_type )
+       case ( l_l2gp ) ! --------------------- Writing l2gp files -----
+         if ( DEBUG ) call output('output file type l2gp', advance='yes')
+         ! Get the l2gp file name from the PCF
+
+          if ( DEBUG ) call output('file_base after split: ', advance='no')
+          if ( DEBUG ) call output(trim(file_base), advance='yes')
+
+           l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+           & mlspcf_l2gp_end, &
+           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+           & exactName=l2gpPhysicalFilename)
+         ! Write the metadata file
+
+         call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
+
+         if ( l2gp_mcf <= 0 ) then
+
+           ! Error in finding mcf number
+           call announce_error ( son, &
+             & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
+             & PENALTY_FOR_NO_METADATA )
+
+         else if ( numquantitiesperfile <= 0 ) then
+
+           ! Error in number of quantities
+           call announce_error ( son, &
+             & 'No quantities written for this l2gp file')
+
+         else if ( QuantityNames(numquantitiesperfile) &
+           & == QuantityNames(1) ) then
+
+           ! Typical homogeneous l2gp file: 
+           ! e.g., associated with BrO is ML2BRO.001.MCF
+           if ( DEBUG ) then
+             call output('preparing to populate metadata_std', advance='yes')
+             call output('l2gpFileHandle: ', advance='no')
+             call output(l2gpFileHandle , advance='no')
+             call output('   l2gp_mcf: ', advance='no')
+             call output(l2gp_mcf , advance='no')
+             call output('   swfid: ', advance='no')
+             call output(swfid , advance='yes')
+           end if
+
+           call populate_metadata_std &
+             & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+             & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+             & filetype='sw' )
+           error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+
+         else
+
+           ! Type l2gp file 'other'
+           if ( DEBUG ) then
+             call output ( 'preparing to populate metadata_oth', advance='yes' )
+             call output ( 'l2gpFileHandle: ', advance='no' )
+             call output ( l2gpFileHandle , advance='no' )
+             call output ( '   l2gp_mcf: ', advance='no' )
+             call output ( l2gp_mcf , advance='no' )
+             call output ( '   swfid: ', advance='no' )
+             call output ( swfid , advance='yes' )
+           end if
+
+           call populate_metadata_oth &
+             & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
+             & numquantitiesperfile, QuantityNames, &
+             & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+             & filetype='sw'  )
+           error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+         end if
+       case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
+
+         if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
+         ! Get the l2aux file name from the PCF
+
+           call split_path_name(file_base, path, file_base)
+           l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+           & mlspcf_l2dgm_end, &
+           & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
+           & exactName=l2auxPhysicalFilename)
+         if ( DEBUG ) then
+           call output ( 'preparing to populate metadata_oth', advance='yes' )
+           call output ( 'l2auxFileHandle: ', advance='no' )
+           call output ( l2auxFileHandle , advance='no' )
+           call output ( '   l2aux_mcf: ', advance='no' )
+           call output ( l2aux_mcf , advance='no' )
+           call output ( '   sdfId: ', advance='no' )
+           call output ( sdfId , advance='yes' )
+           call output ( '   number of quantities: ', advance='no' )
+           call output ( numquantitiesperfile , advance='yes' )
+           do field_no=1, numquantitiesperfile
+             call output ( field_no , advance='no' )
+             call output ( '       ', advance='no' )
+             call output ( trim(QuantityNames(field_no)) , advance='yes' )
+           end do
+         end if
+         call populate_metadata_oth &
+           & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
+           & numquantitiesperfile, QuantityNames,&
+           & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+           & filetype='hdf'  )
+         error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+       case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
+         ! I intend to completely ignore the PCF file in this case,
+         ! it's not worth the effort!
+         call MLSMessage(MLSMSG_Error,ModuleName,&
+           & "Cannot write metadata to l2pc files ")
+       case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+
+         if ( DEBUG ) call output('output file type l2dgg', advance='yes')
+         ! Get the l2gp file name from the PCF
+
+           call split_path_name(file_base, path, file_base)
+           l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+           & mlspcf_l2dgg_end, &
+           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+           & exactName=l2gpPhysicalFilename)
+         if ( DEBUG ) then
+           call output ( 'preparing to populate metadata_oth', advance='yes' )
+           call output ( 'l2gpFileHandle: ', advance='no' )
+           call output ( l2gpFileHandle , advance='no' )
+           call output ( '   l2dgg_mcf: ', advance='no' )
+           call output ( mlspcf_mcf_l2dgg_start , advance='no' )
+           call output ( '   swfid: ', advance='no' )
+           call output ( swfid , advance='yes' )
+         end if
+
+         call populate_metadata_oth &
+           & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+           & numquantitiesperfile, QuantityNames, &
+           & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+           & filetype='sw'  )
+         error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+       case default
+         call announce_error ( ROOT, &
+           &  "Error--unknown output type: parser should have caught this")
+
+       end select
+     enddo
+   end if
 
 ! Write the log file metadata
     if ( LOGFILEGETSMETADATA ) then
@@ -1108,6 +944,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.76  2003/06/26 00:17:17  pwagner
+! Writes metadata to all files in DirectDataBase
+!
 ! Revision 2.75  2003/06/24 23:54:07  pwagner
 ! New db indexes stored for entire direct file
 !
