@@ -101,7 +101,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SPEC_NO                  ! Index of son of Root
     integer(i4) :: START(3), STRIDE(3), DIM_SIZES(3)
     integer :: SWFID
-    double precision :: T1, T2     ! for timing
+    REAL :: T1, T2     ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -315,7 +315,7 @@ contains ! =====     Public Procedures     =============================
     subroutine SayTime
       call cpu_time ( t2 )
       call output ( "Timing for Output_Close =" )
-      call output ( t2 - t1, advance = 'yes' )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
 
@@ -343,6 +343,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.5  2001/01/03 18:15:13  pwagner
+! Changed types of t1, t2 to real
+!
 ! Revision 2.4  2000/11/16 02:25:13  vsnyder
 ! Implement timing.
 !
