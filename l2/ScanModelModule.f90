@@ -16,37 +16,32 @@ module ScanModelModule          ! Scan model and associated calculations
   ! will ever be required.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Dump_0, only: DUMP
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
   use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
     & G0, GM, J2, J4, OMEGA => W
-  USE Get_eta_matrix_m, only: get_eta_sparse
-  use Init_Tables_Module, only: L_HEIGHT, L_REFGPH, L_ZETA
+  use Init_Tables_Module, only: L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION
-  USE ManipulateVectorQuantities, ONLY: FINDCLOSESTINSTANCES, &
+  use ManipulateVectorQuantities, ONLY: FINDCLOSESTINSTANCES, &
     & FindInstanceWindow
   use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, M_BANDED, &
     & M_FULL, UpdateDiagonal
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
-  USE MLSCommon, ONLY: R8, rp
+  use MLSCommon, ONLY: R8, rp
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
        MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
-  use Output_M, only: OUTPUT
-  USE Piq_int_m, only: piq_int
-  USE Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
+  use Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
   use Toggles, only: EMIT, TOGGLE, SWITCHES
   use Trace_M, only: TRACE_BEGIN, TRACE_END
-  USE VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
+  use VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
   use Units, only: Deg2Rad, LN10, PHYQ_Length, PI
-  use QuantityTemplates, only: QuantityTemplate_T
 
   implicit NONE
 
@@ -69,20 +64,13 @@ module ScanModelModule          ! Scan model and associated calculations
   
   real (r8), parameter :: MAXREFRACTION = 0.1_rp ! Don't allow stupidly large n.
   real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
-  
-  ! Now some terms to do with the gas 'constant'
-  
-  real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
-  real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
-  real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
-  real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
 
 contains ! =============== Subroutines and functions ==========================
 
   ! ----------------------------------------------- GetBasisGPH ---------------
-  subroutine GetBasisGPH(temp,refGPH,gph,R,RT,belowRef)
-    ! This function takes a state vector, containing one and only one temperature
-    ! and reference geopotential height quantity, and returns
+  subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
+    ! This function takes a state vector, containing one and only one
+    ! temperature and reference geopotential height quantity, and returns
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -91,6 +79,13 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(:), pointer, optional :: R ! Gas constant, noSurfs
     real (r8), dimension(:,:), pointer, optional :: RT ! R*T (noSurfs,noInstances)
     integer, intent(out), optional :: BELOWREF ! Level in temperature basis
+  
+    ! Some terms to do with the gas 'constant'
+
+    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
+    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
+    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
+    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
 
     ! Local variables, many automatic arrays
 
@@ -103,7 +98,7 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(temp%template%noInstances) :: CORRECTION ! To apply to gph
     real (r8), dimension(temp%template%noInstances) :: DELTAGEOPOT ! noInstances
 
-    integer :: MYBELOWREF                 ! Result of a hunt
+    integer :: MYBELOWREF               ! Result of a hunt
     real (r8) :: ABOVEREFWEIGHT         ! Interpolation weight
     
     integer :: INSTANCE                 ! Loop counter
@@ -162,7 +157,7 @@ contains ! =============== Subroutines and functions ==========================
     ! reference surface is within.
 
     refLogP = refGPH%template%surfs(1,1)
-    call Hunt( logP, refLogP, myBelowRef )
+    call Hunt ( logP, refLogP, myBelowRef )
 
     ! Get weights
     basisGap = logP(myBelowRef+1) - logP(myBelowRef)
@@ -206,6 +201,11 @@ contains ! =============== Subroutines and functions ==========================
     ! This is a new pressure guesser routine which works by simply running the
     ! new 2D scan model 'backwards'
     ! Dummy arguments
+
+    use Dump_0, only: DUMP
+    use Output_M, only: OUTPUT
+    use QuantityTemplates, only: QuantityTemplate_T
+
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
     type (VectorValue_T), intent(in) :: TEMP ! Temperature
     type (VectorValue_T), intent(in) :: REFGPH ! Reference GPH
@@ -342,7 +342,7 @@ contains ! =============== Subroutines and functions ==========================
   end subroutine Get2DHydrostaticTangentPressure
 
   ! ---------------------------------- GetHydroStaticTangentPressure ----------
-  subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt,&
+  subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt, &
     maxIterations )
     ! This routine is a pressure `guesser'.  It works by comparing the
     ! geopotential heights estimated from the level 1 heights with those based on
@@ -1330,6 +1330,11 @@ contains ! =============== Subroutines and functions ==========================
   ! ---------------------------------------- twodScanForwardModel -----------
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, ifm, &
   & fmStat, jacobian )
+
+    use Get_eta_matrix_m, only: Get_eta_sparse
+    use Piq_int_m, only: Piq_int
+    use Units, only: Boltz
+
 ! This is a two D version of ScanForwardModel
 ! inputs
   type (ForwardModelConfig_T), intent(in) :: FMCONF ! Configuration options
@@ -1365,7 +1370,6 @@ contains ! =============== Subroutines and functions ==========================
   INTEGER :: row                   ! Block row in jacobian
   INTEGER :: col                   ! Block col in jacobian
 !
-  REAL(rp), PARAMETER :: boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
   REAL(rp) :: z_surf
   REAL(rp) :: surf_temp
   REAL(rp) :: surf_refr_indx(1)
@@ -1794,71 +1798,65 @@ contains ! =============== Subroutines and functions ==========================
   CALL deallocate_test(not_zero_h2o,'not_zero_h2o',ModuleName)
   CALL deallocate_test(tan_h2o,'tan_h2o',ModuleName)
   CALL DEALLOCATE_TEST(tan_refr_indx,'tan_refr_indx', modulename)
-  end subroutine TwoDScanForwardModel
-!
-  REAL(rp) FUNCTION z_surface(z_basis,t_values,g_ref,h_ref,z_ref,boltz, &
-  & threshold,maxiterations)
+
+  contains
+    real(rp) function Z_surface ( z_basis, t_values, g_ref, h_ref, z_ref, boltz, &
+    & threshold, maxiterations )
 ! finds the surface pressure
 ! inputs:
-  REAL(rp), INTENT(in) :: z_basis(:) ! zeta basis for temperature
-  REAL(rp), INTENT(in) :: t_values(:) ! temperature coefficients
-  REAL(rp), INTENT(in) :: g_ref      ! reference acceloration at the surface
-  REAL(rp), INTENT(in) :: h_ref      ! reference geopotential
-  REAL(rp), INTENT(in) :: z_ref      ! reference zeta for h_ref
-  REAL(rp), INTENT(in) :: boltz      ! k*ln10/m in your favorite units
+      real(rp), intent(in) :: z_basis(:) ! zeta basis for temperature
+      real(rp), intent(in) :: t_values(:) ! temperature coefficients
+      real(rp), intent(in) :: g_ref      ! reference acceloration at the surface
+      real(rp), intent(in) :: h_ref      ! reference geopotential
+      real(rp), intent(in) :: z_ref      ! reference zeta for h_ref
+      real(rp), intent(in) :: boltz      ! k*ln10/m in your favorite units
 ! note that the units of h_ref, g_ref, and boltz must be consistent
-  REAL(rp), OPTIONAL, INTENT(in) :: threshold ! zeta convergence criteria
-  INTEGER, OPTIONAL, INTENT(in) :: maxiterations ! maximum number of
+      real(rp), optional, intent(in) :: threshold ! zeta convergence criteria
+      integer, optional, intent(in) :: MaxIterations ! maximum number of
 !                                  iterations
 ! This is a one dimensional calculation where g_ref is assumed to apply
 ! throughout the entire vertical range of t_basis.
 ! internals
-  INTEGER :: iter
-  INTEGER :: maxiter
-  INTEGER :: n_coeffs
+      integer :: iter
+      integer :: maxiter
 !
-  REAL(rp) :: z_new
-  REAL(rp) :: thresh
-!
-  REAL(rp), POINTER :: eta(:,:)
-  REAL(rp), POINTER :: piq(:,:)
+      real(rp) :: eta(1,size(z_basis))
+      real(rp) :: ghb                    ! g_ref * h_ref / boltz
+      real(rp) :: piq(1,size(z_basis))
+      real(rp) :: thresh
+      real(rp) :: z_old
 ! 
 ! begin code
-  NULLIFY(eta,piq)
-  maxiter = 10
-  thresh = 0.0001_rp
-  IF (PRESENT(maxiterations)) maxiter = maxiterations
-  IF (PRESENT(threshold)) thresh = threshold
-  n_coeffs = SIZE(z_basis)
+      maxiter = 10
+      thresh = 0.0001_rp
+      if ( present(maxiterations) ) maxiter = maxiterations
+      if ( present(threshold) ) thresh = threshold
+
 ! intitial guess
-  z_surface = z_ref - g_ref*h_ref/(t_values(1)*boltz)
-  CALL ALLOCATE_TEST(piq,1,n_coeffs,'piq',modulename)
-  CALL ALLOCATE_TEST(eta,1,n_coeffs,'eta',modulename)
-  CALL piq_int((/z_surface/),z_basis,z_ref,piq)
-  CALL get_eta_sparse(z_basis,(/z_surface/),eta)
+      ghb = g_ref * h_ref / boltz
+      z_old = z_ref - ghb / t_values(1)
+
+      iter = 0
+      do
+        call piq_int ( (/z_old/), z_basis, z_ref, piq )
+        call get_eta_sparse ( z_basis, (/z_old/), eta )
 ! correct
-  z_new = z_surface - (h_ref*g_ref &
-  & + boltz*SUM(RESHAPE(piq,(/n_coeffs/))*t_values)) &
-  & / (boltz*SUM(RESHAPE(eta,(/n_coeffs/))*t_values))
-  iter = 0
-  DO
-    iter = iter + 1
-    IF(ABS(z_new - z_surface) < thresh .OR. iter == maxiter) EXIT
-    z_surface = z_new
-    CALL piq_int((/z_surface/),z_basis,z_ref,piq)
-    CALL get_eta_sparse(z_basis,(/z_surface/),eta)
-! correct
-    z_new = z_surface - (h_ref*g_ref &
-    & + boltz*SUM(RESHAPE(piq,(/n_coeffs/))*t_values)) &
-    & / (boltz*SUM(RESHAPE(eta,(/n_coeffs/))*t_values))
-  ENDDO
-  z_surface = z_new
-  CALL DEALLOCATE_TEST(eta,'eta',modulename)
-  CALL DEALLOCATE_TEST(piq,'piq',modulename)
-  END FUNCTION z_surface
+        z_surface = z_old - (ghb + dot_product(piq(1,:),t_values)) &
+                         & / dot_product(eta(1,:),t_values)
+        iter = iter + 1
+        if ( abs(z_surface - z_old) < thresh .or. iter >= maxiter ) exit
+        z_old = z_surface
+      end do
+    end function Z_surface
+  end subroutine TwoDScanForwardModel
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.48  2002/09/27 01:47:45  vsnyder
+! Move some USEs from module scope to procedure scope.  Move parameters from
+! module scope to procedure scope.  Simplify iteration in z_surface.
+! Convert some variables from pointers to automatic arrays.  Cosmetic changes.
+!
 ! Revision 2.47  2002/09/27 00:01:16  vsnyder
 ! Remove unused variables and dead calculations
 !
