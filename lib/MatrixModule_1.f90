@@ -1028,23 +1028,26 @@ contains ! =====     Public Procedures     =============================
   end function MultiplyMatrices
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
-  subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE, UseMask )
+  subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE, UseMask, Clone )
   ! Z = A^T V if UPDATE is absent or false.  Z is first cloned from V.
   ! Z = Z + A^T V is UPDATE is present and true.
 
   ! If UseMask is present and true, the column mask of A is used to
-  ! suppress columns.
+  ! suppress columns.  If Clone is present and true and Update is absent
+  ! or false, clone Z to be like V.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: UseMask
+    logical, intent(in), optional :: Clone
 
     logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVector
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
     integer, dimension(:), pointer :: MJ ! Mask for column J, if any
+    logical :: My_Clone       ! My copy of Clone or false if it's absent
     logical :: My_Mask        ! My copy of UseMask or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
@@ -1055,11 +1058,15 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     my_mask = .false.
     if ( present(useMask) ) my_mask = useMask
-    if ( my_update .and. a%col%vec%template%id /= z%template%id ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
+    my_clone = .false.
+    if ( present(clone) ) my_clone = clone
+    if ( (my_update .or. .not. my_clone) .and. &
+      & a%col%vec%template%id /= z%template%id ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
-    if ( .not. my_update ) call cloneVector ( z, v, vectorNameText='_z' )
+    if ( my_clone .and. .not. my_update ) &
+      & call cloneVector ( z, v, vectorNameText='_z' )
     do j = 1, a%col%nb
       k = a%col%quant(j)
       l = a%col%inst(j)
@@ -1078,31 +1085,39 @@ contains ! =====     Public Procedures     =============================
   end subroutine MultiplyMatrixVector_1
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_1  -----
-  subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE )
+  subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE, Clone )
   ! Z = A V if UPDATE is absent or false.  Z is first cloned from the
   !     rows-labeling of A.
   ! Z = Z + A V if UPDATE is presend and true.
+  ! If Clone is present and true and Update is absent or false, clone Z
+  ! to be like A%Row%Vec.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
     logical, intent(in), optional :: UPDATE
+    logical, intent(in), optional :: Clone
 
     logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVectorNoT
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
+    logical :: My_Clone       ! My copy of Clone or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
     if ( a%col%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
-    if ( a%row%vec%template%id /= z%template%id ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
+    my_clone = .false.
+    if ( present(clone) ) my_clone = clone
+    if ( (my_update .or. .not. my_clone) .and. &
+      & a%row%vec%template%id /= z%template%id ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
-    if ( .not. my_update ) call cloneVector ( z, a%row%vec, vectorNameText='_z' )
+    if ( my_clone .and. .not. my_update ) &
+      & call cloneVector ( z, a%row%vec, vectorNameText='_z' )
     do i = 1, a%row%nb
       m = a%row%quant(i)
       n = a%row%inst(i)
@@ -1677,6 +1692,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.58  2001/10/15 23:22:45  vsnyder
+! Make Z-cloning during MultiplyMatrixVector* optional
+!
 ! Revision 2.57  2001/10/04 23:49:57  livesey
 ! Added checking code, and temporarily suppressed sparse
 !
