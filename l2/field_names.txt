@@ -117,10 +117,9 @@ lsbFraction
 
 mask
 matrix
-maxF
 maxGap
 maxIterations
-maxJ
+maxJ # Maximum number of Jacobian evaluations in Retrieve
 maxLength
 measurements
 measurementSD
@@ -250,6 +249,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.49  2002/09/23 22:14:19  vsnyder
+# Delete maxF field name
+#
 # Revision 2.48  2002/09/05 20:49:22  livesey
 # Added skipMask
 #
