@@ -1570,6 +1570,7 @@ contains
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
+          if ( index(switches,'NDB') /= 0 ) call nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
       end do ! Newton iteration
 
@@ -2977,6 +2978,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.179  2002/09/14 02:46:30  vsnyder
+! Add NDB switch to get DNWT output every return
+!
 ! Revision 2.178  2002/09/14 00:37:37  vsnyder
 ! More stuff on subsuming EVALF into EVALJ properly
 !
