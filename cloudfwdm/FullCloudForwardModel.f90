@@ -697,11 +697,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf )
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
-!      colJBlock = 0
-!      do while (colJBlock <= jacobian%col%nb .and. &
-!           jacobian%col%inst(colJBlock) /= maf)
-!           colJBlock = colJBlock +1 
-!      end do
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
@@ -803,10 +798,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! In the absent case, the jacobian is stored in a special format
         !----------------------------------------------------------------
 
-        call CreateBlock ( jBlock, noChans, &
-            & noSgrid*noMIFs, M_Full )
+        call CreateBlock ( jBlock, noChans, noSgrid*noMIFs, M_Full )
         jBlock%values = 0.0_r8
 
+         jBlock%kind = M_Absent     ! createBlock has changed jBlock%kind
         allocate( TransOnS(noSgrid, noMIFs), stat=status )
 
         !------------------------------------------
@@ -981,6 +976,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.52  2001/10/08 21:46:39  jonathan
+! add CloudySkyModule
+!
 ! Revision 1.50  2001/10/08 21:42:29  dwu
 ! *** empty log message ***
 !
