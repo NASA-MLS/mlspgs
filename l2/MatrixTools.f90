@@ -386,9 +386,11 @@ contains ! ================ Public procedures ================================
                 & call deallocate_test ( val, 'val', ModuleName )
             endif
 
-            call output ( 'Number of elements dumped:\ ' )
-            call output ( size(toDump), advance='yes' )
-            call dump ( toDump, clean=.true. )
+            if ( mb%kind /= m_absent ) then
+              call output ( 'Number of elements dumped:\ ' )
+              call output ( size(toDump), advance='yes' )
+              call dump ( toDump, clean=.true. )
+            end if
 
           end if
         end do
@@ -500,6 +502,9 @@ contains ! ================ Public procedures ================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.5  2001/07/17 17:32:15  livesey
+! Added PVM pack stuff
+!
 ! Revision 1.4  2001/05/08 21:33:23  livesey
 ! Added the CVS log stuff, whoops!
 !
