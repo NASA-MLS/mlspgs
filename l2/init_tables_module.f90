@@ -752,6 +752,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
+             begin, f+f_hRegOrders, t+t_numeric, n+n_field_type, &
+             begin, f+f_hRegQuants, t+t_quantityType, n+n_field_type, &
+             begin, f+f_hRegWeights, t+t_numeric, n+n_field_type, &
+             begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_lambda, t+t_numeric, n+n_field_type, &
              begin, f+f_maxF, t+t_numeric, n+n_field_type, &
@@ -762,14 +766,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
-             begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
-             begin, f+f_regQuants, t+t_quantityType, n+n_field_type, &
-             begin, f+f_regWeights, t+t_numeric, n+n_field_type, &
-             begin, f+f_regWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
+             begin, f+f_vRegOrders, t+t_numeric, n+n_field_type, &
+             begin, f+f_vRegQuants, t+t_quantityType, n+n_field_type, &
+             begin, f+f_vRegWeights, t+t_numeric, n+n_field_type, &
+             begin, f+f_vRegWeightVec, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
@@ -866,6 +870,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.234  2002/08/24 01:38:28  vsnyder
+! Implement horizontal regularization
+!
 ! Revision 2.233  2002/08/15 03:52:40  livesey
 ! Added stuff for profile fill
 !
