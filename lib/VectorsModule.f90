@@ -38,8 +38,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DestroyVectorTemplateInfo    destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
 ! DotVectors                   z = x . y
+! dump                         interface for next three
 ! dump_vector                  display how a single vector is made up
 ! dump_vectors                 display how vector database is made up
+! dump_vector_templates        display how vector template database is made up
 ! GetVectorQuantity            returns pointer to quantity by name in vector
 ! GetVectorQuantityByType      returns pointer to quantity by type in vector
 ! GetVectorQtyByTemplateIndex  returns pointer to quantity by template in vector
@@ -692,14 +694,25 @@ contains ! =====     Public Procedures     =============================
   end function DotVectors
 
   ! ------------------------------------------------  Dump_Vector  -----
-  subroutine Dump_Vector ( VECTOR, DETAILS, NAME )
+  subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
+    & QUANTITYTYPES, COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
+    ! if the following are present, dump only quantities matching them
+    integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
+    logical, intent(in), optional                :: COHERENT
+    logical, intent(in), optional                :: STACKED
+    logical, intent(in), optional                :: REGULAR
+    logical, intent(in), optional                :: MINORFRAME
+    logical, intent(in), optional                :: MAJORFRAME
+
+    ! Local parameters
     integer :: J    ! Loop inductor, subscript
     integer :: MyDetails
+    logical :: dumpThisQty
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( present(name) ) then
@@ -716,49 +729,103 @@ contains ! =====     Public Procedures     =============================
     call output ( ' Template_ID = ' )
     call output ( vector%template%id, advance='yes' )
     do j = 1, size(vector%quantities)
-      call output ( j, 4 )
-      call output ( "~" )
-      if ( vector%quantities(j)%template%name /= 0 ) then
-        call output ( ' Qty_Template_Name = ' )
-        call display_string ( vector%quantities(j)%template%name )
-      end if
-      call output ( ' Qty_Template_ID = ' )
-      call output ( vector%quantities(j)%template%id )
-      if ( myDetails > 0 ) then
-        call dump ( vector%quantities(j)%values, ', Elements = ' )
-        if ( associated(vector%quantities(j)%mask) ) then
-          call dump ( vector%quantities(j)%mask, format='(z8)' )
-        else
-          call output ( '      Without mask', advance='yes' )
+      dumpThisQty = .true.
+      if ( present (quantitytypes) ) dumpThisQty = &
+        & any(vector%quantities(j)%template%quantitytype == quantitytypes)
+      if ( present (coherent) ) dumpThisQty = dumpThisQty .and. &
+        & (vector%quantities(j)%template%coherent .eqv. coherent)
+      if ( present (stacked) ) dumpThisQty = dumpThisQty .and. &
+        & (vector%quantities(j)%template%stacked .eqv. stacked)
+      if ( present (regular) ) dumpThisQty = dumpThisQty .and. &
+        & (vector%quantities(j)%template%regular .eqv. regular)
+      if ( present (minorFrame) ) dumpThisQty = dumpThisQty .and. &
+        & (vector%quantities(j)%template%minorFrame .eqv. minorFrame)
+      if ( present (majorFrame) ) dumpThisQty = dumpThisQty .and. &
+        & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
+      if ( dumpThisQty ) then
+        call output ( j, 4 )
+        call output ( "~" )
+        if ( vector%quantities(j)%template%name /= 0 ) then
+          call output ( ' Qty_Template_Name = ' )
+          call display_string ( vector%quantities(j)%template%name )
         end if
-      else
-        call output ( ', with' )
-        if ( .not. associated(vector%quantities(j)%values) ) &
-          & call output ( 'out' )
-        call output ( ' values, with' )
-        if ( .not. associated(vector%quantities(j)%mask ) ) &
-          & call output ( 'out' )
-        call output ( ' mask', advance='yes' )
+        call output ( ' Qty_Template_ID = ' )
+        call output ( vector%quantities(j)%template%id )
+        if ( myDetails > 0 ) then
+          call dump ( vector%quantities(j)%values, ', Elements = ' )
+          if ( associated(vector%quantities(j)%mask) ) then
+            call dump ( vector%quantities(j)%mask, format='(z8)' )
+          else
+            call output ( '      Without mask', advance='yes' )
+          end if
+        else
+          call output ( ', with' )
+          if ( .not. associated(vector%quantities(j)%values) ) &
+            & call output ( 'out' )
+          call output ( ' values, with' )
+          if ( .not. associated(vector%quantities(j)%mask ) ) &
+            & call output ( 'out' )
+          call output ( ' mask', advance='yes' )
+        end if
       end if
     end do ! j
   end subroutine Dump_Vector
 
   ! -----------------------------------------------  Dump_Vectors  -----
-  subroutine Dump_Vectors ( VECTORS, DETAILS, NAME )
+  subroutine Dump_Vectors ( VECTORS, DETAILS, NAME, &
+    & QUANTITYTYPES, COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
+    ! if the following are present, dump only quantities matching them
+    integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
+    logical, intent(in), optional                :: COHERENT
+    logical, intent(in), optional                :: STACKED
+    logical, intent(in), optional                :: REGULAR
+    logical, intent(in), optional                :: MINORFRAME
+    logical, intent(in), optional                :: MAJORFRAME
+
+    ! Local parameters
     integer :: I
+    logical :: dumpThisQty
+    logical :: dumpThisVector
+    integer :: J
+
     if ( size(vectors) > 1 ) then
       call output ( 'VECTORS: SIZE = ' )
       call output ( size(vectors), advance='yes' )
     end if
     do i = 1, size(vectors)
-      call output ( i, 4 )
-      call output ( ': ' )
-      call dump_vector ( vectors(i), details, name )
+      ! Presume do not need to dump vector; hence preset to FALSE -- 
+      ! becomes TRUE if wish to dump one or more quantities
+      dumpThisVector = .false.
+      do j=1, size(vectors(i)%quantities)
+        ! Presume need to dump quantity; hence preset to TRUE --
+        ! becomes FALSE if fails to match a requirement
+        dumpThisQty = .true.
+        ! Check on requirements
+        if ( present (quantitytypes) ) dumpThisQty = &
+          & any(vectors(i)%quantities(j)%template%quantitytype == quantitytypes)
+        if ( present (coherent) ) dumpThisQty = dumpThisQty .and. &
+          & (vectors(i)%quantities(j)%template%coherent .eqv. coherent)
+        if ( present (stacked) ) dumpThisQty = dumpThisQty .and. &
+          & (vectors(i)%quantities(j)%template%stacked .eqv. stacked)
+        if ( present (regular) ) dumpThisQty = dumpThisQty .and. &
+          & (vectors(i)%quantities(j)%template%regular .eqv. regular)
+        if ( present (minorFrame) ) dumpThisQty = dumpThisQty .and. &
+          & (vectors(i)%quantities(j)%template%minorFrame .eqv. minorFrame)
+        if ( present (majorFrame) ) dumpThisQty = dumpThisQty .and. &
+          & (vectors(i)%quantities(j)%template%majorFrame .eqv. majorFrame)
+        dumpThisVector = dumpThisVector .or. dumpThisQty
+      enddo
+      if ( dumpThisVector ) then
+        call output ( i, 4 )
+        call output ( ': ' )
+        call dump_vector ( vectors(i), details, name, &
+        & quantitytypes, coherent, stacked, regular, minorframe, majorframe )
+      endif
     end do ! i
   end subroutine Dump_Vectors
 
@@ -1373,6 +1440,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.53  2001/09/20 23:02:31  vsnyder
+! Specified explicitly which entities are public (so as not to re-publish
+! everything gotten by USE).  Added ClearUnderMask subroutine.
+!
 ! Revision 2.52  2001/09/20 20:56:34  pwagner
 ! Added contents list; tweaked some things
 !
