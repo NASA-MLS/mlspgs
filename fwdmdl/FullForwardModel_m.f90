@@ -1599,15 +1599,13 @@ contains
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
 
-!???? Added 1/2 terms to scalar "power absorption" to get "field absorption" 
+              ! 0.5 factors scalar unpolarized "power absorption" to get "field absorption" 
 
               incoptdepth_pol(1,1,1:npc) = - incoptdepth_pol(1,1,1:npc) * del_s(1:npc) - &
-!                  & incoptdepth(1:npc)
                    & 0.5*incoptdepth(1:npc)
               incoptdepth_pol(2,1,1:npc) = - incoptdepth_pol(2,1,1:npc) * del_s(1:npc)
               incoptdepth_pol(1,2,1:npc) = - incoptdepth_pol(1,2,1:npc) * del_s(1:npc)
               incoptdepth_pol(2,2,1:npc) = - incoptdepth_pol(2,2,1:npc) * del_s(1:npc) - &
-!                  & incoptdepth(1:npc)
                    & 0.5*incoptdepth(1:npc)
 
               do j = 1, npc
@@ -1669,8 +1667,9 @@ contains
           else
          !Polarized model
 
-!??????  This seems not to do the job, though it makes agreement better
-alpha_path_f = 0.5 * alpha_path_f
+!????DEBUG  This makes agreement to 0.2K with scalar model.  I don't know why.
+!we ought to need to add the scalar contribution 0.25 0.5 0.25 to the polarized
+alpha_path_f = 0.0 
 
             ! POLARIZED
             ! get the corrections to integrals for layers that need gl for
@@ -1715,7 +1714,12 @@ alpha_path_f = 0.5 * alpha_path_f
               & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol )
 
             !Assume antenna is only sensitive to the first linear polarization
-            RadV(frq_i) = real(rad_pol(1,1))
+            if ( index(switches,'crosspol') /= 0 ) then
+               RadV(frq_i) = real(rad_pol(2,2))
+            else
+               RadV(frq_i) = real(rad_pol(1,1))
+            end if
+  
           end if
 
           ! Compute derivatives if needed ----------------------------------
@@ -2608,6 +2612,9 @@ alpha_path_f = 0.5 * alpha_path_f
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.139  2003/05/22 20:01:17  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.138  2003/05/22 04:03:41  livesey
 ! Now handles elevation offset as a channel by channel quantity
 !
