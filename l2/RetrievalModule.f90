@@ -895,9 +895,9 @@ contains
             ! Destroy (i.e. clean up) the previous contents of
             ! AprioriMinusX (if any), so as not to have a memory
             ! leak.  Then make it look like apriori.
+!           v(aprioriMinusX) = apriori - v(x) ! leaks memory, so do:
             call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
               & vectorNameText='_aprioriMinusX' ) ! a-x := a
-!           v(aprioriMinusX) = apriori - v(x)
             call subtractFromVector ( v(aprioriMinusX), v(x) ) ! a-x := a - x
             if ( got(f_regApriori) ) &
               & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
@@ -933,14 +933,14 @@ contains
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
 
             !{ Using Apriori requires adding equations of the form ${\bf F
-            !  x}_n \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky factor
-            !  of $\bf C$, the inverse of the apriori covariance ${\bf S}_a$. 
-            !  So that all of the parts of the problem are solving for
-            !  ${\bf\delta x}$, we subtract ${\bf F x}_{n-1}$ from both sides,
-            !  to get ${\bf F \delta x} \simeq {\bf F (a - x}_{n-1})$.
+            !  x}_{n+1} \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky
+            !  factor of $\bf C$, the inverse of the apriori covariance ${\bf
+            !  S}_a$.  So that all of the parts of the problem are solving
+            !  for ${\bf\delta x}$, we subtract ${\bf F x}_n$ from both
+            !  sides, to get ${\bf F \delta x} \simeq {\bf F (a - x}_n)$.
             !
             ! Actually, we start by putting this into the normal equations,
-            ! so we form ${\bf C \delta x} = {\bf C (a - x}_{n-1})$
+            ! so we form ${\bf C \delta x} = {\bf C (a - x}_n)$
             if ( diagonal ) then
             ! Iterate with the diagonal of the apriori covariance, then
             ! use the full apriori covariance (one hopes only for one
@@ -965,14 +965,14 @@ contains
           if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. tikhonovBefore ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
-            !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
-            !  0}$ or ${\bf R x}_n \simeq {\bf a}$, where {\bf a} is the
-            !  apriori. So that all of the parts of the problem are solving for
-            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides
-            !  to get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$ or ${\bf
-            !  R \delta x} \simeq {\bf R} ( {\bf a - x}_{n-1})$.
+            !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
+            !  {\bf 0}$ or ${\bf R x}_{n+1} \simeq {\bf a}$, where {\bf a} is
+            !  the apriori. So that all of the parts of the problem are solving
+            !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
+            !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$ or ${\bf R \delta
+            !  x} \simeq {\bf R} ( {\bf a - x}_n)$.
 
-            do t = 1, 2 ! Vertical, Horizontal regularization
+            do t = 1, 2 ! Vertical, then Horizontal regularization
               if ( t == 1 ) then
                 if ( .not. got(f_vRegOrders) ) cycle
                 call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
@@ -1015,7 +1015,7 @@ contains
           ! Include the part of the normal equations due to the Jacobian matrix
           ! and the measurements
           call clearVector ( v(f_rowScaled) )
-          if ( got(f_average) ) then ! Need a separate matrix for J^T J
+          if ( got(f_average) ) then ! Need a separate matrix for K^T K
             kTk => kTkSep
             call clearMatrix ( kTkSep%m )
           else
@@ -1048,7 +1048,7 @@ contains
                 ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
                 ! scale the part of the least-squares problem that arises
                 ! from the measurements, i.e. the least-squares problem
-                ! becomes $\mathbf{W J \delta \hat x \simeq W f}$ (actually,
+                ! becomes $\mathbf{W J \delta \hat x -\simeq W f}$ (actually,
                 ! we only row scale ${\bf f}$ here, and scale ${\bf J}$
                 ! below).
                 if ( got(f_measurementSD) ) then
@@ -1065,8 +1065,8 @@ contains
             !{Form normal equations:
             ! ${\bf J}^T {\bf W}^T {\bf W J \delta \hat x} =
             ! {\bf J}^T {\bf S}_m^{-1} {\bf J \delta \hat x} =
-            ! {\bf J}^T {\bf W}^T {\bf W f} =
-            ! {\bf J}^T {\bf S}_m^{-1} {\bf f}$:
+            ! -{\bf J}^T {\bf W}^T {\bf W f} =
+            ! -{\bf J}^T {\bf S}_m^{-1} {\bf f}$:
               call add_to_retrieval_timing( 'newton_solver', t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
@@ -1098,12 +1098,12 @@ contains
           if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. .not. tikhonovBefore ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
-            !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
-            !  0}$. So that all of the parts of the problem are solving for
-            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
-            !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
+            !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
+            !  {\bf 0}$. So that all of the parts of the problem are solving
+            !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
+            !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$.
 
-            do t = 1, 2
+            do t = 1, 2 ! Vertical, then Horizontal regularization
               if ( t == 1 ) then
                 if ( .not. got(f_vRegOrders) ) cycle
                 call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
@@ -1311,7 +1311,7 @@ contains
             end if
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
-        ! $\lambda =$ {\bf AJ\%SQ}.  I.e. form $({\bf \Sigma}^T {\bf J}^T
+        ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
         ! {\bf W}^T {\bf W J \Sigma + \lambda^2 I}) {\bf \Sigma}^{-1}
         ! {\bf \delta \hat x = \Sigma}^T {\bf J}^T {\bf W}^T {\bf f}$ for
         ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  Set
@@ -1356,7 +1356,7 @@ contains
           ! is how we did it at NF\_EVALF, so we don't need to do it now).
             call add_to_retrieval_timing( 'newton_solver', t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
-            & transpose=.true. )
+            & transpose=.true. ) ! v(candidateDX) := factored^{-T} v(aTb)
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
           ! aj%fnorm is now the norm of f, not its square.
           ! The following calculation of fnmin was commented out, but on
@@ -1375,6 +1375,7 @@ contains
             aj%fnmin = tiny ( aj%fnmin )
           end if
           aj%fnmin = sqrt(aj%fnmin)
+          ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -1427,8 +1428,9 @@ contains
           aj%big = .false.
           do j = 1, size(v(x)%quantities)
             aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(j)%values)))
-            aj%big = aj%big .or. any( abs(v(dx)%quantities(j)%values) > &
-              & 10.0 * epsilon(aj%axmax) * abs(v(x)%quantities(j)%values) )
+            if ( any( abs(v(dx)%quantities(j)%values) > &
+              & 10.0 * epsilon(aj%axmax) * abs(v(x)%quantities(j)%values) ) ) &
+              & aj%big = .true.
           end do
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%axmax = ' )
@@ -1554,7 +1556,9 @@ contains
         prev_nwt_flag = nwt_flag
       end do ! Newton iteration
 
-        if ( index(switches,'ndb') /= 0 ) then
+        if ( index(switches,'NDB') /= 0 ) then
+          call nwtdb ( aj, width=9 )
+        else if ( index(switches,'ndb') /= 0 ) then
           if ( index(switches,'sca') /= 0 ) then
             call nwtdb ( width=9 )
           else
@@ -2956,6 +2960,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.181  2002/09/19 01:26:46  vsnyder
+! Mostly fixing up comments and LaTeX stuff
+!
 ! Revision 2.180  2002/09/18 23:56:01  vsnyder
 ! Call time_now at end of add_to_retrieval_timing
 !
