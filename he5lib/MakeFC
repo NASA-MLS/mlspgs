@@ -91,7 +91,8 @@ else
 endif
 
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT) h5_griddeddata.f90
+#OMIT_SRCS := $(OMIT) h5_griddeddata.f90
+OMIT_SRCS := $(OMIT)
 
 #PROG=l2_test
 PROG=libhe5.a
@@ -111,10 +112,12 @@ endif
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(OBJ_DIR)/$(MLSCONFG) $(libmls_objs)/libmls.a
-	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG)
+	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG) \
+   UNPREFXDPTHS="$(HDF5)/../fortran/src"
 
 $(OBJ_DIR)/$(MLSCONFG)/$(PROG): $(PROG)
-	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG)
+	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG) \
+   UNPREFXDPTHS="$(HDF5)/../fortran/src"
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
@@ -185,6 +188,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.2  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
 # Revision 1.1  2002/01/10 01:11:52  pwagner
 # First commit
 #
