@@ -992,7 +992,7 @@ contains ! =====     Public Procedures     =============================
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
     & minorFrame, verticalCoordinate, frequencyCoordinate, &
-    & noInstances, quantityType, molecule, sayWhyNot)
+    & noInstances, noSurfs, quantityType, molecule, sayWhyNot)
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
@@ -1004,9 +1004,10 @@ contains ! =====     Public Procedures     =============================
     integer, optional, dimension(:), intent(IN) :: VERTICALCOORDINATE
     integer, optional, dimension(:), intent(IN) :: FREQUENCYCOORDINATE
     integer, optional, dimension(:), intent(IN) :: NOINSTANCES
+    integer, optional, dimension(:), intent(IN) :: NOSURFS
     integer, optional, dimension(:), intent(IN) :: QUANTITYTYPE
-    integer, optional ,dimension(:), intent(IN) :: MOLECULE
-    logical, optional , intent(IN)              :: sayWhyNot
+    integer, optional, dimension(:), intent(IN) :: MOLECULE
+    logical, optional, intent(IN)               :: sayWhyNot
 
     ! Result
     logical :: ValidateVectorQuantity
@@ -1107,6 +1108,18 @@ contains ! =====     Public Procedures     =============================
       if (.not. ValidateVectorQuantity) return
     end if
 
+    if (present(noSurfs)) then
+      ValidateVectorQuantity=any(quantity%template%noSurfs == noSurfs)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+          call output('quantity checked with dif num surfs', advance='yes')
+          call output('quantity num surfs ', advance='no')
+          call output(quantity%template%noInstances, advance='yes')
+          call output('check noSurfs ', advance='no')
+          call output(noSurfs, advance='yes')
+        end if
+      if (.not. ValidateVectorQuantity) return
+    end if
+
     if (present(quantityType)) then
       ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
@@ -1153,6 +1166,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.39  2001/05/10 23:11:54  vsnyder
+! Add a dumper for one vector
+!
 ! Revision 2.38  2001/05/08 20:28:34  vsnyder
 ! Added stuff to dump masks
 !
