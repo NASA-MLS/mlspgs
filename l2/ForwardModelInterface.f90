@@ -56,7 +56,7 @@ module ForwardModelInterface
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
-  use Units, only: DegToRad => Deg2Rad
+  use Units, only: Deg2Rad
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
   use VGridsDatabase, only: VGrid_T
@@ -348,6 +348,7 @@ contains
       MNM => max_no_mmaf
     use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
+    use GET_PATH_SPSFUNC_NGRID_M, only: GET_PATH_SPSFUNC_NGRID
     use REFRACTION_M, only: REFRACTION_CORRECTION
     use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
       PATH_DERIVATIVE, PATH_VECTOR_2D
@@ -356,7 +357,7 @@ contains
     use GET_BETA_PATH_M, only: GET_BETA_PATH
     use GEOC_GEOD_CONV_M, only: GEOC_GEOD_CONV
     use RAD_TRAN_M, only: RAD_TRAN
-    ! use RAD_TRAN_WD_M, only: RAD_TRAN_WD
+    use RAD_TRAN_WD_M, only: RAD_TRAN_WD
     use FREQ_AVG_M, only: FREQ_AVG
     use CONVOLVE_ALL_M, only: CONVOLVE_ALL
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
@@ -475,19 +476,20 @@ contains
     real(r8), dimension(:,:), pointer :: DX_DT=>NULL() ! (Nptg, Tsurfs)
     real(r8), dimension(:,:), pointer :: D2X_DXDT=>NULL() ! (Nptg, Tsurfs)
 
-    integer, pointer, dimension(:) :: GRIDS=>NULL()       ! Frq grid for each tan_press
+    integer, pointer, dimension(:) :: GRIDS=>NULL()    ! Frq grid for each tan_press
 
     type(path_index), allocatable, dimension(:,:) :: NDX_PATH ! (Nptg,mnm)
 
+    type(path_vector), allocatable, dimension(:) :: N_PATH    ! (Nptg)
+
     type(path_vector), allocatable, dimension(:,:) :: DHDZ_PATH ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: H_PATH    ! (Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:) :: N_PATH    ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: PHI_PATH  ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: T_PATH    ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: Z_PATH    ! (Nptg,mnm)
 
-! dimensions of SPSFUNC_PATH are: (Nsps,Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH
+! dimensions of SPSFUNC_PATH are: (Nsps,Nptg)
+    type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
 
     Type(path_vector_2d), allocatable, dimension(:,:) :: ETA_PHI ! (Nptg,mnm)
 
@@ -555,7 +557,7 @@ contains
     ! There will be more to come here.
 
     noSpecies = size(forwardModelConfig%molecules)
-    !  Create a subset of the catalog composed only of those molecules to be 
+    !  Create a subset of the catalog composed only of those molecules to be
     !  used for this run
 
     ALLOCATE(My_Catalog(noSpecies),STAT=ier)
@@ -567,7 +569,7 @@ contains
       do i = 1, Size(Catalog)
         if(Catalog(i)%Spec_Tag == Spectag) then
           My_Catalog(j) = Catalog(i)
-          exit
+          EXIT
         endif
       end do
     end do
@@ -600,7 +602,7 @@ contains
     allocate (h_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'h_path')
-    allocate (n_path(Nptg,noMAFs), STAT=status)
+    allocate (n_path(Nptg), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'n_path')
     allocate (phi_path(Nptg,noMAFs), STAT=status)
@@ -613,7 +615,7 @@ contains
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'z_path')
 
-    allocate (spsfunc_path(noSpecies,Nptg,noMAFs), STAT=status)
+    allocate (spsfunc_path(noSpecies,Nptg), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'spsfunc_path')
     allocate (eta_phi(Nptg,noMAFs), STAT=status)
@@ -636,9 +638,9 @@ contains
     if (temp%template%noInstances /= noMAFs) &
       & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
     do maf = 1, noMAFs
-      phi_tan = degToRad*temp%template%phi(1,maf)
+      phi_tan = Deg2Rad*temp%template%phi(1,maf)
          ! ??? For the moment, change this soon.
-      geod_lat= degToRad*temp%template%geodLat(1,maf)
+      geod_lat= Deg2Rad*temp%template%geodLat(1,maf)
       call geoc_geod_conv(elvar(maf),orbIncline%values(1,1), &
         &  phi_tan,geod_lat, geoc_lat(maf),E_rad(maf))
     end do
@@ -674,13 +676,11 @@ contains
     no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
 !    phi_window = ForwardModelConfig%phiWindow
     ! Now compute stuff along the path given this hydrostatic grid.
-    call comp_path_entities(fwdModelIn, fwdModelExtra, &
-      &  forwardModelConfig%molecules, &
-      &  ForwardModelConfig%integrationGrid%noSurfs,temp%template%noSurfs,&
-      &  gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid, &
-      &  tan_hts,no_tan_hts, z_path,h_path,t_path, phi_path,n_path,&
-      &  dhdz_path,eta_phi,temp%template%noInstances, &
-      &  temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,elvar,Ier)
+    call comp_path_entities(ForwardModelConfig%integrationGrid%noSurfs, &
+      &  temp%template%noSurfs,gl_count,ndx_path,z_glgrid,t_glgrid,&
+      &  h_glgrid,dhdz_glgrid,tan_hts,no_tan_hts,z_path,h_path,t_path,&
+      &  phi_path,dhdz_path,eta_phi,temp%template%noInstances, &
+      &  temp%template%phi(1,:)*Deg2Rad,noMAFs,elvar,Ier)
     if(ier /= 0) goto 99
 
     ! The first part of the forward model dealt with the chunks as a whole.
@@ -689,27 +689,38 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    !do maf = 3, 3
-    do maf = 1, noMAFs
+    do maf = 3, 3
+ !  do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
-      phi_tan = degtorad*temp%template%phi(1,maf) !??? Choose better value later
+ ! Compute the specie function (spsfunc) and the refraction along
+ ! all the paths for the current maf
+
+      Call get_path_spsfunc_ngrid(fwdModelIn, fwdModelExtra, &
+     &     forwardModelConfig%molecules, ndx_path(:,maf),no_tan_hts, &
+     &     z_path(:,maf), t_path(:,maf), phi_path(:,maf), n_path, &
+     &     spsfunc_path(:,:), Ier)
+      if(ier /= 0) goto 99
+!
+!??? Choose better value for phi_tan later
+      phi_tan = Deg2Rad*temp%template%phi(1,maf)
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the
       ! derivatives of chi w.r.t to T and other parameters
-      call get_chi_angles(ndx_path(:,maf),n_path(:,maf),&
+      call get_chi_angles(ndx_path(:,maf),n_path,&
         &     forwardModelConfig%tangentGrid%surfs,        &
         &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,elvar(maf)%Roc,&
-        &     1.0e-3*scGeocAlt%values(1,1),  &
+        &     0.001*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
-        &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
+        &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs, &
+        &     temp%template%surfs(:,1),&
         &     forwardModelConfig%SurfaceTangentIndex, &
         &     center_angle,ptg_angles(:,maf),dx_dt,d2x_dxdt,ier)
       if(ier /= 0) goto 99
 
       ! Compute the refraction correction scaling matrix for this mmaf:
       call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
-        &                n_path(:,maf), ndx_path(:,maf), E_rad(maf), ref_corr)
+        &                n_path, ndx_path(:,maf), E_rad(maf), ref_corr)
 
       prev_npf = -1
       Radiances(1:Nptg,1:25) = 0.0
@@ -809,8 +820,8 @@ contains
         endif ! If not, we dealt with this outside the loop
 
         call get_beta_path ( frequencies, my_Catalog, no_ele, &
-          &                  z_path(ptg_i,maf), t_path(ptg_i,maf), beta_path, &
-          &                  0.001*losVel%values(1,maf), ier )
+          &                  z_path(ptg_i,maf), t_path(ptg_i,maf), &
+          &                  beta_path, 0.001*losVel%values(1,maf), ier )
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -835,41 +846,43 @@ contains
         end if
 !
 
-        ! ------------------------------- Begin loop over frequencies ------
+! ------------------------------- Begin loop over frequencies ------
         do frq_i = 1, noFreqs
+
           Frq = frequencies(frq_i)
 
-          call Rad_Tran(elvar(maf), Frq, &
+          Call Rad_Tran(elvar(maf), Frq, &
             &    forwardModelConfig%integrationGrid%noSurfs, &
             &    h_tan, noSpecies, ndx_path(k,maf),  &
             &    z_path(k,maf), h_path(k,maf), t_path(k,maf), phi_path(k,maf),&
-            &    dHdz_path(k,maf), earthRefl%values(1,1), beta_path(:,frq_i),      &
-            &    spsfunc_path(:,k,maf), ref_corr(:,k), spaceRadiance%values(1,1), brkpt, &
-            &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
+            &    dHdz_path(k,maf),earthRefl%values(1,1),beta_path(:,frq_i),  &
+            &    spsfunc_path(:,k), ref_corr(:,k), spaceRadiance%values(1,1), &
+            &    brkpt, no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
           if(ier /= 0) goto 99
 
           RadV(frq_i) = Rad
 
-          ! Now, Compute the radiance derivatives:
-          !         CALL Rad_Tran_WD(elvar(maf),frq_i,FMI%band,Frq, &
-          !        &     ForwardModelConfig%integrationGrid%noSrfs,FMI%n_sps, &
-          !        &     ForwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
-          !        &     ForwardModelConfig%spect_der,            &
-          !        &     z_path(k,maf),h_path(k,maf),t_path(k,maf),phi_path(k,maf),   &
-          !        &     dHdz_path(k,maf),TFMI%atmospheric,beta_path(:,frq_i),&
-          !        &     spsfunc_path(:,k,maf),temp%template%surfs(:,1),  &
-          !        &     TFMI%f_zeta_basis,TFMI%no_coeffs_f,   &
-          !        &     TFMI%mr_f,TFMI%no_t,ref_corr(:,k),TFMI%no_phi_f,       &
-          !        &     TFMI%f_phi_basis,temp%template%noInstances, &
-          !        &     temp%template%phi(1,:)*degToRad,  &
-          !        &     dh_dt_path,FMI%spect_atmos,         &
-          !        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
-          !        &     k_spect_dn_frq,k_spect_dnu_frq,TFMI%is_f_log,brkpt,       &
-          !        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
-          !         IF(ier /= 0) goto 99
+! Now, Compute the radiance derivatives:
+
+!         Call Rad_Tran_WD(elvar(maf),frq_i,FMI%band,Frq, &
+!        &     ForwardModelConfig%integrationGrid%noSurfs,FMI%n_sps, &
+!        &     ForwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
+!        &     ForwardModelConfig%spect_der,            &
+!        &     z_path(k,maf),h_path(k,maf),t_path(k,maf),phi_path(k,maf),   &
+!        &     dHdz_path(k,maf),TFMI%atmospheric,beta_path(:,frq_i),&
+!        &     spsfunc_path(:,k),temp%template%surfs(:,1),  &
+!        &     TFMI%f_zeta_basis,TFMI%no_coeffs_f,   &
+!        &     TFMI%mr_f,TFMI%no_t,ref_corr(:,k),TFMI%no_phi_f,       &
+!        &     TFMI%f_phi_basis,temp%template%noInstances, &
+!        &     temp%template%phi(1,:)*Deg2Rad,  &
+!        &     dh_dt_path,FMI%spect_atmos,         &
+!        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
+!        &     k_spect_dn_frq,k_spect_dnu_frq,TFMI%is_f_log,brkpt,       &
+!        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
+!         IF(ier /= 0) goto 99
 
         end do                          ! Frequency loop
-        ! ----------------------------- End loop over frequencies ----
+! ----------------------------- End loop over frequencies ----
 
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
@@ -1272,6 +1285,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.69  2001/04/07 23:49:54  zvi
+! Code modified to do spsfunc & refraction inside the MAF loop
+!
 ! Revision 2.68  2001/04/07 01:50:48  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
@@ -1480,4 +1496,3 @@ end module ForwardModelInterface
 !
 ! Revision 2.1  2001/02/07 00:52:27  vsnyder
 ! Initial commit
-!
