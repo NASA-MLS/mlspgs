@@ -30,4 +30,7 @@ main ( int argc, void *argv[] )
 
 /*
 $Log$
-/*
+Revision 1.1  2003/01/17 17:56:08  livesey
+First version
+
+*/
