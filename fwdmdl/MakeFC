@@ -116,9 +116,10 @@ CUSTOM_BUILDS=
 
 # Custom builds for this module needed so LF95 compiler
 # won't create an executable that bombs on some chunks
-ifeq ($(MLSF95),LF95)
-  CUSTOM_BUILDS := $(CUSTOM_BUILDS) LinearizedForwardModel_m.f90
-endif
+# --  f i x e d  --
+#ifeq ($(MLSF95),LF95)
+#  CUSTOM_BUILDS := $(CUSTOM_BUILDS) LinearizedForwardModel_m.f90
+#endif
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
@@ -243,6 +244,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.13  2002/07/19 17:40:07  pwagner
+# Slow down LF95 build of LinearizedFM by custom build
+#
 # Revision 2.12  2002/07/18 18:00:01  pwagner
 # NOHUNTING default when .mod-mediated dependency
 #
