@@ -20,7 +20,7 @@ module TREE_CHECKER
                                 PHYQ_INVALID, SECTION_FIRST, &
                                 SECTION_INDICES, SECTION_LAST, &
                                 SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL
+  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL, REQ_FLD
   use LEXER_CORE, only: PRINT_SOURCE
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
@@ -122,7 +122,7 @@ contains ! ====     Public Procedures     ==============================
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
-    call output ( ' the tree_checker detected: ' )
+    call output ( ' the type checker detected: ' )
     select case ( code )
     case ( already_declared )
       call dump_tree_node ( where, 0 )
@@ -132,9 +132,9 @@ contains ! ====     Public Procedures     ==============================
     case ( inconsistent_units )
       call output ( 'units are not consistent.', advance = 'yes' )
     case ( missing_field )
-      call output ( 'the field "' )
+      call output ( 'the "' )
       call display_string ( field_indices(fields(1)) )
-      call output ( '" is required but not present.', advance='yes' )
+      call output ( '" field is required but not present.', advance='yes' )
     case ( no_code_for )
       call output ( 'there is no code to analyze ' )
       call dump_tree_node ( where, 0, advance='yes' )
@@ -142,15 +142,15 @@ contains ! ====     Public Procedures     ==============================
       call output ( 'a reference of the form X.Y is not allowed.', &
         advance='yes' )
     case ( no_duplicate_fields )
-      call output ( 'the field "' )
+      call output ( 'the "' )
       call display_string ( field_indices(fields(1)) )
-      call output ( '" shall not be specified twice.', advance='yes' )
+      call output ( '" field shall not be specified twice.', advance='yes' )
     case ( no_positional_fields )
       call output ( 'positional fields are not allowed.', advance='yes' )
     case ( no_such_field )
-      call output ( 'a required field ' )
+      call output ( 'a required field "' )
       call display_string ( field_indices(sons(1)) )
-      call output ( ' is absent in the chain of specifications.', &
+      call output ( '" is absent in the chain of specifications.', &
         advance='yes' )
     case ( no_such_reference )
       call output ( 'there is no reference to ' )
@@ -193,9 +193,10 @@ contains ! ====     Public Procedures     ==============================
       end do
       call output ( '', advance='yes' )
     case ( wrong_type )
-      call output ( '"' )
+      call output ( 'the "' )
       call display_string ( sub_rosa(where) )
-      call output ( '" has the wrong type of associated value.', advance='yes'  )
+      call output ( '" field has the wrong type of associated value.', &
+        & advance='yes'  )
     case default
       call output ( 'No message in TREE_CHECKER for error code ' )
       call output ( code, advance='yes' )
@@ -415,7 +416,6 @@ m:              do j = 3, nsons(field)
 
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, section, decoration(son), root )
-!   call decorate ( son, root )
     do i = 2, nsons(root)
       son = subtree(i,root)
       if ( node_id(son) == n_name_def ) then
@@ -461,7 +461,6 @@ m:              do j = 3, nsons(field)
         call declare ( sub_rosa(field_name), decl%value, field, &
                        decoration(field_name), son )
       end if
-!     call decorate ( field_name, son )
       select case ( node_id(son) )
       case ( n_field_type )
         do j = 2, nsons(son)
@@ -482,7 +481,6 @@ m:              do j = 3, nsons(field)
         ! The rest of the sons are field names, for which new decorations
         ! Won't help -- in fact, the f_field_name's index is best.
       end select
-      call decorate ( son, spec_name )
     end do
     if ( toggle(con) ) call trace_end ( 'DEF_SPEC' )
   end subroutine DEF_SPEC
@@ -838,14 +836,15 @@ m:              do j = 3, nsons(field)
             end if
           end select
         end do
-        if ( all_fields_flag ) then
-          do i = 2, nsons(spec_decl%tree)
-            field_lit = decoration(subtree(1,subtree(i,spec_decl%tree)))
-            if ( .not. got(field_lit) ) &
-              call announce_error ( root, missing_field, &
+        do i = 2, nsons(spec_decl%tree)
+          son = subtree(i,spec_decl%tree)
+          field_lit = decoration(subtree(1,son))
+          if ( .not. got(field_lit) ) then
+            if ( all_fields_flag .or. mod(decoration(son)/req_fld,2) /= 0) &
+              & call announce_error ( root, missing_field, &
                 & fields=(/ field_lit /) )
-          end do
-        end if
+          end if
+        end do
       end if
     end if
     if ( toggle(con) ) call trace_end ( 'SPEC_ARGS' )
@@ -853,6 +852,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.3  2001/02/07 19:42:06  vsnyder
+! Add checking for duplicate fields, all fields and no-positional.
+!
 ! Revision 1.2  2001/02/02 00:04:36  vsnyder
 ! Improved some error messages
 !
