@@ -515,10 +515,10 @@
 !====================================
 
          ! CLEAR-SKY BACKGROUND
-            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
          ! CLOUD-INDUCED RADIANCE
-            CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
+         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
            
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
