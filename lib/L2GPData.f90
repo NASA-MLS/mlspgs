@@ -16,7 +16,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: ints2Strings, list2array, strings2Ints
+  use MLSStrings, only: ExtractSubString, GetStringHashElement, ints2Strings, &
+    & list2array, lowercase, strings2Ints
   use OUTPUT_M, only: OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH
   use STRING_TABLE, only: DISPLAY_STRING
@@ -96,6 +97,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
    character (len=*), parameter :: DATA_FIELD3 = 'Status'
    character (len=*), parameter :: DATA_FIELD4 = 'Quality'
+   character (len=*), parameter :: DATA_FIELDS = &
+     & 'L2gpValue,L2gpPrecision,Quality'
 
    ! The old names of the following lacked "MLS.."
    character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
@@ -106,11 +109,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
    character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
    character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
-   ! character (len=*), parameter :: GEO_FIELD7 = 'MLSOrbitGeodeticAngle'
-   ! character (len=*), parameter :: GEO_FIELD8 = 'MLSChunkNumber'
    character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
    character (len=*), parameter :: GEO_FIELD10= 'Frequency'
-   ! character (len=*), parameter :: GEO_FIELD10= 'MLSFrequency'
+   character (len=*), parameter :: GEO_FIELDS = &
+     & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
+     & ',OrbitGeodeticAngle,Pressure,Frequency'
 
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
    character (len=*), parameter :: DIM_NAME2 = 'nLevels'
@@ -1855,7 +1858,8 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
 
   use HDFEOS5
-  use HE5_SWAPI 
+  use HE5_SWAPI
+  use MLSHDFEOS, only : mls_swsetfill
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -2049,13 +2053,6 @@ contains ! =====     Public Procedures     =============================
           msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
-       ! Set Fill Value
-       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-         & UNDEFINED_VALUE)
-       if ( status == -1 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName,&
-            & 'Unable to set Fill Value for data field '// DATA_FIELD1)
-       end if
 
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
@@ -2086,9 +2083,6 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
-       ! Set Fill Value
-       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-         & UNDEFINED_VALUE)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
         HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
@@ -2111,9 +2105,6 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
-       ! Set Fill Value
-       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-         & UNDEFINED_VALUE)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
        HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
@@ -2147,6 +2138,15 @@ contains ! =====     Public Procedures     =============================
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
 
+    ! Set Fill Values
+    status =  mls_swsetfill(swid, DATA_FIELDS, HE5T_NATIVE_FLOAT, &
+      & UNDEFINED_VALUE)
+    status =  mls_swsetfill(swid, GEO_FIELDS, HE5T_NATIVE_FLOAT, &
+      & UNDEFINED_VALUE)
+    status =  mls_swsetfill(swid, GEO_FIELD3, HE5T_NATIVE_DOUBLE, &
+      & real(UNDEFINED_VALUE, r8) )
+    status =  mls_swsetfill(swid, GEO_FIELD8, HE5T_NATIVE_INT, &
+      & int(UNDEFINED_VALUE) )
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
     ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
@@ -2208,11 +2208,8 @@ contains ! =====     Public Procedures     =============================
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
-    !print*,"writeGeo Attached swath ",name," with SW ID=",swid
-    !print*,"About to write latitude with offset=",myoffset
     status = HE5_SWwrfld(swid, GEO_FIELD1, start, stride, edge, &
          real(l2gp%latitude))
-    !print*,"wrote latitude, maybe"
     if ( status == -1 ) then
        msr = WR_ERR // GEO_FIELD1
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2233,10 +2230,8 @@ contains ! =====     Public Procedures     =============================
     end if
 
 
-    !print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
     status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
          real(l2gp%solarZenith))
-    !print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
     if ( status == -1 ) then
        msr = WR_ERR // GEO_FIELD5
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2297,7 +2292,6 @@ contains ! =====     Public Procedures     =============================
     ! Detach from the swath interface.  
 
     status = HE5_SWdetach(swid)
-    !print*,"Detatched from swath -- error=",status
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach from swath interface' )
@@ -2355,9 +2349,6 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     endif
 
-    !print*,"OutputL2GP_writeData -- name=",name
-    ! Write data to the fields
-
     start = 0
     stride = 1
     start(3)= myOffset ! Please do not set to zero
@@ -2365,9 +2356,7 @@ contains ! =====     Public Procedures     =============================
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
     swid = HE5_SWattach (l2FileHandle, name)
-    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
     if ( l2gp%nFreqs > 0 ) then
-       !print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
        status = HE5_SWwrfld(swid, DATA_FIELD1, start, stride, edge, &
             & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)) )
@@ -2383,13 +2372,10 @@ contains ! =====     Public Procedures     =============================
        end if
 
     else if ( l2gp%nLevels > 0 ) then
-       !Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
-     ! print*,"About to write data with offset=",myOffset
       
        status = HE5_SWwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
             edge(2:3), real(l2gp%l2gpValue(1,:,:) ))
-       !print*,"Status of write was ",status
        if ( status == -1 ) then
           msr = WR_ERR // DATA_FIELD1
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2403,7 +2389,6 @@ contains ! =====     Public Procedures     =============================
     else
 
        ! Value and Precision are 1-D fields
-       !Print*,"Writing 1-D field"
        status = HE5_SWwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ))
        if ( status == -1 ) then
@@ -2444,8 +2429,6 @@ contains ! =====     Public Procedures     =============================
          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
       end if
     end if
-    !  l2gp%quality = 0 !??????? Why was this here !??? NJL
-    !                   ! Beats me. Evil bug gnomes, probably. HCP 
     status = HE5_SWwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality))
     if ( status == -1 ) then
@@ -2456,7 +2439,6 @@ contains ! =====     Public Procedures     =============================
     !     Detach from the swath interface.
 
     status = HE5_SWdetach(swid)
-    !print*,"Detatched from swath -- error=",status
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
@@ -2470,7 +2452,8 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_attributes_hdf5  -----
   subroutine OutputL2GP_attributes_hdf5(l2gp, l2FileHandle, swathName)
 
-  use HDFEOS5, only: HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
+  use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
+    & HE5T_NATIVE_SCHAR, &
     & HE5_SWattach, HE5_SWdetach
   use he5_swapi, only: he5_swwrattr, he5_swwrlattr
   use PCFHdr, only:  he5_writeglobalattr
@@ -2499,16 +2482,29 @@ contains ! =====     Public Procedures     =============================
       & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
     character (len=*), parameter :: GeolocationUnits = &
       & 'deg,deg,s,h,deg,deg,deg,NoUnits,hPa,GHz'
-    ! & 'degrees,degrees,seconds,hours,degrees,degrees,degrees,none,hPa,GHz'
+    character (len=*), parameter :: GeoUniqueFieldDefinition = &
+      & 'HMT,HMT,AS,HMT,HMT,M,M,M,AS,M'   ! These are abbreviated values
+    character (len=*), parameter :: UniqueFieldDefKeys = &
+      & 'HM,HMT,MT,AS,M'
+    character (len=*), parameter :: UniqueFieldDefValues = &
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,Aura-Shared,MLS-Specific'  ! Expanded values
+    character (len=*), parameter :: Species = &
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+    character (len=*), parameter :: SpUniqueFieldDefinition = &
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
 
     integer :: field
+    logical :: isColumnAmt
     integer :: rgp_type
     integer :: status
     integer :: swid
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
     character(len=CHARATTRLEN) :: field_name
+    character(len=CHARATTRLEN) :: species_name
     character(len=CHARATTRLEN) :: units_name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
     
     ! Begin
     if (present(swathName)) then
@@ -2566,18 +2562,61 @@ contains ! =====     Public Procedures     =============================
         ! print *, 'field ', field
         ! print *, 'title ', trim(theTitles(field))
         ! print *, 'units ', trim(theUnits(field))
+        call GetStringHashElement (GeolocationTitles, &
+          & GeoUniqueFieldDefinition, trim(theTitles(field)), &
+          & abbr_uniq_fdef, .false.)
+        call GetStringHashElement (UniqueFieldDefKeys, &
+          & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+          & expnd_uniq_fdef, .false.)
         status = he5_swwrlattr(swid, trim(theTitles(field)), 'Title', &
           & HE5T_NATIVE_SCHAR, 1, theTitles(field))
         status = he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
           & HE5T_NATIVE_SCHAR, 1, theUnits(field))
-        status = he5_swwrlattr(swid, trim(theTitles(field)), 'FillValue', &
-          & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
+
+        if ( trim(theTitles(field)) == 'Time' ) then
+          status = he5_swwrlattr(swid, trim(theTitles(field)), &
+            & 'MissingValue', &
+            & HE5T_NATIVE_DOUBLE, 1, (/ real(UNDEFINED_VALUE, r8) /) )
+        elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
+          status = he5_swwrlattr(swid, trim(theTitles(field)), &
+            & 'MissingValue', &
+            & HE5T_NATIVE_INT, 1, (/ int(UNDEFINED_VALUE) /) )
+        else
+          status = he5_swwrlattr(swid, trim(theTitles(field)), &
+            & 'MissingValue', &
+            & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
+        endif
+        status = he5_swwrlattr(swid, trim(theTitles(field)), &
+          & 'UniqueFieldDefinition', &
+          & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
       endif
     enddo
     !   - -   D a t a   A t t r i b u t e s   - -
-    call GetQuantityAttributes ( l2gp%quantityType, &
-      & units_name)
+    ! call GetQuantityAttributes ( l2gp%quantityType, &
+    !  & units_name, expnd_uniq_fdef)
     field_name = Name
+    species_name = name
+    isColumnAmt = ( index(species_name, 'Column') > 0 )
+    if ( isColumnAmt ) then
+      call ExtractSubString(Name, species_name, 'Column', 'wmo')
+    endif
+    call GetStringHashElement (lowercase(Species), &
+      & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
+      & abbr_uniq_fdef, .false.)
+    call GetStringHashElement (UniqueFieldDefKeys, &
+      & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+      & expnd_uniq_fdef, .false.)
+    select case (trim(lowercase(species_name)))
+    case ('temperature')
+      units_name = 'K'
+    case ('gph')
+      units_name = 'm'
+    case ('rhi')
+      units_name = '%rhi'
+    case default
+      units_name = 'vmr'
+    end select
+    if ( isColumnAmt ) units_name = 'DU'
     ! print *, 'Writing data attributes'
     ! print *, 'title ', trim(field_name)
     ! print *, 'units ', trim(units_name)
@@ -2585,6 +2624,20 @@ contains ! =====     Public Procedures     =============================
       & HE5T_NATIVE_SCHAR, 1, field_name)
     status = he5_swwrlattr(swid, DATA_FIELD1, 'Units', &
       & HE5T_NATIVE_SCHAR, 1, units_name)
+    status = he5_swwrlattr(swid, DATA_FIELD1, 'MissingValue', &
+      & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
+    status = he5_swwrlattr(swid, DATA_FIELD1, &
+      & 'UniqueFieldDefinition', &
+      & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
+    status = he5_swwrlattr(swid, DATA_FIELD2, 'Title', &
+      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Precision')
+    status = he5_swwrlattr(swid, DATA_FIELD2, 'Units', &
+      & HE5T_NATIVE_SCHAR, 1, units_name)
+    status = he5_swwrlattr(swid, DATA_FIELD2, 'MissingValue', &
+      & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
+    status = he5_swwrlattr(swid, DATA_FIELD2, &
+      & 'UniqueFieldDefinition', &
+      & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
     status = HE5_SWdetach(swid)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -2880,182 +2933,6 @@ contains ! =====     Public Procedures     =============================
 
   end function GetGeolocUnits
 
-  ! ----------------------------------  GetQuantityAttributes  -----
-  subroutine GetQuantityAttributes ( quantityType, &
-   & units_name)
-!  & framing, units_name, dim_names)
-
-  ! Given a quantity type, e.g. l_vmr,
-  ! returns major/minor/neither framing distinction, default unit name,
-  ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
-
-    ! Dummy arguments
-    integer, intent(in)                :: quantityType
-    character(len=*), intent(out)      :: units_name
-    ! Local variables
-    character(len=8)                   :: framing
-    integer, dimension(3)              :: dim_names
-
-    ! Executable code
-    units_name = ' '
-    select case (quantityType)                                       
-    case ( l_channel )  
-      framing = 'major'
-      units_name = 'channel'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_chunk )  
-      framing = 'major'
-      units_name = 'chunk'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_cloudIce )  
-      framing = 'major'
-      units_name = 'g/m3'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_columnAbundance )  
-      framing = 'major'
-      units_name = 'DU'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_effectiveOpticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_elevOffset )  
-      framing = 'neither'
-      units_name = 'degrees'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_frequency )  
-      framing = 'major'
-      units_name = 'frequency'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_geodAngle )  
-      framing = 'neither'
-      units_name = 'degrees'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_gph )  
-      framing = 'neither'
-      units_name = 'meters'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_heightOffset )  
-      framing = 'minor'
-      units_name = 'degrees'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_iteration )  
-      framing = 'major'
-      units_name = 'iteration'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_losTransFunc )  
-      framing = 'neither'
-      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
-    case ( l_losVel )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_MAF )  
-      framing = 'major'
-      units_name = 'MAF'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_massMeanDiameterIce )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_massMeanDiameterWater )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_MIF )  
-      framing = 'major'
-      units_name = 'MIF'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_noiseBandwidth )  
-      framing = 'neither'
-      units_name = 'MHz'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_opticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_orbitInclination )  
-      framing = 'minor'
-      units_name = 'degrees'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_phiTan )  
-      framing = 'minor'
-      units_name = 'degrees'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_ptan )  
-      framing = 'minor'
-      units_name = 'log10(hPa)'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_radiance )  
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_rhi )  
-      framing = 'minor'
-      units_name = '%rhi'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_scanResidual )  
-      framing = 'minor'
-      units_name = 'meter'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_scECI )  
-      framing = 'minor'
-      units_name = 'meter'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_sidebandRatio )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_spaceRadiance )  
-      framing = 'neither'
-      units_name = 'K'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_surfacetype )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_systemTemperature )  
-      framing = 'neither'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_Temperature )  
-      framing = 'neither'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_totalExtinction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_vmr )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-      units_name = 'vmr'
-    case default                                                     
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    end select                                                       
-
-  end subroutine GetQuantityAttributes
-
-!> >   subroutine my_swwrattr_snglarray(swid, attr_name, attr_type, attr_size, &
-!> >       & value)
-!> >   ! Arguments
-!> >   integer, intent(in)                            :: swid
-!> >   character(len=*)                               :: attr_name
-!> >   integer, intent(in)                            :: attr_type
-!> >   integer, intent(in)                            :: attr_size
-!> >   real(r4), dimension(*), intent(in)             :: value
-!> >   
-!> >   external :: he5_swwrattr
-!> >   call he5_swwrattr(swid, attr_name, attr_type, attr_size, &
-!> >       & value)
-!> >   end subroutine my_swwrattr_snglarray
-!> > 
-!> >   subroutine my_swwrattr_char(swid, attr_name, attr_type, attr_size, &
-!> >       & value)
-!> >   ! Arguments
-!> >   integer, intent(in)                            :: swid
-!> >   character(len=*)                               :: attr_name
-!> >   integer, intent(in)                            :: attr_type
-!> >   integer, intent(in)                            :: attr_size
-!> >   character(len=*), intent(in)                   :: value
-!> >   
-!> >   external :: he5_swwrattr
-!> >   call he5_swwrattr(swid, attr_name, attr_type, attr_size, &
-!> >       & value)
-!> >   end subroutine my_swwrattr_char
 
 !=============================================================================
   logical function not_used_here()
@@ -3068,6 +2945,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.60  2003/04/03 22:58:40  pwagner
+! Alias now set in lib/L2GPData instead of l2/write_meta
+!
 ! Revision 2.59  2003/04/02 23:53:56  pwagner
 ! Checks for FILENOTFOUND
 !
