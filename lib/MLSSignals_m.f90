@@ -45,6 +45,7 @@ module MLSSignals_M
 ! DestroySignalDatabase           ...
 ! DestroySpectrometerType         ...
 ! DestroySpectrometerTypeDatabase ...
+! DisplaySignalName               ...
 ! Dump                            ...
 ! Dump_Bands                      ...
 ! Dump_Radiometers                ...
@@ -74,8 +75,9 @@ module MLSSignals_M
   public :: AddSignalToDatabase, AddSpectrometerTypeToDatabase, AreSignalsSuperset
   public :: DestroyBandDatabase, DestroyModuleDatabase
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
-  public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
-  public :: Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
+  public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase
+  public :: DisplaySignalName
+  public :: Dump, Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
   public :: Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
   public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
@@ -771,6 +773,58 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
+  ! ------------------------------------------  DisplaySignalName  -----
+  subroutine DisplaySignalName ( Signal, Advance )
+    ! Given a signal object, this routine displays a full signal name.
+    use String_Table, only: Display_String
+    type(signal_T), intent(in) :: SIGNAL
+    character(len=*), intent(in), optional :: Advance
+    character(len=15) :: BandName
+    logical :: First
+    integer :: I, J
+
+    call display_string ( radiometers(signal%radiometer)%prefix )
+    call output ( ':' )
+    call display_string ( radiometers(signal%radiometer)%suffix, strip=.true. )
+    call output ( '.' )
+    call GetBandName ( signal%band, bandName, sideband=signal%sideband )
+    call output ( trim(bandName) )
+    call output ( signal%switch, before='.S', after='.' )
+    call display_string ( spectrometerTypes(signal%spectrometerType)%name )
+    call output ( signal%spectrometer, before='-' )
+    if ( associated(signal%channels) ) then
+      if ( .not. all(signal%channels) .or. &
+        & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
+        & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
+        first = .true.
+        call output ( '.C' )
+        i = lbound(signal%channels, 1)
+oc:     do
+          do
+            if ( i > ubound(signal%channels, 1) ) exit oc
+            if ( signal%channels(i) ) exit
+            i = i + 1
+          end do
+          if ( .not. first ) call output ( '+' )
+          first = .false.
+          j = i
+          do while ( j < ubound(signal%channels, 1) )
+            if ( .not. signal%channels(j+1) ) exit
+            j = j + 1
+          end do
+          if ( j > i ) then
+            call output ( i, after = ':' )
+            call output ( j )
+          else
+            call output ( i )
+          end if
+          i = j + 1
+        end do oc
+      end if
+    end if
+    call output ( '', advance=advance )
+  end subroutine DisplaySignalName
+
   ! -------------------------------------------------  Dump_Bands  -----
   subroutine DUMP_BANDS ( BANDS )
     type (Band_T), intent(in) :: BANDS(:)
@@ -1164,7 +1218,9 @@ contains
     end if
 
     if ( .not. my_noChannels .and. associated(signal%channels) ) then
-      if ( .not. all(signal%channels) ) then
+      if ( .not. all(signal%channels) .or. &
+        & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
+        & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
         l = len_trim(string_text)
         call addToSignalString ( '.C' )
         i = lbound(signal%channels, 1)
@@ -1600,6 +1656,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.71  2004/05/29 02:45:28  vsnyder
+! Add DisplaySignalName, fix a bug in GetNameOfSignal
+!
 ! Revision 2.70  2004/05/01 04:07:44  vsnyder
 ! Rearranged some dumping stuff
 !
