@@ -23,7 +23,7 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
   character (len=*), private, parameter :: IdParm = &
     "$Id$"
   character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName= &
+  character (len=*), private, parameter :: ModuleName = &
     "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -200,11 +200,14 @@ contains ! ========================= Public Procedures ====================
   elemental function NormalizeLongitude ( lon )
     real(r8), intent(in) :: LON
     real(r8) :: NormalizeLongitude
-    ! Local variables
-    integer :: N
     ! Executable code
-    NormalizeLongitude = modulo ( lon, 360.0 )
+    NormalizeLongitude = modulo ( lon, 360.0_r8 )
     if (NormalizeLongitude > 180.0) NormalizeLongitude = NormalizeLongitude - 360.0
   end function NormalizeLongitude
 
 end module EmpiricalGeometry
+
+! $Log$
+! Revision 2.2  2001/12/13 23:05:08  vsnyder
+! Add a kind parameter in MODULO; Add a CVS Log comment
+!
