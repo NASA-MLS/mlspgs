@@ -1775,7 +1775,7 @@ contains
       deallocate(A,C,tmp1,tmp2,dx,x,x0,sx0)
 
     ! ExtSD is defined as MLS contribution only
-	   badValue = outExtSD%template%badValue
+           badValue = outExtSD%template%badValue
 !      outExtSD%values = 1._r8/outExtSD%values - xExtVar%values !xExtVar is an inverted variance
 !       where(outExtSD%values > 0._r8) outExtSD%values = 1._r8/sqrt(outExtSD%values)
 !       where(outExtSD%values .le. 0._r8) outExtSD%values = badValue
@@ -2168,7 +2168,7 @@ contains
                  ! protect from blowing up
                  if(1._r8-trans > 0.004) then
                   scale = (1._r8-trans)*(slevel(i)-slevel(i-1))      ! see ATBD
-			         xext(i)=x(i)/scale
+                                 xext(i)=x(i)/scale
                   ! and standard deviation
                   outLosSD%values(i+(mif-1)*nSgrid,maf) = &     !neglect higher orders
                      & outLosSD%values(i+(mif-1)*nSgrid,maf)/scale
@@ -2207,7 +2207,7 @@ contains
     ! output SD
       outLosSD%values = sqrt(outLosSD%values)
     ! ExtSD is defined as MLS contribution only
-	   badValue = outExtSD%template%badValue
+      badValue = outExtSD%template%badValue
       outExtSD%values = 1._r8/outExtSD%values - 1._r8/xExtVar%values
        where(outExtSD%values > 0._r8) outExtSD%values = 1._r8/sqrt(outExtSD%values)
        where(outExtSD%values .le. 0._r8) outExtSD%values = badValue
@@ -2799,6 +2799,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.145  2002/06/18 01:19:52  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.144  2002/06/07 01:34:26  vsnyder
 ! Create temp matrix used in covariance calculation
 !
