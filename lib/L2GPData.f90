@@ -2392,7 +2392,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DiffL2GPData
     
   ! ------------------------------------------ DiffL2GPFiles ------------
-  subroutine DiffL2GPFiles ( file1, file2, Details, swList, stats, showMissing )
+  subroutine DiffL2GPFiles ( file1, file2, Details, stats, swList, showMissing )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2402,8 +2402,11 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    character (len=*), optional, intent(in) :: swList
+    !
+    ! The following parameters, if present, will override Details
     logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    ! swList currently used only if showMissing is TRUE
+    character (len=*), optional, intent(in) :: swList
     logical, intent(in), optional :: showMissing   ! if TRUE, just show which
     ! Local                                         swaths are missing from other
     logical, parameter            :: countEmpty = .true.
@@ -2418,6 +2421,7 @@ contains ! =====     Public Procedures     =============================
     integer :: file_access
     integer :: listsize
     integer :: noSwaths
+    integer :: noSwaths2
     integer :: noUnique
     logical :: myShowMissing
     character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
@@ -2446,7 +2450,7 @@ contains ! =====     Public Procedures     =============================
     the_hdfVersion2 = mls_hdf_version(File2)
     noSwaths = mls_InqSwath ( file1, swathList1, listSize, &
          & hdfVersion=the_hdfVersion1)
-    noSwaths = mls_InqSwath ( file2, swathList2, listSize, &
+    noSwaths2 = mls_InqSwath ( file2, swathList2, listSize, &
          & hdfVersion=the_hdfVersion2)
     ! Are we merely to point out which swaths are missing from the other file?
     if ( myShowMissing ) then
@@ -2507,13 +2511,20 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'swathList1: ', trim(swathList1)
     do i = 1, noSwaths
       call GetStringElement (trim(swathList1), swath, i, countEmpty )
+      if ( len_trim(swath) < 1 ) then
+        call output('(Ignoring blank swath name in ' // &
+          &  trim(File1), advance='yes')
+        cycle
+      endif
       status = stringElementNum(swathList2, trim(swath), countEmpty)
       if ( status < 1 ) then
         call output('Swath ' // trim(swath) // ' not found in ' // &
           & trim(File2), advance='yes')
         cycle
       endif
-      ! print *, 'swath name: ', trim(swath)
+      call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
+      call output( '---- swath name: ' // trim(swath) // ' ----', advance='yes')
+      call blanks( 22+len_trim(swath), fillChar='-', advance='yes')
       call ReadL2GPData ( File1Handle, trim(swath), l2gp1, &
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
@@ -2980,6 +2991,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.106  2004/06/09 00:04:51  pwagner
+! New optional args to diff
+!
 ! Revision 2.105  2004/06/02 19:37:52  pwagner
 ! Added stats option to diff
 !
