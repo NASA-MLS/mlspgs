@@ -407,6 +407,7 @@ contains ! =====     Public Procedures     =============================
           end if
 
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
+          if ( checkPaths ) exit   ! Not done on sips, so this is good enough
           ! I intend to completely ignore the PCF file in this case,
           ! it's not worth the effort!
           ! In that case, I will ignore the possibility of checkPaths being true
@@ -970,6 +971,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.100  2004/08/26 18:52:56  pwagner
+! Fixed checkPaths bug if outputting l2pc
+!
 ! Revision 2.99  2004/08/04 23:19:58  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
