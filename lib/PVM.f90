@@ -192,6 +192,12 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(out) :: numt
      end subroutine pvmfspawn
 
+     subroutine pvmfmcast( ntask, tids, msgtag, info )
+       integer,intent(in)::ntask,msgtag
+       integer,intent(in),dimension(ntask)::tids
+       integer,intent(out)::info
+     end subroutine pvmfmcast
+
      subroutine pvmfcatchout ( onoff, info )
        integer, intent(in) :: ONOFF
        integer, intent(out) :: inFO
@@ -476,6 +482,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.7  2001/11/19 17:00:30  pumphrey
+! Added interface for pvmfmcast
+!
 ! Revision 2.6  2001/05/25 01:05:14  livesey
 ! Added pvmfnotify
 !
