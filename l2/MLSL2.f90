@@ -225,18 +225,26 @@ program MLSL2
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to open L2CF file " // trim(line) )
+        & "Unable to open L2CF file: " // trim(line) )
     end if
     inunit = l2cf_unit
   else if ( pcf_for_input ) then
     call open_MLSCF ( MLSPCF_L2CF_Start, inunit, status )
     if(status /= 0) then
+      call output( 'Non-zero status returned from open_MLSCF: ', &
+      & advance='no')
+      call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to open L2CF file " // trim(line) )
+        & "Unable to open L2CF file named in pcf" )
     end if
   end if
+  error = status
   call cpu_time ( t1 )
-  call configuration ( root )
+  if (error == 0) then
+    call configuration ( root )
+  else
+    root = -1
+  endif
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
   if ( PCF_FOR_INPUT ) then
     call close_MLSCF ( inunit )
@@ -247,6 +255,7 @@ program MLSL2
     call output ( &
       'A syntax error occurred -- there is no abstract syntax tree', &
       advance='yes' )
+      error = 1
   else
     if ( dump_tree ) then
       call output ( 'Begin un-type-checked abstract syntax tree:', &
@@ -285,7 +294,9 @@ program MLSL2
   call deallocate_decl
   call deallocate_tree
   call FreePVMArgs
-  if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
+  if(error /= 0) then
+     call MLSMessageExit(1)
+  elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
      call MLSMessageExit(NORMAL_EXIT_STATUS)
    else
      call MLSMessageExit
@@ -320,6 +331,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.50  2001/07/18 00:16:54  pwagner
+! Better control over when to exit with status
+!
 ! Revision 2.49  2001/07/16 23:43:15  pwagner
 ! With settable NORMAL_EXIT_STATUS
 !
