@@ -103,7 +103,7 @@ contains ! ====     Public Procedures     ==============================
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
-    call output ( ': ' )
+    call output ( ' in module table_generator: ' )
     select case ( code )
     case ( no_code_for )
       call output ( ' there is no code to analyze ' )
@@ -335,6 +335,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.2  2000/11/15 21:24:41  vsnyder
+! Added the module name to error messages
+!
 ! Revision 2.1  2000/10/11 18:58:37  vsnyder
 ! Move from lib/cf_parser to lib
 !
