@@ -93,6 +93,7 @@ norm
 numF # Number of function values used by the Newtonian solver
 numJ # Number of Jacobian values used by the Newtonian solver
 
+offsetRadiance
 orbital
 
 PE
@@ -117,6 +118,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.20  2002/08/28 01:14:15  livesey
+# Added offsetRadiance
+#
 # Revision 2.19  2002/08/20 19:19:17  livesey
 # Moved angle and pressure into lib
 #
