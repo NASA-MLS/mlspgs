@@ -68,7 +68,7 @@ module ScanModelModule          ! Scan model and associated calculations
   
   real (r8), parameter :: REFRATERM = 0.0000776D0 ! First term
   real (r8), parameter :: REFRBTERM = 4810.0D0 ! Second term
-  real (r8), parameter :: MAXREFRACTION = 1.0 ! Don't allow stupidly large n.
+  real (r8), parameter :: MAXREFRACTION = 1e-2 ! Don't allow stupidly large n.
   
   ! Now some terms to do with the gas 'constant'
   
@@ -203,12 +203,12 @@ contains ! =============== Subroutines and functions ==========================
 
   ! ---------------------------------- GetHydroStaticTangentPressure ----------
   subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt,&
-       maxIterations )
+    maxIterations )
     ! This routine is a pressure `guesser'.  It works by comparing the
     ! geopotential heights estimated from the level 1 heights with those based on
     ! a hydrostatic calculation.  The tangent point pressure is adjusted over
     ! several iterations until a good match is achieved.
-    
+
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
     type (VectorValue_T), intent(in) :: TEMP    ! Temperature
@@ -232,17 +232,23 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(:), pointer :: EARTHRADIUS
     real (r8), dimension(:), pointer :: GEOCLAT
     real (r8), dimension(:), pointer :: GEOMETRICGPH
+    real (r8), dimension(:), pointer :: H2OBASIS ! Points to h2o basis
+    real (r8), dimension(:), pointer :: H2OVALS ! Points to part of h2o
     real (r8), dimension(:), pointer :: N              ! Refractive index
     real (r8), dimension(:), pointer :: P2
     real (r8), dimension(:), pointer :: P4
     real (r8), dimension(:), pointer :: POINTINGH2O    ! t.p. h2o
     real (r8), dimension(:), pointer :: POINTINGTEMP   ! t.p. temp.
+    real (r8), dimension(:), pointer :: PTANVALS       ! Points to part of ptan
     real (r8), dimension(:), pointer :: RATIO2         ! minor frame
     real (r8), dimension(:), pointer :: RATIO4         ! minor frame
     real (r8), dimension(:), pointer :: REFRACTEDGEOCALT ! minor frame
     real (r8), dimension(:), pointer :: RTLOWER
     real (r8), dimension(:), pointer :: RTUPPER
     real (r8), dimension(:), pointer :: S2
+    real (r8), dimension(:), pointer :: TEMPBASIS ! Points to temp basis
+    real (r8), dimension(:), pointer :: TEMPVALS ! Points to part of temp
+    real (r8), dimension(:), pointer :: THISBASISGPH ! Points to part of basisGPH
 
     integer, dimension(:), pointer :: CLOSESTTEMPPROFILES
     integer, dimension(:), pointer :: CLOSESTH2OPROFILES
@@ -285,9 +291,9 @@ contains ! =============== Subroutines and functions ==========================
     call Allocate_Test(basisGPH,temp%template%noSurfs,temp%template%noInstances,&
       & "basisGPH", ModuleName)
     call Allocate_Test(earthRadius,ptan%template%noSurfs, &
-         "earthRadius",ModuleName)
+      "earthRadius",ModuleName)
     call Allocate_Test(geocLat,ptan%template%noSurfs, &
-         "geocLat",ModuleName)
+      "geocLat",ModuleName)
     call Allocate_Test(s2,ptan%template%noSurfs, "s2",ModuleName)
     call Allocate_Test(p2,ptan%template%noSurfs, "p2",ModuleName)
     call Allocate_Test(p4,ptan%template%noSurfs, "p4",ModuleName)
@@ -301,18 +307,18 @@ contains ! =============== Subroutines and functions ==========================
     call Allocate_Test(cCoeff,ptan%template%noSurfs,"cCoeff",ModuleName)
     call Allocate_Test(deltaRT,ptan%template%noSurfs,"deltaRT",ModuleName)
     call Allocate_Test(geometricGPH,ptan%template%noSurfs, &
-         "geometricGPH",ModuleName)
+      "geometricGPH",ModuleName)
     call Allocate_Test(n,ptan%template%noSurfs,"n",ModuleName)
     call Allocate_Test(pointingH2O,ptan%template%noSurfs,"pointingH2O",ModuleName)
     call Allocate_Test(pointingTemp,ptan%template%noSurfs,"pointingTemp",ModuleName)
     call Allocate_Test(ratio2,ptan%template%noSurfs,"ratio2",ModuleName)
     call Allocate_Test(ratio4,ptan%template%noSurfs,"ratio4",ModuleName)
     call Allocate_Test(refractedGeocAlt,ptan%template%noSurfs,"refractedGeocAlt",ModuleName)
-    
+
     call Allocate_Test(closestTempProfiles,ptan%template%noInstances,&
-         "closestTempProfiles", ModuleName)
+      "closestTempProfiles", ModuleName)
     call Allocate_Test(closestH2OProfiles,ptan%template%noInstances,&
-         "closestH2OProfiles", ModuleName)
+      "closestH2OProfiles", ModuleName)
     call Allocate_Test(lower,ptan%template%noSurfs,"lower",ModuleName)
     call Allocate_Test(upper,ptan%template%noSurfs,"upper",ModuleName)
 
@@ -327,89 +333,109 @@ contains ! =============== Subroutines and functions ==========================
     ! Rather than try to be too clever and do this all with 2D arrays, we'll
     ! loop over major frame.
 
+    tempBasis => temp%template%surfs(:,1)
+    h2oBasis => h2o%template%surfs(:,1)
+
     do maf=1,ptan%template%noInstances
+      ! Setup pointers for this maf
+      ptanVals => ptan%values(:,maf)
+      tempVals => temp%values(:,closestTempProfiles(maf))
+      h2oVals => h2o%values(:,closestH2OProfiles(maf))
+      thisBasisGPH => basisGPH(:,closestTempProfiles(maf))
+
       ! Get a really simple first guess, assuming a uniform log scale height of
       ! 16km
       geocLat=GeodToGeocLat(ptan%template%geodLat(:,maf))
       earthRadius= earthRadA*earthRadB/sqrt(&
         & (earthRadA*sin(geocLat))**2+ &
         & (earthRadB*cos(geocLat))**2)
-      
-      ptan%values(:,maf) = -3.0+(geocAlt%values(:,maf) - &
+
+      ptanVals = -3.0+(geocAlt%values(:,maf) - &
         & earthRadius)/16e3 ! Do a better job later !???
       ! Precompute some spherical geometry terms, these are
-      ! particularly worthy of note.  There is a 1D approximation
-      ! the same one we made in early versions of UMLSV5 and had to fix.
-      ! Make sure we update this one when we go 2D!
+      ! particularly worthy of note. We're doing the geometricGPH
+      ! in a 2D manner (apart from refraction effects).  The hydrostatic GPH is
+      ! being done 2D.
       s2=sin(geocLat)**2
       p2=0.5*(3*s2-1)
       p4=0.125*(35*(s2**2)-30*s2+30)
 
-       ! Now we have an iteration loop where we try to fit the tangent pressure
-       do iteration=1,maxIterations
-          ! The first stage is to refract the tangent point altitudes, for this we
-          ! need the refractive index, which is dependent on temperature, pressure
-          ! and water vapor concentration for the given altitude.
-          
-          ! Note here an assumption that temp and h2o are coherent.
-          call InterpolateValues( temp%template%surfs(:,1), &
-               temp%values(:,closestTempProfiles(maf)), ptan%values(:,maf), &
-               pointingTemp, "Linear", extrapolate='C')
-          call InterpolateValues( h2o%template%surfs(:,1), &
-               h2o%values(:,closestH2OProfiles(maf)), ptan%values(:,maf), &
-               pointingH2O, "Linear", extrapolate='C')
+      ! Now we have an iteration loop where we try to fit the tangent pressure
+      do iteration=1,maxIterations
+        print*,'Iteration:',iteration,maxval(ptanVals),minval(ptanVals)
+        ! The first stage is to refract the tangent point altitudes, for this we
+        ! need the refractive index, which is dependent on temperature, pressure
+        ! and water vapor concentration for the given altitude.
 
-          pointingH2O = max(pointingH2O, 0.0_r8)
+        ! Note here an assumption that temp and h2o are coherent.
+        call InterpolateValues( tempBasis, tempVals, ptanVals, &
+          pointingTemp, "Linear", extrapolate='Clamp')
+        call InterpolateValues( h2oBasis, h2oVals, ptanVals, &
+          pointingH2O, "Linear", extrapolate='Clamp')
 
-          where(geocAlt%values(:,maf) /= geocAlt%template%badValue)
-            
-            n=( (refrATerm*(10**(-ptan%values(:,maf)))) / pointingTemp ) * &
-              & (1.0 + refrBTerm*pointingH2O/pointingTemp)
-            
-            n=min(n,maxRefraction) ! Forbid stupidly large values of n             
-            ! Now we're going to compute refracted geocentric altitudes
-            refractedGeocAlt=geocAlt%values(:,maf)/(1.0+n)
-            
-            ! Now convert these to geopotential heights
-            ratio2=(earthRadA/refractedGeocAlt)**2
-            ratio4=ratio2**2
-            
-            geometricGPH= -(GM/(refractedGeocAlt*g0))*&
-              &              (1-j2*p2*ratio2- j4*p4*ratio4) - &
-              ((omega*refractedGeocAlt*cos(geocLat))**2)/(2*g0)+earthSurfaceGPH
-          elsewhere
-            n=0.0
-          end where
-          
-          ! Now, we're effectively going to compare this with a hydrostatic
-          ! calculation.
+        pointingH2O = max(pointingH2O, 0.0_r8)
+        where(geocAlt%values(:,maf) /= geocAlt%template%badValue)
 
-          call Hunt(temp%template%surfs(:,1), ptan%values(:,maf),lower)
-          upper=lower+1
-          basisLower= temp%template%surfs(lower,1)
-          basisUpper= temp%template%surfs(upper,1)
-          basisSpacing= basisUpper - basisLower
-          rtLower = rt(lower, closestTempProfiles(maf))
-          rtUpper = rt(upper, closestTempProfiles(maf))
-          deltaRT = rtUpper - rtLower
+          n=( (refrATerm*(10**(-ptanVals))) / pointingTemp ) * &
+            & (1.0 + refrBTerm*pointingH2O/pointingTemp)
 
-          where (geocAlt%values(:,maf) /= geocAlt%template%badValue)
-            aCoeff = deltaRT
-            bCoeff = 2*rtLower
-            cCoeff = -2*g0*(geometricGPH-basisGPH(lower,closestTempProfiles(maf))) /  &
-              & (basisSpacing*ln10)
-            ! Let ptan contain upperWeight (ptan-basisLower)/basisSpacing first
-            ptan%values(:,maf)=2*cCoeff/( -bCoeff - &
-              & sqrt(max(bCoeff**2-4*aCoeff*cCoeff,0.0_r8)))
-            ! The max is here just in case of slips.
-            ! Now let it contain ptan
-            ptan%values(:,maf) = basisLower+(ptan%values(:,maf) * basisSpacing)
-          elsewhere
-            ptan%values(:,maf)=ptan%template%badValue
-          end where
-       end do                   ! End iteration loop
-    end do                      ! Major frame loop
+          n=min(n,maxRefraction) ! Forbid stupidly large values of n           
 
+          ! Now we're going to compute refracted geocentric altitudes
+          refractedGeocAlt=geocAlt%values(:,maf)/(1.0+n)
+
+          ! Now convert these to geopotential heights
+          ratio2=(earthRadA/refractedGeocAlt)**2
+          ratio4=ratio2**2
+
+          geometricGPH= -(GM/(refractedGeocAlt*g0))*&
+            &              (1-j2*p2*ratio2- j4*p4*ratio4) - &
+            ((omega*refractedGeocAlt*cos(geocLat))**2)/(2*g0)+earthSurfaceGPH
+        elsewhere
+          n=0.0
+        end where
+
+        ! Now, we're effectively going to compare this with a hydrostatic
+        ! calculation.
+
+        call Hunt(thisBasisGPH, geometricGPH, lower)
+        upper=lower+1
+        basisLower= tempBasis(lower)
+        basisUpper= tempBasis(upper)
+        basisSpacing= basisUpper - basisLower
+        rtLower = rt(lower, closestTempProfiles(maf))
+        rtUpper = rt(upper, closestTempProfiles(maf))
+        deltaRT = rtUpper - rtLower
+
+        where (geocAlt%values(:,maf) == geocAlt%template%badValue)
+          ptanVals = ptan%template%badValue
+
+          ! Below the bottom
+        elsewhere ( geometricGPH < thisBasisGPH(1) )
+          ptanVals = tempBasis(1) - (thisBasisGPH(1) - geometricGPH) * &
+            & (g0 / (ln10*rtLower))
+
+          ! Above the top
+        elsewhere ( geometricGPH >= thisBasisGPH(temp%template%noSurfs) )
+          ptanVals = tempBasis(temp%template%noSurfs) + &
+            & (geometricGPH-thisBasisGPH(upper)) * &
+            & (g0 / (ln10*rtUpper))
+
+          ! Everywhere else
+        elsewhere
+          aCoeff = deltaRT
+          bCoeff = 2*rtLower
+          cCoeff = -2*g0*(geometricGPH-thisBasisGPH(lower)) / &
+            & (basisSpacing*ln10)
+          ! Let ptan contain upperWeight (ptan-basisLower)/basisSpacing first
+          ptanVals = 2*cCoeff/( -bCoeff - &
+            & sqrt(max(bCoeff**2-4*aCoeff*cCoeff,0.0_r8)))
+          ! The max is here just in case of slips.
+          ! Now let it contain ptan
+          ptanVals = basisLower + ( ptanVals * basisSpacing )
+        end where
+      end do                            ! End iteration loop
+    end do                              ! Major frame loop
 
     ! Deallocate all the various things
     call Deallocate_Test(basisGPH,"basisGPH", ModuleName)
@@ -434,7 +460,7 @@ contains ! =============== Subroutines and functions ==========================
     call Deallocate_Test(ratio2,"ratio2",ModuleName)
     call Deallocate_Test(ratio4,"ratio4",ModuleName)
     call Deallocate_Test(refractedGeocAlt,"refractedGeocAlt",ModuleName)
-    
+
     call Deallocate_Test(closestTempProfiles,"closestTempProfiles", ModuleName)
     call Deallocate_Test(closestH2OProfiles,"closestH2OProfiles", ModuleName)
     call Deallocate_Test(lower,"lower",ModuleName)
@@ -804,7 +830,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Now get interpolated temperature and H2O
     pointingTemp = tempVals(pointTempLayer) * tempLowerWeight + &
       &            tempVals(pointTempLayer+1) * tempUpperWeight 
-    pointingH2O = h2oVals(pointH2Olayer) * h2oLowerWeight + &
+    pointingH2O = h2oVals(pointH2OLayer) * h2oLowerWeight + &
       &           h2oVals(pointH2OLayer+1) * h2oUpperWeight
 
     ! Get pointing pressure in mb
@@ -825,7 +851,6 @@ contains ! =============== Subroutines and functions ==========================
       & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
     dNByDTempUpper=-(tempUpperWeight*refrATerm) * &
       & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
-
 
     ! Now if n is too big limit it and set derivatives to zero
     where ( n > maxRefraction )
@@ -928,11 +953,11 @@ contains ! =============== Subroutines and functions ==========================
         lower = pointTempLayer(i)
         upper = lower+1
       endif
-      
+
       ! Now do the main bulk of the temperature bases
       do j = 1, noTemps
 
-      ! Loop over temperature basis surfaces
+        ! Loop over temperature basis surfaces
         A(i,j) = 0.0_r8          ! Set to zero to start
 
         ! Now do nothing for bad ptans
@@ -946,9 +971,15 @@ contains ! =============== Subroutines and functions ==========================
             upperWeight = 1.0
           end if
 
-          ! I'm listing these cases in the order given in the geopotential ATBD.
+          
+          ! Consider the extremes (j==1, j==noTemps) cases first
+          if ( (j==1) .and. (usePtan < tempBasis(j)) ) then ! Below bottom of basis
+            A(i,j) = 2*(usePtan-tempBasis(j))
 
-          if ( j < lower ) then         ! Basis triangles completely below ptan
+          else if ( (j==noTemps) .and. (usePtan > tempBasis(j)) ) then ! Above top
+            A(i,j) = 2*(usePtan-tempBasis(j))
+            
+          else if ( j < lower ) then         ! Basis triangles completely below ptan
             A(i,j) = basisPlus - basisMinus
 
           else if ( j == lower  ) then  ! Basis triangles with ptan in the top half
@@ -999,6 +1030,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Find row in jacobian
     if ( present ( jacobian ) ) then
       row = FindBlock ( jacobian%row, residual%index, maf )
+      fmStat%rows(row) = .true.
       
       ! Store the ptan derivatives
       if ( ptanInState ) then
@@ -1054,14 +1086,14 @@ contains ! =============== Subroutines and functions ==========================
         endif
         call CreateBlock ( jacobian, row, col, M_Full )
         block%values = - dHydrosGPHByDTemp
-!         do i = 1, noMIFs
-!           block%values(i,pointTempLayer(i)) = &
-!             & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-!           block%values(i,pointTempLayer(i)+1) = &
-!             & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-!         end do
+        do i = 1, noMIFs
+          block%values(i,pointTempLayer(i)) = &
+            & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+          block%values(i,pointTempLayer(i)+1) = &
+            & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+        end do
       end if
-
+      
     end if
 
     ! Now deallocate pointers
@@ -1124,6 +1156,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.18  2001/05/08 03:05:05  livesey
+! Working version, pressure guesser a little unstable in extreme cases
+!
 ! Revision 2.17  2001/05/05 00:03:30  livesey
 ! Close to working.  One last part of the temperature derivatives that disagrees with
 ! numerical calculation.
