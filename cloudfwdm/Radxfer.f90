@@ -323,7 +323,7 @@
 
 !         UU=(UAVE(ITT,K1)+UAVE(ITT,K1+1))*0.5
 
-         UU=UAVE(ITT,K1+1)
+         UU=UAVE(ITT,K1)
 
          TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU)+  &
      &              (1._r8-EXP(-TAU(K1)/UU))*tsource
@@ -384,7 +384,7 @@
 !         UU=(UAVE(ITT,K)+UAVE(ITT,K+1))*0.5     ! the average is not true at tangent point
                                                  ! it will reduce contribution by half
 
-         UU=UAVE(ITT,K+1)
+         UU=UAVE(ITT,K)
 
          TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU)+          &
      &                (1._r8-EXP(-TAU(K)/UU))*tsource
