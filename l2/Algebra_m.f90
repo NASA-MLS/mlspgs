@@ -54,7 +54,7 @@ contains
       & CholeskyFactor, CreateEmptyMatrix, CopyMatrix, &
       & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
       & GetDiagonal, GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
-      & K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
+      & InvertCholesky, K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
       & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
@@ -268,13 +268,15 @@ contains
     subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase, &
       & chunk, forwardModelConfigDatabase )
       use MatrixModule_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
+      use Regularization, only: REGULARIZE
       use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
         & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
-        & F_MEASUREMENTS, F_MEASUREMENTSD
+        & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
+        & F_HORIZONTAL
       use Init_Tables_Module, only: L_TRUE
       use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, &
-        & S_ROWSCALE, S_NORMALEQUATIONS
-      use MoreTree, only: GET_SPEC_ID
+        & S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
+      use MoreTree, only: GET_SPEC_ID, GET_BOOLEAN
         
       ! Dummy arguments
       integer, intent(in) :: ROOT
@@ -285,14 +287,19 @@ contains
 
       ! Local variables
       logical, dimension(field_first:field_last) :: GOT ! Fields
+      logical :: HORIZONTAL             ! Regularization direction
       integer :: FIELDID                ! ID for a field (duh!)
       integer :: FORWARDMODELNODE       ! Tree node
       integer :: I                      ! Loop counter
       integer :: KEY                    ! Tree node
-      integer :: SON                    ! Tree node
-      integer :: VALUE                  ! Value node
       integer :: MATRIXIND              ! Index into matrix database
       integer :: MATRIXKIND             ! Kind of matrix
+      integer :: REGORDERS              ! Regularization orders
+      integer :: REGQUANTS              ! Regularization quantities
+      integer :: REGWEIGHTS             ! Regularization weights
+      integer :: ROWS                   ! Rows of regularization
+      integer :: SON                    ! Tree node
+      integer :: VALUE                  ! Value node
       type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
       type(Matrix_T), pointer :: MATRIX ! The matrix to work on
       type(Matrix_SPD_T), pointer :: MATRIX_S ! SPD version of matrix
@@ -304,11 +311,17 @@ contains
       type(Vector_T), pointer :: MEASUREMENTSD ! Measurement noise vector
       type(Vector_T), pointer :: RHSOUT ! Vector for normal equations
       type(Vector_T), pointer :: SCALE ! The scaling vector
+      type(Vector_T), pointer :: REGWEIGHTVEC ! Regularization vector
 
       ! Executable code
       nullify ( matrix, eigenvectors )
       nullify ( fwdModelExtra, fwdModelIn, fwdModelOut, rhsOut, &
         & measurements, measurementSD, scale )
+      nullify ( regWeightVec )
+      
+      regOrders = 0
+      regWeights = 0
+      regQuants = 0
 
       do i = 2, nsons(root)
         son = subtree ( i, root )
@@ -334,10 +347,20 @@ contains
           fwdModelIn => vectorDatabase ( decoration ( value ) )
         case ( f_fwdModelOut )
           fwdModelOut => vectorDatabase ( decoration ( value ) )
+        case ( f_horizontal )
+          horizontal = get_boolean ( son )
         case ( f_measurements )
           measurements => vectorDatabase ( decoration ( value ) )
         case ( f_measurementSD )
           measurementSD => vectorDatabase ( decoration ( value ) )
+        case ( f_regOrders )
+          regOrders = son
+        case ( f_regQuants )
+          regQuants = son
+        case ( f_regWeights )
+          regWeights = son
+        case ( f_regWeightVec )
+          regWeightVec => vectorDatabase ( decoration ( value ) )
         case ( f_scale )
           scale => vectorDatabase ( decoration ( value ) )
         case ( f_matrix )
@@ -392,6 +415,9 @@ contains
         call NormalEquationsCommand ( matrix_s, rhsOut, forwardModelNode, &
           & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, measurements, measurementSD, &
           & forwardModelConfigDatabase )
+      case ( s_regularization )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call Regularize ( matrix, regOrders, regQuants, regWeights, regWeightVec, rows, horizontal )
       end select
 
     end subroutine AlgebraCommands
@@ -452,7 +478,8 @@ contains
       ! or put into a database to avoid memory leaks.
 
       use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
-      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT
+      use FUNCTIONS, only: F_CHOLESKY, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
+      use MatrixModule_1, only: NORMALEQUATIONS
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
       use TREE_TYPES ! Everything, especially everything beginning with N_
@@ -569,6 +596,22 @@ contains
               what = w_matrix_c
             end if
           end if
+        case ( f_invert )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix_c ) then
+              call announce_error ( son2, incompatible )
+            else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix_c2%m%row%vec, matrix_c2%m%col%vec, &
+                & .not. matrix_c2%m%row%instFirst, .not. matrix_c2%m%col%instFirst )
+              ! Fill it
+              call InvertCholesky ( matrix_c2, matrix )
+              what = w_matrix
+            end if
+          end if
         case ( f_getDiagonal )
           if ( nsons(root) /= 2 ) then
             call announce_error ( son1, wrongNumArgs )
@@ -635,6 +678,37 @@ contains
               what = w_matrix_s
             case default
               call announce_error ( son2, incompatible )
+            end select
+          end if
+        case ( f_xtx )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            select case ( what2 )
+            case ( w_matrix )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix2%col%vec, matrix2%col%vec, &
+                & .not. matrix2%col%instFirst, .not. matrix2%col%instFirst )
+              call NormalEquations ( matrix2, matrix_s )
+              what = w_matrix_s
+            case ( w_matrix_c )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix_c2%m%col%vec, matrix_c2%m%col%vec, &
+                & .not. matrix_c2%m%col%instFirst, .not. matrix_c2%m%col%instFirst )
+              call NormalEquations ( matrix_c2%m, matrix_s )
+              what = w_matrix_s
+            case ( w_matrix_s )
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_s%m, 0, &
+                & matrix_s2%m%col%vec, matrix_s2%m%col%vec, &
+                & .not. matrix_s2%m%col%instFirst, .not. matrix_s2%m%col%instFirst )
+              call NormalEquations ( matrix_s2%m, matrix_s )
+              what = w_matrix_s
+            case default
+              call announce_error ( son2, incompatible )
+              what = w_nothing
             end select
           end if
         end select
@@ -755,11 +829,17 @@ contains
               call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
               call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
             case ( w_matrix_c ) ! .................... Matrix * Matrix_C
-              call Announce_Error ( root, notSupported )
+              call multiplyMatrix_XY ( matrix, matrix_c2%m, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
             case ( w_matrix_k ) ! .................... Matrix * Matrix_K
               call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Matrix * Matrix_S
-              call Announce_Error ( root, notSupported )
+              ! Promote matrix 2 to plain
+              call copyMatrix ( matrix2, matrix_s2%m )
+              call ReflectMatrix ( matrix2 )
+              call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
+              call DestroyMatrix ( matrix2 )
             end select
           case ( w_matrix_c )
             select case ( what2 )
@@ -1164,6 +1244,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.11  2004/04/29 01:26:47  livesey
+! More refinements
+!
 ! Revision 2.10  2004/04/28 23:07:56  livesey
 ! Many additions.
 !
