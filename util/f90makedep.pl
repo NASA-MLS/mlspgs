@@ -432,6 +432,7 @@ sub MakeDependsf90 {
    local($prependant);
    local($key);
    local($value);
+   local($TOUCH_PART1) = '$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ';
    local($BUILD_PART1) = '$(UTILDIR)/newAifBdiff.sh -a ';
    local($BUILD_PART2) = '$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/';
    local($BUILD_PART3) = ' $(FAFTER)';
@@ -593,7 +594,10 @@ sub MakeDependsf90 {
               print MAKEFILE "$objfile: $modulename_by_file{$objfile}.mod \n";
               if ($dont_build{$file} != 1) {
                 print MAKEFILE "\t";
-                print MAKEFILE "touch $objfile \n";
+#                print MAKEFILE "touch $objfile \n";
+                print MAKEFILE "$TOUCH_PART1";
+                print MAKEFILE "$objfile ";
+                print MAKEFILE "$modulename_by_file{$objfile}.mod \n";
               }
               print MAKEFILE "$modulename_by_file{$objfile}.mod: ";
            } else {
@@ -664,6 +668,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.8  2002/07/01 17:27:08  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.7  2002/06/24 20:35:34  pwagner
 # Restored FAFTER to compiler invocation
 #

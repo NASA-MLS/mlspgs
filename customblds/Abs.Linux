@@ -6,13 +6,15 @@ ifndef CASCADE
 #	l1
 
 OutputL1B.o: OUTPUTL1B.mod
-	touch OutputL1B.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B.o OUTPUTL1B.mod 
 OUTPUTL1B.mod:
 	$(UTILDIR)/newAifBdiff.sh -a OUTPUTL1B.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 TREE_CHECKER.mod: INIT_TABLES_MODULE.mod
 	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 tree_checker.o: TREE_CHECKER.mod
-	touch tree_checker.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T tree_checker.o TREE_CHECKER.mod 
 
 # l2
 # This keeps switch_usage up-to-date with notes/switches
@@ -66,7 +68,8 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 INIT_TABLES_MODULE.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
 init_tables_module.o: INIT_TABLES_MODULE.mod
-	touch init_tables_module.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T init_tables_module.o INIT_TABLES_MODULE.mod 
 
 endif
 #	l3
@@ -74,11 +77,13 @@ endif
 L2INTERFACE.mod:
 	$(UTILDIR)/newAifBdiff.sh -a L2INTERFACE.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
 L2Interface.o: L2INTERFACE.mod
-	touch L2Interface.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2Interface.o L2INTERFACE.mod 
 L3DMDATA.mod:
 	$(UTILDIR)/newAifBdiff.sh -a L3DMDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
 L3DMData.o: L3DMDATA.mod
-	touch L3DMData.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DMData.o L3DMDATA.mod 
 #TREE_CHECKER.mod: INIT_TABLES_MODULE.mod
 #	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 
@@ -86,17 +91,20 @@ L3DMData.o: L3DMDATA.mod
 L3DZDATA.mod:
 	$(UTILDIR)/newAifBdiff.sh -a L3DZDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
 L3DZData.o: L3DZDATA.mod
-	touch L3DZData.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3DZData.o L3DZDATA.mod 
 
 L3MZDATA.mod:
 	$(UTILDIR)/newAifBdiff.sh -a L3MZDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
 L3MZData.o: L3MZDATA.mod
-	touch L3MZData.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MZData.o L3MZDATA.mod 
 
 L3MMDATA.mod:
 	$(UTILDIR)/newAifBdiff.sh -a L3MMDATA.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
 L3MMData.o: L3MMDATA.mod
-	touch L3MMData.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L3MMData.o L3MMDATA.mod 
 
 # lib
 
@@ -122,7 +130,8 @@ MACHINE.mod:
 	$(UTILDIR)/newAifBdiff.sh -a MACHINE.mod $(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
 	rm -f machine.f90
 machine.o: MACHINE.mod
-	touch machine.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T machine.o MACHINE.mod 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
@@ -136,18 +145,21 @@ DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 HDF.mod:
 	$(UTILDIR)/newAifBdiff.sh -a HDF.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
 Hdf.o: HDF.mod
-	touch Hdf.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T Hdf.o HDF.mod 
 STRING_TABLE.mod:
 	$(UTILDIR)/newAifBdiff.sh -a STRING_TABLE.mod $(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 string_table.o: STRING_TABLE.mod
-	touch string_table.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T string_table.o STRING_TABLE.mod 
 
 # ncep_dao module doesn't play well with the lf95 undefined variable
 # runtime checker because of endian swapping
 NCEP_DAO.mod:
 	$(UTILDIR)/newAifBdiff.sh -a NCEP_DAO.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 ncep_dao.o: NCEP_DAO.mod
-	touch ncep_dao.o
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T ncep_dao.o NCEP_DAO.mod 
 
 else
 #	special options for compiling some modules--override .f90 rules
@@ -278,3 +290,6 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.1  2002/07/01 17:24:32  pwagner
+# First commit
+#
