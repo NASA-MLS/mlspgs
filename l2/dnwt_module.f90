@@ -807,7 +807,7 @@ contains
 
   770 dxnl = dxn
       aj%dxnl = dxnl
-      if ( sqrt(fnmin**2 - (sq*dxn)**2) > fnb ) go to 222
+      if ( fnxe > fnb ) go to 222
       ! Come here after returning from a gradient move
   775 fnl = fn
       frzl = frz
@@ -1209,6 +1209,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.27  2002/09/11 23:41:53  vsnyder
+! Correct improved test for retreating to best X
+!
 ! Revision 2.26  2002/09/10 23:52:56  vsnyder
 ! Improved test for retreating to best X
 !
