@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -28,6 +28,14 @@ module MLSFiles               ! Utility file routines
   character(LEN=130) :: Id = &
     "$Id$"
   !----------------------------------------------------------
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! GetPCFromRef       Turns a FileName into the corresponding PC
+! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
+! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
+! split_path_name    splits the input full_file_name into its components path and name
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -571,7 +579,7 @@ contains
     character (len=1) :: mySlash
     character (len=MAXFILENAMELENGTH) :: mirrored_ffn
     integer :: loc
-   logical, parameter :: DEBUG = .false.
+!   logical, parameter :: DEBUG = .false.
 
     ! Begin
 
@@ -590,9 +598,6 @@ contains
     mirrored_ffn = Reverse(full_file_name)
     loc = index(mirrored_ffn, mySlash)
     
-    if(DEBUG) then
-      print*, trim(mirrored_ffn), ' ', loc
-   endif
 
     if(loc <= 0) then
       path = ' '
@@ -601,10 +606,6 @@ contains
       path = adjustl(full_file_name)
       name = ' '
     else
-    if(DEBUG) then
-      print*, trim(mirrored_ffn(loc:))
-      print*, trim(mirrored_ffn(:loc-1))
-   endif
       path = adjustl(Reverse(mirrored_ffn(loc:)))
       name = adjustl(Reverse(mirrored_ffn(:loc-1)))
     endif
@@ -617,6 +618,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.22  2002/01/09 23:43:26  pwagner
+! Added toc; removed debugging stuff
+!
 ! Revision 2.21  2001/07/18 23:59:16  pwagner
 ! Fixed bug with version variable in mls_io_gen_openf
 !
