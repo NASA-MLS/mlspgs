@@ -99,7 +99,6 @@ type (VectorValue_T), pointer :: f, h2o
       lmax = no_mmaf
       lmin = max(1,lmax - 2 * jp)
     endif
-    print*,'Hello there:',jp,l,no_mmaf,lmin,lmax,shape(t_glgrid),lbound(t_glgrid,2)
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
       CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
@@ -198,6 +197,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.16  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.15  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !
