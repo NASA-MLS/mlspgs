@@ -9,7 +9,7 @@ module TREE_WALKER
   use FILL, only: MLSL2Fill
   use ForwardModelInterface, only: ForwardModelInfo_T
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
-  use GriddedData, only: DestroyGridTemplateDatabase, GriddedData_T
+  use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: Field_Indices, Spec_Indices, Z_CHUNKDIVIDE, &
     & Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI,& 
     & Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE
@@ -23,6 +23,7 @@ module TREE_WALKER
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: MLSSignals
 !  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
+  use ncep_dao, only: DestroyGridTemplateDatabase
   use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize
   use ReadAPriori, only: read_apriori
   use OutputAndClose, only: Output_Close
@@ -155,6 +156,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.17  2001/03/15 21:05:23  vsnyder
+! Set up to test Parse_Signal
+!
 ! Revision 2.16  2001/03/14 02:04:53  vsnyder
 ! Moved MLSSignals_m to mlspgs/lib
 !
