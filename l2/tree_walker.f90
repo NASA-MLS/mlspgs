@@ -53,8 +53,8 @@ contains ! ====     Public Procedures     ==============================
     use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
-    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
-    use MLSFiles, only: MLSFile_T
+    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
+    ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -373,6 +373,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.100  2002/12/04 01:18:21  pwagner
+! First halting steps toward using filedatabase
+!
 ! Revision 2.99  2002/11/22 12:24:25  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
