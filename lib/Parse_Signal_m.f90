@@ -288,18 +288,20 @@ o:  do
       end do
     end if
     ! Now we have all of the pieces assembled and identified.  Find the
-    ! set of signals that satisfy the specified criteria.
+    ! set of signals that satisfies the specified criteria.
     if ( radiometer_i < 0 .and. band_i < 0 .and. spectrometer_i < 0 ) &
       call announce_error ( notEnough, signal_string, tree_index )
     if ( error == 0 ) call scanSignals
 
     if ( present(sideband) ) sideband = mySideband
     if ( present(channels) ) then
-      if ( associated(channels ) ) &
+      if ( associated(channels) ) &
         & call deallocate_test ( channels, "Channels", moduleName )
-      call allocate_test ( channels, ubound(myChannels,1), "Channels", &
-        & moduleName, lowBound=lbound(myChannels,1) )
-      channels = myChannels
+      if ( associated(myChannels) ) then
+        call allocate_test ( channels, ubound(myChannels,1), "Channels", &
+          & moduleName, lowBound=lbound(myChannels,1) )
+        channels = myChannels
+      end if
     end if
     if ( associated(myChannels) ) &
       & call deallocate_test ( myChannels, "MyChannels", moduleName )
@@ -435,6 +437,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.6  2001/04/10 17:59:54  vsnyder
+! Remove sideband field from signal
+!
 ! Revision 2.5  2001/04/09 20:15:53  vsnyder
 ! Tighter bound on myChannelNumbers
 !
