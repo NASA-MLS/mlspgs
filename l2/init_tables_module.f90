@@ -649,7 +649,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, &
              l+l_cloudIce, l+l_cloudInducedRadiance, &
-             l+l_cloudExtinction, l+l_cloudWater, &
+             l+l_cloudExtinction, l+l_cloudRadSensitivity, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
@@ -1014,6 +1014,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.133  2001/07/13 20:24:48  jonathan
+! added cloudRadSensitivity as it is in intrinsic. -Jonathan
+!
 ! Revision 2.132  2001/07/13 18:13:04  dwu
 ! add quantity losTransFunc
 !
