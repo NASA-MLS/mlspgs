@@ -108,7 +108,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: ScaleFactor
     integer :: Sideband
     integer :: Signal                   ! Database index
-    integer, dimension(:), pointer :: signalInds=>NULL() ! From parse signal
+    integer, dimension(:), pointer :: SignalInds ! From parse signal
     type (signal_T) :: SignalInfo       ! Details of the appropriate signal
     integer :: Son                      ! A Son of Root -- an n_assign node
     character (len=80) :: Str
@@ -123,6 +123,7 @@ contains ! =====     Public Procedures     =============================
 
 ! ??? Do we need a GOT_FIELD check like in VGrid, e.g. ???
 
+    nullify ( signalInds )
     error = 0
     family = 0
     hGridIndex = 0
@@ -693,6 +694,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.29  2001/05/03 20:30:09  vsnyder
+! Add a 'nullify' and some cosmetic changes
+!
 ! Revision 2.28  2001/04/26 02:45:25  vsnyder
 ! Fix up CVS stuff
 !
