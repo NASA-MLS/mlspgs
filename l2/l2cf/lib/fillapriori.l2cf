@@ -306,7 +306,7 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:1K ]
+    profileValues=[ 1mb:3K ]
 
   ;; Horizontal
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -367,7 +367,7 @@ begin Fill
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:1K ]
+    profileValues=[ 1mb:3K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
