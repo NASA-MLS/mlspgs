@@ -98,33 +98,45 @@ contains ! ==================================================================
   end subroutine CloseParallel
 
   ! ------------------------------------------- SlaveJoin ---------------
-  subroutine SlaveJoin ( quantity, precisionQuantity, hdfName, key )
-    ! This simply sends a vector quantity (or two) down a pvm spigot.
+  subroutine SlaveJoin ( quantity, precisionQuantity, BPQuantity, hdfName, key )
+    ! This simply sends one or more vector quantities down a pvm spigot.
     type (VectorValue_T), pointer :: QUANTITY    ! Quantity to join
     type (VectorValue_T), pointer :: PRECISIONQUANTITY ! Its precision
+    type (VectorValue_T), pointer :: BPQUANTITY ! Tropopause if colm. abund.
     character(len=*), intent(in) :: HDFNAME ! Swath / sd name
     integer, intent(in) :: KEY          ! Tree node
 
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: GOTPRECISION             ! really boolean
+    integer :: GOTBP                    ! really boolean
     integer :: INFO                     ! Flag from PVM
 
     ! Executable code
     gotPrecision = 0
     if ( associated ( precisionQuantity) ) gotPrecision = 1
 
+    if ( associated ( BPQuantity) ) then
+      gotBP = 1
+    else
+      gotBP = 0
+    endif
+
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_ToJoin, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing kind" )
-    call PVMF90Pack ( (/key, gotPrecision /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing key, gotPrecision" )
+    call PVMF90Pack ( (/key, gotPrecision, gotBP /), info )
+    if ( info /= 0 ) &
+       & call PVMErrorMessage ( info, "packing key, gotPrecision, gotBP" )
     call PVMIDLPack ( hdfName, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing hdfName" )
 
     call PVMSendQuantity ( quantity, justPack=.true. )
     if ( associated ( precisionQuantity ) ) &
       call PVMSendQuantity ( precisionQuantity, justPack=.true. )
+    
+    if ( associated ( BPQuantity ) ) &
+      call PVMSendQuantity ( BPQuantity, justPack=.true. )
     
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
@@ -144,6 +156,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.8  2001/09/08 00:21:44  pwagner
+! Revised to work for new column Abundance in lone swaths
+!
 ! Revision 2.7  2001/05/30 23:53:54  livesey
 ! Vectors now sent within info packets
 !
