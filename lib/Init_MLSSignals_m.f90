@@ -68,6 +68,9 @@ contains
   subroutine Init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
     & Parm_Indices, Section_Indices, Spec_Indices )
 
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
 
     integer, intent(inout) :: Data_Type_Indices(:)
@@ -199,6 +202,10 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.8  2001/04/04 17:56:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
 ! Revision 2.7  2001/04/03 19:09:12  vsnyder
 ! Change the order of initialization to intrinsic, Molecules, MLSSignals.
 ! Use the revised make_tree.f9h, which requires revision of init...
