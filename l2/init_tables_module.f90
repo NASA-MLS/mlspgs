@@ -65,8 +65,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DIAGONAL            = f_criteria + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
-  integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
-  integer, parameter :: F_FIELD               = f_explicitvalues + 1
+  integer, parameter :: F_EXPLICITVALUES      = f_diagonalOut + 1
+  integer, parameter :: F_EXTRAHEIGHTS        = f_explicitValues + 1
+  integer, parameter :: F_FIELD               = f_extraHeights + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FRACTION            = f_file + 1
   integer, parameter :: F_FWDMODELEXTRA       = f_fraction + 1
@@ -92,7 +93,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
   integer, parameter :: F_PER_DECADE          = f_overlaps + 1
-  integer, parameter :: F_QUANTITIES          = f_per_decade + 1
+  integer, parameter :: F_POINTINGGRIDS       = f_per_decade + 1
+  integer, parameter :: F_QUANTITIES          = f_pointingGrids + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
@@ -345,7 +347,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
-    field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
+    field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
+    field_indices(f_extraHeights) =        add_ident ( 'extraHeights' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -372,6 +375,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
     field_indices(f_per_decade) =          add_ident ( 'per_decade' )
+    field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -679,7 +683,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &     !???
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &       !???
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &   !???
+             begin, f+f_extraHeights, t+t_numeric, nr+n_field_type, & !???
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &     !???
+             begin, f+f_pointingGrids, t+t_string, nr+n_field_type, & !???
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &     !???
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &      !???
              ndp+n_spec_def /) )                                      !???
@@ -771,6 +777,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.51  2001/03/16 21:49:10  vsnyder
+! Add "pointingGrids" and "extraHeights" fields to ForwardModelGlobal
+!
 ! Revision 2.50  2001/03/16 00:59:43  vsnyder
 ! Add support for defining types and literals in Init_MLSSignals_m
 !
