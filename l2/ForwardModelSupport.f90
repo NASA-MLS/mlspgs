@@ -34,8 +34,7 @@ module ForwardModelSupport
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
   integer, parameter :: TangentNotSubset     = LinearSidebandHasUnits + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
-  integer, parameter :: ToleranceNotPolarized  = ToleranceNotK + 1
-  integer, parameter :: TooManyHeights       = ToleranceNotPolarized + 1
+  integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
   integer, parameter :: BadHeightUnit        = TooManyCosts + 1
   integer, parameter :: NoMolecule           = BadHeightUnit + 1
@@ -583,9 +582,6 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
-      if ( info%polarized .and. info%tolerance >= 0.0 ) &
-        & call AnnounceError ( ToleranceNotPolarized, root )
-
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
     case ( l_cloudfull )
@@ -800,9 +796,6 @@ contains ! =====     Public Procedures     =============================
     case ( ToleranceNotK )
       call output ( 'tolerance does not have dimensions of temperature/radiance',&
         & advance='yes' )
-    case ( ToleranceNotPolarized )
-      call output ( 'asks for non negative tolerance in the polarized forward model',&
-        & advance='yes' )
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range',&
         & advance='yes' )
@@ -834,6 +827,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.83  2003/08/27 20:31:07  livesey
+! Removed the prevention of tolerance>0.0 on polarized runs
+!
 ! Revision 2.82  2003/08/21 21:15:18  cvuu
 ! Change the output format for fullForwardModel Timing
 !
