@@ -3179,6 +3179,9 @@ contains
           coordinate = qty%template%verticalCoordinate
           instanceOr1 = 1
         else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
+          if ( ptan%template%instrumentModule /= qty%template%instrumentModule ) &
+            & call AnnounceError ( inconsistent, f_ptanQuantity, &
+            & f_quantity )
           theseHeights => ptan%values(:,instance)
           coordinate = l_zeta
         else
@@ -3434,6 +3437,8 @@ contains
           call output ( exp(-log(10.)*heightMin), advance='yes' )
         end if
       end if
+      if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'An error occured during the subset setup' )
     end subroutine SetupSubset
 
     ! -------------------------------------------------- FlagCloud ---
@@ -3707,6 +3712,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.230  2003/02/08 00:20:25  livesey
+! Added error message to check that the right ptan (GHz/THz) is used in
+! subset statements.
+!
 ! Revision 2.229  2003/02/05 20:59:16  dwu
 ! an improvement in flagcloud
 !
