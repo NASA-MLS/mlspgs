@@ -505,9 +505,7 @@ contains
 
     ! Create the data structures for the species
 
-    call get_species_data ( fwdModelConf%molecules, fwdModelConf, &
-      & fwdModelIn, fwdModelExtra, &
-      & fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, &
+    call get_species_data ( fwdModelConf, fwdModelIn, fwdModelExtra, &
       & noSpecies, no_mol, beta_group, my_catalog )
 
     call allocate_test ( mol_cat_index, no_mol, 'mol_cat_index', moduleName )
@@ -2601,6 +2599,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.151  2003/06/25 02:41:37  vsnyder
+! Futzing
+!
 ! Revision 2.150  2003/06/18 22:26:41  vsnyder
 ! Restored the check to the wrong place at 2.149
 !

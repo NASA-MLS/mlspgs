@@ -30,8 +30,7 @@ module Get_Species_Data_M
 contains
 
   ! -------------------------------------------  Get_Species_Data  -----
-  subroutine Get_Species_Data ( TheMolecules, FwdModelConf, &
-    & FwdModelIn, FwdModelExtra, SidebandStart, SidebandStop, &
+  subroutine Get_Species_Data ( FwdModelConf, FwdModelIn, FwdModelExtra, &
     & NoSpecies, No_Mol, Beta_Group, My_Catalog )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -50,15 +49,13 @@ contains
 
   ! Inputs
 
-    integer, intent(in) :: TheMolecules(:) ! List oftheMolecules
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
-    integer, intent(in) :: SidebandStart, SidebandStop
 
   ! Outputs
 
-    integer, intent(out) :: NoSpecies   ! No. oftheMolecules under consideration
-    integer, intent(out) :: No_Mol      ! Number of majortheMolecules (NO iso/vib)
+    integer, intent(out) :: NoSpecies   ! No. of Molecules under consideration
+    integer, intent(out) :: No_Mol      ! Number of major Molecules (NO iso/vib)
     type (beta_group_T), dimension(:), pointer :: Beta_Group
     type (catalog_T), dimension(:), pointer :: My_Catalog
 
@@ -70,7 +67,7 @@ contains
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
                                         ! (noLines per species)
-    integer, dimension(size(theMolecules,1)+1) :: Molecules_Temp
+    integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
     character (len=32) :: molName       ! Name of a molecule
     integer :: NLines                   ! count(lineFlag)
     integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
@@ -82,8 +79,8 @@ contains
 
     nullify ( lineFlag )
 
-    noSpecies = size (theMolecules)
-    no_mol = count (theMolecules > 0)
+    noSpecies = size (fwdModelConf%molecules)
+    no_mol = count (fwdModelConf%molecules > 0)
 
     allocate ( beta_group(no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -107,7 +104,7 @@ contains
       sv_i = 0
       beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
       do j = 1, noSpecies
-        l = theMolecules(j)
+        l = fwdModelConf%molecules(j)
 !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
         beta_group(sv_i)%n_elements   = 1
@@ -117,7 +114,7 @@ contains
 
     else
 
-      molecules_temp(1:noSpecies) = theMolecules(1:noSpecies)
+      molecules_temp(1:noSpecies) = fwdModelConf%molecules(1:noSpecies)
       molecules_temp(noSpecies+1) = noSpecies
 
       sv_i = 0
@@ -157,8 +154,8 @@ contains
     do j = 1, noSpecies
       ! Skip if the next molecule is negative (indicates that this one is a
       ! parent)
-      if ( (j < noSpecies) .and. (theMolecules(j) > 0) ) then
-        if (theMolecules(j+1) < 0 ) then
+      if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
+        if (fwdModelConf%molecules(j+1) < 0 ) then
           my_catalog(j) = empty_cat
           ! my_catalog springs into existence with %lines and %polarized null
           call allocate_test ( my_catalog(j)%lines, 0, &
@@ -168,7 +165,7 @@ contains
           cycle
         end if
       end if
-      l = abs(theMolecules(j))
+      l = abs(fwdModelConf%molecules(j))
       thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
       My_Catalog(j) = thisCatalogEntry
       ! Don't deallocate them by mistake -- my_catalog is a shallow copy
@@ -214,8 +211,9 @@ contains
               end if
 
               ! If we're only doing one sideband, maybe we can remove some more lines
-              if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
-                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+              if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                & doThis = doThis .and. &
+                & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
                 & ( thisLine%sidebands == 0 ) )
               if ( doThis ) then
                 lineFlag(k) = polarized
@@ -345,6 +343,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.5  2003/05/24 02:25:53  vsnyder
+! Set the polarized flag correctly -- well, at least differently
+!
 ! Revision 2.4  2003/05/21 22:15:36  vsnyder
 ! Dump my_catalog and beta_group if the 'bgrp' switch is set
 !
