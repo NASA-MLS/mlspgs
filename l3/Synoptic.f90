@@ -43,8 +43,8 @@ MODULE Synoptic
 CONTAINS
 
 !-------------------------------------------------------------------------
-   SUBROUTINE DailyCoreProcessing(cfDef, cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, l3dm, dmA, dmD, &
-				  l3r, residA, residD, mis_l2Days, mis_Days, flags)
+   SUBROUTINE DailyCoreProcessing(cfDef, cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, &
+     l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
 !-------------------------------------------------------------------------
 
 ! Brief description of program
@@ -83,7 +83,8 @@ CONTAINS
         INTEGER, POINTER, DIMENSION(:) :: nc(:), nca(:), ncd(:)
         Real (r8), POINTER, DIMENSION(:) :: startTime(:), endTime(:)
 
-	INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
+	INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, numSwaths
+        INTEGER ::  rDays, pEndIndex, pStartIndex
 
         integer mis_l2Days, mis_l2Days_temp
 
@@ -234,16 +235,20 @@ CONTAINS
            dmA(j)%maxDiff = 0.0 
            dmD(j)%maxDiff = 0.0 
 
+           l3dm(j)%maxDiffTime = 0.0 
+           dmA(j)%maxDiffTime = 0.0 
+           dmD(j)%maxDiffTime = 0.0 
+
         ENDDO
 
 !!      Initialize Daily Map Residues
 
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
-                          mis_l2Days_temp, mis_Days_temp, l3r)
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
-                          mis_l2Days_temp, mis_Days_temp, residA)
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
-                          mis_l2Days_temp, mis_Days_temp, residD)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
         residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
@@ -319,7 +324,7 @@ CONTAINS
         DO I = 1, size(avgPeriod)
 	  tau0 = tau0 + avgPeriod(i)
 	ENDDO 
-	tau0 = tau0/86400.0/float(size(avgPeriod))
+        IF (size(avgPeriod) .ne. 0) tau0 = tau0/86400.0/float(size(avgPeriod))
  
 !*** Sort & Prepare the Data 
 
@@ -357,16 +362,16 @@ CONTAINS
    		  lonD0_in = FindRealLon(real(dlons(J, 1, iP)))
    		  lonA0_in = FindRealLon(real(alons(J, 1, iP)))
 
-	          CALL Init(cfProd%mode, 						&
-			  nt_a_i   = anlats(J, iP), 				&
-			  nt_d_i   = dnlats(J, iP), 				&
-			  tau0_i   = tau0, 					&
-			  delTad_i = delTad(J, iP), 				&
-			  c0_i     = 2.0*PI, 					&
-			  lonD0_i  = lonD0_in, 					&
-			  tD0_i    = dtimes(J, 1, iP), 				&
-			  lonA0_i  = lonA0_in, 					&
-			  tA0_i    = atimes(J, 1, iP), 				&
+	          CALL Init(cfProd%mode, 				&
+			  nt_a_i   = anlats(J, iP), 			&
+			  nt_d_i   = dnlats(J, iP), 			&
+			  tau0_i   = tau0, 				&
+			  delTad_i = delTad(J, iP), 			&
+			  c0_i     = 2.0*PI, 				&
+			  lonD0_i  = lonD0_in, 				&
+			  tD0_i    = dtimes(J, 1, iP), 			&
+			  lonA0_i  = lonA0_in, 				&
+			  tA0_i    = atimes(J, 1, iP), 			&
 			  lat_i    = alats(J, 1, iP) )
           		CALL DataGenerate(afields(J, :, iP), dfields(J, :, iP) )
 		ELSE
@@ -374,16 +379,16 @@ CONTAINS
    		  lonD0_in = FindRealLon(real(dlons(J, 2, iP)))
    		  lonA0_in = FindRealLon(real(alons(J, 1, iP)))
 
-	          CALL Init(cfProd%mode, 						&
-			  nt_a_i   = anlats(J, iP), 				&
-			  nt_d_i   = dnlats(J, iP)-1, 				&
-			  tau0_i   = tau0, 					&
-			  delTad_i = delTad(J, iP), 				&
-			  c0_i     = 2.0*PI, 					&
-			  lonD0_i  = lonD0_in, 					&
-			  tD0_i    = dtimes(J, 2, iP), 				&
-			  lonA0_i  = lonA0_in, 					&
-			  tA0_i    = atimes(J, 1, iP), 				&
+	          CALL Init(cfProd%mode, 				&
+			  nt_a_i   = anlats(J, iP), 			&
+			  nt_d_i   = dnlats(J, iP)-1, 			&
+			  tau0_i   = tau0, 				&
+			  delTad_i = delTad(J, iP), 			&
+			  c0_i     = 2.0*PI, 				&
+			  lonD0_i  = lonD0_in, 				&
+			  tD0_i    = dtimes(J, 2, iP), 			&
+			  lonA0_i  = lonA0_in, 				&
+			  tA0_i    = atimes(J, 1, iP), 			&
 			  lat_i    = alats(J, 1, iP) )
           		CALL DataGenerate(afields(J, :, iP), dfields(J, 2:, iP) )
 		END IF
@@ -399,50 +404,55 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSM(l3sp(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
-				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
+        	      CALL Reconstruct(cfProd%mode, &
+                        real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+                        l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-			if(l3Result(I) < 0.0) then
-			end if
 		      ENDDO
-                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+          !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
                       avg = 0.0
                       DO I = 1, l3dm(iD)%nLons
                         avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(l3dm(iD)%nLons)
+                    IF (l3dm(iD)%nLons .ne. 0) avg = avg/real(l3dm(iD)%nLons)
                       l3dm(iD)%latRss(iP, J) = 0.0
                       DO I = 1, l3dm(iD)%nLons
-                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +       &
-                                                   (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +  &
+                                      (l3dm(iD)%l3dmValue(iP, J, I)-avg)*  &
+                                      (l3dm(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
-                      l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/real(l3dm(iD)%nLons)
+
+                      IF (l3dm(iD)%nLons .ne. 0) THEN
+                       l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/ &
+                         real(l3dm(iD)%nLons)
+                      ENDIF
+
 		   ENDDO
 
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
-			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
-			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+		IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+                   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
-			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		   l3r(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	           l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	           l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+		   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+	           l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
                       DO iL = 1, dnlats(J, iP)
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+	       CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+		   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+		   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -465,7 +475,7 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3sp(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+       	      CALL Reconstruct(cfProd%mode, real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
@@ -475,13 +485,16 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmA(iD)%nLons)
+                      IF (dmA(iD)%nLons .ne. 0) avg = avg/real(dmA(iD)%nLons)
                       dmA(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmA(iD)%nLons
-                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
-                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +  &
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)* &
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
+                      IF (dmA(iD)%nLons .ne. 0) THEN 
                       dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
+                      ENDIF
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -489,12 +502,12 @@ CONTAINS
 			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   residA(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-			   residA(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
-			   residA(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+	         residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	         residA(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	         residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+	         residA(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+		 residA(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -517,8 +530,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMD(l3sp(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
-				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+             CALL Reconstruct(cfProd%mode, real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+			      dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
@@ -527,13 +540,16 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmD(iD)%nLons)
+                      IF (dmD(iD)%nLons .ne. 0) avg = avg/real(dmD(iD)%nLons)
                       dmD(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmD(iD)%nLons
-                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
-                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +  &
+                                     (dmD(iD)%l3dmValue(iP, J, I)-avg)*  &
+                                     (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
+                      IF (dmD(iD)%nLons .ne. 0) THEN
                       dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
+                      ENDIF
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -541,12 +557,12 @@ CONTAINS
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-			   residD(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   residD(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-			   residD(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-			   residD(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		   CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		  residD(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		  residD(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	          residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+	          residD(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		  residD(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -569,7 +585,7 @@ CONTAINS
                    CALL CordTransform('asc')
                    CALL FFSMA(l3sp(2), iP, J)
                    DO iD = 1, cfProd%nDays
-                      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0,       &
+                   CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0,  &
                                     dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
                         dmA(iD)%l3dmValue(iP, J, I) = l3Result(I)
@@ -579,13 +595,16 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmA(iD)%nLons)
+                      IF (dmA(iD)%nLons .ne. 0) avg = avg/real(dmA(iD)%nLons)
                       dmA(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmA(iD)%nLons
-                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
-                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +  &
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)* & 
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
+                      IF (dmA(iD)%nLons .ne. 0) THEN
                       dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
+                      ENDIF
                    ENDDO 
 
                    DO iD = 1, rDays
@@ -593,10 +612,12 @@ CONTAINS
                         IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
                            atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
                            nca(iD) = nca(iD) + 1
-                           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret)
-                           residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                          CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret)
+                           residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+ & 
+                             l2gp(1)%time(1)
                            residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J)  
-                           residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+                           residA(iD)%longitude(nc(iD)) = &
+                             FindRealLon(real(alons(J, iL, iP)))*180.0/PI
                            residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret
                            residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0
                         END IF
@@ -615,7 +636,7 @@ CONTAINS
                    CALL CordTransform('des')
                    CALL FFSMD(l3sp(3), iP, J)
                    DO iD = 1, cfProd%nDays
-                      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0,       &
+                      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
                                     dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
                         dmD(iD)%l3dmValue(iP, J, I) = l3Result(I)
@@ -625,13 +646,17 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmD(iD)%nLons)
+                      IF (dmD(iD)%nLons .ne. 0) avg = avg/real(dmD(iD)%nLons)
                       dmD(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmD(iD)%nLons
-                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
-                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) + &
+                                               (dmD(iD)%l3dmValue(iP, J, I)-avg)* & 
+                                               (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
-                      dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
+                      IF (dmD(iD)%nLons .ne. 0) THEN 
+                      dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/ &
+                        real(dmD(iD)%nLons)
+                      ENDIF
                    ENDDO 
 
                    DO iD = 1, rDays
@@ -639,12 +664,12 @@ CONTAINS
                         IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
                            dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
                            ncd(iD) = ncd(iD) + 1
-                           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret)
-                           residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-                           residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
-                           residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-                           residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
-                           residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
+                          CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret)
+                  residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                  residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
+                  residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+                  residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
+                  residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
                         END IF
                       ENDDO
                    ENDDO
@@ -667,7 +692,7 @@ CONTAINS
                    CALL CordTransform('com')
 	   	   CALL FFSM(l3sp(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('com', real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+            CALL Reconstruct('com', real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
@@ -677,13 +702,17 @@ CONTAINS
                       DO I = 1, l3dm(iD)%nLons
                         avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(l3dm(iD)%nLons)
+                      IF (l3dm(iD)%nLons .ne. 0) avg = avg/real(l3dm(iD)%nLons)
                       l3dm(iD)%latRss(iP, J) = 0.0
                       DO I = 1, l3dm(iD)%nLons
-                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +       &
-                                                   (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +  &
+                                      (l3dm(iD)%l3dmValue(iP, J, I)-avg)*  &
+                                      (l3dm(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
-                      l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/real(l3dm(iD)%nLons)
+                      IF (l3dm(iD)%nLons .ne. 0) THEN
+                      l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/ &
+                        real(l3dm(iD)%nLons)
+                      ENDIF
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -691,10 +720,11 @@ CONTAINS
 			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics('com', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+		         CALL Diagnostics('com', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		        l3r(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			l3r(iD)%longitude(nc(iD)) = & 
+                          FindRealLon(real(alons(J, iL, iP)))*180.0/PI
 			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
 			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -703,12 +733,12 @@ CONTAINS
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics('com', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		         CALL Diagnostics('com', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+	             l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	             l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+		     l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+		     l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		     l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -730,7 +760,7 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3sp(2), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
@@ -740,13 +770,16 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmA(iD)%nLons)
+                      IF (dmA(iD)%nLons .ne. 0) avg = avg/real(dmA(iD)%nLons)
                       dmA(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmA(iD)%nLons
-                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
-                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) + &
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)* &
+                                               (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
+                      IF (dmA(iD)%nLons .ne. 0) THEN
                       dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
+                      ENDIF
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -754,12 +787,12 @@ CONTAINS
 			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nca(iD) = nca(iD) + 1
-		           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
-			   residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-			   residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
-			   residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
+	           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		  residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		  residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
+		  residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+                  residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
+                  residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -781,7 +814,7 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMD(l3sp(3), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
@@ -791,13 +824,16 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
-                      avg = avg/real(dmD(iD)%nLons)
+                      IF (dmD(iD)%nLons .ne. 0) avg = avg/real(dmD(iD)%nLons)
                       dmD(iD)%latRss(iP, J) = 0.0
                       DO I = 1, dmD(iD)%nLons
-                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
-                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +  &
+                                               (dmD(iD)%l3dmValue(iP, J, I)-avg)* &
+                                               (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
+                      IF (dmD(iD)%nLons .ne. 0) THEN 
                       dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
+                      ENDIF
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -805,12 +841,12 @@ CONTAINS
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   ncd(iD) = ncd(iD) + 1
-		           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-			   residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
-			   residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-			   residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
-			   residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
+		         CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		  residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                  residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
+                  residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+                  residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
+                  residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -905,15 +941,21 @@ CONTAINS
                         avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (l3dm(iD)%nLons*cfProd%nLats .ne. 0) THEN
                       avg = avg/real(l3dm(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       l3dm(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, l3dm(iD)%nLons
                         l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP) +         &
-                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/real(l3dm(iD)%nLons*cfProd%nLats)
+                      IF (l3dm(iD)%nLons*cfProd%nLats .ne. 0) THEN
+                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/ &
+                        real(l3dm(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       l3dm(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
           ELSE IF (cfProd%mode == 'asc') THEN
@@ -939,15 +981,15 @@ CONTAINS
                       ENDDO
                       DO i = 1, nc(iD)
                         residA(iD)%latitude(i) = sortTemp(pt(i))
-                      ENDDO
                       !** do longitude
+                      ENDDO
                       DO i = 1, nc(iD)
                         sortTemp(i) = residA(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
                         residA(iD)%longitude(i) = sortTemp(pt(i))
-                      ENDDO
                       !** do value
+                      ENDDO
                       DO i = 1, nc(iD)
                         sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
                       ENDDO
@@ -990,15 +1032,21 @@ CONTAINS
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0) THEN 
                       avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmA(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmA(iD)%nLons
                         dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
-                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0) THEN
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/ &
+                        real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
           ELSE IF (cfProd%mode == 'des') THEN
@@ -1075,15 +1123,21 @@ CONTAINS
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN
                       avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmD(iD)%nLons
                         dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
-                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/ & 
+                        real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
           ELSE IF (cfProd%mode == 'ado') THEN
@@ -1160,15 +1214,25 @@ CONTAINS
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
-                      avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                        avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
+
                       dmA(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmA(iD)%nLons
                         dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
-                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0 ) THEN 
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/ & 
+                        real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
+
                       dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
 
@@ -1245,15 +1309,21 @@ CONTAINS
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN
                       avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmD(iD)%nLons
                         dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
-                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/ & 
+                        real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
           ELSE IF (cfProd%mode == 'all') THEN
@@ -1330,15 +1400,21 @@ CONTAINS
                         avg = avg + dmA(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0) THEN 
                       avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmA(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmA(iD)%nLons
                         dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
-                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+                      IF (dmA(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/ & 
+                        real(dmA(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
 
@@ -1415,15 +1491,20 @@ CONTAINS
                         avg = avg + dmD(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN 
                       avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, dmD(iD)%nLons
                         dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
-                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
+                      IF (dmD(iD)%nLons*cfProd%nLats .ne. 0) THEN 
                       dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
 
@@ -1500,15 +1581,21 @@ CONTAINS
                         avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
                       ENDDO
                       ENDDO
-                      avg = avg/real(l3dm(iD)%nLons*cfProd%nLats)
+                      IF (l3dm(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                        avg = avg/real(l3dm(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       l3dm(iD)%gRss(iP) = 0.0
                       DO J = 1, cfProd%nLats
                       DO I = 1, l3dm(iD)%nLons
                         l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP) +         &
-                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)* &
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)
                       ENDDO
                       ENDDO
-                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/real(l3dm(iD)%nLons*cfProd%nLats)
+                      IF (l3dm(iD)%nLons*cfProd%nLats .ne. 0) THEN 
+                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/ &
+                        real(l3dm(iD)%nLons*cfProd%nLats)
+                      ENDIF
                       l3dm(iD)%perMisPoints(iP) = perMisPoints(iP)
                 ENDDO
           END IF
@@ -1573,7 +1660,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSM(l3spPrec(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct(cfProd%mode, &
+                        real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1596,7 +1684,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3spPrec(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct(cfProd%mode, &
+                        real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1619,7 +1708,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMD(l3spPrec(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct(cfProd%mode, real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct(cfProd%mode, &
+                        real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1642,7 +1732,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3spPrec(2), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('asc', &
+                        real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1664,7 +1755,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMD(l3spPrec(3), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('des', &
+                        real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1682,7 +1774,8 @@ CONTAINS
                    CALL CordTransform('com')
 	   	   CALL FFSM(l3spPrec(1), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('com', real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('com', &
+                        real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1704,7 +1797,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3spPrec(2), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('asc', &
+                        real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1725,7 +1819,8 @@ CONTAINS
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMD(l3spPrec(3), iP, J)
                    DO iD = 1, cfProd%nDays
-        	      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
+        	      CALL Reconstruct('des', &
+                        real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
@@ -1850,7 +1945,7 @@ CONTAINS
 
 
 !-------------------------------------------------------------------------
-   SUBROUTINE SortData(cfProd, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
+   SUBROUTINE SortData(cfProd, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, &
 		alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
 		atimes_interp, dtimes_interp, afields_interp, dfields_interp,	&
 		aprec_interp, dprec_interp, delTad, perMisPoints)
@@ -1862,17 +1957,24 @@ CONTAINS
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 
-	Real (r8), POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Lons_new(:, :), l2Lons(:, :),  l2Lons_old(:, :), &
-						l2Lats(:, :), l2Values(:, :), l2Prec(:, :)
+	Real (r8), POINTER, DIMENSION(:, :) ::  &
+          l2Times(:, :), l2Lons_new(:, :), &
+          l2Lons(:, :),  l2Lons_old(:, :), l2Lats(:, :), l2Values(:, :), l2Prec(:, :)
 
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons_interp(:, :, :), alats_interp(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  dlons_interp(:, :, :), dlats_interp(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  atimes_interp(:, :, :), dtimes_interp(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  afields_interp(:, :, :), dfields_interp(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  aprec_interp(:, :, :), dprec_interp(:, :, :)
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  & 
+          alons_interp(:, :, :), alats_interp(:, :, :)
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  & 
+          dlons_interp(:, :, :), dlats_interp(:, :, :)
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  & 
+          atimes_interp(:, :, :), dtimes_interp(:, :, :)
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  & 
+          afields_interp(:, :, :), dfields_interp(:, :, :)
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  &
+          aprec_interp(:, :, :), dprec_interp(:, :, :)
 
-	Real (r8) dlons, alons, lons_found, lats_found, times_found, fields_found, prec_found, 	&
-		  slope, slope_time, slope_field, slope_prec, sTime
+	Real (r8) &
+          dlons, alons, lons_found, lats_found, times_found, fields_found, prec_found, 	&
+	  slope, slope_time, slope_field, slope_prec, sTime
 
 	Real (r8) lons_found_old
 
@@ -1955,14 +2057,14 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
 
-        ALLOCATE(atimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+       ALLOCATE(atimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
 
           IF ( error /= 0 ) THEN
              msr = MLSMSG_Allocate // ' atimes_interp array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
 
-        ALLOCATE(afields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+      ALLOCATE(afields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
 
           IF ( error /= 0 ) THEN
              msr = MLSMSG_Allocate // ' afields_interp array.'
@@ -1989,13 +2091,13 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
 
-        ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+       ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_Allocate // ' dtimes_interp array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
 
-        ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+      ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_Allocate // ' dfields_interp array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2036,7 +2138,10 @@ CONTAINS
 	ENDDO
 
         DO kP = pStartIndex, pEndIndex
-          perMisPoints(kP+1-pStartIndex) = 100*perMisPoints(kP+1-pStartIndex)/numData(kP+1-pStartIndex)
+          if (numData(kP+1-pStartIndex).ne.0) then 
+            perMisPoints(kP+1-pStartIndex) = & 
+              100*perMisPoints(kP+1-pStartIndex)/numData(kP+1-pStartIndex)
+            endif
         ENDDO
 
 !*** Re-arrange the longitude into sequence 
@@ -2107,25 +2212,43 @@ CONTAINS
 		    l2Lats(lindex+1, iP) > cfProd%latGridMap(J) )  .OR.	&
                   ( l2Lats(lindex, iP) >= cfProd%latGridMap(J) .AND. 	&
 		    l2Lats(lindex+1, iP) < cfProd%latGridMap(J) )  ) THEN
+                
+                if (abs(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP)).ge.1.0e-12) then 
 		slope = (l2Lats(lindex+1, iP)-l2Lats(lindex, iP))/	&
 			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+                endif
+
+                if (abs(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP)).ge.1.0e-12) then 
 		slope_time = (l2Times(lindex+1, iP)-l2Times(lindex, iP))/	&
 			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+                endif
+
+                if (abs(l2Lons(lindex+1, iP)-l2Lons(lindex, iP)).ge.1.0e-12) then 
 		slope_field = (l2Values(lindex+1, iP)-l2Values(lindex, iP))/	&
 			(l2Lons(lindex+1, iP)-l2Lons(lindex, iP))
+                endif 
+
+                if (abs(l2Lons(lindex+1, iP)-l2Lons(lindex, iP)).ge.1.0e-12) then 
                 slope_prec = (l2Prec(lindex+1, iP)-l2Prec(lindex, iP))/ &
                         (l2Lons(lindex+1, iP)-l2Lons(lindex, iP))
+                endif
+
 		IF(ABS(slope) < 1.e-6) THEN
 		   lons_found = l2Lons_new(lindex, iP)
 		   lons_found_old = l2Lons_old(lindex, iP)
 		ELSE
-		   lons_found = l2Lons_new(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
-		   lons_found_old = l2Lons_old(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
+		   lons_found = l2Lons_new(lindex, iP) + & 
+                     (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
+		   lons_found_old = l2Lons_old(lindex, iP) + &
+                     (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
 		END IF
 		lats_found = cfProd%latGridMap(J)
-		times_found = l2Times(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_time
-		fields_found = l2Values(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_field
-		prec_found = l2Prec(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_prec
+		times_found = l2Times(lindex, iP) + &
+                  (lons_found-l2Lons_new(lindex, iP))*slope_time
+		fields_found = l2Values(lindex, iP) + & 
+                  (lons_found-l2Lons_new(lindex, iP))*slope_field
+		prec_found = l2Prec(lindex, iP) + & 
+                  (lons_found-l2Lons_new(lindex, iP))*slope_prec
                 aindex = J
 		EXIT
 	      END IF
@@ -2133,14 +2256,12 @@ CONTAINS
               
 	     IF( slope < 0 .and. aindex /= aindex_prev) THEN
 	         aindex_prev = aindex
-		 !IF(dnlats(aindex, iP) > 0) THEN
        	           anlats(aindex, iP) = anlats(aindex, iP) + 1 
 	           alons_interp(aindex, anlats(aindex, iP), iP) = lons_found
 	           alats_interp(aindex, anlats(aindex, iP), iP) = lats_found
 	           atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
 	           afields_interp(aindex, anlats(aindex, iP), iP) = fields_found
 		   aprec_interp(aindex, anlats(aindex, iP), iP) = prec_found
-	         !END IF
 	     END IF
 
 	     IF( slope >= 0 .and. aindex /= dindex_prev) THEN
@@ -2174,10 +2295,10 @@ CONTAINS
 		iMin = dnlats(J, iP)
 	    END IF 
 	    DO I = 2, iMin 
-                delTad(J,iP) = delTad(J,iP) + dtimes_interp(J, I, iP) - atimes_interp(J, I, iP)
+             delTad(J,iP) = delTad(J,iP) + dtimes_interp(J, I, iP) - atimes_interp(J, I, iP)
 	    ENDDO
             IF(iMin > 0) THEN
-                delTad(J,iP) = delTad(J,iP)/float(iMin-1)
+                if (iMin .ne. 1) delTad(J,iP) = delTad(J,iP)/float(iMin-1)
 	    ELSE
                 delTad(J,iP) = 0.0 
 	    END IF
@@ -2264,6 +2385,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.22  2002/03/27 22:45:17  jdone
+! deallocate statements added
+!
 ! Revision 1.21  2002/03/27 21:35:14  jdone
 ! allocate statements checked and maxDiff is initialized
 !
