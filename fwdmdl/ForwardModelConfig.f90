@@ -176,10 +176,11 @@ contains
 
     ! Executable code
     ! First pack the scalars
-    call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
-      & config%do_conv, config%do_freq_avg, config%do_1d, config%incl_cld, config%differentialScan, &
-      & config%lockBins, config%polarized, config%spect_der, config%temp_der, config%skipOverlaps, &
-      & config%default_spectroscopy /), info )
+    call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, &
+      & config%do_baseline, config%do_conv, config%do_freq_avg, &
+      & config%do_1d, config%incl_cld, config%differentialScan, &
+      & config%lockBins, config%polarized, config%spect_der, &
+      & config%temp_der, config%skipOverlaps, config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
     call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
       & config%no_cloud_species, config%no_model_surfs, &
@@ -263,7 +264,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(14) :: l13       ! Temporary array
+    logical, dimension(14) :: l14       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(12) :: i12       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
@@ -272,22 +273,22 @@ contains
 
     ! Executable code
     ! First the scalars
-    call PVMIDLUnpack ( l13, info )
+    call PVMIDLUnpack ( l14, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%globalConfig = l13(1)
-    config%atmos_der = l13(2)
-    config%do_baseline = l13(3)
-    config%do_conv = l13(4)
-    config%do_freq_avg = l13(5)
-    config%do_1d = l13(6)
-    config%differentialScan = l13(7)
-    config%lockBins = l13(8)
-    config%polarized = l13(9)
-    config%spect_der = l13(10)
-    config%temp_der = l13(11)
-    config%skipOverlaps = l13(12)
-    config%default_spectroscopy = l13(13)
-    config%incl_cld = l13(14)
+    config%globalConfig = l14(1)
+    config%atmos_der = l14(2)
+    config%do_baseline = l14(3)
+    config%do_conv = l14(4)
+    config%do_freq_avg = l14(5)
+    config%do_1d = l14(6)
+    config%incl_cld = l14(7)
+    config%differentialScan = l14(8)
+    config%lockBins = l14(9)
+    config%polarized = l14(10)
+    config%spect_der = l14(11)
+    config%temp_der = l14(12)
+    config%skipOverlaps = l14(13)
+    config%default_spectroscopy = l14(14)
     call PVMIDLUnpack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i12(1)
@@ -507,6 +508,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.26  2003/01/30 18:29:40  jonathan
+! change dimension l13 to 14
+!
 ! Revision 2.25  2003/01/30 17:28:01  jonathan
 ! add logical incl_cld
 !
