@@ -9,10 +9,11 @@ module Fill                     ! Create vectors and fill them.
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
-  use INIT_TABLES_MODULE, only: F_Columns, F_GEOCALTITUDEQUANTITY, &
-    & F_EXPLICITVALUES, F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, &
-    & F_REFGPHQUANTITY, F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, &
-    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, &
+  use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
+    & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
+    & F_MAXITERATIONS, F_Matrix, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, &
+    & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
+    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SuperDiagonal, &
     & F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_CHOLESKY, L_EXPLICIT, L_GPH, L_GRIDDED, &
@@ -21,25 +22,30 @@ module Fill                     ! Create vectors and fill them.
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
-  use INIT_TABLES_MODULE, only: S_FILL, S_MATRIX, S_SNOOP, S_TIME, S_VECTOR
+  use INIT_TABLES_MODULE, only: S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_SNOOP, &
+    & S_TIME, S_VECTOR
   ! Now some arrays
-  use Intrinsic, only: Lit_Indices
-  !??? will be added
+  use Intrinsic, only: Field_Indices, Lit_Indices
+  use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
+    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T, L2AUXRank
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
-  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & Dump, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, &
-    & Matrix_SPD_T, Matrix_T
+  use MatrixModule_1, only: AddToMatrixDatabase, ClearMatrix, CreateEmptyMatrix, &
+    & Dump, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
+    & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
+    & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
-  use MoreTree, only: Get_Field_ID, Get_Spec_ID
+  use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
+  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
+  use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String, Get_string
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -49,10 +55,6 @@ module Fill                     ! Create vectors and fill them.
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
     & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
-  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
-  use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
-    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
-  use SnoopMLSL2, only: SNOOP
   use VGridsDatabase, only: VGRID_T
 
   implicit none
@@ -64,8 +66,8 @@ module Fill                     ! Create vectors and fill them.
   integer, private :: ERROR
 
   ! Error codes for "announce_error"  
-  integer, parameter :: WRONG_NUMBER = 1     ! of fields of a VECTOR command
-  integer, parameter :: UnknownQuantityName = WRONG_NUMBER + 1
+  integer, parameter :: Wrong_Number = 1     ! of fields of a VECTOR command
+  integer, parameter :: UnknownQuantityName = wrong_number + 1
   integer, parameter :: Source_not_in_db = unknownQuantityName + 1
   integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
   integer, parameter :: ZeroGeodSpan = zeroProfilesFound + 1
@@ -77,7 +79,7 @@ module Fill                     ! Create vectors and fill them.
   ! Error codes for "Matrix" specification
   integer, parameter :: MissingField = cantFillFromL1B + 1
 
-  ! more Error codes relating to FillVector
+  ! More Error codes relating to FillVector
   integer, parameter :: NumInstancesisZero = missingField + 1
   integer, parameter :: NumSurfsisZero = numInstancesisZero + 1
   integer, parameter :: NumChansisZero = numSurfsisZero + 1
@@ -91,8 +93,12 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
   integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
 
+  ! Error codes resulting from FillCovariance
+  integer, parameter :: NotSPD = badUnitsForExplicit + 1
+  integer, parameter :: NotImplemented = notSPD + 1
+
   ! Error codes resulting from squeeze
-  integer, parameter :: N1_is_zero = badUnitsForExplicit + 1
+  integer, parameter :: N1_is_zero = notImplemented + 1
   integer, parameter :: N2_is_zero = n1_is_zero + 1
   integer, parameter :: N3_is_zero = n2_is_zero + 1
   integer, parameter :: M1_too_small = n3_is_zero + 1
@@ -101,7 +107,7 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: Allocation_err = not_permutation + 1
   integer, parameter :: Deallocation_err = allocation_err + 1
 
-  ! miscellaneous
+  ! Miscellaneous
   integer, parameter :: Miscellaneous_err = deallocation_err + 1
   integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
   integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
@@ -164,8 +170,15 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
 
     integer :: ColVector                ! Vector defining columns of Matrix
+    type(matrix_SPD_T), pointer :: Covariance
+    integer :: Decay                    ! Index of decay-rate vector in database
+    !                                     -- for FillCovariance
+    integer :: Diagonal                 ! Index of diagonal vector in database
+    !                                     -- for FillCovariance
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
+    logical :: Extra                    ! Matrix needs an extra column / row
     integer :: FIELDINDEX               ! Entry in tree
+    integer :: FieldValue               ! Value of a field in the L2CF
     integer :: FILLMETHOD               ! How will we fill this quantity
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
@@ -185,6 +198,7 @@ contains ! =====     Public Procedures     =============================
     type(matrix_Kronecker_T) :: MatrixKronecker
     type(matrix_SPD_T) :: MatrixSPD
     type(matrix_T) :: MatrixPlain
+    integer :: MatrixToFill             ! Index in database
     integer :: MatrixType               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character (LEN=LineLen) ::  Msr
@@ -203,7 +217,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREAD           ! Do we spread values accross instances in explict
-    real :: T1, T2              ! for timing
+    integer :: SuperDiagonal            ! Index of superdiagonal matrix in database
+    !                                     -- for FillCovariance
+    real :: T1, T2                      ! for timing
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
@@ -251,7 +267,7 @@ contains ! =====     Public Procedures     =============================
       ! Node_id(key) is now n_spec_args.
 
       select case( get_spec_id(key) )
-      case ( s_vector )
+      case ( s_vector ) ! ===============================  Vector  =====
         if ( nsons(key) /= 2 ) call announce_error ( son, wrong_number )
         templateIndex = decoration(decoration(subtree(2,subtree(2,key))))
 
@@ -263,28 +279,33 @@ contains ! =====     Public Procedures     =============================
 
         ! That's the end of the create operation
 
-      case ( s_matrix )
+      case ( s_matrix ) ! ===============================  Matrix  =====
+        extra = .false.
         got = .false.
         matrixType = l_plain
-        do j=2,nsons(key)
+        do j = 2, nsons(key)
           gson = subtree(j,key)              ! The field
           fieldIndex = get_field_id(gson)
           got(fieldIndex) = .true.
-          gson = decoration(subtree(2,gson)) ! The field's value
+          if ( nsons(gson) > 1 ) &
+            & fieldValue = decoration(subtree(2,gson)) ! The field's value
           select case ( fieldIndex )
           case ( f_columns )
-            colVector = decoration(gson)
+            colVector = decoration(fieldValue)
           case ( f_rows )
-            rowVector = decoration(gson)
+            rowVector = decoration(fieldValue)
+          case ( f_extra )
+            extra = get_boolean(gson)
           case ( f_type )
-            matrixType = gson
+            matrixType = fieldValue
           end select
         end do
-        if ( got(f_columns) .and. got(f_rows) ) then
+        if ( got(f_columns) .and. (got(f_rows) .or. matrixType == l_spd) ) then
           select case ( matrixType )
           case ( l_cholesky )
             call createEmptyMatrix ( matrixCholesky%m, vectorName, &
-              & vectors(rowVector), vectors(colVector) )
+              & vectors(rowVector), vectors(colVector), &
+              & extra_Row = extra, extra_Col = extra )
             call decorate ( key, addToMatrixDatabase(matrices, matrixCholesky) )
           case ( l_kronecker )
             call createEmptyMatrix ( matrixKronecker%m, vectorName, &
@@ -292,25 +313,26 @@ contains ! =====     Public Procedures     =============================
             call decorate ( key, addToMatrixDatabase(matrices, matrixKronecker) )
           case ( l_plain )
             call createEmptyMatrix ( matrixPlain, vectorName, vectors(rowVector), &
-              vectors(colVector) )
+              vectors(colVector), extra_Col = extra )
             call decorate ( key, addToMatrixDatabase(matrices, matrixPlain) )
           case ( l_spd )
             call createEmptyMatrix ( matrixSPD%m, vectorName, &
-              & vectors(rowVector), vectors(colVector) )
+              & vectors(colVector), vectors(colVector), &
+              & extra_Row = extra, extra_Col = extra )
             call decorate ( key, addToMatrixDatabase(matrices, matrixSPD) )
           end select
         else
-          call announce_error ( missingField, key, &
+          call announce_error ( key, missingField, &
             & extraInfo = (/ f_columns, f_rows /) )
         end if
 
-      case ( s_fill )
+      case ( s_fill ) ! ===================================  Fill  =====
         ! Now we're on actual Fill instructions.
         ! Loop over the instructions to the Fill command
 
-        do j=2,nsons(key)
+        do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
-          fieldIndex=get_field_id(gson)
+          fieldIndex = get_field_id(gson)
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex)=.TRUE.
           select case ( fieldIndex )
@@ -369,9 +391,8 @@ contains ! =====     Public Procedures     =============================
 
         ! Now call various routines to do the filling
         quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+
         select case ( fillMethod )
-
-
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
           if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
@@ -380,7 +401,7 @@ contains ! =====     Public Procedures     =============================
           temperatureQuantity => GetVectorQtyByTemplateIndex( &
             &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
           if ( temperatureQuantity%template%quantityType /= l_Temperature ) &
-            & call Announce_Error (key, badTemperatureQuantity)
+            & call Announce_Error ( key, badTemperatureQuantity )
 
           refGPHQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(refGPHVectorIndex), refGPHQuantityIndex)
@@ -389,18 +410,18 @@ contains ! =====     Public Procedures     =============================
 
           if ( quantity%template%quantityType==l_ptan ) then
             if ( .not. got(f_geocAltitudeQuantity) ) &
-              & call Announce_Error( key, needGeocAltitude )
+              & call Announce_Error ( key, needGeocAltitude )
             geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
             if ( geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt ) &
-              & call Announce_Error( key, badGeocAltitudeQuantity )
+              & call Announce_Error ( key, badGeocAltitudeQuantity )
             if ( .not. got(f_h2oQuantity) ) &
-              & call Announce_Error( key, needH2O )
+              & call Announce_Error ( key, needH2O )
             h2oQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(h2oVectorIndex), h2oQuantityIndex)
             if ( .not. ValidateVectorQuantity(h2oQuantity, &
               & quantityType=(/l_vmr/), molecule=(/l_h2o/)) )&
-              & call Announce_Error( key, badGeocAltitudeQuantity )
+              & call Announce_Error ( key, badGeocAltitudeQuantity )
           else
             nullify ( geocAltitudeQuantity, h2oQuantity )
           end if
@@ -473,12 +494,39 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
 
         case default
-          call Announce_error ( key,0, 'This fill method not yet implemented' )
+          call Announce_error ( key, 0, 'This fill method not yet implemented' )
         end select
-        
-        ! End of fill operations
 
-      case ( s_time )
+      case ( s_FillCovariance ) ! ===============  FillCovariance  =====
+        do j = 2, nsons(key)
+          gson = subtree(j,key) ! The argument
+          fieldIndex = get_field_id(gson)
+          if (nsons(gson) > 1) &
+            & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
+          got(fieldIndex)=.true.
+          select case ( fieldIndex )
+          case ( f_matrix )
+            matrixToFill = gson
+            if ( getKindFromMatrixDatabase(matrices(matrixToFill)) /= k_spd ) &
+              call announce_error ( key, notSPD )
+          case ( f_diagonal )
+            diagonal = gson
+          case ( f_decay )
+            decay = gson
+            call announce_error ( key, notImplemented, "Decay" ) !???
+          case ( f_superDiagonal )
+            superDiagonal = gson
+            call announce_error ( key, notImplemented, "SuperDiagonal" ) !???
+          end select
+        end do
+
+        ! All the fields are collected.  Now fill the matrix.
+        call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
+        call updateDiagonal ( covariance, vectors(diagonal) )
+
+      ! End of fill operations
+
+      case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
           call sayTime
         else
@@ -491,13 +539,13 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
+      if ( ERROR /= 0 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
+!        call Announce_error ( key, 0, &
+!                          & 'Problem with Fill section (This would be fatal)')
+      end if
     end do
 
-    if ( ERROR /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
-!      call Announce_error(key,0, &
-!			 & 'Problem with Fill section (This would be fatal)')
-    end if
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
@@ -765,12 +813,12 @@ contains ! =====     Public Procedures     =============================
       &  (tngtECI%template%quantityType /= l_tngtECI) .or. &
       &  (scECI%template%quantityType /= l_scECI) .or. &
       &  (scVel%template%quantityType /= l_scVel) ) then
-      call Announce_Error(key, badLOSVelFill)
+      call Announce_Error ( key, badLOSVelFill )
       return
     end if
 
     if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) then
-      call Announce_Error(key, badLOSVelFill)
+      call Announce_Error ( key, badLOSVelFill )
       return
     end if
 
@@ -840,7 +888,7 @@ contains ! =====     Public Procedures     =============================
         &  (temperatureQuantity%template%noInstances /= &
         &   quantity%template%noInstances) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
-        & "case l_gph failed first test" )
+          & "case l_gph failed first test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -848,7 +896,7 @@ contains ! =====     Public Procedures     =============================
         & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
-        &  "case l_gph failed second test")
+          &  "case l_gph failed second test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -859,14 +907,14 @@ contains ! =====     Public Procedures     =============================
         &  (temperatureQuantity%template%noInstances /= &
         &   h2oQuantity%template%noInstances) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
-        & "case l_ptan failed first test")
+          & "case l_ptan failed first test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
       if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
-        & "case l_ptan failed second test" )
+          & "case l_ptan failed second test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -874,8 +922,8 @@ contains ! =====     Public Procedures     =============================
         &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
         &  (quantity%template%instrumentModule /= &
         &   geocAltitudeQuantity%template%instrumentModule) )  then
-        call Announce_Error (key, nonConformingHydrostatic, &
-        & "case l_ptan failed third test" )
+        call Announce_Error ( key, nonConformingHydrostatic, &
+          & "case l_ptan failed third test" )
         print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
         &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
         print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
@@ -961,9 +1009,9 @@ contains ! =====     Public Procedures     =============================
       !         end if
       !   end do
       !Can't get here unless ChunkNumberIsTrustworthy has been reset
-      call announce_error(0, miscellaneous_err, &
+      call announce_error ( 0, miscellaneous_err, &
 	& "Programming error in Module Fill, SUBROUTINE FillPrevDefd " &
-	& // "ChunkNumberIsTrustworthy must be FALSE")
+	& // "ChunkNumberIsTrustworthy must be FALSE" )
     else
       ! Instead of comparing OldVector%chunkNumbers to ChunkNo
       ! we will compare geodetic angles to phi
@@ -1154,7 +1202,7 @@ contains ! =====     Public Procedures     =============================
       if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
         &    (nsons(valuesNode)-1 /= 1) ) .or. &
         &  (.not. quantity%template%regular)) &
-        & call Announce_error(valuesNode,invalidExplicitFill)
+        & call Announce_error ( valuesNode, invalidExplicitFill )
 
       ! Loop over the values
       do k=1,nsons(valuesNode)-1
@@ -1163,7 +1211,7 @@ contains ! =====     Public Procedures     =============================
         ! Check unit OK
        if ( (unitAsArray(1) /= quantity%template%unit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-          & call Announce_error(valuesNode,badUnitsForExplicit)
+          & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
         if (nsons(valuesNode)-1 == 1) then
           quantity%values=valueAsArray(1)
@@ -1177,7 +1225,7 @@ contains ! =====     Public Procedures     =============================
       ! Check we have the right number of values
       if (nsons(valuesNode)-1 /= &
         & quantity%template%noInstances*quantity%template%instanceLen) &
-        & call Announce_error(valuesNode,invalidExplicitFill)
+        & call Announce_error ( valuesNode, invalidExplicitFill )
 
       ! Loop over values
       do k=1,nsons(valuesNode)-1
@@ -1186,7 +1234,7 @@ contains ! =====     Public Procedures     =============================
         ! Check unit OK
         if ( (unitAsArray(1) /= quantity%template%unit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-          & call Announce_error(valuesNode,badUnitsForExplicit)
+          & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
         quantity%values(mod(k-1,quantity%template%instanceLen)+1,&
           &             (k-1)/quantity%template%instanceLen+1)=&
@@ -1232,15 +1280,15 @@ contains ! =====     Public Procedures     =============================
     case ( l_scGeocAlt )
       nameString='scGeocAlt'
     case default
-      call Announce_Error(root, cantFillFromL1B)
+      call Announce_Error ( root, cantFillFromL1B )
     end select
 
     call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     ! We'll have to think about `bad' values here .....
     if ( flag /= 0 ) then
-      call Announce_Error(errorReadingL1B, root)
-		    if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
+      call Announce_Error ( root, errorReadingL1B )
+      if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
       return
     end if
     quantity%values = RESHAPE(l1bData%dpField, &
@@ -1425,11 +1473,11 @@ contains ! =====     Public Procedures     =============================
     call output ( ': ' )
     call output ( "The " );
 
-    if ( where > 0 ) then
-      call dump_tree_node ( where, 0 )
-    else
-      call output ( '(no lcf node available)' )
-    end if
+!   if ( where > 0 ) then
+!     call dump_tree_node ( where, 0 )
+!   else
+!     call output ( '(no lcf node available)' )
+!   end if
 
     select case ( code )
     case ( allocation_err )
@@ -1461,9 +1509,9 @@ contains ! =====     Public Procedures     =============================
     case ( m2_too_small )
       call output ( " command caused a m2 too small error in squeeze.", advance='yes' )
     case ( missingField )
-      call output ( " the fields " )
+      call output ( " fields " )
       do i = 1, size(extraInfo)
-        call display_string ( lit_indices(i) )
+        call display_string ( field_indices(i) )
         if ( i == size(extraInfo) ) then
           call output ( " and " )
         else
@@ -1491,6 +1539,11 @@ contains ! =====     Public Procedures     =============================
       call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
     case ( noSpecialFill )
       call output ( " invalid special fill", advance='yes' )
+    case ( notImplemented )
+      call output ( extraMessage )
+      call output ( " is not implemented yet.", advance='yes' )
+    case ( notSPD )
+      call output ( " is not a SPD matrix.", advance='yes' )
     case ( not_permutation )
       call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
     case ( numInstancesisZero )
@@ -1535,6 +1588,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.46  2001/05/08 20:34:26  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.45  2001/05/03 20:30:29  vsnyder
 ! Add a 'nullify' and some cosmetic changes
 !
