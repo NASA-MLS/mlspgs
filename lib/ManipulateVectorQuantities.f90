@@ -69,9 +69,9 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
       ! First we're going to look for the instance within the reference
       ! quantity that starts below the current one.
 
-      CALL Hunt(referenceQuantity%template%phi(1,:),&
-           soughtQuantity%template%phi(1,:), referenceIndices&
-           ,allowTopValue=.TRUE.)
+      CALL Hunt(referenceQuantity%template%phi(1,:), &
+        & soughtQuantity%template%phi(1,:), referenceIndices, &
+        & allowTopValue=.TRUE.)
 
       ! Now we refine these by looking at the instances found above and the
       ! ones above and below, and choosing the one that is closest over the
@@ -89,6 +89,7 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
                  referenceQuantity%template%phi(1,referenceIndex)-&
                  soughtQuantity%template%phi(:,soughtInstance)))
          END DO
+         minLocResult=MINLOC(costs)
          ! Choose best
          referenceIndices(soughtInstance)=referenceIndices(soughtInstance)+&
               minlocResult(1)-2 ! Correct for the -1:1 indexing
@@ -103,6 +104,9 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
   END MODULE ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.5  2001/03/08 02:21:08  livesey
+! Fixed bug, wasn't setting minloc!
+!
 ! Revision 2.4  2001/03/02 01:31:36  livesey
 ! Regular commit
 !
