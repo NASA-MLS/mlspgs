@@ -44,7 +44,7 @@ module MLSHDFEOS
 
   public :: HE5_EHWRGLATT, MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
-    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, &
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
     & MLS_SWWRATTR, MLS_SWWRLATTR, &
     & mls_swath_in_file
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
@@ -192,6 +192,19 @@ contains ! ======================= Public Procedures =========================
           & 'Failed to create grid name ' // trim(GRIDNAME) )
 
   end function MLS_GDCREATE
+
+  integer function mls_gdwrattr ( GRIDID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: GRIDID      ! Grid ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+    integer, external ::   he5_GDwrattr
+    mls_gdwrattr = HE5_GDWRATTR( GRIDID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+
+  end function mls_gdwrattr
 
   integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, &
     &  hdfVersion, DONTFAIL )
@@ -1762,6 +1775,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.15  2003/10/30 00:01:57  pwagner
+! Added MLS_GDWRATTR
+!
 ! Revision 2.14  2003/10/28 00:28:53  pwagner
 ! Added MLS_EHWRGLATT,MLS_SWWRATTR,MLS_SWWRLATTR
 !
