@@ -147,26 +147,8 @@ contains ! ================================== Module procedures ============
       
       call PVMIDLPack ( q%template%losAngle, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
-      
-      if ( associated ( q%template%mafIndex ) ) then
-        call PVMIDLPack ( (/.true./), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
-        call PVMIDLPack ( q%template%mafIndex, info )
-      else
-        call PVMIDLPack ( (/ .false. /), info )
-      end if
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex/flag" )
-
-      if ( associated ( q%template%mafCounter ) ) then
-        call PVMIDLPack ( (/.true./), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
-        call PVMIDLPack ( q%template%mafCounter, info )
-      else
-        call PVMIDLPack ( (/ .false. /), info )
-      end if
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter/flag" )
     end if
-      
+
     if ( associated ( q%template%frequencies ) ) then
       call PVMIDLPack ( (/.true./), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
@@ -341,20 +323,6 @@ contains ! ================================== Module procedures ============
       call PVMIDLUnpack ( qt%losAngle, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
 
-
-      call PVMIDLUnpack ( flag, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
-      if ( flag(1) ) then
-        call PVMIDLUnpack ( qt%mafIndex, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafIndex" )
-      end if
-
-      call PVMIDLUnpack ( flag, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
-      if ( flag(1) ) then
-        call PVMIDLUnpack ( qt%mafCounter, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafCounter" )
-      end if
     else
       ! If it's minor frame and we've got mif geolocation information just point to that.
       if ( qt%minorFrame ) then
@@ -375,11 +343,6 @@ contains ! ================================== Module procedures ============
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime(1:1,:)
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith(1:1,:)
       end if
-      if ( qt%minorFrame .or. qt%majorFrame ) then
-        qt%mafIndex => mifGeolocation(qt%instrumentModule)%mafIndex
-        qt%mafCounter => mifGeolocation(qt%instrumentModule)%mafCounter
-      end if
-      
     end if
 
     call PVMIDLUnpack ( flag, info )
@@ -453,6 +416,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.16  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.15  2003/05/13 04:46:55  livesey
 ! Changed some integer packing to strings
 !
