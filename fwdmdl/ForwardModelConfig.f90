@@ -114,7 +114,8 @@ module ForwardModelConfig
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
-      ! >0 = beginning of a group or a lonesome molecule, <0 = member of a group
+      ! >0 = beginning of a group or a lonesome molecule, <0 = member of a group.
+      ! Size is one more than number in config; last one is a huge positive sentinel.
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     ! Now the derived types
@@ -258,7 +259,7 @@ contains
       ! a few that are germane to this fwdModelConf
       howManyPFA = 0
       do i = 1, size(pfaData)
-        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules)
+        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
           howManyPFA = howManyPFA + &
             & count(fwdModelConf%molecules(j) == PFAData(i)%molecules)
         end do
@@ -266,7 +267,7 @@ contains
       call allocate_test ( whichPFA, howManyPFA, 'whichPFA', moduleName )
       howManyPFA = 0
       do i = 1, size(pfaData)
-        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules)
+        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
           if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
             howManyPFA = howManyPFA + 1
             whichPFA(howManyPFA) = i
@@ -467,7 +468,7 @@ contains
       call PVMIDLPack ( config%firstPFA, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing index of first PFA molecule" )
       if ( size ( config%molecules ) > 0 ) then
-        do i = 1, size(config%molecules)
+        do i = 1, size(config%molecules) - 1
           call PVMPackLitIndex ( abs ( config%molecules(i) ), info )
           if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a molecule" )
           call PVMIDLPack ( (config%molecules(i) .gt. 0.0), info )
@@ -616,13 +617,14 @@ contains
       call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
       call Allocate_test ( config%moleculeDerivatives, &
         & n, 'config%moleculeDerivatives', ModuleName )
-      do i = 1, n
+      do i = 1, n - 1
         call PVMUnpackLitIndex ( config%molecules(i), info )
         if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule" )
         call PVMIDLUnpack ( flag, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule sign flag" )
         if ( .not. flag ) config%molecules(i) = - config%molecules(i)
       end do
+      config%molecules(n) = huge(config%molecules(n)) ! Sentinel
       call PVMIDLUnpack ( config%moleculeDerivatives, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
@@ -814,7 +816,7 @@ contains
     call output ( Config%temp_der, advance='yes' )
     call output ( '  Molecules: ', advance='yes' )
     if ( associated(Config%molecules) ) then
-      do j = 1, size(Config%molecules)
+      do j = 1, size(Config%molecules) - 1
         call output ( '    ' )
         if ( j == config%firstPFA ) call output ( 'PFA: ' )
         if ( Config%molecules(j) < 0 ) call output ( '-' )
@@ -871,6 +873,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.55  2004/08/03 21:40:06  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.54  2004/07/16 19:13:18  vsnyder
 ! Correct problem in dump routine
 !
