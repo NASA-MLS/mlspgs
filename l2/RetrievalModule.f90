@@ -1120,9 +1120,13 @@ contains
             call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
+                 ! Store what we've just got in v(f) ie fwdModelOut
                 call subtractFromVector ( v(f_rowScaled), measurements, &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock) ) ! f - y
+                call copyVector ( v(f), v(f_rowScaled), &
+                  & quant=jacobian%row%quant(rowBlock), &
+                  & inst=jacobian%row%inst(rowBlock), noMask=.true. )
                 !{Let $\bf W$ be the Cholesky factor of the inverse of the
                 ! measurement covariance ${\bf S}_m$ (which in our case is
                 ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
@@ -3022,6 +3026,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.172  2002/09/11 14:06:42  livesey
+! Bug fix, misunderstood meaning of v(f)
+!
 ! Revision 2.171  2002/09/11 01:14:47  livesey
 ! Added extra dump of | F |
 !
