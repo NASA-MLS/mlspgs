@@ -129,7 +129,7 @@ Radiometer Frequencies
 ; If two radiometers are given, this indicates a redundancy.
 ;
 R1A:118 110.706e3
-R1B:118 R1A:118 110.706e3
+R1B:118 110.706e3
 R2:190 191.9e3
 R3:240 239.66e3
 R4:640 642.87e3
@@ -249,9 +249,11 @@ END
 ; History
 ;
 ; $Log$
+; Revision 1.2  1999/11/08 23:16:58  livesey
+; Put under CVS for first time.
+;
 ; ------------------
-;    08-Nov-99 NJL Removed redundancy information for R1B. Also put
-;                  under CVS, for later log information see automatic
+;    08-Nov-99 NJL Put under CVS, for later log information see automatic
 ;                  stuff in dollar Log dollar above.
 ;    18-May-98 NJL Improved comments prior to telling people about the
 ;    file.
