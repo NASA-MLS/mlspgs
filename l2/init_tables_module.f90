@@ -175,10 +175,11 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: S_OUTPUT = 7
   integer, public, parameter :: S_QUANTITY = 8
   integer, public, parameter :: S_TEMPLATE = 9
-  integer, public, parameter :: S_TPFILL = 10
-  integer, public, parameter :: S_VECTOR = 11
-  integer, public, parameter :: S_VECTORTEMPLATE = 12
-  integer, public, parameter :: S_VGRID = 13
+  integer, public, parameter :: S_TIME = 10
+  integer, public, parameter :: S_TPFILL = 11
+  integer, public, parameter :: S_VECTOR = 12
+  integer, public, parameter :: S_VECTORTEMPLATE = 13
+  integer, public, parameter :: S_VGRID = 14
   integer, public, parameter :: SPEC_FIRST = s_Climatology, SPEC_LAST = s_vGrid
   integer, public :: SPEC_INDICES(spec_first:spec_last)
 
@@ -341,6 +342,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_template) =             add_ident ( 'template' )
+    spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectortemplate' )
@@ -418,6 +420,7 @@ contains ! =====     Public procedures     =============================
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
+      begin, s+s_time, n+n_spec_def, &
       begin, s+s_climatology, &
              begin, f+f_type, t+t_aprioriType, n+n_field_type, &
              begin, f+f_source, t+t_aprioriSource, n+n_field_type, &
@@ -515,16 +518,16 @@ contains ! =====     Public procedures     =============================
     !  > or
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
-      begin, z+z_globalsettings, &
+      begin, z+z_globalsettings, s+s_time, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def, &
              n+n_section, &
-      begin, z+z_readapriori, s+s_climatology, n+n_section, &
-      begin, z+z_mergeapriori, s+s_merge, n+n_section, &
-      begin, z+z_chunkdivide, &
+      begin, z+z_readapriori, s+s_time, s+s_climatology, n+n_section, &
+      begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
+      begin, z+z_chunkdivide, s+s_time, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
              begin, p+p_critical_scanning_modules, t+t_criticalModule, &
                     n+n_name_def, &
@@ -536,11 +539,12 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              n+n_section, &
-      begin, z+z_construct, s+s_vgrid, s+s_hgrid, s+s_quantity, &
+      begin, z+z_construct, s+s_time, s+s_vgrid, s+s_hgrid, s+s_quantity, &
              s+s_vectortemplate, n+n_section, &
-      begin, z+z_fill, s+s_vector, s+s_tpfill, s+s_create, n+n_section, &
-      begin, z+z_join, s+s_l2gp, s+s_l2aux, n+n_section, &
-      begin, z+z_output, s+s_output, n+n_section /) )
+      begin, z+z_fill, s+s_time, s+s_vector, s+s_tpfill, s+s_create, &
+             n+n_section, &
+      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
+      begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
 
 ! =====     Private procedures     =====================================
@@ -606,6 +610,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.2  2000/11/16 01:22:59  vsnyder
+! Add a "time" spec to every section.
+!
 ! Revision 2.1  2000/10/12 00:35:57  vsnyder
 ! Move intrinsic types and literals to "intrinsic" module
 !
