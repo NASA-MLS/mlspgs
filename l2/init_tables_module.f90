@@ -542,7 +542,7 @@ contains ! =====     Public procedures     =============================
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
              l+l_temperature_prec, n+n_dt_def, &
-      begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
+      begin, t+t_units, l+l_c, l+l_days, l+l_deg, l+l_degrees, &
              l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
              l+l_m, l+l_maf, l+l_mafs, l+l_mb, l+l_meters, l+l_mhz, &
@@ -820,6 +820,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.68  2001/04/09 20:59:05  vsnyder
+! Add C (for Celsius) unit and l_c name for it
+!
 ! Revision 2.67  2001/04/06 21:53:20  vsnyder
 ! Specify 'no duplicate fields' for s_forwardModel
 !
