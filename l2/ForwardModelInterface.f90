@@ -348,7 +348,7 @@ contains ! =====     Public Procedures     =============================
     case ( l_linear)
       if ( .not. all(got( (/f_molecules, f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
-      if ( any(got( (/f_atmos_der, f_do_conv, f_do_freq_avg, f_frequency /) )) ) &
+      if ( any(got( (/f_do_conv, f_do_freq_avg, f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
     end select
 
@@ -1265,7 +1265,7 @@ contains ! =====     Public Procedures     =============================
             &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
             &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt, si, center_angle, &
             &     Radiances(:, i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     thisRatio, Jacobian, &
+            &     thisRatio, Jacobian, fmStat%rows,  &
             &     antennaPatterns(1), ier )
           !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) goto 99
@@ -1274,7 +1274,7 @@ contains ! =====     Public Procedures     =============================
             &     windowStart, windowFinish, temp, ptan, radiance, &
             &     ForwardModelConfig%tangentGrid%surfs, &
             &     Radiances(:,i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     thisRatio, Jacobian )
+            &     thisRatio, Jacobian, fmStat%rows )
 
         end if
 
@@ -1438,6 +1438,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.123  2001/04/28 17:47:42  livesey
+! Passes row flags to convolve and no convolve
+!
 ! Revision 2.122  2001/04/28 01:44:09  vsnyder
 ! Make debugging output conditional on toggle(emit) etc.
 !
