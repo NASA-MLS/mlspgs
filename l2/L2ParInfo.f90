@@ -92,7 +92,7 @@ contains ! ==================================================================
       ! Register ourselves with the master
       ! Identify ourselves
       call output ( 'Task ID: ' )
-      call output ( trim(GetNiceTidString ( parallel%myTid ) ) )
+      call output ( trim(GetNiceTidString ( parallel%myTid ) ), advance='yes' )
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( SIG_Register, info )
       if ( info /= 0 ) &
@@ -249,6 +249,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.14  2002/07/17 20:01:42  livesey
+! Put an advance=yes in there
+!
 ! Revision 2.13  2002/07/17 19:54:52  livesey
 ! Made slaves at least identify themselves
 !
