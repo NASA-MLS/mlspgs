@@ -51,7 +51,7 @@ contains
     & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
 
     use DirectWrite_m, only: DirectData_T, &
-      & AddDirectToDatabase, SetupNewDirect
+      & AddDirectToDatabase, Dump, SetupNewDirect
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
     use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
@@ -442,7 +442,7 @@ contains
       Details = -2
     end if
     if( index(switches, 'glo') /= 0 ) &
-      & call dump_global_settings( processingRange, l1bInfo, &
+      & call dump_global_settings( processingRange, l1bInfo, DirectDatabase, &
       & LeapSecFileName, details )
 
     if ( error /= 0 ) &
@@ -540,7 +540,7 @@ contains
     end subroutine Announce_Error
 
     ! ------------------------------------------  dump_global_settings  -----
-    subroutine dump_global_settings ( processingRange, l1bInfo, &
+    subroutine dump_global_settings ( processingRange, l1bInfo, DirectDatabase, &
       & LeapSecFileName, dumpL1BDetails )
 
       ! Dump info obtained during OpenAndInitialize and global_settings:
@@ -557,6 +557,7 @@ contains
       type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
       ! type(PCFData_T) :: l2pcf
       type (TAI93_Range_T) :: processingRange ! Data processing range
+      type (DirectData_T), dimension(:), pointer :: DirectDatabase
 
       ! The following dtermines the level of detail to expose:
       ! -1 Skip even counterMAF
@@ -657,6 +658,7 @@ contains
         call output ( '(file unknown)', advance='yes' )
       end if
 
+      call dump(DirectDatabase, Details)
       call output ( ' ', advance='yes' )
       call output ( 'Start Time:   ' )
       call output ( l2pcf%startutc, advance='yes' )
@@ -741,7 +743,8 @@ contains
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root ) result (Direct)
     integer, intent(in) :: ROOT         ! Tree node
-    type (DirectData_T), pointer :: Direct
+    ! type (DirectData_T), pointer :: Direct
+    type (DirectData_T) :: Direct
     ! Local variables
     integer :: SON                      ! Tree node
     integer :: GSON                     ! Tree node
@@ -755,7 +758,7 @@ contains
     integer :: RETURNSTATUS
     logical, parameter :: DEEBUG = .false.
     ! Executable
-    nullify(Direct)
+    ! nullify(Direct)
     call SetupNewDirect(Direct, 0)
     l2gp_Version = 1
     do i = 2, nsons(root)               ! Skip DirectFileName command
@@ -767,10 +770,12 @@ contains
         Direct%Type = decoration(gson)
       case ( f_file )
         file = sub_rosa(subtree(2,son))
+        Direct%fileIndex = file
       end select
     end do
     call get_string ( file, filename, strip=.true. )
       call split_path_name(filename, path, file_base)
+      Direct%filenameBase = file_base
       if ( .not. TOOLKIT ) then
         Direct%handle = 0
         Direct%filename = filename
@@ -785,7 +790,7 @@ contains
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Direct%Filename)
       elseif ( Direct%Type ==  l_l2fwm  ) then
-        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+           Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
           & mlspcf_l2fwm_full_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Direct%Filename)
@@ -812,6 +817,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.77  2003/12/11 22:59:08  pwagner
+! May fill DirectWriteDatabase in global settings
+!
 ! Revision 2.76  2003/11/15 00:46:41  pwagner
 ! maxfailurespermachine, maxfailuresperchunk no longer configuration settings (see comline opts)
 !
