@@ -146,6 +146,8 @@ primary
 profiles
 ptan
 
+quality
+
 rad
 radiance
 radians
@@ -168,6 +170,7 @@ secondary
 seconds
 sizeDistribution
 spaceRadiance
+status
 strayRadiance
 surfaceType
 swath
@@ -196,6 +199,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.32  2004/02/10 21:16:46  livesey
+# Added status and quality
+#
 # Revision 2.31  2004/01/24 01:00:32  livesey
 # Added adopted
 #
