@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
-    use MLSFiles, only: HDFVERSION_5, &
+    use MLSFiles, only: HDFVERSION_5, NAMENOTFOUND, &
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
@@ -452,6 +452,7 @@ contains ! =====     Public Procedures     =============================
       call split_path_name(filename, path, file_base)
       if ( .not. TOOLKIT ) then
         handle = 0
+        returnStatus = 0
       elseif ( any ( outputType == (/ l_l2gp /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
@@ -473,6 +474,9 @@ contains ! =====     Public Procedures     =============================
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
       end if
+      if ( returnStatus /= 0 ) call MLSMessage ( &
+         & MLSMSG_Error, ModuleName, &
+         & 'Failed in GetPCFromRef for ' // trim(filename) )
 
       if ( createFileFlag ) then
         fileaccess = DFACC_CREATE
@@ -1357,6 +1361,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.94  2003/10/10 00:00:24  pwagner
+! Should quit properly if SIPS and no PCFid match for file name
+!
 ! Revision 2.93  2003/09/12 21:45:52  pwagner
 ! Only prints l2gp label during DirectWrite if DEEBUG
 !
