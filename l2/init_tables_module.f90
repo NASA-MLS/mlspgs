@@ -175,7 +175,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2GP 	        = l_l2aux + 1
-  integer, parameter :: L_LINEAR        = l_l2gp + 1
+  integer, parameter :: L_L2PC          = l_l2gp + 1
+  integer, parameter :: L_LINEAR        = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC   = l_linear + 1
   integer, parameter :: L_NCEP 	        = l_logarithmic + 1
   integer, parameter :: L_NEITHER       = l_ncep + 1
@@ -341,6 +342,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_l1b) =                   add_ident ( 'l1b' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
     lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
+    lit_indices(l_l2pc) =                  add_ident ( 'l2pc' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
     lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
     lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
@@ -547,7 +549,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def /) )
+      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_losVel, l+l_orbitIncline, l+l_ptan,&
@@ -724,7 +726,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_l2pc, n+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -847,6 +849,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.82  2001/04/25 20:34:19  livesey
+! Now supports writing of l2pc files
+!
 ! Revision 2.81  2001/04/24 20:05:07  livesey
 ! Added l2pc joining
 !
