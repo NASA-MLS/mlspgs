@@ -18,16 +18,23 @@
     else
       j = 1
       S = 0.0_rk
-      do while ( j < N )
+      do
         k = j + 2
-        if ( k <= N ) S = S + f(j) + 4.0_rk * f(j+1) + f(k)
-        j = k
+        if ( k <= N ) then
+          S = S + f(j) + 4.0_rk * f(j+1) + f(k)
+          j = k
+        else
+          EXIT
+        endif
       end do
       R = S * dx / 3.0_rk
-      if ( j > N ) R = R + dx * (f(N-1) + f(N)) / 2.0_rk
+      if ( j < N ) R = R + dx * (f(N-1) + f(N)) / 2.0_rk
     endif
     Return
 ! $Log$
+! Revision 2.1  2002/03/21 23:35:36  zvi
+! Fixing minor bug & making it more efficient
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
