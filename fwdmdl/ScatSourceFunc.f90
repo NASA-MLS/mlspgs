@@ -9,7 +9,7 @@ module ScatSourceFunc
 
   implicit NONE
   private
-  public :: T_Scat
+  public :: T_Scat, Interp_Tscat, Convert_grid
 
  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm =                          &
@@ -22,7 +22,8 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT, Scat_alb )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, &
+                     & TB_SCAT, Scat_alb, Cloud_ext, THETA )  
 
       use Cloud_extinction,    only: Get_beta_cloud
       use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
@@ -48,6 +49,7 @@ contains
       
       real(rk), intent(inout) :: TB_scat(:,:)  ! TB FROM SCATTERING PHASE FUNCTION
       real(rk), intent(inout) :: Scat_alb(:,:) ! Single Scattering albedo 
+      real(rk), intent(inout) :: Cloud_ext(:,:) ! Cloud extinction
 
     ! Local variables
       real(rk), parameter :: COLD = 2.7_rk   ! kelvins
@@ -70,13 +72,13 @@ contains
       real(rk) :: RSAVG
       real(rk) :: RS( NU/2 )
       real(rk) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
-      real(rk) :: TB( NU, size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
+      real(rk) :: TB( NU, size(TEMP_AIR) )! TB IN FLAT PLANE GEOMETRY
                                           ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
       real(rk) :: TB0 ( NU )   ! TB AT THE SURFACE
       real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
       real(rk) :: TGT
       real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
-      real(rk) :: THETA(NU)    ! SCATTERING ANGLES
+      real(rk) , intent(inout) :: THETA(:)    ! SCATTERING ANGLES
       real(rk) :: TSCAT(NU,size(Z))
       real(rk) :: Tsource
       real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
@@ -115,7 +117,7 @@ contains
       TB_scat = 0.0_rk
       Tscat   = 0.0_rk
       tsource = 0.0_rk
-
+      Scat_alb= 0.0_rk
 !--------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
 !--------------------------------------------------
@@ -130,10 +132,12 @@ contains
       tspace = cold / rrexp(h_over_k * freq / cold)
 
       call ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
-      
+
       WC=0.0
       PHH=0.0
       cld_ext=0.0
+      W0=0.0_rk
+      Cloud_ext =0.0_rk
 !      WC(1,10) = 0.01   !test only
 !      WC(1,11) = 0.01   !test only
       dtau =0.0
@@ -156,6 +160,7 @@ contains
             dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))            
         endif
         W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
+        Cloud_ext(K,1) = cld_ext
       end do
       dtau(1)=dtau(2) 
       dtau(L)=dtau(L-1)
@@ -301,6 +306,70 @@ contains
 
   end subroutine T_SCAT
 
+  subroutine Interp_Tscat (TB_SCAT, THETA, PHI_angle, TT_SCAT)
+
+      use Interpack,           only: LOCATE
+      use MLSCommon,           only: RK => R8 ! working REAL kind
+      use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,     only: Angle
+      use Units,               only: Pi
+
+    ! Arguments
+      real(rk), intent(in) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(in) :: THETA(:)       ! Scattering angles 
+      real(rk), intent(in) :: PHI_angle(:)   ! Phi Angles
+      real(rk), intent(inout) :: TT_scat(:,:)! 
+      real(rk) :: PHI_90(size(PHI_angle))
+      real(rk) :: WK, eta
+      INTEGER :: I, JM, No_ele, No_ang
+!-----------------------------------------------------------------------------
+
+      No_ele= size(PHI_angle)
+      No_ang= size(THETA)
+
+      PHI_90 = pi + PHI_angle
+
+      DO I=1, No_ele
+
+          CALL LOCATE ( THETA, No_ang, No_ang, PHI_90(I), JM )
+          TT_SCAT(I,1) = ( TB_SCAT(I,JM)   * (THETA(JM+1)-PHI_90(I)) + &
+                       &   TB_SCAT(I,JM+1) * (PHI_90(I)-THETA(JM)) ) / &
+                       &   (THETA(JM+1)-THETA(JM))
+      ENDDO
+
+  end subroutine Interp_Tscat
+
+  subroutine Convert_grid ( salb_path, cext_path, path_inds, beta_path_cloud, w0_path )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: R8, RP, IP
+
+    real(rp), intent(in) :: Salb_path(:,:) ! single scattering albedo gl grids  
+    real(rp), intent(in) :: Cext_path(:,:) ! cloud extinction on gl grids
+    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+
+    real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction on coarse grids
+    real(rp), intent(out) :: w0_path(:)         ! single scattering albedo coarse grids
+
+    integer(ip) :: j, k, n_path
+
+! ---------------------------------------------------------------------------------
+
+    beta_path_cloud = 0.0_rp
+    w0_path         = 0.0_rp
+
+    n_path = size(path_inds)
+
+    do j = 1, n_path
+
+       k = path_inds(j)
+       beta_path_cloud(j) = beta_path_cloud(j) + Cext_path(k,1)
+       w0_path(j)         = w0_path(j)         + Salb_path(k,1)     
+            
+    end do
+
+  end subroutine Convert_grid
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -308,6 +377,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.7  2003/12/01 17:25:02  jonathan
+! add scat alb
+!
 ! Revision 2.6  2003/11/19 22:22:03  jonathan
 ! some update
 !

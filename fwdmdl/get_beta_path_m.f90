@@ -300,7 +300,7 @@ contains
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
   subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,                 &
         & beta_group, path_inds, beta_path_cloud,                       &
-        & beta_path_w0,  beta_path_phh,                                 & 
+        & w0_path,                                                 & 
         & IPSD, WC, fwdModelConf  )
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
@@ -327,8 +327,7 @@ contains
 ! outputs
 
     real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction
-    real(rp), intent(out) :: beta_path_w0(:)    ! single scattering albedo
-    real(rp), intent(out) :: beta_path_phh(:,:)   ! phase function
+    real(rp), intent(out) :: w0_path(:)    ! single scattering albedo
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -353,8 +352,7 @@ contains
     n_path = size(path_inds)
 
     beta_path_cloud = 0.0
-    beta_path_w0    = 0.0
-    beta_path_phh   = 0.0
+    w0_path    = 0.0
 
         do j = 1, n_path
           k = path_inds(j)
@@ -364,9 +362,8 @@ contains
                           &  cld_ext, W0, PHH                )      
 
             beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
-            beta_path_w0(j) = beta_path_w0(j) + W0 
-            beta_path_phh(j,:) = beta_path_phh(j,:) + PHH(:) 
-            
+            w0_path(j) = w0_path(j) + W0 
+
          end do
 
   end subroutine Get_Beta_Path_Cloud
@@ -978,6 +975,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.47  2003/08/20 21:12:39  bill
+! fixed tanh1 bug associated with T-ders
+!
 ! Revision 2.46  2003/07/15 17:50:30  vsnyder
 ! Callers need t_der_path_flags to be a pointer
 !
