@@ -268,7 +268,7 @@ contains
                              k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
                              k_spect_dnu_frq(Nsps)
     !
-    Type(path_beta), DIMENSION(:,:), POINTER :: beta_path
+    Type(path_beta), DIMENSION(:,:), POINTER :: beta_path => null()
 
     Real(r8) :: Radiances(Nptg,Nch)
     Real(r8) :: e_rad, Zeta, Frq, h_tan, Rad, geoc_lat, r
@@ -805,6 +805,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.12  2001/03/09 01:49:31  zvi
+! *** empty log message ***
+!
 ! Revision 2.11  2001/03/09 01:08:07  zvi
 ! *** empty log message ***
 !
