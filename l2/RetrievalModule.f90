@@ -1530,8 +1530,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                      sensitivity = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
 
-                     if(mif==1) print*,mif,ich,k,sensitivity
-                     if(abs(sensitivity) < 10._r8) print*,mif,ich,k,slope%values(1:nFreqs,fmStat%maf)
+                     ! in case we go into ambiguity altitudes with small sensitivity
+                     if(abs(sensitivity) < 1._r8) sensitivity = 1._r8
+                     
                      teff = y(ich,mif)/sensitivity
                      if(teff > 1._r8) teff = 1._r8
                            
@@ -2073,6 +2074,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.99  2001/10/19 17:42:36  dwu
+! add protection for cloud sensitivity from going to zero
+!
 ! Revision 2.98  2001/10/18 23:25:13  dwu
 ! rename FillQuantityFromLos to BinFromLOS2Grid
 !
