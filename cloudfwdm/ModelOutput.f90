@@ -133,8 +133,8 @@ contains
             HT = ZT(I)
             if(HT .gt. yz(nh-1)) cycle    ! don't compute for large Zt  
             
-               do j=nh,2,-1
-                  if (yz(j) .le. ht) then
+               do j=2,NH
+                  if (yz(j) .GE. ht) then
                      iflag=j
                      goto 100
                   endif
@@ -195,6 +195,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.12  2001/10/24 22:09:53  dwu
+! provent cases where tangent heights are greater than model top
+!
 ! Revision 1.11  2001/10/19 19:39:49  dwu
 ! fix bug after changes
 !
