@@ -33,7 +33,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
   integer, parameter :: F_radiometer        = f_module + 1
-  integer, parameter :: F_spacecraft        = f_radiometer + 1
+  integer, parameter :: F_sideband          = f_radiometer + 1
+  integer, parameter :: F_spacecraft        = f_sideband + 1
   integer, parameter :: F_spectrometer      = f_spacecraft + 1
   integer, parameter :: F_spectrometerType  = f_spectrometer + 1
   integer, parameter :: F_start             = f_spectrometerType + 1
@@ -86,6 +87,7 @@ contains
     field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_radiometer) =          add_ident ( 'radiometer' )
+    field_indices(f_sideband) =            add_ident ( 'sideband' )
     field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
@@ -177,6 +179,7 @@ contains
              ndp+n_spec_def, &
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
+             begin, f+f_sideband, t+t_sideband, n+n_field_type, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
@@ -224,6 +227,8 @@ contains
           select case ( which )
           case ( f/1000 ) ! Fields
             string = field_indices(item)
+          case ( l/1000 ) ! Enumeration literals
+            string = lit_indices(item)
           case ( s/1000 ) ! Specs
             string = spec_indices(item)
           case ( t/1000 ) ! Intrinsic data types
@@ -257,6 +262,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.5  2001/03/16 02:00:40  vsnyder
+! Add support for literals to Make_Tree (duh!)
+!
 ! Revision 2.4  2001/03/16 01:02:32  vsnyder
 ! ... Including the Log at the end.
 !
