@@ -178,7 +178,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & 'Cannot call the full cloud forward model with multiple signals' )
     signal = forwardModelConfig%signals(1)
     maf = fmStat%maf
-    print*, maf
+!    print*, maf
 
     ! For the moment make it only single sideband
     if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
@@ -400,13 +400,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       if(ivmr==0) then
         cycle
       endif
-      print*, 'i: ', i, 'about to get vmr for molecule of i'
+!      print*, 'i: ', i, 'about to get vmr for molecule of i'
       vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
         & quantityType=l_vmr, molecule=forwardModelConfig%molecules(i) )
       if (.not.ValidateVectorQuantity( vmr, stacked=.true., coherent=.true., &
         & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
         & ModuleName, InvalidQuantity//'vmr' )
-      print*, 'i: ', i, 'got vmr for molecule of i'
+!      print*, 'i: ', i, 'got vmr for molecule of i'
 
       call FindClosestInstances ( vmr, radiance, closestInstances )
       vmrInst = closestInstances(maf)
@@ -446,13 +446,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Allocate_test ( a_totalExtinction,                                  &
       & temp%template%noSurfs, noFreqs,                                      &
       & 'a_totalExtinction', ModuleName )
-
     call Allocate_test ( a_cloudExtinction,                                  &
       & temp%template%noSurfs, noFreqs,                                      &
       & 'a_cloudExtinction', ModuleName )
     call Allocate_test ( a_massMeanDiameter,                                 &
       & 2, temp%template%noSurfs,                                            &
       & 'a_massMeanDiameter', ModuleName )
+    call Allocate_test ( a_Trans,                                 &
+      & temp%template%noSurfs, noFreqs,                                   &
+      & 'a_trans', ModuleName )
     
     ! Now call the full CloudForwardModel code
 
@@ -470,8 +472,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
-    print*, ' '
-    print*,'No. of Frequencies:', noFreqs 
+!    print*, ' '
+!    print*,'No. of Frequencies:', noFreqs 
 !    print*, frequencies/1e3_r8
 
     call CloudForwardModel (                                                 &
@@ -495,6 +497,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%cloud_width,                                      &
       & a_clearSkyRadiance,                                                  &
       & a_cloudInducedRadiance,                                              &
+      & a_trans,                                                   &
       & a_totalExtinction,                                                   &
       & a_cloudExtinction,                                                   &
       & a_massMeanDiameter,                                                  &
@@ -582,7 +585,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         noChans = radiance%template%noChans
         noMIFs = radiance%template%noSurfs
-        noSgrid=stateQ%template%nosurfs
+        noSgrid=stateQ%template%noChans
 
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
         fmStat%rows(rowJBlock) = .true.
@@ -591,7 +594,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
            jacobian%col%inst(colJBlock) /= maf)
            colJBlock = colJBlock +1 
         end do
-!       colJBlock = FindBlock ( jacobian%col, stateQ%index, maf)
+
         jBlock => jacobian%block(rowJblock,colJblock)
 
         instanceLen = noSurf*noMIFs
@@ -603,8 +606,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                          & M_Full )
         jBlock%values = 0.0_r8
 
-!        allocate(TransOnS,noSgrid,noMIFs,stat=status)     !this is wrond
-         allocate( TransOnS(noSgrid, noMIFs), stat=status )
+        allocate( TransOnS(noSgrid, noMIFs), stat=status )
 
        ! Now fill the jacobian
             
@@ -614,23 +616,24 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                     
           call FindTransForSgrid (                                   &
                       &     ptan%values(:,maf),                      &
-                      &     earthradius%values(1,maf),               &
+                      &     earthradius%values(1,maf)*1.e-3_r8,               &
                       &     noMIFs,                                  &
-                      &     gph%template%noSurfs,                    &
+                      &     temp%template%noSurfs,                   &
                       &     noSgrid,                                 &
                       &     gph%template%Surfs,                      &
-                      &     a_totalExtinction(:,chan),               &
+                      &     a_trans(:,chan),               &
                       &     stateQ%template%frequencies,             &
                       &     TRANSonS )                
 
-            do mif = 1, noMIFs
+                    do mif = 1, noMIFs
                     do i=1,noSgrid
                      jBlock%values(chan+(mif-1)*noChans,i+(mif-1)*noSgrid) &
                        & = TransOnS(i,mif)
                     end do
                     end do
-                  end do
-               Deallocate(TransOnS,stat=status)
+         end do
+
+              Deallocate(TransOnS,stat=status)
 
 
               case ( M_Banded, M_Column_Sparse )
@@ -647,6 +650,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'a_massMeanDiameter',           ModuleName )
     call Deallocate_test ( a_cloudExtinction,                                &
                           'a_cloudExtinction',            ModuleName )
+    call Deallocate_test ( a_trans,                                &
+                          'a_trans',            ModuleName )
     call Deallocate_test ( a_totalExtinction,                                &
                           'a_totalExtinction',            ModuleName )
     call Deallocate_test ( a_cloudRADSensitivity,                            &
@@ -661,9 +666,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'vmrArray',                     ModuleName )
     call Deallocate_test ( closestInstances,                                 &
                           'closestInstances',             ModuleName )
-    print*, ' '
-    print*, 'Time Instance: ', instance
-    print*, 'Successful done with full cloud forward wapper !'
+!    print*, ' '
+!    print*, 'Time Instance: ', instance
+!    print*, 'Successful done with full cloud forward wapper !'
 !    stop
 
     if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
@@ -691,7 +696,7 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
   real(r8) :: TRANSonS(NS,NT)
 
   real(r8) :: zt(nt),x_out(ns)
-
+    TransOns = 0._r8
     zt = (pt+3.)*16.                      ! converted to height in km
     do mif=1,nt
 
@@ -702,11 +707,16 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 
       CALL INTERPOLATEVALUES(Zlevel,TransOnZ,x_out,TransOnS(:,mif),method='Linear')
 
-    enddo
 
+     enddo
+
+                    
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.20  2001/08/01 17:24:29  jonathan
+! updated version
+!
 ! Revision 1.19  2001/08/01 00:20:22  dwu
 ! add Jacobian -Jonathan/Wu
 !

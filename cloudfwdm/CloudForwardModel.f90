@@ -2,7 +2,7 @@
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
              &   WCin, IPSDin,                                    &
              &   ZT, RE, ISURF, ISWI, ICON,                       &
-             &   TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,         &
+             &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
              &   NU, NUA, NAB, NR)
 
 !============================================================================C
@@ -174,6 +174,7 @@
       REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
                                                ! (NT+1) FOR ZENITH LOOKING) 
 
+      REAL(r8) :: Trans(NZ-1,NF)               ! Clear Trans Func
       REAL(r8) :: BETA(NZ-1,NF)                ! TOTAL OPTICAL DEPTH
       REAL(r8) :: BETAc(NZ-1,NF)               ! CLOUDY OPTICAL DEPTH
 
@@ -252,6 +253,7 @@
       REAL(r8) :: DEPTH                        ! TOTAL OPTICAL DEPTH
                                                ! (CLEAR+CLOUD)
 
+      REAL(r8) :: delTAU100(NZmodel-1)         ! TOTAL AIR EXTINCTION for 100%RHi
       REAL(r8) :: delTAU(NZmodel-1)            ! TOTAL EXTINCTION
       REAL(r8) :: delTAUc(NZmodel-1)           ! CLOUDY-SKY EXTINCTION
       
@@ -267,7 +269,8 @@
       INTEGER :: IL
       INTEGER :: ISPI
       INTEGER :: IIWC
-      INTEGER :: ICLD_TOP
+      INTEGER :: ICLD_TOP                     ! cloud top index
+      INTEGER :: I100_TOP                     ! 100 mb index
       INTEGER :: MY_NIWC
       INTEGER :: L
 
@@ -299,8 +302,7 @@
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
-      CALL HEADER(1)
-      RE = 6370000._r8
+!      CALL HEADER(1)
 
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
@@ -376,27 +378,27 @@
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
-         CALL HEADER(3)
+!         CALL HEADER(3)
 
 !-----------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
 !-----------------------------------------------------
 
-         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
-            IF(CHK_CLD(IL) .NE. 0._r8)THEN
-               ICLD_TOP=IL
-               IF(YZ(IL) .LT. 20.)THEN
-                  TAU0(IL)=TAU100(IL)
-               ENDIF
-            ENDIF
+         ICLD_TOP = 0
+         DO IL=1, NZmodel-1 
+            IF(CHK_CLD(IL) .NE. 0._r8) ICLD_TOP=IL
+            IF(YP(IL) .LE. 100._r8) I100_TOP=IL
          ENDDO
 
-         IF (ICON .EQ. 1) THEN
-            DO IL=1,ICLD_TOP             ! 100% SATURATION BELOW CLOUD 
-               TAU0(IL)=TAU100(IL)       
+         IF (ICON .GE. 1) THEN
+            DO IL=1,MAX(ICLD_TOP,I100_TOP)          ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)      
             ENDDO
          ENDIF   
 
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)             ! 100% SATURATION BELOW CLOUD 
+            delTAU100(IL)=TAU100(IL)      
+         ENDDO
 !--------------------------------------------------------
 
          DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
@@ -473,6 +475,7 @@
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
             DEPTH=RC_TOT(3)*Z(ILYR)
 
+            delTAU100(ILYR) = TAU100(ILYR)
             delTAU(ILYR) = max(0._r8, DEPTH )
             delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
 
@@ -482,7 +485,7 @@
 !    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
 !==================================================
 
-         CALL HEADER(4)
+!         CALL HEADER(4)
 
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -507,8 +510,8 @@
             CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
            
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &            delTAU,delTAUc,TAUeff(:,IFR),SS(:,IFR),               &
-              &            BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ,            &
+              &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
+              &            Trans(:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
               &            N,ISWI,RE) ! COMPUTE SENSITIVITY
 
 

@@ -1,7 +1,6 @@
-
-      SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
-        &                    delTAU,delTAUc,TAUeff,SS,          &
-        &                    BETA,BETAc,DDm,Dm,DDZ,DZ,          &
+SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
+        &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
+        &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
         &                       N,ISWI,RE)
 !----------------------------------------------------------------
 
@@ -17,9 +16,11 @@
       REAL(r8) :: TAUeff(NT)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
       REAL(r8) :: Trans(NH-1)                      ! Clear Transmission Func 
+      REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR EXTINCTION 
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
 
+      REAL(r8) :: Trans_out(NZ-1)            ! TOTAL Clear Trans Func
       REAL(r8) :: BETA(NZ-1)                     ! TOTAL EXTINCTION
       REAL(r8) :: BETAc(NZ-1)                    ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
@@ -40,9 +41,9 @@
       DO I=1,NH-1
         TRANS(I)=0._r8
       ENDDO
-        TRANS(NH-1) = DELTAU(NH-1)-DELTAUc(NH-1)
+        TRANS(NH-1) = DELTAU100(NH-1)
       DO I=NH-2,1,-1
-        TRANS(I)=TRANS(I+1)+DELTAU(I)-DELTAUc(I)   ! only clear sky absorption
+        TRANS(I)=TRANS(I+1)+DELTAU100(I)   ! only clear sky absorption
       ENDDO
 
       Trans = exp(- Trans)
@@ -62,13 +63,11 @@
       
          CALL LOCATE (ZH,NH-1, NH-1, ZA(J),JM)
          
-! If we want to output total beta
-!         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
-!     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
-
-! if we want to output air transmission function             
-         BETA(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
+         Trans_out(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
      &                TRANS(JM+1))/(ZH(JM+1)-ZH(JM))
+     
+         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
+     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
 
          BETAc(J)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
      &                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
