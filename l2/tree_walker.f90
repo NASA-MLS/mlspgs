@@ -94,7 +94,7 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-        call set_global_settings ( son, forwardModelConfigDatabase, vGrids )
+        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, l2gpDatabase )
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
         if ( toggle(emit) ) call test_parse_signals
@@ -115,7 +115,7 @@ subtrees: do while ( j <= howmany )
             select case ( decoration(subtree(1,son)) ) ! section index
             case ( z_construct )
               call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                & qtyTemplates, vectorTemplates, vGrids, mifGeolocation )
+                & qtyTemplates, vectorTemplates, vGrids, l2gpDatabase, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
                 & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
@@ -158,6 +158,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.35  2001/04/20 17:12:38  livesey
+! Add vGrids argument to fill to support fill from vGrid
+!
 ! Revision 2.34  2001/04/19 23:51:40  pwagner
 ! Moved anText to become component of PCFData_T
 !
