@@ -8,6 +8,7 @@ module ModelOutput
 ! OUTPUT CLOUD EXTINCTION, EFFECTIVE OPTICAL DEPTH, AND RADIANCE SENSITIVITY
 ! ---------------------------------------------------------------------------
 
+      use Interpack, only: LOCATE
       use MLSCommon, only: r8
       IMPLICIT NONE
       private

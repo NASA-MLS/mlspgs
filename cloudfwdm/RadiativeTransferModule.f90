@@ -8,6 +8,7 @@ module RadiativeTransferModule
 ! -------------------------------------------------------------------------
 
       use Blackbody, only: planck
+      use Interpack, only: LOCATE
       use MLSCommon, only: r8      
       IMPLICIT NONE
       Private
