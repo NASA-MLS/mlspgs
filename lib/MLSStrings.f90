@@ -39,6 +39,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
+! writeIntsToChars   Converts an array of ints to strings using Fortran write
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -57,6 +58,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! strings2Ints (char* strs(:), int ints(:,:))
+! writeIntsToChars (int ints(:), char* strs(:))
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
@@ -76,7 +78,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & LowerCase, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Reverse, &
-   & SplitWords, strings2Ints
+   & SplitWords, strings2Ints, &
+   & writeIntsToChars
 
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
@@ -646,6 +649,36 @@ contains
 
   END SUBROUTINE strings2Ints
 
+  ! --------------------------------------------------  writeIntsToChars  -----
+  SUBROUTINE writeIntsToChars (ints, strs)
+    ! takes an array of integers and returns string array
+    ! using Fortran "write"
+    ! If any element of string array is blank or contains one of forbiddens
+    ! the corresponding element of ints is left undefined
+	 ! Not useful yet
+	 !
+    !--------Argument--------!
+    !    dimensions are (len(strs(1)), size(strs(:)))
+    character (LEN=*), intent(out), dimension(:) ::   strs
+    integer, intent(in), dimension(:)            ::   ints
+
+    !----------Local vars----------!
+    integer :: i, j, arrSize
+    logical :: leave_undef
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   arrSize = MIN(size(strs), size(ints))
+   if ( arrSize <= 0 ) then
+     strs = ' '
+     return
+   endif
+   do i=1, arrSize
+      write(strs(i), *) ints(i)
+   enddo
+
+  END SUBROUTINE writeIntsToChars
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -654,6 +687,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.46  2004/09/16 00:15:52  pwagner
+! Added writeIntsToChars
+!
 ! Revision 2.45  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
