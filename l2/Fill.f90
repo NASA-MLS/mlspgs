@@ -23,7 +23,7 @@ module Fill                     ! Create vectors and fill them.
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_FILL, S_MATRIX, S_SNOOP, S_TIME, S_VECTOR
   ! Now some arrays
-  use Init_Tables_Module, only: Lit_Indices
+  use Intrinsic, only: Lit_Indices
   !??? will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
@@ -117,11 +117,13 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
-    "$id: fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
-  character (len=*), parameter :: ModuleName= "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! This module performs the Fill operation in the Level 2 software.  
   ! This takes a vector template, and creates and fills an appropriate vector
@@ -1538,6 +1540,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.43  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.42  2001/04/24 23:12:02  livesey
 ! Made spread more flexible
 !
