@@ -19,6 +19,7 @@
 # -k            if keeping old A, keep old B, too
 #                (as no diff betw. old and new B, means keep date of old B)
 # -nr           leave no record file
+# -x n          ignore actual error status from command: exit with "n"
 # -h[elp]       print brief help message; exit
 # old_A         the file to be conditionally replaced
 # old_B         the file to be compared with new_B
@@ -39,6 +40,9 @@
 #(2) Because the option, "-a", is legal to gnu diff, but not to Sun's diff
 #    we have ceased relying on it; instead we use the octal dump routine od
 #    if your platform/os doesn't support it please let me know
+#(3) Unless you specify otherwise, using the -x n option,
+#    the script will attempt to pass the exit status of command back to
+#    whoever called it
 #
 #Record file
 #file name: newAifBdiff.out
@@ -159,6 +163,9 @@ my_name=newAifBdiff.sh
 record_file=newAifBdiff.out
 the_status="undefined"
 DEEBUG="no"
+NORMAL_STATUS=0
+MUST_EXIT_STATUS=""
+return_status=0
 
 wrong_list=""
 more_opts="yes"
@@ -180,6 +187,11 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
     -nr )
        keepRecords="no"
+       shift
+	;;
+    -x )
+       shift
+       MUST_EXIT_STATUS=`expr $1`
        shift
 	;;
     * )
@@ -210,6 +222,7 @@ fi
 if [ "$DEEBUG" = "yes" ]; then
   echo "old_A: $old_A"
   echo "old_B: $old_B"
+  echo "MUST_EXIT_STATUS: $MUST_EXIT_STATUS"
   echo "the_command: $the_command"
   echo "the_args: $@"
   echo "ASameAsB: $ASameAsB"
@@ -224,11 +237,13 @@ if [ "$oldBExists" = "no" ]; then
 # There's no old B => automatically new and old B differ, so need new A
     message="There is no old B => automatically need new A"
   "$the_command" "$@"
+  return_status=`expr $?`
   the_status="new"
 elif [ "$ASameAsB" = "yes" ]; then
 # A and B the same, so check if new A diff from old
   mv "$old_A" "$old_A.1"
   "$the_command" "$@"
+  return_status=`expr $?`
 #  the_diff=`diff -a $old_A $old_A.1 | wc -l`
 #  what_diff_opt $old_A
 #  echo diff $diff_opt $old_A $old_A.1 | wc -l
@@ -246,6 +261,7 @@ elif [ "$ASameAsB" = "yes" ]; then
 elif [ "$oldAExists" = "no" ]; then
 # There's no old A so need new A
   "$the_command" "$@"
+  return_status=`expr $?`
     message="There is no old A => automatically need new A"
     the_status="new"
 else
@@ -253,6 +269,7 @@ else
   mv "$old_A" "$old_A.1"
   mv "$old_B" "$old_B.1"
   "$the_command" "$@"
+  return_status=`expr $?`
 #  the_diff=`diff -a $old_B $old_B.1 | wc -l`
 #  what_diff_opt $old_B
 #  echo diff $diff_opt $old_B $old_B.1 | wc -l
@@ -279,8 +296,25 @@ fi
 if [ "$keepRecords" = "yes" ]; then    
   echo "$old_A   $the_status" >> "$record_file"
 fi
-exit
+
+# What status must we exit with?
+#echo "MUST_EXIT_STATUS: $MUST_EXIT_STATUS"
+#echo "return_status: $return_status"
+#echo "NORMAL_STATUS: $NORMAL_STATUS"
+if [ "$MUST_EXIT_STATUS" != "" ]; then    
+#   echo "exiting with status $MUST_EXIT_STATUS (special)"
+   exit "$MUST_EXIT_STATUS"
+elif [ "$return_status" != "$NORMAL_STATUS" ]; then
+#   echo "exiting with status 1"
+   exit 1
+else
+#   echo "exiting with status 0"
+   exit 0
+fi
 # $Log$
+# Revision 1.4  2002/06/25 18:04:17  pwagner
+# Relies on octal dump routine instead of -a option to diff
+#
 # Revision 1.3  2002/06/21 20:32:06  pwagner
 # Conditionally passes option -a to diff
 #
