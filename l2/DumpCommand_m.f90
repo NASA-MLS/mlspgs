@@ -38,19 +38,21 @@ contains
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, F_AllPFA, &
-      & F_AllQuantityTemplates, F_AllVectors, F_AllVectorTemplates, &
-      & F_AllVGrids, F_AntennaPatterns, F_Details, F_DACSFilterShapes, &
-      & F_FilterShapes, F_ForwardModel, F_HGrid, F_PfaData, &
-      & F_PointingGrids, F_Quantity, F_Spectroscopy, F_Template, F_TGrid, &
-      & F_Vector, F_VGrid, S_Quantity, S_VectorTemplate
+    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, F_AllLines, &
+      & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
+      & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
+      & F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, F_HGrid, &
+      & F_Lines, F_PfaData, F_PointingGrids, F_Quantity, F_Signals, F_Spectroscopy, &
+      & F_Stop, F_Template, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
+      & S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MLSSignals_m, only: Dump, Signals
     use Output_M, only: Output
     use PFADataBase_m, only: Dump, Dump_PFADataBase, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
-    use SpectroscopyCatalog_m, only: Catalog, Dump
+    use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
@@ -81,8 +83,10 @@ contains
     integer, parameter :: Dimless = 1
     integer, parameter :: NoFWM = dimless + 1
     integer, parameter :: NoHGrid = NoFWM + 1
-    integer, parameter :: NoQT = noHGrid + 1
-    integer, parameter :: NoTG = noQT + 1
+    integer, parameter :: NoLines = noHGrid + 1
+    integer, parameter :: NoQT = noLines + 1
+    integer, parameter :: NoSignals = noQT + 1
+    integer, parameter :: NoTG = noSignals + 1
     integer, parameter :: NoVectors = noTG + 1
     integer, parameter :: NoVG = noVectors + 1
     integer, parameter :: NoVT = noVG + 1
@@ -95,9 +99,10 @@ contains
       fieldIndex = get_field_id(son)
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
-      case ( f_allForwardModels, f_allHGrids, f_allPFA, f_allQuantityTemplates, &
-        & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids, f_spectroscopy )
+      case ( f_allForwardModels, f_allHGrids, f_allLines, f_allPFA, &
+        & f_allQuantityTemplates, f_allSignals, f_allSpectra, f_allVectors, &
+        & f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
+        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids, f_stop )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allForwardModels )
@@ -112,6 +117,12 @@ contains
             else
               call announceError ( son, noHGrid )
             end if
+          case ( f_allLines )
+            if ( associated(lines) ) then
+              call dump_lines_database
+            else
+              call announceError ( son, noLines )
+            end if
           case ( f_allPFA )
             call Dump_PFADataBase ( details )
           case ( f_allQuantityTemplates )
@@ -120,6 +131,14 @@ contains
             else
               call announceError ( son, noQT )
             end if
+          case ( f_allSignals )
+            if ( associated(signals) ) then
+              call dump ( signals, details=details>0 )
+            else
+              call announceError ( son, noSignals )
+            end if
+          case ( f_allSpectra )
+            call dump ( catalog, details=details )
           case ( f_allVectors )
             if ( present(vectors) ) then
               call dump ( vectors )
@@ -146,8 +165,8 @@ contains
             call dump_filter_shapes_database ( son )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
-          case ( f_spectroscopy )
-            call dump ( catalog, details=details )
+          case ( f_stop )
+            stop
           end select
         end if
       case ( f_details )
@@ -174,6 +193,12 @@ contains
         else
           call announceError ( gson, noHGrid )
         end if
+      case ( f_lines )
+        do i = 2, nsons(son)
+          what = decoration(decoration(subtree(i,son)))
+          call output ( what, after=': ' )
+          call dump ( lines(what) )
+        end do
       case ( f_pfaData )
         do i = 2, nsons(son)
           call dump ( pfaData(decoration(decoration(subtree(i,son)))), details )
@@ -185,6 +210,18 @@ contains
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           call dump ( GetVectorQtyByTemplateIndex( &
             & vectors(vectorIndex), quantityIndex), details=details )
+        end do
+      case ( f_signals )
+        do i = 2, nsons(son)
+          what = decoration(decoration(subtree(i,son)))
+          call output ( what, after=': ' )
+          call dump ( signals(what), details=details>0 )
+        end do
+      case ( f_spectroscopy )
+        do i = 2, nsons(son)
+          what = decoration(subtree(i,son))
+          call output ( what, after=': ' )
+          call dump ( catalog(what), details=details )
         end do
       case ( f_template ) ! Dump vector templates or quantity templates
         do i = 2, nsons(son)
@@ -255,8 +292,12 @@ contains
         call output ( "Can't dump Forward Model Configs here." )
       case ( noHGrid )
         call output ( "Can't dump HGrids here." )
+      case ( noLines )
+        call output ( "Can't dump Lines here." )
       case ( noQT )
         call output ( "Can't dump Quantity Templates here." )
+      case ( noSignals )
+        call output ( "Can't dump Signals here." )
       case ( noTG )
         call output ( "Can't dump TGrids here." )
       case ( noVectors )
@@ -277,6 +318,10 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.16  2004/12/13 20:13:04  vsnyder
+! Add dumps for AllLines, ALlSignals, AllSpectra, Lines, Signals, Spectroscopy,
+! and a Stop command.
+!
 ! Revision 2.15  2004/11/04 06:37:34  vsnyder
 ! Index spetroscopy catalog by molecule instead of searching
 !
