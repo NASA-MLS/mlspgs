@@ -126,6 +126,10 @@ CONTAINS
 
     INTEGER :: noMAFs,l1bFlag,l1bItem,mafIndex,mifIndex
 
+     MLSInstrumentModuleNames(1) = "GHz"
+     MLSInstrumentModuleNames(2) ="THz"
+
+
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
     ! quantity.  Otherwise, we have to read it all from the l1boa file
@@ -166,7 +170,7 @@ CONTAINS
 
        ! First we read tpGeodalt to get the size of the quantity.
 
-       l1bItemName=TRIM(MLSInstrumentModuleNames(instrumentModule))//"tpGeodAlt"
+       l1bItemName=TRIM(MLSInstrumentModuleNames(instrumentModule))//"."//"tpGeodAlt"
        CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,l1bField,noMAFs,l1bFlag, &
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
        IF (l1bFlag==-1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
@@ -197,7 +201,7 @@ CONTAINS
           ! Get the name of the item to read
           l1bItemName=l1bItemsToRead(l1bItem)
           IF (l1bItem>=TransitionToModularItems) l1bItemName=&
-               & MLSInstrumentModuleNames(instrumentModule)//l1bItemName
+               & MLSInstrumentModuleNames(instrumentModule)//'.'//l1bItemName
 
           ! Read it from the l1boa file
           CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,l1bField,noMAFs, &
@@ -288,25 +292,29 @@ CONTAINS
     ! Executable code
 
     ! First we'll loop over the mlscf keys and parse them.
-
+    
+    hGridIndex=0
+    vGridIndex=0  
     DO keyNo=1,cfInfo%mlscfEntryNoKeys
+  
        cell=cfInfo%cells(keyNo)
+
        SELECT CASE(TRIM(cell%keyword))
        CASE ("NAME")
           name=cell%charValue
        CASE ("HGRID")
           hGridIndex=LinearSearchStringArray(hGrids%name,cell%charValue,&
-               & caseInsensitive=.FALSE.)
+               & caseInsensitive=.TRUE.)
           IF (hGridIndex==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
                & "Unknown hGrid: "//cell%charValue)
        CASE ("VGRID")
           vGridIndex=LinearSearchStringArray(vGrids%name,cell%charValue,&
-               & caseInsensitive=.FALSE.)
+               & caseInsensitive=.TRUE.)
           IF (vGridIndex==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
                & "Unknown vGrid: "//cell%charValue)
        CASE ("TYPE")
           quantityType=LinearSearchStringArray(QTYTypeNames,cell%charValue,&
-               & caseInsensitive=.FALSE.)
+               & caseInsensitive=.TRUE.)
           IF (quantityType==QTY_Invalid) &
                & CALL MLSMessage(MLSMSG_Error,ModuleName,&
                &   "No such quantity type: "//cell%charValue)
@@ -348,13 +356,16 @@ CONTAINS
        needVHGrids=.FALSE.
        IF (family/=PHYQ_Temperature) badUnit=.TRUE.
     CASE(QTY_Ptan)
-       IF (family/=PHYQ_Zeta) badUnit=.TRUE.
+       IF (family/=PHYQ_Zeta ) badUnit=.TRUE.
        needVHGrids=.FALSE.
     CASE(QTY_Baseline)
        IF (family/=PHYQ_Temperature) badUnit=.TRUE.
        needVHGrids=.FALSE.
     CASE(QTY_Extinction)
        ! Need to think about a family here
+       needVHGrids=.TRUE.
+    CASE(QTY_Gph)
+      ! Need to think about a family here
        needVHGrids=.TRUE.
     CASE DEFAULT
        CALL MLSMessage(MLSMSG_Error,ModuleName,"Unknown quantityType")
@@ -376,9 +387,9 @@ CONTAINS
        CALL SetupNewQuantityTemplate(qty, &
             & noSubVectors=hGrids(hGridIndex)%noProfs, &
             & noSurfs=vGrids(vGridIndex)%noSurfs, &
-            & coherent=.TRUE.,stacked=.FALSE.,regular=.TRUE.)
+            & coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.)
        ! Note in later versions we'll need to think about channels here
-
+      
        CALL CopyHGridInfoIntoQuantity(hGrids(hGridIndex),qty)
        CALL CopyVGridInfoIntoQuantity(vGrids(vGridIndex),qty)
 
@@ -433,6 +444,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.12  2000/05/16 20:20:38  livesey
+! Another attempt to fix the `time' problem.
+!
 ! Revision 1.11  2000/05/16 19:58:58  livesey
 ! Added stuff to deal with `time' correctly.
 !
