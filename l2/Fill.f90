@@ -79,7 +79,7 @@ module Fill                     ! Create vectors and fill them.
     & DestroyVectorInfo, Dump, &
     & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
     & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
-    & VectorTemplate_T, VectorValue_T, M_ExplicitFill
+    & VectorTemplate_T, VectorValue_T, M_Fill
   use VGridsDatabase, only: VGRID_T
 
   implicit none
@@ -852,6 +852,9 @@ contains ! =====     Public Procedures     =============================
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
           ! before too long.
+          ! Note that this does *NOT* copy the mask (at least for the moment)
+          ! It is assumed that the original one (e.g. inherited from transfer)
+          ! is still relevant.
           if ( .not. got(f_sourceQuantity) ) &
             & call Announce_Error ( key, No_Error_Code, &
             & 'Missing a source field for vector fill' )
@@ -862,15 +865,14 @@ contains ! =====     Public Procedures     =============================
           if ( quantity%template%name /= sourceQuantity%template%name ) &
             & call Announce_Error ( key, No_Error_Code, &
             & 'Quantity and sourceQuantity do not have the same template' )
-          quantity%values = sourceQuantity%values
-          ! If we have a mask, copy it over.
-          if ( associated(sourceQuantity%mask) ) then
-            call CreateMask ( quantity )
-            quantity%mask = sourceQuantity%mask
-          else
-            ! Otherwise, if the destination quantity had one, then
-            ! delete that.
-            call Deallocate_test ( quantity%mask, 'quantity%mask', ModuleName )
+
+          ! If we have a mask and we're going to obey it then do so
+          if ( associated(quantity%mask) .and. .not. dontMask ) then
+            where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+              quantity%values(:,:) = sourceQuantity%values(:,:)
+            end where
+          else ! Otherwise, just blindly copy
+            quantity%values = sourceQuantity%values
           end if
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
@@ -2449,11 +2451,11 @@ contains ! =====     Public Procedures     =============================
         ! Store value
         if ( .not. dontMask .and. associated ( quantity%mask ) ) then
           if ( nsons(valuesNode)-1 == 1 ) then
-            where ( iand ( ichar(quantity%mask), m_ExplicitFill ) == 0 )
+            where ( iand ( ichar(quantity%mask), m_Fill ) == 0 )
               quantity%values=valueAsArray(1)
             end where
           else
-            where ( iand ( ichar(quantity%mask(k,:)), m_ExplicitFill ) == 0 )
+            where ( iand ( ichar(quantity%mask(k,:)), m_Fill ) == 0 )
               quantity%values(k,:)=valueAsArray(1)
             end where
           end if
@@ -2486,7 +2488,7 @@ contains ! =====     Public Procedures     =============================
         i = mod(k-1,quantity%template%instanceLen) + 1
         j = (k-1) / quantity%template%instanceLen + 1
         if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-          if ( iand ( ichar(quantity%mask(i,j)), m_ExplicitFill ) == 0 ) &
+          if ( iand ( ichar(quantity%mask(i,j)), m_Fill ) == 0 ) &
             & quantity%values(i,j) = valueAsArray(1)
         else
           quantity%values(i,j) = valueAsArray(1)
@@ -2924,6 +2926,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.110  2002/03/13 22:01:41  livesey
+! Added masking of fill from vector quantity, also changed
+! from m_explicitfill to m_fill
+!
 ! Revision 2.109  2002/03/08 08:07:00  livesey
 ! Added explicit fill mask
 !
