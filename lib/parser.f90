@@ -9,7 +9,7 @@ module PARSER
   use LEXER_M, only: LEXER
   use OUTPUT_M, only: OUTPUT
   use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
-  use SYMBOL_TYPES ! Everything, especially everything beginning with T_
+  use SYMBOL_TYPES ! Everything, except tree_init; remainder begin with T_
   use TOGGLES, only: PAR, TOGGLE
   use TREE, only: BUILD_TREE, N_TREE_STACK, &
                   PUSH_PSEUDO_TERMINAL, STACK_SUBTREE
@@ -263,6 +263,7 @@ o:  do
   end subroutine ONE_CF
 ! ------------------------------------------------------  PRIMARY  -----
   recursive subroutine PRIMARY
+    integer :: N
     if ( toggle(par) ) call where ( 'Enter PRIMARY', advance='yes' )
     do
       select case ( next%class )
@@ -272,6 +273,18 @@ o:  do
           call get_token
           call test_token ( t_identifier )
           call build_tree ( n_dot, 2 )
+        else if ( next%class == t_left_parenthesis ) then
+          n = 1
+          call get_token
+          do while ( next%class /= t_right_parenthesis )
+            call expr
+            n = n + 1
+            if ( next%class /= t_comma ) &
+          exit
+            call get_token
+          end do
+          call test_token ( t_right_parenthesis )
+          call build_tree ( n_func_ref, n )
         end if
     exit
       case ( t_number )       ! primary -> 'number' 'unit' ?
@@ -436,6 +449,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.12  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
 ! Revision 2.11  2004/01/16 23:49:32  vsnyder
 ! Add backslash for 'into' operator
 !
