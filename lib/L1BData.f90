@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L1BData
@@ -11,7 +11,6 @@ module L1BData
     & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
-  ! use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
@@ -88,7 +87,7 @@ module L1BData
 
   private
 
-  public :: Dump, L1BData_T, L1BRadSetup, L1BOASetup, DeallocateL1BData, &
+  public :: L1BData_T, L1BRadSetup, L1BOASetup, DeallocateL1BData, DIFF, DUMP, &
     & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, ReadL1BData, &
     & AssembleL1BQtyName, ReadL1BAttribute
 
@@ -100,6 +99,10 @@ module L1BData
     "$RCSfile$"
   private not_used_here
   !---------------------------------------------------------------------------
+
+  interface DIFF
+    module procedure DiffL1BData
+  end interface
 
   interface DUMP
     module procedure DumpL1BData
@@ -122,7 +125,7 @@ module L1BData
 
   ! Assume l1b files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
-  integer, parameter :: L1BDEFAULT_HDFVERSION = HDFVERSION_4
+  integer, parameter :: L1BDEFAULT_HDFVERSION = HDFVERSION_5
 
   ! Unless the following is true, a subgroup named 'tp' will be
   ! created under each instrument Module for hdf5 versions
@@ -171,7 +174,7 @@ module L1BData
 contains ! ============================ MODULE PROCEDURES =======================
 
 
-  !-------------------------------------------  DeallocateL1BData  -----
+  !-------------------------------------------  AssembleL1BQtyName  -----
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
@@ -287,6 +290,102 @@ contains ! ============================ MODULE PROCEDURES ======================
     call deallocate_test ( l1bData%intField, 'l1bData%intField', ModuleName )
     call deallocate_test ( l1bData%dpField, 'l1bData%dpField', ModuleName )
   end subroutine DeallocateL1BData
+
+  !-------------------------------------------------  DiffL1BData  -----
+  subroutine DiffL1BData ( l1bData1, l1bData2, details )
+    ! Diiff two l1brad quantities
+    type( L1BData_T ), intent(inout) :: L1bData1
+    type( L1BData_T ), intent(inout) :: L1bData2
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even counterMAF
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: MYDETAILS
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( trim(L1bData1%NameInst) /= trim(L1bData2%NameInst) ) then
+      call output(trim(L1bData1%NameInst), advance='yes')
+      call output(trim(L1bData2%NameInst), advance='yes')
+    endif
+    if ( trim(L1bData1%L1BName) /= trim(L1bData2%L1BName) ) then
+      call output('L1B rad quantity (1) Name = ', advance='no')
+      call output(trim(L1bData1%L1BName), advance='yes')
+      call output('L1B rad quantity (2) Name = ', advance='no')
+      call output(trim(L1bData2%L1BName), advance='yes')
+    endif
+    if ( myDetails < -1 ) return
+    if ( L1bData1%FirstMAF /= L1bData2%FirstMAF ) then
+      call output(' (1) First major frame read = ', advance='no')
+      call output(L1bData1%FirstMAF, advance='yes')
+      call output(' (2) First major frame read = ', advance='no')
+      call output(L1bData2%FirstMAF, advance='yes')
+    endif
+    if ( L1bData1%NoMAFs /= L1bData2%NoMAFs ) then
+      call output(' (1) Num of MAFs read = ', advance='no')
+      call output(L1bData1%NoMAFs, advance='yes')
+      call output(' (2) Num of MAFs read = ', advance='no')
+      call output(L1bData2%NoMAFs, advance='yes')
+    endif
+    if ( L1bData1%MaxMIFs /= L1bData2%MaxMIFs ) then
+      call output(' (1) Max # of MIFs/MAF in SD array = ', advance='no')
+      call output(L1bData1%MaxMIFs, advance='yes')
+      call output(' (2) Max # of MIFs/MAF in SD array = ', advance='no')
+      call output(L1bData2%MaxMIFs, advance='yes')
+    endif
+    if ( L1bData1%NoAuxInds /= L1bData2%NoAuxInds ) then
+      call output(' (1) Num of auxilliary indices = ', advance='no')
+      call output(L1bData1%NoAuxInds, advance='yes')
+      call output(' (2) Num of auxilliary indices = ', advance='no')
+      call output(L1bData2%NoAuxInds, advance='yes')
+    endif
+
+    if ( myDetails < 0 ) return
+    if ( associated(l1bData1%counterMAF) .and. &
+      & associated(l1bData2%counterMAF) ) then
+      if ( any(l1bData1%counterMAF /= l1bData2%counterMAF)) then
+        call dump ( l1bData1%counterMAF - l1bData2%counterMAF, &
+          & 'l1bData%counterMAF (diff)' )
+       endif
+    else
+      call output('(CounterMAF arrays not associated)', advance='yes')
+    end if
+
+    if ( myDetails < 1 ) return
+    if ( associated(l1bData1%charField) .and. &
+      & associated(l1bData2%charField)) then
+      if ( any(l1bData1%charField /= l1bData2%charField) ) then
+        call dump ( l1bData1%CharField, 'l1bData1%CharField' )
+        call dump ( l1bData2%CharField, 'l1bData2%CharField' )
+      end if
+    else
+      call output('(CharField arrays not associated)', advance='yes')
+    end if
+
+    if ( associated(l1bData1%intField) &
+      & .and. associated(l1bData1%intField) ) then
+      if ( any(l1bData1%intField /= l1bData2%intField) ) then
+        call dump ( l1bData1%intField - l1bData2%intField, &
+          & 'l1bData%intField (diff)' )
+      endif
+    else
+      call output('(intField arrays not associated)', advance='yes')
+    end if
+
+    if ( associated(l1bData1%dpField) &
+      & .and. associated(l1bData1%dpField) ) then
+      if ( any(l1bData1%dpField /= l1bData2%dpField) ) &
+        & call dump ( l1bData1%dpField-l1bData2%dpField, &
+        & 'l1bData%dpField (diff)' )
+    else
+      call output('(dpField arrays not associated)', advance='yes')
+    end if
+
+  end subroutine DiffL1BData
 
   !-------------------------------------------------  DumpL1BData  -----
   subroutine DumpL1BData ( l1bData, details )
@@ -970,7 +1069,6 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     character(len=1) :: Char_rank
     integer :: I
-! > >      type(MLSAuxData_T) :: MLSAuxData
     integer :: MAFoffset
     logical :: MyNeverFail
     integer :: NUMMAFS
@@ -1158,6 +1256,17 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
       l1bdata%data_type = 'double'
+    case ('integer1')  
+      allocate( l1bData%intField(l1bData%noMAFs, 1, 1),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1), &
+          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1))  
+      end if                                                                  
+      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
+      ! & 'Sorry--LoadFromHDF5DS not yet written for type integer(:).')
+      l1bdata%data_type = 'integer'
     case ('integer3')  
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
@@ -1167,10 +1276,12 @@ contains ! ============================ MODULE PROCEDURES ======================
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
       l1bdata%data_type = 'integer'
     case default 
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      l1bdata%data_type = 'unknown'
+      flag = UNKNOWNDATATYPE
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type: ' &
         & // trim(Qtype) // Char_rank)
-      l1bdata%data_type = 'unknown'
     end select
     if ( DEEBUG ) call dump(l1bData, 0)
     
@@ -1375,6 +1486,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.44  2004/03/12 00:36:33  pwagner
+! Added diff subroutine; hdf version default increased to 5
+!
 ! Revision 2.43  2003/09/12 16:37:10  cvuu
 ! add subroutine to read L1BOA attributes
 !
