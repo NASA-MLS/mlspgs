@@ -224,7 +224,7 @@ contains ! ================================== Module procedures ============
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
     integer, intent(in), optional :: TID ! Task to get it from
-    integer, dimension(:,:), optional, pointer :: MASK ! Mask
+    character, dimension(:,:), optional, pointer :: MASK ! Mask
     logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
 
     ! Local variables
@@ -411,6 +411,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.8  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.7  2002/02/01 23:50:36  livesey
 ! Added CVS log information
 !
