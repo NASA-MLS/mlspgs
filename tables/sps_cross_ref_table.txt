@@ -9,9 +9,11 @@ format = '(a24,1x,a24,1x,a24,1x,i3)'
               $^{81}$BrO                  BR_81_O                  Br-81-O   0
    $^{81}$BrO$(\nu_{1})$               BR_81_O_V1               Br-81-O-v1   0
               CH$_{3}$CN                    CH3CN                    CH3CN   0
+      CH$_{3}$COCH$_{3}$                 CH3COCH3                 CH3COCH3   0
               CH$_{3}$Cl                    CH3CL                    CH3Cl   2
          CH$_{3}^{35}$Cl                 CH3CL_35                 CH3Cl-35   0
          CH$_{3}^{37}$Cl                 CH3CL_37                 CH3Cl-37   0
+              CH$_{3}$OH                    CH3OH                    CH3OH   0
                       CO                       CO                       CO  -3
                $^{13}$CO                   C_13_O                   C-13-O   0
                C$^{17}$O                    CO_17                    CO-17   0
