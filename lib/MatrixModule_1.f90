@@ -56,7 +56,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: operator(.TX.)
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
-  public :: Sparsify_1, Sparsify
+  public :: Sparsify_1, Sparsify, TransposeMatrix
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
@@ -186,6 +186,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface Spill
     module procedure Spill_1
+  end interface
+
+  interface TransposeMatrix
+    module procedure TransposeMatrix_1
   end interface
 
   interface UpdateDiagonal
@@ -1710,7 +1714,7 @@ contains ! =====     Public Procedures     =============================
     do i = 1, m%row%nb
       call ReflectMatrix ( m%block ( i,i ) )
       do j = i + 1, m%col%nb
-        call TransposeMatrix ( m%block ( i, j ), m%block ( j, i ) )
+        call TransposeMatrix ( m%block ( j, i ), m%block ( i, j ) )
       end do
     end do
   end subroutine ReflectMatrix_1
@@ -1907,6 +1911,27 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
   end subroutine Spill_1
+
+  ! ------------------------------------------------ TransposeMatrix_1 -------
+  subroutine TransposeMatrix_1 ( Z, A )
+    type(Matrix_T), intent(inout) :: Z  ! Output matrix (already created)
+    type(Matrix_T), intent(in) :: A     ! Input matrix
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    ! Executable code
+    if ( z%col%vec%template%name /= a%row%vec%template%name .or. &
+      &  z%row%vec%template%name /= a%col%vec%template%name .or. &
+      &  (z%col%instFirst .neqv. a%col%instFirst) .or. &
+      &  (z%row%instFirst .neqv. a%row%instFirst) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Z and A not compatible in TransposeMatrix_1" )
+    ! Don't need to clear matrix on Z as the TransposeMatrix_0 calls do that
+    do i = 1, z%row%nb
+      do j = 1, z%col%nb
+        call TransposeMatrix ( z%block(i,j), a%block(j,i) )
+      end do
+    end do
+  end subroutine TransposeMatrix_1
 
   ! -------------------------------------------  UpdateDiagonal_1  -----
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
@@ -2300,6 +2325,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.96  2004/01/24 01:02:28  livesey
+! Added TransposeMatrix_1
+!
 ! Revision 2.95  2004/01/23 05:36:24  livesey
 ! Added allowNameMismatch argument to CopyMatrixValues
 !
