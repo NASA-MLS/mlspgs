@@ -25,7 +25,7 @@
 
     integer :: JIN, I, J, KLO, KHI, KPL
     real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
-    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP, H, TOL
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP, H
 
     jin = abs(nin)
 
@@ -75,8 +75,7 @@
         end if
       end do
 
-! If spline is more than 'TOL' different from linear, revert back to
-! linear interpolation:
+! Decide whether to revert back to linear interpolation:
 
       dp = 100.0 * abs(y-ylin) / (abs(ylin) + epsilon(ylin))
 
@@ -98,6 +97,9 @@
 ! end subroutine ?CSPLINE_DER
 
 ! $Log$
+! Revision 2.4  2002/10/04 23:26:25  vsnyder
+! Fix a bug in the x-descending case
+!
 ! Revision 2.3  2002/10/02 15:49:26  bwknosp
 ! Added Id and RCS info
 !
