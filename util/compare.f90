@@ -31,7 +31,7 @@ program COMPARE
   logical :: All = .false.   ! Show nonzero differences for all quantities
   real :: AMAX               ! Maximum absolute difference for one R1, R2 pair
   real :: AMAXG = 0.0        ! Global maximum of all values of AMAX
-  logical :: AnyNaN(2) = .false. ! R1 or R2 has a NaN
+  logical :: AnyNaN(3) = .false. ! R1, R2 or a relative difference has a NaN
   real :: AVG(2)
   logical :: CONT = .false.  ! Continue even if control lines differ
   logical :: DoStats = .false. ! -s option specified
@@ -153,6 +153,7 @@ program COMPARE
       lrmax = maxloc(rd,1)
       rmax = rd(lrmax)
       rmaxe = rmax / epsilon(rd)
+      if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
         print '(1pg14.8,i6,1pg14.8,i6,1pg15.8,1x,a)', &
           & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
@@ -180,6 +181,7 @@ program COMPARE
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
   if ( anyNaN(2) ) print *, trim(file2), ' has a NaN somewhere'
+  if ( anyNaN(3) ) print *, 'A relative difference has a NaN'
 
 contains
 
@@ -223,6 +225,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.3  2003/09/27 02:15:29  vsnyder
+! Add computation of average and std dev
+!
 ! Revision 1.2  2003/09/26 19:07:23  vsnyder
 ! Widen some formats
 !
