@@ -129,8 +129,8 @@ subtrees: do while ( j <= howmany )
                 & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
                 & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
-              call MLSL2Join ( son, vectors, matrices, l2gpDatabase, &
-                & l2auxDatabase, size(chunks)==1, chunkNo, chunks )
+              call MLSL2Join ( son, vectors, l2gpDatabase, &
+                & l2auxDatabase, chunkNo, chunks )
             case ( z_retrieve )
               call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
             case default
@@ -149,7 +149,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf,&
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
           & size(chunks)==1 )
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -193,6 +193,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.47  2001/04/26 20:02:09  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.46  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
