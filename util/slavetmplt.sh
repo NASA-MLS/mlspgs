@@ -41,21 +41,34 @@ get_unique_name()
         pt="."
         temp="temp"
       fi
+   # Was second arg "-reverse?" If so,
+   # that's a reverse part oder in name flag, not a redef of pt
+   if [ "$pt" = "-reverse" ] 
+   then
+     reverse="yes"
+     pt="."
+   else
+     reverse="no"
+   fi
    # Is $HOST defined?
-      if [ "$HOST" != "" ]
-      then
-         our_host_name="$HOST"
-      elif [ "$HOSTNAME" != "" ]
-      then
-         our_host_name="$HOSTNAME"
-      else
-         our_host_name="host"
-      fi
-    #  echo $our_host_name
+   if [ "$HOST" != "" ]
+   then
+      our_host_name="$HOST"
+   elif [ "$HOSTNAME" != "" ]
+   then
+      our_host_name="$HOSTNAME"
+   else
+      our_host_name="host"
+   fi
    # if in form host.moon.planet.star.. extract host
-      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
-      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
-      echo $temp${pt}$our_host_name${pt}$$
+   our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+   our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+   if [ "$reverse" = "yes" ]
+   then
+     echo $our_host_name.$$.$temp
+   else
+     echo $temp${pt}$our_host_name${pt}$$
+   fi
 }
 #---------------------------- do_the_call
 #
@@ -77,7 +90,7 @@ PGS_PC_INFO_FILE=ppccff
 #LOGFILE="$PVM_BIN/mlsl2.log"
 
 # The next choice, in contrast, puts each slave's output into its own unique file
-temp_file_name=`get_unique_name mlsl2`
+temp_file_name=`get_unique_name log -reverse`
 LOGFILE="$PVM_BIN/$temp_file_name"
 
 if [ ! -w "$LOGFILE" ]
@@ -168,6 +181,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.5  2003/10/20 22:22:00  pwagner
+# Use tee to let slaves output to stdout--which pvm reechoes to master
+#
 # Revision 1.4  2003/10/15 20:56:27  pwagner
 # Each slave sends its stdout to a unique file
 #
