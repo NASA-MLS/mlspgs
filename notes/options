@@ -38,6 +38,8 @@ Note: use "-T2" and not "--T2" because T2 has one letter
       i.e., --chunk 1 --chunk 14 runs chunks 1..14)
   --[n]ckbk: Do [not] check the block calculations against full block algebra
   --[n]countChunks: Do [not] just print the number of chunks and quit
+  --delay[ ]<amount> sleep <amount> micosecs at end of each master event loop
+      default is 200000; 0 means no sleeping
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
   --[n]gcch: Do [not] force garbage collection after each chunk processed
@@ -101,6 +103,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.27  2003/11/05 21:29:11  pwagner
+ Can enter range of chunks to be processed instead of single
+
  Revision 1.26  2003/10/09 23:30:39  pwagner
  ,-separated switches recommended
 
