@@ -612,7 +612,8 @@ contains
       ! We don't use the vector quantity -- at least not right away.  We get
       ! it again later.
       thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-        & signal=fwdModelConf%signals(sigInd)%index, sideband=firstSignal%sideband )
+        & signal=fwdModelConf%signals(sigInd)%index, &
+        & sideband=merge ( 0, firstSignal%sideband, fwdModelConf%forceFoldedOutput ) )
       noUsedChannels = noUsedChannels + &
         & count( fwdModelConf%signals(sigInd)%channels )
     end do
@@ -2070,7 +2071,7 @@ contains
         thisRadiance =>  &
           GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
-          & sideband=fwdModelConf%signals(sigInd)%sideband )
+          & sideband=merge ( 0, fwdModelConf%signals(sigInd)%sideband, fwdModelConf%forceFoldedOutput ) )
         ! Get the sideband fraction if we need to
         if ( fwdModelConf%sidebandStart /= fwdModelConf%sidebandStop &
           & .or. fwdModelConf%forceSidebandFraction ) then   ! We're folding
@@ -2669,6 +2670,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.173  2003/10/28 22:05:53  jonathan
+! add l_gph for use in cloud model
+!
 ! Revision 2.172  2003/10/09 19:30:18  vsnyder
 ! Cosmetic changes
 !
