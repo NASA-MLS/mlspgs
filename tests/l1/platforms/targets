@@ -40,6 +40,7 @@ include ../Makefile.dep
 
 # ========================================================================
 
+# where which_fftw.sh is stored
 MLSBIN=../../../util
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -120,6 +121,7 @@ else
    hdf5_message=Building test of mlsl1 without hdf5
 endif
 
+fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 libl1.a: $(libl1_objs)
 ifeq ($(delete_lib_first),yes)
@@ -133,6 +135,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
+		@cat fftw_link_message
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll1 \
                       -L${libdir} -lmls \
@@ -148,6 +151,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
         $(blas_linker_line) \
         $(lapack_linker_line) \
         $(hdf5_linker_line) \
+        $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -169,6 +173,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
 # Revision 1.13  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #
