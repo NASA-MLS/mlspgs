@@ -7,7 +7,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFEND, &
-    & SFENDACC, SFSTART, SFRDATA, sfn2index, sfselect, sfgetinfo, &
+    & SFENDACC, SFSTART, SFRDATA, sfn2index, sfselect, sfginfo, &
     & sfgdinfo
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
@@ -314,7 +314,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Attach to the file for reading
 
-! found below in sfgetinfo--where we will check it for self consistency
+! found below in sfginfo--where we will check it for self consistency
 !    l2aux%Name = quantityname
 
     ! find SD data set identifier
@@ -326,7 +326,7 @@ contains ! =====     Public Procedures     =============================
     IF (sds_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &get sds_id.')
          
-    status = sfgetinfo(sds_id, sds_name, rank, dim_sizes, data_type, &
+    status = sfginfo(sds_id, sds_name, rank, dim_sizes, data_type, &
     & num_attrs)
     IF (status == -1) THEN
        CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
@@ -406,6 +406,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.4  2001/01/03 00:46:19  pwagner
+! Changed sfgetinfo to sfginfo
+!
 ! Revision 2.3  2000/12/04 23:34:38  vsnyder
 ! Move more of addItemToDatabase into the include.
 !

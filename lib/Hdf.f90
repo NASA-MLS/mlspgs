@@ -76,13 +76,13 @@ MODULE Hdf
         INTEGER, INTENT (IN) :: sd_id
         INTEGER, INTENT (IN) :: sds_index
       END FUNCTION sfselect
-      INTEGER FUNCTION sfgetinfo(sds_id, sds_name, rank, dimsizes, data_type, &
+      INTEGER FUNCTION sfginfo(sds_id, sds_name, rank, dimsizes, data_type, &
       & num_attrs)      
         INTEGER, INTENT (IN) :: sds_id
         INTEGER, INTENT (OUT) :: rank, data_type, num_attrs
         CHARACTER (LEN=*), INTENT (OUT) :: sds_name
         INTEGER, INTENT (IN), DIMENSION (:) :: dimsizes
-      END FUNCTION sfgetinfo
+      END FUNCTION sfginfo
       INTEGER FUNCTION sfgdinfo(dim_id, dim_name, size, data_type, &
       & num_attrs)      
         INTEGER, INTENT (IN) :: dim_id
@@ -493,11 +493,14 @@ END MODULE Hdf
 !===============================================================================
 
 !# $Log$
+!# Revision 2.4  2001/01/03 00:45:27  pwagner
+!# Changed sfgetinfo to sfginfo
+!#
 !# Revision 2.3  2000/12/04 21:50:24  pwagner
 !# Added sfgdinfo
 !#
 !# Revision 2.2  2000/12/02 00:05:22  pwagner
-!# Added sfgetinfo, sfrdata, sfn2index, sfselect
+!# Added sfginfo, sfrdata, sfn2index, sfselect
 !#
 !# Revision 2.1  2000/11/29 19:33:18  pumphrey
 !# Added EXTERNAL reference for sfsfill
