@@ -218,26 +218,43 @@ contains
 
   ! --------------------------------------------  MLSMessageExit  -----
 
-  ! This routine logs farewell, advances
+  ! This routine (optionally) logs farewell, advances
   ! (hopefully) gracefully ends logging, and exits 
   ! (optionally with status)
-
-  subroutine MLSMessageExit(status)
+  ! if farewell present, and non-blank, logs it
+  ! if farewell present,  but blank, logs default message
+  ! if farewell absent, does not log
+  subroutine MLSMessageExit(status, farewell)
   integer, optional, intent(in) :: STATUS
-  CHARACTER(LEN=32) :: mesg
+  character(LEN=*), optional, intent(in) :: FAREWELL
+  CHARACTER(LEN=36) :: mesg
 
     ! Executable code
     if(present(status)) then
-      write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
-      status, ')'
-      call MLSMessage(MLSMSG_Info, ModuleName, &
-      & mesg, advance='y')
+      if(present(farewell)) then
+        if(farewell == ' ') then
+          write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
+          status, ')'
+          call MLSMessage(MLSMSG_Info, ModuleName, &
+          & mesg, advance='y')
+        else
+          call MLSMessage(MLSMSG_Info, ModuleName, &
+          & farewell, advance='y')
+        endif
+      endif
       call MLSMessageClose
       call exit_with_status ( status )
     else
-      mesg='Exiting with status normal (0)'
-      call MLSMessage(MLSMSG_Info, ModuleName, &
-      & mesg, advance='y')
+      if(present(farewell)) then
+        if(farewell == ' ') then
+          mesg='Exiting normally with "stop"'
+          call MLSMessage(MLSMSG_Info, ModuleName, &
+          & mesg, advance='y')
+        else
+          call MLSMessage(MLSMSG_Info, ModuleName, &
+          & farewell, advance='y')
+        endif
+      endif
       call MLSMessageClose
       stop
     endif
@@ -249,6 +266,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.13  2001/08/08 23:50:35  pwagner
+! Added farewell optional arg to MLSMessageExit
+!
 ! Revision 2.12  2001/07/16 23:44:10  pwagner
 ! Added MLSMessageQuit
 !
