@@ -82,9 +82,12 @@ INC_PATHS = $(EXTRA_PATHS) \
 #RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
 
 #Special load libraries
-l_specials = 
+l_specials = -lU77
 
 # $Log$
+# Revision 1.9  2001/11/20 00:08:47  pwagner
+# Small changes to work better--or go farther before failing
+#
 # Revision 1.8  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #

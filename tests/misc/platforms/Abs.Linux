@@ -46,7 +46,7 @@ DUSTY = $(FOPTS) -dusty
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $S -I $(PGSINC) -I $S
+INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $S -I$(PGSINC) -I$S
 
 # Define some suffix rules
 
@@ -65,6 +65,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $S -I $(PGSINC) -I $S
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials =
+l_specials = -lU77
 
 # $Log$
+# Revision 1.2  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
