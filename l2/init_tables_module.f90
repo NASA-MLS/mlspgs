@@ -360,7 +360,8 @@ contains ! =====     Public procedures     =============================
     ! The intrinsic data types are defined in the intrinsic module
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
+             l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
@@ -869,6 +870,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.195  2002/01/23 22:35:20  livesey
+! Added Gloria format gridded data
+!
 ! Revision 2.194  2002/01/23 21:51:11  pwagner
 ! hdfVersion new optional field in l2gp, l2aux, output
 !
