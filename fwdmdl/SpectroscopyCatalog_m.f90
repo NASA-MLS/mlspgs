@@ -19,7 +19,7 @@ module SpectroscopyCatalog_m
   public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump
 
   interface DUMP
-    module procedure Dump_SpectCat_Database
+    module procedure Dump_SpectCat_Database, Dump_SpectCat_Database_2d
   end interface
 
   ! Private parameters
@@ -570,6 +570,22 @@ contains ! =====  Public Procedures  ===================================
     end do
   end subroutine Dump_Lines_Database
   ! -------------------------------------  Dump_SpectCat_Database  -----
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name )
+    use Output_m, only: Output
+    type(catalog_T), intent(in) :: Catalog(:,:)
+    character(len=*), intent(in), optional :: NAME
+    integer :: SIDEBAND
+    ! Executable code
+    call output ( 'Spectroscopy catalog' )
+    if ( present(name) ) call output ( ' '//trim(name) )
+    do sideband = -1, 1, 2
+      call output ( 'Sideband: ' )
+      call output ( sideband, advance='yes' )
+      call Dump ( catalog(sideband,:) )
+    end do
+  end subroutine Dump_SpectCat_Database_2d
+
+  ! -------------------------------------  Dump_SpectCat_Database  -----
   subroutine Dump_SpectCat_Database ( Catalog, Name )
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
@@ -662,6 +678,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.18  2003/05/21 22:14:53  vsnyder
+! Add 'new' fields to the dump routines
+!
 ! Revision 2.17  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
