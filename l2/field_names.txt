@@ -78,6 +78,7 @@ geodAngle
 gph
 
 h2oquantity
+h2oPrecisionQuantity
 hdfversion
 height
 hgrid
@@ -223,6 +224,7 @@ systemTemperature
 
 tangentGrid
 temperatureQuantity
+temperaturePrecisionQuantity
 template
 temp_der
 terms
@@ -251,6 +253,10 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.52  2002/10/01 18:30:07  mjf
+# Added new quantitites for new Fill for RHi precision including T
+# error.
+#
 # Revision 2.51  2002/09/25 20:06:59  livesey
 # Added specificQuantities
 #
