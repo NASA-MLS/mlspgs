@@ -36,7 +36,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: T_LAST           = t_units
 ! Field indices:
   integer, public, parameter :: F_ALVL = last_Signal_Field + 1
-  integer, public, parameter :: F_DLON = f_dlat + 1
+  integer, public, parameter :: F_DLON = f_alvl + 1
   integer, public, parameter :: F_DLVL = f_dlon + 1
   integer, public, parameter :: F_FILE = f_dlvl + 1
   integer, public, parameter :: F_LABEL = f_file + 1
@@ -267,6 +267,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.11  2001/07/18 15:49:17  nakamura
+! Modified to work with L3M as well.
+!
 ! Revision 1.10  2001/05/10 13:39:10  nakamura
 ! Removed separate pressure specifications for DZ.
 !
