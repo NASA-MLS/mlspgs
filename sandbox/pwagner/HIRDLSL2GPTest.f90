@@ -34,7 +34,8 @@ PROGRAM HIRDLSL2GPtest ! reads HIRDLS L2GPData file
    integer                      :: hdfVersion
    integer                      :: returnStatus, swfid, record_length, swid
    character(len=*), parameter  :: l2gpFilename = &
-     & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-Aura12h_b027_2000d275.he5'
+     & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-MOSS3_b035_2000d275.he5'
+   !  & '/users/pwagner/docs/mls/l2gpsamples/HIRDLS2-Aura12h_b027_2000d275.he5'
    character(len=*), parameter  :: swathName = 'H2O'
    ! Executable
    MLSMessageConfig%logFileUnit = -1
@@ -51,3 +52,6 @@ END PROGRAM HIRDLSL2GPtest
 !==================
 
 ! $Log$
+! Revision 1.1  2003/04/17 23:02:43  pwagner
+! First commit
+!
