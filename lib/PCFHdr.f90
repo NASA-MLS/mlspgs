@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -28,7 +28,7 @@ MODULE PCFHdr
    PUBLIC :: GlobalAttributes_T, &
      & FillTAI93Attribute, &
      & CreatePCFAnnotation,  &
-     & h5_writeglobalattr, he5_writeglobalattr, &
+     & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
      & InputInputPointer, &
      & WritePCF2Hdr, WriteInputPointer
    private
@@ -50,6 +50,7 @@ MODULE PCFHdr
 !                InputInputPointer
 !                h5_writeglobalattr
 !                he5_writeglobalattr
+!                he5_readglobalattr
 !                sw_writeglobalatt
 ! Remarks:  This module contains subroutines for writing the PCF as an 
 ! annotation to HDF files. (obsolete)
@@ -402,6 +403,71 @@ CONTAINS
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   SUBROUTINE he5_readglobalattr (fileID, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule)
+!------------------------------------------------------------
+
+    use MLSHDFEOS, only: he5_EHrdglatt
+! Brief description of subroutine
+! This subroutine reads the global attributes from an hdf-eos5 file
+
+! Arguments
+
+      INTEGER, INTENT(IN)                      :: fileID
+      type (GlobalAttributes_T), intent(inout) :: gAttributes
+      character(len=*), intent(out), optional  :: ProcessLevel
+      integer, intent(out), optional           :: DayofYear
+      double precision, optional, intent(out)  :: TAI93At0zOfGranule
+! Internal variables
+      integer :: status
+      integer, dimension(1) :: ibuf
+      real(r8), dimension(1) :: dbuf
+! Executable
+      status = he5_EHrdglatt(fileID, &
+         & 'OrbitNumber', &
+         &  gAttributes%OrbNum )
+      status = he5_EHrdglatt(fileID, &
+         & 'OrbitPeriod', &
+         &  gAttributes%OrbPeriod )
+      status = he5_EHrdglatt(fileID, &
+       & 'InstrumentName', &
+       &  gAttributes%InstrumentName)
+      if ( present(ProcessLevel) ) status = he5_EHrdglatt(fileID, &
+       & 'ProcessLevel', &
+       &  ProcessLevel)
+      status = he5_EHrdglatt(fileID, &
+       & 'PGEVersion', &
+       &  gAttributes%PGEVersion)
+      status = he5_EHrdglatt(fileID, &
+       & 'StartUTC', &
+       &  gAttributes%StartUTC)
+      status = he5_EHrdglatt(fileID, &
+       & 'EndUTC', &
+       &  gAttributes%EndUTC)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleMonth', &
+       &  ibuf  )
+      gAttributes%GranuleMonth = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleDay', &
+       &  ibuf  )
+      gAttributes%GranuleDay = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleDayOfYear', &
+       &  ibuf  )
+      if ( present(DayofYear) ) DayOfYear=ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'GranuleYear', &
+       &  ibuf  )
+      gAttributes%GranuleYear = ibuf(1)
+      if ( present(TAI93At0zOfGranule) ) status = he5_EHrdglatt(fileID, &
+       & 'TAI93At0zOfGranule', dbuf )
+      TAI93At0zOfGranule = dbuf(1)
+!------------------------------------------------------------
+   END SUBROUTINE he5_readglobalattr
 !------------------------------------------------------------
 
 !----------------------------------------
@@ -993,6 +1059,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.29  2004/02/13 00:17:12  pwagner
+!# New stuff for reading swath attributes
+!#
 !# Revision 2.28  2003/10/30 00:03:02  pwagner
 !# Prepends 'L' to GlobalAttributes%ProcessLevel if necessary
 !#
