@@ -251,13 +251,31 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
-      else if ( line(3+n:7+n) == 'recl ' ) then
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
+      else if ( line(3+n:6+n) == 'recl' ) then
+        if ( line(7+n:) /= ' ' ) then
+          line(:6+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+        end if
         read ( line, *, iostat=status ) recl
         if ( status /= 0 ) then
           call io_error ( "After --recl option", status, line )
+          stop
+        end if
+      else if ( line(3+n:10+n) == 'slaveMAF' ) then
+        copyArg=.false.
+        if ( line(11+n:) /= ' ' ) then
+          line(:10+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(adjustl(line))
+        end if
+        read ( line, *, iostat=status ) slaveMAF
+        if ( status /= 0 ) then
+          call io_error ( "After --slaveMAF option", status, line )
           stop
         end if
       else if ( line(3+n:7+n) == 'slave' ) then
@@ -268,25 +286,11 @@ program MLSL2
         else
           i = i + 1
           call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
+          command_line = trim(command_line) // ' ' // trim(adjustl(line))
         end if
         read ( line, *, iostat=status ) parallel%masterTid
         if ( status /= 0 ) then
           call io_error ( "After --slave option", status, line )
-          stop
-        end if
-      else if ( line(3+n:10+n) == 'slaveMAF' ) then
-        copyArg=.false.
-        if ( line(8+n:) /= ' ' ) then
-          line(:7+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
-        read ( line, *, iostat=status ) slaveMAF
-        if ( status /= 0 ) then
-          call io_error ( "After --slaveMAF option", status, line )
           stop
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
@@ -319,8 +323,8 @@ program MLSL2
         toolkit = switch
       else if ( line(3+n:10+n) == 'version ' ) then
         do j=1, size(current_version_id)
-          print*, current_version_id(j)
-        enddo
+          print *, current_version_id(j)
+        end do
         stop
       else if ( line(3+n:7+n) == 'wall ' ) then
         use_wall_clock = switch
@@ -696,6 +700,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.97  2003/06/13 20:02:50  vsnyder
+! Put snoopMAF before snoop, so it can be found, futzing
+!
 ! Revision 2.96  2003/06/09 22:49:33  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
