@@ -1,20 +1,45 @@
-! SUBROUTINES FOR CALCULATIONS OF SURFACE EMISSIVITY
-      SUBROUTINE SURFACE(F,TS,IS,S,W,X,N,NP,RH,RV)
-      use MLSCommon, only: r8
-! IS --- surface type:
-!        0 - Ocean
-!        1 - Land
-!        2 - SeaIce
-!        3 - Snow
-! TS --- surface temperature in K
-!  F --- Frequency in GHz
-!  S --- Salinity in per thousand if ocean,  
-!        Emissivity value, if land (negative means default,0.9)
-!        Ice type, if sea ice, 0=new,1=2nd year,2=multiyear
-!        Snow type, if snow, 0=wet,1=dry,2=refrozen
-!  W --- Wind Speed in m/s, if ocean
-!        Not used, else
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+module SurfaceModel
+
+! ------------------------------------------------------------
+! CALCULATIONS OF SURFACE EMISSIVITY
+! ------------------------------------------------------------
+
+      use MLSCommon, only: r8
+
+      IMPLICIT NONE
+      Private
+      Public :: SURFACE
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
+contains
+
+      SUBROUTINE SURFACE(F,TS,IS,S,W,X,N,NP,RH,RV)
+
+        ! IS --- surface type:
+        !        0 - Ocean
+        !        1 - Land
+        !        2 - SeaIce
+        !        3 - Snow
+        ! TS --- surface temperature in K
+        !  F --- Frequency in GHz
+        !  S --- Salinity in per thousand if ocean,  
+        !        Emissivity value, if land (negative means default,0.9)
+        !        Ice type, if sea ice, 0=new,1=2nd year,2=multiyear
+        !        Snow type, if snow, 0=wet,1=dry,2=refrozen
+        !  W --- Wind Speed in m/s, if ocean
+        !        Not used, else
+
+        integer :: np,n,i
 	real(r8) :: X(NP)	! scattering angles
 	real(r8) :: RH(NP)	! reflectivity for horizontal polarization
 	real(r8) :: RV(NP)	! reflectivity for vertical polarization
@@ -34,14 +59,16 @@
          print*,'Check, surface type:',IS
          stop
        end if
-       return
-       end
-    
+       
+      END SUBROUTINE SURFACE
+
        SUBROUTINE ASSEA(F,TS,S,X,N,NP,RH,RV)
        use MLSCommon, only: r8       
 !      X ----  COS(SITA)
 !      S ---- SALINTY PER MILI
+       integer :: n,np,i
        REAL (r8) :: X(NP),RH(NP),RV(NP)
+       real(r8) :: t,ts,d,b,s,s25,ss,e0,e9,a,es,a1,ta,pai,f,cs,ss2
        COMPLEX(r8) :: E,P1,P2
 
        T=TS-273.16
@@ -77,11 +104,14 @@
      &        (E*CS+SQRT(E-SS2))))**2
        END DO
        RETURN
-       END
+       END SUBROUTINE ASSEA
 !CF
        SUBROUTINE ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
        use MLSCommon, only: r8
+       integer :: n,in,np
        REAL(r8) :: X(NP),RH(NP),RV(NP)
+       real(r8) :: s, w, ca, dtrv, a,b,c,f,dtrh,d,e,rouv,rouh
+       real(r8) :: fv,fh,roufv,roufh,fu,ts
        DATA a,b,c,d,e/0.117,-2.09e-3,7.32e-2,0.115,    &
      &                3.8e-5/
 
@@ -104,12 +134,15 @@
         RV(IN)=ROUV*(1-FU)+ROUFV*FU
        END DO
        RETURN
-       END
+       END SUBROUTINE ASSEA1
 !CF
        SUBROUTINE ASSEA3(F,TS,S,W,X,N,NP,RH,RV)
 !     good only for ssm/i channels
        use MLSCommon, only: r8
+       integer :: n, np, in, kf
        REAL(r8) :: X(NP),RH(NP),RV(NP),C(8,4),DES(8),CG(4)
+       real (r8) :: ev, eh, s, e0h, e0v, derh, derv, dc, ca,ca0
+       real (r8) :: w,f,td,ts,ts0,fu,w0,cf,cga,g2
        DATA CF,W0,CA0,TS0/8.E-3,7.,53.,273./
        DATA C/-0.556,0.406,-0.670,0.479,      &
      & -0.811,0.473,-0.723,0.358,             &
@@ -157,7 +190,7 @@
         RV(IN)=1-EV
        END DO
        RETURN
-       END
+       END SUBROUTINE ASSEA3
 
 ! emissivity for non-ocean surface
 !
@@ -167,9 +200,10 @@
 !       2 = ice, S---0: New, 1: Second Year, 2: Multiyear
 !       3 = snow,S---0: Wet, 1: Dry, 2: Refrozen
        use MLSCommon, only: r8
+       integer :: np
        REAL(r8) :: X(NP),RH(NP),RV(NP),CICE(4,3),CSNOW(4,3)
-        real(r8) :: F, TS, S, W
-        integer :: IS
+        real(r8) :: F, TS, S, W, e
+        integer :: IS, N, I, K
 
 
        save CICE,CSNOW
@@ -200,6 +234,18 @@
        end do
 
        return
-       end
+       END SUBROUTINE ASSEAN
 
-! $Log: surface.f90,v 
+end module SurfaceModel
+
+! $Log: SurfaceModel.f90,v      
+
+
+
+
+
+
+
+
+
+
