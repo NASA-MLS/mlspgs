@@ -44,6 +44,9 @@ MODULE L3CF
      INTEGER :: minDays
 	! # of days of input data needed to process an l3 product
 
+     INTEGER :: N
+	! number for "largest differences" diagnostics
+
      CHARACTER (LEN=3) :: intpMethod		! method of interpolation (lin/csp)
 
    END TYPE L3CFDef_T
@@ -117,6 +120,7 @@ CONTAINS
 
       INTEGER :: i
 
+      array = 0.0
       array(1) = start
 
       DO i = 2, maxGridPoints
@@ -197,6 +201,13 @@ CONTAINS
       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
                                      &for MinDays.')
       cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Find/save N
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'N')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for N.')
+      cfDef%N = cf%Sections(iGlob)%Cells(indx)%RealValue
 
 ! Find/save the interpolation method
 
@@ -421,6 +432,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.14  2001/07/18 15:53:30  nakamura
+! Revised for new l3cf; added asc/des lvls; removed DZ stuff.
+!
 ! Revision 1.13  2001/05/10 13:39:37  nakamura
 ! Removed separate pressure specifications for DZ.
 !
