@@ -33,14 +33,15 @@ module ScanModelModule          ! Scan model and associated calculations
   use MatrixModule_0, only: MATRIXELEMENT_T, M_ABSENT, M_BANDED, M_FULL, DESTROYBLOCK
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
-
+  use Toggles, only: TOGGLE, GEN
+  use Trace_M, only: TRACE_BEGIN, TRACE_END
   use MLSCommon, only: r8
 
   implicit none
 
   private
 
-  public :: GetBasisGPH, GetHydrostaticTangentPressure, Omega
+  public :: GetBasisGPH, GetHydrostaticTangentPressure, Omega, ScanForwardModel
 
   !---------------------------- RCS Ident Info -------------------------------
   character (LEN=130), private :: Id = &
@@ -250,6 +251,8 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Executable code
 
+    if ( toggle(gen) ) call trace_begin ('GetHydrostaticTangentPressure' )
+
     nullify ( aCoeff, basisGPH, basisLower, basisSpacing, basisUpper, &
       & bCoeff, cCoeff, closestH2OProfiles, closestTempProfiles, deltaRT, &
       & earthRadius, geocLat, geometricGPH, lower, n, &
@@ -431,6 +434,8 @@ contains ! =============== Subroutines and functions ==========================
 
     call Deallocate_Test(rt,"rt",ModuleName) ! Was allocated in GetBasisGPH
 
+    if ( toggle(gen) ) call trace_end ('GetHydrostaticTangentPressure' )
+
   end subroutine GetHydrostaticTangentPressure
 
   ! ---------------------------------------- ScanForwardModel --------------
@@ -483,7 +488,7 @@ contains ! =============== Subroutines and functions ==========================
 
     real (r8), target :: ZERO=0.0_r8    ! Need this if no heightOffset
     real (r8), pointer :: HTOFF         ! HeightOffset%values or zero
-    real (r8), pointer :: USEPTAN       ! A tangent pressure
+    real (r8) :: USEPTAN                ! A tangent pressure
 
     ! All these will be dimensioned noMIFs.
     real (r8), dimension(:), pointer :: BASISGPH ! From ifm
@@ -551,6 +556,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Executable code -----------------------
 
+    if ( toggle ( gen ) ) call trace_begin ( 'ScanForwardModel' )
 
     ! Identify the vector quantities from state/extra
     temp => GetVectorQuantityByType ( state, extra, &
@@ -605,18 +611,20 @@ contains ! =============== Subroutines and functions ==========================
     nullify ( pointTempLayer, pointH2OLayer )
     nullify ( closestTempProfiles, closestH2OProfiles )
 
-    nullify ( basisGPH, dh2obydptan, dhydrosgphbydptan, dl1gphbydheightoffset )
+    nullify ( dh2obydptan, dhydrosgphbydptan, dl1gphbydheightoffset )
     nullify ( dl1gphbydl1refrgeocalt, dl1gphbydptan, dl1gphbydtemplower )
     nullify ( dl1gphbydtempupper,  dl1refrgeocaltbydheightoffset )
     nullify ( dl1refrgeocaltbydn, dl1refrgeocaltbydptan )
     nullify ( dl1refrgeocaltbydtemplower, dl1refrgeocaltbydtempupper )
     nullify ( dnbydptan, dnbydtemplower, dnbydtempupper, dtempbydptan )
-    nullify ( geoclat, h2obasis, h2obasisgap, h2olowerweight )
-    nullify ( h2oupperweight, h2ovals, hydrosgph, l1gph, l1refrgeocalt )
+    nullify ( geoclat, h2obasisgap, h2olowerweight )
+    nullify ( h2oupperweight, hydrosgph, l1gph, l1refrgeocalt )
     nullify ( n, p2, p4, pointingh2o, pointingpres, pointingtemp )
-    nullify ( povertsquared, ptanvals, ratio2, ratio4 )
-    nullify ( rt, s2, tempbasis, tempbasisgap )
-    nullify ( templowerweight, tempupperweight, tempvals )
+    nullify ( povertsquared, ratio2, ratio4 )
+    nullify ( rt, s2, tempbasisgap )
+    nullify ( templowerweight, tempupperweight )
+
+    nullify ( A, dHydrosGPHByDTemp )
 
     ! Now set up pointer arrays (there are a lot of these)
     call allocate_test ( pointTempLayer, noMIFs,&
@@ -672,6 +680,8 @@ contains ! =============== Subroutines and functions ==========================
       & 'hydrosGPH', ModuleName )
     call allocate_test ( l1GPH, noMIFs, &
       & 'l1GPH', ModuleName )
+    call allocate_test ( l1RefrGeocAlt, noMIFs, &
+      & 'l1RefrGeocAlt', ModuleName )
     call allocate_test ( n, noMIFs, &
       & 'n', ModuleName )
     call allocate_test ( p2, noMIFs, &
@@ -699,7 +709,7 @@ contains ! =============== Subroutines and functions ==========================
     call allocate_test ( tempUpperWeight, noMIFs, &
       & 'tempUpperWeight', ModuleName )
 
-    call allocate_test ( A, noMIFs, noTemps, &
+    call allocate_test ( A, noMIFs+1, noTemps, & ! Extra for refGPH
       & 'A', ModuleName )
     call allocate_test ( dHydrosGPHByDTemp, noMIFs, noTemps, &
       & 'dHydrosGPHByDTemp', ModuleName )
@@ -727,9 +737,9 @@ contains ! =============== Subroutines and functions ==========================
     ! Do some preamble calcaulations
     geocLat = GeodToGeocLat( ptan%template%geodLat(:,maf) )
     ! Get terms for geopotential expression
-    s2 = (sin(geocLat(I)))**2
-    p2 = 0.5 * (3*s2(I)-1) ! Polynomial terms
-    p4 = 0.125 * (35*(s2(I)**2) - 30*s2(I) + 30)
+    s2 = (sin(geocLat))**2
+    p2 = 0.5 * (3*s2-1) ! Polynomial terms
+    p4 = 0.125 * (35*(s2**2) - 30*s2 + 30)
 
     ! The first part of the calculation is the geometric calculation. This is in
     ! three stages.
@@ -1021,7 +1031,13 @@ contains ! =============== Subroutines and functions ==========================
         call DestroyBlock ( block )
       endif
       call CreateBlock ( jacobian, row, col, M_Full )
-      !block%values = dL1GPHByDTemp - dHydrosGPHByDTemp
+      block%values = - dHydrosGPHByDTemp
+      do i = 1, noMIFs
+        block%values(i,pointTempLayer(i)) = &
+          & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+        block%values(i,pointTempLayer(i)+1) = &
+          & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+      end do
 
     endif
 
@@ -1058,6 +1074,7 @@ contains ! =============== Subroutines and functions ==========================
     call deallocate_test ( h2oUpperWeight, 'h2oUpperWeight', ModuleName )
     call deallocate_test ( hydrosGPH, 'hydrosGPH', ModuleName )
     call deallocate_test ( l1GPH, 'l1GPH', ModuleName )
+    call deallocate_test ( l1RefrGeocAlt, 'l1RefrGeocAlt', ModuleName )
     call deallocate_test ( n, 'n', ModuleName )
     call deallocate_test ( p2, 'p2', ModuleName )
     call deallocate_test ( p4, 'p4', ModuleName )
@@ -1075,11 +1092,16 @@ contains ! =============== Subroutines and functions ==========================
     call deallocate_test ( A, 'A', ModuleName )
     call deallocate_test ( dHydrosGPHByDTemp, 'dHydrosGPHByDTemp', ModuleName )
 
+    if ( toggle ( gen ) ) call trace_end ( 'ScanForwardModel' )
+
   end subroutine ScanForwardModel
 
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.14  2001/05/03 23:42:57  livesey
+! Closer to working
+!
 ! Revision 2.13  2001/05/03 23:09:52  livesey
 ! First version of scan model.  Compiles, but probably doesn't run.
 !
