@@ -241,6 +241,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree ( prof+1, valuesNode), expr_units, expr_value )
         hGrid%phi(prof) = expr_value(1)
         hGrid%geodLat(prof) = hGrid%phi(prof) !???? Sort this out later!
+        hGrid%time = processingRange%startTime
       end do
 
     case ( l_regular ) ! ----------------------- Regular --------------
@@ -1091,6 +1092,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.32  2002/07/01 23:57:06  livesey
+! Explicit HGrids now inherit the processing start time as their time.
+!
 ! Revision 2.31  2002/07/01 23:42:42  vsnyder
 ! Plug a memory leak
 !
