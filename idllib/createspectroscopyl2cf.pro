@@ -57,10 +57,21 @@ for mol = 0, noMols - 1 do begin
     '$^{81}$BrO'      : thisMolName = 'Br_81_O BrO'
     '$^{79}$BrO'      : thisMolName = 'Br_79_O BrO'
     'CH$_{3}$CN'      : thisMolName = 'CH3CN'
+    'CH$_{3}^{35}$Cl' : thisMolName = 'CH3Cl_35 CH3CL'
+    'CH$_{3}^{37}$Cl' : thisMolName = 'CH3Cl_37 CH3CL'
+    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
+    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
     '$^{35}$ClO'      : thisMolName = 'Cl_35_O ClO'
     'H$^{35}$Cl'      : thisMolName = 'HCl_35 HCl'
     'H$^{37}$Cl'      : thisMolName = 'HCl_37 HCl'
     'H$_{2}$O'        : thisMolName = 'H2O'
+    'H$_{2}$O-r1a'    : thisMolName = 'H2O_R1A H2O'
+    'H$_{2}$O-r1b'    : thisMolName = 'H2O_R1B H2O'
+    'H$_{2}$O-r2'     : thisMolName = 'H2O_R2 H2O'
+    'H$_{2}$O-r3'     : thisMolName = 'H2O_R3 H2O'
+    'H$_{2}$O-r4'     : thisMolName = 'H2O_R4 H2O'
+    'H$_{2}$O-r5h'    : thisMolName = 'H2O_R5H H2O'
+    'H$_{2}$O-r5v'    : thisMolName = 'H2O_R5V H2O'
     'H$_{2}^{18}$O'   : thisMolName = 'H2O_18 H2O'
     'H$_{2}$O$_{2}$'  : thisMolName = 'H2O2'
     'HNO$_{3}$'       : thisMolName = 'HNO3'
@@ -82,7 +93,10 @@ for mol = 0, noMols - 1 do begin
     'O$_{2}^{18}$O'   : thisMolName = 'O3_ASYM_O_18 O3'
     'O$^{18}$OO'      : thisMolName = 'O3_SYM_O_18 O3'
     '$^{32}$SO$_{2}$' : thisMolName = 'S_32_O2 SO2'
-    else: thisMolName = thisMolName
+    else: begin
+      print,'Uncertain about: ',thisMolName
+      thisMolName = thisMolName
+    end
   endcase
   if ( strpos ( thisMolName, ' ' ) eq -1 ) then begin
     parentName = thisMolName
@@ -229,19 +243,26 @@ printf, unit, ''
 
 if keyword_set(uars) $
   then array = umlsMolecules $
-else array=emlsMolecules
+else array = emlsMolecules
 
 ;; Collapse the sidebands
 array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
 printf, unit, '; ----------------------------------------- Molecules per band'
 printf, unit, ''
+;; Make H2O and N2 used everywhere.
 array(*,*,where(niceNames eq 'H2O')) = 1
 array(*,*,where(niceNames eq 'N2')) = 1
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
+;; Make the H2O_<radiometer> species used where appropriate
+database = ReadValidSignals()
+for radiometer = 0, database.noRadiometers-1 do begin
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  array(*,relevantBands, $
+    where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
+endfor
 
 ;; Now, add some extra virtual bands which are the radiometers
-database = ReadValidSignals()
 newArray = intarr ( noSidebands, noBands+database.noRadiometers, noMols )
 newArray(*,0:noBands-1,*) = array
 for radiometer = 0, database.noRadiometers-1 do begin
