@@ -1,5 +1,5 @@
 
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -9,6 +9,7 @@ MODULE OutputL1B
    USE Hdf
    USE MLSCommon
    USE MLSL1Common
+   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
    USE MLSL1Rad
    USE MLSMessageModule
    IMPLICIT NONE
@@ -198,7 +199,7 @@ CONTAINS
 
 ! Arguments
 
-      TYPE( L1BInfo_T ), INTENT(IN) :: sdId
+      TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
 
 ! Parameters
 
@@ -222,35 +223,33 @@ CONTAINS
       INTEGER :: sds50_id, sds51_id, sds52_id, sds53_id
       INTEGER :: dimSize(3)
 
-! Create the counterMAF SD in rad file A; name the dimension; terminate access
+! Create the counterMAF SD in rad file F; name the dimension; terminate access
 ! to the data set.
 
       rank = 1
       dimSize(2) = SD_UNLIMITED
 
-      sds52_id = sfcreate(sdId%L1BRADIDs(1), SDS51_NAME, DFNT_INT32, rank, &
+      sds52_id = sfcreate(sdId%RADFID, SDS51_NAME, DFNT_INT32, rank, &
                           dimSize(2))
       dim_id = sfdimid(sds52_id, 0)
       status = sfsdmname(dim_id, DIM1_NAME)
       status = sfendacc(sds52_id)
 
-! Repeat these steps for the Rad B file, if one was opened
+! Repeat these steps for the Rad D file
        
-      IF ( SIZE(sdId%L1BRADIDs) > 1 ) THEN
-         sds53_id = sfcreate(sdId%L1BRADIDs(2), SDS51_NAME, DFNT_INT32, rank, &
-                             dimSize(2))
-         dim_id = sfdimid(sds53_id, 0)
-         status = sfsdmname(dim_id, DIM1_NAME)
-         status = sfendacc(sds53_id)
-      ENDIF
+      sds53_id = sfcreate(sdId%RADDID, SDS51_NAME, DFNT_INT32, rank, &
+           dimSize(2))
+      dim_id = sfdimid(sds53_id, 0)
+      status = sfsdmname(dim_id, DIM1_NAME)
+      status = sfendacc(sds53_id)
 
 ! L1BOA file -- create one-dimensional data sets
 
-      sds2_id = sfcreate( sdId%L1BOAId, SDS2_NAME, DFNT_FLOAT64, rank, &
+      sds2_id = sfcreate( sdId%OAId, SDS2_NAME, DFNT_FLOAT64, rank, &
                           dimSize(2) )
-      sds3_id = sfcreate( sdId%L1BOAId, SDS3_NAME, DFNT_INT32, rank, &
+      sds3_id = sfcreate( sdId%OAId, SDS3_NAME, DFNT_INT32, rank, &
                           dimSize(2) )
-      sds51_id = sfcreate( sdId%L1BOAId, SDS51_NAME, DFNT_INT32, rank, &
+      sds51_id = sfcreate( sdId%OAId, SDS51_NAME, DFNT_INT32, rank, &
                            dimSize(2) )
 
 ! Create two-dimensional data sets
@@ -261,53 +260,53 @@ CONTAINS
 
       dimSize(1) = lenUTC
   
-      sds1_id = sfcreate( sdId%L1BOAId, SDS1_NAME, DFNT_CHAR8, rank, &
+      sds1_id = sfcreate( sdId%OAId, SDS1_NAME, DFNT_CHAR8, rank, &
                           dimSize(1:2) )
 
       dimSize(1) = MaxMIFs
 
-      sds6_id = sfcreate( sdId%L1BOAId, SDS6_NAME, DFNT_FLOAT64, rank, &
+      sds6_id = sfcreate( sdId%OAId, SDS6_NAME, DFNT_FLOAT64, rank, &
                           dimSize(1:2) )
       status = sfsfill(sds6_id, FILL_DP)
-      sds7_id = sfcreate( sdId%L1BOAId, SDS7_NAME, DFNT_FLOAT32, rank, &
+      sds7_id = sfcreate( sdId%OAId, SDS7_NAME, DFNT_FLOAT32, rank, &
                           dimSize(1:2) )
       status = sfsfill(sds7_id, FILL_REAL)
-      sds8_id = sfcreate( sdId%L1BOAId, SDS8_NAME, DFNT_FLOAT64, rank, &
+      sds8_id = sfcreate( sdId%OAId, SDS8_NAME, DFNT_FLOAT64, rank, &
                           dimSize(1:2) )
       status = sfsfill(sds8_id, FILL_DP)
-      sds9_id = sfcreate( sdId%L1BOAId, SDS9_NAME, DFNT_FLOAT32, rank, &
+      sds9_id = sfcreate( sdId%OAId, SDS9_NAME, DFNT_FLOAT32, rank, &
                           dimSize(1:2) )
       status = sfsfill(sds9_id, FILL_REAL)
-      sds10_id = sfcreate( sdId%L1BOAId, SDS10_NAME, DFNT_FLOAT32, rank, &
+      sds10_id = sfcreate( sdId%OAId, SDS10_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds10_id, FILL_REAL)
-      sds11_id = sfcreate( sdId%L1BOAId, SDS11_NAME, DFNT_FLOAT32, rank, &
+      sds11_id = sfcreate( sdId%OAId, SDS11_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds11_id, FILL_REAL)
 
-      sds15_id = sfcreate( sdId%L1BOAId, SDS15_NAME, DFNT_FLOAT64, rank, &
+      sds15_id = sfcreate( sdId%OAId, SDS15_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds15_id, FILL_DP)
-      sds16_id = sfcreate( sdId%L1BOAId, SDS16_NAME, DFNT_FLOAT64, rank, &
+      sds16_id = sfcreate( sdId%OAId, SDS16_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds16_id, FILL_DP)
-      sds17_id = sfcreate( sdId%L1BOAId, SDS17_NAME, DFNT_FLOAT64, rank, &
+      sds17_id = sfcreate( sdId%OAId, SDS17_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds17_id, FILL_DP)
-      sds18_id = sfcreate( sdId%L1BOAId, SDS18_NAME, DFNT_FLOAT32, rank, &
+      sds18_id = sfcreate( sdId%OAId, SDS18_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds18_id, FILL_REAL)
 
-      sds33_id = sfcreate( sdId%L1BOAId, SDS33_NAME, DFNT_FLOAT64, rank, &
+      sds33_id = sfcreate( sdId%OAId, SDS33_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds33_id, FILL_DP)
-      sds34_id = sfcreate( sdId%L1BOAId, SDS34_NAME, DFNT_FLOAT64, rank, &
+      sds34_id = sfcreate( sdId%OAId, SDS34_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds34_id, FILL_DP)
-      sds35_id = sfcreate( sdId%L1BOAId, SDS35_NAME, DFNT_FLOAT64, rank, &
+      sds35_id = sfcreate( sdId%OAId, SDS35_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds35_id, FILL_DP)
-      sds36_id = sfcreate( sdId%L1BOAId, SDS36_NAME, DFNT_FLOAT32, rank, &
+      sds36_id = sfcreate( sdId%OAId, SDS36_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds36_id, FILL_REAL)
 
@@ -315,40 +314,40 @@ CONTAINS
 
       dimSize(1) = lenG
 
-      sds21_id = sfcreate( sdId%L1BOAId, SDS21_NAME, DFNT_FLOAT32, rank, &
+      sds21_id = sfcreate( sdId%OAId, SDS21_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds21_id, FILL_REAL)
-      sds22_id = sfcreate( sdId%L1BOAId, SDS22_NAME, DFNT_FLOAT64, rank, &
+      sds22_id = sfcreate( sdId%OAId, SDS22_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds22_id, FILL_DP)
-      sds23_id = sfcreate( sdId%L1BOAId, SDS23_NAME, DFNT_FLOAT32, rank, &
+      sds23_id = sfcreate( sdId%OAId, SDS23_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds23_id, FILL_REAL)
-      sds24_id = sfcreate( sdId%L1BOAId, SDS24_NAME, DFNT_FLOAT32, rank, &
+      sds24_id = sfcreate( sdId%OAId, SDS24_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds24_id, FILL_REAL)
-      sds25_id = sfcreate( sdId%L1BOAId, SDS25_NAME, DFNT_FLOAT64, rank, &
+      sds25_id = sfcreate( sdId%OAId, SDS25_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds25_id, FILL_DP)
-      sds26_id = sfcreate( sdId%L1BOAId, SDS26_NAME, DFNT_FLOAT32, rank, &
+      sds26_id = sfcreate( sdId%OAId, SDS26_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds26_id, FILL_REAL)
-      sds27_id = sfcreate( sdId%L1BOAId, SDS27_NAME, DFNT_FLOAT32, rank, &
+      sds27_id = sfcreate( sdId%OAId, SDS27_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds27_id, FILL_REAL)
-      sds28_id = sfcreate( sdId%L1BOAId, SDS28_NAME, DFNT_FLOAT32, rank, &
+      sds28_id = sfcreate( sdId%OAId, SDS28_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds28_id, FILL_REAL)
-      sds29_id = sfcreate( sdId%L1BOAId, SDS29_NAME, DFNT_FLOAT32, rank, &
+      sds29_id = sfcreate( sdId%OAId, SDS29_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) ) 
       status = sfsfill(sds29_id, FILL_REAL)
-      sds30_id = sfcreate( sdId%L1BOAId, SDS30_NAME, DFNT_FLOAT32, rank, &
+      sds30_id = sfcreate( sdId%OAId, SDS30_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds30_id, FILL_REAL)
-      sds31_id = sfcreate( sdId%L1BOAId, SDS31_NAME, DFNT_FLOAT32, rank, &
+      sds31_id = sfcreate( sdId%OAId, SDS31_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds31_id, FILL_REAL)
-      sds32_id = sfcreate( sdId%L1BOAId, SDS32_NAME, DFNT_FLOAT32, rank, &
+      sds32_id = sfcreate( sdId%OAId, SDS32_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds32_id, FILL_REAL)
 
@@ -356,40 +355,40 @@ CONTAINS
 
       dimSize(1) = lenT
 
-      sds39_id = sfcreate( sdId%L1BOAId, SDS39_NAME, DFNT_FLOAT32, rank, &
+      sds39_id = sfcreate( sdId%OAId, SDS39_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds39_id, FILL_REAL)
-      sds40_id = sfcreate( sdId%L1BOAId, SDS40_NAME, DFNT_FLOAT64, rank, &
+      sds40_id = sfcreate( sdId%OAId, SDS40_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds40_id, FILL_DP)
-      sds41_id = sfcreate( sdId%L1BOAId, SDS41_NAME, DFNT_FLOAT32, rank, &
+      sds41_id = sfcreate( sdId%OAId, SDS41_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds41_id, FILL_REAL)
-      sds42_id = sfcreate( sdId%L1BOAId, SDS42_NAME, DFNT_FLOAT32, rank, &
+      sds42_id = sfcreate( sdId%OAId, SDS42_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds42_id, FILL_REAL)
-      sds43_id = sfcreate( sdId%L1BOAId, SDS43_NAME, DFNT_FLOAT64, rank, &
+      sds43_id = sfcreate( sdId%OAId, SDS43_NAME, DFNT_FLOAT64, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds43_id, FILL_DP)
-      sds44_id = sfcreate( sdId%L1BOAId, SDS44_NAME, DFNT_FLOAT32, rank, &
+      sds44_id = sfcreate( sdId%OAId, SDS44_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2))
       status = sfsfill(sds44_id, FILL_REAL)
-      sds45_id = sfcreate( sdId%L1BOAId, SDS45_NAME, DFNT_FLOAT32, rank, &
+      sds45_id = sfcreate( sdId%OAId, SDS45_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds45_id, FILL_REAL)
-      sds46_id = sfcreate( sdId%L1BOAId, SDS46_NAME, DFNT_FLOAT32, rank, &
+      sds46_id = sfcreate( sdId%OAId, SDS46_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds46_id, FILL_REAL)
-      sds47_id = sfcreate( sdId%L1BOAId, SDS47_NAME, DFNT_FLOAT32, rank, &
+      sds47_id = sfcreate( sdId%OAId, SDS47_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds47_id, FILL_REAL)
-      sds48_id = sfcreate( sdId%L1BOAId, SDS48_NAME, DFNT_FLOAT32, rank, &
+      sds48_id = sfcreate( sdId%OAId, SDS48_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds48_id, FILL_REAL)
-      sds49_id = sfcreate( sdId%L1BOAId, SDS49_NAME, DFNT_FLOAT32, rank, &
+      sds49_id = sfcreate( sdId%OAId, SDS49_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2) )
       status = sfsfill(sds49_id, FILL_REAL)
-      sds50_id = sfcreate( sdId%L1BOAId, SDS50_NAME, DFNT_FLOAT32, rank, &
+      sds50_id = sfcreate( sdId%OAId, SDS50_NAME, DFNT_FLOAT32, rank, &
                            dimSize(1:2))
       status = sfsfill(sds50_id, FILL_REAL)
 
@@ -403,33 +402,33 @@ CONTAINS
       dimSize(2) = MaxMIFs
       dimSize(3) = SD_UNLIMITED
 
-      sds4_id = sfcreate(sdId%L1BOAId, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds4_id = sfcreate(sdId%OAId, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds4_id, FILL_DP)
-      sds5_id = sfcreate(sdId%L1BOAId, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds5_id = sfcreate(sdId%OAId, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds5_id, FILL_DP)
-      sds12_id = sfcreate(sdId%L1BOAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds12_id = sfcreate(sdId%OAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds12_id, FILL_DP)
-      sds13_id = sfcreate(sdId%L1BOAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds13_id = sfcreate(sdId%OAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds13_id, FILL_DP)
-      sds14_id = sfcreate(sdId%L1BOAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds14_id = sfcreate(sdId%OAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds14_id, FILL_DP)
 
 ! GHz tangent point quantities
 
       dimSize(2) = lenG
 
-      sds19_id = sfcreate(sdId%L1BOAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds19_id = sfcreate(sdId%OAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds19_id, FILL_DP)
-      sds20_id = sfcreate(sdId%L1BOAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds20_id = sfcreate(sdId%OAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds20_id, FILL_DP)
 
 ! THz tangent point quantities
 
       dimSize(2) = lenT
 
-      sds37_id = sfcreate(sdId%L1BOAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
+      sds37_id = sfcreate(sdId%OAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
       status = sfsfill(sds37_id, FILL_DP)
-      sds38_id = sfcreate(sdId%L1BOAId, SDS38_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds38_id = sfcreate(sdId%OAId, SDS38_NAME, DFNT_FLOAT64, rank, dimSize)
       status = sfsfill(sds38_id, FILL_DP)
    
 ! Give names to the dimensions
@@ -1279,12 +1278,11 @@ CONTAINS
 !--------------------------------------------------------
 
 ! Brief description of subroutine
-! This subroutine writes an MAF's worth of data to the L1BRad A & B files (if
-! the latter exists).
+! This subroutine writes an MAF's worth of data to the L1BRad D & F files
 
 ! Arguments
 
-      TYPE( L1BInfo_T ) :: sdId
+      TYPE( L1BFileInfo_T ) :: sdId
       TYPE( Radiance_T ) :: rad(:)
 
       INTEGER, INTENT(IN) :: counterMAF, noMAF
@@ -1315,28 +1313,25 @@ CONTAINS
       stride = 1
       edge(3) = 1
 
-! Find the sds_id number for counterMAF in the file A, write the data to it,
+! Find the sds_id number for counterMAF in the file RADF, write the data to it,
 ! terminate access to the data set
 
       name = 'counterMAF'
-
-      sds_index = sfn2index(sdId%L1BRADIDs(1), name)
-      sds1_id = sfselect(sdId%L1BRADIDs(1), sds_index)
+      sds_index = sfn2index(sdId%RADFID, name)
+      sds1_id = sfselect(sdId%RADFID, sds_index)
       status = sfwdata(sds1_id, start(3), stride(3), edge(3), counterMAF)
       status = sfendacc(sds1_id)
       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
-                                       &writing counterMAF to rad file A.')
+                                       &writing counterMAF to rad F file')
 
-! Do the same for file B, if it exists
+! Do the same for file RADD
 
-      IF ( SIZE(sdId%L1BRADIDs) > 1 ) THEN
-         sds_index = sfn2index(sdId%L1BRADIDs(2), name)
-         sds2_id = sfselect(sdId%L1BRADIDs(2), sds_index)
-         status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
-         status = sfendacc(sds2_id)
-         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
-                                          &writing counterMAF to rad file B.')
-      ENDIF
+      sds_index = sfn2index(sdId%RADDID, name)
+      sds2_id = sfselect(sdId%RADDID, sds_index)
+      status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
+      status = sfendacc(sds2_id)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+           &writing counterMAF to rad D file')
 
 ! Loop on number of SDs per MAF
 
@@ -1359,28 +1354,28 @@ CONTAINS
 
          IF ( INDEX(name,'FB') /= 0 ) THEN
             dim_chan = DIM7_NAME
-            sd_id = sdId%L1BRADIDs(1)
+            sd_id = sdId%RADFID
          ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
             dim_chan = DIM8_NAME
-            sd_id = sdId%L1BRADIDs(1)
+            sd_id = sdId%RADFID
          ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
             dim_chan = DIM9_NAME
-            sd_id = sdId%L1BRADIDs(1)
+            sd_id = sdId%RADFID
          ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
             dim_chan = DIM10_NAME
-            sd_id = sdId%L1BRADIDs(2)
+            sd_id = sdId%RADDID
          ENDIF
 
 ! Based on rad module, set dim name & size, edge for # of MIFs
 
          IF ( INDEX(name,'R5') /= 0 ) THEN
             dim_mif = DIM4_NAME
-            dimSize(2) = lenT
-            edge(2) = lenT
+            dimSize(2) = MIFsTHz  !! lenT
+            edge(2) = MIFsTHz     !! lenT
          ELSE
             dim_mif = DIM3_NAME
-            dimSize(2) = lenG
-            edge(2) = lenG
+            dimSize(2) = MIFsGHz  !! lenG
+            edge(2) = MIFsGHz     !! lenG
          ENDIF
 
 ! If # of input MIFs exceeds dim size, re-set & output warning msg
@@ -1464,6 +1459,9 @@ END MODULE OutputL1B
 !===============================================================================
 
 ! $Log$
+! Revision 2.1  2001/02/23 18:26:11  perun
+! Version 0.5 commit
+!
 ! Revision 2.0  2000/09/05 18:55:14  ahanzel
 ! Changing file revision to 2.0.
 !

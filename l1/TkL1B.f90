@@ -9,7 +9,8 @@ MODULE TkL1B
    USE MLSCommon
    USE MLSL1Common
    USE MLSMessageModule
-   USE OutputL1B
+   USE OutputL1B, ONLY: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, lenCoord, &
+        OutputL1B_THz, OutputL1B_SC, OutputL1B_Index, OutputL1B_GHz, lenG, lenT
    USE Scan
    USE SDPToolkit
    IMPLICIT NONE
@@ -883,6 +884,9 @@ END MODULE TkL1B
 !===============
 
 ! $Log$
+! Revision 2.1  2001/02/23 18:26:11  perun
+! Version 0.5 commit
+!
 ! Revision 2.0  2000/09/05 18:55:15  ahanzel
 ! Changing file revision to 2.0.
 !

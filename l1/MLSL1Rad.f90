@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -29,25 +29,27 @@ MODULE MLSL1Rad              ! Radiance data types for the MLSL1 program
      REAL(r4), DIMENSION (:,:), POINTER :: value, precision
   END TYPE Radiance_T
 
+  TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad
+
 CONTAINS
 
 !=============================================================================
-  SUBROUTINE InitRad (L1Brad)
+  SUBROUTINE InitRad
 !=============================================================================
+
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
 
     ! Arguments
 
-    TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad
-
     ! Local
 
-    INTEGER :: i, status
-    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal
+    INTEGER :: i, status,RADMIFs
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
     CHARACTER (LEN=3) :: bandNo
 
     ! For this version, allocate for only standard and mid-band filter banks
 
-    ALLOCATE (L1Brad(FBnum+MBnum), STAT=status)
+    ALLOCATE (L1Brad(FBnum+MBnum+WFnum), STAT=status)
     IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
          & MLSMSG_Allocate//"L1BRad")
 
@@ -55,10 +57,15 @@ CONTAINS
 
     DO i = 1, FBnum
 
-       ALLOCATE (L1Brad(i)%value(FBchans,MaxMIFs), STAT=status)
+       IF (i < 15) THEN
+          RADMIFs = MIFsGHz
+       ELSE
+          RADMIFs = MIFsTHz
+       ENDIF
+       ALLOCATE (L1Brad(i)%value(FBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBvalue")
-       ALLOCATE (L1Brad(i)%precision(FBchans,MaxMIFs), STAT=status)
+       ALLOCATE (L1Brad(i)%precision(FBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBprecision")
        WRITE (bandNo, '("B",i2.2)') i
@@ -68,14 +75,18 @@ CONTAINS
 
     END DO
 
+    RADMIFs = MIFsGHz          ! Size for remainder of channels
+
+    FBrad => L1Brad(1:FBnum)   ! Point to FB data
+
     ! Allocate and initialize for the mid-band filter banks
 
     DO i = 1, MBnum
 
-       ALLOCATE (L1BRad(i+FBnum)%value(MBchans,MaxMIFs), STAT=status)
+       ALLOCATE (L1BRad(i+FBnum)%value(MBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBvalue")
-       ALLOCATE (L1BRad(i+FBnum)%precision(MBchans,MaxMIFs), STAT=status)
+       ALLOCATE (L1BRad(i+FBnum)%precision(MBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBprecision")
        WRITE (bandNo, '("B",i2.2)') (i+26)   ! start at band 27
@@ -84,6 +95,27 @@ CONTAINS
        DEALLOCATE (signal)
 
     END DO
+
+    MBrad => L1Brad(FBnum+1:FBnum+MBnum)  ! Point to MB data
+
+    ! Allocate and initialize for the wide filter banks
+
+    DO i = 1, WFnum
+
+       ALLOCATE (L1BRad(i+FBnum+MBnum)%value(WFchans,RADMIFs), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"WFvalue")
+       ALLOCATE (L1BRad(i+FBnum+MBnum)%precision(WFchans,RADMIFs), STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"WFprecision")
+       WRITE (bandNo, '("B",i2.2)') (i+31)   ! start at band 32
+       CALL ParseMLSSignalRequest (bandNo, signal, .false.)
+       L1Brad(i+FBnum+MBnum)%signal = signal(1)
+       DEALLOCATE (signal)
+
+    END DO
+
+    WFrad => L1Brad(FBnum+MBnum+1:FBnum+MBnum+WFnum)  ! Point to WF data
 
     RETURN
 
@@ -95,6 +127,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.1  2001/02/23 18:26:11  perun
+! Version 0.5 commit
+!
 ! Revision 2.0  2000/09/05 18:55:14  ahanzel
 ! Changing file revision to 2.0.
 !
