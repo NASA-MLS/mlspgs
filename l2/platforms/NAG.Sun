@@ -37,7 +37,7 @@ FC = f95
 # Compiler options:
 FOPTS = -g -C=all
 
-DUSTY = -g -dusty
+DUSTY = $(FOPTS) -dusty
 
 #PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
 
@@ -88,6 +88,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.5  2000/11/18 00:16:39  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.4  2000/11/16 22:55:21  pwagner
 # Looks for %.f9h in srclib
 #

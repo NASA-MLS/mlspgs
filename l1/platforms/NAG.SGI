@@ -37,7 +37,7 @@ FC = f95
 # Compiler options:
 FOPTS = -g -C=all -abi=n32
 
-DUSTY = -g -dusty -abi=n32
+DUSTY = $(FOPTS) -dusty
 
 #PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
 
@@ -84,6 +84,9 @@ DUSTY = -g -dusty -abi=n32
 l_specials =
 
 # $Log$
+# Revision 1.2  2000/11/18 00:06:17  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.1  2000/11/15 00:12:41  pwagner
 # First commit
 #
