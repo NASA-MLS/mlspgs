@@ -8,8 +8,10 @@ module ForwardModelSupport
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Expr_M, only: EXPR
+  use Intrinsic, only: T_NUMERIC_RANGE
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_VMR
+  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, &
+    & L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, L_LATITUDE, L_SZA
   use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, &
     & F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
@@ -29,7 +31,7 @@ module ForwardModelSupport
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, PHYQ_PROFILES, &
-    & PHYQ_ANGLE
+    & PHYQ_ANGLE, PHYQ_VMR, PHYQ_INVALID
 
 
   implicit none
@@ -227,6 +229,8 @@ contains ! =====     Public Procedures     =============================
     integer :: THISSIDEBAND
     integer :: SIGNALCOUNT              ! Number of signals
     integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
+    integer :: COSTUNIT                 ! Units for cost
+    integer :: WANTEDUNIT               ! Units wanted for cost
 
     ! Exeuctable code
     do i = 2, nsons(root)               ! Skip binSelector command
@@ -239,9 +243,13 @@ contains ! =====     Public Procedures     =============================
         binSelector%selectorType = decoration(gson)
       case ( f_molecule )
         binSelector%molecule = decoration(gson)
+      case ( f_nameFragment )
+        binSelector%nameFragment = sub_rosa(gson)
       case ( f_height )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son, &
           & f_height )
+        if ( type /= t_numeric_range ) call AnnounceError ( 0, son, f_height, &
+          & 'Height range expected' )
         call expr ( gson, units, value, type )
         if ( any ( units /= phyq_pressure .and. units /= phyq_dimensionless ) .or. &
           & all ( units /= phyq_pressure ) ) &
@@ -251,15 +259,34 @@ contains ! =====     Public Procedures     =============================
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son, &
           & f_cost )
         call expr ( gson, units, value, type )
+        if ( type == t_numeric_range ) call AnnounceError ( 0, son, &
+          & f_cost, 'Cost must not be a range' ) 
         ! Some units checking should probably go here in the long run !???? NJL
         binSelector%cost = value(1)
+        costUnit = units(1)
       end select
     end do
+
+    wantedUnit = phyq_invalid
+    select case ( binSelector%selectorType )
+    case ( l_vmr )
+      wantedUnit = phyq_vmr
+    case ( l_temperature )
+      wantedUnit = phyq_temperature
+    case ( l_latitude, l_sza )
+      wantedUnit = phyq_angle
+    end select
 
     ! Just check a few last details
     if ( ( binSelector%selectorType == l_vmr ) &
       & .and. ( .not. got(f_molecule) ) ) call AnnounceError ( &
       & NoMolecule, son )
+    if ( ( binSelector%selectorType == l_nameFragment ) .and. &
+      & ( .not. got(f_nameFragment) ) ) call AnnounceError ( &
+      0, son, extraMessage='No name fragment supplied' )
+    if ( ( wantedUnit /= phyq_invalid ) .and. ( wantedUnit /= costUnit ) ) &
+      & call AnnounceError ( 0, son, extraMessage='Wrong units for cost' )
+
   end function CreateBinSelectorFromMLSCFINFO
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
@@ -664,6 +691,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.54  2003/02/06 00:45:51  livesey
+! Added new binSelector stuff
+!
 ! Revision 2.53  2003/02/06 00:15:01  jonathan
 ! sorry no_cloud_sps=2
 !
