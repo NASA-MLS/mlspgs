@@ -145,15 +145,44 @@ contains ! ================================ Procedures ======================
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
 
     ! Local variables
-    integer :: LUN                      ! Logical unit number
     character(len=MachineNameLen) :: LINE ! A line from the file
-    integer :: MACHINE                  ! Counter
-    integer :: NOMACHINES               ! Array size
+    character(len=MachineNameLen) :: ORIGINAL ! A line from the file
     logical :: EXIST                    ! Flag from inquire
+    logical :: GOTFIRSTLAST             ! Got a range
     logical :: OPENED                   ! Flag from inquire
+
+    integer :: FIRSTCOLONPOS          ! Position in string
+    integer :: SECONDCOLONPOS         ! Position in string
+    integer :: FIRST                    ! First machine in file to use
+    integer :: I                        ! Loop inductor
+    integer :: LAST                     ! Last machine in file to use
+    integer :: LUN                      ! Logical unit number
+    integer :: MACHINE                  ! Counter
+    integer :: NOLINES                  ! Number of lines in file
+    integer :: NOMACHINES               ! Array size
     integer :: STAT                     ! Status flag from read
 
     ! Executable code
+    ! The slave filename may contain starting and ending line numbers
+
+    original = parallel%slaveFilename
+    gotFirstLast = .false.
+    firstColonPos = index ( parallel%slaveFilename, ':' )
+    if ( firstColonPos /= 0 ) then
+      gotFirstLast = .true.
+      parallel%slaveFilename(firstColonPos:firstColonPos) = ' '
+      secondColonPos = index ( parallel%slaveFilename,':' )
+      if ( secondColonPos < firstColonPos ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Incorrect syntax for slave info:'//trim(original) )
+      parallel%slaveFilename(secondColonPos:secondColonPos) = ' '
+      read (parallel%slaveFilename(firstColonPos+1:),*,iostat=stat) first, last
+      if ( stat /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Incorrect syntax for slave info:'//trim(original) )
+    else
+      firstColonPos = len_trim(parallel%slaveFilename)+1
+    end if
 
     ! Find a free logical unit number
     do lun = 20, 99
@@ -162,28 +191,48 @@ contains ! ================================ Procedures ======================
     end do
     if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "No logical unit numbers available" )
-    open ( unit=lun, file=parallel%slaveFilename, status='old', form='formatted', &
+    open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
+      & status='old', form='formatted', &
       & access='sequential', iostat=stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open slave file " // parallel%slaveFilename )
+      & "Unable to open slave file " // parallel%slaveFilename(1:firstColonPos-1) )
 
     ! Now read the file and count the lines
     noMachines = 0
+    noLines = 0
     firstTimeRound: do
       read ( unit=lun, fmt=*, iostat=stat ) line
       if ( stat < 0 ) exit firstTimeRound
-      noMachines = noMachines + 1
+      noLines = noLines + 1
+      line = adjustl ( line )
+      if ( line(1:1) /= '#' ) noMachines = noMachines + 1
     end do firstTimeRound
 
     ! Now setup the result array
+    if ( .not. gotFirstLast ) then
+      first = 1
+      last = noMachines
+    else
+      first = min( max ( first, 1 ), noMachines )
+      last = max( 1, min ( last, noMachines ) )
+    end if
+    noMachines = last - first + 1
+
     allocate ( machineNames(noMachines), stat=stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' machineNames')
 
     ! Now rewind the file and read the names
     rewind ( lun )
-    do machine = 1, noMachines
-      read ( unit=lun, fmt=* ) machineNames(machine)
+    machine = 1
+    do i = 1, noLines
+      read ( unit=lun, fmt=* ) line
+      line = adjustl ( line )
+      if ( line(1:1) /= '#' ) then
+        if ( (machine >= first) .and. (machine <= last) ) &
+          & machineNames(machine-first+1) = line
+        machine = machine + 1
+      endif
     end do
 
     close ( unit=lun )
@@ -780,6 +829,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.22  2001/11/05 23:21:31  livesey
+! Can now specify subset of slaves using <filename>:a:b.
+!
 ! Revision 2.21  2001/10/30 01:45:21  livesey
 ! Some modifications/fixes to parallel join
 !
