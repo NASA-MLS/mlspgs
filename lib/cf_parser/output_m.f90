@@ -1,17 +1,23 @@
 module OUTPUT_M
 
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Info
   implicit NONE
   private
 
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
                                         ! place to store it
-  integer, save, public :: PRUNIT = -1  ! "printer" unit, * if < 0.
+  integer, save, public :: PRUNIT = -1  ! Unit for output.  "printer" unit, *
+                                        ! if -1, MLSMessage if -2, both
+                                        ! printer and MLSMSG if < -2.
 
   public :: BLANKS, OUTPUT
   interface OUTPUT
     module procedure output_char, output_char_array, output_double
     module procedure output_integer
   end interface
+
+! integer, save, public :: MLSMSG_Level = MLSMSG_Info
+  integer, save, public :: MLSMSG_Level = 2
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -40,11 +46,12 @@ contains
       i = min(n,len(b))
       n = n - i
       if ( n == 0 ) adv = my_adv
-      if ( prunit < 0 ) then
-        write ( *, '(a)', advance=adv ) b(:i)
-      else
-        write ( prunit, '(a)', advance=adv ) b(:i)
-      end if
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=adv ) b(:i)
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, b(:i), advance=adv )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=adv ) b(:i)
       if ( n == 0 ) exit
     end do
     return
@@ -57,11 +64,12 @@ contains
     character(len=3) :: MY_ADV
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
-    if ( prunit < 0 ) then
-      write ( *, '(a)', advance=my_adv ) chars
-    else
-      write ( prunit, '(a)', advance=my_adv ) chars
-    end if
+    if ( prunit == -1 .or. prunit < -2 ) &
+      & write ( *, '(a)', advance=my_adv ) chars
+    if ( prunit < -1 ) &
+      & call MLSMessage ( MLSMSG_Level, ModuleName, chars, advance=my_adv )
+    if ( prunit >= 0 ) &
+      & write ( prunit, '(a)', advance=my_adv ) chars
   end subroutine OUTPUT_CHAR
 
   subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE )
@@ -70,18 +78,20 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I ! loop inductor
     do i = 1, size(chars)
-      if ( prunit < 0 ) then
-        write ( *, '(a)', advance='no' ) chars(i:i)
-      else
-        write ( prunit, '(a)', advance='no' ) chars(i:i)
-      end if
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance='no' ) chars(i)
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, chars(i), advance='no' )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance='no' ) chars(i)
     end do
     if ( present(advance) ) then
-      if ( prunit < 0 ) then
-        write ( *, '(a)', advance=advance )
-      else
-        write ( prunit, '(a)', advance=advance )
-      end if
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=advance )
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=advance )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=advance )
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
@@ -97,11 +107,15 @@ contains
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     if ( present(format) ) then
-      if ( prunit < 0 ) then
-        write ( *, format, advance=my_adv ) value
-      else
-        write ( prunit, format, advance=my_adv ) value
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, format, advance=my_adv ) value
+      if ( prunit < -1 ) then
+        write ( line, * ) value
+        call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+          & advance=advance )
       end if
+      if ( prunit >= 0 ) &
+        & write ( prunit, format, advance=my_adv ) value
     else
       write ( line, * ) value
       i = index(line,'.')
@@ -118,11 +132,13 @@ contains
       end if
       line = adjustl(line)
       k = len_trim(line)
-      if ( prunit < 0 ) then
-        write ( *, '(a)', advance=my_adv ) line(:k)
-      else
-        write ( prunit, '(a)', advance=my_adv ) line(:k)
-      end if
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=my_adv ) line(:k)
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
+          & advance=advance )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=my_adv ) line(:k)
     end if
   end subroutine OUTPUT_DOUBLE
 
@@ -141,11 +157,13 @@ contains
     if ( present(advance) ) then; my_adv = advance; end if
     write ( line, '(i6)' ) int
     i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
-    if ( prunit < 0 ) then
-      write ( *, '(a)', advance=my_adv ) line(i:)
-    else
-      write ( prunit, '(a)', advance=my_adv ) line(i:)
-    end if
+    if ( prunit == -1 .or. prunit < -2 ) &
+      & write ( *, '(a)', advance=my_adv ) line(i:)
+    if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, line(i:), &
+          & advance=advance )
+    if ( prunit >= 0 ) &
+      & write ( prunit, '(a)', advance=my_adv ) line(i:)
     return
   end subroutine OUTPUT_INTEGER
 
@@ -161,11 +179,15 @@ contains
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     if ( present(format) ) then
-      if ( prunit < 0 ) then
-        write ( *, format, advance=my_adv ) value
-      else
-        write ( prunit, format, advance=my_adv ) value
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, format, advance=my_adv ) value
+      if ( prunit < -1 ) then
+        write ( line, * ) value
+        call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+          & advance=advance )
       end if
+      if ( prunit >= 0 ) &
+        & write ( prunit, format, advance=my_adv ) value
     else
       write ( line, * ) value
       i = index(line,'.')
@@ -182,16 +204,21 @@ contains
       end if
       line = adjustl(line)
       k = len_trim(line)
-      if ( prunit < 0 ) then
-        write ( *, '(a)', advance=my_adv ) line(:k)
-      else
-        write ( prunit, '(a)', advance=my_adv ) line(:k)
-      end if
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=my_adv ) line(:k)
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
+          & advance=advance )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=my_adv ) line(:k)
     end if
   end subroutine OUTPUT_SINGLE
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.0  2000/09/05 17:41:50  dcuddy
+! Change revision to 2.0
+!
 ! Revision 1.1  2000/07/06 01:43:12  vsnyder
 ! Initial check-in
 !
