@@ -21,7 +21,8 @@ module ScanDivide
   use Output_M, only: Output
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: Display_String
-  use TREE, only: DECORATION, NSONS, Source_Ref, SUBTREE
+  use TREE, only: DECORATION, Node_ID, NSONS, Source_Ref, SUBTREE
+  use Tree_Types, only: N_Equal, N_Named
   implicit none
   private
 
@@ -1273,9 +1274,11 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section identifiers
       son = subtree(i,root)
+      if ( node_id(son) == n_named ) son = subtree(2,son)
       key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
       got(key) = .true.
-      call expr ( subtree(2,son), units, value )
+      if ( node_id(root) == n_equal ) &
+        & call expr ( subtree(2,son), units, value )
 
       select case ( key )
       case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
@@ -1371,6 +1374,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.8  2001/04/23 23:57:12  vsnyder
+!# Finish adding 'time' command
+!#
 !# Revision 2.7  2001/04/23 23:42:00  vsnyder
 !# Add 'time' command
 !#
