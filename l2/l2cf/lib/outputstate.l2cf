@@ -11,6 +11,7 @@ begin Output
   file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
 
 !standardProduct(temperature,Temperature,)
+!standardProduct(refgph,refGPH,)
 !standardProduct(gph,GPH,)
 !standardProduct(bro,BrO,)
 !standardProduct(ch3cn,CH3CN,)
@@ -26,7 +27,7 @@ begin Output
 !standardProduct(o3,O3,)
 !standardProduct(oh,OH,)
 !standardProduct(so2,SO2,)
-!standardProduct(rhi,RHI,)
+!standardProduct(rhi,RHi,)
 
 ;; Now output the DGG file
 !ifdef(gotDGGs,{
@@ -39,7 +40,8 @@ Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
  Output, quantities=[ $
    joined_ptanGHz, joined_ptanTHz, $
    joined_ptanGHz_precision, joined_ptanTHz_precision, $
-   joined_phitanGHz, joined_phitanTHz ], $
+   joined_phitanGHz, joined_phitanTHz, $
+   joined_phitanGHz_precision, joined_phitanTHz_precision ], $
    type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
 },{
 !ifdef(gotDGMs,{
@@ -51,7 +53,7 @@ Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
 })
 !ifdef(gotAK,{
   output, file= $
-    '!outpathl2ak/MLS-Aura_L2AK-!l2version_!day.txt', $
-    quantities=akOutAll, type=l2pc, /ascii
+    '!outpathl2ak/MLS-Aura_L2AK-!l2version_!day.h5', $
+    quantities=akOutAll, type=l2pc;, /ascii
 })
 end Output
