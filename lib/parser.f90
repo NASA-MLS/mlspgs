@@ -121,14 +121,8 @@ contains ! ====     Public Procedures     ==============================
         call expr
         if ( next%class == t_equal ) then
           call get_token
-          how_many = 2
-          call expr
-          do while ( any(next%class == &
-              (/ t_identifier, t_number, t_string, &
-                 t_left_parenthesis, t_dot /) ) )
-            call expr
-            how_many = how_many + 1
-          end do
+          how_many = 1
+          call value ( how_many )
           call build_tree ( n_asg, how_many )
         end if
     exit
@@ -314,14 +308,8 @@ o:  do
     exit
       case ( t_equal )        ! spec_rest -> '=' expr +
         call get_token
-        call expr
-        how_many = 2
-        do while ( any(next%class == &
-            (/ t_identifier, t_number, t_string, &
-               t_left_parenthesis, t_dot, t_plus, t_minus /) ) )
-          call expr
-          how_many = how_many + 1
-        end do
+        how_many = 1
+        call value ( how_many )
         call build_tree ( n_equal, how_many )
     exit
       case ( t_comma )        ! spec_rest -> ( ',' spec_list ) +
@@ -374,10 +362,33 @@ o:  do
     error = max(error,1)
     call announce_error ( (/ the_terminal /) )
   end subroutine TEST_TOKEN
-
+! --------------------------------------------------------  VALUE  -----
+  subroutine VALUE ( HOW_MANY )
+    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
+    if ( next%class == t_left_bracket ) then
+      call get_token     ! Consume the left bracket
+      do
+        call expr
+        how_many = how_many + 1
+        if ( next%class == t_right_bracket ) then
+          call get_token ! Consume the right bracket
+          exit
+        end if
+        if ( next%class /= t_comma ) &
+          call announce_error ( (/ t_right_bracket, t_comma /) )
+        call get_token   ! Consume the comma
+      end do
+    else
+      call expr
+      how_many = how_many + 1
+    end if
+  end subroutine VALUE
 end module PARSER
 
 ! $Log$
+! Revision 2.4  2000/11/30 00:23:10  vsnyder
+! Implement [] syntax for arrays
+!
 ! Revision 2.3  2000/11/15 22:01:18  vsnyder
 ! Allow specification with no arguments.
 !
