@@ -26,7 +26,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------- ConstructMIFGeolocation --
-  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
+  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
     ! mifGeolocation is just quantity templates containing geolocation
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
@@ -39,8 +39,7 @@ contains ! =====     Public Procedures     =============================
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (L1BInfo_T), intent(in) :: l1bInfo
-    type (MLSChunk_T), dimension(:), intent(in) :: chunks
-    integer, intent(in) :: chunkNo
+    type (MLSChunk_T), intent(in) :: chunk
     
     ! Local variables
     integer :: INSTRUMENTMODULEINDEX    ! Loop counter
@@ -56,7 +55,7 @@ contains ! =====     Public Procedures     =============================
       ! Now try to fill it if we have any L1BFiles
       if (l1bInfo%l1boaID /= 0 ) then
         do instrumentModuleIndex = 1, size(modules)
-          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
+          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
             & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
         end do
       else
@@ -67,7 +66,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructMIFGeolocation
 
   ! ---------------------------------------------  MLSL2Construct  -----
-  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
        & quantityTemplatesBase, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
 
@@ -81,7 +80,8 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig
-    use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, HGrid_T
+    use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
+    use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_FORGE, S_FORWARDMODEL, S_HGRID, S_QUANTITY, S_TIME, &
       & S_VECTORTEMPLATE
     use Intrinsic, ONLY: L_None
@@ -108,8 +108,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
     type (L1BInfo_T), intent(in) :: l1bInfo
     type (TAI93_Range_T), intent(in) :: processingRange
-    type (MLSChunk_T), dimension(:), intent(in) :: chunks
-    integer, intent(in) :: chunkNo
+    type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (FGrid_T), dimension(:), pointer :: fGrids
@@ -136,7 +135,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
-    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
+    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunk )
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -155,7 +154,7 @@ contains ! =====     Public Procedures     =============================
       
       select case( get_spec_id(key) )
       case ( s_forge )
-        call ForgeMinorFrames ( key, chunks(chunkNo), mifGeolocation )
+        call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case ( s_forwardModel )
         call decorate ( key, AddForwardModelConfigToDatabase ( &
           & forwardModelConfigDatabase, &
@@ -163,11 +162,11 @@ contains ! =====     Public Procedures     =============================
       case ( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
-          & processingRange, chunks, chunkNo ) ) )
+          & processingRange, chunk ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
+            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
@@ -216,7 +215,7 @@ contains ! =====     Public Procedures     =============================
 
   ! DeConstruct the Quantity and Vector template databases.
 
-    use HGrid, only: DestroyHGridDatabase, HGrid_T
+    use HGridsDatabase, only: DestroyHGridDatabase, HGrid_T
     use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
       & QuantityTemplate_T
     use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
@@ -227,8 +226,7 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), dimension(:), pointer :: hGrids
 
     call destroyVectorTemplateDatabase ( vectorTemplates )
-    call destroyQuantityTemplateDatabase ( quantityTemplatesBase, &
-      & ignoreMinorFrame=.true., ignoreMajorFrame=.true. )
+    call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
     call destroyHGridDatabase ( hGrids )
   end subroutine MLSL2DeConstruct
@@ -243,6 +241,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.40  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.39  2003/05/28 04:39:32  livesey
 ! Removed some obsolete checking
 !
