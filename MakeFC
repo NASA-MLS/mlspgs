@@ -77,6 +77,7 @@ endif
 #   mlsconfigure*
 #   mlsprog.sh
 #   reecho.sh
+#   which_fftw.sh
 
 MLSBIN=util
 
@@ -249,10 +250,12 @@ TAR=tar
 
 # These are all the configurations that will be removed by clean_all
 # If it becomes more widely used, I could add Abs.Linux
-EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
+EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
 
+# The next 2 may be commented out if you're absolutely sure you won't need them
 tests_sub_dirs := $(shell echo tests/*)
-
+sids_l1boa := sids/l1boa
+  
 # This determines the command which MakeFC transmits to each of the
 # SUBDIRS when you invoke it with "make update":
 # likely candidates are "depends" or "depends ghostbuster"
@@ -559,7 +562,7 @@ internalcleanup:
 	  cd ..; \
 	done
 	@echo "Automatic housekeeping in $(tests_sub_dirs)"; \
-	 for dir in $(tests_sub_dirs); do \
+	 for dir in $(tests_sub_dirs) $(sids_l1boa); do \
 	 	if [ -d $$dir ] ; then \
 	  		cd $$dir; \
 			if [ -f Makefile.dep ] ; then \
@@ -635,7 +638,11 @@ internalmftests:
          -cf "$(MLSCFILE)" -nc -nd; \
 	 		cd ../..; \
 		fi; \
-	done
+	done; \
+	if [ -d "$(sids_l1boa)" ] ; then \
+     cd "$(sids_l1boa)"; \
+     $(MAKE) update; \
+   fi
 
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
@@ -669,6 +676,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.50  2001/10/04 22:24:49  pwagner
+# Limit suffix-based rules to (MLSCONFG)
+#
 # Revision 1.49  2001/09/07 18:12:29  pwagner
 # Tweaked the tar command
 #
