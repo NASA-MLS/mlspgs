@@ -27,6 +27,8 @@ vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
 
 sGridStandard:  vGrid, type=Explicit,   $
   values=[50,100,150,200,250,300,350,400,450,500,550] ;km
+hGridFine: hGrid, type=height, height=0km, module=GHz, interpolationFactor=4.,$
+    origin=0 degrees, /forbidOverspill, /insetOverlaps
 vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
   start= 464.158872744048438mb, formula=[7:6]
 
@@ -34,6 +36,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.6  2003/05/10 00:57:33  livesey
+; Added vGridWMO
+;
 ; Revision 1.5  2003/03/22 01:16:51  livesey
 ; Added vGridExtinctionHiRes
 ;
