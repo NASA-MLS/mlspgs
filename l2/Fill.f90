@@ -1739,7 +1739,7 @@ contains ! =====     Public Procedures     =============================
       heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
       if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
         & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
-        & call AnnounceError ( valuesNode, 0, 'Bad height units for profile fill' )
+        & call Announce_error ( valuesNode, 0, 'Bad height units for profile fill' )
       ! Store height
       if ( heightUnit == PHYQ_Zeta ) then
         ! Assume zeta coordinates are expressed in mb
@@ -1749,7 +1749,7 @@ contains ! =====     Public Procedures     =============================
       end if
       ! Check value unit OK
       if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
-        & call AnnounceError ( valuesNode, 0, 'Bad units for profile fill' )
+        & call Announce_error ( valuesNode, 0, 'Bad units for profile fill' )
       ! Store value
       values ( i ) = exprValue(2)
     end do
@@ -3712,6 +3712,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.136  2002/08/20 19:30:24  livesey
+! Typo!
+!
 ! Revision 2.135  2002/08/20 19:19:41  livesey
 ! Tidied up FillVectorQtyFromProfile
 !
