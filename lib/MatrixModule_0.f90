@@ -1021,15 +1021,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  CreateBlock_0  -----
   subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues, &
-    & BandHeight )
+    & BandHeight, Init )
   ! Create a matrix block, but don't fill any elements or structural
-  ! information.  The "NumberNonzero" is required if and only if the
-  ! "Kind" argument has the value M_Banded or M_Column_Sparse.
-  ! The block is first destroyed, so as not to have a memory leak.
-  ! If NoValues is present and true, the values component is not allocated
-  ! If Kind == M_Banded and BandHeight is present, the band height is
-  !   assumed to be uniform, and the R1 and R2 components are filled to
-  !   reflect that assumption.
+  ! information, except if the Values field is created and Init is present,
+  ! Values is filled from Init.  The "NumberNonzero" is required if and only
+  ! if the "Kind" argument has the value M_Banded or M_Column_Sparse. The
+  ! block is first destroyed, so as not to have a memory leak. If NoValues is
+  ! present and true, the values component is not allocated.  If Kind ==
+  ! M_Banded and BandHeight is present, the band height is assumed to be
+  ! uniform, and the R1 and R2 components are filled to reflect that
+  ! assumption.
 
   ! Filling the block after it's created depends on the kind.
   !  M_Absent: Do nothing
@@ -1055,6 +1056,7 @@ contains ! =====     Public Procedures     =============================
                                                    ! M_Column_Sparse
     logical, intent(in), optional :: NoValues
     integer, intent(in), optional :: BandHeight
+    real(rm), intent(in), optional :: Init         ! Initial value for z%values
 
     integer :: I
     logical :: Values
@@ -1095,6 +1097,7 @@ contains ! =====     Public Procedures     =============================
     z%nRows = nRows
     z%nCols = nCols
     z%kind = kind
+    if ( present(init) .and. values ) z%values = init
   end subroutine CreateBlock_0
 
   ! ----------------------------------------------  CyclicJacobi_0 -----
@@ -3397,6 +3400,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.103  2004/07/07 19:34:30  vsnyder
+! Add Init argument to CreateBlock
+!
 ! Revision 2.102  2004/05/17 22:06:35  livesey
 ! Added check for valid numbers in CheckIntegrity_0
 !
