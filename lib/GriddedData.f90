@@ -23,7 +23,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   !-----------------------------------------------------------------------------
 
   public :: AddGriddedDataToDatabase, Dump, DestroyGriddedData, &
-    & DestroyGriddedDataDatabase, GriddedData_T, SetupNewGriddedData
+    & DestroyGriddedDataDatabase, GriddedData_T, SetupNewGriddedData, &
+    & NullifyGriddedData
 
   logical, private, parameter :: MAYDUMPFIELDVALUES = .false.
 
@@ -327,6 +328,23 @@ contains
   
   end subroutine SetupNewGriddedData
 
+  ! ----------------------------------------NullifyGriddedData -----
+  subroutine NullifyGriddedData ( G )
+    ! Given a GriddedData, nullify all the pointers associated with it
+    type ( GriddedData_T ), intent(out) :: G
+
+    ! Executable code
+    nullify ( g%fileComments )
+    nullify ( g%heights )
+    nullify ( g%lats )
+    nullify ( g%lons )
+    nullify ( g%lsts )
+    nullify ( g%szas )
+    nullify ( g%dateStarts )
+    nullify ( g%dateEnds )
+    nullify ( g%field )
+  end subroutine NullifyGriddedData
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -335,6 +353,10 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.18  2002/11/22 12:46:26  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.17  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
