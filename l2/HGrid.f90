@@ -34,6 +34,7 @@ module HGrid                    ! Horizontal grid information
   integer, private, parameter :: NoModule = UnitlessMessage + 1
   integer, private, parameter :: NoMIF = NoModule + 1
   integer, private, parameter :: NoSpacingOrigin = NoMIF + 1
+  integer, private, parameter :: BadTime = NoSpacingOrigin + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -44,7 +45,7 @@ contains ! =====     Public Procedures     =============================
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID, &
       & ADDHGRIDTODATABASE
-    use INIT_TABLES_MODULE, only: F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
+    use INIT_TABLES_MODULE, only: F_DATE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
       & F_HEIGHT, FIELD_FIRST, FIELD_LAST, F_INCLINATION, F_INSETOVERLAPS, &
       & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
       & F_MODULE, F_ORIGIN, F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, &
@@ -75,6 +76,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
+    integer :: DATE                 ! Tree node
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
     integer :: hGridType
@@ -135,6 +137,7 @@ contains ! =====     Public Procedures     =============================
     insetOverlaps = .false.
     single = .false.
     solarTimeNode = 0
+    date = 0
     solarZenithNode = 0
     geodAngleNode = 0
 
@@ -208,6 +211,8 @@ contains ! =====     Public Procedures     =============================
         solarTimeNode = son
       case ( f_solarZenith )
         solarZenithNode = son
+      case ( f_date )
+        date = sub_rosa(subtree(2,son))
       case ( f_sourceL2gp )
         l2gp => l2gpDatabase(decoration(decoration(subtree(2,son))))
       case ( f_inclination )
@@ -229,7 +234,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
-      call CreateExplicitHGrid ( geodAngleNode, solarTimeNode, &
+      call CreateExplicitHGrid ( son, date, geodAngleNode, solarTimeNode, &
         & solarZenithNode, processingRange%startTime, hGrid )
 
     case ( l_regular ) ! ----------------------- Regular --------------
@@ -283,17 +288,23 @@ contains ! =====     Public Procedures     =============================
   end function CreateHGridFromMLSCFInfo
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
-  subroutine CreateExplicitHGrid ( geodAngleNode, solarTimeNode, &
+  subroutine CreateExplicitHGrid ( key, date, geodAngleNode, solarTimeNode, &
     & solarZenithNode, time, hGrid )
 
+    use SDPToolkit, only: MLS_UTCTOTAI
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T
     use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_TIME
     use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use TREE, only: NSONS, SUBTREE
+    use Output_m, only: OUTPUT
+    use String_table, only: GET_STRING
+    use Global_Settings, only: LEAPSECFILENAME
 
     ! dummy arguments
+    integer, intent(in) :: KEY          ! Tree node
+    integer, intent(in) :: DATE     ! Date if any
     integer, intent(in) :: GEODANGLENODE ! Geod angle if any
     integer, intent(in) :: SOLARTIMENODE ! Solar time if any
     integer, intent(in) :: SOLARZENITHNODE ! Solar zenith angle if any
@@ -308,6 +319,8 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:,:), pointer :: VALUES
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     real(rk) :: EXPR_VALUE(2)   ! Output from Expr subroutine
+    integer :: RETURNSTATUS             ! Flag
+    character(len=80) :: DATESTRING
 
     ! Executable code
 
@@ -341,7 +354,15 @@ contains ! =====     Public Procedures     =============================
     ! Fill up the obvious stuff
     hGrid%lon = 0.0_rk
     hGrid%losAngle = 0.0_rk
-    hGrid%time = time
+    if ( date /= 0 ) then
+      call get_string ( date, dateString, strip=.true. )
+      call output ( ' Date: ' // trim ( dateString ), advance='yes' )
+      returnStatus = mls_utctotai ( trim(LeapSecFileName), trim(dateString), hGrid%time(1,1) )
+      call output ( hGrid%time(1,1), advance='yes' )
+      if ( returnStatus /= 0 ) call announce_error( key, badTime )
+    else
+      hGrid%time = time                   ! Get it from input time range
+    end if
     ! Set defaults for the others, our expressions may overwrite them
     hGrid%phi = 0.0_rk
     hGrid%geodLat = 0.0_rk
@@ -1398,6 +1419,9 @@ contains ! =====     Public Procedures     =============================
     case ( noSpacingOrigin )
       call output ( "TYPE = Regular but no spacing and/or origin is specified", &
         & advance='yes' )
+    case ( badTime )
+      call output ( "Bad information given for date in explicit hGrid", &
+        & advance='yes' )
     case ( unitlessMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -1415,6 +1439,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.58  2004/03/24 01:03:23  livesey
+! Added date option to explicit hGrid
+!
 ! Revision 2.57  2003/08/28 23:52:36  livesey
 ! Bug fix for computing total size of hGrid, and tidied up the geometry
 ! dumper.
