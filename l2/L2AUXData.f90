@@ -847,6 +847,7 @@ contains ! =====     Public Procedures     =============================
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
       endif
+      call h5_writeglobalattr(l2FileHandle, skip_if_already_there=.false.)
       if ( .not. myWriteCounterMAF ) return
     
       ! Now create and write bogus counterMAF array
@@ -870,7 +871,6 @@ contains ! =====     Public Procedures     =============================
       call Build_MLSAuxData(l2FileHandle, dataProduct, counterMAF, &
       & myNoMAFS )
       call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
-      call h5_writeglobalattr(l2FileHandle)
     endif
   end subroutine WriteL2AUXData_hdf5
 
@@ -1097,6 +1097,10 @@ contains ! =====     Public Procedures     =============================
   do dim=1, ndims
     call GetStringElement (ottff, i_char, dim, .true.)
     dim_of_i = 'dim ' // trim(i_char)
+    ! print *, 'dim_of_i: ', dim_of_i
+    ! print *, 'dim_name: ', trim(dim_name(dim))
+    ! print *, 'trim(dim_of_i) ' // ' units: ', trim(dim_unit(dim))
+    if ( trim(dim_unit(dim)) == ' ' ) dim_unit(dim) = 'none'
     call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i), &
       & trim(dim_name(dim)))
     call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i) // ' units', &
@@ -1499,6 +1503,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.48  2003/02/12 21:52:34  pwagner
+! Renames blank dim units to none
+!
 ! Revision 2.47  2003/02/07 21:44:56  pwagner
 ! Capitalized 1st letter of each attribute name
 !
