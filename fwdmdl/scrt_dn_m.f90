@@ -161,7 +161,7 @@ contains
 
     integer(ip), intent(in) :: i_start      ! where non-zeros on the path begin
     integer(ip), intent(in) :: i_end        ! where non-zeros on the path end
-    real(rp), intent(in) :: DDER(:)         ! path opacity derivatives wrt species
+    real(rp), intent(in) :: DDER(:)         ! path opacity derivatives wrt sve
     real(rp), intent(in) :: T_SCRIPT(:)     ! differential temperatures
     real(rp), intent(in) :: TAU(:)          ! path transmission
     real(rp), intent(in) :: DT_SCRIPT_DX(:) ! derivatives of differential temps
@@ -207,6 +207,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.5  2002/10/10 19:50:50  vsnyder
+! Mostly cosmetic changes, including adding LaTeX equations
+!
 ! Revision 2.4  2002/10/09 22:47:58  vsnyder
 ! Don't set tau(i_stop) to zero at the end
 !
