@@ -161,6 +161,8 @@ contains
   subroutine Destroy_Filter_Shapes_Database
     integer :: I, Status
     do i = 1, size(filterShapes)
+      call deallocate_test ( filterShapes(i)%filterGrid, &
+        & "FilterShapes(?)%filterGrid", moduleName )
       call deallocate_test ( filterShapes(i)%filterShape, &
         & "FilterShapes(?)%filterShape", moduleName )
     end do ! i
@@ -192,6 +194,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.7  2001/04/02 20:56:56  vsnyder
+! Add FilterGrid field and compute it
+!
 ! Revision 1.6  2001/03/30 02:10:12  vsnyder
 ! Improve 'dump' routine
 !
