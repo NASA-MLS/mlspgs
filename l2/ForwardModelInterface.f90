@@ -8,8 +8,6 @@ module ForwardModelInterface
   ! Set up the forward model.  Interface from the retrieve step to the
   ! forward model.
 
-  !??? Do we want a forward model database ???
-
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use AntennaPatterns_m, only: AntennaPatterns
   use AntennaPatterns_m, only: Close_Antenna_Patterns_File, &
@@ -723,8 +721,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    do maf = 3, 3
- !  do maf = 1, noMAFs
+ !  do maf = 3, 3
+    do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
  ! Compute the specie function (spsfunc) and the refraction along
@@ -1185,9 +1183,9 @@ contains
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
 
-    tau(1:) = 0.0
     m = ptan%template%noSurfs
-    tau(1:m) = dble(ptan%values(1:m,3))
+    tau(1:m) = ptan%values(1:m,3)
+    tau(m+1:) = 0.0
 
     klo = -1
     Zeta = -1.666667
@@ -1316,6 +1314,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.72  2001/04/09 21:05:40  vsnyder
+! Remove unneeded explicit conversion to double
+!
 ! Revision 2.71  2001/04/09 20:51:03  zvi
 ! Debugging Derivatives version
 !
