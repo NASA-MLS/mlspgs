@@ -58,6 +58,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module defines datatypes and gives basic routines for storing and
@@ -668,11 +669,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine ANNOUNCE_ERROR
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2AUXData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.25  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.24  2002/08/21 01:04:53  livesey
 ! Changed to single precision for data
 !
