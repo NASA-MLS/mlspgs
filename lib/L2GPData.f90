@@ -437,6 +437,8 @@ CONTAINS ! =====     Public Procedures     =============================
     ALLOCATE(realProf(myNumProfs), realSurf(l2gp%nLevels), &
          realFreq(l2gp%nFreqs), &
          real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
+    IF (alloc_err /= 0) call MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+      & ' various things in ReadL2GPData')
 
     ! Read the horizontal geolocation fields
 
@@ -447,64 +449,65 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
     edge(3) = myNumProfs
+    status=0
 
-    status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD1
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%latitude = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD2
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%longitude = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%time)
+     status = swrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+          l2gp%time)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD3
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
 
-    status = swrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD4
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%solarTime = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD5
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%solarZenith = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD6
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%losAngle = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+     status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
+          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD7
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%geodAngle = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%chunkNumber)
+     status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
+          l2gp%chunkNumber)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD8
        CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
@@ -515,7 +518,7 @@ CONTAINS ! =====     Public Procedures     =============================
     IF (lev /= 0) THEN
 
        status = swrdfld(swid, GEO_FIELD9, start(2:2), stride(2:2), edge(2:2), &
-            realSurf)
+         realSurf)
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // GEO_FIELD9
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -532,7 +535,7 @@ CONTAINS ! =====     Public Procedures     =============================
        edge(1) = l2gp%nFreqs
 
        status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
-            realFreq)
+         realFreq)
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // GEO_FIELD10
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -561,22 +564,22 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ELSE IF ( lev == 1) THEN
 
-       status = swrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), real3(1,:,:) )
-       IF (status == -1) THEN
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-       l2gp%l2gpValue = DBLE(real3)
-
-       status = swrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
-            edge(2:3), real3(1,:,:) )
-       IF (status == -1) THEN
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-       l2gp%l2gpPrecision = DBLE(real3)
-
+      status = swrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
+           edge(2:3), real3(1,:,:) )
+      IF (status == -1) THEN
+        msr = MLSMSG_L2GPRead // DATA_FIELD1
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gp%l2gpValue = DBLE(real3)
+      
+      status = swrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
+        edge(2:3), real3(1,:,:) )
+      IF (status == -1) THEN
+        msr = MLSMSG_L2GPRead // DATA_FIELD2
+        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l2gp%l2gpPrecision = DBLE(real3)
+      
     ELSE
 
        status = swrdfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
@@ -599,12 +602,12 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Read the data fields that are 1-dimensional
 
-         status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-              l2gp%status)
-         IF (status == -1) THEN
-            msr = MLSMSG_L2GPRead // DATA_FIELD3
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      l2gp%status)
+    IF (status == -1) THEN
+      msr = MLSMSG_L2GPRead // DATA_FIELD3
+      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
 
     status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          realProf)
@@ -613,6 +616,7 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%quality = DBLE(realProf)
+
 
     ! Deallocate local variables
 
@@ -1079,8 +1083,10 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%status)
+!     status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+!          l2gp%status)  
+! These lines commented out, as they make NAG core dump, NJL.
+!
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1132,6 +1138,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.19  2001/02/14 23:39:40  livesey
+! Made numProfs argument optional(intent out) for ReadL2GPData
+!
 ! Revision 2.18  2001/02/13 00:55:35  livesey
 ! Removed another print statement!
 !
