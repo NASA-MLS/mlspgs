@@ -48,7 +48,7 @@ begin ReadApriori
     file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_!simulationSeries!simulationVersion--t_!day.he5', $
     hdfVersion=5!nl})
 
-  !define(l2gpInputSpecies,{BrO,CO,ClO,GPH,H2O,HCl,HNO3,HO2,HOCl,N2O,O3,OH,Temperature})
+  !define(l2gpInputSpecies,{BrO,CO,ClO,GPH,H2O,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,Temperature})
   !forall(readTruthL2GP,!l2gpInputSpecies)
   })
   
