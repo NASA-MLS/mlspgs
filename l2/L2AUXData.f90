@@ -10,8 +10,32 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & SFCREATE, SFDIMID, SFSDSCALE, &
     & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
-  use intrinsic, only: LIT_INDICES, L_CHANNEL, &
-    & L_MAF, L_MIF, L_NONE
+  use INIT_TABLES_MODULE, only: &
+    FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
+    L_CLOUDEXTINCTION, L_CLOUDWATER, &
+    L_TOTALEXTINCTION, L_MASSMEANDIAMETERICE, &
+    L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
+    L_COLUMNABUNDANCE, L_DNWT_AJN, L_DNWT_AXMAX, &
+    L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
+    L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
+    L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
+    L_DNWT_SQ, L_DNWT_SQT, &
+    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, &
+    L_ELEVOFFSET, L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GPH, &
+    L_HEIGHT, L_HEIGHTOFFSET, L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
+    L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
+    L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
+    L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
+    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
+    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SIZEDISTRIBUTION, &
+    L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+    L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
+    L_TRUE,&
+    L_VMR, L_XYZ
+  use intrinsic, only: LIT_INDICES !, L_CHANNEL, &
+!    & L_MAF, L_MIF, L_NONE
   use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4
@@ -19,7 +43,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: GetStringElement, NumStringElements
+  use MLSStrings, only: Array2List, GetStringElement, NumStringElements
   use Output_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Tree, only: SOURCE_REF
@@ -74,6 +98,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   public :: AddL2AUXToDatabase, DestroyL2AUXDatabase, Dump
   public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
   public :: ReadL2AUXData, WriteL2AUXData
+  public :: GetDimString, GetQuantityAttributes
 
   interface DUMP
     module procedure Dump_L2AUX
@@ -122,14 +147,18 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     logical :: MAJORFRAME               ! Is this a major frame quantity
     ! The dimensions for the quantity
     type (L2AUX_Dimension_T), dimension(L2AUXRank) :: DIMENSIONS
+    character(len=48)                              :: DIM_Names ! ','-separated
+    character(len=48)                              :: DIM_Units ! ','-separated
     ! The values of the quantitiy
     real(r8), pointer, dimension(:,:,:) :: VALUES=>NULL()
+    character(len=24)                              :: VALUE_Units
   end type L2AUXData_T
 
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  SetupNewL2AUXRecord   -----
-  subroutine SetupNewL2AUXRecord ( dimensionFamilies, dimSizes, dimStarts, l2aux )
+  subroutine SetupNewL2AUXRecord ( dimensionFamilies, dimSizes, dimStarts, &
+   & l2aux, quantityType )
 
     ! This first routine sets up the arrays for an l2aux datatype.
     ! The user supplies a set of three dimensionFamilies (e.g. l_maf)
@@ -140,16 +169,37 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(L2AUXRank), intent(in) :: dimensionFamilies
     integer, dimension(L2AUXRank), intent(in) :: dimSizes
     integer, dimension(L2AUXRank), intent(in) :: dimStarts
-    type (L2AUXData_T), intent(out) :: l2aux
+    type (L2AUXData_T), intent(out)           :: l2aux
+    integer, optional, intent(in)             :: quantityType
 
     ! Local variables
     integer :: dimIndex
     integer :: status
-    integer, dimension(L2AUXRank) :: dimEnds
+    integer, dimension(L2AUXRank)   :: dimEnds
+    integer, dimension(3        )   :: dim_names
+    character(len=16), dimension(3) :: extra_name
+    character(len=16)               :: framing
 
     ! Fill the dimensions data structure
     l2aux%dimensions%dimensionFamily = dimensionFamilies
+    if ( present(quantityType) ) then
+      call GetQuantityAttributes( quantityType, &
+       & framing, l2aux%VALUE_Units, dim_names )
+      l2aux%dimensions%dimensionFamily = dim_names
+    endif
     l2aux%dimensions%noValues = dimSizes
+    ! Name the dimensions (e.g. 'frequency')
+    do dimIndex=1, L2AUXRank
+      call GetDimString( l2aux%dimensions(dimIndex)%dimensionFamily, &
+        & extra_name(dimIndex) )
+    enddo
+    call Array2List(extra_name, l2aux%DIM_Names)
+    ! Name the dimensions' units (e.g. 'K')
+    do dimIndex=1, L2AUXRank
+      call GetQuantityAttributes( l2aux%dimensions(dimIndex)%dimensionFamily, &
+       & framing, extra_name(dimIndex), dim_names )
+    enddo
+    call Array2List(extra_name, l2aux%DIM_Units)
 
     dimEnds = dimStarts + max(1,dimSizes) - 1
 
@@ -941,6 +991,244 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine WriteL2AUXData_hdf4
 
+  ! ----------------------------------  GetDimString  -----
+  subroutine GetDimString ( nameType, dim_string)
+
+  ! Given a dim name type, e.g. l_vmr,
+  ! returns corresponding character string
+
+    ! Dummy arguments
+    integer, intent(in)                :: nameType
+    character(len=*), intent(out)      :: dim_string
+
+    ! Executable code
+    dim_string = 'none'
+    select case (nameType)                                       
+    case ( l_channel )  
+      dim_string = 'channel'
+    case ( l_chunk )  
+      dim_string = 'chunk'
+    case ( l_frequency )  
+      dim_string = 'frequency'
+    case ( l_height )  
+      dim_string = 'height'
+    case ( l_iteration )  
+      dim_string = 'iteration'
+    case ( l_MAF )  
+      dim_string = 'MAF'
+    case ( l_MIF )  
+      dim_string = 'MIF'
+    case ( l_pressure )  
+      dim_string = 'pressure'
+    case ( l_xyz )  
+      dim_string = 'xyz'
+
+    end select                                                       
+
+  end subroutine GetDimString
+
+  ! ----------------------------------  GetQuantityAttributes  -----
+  subroutine GetQuantityAttributes ( quantityType, &
+   & framing, units_name, dim_names)
+
+  ! Given a quantity type, e.g. l_vmr,
+  ! returns major/minor/neither framing distinction, default unit name,
+  ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
+
+    ! Dummy arguments
+    integer, intent(in)                :: quantityType
+    character(len=*), intent(out)      :: framing
+    character(len=*), intent(out)      :: units_name
+    integer, dimension(3), intent(out) :: dim_names
+
+    ! Executable code
+    units_name = ' '
+    select case (quantityType)                                       
+    case ( l_channel )  
+      framing = 'major'
+      units_name = 'channel'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_chisqchan )  
+      framing = 'major'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_chisqmmaf )  
+      framing = 'major'
+      dim_names = (/ l_none, l_none, l_MAF /)                  
+    case ( l_chisqmmif )  
+      framing = 'minor'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_chunk )  
+      framing = 'major'
+      units_name = 'chunk'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_cloudInducedRadiance )  
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_cloudExtinction )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_cloudRadSensitivity )  
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_cloudWater )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_dnwt_ajn )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_dnwt_axmax )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_dnwt_cait, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_diag, &
+      & l_dnwt_dxdx, l_dnwt_dxdxl, l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, &
+      & l_dnwt_fnmin, l_dnwt_fnorm, l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, &
+      & l_dnwt_sq, l_dnwt_sqt )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_effectiveOpticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_elevOffset )  
+      framing = 'neither'
+      units_name = 'degrees'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_frequency )  
+      framing = 'major'
+      units_name = 'frequency'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_heightOffset )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_iteration )  
+      framing = 'major'
+      units_name = 'iteration'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_jacobian_cols )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_jacobian_rows )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_losTransFunc )  
+      framing = 'neither'
+      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
+    case ( l_losVel )  
+      framing = 'minor'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_MAF )  
+      framing = 'major'
+      units_name = 'MAF'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_massMeanDiameterIce )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_massMeanDiameterWater )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_MIF )  
+      framing = 'major'
+      units_name = 'MIF'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_noiseBandwidth )  
+      framing = 'neither'
+      units_name = 'MHz'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_numJ )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_iteration, l_chunk /)                  
+    case ( l_opticalDepth )  
+      framing = 'minor'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_orbitInclination )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_phiTan )  
+      framing = 'minor'
+      units_name = 'degrees'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_ptan )  
+      framing = 'minor'
+      units_name = 'log10(hPa)'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_radiance )  
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_sizedistribution )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_scanResidual )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
+    case ( l_scECI )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVel )  
+      framing = 'minor'
+      units_name = 'm/s'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVelECI )  
+      framing = 'minor'
+      units_name = 'm/s'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scVelECR )  
+      framing = 'minor'
+      units_name = 'm/s'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_scGeocAlt )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_sidebandRatio )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_spaceRadiance )  
+      framing = 'neither'
+      units_name = 'K'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_surfacetype )  
+      framing = 'neither'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_systemTemperature )  
+      framing = 'neither'
+      units_name = 'K'
+      dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_tngtECI )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_tngtGeodAlt )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_tngtGeocAlt )  
+      framing = 'minor'
+      units_name = 'meter'
+      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
+    case ( l_totalExtinction )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+    case ( l_vmr )  
+      framing = 'neither'
+      dim_names = (/ l_channel, l_none, l_MAF /)                  
+      units_name = 'vmr'
+    case ( l_xyz )  
+      framing = 'major'
+      units_name = 'xyz'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case default                                                     
+      framing = 'neither'
+      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    end select                                                       
+
+  end subroutine GetQuantityAttributes
+
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -978,6 +1266,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.43  2003/01/14 00:41:43  pwagner
+! Added GetQuantityAttributes and getDimString; new fields in L2AUXData_T
+!
 ! Revision 2.42  2002/12/10 00:41:28  pwagner
 ! In principle can now read hdf5-formatted l2aux files; untested; njl has other plans
 !
