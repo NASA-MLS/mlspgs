@@ -103,12 +103,13 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure UpdateDiagonal_0, UpdateDiagonalVec_0
   end interface
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! Parameters for the KIND component of objects of type(MatrixElement_T):
   integer, parameter :: M_Absent = 0         ! An absent block -- assumed zero
@@ -126,7 +127,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   type MatrixElement_T
     integer :: KIND = M_Absent               ! Kind of block -- one of the
       !                                        M_... parameters above
-    integer :: NROWS, NCOLS                  ! Numbers of rows and columns
+    integer :: NROWS = 0, NCOLS = 0          ! Numbers of rows and columns
     integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
       ! number. Used for the first column number if KIND = M_Banded, as
       ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
@@ -351,6 +352,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), pointer, dimension(:,:) :: ZT   ! A local full result that is
     !                           sparsified at the end.
 
+    nullify ( r1, xin, zt )
     x => z
     if ( present(xopt) ) x => xopt
     nc = x%ncols
@@ -648,7 +650,8 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( b%r1, "b%r1", ModuleName )
       call deallocate_test ( b%r2, "b%r2", ModuleName )
       call deallocate_test ( b%values, "b%values", ModuleName )
-      b%kind = M_Absent
+      b%nrows = 0
+      b%ncols = 0
     endif
   end subroutine DestroyBlock_0
 
@@ -785,6 +788,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MY_SUB, MY_UPD
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
+    nullify ( z )
     my_sub = .false.
     if ( present(subtract) ) my_sub = my_sub
     my_upd = .false.
@@ -1334,6 +1338,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), pointer, dimension(:,:) :: XS  ! The solution, dense
     real(r8), pointer, dimension(:,:) :: UD  ! U, densified
 
+    nullify ( ud, xs )
     n = u%nrows
     if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "U matrix in SolveCholeskyM_0 must be square" )
@@ -1496,14 +1501,15 @@ contains ! =====     Public Procedures     =============================
           if ( abs(d) < tiny(0.0_r8) ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
-          ! dot_product( ud(1:i-1,i), my_b(1:i-1) )
-          my_b(i) = my_b(i) - dot(i-1, ud(1,i), 1, my_b(1), 1)
+          ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
+          my_b(i) = my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1)
         end do ! i = 1, n
       end select
     else             ! solve U X = B for X
       if ( u%kind == M_full ) then
         ud => u%values
       else
+        nullify ( ud )
         call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
         call densify ( ud, u )
       end if
@@ -1633,6 +1639,7 @@ contains ! =====     Public Procedures     =============================
     integer :: N                             ! min(a%ncols,a%nrows)
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
+    nullify ( t )
     n = min(a%ncols,a%nrows)
     select case ( a%kind )
     case ( m_absent )
@@ -1651,6 +1658,7 @@ contains ! =====     Public Procedures     =============================
           call densify ( t, a )
           call updateDenseDiagonal ( t, lambda, i )
           call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
           return
         end if
         a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
@@ -1668,6 +1676,7 @@ contains ! =====     Public Procedures     =============================
             call densify ( t, a )
             call updateDenseDiagonal ( t, lambda, i )
             call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
             return
           end if
         end do
@@ -1701,6 +1710,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: S                            ! Sign to use for X, +1 or -1
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
+    nullify ( t )
     s = 1.0_r8
     if ( present(subtract) ) then
       if ( subtract ) s = -1.0_r8
@@ -1723,6 +1733,7 @@ contains ! =====     Public Procedures     =============================
           call densify ( t, a )
           call updateDenseDiagonal ( t, x, s, i )
           call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
           return
         end if
         a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
@@ -1740,6 +1751,7 @@ contains ! =====     Public Procedures     =============================
             call densify ( t, a )
             call updateDenseDiagonal ( t, x, s, i )
             call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
             return
           end if
         end do
@@ -1770,7 +1782,7 @@ contains ! =====     Public Procedures     =============================
     first = .false.
     emptyBlock%kind = M_absent
     emptyBlock%nRows = 0; emptyBlock%nCols = 0 ! just so they're defined
-    allocate ( emptyBlock%r1(0), emptyBlock%r2(0), emptyBlock%values(0,0) )
+  ! allocate ( emptyBlock%r1(0), emptyBlock%r2(0), emptyBlock%values(0,0) )
   end subroutine CreateEmptyBlock
 
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
@@ -1825,6 +1837,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.21  2001/05/03 02:10:26  vsnyder
+! Nullify a bunch of pointers that should have been but weren't.  Use a
+! disassociated VALUES array instead of a zero-size one for absent blocks.
+!
 ! Revision 2.20  2001/04/30 23:44:25  vsnyder
 ! Correct/remove some incorrect size tests in MultiplyMatrixVectorNoT
 !
