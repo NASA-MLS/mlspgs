@@ -76,3 +76,11 @@
 !define(systemp20L, 30000K )
 !define(systemp20U, 30000K )
 !define(systemp20,  15000K )
+
+!define(systemp32L,  1500K )
+!define(systemp32,   1500K )
+
+!define(systemp33L,  4000K )
+!define(systemp33U,  4000K )
+!define(systemp33,   2000K )
+
