@@ -207,14 +207,19 @@ contains
       sai = saip1
       saip1 = v_grid(i+1)
       if (ch == 'a') saip1 = Sin(saip1)
-      dz = z_grid(i+1) - z_grid(i)
-      w = (t_grid(i+1) - t_grid(i)) / dz   ! ??? Do we really want to divide
-      vl = dz * (t_grid(i) + 0.5 * w * dz) ! ??? by DZ, and then multiply?
-      coeff(i) = vl / (saip1 - sai)
+      coeff(i) = 0.5 * (z_grid(i+1) - z_grid(i))*(t_grid(i+1) + t_grid(i)) &
+               / (saip1 - sai)
+!      dz = z_grid(i+1) - z_grid(i)
+!      w =  (t_grid(i+1) - t_grid(i)) / dz  ! ??? Do we really want to divide
+!      vl = dz * (t_grid(i) + 0.5 * w * dz) ! ??? by DZ, and then multiply?
+!      coeff(i) = vl / (saip1 - sai)
     end do
   end subroutine COMPUTE_COEFF
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.6  2001/06/07 23:39:31  pwagner
 ! Added Copyright statement
 !
