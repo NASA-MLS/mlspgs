@@ -27,11 +27,11 @@ module OutputAndClose ! outputs all data from the Join module to the
     & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
     & Mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: blanks, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, switches
   use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
@@ -124,6 +124,11 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
     error = 0
+
+   if(index(switches, 'pro') /= 0) then
+    call output ( '============ Level 2 Products ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+   endif
 
     ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
     l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
@@ -221,6 +226,9 @@ contains ! =====     Public Procedures     =============================
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
+            elseif(index(switches, 'pro') /= 0) then
+               call proclaim(l2gpPhysicalFilename, 'l2gp', &
+               & numquantitiesperfile, quantityNames)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -352,6 +360,9 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( root, &
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
+            elseif(index(switches, 'pro') /= 0) then
+               call proclaim(l2auxPhysicalFilename, 'l2aux', &
+               & numquantitiesperfile, quantityNames)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -415,8 +426,13 @@ contains ! =====     Public Procedures     =============================
             end select
           end do ! field_no = 2, nsons(key)
           error = mls_io_gen_closef ( 'cl', l2pcUnit)
-          if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+          if ( error /= 0 ) then
+            call MLSMessage(MLSMSG_Error,ModuleName,&
             & 'Failed to close l2pc file:'//trim(file_base))
+          elseif(index(switches, 'pro') /= 0) then
+               call proclaim(file_base, 'l2pc', &
+               & 0, quantityNames)
+         endif
 
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
@@ -466,6 +482,9 @@ contains ! =====     Public Procedures     =============================
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
+            elseif(index(switches, 'pro') /= 0) then
+               call proclaim(l2gpPhysicalFilename, 'l2dgg', &
+               & numquantitiesperfile, quantityNames)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -544,6 +563,12 @@ contains ! =====     Public Procedures     =============================
 
     call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
 
+   if(index(switches, 'pro') /= 0) then
+    call output ( '============ End Level 2 Products ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+   endif
+
+
     if ( error /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Problem with Output_Close section' )
@@ -562,6 +587,33 @@ contains ! =====     Public Procedures     =============================
   end subroutine Output_Close
 
 ! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( Name, l2_type, num_quants, quantities )
+    integer, intent(in) :: num_quants 
+    character(LEN=*), intent(in) :: Name
+    character(LEN=*), intent(in) :: l2_type
+    character(LEN=*), dimension(:), intent(in) :: quantities
+    integer :: i
+
+    call output ( 'Level 2 output product type : ' )
+    call output ( trim(l2_type), advance='yes')
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+
+    if ( num_quants > 0 ) then
+    call output ( 'number ' )
+    call blanks(5)
+    call output ( 'quantity', advance='yes')
+      do i=1, num_quants
+          call output ( i )
+          call blanks(5)
+          call output ( trim(quantities(i)), advance='yes')
+      enddo
+    end  if
+  end subroutine proclaim
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
@@ -594,6 +646,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.35  2001/05/17 22:33:28  pwagner
+! Prints info if pro switch set
+!
 ! Revision 2.34  2001/05/04 23:22:13  pwagner
 ! Detachable from Toolkit; created metafiles conditionally
 !
