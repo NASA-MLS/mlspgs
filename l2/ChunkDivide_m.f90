@@ -1438,7 +1438,6 @@ contains ! ===================================== Public Procedures =====
         & 'goodness_changes', ModuleName)
       good_signals_now = .false.   ! Initializing
       do signalIndex=1, size(signals)
-        print*,'Doing signal:', signalIndex
         if ( mafRange(2) - mafRange(1) + 1 <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
@@ -2071,6 +2070,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.44  2003/08/26 19:49:22  livesey
+! Removed another print statement.
+!
 ! Revision 2.43  2003/08/26 19:43:42  livesey
 ! Commented out a print statement
 !
