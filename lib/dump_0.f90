@@ -177,20 +177,36 @@ contains
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), 5
-          if (.not. myClean) then
+      if ( present(name) ) call output ( name )
+      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+        call output ( '', advance='yes' )
+        do i = 1, size(array,1)
+          do j = 1, size(array,2), 5
+            if (.not. myClean) then
+              call output ( i, max(4,ilog10(size(array,1))+1) )
+              call output ( j, max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
+            end if
+            do k = j, min(j+4, size(array,2))
+              call output ( array(i,k), '(1x,1pg13.6)' )
+            end do
+            call output ( '', advance='yes' )
+          end do
+        end do
+      else ! Dump the transpose
+        call output ( ', transposed', advance='yes' )
+        do j = 1, size(array,2)
+          do i = 1, size(array,1), 5
             call output ( i, max(4,ilog10(size(array,1))+1) )
             call output ( j, max(4,ilog10(size(array,2))+1) )
             call output ( afterSub )
-          endif
-          do k = j, min(j+4, size(array,2))
-            call output ( array(i,k), '(1x,1pg13.6)' )
+            do k = i, min(i+4, size(array,1))
+              call output ( array(k,j), '(1x,1pg13.6)' )
+            end do
+            call output ( '', advance='yes' )
           end do
-          call output ( '', advance='yes' )
         end do
-      end do
+      end if
     end if
   end subroutine DUMP_2D_DOUBLE
 
@@ -300,6 +316,10 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.8  2001/05/11 22:44:54  vsnyder
+! Print transpose of 2d-double if it would take fewer lines.  Get rid of
+! double printing of "without mask"
+!
 ! Revision 2.7  2001/05/08 20:27:24  vsnyder
 ! Added an optional 'format' argument in a few more places
 !
