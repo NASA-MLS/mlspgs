@@ -702,7 +702,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
@@ -871,6 +870,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.204  2002/03/07 17:18:03  livesey
+! Removed frqGap
+!
 ! Revision 2.203  2002/02/22 01:07:58  pwagner
 ! Added metaName
 !
