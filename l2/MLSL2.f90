@@ -7,8 +7,9 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSL2Options, only: PCF, OUTPUT_PRINT_UNIT
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSL2Options, only: PCF, OUTPUT_PRINT_UNIT, QUIT_ERROR_THRESHOLD
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Debug, &
+  & MLSMSG_Severity_to_quit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
 ! use Open_Init, only: Close_MLSCF, Open_MLSCF !!! Enormous compile time !!!
@@ -43,8 +44,9 @@ program MLSL2
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-! Where to send output
+! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
+   MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
    
 ! Initialize the lexer, symbol table, and tree checker's tables:
   call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2017 )
@@ -204,6 +206,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.21  2001/04/20 20:44:18  pwagner
+! Sets MLSMSG_Severity_to_quit
+!
 ! Revision 2.20  2001/04/17 22:08:56  pwagner
 ! Sets prunit according to OUTPUT_PRINT_UNIT
 !
