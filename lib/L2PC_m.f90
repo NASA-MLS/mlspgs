@@ -15,8 +15,8 @@ module L2PC_m
     & L_ROWS, L_COLUMNS
   use machine, only: io_error
   use MLSCommon, only: R8, RM, R4, FindFirst
-  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
-    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
+  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
+    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
@@ -40,7 +40,7 @@ module L2PC_m
   implicit NONE
   private
   
-  public :: AdoptVectorTemplate, AdoptMatrix
+  public :: AdoptVectorTemplate, LoadMatrix, LoadVector
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
@@ -58,17 +58,6 @@ module L2PC_m
   type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
   type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
-
-  ! Now it is possible to adopt L2PC quantity templates, vector
-  ! templates, vectors and matrices into the main 'namespace' as it were.
-  ! These integers keep track of that information
-  type L2PCAdoptionInfo_T
-    integer, dimension(:), pointer :: QUANTITYTEMPLATES
-    integer, dimension(:), pointer :: ROWTEMPLATES
-    integer, dimension(:), pointer :: COLTEMPLATES
-  end type L2PCAdoptionInfo_T
-
-  type(L2PCAdoptionInfo_T), save :: ADOPTIONS
 
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
@@ -134,8 +123,8 @@ contains ! ============= Public Procedures ==========================
     AddL2PCToDatabase = newSize
   end function AddL2PCToDatabase
 
-  ! ---------------------------------- AdoptMatrix ----------
-  subroutine AdoptMatrix ( matrix, name, message )
+  ! ---------------------------------- LoadMatrix ----------
+  subroutine LoadMatrix ( matrix, name, message )
     ! This function copies the matrix from the l2pc database into the
     ! given matrix (presumably from the main dabase)
 
@@ -158,15 +147,54 @@ contains ! ============= Public Procedures ==========================
     call PopulateL2PCBin ( i )
     source => l2pcDatabase(i)
     if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
-      message = 'Rows do not match for adoption'
+      message = 'Rows do not match for loading'
       return
     endif
     if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
-      message = 'Columns do not match for adoption'
+      message = 'Columns do not match for loading'
       return
     endif
     call CopyMatrixValue ( matrix, source, allowNameMismatch=.true. )
-  end subroutine AdoptMatrix
+  end subroutine LoadMatrix
+
+  ! ---------------------------------- LoadVector ----------
+  subroutine LoadVector ( vector, name, source, message )
+    ! This function copies the matrix from the l2pc database into the
+    ! given matrix (presumably from the main dabase)
+
+    ! Dummy arguments
+    type(Vector_T), intent(inout) :: VECTOR
+    integer, intent(in) :: NAME
+    integer, intent(in) :: SOURCE       ! l_rows or l_columns
+    character (len=*), intent(out) :: MESSAGE
+
+    ! Local variables
+    integer :: I                        ! Index
+    type(Matrix_T), pointer :: MATRIX
+    type(Vector_T), pointer :: SOURCEVECTOR
+
+    ! Executable code
+    message = ''
+    i = FindFirst ( l2pcDatabase%name == name )
+    if ( i == 0 ) then
+      message = 'No such l2pc matrix'
+      return
+    end if
+    call PopulateL2PCBin ( i )
+    matrix => l2pcDatabase(i)
+    select case ( source )
+    case ( l_rows )
+      sourceVector => matrix%row%vec
+    case ( l_columns )
+      sourceVector => matrix%col%vec
+    end select
+    if ( .not. DoVectorsMatch ( vector, sourceVector ) ) then
+      message = 'Vector does not match for loading'
+      return
+    endif
+    ! Use the clone option to avoid fussyness with vector templates
+    call CopyVector ( vector, sourceVector, clone=.true. )
+  end subroutine LoadVector
 
   ! ----------------------------------- AdoptVectorTemplate --
   type (VectorTemplate_T) function AdoptVectorTemplate ( name, quantityTemplates, source ) &
@@ -1676,6 +1704,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.68  2004/01/23 19:07:49  livesey
+! More on adoption / loading
+!
 ! Revision 2.67  2004/01/23 05:37:34  livesey
 ! Added the adoption stuff
 !
