@@ -21,8 +21,8 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, &
-	 & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, &
-	 & mlspcf_mcf_l2dgg_start, PENALTY_FOR_NO_METADATA
+    & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, &
+    & mlspcf_mcf_l2dgg_start, PENALTY_FOR_NO_METADATA
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, Pgs_smf_getMsg
@@ -33,7 +33,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
   use WriteMetadata, only: PCFData_T, populate_metadata_std, &
-  & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf, MCFFORL2GPOPTION
+    & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf, MCFFORL2GPOPTION
 
   implicit none
   private
@@ -440,40 +440,43 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
-	character(LEN=*), intent(in)    :: full_message
+    character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
 
     error = max(error,1)
     call output ( '***** At ' )
 !    call print_source ( source_ref(where) )
-	if(where > 0) then
-	    call print_source ( source_ref(where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf node available)' )
+    end if
     call output ( ' OutputAndClose complained: ' )
 
     call output ( ': ' )
     call output ( "The " );
-	if(where > 0) then
-    call dump_tree_node ( where, 0 )
-		else
-    call output ( '(no lcf tree available)' )
-		endif
+    if ( where > 0 ) then
+      call dump_tree_node ( where, 0 )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
 
-		CALL output("Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(code)) then
-			select case ( code )
-			end select
-		endif
-    end subroutine ANNOUNCE_ERROR
+    call output ( " Caused the following error: ", advance='yes', &
+      & from_where=ModuleName )
+    call output ( trim(full_message), advance='yes', &
+      & from_where=ModuleName )
+    if ( present(code) ) then
+      select case ( code )
+      end select
+    end  if
+  end subroutine ANNOUNCE_ERROR
 
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.20  2001/04/12 22:19:33  vsnyder
+! Improved an error message
+!
 ! Revision 2.19  2001/04/10 23:01:57  pwagner
 ! Now works better; tacks if no metadata
 !
