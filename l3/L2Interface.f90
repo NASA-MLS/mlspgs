@@ -51,7 +51,7 @@ CONTAINS
 
 !----------------------------------------------------------------------------
    SUBROUTINE GetL2GPfromPCF (mlspcf_start, mlspcf_end, template, startDOY, &
-                              endDOY, numFiles, pcfNames)
+                              endDOY, numFiles, pcfNames, mis_numFiles, mis_Days)
 !----------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -66,9 +66,10 @@ CONTAINS
 
       INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
 
-      INTEGER, INTENT(OUT) :: numFiles
+      INTEGER, INTENT(OUT) :: numFiles, mis_numFiles
 
       CHARACTER (LEN=FileNameLen) :: pcfNames(:)
+      CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
 
 ! Parameters
 
@@ -86,6 +87,7 @@ CONTAINS
       CALL ExpandFileTemplate(template, type, 'L2GP')
 
       numFiles = 0
+      mis_numFiles = 0
 
 ! Loop through all the PCF numbers for L2GP files
 
@@ -96,7 +98,34 @@ CONTAINS
 
 ! If no file name was returned, go on to the next PCF number
 
-         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+         !IF (physicalFilename == '/data/emls/l2gp/v0.5/1996/MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-038.dat' &
+         !   .or. physicalFilename == '/data/emls/l2gp/v0.5/1996/MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-045.dat' &
+	 !		.or. returnStatus /= PGS_S_SUCCESS) THEN
+	 IF(returnStatus /= PGS_S_SUCCESS) THEN
+
+            IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
+
+! Extract the date from the file name
+
+            	indx = INDEX(physicalFilename, '.', .TRUE.)
+            	date = physicalFilename(indx-8:indx-1)
+
+! Check that the date is within the desired boundaries for reading
+
+            	IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
+
+! Save the name in an array of files for the species
+
+               		mis_numFiles = mis_numFiles + 1
+               		mis_Days(mis_numFiles) = date
+
+            	ENDIF
+
+            ENDIF
+
+	    CYCLE
+
+         ENDIF
 
 ! Check that the returned file name is for the proper species
 
@@ -421,7 +450,7 @@ CONTAINS
 !-------------------------
 
 !----------------------------------------------------------------------------------
-   SUBROUTINE ReadL2GPProd (product, template, startDOY, endDOY, numDays, prodL2GP)
+   SUBROUTINE ReadL2GPProd (product, template, startDOY, endDOY, numDays, mis_numDays, mis_Days, prodL2GP)
 !----------------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -434,9 +463,11 @@ CONTAINS
 
       CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
 
-      INTEGER, INTENT(OUT) :: numDays
+      INTEGER, INTENT(OUT) :: numDays, mis_numDays
 
       TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
+
+      CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(maxWindow)
 
 ! Parameters
 
@@ -454,7 +485,7 @@ CONTAINS
 ! Search the PCF for L2GP files for this species
 
       CALL GetL2GPfromPCF(mlspcf_l2gp_start, mlspcf_l2gp_end, template, startDOY, &
-                          endDOY, numDays, pcfNames)
+                          endDOY, numDays, pcfNames, mis_numDays, mis_Days)
 
 ! Check that numDays is at least 1, so pointer allocation is possible
 
@@ -497,6 +528,7 @@ CONTAINS
             ENDIF
 
          ENDDO
+
 
       ENDIF
 
@@ -1077,6 +1109,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.6  2001/07/18 15:50:59  nakamura
+!# Generalized to work with L3M as well.
+!#
 !# Revision 1.5  2001/04/24 19:37:30  nakamura
 !# Changes for privatization of L2GPData.
 !#
