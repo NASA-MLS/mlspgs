@@ -1,0 +1,48 @@
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+  !---------------------------- RCS Ident Info -------------------------------
+    character(len=*), parameter :: IdParm = &
+      & "$Id$"
+    character(len=len(idParm)) :: Id = idParm
+  !---------------------------------------------------------------------------
+    integer :: newSize, status
+    integer ::                                rmItemNumber, i
+
+    ! Executable code
+
+    ! What is the rmItemNumber corresponding to Item ?
+    rmItemNumber = 0
+    do i=1, SIZE(database)
+      if( Item%name == database(i)%name ) rmItemNumber=i
+    enddo
+
+    if ( .not. associated(database) ) then ! tree_checker prevents duplicate names
+      newSize=0
+    elseif ( size(database) == 1) then
+      newSize=0
+      deallocate ( database, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+    elseif ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove illegal item number from database")
+    else
+      newSize = SIZE(database)-1
+      allocate(tempDatabase(newSize),STAT=status)
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // "tempDatabase")
+      newSize = 0
+      do i=1, SIZE(database)
+        if (i /= rmItemNumber) then
+          newSize = newSize+1
+          tempDatabase(newSize) = database(i)
+        endif
+      enddo
+      deallocate ( database, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+      database => tempDatabase
+    end if
+
+! $Log$
