@@ -18,8 +18,9 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
+  use MLSFiles, only: WILDCARDHDFVERSION, &
+    & GetPCFromRef, MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & MLS_INQSWATH, MLS_SFEND, MLS_SFSTART, SPLIT_PATH_NAME
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF, PCFL2CFSAMECASE
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -209,22 +210,7 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_swath) ) &
           & call get_string ( swathName, swathNameString, strip=.true. )
 
-        ! If we didn't get a name get the first swath name in the file
-        if ( len_trim(swathNameString) == 0 ) then
-!          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
-          allSwathNames = ''
-          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
-           & hdfVersion=hdfVersion)
-          if ( listSize < len(allSwathNames) ) then
-            commaPos = index ( allSwathNames, ',' )
-            if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
-            swathNameString = allSwathNames ( 1:commaPos )
-          else
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Failed to determine swath names, string too long.' )
-          end if
-        endif
-        
+        ! If we were given only a strand of the filename, expand it
         if ( PCF ) then
           call split_path_name(FileNameString, path, SubString)
           LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
@@ -232,31 +218,60 @@ contains ! =====     Public Procedures     =============================
           & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
           & exactName=FileNameString)                             
         endif
+
+        ! If we didn't get a name get the first swath name in the file
+        if ( len_trim(swathNameString) == 0 ) then
+!          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
+          allSwathNames = ''
+          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
+           & hdfVersion=hdfVersion)
+          if ( listSize < 1 ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Failed to determine swath names, perhaps none in file ' &
+              & // trim(fileNameString) )
+          elseif ( listSize < len(allSwathNames) ) then
+            commaPos = index ( allSwathNames, ',' )
+            if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
+            swathNameString = allSwathNames ( 1:commaPos )
+          else
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Failed to determine swath names, string too long.' &
+              & // trim(fileNameString) )
+          end if
+        endif
+        if ( swathNameString == ' ' ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to determine swath name, obscure error on ' &
+            & // trim(fileNameString) )
+        endif
         ! Open the l2gp file
-!        fileHandle = swopen(FileNameString, DFACC_READ)
-        fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-             & record_length, DFACC_READ, FileName=FileNameString, &
-             & hdfVersion=hdfVersion, debugOption=.false. )
-        if ( fileHandle < 0 ) then
-          call announce_error ( son, &
-            & 'Failed to open swath file ' // trim(FileNameString) )
-        end if
+        ! fileHandle = swopen(FileNameString, DFACC_READ)
+        ! fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+        !     & record_length, DFACC_READ, FileName=FileNameString, &
+        !     & hdfVersion=hdfVersion, debugOption=.false. )
+        ! if ( fileHandle < 0 ) then
+        !  call announce_error ( son, &
+        !    & 'Failed to open swath file ' // trim(FileNameString) )
+        ! end if
 
         ! Read the swath
-        call ReadL2GPData ( fileHandle, swathNameString, l2gp, &
+        ! call ReadL2GPData ( fileHandle, swathNameString, l2gp, &
+        ! & hdfVersion=hdfVersion )
+        call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
          & hdfVersion=hdfVersion )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( l2gp, details=details )
 
         ! Close the file
-!        fileHandle = swclose(fileHandle)
-        fileHandle = mls_io_gen_closeF('swclose', fileHandle, &
-         & hdfVersion=hdfVersion)
-        if ( fileHandle == -1 ) then
-          call announce_error ( son, &
-            & 'Failed to close swath file ' // trim(FileNameString) )
-        elseif(index(switches, 'pro') /= 0) then                            
+        ! fileHandle = swclose(fileHandle)
+        ! fileHandle = mls_io_gen_closeF('swclose', fileHandle, &
+        ! & hdfVersion=hdfVersion)
+        ! if ( fileHandle == -1 ) then
+        !  call announce_error ( son, &
+        !    & 'Failed to close swath file ' // trim(FileNameString) )
+        ! elseif(index(switches, 'pro') /= 0) then                            
+        if(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2gp', &                    
            & swathNameString, hdfVersion=hdfVersion)    
         end if
@@ -343,7 +358,10 @@ contains ! =====     Public Procedures     =============================
             & dimListString, TRIM(fieldNameString) )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'ncep', &                    
-             & fieldNameString, hdfVersion=hdfVersion)    
+             & fieldNameString, hdfVersion=hdfVersion)
+             print *, trim(GriddedDatabase(gridIndex)%quantityName)
+             print *, trim(GriddedDatabase(gridIndex)%description)
+             print *, trim(GriddedDatabase(gridIndex)%units)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
@@ -353,6 +371,9 @@ contains ! =====     Public Procedures     =============================
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'dao', &                    
              & fieldNameString, hdfVersion=hdfVersion)    
+             print *, trim(GriddedDatabase(gridIndex)%quantityName)
+             print *, trim(GriddedDatabase(gridIndex)%description)
+             print *, trim(GriddedDatabase(gridIndex)%units)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call decorate ( key, &
@@ -447,12 +468,19 @@ contains ! =====     Public Procedures     =============================
     integer, optional,  intent(in) :: hdfVersion
     character(LEN=*), intent(in) :: quantityName
 
+    ! Local variables
+    integer                        :: myhdfVersion
     call output ( 'Level 2 apriori product type : ' )
     call output ( trim(l2_type), advance='no')
     if ( present(hdfVersion) ) then
       call blanks(4)
       call output ( 'hdf ' )
-      call output ( hdfVersion, advance='yes')
+      if ( hdfVersion == WILDCARDHDFVERSION ) then
+        myhdfVersion = mls_hdf_version(trim(Name))
+      else
+        myhdfVersion = hdfVersion
+      endif
+      call output ( myhdfVersion, advance='yes')
     else
       call output ( ' ', advance='yes')
     endif
@@ -538,6 +566,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.42  2003/02/27 18:41:40  pwagner
+! Handles WILDCARDHDFVERSION properly
+!
 ! Revision 2.41  2003/02/20 21:26:21  pwagner
 ! Lets you read field dimList=x,y,.. w/ griddeddata
 !
