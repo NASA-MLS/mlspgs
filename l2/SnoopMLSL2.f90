@@ -213,8 +213,10 @@ contains ! ========  Public Procedures =========================================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'newSnoopers' )
 
-    newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
-    newSnoopers(snooper:) = snoopers(snooper+1:)
+    if ( size(newSnoopers) > 0 ) then
+      newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
+      newSnoopers(snooper:) = snoopers(snooper+1:)
+    endif
     deallocate ( snoopers, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate//'snoopers' )
@@ -287,7 +289,7 @@ contains ! ========  Public Procedures =========================================
     integer :: SNOOPER                  ! Loop counter
     integer :: SNOOPERTID               ! Task ID for snooper
     integer :: STATUS                   ! Status from allocate/deallocate
-    logical :: FIRSTCALL                ! First time snoop called
+    logical :: KEEPWAITING                ! First time snoop called
     logical :: GOTSOMETHING             ! Set if we got a message
 
     ! Executable code
@@ -305,7 +307,7 @@ contains ! ========  Public Procedures =========================================
     ! If this is the very first call enroll in PVM for the first time, allocate
     ! 0 snoopers to start with.
     if ( myTid==0 ) then
-      firstCall = .true.
+      keepWaiting = .true.
       call PVMfmytid ( myTid )
       if ( myTid<=0 ) call PVMErrorMessage ( myTid, "Enroling in PVM" )
       call PVMfjoingroup ( Level2CodeGroupName, inum )
@@ -315,7 +317,7 @@ contains ! ========  Public Procedures =========================================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & MLSMSG_Allocate // "snoopers(0)" )
     else
-      firstCall = .false.
+      keepWaiting = .false.
     end if
 
     ! Tell all the snoopers we're ready to talk to them
@@ -344,6 +346,7 @@ contains ! ========  Public Procedures =========================================
         select case ( trim(line) )
 
         case ( 'NewSnooper' )
+          keepWaiting = .false.
           call RegisterNewSnooper ( snoopers, snooperTid )
           snooper = FindFirst ( snoopers%tid == snooperTid )
           ! Tell it where we are
@@ -407,7 +410,7 @@ contains ! ========  Public Procedures =========================================
 
       ! Shall we quit the loop?
       if ( size(snoopers) == 0 ) then
-        if (.not. firstCall) exit SnoopEventLoop
+        if (.not. keepWaiting) exit SnoopEventLoop
       else
         if ( all ( snoopers%mode /= SnooperControling ) ) exit SnoopEventLoop
       end if
@@ -513,6 +516,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.17  2001/09/27 23:39:22  livesey
+! Bug fix for going from one to zero snoopers
+!
 ! Revision 2.16  2001/09/22 15:49:54  livesey
 ! Made delay in loop optional, only if nothing received
 !
