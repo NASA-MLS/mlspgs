@@ -1,7 +1,9 @@
-#Makefile.mac -- a file full of macros to be included by a Makefile
+#a file full of macros to be included by a Makefile
 #to compile a Fortran 9x program or library
 
 # "$Id$"
+
+SHELL = /bin/sh
 
 # Path to source files:
 S = ..
@@ -36,6 +38,12 @@ FC = f95
 # Currently, unknown if DUSTY needs to be different yet
 DUSTY = $(FOPTS)
 
+# Use the libmlsl3 directory, libmlsl3dir, for more .mod files
+# dir2 is the path prepended to its .o files in dependency lists
+libmlsl3dir = $(CONFDIR)/l3/$(MLSCONFG)
+
+dir2 = $(libmlsl3dir)/
+
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
@@ -67,6 +75,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.6  2002/07/17 16:54:15  pwagner
+# Omit forbidden space between -I and include directory in compile command
+#
 # Revision 1.5  2002/07/15 23:12:15  pwagner
 # Dropped srclib from path searched for source files
 #
