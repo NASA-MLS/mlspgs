@@ -9,10 +9,13 @@ module FullCloudForwardModel
 ! Jonathan Jiang,  Paul Wagner, July 16, 2001 
 ! Jonathan Jiang,  Dong Wu, add Jacobian, August 3, 2001
 ! Jonathan Jiang,  add Field Of View Convolution, August 16, 2001  
+! Jonathan Jiang,  add sideband ratio, October 4, 2001 
+! Jonathan Jiang,  add CloudProfile module, October 5, 2001 
 ! -------------------------------------------------------------------------
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use AntennaPatterns_m, only: ANTENNAPATTERNS
+  use CloudProfile, only: CLOUD_MODEL
   use CloudySkyRadianceModel, only: CloudForwardModel
   use Hdf, only: DFACC_READ, DFACC_CREATE
   use HDFEOS, only: SWOPEN,     SWCLOSE
@@ -20,7 +23,7 @@ module FullCloudForwardModel
   use MLSCommon,only: NameLen,    FileNameLen, r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: SIGNAL_T, ARESIGNALSSUPERSET
-  use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
+  use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED,   &
                           & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK
   use ManipulateVectorQuantities, only: FindClosestInstances
@@ -45,7 +48,6 @@ module FullCloudForwardModel
 
 ! ----------------------------------------------------------
 ! DEFINE INTRINSIC CONSTANTS NEEDED BY Init_Tables_Module
-! I'm not sure anything else is needed !
 ! ----------------------------------------------------------
 
   use Intrinsic, only: L_TEMPERATURE,L_PTAN,L_VMR,L_GPH,L_RADIANCE,L_NONE,   &
@@ -90,6 +92,7 @@ module FullCloudForwardModel
 contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          ! CLOUD FORWARD MODEL
          ! ---------------------------------------------------------------------
+
   subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn,  &
                                             FwdModelExtra, FwdModelOut, Ifm, &
                                             fmStat, Jacobian                 )  
@@ -123,7 +126,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset quantity
     type (Signal_T) :: signal                      ! A signal
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
-    type(VectorValue_T), pointer :: STATEQ         ! A state vector quantity
+    !type(VectorValue_T), pointer :: STATEQ        ! A state vector quantity
+    type(VectorValue_T), pointer :: STATE_ext      ! A state vector quantity
+    type(VectorValue_T), pointer :: STATE_los      ! A state vector quantity
+
     type(VectorValue_T), pointer :: SIDEBANDRATIO  ! From the state vector
 
     ! for jacobian
@@ -152,7 +158,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: GPHINST                  ! Relevant instance for GPH
     integer :: NOLAYERS                 ! temp.noSurfs - 1
     integer :: nfine                    ! no of fine resolution grids
-    character :: reply
     integer :: status                   ! allocation status 
     integer :: SIDEBAND                 ! Loop index
     integer :: SIDEBANDSTART            ! For sideband loop
@@ -163,13 +168,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: SIGIND                   ! Signal index, loop counter
 
     integer :: quantity_type, L_quantity_type       ! added on Jul 13
-    integer :: L_stateQ_type
+    integer :: L_state_type
+
+    integer :: iCloudHeight                          ! Index for Cloud Top Height
 
     integer, dimension(:), pointer :: closestInstances 
 
-    integer :: WHICHPATTERN             ! Index of antenna pattern
-    integer :: MAXSUPERSET              ! Max. value of superset
-    integer, dimension(:), pointer :: SUPERSET ! Result of AreSignalsSuperset
+    integer :: WHICHPATTERN                           ! Index of antenna pattern
+    integer :: MAXSUPERSET                            ! Max. value of superset
+    integer, dimension(:), pointer :: SUPERSET        ! Result of AreSignalsSuperset
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
     integer, dimension(:), pointer :: USEDCHANNELS    ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS     ! Which signal is this channel from
@@ -181,30 +188,35 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_EFFECTIVEOPTICALDEPTH
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
-    real(r8), dimension(:,:), pointer :: VMRARRAY               ! The VMRs
+    real(r8), dimension(:,:), pointer :: VMRARRAY     ! The VMRs
 
-    real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
+    real (r8), dimension(:), pointer :: thisRatio     ! Sideband ratio values
 
-    real(r8), dimension(:), pointer :: phi_fine  !fine resolution for phi 
-    real(r8), dimension(:), pointer :: z_fine  !fine resolution for z
-    real(r8), dimension(:), pointer :: ds_fine  !fine resolution for ds
-    real(r8) :: ds_tot     ! total length of all ds
+    real(r8), dimension(:), pointer :: phi_fine       ! Fine resolution for phi 
+    real(r8), dimension(:), pointer :: z_fine         ! Fine resolution for z
+    real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
+    real(r8) :: ds_tot                                ! Total length of all ds
 
     real(r8), dimension(:,:), pointer :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
     real(r8), dimension(:,:), allocatable :: WC
     real(r8), dimension(:,:), allocatable :: TransOnS
     real(r8) :: phi_tan
-    real(r8) :: dz                        ! thickness of state quantity
-    real(r8) :: dphi                      ! phi interval of state quantity
-    
-    logical, dimension(:), pointer :: doChannel ! Do this channel?
-    logical :: DoHighZt                   ! Flag
-    logical :: DoLowZt                    ! Flag
-    logical :: Got(2) = .false.  
+    real(r8) :: dz                                    ! thickness of state quantity
+    real(r8) :: dphi                                  ! phi interval of state quantity
+    real(r8) :: tLat                                  ! temperature 'window' latitude
+    real(r8) :: CloudHeight                           ! Cloud Top Height
+
+    logical, dimension(:), pointer :: doChannel       ! Do this channel?
+    logical :: DoHighZt                               ! Flag
+    logical :: DoLowZt                                ! Flag
+    logical :: Got(2)  = .false.  
     logical :: QGot(8) = .false.  
     logical :: dee_bug = .true.  
-    logical :: FOUNDINFIRST               ! Flag to indicate derivatives
+    logical :: prt_log = .false.
+    logical :: FOUNDINFIRST                           ! Flag to indicate derivatives
+
+    character :: cloudtype                            ! cloud profile type
 
     !---------------------------------------------------------------------------
     ! >>>>>>>>>>>>>>>>>>>>>>>>>>> Executable code  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -226,7 +238,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
              A_TOTALEXTINCTION, A_TRANS,FREQUENCIES,                         &
              superset, usedchannels, usedsignals, thisRatio,                 &
-             JBLOCK, stateQ )
+             JBLOCK, state_ext, state_los )
              
     nullify ( doChannel )
     
@@ -243,31 +255,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     do sigInd = 1, size(forwardModelConfig%signals)
 
-!    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
-!       & call MLSMessage ( MLSMSG_Error, ModuleName,                         &
-!       & 'Cannot call the full cloud forward model with multiple signals' )
+    !    if ( size ( forwardModelConfig%signals ) /= 1 )                        &
+    !       & call MLSMessage ( MLSMSG_Error, ModuleName,                       &
+    !       & 'Cannot call the full cloud forward model with multiple signals' )
 
     ! -------------------------------------
     ! Identify the signal (band)
     ! -------------------------------------
 
-!    signal = forwardModelConfig%signals(1)
+    !signal = forwardModelConfig%signals(1)
       
      signal = forwardModelConfig%signals(sigInd)
-     print*,signal%index
-    ! -------------------------------------------------------------------------
-    ! Make sure all the signals we're dealing with are same module, radiometer 
-    ! and sideband. This will be used later in multi signal version
-    !--------------------------------------------------------------------------
 
-!    if ( any( forwardModelConfig%signals%sideband .ne. &
-!      & signal%sideband ) ) &
-!      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!      &  "Can't have mixed sidebands in forward model config")
-!    if ( any( forwardModelConfig%signals%radiometer .ne. &
-!      & signal%radiometer ) ) &
-!      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!      &  "Can't have mixed radiometers in forward model config")
+     if (prt_log) print*,signal%index
 
     ! --------------------------------------------
     ! Get the quantities we need from the vectors
@@ -277,20 +277,20 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Outputs:
     ! --------
         radiance => GetVectorQuantityByType ( fwdModelOut,                 &
-          & quantityType=l_radiance,                                         &
+          & quantityType=l_radiance,                                       &
           & signal=signal%index, sideband=signal%sideband )
         cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
-          & quantityType=l_cloudInducedRadiance,                             &
+          & quantityType=l_cloudInducedRadiance,                           &
           & signal=signal%index, sideband=signal%sideband )
         cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
             & quantityType=l_cloudExtinction, noerror=.true. )
         cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_cloudRADSensitivity, noerror=.true.,   &
+          & quantityType=l_cloudRADSensitivity, noerror=.true.,            &
           & signal=signal%index, sideband=signal%sideband )
         totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
           & quantityType=l_totalExtinction, noerror=.true. )
         effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_effectiveOpticalDepth, noerror=.true.,   &
+          & quantityType=l_effectiveOpticalDepth, noerror=.true.,          &
           & signal=signal%index, sideband=signal%sideband )
         massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
           & quantityType=l_massMeanDiameterIce, noerror=.true. )
@@ -300,7 +300,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! -------
     ! Inputs:
     ! -------
-        ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
+        ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,       &
           & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
         temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
           & quantityType=l_temperature )
@@ -312,9 +312,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_cloudWater )
         surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
           & quantityType=l_surfaceType )
-        sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
+        sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra,&
           & quantityType=l_sizeDistribution )
-        earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
           & quantityType=l_earthradius ) 
 	     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_scGeocAlt )
@@ -444,7 +444,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     endif
 
     !--------------------------------------------
-    ! --------- Loop over sidebands ------------
+    ! Loop over sidebands 
     !--------------------------------------------
 
     do sideband = sidebandStart, sidebandStop, sidebandStep
@@ -509,8 +509,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
            & ForwardModelConfig%signals, sideband=signal%sideband , channel=1 )
         end do
 
-!    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-!           & "No matching antenna patterns." )
+    !    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !           & "No matching antenna patterns." )
 
     whichPattern = 1
     maxSuperset = maxval ( superset )
@@ -545,12 +545,46 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
         !               signal%frequencies)
 
+    if (prt_log) then
+       print*, ' '
+       print*,'No. of Frequencies:', noFreqs 
+       print*,'Frequency=', frequencies/1e3_r8
+    endif
+
+    tLat = temp%template%geodLat(1,1)
+
+    IF ( present(jacobian) ) THEN
+
+    if (prt_log) print*, 'jacobian is true'
+
+    !----------------------------
+    ! get state quantity type 
+    !----------------------------
+       state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
+       state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
+
+       if (tLat .ge. -25._r8 .and. tLat .le. 25._r8) then
+          CloudType='convective'
+       else
+          CloudType='frontal'
+       endif
+
+       do i = 1, noSurf  
+          if(state_ext%values(i,instance) .ne. 0.) then
+            iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
+          endif
+        enddo
+
+        CloudHeight = gph%values(iCloudHeight, instance)
+
+        call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
+	     &            noSurf, WC )
+
+    ENDIF
+
     !------------------------------------------
     ! Now call the full CloudForwardModel code
     !------------------------------------------
-!    print*, ' '
-!    print*,'No. of Frequencies:', noFreqs 
-!    print*, frequencies/1e3_r8
 
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
@@ -589,9 +623,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS )
 
-!    print*, 'Successfully done with Full Cloud Foward Model ! '
+    if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
-!    print*, 'about to deallocate'
     deallocate (WC, stat=status)
      
     !------------------------------------------------------------------------
@@ -609,7 +642,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & (/radiance%template%instanceLen/) )
 
     if(associated(cloudInducedRadiance)) &
-      & cloudInducedRadiance%values ( :, maf ) =                                 &
+      & cloudInducedRadiance%values ( :, maf ) =                             &
       & reshape ( transpose(a_cloudInducedRadiance),                         &
       & (/cloudInducedRadiance%template%instanceLen/) )
 
@@ -619,13 +652,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & (/effectiveOpticalDepth%template%instanceLen/) )
 
     if(associated(cloudRADSensitivity)) &
-      & cloudRADSensitivity%values ( :, maf ) =                                  &
+      & cloudRADSensitivity%values ( :, maf ) =                              &
       & reshape ( transpose(a_cloudRADSensitivity),                          &
       & (/cloudRADSensitivity%template%instanceLen/) )
 
-! -----------------------------------------------------------------------------
-! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
-! -----------------------------------------------------------------------------
+    ! -----------------------------------------------------------------------------
+    ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
+    ! -----------------------------------------------------------------------------
 
     if(associated(cloudExtinction)) &
       & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,1)
@@ -636,30 +669,26 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if(associated(totalExtinction)) &
       & totalExtinction%values ( :, instance )    = a_totalExtinction (:,1)
 
-! ------------------
-! output Jacobian
-! ------------------
-
-    !---------------------------------------------------------------------
-    ! get state quantity type and determine which retrieval is to be used
-    !---------------------------------------------------------------------
-    l_stateQ_type = fwdModelIn%quantities(1)%template%quantityType
-    stateQ => GetVectorQuantityByType (FwdModelIn,quantityType = l_stateQ_type )
+    !-----------------------
+    ! Start output Jacobian
+    !-----------------------
+    IF ( present(jacobian) ) THEN
 
     !-------------------------------------------------------
-    ! Get some dimensions that are common for both methods
+    ! Determine which retrieval is to be used
     !-------------------------------------------------------
-      noInstances = stateQ%template%noInstances
+      noInstances = state_ext%template%noInstances
 
     !--------------------------------------------
     ! Jacobian for high tangent height retrieval
     !--------------------------------------------
-    doHighZt = present(jacobian) .and. (l_stateQ_type == l_cloudExtinction)
+    !doHighZt = present(jacobian) .and. (l_stateQ_type == l_cloudExtinction)
 
-    if (doHighZt) then
+    doHighZt = .false.
+    if (doHighZt) then      
 
     ! Get dimension
-      noSurf = stateQ%template%noSurfs
+      noSurf = state_ext%template%noSurfs
       
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
@@ -685,9 +714,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       allocate( ds_fine(nfine*noInstances), stat=status )
       
       do i=1,noInstances*nfine
-       phi_fine(i) = minval(stateQ%template%phi(1,:)) + &
+       phi_fine(i) = minval(state_ext%template%phi(1,:)) + &
          & 1._r8*(i-1)/nfine/noInstances * &
-         & (maxval(stateQ%template%phi(1,:)) - minval(stateQ%template%phi(1,:)))
+         & (maxval(state_ext%template%phi(1,:)) - minval(state_ext%template%phi(1,:)))
       end do 
       
       do mif = 1, noMIFs
@@ -695,8 +724,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !----------------------------------
         ! find intervals of stateQ at maf
         !----------------------------------
-        dz = abs(stateQ%template%surfs(2,maf)-stateQ%template%surfs(1,maf))
-        dphi = abs(stateQ%template%phi(2,maf)-stateQ%template%phi(1,maf))
+        dz = abs(state_ext%template%surfs(2,maf)-state_ext%template%surfs(1,maf))
+        dphi = abs(state_ext%template%phi(2,maf)-state_ext%template%phi(1,maf))
 
         !------------------------------
         ! find z for given phi_fine
@@ -718,14 +747,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! find the total length for this tangent height
         !-----------------------------------------------
         ds_tot = sum(ds_fine)
+
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
         !----------------------------------------------------------
          do i = 1,noInstances             ! loop over profile
          do j = 1,noSurf                  ! loop over surface
          do k = 1, nfine*noInstances      ! sum up all the lengths
-           if(abs(z_fine(k) - stateQ%template%surfs(j,i)) < dz/2. &
-           & .AND. abs(phi_fine(k) - stateQ%template%phi(j,i)) < dphi/2.) &
+           if(abs(z_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
+           & .AND. abs(phi_fine(k) - state_ext%template%phi(j,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noInstances) = &
            & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)/ds_tot
          end do
@@ -746,12 +776,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !--------------------------------------------
     ! Jacobian for low tangent height retrieval
     !--------------------------------------------
-    doLowZt = present(jacobian) .and. (l_stateQ_type == l_LosTransFunc)
+    ! doLowZt = present(jacobian) .and. (l_stateQ_type == l_LosTransFunc)
 
+    doLowZt = .true.
     if (doLowZt) then
     
         ! Get dimension
-        noSgrid=stateQ%template%noChans
+        noSgrid=state_los%template%noChans
 
         colJBlock = FindBlock ( Jacobian%col, ptan%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
@@ -790,7 +821,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                       &     noSgrid,                                 &
                       &     gph%template%Surfs,                      &
                       &     a_trans(:,chan),               &
-                      &     stateQ%template%frequencies,             &
+                      &     state_los%template%frequencies,             &
                       &     TRANSonS )                
 
                     do mif = 1, noMIFs
@@ -831,7 +862,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                       &     noSgrid,                                 &
                       &     gph%template%Surfs,                      &
                       &     a_trans(:,chan),                         &
-                      &     stateQ%template%frequencies,             &
+                      &     state_los%template%frequencies,             &
                       &     TRANSonS )                
 
             jBlock%values = 0.0_r8
@@ -857,17 +888,22 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                
     endif
 
+    ENDIF   
+    !------------------------------
+    ! End of output jacobian
+    !------------------------------
+
     !------------------------------
     ! Remove temporary quantities
     !------------------------------
-    call deallocate_test ( superset, 'superset', ModuleName )
+    call deallocate_test ( superset, 'superset',          ModuleName )
 
     call Deallocate_test ( a_massMeanDiameter,                               &
                           'a_massMeanDiameter',           ModuleName )
     call Deallocate_test ( a_cloudExtinction,                                &
                           'a_cloudExtinction',            ModuleName )
     call Deallocate_test ( a_trans,                                          &
-                          'a_trans',            ModuleName )
+                          'a_trans',                      ModuleName )
     call Deallocate_test ( a_totalExtinction,                                &
                           'a_totalExtinction',            ModuleName )
     call Deallocate_test ( a_cloudRADSensitivity,                            &
@@ -882,21 +918,24 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'vmrArray',                     ModuleName )
     call Deallocate_test ( closestInstances,                                 &
                           'closestInstances',             ModuleName )
-    call Deallocate_test ( doChannel, 'doChannel', ModuleName )
+
+    call Deallocate_test ( doChannel, 'doChannel',        ModuleName )
 
     !--------------------------------------------
-    !       End of sideband loop 
+    ! End of sideband loop 
     !--------------------------------------------
     enddo
 
-!    print*, ' '
-!    print*, 'Time Instance: ', instance
+    if (prt_log) then
+      print*, ' '
+      print*, 'Time Instance: ', instance
+    endif
 
     end do  ! End of signals
     
     if ( toggle(emit) ) call trace_end ( 'FullCloudForwardModel' )
 
-!    print*, 'Successful done with full cloud forward wapper !'
+    if(prt_log) print*, 'Successful done with full cloud forward wapper !'
 
   end subroutine FullCloudForwardModelWrapper
 
@@ -937,6 +976,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.42  2001/10/05 22:25:40  dwu
+! allow multiple signals
+!
 ! Revision 1.41  2001/10/05 20:46:39  dwu
 ! clean up input statements
 !
@@ -1015,5 +1057,3 @@ end subroutine FindTransForSgrid
 ! Revision 1.15  2001/07/27 15:17:58  jonathan
 ! First Successful f90 runs
 !
-
-
