@@ -74,7 +74,9 @@ contains ! =====     Public Procedures     =============================
     ! External (C) function
     external :: Usleep
     ! Local variables
+    logical :: AUTODIRECTWRITE
     logical :: CREATEFILE               ! Flag
+    integer :: DBINDEX
     logical :: DIDTHEWRITE
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     integer :: DWINDEX                  ! Direct Write index
@@ -103,7 +105,14 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
-
+    ! Will we (perhaps) be automatically assigning Direct writes to
+    ! files declared in global settings section?
+    autoDirectWrite = .false.
+    if ( associated(DirectDataBase) ) then
+      if ( size(DirectDataBase) > 0 ) then
+        autoDirectWrite = any(DirectDataBase%autoType > 0)
+      endif
+    endif
     ! This is going to be somewhat atypical, as the code may run in 'passes'
     ! In pass 1 we do all the regular join statements and count the direct writes
     ! In pass 2 we log all our direct write requests.
@@ -174,8 +183,18 @@ contains ! =====     Public Procedures     =============================
             if ( .not. parallel%slave ) then
               if(DEEBUG)print*,'Calling DirectWrite, not slave'
               call time_now ( dwt2 )
-              call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
-                & chunkNo, chunks )
+              if ( autoDirectWrite ) then
+                ! Pretend we're given permission to write to each of the files
+                do dbIndex=1, size(DirectdataBase)
+                  if ( DirectDataBase(dbIndex)%autoType < 1 ) cycle
+                  call DirectWriteCommand ( son, ticket, vectors, &
+                    & DirectdataBase, chunkNo, chunks, &
+                    & theFile=DirectDataBase(dbIndex)%fileNameBase )
+                enddo
+              else
+                call DirectWriteCommand ( son, ticket, vectors, &
+                  & DirectdataBase, chunkNo, chunks )
+              end if
               call add_to_directwrite_timing ( 'writing', dwt2)
             end if
           else if ( pass == 2 ) then
@@ -360,7 +379,6 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(DirectData_T) :: newDirect
     type(DirectData_T), pointer :: thisDirect ! => null()
-    ! integer, external :: he5_SWclose
 
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
@@ -378,7 +396,7 @@ contains ! =====     Public Procedures     =============================
 
     ! This routine will be called twice for each direct write.  The first
     ! (makeRequests=.true.) is a pass through to check the syntax etc.
-    ! If it is sucessfull a request will be made to the master.
+    ! If it is successful a request will be made to the master.
 
     ! The second call will be to actually do the writing.
     lastFieldIndex = 0
@@ -561,6 +579,19 @@ contains ! =====     Public Procedures     =============================
         createFileFlag = .false.
         if ( present ( create ) ) createFileFlag = create
       elseif ( distributingSources ) then
+        ! Short-circuit this direct write if outputType fails to match
+        if ( myFile < 1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to auto-direct write ' // trim(filename) )
+        elseif ( outputType /= DirectDataBase(myFile)%type ) then
+          call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
+          call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
+          call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
+          call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+          call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+          if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
+          return
+        endif
         createFileFlag = .not. any ( createdFilenames == myFile )
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
@@ -650,8 +681,21 @@ contains ! =====     Public Procedures     =============================
       else
         fileaccess = DFACC_RDWR
       endif
+      if ( DeeBUG ) then
+        print *, 'Trying to open ', trim(FileName)
+        print *, 'FileAccess ', FileAccess
+        print *, 'hdfVersion ', hdfVersion
+        print *, 'outputType ', outputType
+        print *, 'myFile ', myFile
+        print *, 'createFileFlag ', createFileFlag
+      endif
+      if ( .not. isnewdirect ) then
+        if ( outputType /= thisDirect%type ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'DirectWriteCommand mismatched outputTypes for ' // trim(filename) )
+        endif
+      endif
       select case ( outputType )
-
       case ( l_l2gp, l_l2dgg )
         ! Before opening file, see which swaths are already there
         ! and which ones need to be created
@@ -689,6 +733,11 @@ contains ! =====     Public Procedures     =============================
       end select
       
       if ( ErrorType /= 0 ) then
+        print *, 'Tried to open ', trim(FIleName)
+        print *, 'FileAccess ', FileAccess
+        print *, 'hdfVersion ', hdfVersion
+        print *, 'myFile ', myFile
+        print *, 'createFileFlag ', createFileFlag
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to open ' // trim(filename) )
       endif
@@ -769,16 +818,41 @@ contains ! =====     Public Procedures     =============================
       end do ! End loop over swaths/sds
       
       if ( NumPermitted < 1 ) then
-        call Announce_Error ( son, no_error_code, &
-        & "NumPermitted=0", penalty=0 )
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'No sources permitted for writing to  ' // trim(filename) )
-        if ( parallel%slave ) call FinishedDirectWrite ( ticket )
+        if ( parallel%slave) then
+          call Announce_Error ( son, no_error_code, &
+            & "NumPermitted=0", penalty=0 )
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No sources permitted for writing to  ' // trim(filename) )
+          call FinishedDirectWrite ( ticket )
+        else
+          ! But did we claim we were created this file? If so, decrement
+          if ( createFileFlag ) noCreatedFiles = noCreatedFiles - 1
+          print *, 'No sources written to ', trim(FileName)
+          print *, 'FileAccess ', FileAccess
+          print *, 'hdfVersion ', hdfVersion
+          print *, 'myFile ', myFile
+          print *, 'createFileFlag ', createFileFlag
+          print *, 'noCreatedFiles ', noCreatedFiles
+        endif
         call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
         call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
         call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
         call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
         call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+        ! Don't forget to close file
+        select case ( outputType )
+        case ( l_l2gp, l_l2dgg )
+          errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
+        case ( l_l2aux, l_l2fwm )
+          errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
+        case default
+          call output('outputType: ', advance='no')
+          call output(outputType, advance='yes')
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Tried to close Unrecognized OutputType in ' // trim(filename) )
+        end select
+        if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to close ' // trim(filename) )
         return
       endif
       if ( isnewdirect .and. TOOLKIT ) then
@@ -816,7 +890,7 @@ contains ! =====     Public Procedures     =============================
         & 'DirectWriteCommand unable to close ' // trim(filename) )
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
         & outputType /= l_l2fwm ) then
-        call add_metadata ( node, file_base, noSources, thisDirect%sdNames, &
+        call add_metadata ( node, file_base, NumPermitted, thisDirect%sdNames, &
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(filename) )
@@ -1609,6 +1683,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.103  2004/02/05 23:40:35  pwagner
+! More bugs fixed in automatic directwrites
+!
 ! Revision 2.102  2004/01/23 01:09:48  pwagner
 ! Only directwrite files entered in global settings eligible to be auto-sourced
 !
