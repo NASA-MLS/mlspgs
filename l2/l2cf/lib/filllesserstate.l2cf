@@ -59,6 +59,18 @@ begin Fill
   !forall(fillNoiseBandwidth,!allBandLSBs)
   !forall(fillNoiseBandwidth,!allBandUSBs)
 
+  ;; --------------------------------------------------- Antenna loss
+
+  !define(fillAntennaTerms,{!dnl
+  Fill, quantity=apriori.reflReflPrimary$1, method=explicit, explicitValues=!OhmicPri$1
+  Fill, quantity=apriori.reflTransPrimary$1, method=explicit, explicitValues=!EffPri$1
+  Fill, quantity=apriori.reflReflSecondary$1, method=explicit, explicitValues=!OhmicSec$1
+  Fill, quantity=apriori.reflTransSecondary$1, method=explicit, explicitValues=!EffSec$1
+  Fill, quantity=apriori.reflReflTertiary$1, method=explicit, explicitValues=!OhmicTer$1
+  Fill, quantity=apriori.reflTransTertiary$1, method=explicit, explicitValues=!EffTer$1
+  Fill, quantity=apriori.reflTransComplete$1, method=explicit, explicitValues=!EffAA$1!nl})
+  !forall(fillAntennaTerms,!allBandLSBs,!allBandUSBs)
+
   ;; --------------------------------------------------- Minor terms
 
   Fill, quantity=apriori.earthReflectivity, $
