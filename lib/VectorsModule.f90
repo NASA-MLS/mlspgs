@@ -68,7 +68,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
-  use MLSCommon, only: R8, RV
+  use MLSCommon, only: R8, RV, FINDFIRST
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
@@ -1473,7 +1473,6 @@ contains ! =====     Public Procedures     =============================
     character(len=132) :: MSG           ! An error message
 
     ! Executable code
-    myIndexInVector=0
     GetVectorQtyByTemplateIndex => NULL()
     if ( .not. associated ( vector%quantities ) ) then
       msg = "Reference to the vector "
@@ -1481,12 +1480,7 @@ contains ! =====     Public Procedures     =============================
       msg = trim ( msg ) // " which has been destroyed" 
       call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
     end if
-    do i=1,vector%template%noQuantities
-      if ( vector%template%quantities(i) == quantityIndex ) then
-        myIndexInVector=i
-        exit
-      end if
-    end do
+    myIndexInVector = FindFirst ( vector%template%quantities == quantityIndex )
     if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
@@ -2161,6 +2155,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.105  2003/09/15 23:28:50  vsnyder
+! Remove unused private module variable
+!
 ! Revision 2.104  2003/09/15 17:45:37  livesey
 ! Added target declaration for fussy intel compiler
 !
