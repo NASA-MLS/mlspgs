@@ -115,7 +115,7 @@ contains ! =====     Private Procedures     ============================
       if ( quantity_templates(i)%logBasis ) then
         call output ('log-')
       else
-        call output ('linear')
+        call output ('linear-')
       endif
       call output ('basis ' )  
       if ( .not. quantity_templates(i)%minorFrame ) call output ( 'non' )
