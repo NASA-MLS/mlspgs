@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -120,7 +120,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable
       if ( present(t1) ) myLastTime = t1
-      elem = StringElementNum(trim(phaseNames), LowerCase(phase_name), countEmpty)
+      elem = StringElementNum(LowerCase(trim(phaseNames)), &
+        & LowerCase(phase_name), countEmpty)
       if ( elem < 1 .and. phase_name /= ' ' ) then
         num_phases = num_phases + 1
         if ( num_phases > MAXNUMPHASES ) &
@@ -496,6 +497,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.21  2004/02/10 19:26:23  pwagner
+! Fixed bug in phase names
+!
 ! Revision 2.20  2004/01/14 18:49:58  vsnyder
 ! Stuff to support the Algebra section
 !
