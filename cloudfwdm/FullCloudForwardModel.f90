@@ -55,7 +55,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                                         & L_H2O_18, L_O_18_O, &
                                         & LAST_MOLECULE
     use Output_m,                   only: OUTPUT
-!   use PointingGrid_m,             only: POINTINGGRIDS
     use SpectroscopyCatalog_m,      only: CATALOG_T, LINE_T, LINES, CATALOG
     use String_table,               only: GET_STRING
     use Toggles,                    only: Emit, Levels, Toggle
@@ -213,7 +212,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: FREQUENCIES 
     real(r8), dimension(:,:), allocatable :: WC
 
-!    real(r8) :: phi_tan
     real(r8) :: dz                                 ! thickness of state quantity
     real(r8) :: dphi                               ! phi interval of state quantity
     real(r8) :: tLat                               ! temperature 'window' latitude
@@ -221,7 +219,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     logical, dimension(:), pointer :: doChannel    ! Do this channel?
     logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )
-!   logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
     logical, dimension(:), pointer :: LINEFLAG     ! Use this line (noLines per species)
@@ -342,7 +339,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! -------
         ptan => GetVectorQuantityByType ( fwdModelExtra,                     &
           & quantityType=l_ptan, instrumentModule = Signal%instrumentModule )
-!          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
         temp => GetVectorQuantityByType ( fwdModelExtra,                     &
           & quantityType=l_temperature )
         gph => GetVectorQuantityByType ( fwdModelExtra,                      &
@@ -382,7 +378,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! ----------------------------
     noMIFs  = radiance%template%noSurfs
     noSurf  = temp%template%noSurfs     ! Number of model layers
-!    noChans = radiance%template%noChans
 
     !----------------------------
     ! get state quantity type (need both ext and los quantities for Jacobians)
@@ -421,7 +416,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call FindClosestInstances ( temp, radiance, closestInstances )
     instance = closestInstances(maf)
     tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
-
 
 ! now checking spectroscopy
     got = .false.
@@ -513,7 +507,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
             & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
             & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
             & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
-            & vmrArray(ispec,:),                                  &    ! New Y
+            & vmrArray(ispec,:),                              &    ! New Y
             & 'Linear', extrapolate='Clamp' )
 
         case ( L_N2, L_O2, L_H2O_18, L_O_18_O)
@@ -580,8 +574,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       if(i .eq. 2) WC (i,:) = CloudWater%values(:,instance)
     enddo
 
-!    phi_tan = Deg2Rad * temp%template%phi(1,instance)
-
     call allocate_test ( superset, size(antennaPatterns), &
          & 'superset', ModuleName )
 
@@ -606,7 +598,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       ! find cloud top index from observed Tcir, threshold to be determined
       !     for high Zt, use Tcir(maf)
-       !     for low Zt, use Tcir(maf-2)
+      !     for low Zt, use Tcir(maf-2)
     ! --------------------------------------------------------------------
     ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
     ! --------------------------------------------------------------------
@@ -642,9 +634,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     call Allocate_test ( frequencies, noFreqs, 'frequencies', ModuleName )
 
-! It is equavelent to shift either spectral line frequencies or filter frequencies
-! but the sign is opposite.
-!    Vel_Cor = 1.0_rp - losVel%values(1,maf)/299792458.3_rp    ! for shift spectral lines
+    ! It is equavelent to shift either spectral line frequencies or filter frequencies
+    ! but the sign is opposite.
+    ! Vel_Cor = 1.0_rp - losVel%values(1,maf)/299792458.3_rp    ! for shift spectral lines
     Vel_Cor = 1.0_rp + losVel%values(1,maf)/299792458.3_rp  ! for shift spectral channnels
 
     !--------------------------------------------
@@ -667,7 +659,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
     end if
-
 
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
 
@@ -694,7 +685,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         if(signal%sideband /= 0) &
         frequencies = signal%lo + signal%sideband * frequencies    ! signal sideband cases
-
 
 !--------------------------------------------
 ! VELOCITY shift correction to frequencies
@@ -728,12 +718,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
     !---------------------------------------------
-!print*,instance,maxval(wc)
+    !print*,instance,maxval(wc)
+ 
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
       & noMifs,                                                              &
-      & nspec,                                  &
+      & nspec,                                                               &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
       & frequencies/1e3_r8,                                                  &
@@ -767,7 +758,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
       & My_Catalog, losVel%values(1,1) )   
-
 !      & My_Catalog, losVel%values(1,maf) )                    
                                 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
@@ -782,11 +772,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        & reshape ( transpose(a_cloudInducedRadiance),                         &
        & (/modelCloudRadiance%template%instanceLen/) )
      if(associated(effectiveOpticalDepth))                                    &
-       & effectiveOpticalDepth%values ( :, maf ) =                                &
+       & effectiveOpticalDepth%values ( :, maf ) =                            &
        & reshape ( transpose(a_effectiveOpticalDepth),                        &
        & (/effectiveOpticalDepth%template%instanceLen/) )
      if(associated(cloudRADSensitivity))                                      &
-       & cloudRADSensitivity%values ( :, maf ) =                                  &
+       & cloudRADSensitivity%values ( :, maf ) =                              &
        & reshape ( transpose(a_cloudRADSensitivity),                          &
        & (/cloudRADSensitivity%template%instanceLen/) )
 !     print*,maf,thissideband,a_clearSkyRadiance(:,25)
@@ -796,22 +786,22 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        if (doChannel(i)) then
          do mif=1, noMIFs
 
-           radiance%values (i+(mif-1)*noFreqs, maf) =                               &
-             &               radiance%values (i+(mif-1)*noFreqs, maf)               &
+           radiance%values (i+(mif-1)*noFreqs, maf) =                         &
+             &               radiance%values (i+(mif-1)*noFreqs, maf)         &
              &             + thisRatio(i)*a_clearSkyRadiance(mif,i) 
 
-           modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
-             &        modelCloudRadiance%values (i+(mif-1)*noFreqs, maf )           &
+           modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =              &
+             &        modelCloudRadiance%values (i+(mif-1)*noFreqs, maf )     &
              &      + thisRatio(i)*a_cloudInducedRadiance(mif,i)
 
-           if(associated(effectiveOpticalDepth))                                    &
-             & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
-             &        effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf )        &
+           if(associated(effectiveOpticalDepth))                              &
+             & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =       &
+             &        effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf )  &
              &      + thisRatio(i)*a_effectiveOpticalDepth(mif,i)
 
-           if(associated(cloudRADSensitivity))                                      &
-             & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
-             &        cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf )          &  
+           if(associated(cloudRADSensitivity))                                &
+             & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =         &
+             &        cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf )    &  
              &      + thisRatio(i)*a_cloudRADSensitivity(mif,i)
 
          enddo
@@ -848,7 +838,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & massMeanDiameterIce%values (:,instance)   = a_massMeanDiameter(1,:)
     if(associated(massMeanDiameterWater)) &
       & massMeanDiameterWater%values(:, instance) =  a_massMeanDiameter(2,:)
-
 
     !-----------------------
     ! Start output Jacobian
@@ -1067,6 +1056,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.115  2003/04/10 20:40:59  dwu
+! make i_saturation and cloud_der as a verbal argument
+!
 ! Revision 1.114  2003/04/08 20:03:55  dwu
 ! fix a bug in handling no of cloud species. now this number is meanful
 !
