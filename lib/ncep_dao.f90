@@ -10,7 +10,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
-    & v_is_gph, v_is_theta, AddGriddedDataToDatabase, DumpGriddedData
+    & v_is_gph, v_is_theta, AddGriddedDataToDatabase, Dump
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
@@ -356,7 +356,7 @@ contains
     type (GriddedData_T)        :: gddata 
     integer :: ErrType
     logical :: echo
-    logical :: dump
+    logical :: dump_now
     integer:: processCli, CliUnit, record_length
     logical :: use_PCF
 
@@ -369,9 +369,9 @@ contains
     endif
 
     if(present(dump_data)) then
-      dump = dump_data
+      dump_now = dump_data
     else
-      dump = DUMP_GRIDDED_QUANTITIES
+      dump_now = DUMP_GRIDDED_QUANTITIES
     endif
 
     use_PCF = present(mlspcf_l2clim_start) &
@@ -437,8 +437,8 @@ contains
             call output('units ' // gddata%units, advance='yes')
           endif
 
-          if(dump) then
-            call DumpGriddedData(gddata, root)
+          if(dump_now) then
+            call Dump(gddata, root)
           endif
 
           ErrType = AddGriddedDataToDatabase(aprioriData, gddata)
@@ -734,6 +734,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.16  2001/10/26 23:14:37  pwagner
+! Complies with Gridded data dump
+!
 ! Revision 2.15  2001/09/10 23:37:10  livesey
 ! Tidied up a bit, moved much stuff to GriddedData.f90
 !
