@@ -1552,7 +1552,12 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( ud, n, n, "UD in SolveCholeskyM_0", ModuleName )
         call densify ( ud, u )
       end if
-      do i = n, 1, -1
+      d = ud(n,n)
+      if ( abs(d) < tiny(0.0_r8) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyM_0 is singular" )
+      xs(n,1:nc) = xs(n,1:nc) / d
+      do i = n-1, 1, -1
         d = ud(i,i)
         if ( abs(d) < tiny(0.0_r8) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1618,8 +1623,8 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
           ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
-          x(i) = my_b(i) - dot(u%r2(i)-u%r2(i-1), &
-            &                  u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1) / d
+          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1), &
+            &      u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1) ) / d
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -1642,7 +1647,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
-          x(i) = my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1) / d
+          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1) ) / d
         end do ! i = 1, n
       end select
     else             ! solve U X = B for X
@@ -1653,13 +1658,18 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
         call densify ( ud, u )
       end if
-      do i = n, 1, -1
+      d = ud(n,n)
+      if ( abs(d) < tiny(0.0_r8) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
         d = ud(i,i)
         if ( abs(d) < tiny(0.0_r8) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyV_0 is singular" )
         ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
-        x(i) = my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1) / d
+        x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1) ) / d
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
@@ -1980,6 +1990,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.30  2001/05/19 00:13:43  vsnyder
+! Correct SolveCholesky*_0
+!
 ! Revision 2.29  2001/05/17 20:17:56  vsnyder
 ! Implement GetMatrixElement.  Change handling of mask in MultiplyMatrixBlocks.
 !
