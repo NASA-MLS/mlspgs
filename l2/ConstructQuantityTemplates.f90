@@ -47,7 +47,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use OUTPUT_M, only: OUTPUT
   use Parse_Signal_m, only: PARSE_SIGNAL
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
-    & QuantityTemplateCounter
+    & QuantityTemplateCounter, NullifyQuantityTemplate
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -151,9 +151,7 @@ contains ! =====     Public Procedures     =============================
 
 ! ??? Do we need a GOT_FIELD check like in VGrid, e.g. ???
 
-    nullify ( qty%surfs, qty%phi, qty%geodLat, qty%lon, qty%time, &
-      & qty%solarTime, qty%solarZenith, qty%losAngle, qty%mafIndex, &
-      & qty%mafCounter, qty%frequencies, qty%surfIndex, qty%chanIndex ) ! for Sun's rubbish compiler
+    call nullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
     nullify ( signalInds )
     error = 0
     family = 0
@@ -965,6 +963,10 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.76  2002/11/22 12:16:08  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.75  2002/11/13 01:05:03  pwagner
 ! Actually reads hdf5 radiances
 !
