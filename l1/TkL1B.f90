@@ -93,6 +93,7 @@ contains
       endif
     enddo
 
+
   end subroutine TkL1B_sc
 
   !------------------------------------------------------TkL1B_tp ----
@@ -173,6 +174,7 @@ contains
 
     ! For each scanning MIF,
     do i = 1, lenG
+
       ! Calculate tangent point (geodetic & ECR)
       returnStatus = Pgs_csc_grazingRay(earthModel, posECR(:,i), ecr(:,i), &
         latD(i), lon(i), tp%tpGeodAlt(i), &
@@ -605,6 +607,7 @@ contains
 
     ! Normalize q
     qSize = sqrt( q(1,:)**2 + q(2,:)**2 ) 
+
     q(1,:) = q(1,:) / qSize(:)
     q(2,:) = q(2,:) / qSize(:)
 
@@ -865,6 +868,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.9  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.8  2001/12/14 01:43:46  livesey
 ! Working version with ECR based master coordinate
 !
