@@ -10,9 +10,9 @@ MODULE Radiances ! Determine radiances
        MaxMIFs, absZero_C, BandWidth, tau
   USE MLSL1Utils, ONLY : GetIndexedAvg
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx
-  USE Calibration, ONLY : CalWin, limb_time, limb_counts, space_interp, &
-       & target_interp, space_err, target_err, space_weight, target_weight, &
-       zero_counts
+  USE Calibration, ONLY : CalWin, CalMAFdata, limb_time, limb_counts, &
+       space_interp, target_interp, space_err, target_err, space_weight, &
+       target_weight, zero_counts
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad
 
   IMPLICIT NONE
@@ -175,6 +175,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2001/09/10 16:17:56  perun
+! Added CalMAFdata from Calibration module
+!
 ! Revision 2.1  2001/02/23 20:55:04  perun
 ! Version 0.5 commit
 !

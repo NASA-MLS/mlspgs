@@ -39,13 +39,15 @@ MODULE Calibration ! Calibration data and routines
      INTEGER :: last_mifno
   END TYPE MAFdata_T
 
+  TYPE (MAFdata_T), ALLOCATABLE, DIMENSION(:), TARGET :: CalMAFdata
+
   !! Calibration window:
 
   TYPE CalWin_T
      INTEGER :: size        ! size in MAFs
      INTEGER :: current     ! current index for new data
      INTEGER :: central     ! central index to calibrate
-     TYPE (MAFdata_T), ALLOCATABLE, DIMENSION (:) :: MAFdata
+     TYPE (MAFdata_T), POINTER, DIMENSION (:) :: MAFdata
   END TYPE CalWin_T
 
   TYPE (CalWin_T) :: CalWin
@@ -104,7 +106,8 @@ CONTAINS
 
     !! Allocate space for a calibration window's worth of science & eng data:
 
-    ALLOCATE (CalWin%MAFdata(window_MAFs))
+    ALLOCATE (CalMAFdata(window_MAFs))
+    CalWin%MAFdata => CalMAFdata
 
     !! Initialize indexes:
 
@@ -439,6 +442,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2001/09/10 16:16:08  perun
+! Changed ALLOCATABLE component to POINTER
+!
 ! Revision 2.1  2001/02/23 18:50:29  perun
 ! Version 0.5 commit
 !
