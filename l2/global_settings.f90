@@ -47,7 +47,7 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & FGrids, VGrids, l2gpDatabase, l2pcf, processingRange, l1bInfo )
+    & FGrids, VGrids, l2gpDatabase, processingRange, l1bInfo )
 
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
@@ -85,7 +85,7 @@ contains
     use TREE_TYPES, only: N_EQUAL, N_NAMED
     use VGrid, only: CreateVGridFromMLSCFInfo
     use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
-    use WriteMetadata, only: PCFData_T
+    use WriteMetadata, only: L2PCF
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
@@ -96,7 +96,7 @@ contains
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
     type (L1BData_T) :: l1bField   ! L1B data
-    type (PCFData_T) :: l2pcf
+    ! type (PCFData_T) :: l2pcf
 
     integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
@@ -402,7 +402,7 @@ contains
       Details = -2
     end if
     if( index(switches, 'glo') /= 0 ) &
-      & call dump_global_settings( l2pcf, processingRange, l1bInfo, &
+      & call dump_global_settings( processingRange, l1bInfo, &
       & LeapSecFileName, details )
 
     if ( error /= 0 ) &
@@ -500,7 +500,7 @@ contains
     end subroutine Announce_Error
 
     ! ------------------------------------------  dump_global_settings  -----
-    subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
+    subroutine dump_global_settings ( processingRange, l1bInfo, &
       & LeapSecFileName, dumpL1BDetails )
 
       ! Dump info obtained during OpenAndInitialize and global_settings:
@@ -515,7 +515,7 @@ contains
 
       ! Arguments
       type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-      type(PCFData_T) :: l2pcf
+      ! type(PCFData_T) :: l2pcf
       type (TAI93_Range_T) :: processingRange ! Data processing range
 
       ! The following dtermines the level of detail to expose:
@@ -709,6 +709,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.70  2003/06/09 22:49:34  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.69  2003/05/14 22:04:49  pwagner
 ! Bad leapsecfile name now prints sensibly & stops
 !
