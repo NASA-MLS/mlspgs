@@ -1775,7 +1775,7 @@ contains ! =====     Public Procedures     =============================
       ! Spread it into the other instances, worry about the mask
       if ( .not. associated ( quantity%mask ) ) then
         quantity%values = spread ( &
-          & outValues, quantity%template%noInstances, 2 )
+          & outValues, 2, quantity%template%noInstances )
       else
         do i = 1, quantity%template%noInstances
           where ( iand ( ichar(quantity%mask(:,i)) , m_fill ) == 0 )
@@ -3714,6 +3714,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.138  2002/08/21 23:06:12  livesey
+! Bug fix in profile fill
+!
 ! Revision 2.137  2002/08/20 22:10:49  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
