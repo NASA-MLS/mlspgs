@@ -1,0 +1,96 @@
+; $Id$
+;
+; This L2CF fragment defines system temperatures for EOS MLS that will
+; be used in simulations.
+;
+; Version 1.0.0 is based on data produced by RFJ et al. based on
+; pre-calibration estimates of the instrument performance (May 2002)
+;
+
+!define(systemp1L,  1500K )
+!define(systemp1,   1500K )
+
+!define(systemp2L,  4000K )
+!define(systemp2U,  4000K )
+!define(systemp2,   2000K )
+
+!define(systemp3L,  4000K )
+!define(systemp3U,  4000K )
+!define(systemp3,   2000K )
+
+!define(systemp4L,  4000K )
+!define(systemp4U,  4000K )
+!define(systemp4,   2000K )
+
+!define(systemp5L,  4000K )
+!define(systemp5U,  4000K )
+!define(systemp5,   2000K )
+
+!define(systemp6L,  4000K )
+!define(systemp6U,  4000K )
+!define(systemp6,   2000K )
+
+!define(systemp7L,  4000K )
+!define(systemp7U,  4000K )
+!define(systemp7,   2000K )
+
+!define(systemp8L,  4000K )
+!define(systemp8U,  4000K )
+!define(systemp8,   2000K )
+
+!define(systemp9L,  4000K )
+!define(systemp9U,  4000K )
+!define(systemp9,   2000K )
+
+!define(systemp10L, 12000K )
+!define(systemp10U, 12000K )
+!define(systemp10,  6000K  )
+
+!define(systemp11L, 12000K )
+!define(systemp11U, 12000K )
+!define(systemp11,  6000K  )
+
+!define(systemp12L, 12000K )
+!define(systemp12U, 12000K )
+!define(systemp12,  6000K  )
+
+!define(systemp13L, 12000K )
+!define(systemp13U, 12000K )
+!define(systemp13,  6000K  )
+
+!define(systemp14L, 12000K )
+!define(systemp14U, 12000K )
+!define(systemp14,  6000K  )
+
+!define(systemp15L, 30000K )
+!define(systemp15U, 30000K )
+!define(systemp15,  15000K )
+
+!define(systemp16L, 30000K )
+!define(systemp16U, 30000K )
+!define(systemp16,  15000K )
+
+!define(systemp17L, 30000K )
+!define(systemp17U, 30000K )
+!define(systemp17,  15000K )
+
+!define(systemp18L, 30000K )
+!define(systemp18U, 30000K )
+!define(systemp18,  15000K )
+
+!define(systemp19L, 30000K )
+!define(systemp19U, 30000K )
+!define(systemp19,  15000K )
+
+!define(systemp20L, 30000K )
+!define(systemp20U, 30000K )
+!define(systemp20,  15000K )
+
+!define(systemp32L,  1500K )
+!define(systemp32,   1500K )
+
+!define(systemp33L,  4000K )
+!define(systemp33U,  4000K )
+!define(systemp33,   2000K )
+
+; $Log$
