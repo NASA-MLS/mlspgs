@@ -1957,7 +1957,7 @@ contains
 
           ! Compute radiative transfer ---------------------------------------
 
-          CALL rad_tran ( indices_c(1:npc), gl_inds, Frq,                    &
+          CALL rad_tran ( indices_c(1:npc), gl_inds(1:ngl), Frq,             &
             & spaceRadiance%values(1,1), e_rflty, z_path, t_path,            &
             & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc),            &
             & incoptdepth(1:npc), alpha_path_f(1:ngl), &
@@ -2805,6 +2805,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.124  2003/02/07 01:07:41  jonathan
+! add in option to compute dry and super-saturation case in load_sps
+!
 ! Revision 2.123  2003/02/06 22:04:25  vsnyder
 ! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
 !
