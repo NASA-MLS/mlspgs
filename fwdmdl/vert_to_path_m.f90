@@ -1,8 +1,6 @@
 module VERT_TO_PATH_M
   use Allocate_Deallocate, only: Allocate_test, Deallocate_Test
   use MLSCommon, only: I4, R4, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
-    & MLSMSG_Error
   use D_LINTRP_M, only: LINTRP
   use I_HUNT_M, only: HUNT
   use ELLIPSE_SW_M, only: H_TO_S_PHI
@@ -47,9 +45,7 @@ contains
     type(ellipse), intent(in out) :: Elvar
 
     real(r8), intent(out) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
-                             dhdz_path(:)
-
-    real(r8), pointer :: phi_eta(:,:) ! Pointer, so we get bounds as well as shape
+                             dhdz_path(:), phi_eta(:,:)
 
     real(r8), intent(in) :: htan, z_glgrid(:)
     real(r8), intent(in) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
@@ -59,7 +55,7 @@ contains
     !  Local variables:
     !  ----------------
 
-    integer :: i, j, k, l, lmax, lmin, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
+    integer :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
 
     real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
 
@@ -75,18 +71,13 @@ contains
     Ier = 0
     Ngp1 = Ng + 1
 
-    lmin = lbound(phi_eta,2)
-    lmax = ubound(phi_eta,2)
-
 !?? print*,'Ngt is:',ngt
     call Allocate_test ( cndx, ngt, 'cndx', ModuleName )
     call Allocate_test ( dum_z, ngt, 'dum_z', ModuleName )
     call Allocate_test ( dum_h, ngt, 'dum_h', ModuleName )
     call Allocate_test ( dum_phi, ngt, 'dum_phi', ModuleName )
-    allocate ( h_a(ngt,lmin:lmax), stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // 'H_a' )
-    print*,'no_phi_t is:',no_phi_t
+    call Allocate_test ( h_a, ngt, no_phi_t, 'h_a', ModuleName )
+!?? print*,'no_phi_t is:',no_phi_t
 
 !     DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
 !      ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_phi(ngt), &
@@ -144,7 +135,7 @@ contains
 
     npp = 0
     l = gl_count + 1
-    jp = (lmin + lmax) / 2
+    jp = (no_phi_t + 1) / 2
 
     do
       do n = 1, Ngp1
@@ -182,7 +173,7 @@ contains
 
 !    Cast the h_glgrid onto the path (using liner interpolation)
 
-    do m = lmin, lmax
+    do m = 1, no_phi_t
       call lintrp ( z_glgrid, dum_z, h_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -231,7 +222,7 @@ contains
 
       do i = 1, npp
         r = dum_phi(i)
-        do m = lmin, lmax
+        do m = 1, no_phi_t
           call get_one_eta ( r, t_phi_basis, no_phi_t, m, phi_eta(i,m) )
         end do
       end do
@@ -273,7 +264,7 @@ contains
         if ( j >= ibrk) elvar%ps = 1.0D0
         call H_TO_S_PHI ( elvar, h, s, phi )
         dum_phi(j) = phi
-        do m = lmin, lmax
+        do m = 1, no_phi_t
           call get_one_eta ( dum_phi(j), t_phi_basis, no_phi_t, m, phi_eta(j,m) )
         end do
       end do
@@ -285,7 +276,7 @@ contains
 !   First, compute the path Temperature:
 !   Cast the t_glgrid onto the path (using liner interpolation)
 
-    do m = lmin, lmax
+    do m = 1, no_phi_t
       call lintrp ( z_glgrid, dum_z, t_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -310,7 +301,7 @@ contains
 !   Second, compute the path dh_dz:
 !   Cast the dhdz_glgrid onto the path (using liner interpolation)
 
-    do m = lmin, lmax
+    do m = 1, no_phi_t
       call lintrp ( z_glgrid, dum_z, dhdz_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -332,6 +323,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.11  2001/04/13 01:44:36  vsnyder
+! Work on moving window
+!
 ! Revision 1.10  2001/04/13 01:13:59  vsnyder
 ! Use lmin:lmax for more dimensions
 !
