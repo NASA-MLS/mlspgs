@@ -37,18 +37,18 @@ begin Output
 !standardProduct(rhi,RHI,)
 ; }) ; end !ifelse(!resolution,hiRes
 ;; Now output the DGG file
-!ifdef(gotDGGs,{
+!ifdef(flagGotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
 
 ;; Now output the DGM file
-!ifdef(gotDGMs,{
+!ifdef(flagGotDGMs,{
 Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
   file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
 
 ;; The forward model radiances have been output using direct writes
 })
-!ifdef(gotAnyAKs,{
+!ifdef(flagGotAnyAKs,{
   output, file= $
     '!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5', $
     quantities=[ !undivert(!AVKDivert) ], type=l2pc

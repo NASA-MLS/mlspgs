@@ -66,7 +66,7 @@ end Fill})
 !define(completePhase,{!dnl
 ;; Set default values for some parameters
 !undefine(completePhasetroph2o)
-!processparval({completePhase},!shift($@))
+!ProcessParVal({completePhase},!shift($@))
 begin Fill
   ;; Put state etc. back
   Transfer, source=x$1, destination=state
@@ -141,7 +141,7 @@ joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath=
 })
 
 !define(joinDGM,{!dnl
-!storeDGM(joindDGM_$1_!phase)!storeDGM(joindDGM_$1_!phase_precision)!dnl
+!storeDGM(joinedDGM_$1_!phase)!storeDGM(joinedDGM_$1_!phase_precision)!dnl
 joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
 joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
 })
@@ -170,10 +170,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      /prefixSignal, sdName=' chisqChan !phase'
    joinedDGG_chisqBinned$1_!phase: l2gp, radianceChisq.chisqBinned$1, $
      /prefixSignal, swath=' chisqBinned !phase'
-   !storeDGM(joindDGM_chisqMMAF$1_!phase)!dnl
-   !storeDGM(joindDGM_chisqMMIF$1_!phase)!dnl
-   !storeDGM(joindDGM_chisqChan$1_!phase)!dnl
-   !storeDGG(joindDGG_chisqBinned$1_!phase)})
+   !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
+   !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
+   !storeDGM(joinedDGM_chisqChan$1_!phase)!dnl
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)})
 
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
@@ -202,7 +202,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 
 ;; This macro uses the joinDGG (for the moment, will use DGM when we
 ;; got to hdf5) to join the diagnostics stuff
-!define(joinOneDiagDGG,{!storeDGG(joindDGG_$1_!phase)!dnl
+!define(joinOneDiagDGG,{!storeDGG(joinedDGG_$1_!phase)!dnl
   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
     swath='!translit($1,{_},{-})-!phase'!nl})
 
@@ -225,6 +225,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.42  2003/05/08 20:49:21  livesey
+; Various tidyups and changes
+;
 ; Revision 1.41  2003/03/22 01:18:24  livesey
 ; Added initHiRes
 ;
