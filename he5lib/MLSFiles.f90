@@ -59,9 +59,9 @@ module MLSFiles               ! Utility file routines
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: HDFVERSION_4 = 4
-   integer, parameter :: HDFVERSION_5 = 5
-   integer, parameter :: DEFAULT_HDFVERSION = HDFVERSION_5
+   integer, parameter, public :: HDFVERSION_4 = 4
+   integer, parameter, public :: HDFVERSION_5 = 5
+   integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_5
    
   ! Given this hdfVersion, try to autorecognize hdfversion
   ! then perform appropriate version of open/close; i.e., forgiving
@@ -1142,6 +1142,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.10  2002/03/13 18:32:05  pwagner
+! No longer dumps core after writing metadata to hdf5 files
+!
 ! Revision 1.9  2002/02/19 23:39:29  pwagner
 ! Eliminated unwanted match between o3 and hno3
 !
