@@ -33,7 +33,7 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
   type IEEE_Class_Type
     private
-    integer :: What        ! 1 = IEEE_Quiet_Nam
+    integer :: What        ! 1 = IEEE_Quiet_Nan
                            ! 2 = IEEE_Signaling_Nan
   end type IEEE_Class_Type
 
@@ -49,22 +49,37 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
     module procedure IEEE_Support_NaN_D, IEEE_Support_NaN_S
   end interface
 
+  interface IEEE_IS_FINITE
+    module procedure IEEE_IS_FINITE_D, IEEE_IS_FINITE_S
+  end interface
+
   interface IEEE_Value
     module procedure IEEE_Value_D, IEEE_Value_S
   end interface
 
 CONTAINS
   
-  LOGICAL FUNCTION IEEE_IS_FINITE( ARG )
+  LOGICAL FUNCTION IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
   ! Private
     
-    IEEE_IS_FINITE = .FALSE.
+    IEEE_IS_FINITE_S = .FALSE.
     if( isnan(arg) ) RETURN
     if( isinf(arg) ) RETURN
-    IEEE_IS_FINITE = .TRUE.
-  END FUNCTION IEEE_IS_FINITE
+    IEEE_IS_FINITE_S = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_S
+  
+  LOGICAL FUNCTION IEEE_IS_FINITE_D( ARG )
+  ! Formal args
+    double precision, intent(in) ::          arg
+  ! Private
+    
+    IEEE_IS_FINITE_D = .FALSE.
+    if( isnan(arg) ) RETURN
+    if( isinf(arg) ) RETURN
+    IEEE_IS_FINITE_D = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_D
   
   elemental logical function IEEE_Is_NaN_D ( X )
     double precision, intent(in) :: X
@@ -146,6 +161,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.4  2004/03/26 21:15:00  pwagner
+! FIrst commit
+!
 ! Revision 1.3  2003/07/03 19:26:52  vsnyder
 ! Remove some comments that are no longer true
 !
