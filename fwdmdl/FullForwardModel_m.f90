@@ -424,7 +424,7 @@ contains
     type (beta_group_T), dimension(:), pointer :: beta_group
 
 ! temperature on surfaces where supersaturation may need to be calculated
-    real(r8) :: RHi                     ! relative humidity
+    real(rp) :: RHi                     ! relative humidity
     real(r8) :: refP                    ! the top pressure where supersat is set
     real(r8), dimension(:), pointer :: tempProf
 
@@ -903,7 +903,7 @@ contains
 
          select case (FwdModelConf%i_saturation)
             case (l_clear)
-               RHi = -1
+               RHi = -1._r8
             case (l_clear_110RH_below_top)
                RHi = 110._r8              ! 110% supersaturation
                refP = 100._r8      ! 100 mb
@@ -2868,6 +2868,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.132  2003/04/22 00:14:45  dwu
+! add a new option (clear_110RH_below_tropopause) to i_saturation
+!
 ! Revision 2.131  2003/04/11 00:49:02  dwu
 ! make i_saturation as a verbel input
 !
