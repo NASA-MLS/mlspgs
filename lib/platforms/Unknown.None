@@ -20,14 +20,6 @@ REECHO=$(UTILDIR)/reecho.sh
 
 TESTSDIR=../../tests
 
-ifdef MLSINSTALLDIR
-   INSTALLDIR:=$(MLSINSTALLDIR)
-else
-ifndef INSTALLDIR
-   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
-endif
-endif
-
 # include files %.f9h shared by l2, lib are in $(srclib)
 srclib = ../../srclib
 
@@ -88,47 +80,10 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
-# Custom build commands for some modules
-
-# This uses the utility program init_gen to create two
-# up-to-date prereqs for intrinsic
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
-$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
-          -l last_intrinsic_lit -pl_ \
-          -j lit_names.txt \
-          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
-
-machine.o: $(MACH_DIR)/machine.f90
-	rm -f machine.f90 ; \
-	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
-     > machine.f90
-	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
-	rm -f machine.f90
-
-intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
-
-BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
-NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
-
-DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
-
-Hdf.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
-string_table.o:
-	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
-
-# ncep_dao module doesn't play well with the lf95 undefined variable
-# runtime checker because of endian swapping
-ncep_dao.o:
-	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
-
 # $Log$
+# Revision 1.16  2002/06/21 00:16:44  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.15  2002/02/08 18:33:08  pwagner
 # Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
 #

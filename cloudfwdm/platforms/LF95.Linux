@@ -80,9 +80,13 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials = -lPGSTK.sv3
+#l_specials = -lPGSTK.sv3
+l_specials =
 
 # $Log$
+# Revision 1.6  2002/06/21 00:16:42  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.5  2002/01/31 00:33:13  pwagner
 # Prefixes preset paths just like forwaard model
 #

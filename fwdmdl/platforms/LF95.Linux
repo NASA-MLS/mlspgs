@@ -73,9 +73,13 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials = -lPGSTK.sv3
+#l_specials = -lPGSTK.sv3
+l_specials =
 
 # $Log$
+# Revision 2.4  2002/06/21 00:16:42  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 2.3  2002/01/19 00:27:39  pwagner
 # made useful in he5lib by UNPREFXDPTHS
 #

@@ -62,22 +62,13 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials = -lPGSTK.sv3
-
-#	special options for compiling some modules--override .f90 rules
-
-l2interface.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
-L2Interface.o: $(S)/L2Interface.f90
-	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
-l3dmdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-L3DMData.o: $(S)/L3DMData.f90
-	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-tree_checker.mod: init_tables_module.mod
-	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+#l_specials = -lPGSTK.sv3
+l_specials =
 
 # $Log$
+# Revision 1.8  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.7  2001/10/22 18:30:56  pwagner
 # Added l_special like l2
 #

@@ -74,16 +74,10 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 #Special load libraries
 l_specials =
 
-#	special options for compiling some modules--override .f90 rules
-
-OutputL1B.o: $(S)/OutputL1B.f90
-	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-outputl1b.mod:
-	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-tree_checker.mod: init_tables_module.mod
-	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-
 # $Log$
+# Revision 1.9  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
 # Revision 1.8  2001/08/15 21:03:28  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #

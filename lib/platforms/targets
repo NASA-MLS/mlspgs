@@ -1,5 +1,6 @@
 libmls.a: L2PC_m.o
 
+short_name=l3m
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -24,6 +25,16 @@ else
 include ../Makefile.dep
 endif
 endif
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include ../../customblds/$(MLSF95).$(MLSPLAT)
 
 machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
 MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
@@ -125,7 +136,8 @@ ifdef HDFVERSIONS
    he5lib_message=mlslib will support files with either hdf version
 endif
 
-libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} $(MODULES)
+#libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} $(MODULES)
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
@@ -203,6 +215,9 @@ tar:
 # 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.46  2002/06/21 00:16:44  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.45  2002/05/02 22:35:17  pwagner
 # NOCASCADE setting in place; forestalls unwanted recompilations
 #

@@ -133,7 +133,8 @@ else
 endif
 
 # ========================================================================
-libcloud.a: ${OBJS} ${MODULES}
+#libcloud.a: ${OBJS} ${MODULES}
+libcloud.a: ${OBJS}
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
@@ -154,6 +155,7 @@ l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
 	-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -162,7 +164,6 @@ l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
-        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -186,6 +187,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2002/06/21 00:16:42  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.6  2002/05/02 22:35:16  pwagner
 # NOCASCADE setting in place; forestalls unwanted recompilations
 #

@@ -6,6 +6,7 @@ REECHO=$(UTILDIR)/reecho.sh
 
 mlsl3d: MLSL3D.o
 
+short_name=l3
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -30,6 +31,16 @@ else
 include ../Makefile.dep
 endif
 endif
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include ../../customblds/$(MLSF95).$(MLSPLAT)
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
@@ -185,6 +196,7 @@ mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES)
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
 	-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -193,7 +205,6 @@ mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
-        $(hdf5_linker_line) \
         $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -225,6 +236,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.22  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.21  2002/05/10 20:30:39  pwagner
 # Can build executable if HDFVERSIONS set
 #

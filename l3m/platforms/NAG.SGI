@@ -79,25 +79,10 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
 #Special load libraries
 l_specials = -lnsl
 
-L3DZData.o: $(S)/L3DZData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-
-L3MZData.o: $(S)/L3MZData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-
-L3MMData.o: $(S)/L3MMData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-
-L3DZDiag.o: $(S)/L3DZDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
-
-L3MZDiag.o: $(S)/L3MZDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
-
-L3MMDiag.o: $(S)/L3MMDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
-
 # $Log$
+# Revision 1.3  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.2  2001/08/15 21:03:28  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #

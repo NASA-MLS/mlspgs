@@ -90,35 +90,10 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 #Special load libraries
 l_specials = -lU77
 
-# Custom build commands for some modules
-# This keeps switch_usage up-to-date with notes/switches
-# (and similarly for options)
-MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
-	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
-	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
-	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
-	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	cat part_1 part_2 part_3 > MLSL2.f90 ; \
-	rm -f part_1 part_2 part_3 ; \
-	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
-	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
-	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	cat part_1 part_2 part_3 > MLSL2.f90
-	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
-	rm -f MLSL2.f90 part_1 part_2 part_3
-
-TREE_CHECKER.mod: INIT_TABLES_MODULE.mod
-	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-
 # $Log$
+# Revision 1.12  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.11  2002/01/31 00:33:13  pwagner
 # Prefixes preset paths just like forwaard model
 #

@@ -81,22 +81,10 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 #Special load libraries
 l_specials = -lnsl
 
-l3dzdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-L3DZData.o: $(S)/L3DZData.f90
-	$(UTILDIR)/newAifBdiff.sh -a l3dzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-
-l3mzdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-L3MZData.o: $(S)/L3MZData.f90
-	$(UTILDIR)/newAifBdiff.sh -a l3mzdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-
-l3mmdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-L3MMData.o: $(S)/L3MMData.f90
-	$(UTILDIR)/newAifBdiff.sh -a l3mmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-
 # $Log$
+# Revision 1.3  2002/06/21 23:24:09  pwagner
+# More steps enroute to ending cascades of recompiles
+#
 # Revision 1.2  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #

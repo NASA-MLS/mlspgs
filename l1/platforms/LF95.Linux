@@ -71,18 +71,13 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials = -lPGSTK.sv3
-
-#	special options for compiling some modules--override .f90 rules
-
-OutputL1B.o: $(S)/OutputL1B.f90
-	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-outputl1b.mod:
-	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-tree_checker.mod: init_tables_module.mod
-	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+#l_specials = -lPGSTK.sv3
+l_specials =
 
 # $Log$
+# Revision 1.8  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
 # Revision 1.7  2001/10/22 18:30:56  pwagner
 # Added l_special like l2
 #
