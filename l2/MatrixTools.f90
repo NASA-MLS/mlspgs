@@ -8,8 +8,10 @@ module MatrixTools                      ! Various tools for matrices
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE
+  use PVMIDL, only: PVMIDLPACK
   use MatrixModule_1, only: MATRIX_T, MATRIX_DATABASE_T, &
-    & FINDBLOCK, GETFROMMATRIXDATABASE
+    & FINDBLOCK, GETFROMMATRIXDATABASE, RC_INFO
   use MatrixModule_0, only: MATRIXELEMENT_T, DENSIFY, &
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
   use MLSCommon, only: R8
@@ -24,11 +26,15 @@ module MatrixTools                      ! Various tools for matrices
   use Output_M, only: OUTPUT
   use String_Table, only: DISPLAY_STRING
   use Expr_M, only: EXPR
+  use QuantityPVM, only: PVMSENDQUANTITY
 
   implicit none
   private
 
   public :: DumpBlock
+
+  ! Local paramters
+  integer, parameter :: MTXMSGTAG = 202
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -40,6 +46,7 @@ module MatrixTools                      ! Various tools for matrices
 
 contains ! ================ Public procedures ================================
 
+  ! --------------------------------------------------- DumpBlock
   subroutine DumpBlock ( key, matrices )
     ! This routine can be called whenever a DumpBlock command is issued in the
     ! l2cf.  It can be used to dump a requested block from the l2cf
@@ -393,6 +400,106 @@ contains ! ================ Public procedures ================================
     
   end subroutine DumpBlock
 
+  ! ----------------------------------------- PVMSendBlock
+  subroutine PVMPackBlock ( BLOCK )
+    ! Dummy arguments
+    type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
+
+    ! Local variables
+    integer :: BUFFERID                 ! From pvm
+    integer :: INFO                     ! Flag
+
+    ! Executable code
+
+    call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing block info" )
+    
+    if ( any (block%kind == (/M_Banded, M_Column_Sparse /) ) ) then
+      call PVMIDLPack ( (/ size(block%values) /), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of values" )
+      call PVMIDLPack ( block%R1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing R1" )
+      call PVMIDLPack ( block%R2, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing R2" )
+    end if
+
+    if ( block%kind /= M_Absent ) then
+      call PVMIDLPack ( block%values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing block values" )
+    end if
+
+  end subroutine PVMPackBlock
+
+  ! ----------------------------------------- PVMSendRC
+  subroutine PVMPackRC ( RC )
+    ! Dummy argument
+    type ( RC_Info ), intent(in) :: RC  ! the rcinfo to send
+
+    ! Local variables
+    integer :: BUFFERID                 ! From pvm
+    integer :: INFO                     ! Flag
+    integer :: QTY                      ! Loop counter
+
+    ! Executable code
+    ! Pack the number of blocks
+    call PVMIDLPack ( (/ rc%nelts /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing NB' )
+    
+    ! Pack the indices
+    call PVMIDLPack ( rc%nelts, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Nelts' )
+    call PVMIDLPack ( rc%inst, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Inst' )
+    call PVMIDLPack ( rc%quant, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Quant' )
+
+    ! Pack the size of the vector
+    call PVMIDLPack ( size (rc%vec%quantities), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing no quantities' )
+    do qty = 1, size (rc%vec%quantities)
+      call PVMSendQuantity ( rc%vec%quantities(qty), 0, &
+      & justPack=.true., noValues=.true., noMask=.true. )
+    end do
+
+  end subroutine PVMPackRC
+
+  ! ----------------------------------------- PVMSendMatrix
+  subroutine PVMSendMatrix ( MATRIX, TID, JUSTPACK )
+    ! Dummy arguments
+    type (Matrix_T), intent(in) :: MATRIX ! The matrix to send
+    integer, intent(in) :: TID          ! The task to send it to
+    logical, intent(in), optional :: JUSTPACK ! 
+
+    ! Local variables
+    logical :: MYJUSTPACK               ! Copy of justPack
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: I,J                      ! Loop counters
+
+    ! Executable code
+    myJustPack = .false.
+    if (present(justPack)) myJustPack = justPack
+
+    if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMPackRC ( matrix%col )
+    call PVMPackRC ( matrix%row )
+    
+    do j = 1, size(matrix%block,2)
+      do i = 1, size(matrix%block,1)
+        call PVMPackBlock ( matrix%block(i,j) )
+      end do
+    end do
+
+    if (.not. myJustPack) then
+      call PVMFSend ( tid, MtxMsgTag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+    end if
+
+  end subroutine PVMSendMatrix
+
 end module MatrixTools
 
 ! $Log$
+! Revision 1.4  2001/05/08 21:33:23  livesey
+! Added the CVS log stuff, whoops!
+!
