@@ -35,6 +35,7 @@ module ERMSG_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -427,9 +428,16 @@ contains
     end if
     return
   end subroutine DERVN
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ERMSG_M
 
 ! $Log$
+! Revision 2.6  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/01/18 00:28:39  vsnyder
 ! Account for '/' in formats
 !
