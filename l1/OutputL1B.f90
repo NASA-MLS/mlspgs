@@ -103,8 +103,8 @@ MODULE OutputL1B
 
   INTEGER, PARAMETER :: lenCoord = 3
   INTEGER, PUBLIC, PARAMETER :: lenUTC = 27
-  INTEGER, PARAMETER :: lenG = 150
-  INTEGER, PARAMETER :: lenT = 150
+  INTEGER, PARAMETER :: lenG = 120
+  INTEGER, PARAMETER :: lenT = 120
 
   REAL, PUBLIC, PARAMETER :: FILL_REAL = -999.9
   REAL(r8), PUBLIC, PARAMETER :: FILL_DP = -999.9
@@ -280,7 +280,7 @@ CONTAINS
     status = sfsfill(sds36_id, FILL_REAL)
 
     ! GHz tangent point quantities
-    dimSize(1) = lenG
+    dimSize(1) = MIFsGHz
 
     sds21_id = sfcreate( sdId%OAId, SDS21_NAME, DFNT_FLOAT32, rank, &
       dimSize(1:2) )
@@ -321,7 +321,7 @@ CONTAINS
 
     ! THz tangent point quantities
 
-    dimSize(1) = lenT
+    dimSize(1) = MIFsTHz
 
     sds39_id = sfcreate( sdId%OAId, SDS39_NAME, DFNT_FLOAT32, rank, &
       dimSize(1:2) )
@@ -382,7 +382,7 @@ CONTAINS
     status = sfsfill(sds14_id, FILL_DP)
 
     ! GHz tangent point quantities
-    dimSize(2) = lenG
+    dimSize(2) = MIFsGHz
 
     sds19_id = sfcreate(sdId%OAId, SDS19_NAME, DFNT_FLOAT64, rank, dimSize)
     status = sfsfill(sds19_id, FILL_DP)
@@ -390,7 +390,7 @@ CONTAINS
     status = sfsfill(sds20_id, FILL_DP)
 
     ! THz tangent point quantities
-    dimSize(2) = lenT
+    dimSize(2) = MIFsTHz
 
     sds37_id = sfcreate(sdId%OAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
     status = sfsfill(sds37_id, FILL_DP)
@@ -1365,8 +1365,8 @@ CONTAINS
 END MODULE OutputL1B
 
 ! $Log$
-! Revision 2.5  2002/03/12 16:37:06  perun
-! Changed lenG and lenT to 150; added good_rad flag for output control.
+! Revision 2.6  2002/03/29 20:18:34  perun
+! Version 1.0 commit
 !
 ! Revision 2.4  2001/12/06 01:03:46  pwagner
 ! Now writes orbit incline angle in ECR
