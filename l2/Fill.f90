@@ -122,7 +122,8 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, GetSignal
+    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, &
+      & GetSignal, Signal_T
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -4005,7 +4006,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: USBFRACTION
       integer, intent(in) :: KEY
       ! Local variables
-      type (MLSSignals_T) :: signal
+      type (Signal_T) :: signal
 
       ! Executable code
       ! Do some checking first
@@ -5034,6 +5035,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.197  2003/04/05 00:26:47  livesey
+! Bug fix in sideband splitting stub
+!
 ! Revision 2.196  2003/04/05 00:05:37  livesey
 ! Added call to getSignal in split sideband
 !
