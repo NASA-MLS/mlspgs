@@ -377,7 +377,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
-             l+l_hydrostatic, l+l_addnoise, &
+             l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
              l+l_vector, l+l_special, l+l_fold, &
              l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
@@ -636,6 +636,7 @@ contains ! =====     Public procedures     =============================
             n+n_dot/))
      call acorn((/begin, f+f_radianceQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_refract, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_resetSeed, t+t_boolean, n+n_field_type/))
@@ -915,6 +916,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.223  2002/06/04 22:48:36  livesey
+! Added refract fill for phiTan
+!
 ! Revision 2.222  2002/06/04 22:06:36  livesey
 ! Added phitan as a state vector element
 !
