@@ -450,17 +450,14 @@ contains ! =====     Public Procedures     =============================
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
       end if
-      ! > if ( mls_exists(trim(Filename)) == 0 ) then
-      ! >   fileaccess = DFACC_RDWR
-      ! > else
-      ! >   fileaccess = DFACC_CREATE
-      ! > endif
+
       if ( createFileFlag ) then
         fileaccess = DFACC_CREATE
       else
         fileaccess = DFACC_RDWR
       endif
       select case ( outputType )
+
       case ( l_l2gp )
         ! Before opening file, see which swaths are already there
         ! and which ones need to be created
@@ -470,18 +467,26 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
           & ModuleName )
-        do source = 1, noSources
-          qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-          & sourceQuantities(source) )
-          hdfNameIndex = qty%label
-          call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
-        enddo
-        ANOTHERLOG_VAR = MLS_SWATH_IN_FILE(fileName, nameBuffer, HdfVersion, &
-          & logicalBuffer )
+        if ( .not. createFileFlag ) then
+          do source = 1, noSources
+            print*,'Source:', source
+            qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+              & sourceQuantities(source) )
+            hdfNameIndex = qty%label
+            call display_string ( hdfNameIndex, strip=.true., advance='yes' )
+            call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
+            print*,'Done'
+          enddo
+          ANOTHERLOG_VAR = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
+            & logicalBuffer )
+          print*,'Got out of MLS_SWATH_IN_FILE'
+        else
+          logicalBuffer = .false.
+        end if
         ! Call the l2gp open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
         handle = mls_io_gen_openF('sw', .true., ErrorType, &
-          & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
+          & record_length, FileAccess, trim(FileName), hdfVersion=hdfVersion)
       case ( l_l2aux )
         ! Call the l2aux open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
@@ -1311,6 +1316,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.83  2003/07/11 01:24:20  livesey
+! More changes trying to get the direct write going.
+!
 ! Revision 2.82  2003/07/09 21:49:53  pwagner
 ! Tries to figure out in advance whether to create swath
 !
