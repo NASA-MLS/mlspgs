@@ -401,7 +401,7 @@ o:  do
         if ( numChannelNums > 0 ) &
           & channelMatch(i) = lbound(myChannels,1) >= &
             & lbound(spectrometerTypes(spectrometer)%frequencies,1) .and. &
-            & ubound(myCHannels,1) <= &
+            & ubound(myChannels,1) <= &
             & ubound(spectrometerTypes(spectrometer)%frequencies,1)
         if ( radiometer_i >= 0 ) radiometerMatch(i) = &
           & radiometer_i == signals(i)%radiometer
@@ -437,6 +437,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.7  2001/04/11 02:10:45  vsnyder
+! Fix a typo
+!
 ! Revision 2.6  2001/04/10 17:59:54  vsnyder
 ! Remove sideband field from signal
 !
