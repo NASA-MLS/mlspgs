@@ -1,6 +1,6 @@
 module SLABS_SW_M
 
-  use MLSCommon, only: R8, RP, IP
+  use MLSCommon, only: R8, RP
   use SpectroscopyCatalog_m, only: CATALOG_T, Lines
   use Units, only: Pi, SqrtPi
 
@@ -10,8 +10,8 @@ module SLABS_SW_M
 
   ! Routines to compute Betas and their derivatives, and to get ready to do so:
   public :: Get_GL_Slabs_Arrays, &
-         &  Slabs, Slabs_Lines, Slabs_dT, &
-         &  Slabswint, Slabswint_dT, Slabswint_Lines, &
+         &  Slabs, Slabs_dT, Slabs_Lines, Slabs_Lines_dT, &
+         &  Slabswint, Slabswint_dT, Slabswint_Lines, Slabswint_Lines_dT, &
          &  Voigt_Lorentz, &
          &  DVoigt_Spectral, DVoigt_Spectral_Lines
 
@@ -387,6 +387,84 @@ contains
 
   end function Slabs_Lines
 
+  ! ---------------------------------------------  Slabs_Lines_dT  -----
+  subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
+    &                         Beta, dBeta_dT, Polarized )
+
+  ! Compute single-line absorption and its derivative w.r.t. temperature
+  ! for all lines in the Slabs structure.
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: Nu    ! Frequency
+    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
+    real(rp), intent(in) :: Tanh1 ! tanh( h nu / (2 k T) )
+    real(rp), intent(in) :: dTanh_dT ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+
+    real(rp), intent(out) :: Beta, dBeta_dT
+
+    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
+                                  ! do them all if Polarized is not present.
+
+    real(rp) :: C       ! Terms common to the two parts of dSlabs_dT
+    real(rp) :: D       ! 1 / (SigmaX1**2 + y**2)
+    real(rp) :: Delta   ! Nu-v0s
+    real(rp) :: Du      ! du/dT
+    real(rp) :: Da      ! d(x1*delta)
+    real(rp) :: Dv0s_dT ! dv0s / dT
+    real(rp) :: Dx1_dT  ! 1/x1 dx1/dT
+    real(rp) :: Dy_dT   ! 1/y dy/dT
+    integer :: L        ! Line index
+    real(rp) :: Sa, Sb  ! parts of Slabs
+    real(rp) :: Sigma   ! Nu+v0s
+    real(rp) :: SigmaX1 ! sigma * x1
+    real(rp) :: U       ! Voigt
+    real(r8) :: V0S     ! Pressure-shifted line center
+    real(rp) :: X1, Y   ! Doppler width, ratio Pressure to Doppler widths
+    real(rp) :: Y2      ! y**2
+
+! See Slabs_dT for TeXnicalities
+
+    Beta = 0.0_rp
+    dBeta_dT = 0.0_rp
+
+    do l = 1, size(slabs%catalog%lines)
+
+      if ( present(polarized) ) then
+        if ( polarized(l) ) cycle
+      end if
+
+      v0s = slabs%v0s(l)
+      x1 = slabs%x1(l)
+      y = slabs%y(l)
+      dv0s_dT = slabs%dv0s_dT(l)
+      dx1_dT = slabs%dx1_dT(l)
+      dy_dT = slabs%dy_dT(l)
+      delta = Nu - v0s
+      da = x1 * ( delta * dx1_dT - dv0s_dT )
+      call D_Real_Simple_Voigt ( x1*delta, y, da, dy_dT, u, du )
+
+      sigma = nu + v0s
+      sigmaX1 = sigma * x1
+      y2 = y * y
+      d = 1.0_rp / ( sigmaX1**2 + y2 )
+      sb = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * &
+        &  tanh1
+      sa = sb * u
+      sb = sb * OneOvSPi * y * d
+      beta = beta + sa + sb
+
+      c = slabs%dSlabs1_dT(l) + dtanh_dT
+      dBeta_dT = dBeta_dT + sa * ( c + du / u ) + &
+        &                   sb * ( c + dy_dT - 2.0_rp * d * &            
+        &                          ( sigmaX1 * ( x1 * dv0s_dT + &        
+        &                            sigmaX1 * dx1_dT ) + y2 * dy_dT ) )
+
+    end do
+
+  end subroutine Slabs_Lines_dT
+
   ! --------------------------------------------------  Slabswint  -----
   real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
 
@@ -425,75 +503,6 @@ contains
       & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
 
   end function Slabswint
-
-  ! --------------------------------------------  Slabswint_Lines  -----
-  function Slabswint_Lines ( Nu, Slabs, tanh1, Polarized ) result ( Beta )
-
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use SpectroscopyCatalog_m, only: Lines
-
-    real(r8), intent(in) :: Nu    ! Frequency
-    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
-    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
-    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
-                                  ! do them all if Polarized is not present.
-
-    real(rp) :: Beta ! Output
-
-! If the molecular transition and temperature have not changed but
-! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
-
-    real(rp) :: A        ! First argument for real_simple_voigt
-    integer :: L         ! Line Index
-    real(rp) :: SigmaX1  ! (nu + nu0s) * x1
-    real(rp) :: U        ! Voigt = real part of Fadeeva
-    real(r8) :: V0S      ! Pressure-shifted line center
-    real(rp) :: X1, Y    ! Doppler width, ratio Pressure to Doppler widths
-    real(rp) :: Yi       ! Interference coefficient
-    real(rp) :: Y2       ! y**2
-
-!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
-!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
-!  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
-!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
-!   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
-!     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
-
-    beta = 0.0_rp
-    if ( .not. present(polarized) ) then
-      do l = 1, size(slabs%catalog%lines)
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
-        yi = slabs%yi(l)
-        a = x1 * real(nu-v0s,rp)
-        call real_simple_voigt ( a, y, u )
-
-        sigmaX1 = x1 * (nu + v0s)
-        y2 = y*y
-        beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
-          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
-      end do
-    else
-      do l = 1, size(slabs%v0s)
-        if ( polarized(l) ) cycle
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
-        yi = slabs%yi(l)
-        a = x1 * real(nu-v0s,rp)
-        call real_simple_voigt ( a, y, u )
-
-        sigmaX1 = x1 * (nu + v0s)
-        y2 = y*y
-        beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
-          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
-      end do
-    end if
-
-  end function Slabswint_Lines
 
   ! -----------------------------------------------  Slabswint_dT  -----
   subroutine Slabswint_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi, &
@@ -629,6 +638,166 @@ contains
       &         sd * ( c + dd2 + dyi_dT + da / a )
 
   end subroutine Slabswint_dT
+
+  ! --------------------------------------------  Slabswint_Lines  -----
+  function Slabswint_Lines ( Nu, Slabs, tanh1, Polarized ) result ( Beta )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: Nu    ! Frequency
+    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
+    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
+    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
+                                  ! do them all if Polarized is not present.
+
+    real(rp) :: Beta ! Output
+
+! If the molecular transition and temperature have not changed but
+! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
+
+    real(rp) :: A        ! First argument for real_simple_voigt
+    integer :: L         ! Line Index
+    real(rp) :: SigmaX1  ! (nu + nu0s) * x1
+    real(rp) :: U        ! Voigt = real part of Fadeeva
+    real(r8) :: V0S      ! Pressure-shifted line center
+    real(rp) :: X1, Y    ! Doppler width, ratio Pressure to Doppler widths
+    real(rp) :: Yi       ! Interference coefficient
+    real(rp) :: Y2       ! y**2
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
+!  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+!     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
+
+    beta = 0.0_rp
+    if ( .not. present(polarized) ) then
+      do l = 1, size(slabs%catalog%lines)
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        yi = slabs%yi(l)
+        a = x1 * real(nu-v0s,rp)
+        call real_simple_voigt ( a, y, u )
+
+        sigmaX1 = x1 * (nu + v0s)
+        y2 = y*y
+        beta = beta + slabs%slabs1(l) * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
+      end do
+    else
+      do l = 1, size(slabs%v0s)
+        if ( polarized(l) ) cycle
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        yi = slabs%yi(l)
+        a = x1 * real(nu-v0s,rp)
+        call real_simple_voigt ( a, y, u )
+
+        sigmaX1 = x1 * (nu + v0s)
+        y2 = y*y
+        beta = beta + slabs%slabs1(l) * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
+      end do
+    end if
+
+  end function Slabswint_Lines
+
+  ! -----------------------------------------  Slabswint_Lines_dT  -----
+  subroutine Slabswint_Lines_dT ( Nu, Slabs, tanh1, dTanh_dT, &
+    &                             Beta, dBeta_dT, Polarized )
+
+  ! Compute single-line absorption and its derivative w.r.t. temperature,
+  ! with interference, for all lines in the Slabs structure.
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: Nu    ! Frequency
+    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
+    real(rp), intent(in) :: Tanh1 ! tanh( h nu / (2 k T) )
+    real(rp), intent(in) :: dTanh_dT ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+
+    real(rp), intent(out) :: Beta, dBeta_dT
+
+    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
+                                  ! do them all if Polarized is not present.
+
+! If the molecular transition and temperature have not changed but
+! frequency has enter here.
+
+    real(rp) :: A               ! x1 * delta
+    real(rp) :: C               ! Terms common to the parts of dSlabs_dT
+    real(rp) :: D1              ! 1 / (SigmaX1**2 + y**2)
+    real(rp) :: D2              ! 1 / (a**2 + y**2)
+    real(rp) :: DD1, DD2        ! 1/D1 d(D1)/dT, 1/D2 d(D2)/dT, 
+    real(rp) :: Da              ! da / dT
+    real(rp) :: Delta           ! Nu-v0s
+    real(rp) :: DU              ! du / dT
+    real(rp) :: Dv0s_dT         ! dv0s / dT
+    real(rp) :: Dx1_dT          ! 1/x1 dx1/dT
+    real(rp) :: Dy_dT           ! 1/y dy/dT
+    real(rp) :: Dyi_dT          ! 1/yi dyi/dT
+    integer :: L                ! Line index
+    real(rp) :: Sa, Sb, Sc, Sd  ! parts of SlabsWint
+    real(rp) :: Sigma           ! Nu+v0s
+    real(rp) :: SigmaX1         ! sigma * x1
+    real(rp) :: U               ! Voigt
+    real(r8) :: V0S             ! Pressure-shifted line center
+    real(rp) :: X1, Y           ! Doppler width, ratio Pressure to Doppler widths
+    real(rp) :: Yi              ! Interference coefficient
+    real(rp) :: Y2              ! Y**2
+
+    ! See Slabswint_dT for TeXnicalities.
+
+    do l = 1, size(slabs%catalog%lines)
+
+      if ( present(polarized) ) then
+        if ( polarized(l) ) cycle
+      end if
+
+      v0s = slabs%v0s(l)
+      x1 = slabs%x1(l)
+      y = slabs%y(l)
+      yi = slabs%yi(l)
+      dv0s_dT = slabs%dv0s_dT(l)
+      dx1_dT = slabs%dx1_dT(l)
+      dy_dT = slabs%dy_dT(l)
+      dyi_dT = slabs%dyi_dT(l)
+      delta = nu - v0s
+      a = x1 * delta
+      da = x1 * ( delta * dx1_dT - dv0s_dT )
+      call D_Real_Simple_Voigt ( a, y, da, dy_dT, u, du )
+
+      sigma = nu + v0s
+      sigmaX1 = sigma * x1
+      y2 = y * y
+      d1 = 1.0_rp / ( sigmaX1**2 + y2 )
+      d2 = 1.0_rp / ( a * a + y2 )
+      c = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * &
+        & tanh1
+      sa = c * u
+      c = c * OneOvSPi
+      sb = c * y * d1
+      sc = c * sigmaX1 * yi * d1
+      sd = c * a * yi * d2
+      Beta = sa + sb - sc + sd
+
+      c = slabs%dSlabs1_dT(l) + dtanh_dT
+      dd1 = -2.0_rp * d1 * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
+      dd2 = -2.0_rp * d2 * ( a * da + y2 * dy_dT )
+      dBeta_dT = sa * ( c + du / u ) + &
+        &        sb * ( c + dd1 + dy_dT ) - &
+        &        sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) + &
+        &        sd * ( c + dd2 + dyi_dT + da / a )
+    end do
+
+  end subroutine Slabswint_Lines_dT
 
   ! ----------------------------------------------  Voigt_Lorentz  -----
 
@@ -1581,21 +1750,21 @@ contains
     real(rp), intent(in) :: T        ! Temperature K
     real(rp), intent(in) :: M        ! Molecular mass amu
     real(r8), intent(in) :: V0       ! Line center frequency MHz
-    real(rp), intent(in) :: El       ! Lower state energy cm-1
-    real(rp), intent(in) :: W        ! Collision broadening parameter
+    real(r8), intent(in) :: El       ! Lower state energy cm-1
+    real(r8), intent(in) :: W        ! Collision broadening parameter
                                      ! MHz/mbar at 300 K
-    real(rp), intent(in) :: Ps       ! Pressure shift parameter in MHz/mbar
+    real(r8), intent(in) :: Ps       ! Pressure shift parameter in MHz/mbar
     real(rp), intent(in) :: P        ! Pressure mbar
-    real(rp), intent(in) :: N        ! Temperature power dependence of w
-    real(rp), intent(in) :: Ns       ! Temperature power dependence of ps
-    real(rp), intent(in) :: I        ! Integrated spectral intensity
+    real(r8), intent(in) :: N        ! Temperature power dependence of w
+    real(r8), intent(in) :: Ns       ! Temperature power dependence of ps
+    real(r8), intent(in) :: I        ! Integrated spectral intensity
                                      ! Log(nm**2 MHz) at 300 K
-    real(rp), intent(in) :: Q(3)     ! Logarithm of the partition function
+    real(r8), intent(in) :: Q(3)     ! Logarithm of the partition function
                                      ! At 300 , 225 , and 150 K
-    real(rp), intent(in) :: Delta    ! Delta interference coefficient at 300K 1/mb
-    real(rp), intent(in) :: Gamma    ! Gamma               "
-    real(rp), intent(in) :: N1       ! Temperature dependency of delta
-    real(rp), intent(in) :: N2       ! Temperature dependency of gamma
+    real(r8), intent(in) :: Delta    ! Delta interference coefficient at 300K 1/mb
+    real(r8), intent(in) :: Gamma    ! Gamma               "
+    real(r8), intent(in) :: N1       ! Temperature dependency of delta
+    real(r8), intent(in) :: N2       ! Temperature dependency of gamma
     real(rp), intent(in) :: VelCor   ! Doppler velocity correction term
 
 ! outputs:
@@ -1811,7 +1980,7 @@ contains
 
       nl = Size(catalog%Lines)
 
-      if ( .not. present(t_der_flags) ) then
+!     if ( .not. present(t_der_flags) ) then
         do j = 1, n
           do k = 1, nl
             l = catalog%lines(k)
@@ -1825,26 +1994,26 @@ contains
               & gl_slabs(j,i)%dslabs1_dv0(k) )
           end do ! k = 1, nl
         end do ! j = 1, n
-      else ! t_der_flags are present -- do temperature derivative stuff
-        do j = 1, n
-          if ( t_der_flags(j) ) then ! do temperature derivative stuff
-            do k = 1, nl
-              l = catalog%lines(k)
-              call slabs_prep_dT ( t_path(j), catalog%mass, &
-                & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
-                & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
-                & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
-                & Vel_z_correction, &
-                & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
-                & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
-                & gl_slabs(j,i)%dslabs1_dv0(k), &
-                & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
-                & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
-                & gl_slabs(j,i)%dslabs1_dT(k) )
-            end do ! k = 1, nl
-          end if ! t_der_flags(j)
-        end do ! j = 1, n
-      end if ! present(t_der_flags)
+!     else ! t_der_flags are present -- do temperature derivative stuff
+!       do j = 1, n
+!         if ( t_der_flags(j) ) then ! do temperature derivative stuff
+!           do k = 1, nl
+!             l = catalog%lines(k)
+!             call slabs_prep_dT ( t_path(j), catalog%mass, &
+!               & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
+!               & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+!               & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+!               & Vel_z_correction, &
+!               & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
+!               & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
+!               & gl_slabs(j,i)%dslabs1_dv0(k), &
+!               & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
+!               & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
+!               & gl_slabs(j,i)%dslabs1_dT(k) )
+!           end do ! k = 1, nl
+!         end if ! t_der_flags(j)
+!       end do ! j = 1, n
+!     end if ! present(t_der_flags)
 
       if ( Do_1D ) then
         ! fill in grid points on other side with above value
@@ -1885,6 +2054,12 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.27  2004/03/27 03:35:27  vsnyder
+! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+! line centers and line widths around.  Write slabs_lines and slabswint_lines
+! to get sum of beta over all lines; put slabs_struct instead of its components
+! in the calling sequence.
+!
 ! Revision 2.26  2004/03/20 03:17:44  vsnyder
 ! Steps along the way toward analytic temperature derivatives
 !
