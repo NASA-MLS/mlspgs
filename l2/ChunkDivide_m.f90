@@ -87,6 +87,10 @@ module ChunkDivide_m
   logical :: Timing
   real :: T1
 
+  interface dump
+    module procedure DUMP_OBSTRUCTIONS
+  end interface
+
 contains ! =================================== Public Procedures==============
 
   !------------------------------------------  DestroyChunkDatabase  -----
@@ -129,6 +133,8 @@ contains ! =================================== Public Procedures==============
       & call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
       & obstructions )
 
+    !call dump ( obstructions )
+
     ! Now go place the chunks.
     select case ( config%method )
     case ( l_fixed )
@@ -151,8 +157,11 @@ contains ! =================================== Public Procedures==============
         & MLSMSG_Deallocate//'obstructions' )
     end if
 
+    ! call dump ( chunks )
+    ! stop
+
   end subroutine ChunkDivide
-    
+
   ! ============================== Private Procedures ====================
 
   !---------------------------------------- Add obstruction to database --
@@ -318,19 +327,19 @@ contains ! =================================== Public Procedures==============
       if ( testAngle > maxAngle ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to establish a home major frame, using the first' )
-        homeMAF = m1
+        home = 1
         exit homeHuntLoop
       end if
       ! Find MAF which starts before this test angle
       call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
         & allowTopValue = .true. )
-      homeMAF = home + m1 - 1
       ! Now if this is close enough, accept it
       if ( abs ( tpGeodAngle%dpField(1,1,home) - &
         & testAngle ) < HomeAccuracy ) exit homeHuntLoop
       ! Otherwise, keep looking
       testAngle = testAngle + angleIncrement
     end do homeHuntLoop
+    homeMAF = home + m1 - 1
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! OK, now we have a home MAF, get a first cut for the chunks
@@ -870,6 +879,39 @@ contains ! =================================== Public Procedures==============
 
   end subroutine DeleteChunk
 
+  ! --------------------------------------- Dump Obstructions ------------
+  subroutine Dump_Obstructions ( obstructions ) 
+    type (Obstruction_T), dimension(:), pointer :: obstructions
+    ! Local variables
+    integer :: i                        ! Loop counter
+    ! Executable code
+    if ( associated ( obstructions ) ) then
+      if ( size(obstructions) == 0 ) then
+        call output ( 'Obstructions is a zero size array.', advance='yes' )
+      else
+        call output ( 'Dumping ' )
+        call output ( size(obstructions) )
+        call output ( ' obstructions:', advance='yes' )
+        do i = 1, size(obstructions)
+          call output ( i )
+          if ( obstructions(i)%range ) then
+            call output ( ' : Range [ ' )
+            call output ( obstructions(i)%mafs(1) )
+            call output ( ' : ' )
+            call output ( obstructions(i)%mafs(2) )
+            call output ( ' ]', advance='yes' )
+          else
+            call output ( ' : Wall [ ' )
+            call output ( obstructions(i)%mafs(1) )
+            call output ( ' ]', advance='yes' )
+          end if
+        end do
+      end if
+    else
+      call output ( 'Obstructions is not associated.', advance='yes')
+    end if
+  end subroutine Dump_Obstructions
+
   ! --------------------------------------- Prune Obstructions ----------
   subroutine PruneObstructions ( obstructions )
     ! This routine merges overlapping range obstructions and deletes
@@ -1070,7 +1112,7 @@ contains ! =================================== Public Procedures==============
         valid = .false.
       endif
       do mod = 1, size(modules)
-        call get_string ( lit_indices(modules(mod)%name), modNameStr, strip=.true. )
+        call get_string ( modules(mod)%name, modNameStr, strip=.true. )
         if ( .not. modules(mod)%spacecraft .and. &
           & any ( config%criticalModules == &
           &     (/ modules(mod)%name, l_either, l_both /) ) ) then
@@ -1113,6 +1155,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.14  2001/11/19 23:33:45  livesey
+! Interim version, some bugs to track down
+!
 ! Revision 2.13  2001/11/16 20:38:42  livesey
 ! Nullified some pointers I missed
 !
