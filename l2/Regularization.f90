@@ -96,7 +96,6 @@ contains
 
     error = 0
     nb = a%col%nb
-    if ( a%col%extra ) nb = nb - 1
     if ( nsons(orders) /= 2 ) then
       if ( quants == 0 ) then
         call announceError ( regQuantsReq, orders )
@@ -184,8 +183,6 @@ o:    do ib = 1, nb
     end if ! error == 0
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Regularization failed." )
-    if ( a%col%extra ) &
-      & call createBlock ( a%block(1,a%col%nb), nrow, 1,  m_absent )
   end subroutine Regularize
 
   subroutine AnnounceError ( code, where )
@@ -221,6 +218,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.9  2002/02/01 00:48:26  vsnyder
+! Get rid of 'extra' field of RC_Info
+!
 ! Revision 2.8  2001/10/09 20:36:04  vsnyder
 ! Repair calculation of banded representation
 !
