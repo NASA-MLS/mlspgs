@@ -366,7 +366,7 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
-             l+l_noiseBandwidth, l+l_numF, l+l_numJ, l+l_opticalDepth, &
+             l+l_noiseBandwidth, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -760,7 +760,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_lambda, t+t_numeric, n+n_field_type, &
-             begin, f+f_maxF, t+t_numeric, n+n_field_type, &
              begin, f+f_maxJ, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
@@ -872,6 +871,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.240  2002/09/23 22:15:05  vsnyder
+! Delete maxF field name and numF literal name
+!
 ! Revision 2.239  2002/09/05 20:58:20  livesey
 ! Another fix to Transfer!
 !
