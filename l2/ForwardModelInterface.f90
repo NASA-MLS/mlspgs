@@ -29,7 +29,8 @@ module ForwardModelInterface
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
-    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
+    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
+    & F_MODULE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, &
     & L_LINEAR, L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -221,6 +222,8 @@ contains ! =====     Public Procedures     =============================
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
+      case ( f_module )
+        info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
         call allocate_test ( info%molecules, nsons(son)-1, "info%molecules", &
           & ModuleName )
@@ -1402,6 +1405,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.127  2001/05/03 23:34:44  livesey
+! More stuff to support scan model
+!
 ! Revision 2.126  2001/05/03 20:31:34  vsnyder
 ! Thought I needed to add a nullify, ended up with only cosmetic changes
 !
