@@ -18,7 +18,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & ScaleBlock, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error
+    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use String_Table, only: Display_String
   use VectorsModule, only: CloneVector, Vector_T
@@ -591,7 +591,7 @@ contains ! =====     Public Procedures     =============================
     call clearMatrix ( a )
     if ( associated(a%block) ) then
       deallocate ( a%block, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
     end if
   end subroutine DestroyBlock_1
@@ -612,15 +612,28 @@ contains ! =====     Public Procedures     =============================
   ! Destroy a matrix in the database -- deallocate its pointer components,
   ! don't change the name
     type(matrix_database_T), intent(inout) :: Database
+    integer :: Status  ! from deallocate
 
     if ( associated(database%matrix) ) then
       call destroyMatrix ( database%matrix )
+      deallocate ( database%matrix, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & MLSMSG_Deallocate // 'PlainMatrix' )
     else if ( associated(database%cholesky) ) then
       call destroyMatrix ( database%cholesky%m )
+      deallocate ( database%cholesky, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & MLSMSG_Deallocate // 'CholeskyMatrix' )
     else if ( associated(database%kronecker) ) then
       call destroyMatrix ( database%kronecker%m )
+      deallocate ( database%kronecker, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & MLSMSG_Deallocate // 'KroneckerMatrix' )
     else if ( associated(database%spd) ) then
       call destroyMatrix ( database%spd%m )
+      deallocate ( database%spd, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & MLSMSG_Deallocate // 'SPDMatrix' )
     end if
   end subroutine DestroyMatrixInDatabase
 
@@ -639,7 +652,7 @@ contains ! =====     Public Procedures     =============================
       if ( associated(d(i)%spd) ) call destroyMatrix ( d(i)%spd%m )
     end do
     deallocate ( d, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_DeAllocate // "D in DestroyMatrixDatabase" )
   end subroutine DestroyMatrixDatabase
 
@@ -1389,6 +1402,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.16  2001/04/21 02:11:02  vsnyder
+! Fix a memory leak
+!
 ! Revision 2.15  2001/04/20 02:56:18  livesey
 ! Added createblock_1 as public and overloaded.  Also made dump more informative
 !
