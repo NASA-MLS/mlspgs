@@ -17,6 +17,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
+  use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
@@ -111,7 +112,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
       
-      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      select case( get_spec_id(key) )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
@@ -180,6 +181,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.10  2001/03/15 21:09:52  vsnyder
+! Use 'get_spec_id' from More_Tree
+!
 ! Revision 2.9  2001/03/15 21:03:46  vsnyder
 ! Cross-references between databases are by database index, not tree index
 !
