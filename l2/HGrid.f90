@@ -898,7 +898,7 @@ contains ! =====     Public Procedures     =============================
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
         & hGrid%phi(1,:), hGrid%time(1,:), &
-        & method='Spline', extrapolate='Allow' )
+        & method='Linear', extrapolate='Allow' )
     else
       ! Case where only single MAF per chunk, treat it specially
       hGrid%time = l1bField%dpField(1,1,1) + &
@@ -931,7 +931,7 @@ contains ! =====     Public Procedures     =============================
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi(1,:), hGrid%solarZenith(1,:), &
-      & method='Spline', extrapolate='Allow' )
+      & method='Linear', extrapolate='Allow' )
     if ( deebug ) then
       call dump(hGrid%solarZenith(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
@@ -950,7 +950,7 @@ contains ! =====     Public Procedures     =============================
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi(1,:), hGrid%losAngle(1,:), &
-      & method='Spline', extrapolate='Allow' )
+      & method='Linear', extrapolate='Allow' )
     if ( deebug ) then
       call dump(hGrid%losAngle(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
@@ -991,6 +991,7 @@ contains ! =====     Public Procedures     =============================
         & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
       if ( deebug ) then
         call dump( hGrid%time(1,:), 'Hgrid times')
+        call dump( hGrid%time(1,:)-hGrid%time(1,1), 'Hgrid delta times')
         call output ( 'First profile in Run: ' )
         call output ( firstProfInRun, advance='no' )
         call output ( '    processingRange%startTime: ' )
@@ -1002,7 +1003,7 @@ contains ! =====     Public Procedures     =============================
           & advance='yes' )
         call TrimHGrid ( hGrid, -1, firstProfInRun )
       end if
-      
+
       call Hunt ( hGrid%time(1,:), processingRange%endTime, &
         & lastProfInRun, allowTopValue=.true., allowBelowValue=.true. )
       if ( deebug ) then
@@ -1457,6 +1458,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.64  2004/08/05 20:04:48  livesey
+! Changed some spline interpolations to linear to allow for more
+! stability.
+!
 ! Revision 2.63  2004/07/30 00:16:36  livesey
 ! Minor update in the 'single' option.
 !
