@@ -168,7 +168,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
   integer, parameter :: F_TEST                = f_template + 1
   integer, parameter :: F_TNGTECI             = f_test + 1
-  integer, parameter :: F_TOLERANCEA          = f_tngtECI + 1
+  integer, parameter :: F_TOLERANCE           = f_tngtECI + 1
+  integer, parameter :: F_TOLERANCEA          = f_tolerance + 1
   integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
   integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
   integer, parameter :: F_TYPE                = f_tolerancer + 1
@@ -505,6 +506,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_template) =            add_ident ( 'template' )
     field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
+    field_indices(f_tolerance) =           add_ident ( 'tolerance' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
     field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
@@ -844,6 +846,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tolerance, t+t_numeric, nr+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
             ndp+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &
@@ -968,6 +971,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.118  2001/06/21 15:05:30  livesey
+! Added tolerance field to forwardModel
+!
 ! Revision 2.117  2001/06/01 21:27:58  livesey
 ! Added outSD option to retrieve
 !
