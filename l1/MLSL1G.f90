@@ -10,6 +10,7 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
   USE Calibration, ONLY : Calibrate
   USE Radiances, ONLY : CalcLimbRads
   USE L1BOutUtils, ONLY : OutputL1Bdata
+  USE GHzBaseline, ONLY: LatBinRads, OutputBaselinedRads
   USE Close_Files, ONLY : CloseFiles
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
 
@@ -41,11 +42,15 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 
         CALL OutputL1Bdata
 
+        CALL LatBinRads
+
      ENDIF
 
      IF (.NOT. more_data) EXIT
 
   ENDDO
+
+  CALL OutputBaselinedRads
 
   CALL CloseFiles
 
@@ -59,6 +64,9 @@ END PROGRAM MLSL1G
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
