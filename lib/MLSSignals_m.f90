@@ -105,6 +105,7 @@ module MLSSignals_M
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Suffix                   ! Sub_rosa index
+    integer :: SingleSideband           ! +/-1 indicates indicates single sideband 0 folded
   end type Radiometer_T
 
   ! The second type describes a band within that radiometer
@@ -147,6 +148,7 @@ module MLSSignals_M
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SideBand                 ! -1=lower, +1=upper, 0=folded
+    integer :: SingleSideband           ! Indicates only sideband for this radiometer
     integer :: Spectrometer             ! Just a spectrometer number
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Switch                   ! Just a switch number
@@ -296,6 +298,9 @@ contains
             radiometer%suffix = sub_rosa(gson)
           case ( f_module )
             radiometer%instrumentModule = decoration(decoration(gson))
+          case ( f_singlesideband )
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
+            radiometer%singleSideband = nint ( value(1) )
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -334,6 +339,7 @@ contains
         signal%lo = radiometers(signal%radiometer)%lo
         signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
         signal%spectrometerType = bands(signal%band)%spectrometerType
+        signal%singleSideband = radiometers(signal%radiometer)%singleSideband
         signal%centerFrequency = bands(signal%band)%centerFrequency
         signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
         if ( signal%deferred .neqv. got(f_channels) ) &
@@ -779,7 +785,9 @@ contains
       call output ( ' - ' )
       call display_string ( modules(radiometers(i)%instrumentModule)%name, advance='yes' ) 
       call output ( '   LO: ')
-      call output ( radiometers(i)%lo,advance='yes' )
+      call output ( radiometers(i)%lo )
+      call output ( '   Single sideband: ' )
+      call output ( radiometers(i)%singleSideband, advance='yes' )
     end do
   end subroutine DUMP_RADIOMETERS
 
@@ -848,6 +856,8 @@ contains
       call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
       call output ( '   Sideband: ' )
       call output ( signals(i)%sideband, advance='yes')
+      call output ( '   Single Sideband: ' )
+      call output ( signals(i)%singleSideband, advance='yes')
       if ( my_details ) then
         call output ( '   Frequencies' )
         if ( signals(i)%deferred ) call output ( '(deferred)' )
@@ -1342,6 +1352,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.47  2002/05/14 22:31:59  livesey
+! Added singleSideband
+!
 ! Revision 2.46  2002/05/03 22:38:41  livesey
 ! Added direction field to bands.
 !
