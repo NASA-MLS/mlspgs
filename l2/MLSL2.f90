@@ -57,7 +57,7 @@ program MLSL2
   ! (a) hard-wired options (see MLSL2Options module)
   ! (b) command-line options (see /mlspgs/notes/options and 
   !         /mlspgs/notes/switches)
-  ! (b) the l2cf 
+  ! (c) the l2cf 
   ! (d) the pcf (unless the variable 'pcf' is FALSE) 
   ! Tasks
   ! (1) Accept hard-wired options 
@@ -414,6 +414,13 @@ contains
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
 
+  ! The following offer some information on the options
+  ! available either on the command-line or via the PCF
+  ! Note the unashamed use of 'print' statements which
+  ! are officially discouraged in favor of calls to MLSMessage.
+  ! Unfortunately, we have not yet decided which method to use
+  ! until *after* processing all the options.
+  
   subroutine switch_usage
     print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
@@ -441,6 +448,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.63  2002/01/09 00:00:48  pwagner
+! Fixed small comment; added others explaining unavoidable use of print
+!
 ! Revision 2.62  2001/12/13 23:21:20  livesey
 ! Added countChunks option
 !
