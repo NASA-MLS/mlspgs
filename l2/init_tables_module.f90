@@ -722,6 +722,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
              begin, f+f_cloud_width, t+t_numeric, n+n_field_type,&
              begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
@@ -851,7 +852,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
-      begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
+      begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
                        s+s_matrix, s+s_destroy, s+s_snoop, s+s_time, s+s_vector, &
@@ -872,6 +873,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.242  2002/09/25 20:07:19  livesey
+! Added specificQuantities to s_forwardModel.  Allowed s_forwardModel
+! inside z_construct
+!
 ! Revision 2.241  2002/09/24 21:38:03  livesey
 ! Added minValue
 !
