@@ -1992,7 +1992,6 @@ contains ! ================================ FullForwardModel routine ======
       endif
     end do
 
-    Print *,'Signal: ',Trim(molName)
     if ( index(switches,'rad') /= 0 ) then
       ! *** DEBUG Print
       if ( FwdModelConf%do_conv ) then
@@ -2180,6 +2179,10 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.49  2002/05/24 17:10:57  livesey
+! Fixed bug with my_catalog(?)%lines not being associated for parent
+! species.
+!
 ! Revision 2.48  2002/05/23 21:01:11  livesey
 ! No, that was the wrong thing to do.  Think a bit more.
 !
