@@ -355,7 +355,6 @@ contains ! =================================== Public Procedures==============
       else
         ! User requested specific number of chunks
         noChunks = config%noChunks
-        noChunksBelowHome = min ( noChunksBelowHome, noChunks )
       end if
       
       ! Allocate the chunks
@@ -384,12 +383,16 @@ contains ! =================================== Public Procedures==============
       end select
       homeV = field(home)
 
-      noChunks = int ( ( homeV - minV ) / config%maxLength )
-      if ( homeV > minV ) noChunks = noChunks + 1
-      noChunksBelowHome = noChunks
-      noChunks = noChunks + int ( ( maxV - homeV ) / config%maxLength )
-      if ( homeV + config%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
-        & noChunks = noChunks + 1
+      noChunksBelowHome = int ( ( homeV - minV ) / config%maxLength )
+      if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
+      if ( config%noChunks == 0 ) then
+        ! Choose the number of chunks ourselves
+        noChunks = noChunksBelowHome + int ( ( maxV - homeV ) / config%maxLength )
+        if ( homeV + config%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
+          & noChunks = noChunks + 1
+      else
+        noChunks = config%noChunks
+      end if
 
       ! Allocate the chunks
       allocate ( chunks(noChunks), stat=status )
@@ -1169,6 +1172,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.20  2002/05/24 20:57:34  livesey
+! More revisions associated with being able to have a specific number of chunks
+!
 ! Revision 2.19  2002/05/24 16:47:30  livesey
 ! Allowed user to request specific number of chunks for orbital
 !
