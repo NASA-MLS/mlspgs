@@ -194,11 +194,11 @@ contains
           end if
         end do
       end do specificVectorLoop
-
-      if ( molEntry > 1 .and. noFound < molEntry ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unresolved ambiguity in molecule list' )
     end if
+
+    if ( molEntry > 1 .and. noFound < molEntry ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unresolved ambiguity in molecule list' )
 
     ! Otherwise just get it from one or other vector
     if ( noFound == 0 ) then
@@ -266,6 +266,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.3  2002/09/26 21:41:23  livesey
+! Moved error checking
+!
 ! Revision 2.2  2002/09/26 18:01:34  livesey
 ! Bug fixes.
 !
