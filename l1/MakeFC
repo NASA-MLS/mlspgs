@@ -39,12 +39,14 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
 PROG=mlsl1
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_sources)/*.f90
+$(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar
@@ -92,6 +94,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.2  2000/11/17 20:54:34  pwagner
+# Using srclib_f90 as preq to lib
+#
 # Revision 2.1  2000/11/15 00:11:27  pwagner
 # First commit
 #
