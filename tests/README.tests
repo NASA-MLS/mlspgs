@@ -52,12 +52,28 @@ METHOD
 
 and run the resulting test program with suitable data.
 
-If instead you simply wish to build and test stand-alone software, copy the
-sources into tests/misc (after hiding or removing any sources already there)
-and carry out (4)-(6) above. Note that from misc you can access the toolkit and
-its full panoply. You will not "see" any of the mls lib or any other level,
-however If you need any modules out of any mls level, you should probably be
-building in the tests counterpart of that level.
+If instead you simply wish to build and test stand-alone software, such as a
+small utility, or a program that doesn't USE any of the mls modules, copy the
+program's source(s) into tests/misc (after hiding or removing any sources
+already there) and carry out (4)-(6) above. Note that from misc you can access
+the toolkit and its full panoply. You will not "see" any of the mls lib or any
+other level, however If you need any modules out of any mls level, you should
+probably be building in the tests counterpart of that level.
+
+An alternative and even more automated way to build such a utility is the
+script build_f90_in_misc.sh, which despite its name allows you to build a
+program from a heterogeneous mix of {.f90 .f .c} source files. To see how to
+use it, consider the following lines from the Makefile, which cause the command
+'make hl' to trigger the compiling, linking and installation of the
+highlighting utility hl in INSTALLDIR using the source file hl.c found in the
+util directory:
+	   util/build_f90_in_misc.sh -d $INSTALLDIR -t ./tests \
+      -c $MLSCONFG -p hl util/hl.c
+where I have substituted values for some of the Makefile variables. Before
+issuing this command you would still need to assign values to the remaining
+two variables, MLSCONFG and INSTALLDIR, via e.g.
+   set MLSCONFG=NAG.Linux
+   set INSTALLDIR=bin/NAG.Linux
 
 WARNINGS
 Since the modules of level to be USE'd by test will not include _level_'s own
@@ -101,10 +117,13 @@ original in mlspgs/_level_ is unsafe because the modules that USE it are
 not being recompiled. Rather than a mere warning, this last point should
 perhaps be elevated to being a bug.
 
--pw                           2001-Feb-01 to 2001-July-24
+-pw                           2001-Feb-01 to 2001-Aug-16
 EOF
 exit
 # $Log$
+# Revision 1.5  2001/07/24 23:05:29  pwagner
+# Notes about l3m, bug in substituting modules
+#
 # Revision 1.4  2001/07/16 20:57:46  pwagner
 # Mentions tests/misc
 #
