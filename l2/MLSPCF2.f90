@@ -3,6 +3,13 @@
 ! NOTE: This module is automatically created by the makemlspcfmodule
 !       perl script.  Do *NOT* attempt to modify this by hand.
 !
+
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id$"
+    & "$RCSfile$"
+!----------------------------------------------------------
+
 MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_InputVersion = 2000
    INTEGER, PARAMETER :: mlspcf_l2_param_PGEVersion = 2001
@@ -71,3 +78,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4023
    !
 END MODULE MLSPCF2
+
+! $Log$
+! Revision 2.9  2002/10/01 20:19:06  bwknosp
+! Added Id, RCS, and Log info
+!
