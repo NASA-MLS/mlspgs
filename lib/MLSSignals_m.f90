@@ -733,11 +733,19 @@ contains
       call output ( '   Channels: ' )
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
-      call output ( ubound(signals(i)%frequencies,1), 3 )
+      call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
+      call output ( 'Sideband: ' )
+      call output ( signals(i)%sideband, advance='yes')
       call output ( '   Frequencies:', advance='yes' )
       call dump ( signals(i)%frequencies )
       call output ( '   Widths:', advance='yes' )
       call dump ( signals(i)%widths )
+      if (associated(signals(i)%channels)) then
+        call output ( '    Channel Flags:', advance='yes' )
+        call dump( signals(i)%channels )
+      else
+        call output ( 'All channels selected', advance='yes' )
+      end if
     end do
   end subroutine DUMP_SIGNALS
 
@@ -1028,18 +1036,21 @@ oc:   do
   end function IsModuleSpacecraft
 
   ! ------------------------------------------------  MatchSignal  -----
-  integer function MatchSignal ( Signals, Probe )
+  integer function MatchSignal ( Signals, Probe, matchFlags )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
 
     type(signal_T), dimension(:), intent(in) :: Signals
     type(signal_T), intent(in) :: Probe
+    logical, dimension(size(signals)), intent(inout), optional :: matchFlags
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
     logical :: Match                    ! Channels in probe are in signal
     integer :: NumChannelsMatch
+
+    if ( present(matchFlags) ) matchFlags = .false.
 
     bestMatch = huge(bestMatch)
     matchSignal = 0
@@ -1054,12 +1065,18 @@ oc:   do
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
       ! Now the channels in Probe all have to be present in Signals(i)
-      match = .not. associated(probe%channels)
+      match = (.not. associated(probe%channels)) .or. &
+        & (.not. associated(signals(i)%channels) )
       if ( .not. match ) match = all( (probe%channels .and. &
         & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
         & .eqv. probe%channels )
       if ( match ) then
-        numChannelsMatch = count(signals(i)%channels)
+        if ( present( matchFlags ) ) matchFlags(i) = .true.
+        if ( associated(signals(i)%channels) ) then
+          numChannelsMatch = count(signals(i)%channels)
+        else
+          numChannelsMatch = size( signals(i)%frequencies )
+        endif
         if ( numChannelsMatch < bestMatch ) then
           matchSignal = i
           bestMatch = numChannelsMatch
@@ -1071,6 +1088,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.24  2001/04/13 23:28:59  livesey
+! Tidied up some gothcas in MatchSignal.
+!
 ! Revision 2.23  2001/04/13 20:40:23  vsnyder
 ! Create GetNameOfSignal that returns the name of a Signal_T object (the
 ! already-present subroutine GetSignalName takes a signals-database index).
