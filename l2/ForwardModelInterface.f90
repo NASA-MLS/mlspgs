@@ -106,6 +106,7 @@ module ForwardModelInterface
   integer, parameter :: IncompleteFullFwm    = DuplicateField + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
+  integer, parameter :: TangentNotSubset = IrrelevantFwmParameter + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -308,8 +309,7 @@ contains
       do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
         if (.not. any ( abs(info%tangentGrid%surfs(tangent) - &
           & info%integrationGrid%surfs) < 1e-4) ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
-          & "tagnent grid is not a subset of integration grid")
+          & call AnnounceError (TangentNotSubset, root)
       end do
 
       ! Check parameters needed only for linear/scan are not included
@@ -1313,12 +1313,17 @@ contains
       call output ( 'incomplete linear foward model specification' )
     case (IrrelevantFwmParameter)
       call output ( 'irrelevant parameter for this forward model type' )
+    case (TangentNotSubset)
+      call output ( 'non subsurface tangent grid not a subset of integration grid' )
     end select
   end subroutine AnnounceError
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.49  2001/03/29 00:53:54  livesey
+! Modified error message.
+!
 ! Revision 2.48  2001/03/29 00:33:21  livesey
 ! Added some error checking for tangentGrid
 !
