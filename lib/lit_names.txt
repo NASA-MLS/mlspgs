@@ -108,6 +108,7 @@ ppbv
 ppmv
 pptv
 pressure
+profiles
 
 rad
 radiance
@@ -150,6 +151,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.17  2003/01/26 04:41:38  livesey
+# Added profiles
+#
 # Revision 2.16  2003/01/09 00:07:59  pwagner
 # Newly added Chunk and Iteration
 #
