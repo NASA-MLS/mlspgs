@@ -814,6 +814,139 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
+  !-------------------------------------------- InsulteVector ----------
+  subroutine InsulateVector ( vector )
+    ! Take all the pointers in vector and ensure they are deep copies
+    ! This is useful when filling l2pc_t's and other stuff you want to
+    ! survive the destruction of the vector, vectortemplate, and
+    ! quantitytemplate databases.
+
+    ! Note that the onus is then on the owner of `vector' to ensure
+    ! that it is all tidied up properly
+
+    ! Dummy arguments
+    type (Vector_T), intent(inout) :: vector
+
+    ! Local variables
+    real (r8), dimension(:), pointer :: r1 ! Temporary 1D real
+    real (r8), dimension(:,:), pointer :: r2 ! Temporary 2D real
+    real (r8), dimension(:,:,:), pointer :: r3 ! Temporary 3D real
+    integer, dimension(:), pointer :: i1 ! Temporary 1D integer
+    logical, dimension(:), pointer :: l1 ! Temporary 1D logical
+
+    integer :: NOINSTANCESTOALLOCATE    ! noInstances or 1 if coherent
+    integer :: NOSURFSTOALLOCATE        ! noSurfs or 1 if stacked
+    integer :: QTYIND                   ! loop counter
+    integer :: STATUS                   ! A flag
+    
+    type (VectorValue_T), pointer :: q,nq ! A quantity in new and old space
+    type (VectorValue_T), dimension(:), pointer :: newQuantities ! To be filled
+    type (QuantityTemplate_T), pointer :: qt, nqt ! A quantity template in new and old
+    type (VectorTemplate_T), pointer :: newTemplate
+
+    ! Executable code
+
+    ! Make a new template and copy old one
+    allocate ( newTemplate, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newTemplate')
+    newTemplate = vector%template
+    ! Do quantities field in template
+    allocate ( newTemplate%quantities(size(vector%quantities)), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newTemplate%quantities')
+    newTemplate%quantities = vector%template%quantities
+    vector%template => newTemplate
+
+    ! Make a new quantities, and copy old one
+    allocate ( newQuantities(size(vector%quantities)), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newQuantities')
+    ! Go through quantity by quantity
+    do qtyInd = 1, size(vector%quantities)
+      q => vector%quantities(qtyInd)
+      nq => newQuantities(qtyInd)
+      
+      call Allocate_test ( nq%values, &
+        & nq%template%instanceLen, nq%template%noInstances,&
+        & 'nq%values', ModuleName)
+      nq%values = q%values
+
+      if (associated(q%mask)) then
+        call Allocate_test ( nq%mask, &
+          & nq%template%instanceLen, nq%template%noInstances,&
+          & 'nq%mask', ModuleName)
+        nq%mask = q%mask
+      end if
+
+      qt => q%template
+      nqt => nq%template
+
+      if ( qt%coherent ) then 
+        noInstancesToAllocate = 1
+      else
+        noInstancesToAllocate = qt%noInstances
+      end if
+      
+      if ( qt%stacked ) then
+        noSurfsToAllocate = 1
+      else
+        noSurfsToAllocate = qt%noSurfs
+      end if
+
+      call allocate_test ( nqt%surfs, nqt%noSurfs, noInstancesToAllocate, &
+        & "nqt%surfs", ModuleName )
+      nqt%surfs = qt%surfs
+
+      ! Now the horizontal coordinates
+      call allocate_test ( nqt%phi, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%phi", ModuleName )
+      nqt%phi = qt%phi
+      call allocate_test ( nqt%geodLat, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%geodLat", ModuleName )
+      nqt%geodLat= qt%geodLat
+      call allocate_test ( nqt%lon, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%lon", ModuleName )
+      nqt%lon = qt%lon
+      call allocate_test ( nqt%time, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%time", ModuleName )
+      nqt%time = qt%time
+      call allocate_test ( nqt%solarTime, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%solarTime", ModuleName )
+      nqt%solarTime = qt%solarTime
+      call allocate_test ( nqt%solarZenith, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%solarZenith", ModuleName )
+      nqt%solarZenith = qt%solarZenith
+      call allocate_test ( nqt%losAngle, noSurfsToAllocate, nqt%noInstances, &
+        & "nqt%losAngle", ModuleName )
+      nqt%losAngle = qt%losAngle
+      
+      ! Now some other stuff to allocate
+      if ( nqt%minorFrame ) then
+        call allocate_test ( nqt%MAFIndex, nqt%noInstances, &
+          & "nqt%MAFIndex", ModuleName )
+        nqt%MAFIndex = qt%mafIndex
+        call allocate_test ( nqt%MAFCounter, nqt%noInstances, &
+          & "nqt%MAFCounter", ModuleName )
+        nqt%MAFCounter = qt%MAFCounter
+      else
+        nullify ( nqt%MAFIndex, nqt%MAFCounter )
+      end if
+
+      if (.NOT. nqt%regular) then
+        call allocate_test ( nqt%surfIndex, nqt%instanceLen, nqt%noInstances, &
+          & "nqt%surfIndex", ModuleName )
+        nqt%surfIndex = qt%surfIndex
+        call allocate_test ( nqt%chanIndex, nqt%instanceLen, nqt%noInstances, &
+          & "nqt%chanIndex", ModuleName )
+        nqt%chanIndex = qt%chanIndex
+      else
+        nullify ( nqt%surfIndex, nqt%chanIndex )
+      end if
+    end do
+    vector%quantities => newQuantities
+  end subroutine InsulateVector
+
   !---------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z )
   ! If Z is present, destroy Z and clone a new one from X, then
@@ -1107,6 +1240,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.24  2001/04/20 00:07:15  livesey
+! Added the index field to vectorvalue_t
+!
 ! Revision 2.23  2001/04/18 23:27:00  pwagner
 ! Added default .true. to Validate; also optional sayWhyNot
 !
