@@ -1,0 +1,134 @@
+#! /usr/bin/perl
+
+# This perl script takes the pcfmapping.dat file and produces an output
+# fortran 90 module defining parameters as detailed in the mapping
+
+# Check and parse the input parameters
+
+if ($#ARGV != 1) { 
+  print "Syntax: makemlspcfdatamodule <mapping file> <module file>\n"; 
+  exit(1);
+}
+
+$mappingName=$ARGV[0];
+$moduleName=$ARGV[1];
+
+# open the input and output files
+
+open (MAPPING, $mappingName) || die "Can't open input mapping file";
+open (MODULE, ">$moduleName") || die "Can't open output module file";
+
+print MODULE
+    "! NOTE: This module is automatically created by the " . 
+    "makemlspcfdatamodule\n".
+    "!       perl script.  Do *NOT* attempt to modify this by hand.\n".
+    "!\n".
+    "MODULE MLSPCFData\n";
+
+# Now go through the input file and read it line by line
+
+$lineCounter=0;
+
+while ($line=<MAPPING>) {
+    $lineCounter++;
+    
+    # Strip comments off the line
+
+    chomp $line;
+    $line =~ s/(^[^;]*);.*/$1/;
+
+    # Now if the line contains an = sign it must be a base index assignment
+
+    # if ($line) { print "$line\n";}
+
+    if ($line =~ /=/) {
+
+	# Split into left hand and right hand side
+	
+	@words= split (/=/,$line);
+
+	if ($#words != 1) {
+	    print "Syntax error in mapping file at line $lineCounter\n";
+	    exit (1);
+	}
+
+	if ($words[0] !~ /baseIndex/i) {
+	    print "baseIndex expected at line $lineCounter\n";
+	    exit (1);
+	}
+
+	# Finish off the old identifier if there was one
+
+	if ($identifier) {
+	    print MODULE outputText($identifier,$baseIndex,
+				    $baseIndex+$noFiles-1);
+	    $identifier=0;
+	}
+        $baseIndex=$words[1];
+
+    } else {
+
+	# Must be a files line rather than a base index line
+
+	@words= split (" ",$line);
+
+	if ($#words == -1) { next; }
+
+	if ($#words==1) {
+	    if (not $identifier) {
+		print "Error: Not defined an identifier at line $lineCounter\n";
+		exit (1);
+	    }
+		
+	    $filename=$words[0];
+	    $noFiles=$noFiles+$words[1];
+	}
+	elsif ($#words==2) 
+	{
+	    # This is a new identifier, write out the information on
+	    # the previous one if there was one.
+
+	    if ($identifier) {
+		print MODULE outputText($identifier,$baseIndex,
+					$baseIndex+$noFiles-1);
+		$baseIndex=$baseIndex+$noFiles;
+		$identifier=0;
+	    }
+	    $identifier=$words[0];
+
+	    if ($identifier !~ /\w+:/) {
+		print ": expected at line $lineCounter\n";
+		print "$line\n";
+		exit (1);
+	    }
+
+	    $identifier =~ s/(\w+):/$1/;
+	    $filename=$words[1];
+	    $noFiles=$words[2];
+	}
+	else
+	{
+	    print "Wrong number of words at line $lineCounter\n";
+	    print "$line\n";
+	    print "Got $#words words.\n";
+	    exit (1);
+	}
+    }
+}
+
+print MODULE "END MODULE MLSPCFData\n";
+
+close (MAPPING);
+close (MODULE);
+
+exit;
+
+sub outputText {
+   "   INTEGER, PARAMETER :: mlspcf_$_[0]_start = $_[1]\n".
+   "   INTEGER, PARAMETER :: mlspcf_$_[0]_end = $_[2]\n".
+   "   !\n"
+   }
+    
+
+
+
