@@ -235,8 +235,8 @@ contains
       pdet = prod(1,1,np)*prod(2,2,np) - prod(1,2,np)*prod(2,1,np)
       if ( abs(pdet) <= ptol ) & ! getting too small
     exit
-      pinv(:,:,np) = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
-                &               -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+      pinv(:,:,np) = reshape( (/ prod(2,2,np), -prod(2,1,np), &
+                &               -prod(1,2,np),  prod(1,1,np) /), (/2,2/) ) / &
                 &    pdet
     end do
 
@@ -272,6 +272,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.5  2003/05/24 02:26:18  vsnyder
+! More work on polarized temperature derivatives
+!
 ! Revision 2.4  2003/05/15 03:29:44  vsnyder
 ! Implement polarized model's temperature derivatives
 !
