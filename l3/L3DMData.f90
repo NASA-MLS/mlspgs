@@ -15,7 +15,7 @@ MODULE L3DMData
    USE OpenInit
    USE PCFHdr
    USE PCFModule
-   USE SDPToolkit
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
    IMPLICIT NONE
    PUBLIC
 
@@ -1138,6 +1138,11 @@ CONTAINS
       ENDDO
 
       result = pgs_met_remove()
+      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(msr, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(msr) )
+      endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaL3DM
@@ -1476,6 +1481,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.20  2002/04/10 22:00:34  jdone
+!# swwrfld edge values for time
+!#
 !# Revision 1.19  2002/04/01 21:58:49  jdone
 !# check if array sizes are larger than 0
 !#

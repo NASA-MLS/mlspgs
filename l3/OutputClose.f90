@@ -19,7 +19,7 @@ MODULE OutputClose
    USE MLSStrings
    USE OpenInit
    USE PCFModule
-   USE SDPToolkit
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
    IMPLICIT NONE
    PUBLIC
 
@@ -139,6 +139,11 @@ CONTAINS
       ENDIF
 
       result = pgs_met_remove()
+      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(msr, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(msr) )
+      endif          
 
 !-----------------------------
    END SUBROUTINE WriteMetaLog
@@ -366,6 +371,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.16  2002/04/10 22:10:41  jdone
+!Associated statements added before deallocate.
+!
 !Revision 1.15  2001/12/13 20:51:20  nakamura
 !Removed separate write, flags for diagnostics.
 !

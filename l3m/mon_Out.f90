@@ -1,5 +1,5 @@
 
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -14,7 +14,7 @@ MODULE mon_Out
    USE MLSPCF3
    USE mon_Open
    USE PCFModule
-   USE SDPToolkit
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
    IMPLICIT NONE
    PUBLIC
 
@@ -132,6 +132,11 @@ CONTAINS
       ENDIF
 
       result = pgs_met_remove()
+      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(msr, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(msr) )
+      endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaLogM
@@ -386,6 +391,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.5  2001/12/12 17:48:43  nakamura
+!Added dg fields.
+!
 !Revision 1.4  2001/09/26 19:49:13  nakamura
 !Removed com ZM output; added cfDg deallocate.
 !

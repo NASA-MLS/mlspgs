@@ -1,5 +1,5 @@
 
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -15,7 +15,7 @@ MODULE L3MMData
    USE mon_Open, ONLY: PCFMData_T
    USE PCFHdr
    USE PCFModule
-   USE SDPToolkit
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
    use Time_M, only: Time_Now
    IMPLICIT NONE
    PUBLIC
@@ -1016,6 +1016,11 @@ CONTAINS
       CALL WritePCF2Hdr(file, anText)
 
       result = pgs_met_remove()
+      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(msr, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(msr) )
+      endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaL3MM
@@ -1187,6 +1192,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.4  2002/08/22 23:32:01  pwagner
+!# Made start,endtimes pointer; initialize nMisDays
+!#
 !# Revision 1.3  2001/12/12 17:45:29  nakamura
 !# Added dg fields; removed unused subroutine DestroyL3MMDatabase.
 !#

@@ -1,5 +1,5 @@
 
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -13,7 +13,7 @@ MODULE L3MZData
    USE mon_Open
    USE PCFHdr
    USE PCFModule
-   USE SDPToolkit
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
    IMPLICIT NONE
    PUBLIC
 
@@ -893,6 +893,11 @@ CONTAINS
       CALL WritePCF2Hdr(fileName, anText)
 
       result = pgs_met_remove()
+      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(msr, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(msr) )
+      endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaL3MZ
@@ -1095,6 +1100,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.5  2001/12/12 17:46:30  nakamura
+! Added dg fields; removed unused subroutine DestroyL3MZDatabase.
+!
 ! Revision 1.4  2001/11/12 20:25:50  nakamura
 ! Added L3MZDiag_T.
 !
