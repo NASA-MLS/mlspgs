@@ -14,9 +14,9 @@ MODULE eval_spect_path_m
 
 !---------------------------- RCS Ident Info -------------------------------
   character (LEN=256) :: Id = &
- "$Id$"
+   & "$Id$"
   character (LEN=*), parameter :: ModuleName= &
- "$RCSfile$"
+   & "$RCSfile$"
 !---------------------------------------------------------------------------
  CONTAINS
 !-----------------------------------------------------------------
@@ -55,7 +55,7 @@ MODULE eval_spect_path_m
 !
   Frq = 0.0
   eta_fzp = 0.0
-  do_calc = .false.
+  do_calc = .FALSE.
 !
   f_inda = 1
   p_inda = 1
@@ -105,7 +105,7 @@ MODULE eval_spect_path_m
       Call BrkMod(sv_i,n_f,n_z,n_p,sv_f,sv_z,sv_p)
       IF(not_zero_f(1,sv_f)) THEN
         WHERE(not_zero_z(:,sv_z) .AND. not_zero_p(:,sv_p))
-          do_calc(:,sv_j) = .true.
+          do_calc(:,sv_j) = .TRUE.
           eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_z(:,sv_z) * eta_p(:,sv_p)
         ENDWHERE
       ENDIF
@@ -132,41 +132,28 @@ MODULE eval_spect_path_m
 
  SUBROUTINE BrkMod(m,nf,nz,np,jf,jz,jp)
 
- Integer, intent(in) :: m, nf, nz, np
- Integer, intent(out) :: jf, jz, jp
+  Integer, intent(in) :: m, nf, nz, np
+  Integer, intent(out) :: jf, jz, jp
 
- Integer :: sv_p,sv_z,sv_f,k
- 
- jf = 0
- jz = 0
- jp = 0
+  Integer :: k
 
- k = 0
- do sv_p = 1, np
-   do sv_z = 1, nz
-     do sv_f = 1, nf
-       k = k + 1
-       if(k == m) then
-         jf = sv_f
-         jz = sv_z
-         jp = sv_p
-         Return
-       endif
-     end do
-   end do
- end do
-
- jf = nf
- jz = nz
- jp = np
+   jf = 1 + MOD(m-1,nf)
+   k = (m-jf+nf-1)/nf
+   jz = 1 + MOD(k,nz)
+   k = (k-jz+nz-1)/nz
+   jp = 1 + MOD(k,np)
 
  END SUBROUTINE BrkMod
+
 !---------------------------------------------------------------------
 
 !
 END MODULE eval_spect_path_m
 !
 ! $Log$
+! Revision 2.2  2002/01/27 08:37:48  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.1  2001/11/02 10:48:39  zvi
 ! Implementing frequecy grid
 !
