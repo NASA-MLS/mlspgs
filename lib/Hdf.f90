@@ -8,13 +8,13 @@ module Hdf
   implicit none
   public                                ! Most things are public
 
-  private :: Id                         ! Except Id
-
-  !------------------- RCS Ident Info -----------------------
-  character(LEN=130) :: Id = &        
-    "$Id$"&
-    & "$RCSfile$"
-  !----------------------------------------------------------
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
   ! Contents: 
 
@@ -664,6 +664,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.12  2002/10/01 22:03:54  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.11  2002/10/01 20:26:54  bwknosp
 ! Fixed problem
 !
