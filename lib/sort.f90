@@ -19,15 +19,15 @@ module Sort_M
 !>> 1988-11-22 SSORT  Snyder Initial code.
 
   interface SORT
-    module procedure DSORT, ISORT, SSORT
+    module procedure ASORT, DSORT, ISORT, SSORT
   end interface
 
   interface SORTP ! Using a permutation vector
-    module procedure DSORTP, ISORTP, SSORTP
+    module procedure ASORTP, DSORTP, ISORTP, SSORTP
   end interface
 
   interface SORTQ ! Using a pre-specified permutation vector
-    module procedure DSORTQ, ISORTQ, SSORTQ
+    module procedure ASORTQ, DSORTQ, ISORTQ, SSORTQ
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -40,6 +40,12 @@ module Sort_M
 !---------------------------------------------------------------------------
 
 contains
+
+  subroutine ASORT (A, M, N)
+    character(len=*), intent(inout) :: A(*)
+    character(len=len(a)) :: PARTN, TEMP
+    include "sort.f9h"
+  end subroutine ASORT
 
   subroutine DSORT (A, M, N)
     double precision, intent(inout) :: A(*)
@@ -58,6 +64,17 @@ contains
     real :: PARTN, TEMP
     include "sort.f9h"
   end subroutine SSORT
+
+  subroutine ASORTP (A, M, N, P)
+    character(len=*), intent(in) :: A(*)
+    integer, intent(in) :: M, N
+    integer, intent(out) :: P(*)
+    integer :: I
+    do i = m, n
+      p(i) = i
+    end do
+    call SORTQ ( A, M, N, P )
+  end subroutine ASORTP
 
   subroutine DSORTP (A, M, N, P)
     double precision, intent(in) :: A(*)
@@ -91,6 +108,12 @@ contains
     end do
     call SORTQ ( A, M, N, P )
   end subroutine SSORTP
+
+  subroutine ASORTQ (A, M, N, P)
+    character(len=*), intent(in) :: A(*)
+    character(len=len(a)) :: PARTN
+    include "sortq.f9h"
+  end subroutine ASORTQ
 
   subroutine DSORTQ (A, M, N, P)
     double precision, intent(in) :: A(*)
@@ -273,6 +296,9 @@ contains
 end module Sort_M
 
 ! $Log$
+! Revision 2.6  2005/01/12 03:01:59  vsnyder
+! Added character sorts
+!
 ! Revision 2.5  2004/10/01 23:09:18  vsnyder
 ! Add GSORTP
 !
