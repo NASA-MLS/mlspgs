@@ -2,13 +2,17 @@
 #which_fftw.sh
 
 # --------------- which_fftw.sh help
-# Creates fftw_link_line to build mlspgs level 3d program
+# Use (1):
+# Creates fftw_link_line to build mlspgs level 3d program (default)
+# Use (2):
+# Echoes version number of gcc compiler; e.g. '2.96' or '3.2' (-gcc option)
 # 
 # Usage:
 # which_fftw.sh [options] FFTW_ROOT [FFTW_PREC]
 #
 #    O p t i o n s   a n d   a r g s
 # -h[elp]       print brief help message; exit
+# -gcc          Use (2) above
 # FFTW_ROOT     a directory path where the fftw libraries might be found
 #                These two libraries must have names matching the patterns
 #                1st library: lib[ sd]rfftw.a
@@ -35,7 +39,7 @@
 #      and is in the same directory as which_fftw.sh
 #
 # --------------- End which_fftw.sh help
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -51,6 +55,7 @@
 me="$0"
 my_name=which_fftw.sh
 DEEBUG=off
+USE_2="no"
 
 # The following is echoed if we can't any fftw libraries in FFTW_ROOT
 nothing='-L${FFTW_ROOT} -ldrfftw -ldfftw'
@@ -72,12 +77,44 @@ while [ "$more_opts" = "yes" ] ; do
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
        ;;
+    -gcc )
+       USE_2="yes"
+       shift
+       ;;
     * )
        more_opts="no"
        ;;
     esac
 done
 
+if [ $USE_2 = "yes" ]
+then
+#   - - - U s e  ( 2 ) - - -
+   test_295=`gcc -v 2>&1 | grep -i '2\.95'`
+   test_296=`gcc -v 2>&1 | grep -i '2\.96'`
+   test_31=`gcc -v 2>&1 | grep -i '3\.1'`
+   test_32=`gcc -v 2>&1 | grep -i '3\.2'`
+   gcc_version=
+   if [ "$test_295" != "" ]
+   then
+     gcc_version="2.95"
+   elif [ "$test_296" != "" ]
+   then
+     gcc_version="2.96"
+   elif [ "$test_31" != "" ]
+   then
+     gcc_version="3.1"
+   elif [ "$test_32" != "" ]
+   then
+     gcc_version="3.2"
+   else
+     exit 1
+   fi
+   echo $gcc_version
+   exit 0
+fi
+
+#   - - - U s e  ( 1 ) - - -
 FFTW_ROOT=$1
 shift
 
@@ -146,6 +183,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.2  2001/10/25 17:53:43  pwagner
+# Slightly more robust given wrong FFTW_ROOT
+#
 # Revision 1.1  2001/10/09 20:51:22  pwagner
 # First commit
 #
