@@ -120,7 +120,7 @@ module Hdf
 
   interface sfwdata_f90
     module procedure sfwdata_i1, sfwdata_dp1, sfwdata_r1
-    module procedure sfwdata_r3, sfwdata_dp3
+    module procedure sfwdata_r3, sfwdata_dp2, sfwdata_dp3
   end interface
 
 
@@ -627,6 +627,14 @@ contains ! ============================= Local wrappers ======================
     sfwdata_dp1 = sfwdata ( sds_id, start, stride, edges, data )
   end function sfwdata_dp1
 
+  integer function sfwdata_dp2 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    double precision, intent (in), dimension (:,:) :: data
+    
+    sfwdata_dp2 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_dp2
+
   integer function sfwdata_dp3 (sds_id, start, stride, edges, data)      
     integer, intent (in) :: sds_id
     integer, intent (in), dimension (:) :: start, stride, edges
@@ -646,6 +654,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.8  2002/05/22 00:47:54  livesey
+! Added sfwdata_dp2
+!
 ! Revision 2.7  2001/11/01 21:00:25  pwagner
 ! Replaced sfwdata generic with sfwdata_f90
 !
