@@ -850,6 +850,11 @@ contains ! =====     Public Procedures     =============================
         whichPointingGridAsArray = minloc ( superset )
         whichPointingGrid = whichPointingGridAsArray(1)
         call deallocate_test ( superset, 'superset', ModuleName )
+
+        if ( toggle(emit) ) then
+          call output ( 'Using pointing frequency grid: ' )
+          call output ( whichPointingGrid, advance='yes' )
+        end if
         
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
@@ -1111,12 +1116,26 @@ contains ! =====     Public Procedures     =============================
           do i = 1, noUsedChannels
             sigInd = usedSignals(i)
             ch = usedChannels(i)
+            if ( toggle(emit) .and. levels(emit) > 2 ) then
+              call output ( 'Channel = ' )
+              call output ( i )
+              call output ( ' ( ' )
+              call output ( sigInd )
+              call output ( ':' )
+              call output ( ch )
+              call output ( ' )', advance='yes' )
+            end if
             centerFreq = firstSignal%lo + &
               & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
             shapeInd = MatchSignal ( filterShapes%signal, &
               & fwdModelConf%signals(sigInd), sideband = thisSideband )
             if ( shapeInd == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "No matching channel shape information" )
+            if ( toggle(emit) .and. levels(emit) > 1 ) then
+              call output ( 'Using filter shape:' )
+              call output ( shapeInd, advance='yes' )
+            endif
+                          
             call Freq_Avg ( frequencies, &
               & centerFreq+thisSideband * &
               & FilterShapes(shapeInd)%FilterGrid(ch,:), &
@@ -1271,6 +1290,10 @@ contains ! =====     Public Procedures     =============================
           end where
           whichPatternAsArray = minloc ( superset )
           whichPattern = whichPatternAsArray(1)
+          if ( toggle(emit) .and. levels(emit) > 1 ) then
+            call output ( 'Using antenna pattern: ' )
+            call output ( whichPattern, advance='yes' )
+          end if
 
           call convolve_all ( fwdModelConf, fwdModelIn, maf, ch, &
             &     windowStart, windowFinish, mafTInstance-windowStart+1, &
@@ -1279,7 +1302,7 @@ contains ! =====     Public Procedures     =============================
             &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt, si, center_angle, &
             &     Radiances(:, i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
             &     thisRatio, Jacobian, fmStat%rows,  &
-            &     antennaPatterns(1), ier )
+            &     antennaPatterns(whichPattern), ier )
           !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) goto 99
         else
@@ -1454,6 +1477,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.133  2001/05/17 00:49:54  livesey
+! Interim version.  Slight problem somewhere with convolution for some bands.
+!
 ! Revision 2.132  2001/05/16 23:03:59  livesey
 ! New version, now gets correct antenna pattern too.
 !
