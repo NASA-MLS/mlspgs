@@ -7,6 +7,8 @@ module SidsModule
 
 ! This module evaluates the radiative transfer equation, and maybe
 ! its derivatives.  It is used for SIDS and L2PC runs.
+
+  use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T
   use Init_Tables_Module, only: f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, &
     & f_jacobian
   use Lexer_Core, only: Print_Source
@@ -32,14 +34,16 @@ module SidsModule
 
 contains
 
-! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase )
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
+! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
+    & fmc, fmi, tfmi )
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
                                         ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(forwardModelInfo_T), intent(in) :: FwdModelInfo ! From ForwardModelSetup
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
@@ -87,6 +91,9 @@ contains
       call announceError ( needJacobian )
     end if
 
+    call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+    &                   Jacobian, FwdModelOut=FwdModelOut, &
+    &                   FMC=FMC, FMI=FMI, TFMI=TFMI ) !??? Last line temporary
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -110,6 +117,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.2  2001/03/08 03:23:09  vsnyder
+! More stuff to work with L2_Load
+!
 ! Revision 2.1  2001/03/08 00:00:08  vsnyder
 ! Initial commit.
 !
