@@ -691,14 +691,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8) - &
          & earthradius%values(1,maf)
         z_fine = z_fine/16._r8 - 3._r8    ! convert back to log pressure
-        ! fine ds for each (z,phi) pair
+        ! find ds for each (z,phi) pair
         ds_fine = (earthradius%values(1,maf)+ &
          & (ptan%values(mif,maf)+3.)*16.) / &
          & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8)**2
         ! determine weights by the length inside each state domain
          do i = 1,noInstances  ! loop over profile
          do j = 1,noSurf       ! loop over surface
-         do k = 1, nfine*noInstances
+         do k = 1, nfine*noInstances      ! sum up all the lengths
            if(abs(z_fine(k) - stateQ%template%surfs(j,i)) < dz/2. &
            & .AND. abs(phi_fine(k) - stateQ%template%phi(j,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noInstances) = &
@@ -901,6 +901,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.29  2001/09/24 23:12:53  dwu
+! add derivatives for high tangent height retrievals
+!
 ! Revision 1.28  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
