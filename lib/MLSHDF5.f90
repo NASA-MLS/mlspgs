@@ -36,7 +36,7 @@ module MLSHDF5
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
   use MLSCommon, only: r4, r8
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
 
   implicit NONE
   private
@@ -131,6 +131,9 @@ module MLSHDF5
 
   ! Local parameters
   integer, dimension(7) :: ones = (/1,1,1,1,1,1,1/)
+  logical, parameter    :: DEEBUG = .false.
+  integer, save :: cantGetDataspaceDims = 0
+  integer, parameter :: MAXNUMWARNS = 40
 
 contains ! ======================= Public Procedures =========================
 
@@ -450,10 +453,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -484,10 +485,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for data
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -515,10 +514,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for data
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -546,10 +543,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for data
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -577,10 +572,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for data
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -608,10 +601,8 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
-    integer :: ATTRID                   ! ID for attribute
     integer :: dataID                   ! ID for data
     integer :: STATUS                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
     logical :: my_skip
 
     ! Executable code
@@ -1429,8 +1420,8 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer(hid_t) :: cparms
     integer(hsize_t), dimension(2) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for dataspace
-    integer :: memSpaceID               ! ID for dataspace
+    integer :: spaceID                  ! ID for filespace
+    integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(2) :: SHP        ! Shape
@@ -1596,16 +1587,17 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer(hid_t) :: cparms
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for dataspace
-    integer :: memSpaceID               ! ID for dataspace
+    integer :: spaceID                  ! ID for filespace
+    integer :: filespaceID              ! ID for filespace
+    integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(3) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
-    integer :: test_rank
-    integer(hsize_t), dimension(7) :: test_dims, test_maxdims
-    integer(hssize_t), dimension(7) :: test_offset
-    logical :: test_issimple
+    ! integer :: test_rank
+    ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
+    ! integer(hssize_t), dimension(7) :: test_offset
+    ! logical :: test_issimple
 
     ! Executable code
     style = 0  ! The default
@@ -1616,6 +1608,7 @@ contains ! ======================= Public Procedures =========================
       if ( adding_to ) style = 2
     endif
 
+    if ( DEEBUG ) print *, 'style:   ', style
     ! Create the dataspace
     shp = shape(value)
     maxdims = shp
@@ -1631,63 +1624,84 @@ contains ! ======================= Public Procedures =========================
         & status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 3D real array '//trim(name) )
+      memspaceID = spaceID
+      filespaceID = spaceID
     elseif (style == 1) then
       maxdims(3) = H5S_UNLIMITED_F
       dims(3) = max(1, shp(3))
       chunk_dims(3) = 1
-      ! print *, 'shape ', shp
-      ! print *, 'maxdims ', maxdims
-      ! print *, 'dims ', dims
-      ! print *, 'chunk_dims ', chunk_dims
-      call h5screate_simple_f(3, dims, spaceID, status, maxdims)
+      if ( DEEBUG ) print *, 'shape ', shp
+      if ( DEEBUG ) print *, 'maxdims ', maxdims
+      if ( DEEBUG ) print *, 'dims ', dims
+      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
+      ! call h5screate_simple_f(3, dims, filespaceID, status, maxdims)
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !  & 'Unable to create filespace for 3D real array '//trim(name) )
+      call h5screate_simple_f(3, dims, memspaceID, status, maxdims)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 3D real array '//trim(name) )
+        & 'Unable to create memspace for 3D real array '//trim(name) )
+      spaceID = memspaceID
       call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create property list for 3D real array '//trim(name) )
       call h5pset_chunk_f(cparms, 3, chunk_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to set chunking 3D real array '//trim(name) )
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status, cparms )
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
+        & setID, status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 3D real array '//trim(name) )
-      ! print *, 'spaceID ', spaceID
-      ! print *, 'cparms ', cparms
-      ! print *, 'locID ', locID
+      call h5dextend_f ( setID, dims, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dataset creating 3D real array '//trim(name) )
+      call h5dget_space_f(setID, filespaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get filespaceID creating 3D real array '//trim(name) )
+      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
+      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
+      if ( DEEBUG ) print *, 'cparms ', cparms
+      if ( DEEBUG ) print *, 'locID ', locID
+      if ( DEEBUG ) print *, 'setID ', setID
     else
       call h5dopen_f ( locID, trim(name), setID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset for 3D real array '//trim(name) )
       call h5dget_space_f( setID, spaceID, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 3D real array '//trim(name) )
-      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get space rank for 3D real array '//trim(name) )
-      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-       &  test_maxdims(1:test_rank), status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'Unable to get dataspace for 3D real array '//trim(name) )
+      ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'Unable to get space rank for 3D real array '//trim(name) )
+      ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+      !  &  test_maxdims(1:test_rank), status )
       ! Can't test on status--it's set to the test_rank
-      test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
-      call h5dextend_f( setID, test_dims, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dims for 3D real array '//trim(name) )
-      call h5dget_space_f( setID, spaceID, status)
+      ! test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
+      ! call h5dextend_f( setID, test_dims, status)
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'Unable to extend dims for 3D real array '//trim(name) )
+      if ( .not. present(start) ) &
+        & call mls_extend ( setID, shp )
+      memspaceID = spaceID
+      call h5dget_space_f( setID, filespaceID, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get dataspace for 3D real array '//trim(name) )
     endif
     if ( present(start) ) then
-      ! print *, 'name ', name
-      ! print *, 'shape(value) ', shape(value)
-      ! print *, 'start ', start
-      ! print *, 'count ', count
-      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+      if ( DEEBUG ) print *, 'name ', name
+      if ( DEEBUG ) print *, 'shape(value) ', shape(value)
+      if ( DEEBUG ) print *, 'start ', start
+      if ( DEEBUG ) print *, 'count ', count
+      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_hyperslab_save(filespaceID, &
         & start, count, stride, block)
-      ! print *, 'memspaceID ', memspaceID
-      ! print *, 'spaceID ', spaceID
+      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
+      call dump_space(filespaceID)
+      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
+      call dump_space(memspaceID)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
         & int ( (/ shp, ones(1:4) /), hID_T ), status, &
-        & memspaceID, spaceID )
+        & memspaceID, filespaceID )
+      spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
@@ -1732,16 +1746,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer(hid_t) :: cparms
     integer(hsize_t), dimension(4) :: chunk_dims, dims, maxdims
-    integer :: spaceID                  ! ID for dataspace
-    integer :: memSpaceID               ! ID for dataspace
+    integer :: spaceID                  ! ID for filespace
+    integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(4) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
     integer :: test_rank
     integer(hsize_t), dimension(7) :: test_dims, test_maxdims
-    integer(hssize_t), dimension(7) :: test_offset
-    logical :: test_issimple
 
     ! Executable code
     style = 0  ! The default
@@ -1856,8 +1868,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
     integer :: STRINGTYPE               ! String type
     integer :: STRINGSIZE               ! String size
 
@@ -1930,8 +1940,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
     integer :: STRINGTYPE               ! String type
     integer :: STRINGSIZE               ! String size
 
@@ -2004,8 +2012,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2065,8 +2071,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2127,8 +2131,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2190,8 +2192,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2252,8 +2252,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2314,8 +2312,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2376,8 +2372,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2438,8 +2432,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2500,8 +2492,6 @@ contains ! ======================= Public Procedures =========================
     integer :: SPACEID                  ! ID of dataspace
     integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
-    integer :: RANK                     ! Rank in file
-    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
 
     ! Executable code
     shp = shape ( value )
@@ -2647,6 +2637,95 @@ contains ! ======================= Public Procedures =========================
       & no_pairs=.true. )
   end subroutine check_for_fit
 
+
+  subroutine dump_space(spaceID)
+  ! Dumps dataspace info
+    integer, intent(in)               :: spaceID 
+    integer                           :: rank
+    integer(hsize_t), dimension(7)    :: dims, maxdims
+    integer                           :: status  
+    logical                           :: is_simple
+    call h5sis_simple_f ( spaceID, is_simple, status )
+    if ( DEEBUG ) print *, 'is_simple ', is_simple
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+    if ( DEEBUG ) print *, 'rank ', rank
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
+      &  status )
+    if ( DEEBUG ) print *, 'dims ', dims(1:rank)
+    if ( DEEBUG ) print *, 'maxdims ', maxdims(1:rank)
+    ! call h5soffset_simple_f ( spaceID, offset(1:rank), &
+    !  &  status )
+    ! print *, 'offset ', offset(1:rank)
+  end subroutine dump_space
+
+  subroutine mls_extend ( setID, newCount, start, dataSpaceID )
+  ! Checks whether we need to extend setID to accommodate newDims
+  ! plus any offsets in start array
+  ! Does the extending if necessary
+    integer, intent(in)                :: setID 
+    integer, dimension(:), intent(in)  :: newCount
+    integer, dimension(:), optional, intent(in) :: start
+    integer, optional, intent(inout) :: dataSpaceID
+                                 ! Starting coordinatess of hyperslab
+  ! Local variables
+    integer                           :: spaceID 
+    integer                           :: rank
+    integer(hsize_t), dimension(7)    :: dims, maxdims, my_start
+    integer                           :: status
+    integer                           :: i
+    logical                           :: itFits
+    logical                           :: is_simple
+  ! Executable code
+    my_start = 0
+    dims = 0
+    if ( present(start) ) my_start(1:size(start)) = start
+    if ( present(dataSpaceID) ) then
+      spaceID = dataSpaceID
+    else
+      call h5dget_space_f(setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get data space ID to extend data set' )
+    endif
+    if ( DEEBUG ) print *, 'spaceID ', spaceID
+    call h5sis_simple_f ( spaceID, is_simple, status )
+    if ( DEEBUG ) print *, 'is simple? ', is_simple
+    call h5sget_simple_extent_ndims_f(spaceID, rank, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get data space rank to extend data set' )
+    if ( DEEBUG ) print *, 'rank ', rank
+    call h5sget_simple_extent_dims_f(spaceID, dims,&
+         maxdims, status)
+    if ( status /= 0 .and. cantGetDataspaceDims <= MAXNUMWARNS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Unable to get data space dims to extend data set' )
+      cantGetDataspaceDims = cantGetDataspaceDims + 1
+      if ( cantGetDataspaceDims > MAXNUMWARNS ) &
+        & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Max no. of warnings reached--suppressing further ones')
+    endif
+    if ( DEEBUG ) print *, 'dims ', dims(1:rank)
+    if ( DEEBUG ) print *, 'maxdims ', maxdims(1:rank)
+    if ( DEEBUG ) print *, 'status ', status
+    itFits = .true.
+    do i = 1, min(rank, size(newCount))
+      if ( my_start(i) + newCount(i) > dims(i) ) then
+        itFits = .false.
+        dims(i) = my_start(i) + newCount(i)
+      endif
+    enddo
+    if ( itFits ) return
+    if ( DEEBUG ) print *, 'Need to extend dataset'
+    if ( DEEBUG ) print *, '(New dims) ', dims
+    call h5dextend_f(setID, dims, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to extend data set in mls_extend' )
+    if ( present(dataspaceID) ) then
+      call h5dget_space_f(setID, dataspaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get return dataspaceID in mls_extend' )
+    endif
+  end subroutine mls_extend
+
   subroutine mls_hyperslab ( spaceID, value_dims, name, memspaceID, &
     & start, count, stride, block )
   ! Sits between LoadFromHDF5DS and h5sselect_hyperslab_f
@@ -2681,39 +2760,96 @@ contains ! ======================= Public Procedures =========================
       & 'Impossible optional parameters pattern for dataset '//trim(name), &
       & 'status', (/status/) )
     value_rank = size(value_dims)
-   ! print *, 'value_rank: ', value_rank
+    if ( DEEBUG ) print *, 'value_rank: ', value_rank
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-   ! print *, 'dataspace rank: ', rank
+    if ( DEEBUG ) print *, 'dataspace rank: ', rank
     if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get rank for dataset '//trim(name) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
       &  status )
-   ! print *, 'dataspace dims: ', dims(1:rank)
+    if ( DEEBUG ) print *, 'dataspace dims: ', dims(1:rank)
     if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset '//trim(name) )
     call h5screate_simple_f(value_rank, &
       & int(value_dims(1:value_rank), hsize_t), memspaceID, &
       & status)
-   ! print *, 'memspace id: ', memspaceID
+    if ( DEEBUG ) print *, 'memspace id: ', memspaceID
     if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
       & 'Unable to create memspace for dataset '//trim(name) )
     if ( present(stride) ) then
-     ! print *, 'trying to select hyperslab: ', &
-     !  & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
-     !  & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
+     if ( DEEBUG ) print *, 'trying to select hyperslab: ', &
+       & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
+       & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
       call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
         & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status, &
         & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t) )
     else
-     ! print *, 'trying to select hyperslab: ', &
-     !   & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
+      if ( DEEBUG ) print *, 'trying to select hyperslab: ', &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
       call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
         & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status )
     endif
     if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
       & 'Unable to set hyperslab for dataset '//trim(name) )
-   ! print *, 'Returning memspaceID ', memspaceID
+    if ( DEEBUG ) print *, 'Returning memspaceID ', memspaceID
   end subroutine mls_hyperslab
+
+  subroutine mls_hyperslab_save ( spaceID, &
+    & start, count, stride, block )
+  ! Sits between SaveAsHDF5DS and h5sselect_hyperslab_f
+  ! Restriction:
+  ! The optional parameters must be present in 1 of the two patterns below
+  ! pattern(1): start, count)
+  ! pattern(2): start, count, stride, block)
+    integer, intent(in)                :: spaceID 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    integer                           :: rank
+    integer(hsize_t), dimension(7)    :: dims, maxdims
+    integer                           :: status
+    character(len=*), parameter :: name = 'mls_hyperslab_save'
+
+    ! Begin execution
+    ! Check that pattern 1 or pattern 2 is satisfied
+    status = 0
+    if ( present(start) ) status = status + 1
+    if ( present(count) ) status = status + 2
+    if ( present(stride) ) status = status + 4
+    if ( present(block) ) status = status + 8
+    if ( status /= 3 .and. status /= 15 ) call my_message ( MLSMSG_Error, ModuleName, &
+      & 'Impossible optional parameters pattern for dataset '//trim(name), &
+      & 'status', (/status/) )
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+    if ( DEEBUG ) print *, 'dataspace rank: ', rank
+    if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get rank for dataset '//trim(name) )
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
+      &  status )
+    if ( DEEBUG ) print *, 'dataspace dims: ', dims(1:rank)
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) )
+    if ( present(stride) ) then
+     if ( DEEBUG ) print *, 'trying to select hyperslab: ', &
+       & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
+       & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
+      call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status, &
+        & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t) )
+    else
+      if ( DEEBUG ) print *, 'trying to select hyperslab: ', &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
+      call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status )
+    endif
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+      & 'Unable to set hyperslab for dataset '//trim(name) )
+  end subroutine mls_hyperslab_save
 
   subroutine my_message(severity, ModuleNameIn, Message, &
     & names, ints, reals, doubles, no_pairs)
@@ -2826,6 +2962,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.28  2003/07/18 16:04:19  pwagner
+! Fixed some bugs in DirectWriting 3-d datasets
+!
 ! Revision 2.27  2003/07/15 23:37:57  pwagner
 ! No changes I can see, but cvs says so, so ..
 !
