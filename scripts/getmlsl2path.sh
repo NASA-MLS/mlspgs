@@ -101,10 +101,20 @@ while [ -n "$(echo $1)" ]; do
 	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
+    if [ $1 == "--sidsrad" ]; then
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/work3/$USER"
+	else
+	    echo "/bigdata/$USER/$VERSION"
+	fi
+    fi
     shift
 done
 
 # $Log$
+# Revision 1.14  2003/05/13 04:13:28  livesey
+# Changed livesey's to $USERS and added --tmp option
+#
 # Revision 1.13  2003/05/10 22:23:44  livesey
 # Tidied up year related issues
 #
