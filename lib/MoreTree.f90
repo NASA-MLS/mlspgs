@@ -68,7 +68,7 @@ contains ! ====     Public Procedures     ==============================
     get_spec_id = decoration(subtree(1,decoration(subtree(1,root))))
   end function Get_Spec_Id
 
-  ! ----------------------------------------------- GetIndexFlagsFromList
+  ! --------------------------------------  GetIndexFlagsFromList  -----
 
   subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
     ! Given the root of a numeric/numeric range array
@@ -131,7 +131,7 @@ contains ! ====     Public Procedures     ==============================
     end do
   end subroutine GetIndexFlagsFromList
 
-  ! ------------------------------------------ GetStringIndexFromString ---
+  ! -----------------------------------  GetStringIndexFromString  -----
   integer function GetStringIndexFromString ( line, caseSensitive )
     use Symbol_Types, only: T_IDENTIFIER
     use Symbol_Table, only: ENTER_TERMINAL
@@ -143,7 +143,7 @@ contains ! ====     Public Procedures     ==============================
       & caseSensitive=caseSensitive )
   end function GetStringIndexFromString
 
-  ! ------------------------------------------ GetLitIndexFromString ---
+  ! --------------------------------------  GetLitIndexFromString  -----
   integer function GetLitIndexFromString ( line, stringIndex )
     use Declaration_Table, only: GET_DECL, DECLS, ENUM_VALUE
 
@@ -159,6 +159,21 @@ contains ! ====     Public Procedures     ==============================
     GetLitIndexFromString = decl%units
   end function GetLitIndexFromString
 
+  ! ------------------------------------------  StartErrorMessage  -----
+  subroutine StartErrorMessage ( where )
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+    integer, intent(in) :: Where             ! Tree node index
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no tree available)' )
+    end if
+    call output ( ': ' )
+  end subroutine StartErrorMessage
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -166,6 +181,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.8  2004/05/21 22:52:33  vsnyder
+! Add StartErrorMessage routine
+!
 ! Revision 2.7  2004/01/22 00:41:40  pwagner
 ! GetStringIndexFromString takes optional arg caseSensitive
 !
