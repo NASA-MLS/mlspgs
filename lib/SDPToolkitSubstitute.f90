@@ -126,6 +126,14 @@
         dtime=0.D0
       END FUNCTION pgs_td_utctotai
 
+      INTEGER FUNCTION mls_utctotai(leapsec_file, time, dtime)
+        character(len = *), INTENT(IN) :: leapsec_file
+        character(len = *), INTENT(IN) :: time
+        DOUBLE PRECISION, INTENT(out) :: dtime
+        dtime=0
+        mls_utctotai=0
+      END FUNCTION mls_utctotai
+
 ! Metadata functions
 
       INTEGER FUNCTION PGS_MET_Init(file_id,groups)
@@ -197,6 +205,9 @@
 
 !
 ! $Log$
+! Revision 2.12  2003/04/02 14:40:59  hcp
+! Added dummy mls_utctotai
+!
 ! Revision 2.11  2003/03/06 19:48:08  pwagner
 ! Added pgs_td_asciitime_ functions
 !
