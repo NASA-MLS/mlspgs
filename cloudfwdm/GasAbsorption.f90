@@ -62,8 +62,10 @@ contains
       REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
       INTEGER :: I, J, IMOL
 
-      REAL(r8) :: MYSHAPE, FF, MYRESULT
-      EXTERNAL MYSHAPE
+!      REAL(r8) :: MYSHAPE, FF, MYRESULT
+!      EXTERNAL MYSHAPE
+
+       REAL(r8) :: FF
 
 !------------------------------------------------------------------------
 
@@ -201,10 +203,11 @@ contains
 !     DEFINE LINE-SHAPE FUNCTIONS
 !--------------------------------------------------------------
 !J	real(r8) function myshape(v0,ff,yy,twth0)
-        function myshape(v0,ff,yy,twth0) result (myresult)
-        use MLSCommon, only: r8        
+
+        real(r8) function myshape(v0,ff,yy,twth0) result (myresult)
+!        use MLSCommon, only: r8        
 	implicit none
-        real(r8):: myresult     !J
+!        real(r8):: myresult     !J
 
         real :: pi
         parameter (pi=3.1415926)
@@ -229,7 +232,7 @@ contains
 !J     &      twthp/(voffp**2 + twth0**2)
 !J 	myshape = myshape * (ff/v0)/pi
 
- 	myresult = twthm/(voffm**2 + twth0**2) + &
+  	myresult = twthm/(voffm**2 + twth0**2) + &
        &      twthp/(voffp**2 + twth0**2)
  	 myresult = myresult * (ff/v0)/pi
 
