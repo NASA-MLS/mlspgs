@@ -55,14 +55,25 @@ MODULE MLSFiles               ! Utility file routines
   ! This function takes a FileName as an arg and a range of PC numbers
   ! [PCBottom, PCTop] which are integers
   ! It returns thePC corresponding to the FileName
-  ! If the FileName is not found, it sets ErrType=NAMENOTFOUND
+  !
+  ! FileName may be a fragment such as l2gp_temp of a longer name
+  ! such as mls_l2_temp_v0.5_01-01-2004.dat
+  
+  ! If no matching file found, it sets ErrType=NAMENOTFOUND
   ! otherwise ErrType=0
   
   ! This is useful because all the Toolbox routines refer to files
   ! by their PC numbers, not their names
   
+  ! Optionally you may require the match to be case-sensitive
+  !   (by default it is not: l2_temp will match MLS_L2_TEMP_...)
+  
+  ! Optionally you may pass in a version number and a debug flag
+  
+  ! optionally returns the exact name of the matching file
+  
   FUNCTION GetPCFromRef(FileName, PCBottom, PCTop, &
-  & caseSensitive, ErrType, versionNum, debug) RESULT (thePC)
+  & caseSensitive, ErrType, versionNum, debug, ExactName) RESULT (thePC)
 
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: FileName
@@ -72,10 +83,11 @@ MODULE MLSFiles               ! Utility file routines
     LOGICAL,  INTENT(IN)       :: caseSensitive
     INTEGER(i4),  OPTIONAL     :: versionNum
     LOGICAL,  OPTIONAL, INTENT(IN)       :: debug
+	CHARACTER (LEN=*), optional, intent(out) :: ExactName
   
     ! Local variables
 	
-	CHARACTER (LEN=MAXFILENAMELENGTH) :: MatchName, TryName
+	CHARACTER (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, PhysicalName
 	INTEGER                       :: version, returnStatus
 		
 	!
@@ -104,17 +116,12 @@ MODULE MLSFiles               ! Utility file routines
 		MatchName = Capitalize(FileName)
 	ENDIF
 
-	IF(PRESENT(versionNum)) THEN
-		version = versionNum
-	ELSE
-		version = 1
-	ENDIF
-
 	ErrType = NAMENOTFOUND
 
 	if(present(debug)) then
 		call output('getting ref from pc:', advance='no')
 	endif
+
 	DO thePC = PCBottom, PCTop
 
 !		if(present(debug)) then
@@ -123,13 +130,22 @@ MODULE MLSFiles               ! Utility file routines
 !			call output('              version: ' )
 !			call output(version, advance='yes')
 !		endif
+
+		IF(PRESENT(versionNum)) THEN
+			version = versionNum
+		ELSE
+			version = 1
+		ENDIF
+
             returnStatus = Pgs_pc_getReference(thePC, version, &
-              & TryName)
+              & PhysicalName)
             
             if ( returnStatus == PGS_S_SUCCESS ) then
 
 					IF(.NOT. caseSensitive) THEN
-						TryName = Capitalize(TryName)
+						TryName = Capitalize(PhysicalName)
+					ELSE
+						TryName = PhysicalName
 					ENDIF
 
               if ( INDEX(TryName, TRIM(MatchName)) /= 0 )then
@@ -138,8 +154,12 @@ MODULE MLSFiles               ! Utility file routines
 					endif
 
 				endif
-
+				
 	ENDDO
+
+	if(present(ExactName) .AND. ErrType == 0) then
+		ExactName = PhysicalName
+	endif
 
   END FUNCTION GetPCFromRef
 	
@@ -495,8 +515,6 @@ MODULE MLSFiles               ! Utility file routines
 	
 	character (len=1) :: mySlash
 	character (len=NameLEN) :: mirrored_ffn
-	character (len=NameLEN) :: mirrored_name
-	character (len=NameLEN) :: mirrored_path
 	integer :: loc
 	
 	! Begin
@@ -535,6 +553,9 @@ END MODULE MLSFiles
 
 !
 ! $Log$
+! Revision 2.9  2001/04/09 23:42:38  pwagner
+! Resets version properly each time
+!
 ! Revision 2.8  2001/04/07 00:16:28  pwagner
 ! fixed MAXFILENAMELENGTH to not core dump in toolbox
 !
