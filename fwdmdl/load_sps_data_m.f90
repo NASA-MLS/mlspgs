@@ -161,7 +161,6 @@ contains
     type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
 
     logical :: FoundInFirst                  ! Flag
-    logical :: is_h2o
     integer :: supersat_Index
     integer :: wf
     integer :: f_index
@@ -216,7 +215,8 @@ contains
 
     do ii = 1, no_mol
       kk = FwdModelConf%molecules(mol_cat_index(ii))
-      if ( spec_tags(kk) == sp_h2o ) h2o_ind = ii
+      if ( spec_tags(kk) == sp_h2o ) h2o_ind = ii        ! memorize h2o index
+      
       f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=quantityType, molIndex=mol_cat_index(ii), &
         & radiometer=radiometer, config=fwdModelConf )
@@ -266,15 +266,11 @@ contains
     call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
                        & ModuleName )
 
-    allocate(Grids_x_values(size(Grids_x%values)))
-    Grids_x_values = Grids_x%values
     j = 1
     l = 1
     s = 1
     f_len = 1
     do ii = 1, no_mol
-      kk = FwdModelConf%molecules(mol_cat_index(ii))
-      is_h2o = ( spec_tags(kk) == sp_h2o ) 
       i = mol_cat_index(ii)
       f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=quantityType, molIndex=i, radiometer=radiometer, &
@@ -305,6 +301,7 @@ contains
       r = f_len + kf * kz * kp
       Grids_x%values(f_len:r-1) = reshape(f%values(1:kf*kz,wf1:wf2), &
                                       & (/kf*kz*kp/))
+!  mixing ratio values are manipulated if it's log basis
       if ( Grids_x%lin_log(ii) ) then
         where ( Grids_x%values(f_len:r-1) <= grids_x%min_val(ii) ) &
              & Grids_x%values(f_len:r-1) = grids_x%min_val(ii)
@@ -324,7 +321,8 @@ contains
         grids_x%deriv_flags(f_len:r-1) = .false.
       end if
 
-      if ( my_supersat /= 0 .and. is_h2o ) then
+! modify h2o mixing ratio if a special supersaturation request is present
+      if ( my_supersat /= 0 .and. ii == h2o_ind ) then
         select case ( my_supersat )
         case ( -1 )
           RHI=110.0_r8
@@ -333,6 +331,7 @@ contains
         end select
         values_index = f_len - 1 + 1 + kf*(supersat_Index-1)
 
+      ! find the index for the top of saturation levels
         call Hunt (Grids_x%zet_basis(l:n-1), -log10(refPRESSURE), supersat_Index, &
         & 1, nearest=.true.)
 
@@ -344,20 +343,34 @@ contains
            call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Could not find value of Zeta in Grid_T; returned index too BIG' )
         else
+        
+        ! H2O may have log basis functions
+          if ( Grids_x%lin_log(ii) ) then
           do wf = wf1, wf2
             do f_index = 1, kf
               do z_index = 1, supersat_Index
                 values_index = f_len - 1 + f_index + kf*(z_index-1) + kf*kz*(wf-wf1)
-                Grids_x%values(values_index) = RHIFromH2O_Factor (temp_supersat(z_index), &
-                 & grids_x%zet_basis(l+z_index-1), 0, .true.)*RHI
+                Grids_x%values(values_index) = &
+                 & log(RHIFromH2O_Factor (temp_supersat(z_index), &
+                 & grids_x%zet_basis(l+z_index-1), 0, .true.)*RHI)
               end do
             end do
           end do
-        end if
+          else
+          do wf = wf1, wf2
+            do f_index = 1, kf
+              do z_index = 1, supersat_Index
+                values_index = f_len - 1 + f_index + kf*(z_index-1) + kf*kz*(wf-wf1)
+                Grids_x%values(values_index) = &
+                 & RHIFromH2O_Factor (temp_supersat(z_index), &
+                 & grids_x%zet_basis(l+z_index-1), 0, .true.)*RHI
+              end do
+            end do
+          end do          
+          endif   ! linear or log basis
 
-        values_index = f_len - 1 + 1 + kf*(supersat_Index-1)
-
-      end if
+         end if      ! check supersat_index
+      end if      ! my_supersat
 
       j = k
       l = n
@@ -365,14 +378,6 @@ contains
       f_len = r
 
     end do
-
-    diff = sum(abs(Grids_x_values - Grids_x%values))
-    max_value = 0.
-    do i=1, size(Grids_x%values)
-      max_value = max(max_value, abs(Grids_x_values(i)))
-    enddo
-
-    deallocate(Grids_x_values)
 
     f_len = f_len - 1
 
@@ -405,6 +410,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.41  2003/02/13 00:07:22  jonathan
+! another bug fix
+!
 ! Revision 2.40  2003/02/12 23:50:49  jonathan
 ! add optional to i_supersat and temp_supersat
 !
