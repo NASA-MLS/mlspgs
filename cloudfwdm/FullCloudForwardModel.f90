@@ -153,7 +153,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noSgrid                             ! no of elements in S grid
     integer :: noSurf                              ! Number of pressure levels
     integer :: novmrSurf                           ! Number of vmr levels
-    integer :: noCldSurf                           ! Number of cloud ext levels
+    integer :: noExtSurf                           ! Number of cloud ext levels
+    integer :: noIWCSurf                           ! Number of cloud IWC levels
+    integer :: noLWCSurf                           ! Number of cloud LWC levels
     integer :: NOFREQS                             ! Number of frequencies
     integer :: DIRECTION                           ! Direction of channel numbering
 
@@ -384,7 +386,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
 
         ! Get number of cloud surfaces for retrieval
-        noCldSurf=state_ext%template%noSurfs
+        noIWCSurf=cloudice%template%noSurfs
+        noLWCSurf=cloudwater%template%noSurfs
+        noExtSurf=state_ext%template%noSurfs
+
+        ! check if these dimensions are same
+        if(noIWCSurf .ne. noLWCSurf &
+          & .or. noIWCSurf .ne. noExtSurf) then
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+          &'IWC, LWC and Extinction profiles have different vertical grids')
+        endif
+
         ! Get s dimension
         noSgrid=state_los%template%noChans
         
@@ -568,8 +580,23 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     allocate ( WC(ForwardModelConfig%no_cloud_species,NoSurf), STAT=status )
 
     do i=1,ForwardModelConfig%no_cloud_species
+     if(noSurf .eq. noIWCSurf) then
       if(i .eq. 1) WC (i,:) = CloudIce%values(:,instance)
       if(i .eq. 2) WC (i,:) = CloudWater%values(:,instance)
+     else
+      if(i .eq. 1) &
+        & call InterpolateValues ( &
+        & reshape(CloudIce%template%surfs(:,1),(/noIWCSurf/)), &    ! Old X
+        & reshape(CloudIce%values(:,instance),(/noIWCSurf/)),  &    ! Old Y
+        & reshape(temp%values(:,instance),(/noSurf/)),      &    ! New X
+        & WC (i,:), 'Linear' )                                   ! New Y
+      if(i .eq. 2) &
+        & call InterpolateValues ( &
+        & reshape(CloudWater%template%surfs(:,1),(/noIWCSurf/)), &    ! Old X
+        & reshape(CloudWater%values(:,instance),(/noIWCSurf/)),  &    ! Old Y
+        & reshape(temp%values(:,instance),(/noSurf/)),      &    ! New X
+        & WC (i,:), 'Linear' )                                   ! New Y
+     endif      
     enddo
 
     call allocate_test ( superset, size(antennaPatterns), &
@@ -864,7 +891,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
-        call CreateBlock ( jBlock, noMIFs, noCldSurf*noInstances, M_Full )
+        call CreateBlock ( jBlock, noMIFs, noExtSurf*noInstances, M_Full )
         jBlock%values = 0._rm
 
       !-------------------------------------------------------------------
@@ -905,7 +932,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       
       do mif = 1, noMIFs
       ! Jacobians at only tangent heights less than the top level of retrieval are calculated
-      if(  state_ext%template%surfs(noCldSurf,1) > ptan%values(mif,maf) .and. &
+      if(  state_ext%template%surfs(noExtSurf,1) > ptan%values(mif,maf) .and. &
          & state_ext%template%surfs(1,1) < ptan%values(mif,maf)) then
         !------------------------------
         ! find z for given phi_fine
@@ -947,12 +974,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !----------------------------------------------------------
         
          do i = minInst,maxInst             ! loop over closer profiles
-         do j = 1,noCldSurf                 ! loop over cloudQty surface
+         do j = 1,noExtSurf                 ! loop over cloudQty surface
          do k = 1,nfine*nNear               ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2._r8 &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2._r8) &
-           & jBlock%values(mif,j+(i-1)*noCldSurf) = &
-           & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/1.e3_r8
+           & jBlock%values(mif,j+(i-1)*noExtSurf) = &
+           & jBlock%values(mif,j+(i-1)*noExtSurf) + ds_fine(k)/1.e3_r8
          end do
          end do
          end do
@@ -1057,6 +1084,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.120  2003/07/09 20:17:22  livesey
+! Anticipative bug fix in sideband fraction
+!
 ! Revision 1.119  2003/05/29 16:38:03  livesey
 ! Renamed sideband fraction
 !
