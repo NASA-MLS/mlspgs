@@ -72,6 +72,7 @@ geodAngle
 gph
 
 h2oquantity
+hdfversion
 height
 hgrid
 homeGeodAngle
@@ -213,6 +214,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.22  2002/01/23 21:49:17  pwagner
+# Added hdfversion
+#
 # Revision 2.21  2002/01/21 21:14:35  livesey
 # Added stuff for binSelector
 #

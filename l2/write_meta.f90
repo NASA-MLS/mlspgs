@@ -385,7 +385,7 @@ contains
 
   ! ---------------------------------------------  Third_grouping  -----
 
-  subroutine Third_grouping ( HDF_FILE, L2pcf, Groups )
+  subroutine Third_grouping ( HDF_FILE, L2pcf, Groups, hdfVersion )
 
     ! This writes the following metadata attributes:
 
@@ -426,6 +426,7 @@ contains
     ! string pass of 50.
 
     character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+    integer, optional, intent(in) :: hdfVersion
 
     !Local Variables
 
@@ -635,7 +636,7 @@ contains
     end if
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -657,7 +658,7 @@ contains
     end if
 
 !    hdfReturn = sfend(sdid)
-    hdfReturn = mls_sfend(sdid)
+    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
 
     returnStatus = pgs_met_remove() 
 
@@ -666,7 +667,7 @@ contains
   ! --------------------------------------  Populate_metadata_std  -----
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & L2pcf, Field_name, Metadata_error )
+    & L2pcf, Field_name, hdfVersion, Metadata_error )
 
     ! This is the standard way to write meta data
     ! It should work unchanged for the standard l2gp files (e.g. BrO)
@@ -684,6 +685,7 @@ contains
     integer :: HDF_FILE, MCF_FILE
     type(PCFData_T) :: L2pcf
     character (len=*) :: Field_name
+    integer, optional, intent(in) :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
 
     !Local Variables
@@ -743,10 +745,10 @@ contains
 		
     call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
-    call third_grouping (HDF_FILE, l2pcf, groups)
+    call third_grouping (HDF_FILE, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -776,7 +778,7 @@ contains
     end if
 
 !    hdfReturn = sfend(sdid)
-    hdfReturn = mls_sfend(sdid)
+    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
 
     ! Annotate the file with the PCF
 
@@ -795,7 +797,7 @@ contains
   ! --------------------------------------  Populate_metadata_oth  -----
 
   subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, L2pcf, &
-    & NumQuantitiesPerFile, QuantityNames, Metadata_error )
+    & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error )
 
     ! This is specially to write meta data for heterogeneous files
     ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -809,6 +811,7 @@ contains
     type(PCFData_T) :: L2pcf
     character (len=*), dimension(:) :: QuantityNames
     integer, optional, intent(out) :: Metadata_error
+    integer, optional, intent(in) :: hdfVersion
 
     !Local Variables
 
@@ -874,10 +877,10 @@ contains
 
     end do
 
-    call third_grouping (HDF_FILE, l2pcf, groups)
+    call third_grouping (HDF_FILE, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -908,7 +911,7 @@ contains
     end if
 
 !    hdfReturn = sfend(sdid)
-    hdfReturn = mls_sfend(sdid)
+    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
 
 ! Annotate the file with the PCF
 
@@ -1462,6 +1465,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.22  2002/01/23 21:50:04  pwagner
+! Uses hdfVersion optional parameter
+!
 ! Revision 2.21  2002/01/22 17:45:26  pwagner
 ! Removed bogus declaration of pgs_met_startf
 !
