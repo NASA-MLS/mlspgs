@@ -80,11 +80,16 @@ CONTAINS
     TYPE (L2GPData_T), INTENT(OUT)  :: l2gp
 
     ! Local variables
-    INTEGER :: status
+    INTEGER :: status,surfsArrayLen
 
-    ALLOCATE (l2gp%pressures(noSurfs),STAT=status)
-    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"l2gp%pressure")
+    IF (noSurfs/=0) THEN
+       surfsArrayLen=noSurfs
+       ALLOCATE (l2gp%pressures(noSurfs),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"l2gp%pressure")
+    ELSE
+       surfsArrayLen=1          ! For allocating the data
+    ENDIF
 
     ALLOCATE (l2gp%latitude(noProfs), l2gp%longitude(noProfs), &
          & l2gp%solarTime(noProfs), l2gp%solarZenith(noProfs), &
@@ -100,8 +105,9 @@ CONTAINS
             & MLSMSG_Allocate//"l2gp%frequency")
     END IF
 
-    ALLOCATE (l2gp%l2gpValue(MAX(1,noFreqs),noSurfs,noProfs), &
-         & l2gp%l2gpPrecision(MAX(1,noFreqs),noSurfs,noProfs), STAT=status)
+    ALLOCATE (l2gp%l2gpValue(MAX(1,noFreqs),surfsArrayLen,noProfs), &
+         & l2gp%l2gpPrecision(MAX(1,noFreqs),surfsArrayLen,noProfs), &
+         & STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"l2gp data/precision fields")
 
@@ -125,7 +131,7 @@ CONTAINS
 
     ! Executable code
 
-    DEALLOCATE(l2gp%pressures)
+    IF (ASSOCIATED(l2gp%pressures)) DEALLOCATE(l2gp%pressures)
     DEALLOCATE(l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
          & l2gp%solarZenith, l2gp%losAngle, l2gp%geodAngle, &
          & l2gp%chunkNumber, l2gp%ccsdsTime)
@@ -201,6 +207,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.8  1999/12/21 19:00:10  livesey
+! Typo in accumulatedProfiles
+!
 ! Revision 1.7  1999/12/21 00:15:15  livesey
 ! Added accumulatedProfiles to L2GPData_T for Join
 !
