@@ -545,10 +545,10 @@ contains ! =====     Public Procedures     =============================
     ! A trick! Add final elapsed time to last phase
     call add_to_phase_timing(' ')
     FINISHEDPHASETIMES = .true.
-    print *, 'num_phases: ', num_phases
+    ! print *, 'num_phases: ', num_phases
     do elem = 1, num_phases
       call GetStringElement(trim(phaseNames), section_name, elem, countEmpty)
-      print *, trim(section_name), phase_timings(elem)
+      ! print *, trim(section_name), phase_timings(elem)
     enddo
     phases = .false.
   endif
@@ -742,6 +742,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.25  2004/08/16 17:13:06  pwagner
+! Commented out debug printing
+!
 ! Revision 2.24  2004/08/04 23:19:58  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
