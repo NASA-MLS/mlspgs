@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -22,9 +22,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   ! Level 1 program type(s)
 
+  CHARACTER (LEN=*), PARAMETER :: GHzType = "G"
   CHARACTER (LEN=*), PARAMETER :: THzType = "T"
   CHARACTER (LEN=*), PARAMETER :: LogType = "L"
-  CHARACTER (LEN=1) :: L1ProgType = " "   ! Current L1 type
+  CHARACTER (LEN=1) :: L1ProgType = GHzType   !! Default type
   
   ! The science and engineering Level 0 file info
 
@@ -45,6 +46,8 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
     INTEGER :: EngId           ! The HDF ID (handle) for the L1BENG file
     INTEGER :: DiagId          ! The ID (non-HDF) (handle) for the L1BDIAG file
     INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
+    INTEGER :: EngMAF_unit, SciMAF_unit  ! units for EngMAF & SciMAF files
+    INTEGER :: MAF_data_unit   ! unit for Eng/Sci MAF data merged
     CHARACTER (LEN=FileNameLen) :: OAFileName  ! L1BOA file name
     CHARACTER (LEN=FileNameLen) :: RADDFileName, RADFFilename, RADTFileName
     CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
@@ -75,7 +78,8 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   TYPE MAFinfo_T
      REAL(r8) :: startTAI    ! TAI93 format
-     REAL(r4) :: integTime   ! integration time
+     REAL(r4) :: MIF_dur     ! MIF duration time (secs)
+     REAL(r4) :: integTime   ! integration time (secs)
      INTEGER :: MIFsPerMAF   ! Number of MIFs per MAF
   END TYPE MAFinfo_T
   TYPE (MAFinfo_T) :: MAFinfo  ! Needed for L1BOA output
@@ -110,18 +114,19 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
 !! Switching mirror ranges
 
+  REAL(r8), PARAMETER :: GHzTol = 0.05  ! GHz tolerance
   REAL(r8), PARAMETER :: THzTol = 360.0 / 16384.0  ! THz tolerance
 
-  TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_A(4) = (/ &  ! "A" side
-       SwMir_Range_T ("L", 149.4, 149.6), &
-       SwMir_Range_T ("S", 329.4, 329.6), &
-       SwMir_Range_T ("T", 239.4, 239.6), &          ! Primary target
-       SwMir_Range_T ("t", 59.4, 59.6) /)            ! Secondary target
-  TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_B(4) = (/ &  ! "B" side
-       SwMir_Range_T ("L", 329.499, 329.699), &
-       SwMir_Range_T ("S", 149.499, 149.699), &
-       SwMir_Range_T ("T", 59.499, 59.699), &        ! Primary target
-       SwMir_Range_T ("t", 239.499, 239.699) /)      ! Secondary target
+  TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_A(4) = (/ & ! "A" side
+       SwMir_Range_T ("L", 149.5-GHzTol, 149.5+GHzTol), &
+       SwMir_Range_T ("S", 329.5-GHzTol, 329.5+GHzTol), &
+       SwMir_Range_T ("T", 239.5-GHzTol, 239.5+GHzTol), &     ! Primary target
+       SwMir_Range_T ("t", 59.5-GHzTol, 59.5+GHzTol) /)       ! Secondary target
+  TYPE (SwMir_Range_T), TARGET :: GHz_SwMir_Range_B(4) = (/ & ! "B" side
+       SwMir_Range_T ("L", 329.599-GHzTol, 329.599+GHzTol), &
+       SwMir_Range_T ("S", 149.599-GHzTol, 149.599+GHzTol), &
+       SwMir_Range_T ("T", 59.599-GHzTol, 59.599+GHzTol), &   ! Primary target
+       SwMir_Range_T ("t", 239.599-GHzTol, 239.599+GHzTol) /) ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: THz_SwMir_Range(3) = (/ &
        SwMir_Range_T ("S", 359.39-THzTol, 359.39+THzTol), &
        SwMir_Range_T ("T", 178.75-THzTol, 178.75+THzTol), &
@@ -165,13 +170,15 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
        642.8700e9, 2.5227816e12 /)
 
   ! --------------------------------------------------------------------------
-  
 
 !=============================================================================
 END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.5  2002/11/14 17:03:17  perun
 ! Constants for THz and DACS processing
 !

@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -9,10 +8,12 @@ MODULE Scan
    USE MLSCommon
    USE MLSMessageModule
    USE SDPToolkit
-   IMPLICIT NONE
-   PUBLIC
 
-   PRIVATE :: ID, ModuleName
+   IMPLICIT NONE
+
+   PRIVATE
+
+   PUBLIC :: Scan_guess, Scan_start
 
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &
@@ -57,7 +58,7 @@ CONTAINS
 
 ! Variables
 
-      INTEGER :: i, returnStatus
+      INTEGER :: returnStatus
 
       REAL(r8) :: angle
       REAL(r8) :: eci(3), sc(3)
@@ -189,6 +190,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.0  2000/09/05 18:55:15  ahanzel
+! Changing file revision to 2.0.
+!
 ! Revision 1.1  2000/02/10 16:54:27  nakamura
 ! Module that models the MLS scan program.
 !
