@@ -5,13 +5,14 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
-  use Hdf, only: DFACC_READ, &
-    & DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, DFNT_INT8, &
-    & SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
-    & SFENDACC, SFSTART, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
+  use Hdf, only: &
+    & DFNT_FLOAT32, DFNT_INT32, &
+    & SFCREATE, SFDIMID, SFSDSCALE, &
+    & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
-  use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
-    & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
+  use intrinsic, only: LIT_INDICES, L_CHANNEL, &
+    & L_MAF, L_MIF, L_NONE
+  use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
@@ -21,7 +22,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSStrings, only: GetStringElement, NumStringElements
   use Output_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use Tree, only: DUMP_TREE_NODE, SOURCE_REF
+  use Tree, only: SOURCE_REF
 
   implicit none
 
@@ -303,7 +304,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: DETAILS
 
     ! Local variables
-    integer :: i, dim
+    integer :: i
     
     call output ( '============ L2AUX Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
@@ -455,8 +456,8 @@ contains ! =====     Public Procedures     =============================
     character (LEN=132) :: dim_name
     character (LEN=1)                  :: dim_char
 
-    integer :: nDims, status
-    integer :: start(3), stride(3), edge(3), dims(3)
+    integer :: status
+    integer :: start(3), stride(3)
 
     logical :: firstCheck, lastCheck
     real (r4), dimension(:,:,:), pointer :: TMPVALUES
@@ -578,6 +579,11 @@ contains ! =====     Public Procedures     =============================
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
+    ! Assumptions
+    ! The data format is radiance-like, single- or double-precision
+    ! You don't really care which names the original dimensions had
+    ! You want the new dimension families to be 'channel', 'MIF', 'MAF'
+    ! and in that order
 
     ! Arguments
 
@@ -588,10 +594,33 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: checkDimNames
 
     ! Parameters
+    type(l1bdata_t)               :: L1BDATA ! Intermediate Result
+    integer                       :: NoMAFs
+    logical, parameter            :: NEVERFAIL = .TRUE.
+    integer, dimension(L2AUXRank) :: dim_families
+    integer, dimension(L2AUXRank) :: data_dim_sizes
+    integer                       :: status
     ! Executable
-    call MLSMessage ( MLSMSG_Error,ModuleName, &
-          & 'Sorry--unable to read hdf5-formatted l2aux files yet' )
+    ! call MLSMessage ( MLSMSG_Error,ModuleName, &
+    !      & 'Sorry--unable to read hdf5-formatted l2aux files yet' )
+    CALL ReadL1BData(sd_id, QuantityName, L1bData, NoMAFs, status, &
+    & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL)
+    if ( status /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read ' &
+      & // trim(QuantityName) // ' (perhaps too unlike a radiance)' )
 
+    dim_families(1) = l_channel                      
+    data_dim_sizes = shape(L1BDATA%DpField)          
+    dim_families(2) = l_mif                          
+    dim_families(3) = l_maf                          
+    call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
+    l2aux%values = L1BDATA%DpField
+    deallocate(L1BDATA%DpField, stat=status)
+    if ( status /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to deallocate l1bdata%dpField while reading' &
+      & // trim(QuantityName) )
   end subroutine ReadL2AUXData_hdf5
 
   !----------------------------------------------------- WriteL2AUXData ------
@@ -841,7 +870,7 @@ contains ! =====     Public Procedures     =============================
 !          & "Error setting dimension name to SDS l2aux file:")
 	     endif
         ! Write dimension scale
-        status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32,&
+        status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32, &
           & l2aux%dimensions(dimensionInData)%values)
         if ( status /= 0 ) then
 		  		call output("dimID: ")
@@ -949,6 +978,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.42  2002/12/10 00:41:28  pwagner
+! In principle can now read hdf5-formatted l2aux files; untested; njl has other plans
+!
 ! Revision 2.41  2002/12/07 00:25:42  pwagner
 ! Using SaveAsHDF5DS to write l2aux%values; it works
 !
