@@ -1,11 +1,15 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! -------------------------------------------------------
 MODULE WriteMetaL1 ! Populate metadata and write it out
 ! -------------------------------------------------------
 
+  USE Hdf, ONLY: DFACC_RDWR, sfstart, sfend
+  USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   USE SDPToolkit
   USE MLSPCF1
-  USE Hdf, ONLY: DFACC_RDWR, sfstart, sfend
   USE Orbit, ONLY: orbitNumber, numOrb
 
   IMPLICIT NONE
@@ -405,6 +409,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.4  2002/01/09 23:53:09  pwagner
+! Now gets r8 explicitly from MLSCommon
+!
 ! Revision 2.3  2001/03/22 20:15:48  perun
 ! Corrected valids
 !
