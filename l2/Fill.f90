@@ -52,7 +52,8 @@ module Fill                     ! Create vectors and fill them.
     & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSNumerics, only: InterpolateValues, drang
+  use MLSNumerics, only: InterpolateValues
+  use MLSRandomNumber, only: drang
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -2338,6 +2339,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.77  2001/09/24 17:28:15  pwagner
+! Gets drang from MLSRandomNumber
+!
 ! Revision 2.76  2001/09/21 23:23:35  pwagner
 ! Stiff fails to add noise properly
 !
