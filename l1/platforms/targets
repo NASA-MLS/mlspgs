@@ -126,10 +126,13 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 OutputL1B.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/OutputL1B.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.10  2001/06/04 22:00:28  pwagner
 # Extra shared-object instructions on hdf5 linker line
 #
