@@ -55,6 +55,9 @@ endif
 
 #
 # $Log$
+# Revision 2.0  2000/09/05 17:41:07  dcuddy
+# Change revision to 2.0
+#
 # Revision 1.13  2000/06/30 22:55:24  lungu
 # updated for NAG.
 #

@@ -49,6 +49,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 2.0  2000/09/05 17:42:08  dcuddy
+! Change revision to 2.0
+!
 ! Revision 1.2  2000/07/06 18:04:08  vsnyder
 ! Insert CVS "variables"
 !
