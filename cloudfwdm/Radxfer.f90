@@ -1,6 +1,6 @@
 
       SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ, &
-      &          YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)
+      &          YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,ICON,RE)
 
 !===================================================================
 !     >>>>>>ITERATIVE RADIATIVE TRANSFER CALCULATION<<<<<<
@@ -22,10 +22,10 @@
       REAL(r8) :: RE
       PARAMETER (PI=3.1415926)
 
-      INTEGER :: L,NT,NU,NU0,NUA,N0,N,MNT
-      INTEGER :: NZ                       ! MAXIMUM NO. OF INTEGRAL LAYERS
+      INTEGER :: L,NT,NU,NUA,N
+      
       REAL(r8) :: FIRST                   ! FIRST GUESS OF UPWELLING TB
-      PARAMETER (NZ=1600,FIRST=250.,NU0=256,N0=2)
+      PARAMETER (FIRST=250._r8)
 
       REAL(r8) :: U(NU),DU(NU),THETA(NU),PHI(NUA),      &
       &     THETAI(NU,NU,NUA),UI(NU,NU,NUA),UA(NUA) 
@@ -34,18 +34,18 @@
       REAL(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
       REAL(r8) :: YZ(L+1)                 ! PRESSURE HEIGHT (km)
       REAL(r8) :: ZT(NT)                  ! TANGENT HEIGHT (m)
-      REAL(r8) :: TT(MNT+1,L+1)           ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
+      REAL(r8) :: TT(NT+1,L+1)           ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
       REAL(r8) :: FREQ                    ! FREQUENCY (GHz)
       REAL(r8) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
       REAL(r8) :: TS                      ! SURFACE TEMPERATURE (K)
-      REAL(r8) :: TEMP(NZ)                ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
-      REAL(r8) :: TB0(NU0)                ! TB AT THE SURFACE
+      REAL(r8) :: TEMP(L+1)                ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      REAL(r8) :: TB0(NU)                ! TB AT THE SURFACE
       REAL(r8) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
-      REAL(r8) :: TB(NU0,NZ)              ! TB IN FLAT PLANE GEOMETRY
+      REAL(r8) :: TB(NU,L+1)              ! TB IN FLAT PLANE GEOMETRY
                                           ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
-      REAL(r8) :: TSCAT(N0,NU0,NZ)        ! TB FROM SCATTERING PHASE FUNCTION
+      REAL(r8) :: TSCAT(N,NU,L+1)        ! TB FROM SCATTERING PHASE FUNCTION
 
-      INTEGER :: LMIN(NZ)                 ! LOWEST LAYER REACHED BY A TANGENT HT
+      INTEGER :: LMIN(L+1)                 ! LOWEST LAYER REACHED BY A TANGENT HT
 
       INTEGER :: ICON                     ! CONTROL SWITCH
                                           ! 0 = CLEAR-SKY
@@ -54,7 +54,7 @@
                                           ! 2 = DEFAULT
                                           ! 3 = NEAR SIDE CLOUD ONLY
 
-      REAL(r8) :: UAVE(NZ,NZ)             ! INCIDENT ANGLES FOR EACH TANGENT HT
+      REAL(r8) :: UAVE(L+1,L+1)             ! INCIDENT ANGLES FOR EACH TANGENT HT
       REAL(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
 
       REAL(r8) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
@@ -62,7 +62,7 @@
 
       INTEGER :: I,J,K,K1,ITS,ITT,IH,IP,JM,IND,ISPI
       REAL(r8) :: D1,D2,DY,TGT, jj0
-      REAL(r8) :: WK,WK1,U1(NU0),UU(NZ),X2,RSAVG,XTB(NZ),WW0,CHK(NZ)
+      REAL(r8) :: WK,WK1,U1(NU),UU,X2,RSAVG,XTB(L+1),WW0,CHK(L+1)
       REAL(r8) :: tsource, wwk, wwk1,www0
 
 !------------------------------------------------
@@ -82,7 +82,7 @@
       jj0=1.e-9
 
       DO K=1,L
-         CHK(K)=0.
+         CHK(K)=0._r8
          DO ISPI=1,N
             CHK(K)=CHK(K)+W0(ISPI,K)
          ENDDO
@@ -107,7 +107,7 @@
          DO K=LMIN(I),L
             TGT= YZ(K)
             if(tgt .lt. zt(i)) tgt=zt(i)
-            IF(ZT(I) .LT. 0.) THEN
+            IF(ZT(I) .LT. 0._r8) THEN
                D2=SQRT((YZ(K+1)+RE)**2-(ZT(I)+RE)**2)
                D1=SQRT((TGT+RE)**2-(ZT(I)+RE)**2)
                UAVE(I,K)=(YZ(K+1)-YZ(K))/(D2-D1)          !
@@ -130,7 +130,7 @@
       DO K=1,L+1
          DO I=1,NU/2
             TB(I,K)=FIRST
-            XTB(I)=0.
+            XTB(I)=0._r8
          ENDDO
          DO I=NU/2+1,NU
             TB(I,K)=TSPACE
@@ -160,10 +160,10 @@
          DO 1009 IP=1,NU
             U1(IP)=-U(IP)
             DO 1008 K=1,L
-               TSCAT(ISPI,IP,K)=0.0
-               IF(PHH(ISPI,1,K).NE.0.)THEN 
+               TSCAT(ISPI,IP,K)=0.0_r8
+               IF(PHH(ISPI,1,K).NE.0._r8)THEN 
                   DO IH=1,NU
-                     TAVG=0.
+                     TAVG=0._r8
                      DO J=1,NUA
                         K1=K
                         IF(THETAI(IP,IH,J).LT.PI/2) K1=K-1
@@ -177,6 +177,8 @@
                      TSCAT(ISPI,IP,K)=TSCAT(ISPI,IP,K)+               &
      &                                2.*PHH(ISPI,IH,K)*TAVG*DU(IH)
                   ENDDO
+               ELSE
+                 TSCAT(ISPI,IP,K)=0._r8         !CLEAR SKY
                ENDIF
  1008       CONTINUE
  1009    CONTINUE
@@ -190,15 +192,15 @@
          X2 = U(I)*U(I)
          UEFF = ABS(U(I))
          DO 1100 K=L-1,1,-1
-            WK=0.
-            WW0=0.
+            WK=0._r8
+            WW0=0._r8
             DO ISPI=1,N
                WK=WK+TSCAT(ISPI,I,K)*W0(ISPI,K)
                WW0=WW0+W0(ISPI,K)
             ENDDO
 
-            wwk=0.
-            www0=0.
+            wwk=0._r8
+            www0=0._r8
 !            if (k+1 .le. L) then         !no L+1 levels for w0
             DO ISPI=1,N
                wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
@@ -209,7 +211,7 @@
          tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
 
             TB(I,K)=TB(I,K+1)*EXP(-TAU(K)/UEFF)+           &
-     &              (1.-EXP(-TAU(K)/UEFF))*tsource
+     &              (1._r8-EXP(-TAU(K)/UEFF))*tsource
 
  1100 CONTINUE
 
@@ -217,7 +219,7 @@
 !     DETERMINE SURFACE REFLECTION 
 !-----------------------------------------------------------------------
       DO J=1,NU/2
-        TB0(J)=TS*(1.-RS(J))+TB(J+NU/2,1)*RS(J)
+        TB0(J)=TS*(1._r8-RS(J))+TB(J+NU/2,1)*RS(J)
 	TB(J,1) = TB0(J)
       ENDDO
     
@@ -229,15 +231,15 @@
         X2 = U(I)*U(I)
         UEFF = ABS(U(I))
         DO 1200 K=1,L-1
-           WK=0.
-           WW0=0.
+           WK=0._r8
+           WW0=0._r8
            DO ISPI=1,N
               WK=WK+TSCAT(ISPI,I,K)*W0(ISPI,K)
               WW0=WW0+W0(ISPI,K)
            ENDDO
 
-           wwk=0.
-           www0=0.
+           wwk=0._r8
+           www0=0._r8
 !           if (k+1 .le. L) then         !no K+1 for W0
            DO ISPI=1,N
               wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
@@ -247,7 +249,7 @@
            tsource=(((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk))*0.5
 
            TB(I,K+1)=TB(I,K)*EXP(-TAU(K)/UEFF)+      &
-     &               (1.-EXP(-TAU(K)/UEFF))*tsource
+     &               (1._r8-EXP(-TAU(K)/UEFF))*tsource
 
  1200 CONTINUE
 
@@ -255,14 +257,14 @@
 !     CHECK CONVERGENCE
 !------------------------------------
       IND=0
-      X2=0.
+      X2=0._r8
       DO J=1,NU/2
          X2=X2+(XTB(J)-TB(J,L))**2/NU
          IF (ABS(XTB(J)-TB(J,L)) .GT. DELTA) IND=1
       ENDDO
  
       IF (IND.NE.0 .AND. ITS.LT.ITS0) THEN
-      DO J=1,NT
+      DO J=1,NU
          XTB(J)=TB(J,L)
       ENDDO
          IF (ITS .GT. 1) THEN
@@ -282,42 +284,49 @@
       DO 2000 ITT=1,NT
       DO 2000 K=1,L-LMIN(ITT)
          K1=L-K
-         UU(ITT)=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT) 
-         CALL LOCATE(U1,NU/2,NU0,-UU(ITT),JM) ! INTERPOLATE TSCAT ONTO UU(ITT)
-         WK=0.
-         WW0=0.
+         UU=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT) 
+         CALL LOCATE(U1,NU/2,NU,-UU,JM) ! INTERPOLATE TSCAT ONTO UU
+         WK=0._r8
+         WW0=0._r8
          DO ISPI=1,N
-            WK1=W0(ISPI,K1)*( (TSCAT(ISPI,JM+NU/2+1,K1)*(UU(ITT)-U(JM))+  &
-     &          TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU(ITT)))/                &
+            WK1=W0(ISPI,K1)*( (TSCAT(ISPI,JM+NU/2+1,K1)*(UU-U(JM))+  &
+     &          TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU))/                &
      &          (U(JM+1)-U(JM)) )
             WK=WK+WK1
             WW0=WW0+W0(ISPI,K1)
          END DO
 
-         UU(ITT)=UAVE(ITT,K1+1) 
-         wwk=0.
-         www0=0. 
+         UU=UAVE(ITT,K1+1) 
+         wwk=0._r8
+         www0=0._r8 
 !         if (k1+1 .le. L) then   !no L+1 level for W0
          DO ISPI=1,N
             wwk1=W0(ISPI,K1+1)*                                     &
-     &          ( (TSCAT(ISPI,JM+NU/2+1,K1+1)*(UU(ITT)-U(JM))+      &
-     &          TSCAT(ISPI,JM+NU/2,K1+1)*(U(JM+1)-UU(ITT)))/        &
+     &          ( (TSCAT(ISPI,JM+NU/2+1,K1+1)*(UU-U(JM))+      &
+     &          TSCAT(ISPI,JM+NU/2,K1+1)*(U(JM+1)-UU))/        &
      &          (U(JM+1)-U(JM)) )
             wwk=wwk+wwk1
             www0=www0+W0(ISPI,K1+1)
          END DO
 !         endif
 
+
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
+
+         IF (ICON .eq. 0) THEN
+           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
+         ENDIF
 
          IF (ICON .eq. 3) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 
-         UU(ITT)=(UAVE(ITT,K1)+UAVE(ITT,K1+1))*0.5
+!         UU=(UAVE(ITT,K1)+UAVE(ITT,K1+1))*0.5
 
-         TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU(ITT))+  &
-     &              (1.-EXP(-TAU(K1)/UU(ITT)))*tsource
+         UU=UAVE(ITT,K1+1)
+
+         TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU)+  &
+     &              (1._r8-EXP(-TAU(K1)/UU))*tsource
 
  2000 CONTINUE
 
@@ -329,7 +338,7 @@
 
       DO 2500 ITT=1,NT
          IF(LMIN(ITT).EQ.1) THEN
-            CALL LOCATE(U1,NU/2,NU0,-UAVE(ITT,1),JM) 
+            CALL LOCATE(U1,NU/2,NU,-UAVE(ITT,1),JM) 
             RSAVG=(RS(JM+1)*(UAVE(ITT,1)-U(JM)) +                 &
      &           RS(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
             TT(ITT,1)=(TB0(JM+1)*(UAVE(ITT,1)-U(JM)) +            &
@@ -342,25 +351,25 @@
 !-----------------------------------------
       DO 3000 ITT=1,NT
       DO 3000 K=LMIN(ITT),L-1
-         UU(ITT)=uave(ITT,K)
-         CALL LOCATE(U1,NU/2,NU0,UU(ITT),JM)      ! INTERPOLATE TSCAT ONTO UU
-         WK=0.
-         WW0=0.
+         UU=uave(ITT,K)
+         CALL LOCATE(U1,NU/2,NU,UU,JM)      ! INTERPOLATE TSCAT ONTO UU
+         WK=0._r8
+         WW0=0._r8
          DO ISPI=1,N
-            WK1=W0(ISPI,K)*(TSCAT(ISPI,JM+1,K)*(UU(ITT)-U(JM))+     &
-     &          TSCAT(ISPI,JM,K)*(U(JM+1)-UU(ITT)))/(U(JM+1)-U(JM)) 
+            WK1=W0(ISPI,K)*(TSCAT(ISPI,JM+1,K)*(UU-U(JM))+     &
+     &          TSCAT(ISPI,JM,K)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
             WK=WK+WK1
             WW0=WW0+W0(ISPI,K)
          END DO
 
-         UU(ITT)=uave(ITT,K+1)
-         wwk=0.
-         www0=0.
+         UU=uave(ITT,K+1)
+         wwk=0._r8
+         www0=0._r8
 
 !         if (k+1 .le. L) then
          DO ISPI=1,N
-            wwk1=W0(ISPI,K+1)*(TSCAT(ISPI,JM+1,K+1)*(UU(ITT)-U(JM))+ &
-     &          TSCAT(ISPI,JM,K+1)*(U(JM+1)-UU(ITT)))/(U(JM+1)-U(JM)) 
+            wwk1=W0(ISPI,K+1)*(TSCAT(ISPI,JM+1,K+1)*(UU-U(JM))+ &
+     &          TSCAT(ISPI,JM,K+1)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
             wwk=wwk+wwk1
             www0=www0+W0(ISPI,K+1)
          END DO
@@ -368,10 +377,17 @@
 
          tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
 
-         UU(ITT)=(UAVE(ITT,K)+UAVE(ITT,K+1))*0.5
+         IF (ICON .eq. 0) THEN
+           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
+         ENDIF
 
-         TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU(ITT))+          &
-     &                (1.-EXP(-TAU(K)/UU(ITT)))*tsource
+!         UU=(UAVE(ITT,K)+UAVE(ITT,K+1))*0.5     ! the average is not true at tangent point
+                                                 ! it will reduce contribution by half
+
+         UU=UAVE(ITT,K+1)
+
+         TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU)+          &
+     &                (1._r8-EXP(-TAU(K)/UU))*tsource
 
  3000 CONTINUE
   

@@ -2,7 +2,7 @@
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
         &                    delTAU,delTAUc,TAUeff,SS,          &
         &                    BETA,BETAc,DDm,Dm,DDZ,DZ,          &
-        &                       N,NF,IRF,ISWI,RE)
+        &                       N,ISWI,RE)
 !----------------------------------------------------------------
 
       use MLSCommon, only: r8
@@ -12,15 +12,16 @@
       REAL(r8) :: YP(NH)                            ! MODEL PRESSURE LEVEL
       REAL(r8) :: YZ(NH)                            ! MODEL PRESSURE HEIGHT
       REAL(r8) :: PRESSURE(NZ)                      ! L2 PRESSURE LEVEL
-      REAL(r8) :: DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
-      REAL(r8) :: SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
-      REAL(r8) :: TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL(r8) :: DTcir(NT)                      ! CLOUD-INDUCED RADIANCE
+      REAL(r8) :: SS(NT)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL(r8) :: TAUeff(NT)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
+      REAL(R8) :: TRANS(NH-1)
 
-      REAL(r8) :: BETA(NZ-1,NF)                     ! TOTAL EXTINCTION
-      REAL(r8) :: BETAc(NZ-1,NF)                    ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: BETA(NZ-1)                     ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ-1)                    ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
       REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
@@ -35,9 +36,20 @@
 !===============================================================
 !     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
 !===============================================================
-
+! COMPUTE TRANSMISSION FUNCTION
       DO I=1,NH-1
-         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. )
+        TRANS(I)=0._r8
+      ENDDO
+        TRANS(NH-1) = DELTAU(NH-1)
+      DO I=NH-2,1,-1
+        TRANS(I)=TRANS(I-1)+DELTAU(I)
+      ENDDO
+
+! CONVERT DELTAU TO BETA
+      DO I=1,NH-1
+         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. ) 
+         delTAU(I) = delTAU(I)/DDZ(I)
+         delTAUc(I) = delTAUc(I)/DDZ(I)
       END DO
 
       DO I=1,NZ-1
@@ -47,12 +59,18 @@
       DO J=1,NZ-1
       
          CALL LOCATE (ZH,NH-1, NH-1, ZA(J),JM)
-        
-         BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
-     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
+         
+! If we want to output total beta
+!         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
+!     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
 
-         BETAc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
+! if we want to output air transmission function             
+         BETA(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
+     &                TRANS(JM+1))/(ZH(JM+1)-ZH(JM))
+
+         BETAc(J)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
      &                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
+
 
          Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*        &
      &                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
@@ -65,15 +83,9 @@
 
       ENDDO
 
-      DO J=1,NZ-1
-            IF (DZ(J) .GT. 0.) THEN 
-               BETA(J,IRF)=BETA(J,IRF)/DZ(J)
-               BETAc(J,IRF)=BETAc(J,IRF)/DZ(J)
-            ELSE
-               BETA(J,IRF)=0.
-               BETAc(J,IRF)=0.
-            ENDIF
-      ENDDO
+
+
+
 
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
@@ -135,13 +147,15 @@
 
                ENDDO
 
-               TAUeff(I,IRF)=C_EXT
-               if (TAUeff(I,IRF) .gt. 0.) then
-                  SS(I,IRF)=DTcir(I,IRF)/TAUeff(I,IRF)
+               
+               TAUeff(I)=C_EXT
+               if (TAUeff(I) .gt. 0.) then
+                  SS(I)=DTcir(I)/TAUeff(I)
                else
-                  SS(I,IRF)=0.
+                  SS(I)=0.
                endif
             ENDIF
+
          ENDDO
       
       ENDIF

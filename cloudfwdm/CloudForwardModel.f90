@@ -5,6 +5,8 @@
              &   TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,         &
              &   NU, NUA, NAB, NR)
 
+          use MLSNumerics, only: INTERPOLATEVALUES
+
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
 !----------------------------------------------------------------------------C
@@ -121,7 +123,7 @@
       INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
       INTEGER :: N                             ! NUMBER OF CLOUD SPECIES
       INTEGER :: NZmodel                       ! NUMBER OF INTERNAL MODEL LEVELS
-
+      INTEGER :: MULTI
 
       INTEGER :: IPSDin(NZ)                    ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
@@ -168,7 +170,6 @@
 
       REAL(r8) :: TB0(NT,NF)                   ! CLEAR-SKY TB AT ZT
       REAL(r8) :: DTcir(NT,NF)                 ! CLOUD-INDUCED RADIANCE
-
       REAL(r8) :: TAUeff(NT,NF)                ! CLOUD EFFECTIVE OPTICAL DEPTH
       REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
                                                ! (NT+1) FOR ZENITH LOOKING) 
@@ -222,10 +223,10 @@
       REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
       REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
-      REAL(r8) :: TT(NT+1,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
+      REAL(r8) :: TT(NZmodel/8,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL(r8) :: TT0(NT+1,NZmodel)            ! CLEAR-SKY TB AT TANGENT
+      REAL(r8) :: TT0(NZmodel/8,NZmodel)            ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 !---------------------------------------------
@@ -279,6 +280,12 @@
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: CHK_CLD(NZmodel)                        
       REAL(r8) :: ZZT(NT)
+      REAL(r8) :: ZZT1(NZmodel/8-1)            ! ZT LEVEL FOR CALCULATION 
+                                               ! (a subset OF YZ)
+                                               ! THE RESULT WILL BE INTERPOLATED TO ZZT
+
+!      REAL(r8) :: TMP(NZmodel/8-1)                 
+
       REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
       REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
       REAL(r8) :: DP(NAB,NU)                   ! Delt LEGENDRE POLYNOMIALS l=1
@@ -287,7 +294,6 @@
       REAL(r8) :: RN(NR)                       ! NUMBER OF PARTICLES IN EACH BIN
       REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS/SCAT/EXT 
                                                ! COEFFS
-
       REAL(r8) :: DZ(NZ-1)
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
@@ -306,8 +312,21 @@
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
            &           WCin,IPSDin,                                 &
            &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,     &
-           &           ZT,ZZT,NT) 
+           &           ZT,ZZT,NT)
+ 
+!     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
+      IF (NZmodel-1 .LE. NT) THEN
+        PRINT*,'TOO MANY TANGENT HEIGHTS'
+        STOP
+      ENDIF
+
+      MULTI=NZmodel/8-1
+
+      DO I=1, Multi
+        ZZT1(I)=YZ(I*8)
+      ENDDO
+     
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 !-----------------------------------------------
@@ -327,7 +346,7 @@
       NIWC  = 10
 
       IF (ISWI .EQ. 0) THEN                  
-         RATIO=1.
+         RATIO=1._r8
          MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
       ELSE
           MY_NIWC=NIWC
@@ -341,7 +360,7 @@
          IF (ISWI .EQ. 0) THEN
             RATIO=1.
          ELSE
-            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9
+            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
          ENDIF
 
 !=========================================================================
@@ -364,7 +383,7 @@
 !-----------------------------------------------------
 
          DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
-            IF(CHK_CLD(IL) .NE. 0.)THEN
+            IF(CHK_CLD(IL) .NE. 0._r8)THEN
                ICLD_TOP=IL
                IF(YZ(IL) .LT. 20.)THEN
                   TAU0(IL)=TAU100(IL)
@@ -380,33 +399,33 @@
 
 !--------------------------------------------------------
 
-         DO 1000 ILYR=1, NZmodel-1             ! START OF MODEL LAYER LOOP:   
+         DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
  
             RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
-            RC0(2)=0.
+            RC0(2)=0._r8
             RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
 
             DO J=1,3
-               RC_TOT(J) = 0.
-               RC11(J)=0.
+               RC_TOT(J) = 0._r8
+               RC11(J)=0._r8
             ENDDO
 
             DO ISPI=1,2
                DO J=1,3
-                  RC(ISPI,J)=0.
+                  RC(ISPI,J)=0._r8
                   RC_TMP(ISPI,J)=0.
                ENDDO
-               CDEPTH(ISPI) = 0.
+               CDEPTH(ISPI) = 0._r8
                DO K=1,NU
-                  PHH(ISPI,K,ILYR) = 0.
-                  PH0(ISPI,K,ILYR)=0.
+                  PHH(ISPI,K,ILYR) = 0._r8
+                  PH0(ISPI,K,ILYR)=0._r8
                ENDDO
-               DDm(ISPI,ILYR)=0.
-               W0(ISPI,ILYR)=0.
-               W00(ISPI,ILYR)=0.
+               DDm(ISPI,ILYR)=0._r8
+               W0(ISPI,ILYR)=0._r8
+               W00(ISPI,ILYR)=0._r8
             ENDDO
 
-            DEPTH  = 0.
+            DEPTH  = 0._r8
             CWC = 1.E-9_r8
 
             IF(CHK_CLD(ILYR) .NE. 0.) THEN 
@@ -438,7 +457,7 @@
                ENDDO
             ENDIF
                               
-            DO J=1,3                    ! ADD CLEAR-SKY COEFFICIENTS
+            DO J=1,3                               ! ADD CLEAR-SKY COEFFICIENTS
                RC_TOT(J)=RC0(J)+RC_TMP(1,J)+RC_TMP(2,J)
             ENDDO
 
@@ -465,15 +484,15 @@
 
          CALL HEADER(4)
 
-         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,&
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
-              &     UI,UA,TT0,NT,ICON,RE)                          !CLEAR-SKY
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
          IF(ICON .GT. 1) THEN                               
 
-           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,&
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
-                &  UI,UA,TT,NT,ICON,RE)                            !CLOUDY-SKY
+                &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
 
          ENDIF
 
@@ -481,15 +500,22 @@
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 !====================================
 
-         DO I=1,NT
-            TB0(I,IFR)=TT0(I,NZmodel)                  ! CLEAR-SKY BACKGROUND
-            DTcir(I,IFR)=TT(I,NZmodel)-TT0(I,NZmodel)  ! CLOUD-INDUCED RADIANCE
-         ENDDO
+         ! CLEAR-SKY BACKGROUND
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
-         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &            delTAU,delTAUc,TAUeff,SS,               &
-              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
-              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+         ! CLOUD-INDUCED RADIANCE
+            CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
+           
+         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &            delTAU,delTAUc,TAUeff(:,IFR),SS(:,IFR),               &
+              &            BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ,            &
+              &            N,ISWI,RE) ! COMPUTE SENSITIVITY
+
+
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+
+
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 

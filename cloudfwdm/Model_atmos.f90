@@ -51,7 +51,7 @@
 !----------------------------------------------------------
 !     WORK SPACE
 !----------------------------------------------------------
-      REAL(r8) :: PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK
+      REAL(r8) :: PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
       INTEGER :: I,JM,J
 !--------------------------------------------------------------------------
 
@@ -65,8 +65,12 @@
 
       DO I=1,NZ
          ZA(I)=-LOG10( PRESSURE(I) )
-         HEIGHT(I)= MAX ( 0._r8, HEIGHT(I) )
       END DO
+
+      DO I=1,NZ
+         ZVMR(I)=LOG10( VMR(1,I) )
+      END DO
+
 
       IF (NZ .NE. NH) THEN
 
@@ -79,12 +83,16 @@
 
             CALL LOCATE (ZA,NZ,NH,ZH(J),JM)              
 
-            if (jm .eq. 0) then
+            if (jm .le. 0) then
+              print*,'wronh JM: ',JM
+              stop
                 jm=1                               ! since there is no pressure(0)
             endif
 
-            YP(J)=((ZA(JM+1)-ZH(J))*PRESSURE(JM)+(ZH(J)-ZA(JM))*  &
-     &            PRESSURE(JM+1))/(ZA(JM+1)-ZA(JM))             
+            YP(J)=((ZA(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-ZA(JM))*  &
+     &            ZA(JM+1))/(ZA(JM+1)-ZA(JM))             
+
+            YP(J) = 10**(-YP(J))
 
             YZ(J)=((ZA(JM+1)-ZH(J))*HEIGHT(JM)+(ZH(J)-ZA(JM))*    &
      &            HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))
@@ -98,8 +106,10 @@
             WC(2,J)=((ZA(JM+1)-ZH(J))*WCin(2,JM)+(ZH(J)-ZA(JM))*    &
      &            WCin(2,JM+1))/(ZA(JM+1)-ZA(JM))
             
-            YQ(J)=((ZA(JM+1)-ZH(J))*VMR(1,JM)+(ZH(J)-ZA(JM))*       &
-     &            VMR(1,JM+1))/(ZA(JM+1)-ZA(JM))
+            YQ(J)=((ZA(JM+1)-ZH(J))*ZVMR(JM)+(ZH(J)-ZA(JM))*       &
+     &            ZVMR(JM+1))/(ZA(JM+1)-ZA(JM))
+
+            YQ(J) =10**YQ(J)
 
             VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*   &
      &                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
@@ -141,7 +151,7 @@
 !      stop
 
       DO J=1,NT      
-         CALL LOCATE (ZA,NZ,NT,ZZ(J),JM)
+         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
          ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
      &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
       ENDDO

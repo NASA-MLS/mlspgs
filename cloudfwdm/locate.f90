@@ -5,12 +5,12 @@
       integer :: jl,ju,n,np,jm,j
       real(r8) :: XX(NP),x
 
-	if(x .lt. xx(1)) then
+	if(x .le. xx(1)) then
 	j = 1
 	return
 	endif
 
-	if(x .gt. xx(n) ) then
+	if(x .ge. xx(n) ) then
 	j = n-1
 	return
 	endif
