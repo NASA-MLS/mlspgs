@@ -47,43 +47,59 @@ module INTRINSIC
 
 ! Enumeration literals:
   integer, public, parameter :: FIRST_LIT       = 1
-  integer, public, parameter :: L_DAYS 	        = first_lit
-  integer, public, parameter :: L_DEG 	        = l_days + 1
+  integer, public, parameter :: L_BASELINE      = first_lit
+  integer, public, parameter :: L_DAYS          = l_baseline + 1
+  integer, public, parameter :: L_DEG           = l_days + 1
   integer, public, parameter :: L_DEGREES       = l_deg + 1
   integer, public, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, public, parameter :: L_DIMLESS       = l_dimensionless + 1
-  integer, public, parameter :: L_DL 	        = l_dimless + 1
-  integer, public, parameter :: L_FALSE         = l_dl + 1
-  integer, public, parameter :: L_GHZ           = l_false + 1
-  integer, public, parameter :: L_HOURS         = l_ghz + 1
-  integer, public, parameter :: L_HPA 	        = l_hours + 1
-  integer, public, parameter :: L_HZ 	        = l_hpa + 1
-  integer, public, parameter :: L_K 	        = l_hz + 1
-  integer, public, parameter :: L_KHZ 	        = l_k  + 1
-  integer, public, parameter :: L_KM 	        = l_khz + 1
-  integer, public, parameter :: L_LOGP 	        = l_km + 1
-  integer, public, parameter :: L_M 	        = l_logp + 1
-  integer, public, parameter :: L_MAF 	        = l_m + 1
-  integer, public, parameter :: L_MAFS 	        = l_maf + 1
-  integer, public, parameter :: L_MB 	        = l_mafs + 1
+  integer, public, parameter :: L_DL            = l_dimless + 1
+  integer, public, parameter :: L_EXTINCTION    = l_dl + 1
+  integer, public, parameter :: L_FALSE         = l_extinction + 1
+  integer, public, parameter :: L_GEODALTITUDE  = l_false + 1
+  integer, public, parameter :: L_GHZ           = l_geodaltitude + 1
+  integer, public, parameter :: L_GPH           = l_ghz + 1
+  integer, public, parameter :: L_GPH_PRECISION = l_gph + 1
+  integer, public, parameter :: L_HOURS         = l_gph_precision + 1
+  integer, public, parameter :: L_HPA           = l_hours + 1
+  integer, public, parameter :: L_HZ            = l_hpa + 1
+  integer, public, parameter :: L_K             = l_hz + 1
+  integer, public, parameter :: L_KHZ           = l_k  + 1
+  integer, public, parameter :: L_KM            = l_khz + 1
+  integer, public, parameter :: L_LINEWIDTH     = l_km + 1
+  integer, public, parameter :: L_LOGP          = l_linewidth + 1
+  integer, public, parameter :: L_M             = l_logp + 1
+  integer, public, parameter :: L_MAF           = l_m + 1
+  integer, public, parameter :: L_MAFS          = l_maf + 1
+  integer, public, parameter :: L_MB            = l_mafs + 1
   integer, public, parameter :: L_METERS        = l_mb + 1
-  integer, public, parameter :: L_MHZ 	        = l_meters  + 1
-  integer, public, parameter :: L_MIF 	        = l_mhz + 1
-  integer, public, parameter :: L_MIFS 	        = l_mif + 1
+  integer, public, parameter :: L_MHZ           = l_meters  + 1
+  integer, public, parameter :: L_MIF           = l_mhz + 1
+  integer, public, parameter :: L_MIFS          = l_mif + 1
   integer, public, parameter :: L_MINUTES       = l_mifs + 1
-  integer, public, parameter :: L_ORBITS        = l_minutes + 1
-  integer, public, parameter :: L_PA 	        = l_orbits + 1
-  integer, public, parameter :: L_PPBV 	        = l_pa + 1
-  integer, public, parameter :: L_PPMV 	        = l_ppbv + 1
-  integer, public, parameter :: L_PPTV 	        = l_ppmv + 1
-  integer, public, parameter :: L_RAD 	        = l_pptv + 1
-  integer, public, parameter :: L_RADIANS       = l_rad + 1
-  integer, public, parameter :: L_S 	        = l_radians + 1
-  integer, public, parameter :: L_SECONDS       = l_s + 1
-  integer, public, parameter :: L_THZ 	        = l_seconds + 1
+  integer, public, parameter :: L_ORBITINCLINATION = l_minutes + 1
+  integer, public, parameter :: L_ORBITS        = l_orbitinclination + 1
+  integer, public, parameter :: L_PA            = l_orbits + 1
+  integer, public, parameter :: L_PPBV          = l_pa + 1
+  integer, public, parameter :: L_PPMV          = l_ppbv + 1
+  integer, public, parameter :: L_PPTV          = l_ppmv + 1
+  integer, public, parameter :: L_PTAN          = l_pptv + 1
+  integer, public, parameter :: L_RAD           = l_ptan + 1
+  integer, public, parameter :: L_RADIANCE      = l_rad + 1
+  integer, public, parameter :: L_RADIANS       = l_radiance + 1
+  integer, public, parameter :: L_REFGPH        = l_radians + 1
+  integer, public, parameter :: L_S             = l_refgph + 1
+  integer, public, parameter :: L_SCANRESIDUAL  = l_s + 1
+  integer, public, parameter :: L_SCVEL         = l_scanresidual + 1
+  integer, public, parameter :: L_SECONDS       = l_scvel + 1
+  integer, public, parameter :: L_SIDEBANDRATIO = l_seconds + 1
+  integer, public, parameter :: L_TANGENTHEIGHT = l_sidebandratio + 1
+  integer, public, parameter :: L_TEMPERATURE   = l_tangentheight + 1
+  integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
+  integer, public, parameter :: L_THZ           = l_temperature_prec + 1
   integer, public, parameter :: L_TRUE          = l_thz + 1
-  integer, public, parameter :: L_VMR 	        = l_true + 1
-  integer, public, parameter :: L_ZETA 	        = l_vmr + 1
+  integer, public, parameter :: L_VMR           = l_true + 1
+  integer, public, parameter :: L_ZETA          = l_vmr + 1
   integer, public, parameter :: LAST_INTRINSIC_LIT = l_zeta
 
 contains ! =====     Public procedures     =============================
@@ -101,20 +117,26 @@ contains ! =====     Public procedures     =============================
     ! Put intrinsic enumeration type names into the symbol table
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     ! Put intrinsic enumeration literals into the symbol table:
+    lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
+    lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
+    lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
     lit_indices(l_ghz) =                   add_ident ( 'GHz' )
+    lit_indices(l_gph) =                   add_ident ( 'gph' )
+    lit_indices(l_gph) =                   add_ident ( 'gph_precision' )
     lit_indices(l_hours) =                 add_ident ( 'hours' )
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
     lit_indices(l_k) =                     add_ident ( 'k' )
     lit_indices(l_khz) =                   add_ident ( 'KHz' )
     lit_indices(l_km) =                    add_ident ( 'km' )
+    lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
     lit_indices(l_logp) =                  add_ident ( 'logp' )
     lit_indices(l_m) =                     add_ident ( 'm' )
     lit_indices(l_maf) =                   add_ident ( 'maf' )
@@ -125,15 +147,25 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_mif) =                   add_ident ( 'mif' )
     lit_indices(l_mifs) =                  add_ident ( 'mifs' )
     lit_indices(l_minutes) =               add_ident ( 'minutes' )
+    lit_indices(l_orbitinclination) =      add_ident ( 'orbitInclination' )
     lit_indices(l_orbits) =                add_ident ( 'orbits' )
     lit_indices(l_pa) =                    add_ident ( 'pa' )
+    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
     lit_indices(l_ppbv) =                  add_ident ( 'ppbv' )
     lit_indices(l_ppmv) =                  add_ident ( 'ppmv' )
     lit_indices(l_pptv) =                  add_ident ( 'pptv' )
     lit_indices(l_rad) =                   add_ident ( 'rad' )
+    lit_indices(l_radiance) =              add_ident ( 'radiance' )
     lit_indices(l_radians) =               add_ident ( 'radians' )
+    lit_indices(l_refgph) =                add_ident ( 'refGPH' )
     lit_indices(l_s) =                     add_ident ( 's' )
+    lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
+    lit_indices(l_scvel) =                 add_ident ( 'scVel' )
     lit_indices(l_seconds) =               add_ident ( 'seconds' )
+    lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
+    lit_indices(l_tangentheight) =         add_ident ( 'tangentHeight' )
+    lit_indices(l_temperature) =           add_ident ( 'temperature' )
+    lit_indices(l_temperature) =           add_ident ( 'temperature_prec' )
     lit_indices(l_thz) =                   add_ident ( 'THz' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
@@ -165,6 +197,12 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.2  2001/01/31 23:32:31  vsnyder
+! Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
+! l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
+! l_gph_precision l_refgph l_baseline l_extinction l_linewidth from L2's
+! init_tables_module
+!
 ! Revision 2.1  2000/10/11 18:24:39  vsnyder
 ! Initial entry
 !
