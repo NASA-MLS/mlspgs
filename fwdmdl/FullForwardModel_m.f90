@@ -1830,14 +1830,14 @@ contains
       ! results otherwise).
 
       if ( index(switches,'ptg') /= 0 ) then
-        call Dump ( ptg_angles, 'ptg_angles (before any patch)' )
+        call Dump ( ptg_angles, 'ptg_angles (before any patch)', format='(1PG22.17)' )
       end if
       do ptg_i = 2, no_tan_hts - 1
         ! this is a temporary fix
         if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) ) then
           ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
           if ( index(switches,'ptg') /= 0 ) &
-            & call Dump ( ptg_angles, 'ptg_angles (after a patch)' )
+            & call Dump ( ptg_angles, 'ptg_angles (after a patch)', format='(1PG22.17)' )
         end if
 !        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
 !          & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3082,6 +3082,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.218  2004/08/06 01:24:55  livesey
+! Typo!
+!
 ! Revision 2.217  2004/08/06 01:24:22  livesey
 ! Minor bug fix in ptg_angles dump
 !
