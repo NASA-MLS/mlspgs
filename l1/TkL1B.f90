@@ -11,6 +11,7 @@ module TkL1B
     OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ, LENG, LENT
   use Scan
   use SDPToolkit
+  use units, only: Omega
   implicit none
   private
 
@@ -82,7 +83,12 @@ contains
         radD(i), sc%scGeodAlt(i))
       sc%scGeodLat(i) = Rad2Deg * radD(i)
       sc%scLon(i) = Rad2Deg * radL(i)
-      sc%scOrbIncl(i) = orbInclineCalculated(sc%scECI(:,i), sc%scVelECI(:,i))
+      if ( ORBINCLINE_IS_CONSTANT ) then
+        sc%scOrbIncl(i) = orbInclineCrossProd(sc%scECI(:,i), sc%scVelECI(:,i))
+      else
+        sc%scOrbIncl(i) = orbInclineCalculated(sc%scECR(:,i), sc%scVelECR(:,i), &
+        & sc%scGeocLat(i), sc%scLon(i) )
+      endif
     enddo
 
   end subroutine TkL1B_sc
@@ -568,10 +574,89 @@ contains
   end subroutine Mc_aux
 
   !----------------------------------------------------orbInclineCalculated -----------------
-  function orbInclineCalculated( scECR, scVelECR )
+  function orbInclineCalculated( scECR, scVelECR , lambda, mu)
+    ! This function computes the orbital inclination angle beta' in degrees
+    ! where 90 would mean a perfectly polar orbit in ECR coordinates
+    ! Method: let [r] be the vector of the s/c position (in ECR coords)
+    ! i.e., [r] = (x, y, z)
+    ! also [v] its instantaneous velocity, 
+    ! and scalar values include lambda its geocentric latitude
+    ! and mu its longitude
+    ! then                         (vy cos[mu] - vx sin[mu]
+    ! then sin_beta' = cos[lambda] ------------------------
+    !                                         |v|
+    ! Arguments
+    real(r8), intent(IN) :: scECR(3)             ! s/c pos.
+    real(r8), intent(IN) :: scVelECR(3)          ! s/c vel.
+    real, intent(IN) ::     lambda               ! s/c geocentric latitude
+    real, intent(IN) ::     mu                   ! s/c longitude
+    real(r8) ::             orbInclineCalculated
+
+    ! Variables
+    logical, parameter :: DEBUG = .FALSE.
+    integer, save :: HOWMANYSOFAR=0
+    real(r8) :: vUnrotated(3)          ! s/c vel.
+    real(r8) :: v
+    real :: muRad, lamRad
+
+    ! Executable code
+    HOWMANYSOFAR = HOWMANYSOFAR + 1
+    vUnrotated(1) = scVelECR(1) - Omega*scECR(2)
+    vUnrotated(2) = scVelECR(2) + Omega*scECR(1)
+    vUnrotated(3) = scVelECR(3)
+    v = sqrt( vUnrotated(1)**2 + vUnrotated(2)**2 + vUnrotated(3)**2 )
+    lamRad = (Pi/180)*lambda
+    muRad = (Pi/180)*mu
+    if ( v == 0.d0 ) then
+      orbInclineCalculated = UNDEFINED_VALUE
+      return
+    endif
+    orbInclineCalculated = (180/Pi) * asin( &
+    & cos(lamRad) * (vUnrotated(2)*cos(muRad) - vUnrotated(1)*sin(muRad)) &
+    & / &
+    & v &
+    & )
+!    sc_velv = [sc_vel(i,j)       - 7.27221d-08*datascecr(1,i,j), $
+!               sc_vel(i+mmifs,j) + 7.27221d-08*datascecr(0,i,j), $
+!               sc_vel(i+2*mmifs,j)]
+    ! Now added contraints: 90 < beta < 180
+    orbInclineCalculated = abs(orbInclineCalculated) + 90
+    if ( orbInclineCalculated < 90.d0 ) then
+      orbInclineCalculated = 180. - orbInclineCalculated
+    elseif (orbInclineCalculated > 180.d0 ) then
+      orbInclineCalculated = 360. - orbInclineCalculated
+    endif
+    
+    if ( DEBUG ) then
+      call output('vx, vy, vz ', advance='no')
+      call blanks(3, advance='no')
+      call output(scVelECR, advance='yes')
+      call output('lambda ', advance='no')
+      call blanks(3, advance='no')
+      call output(lambda, advance='no')
+      call blanks(3, advance='no')
+      call output('mu ', advance='no')
+      call blanks(3, advance='no')
+      call output(mu, advance='yes')
+      call output('orbital inclination ', advance='no')
+      call blanks(3, advance='no')
+      call output((180/Pi) * asin( &
+       & cos(lamRad) * (vUnrotated(2)*cos(muRad) - vUnrotated(1)*sin(muRad)) &
+       & / &
+       & v &
+       & ), advance='no')
+      call blanks(3, advance='no')
+      call output(orbInclineCalculated, advance='yes')
+      if ( HOWMANYSOFAR > 40 ) stop
+    endif
+
+  end function orbInclineCalculated
+
+  !----------------------------------------------------orbInclineCrossProd -----------------
+  function orbInclineCrossProd( scECI, scVelECI )
     ! This function computes the orbital inclination angle beta in degrees
     ! where 90 would mean a perfectly polar orbit
-    ! Method: let [r] be the vector of the s/c position (in ECR coords)
+    ! Method: let [r] be the vector of the s/c position (in ECI coords)
     ! i.e., [r] = (x, y, z)
     ! also [v] its instantaneous velocity, [omega] its orbital frequency,
     ! we'll calculate its orbital moment [m]: using 'x' as the cross-product
@@ -580,43 +665,42 @@ contains
     ! and if [r] . [omega] = 0
     ! [omega] = [p] / r^2 = omega (sin_beta cos_alfa, sin_beta sin_alfa, cos_beta)
     ! Arguments
-    real(r8), intent(IN) :: scECR(3)             ! s/c pos.
-    real(r8), intent(IN) :: scVelECR(3)          ! s/c vel.
-    real(r8) :: orbInclineCalculated
-    logical, parameter :: DEBUG = .FALSE.
-    integer, save :: HOWMANYSOFAR=0
+    real(r8), intent(IN) :: scECI(3)             ! s/c pos.
+    real(r8), intent(IN) :: scVelECI(3)          ! s/c vel.
+    real(r8) :: orbInclineCrossProd
 
     ! Variables
-
+    logical, parameter :: DEBUG = .FALSE.
+    integer, save :: HOWMANYSOFAR=0
     real(r8) :: orbMoment(3), OMagnitude
 
     ! Executable code
     HOWMANYSOFAR = HOWMANYSOFAR + 1
-    orbMoment(1) = scECR(2)*scVelECR(3) - scECR(3)*scVelECR(2)
-    orbMoment(2) = scECR(3)*scVelECR(1) - scECR(1)*scVelECR(3)
-    orbMoment(3) = scECR(1)*scVelECR(2) - scECR(2)*scVelECR(1)
+    orbMoment(1) = scECI(2)*scVelECI(3) - scECI(3)*scVelECI(2)
+    orbMoment(2) = scECI(3)*scVelECI(1) - scECI(1)*scVelECI(3)
+    orbMoment(3) = scECI(1)*scVelECI(2) - scECI(2)*scVelECI(1)
     OMagnitude = sqrt( orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2 )
     if ( OMagnitude == 0.d0 ) then
-      orbInclineCalculated = UNDEFINED_VALUE
+      orbInclineCrossProd = UNDEFINED_VALUE
       return
     endif
-    orbInclineCalculated = (180/Pi) * acos( orbMoment(3) / OMagnitude )
+    orbInclineCrossProd = (180/Pi) * acos( orbMoment(3) / OMagnitude )
 
     ! Now added contraints: 90 < beta < 180
-    orbInclineCalculated = abs(orbInclineCalculated)
-    if ( orbInclineCalculated < 90.d0 ) then
-      orbInclineCalculated = 180. - orbInclineCalculated
-    elseif (orbInclineCalculated > 180.d0 ) then
-      orbInclineCalculated = 360. - orbInclineCalculated
+    orbInclineCrossProd = abs(orbInclineCrossProd)
+    if ( orbInclineCrossProd < 90.d0 ) then
+      orbInclineCrossProd = 180. - orbInclineCrossProd
+    elseif (orbInclineCrossProd > 180.d0 ) then
+      orbInclineCrossProd = 360. - orbInclineCrossProd
     endif
     
     if ( DEBUG ) then
       call output('rx, ry, rz ', advance='no')
       call blanks(3, advance='no')
-      call output(scECR, advance='yes')
+      call output(scECI, advance='yes')
       call output('vx, vy, vz ', advance='no')
       call blanks(3, advance='no')
-      call output(scVelECR, advance='yes')
+      call output(scVelECI, advance='yes')
       call output('px, py, pz ', advance='no')
       call blanks(3, advance='no')
       call output(orbMoment, advance='yes')
@@ -624,10 +708,10 @@ contains
       call blanks(3, advance='no')
       call output((180/Pi) * acos( orbMoment(3) / OMagnitude ), advance='no')
       call blanks(3, advance='no')
-      call output(orbInclineCalculated, advance='yes')
+      call output(orbInclineCrossProd, advance='yes')
       if ( HOWMANYSOFAR > 40 ) stop
     endif
-  end function orbInclineCalculated
+  end function orbInclineCrossProd
 
   !----------------------------------------------------TkL1B_mc -----------------
   subroutine TkL1B_mc(ascTAI, dscTAI, dotVec, geocLat, nV, numOrb, &
@@ -670,13 +754,7 @@ contains
     ! Set s = normalized dotVec
     do i = 1, nV
 
-      if ( ORBINCLINE_IS_CONSTANT ) then
-        orbInclineNow = orbIncline
-      else
-!        orbInclineNow = orbInclineCalculated(scECR(:,i), scVelECR(:,i))
-        orbInclineNow = scOrbIncl(i)
-      endif
-      
+      orbInclineNow = scOrbIncl(i)
       if ( orbInclineNow == UNDEFINED_VALUE ) then
         call MLSMessage(MLSMSG_Error, ModuleName, &
           & 'Error in calculating orbital inclination angle')
@@ -735,6 +813,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.4  2001/12/07 00:51:44  pwagner
+! Finally calculates scOrbIncl correctly
+!
 ! Revision 2.3  2001/12/06 01:03:46  pwagner
 ! Now writes orbit incline angle in ECR
 !
