@@ -1502,12 +1502,14 @@ contains ! =====     Public Procedures     =============================
                 if ( fraction /= 0) thisFraction = f%values(j,i)
                 select case (qt%verticalCoordinate)
                 case ( l_height )
-                  distance = abs ( surfs ( j/qt%noChans ) - surfs ( k/qt%noChans ) )
+                  distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
+                    & surfs ( (k-1)/qt%noChans + 1) )
                 case ( l_zeta )
-                  distance = abs ( surfs ( j/qt%noChans ) - surfs ( k/qt%noChans ) ) * decade
+                  distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
+                    & surfs ( (k-1)/qt%noChans + 1 ) ) * decade
                 case ( l_pressure )
-                  distance = abs ( -log10 ( surfs(j/qt%noChans) ) + &
-                    &               log10 ( surfs(k/qt%noChans) ) ) / decade
+                  distance = abs ( -log10 ( surfs( (j-1)/qt%noChans + 1) ) + &
+                    &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
                 end select
                 if ( meanLength > 0.0 ) &
                   & m(j,k) = meanDiag*thisFraction*exp(-distance/meanLength)
@@ -3691,6 +3693,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.134  2002/08/16 16:08:58  livesey
+! Bug fix in the Matrix fill (covariance with frequency variation).
+!
 ! Revision 2.133  2002/08/15 03:52:52  livesey
 ! Added profile fill, still not complete though.
 !
