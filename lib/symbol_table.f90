@@ -45,13 +45,13 @@ contains
     logical :: myDEBUG
     
     myDEBUG = .false.
-    if(present(DEBUG)) myDEBUG = DEBUG
+    if ( present(DEBUG) ) myDEBUG = DEBUG
 
     call lookup_and_insert ( where, found, caseless_look(terminal), DEBUG )
     if ( where > size(symbols) ) then
       call increase_symbols ! String table was expanded
     end if
-    if ( toggle(tab) .OR. myDEBUG) then
+    if ( toggle(tab) .OR. myDEBUG ) then
       call output ( 'Looked up ' ); call output ( terminal )
       call output ( ' ' ); call display_string ( where )
       if ( caseless_look(terminal) ) then; call output ( ' caseless' ); end if
@@ -226,6 +226,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.5  2002/08/21 20:37:48  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.4  2001/06/08 18:00:35  pwagner
 ! add_terminal diagnostic print depends on myDEBUG
 !
