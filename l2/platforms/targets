@@ -33,7 +33,7 @@ mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
 	case "$(PVM_ROOT)" in \
 		"") \
 		echo "Building mlsl2 without PVM support" ; \
-		$(FC) -o mlsl2 $(ALLOBJS) \
+		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -46,7 +46,7 @@ mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
 		;; \
 		*) \
 		echo "Building mlsl2 with PVM support" ; \
-		$(FC) -o mlsl2 $(ALLOBJS) $(PVM_OBJS)  \
+		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) $(PVM_OBJS)  \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -70,6 +70,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/01/23 19:09:24  pwagner
+# With optional PVM support
+#
 # Revision 1.5  2000/11/18 00:16:39  pwagner
 # Now links on sun (pencil)
 #

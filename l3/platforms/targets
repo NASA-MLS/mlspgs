@@ -28,7 +28,7 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 	case "$(PVM_ROOT)" in \
 		"") \
 		echo "Building mlsl3 without PVM support" ; \
-	$(FC) -o mlsl3 $(ALLOBJS) \
+	$(FC) $(LDOPTS) -o mlsl3 $(ALLOBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -41,7 +41,7 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 		;; \
 		*) \
 		echo "Building mlsl3 with PVM support" ; \
-	$(FC) -o mlsl3 $(ALLOBJS) $(PVM_OBJS) \
+	$(FC) $(LDOPTS) -o mlsl3 $(ALLOBJS) $(PVM_OBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -74,6 +74,9 @@ L2Interface.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2001/01/23 23:27:38  pwagner
+# With optional PVM support
+#
 # Revision 1.3  2000/11/17 23:48:45  pwagner
 # Now links on sun (pencil)
 #

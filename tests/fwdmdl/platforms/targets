@@ -12,7 +12,7 @@ test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libfwdmdl.a $(libdir)/libmls.a
 	case "$(PVM_ROOT)" in \
 		"") \
 		echo "Building test without PVM support" ; \
-		$(FC) -o test $(ALLOBJS) \
+		$(FC) $(LDOPTS) -o test $(ALLOBJS) \
                       -L${itmdir} -lfwdmdl \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -26,7 +26,7 @@ test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libfwdmdl.a $(libdir)/libmls.a
 		;; \
 		*) \
 		echo "Building test with PVM support" ; \
-		$(FC) -o test $(ALLOBJS) $(PVM_OBJS)  \
+		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
                       -L${itmdir} -lfwdmdl \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -51,4 +51,7 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2001/02/01 23:12:31  pwagner
+# First commit
+#
 #
