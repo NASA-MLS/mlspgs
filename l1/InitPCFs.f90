@@ -23,8 +23,8 @@ MODULE InitPCFs ! Init PCF data used by MLSL1 program
    TYPE PCFData_T
       CHARACTER(LEN=27) :: StartUTC
       CHARACTER(LEN=27) :: EndUTC
-      CHARACTER(LEN=5) :: OutputVersion
-      CHARACTER(LEN=5) :: Cycle
+      CHARACTER(LEN=80) :: OutputVersion
+      CHARACTER(LEN=80) :: Cycle
    END TYPE PCFData_T
 
    TYPE (PCFData_T) :: L1PCF
@@ -86,6 +86,9 @@ CONTAINS
 END MODULE InitPCFs
 
 ! $Log$
+! Revision 2.3  2002/07/17 15:25:42  perun
+! Increase length of outputversion and cycle
+!
 ! Revision 2.2  2001/03/12 16:15:12  perun
 ! Add OutputVersion and Cycle parameters
 !
