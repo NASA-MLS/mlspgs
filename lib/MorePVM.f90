@@ -58,7 +58,6 @@ contains
   ! ------------------------------------------ PVMUnpackLitIndex ---
   subroutine PVMUnpackLitIndex ( index, info )
     use PVMIDL, only: PVMIDLUnpack
-    use PVM, only: PVMErrorMessage
     use MoreTree, only: GetLitIndexFromString
     ! Dummy arguments
     integer, intent(out) :: INDEX        ! String index
@@ -103,6 +102,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.6  2003/09/15 23:15:28  vsnyder
+! Remove unused USE for PVMErrorMessage
+!
 ! Revision 2.5  2003/07/07 20:21:17  livesey
 ! Increased length of string literals
 !
