@@ -202,6 +202,9 @@ contains
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
+    real(rp), dimension(:), pointer :: TAN_HTS ! Accumulation of ONE_TAN_HT
+    real(rp), dimension(:), pointer :: TAN_TEMPS ! Accumulation of ONE_TAN_TEMP
+    real(rp), dimension(:), pointer :: REQS      ! Accumulation of REQ
 
     real(r8), dimension(:), pointer :: FREQUENCIES ! Frequencies to compute for
 
@@ -396,7 +399,8 @@ contains
       & superset, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tan_inds, &
       & tan_phi, tan_press, tan_temp, tau, t_glgrid, t_path, t_script, &
       & usedchannels, usedsignals, z_all, z_basis, z_basis_dn, &
-      & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_tmp )
+      & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_tmp, tan_temps, &
+      & tan_hts, reqs )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -966,6 +970,9 @@ contains
     call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
     call allocate_test ( tan_phi, no_tan_hts, 'tan_phi', moduleName )
     call allocate_test ( est_scgeocalt, no_tan_hts, 'est_scgeocalt', moduleName )
+    call allocate_test ( tan_hts, no_tan_hts, 'tan_hts', moduleName )
+    call allocate_test ( tan_temps, no_tan_hts, 'tan_temps', moduleName )
+    call allocate_test ( reqs, no_tan_hts, 'reqs', moduleName )
     tan_inds(1:j) = 1
     tan_inds(j+1:no_tan_hts) = (rec_tan_inds - 1) * Ngp1 + 1
     call deallocate_test ( rec_tan_inds, 'rec_tan_inds', moduleName )
@@ -1443,6 +1450,10 @@ contains
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
         end if
+        ! Fill the diagnostic arrays
+        tan_temps ( ptg_i ) = one_tan_temp ( 1 )
+        tan_hts ( ptg_i ) = one_tan_ht ( 1 )
+        reqs ( ptg_i ) = req
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
         if ( spect_der ) then
           call eval_spect_path ( Grids_dw, firstSignal%lo, thisSideband, &
@@ -2086,6 +2097,15 @@ contains
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_End ( 'ForwardModel.PointingLoop' )
 
+!       ! EXTRA DEBUG FOR NATHANIEL/BILL ********************
+!       call dump ( tan_temps, 'tan_temps' )
+!       call dump ( tan_press, 'tan_press' )
+!       call dump ( ptg_angles, 'ptg_angles' )
+!       call dump ( tan_hts, 'tan_hts' )
+!       call dump ( reqs, 'reqs' )
+!       call dump ( est_scgeocalt, 'est_scgeocalt' )
+!       call dump ( grids_f%values, 'grids_f' )
+
       ! Convolution if needed, or interpolation to ptan ----------------------
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
@@ -2349,6 +2369,9 @@ contains
     call deallocate_test ( tan_inds, 'tan_inds', moduleName )
     call deallocate_test ( tan_press, 'tan_press', moduleName )
     call deallocate_test ( tan_phi, 'tan_phi', moduleName )
+    call deallocate_test ( tan_hts, 'tan_hts', moduleName )
+    call deallocate_test ( tan_temps, 'tan_temps', moduleName )
+    call deallocate_test ( reqs, 'reqs', moduleName )
     call deallocate_test ( est_scgeocalt, 'est_scgeocalt', moduleName )
     call deallocate_test ( tan_temp, 'tan_temp', moduleName )
 
@@ -2448,6 +2471,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.96  2002/10/10 19:38:22  vsnyder
+! Mostly cosmetic, some performance improvements
+!
 ! Revision 2.95  2002/10/10 01:46:50  livesey
 ! Whoops, typo fix
 !
