@@ -41,7 +41,7 @@
       REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
       INTEGER :: I, J, IMOL
 
-      REAL(r8) :: MYSHAPE, FF
+      REAL(r8) :: MYSHAPE, FF, MYRESULT
       EXTERNAL MYSHAPE
 
 !------------------------------------------------------------------------
@@ -180,9 +180,12 @@
 !--------------------------------------------------------------
 !     DEFINE LINE-SHAPE FUNCTIONS
 !--------------------------------------------------------------
-	real(r8) function myshape(v0,ff,yy,twth0)
+!J	real(r8) function myshape(v0,ff,yy,twth0)
+        function myshape(v0,ff,yy,twth0) result (myresult)
         use MLSCommon, only: r8        
 	implicit none
+        real(r8):: myresult     !J
+
         real :: pi
         parameter (pi=3.1415926)
 	real(r8) ::  voffm		! frequency difference
@@ -202,9 +205,14 @@
 !	return
 
 !... Van Vleck-Weisskopf
- 	myshape = twthm/(voffm**2 + twth0**2) + &
-     &      twthp/(voffp**2 + twth0**2)
- 	myshape = myshape * (ff/v0)/pi
+!J 	myshape = twthm/(voffm**2 + twth0**2) + &
+!J     &      twthp/(voffp**2 + twth0**2)
+!J 	myshape = myshape * (ff/v0)/pi
+
+ 	myresult = twthm/(voffm**2 + twth0**2) + &
+       &      twthp/(voffp**2 + twth0**2)
+ 	 myresult = myresult * (ff/v0)/pi
+
 !...
 	return
 	end
