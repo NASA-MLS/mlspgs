@@ -262,27 +262,27 @@ CONTAINS
   END SUBROUTINE Array2List
 
   ! -------------------------------------------------  CAPITALIZE  -----
-  FUNCTION Capitalize (str) RESULT (outstr)
+  elemental function Capitalize (STR) result (OUTSTR)
     ! takes a-z and replaces with A-Z 
     ! leaving other chars alone
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), intent(in) :: STR
+    character (len=len(str)) :: OUTSTR
 
     !----------Local vars----------!
-    INTEGER :: i, icode
-    integer, parameter :: offset=IACHAR("A")-IACHAR("a")
+    integer :: I, ICODE
+    integer, parameter :: OFFSET=iachar("A")-iachar("a")
     !----------Executable part----------!
     outstr=str
 
-    DO i=1, LEN(str)
-       icode=IACHAR(outstr(i:i))
-       IF ( icode >=IACHAR("a") .AND. icode <= IACHAR("z")) THEN
+    do i=1, len(str)
+       icode=iachar(outstr(i:i))
+       if ( icode >=iachar("a") .and. icode <= iachar("z")) then
           outstr(i:i)=achar(icode+offset)
-       END IF
-    END DO
+       end if
+    end do
 
-  END FUNCTION Capitalize
+  end function Capitalize
 
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
@@ -2997,6 +2997,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.42  2004/06/16 01:25:08  vsnyder
+! Make Capitalize elemental
+!
 ! Revision 2.41  2004/06/10 00:57:47  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
