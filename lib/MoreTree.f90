@@ -6,7 +6,7 @@ module MoreTree
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
   use Intrinsic, only: L_true
-  use Tree, only: Decoration, Node_ID, Subtree
+  use Tree, only: Decoration, Node_ID, Subtree, nsons
   use Tree_Types, only: N_Set_one
 
   implicit NONE
@@ -24,13 +24,17 @@ contains ! ====     Public Procedures     ==============================
   ! ------------------------------------------------  Get_Boolean  -----
   logical function Get_Boolean ( Root )
   ! Get the value of a field that is required to have type t_boolean.
-  ! Return true if node_id(root) is n_set_one.  Otherwise return
-  ! decoration(subtree(2,root)) == l_true.
+  ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
+  ! root, or of child of root if children
     integer, intent(in) :: Root
     if ( node_id(root) == n_set_one ) then
       get_boolean = .true.
     else
-      get_boolean = decoration(subtree(2,root)) == l_true
+      if ( nsons ( root ) /= 0 ) then
+        get_boolean = decoration(subtree(2,root)) == l_true
+      else
+        get_boolean = decoration(root) == l_true
+      end if
     end if
   end function Get_Boolean
 
@@ -64,6 +68,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.2  2002/06/07 17:51:56  livesey
+! More versitility in get_boolean
+!
 ! Revision 2.1  2001/02/23 01:16:36  vsnyder
 ! Getting L_True from Intrinsic instead of Init_Tables_Module: move to lib
 !
