@@ -26,10 +26,14 @@ begin Fill
   !ifdef(flagSkipL1BMAFBaseline,{},{
 
   !define(readL1BMAFBaseline,{!dnl
-  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource'
-  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource precision'!nl})
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource'
+  Fill, quantity=correctionNoise.band$1L1BMAFBaseline, method=l1b, $
+    suffix=' !L1BMAFBaselineSource precision'!nl})
   ;; Read this for all the relevant bands
   !forall( {readL1BMAFBaseline}, !relevantBands)
+
+  Snoop, comment='Before applying baseline', phaseName='None'
 
   ;; ------------------------------------------ Apply L1B Baselines -----
   ;; Now apply the baseline correction to all the radiances
@@ -40,6 +44,8 @@ begin Fill
     baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
   ;; Apply to all relevant bands
   !forall( {applyL1BMAFBaseline}, !relevantBands)
+
+  Snoop, comment='After applying baseline', phaseName='None'
 
   })
   ;; ====================== End of possibly omitted section
@@ -67,6 +73,10 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.8  2004/09/27 20:12:06  livesey
+; Added the stuff to read and handle L1BMAFBaseline through the new
+; corrections vector.
+;
 ; Revision 1.7  2004/07/06 22:07:20  livesey
 ; Bug fix, case problem in cleanNoisy.
 ;
