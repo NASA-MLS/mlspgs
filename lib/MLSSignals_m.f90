@@ -1036,21 +1036,29 @@ oc:   do
   end function IsModuleSpacecraft
 
   ! ------------------------------------------------  MatchSignal  -----
-  integer function MatchSignal ( Signals, Probe, matchFlags )
+  integer function MatchSignal ( Signals, Probe, sideband, matchFlags )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
 
     type(signal_T), dimension(:), intent(in) :: Signals
     type(signal_T), intent(in) :: Probe
+    integer, intent(in), optional :: sideband     ! Use this instead of probe%sideband
     logical, dimension(size(signals)), intent(out), optional :: matchFlags
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
     logical :: Match                    ! Channels in probe are in signal
     integer :: NumChannelsMatch
+    integer :: mySideband               ! Either sideband or probe%sideband
 
     if ( present(matchFlags) ) matchFlags = .false.
+
+    if ( present(sideband) ) then
+      mySideband = sideband
+    else
+      mySideband = probe%sideband
+    end if
 
     bestMatch = huge(bestMatch)
     matchSignal = 0
@@ -1061,6 +1069,7 @@ oc:   do
       if ( signals(i)%band /= probe%band .or. &
         &  signals(i)%instrumentModule /= probe%instrumentModule.or. &
         &  signals(i)%radiometer /= probe%radiometer .or. &
+        &  signals(i)%sideband /= mySideband .or. &
         &  signals(i)%spectrometer /= probe%spectrometer .or. &
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
@@ -1088,6 +1097,10 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.26  2001/04/19 20:29:24  livesey
+! Added sideband argument to MatchSignal and made MatchSignal look at it or
+! probe%sideband
+!
 ! Revision 2.25  2001/04/13 23:54:06  livesey
 ! Change intent inout to intent out for matchFlags in MatchSignal
 !
