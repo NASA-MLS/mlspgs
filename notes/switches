@@ -19,10 +19,12 @@ Switches (set by -S option in mlsl2's command line):
   jac => Jacobian during retriever iterations
   log => Log file messages
   pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta
+  mas => Activities of the PVM master task
   neq => Normal equations during retriever iterations
   nwt => Action flag at each return from Newton solver
   rad => Radiances in ForwardModelInterface
   sca => Scalars of interest to the Newton method
+  slv => Show output of slaves using pvmfcatchout
   spa => Sparsity structure of fac, jac, neq
   svec => Final state vector after Newton iteration
   tps => Test_Parse_Signals
@@ -50,6 +52,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.5  2001/05/23 22:26:19  pwagner
+ Added section dividers; notes on automatic use
+
  Revision 1.4  2001/05/22 21:58:50  vsnyder
  Add several switches for Newton iteration
 
