@@ -8,6 +8,7 @@ module Time
   use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_DeAllocate, &
     & MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
   use SDPToolkit, only: PI, EARTHMODEL
+  use Output_m, only: BLANKS, OUTPUT
   use OutputL1B, only: L1BOASC_T, LENCOORD
   use Scan, only: SCAN_GUESS
   use TkL1B, only: TKL1B_SC
@@ -358,6 +359,9 @@ contains
     integer :: Pgs_td_utcToTAI, Pgs_td_taiToUTC
 
     ! Variables
+    logical, parameter :: DEBUG = .TRUE.
+    logical, parameter :: ADDEXTRAMIF = .TRUE.
+   
     character(LEN=27) :: backTimes(scansPerOrb)
     integer :: i, returnStatus
     real(r8) :: mafTAI, orbTAI
@@ -372,6 +376,16 @@ contains
     mafTAI = orbTAI
     do i = 1, scansPerOrb
       mafTAI = mafTAI - numValues(scansPerOrb - (i-1))*spm
+      if ( ADDEXTRAMIF ) mafTAI = mafTAI - spm
+      if ( DEBUG  ) then
+        call output('scan Number ', advance='no')
+        call blanks(3, advance='no')
+        call output(i, advance='no')
+        call blanks(3, advance='no')
+        call output('dt', advance='no')
+        call blanks(3, advance='no')
+        call output(mafTAI - startTAI, advance='yes')
+      endif
       if ( mafTAI < startTAI ) exit
       returnStatus = Pgs_td_taiToUTC( mafTAI, backTimes(i) )
       backTAI(i) = mafTAI
@@ -379,10 +393,33 @@ contains
     enddo
 
     ! Reverse numbering of MAF times, numValues
+    if ( DEBUG ) then
+      call output('Num of MAFs prior to first full orbit', advance='no')
+      call blanks(3, advance='no')
+      call output(preMAF, advance='yes')
+    endif
     do i = 1, preMAF
       preTimes(i) = backTimes( preMAF - (i-1) )
       preTAI(i)   = backTAI (preMAF - (i-1) )
       numMIFs(i) = numValues( scansPerOrb - (preMAF - i) )
+! Warning: The following was removed because it made a subscript
+! go out of bounds in l1boa_fill
+! However, w/o it the numbers won't add up
+!      if ( ADDEXTRAMIF ) numMIFs(i) = numMIFs(i) + 1
+      if ( DEBUG .and. i > 1) then
+        call output('Major Frame ', advance='no')
+        call blanks(3, advance='no')
+        call output(i, advance='no')
+        call blanks(3, advance='no')
+        call output('Num of MIFs', advance='no')
+        call blanks(3, advance='no')
+        call output(numMIFs(i), advance='no')
+        call blanks(3, advance='no')
+        call output('delta time TAI', advance='no')
+        call blanks(3, advance='no')
+        call output(preTAI(i) - preTAI(i-1), advance='no')
+        call blanks(3, advance='yes')
+      endif
     enddo
 
   end subroutine Time_pre
@@ -407,6 +444,8 @@ contains
     integer :: Pgs_td_utcToTAI, Pgs_td_taiToUTC
 
     ! Variables
+    logical, parameter :: ADDEXTRAMIF = .TRUE.
+
     integer :: i, returnStatus
     real(r8) :: orbTAI, mafTAI
 
@@ -419,6 +458,7 @@ contains
     mafTAI = orbTAI
     do i = 1, scansPerOrb
       mafTAI = mafTAI + numValues(i)*spm
+      if ( ADDEXTRAMIF ) mafTAI = mafTAI + spm
       if ( mafTAI > endTAI ) exit
       returnStatus = Pgs_td_taiToUTC( mafTAI, postTimes(i+1) )
       postTAI(i+1) = mafTAI
@@ -493,6 +533,9 @@ contains
 end module Time
 
 ! $Log$
+! Revision 1.4  2001/12/06 01:02:30  pwagner
+! Now writes orbit incline angle in ECR
+!
 ! Revision 1.3  2001/12/04 00:25:25  pwagner
 ! sc%scvelECI is new name of scvel
 !
