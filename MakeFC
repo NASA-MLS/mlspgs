@@ -39,7 +39,12 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
-#--------------- Target definitions
+# --------------- MakeFC help
+# Usage: make target SETTING=value
+# Special 1st time usage (assuming no .configure file)
+#    make -f MakeFC update
+
+# --------------- Target definitions
 #            (code sub-directories of mlspgs excluding util, sandbox)
 # $LEVELS        -- automatic; built when target is not specified
 # .configure     -- automatic (if not yet extant; prerequisite for everything else)
@@ -63,6 +68,7 @@ SHELL = /bin/sh
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
 # help           -- prints some info on how to build the mls software
+# disthelp       -- prints README.MakeFC--a long file
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than "make -f $(MakeFName)"
@@ -86,6 +92,30 @@ SHELL = /bin/sh
 #                  (see EVERYTHING variable)
 # substar        -- creates separate archives of subdirs; then tar them
 #                   (also util and srclib are tarred up in this case)
+
+# --------------- SETTING definitions
+# FOPTS              Override default compiler option; note that you must
+#                    use only legal options
+# LDOPTS             Override default (blank) loader option; note that you must
+#                    use only legal options
+# PVM_ROOT           Path to the root of the pvm libraries; note that they
+#                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
+# PVM_ARCH           (see above)
+# FFTW_ROOT          Path to the FFTW library; required for mlsl3
+#
+# The following cannot be set by configure_full
+# BLAS               Path to an external blas library; note that the library
+#                    must then be named \$BLAS/libblas.a
+# TAR                Overrides name of tar command; e.g. path to GNU tar 
+#                    in case your tar won't gzip for targets *targ
+# FAFTER             Appears at the end of each line invoking the compiler
+#                    e.g., for post-processing to highlight warnings and errors
+#                    make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
+# LAFTER             Appears at the end of the very long link statement
+# FC                 Overrides the name by which the Fortran compiler is called
+# CC                 Overrides the name by which the c compiler is called
+#
+# --------------- End MakeFC help
 
 #----------------------------------------------------------
 # LEVELS is the list of automatic targets; i.e.
@@ -135,6 +165,8 @@ TAR=tar
 
 # These are all the configurations that will be removed by clean_all
 EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
+
+tests_sub_dirs := $(shell echo tests/*)
 
 #----------------------- Build instructions
 
@@ -254,6 +286,10 @@ depends:
         mv temp.dep Makefile.dep
 
 help:
+	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
+		| sed -n 's/^..//p'
+
+disthelp:
 	$(CONFDIR)/README.MakeFC
 
 install:
@@ -276,6 +312,22 @@ makefile:
 		fi ; \
 		ln -s MakeFC Makefile ;\
 	  cd ..; \
+	done
+
+makefilesintests:
+	 for dir in $(tests_sub_dirs); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+			pwd ;\
+			if [ -f Makefile ] ; then \
+				rm -f Makefile.old ;\
+				mv Makefile Makefile.old ;\
+			fi ; \
+			if [ -f MakeFC ] ; then \
+				ln -s MakeFC Makefile ;\
+			fi ; \
+	 		cd ../..; \
+		fi; \
 	done
 
 update:
@@ -396,11 +448,15 @@ update: depends
 .PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
-  configure_pvm configure_fopts configure_full configure_help help\
+  configure_pvm configure_fopts configure_full configure_help help disthelp\
+  makefilesintests \
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.25  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
 # Revision 1.24  2001/03/09 00:18:40  pwagner
 # CVS excluded from tar_sips
 #
