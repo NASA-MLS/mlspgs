@@ -27,7 +27,7 @@ module RetrievalModule
     & L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
-  use Intrinsic, only: L_DegreesOfFreedom, PHYQ_Dimensionless
+  use Intrinsic, only: L_Jacobian_Cols, L_Jacobian_Rows, PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
     & Matrix_SPD_T
@@ -90,14 +90,8 @@ contains
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
-    integer :: DegreesOfFreedom         ! (Rows - Columns) of Jacobian
-                                        ! This includes all of the columns, but
-                                        ! excludes masked-out rows, because we
-                                        ! don't mask out columns of the apriori
-                                        ! or the regularization.  If we did, the
-                                        ! normal equations would be singular.
     type(vector_T), pointer :: Diagnostics   ! Diagnostic stuff about the
-                                        ! retrieval -- e.g. degrees of freedom.
+                                        ! retrieval.
     logical :: Diagonal                 ! "Iterate with the diagonal of the
                                         ! a priori covariance matrix until
                                         ! convergence, then put in the whole
@@ -119,6 +113,11 @@ contains
     integer :: IxCovariance             ! Index in tree of outputCovariance
     integer :: IxJacobian               ! Index in tree of jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
+    integer :: Jacobian_Cols            ! Number of columns of the Jacobian.
+    type(vectorValue_T), pointer :: Jac_Col_Qty   ! To output Jacobian_Cols
+    integer :: Jacobian_Rows            ! (Number of rows of Jacobian) -
+                                        ! (masked-off rows of Jacobian)
+    type(vectorValue_T), pointer :: Jac_Row_Qty   ! To output Jacobian_Rows
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
     integer :: MaxFunctions             ! Maximum number of function
@@ -355,7 +354,8 @@ contains
         end if
         if ( error == 0 ) then
           ! Do the retrieval
-          degreesOfFreedom = 0
+          jacobian_Cols = 0
+          jacobian_Rows = 0
           select case ( method )
           case ( l_newtonian )
         ! call add_to_retrieval_timing( 'newton_solver', t1 )
@@ -1152,24 +1152,28 @@ contains
       ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
-        ! Compute degrees of freedom = (Rows of Jacobian actually used) -
-        ! (Columns of Jacobian).  Don't count rows due to Levenberg-
-        ! Marquardt stabilization.  Do count rows due to a priori or
-        ! regularization.
         if ( got(f_diagnostics) ) then
-          dof_qty => GetVectorQuantityByType ( diagnostics, &
-            & quantityType=l_degreesOfFreedom )
-          degreesOfFreedom = sum(normalEquations%m%row%nelts)
+          ! Compute rows of Jacobian actually used.  Don't count rows due
+          ! to Levenberg-Marquardt stabilization.  Do count rows due to a
+          ! priori or regularization.  Put numbers of rows and columns
+          ! into diagnostic vector.
+          jac_col_qty => GetVectorQuantityByType ( diagnostics, &
+            & quantityType=l_jacobian_cols, noError=.true. )
+          jac_row_qty => GetVectorQuantityByType ( diagnostics, &
+            & quantityType=l_jacobian_rows, noError=.true. )
+          jacobian_cols = sum(normalEquations%m%col%nelts)
+          jacobian_rows = sum(normalEquations%m%row%nelts)
           do j = 1, normalEquations%m%col%nb
             if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
-              & degreesOfFreedom = degreesOfFreedom - &
+              & jacobian_rows = jacobian_rows - &
               & countBits(normalEquations%m%col%vec%quantities(j)%mask)
           end do
           if ( got(f_apriori) ) &
-            & degreesOfFreedom = degreesOfFreedom + sum(normalEquations%m%col%nelts)
-          if ( .not. got(f_regOrders) ) &
-            & degreesOfFreedom = degreesOfFreedom - sum(normalEquations%m%col%nelts)
-          dof_qty%values(1,1) = degreesOfFreedom
+            & jacobian_rows = jacobian_rows + jacobian_cols
+          if ( got(f_regOrders) ) &
+            & jacobian_rows = jacobian_rows + jacobian_cols
+          if ( associated(jac_col_qty) ) jac_col_qty%values(1,1) = jacobian_cols
+          if ( associated(jac_row_qty) ) jac_row_qty%values(1,1) = jacobian_rows
         end if
         ! Subtract sum of Levenberg-Marquardt updates from normal
         ! equations
@@ -1448,6 +1452,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.78  2001/10/03 17:57:21  vsnyder
+! Delete l_DegreesOfFreedom, add l-DNWT_...
+!
 ! Revision 2.77  2001/10/02 23:41:11  vsnyder
 ! Added computation of degrees of freedom, diagnostics vector
 !
