@@ -83,7 +83,8 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -168,6 +169,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2002/08/27 23:03:11  pwagner
+# Treats LF95 better
+#
 # Revision 1.8  2002/04/18 20:55:28  pwagner
 # .configure now a prerequisite for executable
 #

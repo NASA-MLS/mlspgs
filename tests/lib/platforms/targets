@@ -83,7 +83,8 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -165,6 +166,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2002/08/29 20:28:16  pwagner
+# Restored -lz to l_specials for Lahey
+#
 # Revision 1.13  2002/08/27 23:03:12  pwagner
 # Treats LF95 better
 #

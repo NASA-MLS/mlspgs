@@ -83,7 +83,8 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -184,6 +185,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
 # Revision 1.12  2002/07/16 18:46:34  pwagner
 # Works with latest Lahey and lf95-toolkit (hopefully)
 #
