@@ -27,9 +27,9 @@ MODULE MLSCF                    ! MLSCF stuff excluding reading and parsing
   integer, parameter :: ShortCharValueLen = 30 ! for upper end of string range
   integer, parameter :: UnitsLen = 10
   integer, parameter :: MlscfEntryLen = 25
-  integer, parameter :: MaxNoKeysPerEntry = 30
-  integer, parameter :: MaxNoDefsPerSection = 50
-  integer, parameter :: MaxNoEntriesPerSection = 50
+  integer, parameter :: MaxNoKeysPerEntry = 60
+  integer, parameter :: MaxNoDefsPerSection = 100
+  integer, parameter :: MaxNoEntriesPerSection = 100
 
   type MlscfKey_T
     character (len=MaxKeyLen) :: Keyword
@@ -159,6 +159,9 @@ end module MLSCF
 !=======================
 
 ! $Log$
+! Revision 2.3  2001/02/22 01:54:41  vsnyder
+! Periodic commit
+!
 ! Revision 2.2  2000/10/19 22:05:02  vsnyder
 ! Try to get the new one to stick
 !

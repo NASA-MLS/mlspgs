@@ -9,6 +9,16 @@ module Allocate_Deallocate
 ! and announce an error if it fails, and similarly for deallocation,
 ! for Double precision, Integer and Real arrays of one or two dimensions.
 
+! **************************************************
+! *****     Important Notice:                  *****
+! **************************************************
+! *****     All of the specific procedures     *****
+! *****     of the Allocate_test generic       *****
+! *****     deallocate the object to be        *****
+! *****     allocated.  Therefore, it must     *****
+! *****     be declared with => NULL()         *****
+! **************************************************
+
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
 
@@ -51,6 +61,7 @@ contains ! =====     Private Procedures     ============================
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     integer :: MY_LOW, STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low = 1
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
@@ -65,6 +76,7 @@ contains ! =====     Private Procedures     ============================
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     integer :: MY_LOW, STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low = 1
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
@@ -79,6 +91,7 @@ contains ! =====     Private Procedures     ============================
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer :: STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
@@ -92,6 +105,7 @@ contains ! =====     Private Procedures     ============================
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer :: STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
@@ -104,6 +118,7 @@ contains ! =====     Private Procedures     ============================
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     integer :: MY_LOW, STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low = 1
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
@@ -118,6 +133,7 @@ contains ! =====     Private Procedures     ============================
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer :: STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
@@ -130,6 +146,7 @@ contains ! =====     Private Procedures     ============================
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     integer :: MY_LOW, STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     my_low = 1
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
@@ -144,6 +161,7 @@ contains ! =====     Private Procedures     ============================
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer :: STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
@@ -265,6 +283,9 @@ contains ! =====     Private Procedures     ============================
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.3  2001/02/22 01:54:41  vsnyder
+! Periodic commit
+!
 ! Revision 2.2  2000/10/09 23:03:49  vsnyder
 ! Provide for lower bounds for allocated arrays
 !
