@@ -396,7 +396,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
+      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, &
+             n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
@@ -797,13 +798,15 @@ contains ! =====     Public procedures     =============================
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, &
+                    s+s_directWrite, nr+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_ascii, t+t_boolean, n+n_field_type, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              begin, f+f_metaName, t+t_string, n+n_field_type, &
              begin, f+f_writeCounterMAF, t+t_boolean, n+n_field_type, &
+             begin, f+f_metaDataOnly, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -1062,6 +1065,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.321  2003/06/23 18:06:34  pwagner
+! Should allow us to write metadata after DirectWrite
+!
 ! Revision 2.320  2003/06/20 19:38:26  pwagner
 ! Allows direct writing of output products
 !
