@@ -1482,18 +1482,27 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: i, myIndexInVector
+    character(len=132) :: MSG           ! An error message
 
     ! Executable code
     myIndexInVector=0
     GetVectorQtyByTemplateIndex => NULL()
+    if ( .not. associated ( vector%quantities ) ) then
+      msg = "Reference to the vector "
+      call get_string ( vector%name, msg(len_trim(msg):len(msg)), strip=.true. )
+      msg = trim ( msg ) // " which has been destroyed" 
+      call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
+    end if
     do i=1,vector%template%noQuantities
       if ( vector%template%quantities(i) == quantityIndex ) then
         myIndexInVector=i
+        exit
       end if
     end do
     if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
+    end if
     if ( present ( indexInVector ) ) indexInVector = myIndexInVector
   end function GetVectorQtyByTemplateIndex
 
@@ -2166,6 +2175,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.99  2003/05/29 16:36:29  livesey
+! New reflector argument to some of the GetVectorQuantity....
+!
 ! Revision 2.98  2003/05/13 04:47:18  livesey
 ! Added noValues argument to CreateVector
 !
