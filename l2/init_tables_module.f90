@@ -760,6 +760,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -939,6 +940,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.273  2003/01/16 00:55:52  jonathan
+! add do_1d
+!
 ! Revision 2.272  2003/01/14 22:14:54  dwu
 ! make FlagCloud depend on both channels and cloudChannels
 !
