@@ -16,8 +16,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    USE MLSMessageModule
    USE OpenInit
    USE OutputClose
-!  USE Synoptic
-   USE DailyCoreModule
+   USE Synoptic
 
    IMPLICIT NONE
 
@@ -65,7 +64,6 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
  
 ! Read all the l2gp data which exist in the input window for that product
 
-!     CALL ReadL2GPProd(cfProd(i), pcf%l2StartDay, pcf%l2EndDay, l2Days, l2gp)
       CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
                         pcf%l2StartDay, pcf%l2EndDay, l2Days, l2gp)
 
@@ -84,7 +82,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
 ! CORE processing
  
-      CALL DailyMapProcessing(cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
+      CALL DailyCoreProcessing(cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
                               l3dm, dmA, dmD, l3r, residA, residD, flags)
 
 ! Check the output data and place them into the appropriate files.  Write the
