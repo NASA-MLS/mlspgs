@@ -556,6 +556,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -565,6 +566,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_sdname, t+t_string, n+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
@@ -669,6 +671,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, nr+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -866,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.194  2002/01/23 21:51:11  pwagner
+! hdfVersion new optional field in l2gp, l2aux, output
+!
 ! Revision 2.193  2002/01/21 21:14:01  livesey
 ! Added binSelector stuff
 !
