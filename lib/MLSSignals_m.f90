@@ -81,6 +81,7 @@ module MLSSignals_M
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
+  public :: PVMPackSignal, PVMUnpackSignal
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
 
@@ -1390,9 +1391,126 @@ contains
 
   end function AreSignalsSuperset
 
+  ! ------------------------------------------------ PVMPackSignal ---
+  subroutine PVMPackSignal ( signal )
+    use PVMIDL, only: PVMIDLpack
+    use PVM, only: PVMErrorMessage
+    ! Dummy arguments
+    type ( Signal_T ), intent(in) :: SIGNAL
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    ! Let's pack things by type do scalars first
+    call PVMIDLPack ( (/ signal%centerFrequency, signal%LO /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal lo/cf' )
+    call PVMIDLPack ( (/ signal%band, signal%direction, signal%index, &
+      & signal%instrumentModule, signal%name, signal%radiometer, signal%sideband, &
+      & signal%singleSideband, signal%spectrometer, signal%spectrometerType, &
+      & signal%switch /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing integers from signal' )
+    call PVMIDLPack ( signal%deferred, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal deferred flag' )
+
+    ! Now do each vector
+    if ( associated ( signal%frequencies ) ) then
+      call PVMIDLPack ( size(signal%frequencies), info )
+      if ( info /= 0 ) call PVMIDLPack ( signal%frequencies, info )
+    else
+      call PVMIDLPack ( 0, info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal frequencies' )
+
+    if ( associated ( signal%widths ) ) then
+      call PVMIDLPack ( size(signal%widths), info )
+      if ( info /= 0 ) call PVMIDLPack ( signal%widths, info )
+    else
+      call PVMIDLPack ( 0, info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal widths' )
+
+    if ( associated ( signal%channels ) ) then
+      call PVMIDLPack ( size(signal%channels), info )
+      if ( info /= 0 ) call PVMIDLPack ( signal%channels, info )
+    else
+      call PVMIDLPack ( 0, info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal channels' )
+
+    ! That's it
+  end subroutine PVMPackSignal
+    
+  ! ------------------------------------------------ PVMUnpackSignal ---
+  subroutine PVMUnpackSignal ( signal )
+    use PVMIDL, only: PVMIDLunpack
+    use PVM, only: PVMErrorMessage
+    ! Dummy arguments
+    type ( Signal_T ), intent(out) :: SIGNAL
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+    integer, dimension(11) :: i11       ! Temporary array
+    real(r8), dimension(2) :: f2        ! Temporary array
+    integer :: SZ
+
+    ! Executable code
+    ! Unpack in mirror image to above pack
+    call PVMIDLUnpack ( f2, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal lo/cf' )
+    signal%centerFrequency = f2(1)
+    signal%lo = f2(2)
+
+    call PVMIDLUnpack ( i11, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking integers from signal' )
+    signal%band = i11(1)
+    signal%direction = i11(2)
+    signal%index = i11(3)
+    signal%instrumentModule = i11(4)
+    signal%name = i11(5)
+    signal%radiometer = i11(6)
+    signal%sideband = i11(7)
+    signal%singleSideband = i11(8)
+    signal%spectrometer = i11(9)
+    signal%spectrometerType = i11(10)
+    signal%switch = i11(11)
+    call PVMIDLUnpack ( signal%deferred, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal deferred flag' )
+
+    ! Now do each vector
+    call PVMIDLUnpack ( sz, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking size of frequencies' )
+    call Allocate_test ( signal%frequencies, sz, 'signal%frequencies', ModuleName )
+    if ( sz > 0 ) then
+      call PVMIDLUnpack ( signal%frequencies, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking frequencies' )
+    end if
+    
+    call PVMIDLUnpack ( sz, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking size of widths' )
+    call Allocate_test ( signal%widths, sz, 'signal%widths', ModuleName )
+    if ( sz > 0 ) then
+      call PVMIDLUnpack ( signal%widths, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking widths' )
+    end if
+    
+    call PVMIDLUnpack ( sz, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking size of channels' )
+    call Allocate_test ( signal%channels, sz, 'signal%channels', ModuleName )
+    if ( sz > 0 ) then
+      call PVMIDLUnpack ( signal%channels, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking channels' )
+    end if
+    
+    ! That's it
+  end subroutine PVMUnpackSignal
+
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.52  2002/10/05 00:40:28  livesey
+! Added pvm packing and unpacking of signals, and deep option on destroy
+!
 ! Revision 2.51  2002/10/03 05:38:11  livesey
 ! Infinite loop fix
 !
