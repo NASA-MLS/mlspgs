@@ -36,7 +36,7 @@
       ENDIF
 !
       S = SIGN(1.0D0,PS)
-      YT(1:NIN) = DLOG(S*YIN(1:NIN))
+      YT(1:NIN) = LOG(S*YIN(1:NIN))
 
       CALL CSPLINE(XIN,XOUT,YT,YY,NIN,NOUT)
 !

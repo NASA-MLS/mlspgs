@@ -12,12 +12,12 @@ module ZOPACITY_M
 contains
 ! This subroutine computes the incremental opacity matrices.
 !
-  Subroutine ZOPACITY ( mr_f, sps_tbl, n_coeffs, n_sps, Ngp1, &
+  Subroutine ZOPACITY ( mr_f, n_coeffs, n_sps, Ngp1, &
  &           N2lvl, Nc, mnp, no_phi_f, brkpt, no_ele, delta, del_opacity)
 !
     integer(i4), intent(in) :: NC, MNP,Ngp1,brkpt,no_ele
     real(r8), intent(in) :: MR_F(Nc,mnp,*)
-    integer(i4), intent(in) :: SPS_TBL(*), N_COEFFS(*), N_SPS
+    integer(i4), intent(in) :: N_COEFFS(*), N_SPS
     integer(i4), intent(in) :: N2lvl, NO_PHI_F(*)
     real(r8), intent(in) :: DELTA(N2lvl,Nc,mnp,*)
     real(r8), intent(out) :: del_opacity(*)
@@ -52,19 +52,18 @@ contains
   contains
 ! --------------------------------     SUM_INCREMENTAL_OPACITY     -----
     subroutine SUM_INCREMENTAL_OPACITY
-      integer(i4) :: FI, J, K, NF, NO_C, SPS_I
+      integer(i4) :: FI, J, K, NF, NO_C
     Real(r8) :: SUM
 !
 ! initialize sums
 !
       Sum = 0.0
 !
-      do sps_i = 1, n_sps             ! Run over the species list
-        j = sps_tbl(sps_i)
+      do j = 1, n_sps                  ! Run over the species list
         nf = no_phi_f(j)
         no_c = n_coeffs(j)
-        do fi = 1, nf                 ! Loop over Phi's
-          do k = 1, no_c              ! Run over the coefficients
+        do fi = 1, nf                  ! Loop over Phi's
+          do k = 1, no_c               ! Run over the coefficients
 !
 ! Compute the total incremental opacity for the segment
 !

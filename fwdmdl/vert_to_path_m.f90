@@ -1,4 +1,3 @@
-!
 module VERT_TO_PATH_M
   use L2PCDim, only: Nlvl, NSPS, N2LVL
   use MLSCommon, only: I4, R4, R8
@@ -25,10 +24,10 @@ contains
 
 ! *** NOTE: This routine is using The Equivalent Circle concept
 
-SUBROUTINE vert_to_path(n_lvls,ng,npath,gl_count,no_phi_t,no_t,    &
+SUBROUTINE vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,    &
            htan,z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,            &
            dh_dt_glgrid,t_phi_basis,z_path,h_path,t_path,phi_path, &
-           dhdz_path,dh_dt_path,brkpt,totnp,rad_cur,phi_lat,Ier)
+           dhdz_path,dhdt_path,brkpt,totnp,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: vert_to_path
@@ -36,16 +35,16 @@ SUBROUTINE vert_to_path(n_lvls,ng,npath,gl_count,no_phi_t,no_t,    &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: n_lvls,ng,gl_count,no_phi_t,no_t,npath
+Integer(i4), INTENT(IN) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
 
 Integer(i4), INTENT(OUT) :: totnp,brkpt,Ier
 
-Real(r4), INTENT(OUT) :: dh_dt_path(:,:,:)
+Real(r4), INTENT(OUT) :: dhdt_path(:,:,:)
 
 Real(r8), INTENT(OUT) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
                          dhdz_path(:)
 
-Real(r8), INTENT(IN) :: rad_cur, phi_lat, htan
+Real(r8), INTENT(IN) :: htan
 Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
                      t_phi_basis(:), dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
 
@@ -53,7 +52,7 @@ Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: i, j, k, l, m, n, jp, n_d, npp, kgp, ibrk, Ngp1, no_iter
+Integer(i4) :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
 
 Real(r8) :: h, s, r, dz, rs, phi, rss, sum, dhdz, prev_h
 
@@ -68,9 +67,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
 
   Ier = 0
   Ngp1 = Ng + 1
-  kgp = N2lvl * Ngp1
 
-  ALLOCATE(cndx(kgp), dum_z(kgp), dum_h(kgp), dum_t(kgp), dum_phi(kgp), &
+  DEALLOCATE(cndx, dum_z, dum_h, dum_t, dum_phi, STAT=i)
+  ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_t(ngt), dum_phi(ngt), &
  &         STAT = ier)
   IF(ier /= 0) THEN
     Ier = 1
@@ -78,7 +77,8 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
     GOTO 99
   endif
 
-  ALLOCATE(h_a(kgp,no_phi_t), phi_eta(kgp,no_phi_t), STAT = ier)
+  DEALLOCATE(h_a, phi_eta, STAT=i)
+  ALLOCATE(h_a(ngt,no_phi_t), phi_eta(ngt,no_phi_t), STAT = ier)
   IF(ier /= 0) THEN
     Ier = 1
     Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
@@ -93,25 +93,23 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   dum_t = 0.0
   dum_phi = 0.0
   DO j = 1, no_phi_t
-    h_a(1:kgp,j) = 0.0
-    phi_eta(1:kgp,j) = 0.0
+    h_a(1:ngt,j) = 0.0
+    phi_eta(1:ngt,j) = 0.0
   END DO
 
   r = -999.99
   dz = r / 57.2958
-  z_path(1:Npath) = r
-  h_path(1:Npath) = r
-  t_path(1:Npath) = r
-  phi_path(1:Npath) = dz
+  z_path(1:ngt) = r
+  h_path(1:ngt) = r
+  t_path(1:ngt) = r
+  phi_path(1:ngt) = dz
 
-  dhdz_path(1:Npath) = 0.0
-  dh_dt_path(1:Npath,1:no_phi_t,1:no_t) = 0.0
+  dhdz_path(1:ngt) = 0.0
+  dhdt_path(1:ngt,1:no_phi_t,1:no_t) = 0.0
 
 ! Define the various COMMON variables needed for computations:
 
   ht = htan
-  roc = rad_cur
-  phi_tan = phi_lat
   earthx = (htan < -0.01)
 
   IF(htan < -0.01) THEN
@@ -174,7 +172,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
     CALL lintrp(z_glgrid,dum_z,h_glgrid(1:,m),h_a(1:,m),gl_count,npp)
   END DO
 
-  n_d = kgp
+  n_d = ngt
   no_iter = 0
 
 10 no_iter = no_iter + 1
@@ -187,7 +185,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   DO i = 1, ibrk-1
     h = dum_h(i)
     phi = dum_phi(i)
-    IF(n_d == kgp) THEN
+    IF(n_d == ngt) THEN
       CALL H_TO_S_PHI(h,s,phi)
     ELSE
       CALL hunt(i,cndx,n_d,l,j)
@@ -202,7 +200,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   DO i = ibrk, npp
     h = dum_h(i)
     phi = dum_phi(i)
-    IF(n_d == kgp) THEN
+    IF(n_d == ngt) THEN
       CALL H_TO_S_PHI(h,s,phi)
     ELSE
       CALL hunt(i,cndx,n_d,l,j)
@@ -322,7 +320,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
       CALL lintrp(z_glgrid, dum_z, dh_dt_glgrid(1:,m,j), dum_h, &
      &            gl_count, npp)
       DO i = 1, npp
-        dh_dt_path(i,m,j) = dum_h(i) * phi_eta(i,m)
+        dhdt_path(i,m,j) = dum_h(i) * phi_eta(i,m)
       END DO
     END DO
   END DO

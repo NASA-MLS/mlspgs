@@ -85,10 +85,10 @@ contains
 !
     if (t < 225.0_r8) then
       r = (q(2)-q(3))/tl1
-      Q_Log = q(2)-q(1)+r*Dlog10(t/225.0_r8)
+      Q_Log = q(2)-q(1)+r*Log10(t/225.0_r8)
     else
       r = (q(1)-q(2))/tl2
-      Q_Log = r*Dlog10(t/300.0_r8)
+      Q_Log = r*Log10(t/300.0_r8)
     endif
 !
     ns = 0.25_r8 + 1.5_r8 * n
@@ -192,10 +192,10 @@ contains
 !
     if (t < 225.0_r8) then
       r = (q(2)-q(3))/tl1
-      Q_Log = q(2)-q(1)+r*Dlog10(t/225.0_r8)
+      Q_Log = q(2)-q(1)+r*Log10(t/225.0_r8)
     else
       r = (q(1)-q(2))/tl2
-      Q_Log = r*Dlog10(t/300.0_r8)
+      Q_Log = r*Log10(t/300.0_r8)
     endif
 !
     ns = 0.25_r8 + 1.5_r8 * n
@@ -374,25 +374,30 @@ contains
 !                                                                      *
 !***********************************************************************
 !
-    logical, save :: FIRST = .true.
-    real(r8), save :: B(22)
+    logical, SAVE :: FIRST = .true.
+!
+    real(r8), SAVE :: B(22)
+!
     real(r8), parameter :: C(21) = &
     & (/ 0.7093602E-7, -0.2518434E-6, 0.8566874E-6, -0.2787638E-5 &
     &  , 0.8660740E-5, -0.2565551E-4, 0.7228775E-4, -0.1933631E-3 &
     &  , 0.4899520E-3, -0.1173267E-2, 0.2648762E-2, -0.5623190E-2 &
     &  , 0.1119601E-1, -0.2084976E-1, 0.3621573E-1, -0.5851412E-1 &
     &  , 0.8770816E-1, -0.121664, 0.15584, -0.184, 0.2 /)
-    real(r8) :: CO
-    real(r8), save :: D0(25), D1(25), D2(25), D3(25), D4(25)
-    real(r8) :: DX
-    real(r8) :: F, FD, FI, FR
-    real(r8), parameter :: H = 0.201
-    real(r8), save :: HN(25)
+!
+    real(r8), SAVE :: D0(25), D1(25), D2(25), D3(25), D4(25)
+!
+    real(r8) :: DX, CO, F, FD, FI, FR, Y2
+    real(r8) :: UU, VOIGT, VV, WI, WR, XL, YL
+!
+    real(r8), PARAMETER :: H = 0.201
+    real(r8), PARAMETER :: TwoOvSPi = 1.1283791670955125739_r8 ! 2.0/Sqrt(Pi)
+!
+    real(r8), SAVE :: HN(25)
+!
     integer :: I, J, N
-    real(r8), save :: RI(15)
-    real(r8), parameter :: TwoOvSPi = 1.1283791670955125739_r8 ! 2.0/Sqrt(Pi)
-    real(r8) :: UU, VOIGT, VV, WI, WR
-    real(r8) :: XL, YL,  Y2
+!
+    real(r8), SAVE :: RI(15)
 !
     data B(1), B(2)/0.0_r8, 0.7093602E-7_r8/
 !

@@ -19,16 +19,18 @@ contains
 ! condensed algorithm. Enter t_script(*) in a quantity that is linear
 ! in power.
 !
-    real(r8), intent(in) :: T_SCRIPT(*)
     integer(i4), intent(in) :: N_lvls
-    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(*)
-    real(r8), intent(out) :: TAU(*), RADIANCE
     integer(i4), intent(in) :: mid
+
+    real(r8), intent(in) :: T_SCRIPT(*)
+    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(*)
+
+    real(r8), intent(out) :: TAU(*), RADIANCE
     integer(i4), intent(out) :: ILO, IHI
 
     Real(r8), Parameter :: cut_off = -15.0
 
-    Integer(i4) :: i, k
+    Integer(i4) :: i, j, k
     Real(r8)    :: r, total_opacity
 !
 ! First segment initialization (From the spacecraft to the tangent point)
@@ -60,7 +62,17 @@ contains
     i = mid + 2
     ihi = i
 !
-    do while (total_opacity > cut_off .and. i <= k)
+    j = k + 1
+    do 
+      j = j - 1
+      if(t_script(j) /= 0.0) EXIT 
+      if(del_opacity(j-2) /= 0.0) EXIT 
+      ihi = j - 1
+    end do
+!
+    j = ihi
+    ihi = i
+    do while (total_opacity > cut_off .and. i <= j)
       total_opacity = total_opacity - del_opacity(i-2)
       r = earth_ref * exp(total_opacity)
       tau(i) = r

@@ -187,12 +187,13 @@ CHARACTER (LEN=*), INTENT(IN), optional :: prim
 INTEGER(i4), PARAMETER :: mdeg = 10
 INTEGER(i4), PARAMETER :: maxc = 130
 
-Real(r8), save :: fa,x1,xl,xr,xn
-Real(r8), save :: ael(3),aer(3)
-Real(r8), save :: asc(maxc),apc(mdeg)
-Integer(i4), save :: nda,nsa,jcos
+Real(r8), SAVE :: fa,x1,xl,xr,xn
+Real(r8), SAVE :: ael(3),aer(3)
+Real(r8), SAVE :: asc(maxc),apc(mdeg)
 
-Integer(i4), save :: fcheck = -1
+Integer(i4), SAVE :: nda,nsa,jcos
+
+Integer(i4), SAVE :: fcheck = -1
 
 Real(r8) :: q,z,zs,zp,vf
 

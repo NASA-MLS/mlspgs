@@ -23,6 +23,7 @@
       return
     end if
 !
+    klo = -1
     do i = 1, Nout
       x = xout(i)
       Call hunt(x, xin, nin, klo, khi)

@@ -16,7 +16,7 @@ contains
 
   Subroutine get_beta_path (Spectag, Freq, no_ele, z_path, t_path, &
                             mdb_hdr, mdb_rec, values, t_power, dbeta_dw, &
-                            dbeta_dn, dbeta_dnu)
+                            dbeta_dn, dbeta_dnu, Ier)
 
     integer(i4), intent(in) :: SPECTAG, no_ele
 
@@ -24,9 +24,10 @@ contains
 
     Type(path_vector), intent(in) :: z_path, t_path
 
-    Type (eos_mdb_hdr), intent(in) :: MDB_HDR(*)
+    Type (eos_mdb_hdr), intent(in) :: MDB_HDR
     Type (eos_mdb_rec), intent(in) :: MDB_REC(*)
 
+    integer(i4), intent(out) :: Ier
     real(r8), intent(out) :: values(*), t_power(*), dbeta_dw(*), &
                              dbeta_dn(*), dbeta_dnu(*)
 
@@ -50,7 +51,8 @@ contains
       if(z <= -4.5) CYCLE
       t = t_path%values(h_i)
       Call Create_beta(Spectag, z, t, Freq, mdb_hdr, mdb_rec, &
-   &                   q, t_p, pw, pn, pnu)
+   &                   q, t_p, pw, pn, pnu, Ier)
+      if(Ier /= 0) Return
       values(h_i) = q
       t_power(h_i) = t_p
       dbeta_dw(h_i) = pw
@@ -69,4 +71,3 @@ end module GET_BETA_PATH_M
 !
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90
-!

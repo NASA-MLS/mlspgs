@@ -20,7 +20,7 @@ contains
 ! --------------------------------------     Create_beta     -----
 !
   Subroutine Create_beta (Spectag, z, t, Fgr, mdb_hdr, mdb_rec, &
-             beta_value, t_power, dbeta_dw, dbeta_dn, dbeta_dnu0)
+             beta_value, t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Ier)
 !
 !  For a given channel, frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
@@ -28,9 +28,10 @@ contains
     Integer(i4), intent(in) :: SPECTAG
     Real(r8), intent(in) :: Z, T, Fgr
 
-    Type(eos_mdb_hdr), intent(in) :: MDB_HDR(*)
+    Type(eos_mdb_hdr), intent(in) :: MDB_HDR
     Type(eos_mdb_rec), intent(in) :: MDB_REC(*)
 
+    Integer(i4), intent(out) :: Ier
     Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
     Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
 !
@@ -47,8 +48,7 @@ contains
     Real(r8) :: B_NTRP, DB_DN_NTRP, DB_DNU0_NTRP, DB_DW_NTRP
     Real(r8) :: FREQ, PRESSURE, Q, Q_LOG(3), RA, RN, RNU0, RW
 
-    Integer(i4) :: I, LN_I, NO_FREQ, NO_PFA_LINES
-    Integer(i4), SAVE :: MS = -1, PREV_SPEC = -1
+    Integer(i4) :: LN_I, NO_FREQ, NO_PFA_LINES
 !
     Real(r8), SAVE :: mdb_pres(NZ), mdb_temp(NT), x_grid(MAX_FREQ)
 !
@@ -57,6 +57,7 @@ contains
 !
 !  Setup absorption coefficients function
 !
+    Ier = 0
     dbeta_dw = 0.0
     dbeta_dn = 0.0
     dbeta_dnu0 = 0.0
@@ -126,33 +127,32 @@ contains
 !
 !  Check for anything but liquid water and dry air:
 !
-    if (Spectag /= prev_spec .or. ms < 1) then
-      ms = 0
-      do i = 1, 20
-        if (mdb_hdr(i)%Spectag == Spectag) then
-          ms = i
-          prev_spec = Spectag
-          mdb_pres(1:nz) = mdb_hdr(ms)%Zeta(1:nz)
-          mdb_temp(1:nt) = mdb_hdr(ms)%Log_Temp(1:nt)
-          x_grid(1:max_freq) = 0.0
-          EXIT
-        end if
-      end do
-    end if
+    if(mdb_hdr%Spectag /= Spectag) then
+      Ier = 1
+      Print 901,Spectag, mdb_hdr%Spectag
+ 901  format('** Error in subroutine: Create_beta ..',/,          &
+     &       '   For some reason mdb_hdr%spectag /= Spectag !',/, &
+     &       '   Spectag:',i6,'  mdb_hdr%spectag:',i6)
+      Return
+    endif
+
+    x_grid(1:max_freq) = 0.0
+    mdb_pres(1:nz) = mdb_hdr%Zeta(1:nz)
+    mdb_temp(1:nt) = mdb_hdr%Log_Temp(1:nt)
 !
-    q_log(1) = mdb_hdr(ms)%q_log(1)
-    q_log(2) = mdb_hdr(ms)%q_log(2)
-    q_log(3) = mdb_hdr(ms)%q_log(3)
+    q_log(1) = mdb_hdr%q_log(1)
+    q_log(2) = mdb_hdr%q_log(2)
+    q_log(3) = mdb_hdr%q_log(3)
 !
-    sps_mass = real(spectag / 1000)
-    no_pfa_lines = mdb_hdr(ms)%no_lines
+    sps_mass = Real(Spectag / 1000)
+    no_pfa_lines = mdb_hdr%no_lines
 !
     do ln_i = 1, no_pfa_lines
 !
-      sps_n = mdb_hdr(ms)%n(ln_i)
-      sps_w = mdb_hdr(ms)%w(ln_i)
-      sps_ps = mdb_hdr(ms)%ps(ln_i)
-      sps_v0 = mdb_hdr(ms)%v0(ln_i)
+      sps_n = mdb_hdr%n(ln_i)
+      sps_w = mdb_hdr%w(ln_i)
+      sps_ps = mdb_hdr%ps(ln_i)
+      sps_v0 = mdb_hdr%v0(ln_i)
 !
       Call Get_V0s_X2N(Pressure, t, sps_n, sps_ps, sps_w, sps_mass, &
  &                     sps_v0, v0s, q)
@@ -185,8 +185,8 @@ contains
       Freq = freqs(ln_i)
       delv = Fgr - Freq
 !
-      no_freq = mdb_hdr(ms)%no_f_grid(ln_i)
-      x_grid(1:no_freq) = mdb_hdr(ms)%x_grid(1:no_freq,ln_i)
+      no_freq = mdb_hdr%no_f_grid(ln_i)
+      x_grid(1:no_freq) = mdb_hdr%x_grid(1:no_freq,ln_i)
 !
       Call beta_intrp(z, t, delv, nz, nt, no_freq, mdb_pres, mdb_temp, &
    &       x_grid, x2nu(ln_i), x2nu_m(ln_i), x2nu_p(ln_i),             &
@@ -274,6 +274,7 @@ contains
 
     Real(r8), parameter :: One = 1.0_r8
 !
+    jz1 = -1
     Call Hunt(z,mdb_pres,nz,jz1,jz2)
 !
     delz = z - mdb_pres(jz1)
@@ -287,6 +288,9 @@ contains
 !
     Temp = t
     x2n = x2nu
+!
+    jt1 = -1
+    jf1 = -1
 !
  10 lnt = Log(Temp)
     Call Hunt(lnt,mdb_temp,nt,jt1,jt2)
@@ -349,20 +353,20 @@ contains
 !
     do i = 1, m
       j = ONdx(i)
-      y = (One-u)*(One-v)*dLogB_dw(jz1,jt1,j) + &
-   &         u   *(One-v)*dLogB_dw(jz2,jt1,j) + &
-   &      (One-u)*   v   *dLogB_dw(jz1,jt2,j) + &
-   &         u   *   v   *dLogB_dw(jz2,jt2,j)
+      y = (One-u) * (One-v) * dLogB_dw(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dw(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dw(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dw(jz2,jt2,j)
       vw(i) = y
-      y = (One-u)*(One-v)*dLogB_dn(jz1,jt1,j) + &
-   &         u   *(One-v)*dLogB_dn(jz2,jt1,j) + &
-   &      (One-u)*   v   *dLogB_dn(jz1,jt2,j) + &
-   &         u   *   v   *dLogB_dn(jz2,jt2,j)
+      y = (One-u) * (One-v) * dLogB_dn(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dn(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dn(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dn(jz2,jt2,j)
       vn(i) = y
-      y = (One-u)*(One-v)*dLogB_dNu0(jz1,jt1,j) + &
-   &         u   *(One-v)*dLogB_dNu0(jz2,jt1,j) + &
-   &      (One-u)*   v   *dLogB_dNu0(jz1,jt2,j) + &
-   &         u   *   v   *dLogB_dNu0(jz2,jt2,j)
+      y = (One-u) * (One-v) * dLogB_dNu0(jz1,jt1,j) + &
+   &         u    * (One-v) * dLogB_dNu0(jz2,jt1,j) + &
+   &      (One-u) *    v    * dLogB_dNu0(jz1,jt2,j) + &
+   &         u    *    v    * dLogB_dNu0(jz2,jt2,j)
       vNu0(i) = y
     end do
 !
@@ -399,6 +403,7 @@ contains
     h = abs(x-Xa(1))
     if (h <= Tiny) Return
 !
+    klo = -1
     Call Hunt(X,Xa,N,klo,khi)
 !
     dydx = (Ya(khi)-Ya(klo))/(Xa(khi)-Xa(klo))

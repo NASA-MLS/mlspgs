@@ -20,12 +20,12 @@ contains
 !  ** NOTE: This routine integrates in ZETA Space !!
 !
   Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
- &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,sps_tbl,Nlvl,  &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,Nlvl,  &
  &           ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
  &           in,ip,d_delta_dtnp)
 !
     Integer(i4), intent(in) :: NLVL,NO_PHI_T,N_LVLS,N_SPS, &
-   &             NO_T,IN,IP,MID,BRKPT,NO_ELE,SPS_TBL(*)
+   &             NO_T,IN,IP,MID,BRKPT,NO_ELE
 !
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 !
@@ -217,13 +217,12 @@ contains
       real(r8), intent(in) :: FS, ZS
 !
       real(r8) :: ETAP, ETAZ
-      integer :: I, J, K, SPS_I
+      integer :: I, J, K
 !
 ! Compute beta and temp. power on the Gauss-Legendre grid for the current
 ! sub-interval:
 !
-      do sps_i = 1, n_sps
-        j = sps_tbl(sps_i)
+      do j = 1, n_sps
         tp_zs(j) = beta_path(j)%t_power(kk)
         betaxf_zs(j) = beta_path(j)%values(kk) *  &
        &               spsfunc_path(j)%values(kk)
@@ -253,7 +252,7 @@ contains
 ! Compute the Gauss-Legendre quadrature, subtracting the 'singularities
 ! factors':
 !
-      Integer :: I, J, SPS_I
+      Integer :: I, J
       Real(r8) :: DS, ETANP, ETAZ, FV1, FV2, HD, HD2, HYD, Q, &
      &            PHI,R,RZ
 
@@ -280,8 +279,7 @@ contains
 !
         fv1 = -sing1
         fv2 = -sing2
-        do sps_i = 1, n_sps
-          j = sps_tbl(sps_i)
+        do j = 1, n_sps
           q = betaxf_GL(i,j)
           if (etanp > 0.0) fv1 = fv1 + q * etanp * tp_GL(i,j)
           fv2 = fv2 + q
@@ -304,14 +302,12 @@ contains
       real(r8), intent(in) :: TS
 !
       Real(r8) :: Q
-      integer :: J, SPS_I
+      integer :: J
 !
       sing1 = 0.0
       sing2 = 0.0
 
-      do sps_i = 1, n_sps
-!
-        j = sps_tbl(sps_i)
+      do j = 1, n_sps
 !
 !  Compute the value of the integrand at the starting point of the interval
 !  (This is done in order to eliminate the singularities. We call these

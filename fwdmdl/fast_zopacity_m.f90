@@ -13,11 +13,11 @@ module FAST_ZOPACITY_M
 contains
 ! This subroutine computes the incremental opacity matrices.
 !
-  Subroutine FAST_ZOPACITY (sps_tbl, n_sps, Ngp1, N2lvl, brkpt, &
+  Subroutine FAST_ZOPACITY (n_sps, Ngp1, N2lvl, brkpt, &
  &                          no_ele, delta, del_opacity)
 !
     integer(i4), intent(in) :: Ngp1,brkpt,no_ele,N2lvl
-    integer(i4), intent(in) :: SPS_TBL(*), N_SPS
+    integer(i4), intent(in) :: N_SPS
 !
     real(r8), intent(in) :: DELTA(N2lvl,*)
 !
@@ -56,15 +56,14 @@ contains
 !
     subroutine SUM_INCREMENTAL_OPACITY
 !
-      Integer(i4) :: J, SPS_I
+      Integer(i4) :: J
 !
       Real(r8) :: SUM
 !
 ! Compute the total incremental opacity for the segment
 !
       Sum = 0.0
-      do sps_i = 1, n_sps             ! Run over the species list
-        j = sps_tbl(sps_i)
+      do j = 1, n_sps                  ! Run over the species list
         Sum = Sum + delta(h_i,j)
       end do
 !

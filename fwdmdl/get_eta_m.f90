@@ -64,4 +64,3 @@ end module GET_ETA_M
 ! $Log$
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
-!

@@ -1,11 +1,10 @@
 module RAD_TRAN_WD_M
   use GL6P, only: NG
-  use L2PCDim, only: NLVL, Nptg, NSPS, N2LVL, MNP => max_no_phi
-  use MLSCommon, only: I4, R4, R8
+  use L2PCDim, only: NLVL, NSPS, N2LVL, MNP => max_no_phi
+  use MLSCommon, only: I4, R8
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, SPECTRO_PARAM
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, &
-                             PATH_DERIVATIVE
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
   use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
   use GET_DELTA_M, only: GET_DELTA
   use SPECTRO_DERIVATIVE_M, only: SPECTRO_DERIVATIVE
@@ -24,22 +23,20 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model with derivatives
 
-Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
+Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,  &
       &    z_path, h_path, t_path, phi_path, dHdz_path, atmospheric,  &
-      &    beta_path, spsfunc_path, t_z_basis, f_basis,no_coeffs_f, mr_f, &
-      &    no_t, ref_corr, no_phi_f, phi_basis_f, temp_der, no_phi_t,       &
-      &    t_phi_basis, dh_dt_path, k_atmos, k_temp,                &
-      &    spect_atmos, spectroscopic, k_spect_dw, k_spect_dn, k_spect_dnu, &
-      &    is_f_log, brkpt, no_ele, mid, ilo, ihi, t_script, tau,  &
-      &    Ier)
+      &    beta_path,spsfunc_path,t_z_basis,f_basis,no_coeffs_f,mr_f, &
+      &    no_t, ref_corr, no_phi_f, phi_basis_f, temp_der, no_phi_t, &
+      &    t_phi_basis, dh_dt_path, spect_atmos, spectroscopic, k_temp,&
+      &    k_atmos, k_spect_dw, k_spect_dn, k_spect_dnu,is_f_log,brkpt,&
+      &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
 !
     Logical, intent(in) :: TEMP_DER, IS_F_LOG(*)
 
-    Integer(i4), intent(in) :: FRQ_I,PTG_I,N_LVLS,BAND,NO_PHI_T,NO_T, &
+    Integer(i4), intent(in) :: FRQ_I,N_LVLS,NO_PHI_T,NO_T, BAND, &
    &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI
 
-    Integer(i4), intent(in) :: SPS_TBL(Nsps,*), NO_COEFFS_F(*), NO_PHI_F(*), &
-   &                           SPECT_ATMOS(*)
+    Integer(i4), intent(in) :: NO_COEFFS_F(*), NO_PHI_F(*), SPECT_ATMOS(*)
 
     Integer(i4), intent(out) :: IER
 
@@ -66,16 +63,14 @@ Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
 
     Type(path_derivative), intent(in) :: DH_DT_PATH
 
-    Real(r4), intent(out) :: K_TEMP(Nptg,mxco,mnp)
-    Real(r4), intent(out) :: K_ATMOS(Nptg,mxco,mnp,Nsps)
-    Real(r4), intent(out) :: K_SPECT_DW(Nptg,mxco,mnp,Nsps),  &
-   &                         K_SPECT_DN(Nptg,mxco,mnp,Nsps),  &
-   &                         K_SPECT_DNU(Nptg,mxco,mnp,Nsps)
+    Type(path_derivative), intent(in out) :: k_temp
+    Type(path_derivative), intent(in out) :: k_atmos(:), k_spect_dw(:), &
+                                             k_spect_dn(:), k_spect_dnu(:)
 !
     CHARACTER (LEN=01) :: CA
 
-    Integer(i4) :: i,j,k,Ngp1,Spectag
-    Integer(i4) :: nf, sa, jz, s_np, s_nz
+    Integer(i4) :: i, j, Ngp1, Spectag
+    Integer(i4) :: nf, sa, s_np, s_nz
 
     Real(r8) :: dt_scrpt_dnp(N2lvl,mxco,mnp), delta(N2lvl,mxco,mnp,Nsps)
 
@@ -87,19 +82,20 @@ Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
 !
     Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
    &     beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
-   &     sps_tbl(1:,band),Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+   &     Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
    &     phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
     if (Ier /= 0) Return
 !
 ! Compute atmosperic derivatives for this channel
 !
-    Call zatmos_deriv(atmospheric,ptg_i,sps_tbl(1:,band),n_sps,  &
-   &            band,no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
-   &            no_phi_f,k_atmos)
+    Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
+   &            no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
+   &            no_phi_f,k_atmos,Ier)
+    if (Ier /= 0) Return
 !
-!   if (frq_i > 0) then           ! DEBUG, do Deriv. for all channel(s)
-    if (frq_i == 1) then          ! DEBUG, do Deriv. for 1 channel(s) only
-!   if (frq_i <= -1) then         ! DEBUG, Skip derivatives altogether ..
+    if (frq_i > 0) then      ! ** DEBUG, do Deriv. for all channel(s)
+!   if (frq_i == 1) then     ! ** DEBUG, do Deriv. for 1 channel(s) only
+!   if (frq_i <= -1) then    ! ** DEBUG, Skip derivatives altogether ..
 !
 ! Compute temperature derivative for this channel (if requested)
 !
@@ -115,10 +111,10 @@ Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
           end do
         end do
 !
-        Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,band,z_path,    &
-       &     t_path,h_path,phi_path,beta_path,dHdz_path,dh_dt_path,       &
-       &     no_phi_t,no_t,N_lvls,n_sps,ptg_i,ref_corr,sps_tbl,t_phi_basis, &
-       &     tau,t_script,dt_scrpt_dnp,spsfunc_path,ilo,ihi,k_temp)
+        Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
+       &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
+       &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
+       &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
 !
       end if
 !
@@ -127,57 +123,56 @@ Subroutine Rad_Tran_WD(ptg_i,frq_i,Frq,N_lvls,band,n_sps, sps_tbl,    &
 !  Get the dI/d(Spectral parameters) (w, n & nu0) FOR EACH SPECIE,
 !  and for each Zeta/Phi coefficient.
 !
-      k = ptg_i
-      do jz = 1, n_sps
+      do nf = 1, n_sps
 !
-        nf = sps_tbl(jz,band)
         sa = spect_atmos(nf)
-        if (sa >= 1) then
+        if (sa < 1) CYCLE
 !
-          Spectag = spectroscopic(sa)%spectag
+        if(.not.spectroscopic(sa)%DER_CALC(band)) CYCLE
 !
-          DO
+        Spectag = spectroscopic(sa)%spectag
 !
-            if(spectroscopic(sa)%Spectag /= Spectag) EXIT
+        DO
 !
-            s_np = spectroscopic(sa)%no_phi_values
-            s_nz = spectroscopic(sa)%no_zeta_values
-            if(s_nz < 1 .or. s_np < 1) EXIT
+          if(spectroscopic(sa)%Spectag /= Spectag) EXIT
 !
-            CA = spectroscopic(sa)%type
+          s_np = spectroscopic(sa)%no_phi_values
+          s_nz = spectroscopic(sa)%no_zeta_values
+          if(s_nz < 1 .or. s_np < 1) EXIT
 !
-            if (CA == 'W') then
-              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
- &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
- &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &                 k_spect_dw(k,1:,1:,nf), Ier )
-!
-            else if (CA == 'N') then
-              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
- &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
- &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &                 k_spect_dn(k,1:,1:,nf), Ier )
-!
-            else if (CA == 'V') then
-              Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &                 h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
- &                 spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
- &                 t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &                 k_spect_dnu(k,1:,1:,nf), Ier )
-!
-            end if
-!
-            if (Ier /= 0) Return
-!
-            sa = sa + 1
-!
-          END DO
+          CA = spectroscopic(sa)%type
 
-        end if
+          if (CA == 'W') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,k_spect_dw(nf), Ier )
 !
-      end do                      ! On jz (Specie loop)
+          else if (CA == 'N') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,k_spect_dn(nf), Ier )
+!
+          else if (CA == 'V') then
+            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
+ &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               frq_i,k_spect_dnu(nf), Ier )
+!
+          end if
+!
+          if (Ier /= 0) Return
+!
+          sa = sa + 1
+          if(sa > 3 * n_sps) EXIT
+!
+        END DO
+!
+      end do                      ! On nf (Specie loop)
 !
     end if                        ! on Derivatives 'if'
 !

@@ -1,4 +1,3 @@
-!
 module REFRACTION_M
   use MLSCommon, only: I4, R4, R8
   use L2PCDIM, only: NLVL, N2lvl, Nptg
@@ -18,9 +17,9 @@ contains
 
 !-------------------------------------------------------------------
 
-SUBROUTINE refractive_index(h2o_vmr,h2o_press,h2o_phi,no_h2o_press,    &
-           no_h2o_phi,ndx_path,z_path,t_path,phi_path,n_path,h2o_path, &
-           no_tan_hts,wet)
+SUBROUTINE refractive_index(h2o_vmr,h2o_press,h2o_phi,no_h2o_press, &
+           no_h2o_phi,ndx_path,z_path,t_path,phi_path,n_path,       &
+           wet,no_tan_hts)
 
 ! This routine computes the refractive index as a function of altitude
 ! and phi. The returned value has one subtracted from it
@@ -39,30 +38,30 @@ Real(r8), INTENT(IN) :: h2o_vmr(:,:),h2o_press(:),h2o_phi(:)
 Type(path_index),  INTENT(IN)  :: ndx_path(:)
 Type(path_vector),  INTENT(IN) :: z_path(:), t_path(:), phi_path(:)
 
-! Real(r8), INTENT(OUT) :: n_path(:,:),h2o_path(:,:)
-Type(path_vector), INTENT(OUT) :: n_path(:), h2o_path(:)
+Type(path_vector), INTENT(OUT) :: n_path(:)
 
 !  ----------------
 !  Local variables:
 !  ----------------
 Integer(i4) :: ht_i, ptg_i, j, ier
-Real(r8) :: q, r, p, v, z, ti, phi
+Real(r8) :: r, p, v, z, ti, phi
 
 ! Derive the water function by linear interpolation of the basis coefficients
 ! and compute the relative refractive index function.
 ! ***************** Caution ******************************
 ! ADD: 1.000 TO GET THE ABSOLUTE REFRACTIVE INDEX !!!!
 
+  ptg_i = no_tan_hts
+  DEALLOCATE(n_path(ptg_i)%values,STAT=j)
+
   DO ptg_i = 1, no_tan_hts
     j = ndx_path(ptg_i)%total_number_of_elements
-    ALLOCATE(n_path(ptg_i)%values(j), h2o_path(ptg_i)%values(j), &
-   &         STAT=ier)
+    ALLOCATE(n_path(ptg_i)%values(j), STAT=ier)
     if(Ier /= 0) then
       Print *,'** Allocation error in "refractive_index" routine !'
       Stop
     endif
     n_path(ptg_i)%values(1:j) = 0.0
-    h2o_path(ptg_i)%values(1:j) = 1.0
     DO ht_i = 1, j
       z = z_path(ptg_i)%values(ht_i)
       if(z < -5.0) CYCLE
@@ -74,9 +73,6 @@ Real(r8) :: q, r, p, v, z, ti, phi
         Call TWO_D_POLATE (h2o_press,h2o_vmr,no_h2o_press,h2o_phi, &
                            no_h2o_phi,z,phi,v)
         r = r * (1.0_r8 + 4810.0_r8 * v * ti)
-        p = 300.0_r8 * ti
-        q = 31.6_r8 * v * (p**7.5)
-        h2o_path(ptg_i)%values(ht_i) = 1.0_r8 + q
       endif
       n_path(ptg_i)%values(ht_i) = r
     END DO
@@ -205,8 +201,8 @@ Real(r8), INTENT(OUT) :: refcor(:)
 Integer(i4) :: j, k, l, m
 
 Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
-            n_tan, nt, ntht2, xm, ym, an, dh, h, s1, s2, h1, h2, x1, x2, &
-            eps, sum
+            ngrd_tan, nt, ntht2, xm, ym, an, dh, h, s1, s2, h1, h2, x1,  &
+            x2, eps, sum
 
 ! For first time in, Load the Gauss-Legendre abscissae & weights
 
@@ -238,7 +234,7 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
   IF(j == 1) THEN
     l = 2
     refcor(1) = 1.0
-    n_tan = ngrid(1) + ngrid(2)
+    ngrd_tan = ngrid(1) + ngrid(2)
     hsk1 = hgrid(2) * hgrid(2)
   ELSE
     l = j
@@ -246,13 +242,13 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
     refcor(m) = 1.0
     hsk1 = hgrid(j) * hgrid(j)
     CALL exp_lintrp(hgrid(m),hgrid(j),ht,ngrid(m),ngrid(j),an)
-    n_tan = ngrid(j) + an
+    ngrd_tan = ngrid(j) + an
   END IF
   DO k = l, n_lvls-1
     r = 0.0
     hsk = hsk1
     hsk1 = hgrid(k+1) * hgrid(k+1)
-    an = n_tan - ngrid(k+2) - ngrid(k+1)
+    an = ngrd_tan - ngrid(k+2) - ngrid(k+1)
     q = 2.0_r8 * SQRT(hsk-ht2) * SQRT(hsk1-ht2)
     IF(q > 0.0) r = ht2 * an / q
     refcor(k) = 1.0_r8 + r
@@ -465,4 +461,3 @@ end module REFRACTION_M
 ! $Log$
 ! Revision 1.1 2000/06/09 00:08:14  Z.Shippony
 ! Initial conversion to Fortran 90
-

@@ -1,5 +1,5 @@
 Program l2_numder
-  use GL6P
+  use GL6P, only: NG
   use EOS_MDB
   use L2PC_FILE_PARAMETERS, mnsv => MAX_NO_SV_ELMNTS, &
                             mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
@@ -12,9 +12,10 @@ Program l2_numder
   use MDBETA
   use ELLIPSE
   use GEO_GRIDS_M
+  use GEOC_GEOD_CONV_M, only: GEOC_GEOD_CONV
   use GET_BETA_PATH_M, only: GET_BETA_PATH
   use FILTER_SW_M, only: FILTER
-  use DSIMPSON_MODULE, only: DSIMPS
+  use DSIMPSON_MODULE, only: SIMPS
   use TWO_D_POLATE_M, only: TWO_D_POLATE
   use REFRACTION_M
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
@@ -23,90 +24,130 @@ Program l2_numder
   use FAST_DELTA_M, only: FAST_DELTA
   use FAST_ZOPACITY_M, only: FAST_ZOPACITY
   use SCRT_DN_M, only: SCRT_DN
+  use FREQ_AVG_M, only: FREQ_AVG
+  use D_HUNT_M, only: HUNT
 
   implicit NONE
 !---------------------------------------------------------------------------
 !
-Integer(i4), PARAMETER :: ngt = (Ng+1) * Nlvl
-Integer(i4), PARAMETER :: Npath = 2 * ngt
+Integer(i4), PARAMETER :: Npath = (Ng+1) * N2lvl
 
-Integer(i4), PARAMETER :: mnf = 25
+Integer(i4), PARAMETER :: mnf = 75
 
-Logical :: temp_der
-
-Integer(i4) :: p_indx(Nlvl), N_TAN(Nlvl),no_filt_pts,  &
-  jpm, ier, no_phi_t, no_spectro, SPECT_ATMOS(Nsps),        &
-  no_coeffs_f(Nsps), no_phi_f(Nsps), n_obs, NO_SPS_TBL(6), no_pfa_ch,    &
-  SPECT_INDEX(Nsps), ATMOS_INDEX(Nsps), NDX_SPS(Nsps,MAXPFACH),          &
-  SPS_TBL(Nsps,6),pfa_ch(MAXPFACH),NO_INT_FRQS(MAXPFACH),NO_PHI_VEC(mnsv)
+Integer(i4) :: p_indx(Nlvl), SPECT_ATMOS(Nsps), no_ptg_frq(Nptg), &
+               no_coeffs_f(Nsps), no_phi_f(Nsps), SPECT_INDEX(Nsps), &
+               no_spectro, pfa_ch(MAXPFACH), jpm, klo, kz, ma
 
 Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, no_geom, no_tan_hts, ld, &
-               no_atmos, ch1, ch2, geo_i, n_lvls, si, mfi, band, n_sps, &
-               no_freqs, ptg_i, frq_i, io, brkpt, no_ele, mid, ilo, ihi
+               no_atmos, ch1, ch2, n_lvls, si, mfi, band, n_sps, Spectag, &
+               no_freqs, ptg_i, frq_i, io, m, brkpt, no_ele, &
+               mid, ilo, ihi, no_pfa_ch, n_obs, ier, no_filt_pts, no_phi_t
 
 Type(path_index)  :: ndx_path(Nptg)
 Type(path_vector) :: z_path(Nptg),t_path(Nptg),h_path(Nptg), &
                      n_path(Nptg),phi_path(Nptg),dhdz_path(Nptg), &
-                     spsfunc_path(Nsps,Nptg)
+                     spsfunc_path(Nsps,Nptg),ptg_frq_grid(Nptg)
 
 Type(path_derivative) :: dh_dt_path(Nptg)
 
-Real(r8) :: href(Nlvl), zref(Nlvl), t_tan(Nptg), tan_hts(Nptg),  &
+Real(r8) :: href(Nlvl), zref(Nlvl), tan_hts(Nptg), dx, zco, &
             tan_hts_raw(Nptg), tan_press(Nptg), tan_temp(Nptg), &
             t_coeff(mxco,mnp), t_z_basis(mxco), t_phi_basis(mnp), &
             tan_dh_dt(Nlvl,mxco),z_grid(Nlvl), Frq, h_tan, Rad, &
-            t_grid(Nlvl),h_grid(Nlvl),z_gnlv(400), e_rad, cse, Rs, &
+            t_grid(Nlvl),h_grid(Nlvl),z_gnlv(400), e_rad, var, daz, &
             ref_corr(N2lvl,Nptg), t_script(N2lvl), tau(N2lvl)
 
 Logical :: IS_F_LOG(Nsps)
 
-real(r8) :: C_FREQ(Nch), freq_grid(mnf)
 real(r8) :: MR_F(mxco,mnp,Nsps)
+real(r8) :: C_FREQ(Nch),freq_grid(mnf)
 real(r8) :: F_BASIS(mxco,Nsps), PHI_BASIS_F(mnp,Nsps)
-real(r8) :: F_GRID(maxaitkenpts,maxpfach)
-real(r8) :: F_GRID_FILTER(maxfiltpts,maxpfach)
 real(r8) :: FILTER_FUNC(maxfiltpts,maxpfach)
+real(r8) :: F_GRID_FILTER(maxfiltpts,maxpfach)
 
 !
 Type(path_beta) :: beta_path(Nsps,mnf,Nptg)
 
-Real(r8) :: S_TEMP, H_OBS, EARTH_REF, ZRoC, geoc_lat, q, r
-Real(r8) :: RadV(Nptg)
+Real(r8) :: Radiances(Nptg)
+Real(r8) :: RadV(mnf),f_grid(mnf)
+Real(r8) :: S_TEMP, H_OBS, EARTH_REF, q, r
 !
 Character :: Primag
+Character (LEN=08) :: dName,Vname
 Character (LEN=40) :: Ax, Fdata
-Character (LEN=80) :: InDir, Fnd
+Character (LEN=80) :: InDir, Fnd, Line
+
+Logical :: do_mol
 
 Type (l2pc_header_one) :: HEADER1
-Type (atmos_comp) :: ATMOSPHERIC(Nsps)
-Type (geom_param) :: GEOMETRIC(maxgeom)
-Type (spectro_param) :: SPECTROSCOPIC(3*Nsps)
-Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
+Type (atmos_comp)      :: ATMOSPHERIC(Nsps)
+Type (geom_param)      :: GEOMETRIC(maxgeom)
+Type (pfa_slab)        :: PFA_SPECTRUM(6,Nsps)
+Type (spectro_param)   :: SPECTROSCOPIC(3*Nsps)
 
 !  ----------------------
 ! Read the inputs from a file...
 !
   ier = 0
   Fdata(1:) = ' '
-! Fdata = '/hpusr/zvi/new_seez'     ! SUN
-  Fdata = '/home/zvi/new_seez'      ! PC
+  Fdata = '/user5/zvi/seez'     ! SUN, MLSGATE
+! Fdata = '/home/zvi/seez'      ! HOME PC
   CLOSE(11,iostat=io)
   OPEN(11,file=Fdata,status='OLD',action='READ',iostat=io)
   if(io /= 0) goto 99
 
-33  jpm = 0
-    Call Gti('Enter plus/minus (p/m)',Ax)
-    if(Ax < '!') goto 99
-    if(Ax(1:1) == 'p') then
-      jpm = 1
-    else if(Ax(1:1) == 'm') then
-      jpm = -1
-    else
-      goto 33
-    endif
-
+  ma = -1
+  kz = -1
+  dx = 0.0
+  dName = ' '
+  Vname = ' '
+  daz = -1.666667
+  do_mol = .false.
+  Print *,'Enter name of variable to differentiate by. Choises are:'
+  Call Gti(' dT, dMr, dw, dn & dNu',dName)
+  if(dName < '!') goto 99
+  Call StrLwr(dName)
   Print *
-  no_int_frqs(1:maxpfach) = 0
+
+  Call Gti(' Enter step size',Ax)
+  if(Ax < '!') goto 99
+  read(Ax,*,iostat=io) dx
+  if(io /= 0) goto 99
+  if(abs(dx) < 1.0e-12) goto 99
+  Print *
+
+  Line(1:)=' '
+  Line = 'Enter Zeta level of the coefficient to differentiate w.r.t.'
+  i = LEN_TRIM(Line)
+  Line = Line(1:i)//'(Default: -1.6667)'
+  i = LEN_TRIM(Line)
+  Print *,Line(1:i)
+  Call Gti(' (Phi coefficient is taken to be the middle one)',Ax)
+  if(Ax < '!') Ax = '-1.666667'
+  read(Ax,*,iostat=i) daz
+  if(i /= 0) daz = -1.666667
+  Print *,Ax
+
+  j = -1
+  if(dName == 'dmr') j = 1
+  if(dName == 'dw' .or. dName == 'dn' .or. dName == 'dnu') j = 2
+  if(j > 0) then
+    do_mol = .true.
+    if(j == 2) zco = daz
+    Call Gti(' Enter molecule name',Vname)
+    if(Vname < '!') goto 99
+    Call StrLwr(Vname)
+    Print *,Vname
+  endif
+
+  p_indx(1:Nlvl) = 0
+  no_phi_f(1:Nsps) = 0
+  no_ptg_frq(1:Nptg) = 0
+  pfa_ch(1:MAXPFACH) = 0
+  no_coeffs_f(1:Nsps) = 0
+
+  SPECT_INDEX(1:Nsps) = -1
+  SPECT_ATMOS(1:Nsps) = -1
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -172,7 +213,8 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
-  read(11,*,iostat=io) (atmos_index(i),i=1,no_atmos)
+! read(11,*,iostat=io) (atmos_index(i),i=1,no_atmos)
+  read(11,*,iostat=io) i                              ! ** DUMMY read
   if(io /= 0) goto 99
 
   read(11,'(A)',iostat=io) Ax
@@ -184,9 +226,14 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
     atmospheric(j)%NAME = AdjustL(Ax)
-    read(11,*,iostat=io) k, ht_i
+    if(ma < 1 .and. do_mol) then
+      Ax = atmospheric(j)%NAME
+      Call StrLwr(Ax)
+      if(Ax == Vname) ma = j
+    endif
+    read(11,*,iostat=io) Spectag, ht_i
     if(io /= 0) goto 99
-    atmospheric(j)%SPECTAG = k
+    atmospheric(j)%SPECTAG = Spectag
     atmospheric(j)%NO_LIN_VALUES = ht_i
     read(11,*,iostat=io) (atmospheric(j)%FWD_CALC(i),i=1,6)
     if(io /= 0) goto 99
@@ -203,6 +250,22 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
 
   read(11,*,iostat=io) band, n_sps
   if(io /= 0) goto 99
+
+  m = 0
+  do j = 1, no_atmos
+    IF(atmospheric(j)%FWD_CALC(band)) THEN
+      m = m + 1
+      atmospheric(m) = atmospheric(j)
+    ENDIF
+  end do
+  no_atmos = m
+
+  if(no_atmos /= n_sps) then
+    io = 3
+    Print *,'** Error: New code: n_sps should be equal to no_atmos !'
+    Print *,'          n_sps =',n_sps,' no_atmos:',no_atmos
+    goto 99
+  endif
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -224,9 +287,6 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
-  SPECT_INDEX(1:Nsps) = -1
-  SPECT_ATMOS(1:Nsps) = -1
-
   read(11,*,iostat=io) (spect_index(i),i=1,no_spectro)
   if(io /= 0) goto 99
 !
@@ -243,9 +303,9 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
     spectroscopic(j)%NAME = AdjustL(Ax)
-    read(11,*,iostat=io) ht_i
+    read(11,*,iostat=io) Spectag
     if(io /= 0) goto 99
-    spectroscopic(j)%SPECTAG = ht_i
+    spectroscopic(j)%SPECTAG = Spectag
     read(11,*,iostat=io) ht_i
     if(io /= 0) goto 99
     spectroscopic(j)%NO_PHI_VALUES = ht_i
@@ -263,9 +323,9 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
 ! Create spect_atmos array:
 !
   do k = 1, no_atmos
-    kk = atmospheric(k)%Spectag
+    Spectag = atmospheric(k)%Spectag
     do i = 1, no_spectro
-      if(kk == spectroscopic(i)%Spectag) then
+      if(Spectag == spectroscopic(i)%Spectag) then
         spect_atmos(k) = i
         EXIT
       endif
@@ -297,20 +357,12 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
-  read(11,*,iostat=io) q, r, phi_tan, geoc_lat
+  read(11,*,iostat=io) q, r, phi_tan   !, geoc_lat
   if(io /= 0) goto 99
 
   href(1:n_lvls) = q
   zref(1:n_lvls) = r
 !
-! Add phi_tan to the spectroscopic phi's and convert to radiance:
-!
-  do j = 1, no_spectro
-    i = spectroscopic(j)%NO_PHI_VALUES
-    spectroscopic(j)%PHI_BASIS(1:i) = (spectroscopic(j)%PHI_BASIS(1:i) + &
-   &                                   phi_tan) * deg2rad
-  end do
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -340,6 +392,12 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
 
   read(11,*,iostat=io) (t_z_basis(i),i=1,no_t)
   if(io /= 0) goto 99
+
+  if(dName == 'dt') then
+    Call Hunt(daz,t_z_basis,no_t,kz,i)
+    IF(ABS(daz-t_z_basis(i)) < ABS(daz-t_z_basis(kz))) kz=i
+    zco = t_z_basis(kz)
+  endif
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -371,16 +429,30 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
   read(11,*,iostat=io) (is_f_log(i),i=1,no_atmos)     ! ** A a new one !
   if(io /= 0) goto 99
 
-  DO geo_i = 1, no_atmos
-    kk = no_phi_f(geo_i)
-    ht_i = no_coeffs_f(geo_i)
-    read(11,*,iostat=io) (f_basis(i,geo_i),i=1,ht_i)
+  DO m = 1, no_atmos
+    kk = no_phi_f(m)
+    ht_i = no_coeffs_f(m)
+    read(11,*,iostat=io) (f_basis(i,m),i=1,ht_i)
     if(io /= 0) goto 99
-    read(11,*,iostat=io) (phi_basis_f(i,geo_i),i=1,kk)
+    read(11,*,iostat=io) (phi_basis_f(i,m),i=1,kk)
     if(io /= 0) goto 99
-    read(11,*,iostat=io) ((mr_f(i,j,geo_i),j=1,kk),i=1,ht_i)
+    read(11,*,iostat=io) ((mr_f(i,j,m),j=1,kk),i=1,ht_i)
     if(io /= 0) goto 99
   END DO
+
+  if(do_mol) then
+    ht_i = no_coeffs_f(ma)
+    Call Hunt(daz,f_basis(1:,ma),ht_i,kz,i)
+    IF(ABS(daz-f_basis(i,ma)) < ABS(daz-f_basis(kz,ma))) kz=i
+    zco = f_basis(kz,ma)
+    if(dName == 'dmr') then
+      k = (no_phi_f(ma)+1)/2
+      r = 0.05 * abs(mr_f(kz,k,ma))
+      q = sign(1.0_r8,dx) * max(1.0d-8,r)
+      dx = q
+      Print *,'** Modified Step Size:',Sngl(dx)
+    endif
+  endif
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -396,6 +468,15 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
 
   CLOSE(11,iostat=i)
 
+  Print *
+  r = abs(dx)
+  Print *, 'VarName: ',dName
+  Print *, 'Molecule: ',Vname
+  Print *, 'Step Size: ',Sngl(r)
+  Print *, 'Differentiated w.r.t. Coefficient #',kz
+  Print *, 'Zeta of differentiated Coefficient:',Sngl(zco)
+  Print *
+
 ! Get the selected integration grid pressures. Also, define the GL
 ! pressure grid:
 
@@ -405,20 +486,45 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
   END DO
   z_grid(n_lvls+1) = z_grid(n_lvls)
 !
+  jpm = 0
+  Radiances(1:Nptg) = 0.0
+
+  if(dName == 'dw' .or. dName == 'dn' .or. dName == 'dnu') then
+    jpm = 1
+    zco = daz
+    if(dx < 0.0) jpm = -1
+  endif
+
+  if(dName == 'dt') then
+    k = (no_phi_t+1)/2
+    var = t_coeff(kz,k)
+    t_coeff(kz,k) = var + dx
+  else if(dName == 'dmr') then
+    k = (no_phi_f(ma)+1)/2
+    var = mr_f(kz,k,ma)
+    mr_f(kz,k,ma) = var + dx
+  endif
+!
   Primag = 'p'
   Call fwd_mdl_set_up(Primag,href,zref,e_rad,z_grid,t_grid,h_grid,    &
  &     ndx_path,n_lvls,geometric,no_geom,t_z_basis,t_coeff,no_t,      &
- &     geoc_lat,atmospheric,no_atmos,f_basis,mr_f,no_coeffs_f,c_freq, &
+ &     atmospheric,no_atmos,f_basis,mr_f,no_coeffs_f,c_freq, &
  &     si,earth_ref,s_temp,h_obs,n_obs,tan_hts_raw,tan_hts,tan_press, &
- &     tan_temp,no_tan_hts,no_sps_tbl,sps_tbl,no_pfa_ch,no_filt_pts,  &
- &     pfa_ch,no_int_frqs,pfa_spectrum,t_tan,ndx_sps,n_tan,           &
- &     f_grid_filter,f_grid,filter_func,ch1,ch2,InDir,ld,             &
- &     header1,no_phi_f,phi_basis_f,atmos_index,no_phi_vec,z_path,    &
- &     h_path,t_path,phi_path,n_path,dhdz_path,dh_dt_path,Npath,      &
- &     no_phi_t,t_phi_basis,ZRoC,spectroscopic,no_spectro,            &
- &     spect_index,tan_dh_dt,no_freqs,freq_grid,spsfunc_path,         &
+ &     tan_temp,no_tan_hts,n_sps,no_pfa_ch,no_filt_pts,  &
+ &     pfa_ch,pfa_spectrum,f_grid_filter,filter_func,ch1,ch2,InDir,ld,&
+ &     band,no_phi_f,phi_basis_f,z_path,h_path,t_path,phi_path,n_path,&
+ &     dhdz_path,dh_dt_path,Npath,no_phi_t,t_phi_basis,spectroscopic,&
+ &     no_spectro,tan_dh_dt,spsfunc_path,no_ptg_frq,ptg_frq_grid,     &
  &     is_f_log,beta_path,jpm,ier)
   IF(ier /= 0) goto 99
+
+  if(dName == 'dt') then
+    k = (no_phi_t+1)/2
+    t_coeff(kz,k) = var
+  else if(dName == 'dmr') then
+    k = (no_phi_f(ma)+1)/2
+    mr_f(kz,k,ma) = var
+  endif
 !
 ! Compute the refraction correction scaling matrix:
 !
@@ -427,47 +533,58 @@ Type (pfa_slab)   :: PFA_SPECTRUM(6,Nsps)
 !
 ! Now, Compute the radiances alone:
 !
-  RadV(:Nptg) = 0.0
-  temp_der = .true.
-! temp_der = .false.
-!
+  Call Hunt(daz,tan_press,no_tan_hts,klo,i)
+  IF(ABS(daz-tan_press(i)) < ABS(daz-tan_press(klo))) klo=i
+
   do ptg_i = 1, no_tan_hts-1
 !
     k = ptg_i
     h_tan = tan_hts(k)
+    kk = no_ptg_frq(k)
 !
-!   do frq_i = 1, no_freqs
-    do frq_i = 1, 1               ! ** DEBUG
+    RadV(1:mnf) = 0.0
+    f_grid(1:kk) = ptg_frq_grid(k)%values(1:kk)
 !
-      Frq = freq_grid(frq_i)
+    do frq_i = 1, kk
 !
-      Call Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, ndx_path(k), &
-      &    z_path(k), h_path(k), t_path(k), phi_path(k), dHdz_path(k), &
-      &    earth_ref, beta_path(1:,frq_i,k), spsfunc_path(1:,k),       &
-      &    ref_corr(1:,k), s_temp, brkpt, no_ele, mid, ilo, ihi, cse,  &
-      &    Rs, t_script, tau, Rad, Ier)
+      Frq = ptg_frq_grid(k)%values(frq_i)
+!
+      Call Rad_Tran(Frq, N_lvls, h_tan, n_sps, ndx_path(k),  &
+     &    z_path(k), h_path(k), t_path(k), phi_path(k), dHdz_path(k), &
+     &    earth_ref, beta_path(1:,frq_i,k), spsfunc_path(1:,k),       &
+     &    ref_corr(1:,k), s_temp, brkpt, no_ele, mid, ilo, ihi,       &
+     &    t_script, tau, Rad, Ier)
       IF(ier /= 0) goto 99
 !
-      if(frq_i == 1) RadV(ptg_i) = Rad
+      RadV(frq_i) = Rad
 !
     end do
 !
+! Frequency Average the radiances with the appropriate filter shapes
+!
+    i = 1
+    Call Freq_Avg(f_grid,F_grid_filter(1:,i),Filter_func(1:,i), &
+   &              RadV,kk,maxfiltpts,Rad,Ier)
+    IF(ier /= 0) goto 99
+    Radiances(ptg_i) = Rad
+
   end do
 !
-  RadV(no_tan_hts) = RadV(no_tan_hts-1)
-!
-     k = 61
-     j = no_tan_hts
-     kk = j - si + 1
-     write(*,'(''pfa_rad'',a1,i2.2)') char(92),kk
-     write(*,905) (RadV(k),k=si,j)
-905  format(4(2x,1pg15.8))
-!
+  j = no_tan_hts
+  Radiances(j) = Radiances(j-1)
+
+    kk = j - si + 1
+    write(*,903) char(92),kk
+    write(*,904) (Radiances(k),k=si,j)
+903 format('avg_pfa_rad',a1,i2.2)
+904 format(4(2x,1pg17.10))
+
  99  CLOSE(11,iostat=i)
      if(io /= 0) Call ErrMsg(' ',io)
 
      Stop
 
+!----------------------------------------------------------------
 contains
 !----------------------------------------------------------------
 
@@ -486,16 +603,14 @@ end Function I2C
 
 SUBROUTINE fwd_mdl_set_up(primag,href,zref,e_rad,z_grid,t_grid,h_grid,  &
            ndx_path,n_lvls,geometric,no_geom,t_z_basis,t_coeff,no_t,    &
-           geoc_lat,atmospheric,no_atmos,f_basis,mr_f,no_coeffs_f,freq, &
-           si,earth_ref,s_temp,h_obs,n_obs,tan_hts_raw,tan_hts,tan_press, &
-           tan_temp,no_tan_hts,no_sps_tbl,sps_tbl,no_pfa_ch,no_filt_pts, &
-           pfa_ch,no_int_frqs,pfa_spectrum,t_tan,ndx_sps,n_tan_ptr,     &
-           f_grid_fltr,f_grid,fltr_func,ch1,ch2,InDir,ld,hdr1,          &
-           no_phi_f,phi_basis_f,atmos_index,no_phi_vec,z_path,h_path,   &
-           t_path,phi_path,n_path,dhdz_path,dh_dt_path,npath,           &
-           no_phi_t,t_phi_basis,rad_cur,spectroscopic,no_spectro,       &
-           spect_index,tan_dh_dt,no_freqs,freq_grid,spsfunc_path,       &
-           is_f_log,beta_path,jpm,ier)
+           atmospheric,no_atmos,f_basis,mr_f,no_coeffs_f,freq, &
+           si,earth_ref,s_temp,h_obs,n_obs,tan_hts_raw,tan_hts,tan_press,&
+           tan_temp,no_tan_hts,n_sps,no_pfa_ch,no_filt_pts, &
+           pfa_ch,pfa_spectrum,f_grid_fltr,fltr_func,ch1,ch2,InDir,ld,   &
+           band,no_phi_f,phi_basis_f,z_path,h_path,t_path,phi_path,n_path,&
+           dhdz_path,dh_dt_path,npath,no_phi_t,t_phi_basis,   &
+           spectroscopic,no_spectro,tan_dh_dt,spsfunc_path,no_ptg_frq,  &
+           ptg_frq_grid,is_f_log,beta_path,jpm,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: fwd_mdl_set_up
@@ -506,18 +621,16 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * Nlvl
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: n_lvls, no_atmos, no_t, ch1, ch2, si,  &
-             atmos_index(:), spect_index(:), no_phi_t, no_freqs, &
-             no_coeffs_f(:), no_phi_f(:), jpm, &
-             no_spectro, npath, no_pfa_ch, no_filt_pts, pfa_ch(:), &
-             no_int_frqs(:)
+Integer(i4), INTENT(IN) :: n_lvls, no_atmos, no_t, ch1, ch2, jpm,  &
+             no_phi_t, no_coeffs_f(:), no_phi_f(:), band, n_sps, &
+             no_spectro, npath, si, no_pfa_ch, no_filt_pts, pfa_ch(:)
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts, no_geom, ld
 
-Integer(i4), INTENT(OUT) :: n_obs, no_sps_tbl(:), sps_tbl(:,:),  &
-             no_phi_vec(:), ier, ndx_sps(:,:), n_tan_ptr(:)
+Integer(i4), INTENT(OUT) :: n_obs,no_ptg_frq(:),ier
+
 !
-Real(r8), INTENT(IN) :: z_grid(:), href(:), zref(:), freq_grid(:), &
+Real(r8), INTENT(IN) :: z_grid(:), href(:), zref(:), &
           t_phi_basis(:), t_coeff(:,:), t_z_basis(:), &
           mr_f(:,:,:), phi_basis_f(:,:), f_basis(:,:)
 !
@@ -528,14 +641,14 @@ Type(path_beta), INTENT(OUT) :: beta_path(:,:,:)
 !
 
 Type(path_index) , INTENT(OUT) :: ndx_path(:)
-Type(path_vector), INTENT(OUT) :: z_path(:),t_path(:),h_path(:), &
-                   phi_path(:), n_path(:), dhdz_path(:), spsfunc_path(:,:)
+Type(path_vector), INTENT(OUT) :: z_path(:),t_path(:),h_path(:), n_path(:), &
+             phi_path(:), dhdz_path(:), spsfunc_path(:,:), ptg_frq_grid(:)
 
 Type(path_derivative), INTENT(OUT) :: dh_dt_path(:)
 
-Real(r8), INTENT(OUT) :: e_rad,earth_ref,s_temp,h_obs,freq(:),geoc_lat, &
-          tan_temp(:),t_grid(:),h_grid(:),tan_press(:),t_tan(:),rad_cur, &
-          f_grid(:,:),fltr_func(:,:),f_grid_fltr(:,:)
+Real(r8), INTENT(OUT) :: e_rad,earth_ref,s_temp,h_obs,freq(:), &
+          tan_temp(:),t_grid(:),h_grid(:),tan_press(:), &
+          fltr_func(:,:),f_grid_fltr(:,:)
 
 Logical, INTENT(IN) :: is_f_log(*)
 !
@@ -546,20 +659,18 @@ Character (LEN=*), INTENT(IN) :: primag
 !  ----------------
 
 Logical :: wet
-Integer(i4) :: i, j, k, jp, ncpb, ich, sps_i, geo_i, band, geo_j, &
-               ih2o, kk, no_geom_new, band1, band2, gl_count
+Integer(i4) :: i, j, k, jp, io, ich, sps_i, geo_i, geo_j, ih2o, kk, &
+               no_geom_new, gl_count
 
 Real(r4) :: def_val(maxgeom) = (/                                    &
             0.0, 0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 6972.0, 6372.0, &
             0.05, 2.735, 1.0 /)
 
-Real(r8) :: z_glgrid(ngt)
-
-! Real(r8) :: h2o_path(Npath,Nptg)
 Type(path_vector) :: h2o_path(Nptg)
 
-Real(r8) :: q,r,p,g,sw,cw,rp,b2,z1,z2,xm,ym,beta_inc,incl,zeta,phi
+Real(r8) :: q,r,p,g,rp,beta_inc,zeta,phi,geoc_lat
 
+Character (LEN=80) :: Fnd
 Character (LEN=8) :: geomname(maxgeom) = (/                         &
          &  'ELEV_183','ELEV_205','AZIM_183','AZIM_205','AZIM_REF', &
          &  'ROLL    ','PITCH   ','YAW     ','GEOCSRAD','GEOCERAD', &
@@ -567,12 +678,10 @@ Character (LEN=8) :: geomname(maxgeom) = (/                         &
 
 !  PFA variables:
 
-type (l2pc_header_one), intent(in)  :: hdr1
-
-type (geom_param),    intent(inout) :: geometric(*)
-type (atmos_comp),    intent(inout) :: atmospheric(*)
-type (spectro_param), intent(inout) :: spectroscopic(*)
-type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
+type (geom_param),    intent(inout) :: GEOMETRIC(*)
+type (atmos_comp),    intent(inout) :: ATMOSPHERIC(*)
+type (spectro_param), intent(inout) :: SPECTROSCOPIC(*)
+type (pfa_slab), intent(inout)      :: PFA_SPECTRUM(6,*)
 !
 ! Set up the default geometric linearization values of earth radius,earth
 ! emission,background space temperature and satellite position.
@@ -580,60 +689,49 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
 
   ier = 0
 
-  q = DBLE(earth_major)
-  a2 = q * q
-
-  r = DBLE(earth_minor)
-  b2 = r * r
-
   beta_inc = 98.0D0                ! Orbit inclination angle for EOS-MLS
-  incl = (beta_inc - 90.0D0) * deg2rad
-  q = TAN(incl)
-  r = q * q
-  c2 = (1.0D0+r)*a2*b2/(a2+b2*r)   ! This is c*c
-  q = SQRT(c2)                     ! This is c, Minor axis for 2D ellipse
-
-  c2oa2 = c2 / a2
-
-! Get the Tangent Phi (Geodetic Lat.) from the Geocentric Lat.
 !
-! r = geoc_lat * deg2rad
-! q = SIN(r)
-! sw = q * q
-! r = COS(incl)
-! cw = r * r
-! q = a2*a2*sw*cw/(b2*b2+(a2*a2-b2*b2)*sw*cw)
-! spt = SQRT(q)                ! Sin(Phi_tan)
-! phi_tan = DASIN(spt)
+! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
+! Radians (instead of Degrees). Also compute the effective earth radius.
 !
-! Get the Geocentric Lat. (geoc_lat) from the Tangent Phi (Geodetic Lat.)
+  Call geoc_geod_conv('d2c',beta_inc,phi_tan,geoc_lat,rp)
 !
-  r = Phi_tan
-  Phi_tan  = r * deg2rad               ! Convert to Radians
-  spt = SIN(Phi_tan)
-  cpt = COS(Phi_tan)
-  cw = cpt * cpt
-  sw = spt * spt
-  r = a2*a2*cw +b2*b2*sw
-  q = spt*b2/Sqrt(r)/COS(incl)
-  geoc_lat = DASIN(q) / deg2rad        ! In Degrees
+! Convert the t_phi_basis to radians and add phi_tan:
+!
+  do j = 1, no_phi_t
+    t_phi_basis(j) = deg2rad * t_phi_basis(j) + phi_tan
+  end do
+!
+! Convert the phi_basis_f to radians and add phi_tan:
+!
+    do j = 1, n_sps
+      i = no_phi_f(j)
+      phi_basis_f(1:i,j) = deg2rad * phi_basis_f(1:i,j) + phi_tan
+    end do
+!
+! Convert the spectroscopic to radians and add phi_tan:
+!
+  do j = 1, no_spectro
+    i = spectroscopic(j)%NO_PHI_VALUES
+    spectroscopic(j)%PHI_BASIS(1:i) = &
+   &        deg2rad * spectroscopic(j)%PHI_BASIS(1:i) + phi_tan
+  end do
 
-  nphi_tan = a2 / SQRT(c2-(c2-a2)*cw)
+! Call the grids program to get the preselected integration heights and
+! pointings. Also transfer the pointings expressed in pressure units to
+! heights.  Also, set up geophysical parameters (for derivatives):
+! [The following routine replaces the older code using the two routines:
+!  grids() and geo_basis() ]
+
+! (z_grid,t_grid,h_grid) are the arrays of the preselected integration grid.
+
+  CALL geo_grids(z_grid,t_grid,h_grid,tan_dh_dt,n_lvls,t_z_basis,    &
+       t_coeff,si,tan_hts,tan_hts_raw,tan_press,tan_temp,no_tan_hts, &
+       z_path,h_path,t_path,phi_path,dhdz_path,dh_dt_path,Npath,g,href, &
+       zref,geoc_lat,no_t,no_phi_t,t_phi_basis,ndx_path,ier)
+  IF(ier /= 0) Return
+
   ps = -1.0D0
-
-!  Compute Radius of Curvature Circle (RoC) and its center coordinates:
-
-  r = c2 * cpt / a2
-  q = spt * spt + r * r
-  roc = nphi_tan * SQRT(q)
-  xoc = (nphi_tan - roc) * cpt
-  yoc = (c2oa2 * nphi_tan - roc) * spt
-  rad_cur = roc
-
-!  Compure Earth Radius (Elliptical)
-
-  q = ((a2*a2)*cw+(b2*b2)*sw)/(a2*cw+b2*sw)
-  rp = SQRT(q)
 
   e_rad = rp
   def_val(10) = e_rad
@@ -649,37 +747,7 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
 ! Default space temperature
 
   s_temp = def_val(12)
-
-! From the selected integration grid pressures define the GL pressure
-! grid:
-
-  gl_count = 0
-  z2 = z_grid(1)
-  DO i = 2, n_lvls
-    z1 = z2
-    z2 = z_grid(i)
-    xm = 0.5D0 * (z2 + z1)
-    ym = 0.5D0 * (z2 - z1)
-    gl_count = gl_count + 1
-    z_glgrid(gl_count) = z1
-    DO j = 1, ng
-      gl_count = gl_count + 1
-      z_glgrid(gl_count) = xm + ym * Gx(j)
-    END DO
-  END DO
-
-  gl_count = gl_count + 1
-  z_glgrid(gl_count) = z2
 !
-! Initialize the no_phi_vec array. This array stores the number of Phi's for
-! each state_vector type entry. Initial value for all is: 1.
-! (Later, we will connect between 'no_phi_vec' and 'no_phi_f' and 'no_phi_g'
-! entries.)
-
-  DO i = 1, max_no_sv_elmnts
-    no_phi_vec(i) = 1
-  END DO
-
 ! Scan geometric quantities for specific values of the above if user wants
 ! to override the defaults
 
@@ -754,25 +822,7 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
   END DO
 
   no_geom = no_geom_new
-
-! Call the grids program to get the preselected integration heights and
-! pointings. Also transfer the pointings expressed in pressure units to
-! heights.  Also, set up geophysical parameters (for derivatives):
-! [The following routine replaces the older code using the two routines:
-!  grids() and geo_basis() ]
-
-! (z_grid,t_grid,h_grid) are the arrays of the preselected integration grid.
-
-  CALL geo_grids(z_glgrid,gl_count,z_grid,t_grid,h_grid,tan_dh_dt,  &
-       n_lvls,t_z_basis,t_coeff,si,tan_hts,tan_hts_raw,tan_press,   &
-       tan_temp,no_tan_hts,z_path,h_path,t_path,phi_path,dhdz_path, &
-       dh_dt_path,Npath,g,href,zref,phi_tan,geoc_lat,roc,n_tan_ptr, &
-       t_tan,no_t,no_phi_t,t_phi_basis,ndx_path,ier)
-  IF(ier /= 0) RETURN
-! Get the crossections if this is the first Call to the subroutine,
-! The subroutine knows that this is the first Call if the time counter
-! in the main program is one
-
+!
   DO ich = 1, nch
     freq(ich) = 0.0D0
   END DO
@@ -782,76 +832,119 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
     IF(primag == 'p') freq(ich) = q     ! DEBUG, Added Jan/23/2000, Z.S
     IF(primag == 'i') freq(ich) = r     ! DEBUG, Added Jan/23/2000, Z.S
   END DO
-
-  ncpb = hdr1%no_channels_per_band
-  band1 = (ch1 + ncpb - 1) / ncpb     ! Begining Band
-  band2 = (ch2 + ncpb - 1) / ncpb     !  Ending  Band
-
-  DO band = band1, band2
-    kk = 0
-    DO i = 1, no_atmos
-      IF(atmospheric(i)%fwd_calc(band)) THEN
-        kk = kk + 1
-        sps_tbl(kk,band) = i
-      END IF
-    END DO
-    no_sps_tbl(band) = kk
-  END DO
 !
 ! Create the specie function along the path for all species
 !
   DO k = 1, no_tan_hts
     gl_count = ndx_path(k)%total_number_of_elements
-    DO band = band1, band2
-      do sps_i = 1, no_sps_tbl(band)
-        j = sps_tbl(sps_i,band)
-        jp = no_phi_f(j)
-        kk = no_coeffs_f(j)
-        ALLOCATE(spsfunc_path(j,k)%values(gl_count),STAT=i)
-        IF(i /= 0) THEN
-          ier = i
-          PRINT *,'** Error: ALLOCATION error for spsfunc_path ..'
-          PRINT *,'   STAT =',ier
-          RETURN
-        ENDIF
-        do i = 1, gl_count
-          zeta = z_path(k)%values(i)
-          phi = phi_path(k)%values(i)
-          Call TWO_D_POLATE (f_basis(1:,j), mr_f(1:,1:,j), kk,    &
-     &                       phi_basis_f(1:,j), jp, zeta, phi, q)
-          if (is_f_log(j)) q = exp(q)
-          spsfunc_path(j,k)%values(i) = q
-        end do
+    do j = 1, n_sps
+      jp = no_phi_f(j)
+      kk = no_coeffs_f(j)
+      DEALLOCATE(spsfunc_path(j,k)%values,STAT=i)
+      ALLOCATE(spsfunc_path(j,k)%values(gl_count),STAT=i)
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for spsfunc_path ..'
+        PRINT *,'   STAT =',ier
+        Return
+      ENDIF
+      do i = 1, gl_count
+        zeta = z_path(k)%values(i)
+        phi = phi_path(k)%values(i)
+        if (is_f_log(j)) then
+          Call TWO_D_POLATE(f_basis(1:,j), LOG(mr_f(1:kk,1:jp,j)), &
+         &                  kk, phi_basis_f(1:,j), jp, zeta, phi, r)
+          q = exp(r)
+        else
+          Call TWO_D_POLATE(f_basis(1:,j), mr_f(1:kk,1:jp,j), kk,  &
+         &                  phi_basis_f(1:,j), jp, zeta, phi, q)
+        endif
+        spsfunc_path(j,k)%values(i) = q
       end do
     end do
   END DO
-
+!
+! Load the pointing vs. frequencies database for the given band
+! (needed for frequency averaging)
+!
+  Fnd(1:) = ' '
+! Fnd = '/home/zvi/ptg_frq_grid_bxx.dat'     ! HOME PC
+  Fnd = '/user5/zvi/ptg_frq_grid_bxx.dat'    ! SUN, MLSGATE
+  i = index(Fnd,'_bxx.dat')
+  write(Fnd(i+2:i+3),'(i2.2)') band
+!
+  kk = -1
+  no_ptg_frq(1:Nptg) = 0
+!
+  Close(32,iostat=i)
+  Open(32,file=Fnd,action='READ',iostat=io)
+  if(io /= 0) goto 44
+!
+! First entry in the file is the 'Band' frequency. All the rest are
+! relative to this (center) frequency for this band
+!
+  Read(32,*,iostat=io) q
+  if(io /= 0) goto 44
+!
+  DO
+    Read(32,*,iostat=io) r, jp
+    if(io > 0) goto 44
+    if(io /= 0) EXIT
+    Call Hunt(r,tan_press,no_tan_hts,k,i)
+    IF(ABS(r-tan_press(i)) < ABS(r-tan_press(k))) k = i
+    if(ABS(r-tan_press(k)) > 0.001) &
+   &       Print *,'** Warning: Zeta:',r,' k:',k
+    no_ptg_frq(k) = jp
+    DEALLOCATE(ptg_frq_grid(k)%values,STAT=i)
+    ALLOCATE(ptg_frq_grid(k)%values(jp),STAT=i)
+    IF(i /= 0) THEN
+      ier = i
+      PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+      PRINT *,'   tan_hts index:',k,' STAT =',ier
+      Return
+    ENDIF
+    Read(32,*,iostat=io) (ptg_frq_grid(k)%values(i),i=1,jp)
+    if(io /= 0) goto 44
+    if(kk < 0) kk = k
+!
+! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
+!
+    ptg_frq_grid(k)%values(1:jp) = ptg_frq_grid(k)%values(1:jp) + q
+!
+  END DO
+!
+  if(kk > 1) then
+    jp = no_ptg_frq(kk)
+    do k = 1, kk-1
+      DEALLOCATE(ptg_frq_grid(k)%values,STAT=i)
+      ALLOCATE(ptg_frq_grid(k)%values(jp),STAT=i)
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+        PRINT *,'   tan_hts index:',k,' STAT =',ier
+        Return
+      ENDIF
+      no_ptg_frq(k) = jp
+      ptg_frq_grid(k)%values(1:jp) = ptg_frq_grid(kk)%values(1:jp)
+    end do
+  endif
+!
+ 44 Close(32,iostat=i)
+  if(io > 0) then
+    ier = io
+    Return
+  endif
+!
 ! Set n_obs to be: N_lvls always.
 !   (Changed, Aug/6/96 Z.Shippony & W.G.Read)
 
   n_obs = n_lvls
 
-! Connect between 'no_phi_vec' and 'no_phi_f' entries.
-
-  DO i = 1, no_atmos
-    j = atmos_index(i)
-    kk = hdr1%sv_component_first_elmnt_index(j)
-    no_phi_vec(kk) = no_phi_f(i)
-  END DO
-
-! Connect between 'no_phi_vec' and number of spectral phi's entries.
-
-  DO i = 1, no_spectro
-    j = spect_index(i)
-    kk = hdr1%sv_component_first_elmnt_index(j)
-    no_phi_vec(kk) = spectroscopic(i)%no_phi_values
-  END DO
-
 !  *** Special PC code - check if number of Keys will exceed maximum:
 
   kk = 3                ! x_star key + i_star key + Ptan63 Key
   DO geo_i = 1, no_geom
-    IF(geometric(geo_i)%der_calc(band1)) kk = kk + 1
+    IF(geometric(geo_i)%der_calc(band)) kk = kk + 1
   END DO
 
   DO sps_i = 1, no_atmos
@@ -870,7 +963,7 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
     PRINT *,'** Error in fwd_mdl_set_up subroutine **'
     PRINT *,'   Number of records exceeded maximum. kk =',kk
     PRINT *,'   Maximum number of records allowed =',max_no_key_addr
-    RETURN
+    Return
   END IF
 
 !  *** End Special PC code
@@ -879,8 +972,7 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
 ! Get the water mixing ratio function
 
   sps_i = 1
-  DO WHILE (atmospheric(sps_i)%name /= 'H2O'  .AND.  &
-        sps_i <= no_atmos)
+  DO WHILE (atmospheric(sps_i)%name /= 'H2O' .AND. sps_i <= no_atmos)
     sps_i = sps_i + 1
   END DO
 
@@ -902,14 +994,14 @@ type (pfa_slab), intent(inout)      :: pfa_spectrum(6,*)
 ! Create filter grids & functions for PFA calculations
 
   IF(no_pfa_ch > 0) THEN
-    CALL pfa_prep(atmospheric,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch,   &
-         no_int_frqs,pfa_spectrum,ndx_sps,f_grid_fltr,f_grid,freq,     &
-         fltr_func,no_tan_hts,no_freqs,ndx_path,z_path,t_path,   &
-         beta_path,freq_grid,InDir,ld,primag,jpm,ier)
-    IF(ier /= 0) RETURN
+    CALL pfa_prep(atmospheric,band,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch, &
+         pfa_spectrum,f_grid_fltr,freq,fltr_func,no_tan_hts,  &
+         ndx_path,no_ptg_frq,ptg_frq_grid,z_path,t_path,    &
+         beta_path,InDir,ld,primag,jpm,ier)
+    IF(ier /= 0) Return
   ENDIF
 
-  RETURN
+  Return
 END SUBROUTINE fwd_mdl_set_up
 
 !-----------------------------------------------------------------------
@@ -917,7 +1009,7 @@ END SUBROUTINE fwd_mdl_set_up
 SUBROUTINE radiometry(ch, f_p, f_i, db_fi, lmt)
 
 ! This subroutine calculates the center frequency of the primary and image
-! sideband by channel. It also returns the bandwidth limits of integration
+! sideband by channel. It also Returns the bandwidth limits of integration
 ! and the gain of the primary sideband relative to the image in db units.
 
 INTEGER(i4), INTENT(IN) :: ch
@@ -927,12 +1019,12 @@ REAL(r8), INTENT(OUT) :: f_p
 REAL(r8), INTENT(OUT) :: f_i
 REAL(r8), INTENT(OUT) :: db_fi
 
-LOGICAL, save :: sgn_fp(6) = (/                                    &
+LOGICAL, SAVE :: sgn_fp(6) = (/                                    &
                  .false., .true., .false., .true., .true., .false./)
 
 INTEGER(i4) :: band, sub_ch, j
 
-Real(r4), save :: db_fi_data(90) =(/                   &
+Real(r4), SAVE :: db_fi_data(90) =(/                   &
      &    -0.5218,  0.0000,  0.5218,  0.8264,  0.9654, &
      &     1.0332,  1.0668,  1.0890,  1.1111,  1.1440, &
      &     1.2091,  1.3365,  1.5807,  0.3476, -3.6798, &
@@ -953,11 +1045,11 @@ Real(r4), save :: db_fi_data(90) =(/                   &
      &     0.1795,  0.1534,  0.1418,  0.3651,  0.5647 /)
 !
 
-REAL(r8), save :: f_prime(6) = (/                          &
+REAL(r8), SAVE :: f_prime(6) = (/                          &
     63568.418D0, 204352.161D0, 204574.627D0, 206132.067D0, &
     183310.062D0, 184377.788D0/)
 
-REAL(r8), save :: f_image(6) = (/                          &
+REAL(r8), SAVE :: f_image(6) = (/                          &
     62997.812D0, 202181.555D0, 201959.089D0, 200401.648D0, &
     186245.513D0, 185177.788D0/)
 
@@ -985,15 +1077,15 @@ REAL(r8) :: ch_offset
     f_i = f_image(band) + ch_offset
   END IF
 
-  RETURN
+  Return
 END SUBROUTINE radiometry
 
-!-----------------------------------------------------------------
+!----------------------------------------------------------------
 
-SUBROUTINE pfa_prep(atmospheric,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch, &
-           no_int_frqs,pfa_spectrum,ndx_sps,f_grid_filter,f_grid,freqs,   &
-           filter_func,no_tan_hts,no_freqs,ndx_path,z_path,t_path,  &
-           beta_path,freq_grid,InDir,ld,primag,jpm,ier)
+SUBROUTINE pfa_prep(atmospheric,band,no_atmos,no_pfa_ch,no_filt_pts,    &
+           pfa_ch,pfa_spectrum,f_grid_filter,freqs,filter_func,  &
+           no_tan_hts,ndx_path,no_ptg_frq,ptg_frq_grid,z_path, &
+           t_path,beta_path,InDir,ld,primag,jpm,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: pfa_prep
@@ -1001,35 +1093,32 @@ SUBROUTINE pfa_prep(atmospheric,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch, &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_atmos, no_pfa_ch, no_filt_pts, pfa_ch(:), &
-                           no_int_frqs(:), no_freqs, no_tan_hts, jpm
+Integer(i4), INTENT(IN) :: no_atmos, no_pfa_ch, no_filt_pts, pfa_ch(*), &
+                           no_tan_hts, band, jpm, no_ptg_frq(*)
 
-Integer(i4), INTENT(OUT) :: ier, ld, ndx_sps(:,:)
+Integer(i4), INTENT(OUT) :: ier, ld
 
-Real(r8), INTENT(IN) :: freqs(:),freq_grid(:)
+Real(r8), INTENT(IN) :: freqs(*)
 
 Type(path_index), INTENT(IN) :: ndx_path(*)
-Type(path_vector), INTENT(IN) :: z_path(*),t_path(*)
+Type(path_vector), INTENT(IN) :: z_path(*), t_path(*), ptg_frq_grid(*)
 
-Type (atmos_comp), INTENT(IN) :: atmospheric(*)
+Type (atmos_comp), INTENT(IN) :: ATMOSPHERIC(*)
 
-Type (pfa_slab), INTENT(INOUT) :: pfa_spectrum(6,*)
+Type (pfa_slab), INTENT(INOUT) :: PFA_SPECTRUM(6,*)
 
-Real(r8), INTENT(OUT) :: filter_func(:,:), f_grid(:,:), f_grid_filter(:,:)
+Real(r8), INTENT(OUT) :: filter_func(:,:), f_grid_filter(:,:)
 
 Type(path_beta), INTENT(OUT) :: beta_path(:,:,:)  ! (sps_i,frq_i,ptg_i)
 
 Character (LEN=*), INTENT(IN) :: InDir, primag
 
-!  ----------------------
-!  PARAMETER Declaration:
-!  ----------------------
-Real(r8), PARAMETER :: Tiny = epsilon(freqs(1))
 !  ----------------
 !  Local variables:
 !  ----------------
-Integer(i4) :: i, j, k, m, ch_i, sps_ind, sps_i, pb, no_sps, spectag, &
-               j4, mch, band, ptg_i, frq_i, spectags(MAXSPS)
+
+Integer(i4) :: i, j, k, m, ch_i, sps_i, pb, no_sps, spectag, &
+               mch, ptg_i, frq_i, spectags(MAXSPS)
 
 Real(r8) :: xlhs, xrhs, df, q, area, frq
 
@@ -1042,8 +1131,7 @@ Type (eos_mdb_rec) :: MDB_REC(02)      ! ** DEBUG
 
 Real(r8), DIMENSION(:), ALLOCATABLE :: values, t_power, dbeta_dw, &
                                        dbeta_dn, dbeta_dnu
-
-! begin code:
+! Begin code:
 
   ier = 0
 
@@ -1051,168 +1139,122 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: values, t_power, dbeta_dw, &
 
   pb = 0
   spectags(1:MAXSPS) = -1
-
-  DO ch_i = 1, no_pfa_ch
-
-    mch = pfa_ch(ch_i)
-    band = (mch + 14) / 15
-    no_sps = pfa_spectrum(band,1)%no_sps
+  no_sps = pfa_spectrum(band,1)%no_sps
 
 sps:DO sps_i = 1, no_sps
 
-      Spectag = pfa_spectrum(band,sps_i)%sps_spectag
+    Spectag = pfa_spectrum(band,sps_i)%sps_spectag
 
-!  Build: ndx_sps, the index in the mixing ratio array:
+    j = 1
+    DO WHILE(j < no_atmos .AND. spectag /= atmospheric(j)%spectag)
+      j = j + 1
+    END DO
 
-      sps_ind = 1
-      DO WHILE(sps_ind < no_atmos .AND. spectag /=  &
-            atmospheric(sps_ind)%spectag)
-        sps_ind = sps_ind + 1
-      END DO
+!  Check if specie is in the database
 
-!  Check if sps is in the database
+    IF(spectag /= atmospheric(j)%spectag) THEN
+      ier = 1
+      WRITE(6,900) spectag
+      Return
+    END IF
 
-      IF(spectag /= atmospheric(sps_ind)%spectag) THEN
-        ier = 1
-        WRITE(6,900) spectag
-        RETURN
-      END IF
-
-!  'sps_ind' locates the index in the mixing ratio array:
-
-      ndx_sps(sps_i,ch_i) = sps_ind
-
-      IF(.NOT.atmospheric(sps_ind)%fwd_calc(band)) CYCLE sps
+    IF(.NOT.atmospheric(j)%fwd_calc(band)) CYCLE sps
 
 !  Now check if we loaded this Spectag already ..
 
-      IF(pb > 0) THEN
-        DO k = 1, pb
-          IF(spectag == spectags(k)) CYCLE sps
-        END DO
-      END IF
+    IF(pb > 0) THEN
+      DO k = 1, pb
+        IF(spectag == spectags(k)) CYCLE sps
+      END DO
+    END IF
 
-      IF(pb == 9) THEN
-        ier = 1
-        PRINT *,'** Error in routine: read_EOS_db ..'
-        PRINT *,'   This limited version does not support more then &
-            &nine species..'
-        RETURN
-      END IF
+    IF(pb == 9) THEN
+      ier = 1
+      PRINT *,'** Error in routine: read_EOS_db ..'
+      PRINT *,'   This limited version does not support more then &
+          &nine species..'
+      Return
+    END IF
 
-      pb = pb + 1
-      spectags(pb) = Spectag
-      CALL read_eos_db(Spectag,sps_name,mdb_hdr(pb),mdb_rec,jpm,Ier)
-      IF(ier /= 0) THEN
-        PRINT *,'** Error in routine: read_EOS_db, Spectag:',spectag
-        PRINT *,'   Called by routine: pfa_prep ..'
-        RETURN
-      END IF
+    pb = pb + 1
+    spectags(pb) = Spectag
+    CALL read_eos_db(Spectag,sps_name,mdb_hdr(pb),mdb_rec,jpm,Ier)
+    IF(ier /= 0) THEN
+      PRINT *,'** Error in routine: read_EOS_db, Spectag:',spectag
+      PRINT *,'   Called by routine: pfa_prep ..'
+      Return
+    END IF
 !
 ! Now, build the beta arrays along the path
 !
-      do ptg_i = 1, no_tan_hts
+    do ptg_i = 1, no_tan_hts
 !
-        m = ndx_path(ptg_i)%total_number_of_elements
-        ALLOCATE(values(m),t_power(m),dbeta_dw(m),dbeta_dn(m), &
-                 dbeta_dnu(m),STAT=ier)
+      m = ndx_path(ptg_i)%total_number_of_elements
+      ALLOCATE(values(m),t_power(m),dbeta_dw(m),dbeta_dn(m), &
+               dbeta_dnu(m),STAT=ier)
+      if(ier /= 0) then
+        PRINT *,'** Allocation error in routine: pfa_prep ..'
+        PRINT *,'   IER =',ier
+        Return
+      endif
+!
+      k = ptg_i
+      do frq_i = 1, no_ptg_frq(k)
+!
+        DEALLOCATE(beta_path(j,frq_i,ptg_i)%values,    &
+     &             beta_path(j,frq_i,ptg_i)%t_power,   &
+     &             beta_path(j,frq_i,ptg_i)%dbeta_dw,  &
+     &             beta_path(j,frq_i,ptg_i)%dbeta_dn,  &
+     &             beta_path(j,frq_i,ptg_i)%dbeta_dnu, &
+     &             STAT=i)
+!
+        Frq = ptg_frq_grid(k)%values(frq_i)
+        CALL get_beta_path (Spectag, Frq, m, z_path(k), t_path(k),     &
+     &                mdb_hdr(pb), mdb_rec, values, t_power, dbeta_dw, &
+     &                dbeta_dn,dbeta_dnu)
+!
+        ALLOCATE(beta_path(j,frq_i,ptg_i)%values(m),    &
+     &           beta_path(j,frq_i,ptg_i)%t_power(m),   &
+     &           beta_path(j,frq_i,ptg_i)%dbeta_dw(m),  &
+     &           beta_path(j,frq_i,ptg_i)%dbeta_dn(m),  &
+     &           beta_path(j,frq_i,ptg_i)%dbeta_dnu(m), &
+     &           STAT = ier)
         if(ier /= 0) then
           PRINT *,'** Allocation error in routine: pfa_prep ..'
           PRINT *,'   IER =',ier
-          RETURN
+          Return
         endif
 !
-        do frq_i = 1, no_freqs
+        beta_path(j,frq_i,ptg_i)%values(1:m) = values(1:m)
+        beta_path(j,frq_i,ptg_i)%t_power(1:m) = t_power(1:m)
+        beta_path(j,frq_i,ptg_i)%dbeta_dw(1:m) = dbeta_dw(1:m)
+        beta_path(j,frq_i,ptg_i)%dbeta_dn(1:m) = dbeta_dn(1:m)
+        beta_path(j,frq_i,ptg_i)%dbeta_dnu(1:m) = dbeta_dnu(1:m)
 !
-          Frq = freq_grid(frq_i)
-          CALL get_beta_path (Spectag, Frq, m, z_path(ptg_i), t_path(ptg_i), &
-       &                mdb_hdr(pb), mdb_rec, values, t_power, dbeta_dw, &
-       &                dbeta_dn,dbeta_dnu)
-!
-          ALLOCATE(beta_path(sps_ind,frq_i,ptg_i)%values(m),    &
-       &           beta_path(sps_ind,frq_i,ptg_i)%t_power(m),   &
-       &           beta_path(sps_ind,frq_i,ptg_i)%dbeta_dw(m),  &
-       &           beta_path(sps_ind,frq_i,ptg_i)%dbeta_dn(m),  &
-       &           beta_path(sps_ind,frq_i,ptg_i)%dbeta_dnu(m), &
-                   STAT = ier)
-          if(ier /= 0) then
-            PRINT *,'** Allocation error in routine: pfa_prep..'
-            PRINT *,'   IER =',ier
-            RETURN
-          endif
-!
-          beta_path(sps_ind,frq_i,ptg_i)%values(1:m) = values(1:m)
-          beta_path(sps_ind,frq_i,ptg_i)%t_power(1:m) = t_power(1:m)
-          beta_path(sps_ind,frq_i,ptg_i)%dbeta_dw(1:m) = dbeta_dw(1:m)
-          beta_path(sps_ind,frq_i,ptg_i)%dbeta_dn(1:m) = dbeta_dn(1:m)
-          beta_path(sps_ind,frq_i,ptg_i)%dbeta_dnu(1:m) = dbeta_dnu(1:m)
-!
-        end do
-
-        DEALLOCATE(values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu,STAT=i)
-
       end do
 
-    END DO sps
+      DEALLOCATE(values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu,STAT=i)
 
-  END DO
+    end do
 
-!  Find the species index in the l2pc mixing ratio database:
+  END DO sps
+
+! Find the species index in the l2pc mixing ratio database:
 
   m = pb
   pb = -1
+  no_sps = pfa_spectrum(band,1)%no_sps
+
   DO ch_i = 1, no_pfa_ch
 
     mch = pfa_ch(ch_i)
-    band = (mch + 14) / 15
-    no_sps = pfa_spectrum(band,1)%no_sps
-
-    j4 = 4 * no_int_frqs(ch_i) + 1     ! Total # of Aitken's points
-
-    IF(j4 > 1) THEN
-
-      DO sps_i = 1, no_sps
-
-        spectag = pfa_spectrum(band,sps_i)%sps_spectag
-        spectags(sps_i) = spectag
-
-!  Setup the spectrum record (structure), per band:
-
-        j = 1
-        k = spectag
-        IF(k == 18999 .OR. k == 28964 .OR. k == 28965) j = -1
-
-        IF(j >= 0 .AND. pb /= band) THEN
-
-          k = -sps_i
-          IF(sps_i > 1) k = sps_i
-
-        END IF
-!
-!  Overwrite the pfa_spectrum data with the appropriate EOS Database
-!
-        j = 0
-        k = -1
-        DO WHILE(j < m .AND. k < 1)
-          j = j + 1
-          IF(mdb_hdr(j)%spectag == spectag) k = j
-        END DO
-
-        IF(k > 0) THEN
-          j = mdb_hdr(k)%no_lines
-          pfa_spectrum(band,sps_i)%no_lines = j
-        END IF
-
-      END DO
-
-    END IF
 
     pb = band
     frq = freqs(mch)
     IF(frq < 1.0D0) THEN
       ier = 1
       WRITE(6,905) mch
-      RETURN
+      Return
     END IF
 
 ! Set up filter's response function
@@ -1230,21 +1272,10 @@ sps:DO sps_i = 1, no_sps
 
 !  Normalize the filter's response array:
 
-    CALL dsimps(filter_func(1:,ch_i),df,no_filt_pts,q)
+    CALL Simps(filter_func(1:,ch_i),df,no_filt_pts,q)
     DO j = 1, no_filt_pts
       filter_func(j,ch_i) = filter_func(j,ch_i) / q
     END DO
-
-!  If needed, Get Aitken's grid points:
-
-    IF(j4 > 1) THEN
-      df = (xrhs - xlhs) / (j4 - 1)
-      DO j = 1, j4
-        q = xlhs + (j - 1) * df
-        f_grid(j,ch_i) = frq + q
-      END DO
-      f_grid(j4+1,ch_i) = frq                 ! *** DEBUG
-    END IF
 
   END DO                         ! On ch_i
 
@@ -1260,11 +1291,12 @@ sps:DO sps_i = 1, no_sps
       '    Inconsistant User Input.',/, &
       '    PFA Channel:',i3,' not among the non-PFA channels !')
 
-  RETURN
+  Return
+
 END SUBROUTINE pfa_prep
 
 !---------------------------------------------------------------------
-!  This routine reads the EOS database and returns the structer holding
+!  This routine reads the EOS database and Returns the structer holding
 !  the required Spectag
 
 SUBROUTINE read_eos_db(spectag,sps_name,mdb_hdr,mdb_rec,jpm,ier)
@@ -1287,7 +1319,7 @@ type (eos_mdb_rec), intent (OUT) :: mdb_rec(*)
 !  ----------------
 Integer(i4) :: i, j, k, io, nl, du, iu, ii, jj, kk, no_lines
 
-Integer(i4), save :: init = 0
+Integer(i4), SAVE :: init = 0
 
 Integer(i4) :: no_sps = 14
 Integer(i4) :: spectags(14) = (/                          &
@@ -1300,8 +1332,8 @@ Character (LEN=8) :: names(14) = (/                                &
            'HCN     ','CLO     ','O3      ','CO      ','HOCL    ', &
            'HO2     ','HCL     ','BR-81-O ','OH      '/)
 
-type (eos_mdb_hdr), save :: mdb_zero_hdr
-type (eos_mdb_rec), save :: mdb_zero_rec
+type (eos_mdb_hdr), SAVE :: mdb_zero_hdr
+type (eos_mdb_rec), SAVE :: mdb_zero_rec
 
 ! Begin code:
 
@@ -1373,12 +1405,22 @@ type (eos_mdb_rec), save :: mdb_zero_rec
   END IF
 
   sps_name = names(i)
+  Call StrLwr(sps_name)
 
-  datdir(1:) = ' '
-  if(jpm < 1) then
-    datdir= '/home/zvi/temp/minus/'
+  fdt(1:) = ' '
+! fdt = '/home/zvi/temp/'              ! HOME PC
+  fdt = '/user5/zvi/linux/temp/'       ! MLSGATE, VANPC
+! fdt = '/user5/zvi/temp/'             ! SUN, SGI
+
+  i = LEN_TRIM(fdt)
+  if(jpm < 0) then
+    datdir = fdt(1:i)//'/minus/'
+  else if(jpm > 0) then
+    datdir = fdt(1:i)//'/plus/'
   else
-    datdir= '/home/zvi/temp/plus/'
+!   datdir = '/home/zvi/data/'              ! HOME PC
+    datdir = '/user5/zvi/linux/MLS/data/'   ! MLSGATE, VANPC
+!   datdir = '/user5/zvi/zvi/eos/data/'     ! SUN, SGI
   endif
 
   fdt(1:) = ' '
@@ -1386,7 +1428,6 @@ type (eos_mdb_rec), save :: mdb_zero_rec
   j = LEN_TRIM(datdir)
   i = LEN_TRIM(sps_name)
   fdt = datdir(1:j)//sps_name(1:i)//'_eosmdb.dat'
-  CALL strlwr(fdt)
   j = LEN_TRIM(fdt)
   i = INDEX(fdt,'.dat')
   fhd = fdt(1:i-1)//'.hdr'
@@ -1427,8 +1468,8 @@ type (eos_mdb_rec), save :: mdb_zero_rec
   CLOSE(du,IOSTAT=i)
   CLOSE(iu,IOSTAT=i)
 
-  RETURN
-END SUBROUTINE read_eos_db
+  Return
+ END SUBROUTINE read_eos_db
 !
 !---------------------------------------------------------------------
 !
@@ -1452,16 +1493,15 @@ END SUBROUTINE read_eos_db
 !
       END SUBROUTINE GTI
 
-!-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! This is the radiative transfer model, radiances only !
 
-Subroutine Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, &
+    Subroutine Rad_Tran(Frq,N_lvls,h_tan,n_sps, &
       &    ndx_path, z_path, h_path, t_path, phi_path, dHdz_path,     &
       &    earth_ref,beta_path, spsfunc_path, ref_corr, s_temp,brkpt, &
-      &    no_ele, mid, ilo, ihi, cse, Rs, t_script, tau, Rad, Ier)
+      &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
 !
-    Integer(i4), intent(in) :: N_LVLS, BAND, N_SPS
-
-    Integer(i4), intent(in) :: SPS_TBL(Nsps,*)
+    Integer(i4), intent(in) :: N_LVLS, N_SPS
 
     Integer(i4), intent(out) :: BRKPT, NO_ELE, MID, ILO, IHI, IER
 
@@ -1477,10 +1517,11 @@ Subroutine Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, &
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
 
     Real(r8), intent(out) :: T_SCRIPT(*), TAU(*)
-    Real(r8), intent(out) :: CSE, RS, RAD
+    Real(r8), intent(out) :: RAD
 !
     Integer(i4) :: Ngp1
 
+    Real(r8) :: CSE, RS
     Real(r8) :: del_opacity(N2lvl), delta(N2lvl,Nsps)
 !
 ! 'brkpt' is the index of the path break-point (when it change from
@@ -1513,7 +1554,7 @@ Subroutine Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, &
    &                 mid, t_script)
 !
     Call FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path, &
- &       dHdz_path,spsfunc_path,n_sps,N_lvls,sps_tbl(1:,band),Nlvl,    &
+ &       dHdz_path,spsfunc_path,n_sps,N_lvls,Nlvl, &
  &       ref_corr,delta,Ier)
     if (Ier /= 0) Return
 !
@@ -1522,7 +1563,7 @@ Subroutine Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, &
     tau(1:N2lvl) = 0.0
     del_opacity(1:N2lvl) = 0.0
 !
-    CALL FAST_ZOPACITY(sps_tbl(1:,band), n_sps, Ngp1, N2lvl, brkpt, &
+    CALL FAST_ZOPACITY(n_sps, Ngp1, N2lvl, brkpt, &
    &                   no_ele, delta, del_opacity)
 !
     Call Scrt_dn(t_script, N_lvls, cse, del_opacity, tau, Rad, mid, &
@@ -1531,4 +1572,4 @@ Subroutine Rad_Tran(Frq,N_lvls,h_tan,band,n_sps, sps_tbl, &
     Return
   End Subroutine RAD_TRAN
 
-end Program l2_numder
+End Program l2_numder

@@ -12,6 +12,7 @@ module EOS_MDB
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
+!
   Real(r4), parameter :: TEMP_LO = 170.0  ! Lower limit of temperature
   Real(r4), parameter :: TTEMP_HI = 320.0 ! Upper limit of temperature
   Real(r4), parameter :: ZETA_LO = -3.0   ! Lower limit of Zeta
@@ -42,16 +43,10 @@ module EOS_MDB
     Real(r4) :: dLog_beta_dw(max_zeta,max_temp,max_freq)
     Real(r4) :: dLog_beta_dn(max_zeta,max_temp,max_freq)
     Real(r4) :: dLog_beta_dNu0(max_zeta,max_temp,max_freq)
-  end type EOS_MDB_REC
+  End type EOS_MDB_REC
 !
 end module EOS_MDB
 ! $Log$
-! Revision 1.4  2000/11/22 23:15:48  zvi
-! correcting typo (r4) instead of (i4)
-!
-! Revision 1.3  2000/11/22 23:10:03  zvi
-! Re-add basic stuff
-!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

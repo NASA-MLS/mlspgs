@@ -19,11 +19,10 @@ contains
 !  ** NOTE: This routine integrate in ZETA Space !
 !
   Subroutine FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path, &
- &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,sps_tbl, &
+ &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,      &
  &           Nlvl,ref_corr,delta,Ier)
 !
     Integer(i4), intent(in) :: NLVL, N_SPS, N_LVLS, MID, BRKPT, NO_ELE
-    Integer(i4), intent(in) :: SPS_TBL(*)
 
     Real(r8), intent(in) :: REF_CORR(*)
 
@@ -38,7 +37,7 @@ contains
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: J, K, SPS_I
+    Integer(i4) :: J, K
 !
     Integer(i4), SAVE :: NZ=1, NP=1, IZ=1, IP=1
 !
@@ -60,9 +59,7 @@ contains
       goto 99
     endif
 !
-    do sps_i = 1, n_sps
-!
-      j = sps_tbl(sps_i)
+    do j = 1, n_sps
 !
       integrand(1:no_ele) = spsfunc_path(j)%values(1:no_ele) *  &
      &                      beta_path(j)%values(1:no_ele)

@@ -1,8 +1,6 @@
-!
 module GEO_GRIDS_M
-  use GL6P, only: Ng
-  use L2PC_FILE_PARAMETERS, only: DEG2RAD, &
-                                  MXCO => max_no_elmnts_per_sv_component
+  use GL6P, only: NG, GX
+  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PCDIM, only: N2lvl, Nlvl, Nptg, MNP => max_no_phi
   use MDBETA, only: NO_T_PHI
   use MLSCommon, only: I4, R4, R8
@@ -11,7 +9,6 @@ module GEO_GRIDS_M
   use D_LINTRP_M, only: LINTRP
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
   use HYDROSTATIC_INTRP, only: GET_HEIGHTS, GET_PRESSURES
-  use CH_RUN_SETUP_M, only: CH_RUN_SETUP
   use VERT_TO_PATH_M, only: VERT_TO_PATH
 
   implicit NONE
@@ -24,11 +21,10 @@ module GEO_GRIDS_M
 contains
 !---------------------------------------------------------------
 
-SUBROUTINE geo_grids(z_glgrid,gl_count,z_grid,t_grid,h_grid,tan_dh_dt,  &
-           n_lvls,t_z_basis,t_coeff,si,tan_hts,tan_hts_raw,tan_press,   &
-           tan_temp,no_tan_hts,z_path,h_path,t_path,phi_path,dhdz_path, &
-           dh_dt_path,npath,g,href,zref,phi_tan,lat,roc,n_tan,t_tan,    &
-           no_t,no_phi_t,t_phi_basis,ndx_path,ier)
+SUBROUTINE geo_grids(z_grid,t_grid,h_grid,tan_dh_dt,n_lvls,t_z_basis,    &
+           t_coeff,si,tan_hts,tan_hts_raw,tan_press,tan_temp,no_tan_hts, &
+           z_path,h_path,t_path,phi_path,dhdz_path,dh_dt_path,npath,g,   &
+           href,zref,geoc_lat,no_t,no_phi_t,t_phi_basis,ndx_path,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: geo_grids
@@ -37,11 +33,11 @@ SUBROUTINE geo_grids(z_glgrid,gl_count,z_grid,t_grid,h_grid,tan_dh_dt,  &
 !  Calling sequence variables:
 !  ---------------------------
 
-Integer(i4), INTENT(IN) :: npath, si, n_lvls, no_phi_t, no_t, gl_count
+Integer(i4), INTENT(IN) :: npath, si, n_lvls, no_phi_t, no_t
 
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
-Integer(i4), INTENT(OUT) :: Ier, n_tan(:)
+Integer(i4), INTENT(OUT) :: Ier
 
 Type(path_index), INTENT(OUT)  :: ndx_path(:)
 Type(path_vector), INTENT(OUT) :: z_path(:),t_path(:),h_path(:), &
@@ -49,11 +45,11 @@ Type(path_vector), INTENT(OUT) :: z_path(:),t_path(:),h_path(:), &
 
 Type(path_derivative), INTENT(OUT) :: dh_dt_path(:)
 
-Real(r8), INTENT(IN) :: roc, phi_tan, lat, href(:), zref(:), z_glgrid(:), &
-            z_grid(:),t_z_basis(:), t_coeff(:,:), t_phi_basis(:)
+Real(r8), INTENT(IN) :: geoc_lat, href(:), zref(:), &
+            z_grid(:), t_z_basis(:), t_coeff(:,:), t_phi_basis(:)
 
-Real(r8), INTENT(OUT) :: g, t_grid(:), h_grid(:), tan_temp(:),  &
-          tan_press(:), tan_hts(:), tan_dh_dt(:,:),t_tan(:)
+Real(r8), INTENT(OUT) :: g, t_grid(:), h_grid(:), tan_temp(:), tan_hts(:), &
+          tan_press(:),  tan_dh_dt(:,:)
 
 Real(r8), INTENT(IN OUT) :: tan_hts_raw(:)
 
@@ -64,14 +60,14 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  ----------------
 !  Local variables:
 !  ----------------
-Integer(i4) :: no_phi, h_i, jp, i, j, k, klo, khi
+Integer(i4) :: no_phi, h_i, jp, i, j, k, klo, khi, gl_count
 
 Real(r4) :: dhdtp(ngt,mnp,mxco)
 
-Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),    &
+Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),z1,z2,xm,ym, &
      dhdt(mxco,mnp), h_glgrid(ngt,mnp), t_glgrid(ngt,mnp), &
      dh_dt_glgrid(ngt,mnp,mxco), dhdz_glgrid(ngt,mnp), zpath(ngt), &
-     tpath(ngt),hpath(ngt),ppath(ngt),dhdzp(ngt)
+     tpath(ngt),hpath(ngt),ppath(ngt),dhdzp(ngt),z_glgrid(ngt/2)
 
 ! Begin the code here
 
@@ -80,29 +76,29 @@ Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),    &
   no_phi = no_phi_t
   jp = (no_phi + 1) / 2
 
-! *** Make sure there is NO Extrapolation on Temperature at either end of
-!     the range. This is the Temperature on the GL grid:
+! From the selected integration grid pressures define the GL pressure
+! grid:
 
-! DO j = 1, no_phi
-!   klo = 1
-!   z = t_coeff(1,j)
-!   DO WHILE(t_z_basis(1) > z_glgrid(klo))
-!     t_glgrid(klo,j) = z
-!     klo = klo + 1
-!   END DO
-!   khi = gl_count
-!   z = t_coeff(no_t,j)
-!   DO WHILE(t_z_basis(no_t) < z_glgrid(khi))
-!     t_glgrid(khi,j) = z
-!     khi = khi - 1
-!   END DO
-!   i = khi - klo + 1
-!   CALL lintrp(t_z_basis,z_glgrid(klo:),t_coeff(1:,j), &
-!               t_glgrid(klo:,j),no_t,i)
-! END DO
+  gl_count = 0
+  z2 = z_grid(1)
+  DO i = 2, n_lvls
+    z1 = z2
+    z2 = z_grid(i)
+    xm = 0.5D0 * (z2 + z1)
+    ym = 0.5D0 * (z2 - z1)
+    gl_count = gl_count + 1
+    z_glgrid(gl_count) = z1
+    DO j = 1, ng
+      gl_count = gl_count + 1
+      z_glgrid(gl_count) = xm + ym * Gx(j)
+    END DO
+  END DO
+
+  gl_count = gl_count + 1
+  z_glgrid(gl_count) = z2
 !
-! Bill wants to use this approach for liner interpolation of temperatures..
-! (Should be identical...) (Checked ..)
+! *** Create the Temperature on the GL grid by linear interpolation via
+!     the get_eta procedure (Bill's request)
 !
   DO j = 1, no_phi
     do i = 1, gl_count
@@ -124,7 +120,7 @@ Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),    &
     DO j = 1, no_phi_t
       phi = t_phi_basis(j)
       CALL get_h_dhdt(t_coeff(1:,1:),t_z_basis,t_phi_basis,z,phi, &
-           zref(j),href(j),lat,reff,g,const,no_t,no_phi,h,dhdt)
+           zref(j),href(j),geoc_lat,reff,g,const,no_t,no_phi,h,dhdt)
       h_glgrid(h_i,j) = h
       q = h + reff
       dhdz_glgrid(h_i,j) = q * q * const * t_glgrid(h_i,j)
@@ -225,10 +221,6 @@ Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),    &
     tan_hts(i) = tan_hts_raw(i)
   END DO
 
-! Get n_tan & t_tan arrays:
-
-  CALL ch_run_setup(tan_hts,no_tan_hts,h_grid,t_grid,n_lvls,n_tan,t_tan)
-
 ! Compute all the various integration paths according to tanget heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
 
@@ -237,7 +229,7 @@ Real(r8) :: reff, const, q, h, z, t, v, phi, dummy(Nlvl),    &
     CALL vert_to_path(n_lvls,Ng,Npath,gl_count,no_phi_t,no_t, &
          h,z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,            &
          dh_dt_glgrid,t_phi_basis,zpath,hpath,tpath,ppath,    &
-         dhdzp,dhdtp,klo,khi,roc,phi_tan,Ier)
+         dhdzp,dhdtp,klo,khi,Ier)
     IF(ier /= 0) RETURN
     ALLOCATE(z_path(k)%values(khi), h_path(k)%values(khi),   &
              t_path(k)%values(khi), phi_path(k)%values(khi), &
@@ -267,7 +259,7 @@ END SUBROUTINE geo_grids
 !  The 2 dimensional Hydrostatic integrator
 
 SUBROUTINE get_h_dhdt(t_profile,t_basis,t_phi_basis,zeta,phi,zref, &
-           href,lat,reff,g,const,nt,no_t_phi,h,dhdt)
+           href,geoc_lat,reff,g,const,nt,no_t_phi,h,dhdt)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_h_dhdt
@@ -277,7 +269,7 @@ SUBROUTINE get_h_dhdt(t_profile,t_basis,t_phi_basis,zeta,phi,zref, &
 !  ---------------------------
 Integer(i4), INTENT(IN) :: nt, no_t_phi
 
-Real(r8), INTENT(IN) :: lat, href, zref, zeta, phi, t_profile(:,:), &
+Real(r8), INTENT(IN) :: geoc_lat, href, zref, zeta, phi, t_profile(:,:), &
              t_basis(:), t_phi_basis(:)
 
 Real(r8), INTENT(OUT) :: const, h, g, reff, dhdt(:,:)
@@ -292,16 +284,16 @@ Integer(i4) :: iq, j, nv
 
 Real(r8) :: v, denom, sum, eta_phi
 
-Real(r8), save :: gr2, c, prevlat = -500.0
+Real(r8), SAVE :: gr2, c, prevlat = -500.0
 
 Real(r8) :: pm(50) = 0.0
 Real(r8) :: etapv(15) = 0.0
 
 ! Begin the code here
 
-  IF(lat /= prevlat) THEN
-    prevlat = lat
-    CALL get_g_reff(lat,href,g,reff)
+  IF(geoc_lat /= prevlat) THEN
+    prevlat = geoc_lat
+    CALL get_g_reff(geoc_lat,href,g,reff)
     c = g * reff
     gr2 = c * reff
     const = boltzxln10 / (gr2 * 28.964125D0)      ! 28.964... = Mass
@@ -358,7 +350,7 @@ END SUBROUTINE get_h_dhdt
 
 !---------------------------------------------------------------------
 
-SUBROUTINE get_g_reff(lat,href,g,reff)
+SUBROUTINE get_g_reff(geoc_lat,href,g,reff)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_g_reff
@@ -366,7 +358,7 @@ SUBROUTINE get_g_reff(lat,href,g,reff)
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Real(r8), INTENT(IN) :: lat, href
+Real(r8), INTENT(IN) :: geoc_lat, href
 
 Real(r8), INTENT(OUT) :: g, reff
 !  ----------------------
@@ -378,18 +370,16 @@ Real(r8), PARAMETER :: g2 = 5.9d-6
 Real(r8), PARAMETER :: r1 = 3.085462d-3
 Real(r8), PARAMETER :: r2 = 2.27d-6
 Real(r8), PARAMETER :: r3 = 2.0d-9
-Real(r8), PARAMETER :: d2r = 1.74532925199433d-2
 !  ----------------
 !  Local variables:
 !  ----------------
-Real(r8) :: ang, cr, crr, a
+Real(r8) :: cr, crr, a
 
 ! Begin code:
 
-  ang  = d2r * lat                                ! Convert to radians
-  cr   = DCOS(2.0D0 * ang)
+  cr   = DCOS(2.0D0 * geoc_lat)
   g    = g0 * (1.0D0 - cr * (g1 - cr * g2))       ! Modified G
-  crr  = 2.0D0 * cr * cr - 1.0D0                  ! Cos(4*Ang)
+  crr  = 2.0D0 * cr * cr - 1.0D0                  ! Cos(4*geoc_lat)
   reff = 2.0D0 * g / (r1 + r2 * cr - r3 * crr)    ! Reff in Kilometers
 
 ! Make approriate correction for Href not being the surface

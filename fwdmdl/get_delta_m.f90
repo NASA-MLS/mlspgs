@@ -18,13 +18,13 @@ contains
 !  ** NOTE: This routine integrate in ZETA Space !
 !
   Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,         &
- &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,sps_tbl,Nlvl,  &
+ &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,Nlvl,  &
  &           z_basis,ref_corr,mnp,no_phi_f,phi_basis,spsfunc_path,mr_f, &
  &           is_f_log,delta,Ier)
 
     Logical,     intent(in) :: IS_F_LOG(*)
     Integer(i4), intent(in) :: NLVL, NC, N_SPS, N_LVLS, MNP
-    Integer(i4), intent(in) :: NCOEFFS(*), SPS_TBL(*), NO_PHI_F(*)
+    Integer(i4), intent(in) :: NCOEFFS(*), NO_PHI_F(*)
     Integer(i4), intent(in) :: mid, brkpt, no_ele
 
     Real(r8), intent(in) :: REF_CORR(*)
@@ -43,7 +43,7 @@ contains
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: SPS_I, J, K, IP, IZ, NCO, NPF
+    Integer(i4) :: J, K, IP, IZ, NCO, NPF
 
     Real(r8) :: Q
 !
@@ -64,14 +64,12 @@ contains
 !  Initialize all arrays:
 !
     k = 2 * N_lvls
-    do sps_i = 1, n_sps
-      j = sps_tbl(sps_i)
+    do j = 1, n_sps
       delta(1:k,1:ncoeffs(j),1:no_phi_f(j),j) = 0.0
     end do
 !
-    do sps_i = 1, n_sps
+    do j = 1, n_sps
 !
-      j = sps_tbl(sps_i)
       npf = no_phi_f(j)
       nco = ncoeffs(j)
 !
