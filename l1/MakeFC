@@ -38,6 +38,11 @@ PLATFORMS = .
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/.configure
 
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
 SHELL = /bin/sh
 
 #--------------- Target definitions
@@ -105,9 +110,12 @@ clean_objs:
 
 tar:
 	rm -f ../$(PROG).tgz
-	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.7  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
 # Revision 2.6  2001/03/06 18:17:57  pwagner
 # clean more amitious--rms * from MLSCONFGl[13]/MakeFC
 #
