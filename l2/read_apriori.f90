@@ -24,7 +24,10 @@ module ReadAPriori
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF, PCFL2CFSAMECASE
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end
+  use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+    & mlspcf_l2ncep_start, mlspcf_l2ncep_end, &
+    & mlspcf_l2dao_start, mlspcf_l2dao_end, &
+    & mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -96,6 +99,8 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: L2apriori_version
     integer :: LastClimPCF
+    integer :: LastDAOPCF
+    integer :: LastNCEPPCF
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
     type (L2AUXData_T) :: L2AUX
     type (L2GPData_T) :: L2GP
@@ -117,7 +122,6 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     real :: T1, T2                      ! for timing
     logical :: TIMING
-    integer :: Version
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
@@ -142,9 +146,10 @@ contains ! =====     Public Procedures     =============================
     endif
     if( index(switches, 'apr') /= 0 ) &     
     & call output ( '============ Read APriori ============', advance='yes' )    
-    version = 1
     allswathnames = ' '
-    lastClimPCF = mlspcf_l2apriori_start - 1
+    lastClimPCF = mlspcf_l2clim_start - 1
+    lastDAOPCF = mlspcf_l2dao_start - 1
+    lastNCEPPCF = mlspcf_l2ncep_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
@@ -270,19 +275,8 @@ contains ! =====     Public Procedures     =============================
             & 'Failed to determine swath name, obscure error on ' &
             & // trim(fileNameString) )
         endif
-        ! Open the l2gp file
-        ! fileHandle = swopen(FileNameString, DFACC_READ)
-        ! fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
-        !     & record_length, DFACC_READ, FileName=FileNameString, &
-        !     & hdfVersion=hdfVersion, debugOption=.false. )
-        ! if ( fileHandle < 0 ) then
-        !  call announce_error ( son, &
-        !    & 'Failed to open swath file ' // trim(FileNameString) )
-        ! end if
 
         ! Read the swath
-        ! call ReadL2GPData ( fileHandle, swathNameString, l2gp, &
-        ! & hdfVersion=hdfVersion )
         if ( HMOT /= ' ' ) then
           call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
            & hdfVersion=hdfVersion, HMOT=HMOT )
@@ -294,14 +288,6 @@ contains ! =====     Public Procedures     =============================
         if( index(switches, 'apr') /= 0 ) &
         & call dump( l2gp, details=details )
 
-        ! Close the file
-        ! fileHandle = swclose(fileHandle)
-        ! fileHandle = mls_io_gen_closeF('swclose', fileHandle, &
-        ! & hdfVersion=hdfVersion)
-        ! if ( fileHandle == -1 ) then
-        !  call announce_error ( son, &
-        !    & 'Failed to close swath file ' // trim(FileNameString) )
-        ! elseif(index(switches, 'pro') /= 0) then                            
         if(index(switches, 'pro') /= 0) then                            
            call announce_success(FilenameString, 'l2gp', &                    
            & swathNameString, hdfVersion=hdfVersion)    
@@ -327,22 +313,14 @@ contains ! =====     Public Procedures     =============================
         call get_string ( sdName, sdNameString )
         sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
 
-  ! ((( This will have to change if we wish to convert l2aux to hdf5
-  !          Maybe put another wrapper in MSLFiles
         ! create SD interface identifier for l2aux
          if ( hdfVersion == WILDCARDHDFVERSION ) &
            & hdfVersion = mls_hdf_version(trim(FilenameString))
          sd_id = mls_sfstart(FilenameString, DFACC_READ, hdfVersion=hdfVersion)
-!        sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
           call announce_error ( son, 'Failed to open l2aux ' // &
           &  trim(FilenameString) )
         end if
-
-        ! Create the l2aux, and add it to the database.
-        ! This doesn't match the interface in module L2AUXData
-        !       CALL SetupNewL2AUXRecord ( l2aux )
-        ! It has been relocated to READL2AUXData
 
         l2aux%name = l2Name
 
@@ -354,10 +332,6 @@ contains ! =====     Public Procedures     =============================
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
 
-   ! For some reason, sfend was never called for l2aux data files here
-   ! Did we think we were going to read from elsewhere?
-   ! Anyway, I added the mls_sfend version when I converted
-   ! this module to use MLSFiles instead of Hdf
         if ( hdfVersion == WILDCARDHDFVERSION ) &
           & hdfVersion = mls_hdf_version(trim(FilenameString))
         fileHandle = mls_sfend(sd_id, hdfVersion=hdfVersion)
@@ -371,14 +345,6 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_gridded )
 
-        if ( PCF .and. got(f_file) ) then
-          call split_path_name(FileNameString, path, SubString)
-          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
-          & mlspcf_l2apriori_end, &                                     
-          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
-          & exactName=FileNameString)                             
-        endif
-
         if ( .not. all(got((/f_origin, f_field/))) ) &
           & call announce_error ( son, 'Incomplete gridded data information' )
 
@@ -386,6 +352,25 @@ contains ! =====     Public Procedures     =============================
         
         select case ( griddedOrigin )
         case ( l_ncep ) ! --------------------------- NCEP Data
+          if ( PCF .and. got(f_file) ) then
+            call split_path_name(FileNameString, path, SubString)
+            LastNCEPPCF = GetPCFromRef(SubString, mlspcf_l2ncep_start, &
+            & mlspcf_l2ncep_end, &                                     
+            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & exactName=FileNameString)                             
+          elseif ( PCF ) then
+            do pcf_indx = LastNCEPPCF+1, mlspcf_l2ncep_end
+              returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+                & fileNameString)
+              if ( returnStatus == PGS_S_SUCCESS) exit
+            end do
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call announce_error ( son, &
+                & 'PCF number not found to supply' // &
+                & ' missing ncep file name' )
+            end if
+            LastNCEPPCF = pcf_indx
+          endif
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
@@ -400,6 +385,25 @@ contains ! =====     Public Procedures     =============================
                & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
+          if ( PCF .and. got(f_file) ) then
+            call split_path_name(FileNameString, path, SubString)
+            LastDAOPCF = GetPCFromRef(SubString, mlspcf_l2dao_start, &
+            & mlspcf_l2dao_end, &                                     
+            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & exactName=FileNameString)                             
+          elseif ( PCF ) then
+            do pcf_indx = LastDAOPCF+1, mlspcf_l2dao_end
+              returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+                & fileNameString)
+              if ( returnStatus == PGS_S_SUCCESS) exit
+            end do
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call announce_error ( son, &
+                & 'PCF number not found to supply' // &
+                & ' missing dao file name' )
+            end if
+            LastDAOPCF = pcf_indx
+          endif
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
@@ -415,6 +419,25 @@ contains ! =====     Public Procedures     =============================
                & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
+          if ( PCF .and. got(f_file) ) then
+            call split_path_name(FileNameString, path, SubString)
+            LastClimPCF = GetPCFromRef(SubString, mlspcf_l2clim_start, &
+            & mlspcf_l2clim_end, &                                     
+            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & exactName=FileNameString)                             
+          elseif ( PCF ) then
+            do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
+              returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+                & fileNameString)
+              if ( returnStatus == PGS_S_SUCCESS) exit
+            end do
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call announce_error ( son, &
+                & 'PCF number not found to supply' // &
+                & ' missing Climatology file name' )
+            end if
+            LastCLIMPCF = pcf_indx
+          endif
           call decorate ( key, &
             & AddGriddedDataToDatabase ( griddedDatabase, &
             & ReadGloriaFile ( FilenameString ) ) )
@@ -424,9 +447,16 @@ contains ! =====     Public Procedures     =============================
           endif
         case ( l_climatology ) ! -------------------- Climatology data
           ! Identify file (maybe from PCF if no name given)
-          if ( .NOT. got(f_file) .and. PCF) then
-            do pcf_indx = lastClimPCF+1, mlspcf_l2apriori_end
-              returnStatus = Pgs_pc_getReference(i, version, fileNameString)
+          if ( PCF .and. got(f_file) ) then
+            call split_path_name(FileNameString, path, SubString)
+            LastClimPCF = GetPCFromRef(SubString, mlspcf_l2clim_start, &
+            & mlspcf_l2clim_end, &                                     
+            & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+            & exactName=FileNameString)                             
+          elseif ( PCF ) then
+            do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
+              returnStatus = Pgs_pc_getReference(pcf_indx, L2apriori_version, &
+                & fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
             if ( returnStatus /= PGS_S_SUCCESS ) then
@@ -434,7 +464,8 @@ contains ! =====     Public Procedures     =============================
                 & 'PCF number not found to supply' // &
                 & ' missing Climatology file name' )
             end if
-          end if
+            LastCLIMPCF = pcf_indx
+          endif
           
           ! Have we read this already?
           gotAlready = associated(GriddedDatabase)
@@ -606,6 +637,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.51  2003/05/29 17:54:28  pwagner
+! Able to read dao, ncep files w/o knowing name fragment
+!
 ! Revision 2.50  2003/05/09 23:26:45  pwagner
 ! Should not bomb when l2aux hdfversion absent or wildcard
 !
