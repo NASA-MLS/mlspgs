@@ -95,8 +95,9 @@ libmlsl3_f90 := $(shell ${REECHO} $(libmlsl3_sources)/*.c $(libmlsl3_sources)/*.
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
-depends_where:=$(libmls_sources) $(srclib) \
-   $(libmlsl3_sources)
+#depends_where:=$(libmls_sources) $(srclib) \
+#   $(libmlsl3_sources)
+depends_where:=$(libmls_sources) $(libmlsl3_sources)
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
 	  $(libmlsl3_objs)/libmlsl3.a  $(REECHO)   
@@ -248,7 +249,8 @@ depends--mod:
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
-       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+       $(PLATFORMS)/$(MLSCONFG) ./
+#       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -287,6 +289,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.16  2002/07/15 16:52:59  pwagner
+# Exits make with status 2 if error in any level
+#
 # Revision 1.15  2002/07/02 00:14:01  pwagner
 # Skips marking uptodate after an error
 #

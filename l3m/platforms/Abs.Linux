@@ -22,23 +22,11 @@ libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
-# sources shared by l2, l3 are in $(srclib)
-# these USE init_tables_module, which is different for l2 from the l3 version
-# while l2 and l3 use the same sources in srclib they do
-# require different objects--thus a source library instead of an object
-# library (such as libmls.a)
-# therefore we will tell make to add srclib to directories searched for .f90
-# while dir2, the path prepended to its .o files in dependency lists, is empty
-# so that its object files share the current working directory with those of l2
-srclib = $(CONFDIR)/srclib
-
-dir2 =
-
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ $(srclib)
-vpath %.f9h ../ $(srclib)
+vpath %.f90 ../
+vpath %.f9h ../
 vpath %.f ../
 vpath %.c ../
 
@@ -48,16 +36,17 @@ FC = f90
 DUSTY = $(FOPTS)
 
 # Use the libmlsl3 directory, libmlsl3dir, for more .mod files
-# dir3 is the path prepended to its .o files in dependency lists
+# dir2 is the path prepended to its .o files in dependency lists
 libmlsl3dir = $(CONFDIR)/l3/$(MLSCONFG)
 
-dir3 = $(libmlsl3dir)/
+#dir3 = $(libmlsl3dir)/
+dir2 = $(libmlsl3dir)/
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 
-INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
+INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $S -p $(libdir) \
      -p $(libmlsl3dir) \
-     -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
+     -I$(PGSINC) -I$S -I$(libdir) \
      -I$(libmlsl3dir)
 
 # Define some suffix rules
@@ -80,6 +69,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
 l_specials = 
 
 # $Log$
+# Revision 1.5  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.4  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #
