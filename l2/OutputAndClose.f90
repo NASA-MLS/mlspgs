@@ -13,7 +13,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Hdf, only: DFACC_CREATE  !, SFEND, SFSTART
   use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
     & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
-    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
+    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
   use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
@@ -58,9 +58,6 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! -----     Private declarations     ---------------------------------
 
-  ! Shall we write bogus CounterMAF so l2aux is l1brad counterfeit?
-  logical, parameter :: COUNTERFEITCOUNTERMAF = .false.
-
   ! For Announce_Error
   integer :: ERROR
 
@@ -96,6 +93,7 @@ contains ! =====     Public Procedures     =============================
     logical, parameter :: DEBUG = .FALSE.
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    integer :: FIELDVALUE               ! For get_boolean
     character (len=132) :: FILE_BASE    ! From the FILE= field
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -132,6 +130,7 @@ contains ! =====     Public Procedures     =============================
     double precision :: Value(2)        ! Value returned by EXPR
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
     logical :: TIMING
+    logical :: WriteCounterMAF          ! Add the counter MAF field
 
     ! Executable code
     timing = section_times
@@ -160,6 +159,7 @@ contains ! =====     Public Procedures     =============================
       l2aux_Version = 1
       hdfVersion = DEFAULT_HDFVERSION_WRITE
       meta_name = ''
+      writeCounterMAF = .false.
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -174,6 +174,11 @@ contains ! =====     Public Procedures     =============================
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
+          if ( nsons(gson) > 1 ) then
+            fieldValue = decoration(subtree(2,gson)) ! The field's value
+          else
+            fieldValue = gson
+          end if
           field_index = decoration(subtree(1,gson))
           select case ( field_index )   ! Field name
           case ( f_file )
@@ -184,6 +189,8 @@ contains ! =====     Public Procedures     =============================
             meta_name = meta_name(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
           case ( f_type )
             output_type = decoration(subtree(2,gson))
+          case ( f_writeCounterMAF )
+            writeCounterMAF = get_boolean ( fieldValue )
           case ( f_hdfVersion )
             call expr ( subtree(2,gson), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -379,8 +386,8 @@ contains ! =====     Public Procedures     =============================
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                   if ( db_index >= 1 ) then
                     call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, &
-                      & WriteCounterMAF=&
-                      & (COUNTERFEITCOUNTERMAF .and. numquantitiesperfile == 0) )
+                      & WriteCounterMAF = &
+                      &   (writeCounterMAF .and. numquantitiesperfile == 0) )
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
                       & "attempting to fill quantity name", advance='yes')
@@ -732,6 +739,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.51  2002/05/07 20:26:15  livesey
+! Added writeCounterMAF option for l2aux
+!
 ! Revision 2.50  2002/02/22 19:19:48  pwagner
 ! Fixed bug in metaName use
 !
