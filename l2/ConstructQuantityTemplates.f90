@@ -14,7 +14,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, &
-    L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SPACERADIANCE, &
+    L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA, SPEC_INDICES
@@ -212,6 +212,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Set defaults for other parameters
     frequencyCoordinate = L_None
+    noChans = 1
 
     ! Here the code splits, for minor frame quantities, we take the information
     ! from the previously constructed MIFGeolocation information.  Otherwise,
@@ -243,7 +244,6 @@ contains ! =====     Public Procedures     =============================
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
-      qty%frequencyCoordinate = frequencyCoordinate
     else
 
       ! This is not a minor frame quantity, set it up from VGrids and HGrids
@@ -260,8 +260,19 @@ contains ! =====     Public Procedures     =============================
         noSurfs=1
       end if
 
+      
+      ! Some special cases for certain quantities
+      select case (quantityType)
+      case (l_sidebandRatio)
+        frequencyCoordinate = l_channel
+        signalInfo = GetSignal(signal)
+        noChans = size ( signalInfo%frequencies ) 
+      case default
+      end select
+
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
-        & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
+        & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE.,&
+        & noChans=noChans )
       ! ??? Note in later versions we'll need to think about channels here
 
       if ( hGridIndex /=0 ) then
@@ -287,17 +298,18 @@ contains ! =====     Public Procedures     =============================
 
     ! Now fill up the remaining items, e.g. name etc.
 
-    qty%unit = family
+    qty%badValue = -999.99              ! Think more about this later NJL !????
+    qty%frequencyCoordinate = frequencyCoordinate
+    qty%instrumentmodule = instrumentmodule
     qty%logBasis = logBasis
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
-    qty%instrumentmodule = instrumentmodule
     qty%radiometer = radiometer
-    qty%signal = signal
-    qty%sideband = sideband
     qty%scaleFactor = scaleFactor
-    qty%badValue = -999.99              ! Think more about this later NJL !????
+    qty%sideband = sideband
+    qty%signal = signal
+    qty%unit = family
 
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
@@ -596,6 +608,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.20  2001/04/19 20:30:06  livesey
+! Added specific stuff for sideband ratio
+!
 ! Revision 2.19  2001/04/12 23:25:29  vsnyder
 ! Give "Sideband" an initial value
 !
