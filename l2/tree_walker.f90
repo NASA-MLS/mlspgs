@@ -37,6 +37,8 @@ contains ! ====     Public Procedures     ==============================
     use FilterShapes_m, only: Destroy_Filter_Shapes_Database
     use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase, &
       & StripForwardModelConfigDatabase
+    use ForwardModelSupport, only: printForwardModelTiming, &
+      & resetForwardModelTiming
     use Global_Settings, only: Set_Global_Settings
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
     use HGridsDatabase, only: HGrid_T
@@ -114,6 +116,7 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   SON              ! Son of Root
     real    ::                                   t1, t2
     integer ::                                   totalNGC   ! Total num garbage colls.
+    integer ::                                   fwmIndex  ! Index
     logical ::                                   show_totalNGC = .true.
     type (Vector_T), dimension(:), pointer ::    Vectors
     type (VGrid_T), dimension(:), pointer ::     VGrids
@@ -237,6 +240,17 @@ contains ! ====     Public Procedures     ==============================
           case ( z_retrieve )
             call add_to_section_timing ( 'retrieve', t1)
           end select
+          ! print the timing for FullForwardModel, the following return
+	  ! if fmt1 or fmt2 is true
+          if ( index(switches, 'fmt') /= 0 .and. &
+	     & associated(forwardModelConfigDatabase)) then
+               do fwmIndex =1, size(forwardModelConfigDatabase)
+                  call printForwardModelTiming ( forwardModelConfigDatabase &
+                        & (fwmIndex))
+                  call resetForwardModelTiming ( forwardModelConfigDatabase &
+                        & (fwmIndex))
+               end do
+          end if  !--------- End of if fmt
 
         else
         ! Otherwise, this is the 'standard' work for these sections.
@@ -298,6 +312,22 @@ subtrees:   do while ( j <= howmany )
                 & totalNGC = Say_num_gcs()
             end if
             call ForgetOptimumLon0
+            ! print the timing for FullForwardModel
+            ! fmt2: at each chunk, fmt1: at last chunk
+            if ( index(switches, 'fmt2') /= 0 ) then
+               do fwmIndex =1, size(forwardModelConfigDatabase)
+                  call printForwardModelTiming ( forwardModelConfigDatabase &
+                        & (fwmIndex))
+                  call resetForwardModelTiming ( forwardModelConfigDatabase &
+                        & (fwmIndex))
+               end do
+            end if  !--------- End of if fmt2
+            if ( index(switches, 'fmt1') /= 0 .and. chunkNo == lastChunk) then
+               do fwmIndex =1, size(forwardModelConfigDatabase)
+                  call printForwardModelTiming ( &
+                   & forwardModelConfigDatabase(fwmIndex))
+               end do
+            end if  ! ---------- End of if fmt1
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
           end do ! ---------------------------------- End of chunk loop
           i = j - 1 ! one gets added back in at the end of the outer loop
@@ -403,6 +433,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.109  2003/06/24 23:54:07  pwagner
+! New db indexes stored for entire direct file
+!
 ! Revision 2.108  2003/06/24 23:00:53  livesey
 ! Nullified directDatabase
 !
