@@ -9,12 +9,16 @@ module Open_Init
 ! Creates and destroys the L1BInfo database
 
   use Hdf, only: DFACC_READ, SFSTART
+  use Hdfeos, only: swopen, swclose
+  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase	!, ReadL2AUXData
+  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
   use MLSCommon, only: L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
+    & MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
+  use MLSStrings, only: lowercase
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
@@ -231,12 +235,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine OpenMLSCF
 
   ! --------------------------------------------------  read_apriori  -----
-  subroutine read_apriori ( root )
+  subroutine read_apriori ( root, L2GPDatabase, l2auxDatabase)
 
 	! Read in  a priori data from l2gp files and l2aux files
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
+    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
 
     !Local Variables
     integer :: I, J                ! Loop indices for section, spec
@@ -248,7 +254,24 @@ contains ! =====     Public Procedures     =============================
     integer :: vectorName          ! Sub-rosa index
     integer :: quantityName        ! Sub-rosa index
     integer :: sourceName          ! Sub-rosa index
-    integer :: FileType            ! Sub-rosa index; either 'l2gp' or 'l2aux'
+    integer :: FileType            ! Sub-rosa index of either 'l2gp' or 'l2aux'
+    integer :: fileHandle          ! fileHandle of a priori data file
+    integer :: NumProfs            ! number of profiles actually read
+    CHARACTER (LEN=24) :: FileTypeString     ! 'l2gp' or 'l2aux'
+    CHARACTER (LEN=480) :: msr     ! Error message if can't find file
+    integer :: JName               ! index to spec name of 3rd son of root
+    CHARACTER*16 :: JString        ! index to spec name of 3rd son of root
+    integer :: FileRoot            ! index to spec name of file field
+    integer :: SourceRoot          ! index to spec name of source field
+    integer :: FileName            ! subrosa indexed of name in file='name'
+    CHARACTER*16 :: FileNameString ! actual literal file name
+    CHARACTER*16 :: SourceNameString ! actual literal source name
+    TYPE (L2GPData_T) :: L2GP
+    TYPE (L2AUXData_T) :: L2AUX
+
+! Toolkit Functions
+
+      INTEGER, EXTERNAL :: swclose, swopen
 
 	! Assume specifications take the following form:
         !   vName: fileType, file='fileName', source='fieldName'
@@ -266,15 +289,80 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
+        if ( nsons(key) /= 4 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Wrong number of fields in read a priori')
+
         FileType = sub_rosa(subtree(2,son))
+        CALL get_string(FileType, FileTypeString)
+	FileTypeString = lowercase(FileTypeString)
 
-      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
-      case ( s_l2gp )
+        ! Now parse file and field names
+        ! Does file spec precede field spec?
+        J = subtree(3, key)
+        JName = decoration(subtree(1,decoration(subtree(1,J))))
+        CALL get_string(JName, JString)
+        JString = lowercase(JString)
+        IF(JString.EQ.'file') THEN
+ 		! Yes
+        	fileRoot = subtree(3, key)
+        	sourceRoot = subtree(4, key)
+	ELSE
+ 		! No
+        	fileRoot = subtree(4, key)
+        	sourceRoot = subtree(3, key)
+	ENDIF
+	FileName=sub_rosa(subtree(2, fileRoot))
+        CALL get_string(FileName, FileNameString)
+	sourceName=sub_rosa(subtree(2, sourceRoot))
+        CALL get_string(sourceName, sourceNameString)
 
-      case ( s_l2aux )
+            fileHandle = swopen(FileNameString, DFACC_READ)
+            IF (fileHandle == -1) THEN
+               msr = MLSMSG_Fileopen // FileNameString
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+      select case( FileTypeString )
+      case ( 'l2gp' )
+
+        vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+
+        ! Create the l2gp, and add it to the database.
+        CALL SetupNewL2GPRecord ( l2gp )
+
+        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
+
+        ! That's the end of the create operation
+        
+
+           CALL ReadL2GPData(fileHandle, sourceNameString, L2GPDatabase(vectorIndex),&
+           & numProfs)
+
+
+      case ( 'l2aux' )
+
+        vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+
+        ! Create the l2aux, and add it to the database.
+        CALL SetupNewL2AUXRecord ( l2aux )
+
+        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
+
+        ! That's the end of the create operation
+        
+! Need to add this routine to L2AUXData.f90 before uncommenting this line
+!           CALL ReadL2AUXData(fileHandle, sourceNameString, L2GPDatabase(vectorIndex),&
+!           & numProfs)
+
 
       case default ! Can't get here if tree_checker worked correctly
       end select
+
+            fileHandle = swclose(fileHandle)
+            IF (fileHandle == -1) THEN
+               msr = 'Failed to close file ' // FileNameString
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
 
     end do
 
@@ -286,6 +374,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.6  2000/11/30 00:23:58  pwagner
+! functions properly moved here from Fill
+!
 ! Revision 2.5  2000/11/29 17:35:30  pwagner
 ! Compiles now
 !

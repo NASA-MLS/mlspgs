@@ -11,6 +11,7 @@ module Fill                     ! Create vectors and fill them.
                                                            ! will be added
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen
+  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use string_table, only: get_string
@@ -78,10 +79,10 @@ contains ! =====     Public Procedures     =============================
 
 
     ! These should be moved into open_init some day soon
-    INTEGER :: mlspcf_ol2gp_start=22000
-    INTEGER :: mlspcf_ol2gp_end=22050
+!    INTEGER :: mlspcf_ol2gp_start=22000
+!    INTEGER :: mlspcf_ol2gp_end=22050
 
-    INTEGER :: OL2FileHandle
+!    INTEGER :: OL2FileHandle
     INTEGER :: qtiesStart
     double precision :: T1, T2     ! for timing
     logical :: TIMING
@@ -92,7 +93,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
 
     ! Logical id of file(s) holding old L2GP data
-    OL2FileHandle = mlspcf_ol2gp_start
+!    OL2FileHandle = mlspcf_ol2gp_start
 
     ! starting quantities number for *this* vector; what if we have more?
     qtiesStart = 1
@@ -172,7 +173,7 @@ contains ! =====     Public Procedures     =============================
 
 !          vectorIndex=LinearSearchStringArray(vectors%name,&
 !               & vectorName,caseInsensitive=.FALSE.)
-          CALL FillOL2GPVector(OL2FileHandle, L2GPDatabase, &
+          CALL FillOL2GPVector(L2GPDatabase(1), qtyTemplates, &
                & vectors(vectorIndex), quantityNameString, qtiesStart)
 
           ! This is *not* going to work if you have more than one vector
@@ -288,8 +289,8 @@ END SELECT
 END SUBROUTINE FillVector
 
 !=============================== FillOL2GPVector ==========================
-SUBROUTINE FillOL2GPVector( OL2FileHandle, L2GPDatabase, Output, QuantityName,&
-qtiesStart)
+SUBROUTINE FillOL2GPVector(OldL2GPData, qtyTemplates, &
+& Output, QuantityName, qtiesStart)
 !=============================== FillOL2GPVector ==========================
 
 ! If the times, pressures, and geolocations match,
@@ -297,54 +298,58 @@ qtiesStart)
 ! Old L2GP vector OldL2GPData
 ! 
 
-INTEGER, INTENT(IN) ::                            OL2FileHandle, qtiesStart
-TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
+INTEGER, INTENT(IN) ::                            qtiesStart
+TYPE(L2GPData_T) ::                               OldL2GPData
+    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+!TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
 TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
 
 ! Local variables
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
-TYPE(L2GPData_T) ::                               L2GPData
-TYPE(L2GPData_T) ::                               OldL2GPData
+!TYPE(L2GPData_T) ::                               L2GPData
 ! INTEGER ::                                        Qty
+type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
 INTEGER ::                                        i
 INTEGER ::                                        ONTimes
 INTEGER ::                                        alloc_err
 INTEGER ::                                        noL2GPValues=1
 LOGICAL ::                                        TheyMatch
 
+OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
 !
 ! Read the old L2GP file for QuantityName
-CALL ReadL2GPData(OL2FileHandle, TRIM(LowerCase(QuantityName)), &
-     & OldL2GPData, ONTimes)
+!CALL ReadL2GPData(OL2FileHandle, TRIM(LowerCase(QuantityName)), &
+!     & OldL2GPData, ONTimes)
 ! Allocate space for current l2gpdata
-ALLOCATE(l2gpData%pressures(OldL2GPData%nLevels),&
-     & l2gpData%latitude(ONTimes), &
-     & l2gpData%longitude(ONTimes), & 
-     & l2gpData%time(ONTimes), &
-     & l2gpData%solarTime(ONTimes), &
-     & l2gpData%solarZenith(ONTimes), &
-     & l2gpData%losAngle(ONTimes), &
-     & l2gpData%geodAngle(ONTimes), &
-     & l2gpData%chunkNumber(ONTimes), &
-     & l2gpData%frequency(OldL2GPData%nFreqs), &
-     & l2gpData%l2gpValue(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
-     & l2gpData%l2gpPrecision(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
-     & l2gpData%status(ONTimes), l2gpData%quality(ONTimes), &
-     & STAT=alloc_err)
-IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-     & 'Failed to allocate temp l2gpData')
+!ALLOCATE(l2gpData%pressures(OldL2GPData%nLevels),&
+!     & l2gpData%latitude(ONTimes), &
+!     & l2gpData%longitude(ONTimes), & 
+!     & l2gpData%time(ONTimes), &
+!     & l2gpData%solarTime(ONTimes), &
+!     & l2gpData%solarZenith(ONTimes), &
+!     & l2gpData%losAngle(ONTimes), &
+!     & l2gpData%geodAngle(ONTimes), &
+!     & l2gpData%chunkNumber(ONTimes), &
+!     & l2gpData%frequency(OldL2GPData%nFreqs), &
+!     & l2gpData%l2gpValue(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
+!     & l2gpData%l2gpPrecision(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
+!     & l2gpData%status(ONTimes), l2gpData%quality(ONTimes), &
+!     & STAT=alloc_err)
+!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!     & 'Failed to allocate temp l2gpData')
 ! Check that times, etc. match
-L2GPData    = L2GPDatabase(1)
-TheyMatch = ONTimes .EQ. L2GPData%nTimes
+!L2GPData    = L2GPDatabase(1)
+TheyMatch = OQTemplate%noInstances .EQ. OldL2GPData%nTimes
+TheyMatch = TheyMatch .AND. OQTemplate%stacked
 IF(TheyMatch) THEN
    DO i = 1, OldL2GPData%nTimes
       IF( &
-        &   nearBy(OldL2GPData%latitude(i), L2GPData%latitude(i)) &
+        &   nearBy(OldL2GPData%latitude(i), OQTemplate%geodLat(1,i)) &
         & .AND. &
-        &   nearBy(OldL2GPData%longitude(i), L2GPData%longitude(i)) &
+        &   nearBy(OldL2GPData%longitude(i), OQTemplate%lon(1,i)) &
         & .AND. &
-        &   nearBy(OldL2GPData%solarTime(i), L2GPData%solarTime(i)) &
+        &   nearBy(OldL2GPData%solarTime(i), OQTemplate%solarTime(1,i)) &
         &) THEN
        ELSE
           TheyMatch = .FALSE.
@@ -352,10 +357,10 @@ IF(TheyMatch) THEN
       ENDIF
    END DO
 ENDIF
-IF(TheyMatch) THEN
+IF(TheyMatch .AND. OldL2GPData%NLevels.EQ.OQTemplate%noSurfs) THEN
    DO i = 1, OldL2GPData%NLevels
       IF( &
-        &   nearBy(OldL2GPData%latitude(i), L2GPData%latitude(i)) &
+        &   nearBy(OldL2GPData%pressures(i), OQTemplate%surfs(i,1)) &
         & ) THEN
      ELSE
        TheyMatch = .FALSE.
@@ -380,25 +385,25 @@ ELSE
    CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Old and new L2GPData don''t match in times or geolocations')
 ENDIF
-DEALLOCATE(l2gpData%pressures, &
-     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
-     & l2gpData%solarTime, l2gpData%solarZenith, l2gpData%losAngle, &
-     & l2gpData%geodAngle, l2gpData%chunkNumber, &
-     & l2gpData%l2gpValue, l2gpData%frequency, &
-     & l2gpData%l2gpPrecision, l2gpData%status, l2gpData%quality, &
-     & STAT=alloc_err)
-IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-     & 'Failed to deallocate temp l2gpData')
+!DEALLOCATE(l2gpData%pressures, &
+!     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
+!     & l2gpData%solarTime, l2gpData%solarZenith, l2gpData%losAngle, &
+!     & l2gpData%geodAngle, l2gpData%chunkNumber, &
+!     & l2gpData%l2gpValue, l2gpData%frequency, &
+!     & l2gpData%l2gpPrecision, l2gpData%status, l2gpData%quality, &
+!     & STAT=alloc_err)
+!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!     & 'Failed to deallocate temp l2gpData')
 !
-DEALLOCATE(OldL2GPData%pressures, &
-     & OldL2GPData%latitude, l2gpData%longitude, OldL2GPData%time, &
-     & OldL2GPData%solarTime, OldL2GPData%solarZenith, OldL2GPData%losAngle, &
-     & OldL2GPData%geodAngle, OldL2GPData%chunkNumber, &
-     & OldL2GPData%l2gpValue, OldL2GPData%frequency, &
-     & OldL2GPData%l2gpPrecision, OldL2GPData%status, OldL2GPData%quality,&
-     & STAT=alloc_err)
-IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-     & 'Failed to deallocate temp OldL2GPData')
+!DEALLOCATE(OldL2GPData%pressures, &
+!     & OldL2GPData%latitude, l2gpData%longitude, OldL2GPData%time, &
+!     & OldL2GPData%solarTime, OldL2GPData%solarZenith, OldL2GPData%losAngle, &
+!     & OldL2GPData%geodAngle, OldL2GPData%chunkNumber, &
+!     & OldL2GPData%l2gpValue, OldL2GPData%frequency, &
+!     & OldL2GPData%l2gpPrecision, OldL2GPData%status, OldL2GPData%quality,&
+!     & STAT=alloc_err)
+!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!     & 'Failed to deallocate temp OldL2GPData')
 END SUBROUTINE FillOL2GPVector
 
 !=============================== nearby ==========================
@@ -485,32 +490,6 @@ SUBROUTINE squeeze(source, sink, IERR)
     
 END SUBROUTINE squeeze
 
-!=============================== lowercase ==========================
-FUNCTION lowercase(str) RESULT (outstr)
-!=============================== lowercase ==========================
-    ! takes A-Z and replaces with a-z 
-    ! leaving other chars alone
-    !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
-
-    !----------Local vars----------!
-    CHARACTER(LEN=LEN(STR))::capstr
-    INTEGER::i,icode,offset
-    !----------Executable part----------!
-    capstr=str
-    offset=ICHAR("a")-ICHAR("A")
-
-    DO i=1,LEN(str)
-       icode=ICHAR(capstr(i:i))
-       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
-          capstr(i:i)=char(icode+offset)
-       ENDIF
-    ENDDO
-
-    outstr=capstr
-END FUNCTION lowercase
-
 !
 !
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -536,6 +515,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.6  2000/11/30 00:22:52  pwagner
+! functions properly moved to read a priori
+!
 ! Revision 2.5  2000/11/16 02:15:25  vsnyder
 ! Implement timing.
 !
