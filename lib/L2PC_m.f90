@@ -47,6 +47,9 @@ module L2PC_m
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
   type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
+  integer :: counterStart
+  parameter ( counterStart = huge (0) / 2 )
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -265,6 +268,10 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: UNIT         ! File unit
     integer, intent(out) :: VECTOR      ! Index of Vector read in L2PCVs
     logical, intent(out) :: EOF         ! Flag
+
+    ! Local saved variables
+    integer, save :: L2PCQTCOUNTER = CounterStart ! To place in qt%id
+    integer, save :: L2PCVTCOUNTER = CounterStart ! To place in vt%id
     
     ! Local variables
     integer :: QUANTITY                 ! Loop counter
@@ -356,13 +363,17 @@ contains ! ============= Public Procedures ==========================
       read (unit,*) line              ! Line saying phi
       read (unit,*) qt%phi
       
-      ! Now add this template to our private database
+      ! Now add this template to our private database 
+      qt%id = l2pcQTCounter
+      l2pcQTCounter = l2pcQtCounter + 1
       qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
       
     end do                            ! First Loop over quantities
     
     ! Now create a vector template with these quantities
     call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
+    vt%id = l2pcVTCounter
+    l2pcVtCounter = l2pcVtCounter + 1
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
     
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
@@ -496,6 +507,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.16  2001/04/28 01:38:36  livesey
+! Now maintains proper IDs for its own quantity and vector templates
+!
 ! Revision 2.15  2001/04/28 01:26:50  livesey
 ! This one seems to work!
 !
