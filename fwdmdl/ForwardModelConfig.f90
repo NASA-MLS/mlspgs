@@ -47,6 +47,7 @@ module ForwardModelConfig
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     integer :: phiWindow            ! Window size for examining stuff
+    real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -131,6 +132,8 @@ contains
         call output ( database(i)%do_conv, advance='yes' )
         call output ( '  Do_freq_avg:' )
         call output ( database(i)%do_freq_avg, advance='yes' )
+        call output ( '  frqGap:' )
+        call output ( database(i)%frqGap, advance='yes' )
         call output ( '  Spect_der:' )
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
@@ -160,6 +163,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.7  2001/05/03 23:07:02  livesey
+! Added scan model stuff
+!
 ! Revision 1.6  2001/05/02 20:30:36  livesey
 ! Removed frequency from config
 !
