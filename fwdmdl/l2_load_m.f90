@@ -251,25 +251,25 @@ Character (LEN=80) :: Fnd, Line
   r = (zn - z0)/ (mnz - 1)
 
   j = k + si - 1
-  DEALLOCATE(FMI%z_grid,FMI%tan_press,STAT=i)
-  ALLOCATE(FMI%z_grid(k),FMI%tan_press(j),STAT=i)
-  if(i /= 0) goto 99
+! DEALLOCATE(FMI%z_grid,FMI%tan_press,STAT=i)
+! ALLOCATE(FMI%z_grid(k),FMI%tan_press(j),STAT=i)
+! if(i /= 0) goto 99
 !
-  FMI%z_grid(j) = 0.0
-  DO i = 1, k
-    j = FMC%p_indx(i)
-    FMI%z_grid(i) = z0 + (j - 1) * r
-  END DO
+! FMI%z_grid(j) = 0.0
+! DO i = 1, k
+!   j = FMC%p_indx(i)
+!   FMI%z_grid(i) = z0 + (j - 1) * r
+! END DO
 !
 ! Define tan_press as a TRUE subset of z_grid:
 !
-  kz = si - 1
-  FMI%tan_press(1:kz) = -5.0
-  do i = 1, FMC%no_tan_hts
-    kz = kz + 1
-    j = FMC%t_indx(i)
-    FMI%tan_press(kz) = FMI%z_grid(j)
-  end do
+! kz = si - 1
+! FMI%tan_press(1:kz) = -5.0
+! do i = 1, FMC%no_tan_hts
+!   kz = kz + 1
+!   j = FMC%t_indx(i)
+!   FMI%tan_press(kz) = FMI%z_grid(j)
+! end do
 !
   j = 2**FMI%fft_pts
   DEALLOCATE(FMI%AAAP,FMI%D1AAAP,FMI%D2AAAP,STAT=i)
@@ -614,25 +614,24 @@ Character (LEN=80) :: Fnd, Line
 !
 ! Get all the filter's loaded & define:
 !
-  no_pfa_ch = FMC%Channels_range(2)-FMC%Channels_range(1)+1
-  do i = 1, no_pfa_ch
-    ch2 = FMC%Channels_range(1) + i - 1
-    pfa_ch(i) = ch2
-  end do
+! no_pfa_ch = FMC%Channels_range(2)-FMC%Channels_range(1)+1
+! do i = 1, no_pfa_ch
+!   ch2 = FMC%Channels_range(1) + i - 1
+!   pfa_ch(i) = ch2
+! end do
 
-  j = no_pfa_ch
-  k = FMI%no_filt_pts
-  DEALLOCATE(FMI%F_grid_filter,FMI%Filter_func,STAT=i)
-  ALLOCATE(FMI%F_grid_filter(k,j),FMI%Filter_func(k,j),STAT=i)
-  if(i /= 0) goto 99
+! j = no_pfa_ch
+! k = FMI%no_filt_pts
+! DEALLOCATE(FMI%F_grid_filter,FMI%Filter_func,STAT=i)
+! ALLOCATE(FMI%F_grid_filter(k,j),FMI%Filter_func(k,j),STAT=i)
+! if(i /= 0) goto 99
 
-  Call get_filters(no_pfa_ch,FMI%no_filt_pts,pfa_ch, &
- &                 FMI%F_grid_filter,FMI%Filter_func,  &
- &                 FMC%InDir,ier)
-  if(ier /= 0) goto 99
-!
+! Call get_filters(no_pfa_ch,FMI%no_filt_pts,pfa_ch, &
+!&                 FMI%F_grid_filter,FMI%Filter_func,  &
+!&                 FMC%InDir,ier)
+
  99  CLOSE(11,iostat=i)
-     CLOSE(13,iostat=i)
+!    CLOSE(13,iostat=i)
 !
      if(io /= 0) then
        Ier = iabs(io)
@@ -867,6 +866,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.19  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
 ! Revision 1.18  2001/04/02 17:33:32  pwagner
 ! Resurrected--still needed by l2
 !
