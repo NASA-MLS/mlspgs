@@ -1,8 +1,11 @@
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, &
-    & Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, Spec_First, T, &
-    & T_Boolean, T_Numeric, T_Numeric_Range, T_String, Z
+  use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, L, &
+    & Last_Intrinsic_Lit, Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, &
+    & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_String, Z
+
+  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
 
   use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
   implicit NONE
@@ -21,7 +24,6 @@ module Init_MLSSignals_m
   integer, parameter :: Last_signal_type = last_molecule_type
 
   ! Fields used in signal specifications:
-  integer, parameter :: Field_First = 1
   integer, parameter :: F_band = field_First
   integer, parameter :: F_centerFrequency   = f_band + 1
   integer, parameter :: F_channel           = f_centerFrequency + 1
@@ -59,23 +61,24 @@ module Init_MLSSignals_m
 
 contains
   ! --------------------------------------------  Init_MLSSignals  -----
-  subroutine Init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
-    & Parm_Indices, Section_Indices, Spec_Indices )
+  subroutine Init_MLSSignals ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES )
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
 
-    integer, intent(inout) :: Data_Type_Indices(:)
-    integer, intent(inout) :: Lit_Indices(:)
-    integer, intent(inout) :: Field_Indices(field_First:last_Signal_Field)
-    integer, intent(inout) :: Parm_Indices(:)
-    integer, intent(inout) :: Section_Indices(:)
-    integer, intent(inout) :: Spec_Indices(spec_First:last_Signal_Spec)
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
 
-    call init_molecules ( data_type_indices, field_indices, lit_indices, &
-      & parm_indices, section_indices, spec_indices )
+    call init_molecules ( n_data_type_indices, n_field_indices, n_lit_indices, &
+      & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put field names into the symbol table
     field_indices(f_band) =                add_ident ( 'band' )
@@ -180,6 +183,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.14  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.13  2001/04/23 20:57:42  vsnyder
 ! Move the first spec (time) to 'intrinsic'
 !
