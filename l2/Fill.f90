@@ -18,6 +18,7 @@ module Fill                     ! Create vectors and fill them.
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -4363,11 +4364,18 @@ contains ! =====     Public Procedures     =============================
     end subroutine ANNOUNCE_ERROR
   end subroutine MLSL2Fill
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Fill
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.153  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.152  2002/10/03 13:44:04  mjf
 ! Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
 ! names < 31 long.
