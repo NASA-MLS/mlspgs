@@ -1593,9 +1593,9 @@ contains
 
           ICON = FwdModelConf%i_saturation
 
-          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &   
-            &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),      &   
-            &  beta_path_c(1:npc,:),                                    &   
+          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), & 
+            &  z_path(1:no_ele), my_Catalog, beta_group, gl_slabs,      &
+            &  indices_c(1:npc), beta_path_c(1:npc,:),                  &   
             &  gl_slabs_m, t_path(1:no_ele)-del_temp,                   &   
             &  gl_slabs_p, t_path(1:no_ele)+del_temp,                   &   
             &  dbeta_dt_path_c, dbeta_dw_path_c,                        &   
@@ -1641,7 +1641,8 @@ contains
           ICON = FwdModelConf%i_saturation
 
           call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &
-            & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,   &
+            & z_path(1:no_ele),my_Catalog, beta_group, gl_slabs,        &
+            & gl_inds, beta_path_f,   &
             & gl_slabs_m, t_path(1:no_ele)-del_temp,                    &
             & gl_slabs_p, t_path(1:no_ele)+del_temp,                    &
             & dbeta_dt_path_f, dbeta_dw_path_f,                         &
@@ -2430,6 +2431,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.110  2003/01/26 04:42:42  livesey
+! Added profiles/angle options for phiWindow
+!
 ! Revision 2.109  2003/01/21 18:20:32  vsnyder
 ! Put dimensions back onto actual arguments to path_contrib
 !
