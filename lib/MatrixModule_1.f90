@@ -11,11 +11,12 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
-    & ColumnScale, CopyBlock, CreateBlock, DestroyBlock, Dump, GetDiagonal, &
-    & GetMatrixElement, GetVectorFromColumn, M_Absent, M_Banded, M_Full, &
-    & MatrixElement_T, MaxAbsVal, MinDiag, MultiplyMatrixBlocks, &
-    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
-    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, UpdateDiagonal
+    & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
+    & GetDiagonal, GetMatrixElement, GetVectorFromColumn, M_Absent, &
+    & M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
+    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
+    & operator(+), operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
+    & UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -38,9 +39,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
-  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
-  public :: MinDiag_SPD, MultiplyMatrices, MultiplyMatrixVector
-  public :: MultiplyMatrixVector_1
+  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MaxL1
+  public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD, MultiplyMatrices
+  public :: MultiplyMatrixVector, MultiplyMatrixVector_1
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
@@ -1037,6 +1038,29 @@ contains ! =====     Public Procedures     =============================
     end do
   end function MaxAbsVal_1
 
+  ! ------------------------------------------------------  MaxL1  -----
+  real(r8) function MaxL1 ( A )
+  ! Return the L1 norm of the column in A that has the largest L1 norm.
+  ! Don't include the extra row or column.
+    type(Matrix_T), intent(in) :: A
+    integer :: I, J, K, M, N
+    real(r8) :: My_L1
+    maxL1 = 0.0_r8
+    m = a%row%nb
+    if ( a%row%extra ) m = m - 1
+    n = a%col%nb
+    if ( a%col%extra ) n = n - 1
+    do j = 1, n
+      do k = 1, a%block(1,j)%ncols
+        my_L1 = 0.0_r8
+        do i = 1, m
+          my_L1 = my_L1 + col_L1(a%block(i,j),k)
+        end do
+        maxL1 = max(maxL1, my_L1)
+      end do
+    end do
+  end function MaxL1
+
   ! -------------------------------------------  MinDiag_Cholesky  -----
   real(r8) function MinDiag_Cholesky ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
@@ -1737,6 +1761,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.42  2001/05/22 19:09:33  vsnyder
+! Implement MaxL1
+!
 ! Revision 2.41  2001/05/19 00:20:05  livesey
 ! Cosmetic changes from Van.
 !
