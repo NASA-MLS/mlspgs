@@ -11,8 +11,9 @@ module IO_STUFF
   public GET_LUN
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -36,6 +37,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.2  2001/04/26 02:39:11  vsnyder
+! Fix up CVS stuff
+!
 ! Revision 2.1  2000/10/11 18:33:24  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
