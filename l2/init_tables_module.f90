@@ -135,7 +135,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_CHUNKDIVIDE        = s_apriori + 1
+  integer, parameter :: S_BINSELECTOR        = s_apriori + 1
+  integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
   integer, parameter :: S_DESTROY            = s_chunkDivide + 1
   integer, parameter :: S_DUMP               = s_destroy + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
@@ -301,6 +302,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
+    spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
@@ -457,6 +459,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_origin, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_binSelector, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_quantityType, nr+n_field_type, &
+             begin, f+f_molecule, t+t_molecule, n+n_field_type, &
+             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_cost, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_empiricalGeometry, &
@@ -856,6 +866,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.193  2002/01/21 21:14:01  livesey
+! Added binSelector stuff
+!
 ! Revision 2.192  2002/01/18 00:24:58  livesey
 ! Added packed option for output (l2pcs)
 !
