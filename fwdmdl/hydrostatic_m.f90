@@ -76,7 +76,7 @@ module Hydrostatic_m
     where ( z_grid > 2.5_rp )
 !      mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
 ! This is a second order approximation to the above
-      mass_corr = 1.0_rp * 0.02_rp*(z_grid - 2.5_rp)**2
+      mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
     elsewhere
       mass_corr = 1.0_rp
     end where
@@ -178,6 +178,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.8  2003/02/10 23:41:27  bill
+! got rid of a spread statement
+!
 ! Revision 2.7  2003/02/08 00:59:16  bill
 ! uses latest piq int
 !
