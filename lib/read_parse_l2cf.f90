@@ -1,3 +1,5 @@
+
+
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -5,9 +7,15 @@
 !=============================================================================
 MODULE ReadParseL2cf         ! Read and Parse the l2 Configuration File
 !=============================================================================
-  
+
+USE SDPToolkit
+USE Hdf
+USE MLSMessageModule
+
+
 IMPLICIT NONE
 PUBLIC
+
 
 PRIVATE :: Id, ModuleName
 
@@ -18,20 +26,20 @@ CHARACTER(LEN=130) :: Id = &
 CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
  
-integer, parameter :: MaxKeyLen = 25
-integer, parameter :: MaxTypeLen = 6
-integer, parameter :: MaxNOL2cfKeys = 20
-integer, parameter :: MaxCharValueLen =25
-integer, parameter :: UnitsLen = 10
-integer, parameter :: L2cfEntryLen = 25
-integer, parameter :: MaxNoKeysPerEntry = 10
-integer, parameter :: MaxNoEntriesPerSection = 15
+INTEGER, PARAMETER :: MaxKeyLen = 25
+INTEGER, PARAMETER :: MaxTypeLen = 6
+INTEGER, PARAMETER :: MaxNOL2cfKeys = 20
+INTEGER, PARAMETER :: MaxCharValueLen =25
+INTEGER, PARAMETER :: UnitsLen = 10
+INTEGER, PARAMETER :: L2cfEntryLen = 25
+INTEGER, PARAMETER :: MaxNoKeysPerEntry = 10
+INTEGER, PARAMETER :: MaxNoEntriesPerSection = 15
 
-type l2cfKey
-  character (len=MaxKeyLen) :: Keyword
-  character (len=MaxTypeLen):: Type
-  integer :: Keylen
-end type l2cfKey
+TYPE l2cfKey
+  CHARACTER (len=MaxKeyLen) :: Keyword
+  CHARACTER (len=MaxTypeLen):: TYPE
+  INTEGER :: Keylen
+END TYPE l2cfKey
 
 
 
@@ -137,8 +145,8 @@ LOGICAL :: done = .FALSE.
 ncc = nc
 
 ! check for blank line
-CALL TRIM(line)
-IF (LEN(line) .eq.  0)THEN
+line = TRIM(line)
+IF (LEN(line) .EQ.  0)THEN
   ncnb = 0
   RETURN
 END IF
@@ -155,7 +163,7 @@ END IF
 
 DO WHILE (.NOT. done)
   i = INDEX(line(1:ncc), '  ')
-  IF (i .eq. 0)THEN
+  IF (i .EQ. 0)THEN
     done =.TRUE.
     ncnb = ncc
   ELSE 
@@ -169,7 +177,7 @@ END SUBROUTINE Strip_Blanks
 
 
 !===================================
-SUBROUTINE read_parse_l2cf (L2cf_data, returnStatus) 
+SUBROUTINE read_parse_l2cf (L2CFUnit, L2cf_data, returnStatus) 
 !===================================
 
 ! This subroutine reads and parses L2CF and does some preliminary checking on 
@@ -177,9 +185,11 @@ SUBROUTINE read_parse_l2cf (L2cf_data, returnStatus)
 
 ! Arguments
 
+INTEGER, INTENT (IN):: L2CFUnit 
 TYPE (l2cf), INTENT (OUT) :: L2cf_data
+INTEGER, INTENT (OUT) ::  returnStatus
 
-type (l2cfKey), dimension(MaxNoL2cfKeys) :: L2cfTable
+TYPE (l2cfKey), DIMENSION(MaxNoL2cfKeys) :: L2cfTable
 
 
 
@@ -188,7 +198,7 @@ type (l2cfKey), dimension(MaxNoL2cfKeys) :: L2cfTable
 
 CHARACTER (LEN=*), PARAMETER :: lineFmt = "(q,<nc>a1)"
 
-INTEGER, PARAMETER :: L2CFUnit = 3000
+
 
 ! Functions
 
@@ -200,12 +210,15 @@ INTEGER, EXTERNAL :: Pgs_io_gen_openF, Pgs_io_gen_closeF
 CHARACTER (LEN=256) :: line
 CHARACTER (LEN=256) :: msg
 CHARACTER (LEN=2048) :: buff
-
-
-
-INTEGER :: nc, returnStatus, version, isection, igs
-
+CHARACTER (LEN=L2cfEntryLen) :: mnemonic, section, AnEntry
+CHARACTER (LEN=maxKeyLen) :: key
+CHARACTER (LEN=MaxCharValueLen)Value
+INTEGER :: nc, ncnb, ncb, version, isection, i, ib, ie, igs, ios, j, k, processL2CF
+INTEGER :: CellIndex, ValueLen, keyLen
+REAL :: tmp
 LOGICAL :: eof = .FALSE.
+LOGICAL :: found = .FALSE.
+LOGICAL :: flag_section = .FALSE.
 
 L2cfTable(1)%Keyword = 'InputVersionString       '
 L2cfTable(1)%Type = 'string'
@@ -256,15 +269,15 @@ L2cfTable(16)%Keyword ='CriticalBands            '
 L2cfTable(16)%Type = 'string'
 L2cfTable(16)%Keylen = 13
 L2cfTable(17)%Keyword ='MaxGap                   '
-L2cfTable(17)%Type = 'real  '
+L2cfTable(17)%Type ='real  '
 L2cfTable(17)%Keylen = 6
 L2cfTable(18)%Keyword = 'type                    '
 L2cfTable(18)%Type ='string' 
 L2cfTable(18)%Keylen = 4
-L2cfTable(19)%Keyword = 'fraction                 '
+L2cfTable(19)%Keyword ='fraction                 '
 L2cfTable(19)%Type ='real  '
 L2cfTable(19)%Keylen = 8
-L2cfTable(20)%Keyword = 'interpolationfactor      '
+L2cfTable(20)%Keyword ='interpolationfactor      '
 L2cfTable(20)%Type ='real  '
 L2cfTable(20)%Keylen = 19
 
@@ -273,13 +286,13 @@ isection = 0
 igs=0
 ! Open the L2CF as a generic file for reading
 
-returnStatus = Pgs_io_gen_openF (L2CF, PGSd_IO_Gen_RSeqFrm, 0, &
+returnStatus = Pgs_io_gen_openF (L2CFUnit, PGSd_IO_Gen_RSeqFrm, 0, &
                                 processL2CF, version)
 
 IF (returnStatus /= PGS_S_SUCCESS) THEN
 
   CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-  CALL MSMessage (MLSMSG_Error, &
+  CALL MLSMessage (MLSMSG_Error, &
                   ModuleName, "Error opening L2CF:  "//mnemonic//" "//msg)
 
 ENDIF
@@ -288,20 +301,27 @@ ENDIF
 DO WHILE (.NOT. eof)
 
   READ(UNIT=processL2CF, IOSTAT=ios, FMT=lineFmt) nc, line
-  IF (ios /= 0) THEN
+  IF (ios .eq. 0) THEN
 
 ! strip leading, trailing and multiple blanks from line
  
     CALL Strip_Blanks(line, nc, ncnb)
 
-    IF (INDEX(line, 'BEGIN') /= 0) THEN
+    IF (INDEX(line, 'BEGIN' ) /= 0 ) THEN
+! Is this a BEGIN Section Line?
        isection = isection + 1
        section(1:) = line (7:ncnb)
+       flag_section =.false.
+    ELSE IF (isection .eq. 0 .and. ncnb .gt. 0)Then
+! If not and there was no BEGIN before and this is not a comment line, log error and exit
+        CALL MLSMessage (MLSMSG_Error, ModuleName, 'Missing BEGIN')
+     
     END IF
 
     ib = 1
     READ(UNIT=processL2CF, IOSTAT=ios, FMT=lineFmt) nc, line
-    IF (ios /= 0) THEN
+    
+    IF (ios .eq.  0) THEN
 
       CALL Strip_Blanks(line, nc, ncnb)
 
@@ -316,7 +336,7 @@ DO WHILE (.NOT. eof)
 
 ! copy continuation lines into buff
 
-          DO WHILE (line(ncnb:ncnb) = '$')
+          DO WHILE (line(ncnb:ncnb) .eq. '$')
             ib = ib- 1
 
             READ(UNIT=processL2CF, IOSTAT=ios, FMT=lineFmt) nc, line
@@ -337,14 +357,14 @@ DO WHILE (.NOT. eof)
           AnEntry(1:L2cfEntryLen) =' '
           ib = INDEX(buff, ',')
 
-          IF (ib = 0) THEN
-            CALL MSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(1:ncb))
+          IF (ib .eq.  0) THEN
+            CALL MLSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(1:ncb))
           END IF          
 
           AnEntry(1:ib-1)=buff(1:ib-1)
           ib = ib + 1
           igs = igs + 1
-          L2cf_data%Sections(isection)%Section(igs)%L2cfEntryName = AnEntry
+          L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryName = AnEntry
           CellIndex = 1
 
 ! Process keyword = value pairs
@@ -352,22 +372,22 @@ DO WHILE (.NOT. eof)
           DO WHILE (ib < ncb)
             ie = INDEX(buff(ib:ncb), '=')
 
-            IF (ie = 0) THEN
-              CALL MSMessage (MLSMSG_Error, ModuleName, "= expected, : "//buff(1:ncb))
+            IF (ie .eq. 0) THEN
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "= expected, : "//buff(1:ncb))
             END IF
  
             key(1:maxKeyLen) = ' '
-            Key = buff(ib, ie-1) 
+            Key = buff(ib: ie-1) 
             keyLen = ie-ib
             ib = ie + 1
             ie = INDEX(buff(ib:ncb), ',')
 
-            IF (ie = 0) THEN
-              CALL MSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(ib:ncb))
+            IF (ie .eq. 0) THEN
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(ib:ncb))
             END IF 
 
             Value (1:MaxCharValueLen) = ' '
-            Value = buff(ib, ie-1)
+            Value = buff(ib: ie-1)
             ValueLen = ie-ib
             ib = ie + 1
 
@@ -387,33 +407,35 @@ DO WHILE (.NOT. eof)
 
                 
                L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryNoKeys = &
-               L2cf_data%Section(isection)%Entries(igs)%L2cfEntryNoKeys + 1
+               L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryNoKeys + 1
                L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%Keyword= Key(1:Keylen)
 
-               IF(l2cfTable(i)%Type = "real")THEN
+               IF(l2cfTable(i)%Type .eq. 'real')THEN
                  j = 1     
-                 DO WHILE((j <= ValueLen) = (Value(j:j) /= ' '))
+                 DO WHILE((j <= ValueLen) .and. (Value(j:j) /= ' '))
                    j = j + 1
                  END DO
-                 READ (unit=Value(1:j-1), fmt='*') L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RealValue
+                 READ (unit=Value(1:j-1), fmt=*)L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RealValue
                  L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
-               ELSE IF(l2cfTable(i)%Type = "int")THEN
+               ELSE IF(l2cfTable(i)%Type .eq. 'int')THEN
                  j = 1     
                  DO WHILE((j <= ValueLen) .AND. (Value(j:j) /= ' '))
                    j = j + 1
                  END DO
-                 READ (unit=Value(1:j-1), fmt='*') L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%IntValue
+                 READ (unit=Value(1:j-1), fmt=*)L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%IntValue
                  L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
-               ELSE IF(l2cfTable(i)%Type = "range")THEN
+               ELSE IF(l2cfTable(i)%Type .eq. 'range')THEN
                  j = INDEX(Value, '..')
                  IF (j > 0)THEN
-                   READ (unit=Value(1:j-1), fmt='*') &
+                   READ (unit=Value(1:j-1), fmt=*) &
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
                    k=j+2
+
                    DO WHILE((k <= ValueLen) .AND. (Value(k:k) /= ' '))
                     k = k + 1
-                   END DO              
-                   READ (unit=Value(1:j-1), fmt='*') &
+                   END DO  
+            
+                   READ (unit=Value(1:j-1), fmt=*) &
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(k:ValueLen)
 
@@ -421,46 +443,67 @@ DO WHILE (.NOT. eof)
                       L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound)THEN
 
                      tmp = L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
-                     L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound = 
+                     L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound = &
                      L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
                      L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound = tmp
 
-                   END IF
+                   END IF ! (L2cf_data%Sections(isection)%Entries
                  ELSE
-                   CALL MSMessage (MLSMSG_Error, ModuleName, "Range expected, : "//Value
-                 END IF
+                   CALL MLSMessage (MLSMSG_Error, ModuleName, "Range expected, : "//Value)
+                 END IF ! (j > 0)
 
                ELSE IF(l2cfTable(i)%Type .EQ. 'string')THEN
 
                  j = INDEX(Value, '"')
                  IF(j > 0)THEN
-                   k = INDEX(Value(j+1:ValueLen)
+                   k = INDEX(Value(j+1:ValueLen), '"')
                    IF(k > 0)THEN
                       L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%CharValue=Value(j:k)
                    ELSE
-                     CALL MSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                     CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
                    END IF
                  ELSE
-                   CALL MSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
-                 END IF
+                   CALL MLSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
+                 END IF ! j > 0
     
-               END IF
-               
-                                  
-               
-         END DO
-       ELSE
+               END IF ! l2cfTable(i)%Type
+
+            ELSE            
+              CALL MLSMessage (MLSMSG_Error, ModuleName, "Illegal Keyword : " //key(1:KeyLen))
+            END IF ! (found)                      
+            CellIndex = CellIndex + 1  
+          END DO ! ib < ncb
+          igs = igs + 1
+        ELSE
+          if (  L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryName .ne. line(5:ncnb))THEN
+             CALL MLSMessage (MLSMSG_Warning, ModuleName, "BEGIN and END Section Names don't match " // &
+                              L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryName//' , '//line(5:ncnb))
+          end if
+          isection = isection + 1
+          flag_section = .true.
 ! Check whether END Section matches BEGIN
-       END IF  
-     ELSE
-       eof = .TRUE.
-     END IF
+        END IF !INDEX(line, 'END') /= 1  
+      ELSE
+        eof = .TRUE.
+      END IF ! (INDEX(line, ';' ) /= 1)
+    ELSE
 
-   END IF
-  END IF
- END IF
+      eof = .true.
+      if(.not. flag_section) then
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, 'Premature EOF encountered')
+      end if
+    END IF ! (ios .eq.  0)
 
-END DO
+  ELSE
+
+    eof = .true.
+    if(.not. flag_section) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, 'Premature EOF encountered')
+    end if
+  END IF ! (ios .eq.  0)
+ 
+
+END DO ! (.not. eof)
 
 ! Close L2CF
 
@@ -468,7 +511,7 @@ returnStatus = Pgs_io_gen_closeF (processL2CF)
 
 IF (returnStatus /= PGS_S_SUCCESS) THEN
   CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-  CALL MSMessage (MLSMSG_Error, ModuleName, 'Error closing L2CF:  ', mnemonic//' '//msg)
+  CALL MLSMessage (MLSMSG_Error, ModuleName, 'Error closing L2CF:  '//mnemonic//' '//msg)
  
 ENDIF
 
@@ -484,6 +527,9 @@ END MODULE ReadParseL2cf
 !=======================
 
 ! $Log$
+! Revision 1.5  2000/01/06 02:37:22  lungu
+! Made a module out of read_parse_l2cf, strip_blanks and data structures.
+!
 ! Revision 1.4  2000/01/04 19:46:23  lungu
-! Changed error handling using MSMessage
+! Changed error handling using MLSMessage
 !
