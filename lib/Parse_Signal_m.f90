@@ -16,7 +16,7 @@ module Parse_Signal_M
 ! Parse_Signal  ( char* Signal_String, *int Signal_Indices(:),
 !    [int Tree_Index], [int Sideband],[*log Channels(:)], [int OnlyCountEm] )
 ! === (end of api) ===
-  public :: Parse_Signal, Expand_Signal_List
+  public :: Parse_Signal, Expand_Signal_List, Get_Individual_Signals
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -29,7 +29,7 @@ module Parse_Signal_M
 
 contains
 
-  ! ----------------------------------------- Expand_signal_list ---
+  ! -----------------------------------------  Expand_signal_list  -----
   subroutine Expand_signal_list ( node, theseSignals, error )
     ! This uses parse_signal below to convert an array of strings
     ! at tree node 'node' into a fully described array of signals
@@ -104,7 +104,90 @@ contains
     ! Executable code
   end subroutine Expand_signal_list
 
-  ! ------------------------------------------ Parse_signal --------
+  ! -------------------------------------  Get_Individual_Signals  -----
+  subroutine Get_Individual_Signals ( InSignals, OutSignals )
+  ! Given InSignals, create OutSignals where each of OutSignals is a
+  ! signal denoted in InSignals, but describes exactly one radiometer,
+  ! band, switch, spectrometer, sideband and channel.  OutSignals is
+  ! allocated using Allocate_Test, so don't send in an undefined pointer!
+  ! There will be no duplicates in OutSignals.  Zero-size InSignals works.
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use MLSSignals_m, only: GetSignalName, Signals
+    use Sort_m, only: Sort
+
+    character(len=*), intent(in) :: InSignals(:)
+    character(len=*), pointer :: OutSignals(:)
+
+    logical, pointer :: Channels(:)
+    integer :: I, J, K, L
+    character(len=len(outSignals)), pointer :: MySignals(:)
+    integer :: Sideband
+    integer, pointer :: SignalIndices(:)
+
+    nullify ( channels, mySignals, signalIndices )
+    ! Determine the size of mySignals
+    l = 0
+    do i = 1, size(inSignals)
+      call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
+        & channels=channels )
+      k = count(channels)
+      l = l + k
+      do j = 1, size(signalIndices)
+        l = l + k
+        if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband /= 0 ) &
+          & l = l + k ! pick up both sidebands
+      end do ! j = 1, size(signalIndices)
+    end do ! i = 1, size(inSignals)
+    ! Fill mySignals
+    call allocate_test ( mySignals, l, 'mySignals', moduleName )
+    if ( l /= 0 ) then
+      do i = 1, size(inSignals)
+        call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
+          & channels=channels )
+        do j = 1, size(signalIndices)
+          do k = lbound(channels,1), ubound(channels,1)
+            if ( channels(k) ) then
+              l = l + 1
+              if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband /= 0 ) then
+                call getSignalName ( signalIndices(j), mySignals(l), sideband=-1 )
+                l = l + 1
+                call getSignalName ( signalIndices(j), mySignals(l), sideband=+1 )
+              else
+                call getSignalName ( signalIndices(j), mySignals(l), sideband=sideband )
+              end if
+            end if
+          end do ! k = lbound(channels), ubound(channels)
+        end do ! j = 1, size(signalIndices)
+      end do ! i = 1, size(inSignals)
+      ! Delete duplicate signals
+      call sort ( mySignals, 1, l )
+      k = 1
+      do i = 2, l
+        if ( mySignals(i) /= mySignals(i-1) ) k = k + 1
+      end do
+    else
+      k = 0
+    end if
+    ! Copy mySignals to outSignals, deleting duplicates
+    call allocate_test ( outSignals, k, 'Outsignals', moduleName )
+    if ( l /= 0 ) then
+      outSignals(1) = mySignals(1)
+      k = 1
+      do i = 2, l
+        if ( mySignals(i) /= mySignals(i-1) ) then
+          k = k + 1
+          outSignals(k) = mySignals(i)
+        end if
+      end do
+    end if
+    ! Clean up
+    call deallocate_test ( channels, 'Channels', moduleName )
+    call deallocate_test ( mySignals, 'MySignals', moduleName )
+    call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
+  end subroutine Get_Individual_Signals
+
+  ! -----------------------------------------------  Parse_signal  -----
 
   subroutine Parse_Signal ( Signal_String, Signal_Indices, &
     & Tree_Index, Sideband, Channels, OnlyCountEm )
@@ -539,6 +622,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.18  2005/01/12 03:08:38  vsnyder
+! Add Get_Individual_Signals
+!
 ! Revision 2.17  2004/03/24 22:45:59  livesey
 ! Increased buffer sizes
 !
