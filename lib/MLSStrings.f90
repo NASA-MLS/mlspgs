@@ -9,9 +9,9 @@ MODULE MLSStrings               ! Some low level string handling stuff
   USE MLSCommon, only: i4, r8, NameLen
 
   IMPLICIT NONE
-  PUBLIC
+  PRIVATE
 
-  PRIVATE :: id, ModuleName
+!  PRIVATE :: id, ModuleName
 !------------------------------- RCS Ident Info ------------------------------
 CHARACTER(LEN=130) :: id = & 
    "$Id$"
@@ -24,35 +24,126 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !     c o n t e n t s
 !     - - - - - - - -
 
+! Array2List         Converts an array of strings to a single string list
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CompressString     Removes all leading and embedded blanks
-! count_words        Counts the number of words in a string
+! count_words        Counts the number of space-delimited words in a string
 ! depunctuate        Replaces punctuation with blanks
 ! GetIntHashElement  Returns int from array of hashes corresponding to key string
 ! GetStringElement   Returns n'th element of string list
-! GetStringHashElement   Returns string from hash list corresponding to key string
+! GetStringHashElement   
+!                    Returns string from hash list corresponding to key string
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
 ! ints2Strings       Converts an array of integers to strings using "char" ftn
-! LinearSearchStringArray     Finds string index of substring in array of strings
+! LinearSearchStringArray     
+!                    Finds string index of substring in array of strings
+! List2Array         Converts a single string list to an array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
 ! NumStringElements  Returns number of elements in list of strings
-! ReadCompleteLineWithoutComments     Knits continuations, snips comments
-! Reverse            turns 'a string' -> 'gnirts a'
-! ReverseList        turns 'abc, def, ghi' -> 'ghi, def, abc'
+! ReadCompleteLineWithoutComments     
+!                    Knits continuations, snips comments
+! Reverse            Turns 'a string' -> 'gnirts a'
+! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
+! SortArray          Similar to SortList, but for an array of strings
+! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
 
-! in the above, a list is a string of usu. comma-delimited words
+! in the above, a list is a string of words (usu. comma-delimited)
 ! an array is a Fortran array of strings or integers
 ! a hash is a list of key strings and either
 ! (1) a list of associated strings
 ! (2) an array of associated integers
-!
+
+! Warning: in the routines LinearSearchStringArray, Array2List, and SortArray
+! the input arguments include an array of strings;
+! it is assumed that this array is og assumed-size
+! I.e., all elements from array(1:size(array)) are relevant
+! Therefore in calling one of these you probably need to use the format
+!   call SortArray(myArray(1:mySize), ..
+
+  public :: Array2List, Capitalize, CompressString, count_words, &
+   & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
+   & GetUniqueStrings, hhmmss_value, ints2Strings, LinearSearchStringArray, &
+   & List2Array, LowerCase, NumStringElements, ReadCompleteLineWithoutComments,&
+   & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
+   & StringElementNum, unquote
 
 CONTAINS
+
+  ! ---------------------------------------------  Array2List  -----
+
+  ! This subroutine returns a (usually) comma-delimited string list, interpreted it
+  ! as a list of individual elements, given returns an equivalent array of
+  ! sub-strings in which the n'th element is the n'th element
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the ordering in which the array elements are to be
+  ! taken may be supplied; e.g. (/4, 1, 3, 2/) means 1st take 4th element,
+  ! then 1st, then 3rd, and finally 2nd: list[k] = array[ordering[k]]
+  ! (unless the further optional arg leftRight is also supplied and equals
+  ! one of {"l", "L"} in which case list[ordering[k]] = array[k])
+
+  SUBROUTINE Array2List(inArray, outList, &
+   & inDelim, ordering, leftRight)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(OUT)                :: outList
+    CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inArray
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    INTEGER, DIMENSION(:), OPTIONAL, INTENT(IN)   :: ordering
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
+
+    ! Local variables
+    INTEGER(i4) :: listElem, arrayElem, nElems
+
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    CHARACTER (LEN=1)               :: myLeftRight
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+    IF(PRESENT(leftRight)) THEN
+	     myleftRight = Capitalize(leftRight)
+	 ELSE
+	     myleftRight = "R"
+	 ENDIF
+
+    if ( len(outList) <= 0 ) return
+    outList = BLANK
+    nElems = size(inArray)
+    if ( nElems <= 0 ) return
+	 listElem = 1
+    DO
+      if (.not. present(ordering) ) then
+        arrayElem = ListElem
+      elseif (myLeftRight == "R") then
+        arrayElem = ordering(ListElem)
+      else
+        ! Try to invert ordering function
+        do arrayElem=1, nElems
+          if ( ordering(arrayElem) == listElem ) exit
+        enddo
+        arrayElem = min(arrayElem, nElems)
+      endif
+      if ( listElem == 1 ) then
+        outList = trim(inArray(arrayElem))
+      else
+        outList = trim(outList) // Delim // trim(inArray(arrayElem))
+      endif
+      listElem = listElem + 1
+      if ( listElem > min(nElems, len(outList)) ) return
+	 ENDDO
+
+  END SUBROUTINE Array2List
 
   ! -------------------------------------------------  CAPITALIZE  -----
   FUNCTION Capitalize (str) RESULT (outstr)
@@ -468,7 +559,6 @@ CONTAINS
     integer :: i
     logical :: mystrict
     integer :: hvalue, mvalue
-!    logical, parameter :: DeeBUG = .false.
     !----------Executable part----------!
 
    if(present(separator)) then
@@ -625,7 +715,7 @@ CONTAINS
 
   ! ------------------------------------  LinearSearchStringArray  -----
 
-  ! This routine does a simple linear search for a string in a list.
+  ! This routine does a simple linear search for a string in an array.
   ! If the case insensitive flag is set the strings are capitalized first.
   ! If the test substring flag is set, the string is tested as a substring.
   ! If the listInString flag is set, the array list is tested as substrings
@@ -717,6 +807,66 @@ CONTAINS
     END IF
 
   END FUNCTION LinearSearchStringArray
+
+  ! ---------------------------------------------  List2Array  -----
+
+  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! as a list of individual elements and returns an equivalent array of
+  ! sub-strings in which the n'th element is the n'th element
+
+  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
+  ! treated like "a,b,c"; otherwise the leading spaces are retained
+
+  SUBROUTINE List2Array(inList, outArray, countEmpty, inDelim, &
+   & IgnoreLeadingSpaces)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)                 :: inList
+    CHARACTER (LEN=*), DIMENSION(:), INTENT(OUT)  :: outArray
+    LOGICAL, INTENT(IN)                           :: countEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
+
+    ! Local variables
+    INTEGER(i4) :: elem, nElems
+
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    logical                         :: myIgnoreLeadingSpaces
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+    IF(PRESENT(IgnoreLeadingSpaces)) THEN
+	     myIgnoreLeadingSpaces = IgnoreLeadingSpaces
+	 ELSE
+	     myIgnoreLeadingSpaces = .false.
+	 ENDIF
+
+    if ( size(outArray) <= 0 ) return
+    outArray = BLANK
+	 elem = 1
+    nElems = NumStringElements(inList, countEmpty, inDelim)
+    if ( nElems <= 0 ) return
+    DO
+      call GetStringElement(inList, outArray(elem), elem, countEmpty, inDelim)
+      if ( myIgnoreLeadingSpaces ) outArray(elem) = adjustl(outArray(elem))
+      elem = elem + 1
+      if ( elem > min(nElems, size(outArray)) ) return
+	 ENDDO
+
+  END SUBROUTINE List2Array
 
   ! --------------------------------------------------  LowerCase  -----
   FUNCTION LowerCase (str) RESULT (outstr)
@@ -1030,6 +1180,265 @@ CONTAINS
 	DEALLOCATE(charBuf)
 
   END FUNCTION ReverseList
+
+  ! ---------------------------------------------  SortArray  -----
+
+  ! This subroutine takes an array of strings
+  ! and returns the array of ordered integers
+  ! sorting the array; i.e., if ss[n] is the sub-string which is
+  ! the n'th element, and ia[k] is the k'th element of the integer array
+  ! then {psl[ia[k]]=ss[k], k=1..n} yields the properly sorted array
+  
+  ! The sorting is ordered by ascii collating sequence:
+  ! "0" < "9" < "A" < "Z" < "a" < "z"
+  ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
+
+  ! As an optional arg the properly sorted array is returned, too
+
+  SUBROUTINE SortArray(inStrArray, outIntArray, CaseSensitive, sortedArray)
+    ! Dummy arguments
+    CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inStrArray
+    INTEGER, DIMENSION(:), INTENT(OUT)            :: outIntArray
+    LOGICAL, INTENT(IN)                           :: CaseSensitive
+    CHARACTER (LEN=*), DIMENSION(:), OPTIONAL, INTENT(OUT)  &
+     &                                            :: sortedArray
+
+    ! Local variables
+    INTEGER(i4) :: elem, nElems
+    integer, parameter              :: MAXCHARVALUE = 256
+    integer, parameter              :: MAXELEM = NameLen
+    integer, dimension(MAXELEM)     :: chValue, cvInvBN
+    integer, dimension(MAXELEM)     :: binNumber, invBinNumber 
+    integer, dimension(MAXELEM)     :: jsort, inTheBin
+    integer                         :: numBins, oldNumBins
+    integer                         :: i, bin, ck, strPos
+    integer                         :: maxStrPos
+    logical                         :: allTheSameInThisBin
+    CHARACTER (LEN=1)               :: theChar  
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '
+    logical, parameter              :: DeeBUG = .false.
+
+    ! Executable code
+    nElems = size(inStrArray)
+    if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
+      return
+    elseif ( nElems > MAXELEM ) then
+       CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'Too many elements in inStrArray in SortArray')
+       return
+    endif
+    outIntArray = 0
+    numBins = 1
+    maxStrPos = 1
+    do elem = 1, nElems    
+      outIntArray(elem) = 1
+      maxStrPos = max(maxStrPos, len_trim(inStrArray(elem)))
+    enddo                  
+    if ( DEEBUG ) then
+      do elem = 1, nElems    
+        print *, 'Array element ', elem, ' ', trim(inStrArray(elem))
+      enddo                  
+    endif    
+    DO strPos = 1, maxStrPos
+      
+      if ( DEEBUG ) then
+        print *, 'string position: ', strPos
+        print *, 'array of bins: ', (outIntArray(elem), elem=1, nElems)
+      endif
+      do elem = 1, nElems
+        theChar = inStrArray(elem)(strPos:strPos)
+        if ( inStrArray(elem) == ' ' ) then
+          chValue(elem) = MAXCHARVALUE
+        elseif ( theChar == ' ' ) then
+          chValue(elem) = 0
+        elseif ( CaseSensitive ) then
+          chValue(elem) = ichar(theChar)
+        elseif (ichar("a") <= ichar(theChar) .and. &
+          & ichar(theChar) <= ichar("z") ) then
+          chValue(elem) = 2*ichar(Capitalize(theChar)) - ichar("A") + 1
+        elseif (ichar("A") <= ichar(theChar) .and. &
+          & ichar(theChar) <= ichar("Z") ) then
+          chValue(elem) = 2*ichar(theChar) - ichar("A")
+        elseif (ichar("Z") < ichar(theChar) ) then
+          chValue(elem) = 2*ichar(theChar)
+        else
+          chValue(elem) = ichar(theChar)
+        endif
+      enddo
+      if ( DEEBUG ) print *, 'array of chValues: ', (chValue(elem), elem=1, nElems)
+      oldNumBins = numBins
+      do elem=1, nElems
+        binNumber(elem) = outIntArray(elem)
+      enddo
+      numBins = 0
+      ck = 0
+      if ( DEEBUG ) print *, 'number of bins: ', oldNumBins
+      do bin=1, oldNumBins
+        if ( DEEBUG ) print *, 'bin number: ', bin
+        call warm_up(bin)
+        if ( DEEBUG ) then
+          print *, 'number in bin: ', inTheBin(bin)
+          print *, 'array of invBinNumber: ', &
+           & (invBinNumber(elem), elem=1, inTheBin(bin))
+          print *, 'array of cvInvBN: ', (cvInvBN(elem), elem=1, inTheBin(bin))
+        endif
+        call tie_breaker(bin)
+        if ( DEEBUG ) print *, 'array of jsort: ', (jsort(elem), elem=1, inTheBin(bin))
+        numBins = numBins + 1
+        ck = cvInvBN(jsort(1))
+        do i=1, inTheBin(bin)
+          if ( ck /= cvInvBN(jsort(i)) .or. &
+           & ( &
+           &  allTheSameInThisBin .and. i > 1 &
+           & ) &
+           & ) then
+            numBins = numBins + 1
+            ck = cvInvBN(jsort(i))
+          endif
+          outIntArray(invBinNumber(jsort(i))) = numBins
+        enddo
+      enddo
+      if ( numBins >= min(nElems, size(outIntArray)) ) exit
+	 ENDDO
+    if ( DEEBUG ) then
+      print *, 'Final number of bins: ', numBins
+      print *, 'Sorting order: ', (outIntArray(i), i=1, nElems)
+    endif
+
+    if ( .not. present(sortedArray) ) return
+    do elem=1, nElems
+      i = max(1, outIntArray(elem))
+      i = min(i, nElems, size(sortedArray))
+      sortedArray(i) = inStrArray(elem)
+    enddo
+
+   contains
+     subroutine warm_up(theBin)
+       ! Form array invBinNumber = {i[j], j=1 .. }
+       ! such that binNumber[i] = theBin
+       ! Then form cvInvBN = {c[j] = chValue[i[j]], j=1..}
+       integer, intent(in) :: theBin
+       integer :: j, i
+       j=0
+       do i=1, nElems
+         if ( binNumber(i) == theBin ) then
+           j=j+1
+           invBinNumber(j) = i
+           cvInvBN(j) = chValue(i)
+         endif
+       enddo
+       inTheBin(theBin) = j
+     end subroutine warm_up
+     subroutine tie_breaker(theBin)
+       ! Form array jsort = j[k] = {j_1, j_2, .., j_N}
+       ! sorted so that c[j_1} <= c[j_2] <= .. <= c{j_N]
+       integer, intent(in)      :: theBin
+       integer                  :: kp, k, ck, jsortie
+       CHARACTER (LEN=NameLen)  :: stringElement  
+       allTheSameInThisBin = (inTheBin(theBin) /= 1)
+       stringElement = inStrArray(invBinNumber(1))
+       do k=1, inTheBin(theBin)
+         jsort(k) = k
+         allTheSameInThisBin = allTheSameInThisBin .and. &
+           & stringElement == inStrArray(invBinNumber(k))
+       enddo
+       if ( inTheBin(theBin) == 1 .or. allTheSameInThisBin) return
+       do k=1, inTheBin(theBin) - 1
+         ck = cvInvBN(jsort(k))
+         do kp=k+1, inTheBin(theBin)
+           if ( cvInvBN(jsort(kp)) < ck ) then
+           ! Pull the old switcheroo
+             ck = cvInvBN(jsort(kp))
+             jsortie = jsort(kp)
+             jsort(kp) = jsort(k)
+             jsort(k) = jsortie
+           endif
+         enddo
+       enddo
+     end subroutine tie_breaker
+
+  END SUBROUTINE SortArray
+
+  ! ---------------------------------------------  SortList  -----
+
+  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! as a list of individual elements and returns the array of ordered integers
+  ! sorting the list; i.e., if ss[n] is the sub-string which is
+  ! the n'th element, and ia[k] is the k'th element of the integer array
+  ! then {psl[ia[k]]=ss[k], k=1..n} yields the properly sorted list
+  
+  ! The sorting is ordered by ascii collating sequence:
+  ! "0" < "9" < "A" < "Z" < "a" < "z"
+  ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
+
+  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the properly sorted list is returned, too
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
+  ! sorted like "a,b,c"; otherwise the leading spaces make" b, c,a"
+
+  SUBROUTINE SortList(inList, outArray, CaseSensitive, countEmpty, &
+   & ignoreLeadingSpaces, inDelim, sortedList)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)                 :: inList
+    INTEGER, DIMENSION(:), INTENT(OUT)            :: outArray
+    LOGICAL, INTENT(IN)                           :: CaseSensitive
+    LOGICAL, INTENT(IN)                           :: countEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=*), OPTIONAL, INTENT(OUT)      :: sortedList
+    LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
+
+    ! Local variables
+    integer, parameter              :: MAXELEM = NameLen
+    INTEGER(i4) :: nElems, status
+
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    CHARACTER (LEN=NameLen), DIMENSION(:), ALLOCATABLE    &
+      &                             :: stringArray
+    logical, parameter              :: DeeBUG = .false.
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+    if ( DEEBUG ) then
+       print *, 'Entered SortList'
+       print *, 'present(inDelim)?: ', PRESENT(inDelim)
+       print *, 'Delim: ', Delim
+       print *, 'string: ', trim(inList)
+    endif
+    if ( size(outArray) <= 0 ) return
+    outArray = 0
+    nElems = NumStringElements(inList, countEmpty, inDelim)
+    if ( nElems <= 0 ) then
+      return
+    elseif ( nElems > MAXELEM ) then
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+         & "Too many elements needed in SortList")
+      return
+    endif
+    ALLOCATE (stringArray(nElems), STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"stringArray in SortList")
+    call list2Array(inList, stringArray, countEmpty, inDelim, &
+     & IgnoreLeadingSpaces)
+    call SortArray(stringArray(1:nElems), outArray, CaseSensitive)
+    if ( present(sortedList) ) then
+      call Array2List(stringArray(1:nElems), sortedList, &
+       & inDelim, outArray, leftRight='L')
+    endif
+    DEALLOCATE(stringArray)
+
+  END SUBROUTINE SortList
 
   ! -------------------------------------------------  SplitWords  -----
 
@@ -1365,6 +1774,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2002/02/15 01:06:12  pwagner
+! Added new array and sorting routines
+!
 ! Revision 2.17  2002/01/09 23:46:05  pwagner
 ! Removed debugging stuff
 !
