@@ -50,6 +50,7 @@ module ReadAPriori
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -500,12 +501,19 @@ contains ! =====     Public Procedures     =============================
   end subroutine Announce_error
 !===========================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ReadAPriori
 
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.36  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.35  2002/04/06 00:11:18  pwagner
 ! Combined pcf numbers for dao, ncep, clim, l2gp into apriori
 !
