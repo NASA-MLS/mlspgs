@@ -194,6 +194,7 @@ pointingGrids
 precision
 precisionFactor
 prefixSignal
+profile
 profileValues
 ptanQuantity
 
@@ -287,6 +288,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.78  2003/02/13 21:41:58  livesey
+# Added profile
+#
 # Revision 2.77  2003/02/12 02:11:04  livesey
 # Added extendedAverage
 #
