@@ -85,7 +85,8 @@ module INTRINSIC
   integer, parameter :: L_KM            = l_khz + 1
   integer, parameter :: L_LINEWIDTH     = l_km + 1
   integer, parameter :: L_LOGP          = l_linewidth + 1
-  integer, parameter :: L_LSBFREQUENCY  = l_logp + 1
+  integer, parameter :: L_LOSVEL        = l_logp + 1
+  integer, parameter :: L_LSBFREQUENCY  = l_losvel + 1
   integer, parameter :: L_M             = l_lsbfrequency + 1
   integer, parameter :: L_MAF           = l_m + 1
   integer, parameter :: L_MAFS          = l_maf + 1
@@ -109,7 +110,8 @@ module INTRINSIC
   integer, parameter :: L_REFGPH        = l_radians + 1
   integer, parameter :: L_S             = l_refgph + 1
   integer, parameter :: L_SCANRESIDUAL  = l_s + 1
-  integer, parameter :: L_SCVEL         = l_scanresidual + 1
+  integer, parameter :: L_SCECI         = l_scanresidual + 1
+  integer, parameter :: L_SCVEL         = l_scECI + 1
   integer, parameter :: L_SECONDS       = l_scvel + 1
   integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
   integer, parameter :: L_TEMPERATURE   = l_seconds + 1
@@ -117,12 +119,14 @@ module INTRINSIC
   integer, parameter :: L_THETA         = l_temperature_prec + 1
   integer, parameter :: L_THZ           = l_theta + 1
   integer, parameter :: L_TIME          = l_thz + 1
-  integer, parameter :: L_TNGTGEOCALT   = l_time + 1
+  integer, parameter :: L_TNGTECI       = l_time + 1
+  integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
   integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
-  integer, parameter :: L_TRUE          = l_tngtgeodalt + 1
-  integer, parameter :: L_USBFREQUENCY  = l_true + 1 !
+  integer, parameter :: L_TRUE         =  l_tngtgeodalt + 1
+  integer, parameter :: L_USBFREQUENCY  = l_true + 1
   integer, parameter :: L_VMR           = l_usbfrequency + 1
-  integer, parameter :: L_ZETA          = l_vmr + 1
+  integer, parameter :: L_XYZ           = l_vmr + 1
+  integer, parameter :: L_ZETA          = l_xyz + 1
   integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
 
   ! The following parameters are for building trees:
@@ -187,6 +191,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_km) =                    add_ident ( 'km' )
     lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
     lit_indices(l_logp) =                  add_ident ( 'logp' )
+    lit_indices(l_losVel) =                add_ident ( 'LOSVel' )
     lit_indices(l_lsbfrequency) =          add_ident ( 'LSBFrequency' )
     lit_indices(l_m) =                     add_ident ( 'm' )
     lit_indices(l_maf) =                   add_ident ( 'maf' )
@@ -211,6 +216,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_refgph) =                add_ident ( 'refGPH' )
     lit_indices(l_s) =                     add_ident ( 's' )
     lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
+    lit_indices(l_scECI) =                 add_ident ( 'scECI' )
     lit_indices(l_scvel) =                 add_ident ( 'scVel' )
     lit_indices(l_seconds) =               add_ident ( 'seconds' )
     lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
@@ -219,11 +225,13 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_theta) =                 add_ident ( 'theta' )
     lit_indices(l_thz) =                   add_ident ( 'THz' )
     lit_indices(l_time) =                  add_ident ( 'time' )
+    lit_indices(l_tngteci) =               add_ident ( 'tngteci' )
     lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
     lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
+    lit_indices(l_xyz) =                   add_ident ( 'xyz' )
     lit_indices(l_zeta) =                  add_ident ( 'zeta' )
 
     ! Put abstract physical quantities into the symbol table
@@ -351,6 +359,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.14  2001/03/15 18:41:04  livesey
+! Added some more, losvel etc.
+!
 ! Revision 2.13  2001/03/15 07:37:35  livesey
 ! Added l_frequency
 !
