@@ -61,7 +61,7 @@ contains
 
   ! ----------------------------------------------- ReadGriddedData
   subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
-    & the_g_data, GeoDimList, fieldName)
+    & the_g_data, GeoDimList, fieldName, missingValue)
 
     ! This routine reads a Gridded Data file, returning a filled data
     ! structure and the  appropriate for 'ncep' or 'dao'
@@ -82,6 +82,7 @@ contains
     character (LEN=*), intent(IN) :: description ! e.g., 'dao'
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
@@ -115,7 +116,7 @@ contains
         & // ' description; appropriate for ncep/dao only')
     case ('dao')
       call Read_dao(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName)
+        & the_g_data, GeoDimList, fieldName, missingValue)
       if ( DEEBUG ) then
         print *, '(Returned from read_dao)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
@@ -124,7 +125,7 @@ contains
       endif
     case ('ncep')
       call Read_ncep(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName)
+        & the_g_data, GeoDimList, fieldName, missingValue)
       if ( DEEBUG ) then
         print *, '(Returned from read_ncep)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
@@ -143,7 +144,7 @@ contains
 
   ! ----------------------------------------------- Read_dao
   subroutine Read_dao(FileName, lcf_where, v_type, &
-    & the_g_data, GeoDimList, fieldName)
+    & the_g_data, GeoDimList, fieldName, missingValue)
     use Dump_0, only: Dump
 
     ! This routine reads a dao file, named something like
@@ -174,6 +175,7 @@ contains
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -415,7 +417,7 @@ contains
 
   ! ----------------------------------------------- Read_ncep
   subroutine Read_ncep(FileName, lcf_where, v_type, &
-    & the_g_data, GeoDimList, gridName)
+    & the_g_data, GeoDimList, gridName, missingValue)
     use Dump_0, only: Dump
 
     ! This routine reads a ncep file, named something like
@@ -449,6 +451,7 @@ contains
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
     character (LEN=*), optional, intent(IN) :: gridName ! Name of grid
+    real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -1116,7 +1119,8 @@ contains
 
   ! --------------------------------------------------  Read_Climatology
   subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, &
-    & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
+    & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
+    & dump_data )
     ! Brief description of program
     ! This subroutine reads a l3ascii file and returns
     ! the data_array to the caller
@@ -1126,6 +1130,7 @@ contains
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
     integer, optional, intent(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+    real, optional, intent(IN) :: missingValue
     logical, optional, intent(in) :: echo_data        ! echo climatology quantity name
     logical, optional, intent(in) :: dump_data        ! dump climatology data
 
@@ -1227,6 +1232,10 @@ contains
           nullify (gddata%dateStarts)
           nullify (gddata%dateEnds)
           nullify (gddata%field)
+          if ( present(missingValue) ) then
+            if (missingValue /= 0._rgr) &
+              & aprioriData(size(aprioriData))%missingValue = missingValue
+          endif
           if(debug) call output('Destroying our grid template', advance='yes')
         endif
       end do !(.not. end_of_file)
@@ -1521,6 +1530,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.28  2003/03/01 00:23:27  pwagner
+! missingValue an optional arg to reading GriddedData and climatology
+!
 ! Revision 2.27  2003/02/28 02:27:12  livesey
 ! Now uses missingValue stuff
 !
