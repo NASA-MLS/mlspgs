@@ -67,7 +67,7 @@ contains ! ============= Public Procedures ==========================
     case ( l_scan2d )
       call TwoDScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'twoDscan_fwm' )
+      call add_to_retrieval_timing( 'twod_scan_fwm' )
     case ( l_cloudFull )
       call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
@@ -79,6 +79,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.13  2002/07/23 00:06:05  pwagner
+! No upper-case allowed in section names
+!
 ! Revision 2.12  2002/07/22 22:51:56  pwagner
 ! Restored name of 2d scan model in timings
 !
