@@ -279,7 +279,7 @@ subtrees:   do while ( j <= howmany )
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
-            & size(chunks)==1 )
+            & size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -374,6 +374,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.95  2002/10/08 17:41:50  livesey
+! Various bug fixes associated with FWMParallel
+!
 ! Revision 2.94  2002/10/08 17:36:23  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
