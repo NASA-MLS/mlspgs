@@ -143,38 +143,28 @@ contains
       end if
       beta_path(:,i) = 0.0_rp
       do n = 1, beta_group(i)%n_elements
-!       ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
         molecule = catalog(ib)%molecule
         no_of_lines = size(catalog(ib)%lines)
         do k = 1, no_of_lines
           lineWidth(k) = lines(catalog(ib)%lines(k))%w
         end do
-         
-!       do j = 1, n_path
-!         k = path_inds(j)
 
-!         call create_beta ( molecule, catalog(ib)%continuum, p_path(k),   &
-!           & t_path(j), Frq, lineWidth(:no_of_lines), gl_slabs(k,ib), &
-!           & tanh_path(j), bb, polarized .and. catalog(ib)%polarized,    &
-!           & DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
-
-!         beta_path(j,i) = beta_path(j,i) + ratio * bb 
-
-!         if ( associated(dbeta_dw_path)) &
-!           &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
-!         if ( associated(dbeta_dn_path)) &
-!           &  dbeta_dn_path(j,i) = dbeta_dn_path(j,i) + ratio * vp
-!         if ( associated(dbeta_dv_path)) &
-!           &  dbeta_dv_path(j,i) = dbeta_dv_path(j,i) + ratio * vm
-!       end do
-
-        call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-          & p_path, t_path, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-          & gl_slabs(:,ib), tanh_path, beta_path(:,i),                      &
-          & polarized .and. catalog(ib)%polarized,                          &
-          & dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
-
+        ! The polarized and nonpolarized calls are split so that Create_Beta_Path
+        ! can go to the "don't bother to test polarized" loop.  Create_Beta_Path
+        ! is the inner loop of the forward model.  It also avoids construction
+        ! of an array temp (polarized .and. catalog(ib)%polarized).
+        if ( polarized ) then
+          call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+            & p_path, t_path, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+            & gl_slabs(:,ib), tanh_path, beta_path(:,i),                      &
+            & catalog(ib)%polarized, dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
+        else
+          call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+            & p_path, t_path, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+            & gl_slabs(:,ib), tanh_path, beta_path(:,i),                      &
+            & dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
+        end if
       end do
     end do
 
@@ -191,36 +181,33 @@ contains
         betam = 0.0
         betap = 0.0
         do n = 1, beta_group(i)%n_elements
-!         ratio = beta_group(i)%ratio(n)
           ib = beta_group(i)%cat_index(n)
           Molecule = Catalog(ib)%molecule
           no_of_lines = size(catalog(ib)%lines)
           do k = 1, no_of_lines
             lineWidth(k) = lines(catalog(ib)%lines(k))%w
           end do ! k
-!         do j = 1 , n_path
-!           k = path_inds(j)
-!           if ( t_der_path_flags(k)) then
-!             call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
-!             &  t_path_m(k), frq, lineWidth(:no_of_lines), gl_slabs_m(k,ib),                      &
-!             &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
-!             betam(j) = betam(j) + ratio * vm
-!             call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
-!             &  t_path_p(k), Frq, lineWidth(:no_of_lines), gl_slabs_p(k,ib),                      &
-!             &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
-!             betap(j) = betap(j) + ratio * vp
-!           end if
-!         end do ! j
-          call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-            & p_path, tm, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-            & gl_slabs_m(:,ib), tanh1_m, betam,                               &
-            & polarized .and. catalog(ib)%polarized, t_der_path_flags,        &
-            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
-          call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-            & p_path, tp, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-            & gl_slabs_p(:,ib), tanh1_p, betap,                               &
-            & polarized .and. catalog(ib)%polarized, t_der_path_flags,        &
-            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+          if ( polarized ) then
+            call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+              & p_path, tm, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+              & gl_slabs_m(:,ib), tanh1_m, betam,                               &
+              & catalog(ib)%polarized, t_der_path_flags,                        &
+              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+            call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+              & p_path, tp, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+              & gl_slabs_p(:,ib), tanh1_p, betap,                               &
+              & catalog(ib)%polarized, t_der_path_flags,                        &
+              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+          else
+            call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+              & p_path, tm, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+              & gl_slabs_m(:,ib), tanh1_m, betam,                               &
+              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+            call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
+              & p_path, tp, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
+              & gl_slabs_p(:,ib), tanh1_p, betap,                               &
+              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+          end if
         end do ! n
         do j = 1 , n_path
           k = path_inds(j)
@@ -402,6 +389,14 @@ contains
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image separately.
 
+!  If you change Create_Beta, change Create_Beta_Path the same way!
+!  Create_Beta and Create_Beta_Path should do the same thing.
+
+!  The reason for the existence of Create_Beta_Path is that by moving the
+!  loop for the path down into Create_Beta a substantial improvement in
+!  running time was achieved.  Create_Beta is in the inner loop of the
+!  forward model.
+
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, IP
     use Molecules, only: L_N2, L_Extinction, L_O2
@@ -540,13 +535,15 @@ contains
       if ( present(dbeta_dn)) dbeta_dn = dbdn
       if ( present(dbeta_dv)) dbeta_dv = dbdv
 
-    else                ! No derivatives required
+    else if ( present(polarized) ) then  ! No derivatives required
+
+      ! This is split into polarized and unpolarized loops, to avoid
+      ! having "if ( present(polarized) )" inside the loop.  This is
+      ! the inner loop of the forward model.
 
       if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
         do ln_i = 1, nl
-          if ( present(polarized) ) then
-            if ( polarized(ln_i) ) cycle
-          end if
+          if ( polarized(ln_i) ) cycle
           beta_value = beta_value + &
             &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
             &        slabs_0%x1(ln_i), tanh1, &
@@ -554,9 +551,26 @@ contains
         end do
       else
         do ln_i = 1, nl
-          if ( present(polarized) ) then
-            if ( polarized(ln_i) ) cycle
-          end if
+          if ( polarized(ln_i) ) cycle
+          beta_value = beta_value + &
+            &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
+            &            slabs_0%x1(ln_i), tanh1, &
+            &            slabs_0%slabs1(ln_i), &
+            &            slabs_0%y(ln_i), slabs_0%yi(ln_i))
+        end do
+      end if
+
+    else ! Still no derivatives required
+
+      if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
+        do ln_i = 1, nl
+          beta_value = beta_value + &
+            &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
+            &        slabs_0%x1(ln_i), tanh1, &
+            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+        end do
+      else
+        do ln_i = 1, nl
           beta_value = beta_value + &
             &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
             &            slabs_0%x1(ln_i), tanh1, &
@@ -906,6 +920,10 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.42  2003/07/07 19:53:51  vsnyder
+! Move newly-public Create_Beta and Create_Beta_Path above the 'Private
+! Procedures' comment
+!
 ! Revision 2.41  2003/07/07 19:08:38  vsnyder
 ! Make Create_Beta and Create_Beta_Path public
 !
