@@ -152,6 +152,7 @@ contains
 ! compute refractive index not depending on h2o
 
       call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out )
+      n_tan_out = min ( n_tan_out, maxRefraction )
 
     end if
 
@@ -189,6 +190,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.14  2004/05/17 23:25:04  livesey
+! More guards
+!
 ! Revision 2.13  2004/05/17 22:06:07  livesey
 ! Guard against large refractive indices
 !
