@@ -13,6 +13,7 @@ module ForwardModelInterface
   use AntennaPatterns_m, only: Close_Antenna_Patterns_File, &
     & Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
   use Declaration_Table, only: NUM_VALUE, RANGE
+  use Dump_0, only: Dump
   use Expr_M, only: EXPR
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
     & ForwardModelConfig_T
@@ -60,7 +61,6 @@ module ForwardModelInterface
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
   use VGridsDatabase, only: VGrid_T
-  use dump_0, only: Dump
 
   implicit none
   private
@@ -1434,6 +1434,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.118  2001/04/26 02:50:47  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.117  2001/04/26 02:49:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic (again)
 !
