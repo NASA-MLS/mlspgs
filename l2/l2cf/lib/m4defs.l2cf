@@ -57,7 +57,8 @@ changesyntax({@!})
 ; (prefix)parameter=value for each such argument.
 ; One would typically call it within another macro, in the form of a
 ; prefix name, followed by $@.
-!define(getpar,{!substr($1,0,!index($1,{=}))})
+!define(getpar,{!translit(!substr($1,0,!index($1,{=})),{A-Z},{a-z})})
+; Note this lowercases all the parameters, though not the prefix
 !define(getval,{!substr($1,!incr(!index($1,{=})))})
 !define(processparval,{!dnl
   !ifelse($2,{},{},{!dnl
