@@ -1,7 +1,3 @@
-!divert(-1)
-; $Id$
-!divert!dnl
-
 ; This l2cf fragment is for defining the fGrids for extinciton
 fGridExtinctionR1A: fGrid, coordinate=Frequency, $
   values=[ !loR1 - 13 GHz, !loR1 ]

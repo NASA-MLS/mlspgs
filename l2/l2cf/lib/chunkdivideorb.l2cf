@@ -1,5 +1,0 @@
-; --------------------------------------------- ChunkDivide ----
-begin ChunkDivide
-  ChunkDivide, method=orbital, maxLength=!MAXLENGTH, overlap=!OVERLAP, $
-    homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=!MAXGAP
-end ChunkDivide

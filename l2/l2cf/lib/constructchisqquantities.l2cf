@@ -1,5 +1,6 @@
 ; These are the chi^2 diagnostic quantities
-
+; This probably needs more attention as it's rather
+; incomplete at the moment.
 BEGIN Construct
 
     csMAF_band3:    Quantity, type=chisqMMAF, signal='R2:190.B3F:N2O'

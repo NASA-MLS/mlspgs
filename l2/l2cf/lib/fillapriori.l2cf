@@ -15,10 +15,10 @@ begin Fill
 end Fill
 
 ;; Fill the standard species
-!include(fillfromclimatology.m4)
+!include(fillfromclimatology.l2cf)
 
 ;; Fill the sideband ratios
-!include(fillsidebandratios.m4)
+!include(fillsidebandratios.l2cf)
 
 ;; Fill the lesser stuff
 ;; !ifdef(l2pcrun,{!include(filllesserstate_l2pc.m4)},{!include(filllesserstate.m4)})
@@ -113,3 +113,6 @@ end Fill
 ;; Now also scale the apriori precisions into isotope space
 !define(vec,{aprioriPrecision})!dnl
 !include(fillisotopes.m4)
+
+
+
