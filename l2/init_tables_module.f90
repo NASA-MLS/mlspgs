@@ -101,7 +101,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
-  integer, parameter :: F_POINTINGGRIDS       = f_overlaps + 1
+  integer, parameter :: F_PHIWINDOW           = f_overlaps + 1
+  integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
   integer, parameter :: F_QUANTITIES          = f_pointingGrids + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
@@ -396,6 +397,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
     field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
+    field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -711,6 +713,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                 !???
@@ -805,6 +808,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.60  2001/03/29 22:07:25  livesey
+! Added phiWindow
+!
 ! Revision 2.59  2001/03/29 19:13:14  livesey
 ! Added stuff for gridded data fill.
 !
