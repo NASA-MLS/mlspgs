@@ -61,7 +61,7 @@ contains ! =====     Public Procedures     =============================
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
-      & F_PHIWINDOW, F_PRECISION, F_PRECISIONFACTOR, &
+      & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
-      & F_TEMPLATE, F_TNGTECI, &
+      & F_TEMPLATE, F_TNGTECI, F_TERMS, &
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
@@ -86,8 +86,8 @@ contains ! =====     Public Procedures     =============================
       & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
-      & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
-      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
+      & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
+      & L_REFLTEMP, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
@@ -367,6 +367,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
     real(r8) :: PHIWINDOW               ! For hydrostatic ptan guesser
+    real(r8) :: PHIZERO                 ! For hydrostatic ptan guesser
     integer :: PHIWINDOWUNITS           ! For hydrostatic ptan guesser
     real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
     integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
@@ -409,6 +410,7 @@ contains ! =====     Public Procedures     =============================
     integer :: TEMPPRECISIONQUANTITYINDEX ! in the quantities database
     integer :: TEMPPRECISIONVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
+    integer :: TERMSNODE                ! Tree index
     logical :: TIMING
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer :: TNGTECIVECTORINDEX       ! In the vector database
@@ -478,6 +480,7 @@ contains ! =====     Public Procedures     =============================
       profile = -1
       phiWindow = 4
       phiWindowUnits = phyq_angle
+      phiZero = 0.0
 
       ! Node_id(key) is now n_spec_args.
 
@@ -760,6 +763,11 @@ contains ! =====     Public Procedures     =============================
             if ( all ( unitAsArray(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
               call Announce_Error ( key, 0, 'Bad units for phiWindow' )
             phiWindowUnits = unitAsArray(1)
+          case ( f_phiZero )
+            call expr ( gson, unitAsArray, valueAsArray )
+            phiZero = valueAsArray(1)
+            if ( all ( unitAsArray(1) /= (/ PHYQ_Angle /) ) ) &
+              call Announce_Error ( key, 0, 'Bad units for phiZero' )
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -821,6 +829,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_tempPrecisionQuantity ) ! For rhi precision
             tempPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
             tempPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_terms )
+            termsNode = subtree(j,key)
           case ( f_usb ) ! For folding
             usbVectorIndex = decoration(decoration(subtree(1,gson)))
             usbQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1216,6 +1226,9 @@ contains ! =====     Public Procedures     =============================
           end if
           call FillPhiTanWithRefraction ( key, quantity, ptanQuantity, temperatureQuantity, &
             & h2oQuantity, refract )
+
+        case ( l_reflectorTempModel ) ! --------------- Reflector temperature model
+          call FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
 
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
           if (.not. all(got((/f_losQty,f_earthRadius,f_PtanQuantity/))))&
@@ -5145,6 +5158,46 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine FillQuantityByManipulation
 
+    ! ----------------------------------------- FillWithReflectorTemperature ---
+    subroutine FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
+      use Units, only: DEG2RAD
+      integer, intent(in) :: KEY         ! Tree node for messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
+      real(r8), intent(in) :: PHIZERO   ! Offset term
+      integer, intent(in) :: TERMSNODE
+
+      ! Local variables
+      integer :: I                      ! Loop counter
+      integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
+      real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
+
+      ! Executable code
+      if ( quantity%template%quantityType /= l_reflTemp ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Inappropriate quantity for reflector temperature fill' )
+
+      ! Loop over fourier terms, coefficients are son i+2
+      do i = 0, nsons ( termsNode ) - 2
+        call expr(subtree(i+2,termsNode),unitAsArray,valueAsArray)
+        ! Check unit OK
+        if ( unitAsArray(1) /= PHYQ_Temperature ) &
+          & call Announce_error ( termsNode, no_error_code, 'Bad unit for fourier term' )
+        ! Add in this coefficient
+        if ( i == 0 ) then
+          quantity%values = valueAsArray(1)
+        else if ( mod ( i, 2 ) == 1 ) then
+          ! A sine term
+          quantity%values(1,:) = quantity%values(1,:) + valueAsArray(1) * &
+            & sin ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
+        else
+          ! A cosine term
+          quantity%values(1,:) = quantity%values(1,:) + valueAsArray(1) * &
+            & cos ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
+        end if
+      end do
+
+    end subroutine FillWithReflectorTemperature
+
     ! ----------------------------------------- FillQtyWithWMOTropopause ------
     subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
       use Hydrostatic_M, only: HYDROSTATIC
@@ -5734,6 +5787,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.227  2003/05/29 20:01:55  livesey
+! Added reflector temperature model.
+!
 ! Revision 2.226  2003/05/29 16:41:56  livesey
 ! Renamed sideband fraction
 !
