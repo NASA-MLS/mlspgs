@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! -------------------------------------------------------
@@ -19,7 +19,8 @@ module WriteMetadata ! Populate metadata and write it out
     & Mlspcf_mcf_l2log_start
   use MLSStrings, only: LowerCase, GetStringHashElement
   use Output_m, only: Output, blanks
-  use PCFHdr, only: WriteInputPointer, WritePCF2Hdr
+  use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
+    & InputInputPointer,WriteInputPointer, WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET !, &
@@ -507,7 +508,8 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: sval
     character (len=132) :: attrname
     integer :: version, indx, i
-    CHARACTER (LEN=98) :: inpt(31)
+    CHARACTER (LEN=INPUTPTR_STRING_LENGTH) :: inpt(31)
+!   CHARACTER (LEN=98) :: inpt(31)
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
 
@@ -517,8 +519,7 @@ contains
     integer, external :: PGS_MET_setattr_d, &
          PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
          PGS_MET_write, PGS_MET_remove
-    INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
-
+!   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
     !Executable code
 
     version = 1
@@ -585,21 +586,23 @@ contains
 
     attrName = 'InputPointer'
     if ( SETINPUTPOINTER ) then
-      inpt = ' '
-      DO i = 0, size(L2pcf%L1BRADPCFIds)
-        version = 1
-        if ( i == 0 ) then
-         returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BOAPCFId, version, sval)
-        elseif ( L2pcf%L1BRADPCFIds(i) /= ILLEGALL1BRADID ) then
-         returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BRADPCFIds(i), &
-           & version, sval)
-        else
-         returnStatus = PGS_S_SUCCESS + 1
-        endif
-        IF (returnStatus == PGS_S_SUCCESS) THEN 
-           inpt(i+1) = sval                     
-        ENDIF                                   
-      ENDDO
+! >       inpt = ' '
+! >       DO i = 0, size(L2pcf%L1BRADPCFIds)
+! >         version = 1
+! >         if ( i == 0 ) then
+! >          returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BOAPCFId, version, sval)
+! >         elseif ( L2pcf%L1BRADPCFIds(i) /= ILLEGALL1BRADID ) then
+! >          returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BRADPCFIds(i), &
+! >            & version, sval)
+! >         else
+! >          returnStatus = PGS_S_SUCCESS + 1
+! >         endif
+! >         IF (returnStatus == PGS_S_SUCCESS) THEN 
+! >            inpt(i+1) = sval                     
+! >         ENDIF                                   
+! >       ENDDO
+      call InputInputPointer(inpt, &
+        & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
       ! returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
     else
@@ -1571,6 +1574,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.35  2003/01/30 01:01:05  pwagner
+! Lets PCFHdr prepare and write input pointer
+!
 ! Revision 2.34  2003/01/14 00:42:24  pwagner
 ! Creates soft link to type2precisionname, too
 !
