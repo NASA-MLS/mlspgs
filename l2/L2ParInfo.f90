@@ -24,7 +24,8 @@ module L2ParInfo
   public :: SIG_DirectWriteFinished, SIG_NewSetup, SIG_RunMAF, SIG_SendResults
   public :: NotifyTag, GetNiceTidString, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
-  public :: FinishedDirectWrite, MachineNameLen, MAFTAG, GetMachineNames
+  public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
+  public :: FWMSlaveGroup
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -39,7 +40,6 @@ module L2ParInfo
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
   integer, parameter :: NOTIFYTAG  = InfoTag + 1
-  integer, parameter :: MAFTAG     = NotifyTag + 1
 
   integer, parameter :: SIG_TOJOIN = 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
@@ -54,6 +54,8 @@ module L2ParInfo
 
   integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
 
+  ! Name of fwm slave group
+  character (len=*), parameter :: FWMSLAVEGROUP = "MLSL2FWMSlaves"
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
@@ -117,6 +119,11 @@ contains ! ==================================================================
       call PVMFSend ( parallel%masterTid, InfoTag, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending finish packet' )
+      if ( parallel%fwmParallel ) then
+        call PVMFJoinGroup ( FWMSlaveGroup, info )
+        if ( info <= 0 ) &
+          & call PVMErrorMessage ( info, 'Joining '//FWMSlaveGroup//' group' )
+      end if
     end if
   end subroutine InitParallel
 
@@ -385,6 +392,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.19  2002/10/06 22:22:47  livesey
+! Removed MAFTAG and MAF communication stuff
+!
 ! Revision 2.18  2002/10/06 01:10:17  livesey
 ! More progress on the fwmParallel stuff
 !
