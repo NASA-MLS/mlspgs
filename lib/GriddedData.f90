@@ -3,13 +3,13 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use MLSCommon, only: R4, R8, LINELEN, NAMELEN, RP
+  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN
+  ! r4 corresponds to sing. prec. :: same as stored in files
+  ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_DEALLOCATE
-  use Toggles, only: TOGGLE, GEN
   use Output_m, only: OUTPUT
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Trace_M, only: TRACE_BEGIN, TRACE_END
 
   implicit NONE
   private
@@ -23,8 +23,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   !-----------------------------------------------------------------------------
 
   public :: AddGriddedDataToDatabase, ConcatenateGriddedData, CopyGrid, &
-    & Dump, DestroyGriddedData, DestroyGriddedDataDatabase, GriddedData_T, &
-    & SetupNewGriddedData, NullifyGriddedData, WrapGriddedData, SliceGriddedData
+    & DestroyGriddedData, DestroyGriddedDataDatabase, Dump, GriddedData_T, &
+    & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
+    & WrapGriddedData
 
   logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
 
@@ -32,10 +33,6 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     module procedure DumpGriddedData
     module procedure DumpGriddedDatabase
   end interface
-
-  ! r4 corresponds to sing. prec. :: same as stored in files
-  ! (except for dao dimensions)
-  integer, public, parameter :: rgr = r4
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
@@ -228,6 +225,9 @@ contains
   subroutine DestroyGriddedDataDatabase ( Database )
   ! This subroutine destroys a quantity template database
 
+    use Toggles, only: TOGGLE, GEN
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+
     ! Dummy argument
     type (GriddedData_T), dimension(:), pointer :: Database
 
@@ -251,7 +251,7 @@ contains
 
   ! ----------------------------------------  DumpGriddedDatabase  -----
   subroutine DumpGriddedDatabase ( GriddedData, Details )
-    use Dump_0, only: Dump
+
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
 
@@ -930,6 +930,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.30  2003/05/19 19:37:41  vsnyder
+! Remove USE's for unreferenced names
+!
 ! Revision 2.29  2003/05/09 01:54:58  livesey
 ! Got SliceGriddedData working
 !
