@@ -2,20 +2,53 @@
 
 ;; This L2CF fragment is for use when we wish to setup an 'advanced'
 ;; linear forward model (one that is linearised about a different state
-;; from the one in the l2pc files) from a previous run of core.
+;; from the one in the l2pc files).
+
+;; This simply takes the current 'state' and produces a full forward
+;; model estimtate of bands 1, 22 and 32.
+
+;; Construct the measurement vector and a full forward model
 begin Construct
-  r1aYTemplate: VectorTemplate, quantities=[band1, band32]
+  r1aYTemplate: VectorTemplate, quantities=[band1, band22, band32]
+  r1aSetupModel: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT','R1A:118.B22D:PT','R1A:118.B32W:PT'], $
+    phiWindow=4.0 degrees, $
+    molecules=!moleculesForR1A, $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= -1K,$
+    /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
 end Construct
 
+;; Setup the vectors
 begin Fill
   r1aX: Vector, template=stateTemplate
   r1aY: Vector, template=r1aYTemplate
-  Transfer, source=stateCore, destination=r1aX
-  Fill, quantity=r1aY.band1, method=l2aux, sourceL2AUX=b1CoreInput
-  Fill, quantity=r1aY.band32, method=l2aux, sourceL2AUX=b32CoreInput
-
-  Fill, quantity=r1aY.band1, method=resetUnusedRadiances
-  Fill, quantity=r1aY.band32, method=resetUnusedRadiances
+  Transfer, source=state, destination=r1aX
+  ;; Zero out the baseline just to be sure (shouldn't matter)
+  Fill, quantity=r1aX.baselineR1A, method=explicit, explicitValues= 0K, /spread
 end Fill
+
+;; Do a sids calculation
+begin Retrieve
+  sids, fwdModelIn=state, fwdModelOut=r1aY, forwardModel=[r1aSetupModel]
+end Retrieve
+
+;; Now we construct the advanced linear models to use these
+begin Construct
+  !define(makeAdvancedL2PCModel,{!dnl
+  advancedL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
+    molecules=!moleculeFamilies(!radiometerForBand($1)), $
+    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
+    /atmos_der, /temp_der, /do_baseline, $
+    phiWindow=100 profiles, /lockBins, $
+    xStar=r1aX, yStar=r1aY!nl})
+
+  !makeAdvancedL2PCModel(1)
+  !makeAdvancedL2PCModel(22)
+  !makeAdvancedL2PCModel(32)
+end Construct
+
+
   
   
