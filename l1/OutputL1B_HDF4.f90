@@ -154,12 +154,12 @@ CONTAINS
        RETURN
     ENDIF 
 
-    sds52_id = sfcreate (sdId%RADFID, SDS51_NAME, DFNT_INT32, rank, &
+    sds52_id = sfcreate (sdId%RADGID, SDS51_NAME, DFNT_INT32, rank, &
       dimSize(2))
     dim_id = sfdimid (sds52_id, 0)
     status = sfsdmname (dim_id, DIM1_NAME)
     status = sfendacc (sds52_id)
-    sds_gird_id = sfcreate (sdId%RADFID, "MAFStartTimeGIRD", DFNT_FLOAT64, &
+    sds_gird_id = sfcreate (sdId%RADGID, "MAFStartTimeGIRD", DFNT_FLOAT64, &
          rank, dimSize(2))
     dim_id = sfdimid (sds_gird_id, 0) 
     status = sfsdmname (dim_id, DIM1_NAME)
@@ -195,17 +195,17 @@ CONTAINS
     status = sfendacc (sds_gird_id)
 
     ! Reflector temperatures
-    sds_reflec_id = sfcreate (sdId%RADFID, "Pri_Reflec", DFNT_FLOAT32, &
+    sds_reflec_id = sfcreate (sdId%RADGID, "Pri_Reflec", DFNT_FLOAT32, &
          rank, dimSize(2))
     dim_id = sfdimid (sds_reflec_id, 0) 
     status = sfsdmname (dim_id, DIM1_NAME)
     status = sfendacc (sds_reflec_id)
-    sds_reflec_id = sfcreate (sdId%RADFID, "Sec_Reflec", DFNT_FLOAT32, &
+    sds_reflec_id = sfcreate (sdId%RADGID, "Sec_Reflec", DFNT_FLOAT32, &
          rank, dimSize(2))
     dim_id = sfdimid (sds_reflec_id, 0) 
     status = sfsdmname (dim_id, DIM1_NAME)
     status = sfendacc (sds_reflec_id)
-    sds_reflec_id = sfcreate (sdId%RADFID, "Ter_Reflec", DFNT_FLOAT32, &
+    sds_reflec_id = sfcreate (sdId%RADGID, "Ter_Reflec", DFNT_FLOAT32, &
          rank, dimSize(2))
     dim_id = sfdimid (sds_reflec_id, 0) 
     status = sfsdmname (dim_id, DIM1_NAME)
@@ -1291,13 +1291,13 @@ CONTAINS
     stride = 1
     edge(3) = 1
 
-    ! Find the sds_id number for counterMAF in the file RADF, write the data to
+    ! Find the sds_id number for counterMAF in the file RADG, write the data to
     ! it, terminate access to the data set
     name = 'counterMAF'
 
-    IF (sdId%RADFID /= 0) THEN
-       sds_index = sfn2index (sdId%RADFID, name)
-       sds1_id = sfselect (sdId%RADFID, sds_index)
+    IF (sdId%RADGID /= 0) THEN
+       sds_index = sfn2index (sdId%RADGID, name)
+       sds1_id = sfselect (sdId%RADGID, sds_index)
        status = sfwdata (sds1_id, start(3), stride(3), edge(3), counterMAF)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1324,13 +1324,13 @@ CONTAINS
             'Error writing counterMAF to rad T file')
     ENDIF
 
-    ! Find the sds_id number for MAFStartTimeGIRD in the file RADF, write the
+    ! Find the sds_id number for MAFStartTimeGIRD in the file RADG, write the
     ! data to it, terminate access to the data set
     name = 'MAFStartTimeGIRD'
 
-    IF (sdId%RADFID /= 0) THEN
-       sds_index = sfn2index (sdId%RADFID, name)
-       sds1_id = sfselect (sdId%RADFID, sds_index)
+    IF (sdId%RADGID /= 0) THEN
+       sds_index = sfn2index (sdId%RADGID, name)
+       sds1_id = sfselect (sdId%RADGID, sds_index)
        status = sfwdata (sds1_id, start(3), stride(3), edge(3), &
             MAFStartTimeGIRD)
        status = sfendacc (sds1_id)
@@ -1363,9 +1363,9 @@ CONTAINS
 ! Reflector temps:
 
     name = 'Pri_Reflec'
-    IF (sdId%RADFID /= 0) THEN
-       sds_index = sfn2index (sdId%RADFID, name)
-       sds1_id = sfselect (sdId%RADFID, sds_index)
+    IF (sdId%RADGID /= 0) THEN
+       sds_index = sfn2index (sdId%RADGID, name)
+       sds1_id = sfselect (sdId%RADGID, sds_index)
        status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Pri)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1382,9 +1382,9 @@ CONTAINS
     ENDIF
 
     name = 'Sec_Reflec'
-    IF (sdId%RADFID /= 0) THEN
-       sds_index = sfn2index (sdId%RADFID, name)
-       sds1_id = sfselect (sdId%RADFID, sds_index)
+    IF (sdId%RADGID /= 0) THEN
+       sds_index = sfn2index (sdId%RADGID, name)
+       sds1_id = sfselect (sdId%RADGID, sds_index)
        status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Sec)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1401,9 +1401,9 @@ CONTAINS
     ENDIF
 
     name = 'Ter_Reflec'
-    IF (sdId%RADFID /= 0) THEN
-       sds_index = sfn2index (sdId%RADFID, name)
-       sds1_id = sfselect (sdId%RADFID, sds_index)
+    IF (sdId%RADGID /= 0) THEN
+       sds_index = sfn2index (sdId%RADGID, name)
+       sds1_id = sfselect (sdId%RADGID, sds_index)
        status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Ter)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1434,17 +1434,17 @@ CONTAINS
       ! Based on the SD name, set dim name for channel, get Id of output file
       IF (INDEX(name,'FB') /= 0 ) THEN
          dim_chan = DIM7_NAME
-         IF (sdId%RADFID /= 0) THEN
-            sd_id = sdId%RADFID
+         IF (sdId%RADGID /= 0) THEN
+            sd_id = sdId%RADGID
          ELSE
             sd_id = sdId%RADTID
          ENDIF
       ELSE IF (INDEX(name,'MB') /= 0 ) THEN
          dim_chan = DIM8_NAME
-         sd_id = sdId%RADFID
+         sd_id = sdId%RADGID
       ELSE IF (INDEX(name,'WF') /= 0 ) THEN
          dim_chan = DIM9_NAME
-         sd_id = sdId%RADFID
+         sd_id = sdId%RADGID
       ELSE IF (INDEX(name,'DACS') /= 0 ) THEN
          dim_chan = DIM10_NAME
          sd_id = sdId%RADDID
@@ -1536,6 +1536,9 @@ CONTAINS
 END MODULE OutputL1B_HDF4
 
 ! $Log$
+! Revision 2.4  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.3  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

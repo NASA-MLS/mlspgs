@@ -48,7 +48,7 @@ CONTAINS
 !=============================================================================
 
     USE EngUtils, ONLY: NextEngMAF
-    USE EngTbls, ONLY: EngMAF
+    USE EngTbls, ONLY: EngMAF, EngPkt
 
     LOGICAL :: first = .TRUE.
     LOGICAL :: more_data = .TRUE.
@@ -85,7 +85,7 @@ CONTAINS
 
 ! Save data for further processing:
 
-       WRITE (L1BFileInfo%EngMAF_unit) EngMAF
+       WRITE (L1BFileInfo%EngMAF_unit) EngMAF, EngPkt
 
 ! Check for data gaps:
 
@@ -307,6 +307,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.3  2003/09/02 17:10:52  perun
 ! Change examine eng data exit condition
 !
