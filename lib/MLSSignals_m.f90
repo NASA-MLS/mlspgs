@@ -170,6 +170,7 @@ contains
     integer, parameter :: WrongUnits = badMix + 1 ! Field has wrong units
 
     error = 0
+    timing = .false.
     if ( toggle(gen) ) call trace_begin ( "MLSSignals", root )
     do i = 2, nsons(root)-1 ! skip "MLSSignals" at "begin" and "end"
       son = subtree(i,root) ! A spec_args vertex now
@@ -1122,6 +1123,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.31  2001/04/23 23:12:45  vsnyder
+! Finish adding 'time' command
+!
 ! Revision 2.30  2001/04/23 23:10:37  vsnyder
 ! Add 'time' command
 !
