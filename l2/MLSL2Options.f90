@@ -67,12 +67,22 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! when set lower, the program would quit even on warnings
    integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
 
+   ! Set the following to 2 before delivering to sips;
+   ! If 0, program simply stops both upon normal termination
+   ! as well as some abnormal ones (e.g. in parser)
+   ! if 2, status will be 2 only if run complete
+   ! and without error
+   integer, parameter :: NORMAL_EXIT_STATUS = 0
+
 !=============================================================================
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.10  2001/07/16 23:43:15  pwagner
+! With settable NORMAL_EXIT_STATUS
+!
 ! Revision 2.9  2001/05/30 22:56:48  pwagner
 ! Moved PCFL2CFSAMECASE here from OutputAndClose
 !
