@@ -740,6 +740,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
+             begin, f+f_average, s+s_matrix, n+n_field_spec, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
@@ -764,7 +765,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
@@ -882,6 +884,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.212  2002/04/22 20:55:00  vsnyder
+! Compute and output the averaging kernel
+!
 ! Revision 2.211  2002/04/18 18:40:17  pwagner
 ! Can fill h2o from an rhiQuantity
 !
