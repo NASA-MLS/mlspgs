@@ -85,7 +85,7 @@ contains
     use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, &
       & DRAD_TRAN_DX
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
-    use ScatSourceFunc, only: T_SCAT             !JJ
+    use ScatSourceFunc, only: T_SCAT,  Interp_Tscat,  Convert_Grid         !JJ
     use SpectroscopyCatalog_m, only: CATALOG_T
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
     use String_table, only: GET_STRING ! Used in include dump_print_code.f9h
@@ -93,7 +93,7 @@ contains
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
-    use Units, only: Deg2Rad, SpeedOfLight
+    use Units, only: Deg2Rad, SpeedOfLight, Pi
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
 
     type(forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -104,13 +104,14 @@ contains
     type(matrix_T), intent(inout), optional :: Jacobian
 
     !--------------------------------------------
-    real(r8), dimension(:,:), pointer :: WC   !JJ
+    real(r8), dimension(:,:), pointer :: WC       !JJ
+    real(r8), dimension(:), pointer :: Scat_ang   !JJ
     integer, dimension(:), pointer :: IPSD
     !--------------------------------------------
 
     ! Define local parameters
     real(rp), parameter :: DEL_TEMP = 10.0_rp ! Temp. step size for derivatives
-    integer, parameter :: Ngp1 = Ng+1     ! NG + 1
+    integer, parameter :: Ngp1 = Ng+1         ! NG + 1
 
     ! Now define local variables, group by type and then
     ! alphabetically
@@ -183,6 +184,7 @@ contains
 
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Update                   ! Just update radiances etc.
+    logical :: cld_fine = .false.
 
     character (len=32) :: SigName       ! Name of a Signal
     character (len=32) :: molName       ! Name of a molecule  !JJ
@@ -215,16 +217,19 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_IWC   ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_Tscat ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_Salb  ! 'Avoid zeros' indicator  !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_cext  ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_HYD_C ! DO_CALC_HYD on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_T_C   ! DO_CALC_T on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T_F   ! DO_CALC_T on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP! 'Avoid zeros' indicator  !JJ
-    logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP! 'Avoid zeros' indicator  !JJ
-    logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP! 'Avoid zeros' indicator  !JJ
-    logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )  !                          !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP! 'Avoid zeros' indicator     !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP ! 'Avoid zeros' indicator  !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP  ! 'Avoid zeros' indicator  !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_Cext_ZP  ! 'Avoid zeros' indicator  !JJ
+
+    logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )  !                             !JJ
     LOGICAL, DIMENSION(:), pointer :: true_path_flags ! array of trues
     LOGICAL, DIMENSION(:), pointer :: t_der_path_flags! a flag that tells the
 ! where an absorption coefficient is needed for a temperature derivative.
@@ -300,8 +305,7 @@ contains
     real(rp), dimension(:), pointer :: Z_PATH       ! Zeta on path
 
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
-    real(rp), dimension(:,:), pointer :: BETA_PATH_PHH_C   ! Scattering phase function !JJ 
-    real(rp), dimension(:),   pointer :: BETA_PATH_W0_C    ! Single scattering albedo
+    real(rp), dimension(:),   pointer :: W0_PATH_C    ! Single scattering albedo
     real(r8), dimension(:,:), pointer :: VMRARRAY          ! The VMRs !JJ  
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
     real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
@@ -333,6 +337,8 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_Tscat_ZP   ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Salb      ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Salb_ZP   ! JJ
+    real(rp), dimension(:,:), pointer :: ETA_Cext      ! JJ
+    real(rp), dimension(:,:), pointer :: ETA_Cext_ZP   ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Mag_ZP   ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZP       ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN_C ! ETA_ZXP_DN on coarse grid
@@ -349,8 +355,10 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T_F  ! ETA_ZXP_T on fine grid
     real(rp), dimension(:,:), pointer :: H_GLGRID     ! H on glGrid surfs
     real(rp), dimension(:,:), pointer :: IWC_PATH     ! IWC on path   !JJ
-    real(rp), dimension(:,:), pointer :: Tscat_PATH     ! TScat on path   !JJ
-    real(rp), dimension(:,:), pointer :: Salb_PATH     ! Single Scattering Albedo on path   !JJ
+    real(rp), dimension(:,:), pointer :: Tscat_PATH   ! TScat on path   !JJ
+    real(rp), dimension(:,:), pointer :: TT_PATH      ! TScat on path along the LOS   !JJ
+    real(rp), dimension(:,:), pointer :: Salb_PATH    ! Single Scattering Albedo on path   !JJ
+    real(rp), dimension(:,:), pointer :: Cext_PATH    ! Cloud extinction on path   !JJ
     real(rp), dimension(:,:), pointer :: K_ATMOS_FRQ  ! dI/dVMR, frq X vmr
     real(rp), dimension(:,:), pointer :: K_SPECT_DN_FRQ ! ****
     real(rp), dimension(:,:), pointer :: K_SPECT_DV_FRQ ! ****
@@ -448,6 +456,7 @@ contains
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_Tscat ! All the coordinates for scaterring source function !JJ
     type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo !JJ
+    type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction !JJ
 
 !   Extra DEBUG for Nathaniel and Bill
 !   real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
@@ -476,6 +485,7 @@ contains
 ! scatering source function for each temperature surface
     type (VectorValue_T) :: scat_src     !JJ
     type (VectorValue_T) :: scat_alb     !JJ
+    type (VectorValue_T) :: cld_ext     !JJ
 
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
@@ -497,7 +507,7 @@ contains
 
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
-      & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
+      & w0_path_c, beta_path_f, beta_path_polarized, &
       & c_inds, cg_inds, channelOrigins, closestInstances, &
       & d_rad_pol_df, d_rad_pol_dt, d_delta_df, d_delta_dt, d_t_scr_dt, &
       & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
@@ -511,11 +521,11 @@ contains
       & do_calc_dw, do_calc_dw_c, do_calc_dw_f, &
       & do_calc_fzp, do_calc_iwc, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
-      & do_calc_tscat, do_calc_tscat_zp, do_calc_Salb, do_calc_Salb_zp, &
+      & do_calc_tscat, do_calc_tscat_zp, do_calc_Salb, do_calc_Salb_zp,  do_calc_Cext, do_calc_Cext_zp, &
       & do_calc_zp, do_calc_iwc_zp, do_gl, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dsdz_gw_path, dx_dh_out, dx_dt, &
       & dxdt_surface, dxdt_tan, eta_fzp, eta_iwc, &
-      & eta_tscat, eta_tscat_zp, eta_salb, eta_salb_zp,  &
+      & eta_tscat, eta_tscat_zp, eta_salb, eta_salb_zp, eta_cext, eta_cext_zp,  &
       & eta_zp, eta_iwc_zp, eta_mag_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
@@ -527,12 +537,12 @@ contains
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
       & k_temp_frq, mag_path, mol_cat_index, n_path, path_dsdh, &
       & p_path, p_path_c, phi_path, prod_pol, ptg_angles, &
-      & radiances, RadV, ref_corr, req_out, scat_src%values, scat_alb%values,  &
-      & sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, &
+      & radiances, RadV, ref_corr, req_out, scat_src%values, scat_alb%values, cld_ext%values, &
+      & scat_ang, sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, &
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, &
       & tan_phi, tan_temp, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
-      & tscat_path,  salb_path, t_script, t_der_path_flags, true_path_flags, &
+      & tscat_path,  tt_path, salb_path, cext_path, t_script, t_der_path_flags, true_path_flags, &
       & usedchannels, usedsignals, vmr, vmrarray, wc, z_path )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -692,6 +702,7 @@ contains
       & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
 
       call allocate_test ( scat_alb%values, n_t_zeta, 1, 'scat_alb', moduleName )
+      call allocate_test ( cld_ext%values, n_t_zeta, 1, 'cld_ext', moduleName )
 
       if ( size(FwdModelConf%molecules) .lt. 2 ) then
          !   make sure we have enough molecules
@@ -908,7 +919,7 @@ contains
     call allocate_test ( alpha_path_c,        npc, 'alpha_path_c',     moduleName )
     call allocate_test ( alpha_path_f,    max_ele, 'alpha_path_f',     moduleName )
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c', moduleName ) !JJ
-    call allocate_test ( beta_path_w0_c,      npc, 'beta_path_w0_c',   moduleName ) !JJ
+    call allocate_test ( w0_path_c,      npc, 'w0_path_c',   moduleName ) !JJ
     call allocate_test ( c_inds,              npc, 'c_inds',           moduleName )
     call allocate_test ( cg_inds,             npc, 'cg_inds',          moduleName )
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
@@ -943,7 +954,6 @@ contains
     call allocate_test ( z_path,          max_ele, 'z_path',           moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
-    call allocate_test ( beta_path_phh_c,  npc, fwdModelConf%num_scattering_angles,     'beta_path_phh_c', moduleName ) !JJ
     call allocate_test ( beta_path_f,   max_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   max_ele, size(grids_f%values),  'do_calc_fzp',   moduleName )
     call allocate_test ( do_calc_zp,    max_ele, grids_f%p_len,  'do_calc_zp',     moduleName )
@@ -1608,6 +1618,7 @@ contains
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
+            call allocate_test ( Scat_ang, fwdModelConf%num_scattering_angles, 'Scat_ang', moduleName )
 
             call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst), &
             & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
@@ -1615,28 +1626,24 @@ contains
             & fwdModelConf%num_azimuth_angles,                          &
             & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
             & fwdModelConf%no_cloud_species,                            &
-            & scat_src%values, scat_alb%values )
+            & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang)
 
             call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
 
             scat_src%template = temp%template
             scat_alb%template = temp%template
+            cld_ext%template = temp%template
 
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
-            call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
 
-
-            call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values), 'do_calc_tscat', moduleName )
-            call allocate_test ( eta_tscat,     max_ele, size(grids_tscat%values), 'eta_tscat',     moduleName )
-            call allocate_test ( eta_tscat_zp,  max_ele, grids_tscat%p_len,  'eta_tscat_zp',    moduleName )
+            call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values),              &
+                               & 'do_calc_tscat', moduleName )
+            call allocate_test ( eta_tscat,     max_ele, size(grids_tscat%values),              &
+                               & 'eta_tscat',     moduleName )
+            call allocate_test ( eta_tscat_zp,  max_ele, grids_tscat%p_len,                     &
+                               & 'eta_tscat_zp',  moduleName )
             call allocate_test ( tscat_path,    max_ele, fwdModelConf%num_scattering_angles, &
-                                 & 'tscat_path', moduleName )            
-
-            call allocate_test ( do_calc_salb, max_ele, size(grids_salb%values), 'do_calc_salb', moduleName )
-            call allocate_test ( eta_salb,     max_ele, size(grids_salb%values), 'eta_salb',     moduleName )
-            call allocate_test ( eta_salb_zp,  max_ele, grids_salb%p_len,  'eta_salb_zp',    moduleName )
-            call allocate_test ( salb_path,    max_ele, fwdModelConf%num_scattering_angles, &
-                                 & 'salb_path', moduleName )            
+                                 & 'tscat_path',  moduleName )            
 
             call comp_eta_docalc_no_frq ( Grids_Tscat, z_path(1:no_ele), &
               &  phi_path(1:no_ele), eta_tscat_zp(1:no_ele,:), &
@@ -1648,7 +1655,24 @@ contains
               & do_calc_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
               & do_calc_tscat(1:no_ele,:), eta_tscat(1:no_ele,:) )
 
-!            call interp_tscat (tscat_path(1:no_ele,:), phi_path(1:no_ele), tt_path )
+            call allocate_test ( tt_path, max_ele, 1, 'tt_path', moduleName )            
+
+            call interp_tscat ( tscat_path(1:no_ele,:), Scat_ang(:), phi_path(1:no_ele), tt_path )
+
+            if ( .not. cld_fine ) then                 ! project onto LOS
+
+            call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
+            call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false. )
+
+            call allocate_test (do_calc_salb,max_ele,size(grids_salb%values),'do_calc_salb',moduleName)
+            call allocate_test (eta_salb, max_ele, size(grids_salb%values), 'eta_salb', moduleName)
+            call allocate_test (eta_salb_zp,  max_ele, grids_salb%p_len, 'eta_salb_zp', moduleName)
+            call allocate_test ( salb_path,    max_ele, 1, 'salb_path', moduleName )            
+
+            call allocate_test (do_calc_cext,max_ele,size(grids_cext%values),'do_calc_cext',moduleName)
+            call allocate_test (eta_cext, max_ele, size(grids_cext%values), 'eta_cext', moduleName)
+            call allocate_test (eta_cext_zp, max_ele, grids_cext%p_len,  'eta_cext_zp', moduleName)
+            call allocate_test (cext_path,  max_ele, 1, 'cext_path', moduleName)            
 
             call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:no_ele), &
               &  phi_path(1:no_ele), eta_salb_zp(1:no_ele,:), &
@@ -1660,25 +1684,42 @@ contains
               & do_calc_zp(1:no_ele,:), salb_path(1:no_ele,:),      &
               & do_calc_salb(1:no_ele,:), eta_salb(1:no_ele,:) )
 
-            !! Jonathan's construction zone
-!!            call get_beta_path_cloud ( Frq,                              &
-!!              &  p_path(1:no_ele), t_path(1:no_ele),                     &  
-!!              &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),    &
-!!              &  beta_path_w0_c(1:npc), beta_path_phh_c(1:npc,:),        &
-!!              &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf ) 
+            call comp_eta_docalc_no_frq ( Grids_cext, z_path(1:no_ele), &
+              &  phi_path(1:no_ele), eta_cext_zp(1:no_ele,:), &
+              &  do_calc_cext_zp(1:no_ele,:) )
 
-!!            do j = 1, npc ! Don't trust compilers to fuse loops
-!!              alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
-!!                                    & beta_path_c(j,:) ) + &
-!!                                    & beta_path_cloud_c(j)
-!!
-!!              incoptdepth(j) = alpha_path_c(j) * del_s(j)
-!!            end do
+            Frq=0.0
+            call comp_sps_path_frq ( Grids_cext, firstSignal%lo, thisSideband, &
+              & Frq, eta_zp(1:no_ele,:), &
+              & do_calc_zp(1:no_ele,:), cext_path(1:no_ele,:),      &
+              & do_calc_cext(1:no_ele,:), eta_cext(1:no_ele,:) )
+
+            call convert_grid ( salb_path(1:no_ele,:), cext_path(1:no_ele,:),   &
+                              & c_inds(1:npc), beta_path_cloud_c(1:npc),        &
+                              & w0_path_c(1:npc) )
+           
+            else                                  ! re-compute cext and w0 alone LOS
+            
+            call get_beta_path_cloud ( Frq,                              &
+              &  p_path(1:no_ele), t_path(1:no_ele),                     &  
+              &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),    &
+              &  w0_path_c(1:npc),        &
+              &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf ) 
+
+            endif
+
+            do j = 1, npc 
+              alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
+                                    & beta_path_c(j,:) ) + &
+                                    & beta_path_cloud_c(j)
+
+              incoptdepth(j) = alpha_path_c(j) * del_s(j)
+            end do
 
             ! Determine where to use Gauss-Legendre instead of a trapezoid.
 
-!!            call path_contrib ( incoptdepth(1:npc), e_rflty, &
-!!              & fwdModelConf%tolerance, do_gl(1:npc) )
+            call path_contrib ( incoptdepth(1:npc), e_rflty, &
+              & fwdModelConf%tolerance, do_gl(1:npc) )
 
           else ! Not cloud model
 
@@ -2436,6 +2477,7 @@ contains
     deallocate ( mol_cat_index, stat=j )
 
     call Deallocate_Test ( WC, 'WC', moduleName )        !JJ
+    call Deallocate_Test ( Scat_ang, 'Scat_ang', moduleName )        !JJ
     call Deallocate_Test ( IPSD, 'IPSD', moduleName )
 
     call deallocate_test ( usedChannels, 'usedChannels', moduleName )
@@ -2470,6 +2512,7 @@ contains
     call destroygrids_t ( grids_tmp )
     call destroygrids_t ( grids_tscat )        !JJ
     call destroygrids_t ( grids_salb )        !JJ
+    call destroygrids_t ( grids_cext )        !JJ
 
     call deallocate_test ( dhdz_path,    'dhdz_path',    moduleName )
     call deallocate_test ( dhdz_gw_path, 'dhdz_gw_path', moduleName )
@@ -2488,9 +2531,8 @@ contains
     call deallocate_test ( alpha_path_c,     'alpha_path_c',     moduleName )
     call deallocate_test ( alpha_path_f,     'alpha_path_f',     moduleName )
     call deallocate_test ( beta_path_c,      'beta_path_c',      moduleName )
-    call deallocate_test ( beta_path_cloud_c, 'beta_path_cloud_c', moduleName ) ! JJ
-    call deallocate_test ( beta_path_phh_c,  'beta_path_phh_c',  moduleName )   
-    call deallocate_test ( beta_path_w0_c,   'beta_path_w0_c',   moduleName )   
+    call deallocate_test ( beta_path_cloud_c,'beta_path_cloud_c',moduleName ) ! JJ
+    call deallocate_test ( w0_path_c,   'w0_path_c',   moduleName )   
     call deallocate_test ( c_inds,           'c_inds',           moduleName )
     call deallocate_test ( cg_inds,          'cg_inds',          moduleName )
     call deallocate_test ( del_s,            'del_s',            moduleName )
@@ -2507,30 +2549,36 @@ contains
     call deallocate_test ( tanh1_f,          'tanh1_f',          moduleName )
     call deallocate_test ( t_script,         't_script',         moduleName )
 
-    call deallocate_test ( beta_path_f,   'beta_path_f',   moduleName )
-    call deallocate_test ( do_calc_fzp,   'do_calc_fzp',   moduleName )
-    call deallocate_test ( do_calc_iwc,   'do_calc_iwc',   moduleName ) ! JJ
-    call deallocate_test ( do_calc_iwc_zp,'do_calc_iwc_zp',moduleName )
+    call deallocate_test ( beta_path_f,   'beta_path_f',       moduleName )
+    call deallocate_test ( do_calc_fzp,   'do_calc_fzp',       moduleName )
+    call deallocate_test ( do_calc_iwc,   'do_calc_iwc',       moduleName ) ! JJ
+    call deallocate_test ( do_calc_iwc_zp,'do_calc_iwc_zp',    moduleName )
     call deallocate_test ( do_calc_tscat,   'do_calc_tscat',   moduleName ) ! JJ
     call deallocate_test ( do_calc_tscat_zp,'do_calc_tscat_zp',moduleName )
-    call deallocate_test ( do_calc_salb,   'do_calc_salb',   moduleName ) ! JJ
-    call deallocate_test ( do_calc_salb_zp,'do_calc_salb_zp',moduleName )
-    call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
-    call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
-    call deallocate_test ( eta_iwc,       'eta_iwc',       moduleName ) 
-    call deallocate_test ( eta_iwc_zp,    'eta_iwc_zp',    moduleName ) 
+    call deallocate_test ( do_calc_salb,   'do_calc_salb',     moduleName ) ! JJ
+    call deallocate_test ( do_calc_salb_zp,'do_calc_salb_zp',  moduleName )
+    call deallocate_test ( do_calc_cext,   'do_calc_salb',     moduleName ) ! JJ
+    call deallocate_test ( do_calc_cext_zp,'do_calc_salb_zp',  moduleName )
+    call deallocate_test ( do_calc_zp,    'do_calc_zp',        moduleName )
+    call deallocate_test ( eta_fzp,       'eta_fzp',           moduleName )
+    call deallocate_test ( eta_iwc,       'eta_iwc',           moduleName ) 
+    call deallocate_test ( eta_iwc_zp,    'eta_iwc_zp',        moduleName ) 
     call deallocate_test ( eta_tscat,       'eta_tscat',       moduleName ) !JJ
     call deallocate_test ( eta_tscat_zp,    'eta_tscat_zp',    moduleName )
-    call deallocate_test ( eta_salb,       'eta_salb',       moduleName ) 
-    call deallocate_test ( eta_salb_zp,    'eta_salb_zp',    moduleName ) 
-    call deallocate_test ( eta_mag_zp,    'eta_mag_zp',    moduleName )
-    call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
-    call deallocate_test ( iwc_path,      'iwc_path',      moduleName )     !JJ
-    call deallocate_test ( tscat_path,      'tscat_path',      moduleName )
-    call deallocate_test ( salb_path,      'salb_path',      moduleName )
-    call deallocate_test ( mag_path,      'mag_path',      moduleName )
-    call deallocate_test ( sps_path,      'sps_path',      moduleName )
-    call deallocate_test ( true_path_flags,'true_path_flags',moduleName )
+    call deallocate_test ( eta_salb,       'eta_salb',         moduleName ) 
+    call deallocate_test ( eta_salb_zp,    'eta_salb_zp',      moduleName )
+     call deallocate_test ( eta_cext,       'eta_cext',         moduleName ) 
+    call deallocate_test ( eta_cext_zp,    'eta_cext_zp',      moduleName )
+    call deallocate_test ( eta_mag_zp,    'eta_mag_zp',        moduleName )
+    call deallocate_test ( eta_zp,        'eta_zp',            moduleName )
+    call deallocate_test ( iwc_path,      'iwc_path',          moduleName )     !JJ
+    call deallocate_test ( tscat_path,    'tscat_path',        moduleName )
+    call deallocate_test ( tt_path,       'tt_path',           moduleName )
+    call deallocate_test ( salb_path,      'salb_path',        moduleName )
+    call deallocate_test ( cext_path,      'cext_path',        moduleName )
+    call deallocate_test ( mag_path,      'mag_path',          moduleName )
+    call deallocate_test ( sps_path,      'sps_path',          moduleName )
+    call deallocate_test ( true_path_flags,'true_path_flags',  moduleName )
 
     call deallocate_test ( tan_chi_out, 'tan_chi_out', moduleName )
     call deallocate_test ( dx_dh_out,   'dx_dh_out',   moduleName )
@@ -2542,6 +2590,10 @@ contains
 
     if ( FwdModelConf%incl_cld ) &
       & call deallocate_test ( scat_alb%values, 'scat_alb%values', &
+        &                      moduleName )
+
+    if ( FwdModelConf%incl_cld ) &
+      & call deallocate_test ( cld_ext%values, 'cld_ext%values', &
         &                      moduleName )
 
     if ( temp_der ) then
@@ -2834,6 +2886,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.188  2003/12/01 17:24:05  jonathan
+! add scat_alb
+!
 ! Revision 2.187  2003/11/24 22:10:14  vsnyder
 ! Multiply beta_path_polarized_f by tanh1_f if derivatives needed
 !
