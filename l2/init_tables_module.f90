@@ -361,7 +361,8 @@ contains ! =====     Public procedures     =============================
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
-             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
+             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
+             l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
@@ -624,6 +625,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_internalVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_intrinsic, t+t_boolean, n+n_field_type, &
@@ -1008,6 +1010,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.300  2003/04/11 21:56:51  livesey
+! Added wmo tropopause
+!
 ! Revision 2.299  2003/04/10 20:24:05  dwu
 ! add l_none in cloud_der
 !
