@@ -245,7 +245,7 @@ Character (LEN=80) :: Fnd, Line
 
   r = (zn - z0)/ (mnz - 1)
 
-  j = k + si
+  j = k + si - 1
   DEALLOCATE(FMI%z_grid,FMI%tan_press,STAT=i)
   ALLOCATE(FMI%z_grid(j),FMI%tan_press(j),STAT=i)
   if(i /= 0) goto 99
@@ -266,7 +266,6 @@ Character (LEN=80) :: Fnd, Line
     j = FMC%t_indx(i)
     FMI%tan_press(kz) = FMI%z_grid(j)
   end do
-  FMI%no_ptg_frq(1) = kz
 !
   j = 2**FMI%fft_pts
   DEALLOCATE(FMI%AAAP,FMI%D1AAAP,FMI%D2AAAP,STAT=i)
@@ -980,6 +979,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.7  2001/03/09 00:40:32  zvi
+! Correcting an error in HUNT routine
+!
 ! Revision 1.6  2001/03/08 22:01:11  vsnyder
 ! Make sure 'line' has a value, in case of an error
 !

@@ -24,7 +24,7 @@ Integer(i4), INTENT(OUT) :: ier
 !
 ! ---- Local variables ---------
 !
-Integer(i4) :: i, k, kk, kz, jp, io, l
+Integer(i4) :: i, k, kk, jp, io, l
 
 Real(r8) :: dummy(N2lvl)
 
@@ -40,7 +40,6 @@ Character (LEN=80) :: Fnd, Line
   Fnd = FMC%B
 !
   kk = -1
-  kz = FMI%no_ptg_frq(1)
   FMI%no_ptg_frq(1:Nptg) = 0
 !
   CLOSE(32,iostat=i)
@@ -60,7 +59,7 @@ Character (LEN=80) :: Fnd, Line
     if(io /= 0) EXIT
 
     k = -1
-    Call Hunt(r,FMI%tan_press,kz,k,i)
+    Call Hunt(r,FMI%tan_press,size(FMI%tan_press),k,i)
     IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
 !
     if(ABS(r-FMI%tan_press(k)) > 0.001) then
@@ -149,6 +148,9 @@ Character (LEN=80) :: Fnd, Line
 
 end module PTG_FRQ_LOAD_M
 ! $Log$
+! Revision 1.3  2001/03/09 00:51:28  zvi
+! Fixed ier not set in ptg_frq_load
+!
 ! Revision 1.2  2001/03/09 00:40:32  zvi
 ! Correcting an error in HUNT routine
 !
