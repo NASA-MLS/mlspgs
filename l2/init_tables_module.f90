@@ -573,8 +573,9 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
-             l+l_extinction, l+l_gph, l+l_losVel, l+l_orbitIncline, l+l_ptan,&
-             l+l_radiance, l+l_refGPH, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
+             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_losVel, &
+             l+l_orbitIncline, l+l_ptan, l+l_radiance, l+l_refGPH, &
+             l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -759,6 +760,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
@@ -881,6 +883,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.92  2001/05/03 23:03:19  livesey
+! Added stuff to support scan model.
+!
 ! Revision 2.91  2001/05/02 20:29:14  livesey
 ! Removed f_frequency from forwardModel
 !
