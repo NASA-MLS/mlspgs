@@ -4515,6 +4515,9 @@ contains ! =====     Public Procedures     =============================
       integer, intent(inout) :: ERRORCODE
 
       ! Executable code
+      errorCode = 0
+      ! Should check maybe that the following reshape will work
+      ! otherwise return informative errorcode
       qty%values = reshape ( l2aux%values ( :, :,  &
         & qty%template%mafIndex(1)+1 : &
         & qty%template%mafIndex(qty%template%noInstances)+1 ), &
@@ -5507,6 +5510,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.206  2003/04/30 22:07:14  pwagner
+! Always sets errorCode to 0 in return from FillVectorQuantityFromL2AUX
+!
 ! Revision 2.205  2003/04/24 22:17:02  dwu
 ! remove dump statement in fill binMinMax
 !
