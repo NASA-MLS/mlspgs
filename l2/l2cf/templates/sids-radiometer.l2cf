@@ -1,0 +1,165 @@
+; This template l2cf performs a sids calculation for one band or
+; sideband, defined by the macro band, for the day defined by the
+; macro day.
+
+; First some m4 directives
+include(m4defs.l2cf)
+
+; Get a default for date and band if not already supplied
+!ifdef(day,{},{!define(day,{1996d051})})
+!ifdef(radiometer,{},{!define(band,{R1A})})
+!ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
+!ifdef(l1bradversion,{},{!define(l1bradversion,{s5-f6--t})})
+
+; Now define our directories
+!define(inpathl1boa,{/data/emls/l1boa/!l1boaversion/!year(!day)/})
+!define(outpathl1brad,{/bigdata/livesey/misc})
+!include(clarifypaths.l2cf)
+
+; Work out what bands we want
+!ifelse(!radiometer,R1A,{!define(bands,{1,22,32})})
+!ifelse(!radiometer,R1B,{!define(bands,{21,26,34})})
+!ifelse(!radiometer,R2,{!define(bands,{2,3,4,5,6,23,27})})
+!ifelse(!radiometer,R3,{!define(bands,{7,8,9,24,25,33})})
+!ifelse(!radiometer,R4,{!define(bands,{10,11,12,13,14,28,29,30,31})})
+!ifelse(!radiometer,R5H,{!define(bands,{15,16,17})})
+!ifelse(!radiometer,R5V,{!define(bands,{18,19,20})})
+
+; ----------------------------------- Boiler plate l2cf stuff -------
+
+; Valid signals database
+!include(!signalsL2cf)
+!define(signals,{!makelist({!sigBand},{},!bands)})
+
+; Spectroscopy and molecule/isotope information
+!include(!spectroscopyL2cf)
+
+; Sideband ratio information
+!include(!sidebandL2cf)
+
+; System temperature information
+!include(!systempL2cf)
+
+; Noise bandwidth information
+!include(!nbwL2cf)
+
+; Now include some minor calibration parameters
+!include(lesserparams.l2cf)
+
+; Now read the l2gp files for each species
+!include(readtruthl2gpfiles.l2cf)
+
+; -------------------------------------------- Global settings ------
+begin GlobalSettings
+
+  ;; Setup the stuff for reading and dealing with l1b files
+  l1boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
+  startTime = '!year(!day)-!doy(!day)T00:00:00.0000'
+  endTime = '!year(!day)-!doy(!day)T23:59:59.9999'
+  leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+
+  ;; Setup our vertical grids
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100 mb
+
+  ;; Setup our emiprical geometry.  This is for getting an empirical
+  ;; value for longitude as a function of geodetic cangle
+  empiricalGeometry, terms=[ $
+    -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, $
+    1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, $
+    0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, $
+    -0.0188811, 0.0138453, -0.00959350], $
+    iterations=10
+
+  ;; Define the frequency grids for the extinciton quantities
+  !include(extinctionfgrids.l2cf)
+
+  ;; Load our forward model databases
+  ForwardModelGlobal, $
+    antennaPatterns=!antennaFile, $
+    filterShapes=!filterFile, $
+    pointingGrids=!pfgFile
+
+  ;; Setup the particular forward model we're going to want
+  sidsFwm: forwardModel, type=full,  $
+    signals = [ !signals ], $
+    molecules = !molecules(!radiometer), $
+    phiWindow=5, $
+    /skipOverlaps, $
+    integrationGrid=vGridStandard, $
+    tangentGrid=vGridStandard, /do_conv, /do_freq_avg
+
+end GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+!include(chunkdivide8th.l2cf)
+
+; ------------------------------------------- Construct sections --
+
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill
+end Construct
+
+!include(constructstandardspecies.l2cf)
+
+begin Construct
+  yTemplate: VectorTemplate, quantities = [ !makelist({band},{},!bands) ]
+end Construct
+
+; --------------------------------------- Define and fill vectors --
+
+; This next lot of stuff may seem a little long winded, but
+; we do it this way to make the l2cf similar to others, and thus
+; containing more in common with them.
+
+; Define and fill the apriori vector
+!include(fillapriori.l2cf)
+
+; Define and fill the truth vector
+!include(filltruth.l2cf)
+
+; Define radiance vectors and noise vector
+begin Fill
+  y: Vector, template=yTemplate
+  yNoise: Vector, template=yTemplate
+end Fill
+
+; -------------------------------------------- Forward model ----
+
+begin Retrieve
+ sids, fwdModelIn=truth, fwdModelOut=y,$
+   forwardModel=[sidsFwm]
+end Retrieve
+
+; ------------------------------------------- Work out the noise level
+
+begin Fill
+  !define(fillNoise,{Fill, quantity=yNoise.band$1, method=estimatedNoise, $
+    radianceQuantity=y.band$1,  noiseBandwidth=truth.noiseBandwidth$1, $
+    systemTemperature=truth.systemTemperature$1, integrationTime=0.162 s!nl})
+  !forall(fillNoise,!bands)
+  
+end Fill
+
+; ------------------------------------------ Join the chunks
+
+begin Join
+  !define(outfile,{'!outpathl1brad/MLS-Aura_L1BRAD-!radiometer-clean_!l1bradversion_!day.h4'})
+  !define(write,{directWrite, source=y.band$1, /prefixSignal, sdName='', file=!outfile
+  directWrite, source=yNoise.band$1, /prefixSignal, sdName=' precision', file=!outfile!nl})
+  !forall(write,!bands)
+  directWrite, source=truth.ptanGHz, sdName='GHz.ptan', file=!outfile
+  directWrite, source=truth.ptanTHz, sdName='THz.ptan', file=!outfile
+end Join
+
+; ---------------------------------------  Output the result
+begin Output
+end Output
