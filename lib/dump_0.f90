@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMP_0
@@ -17,7 +17,7 @@ module DUMP_0
     module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
     module procedure DUMP_3D_INTEGER
     module procedure DUMP_1D_CHAR, DUMP_2D_CHAR, DUMP_3D_CHAR
-    module procedure DUMP_1D_REAL, DUMP_2D_REAL
+    module procedure DUMP_1D_REAL, DUMP_2D_REAL, DUMP_3D_REAL
   end interface
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
@@ -760,7 +760,7 @@ contains
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
-    double precision :: myBlase
+    real :: myBlase
 
     myBlase = 0.e0
     if ( present(Blase) ) myBlase = Blase
@@ -1084,6 +1084,103 @@ contains
     end if
   end subroutine DUMP_3D_INTEGER
 
+  ! ---------------------------------------------  DUMP_3D_REAL  -----
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, BLASE, CLEAN )
+    real, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: BLASE
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    real    :: myBlase
+
+    myBlase = 0.e0
+    if ( present(Blase) ) myBlase = Blase
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
+    else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
+      call dump ( array(:,1,1), name, clean=clean )
+    else if ( size(array,3) == 1 ) then
+      call dump ( array(:,:,1), name, blase=blase, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 5
+            if (.not. myClean) then
+              !call output ( i, max(4,ilog10(size(array,1))+1) )
+              !call output ( j, max(4,ilog10(size(array,2))+1) )
+              !call output ( k, max(4,ilog10(size(array,3))+1) )
+              !call output ( afterSub )
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of ')
+                  call output ( myBlase , advance='no' )
+                  call output ( ' not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, max(4,ilog10(size(array,1))+1) )
+                call output ( j, max(4,ilog10(size(array,2))+1) )
+                call output ( k, max(4,ilog10(size(array,3))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+              do l = k, min(k+4, size(array,3))
+                call output ( array(i,j,l), '(1x,1pg13.6)' )
+              end do
+              call output ( '', advance='yes' )
+            endif
+          end do
+        end do
+      end do
+       if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
+        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of ')                              
+        call output ( myBlase , advance='no' )                  
+        call output ( ' not printed.', advance='yes' )          
+        numZeroRows = 0
+      end if
+   end if
+  end subroutine DUMP_3D_REAL
+
   ! ---------------------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
   subroutine DUMP_NAME_V_PAIRS_DOUBLE ( values, NAMES, CLEAN, FORMAT, WIDTH )
     double precision, intent(in)                         :: values(:)
@@ -1293,6 +1390,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.21  2003/02/19 18:33:38  pwagner
+! Can now dump 3d reals
+!
 ! Revision 2.20  2002/12/02 23:34:14  pwagner
 ! Now can dump name/value pairs
 !
