@@ -172,8 +172,9 @@ mostlyclean:
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi ; \
-	echo "Cleaning $(testdir)"; \
-	$(MAKE) -f $(MakeFName) -C $(testdir) clean
+
+#	echo "Cleaning $(testdir)"; \
+#	$(MAKE) -f $(MakeFName) -C $(testdir) clean
 	rm -f Make.dep.*
 
 clean:
@@ -183,8 +184,9 @@ clean:
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
 	fi; \
-	echo "Cleaning objects from $(testdir)"; \
-	$(MAKE) -f $(MakeFName) -C $(testdir) clean
+
+#	echo "Cleaning objects from $(testdir)"; \
+#	$(MAKE) -f $(MakeFName) -C $(testdir) clean
 	rm -f Make.dep.*
 
 tar:
@@ -210,6 +212,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.33  2001/11/09 21:52:10  pwagner
+# Dropped testdir from targets automatically cleaned
+#
 # Revision 2.32  2001/11/08 00:40:51  pwagner
 # NOCLEANING avoids massive recompiles on changes to .configure
 #
