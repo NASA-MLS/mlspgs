@@ -131,7 +131,18 @@ tar:
 	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+#  This is only needed when mis-using me to build sids/l1boa/sids_l1boa
+
+Sd.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Sd.f90 $(FAFTER)
+
+# ========================================================================
 # $Log$
+# Revision 1.9  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 1.8  2001/07/16 18:00:21  pwagner
 # Builds correctly with hdf5 on new and older Linux
 #
