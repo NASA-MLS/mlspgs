@@ -1,6 +1,8 @@
 program ConvertPFA
 
-  ! Usage: ./convertPFA infile outfile
+  ! Usage: ./convertPFA [options] infile outfile
+  !  Options: -t[ ]tGrid-name (default pfaTgrid)
+  !           -v[ ]vGrid-name (default pfaVgrid)
 
   ! Convert PFAData array files from formatted to unformatted.
 
@@ -44,20 +46,42 @@ program ConvertPFA
 
   character :: Ch
   character(len=255) :: Infile, Line, Outfile, Signal*127
+  character(len=127) :: TGrid = 'pfaTgrid', VGrid = 'pfaVgrid'
   character(len=31) :: Molecules(255) = ' '
   integer :: I, nTemps, nPress, nMol
   real, allocatable :: Absorption(:,:), dAbsDwc(:,:), dAbsDnc(:,:), dAbsDnu(:,:)
-  real :: VelLin
+  real :: TStart, TStep, VelLin, VStart, VStep
 
   call getarg ( 1, line )
-  if ( line == '' ) then
-    call getarg ( 0, line )
-    write ( *, '(a)' ) 'Usage: ' // trim(line) // ' nTemps nPress infile outfile'
-    stop
-  end if
-  call getarg ( 1, inFile )
+  if ( line == '' ) call usage
+  i = 1
+  do
+    call getarg ( i, line )
+    if ( line(1:2) == '-t' ) then
+      i = i + 1
+      if ( line(3:3) /= '' ) then
+        tGrid = line(3:)
+      else
+        call getarg ( i, tGrid )
+        i = i + 1
+      end if
+    else if ( line(1:2) == '-v' ) then
+      i = i + 1
+      if ( line(3:3) /= '' ) then
+        vGrid = line(3:)
+      else
+        call getarg ( i, vGrid )
+        i = i + 1
+      end if
+    else if ( line(1:1) == '-' ) then
+      call usage
+    else
+      exit
+    end if
+  end do
+  call getarg ( i, inFile )
   open ( 10, file=infile, form='formatted', status='old' )
-  call getarg ( 2, outFile )
+  call getarg ( i+1, outFile )
   open ( 11, file=outfile, form='unformatted' )
 
   ! The Molecules
@@ -94,22 +118,16 @@ program ConvertPFA
   write ( *, '(a)' ) 'pfaData, file="' // outfile(:i-1) // '$' // &
     & trim(outfile(i+len_trim(signal):)) // '", $' 
 
-  write ( *, '(a)' ) '  temperatures=pfaTgrid, vGrid=pfaVgrid, signal="' // &
-    & trim(signal) // '"'
+  write ( *, '(a)' ) '  temperatures=' // trim(tGrid) // &
+    & ', vGrid=' // trim(vGrid) // ', signal="' // trim(signal) // '"'
 
   ! The vGrid line
   read ( 10, '(a)' ) line
-  i = index(line,'[')
-  line = line(i+1:)
-  i = index(line,':')
-  read ( line(:i-1), * ) nPress
+  call gridStuff ( vStart, nPress, vStep )
 
   ! The tGrid line
   read ( 10, '(a)' ) line
-  i = index(line,'[')
-  line = line(i+1:)
-  i = index(line,':')
-  read ( line(:i-1), * ) nTemps
+  call gridStuff ( tStart, nTemps, tStep )
 
   allocate ( absorption(nTemps,nPress), dAbsDwc(nTemps,nPress), &
     &        dAbsDnc(nTemps,nPress), dAbsDnu(nTemps,nPress) )
@@ -123,24 +141,29 @@ program ConvertPFA
   read ( 10, * ) line
   ! The "ln(Absorption (km^-1)) data(logT, logp)" data
   read ( 10, * ) absorption
+  absorption = max(absorption,-huge(0.0)) ! Replace -Inf by -Huge
 
   ! The "Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)" line (ignore it)
   read ( 10, * ) line
   ! Th "Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)" data
   read ( 10, * ) dAbsDwc
+  where ( dAbsDwc /= dAbsDwc ) dAbsDwc = 0.0 ! NaN => 0.0
 
   ! The "Dln(Absorption(km^-1)/Dnc data(logT, logp)" line (ignore it)
   read ( 10, * ) line
   ! The "Dln(Absorption(km^-1)/Dnc data(logT, logp)" data
   read ( 10, * ) dAbsDnc
+  where ( dAbsDnc /= dAbsDnc ) dAbsDnc = 0.0 ! NaN => 0.0
 
   ! The "Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)" line (ignore it)
   read ( 10, * ) line
   ! The "Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)" data
   read ( 10, * ) dAbsDnu
+  where ( dAbsDnu /= dAbsDnu ) dAbsDnu = 0.0 ! NaN => 0.0
 
   ! Write the output
-  write ( 11 ) nTemps, nPress, nMol, velLin, len_trim(signal), trim(signal)
+  write ( 11 ) nTemps, nPress, nMol, velLin, len_trim(signal), trim(signal), &
+    & vStart, vStep, tStart, tStep
 
   write ( 11 ) absorption, dAbsDwc, dAbsDnc, dAbsDnu
 
@@ -152,9 +175,38 @@ program ConvertPFA
   close ( 10 )
   close ( 11 )
 
+contains
+  subroutine GridStuff ( Start, Number, Step )
+    real, intent(out) :: Start, Step
+    integer, intent(out) :: Number
+    integer :: I
+    character(len=*), parameter :: NumSet = '0123456789.+-eE'
+      i = index(line,'tart=')
+    line = line(i+5:)
+    i=verify(line,numSet)
+    read ( line(:i-1), * ) start
+    i = index(line,'[')
+    line = line(i+1:)
+    i = index(line,':')
+    read ( line(:i-1), * ) number
+    line = line(i+1:)
+    i = index(line,']')
+    read ( line(:i-1), * ) step
+  end subroutine GridStuff
+
+  subroutine Usage
+    call getarg ( 0, line )
+    write ( *, '(a)' ) 'Usage: ' // trim(line) // ' [options] infile outfile'
+    write ( *, '(a)' ) ' Options: -t[ ]TGrid-name (default '//trim(tGrid)//')'
+    write ( *, '(a)' ) '          -v[ ]VGrid-name (default '//trim(vGrid)//')'
+    stop
+  end subroutine Usage
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.5  2004/07/16 20:15:00  vsnyder
+! Add a quotation mark at end of Signals field
+!
 ! Revision 1.4  2004/07/08 20:59:03  vsnyder
 ! Cannonball polishing
 !
