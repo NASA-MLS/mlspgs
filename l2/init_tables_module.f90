@@ -14,15 +14,11 @@ module INIT_TABLES_MODULE
     ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
     ! here, but everything is included so that it can be gotten by
     ! USE INIT_TABLES_MODULE.
-  use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-                        N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
   private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
-  private :: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
-  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -294,6 +290,8 @@ module INIT_TABLES_MODULE
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
+    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
+                          N_NAME_DEF, N_SECTION, N_SPEC_DEF
     integer :: I ! used only in an array constructor as a DO index
 
   ! Put intrinsic predefined identifiers into the symbol table.
@@ -843,6 +841,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.34  2001/03/02 22:01:11  vsnyder
+! Move USEs into some subroutines -- allows deleting some PRIVATE statements.
+!
 ! Revision 2.33  2001/03/02 20:45:59  vsnyder
 ! Move make_tree to ~/mlspgs/srclib/make_tree.f9h.  This should improve
 ! maintainability of several versions of init_tables_module.
