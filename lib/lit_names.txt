@@ -32,23 +32,6 @@ degrees
 dimensionless
 dimless
 dl
-# Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
-dnwt_ajn
-dnwt_axmax
-dnwt_cait
-dnwt_diag
-dnwt_dxdx
-dnwt_dxdxl
-dnwt_dxn
-dnwt_dxnl
-dnwt_fnmin
-dnwt_fnorm
-dnwt_gdx
-dnwt_gfac
-dnwt_gradn
-dnwt_sq
-dnwt_sqt
-# End of quantities to report progress of DNWT
 dobsonunits
 
 earthRefl
@@ -74,9 +57,6 @@ Hz
 IceDensity
 intermediatefrequency
 isotopeRatio
-
-jacobian_cols
-jacobian_rows
 
 K
 KHz
@@ -149,6 +129,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.2  2001/10/05 00:41:30  vsnyder
+# Move DNWT lits to l2/lit_names.txt
+#
 # Revision 2.1  2001/10/03 22:45:01  vsnyder
 # Initial commit
 #
