@@ -50,8 +50,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_LAST           = t_vgridtype
   integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, parameter :: F_ALTITUDEQUANTITY    = 1
-  integer, parameter :: F_APRIORI             = f_altitudequantity + 1
+  integer, parameter :: F_APRIORI             = 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, parameter :: F_BAND                = f_autofill + 1
@@ -76,12 +75,12 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FREQUENCY           = f_frequencies + 1
   integer, parameter :: F_FWDMODELIN          = f_frequency + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
-  integer, parameter :: F_GPH                 = f_fwdModelOut + 1
+  integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
+  integer, parameter :: F_GPH                 = f_geocAltitudeQuantity + 1
   integer, parameter :: F_H2OQUANTITY         = f_gph + 1
   integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid + 1
-  integer, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
+  integer, parameter :: F_INTERPOLATIONFACTOR = f_hgrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LAST                = f_jacobian + 1
   integer, parameter :: F_LENGTH              = f_last + 1
@@ -106,7 +105,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_ROWS                = f_refGPHQuantity + 1
   integer, parameter :: F_SCALE               = f_rows + 1
   integer, parameter :: F_SDNAME              = f_scale + 1
-  integer, parameter :: F_SIGNALS             = f_sdname + 1
+  integer, parameter :: F_SIGNAL              = f_sdname + 1
+  integer, parameter :: F_SIGNALS             = f_signal + 1
   integer, parameter :: F_SOURCE              = f_signals + 1
   integer, parameter :: F_SOURCEAPRIORI       = f_source + 1
   integer, parameter :: F_SOURCEL2AUX         = f_sourceApriori + 1
@@ -142,8 +142,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WIDTHS              = f_width + 1
   integer, parameter :: F_BILL                = f_widths + 1  !???
   integer, parameter :: F_ZVI                 = f_bill + 1    !???
-! integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_widths
-  integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_zvi
+  integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
@@ -181,7 +180,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_R4            = l_r3 + 1
   integer, parameter :: L_R5H           = l_r4 + 1
   integer, parameter :: L_R5V           = l_r5h + 1
-  integer, parameter :: L_SPACERADIANCE = l_r5v + 1
+  integer, parameter :: L_SCGEOCALT     = l_r5v + 1
+  integer, parameter :: L_SPACERADIANCE = l_scGeocAlt + 1
   integer, parameter :: L_SPD           = l_spaceRadiance + 1
   integer, parameter :: L_VECTOR        = l_spd + 1
   integer, parameter :: L_WEIGHTED      = l_vector + 1
@@ -246,8 +246,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_TEMPLATE           = s_spectrometerType + 1
   integer, parameter :: S_TIME               = s_template + 1
   integer, parameter :: S_TPFILL             = s_time + 1
-  integer, parameter :: S_VALIDSIGNAL        = s_tpfill + 1
-  integer, parameter :: S_VECTOR             = s_validSignal + 1
+  integer, parameter :: S_VECTOR             = s_tpfill + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: S_L2LOAD             = s_vgrid + 1     !???
@@ -354,12 +353,12 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_r4) =                    add_ident ( 'r4' )
     lit_indices(l_r5h) =                   add_ident ( 'r5h' )
     lit_indices(l_r5v) =                   add_ident ( 'r5v' )
+    lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
     lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
-    field_indices(f_altitudequantity) =    add_ident ( 'altitudeQuantity' )
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
@@ -385,11 +384,11 @@ contains ! =====     Public procedures     =============================
     field_indices(f_frequency) =           add_ident ( 'frequency' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
+    field_indices(f_geocAltitudeQuantity) =add_ident ( 'geocAltitudeQuantity' )
     field_indices(f_gph) =                 add_ident ( 'gph' )
-    field_indices(f_h2oquantity) =         add_ident ( 'f_h2oquantity' )
+    field_indices(f_h2oquantity) =         add_ident ( 'h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
-    field_indices(f_instrumentModule) =    add_ident ( 'instrumentModule' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_last) =                add_ident ( 'last' )
@@ -415,6 +414,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_rows) =                add_ident ( 'rows' )
     field_indices(f_scale) =               add_ident ( 'scale' )
     field_indices(f_sdname) =              add_ident ( 'sdname' )
+    field_indices(f_signal) =              add_ident ( 'signal' )
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_source) =              add_ident ( 'source' )
     field_indices(f_sourceapriori) =       add_ident ( 'sourceApriori' )
@@ -501,7 +501,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
-    spec_indices(s_validSignal) =          add_ident ( 'validSignal' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -539,8 +538,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_l1b, l+l_l2aux, &
-             l+l_l2gp, l+l_vector, n+n_dt_def, &
+      begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_hydrostatic, &
+             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -554,7 +553,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl,&
              l+l_extinction, l+l_gph, l+l_orbitIncline, l+l_ptan,&
-             l+l_radiance, l+l_refGPH, l+l_scVel, l+l_spaceRadiance,&
+             l+l_radiance, l+l_refGPH, l+l_scVel, l+l_scGeocAlt, l+l_spaceRadiance,&
              l+l_temperature, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_vmr, n+n_dt_def, &
       begin, t+t_radiometer, l+l_r1a, l+l_r1b, l+l_r2, l+l_r3, l+l_r4, &
@@ -619,7 +618,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
              begin, f+f_centerfrequency, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_ValidSignal, &         ! Must be after band
+      begin, s+s_signal, &         ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
@@ -679,11 +678,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
-             begin, f+f_band, t+t_string, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_radiometer, t+t_radiometer, n+n_field_type, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_signal, s+s_signal, n+n_field_spec, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
              np+n_spec_def, &
@@ -730,7 +730,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_altitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
+             begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -738,6 +738,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceApriori, s+s_apriori, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
+             begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
@@ -790,7 +791,7 @@ contains ! =====     Public procedures     =============================
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
-                             s+s_validSignal, s+s_spectrometerType, &
+                             s+s_signal, s+s_spectrometerType, &
              n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
@@ -841,6 +842,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.35  2001/03/05 01:19:03  livesey
+! Minor changes
+!
 ! Revision 2.34  2001/03/02 22:01:11  vsnyder
 ! Move USEs into some subroutines -- allows deleting some PRIVATE statements.
 !
