@@ -145,7 +145,7 @@ contains ! =====     Public Procedures     =============================
       & DestroyVectorInfo, Dump, &
       & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
       & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
-      & VectorTemplate_T, VectorValue_T, M_Fill, M_LinAlg
+      & VectorTemplate_T, VectorValue_T, M_Fill, M_LinAlg, M_Cloud
     use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
 
     ! Dummy arguments
@@ -4000,13 +4000,17 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------- FillFromSplitSideband ----
     subroutine FillFromSplitSideband ( quantity, sourceQuantity, &
       & lsbFraction, usbFraction, key )
+
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY
       type (VectorValue_T), intent(in) :: LSBFRACTION
       type (VectorValue_T), intent(in) :: USBFRACTION
       integer, intent(in) :: KEY
       ! Local variables
-      type (Signal_T) :: signal
+      logical, dimension(:), pointer :: doChannel    ! Do this channel?
+      integer :: noFreqs, mif, maf
+      type (Signal_T) :: signalIn, signalOut
+      real(r8), dimension(:), pointer :: freq, freqL, freqU
 
       ! Executable code
       ! Do some checking first
@@ -4020,10 +4024,11 @@ contains ! =====     Public Procedures     =============================
         & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
       if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
-        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
+        & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
 
-      signal = GetSignal ( sourceQuantity%template%signal )
+      signalIn = GetSignal ( sourceQuantity%template%signal )
+      signalOut = GetSignal ( Quantity%template%signal )
 
       ! OK Dong, this is where you do your stuff
       ! You're filling the lsb or usb radiance quantity 'quantity', using
@@ -4031,7 +4036,47 @@ contains ! =====     Public Procedures     =============================
       ! 'usbFraction' and 'lsbFraction'.
 
       ! NOTE, THINK ABOUT WHETHER YOU WANT THE FILL MASK TO BE OBEYED HERE.
+      
+      ! this method is only appliable to the cloud-induced radiances that have 
+      ! similar penetration depth (usually close in frequency) and are 
+      ! proportional to frequency^4. And this operation is only applied to
+      ! maskbit = m_cloud
 
+      noFreqs = size(signalIn%frequencies)
+
+      call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
+      call allocate_test ( freq, noFreqs, 'frequencies', ModuleName )
+      call allocate_test ( freqL, noFreqs, 'LSBfrequencies', ModuleName )
+      call allocate_test ( freqU, noFreqs, 'USBfrequencies', ModuleName )
+
+      doChannel = signalIn%channels
+      freq = signalIn%centerFrequency + signalIn%direction*signalIn%frequencies 
+      freqL = signalIn%lo - freq    ! lower sideband freq
+      freqU = signalIn%lo + freq    ! upper sideband freq
+
+      ! redefine freq as output signal frequency
+      if(signalOut%sideband == -1) freq=freqL
+      if(signalOut%sideband == 1) freq=freqU
+
+      quantity%values=0._r8
+      do i=1,noFreqs
+       if (doChannel(i)) then
+        do maf=1, size(quantity%values(1,:))
+        do mif=1, quantity%template%noSurfs
+      	if(iand(ichar(sourceQuantity%mask(i+(mif-1)*noFreqs, maf)), m_cloud) == 1) &
+	& quantity%values(i+(mif-1)*noFreqs, maf) = &
+	&   sourceQuantity%values(i+(mif-1)*noFreqs, maf) *freq(i)**4/ &
+	&   (lsbFraction%values(i,1) * freqL(i)**4 + &
+	&   usbFraction%values(i,1) * freqU(i)**4)
+	enddo
+	enddo
+       endif
+      enddo
+
+      call deallocate_test ( doChannel, 'doChannel', ModuleName )
+      call deallocate_test ( freq, 'frequencies', ModuleName )
+      call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
+      call deallocate_test ( freqU,'USBfrequencies', ModuleName )
     end subroutine FillFromSplitSideband
 
     ! ------------------------------------- FillVectorHydrostatically ----
@@ -5035,6 +5080,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.198  2003/04/07 06:37:42  dwu
+! implement splitsideband for cloud radiance
+!
 ! Revision 2.197  2003/04/05 00:26:47  livesey
 ! Bug fix in sideband splitting stub
 !
