@@ -1435,6 +1435,8 @@ CONTAINS
           call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),    &
           &    one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp, &
           &    ptg_angles(ptg_i),tan_dh_dt(1,:,:),tan_d2h_dhdt(1,:,:), &
+          &    t_path(no_ele/2), 1.0 / dhdz_path(no_ele/2), &
+          &    TRANSPOSE(RESHAPE(eta_zxp_t(no_ele/2,:),(/n_t_zeta,no_sv_p_t/))), &
           &    dx_dt(ptg_i,:,:),d2x_dxdt(ptg_i,:,:))
         else
           call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2), &
@@ -2142,13 +2144,10 @@ CONTAINS
       call Deallocate_test ( Radv, 'RadV', ModuleName )
 
       if ( temp_der ) then
-!       CALL deallocate_test ( k_temp, 'k_temp', Modulename )
-        deallocate( k_temp)
         call Deallocate_test ( k_temp_frq, 'k_temp_frq', ModuleName )
       endif
 
       if (atmos_der) then
-         call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
          call Deallocate_test ( k_atmos_frq, 'k_atmos_frq', ModuleName )
       endif
 
@@ -2313,6 +2312,8 @@ CONTAINS
 
     CALL DEALLOCATE_TEST(tan_chi_out,'tan_chi_out',ModuleName )
     if(temp_der) then
+!     CALL deallocate_test ( k_temp, 'k_temp', Modulename )
+      deallocate( k_temp)
       call Deallocate_test ( dRad_dt, 'dRad_dt', ModuleName )
       call Deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', ModuleName )
       call Deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
@@ -2331,6 +2332,7 @@ CONTAINS
 
     if ( atmos_der ) then
       call Deallocate_test ( dRad_df, 'dRad_df', ModuleName )
+      call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
     end if
 
     if(spect_der) then
@@ -2369,6 +2371,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.61  2002/06/17 17:12:15  bill
+! fixed yet another bug--wgr
+!
 ! Revision 2.60  2002/06/17 16:30:52  bill
 ! inc zvis changes--wgr
 !
