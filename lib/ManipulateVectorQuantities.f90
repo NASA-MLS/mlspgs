@@ -146,22 +146,50 @@ contains
   end subroutine FindInstanceWindow
 
   ! --------------------------------------- DoHGridsMatch --------------
-  logical function DoHGridsMatch ( a, b )
+  logical function DoHGridsMatch ( a, b, spacingOnly )
     ! Returns true if quantities have same hGrid information
     type (VectorValue_T), intent(in) :: A ! First quantity
     type (VectorValue_T), intent(in) :: B ! Second quantity
+    logical, optional, intent(in) :: SPACINGONLY
 
     ! Local parameters
+    logical :: MYSPACINGONLY
     real (r8), parameter :: PHITOL = 0.01 ! Tolerance in angle
+    real (r8) :: MINA, MINB, MAXA, MAXB ! Information on a and b
 
     ! Executable code
-    DoHGridsMatch = .false.
-    if ( a%template%noInstances /= b%template%noInstances ) return
+    mySpacingOnly = .false.
+    if ( present ( spacingOnly ) ) mySpacingOnly = spacingOnly
 
-    if ( any(abs(a%template%phi - &
-      &          b%template%phi) > PhiTol) ) return
+    if ( a%template%stacked .neqv. b%template%stacked ) return
+    if ( mySpacingOnly .and. .not. a%template%stacked ) return
 
-    DoHGridsMatch = .true.
+    if ( .not. mySpacingOnly ) then
+      if ( a%template%noInstances /= b%template%noInstances ) return
+      if ( any(abs(a%template%phi - &
+        &          b%template%phi) > PhiTol) ) return
+      DoHGridsMatch = .true.
+    else
+      ! Here we default to true
+      doHGridsMatch = .true.
+      if ( a%template%noInstances == 1 ) return
+      if ( b%template%noInstances == 1 ) return
+      mina = minval ( &
+        & a%template%phi(1,2:a%template%noInstances) - &
+        & a%template%phi(1,1:a%template%noInstances-1) )
+      minb = minval ( &
+        & b%template%phi(1,2:b%template%noInstances) - &
+        & b%template%phi(1,1:b%template%noInstances-1) )
+      maxa = maxval ( &
+        & a%template%phi(1,2:a%template%noInstances) - &
+        & a%template%phi(1,1:a%template%noInstances-1) )
+      maxb = minval ( &
+        & b%template%phi(1,2:b%template%noInstances) - &
+        & b%template%phi(1,1:b%template%noInstances-1) )
+      doHGridsMatch = all ( (/ &
+        & maxa-mina, maxb-minb, abs(maxa-maxb), abs(mina-minb) /) < phiTol )
+    end if
+
   end function DoHGridsMatch
 
   ! --------------------------------------- DoVGridsMatch --------------
@@ -195,6 +223,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.15  2002/07/17 06:01:27  livesey
+! Fixed bugs in DoH/VGrids match
+!
 ! Revision 2.14  2002/06/12 16:53:32  livesey
 ! Tidied up some public/private stuff
 !
