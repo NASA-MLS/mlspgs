@@ -130,13 +130,13 @@ contains
       j = scan(line(i:),'DdEe ') + i - 1
       if ( i /= 0 ) then
         if ( j == i ) j = len(line)
-        i = i + 2
+        i = i + 1
         k = j
         do while ( j > i )
           j = j - 1
           if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
         end do
-        line(j:) = line(k:)
+        line(j+1:) = line(k:)
       end if
       line = adjustl(line)
       k = len_trim(line)
@@ -247,6 +247,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.5  2001/03/16 23:14:16  vsnyder
+! Don't trim off the last nonzero digit
+!
 ! Revision 2.4  2001/02/28 21:35:34  livesey
 ! Added output logical
 !
