@@ -77,7 +77,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l2gp/$SIMULATION--t/$YEAR";;
+		echo "/testing/emls/l2gp/$SIMULATION--t/$YEAR";;
 	esac
     fi
     if [ $1 == "--corel2gp" ]; then
@@ -97,7 +97,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l1boa/$SIMULATION--t/$YEAR";;
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
 	esac
     fi
     if [ $1 == "--l1brad" ]; then
@@ -107,7 +107,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION";;
+		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION";;
 	esac
     fi
     if [ $1 == "--l2cal" ]; then
@@ -147,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.31  2004/05/01 00:22:48  livesey
+# Moved l2pcfiles on lightspeed
+#
 # Revision 1.30  2004/04/17 05:58:37  livesey
 # Bug fix
 #
