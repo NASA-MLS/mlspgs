@@ -1,6 +1,8 @@
 #	Makefile
-#	targets: configure, clean, depends, and subdirs
+#	targets: configure, clean, clean_objs, depends, tar, and SUBDIRS
 #	true targets: the same make commands in $(SUBDIRS)
+#	special treatment is reserved for srclib which contains
+#	shared sources, but no Makefile
 #
 #special case:
 #the 1st time through, before .configure exists yet,
@@ -29,7 +31,7 @@ MLSBIN=util
 # where the platforms directory is
 PLATFORMS = .
 
-# This will set our MLS platfor, compiler. etc.
+# This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/.configure
 
@@ -41,20 +43,15 @@ SHELL = /bin/sh
 SUBDIRS = lib l2
 
 subdirs: $(SUBDIRS)
-#	echo "Making $(SUBDIRS)"
-#	 for dir in $(SUBDIRS); do \
-#	  $(MAKE) -C $$dir; \
-#	done
 
 $(SUBDIRS):
-#	echo "Making $@ (Note: l3 must be made separately)"
 	$(MAKE) -f $(MakeFName) -C $@
 
 l2: lib
 #l3: lib
 tar: clean
 
-.PHONY: configure depends subdirs $(SUBDIRS) clean tar
+.PHONY: configure depends subdirs $(SUBDIRS) clean clean_objs tar
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -68,7 +65,12 @@ depends:
 	@echo "Making dependencies for $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
-	done
+	done; \
+	echo "Making dependencies for srclib"; \
+        cd srclib; \
+        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
+        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
+        mv temp.dep Makefile.dep
 
 clean:
 	@echo "Cleaning $(SUBDIRS)"; \
@@ -86,8 +88,15 @@ tar:
 	@echo "tar-ing $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
-	done
+	done; \
+	echo "tar-ing srclib"; \
+        rm -f srclib.tgz; \
+	tar hcvzf srclib.tgz srclib
+
 # $Log$
+# Revision 1.4  2000/11/02 23:23:45  pwagner
+# clean_objs option now available
+#
 # Revision 1.3  2000/10/24 21:08:22  pwagner
 # Added tar option
 #

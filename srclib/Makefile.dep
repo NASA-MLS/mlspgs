@@ -1,0 +1,18 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+srclib_objs = \
+getCF_m.o    tree_checker.o  \
+ 
+# using f90makedep.pl to calculate dependencies 
+getCF_m.o: getCF_m.f90 $(dir1)MLSCF.o $(dir1)declaration_table.o \
+	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)parser.o \
+	$(dir1)string_table.o $(dir1)table_dumper.o $(dir1)table_generator.o \
+	$(dir1)toggles_core.o $(dir1)tree.o $(dir1)units.o \
+	$(dir2)init_tables_module.o tree_checker.o
+tree_checker.o: tree_checker.f90 $(dir1)declaration_table.o \
+	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir1)tree_types.o $(dir2)init_tables_module.o
+ 
+#End of Makefile.dep
+ 
