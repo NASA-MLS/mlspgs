@@ -157,12 +157,12 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    Fill, quantity=radianceDiagnostics.chisqChan$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1
-   Fill, quantity=radianceDiagnostics.noRadsPerMIF, method=species, $
+   Fill, quantity=radianceDiagnostics.noRadsPerMIF$1, method=special, $
      measurements=y!phase.band$1
    Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
      sourceQuantity=radianceDiagnostics.chisqMMIF$1
    Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
-     sourceQuantity=radianceDiagnostics.noBandsPerMIF$1!nl})
+     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1!nl})
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
@@ -235,6 +235,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.44  2003/05/10 00:57:53  livesey
+; More chi squared etc. stuff
+;
 ; Revision 1.43  2003/05/08 21:08:02  livesey
 ; Various bug fixes and tidies
 ;
