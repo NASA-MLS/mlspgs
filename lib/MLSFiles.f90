@@ -1081,8 +1081,8 @@ contains
   ! It must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
   ! (This version only uses a file name in autodetecting its hdf version)
-  function mls_io_gen_closeF(toolbox_mode, theFileHandle, &
-    & FileName, hdfVersion) &
+  function mls_io_gen_closeF( toolbox_mode, theFileHandle, &
+    & FileName, hdfVersion, debugOption ) &
     &  result (ErrType)
 
     use HDF5, only: h5fclose_f
@@ -1093,8 +1093,10 @@ contains
     character (LEN=*), optional, intent(IN)   :: FileName
 
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: debugOption
 
     ! Local
+    logical ::                            debug
     integer :: myhdfVersion
 
     logical, parameter :: PRINT_EVERY_CLOSE=.false.
@@ -1102,6 +1104,11 @@ contains
 
     ! begin
 
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
    if(UseSDPToolkit) then
    ! Using Toolkit
     the_eff_mode = LowerCase(toolbox_mode(1:2))
@@ -1111,11 +1118,38 @@ contains
       if(the_eff_mode == 'pg') the_eff_mode = 'cl'
    endif
 
+  if ( debug ) then
+    call output('Call to mls_io_gen_closeF', &
+    & advance='yes')
+    call output('the_eff_mode: ', advance='no')
+    call blanks(2)
+    call output(the_eff_mode, advance='yes')
+    call output('theFileHandle: ', advance='no')
+    call blanks(2)
+    call output(theFileHandle, advance='yes')
+    if ( present (hdfVersion) ) then
+      call output('hdfVersion: ', advance='no')
+      call blanks(2)
+      call output(hdfVersion, advance='yes')
+    endif
+    if ( present (fileName) ) then
+      call output('fileName: ', advance='no')
+      call blanks(2)
+      call output(trim(fileName), advance='yes')
+    endif
+  endif
    ! hdfVersion unimportant for 'pg' or 'cl' operations
    if (the_eff_mode == 'pg' .or. the_eff_mode == 'cl' ) then
      ErrType = 0
    elseif ( present(FileName) ) then
      myhdfVersion = mls_hdf_version(trim(FileName), hdfVersion, DFACC_READ)
+     if ( debug ) then
+       call output('mls_hdf_versionF', &
+       & advance='yes')
+       call output('myhdfVersion: ', advance='no')
+       call blanks(2)
+       call output(myhdfVersion, advance='yes')
+     endif
      if ( myhdfVersion < 0 ) then
         ErrType = myhdfVersion
         return
@@ -1133,6 +1167,13 @@ contains
     case('sw')
       if(myhdfVersion == HDFVERSION_5) then
         ErrType = he5_swclose(theFileHandle)
+        if ( debug ) then
+          call output('he5_swclose', &
+          & advance='yes')
+          call output('ErrType: ', advance='no')
+          call blanks(2)
+          call output(ErrType, advance='yes')
+        endif
       elseif(myhdfVersion == HDFVERSION_4) then
         ErrType = swclose(theFileHandle)
       else
@@ -1778,9 +1819,12 @@ contains
    ! hdf_version ==  myPreferred_Version ?
    if ( myPreferred_Version /= WILDCARDHDFVERSION &
      & .and. &
-     & hdf_version /= myPreferred_Version ) &
-     & hdf_version = WRONGHDFVERSION
-
+     & hdf_version /= myPreferred_Version ) then
+       print *, 'myPreferred_Version: ', myPreferred_Version
+       print *, 'is_hdf5: ', is_hdf5
+       print *, 'hdf_version: ', hdf_version
+       hdf_version = WRONGHDFVERSION
+   endif
   end function mls_hdf_version
 !-----------------------------------------------
 
@@ -1999,6 +2043,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.58  2004/02/05 23:29:16  pwagner
+! Extra debugging when appropriate
+!
 ! Revision 2.57  2004/01/27 21:34:57  pwagner
 ! Fixed bugs in unSplitName
 !
