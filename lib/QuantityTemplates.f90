@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology. ALL RIGHTS RESERVED.
 ! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
 
 !=============================================================================
@@ -16,6 +16,7 @@ module QuantityTemplates         ! Quantities within vectors
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
   use Output_m, only: Output
   use String_Table, only: DISPLAY_STRING, Get_String
+  use TOGGLES, only: SWITCHES
 
   implicit none
   public
@@ -856,7 +857,7 @@ contains ! =====     Public Procedures     =============================
     else
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
-
+    if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
 !=============================================================================
@@ -869,6 +870,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.37  2004/05/01 04:07:44  vsnyder
+! Rearranged some dumping stuff
+!
 ! Revision 2.36  2004/04/15 20:51:51  pwagner
 ! Added DUMP_QUANTITY_TEMPLATES (found in l2/dumper)
 !
