@@ -550,7 +550,8 @@ contains ! =====     Public Procedures     =============================
   subroutine CloneBlock ( Z, X ) ! Z = X, except the values
   ! Duplicate a matrix block, including copying all of its structural
   ! descriptive information, but not its values.
-    type(MatrixElement_T), intent(out) :: Z
+    type(MatrixElement_T), intent(inout) :: Z ! intent(inout) so that
+      !                            destroyBlock gets a chance to clean up surds
     type(MatrixElement_T), intent(in) :: X
     call destroyBlock ( z )
     if ( x%kind == M_absent ) then
@@ -575,7 +576,9 @@ contains ! =====     Public Procedures     =============================
   !                                         and Z is either X or NEWX.
     type(MatrixElement_T), intent(inout), target :: X
     real(r8), intent(in), dimension(:) :: V
-    type(MatrixElement_T), intent(out), target, optional :: NEWX
+    type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyBlock in cloneBlock
+      !                            gets a chance to clean up surds
     type(MatrixElement_T), pointer :: Z
 
     integer :: I
@@ -629,7 +632,9 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------  CopyBlock  -----
   subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
-    type(MatrixElement_T), intent(out) :: Z
+    type(MatrixElement_T), intent(inout) :: Z ! intent(inout) so that the
+      !                            destroyBlock in cloneBlock gets a chance
+      !                            to clean up surds
     type(MatrixElement_T), intent(in) :: X
     call CloneBlock ( Z, X )
     if ( x%kind /= m_absent ) z%values = x%values
@@ -2023,7 +2028,9 @@ contains ! =====     Public Procedures     =============================
   !                                     Z is either X or NEWX.
     real(r8), intent(in), dimension(:) :: V
     type(MatrixElement_T), intent(inout), target :: X
-    type(MatrixElement_T), intent(out), target, optional :: NEWX
+    type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyBlock in cloneBlock
+      !                            gets a chance to clean up surds
     type(MatrixElement_T), pointer :: Z
 
     integer :: I
@@ -2206,7 +2213,7 @@ contains ! =====     Public Procedures     =============================
             & "U matrix in SolveCholeskyM_0 is singular" )
         end if
         xs(1,1:nc) = xs(1,1:nc) / d
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( d )
         do i = 2, n
           d = u%values(i,i)
           if ( abs(d) < tol ) then
@@ -2362,7 +2369,8 @@ contains ! =====     Public Procedures     =============================
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
     real(r8), pointer :: Z(:,:)              ! Full array of values
-    type(MatrixElement_T), intent(out) :: B  ! Z as a block, maybe sparse
+    type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
+    ! B is intent(inout) so that createBlock gets a chance to clean up surds
     character(len=*), intent(in), optional :: Why
     character(len=*), intent(in), optional :: CallingModule
     ! If either Why or CallingModule is present, Z is deallocated using
@@ -2501,7 +2509,7 @@ contains ! =====     Public Procedures     =============================
     n = min(a%nCols,a%nRows)
     select case ( a%kind )
     case ( m_absent )
-      nCols = a%nCols ! because the first argument of CreateBlock is intent(out)
+      nCols = a%nCols ! because createBlock destroys A before re-creating it
       nRows = a%nRows
       call createBlock ( a, nRows, nCols, m_banded, n )
       do i = 1, n
@@ -2588,7 +2596,7 @@ contains ! =====     Public Procedures     =============================
     m = max(a%nCols,a%nRows) / n
     select case ( a%kind )
     case ( m_absent )
-      nCols = a%nCols ! because the first argument of CreateBlock is intent(out)
+      nCols = a%nCols ! because the createBlock destroys A before re-creating it
       nRows = a%nRows
       call createBlock ( a, nRows, nCols, m_banded, m*n )
       do i = 1, n                       ! Loop over shorter side
@@ -2679,8 +2687,12 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  CreateEmptyBlock  -----
   subroutine CreateEmptyBlock ( EmptyBlock )
-    type(MatrixElement_T), intent(out) :: EmptyBlock
-    ! Default initialization does the rest, because of intent(out)
+    type(MatrixElement_T), intent(inout) :: EmptyBlock
+    ! EmptyBlock is intent(inout) so that destroyBlock will have a chance
+    ! to clean up surds.  Default initialization for intent(out) would
+    ! nullify the pointers before destroyBlock had a chance to deallocate
+    ! them.
+    call destroyBlock ( emptyBlock )
   end subroutine CreateEmptyBlock
 
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
@@ -2813,6 +2825,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.72  2002/07/01 23:49:47  vsnyder
+! Plug memory leaks
+!
 ! Revision 2.71  2002/06/18 01:21:18  vsnyder
 ! SolveCholeskyM_0 wasn't solving for the first row in the dense-block /
 ! transpose=.true. case.
