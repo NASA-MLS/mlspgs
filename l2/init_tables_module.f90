@@ -75,8 +75,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_DECAY               = f_criteria + 1
   integer, parameter :: F_DESTROYJACOBIAN     = f_decay + 1
   integer, parameter :: F_DIAGONAL            = f_destroyJacobian + 1
-  integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
-  integer, parameter :: F_DO_CONV             = f_diagonalOut + 1
+  integer, parameter :: F_DO_CONV             = f_diagonal + 1
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
   integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
   integer, parameter :: F_EXTRA               = f_explicitValues + 1
@@ -123,7 +122,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_ORIGIN              = f_number + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
-  integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
+  integer, parameter :: F_OUTPUTSD            = f_outputOverlaps + 1
+  integer, parameter :: F_OVERLAPS            = f_outputSD + 1
   integer, parameter :: F_PERTURBATION        = f_overlaps + 1
   integer, parameter :: F_PHIWINDOW           = f_perturbation + 1
   integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
@@ -411,7 +411,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_decay) =               add_ident ( 'decay' )
     field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
-    field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
@@ -460,6 +459,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
+    field_indices(f_outputSD) =            add_ident ( 'outputSD' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
     field_indices(f_perturbation) =        add_ident ( 'perturbation' )
     field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
@@ -865,7 +865,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
-             begin, f+f_diagonalOut, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
@@ -878,6 +877,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
+             begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -968,6 +968,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.117  2001/06/01 21:27:58  livesey
+! Added outSD option to retrieve
+!
 ! Revision 2.116  2001/05/31 22:14:20  livesey
 ! Bug fix.
 !
