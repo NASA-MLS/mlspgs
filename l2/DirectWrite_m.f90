@@ -108,7 +108,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ----------------------------------------------- DirectWrite_L2GP --------
   subroutine DirectWrite_L2GP_filename ( quantity, quantity_precision, sdName, &
-    & file, chunkNo, hdfVersion, firstProf, lastProf )
+    & file, chunkNo, hdfVersion, firstProf, lastProf, createSwath )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
@@ -130,6 +130,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
     integer, intent(in)              :: chunkNo
     integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    logical, intent(in), optional :: createSwath
     ! Local parameters
     logical, parameter :: DEBUG = .FALSE.
     character (len=132) :: FILE_BASE    ! From the FILE location in string table
@@ -174,9 +175,10 @@ contains ! ======================= Public Procedures =========================
         & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
     call DirectWrite_L2GP_fileID( L2gpFileHandle, &
       & quantity, quantity_precision, sdName, chunkNo, &
-      & hdfVersion, firstProf, lastProf )
-    ReturnStatus = mls_io_gen_closeF('swclose', L2gpFileHandle, FileName=FileName, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion, firstProf, lastProf, filename=filename, &
+      & createSwath=createSwath )
+    ReturnStatus = mls_io_gen_closeF('swclose', L2gpFileHandle, &
+      & FileName=FileName, hdfVersion=hdfVersion)
     if ( ReturnStatus /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
@@ -185,7 +187,7 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------ DirectWrite_L2GP_fileID --------
   subroutine DirectWrite_L2GP_fileID ( L2gpFileHandle, &
     & quantity, quantity_precision, sdName, chunkNo, &
-    & hdfVersion, firstProf, lastProf )
+    & hdfVersion, firstProf, lastProf, fileName, createSwath )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
@@ -202,6 +204,8 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
     integer, intent(in)              :: chunkNo
     integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    character(len=*), intent(in), optional :: FILENAME
+    logical, intent(in), optional :: createSwath
     ! Local parameters
     type (L2GPData_T) :: l2gp
     logical, parameter :: DEBUG = .FALSE.
@@ -239,7 +243,7 @@ contains ! ======================= Public Procedures =========================
       & sdname, chunkNo, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     call AppendL2GPData(l2gp, l2gpFileHandle, &
-      & SDNAME, offset, TotNumProfs, hdfVersion)
+      & SDNAME, filename, offset, TotNumProfs, hdfVersion, createSwath)
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_fileID
 
@@ -370,6 +374,7 @@ contains ! ======================= Public Procedures =========================
     ! What exactly will be our contribution
     stride = 1
     start = 0
+    sizes = 1
     sizes(noDims) = quantity%template%noInstances - &
       & quantity%template%noInstancesLowerOverlap - &
       & quantity%template%noInstancesUpperOverlap
@@ -475,6 +480,7 @@ contains ! ======================= Public Procedures =========================
     ! What exactly will be our contribution
     stride = 1
     start = 0
+    sizes = 1
     sizes(noDims) = quantity%template%noInstances - &
       & quantity%template%noInstancesLowerOverlap - &
       & quantity%template%noInstancesUpperOverlap
@@ -721,6 +727,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.8  2003/07/09 21:49:53  pwagner
+! Tries to figure out in advance whether to create swath
+!
 ! Revision 2.7  2003/07/07 21:03:43  pwagner
 ! Removed DirectWrite_L2Aux_FileName; tries to deal sensibly with all-overlap chunks
 !
