@@ -314,7 +314,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Inputs:
     ! -------
         ptan => GetVectorQuantityByType ( fwdModelExtra,       &
-          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
+          & quantityType=l_ptan, instrumentModule = Signal%instrumentModule )
+!          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
         temp => GetVectorQuantityByType ( fwdModelExtra,      &
           & quantityType=l_temperature )
         gph => GetVectorQuantityByType ( fwdModelExtra,       &
@@ -928,6 +929,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.88  2001/11/16 00:41:00  jonathan
+! add losVel
+!
 ! Revision 1.87  2001/11/15 23:52:12  jonathan
 ! add default_spectroscopy
 !
