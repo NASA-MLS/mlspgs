@@ -7,14 +7,15 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use L1BData, only: ReadL1BAttribute
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, R8, i4, NameLen
+  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, R8, i4
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
-    &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
-  use MLSStringLists, only: catLists, utc_to_yyyymmdd
+    &                         MLSMSG_Error
+  use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
+    & utc_to_yyyymmdd
   use Output_m, only: BLANKS, Output
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GlobalAttributes, &
+    & CreatePCFAnnotation, FillTAI93Attribute
   use SDPToolkit, only: max_orbits
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -119,6 +120,7 @@ contains ! =====     Public Procedures     =============================
     ! Gets the start and end times from the PCF
 
     use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
+    use L1BData, only: FindMaxMAF, ReadL1BAttribute
     use L2ParInfo, only: parallel
     use MLSFiles, only: mls_io_gen_openF, mls_hdf_version
     use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, &
@@ -136,7 +138,6 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_param_switches, &
       &                MLSPCF_PCF_start, mlspcf_l2parsf_start
     use MLSStrings, only: LowerCase
-    use PCFHdr, only: CreatePCFAnnotation, FillTAI93Attribute
     use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
       &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
       &    PGSTD_E_NO_LEAP_SECS
@@ -312,10 +313,6 @@ contains ! =====     Public Procedures     =============================
 
       ! Open the HDF file and initialize the SD interface
 
-  ! ((( This will have to change if we wish to convert l1 files to hdf5
-  !          Maybe put another wrapper in MSLFiles
-  !  sd_id = sfstart(L1physicalFilename, DFACC_READ)
-  !  sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
         the_hdf_version = mls_hdf_version(L1PhysicalFileName)
        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
          & record_length, DFACC_READ, &
@@ -356,6 +353,15 @@ contains ! =====     Public Procedures     =============================
       call announce_error ( 0, "Could not find L1BOA file" )
     end if
 
+    ! We'll possibly need the first and last MAF counter numbers, especially
+    ! if gaps occur
+    ! For now, just look for them in l1boa
+    ! Later you may look also in l1brad files
+    GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1bInfo%L1BOAID/), &
+      & the_hdf_version, &
+      & GlobalAttributes%FirstMAFCtr )
+    print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
+    print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
     ! Get the Start and End Times from PCF
     ! Temporarily we allow the use of older PCFids: CCSDSStartId, CCSDEndId
     ! (if TOOLKIT is FALSE)
@@ -558,9 +564,11 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use L1BData, only: ReadL1BData, L1BData_T, DeallocateL1BData, Dump, &
-      & AssembleL1BQtyName
-    use MLSFiles, only: mls_hdf_version       
+    use L1BData, only: L1BData_T, NAME_LEN, &
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, ReadL1BData
+    use L2AUXData, only: MAXSDNAMESBUFSIZE
+    use MLSFiles, only: HDFVERSION_4, mls_hdf_version       
+    use MLSHDF5, only: GetAllHDF5DSNames
     use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION
     use WriteMetadata, only: L2PCF
 
@@ -580,8 +588,12 @@ contains ! =====     Public Procedures     =============================
     character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
     type (L1BData_T) :: l1bDataSet   ! L1B dataset
 
-    integer ::  hdfVersion                                                        
-    character(len=NameLen) :: l1bItemName                                        
+    integer ::  hdfVersion
+    integer :: item
+    character(len=Name_Len) :: l1bItemName
+    character(len=MAXSDNAMESBUFSIZE) :: l1bitemlist
+    integer :: nL1bItems
+    logical, parameter :: countEmpty = .true.
 
     ! Begin                                                                       
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)  
@@ -604,7 +616,7 @@ contains ! =====     Public Procedures     =============================
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
          call output ( 'hdf version:   ' )                                       
     	   call output ( hdfVersion, advance='yes' )
-         if ( Details > -2 ) then
+         if ( Details > -2 .and. hdfVersion == HDFVERSION_4 ) then
            l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
            call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemname, L1bDataSet, &
             & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
@@ -617,6 +629,26 @@ contains ! =====     Public Procedures     =============================
              call output ( ' while reading quantity named  ' )
              call output ( trim(l1b_quant_name) )
            end if
+         elseif( Details > -2 ) then
+           call GetAllHDF5DSNames (l1bInfo%L1BRADIDs(i), '/', l1bitemlist)
+           nL1bItems = NumStringElements(trim(l1bitemlist), countEmpty)
+           do item=1, nL1bItems
+             call GetStringElement (trim(l1bitemlist), l1bItemName, item, &
+               & countEmpty )
+             if ( index('/PCF,/LCF', trim(l1bItemName)) > 0 ) cycle
+             call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bDataSet, &
+              & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
+             if ( IERR == 0 ) then
+               call Dump ( l1bDataSet, Details )
+               call DeallocateL1BData ( l1bDataSet )
+             else
+               call output ( 'Error number  ' )
+               call output ( IERR )
+               call output ( ' while reading quantity named  ' )
+               call output ( trim(l1bItemName) )
+             end if
+             ! if ( item > 2 ) stop
+           enddo
          end if
         end if
       end do
@@ -748,6 +780,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.79  2004/08/16 17:14:42  pwagner
+! Obtains First,LastMAFCtr global attributes from l1boa file
+!
 ! Revision 2.78  2004/08/04 23:19:58  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
