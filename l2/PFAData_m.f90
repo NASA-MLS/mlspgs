@@ -6,6 +6,7 @@ module PFAData_m
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
 
   use MLSCommon, only: R4
+  use MLSSignals_m, only: Signal_T
   use VGridsDatabase, only: VGrid_t
 
   implicit NONE
@@ -19,9 +20,12 @@ module PFAData_m
   end interface Dump
 
   type PFAData_t
+    integer :: Name                                ! of the pfaData spec
     integer, pointer :: Molecules(:) => NULL()     ! Molecule indices
     character(len=127) :: Signal                   ! The signal string
-    integer, pointer :: SignalIndices(:) => NULL() ! Signal indices
+    integer :: SignalIndex                         ! in Signals database
+    type(signal_t) :: TheSignal                    ! The signal, with channels
+                                                   ! and sidebands added
     real(r4), pointer :: LnT(:) => NULL()          ! Log temperatures
     type(vGrid_t), pointer :: VGrid => NULL()      ! vertical grid
     real(r4) :: VelLin                             ! Velocity linearization, km/s
@@ -45,36 +49,45 @@ module PFAData_m
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  Get_PDAdata_from_l2cf  -----
-  subroutine Get_PFAdata_from_l2cf ( Root, VGrids )
+  subroutine Get_PFAdata_from_l2cf ( Root, Name, VGrids )
   ! Process a PFAdata specification from the l2cf.
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_m, only: Expr
     use Init_Tables_Module, only: F_Absorption, F_dAbsDnc, F_dAbsDnu, &
       & F_dAbsDwc, F_Molecules, F_Signal, F_Temperatures, F_VelLin, F_VGrid
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Temperature, PHYQ_Velocity
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: Signals
     use MoreTree, only: Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, NSons, Sub_Rosa, Subtree
 
     integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
+    integer, intent(in) :: Name            ! of the pfaData spec, else zero
     type(vGrid_t), intent(in), target :: VGrids(:) ! database of vgrids
 
     ! Error codes
     integer, parameter :: SignalParse = 1
-    integer, parameter :: WrongSize = signalParse + 1
+    integer, parameter :: TooManyChannels = signalParse + 1
+    integer, parameter :: TooManySignals = tooManyChannels + 1
+    integer, parameter :: WrongSize = tooManySignals + 1
     integer, parameter :: WrongUnits = wrongSize + 1
 
-    integer :: AbsTree, dAbsDncTree, dAbsDnuTree, dAbsDwcTree, Dim
+    integer :: AbsTree
+    logical, pointer :: Channels(:)
+    integer :: dAbsDncTree, dAbsDnuTree, dAbsDwcTree, Dim
     logical :: Error
-    integer :: I, J, NArrays, NPress, NTemps, Son
-    integer :: TemperatureTree, Units(2)
+    integer :: I, J, NArrays, NPress, NTemps, Sideband
+    integer, pointer :: SignalIndices(:)
+    integer :: Son, TemperatureTree, Units(2)
     type(pfaData_t) :: PFADatum
     double precision :: Value(2)
 
     error = .false.
+    nullify ( channels, signalIndices )
+    pfaDatum%name = name
     do i = 2, nsons(root)
       son = subtree(i,root)
       select case ( get_field_id(son) )
@@ -96,11 +109,19 @@ contains ! =====     Public Procedures     =============================
         pfaDatum%vGrid => vgrids(decoration(decoration(subtree(2,son))))
       case ( f_signal )
         call get_string ( sub_rosa(subtree(2,son)), pfaDatum%signal, strip=.true. )
-        call parse_signal ( pfaDatum%signal, pfaDatum%signalIndices, &
-          & tree_index=son )
-        if ( .not. associated(pfaDatum%signalIndices) ) & ! A parse error occurred
-          & call announce_error ( subtree(2,son), signalParse, &
-            & pfaDatum%signal )
+        call parse_signal ( pfaDatum%signal, signalIndices, &
+          & tree_index=son, sideband=sideband, channels=channels )
+        if ( .not. associated(signalIndices) ) & ! A parse error occurred
+          & call announce_error ( subtree(2,son), signalParse, pfaDatum%signal )
+        if ( size(signalIndices) > 1 ) &
+          & call announce_error ( subtree(2,son), tooManySignals, pfaDatum%signal )
+        if ( size(channels) > 1 ) &
+          & call announce_error ( subtree(2,son), tooManyChannels, pfaDatum%signal )
+        pfaDatum%signalIndex = signalIndices(1)
+        pfaDatum%theSignal = signals(pfaDatum%signalIndex)
+        pfaDatum%theSignal%channels => channels
+        pfaDatum%theSignal%sideband = sideband
+        call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
       case ( f_temperatures )
         temperatureTree = son
       case ( f_velLin )
@@ -173,6 +194,12 @@ contains ! =====     Public Procedures     =============================
       case ( signalParse )
         call output ( 'Unable to parse signal ' )
         call output ( trim(string), advance='yes' )
+      case ( tooManyChannels )
+        call output ( string )
+        call output ( ' Describes more than one channel.', advance='yes' )
+      case ( tooManySignals )
+        call output ( string )
+        call output ( ' Describes more than one signal.', advance='yes' )
       case ( wrongSize )
         call output ( 'Incorrect size for ' )
         call output ( trim(string) )
@@ -218,7 +245,8 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated(pfaData) ) return
     do i = 1, size(pfaData)
       call deallocate_test ( pfaData(i)%molecules, 'pfaData%molecules', moduleName )
-      call deallocate_test ( pfaData(i)%signalIndices, 'pfaData%signalIndices', moduleName )
+      call deallocate_test ( pfaData(i)%theSignal%channels, 'pfaData...Channels', &
+          & moduleName )
       call deallocate_test ( pfaData(i)%lnT, 'pfaData%lnT', moduleName )
       call deallocate_test ( pfaData(i)%absorption, 'pfaData%absorption', moduleName )
       call deallocate_test ( pfaData(i)%dAbsDwc, 'pfaData%dAbsDwc', moduleName )
@@ -244,22 +272,44 @@ contains ! =====     Public Procedures     =============================
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_Indices
-    use String_Table, only: Display_String
+    use MLSSignals_m, only: DisplaySignalName
+    use String_Table, only: Display_String, String_Length
     use Output_m, only: Blanks, NewLine, Output
 
     type(PFAData_t), intent(in) :: PFADatum
 
-    integer :: I
+    integer :: I, L, W
+    character(len=*), parameter :: Molecules = ' Molecules:'
 
-    call output ( ' Molecules:' )
+    if ( pfaDatum%name /= 0 ) then
+      call output ( ' ' )
+      call display_string ( pfaDatum%name )
+    end if
+    call newLine
+    call output ( Molecules )
+    w = len(Molecules)
     do i = 1, size(pfaDatum%molecules)
+      l = string_length(lit_indices(pfaDatum%molecules(i)))
+      if ( w + l > 72 ) then
+        call newLine
+        w = len(molecules)
+        call blanks ( w )
+      end if
       call blanks ( 1 )
       call display_string ( lit_indices(pfaDatum%molecules(i)) )
+      w = w + l + 1
     end do
     call newline
 
-    call output ( ' Signal: ' )
+    call output ( ' Specified signal: ' )
     call output ( trim(pfaDatum%signal), advance='yes' )
+    call output ( ' Actual signal: ' )
+    call output ( pfaDatum%signalIndex, after=': ' )
+    if ( pfaDatum%theSignal%name /= 0 ) then
+      call display_string ( pfaDatum%theSignal%name )
+      call output ( ': ' )
+    end if
+    call displaySignalName ( pfaDatum%theSignal, advance='yes' )
 
     call dump ( pfaDatum%lnT, name=' Ln Temperatures' )
 
@@ -305,6 +355,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.2  2004/05/29 02:51:40  vsnyder
+! Allow signal string to denote only one signal
+!
 ! Revision 2.1  2004/05/22 02:29:48  vsnyder
 ! Initial commit
 !
