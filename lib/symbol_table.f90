@@ -34,21 +34,26 @@ module SYMBOL_TABLE
 
 contains
   ! =========================================     ADD_TERMINAL     =====
-  integer function ADD_TERMINAL ( TERMINAL, DEBUG )
+  integer function ADD_TERMINAL ( TERMINAL, DEBUG, CASESENSITIVE )
   ! Add a terminal symbol with token index TERMINAL to the symbol table.
   ! Its text has already been entered into the string table by
   ! STRING_TABLE % ADD_CHAR.
     integer, intent(in) :: TERMINAL
     logical, optional, intent(in) :: DEBUG
+    logical, optional, intent(in) :: CASESENSITIVE
 
     integer :: WHERE
     logical :: FOUND
     logical :: myDEBUG
+    logical :: myCASESENSITIVE
     
     myDEBUG = .false.
     if ( present(DEBUG) ) myDEBUG = DEBUG
 
-    call lookup_and_insert ( where, found, caseless_look(terminal), DEBUG )
+    myCaseSensitive = .not. caseless_look(terminal)
+    if ( present ( caseSensitive ) ) myCaseSensitive = caseSensitive
+
+    call lookup_and_insert ( where, found, .not. myCaseSensitive, DEBUG )
     if ( where > size(symbols) ) then
       call increase_symbols ! String table was expanded
     end if
@@ -137,14 +142,15 @@ contains
     return
   end subroutine DUMP_SYMBOL_TYPE
   ! =======================================     ENTER_TERMINAL     =====
-  integer function ENTER_TERMINAL ( TEXT, TERMINAL, DEBUG )
+  integer function ENTER_TERMINAL ( TEXT, TERMINAL, DEBUG, CASESENSITIVE )
   ! Put the text of a terminal symbol at the end of the character table,
   ! then enter it and its terminal index into the symbol table.
     character(len=*), intent(in) :: TEXT
     integer, intent(in) :: TERMINAL
     logical, optional, intent(in) :: DEBUG
+    logical, optional, intent(in) :: CASESENSITIVE
     call add_char ( text )
-    enter_terminal = add_terminal ( terminal, DEBUG )
+    enter_terminal = add_terminal ( terminal, DEBUG, CASESENSITIVE )
     return
   end function ENTER_TERMINAL
   ! ====================================     INIT_SYMBOL_TABLE     =====
@@ -231,6 +237,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.7  2003/05/12 02:05:06  livesey
+! Added optional case sensitivity to enter_terminal
+!
 ! Revision 2.6  2002/10/08 00:09:14  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
