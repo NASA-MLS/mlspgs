@@ -995,12 +995,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorValue
 
   ! ----------------------------------------------  DivideVectors  -----
-  subroutine DivideVectors ( X, A, Y )
-  ! Y = A / X if Y is present, else X = A / X, element-by-element.
+  subroutine DivideVectors ( A, X, Y )
+  ! Y = A / X if Y is present, else A = A / X, element-by-element.
+  ! If the mask field of X's vector value is associated, only do the
+  ! divide where the m_linalg bit is zero.
 
     ! Dummy arguments:
-    type(Vector_T), intent(inout), target :: X
-    type(Vector_T), intent(in) :: A
+    type(Vector_T), intent(inout), target :: A
+    type(Vector_T), intent(in) :: X
     type(Vector_T), intent(inout), optional, target :: Y
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
@@ -1008,14 +1010,22 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%name /= a%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Numerator vector has different template from denominator' )
-    z => x
+    z => a
     if ( present(y) ) then
       if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Quotient vector has different template from original' )
       z => y
     end if
     do i = 1, size(x%quantities)
-      z%quantities(i)%values = a%quantities(i)%values / x%quantities(i)%values
+      if ( associated(x%quantities(i)%mask) ) then
+        where ( iand(ichar(x%quantities(i)%mask),m_linalg) == 0 )
+          z%quantities(i)%values = a%quantities(i)%values / x%quantities(i)%values
+        elsewhere
+          z%quantities(i)%values = 0
+        end where
+      else
+        z%quantities(i)%values = a%quantities(i)%values / x%quantities(i)%values
+      end if
     end do
   end subroutine DivideVectors
 
@@ -2264,6 +2274,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.111  2004/06/16 01:18:39  vsnyder
+! Add DivideVectors, incomplete comments in TOC about other routines
+!
 ! Revision 2.110  2004/06/10 00:57:47  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
