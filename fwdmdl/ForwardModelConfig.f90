@@ -54,7 +54,8 @@ module ForwardModelConfig
     integer :: windowUnits          ! Either degrees or profiles
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
-    logical :: Default_spectroscopy      !
+    logical :: Default_spectroscopy ! Using Bill's spectroscopy data
+    logical :: Incl_Cld             ! Include cloud extinction calculation in Bill's forward model
     integer :: no_cloud_species     ! No of Cloud Species '2'
     integer :: no_model_surfs       ! No of Model surfaces '640'
     integer :: NUM_SCATTERING_ANGLES! No of scattering angles '16'
@@ -176,7 +177,7 @@ contains
     ! Executable code
     ! First pack the scalars
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
-      & config%do_conv, config%do_freq_avg, config%do_1d, config%differentialScan, &
+      & config%do_conv, config%do_freq_avg, config%do_1d, config%incl_cld, config%differentialScan, &
       & config%lockBins, config%polarized, config%spect_der, config%temp_der, config%skipOverlaps, &
       & config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
@@ -286,6 +287,7 @@ contains
     config%temp_der = l13(11)
     config%skipOverlaps = l13(12)
     config%default_spectroscopy = l13(13)
+    config%incl_cld = l13(14)
     call PVMIDLUnpack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i12(1)
@@ -466,6 +468,8 @@ contains
         call output ( database(i)%do_freq_avg, advance='yes' )
         call output ( '  Do_1D:' )
         call output ( database(i)%do_1d, advance='yes' )
+        call output ( '  Incl_Cld:' )
+        call output ( database(i)%incl_cld, advance='yes' )
         call output ( '  Polarized:' )
         call output ( database(i)%polarized, advance='yes' )
         call output ( '  SkipOverlaps:' )
@@ -503,6 +507,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.24  2003/01/29 01:48:52  vsnyder
+! Add 'polarized' field to forwardModel
+!
 ! Revision 2.23  2003/01/26 04:42:42  livesey
 ! Added profiles/angle options for phiWindow
 !
