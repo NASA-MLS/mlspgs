@@ -16,6 +16,7 @@ module DUMP_0
     module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
     module procedure DUMP_3D_INTEGER
     module procedure DUMP_1D_CHAR, DUMP_2D_CHAR, DUMP_3D_CHAR
+    module procedure DUMP_1D_REAL
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -881,6 +882,53 @@ contains
     end if
   end subroutine DUMP_3D_INTEGER
 
+  ! ---------------------------------------------  DUMP_1D_REAL  -----
+  subroutine DUMP_1D_REAL ( ARRAY, NAME, CLEAN )
+    real, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
+    integer :: J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1), '(1x,1pg13.6)', advance='yes' )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do j = 1, size(array), 5
+        if (.not. myClean) then
+          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( afterSub )
+        end if
+        do k = j, min(j+4, size(array))
+          call output ( array(k), '(1x,1pg13.6)' )
+        end do
+        call output ( '', advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_1D_REAL
+
   integer function ilog10(int)
     integer, intent(in) :: int
     ilog10=nint(log10(real(int)))
@@ -968,6 +1016,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.16  2001/12/08 00:47:51  pwagner
+! Added dump_1d_real for s.p. arrays
+!
 ! Revision 2.15  2001/11/29 23:50:53  pwagner
 ! Added optional blase arg to dump_nd_char; fixed bug where optional format not passed from dump_3d_int
 !
