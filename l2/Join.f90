@@ -386,8 +386,8 @@ contains ! =====     Public Procedures     =============================
       if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
         & "Quantity does not have a label" )
       if ( precisionVectors(source) /= 0 ) then
-        precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-          & sourceQuantities(source) )
+        precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
+          & precisionQuantities(source) )
         ! Check that this is compatible with it's value quantitiy
         if ( qty%template%name /= precQty%template%name ) &
           & call Announce_Error ( son, no_error_code, &
@@ -1351,6 +1351,10 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.90  2003/09/03 00:53:50  livesey
+! Bug fix on directWrite, it was storing the value field in the precision
+! too!
+!
 ! Revision 2.89  2003/08/28 23:51:58  livesey
 ! Renamed some variables to make them more obvious
 !
