@@ -49,7 +49,8 @@ contains
 !
     do in = 1, no_t              ! Loop over the Temp. zeta coeffs.
 !
-      do ip = 1, no_phi_t        ! Loop over the Temp. phi's coeffs.
+      do ip = lbound(k_temp%values,3), ubound(k_temp%values,3)
+        ! Loop over the Temp. phi's coeffs.
 !
 ! Compute the temperature derivative of delta:
 !
@@ -72,6 +73,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.9  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.8  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !

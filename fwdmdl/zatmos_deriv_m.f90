@@ -46,7 +46,7 @@ contains
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
      &       quantityType=l_vmr, molecule=forwardModelConfig%molecules(j))
 !
-        do ip = 1, f%template%noInstances
+        do ip = lbound(k_atmos(j)%values,3), ubound(k_atmos(j)%values,3)
 
           do iz = 1, f%template%noSurfs
 !
