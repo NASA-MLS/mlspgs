@@ -81,8 +81,8 @@ END GlobalSettings
 ;
 ; This section of the l3cf gives input parameters for the daily maps.
 ;
-; NOTE: in assigning negative numbers, maintain a space between the "=" and the
-;       "-" (the parser will see "=-" as a type of "compound operator.")
+; NOTE: in assigning negative numbers, maintain a space between "=" or ":" and the
+;       "-" (the parser will see "=-" or ":-" as a type of "compound operator.")
 ;
 BEGIN DailyMap
     ;;
@@ -108,8 +108,8 @@ BEGIN DailyMap
     mapSpec,l3prodNameD="ClO",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=1.0:100.0,rangWavenumber=1:20, mode=all, label="CLOL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:8, mode=all, label="CLOL3DM"
     ;;
 END DailyMap
 ;

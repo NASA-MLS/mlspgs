@@ -81,8 +81,8 @@ END GlobalSettings
 ;
 ; This section of the l3cf gives input parameters for the daily maps.
 ;
-; NOTE: in assigning negative numbers, maintain a space between the "=" and the
-;       "-" (the parser will see "=-" as a type of "compound operator.")
+; NOTE: in assigning negative numbers, maintain a space between "=" or ":" and the
+;       "-" (the parser will see "=-" or ":-" as a type of "compound operator.")
 ;
 BEGIN DailyMap
     ;;
@@ -108,53 +108,53 @@ BEGIN DailyMap
     mapSpec,l3prodNameD="ClO",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=1.0:100.0,rangWavenumber=1:20, mode=all, label="CLOL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=1.0:100.0,rangWavenumber=1:8, mode=all, label="CLOL3DM"
     mapSpec,l3prodNameD="GeopotentialHeight",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.01:464.0,rangWavenumber=1:20, mode=com, label="ZL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.01:464.0,rangWavenumber=1:8, mode=com, label="ZL3DM"
     mapSpec,l3prodNameD="H2O",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.01:464.0,rangWavenumber=1:20, mode=com, label="H2OL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.01:464.0,rangWavenumber=1:8, mode=com, label="H2OL3DM"
     mapSpec,l3prodNameD="HCl",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.1:100.0,rangWavenumber=1:20, mode=com, label="HCLL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.1:100.0,rangWavenumber=1:8, mode=com, label="HCLL3DM"
     mapSpec,l3prodNameD="HCN",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=22.0:215.0,rangWavenumber=1:20, mode=com, label="HCNL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=22.0:215.0,rangWavenumber=1:8, mode=com, label="HCNL3DM"
     mapSpec,l3prodNameD="HNO3",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=1.0:100.0,rangWavenumber=1:20, mode=com, label="HNO3L3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=1.0:100.0,rangWavenumber=1:8, mode=com, label="HNO3L3DM"
     mapSpec,l3prodNameD="N2O",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=1.0:215.0,rangWavenumber=1:20, mode=com, label="N2OL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=1.0:215.0,rangWavenumber=1:8, mode=com, label="N2OL3DM"
     mapSpec,l3prodNameD="O3",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.01:316.0,rangWavenumber=1:20, mode=all, label="O3L3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.01:316.0,rangWavenumber=1:8, mode=all, label="O3L3DM"
     mapSpec,l3prodNameD="OH",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.1:10.0,rangWavenumber=1:20, mode=all, label="OHL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.1:10.0,rangWavenumber=1:8, mode=all, label="OHL3DM"
     mapSpec,l3prodNameD="Temperature",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            rangFrequency=0.1:1.0,dF=0.25,  $
-            l3presLvl=0.01:464.0,rangWavenumber=1:20, mode=com, label="TL3DM"
+            rangFrequency= -1.0:6.0,dF=0.2,   $
+            l3presLvl=0.01:464.0,rangWavenumber=1:8, mode=com, label="TL3DM"
     ;;
 END DailyMap
 ;
@@ -187,4 +187,7 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2001/03/01 19:50:26  nakamura
+; Initial revision
+;
 ;
