@@ -57,7 +57,7 @@ module L2ParInfo
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
-    integer :: maxFailuresPerChunk = 4 ! More than this then give up on getting it
+    integer :: maxFailuresPerChunk = 2 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
@@ -250,6 +250,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.16  2002/07/19 06:07:32  livesey
+! Cut down MaxFailuresPerChunk
+!
 ! Revision 2.15  2002/07/17 20:02:17  livesey
 ! Bug fix
 !
