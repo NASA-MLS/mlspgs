@@ -34,6 +34,9 @@ srclib=../srclib
 # where sources (but not OBJS) shared with l3, etc. are stored
 blaslib=../blas
 
+# where blas objects and libmlspack.a are stored
+libblas_objs=$(blaslib)/$(MLSCONFG)
+
 # where sources for the forward model are stored
 libfwdmdl_sources=../fwdmdl
 
@@ -103,15 +106,16 @@ PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libfwdmdl_objs)/libfwdmdl.a \
 	  $(libcloud_objs)/libcloud.a $(REECHO)
 
-ifdef BLAS
+#ifdef BLAS
+#   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+#   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+#   $(REECHO)
+#else
+# We henceforth assume any changes to blas must provoke remaking lib
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(REECHO)
-else
-   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f) $(REECHO)
-endif
+   $(libblas_objs)/libmlspack.a $(REECHO)
+#endif
 
 
 # Because LF95 once couldn't handle write_meta.f90
@@ -163,6 +167,13 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
 		;; \
 	esac 
+
+$(libblas_objs)/libmlspack.a: $(blaslib_f) \
+   $(libblas_objs)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libblas_objs)/libmlspack.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib)
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
@@ -245,6 +256,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.41  2001/11/15 00:10:13  pwagner
+# Rebuilds on changes to mlspgs/blas
+#
 # Revision 2.40  2001/11/08 00:40:51  pwagner
 # NOCLEANING avoids massive recompiles on changes to .configure
 #
