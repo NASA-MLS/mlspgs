@@ -1,6 +1,6 @@
 #	Makefile
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
@@ -52,7 +52,11 @@ endif
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
 
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 SHELL = /bin/sh
@@ -113,8 +117,10 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh \
-        $(libmls_sources) $(srclib)
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 \
+        $(libmls_sources) $(srclib) ; \
+     mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
@@ -155,6 +161,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.8  2002/07/24 20:32:47  pwagner
+# Changes to support hdf5/hdfeos5
+#
 # Revision 1.7  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #

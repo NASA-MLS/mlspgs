@@ -32,6 +32,14 @@ endif
 # will be done in the uniquely-named sub-directories, not here--so
 .SUFFIXES:
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 SHELL = /bin/sh
@@ -80,7 +88,9 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh 
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 ; \
+     mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./
@@ -121,6 +131,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.2  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
 # Revision 1.1  2001/06/14 22:18:42  pwagner
 # First commit
 #
