@@ -77,8 +77,6 @@ contains ! =====     Public Procedures     =============================
     character(len=255) :: FileName      ! Duh
     integer :: I, J                     ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
-    character(len=255) :: PCFFileName
-    integer :: returnStatus             ! non-zero means trouble
     integer :: Son                      ! Some subtree of root.
     integer :: Version
 
@@ -134,8 +132,7 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_l2pc )
         do j = 2, nsons(son)
-          call get_file_name ( mlspcf_l2pc_start, &
-            & 'L2PC File not found in PCF' )
+          call get_file_name ( mlspcf_l2pc_start, 'L2PC File not found in PCF' )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
             call read_l2pc_file ( lun )
@@ -155,9 +152,13 @@ contains ! =====     Public Procedures     =============================
 
   contains
 
+    ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, MSG )
       integer, intent(in) :: pcfCode
       character(len=*), intent(in) :: MSG ! in case of error
+
+      character(len=255) :: PCFFileName
+      integer :: returnStatus             ! non-zero means trouble
 
       call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
       if ( TOOLKIT ) then
@@ -175,7 +176,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ForwardModelGlobalSetup
 
-  ! -------------------------------- CreateBinSelectorFromMLSCFINFO --
+  ! -----------------------------  CreateBinSelectorFromMLSCFINFO  -----
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
@@ -270,7 +271,7 @@ contains ! =====     Public Procedures     =============================
 
   end function CreateBinSelectorFromMLSCFINFO
 
-  ! ------------------------------------------  ConstructForwardModelConfig  -----
+  ! --------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
     & ( NAME, ROOT, VGRIDS, GLOBAL ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
@@ -588,6 +589,7 @@ contains ! =====     Public Procedures     =============================
       & call trace_end ( "ConstructForwardModelConfig" )
 
   contains
+    ! ............................................  CountElements  .....
     recursive subroutine CountElements ( root, count )
       integer, intent(in) :: ROOT       ! of a subtree
       integer, intent(inout) :: COUNT   ! Number of array elements
@@ -601,6 +603,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine CountElements
 
+    ! .............................................  FillElements  .....
     recursive subroutine FillElements ( root, count, depth, molecules )
       integer, intent(in) :: ROOT       ! of a subtree
       integer, intent(inout) :: COUNT   ! of array elements processed
@@ -618,6 +621,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine FillElements
 
+    ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
       use MLSSignals_m, only: Signal_t
       type (Signal_T), pointer :: FirstSignal
@@ -661,8 +665,9 @@ contains ! =====     Public Procedures     =============================
 
   end function ConstructForwardModelConfig
 
-  ! ---------------------- print mean, std_dev for timing FullforwardModel ---
-  subroutine printForwardModelTiming (FWModelConfig)
+  ! ------------------------------------  PrintForwardModelTiming  -----
+  subroutine PrintForwardModelTiming ( FWModelConfig )
+  !  Print mean, std_dev for timing FullforwardModel
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Output_m, only: BLANKS, Output
@@ -695,10 +700,11 @@ contains ! =====     Public Procedures     =============================
     call output ( " ", advance = 'yes')
     call output ( "======= end printForwardModelTiming =====", advance = 'yes')
                                                                                 
-  end subroutine printForwardModelTiming
+  end subroutine PrintForwardModelTiming
                                                                                 
-  ! ----------------------- reset the values for timing FullforwardModel -----
-  subroutine resetForwardModelTiming (FWModelConfig)
+  ! ------------------------------------  ResetForwardModelTiming  -----
+  subroutine ResetForwardModelTiming ( FWModelConfig )
+  ! reset the values for timing FullforwardModel
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
                                                                                 
@@ -709,9 +715,9 @@ contains ! =====     Public Procedures     =============================
     FWModelConfig%sum_DeltaTime = 0.0
     FWModelConfig%sum_squareDeltaTime = 0.0
                                                                                 
-  end subroutine resetForwardModelTiming
+  end subroutine ResetForwardModelTiming
 
-  ! =====     Private Procedures     =====================================
+  ! =====     Private Procedures     ===================================
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
 
@@ -789,6 +795,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.70  2003/07/16 01:27:35  vsnyder
+! Futzing
+!
 ! Revision 2.69  2003/07/16 01:06:36  vsnyder
 ! Add DACS filter shapes
 !
