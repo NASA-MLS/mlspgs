@@ -328,7 +328,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array'//trim(name) )
-    call h5tset_size_f(stringtype, max(len_trim(value(1)), 1), status )
+    call h5tset_size_f(stringtype, len(value(1)), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create dataspace and attribute
@@ -3123,6 +3123,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.33  2003/09/30 18:29:41  perun
+! Change len_trim to len in MakeHDF5Attribute_string_arr1.
+!
 ! Revision 2.32  2003/09/12 16:40:27  cvuu
 ! Add subroutines to get L1BOA attributes
 !
