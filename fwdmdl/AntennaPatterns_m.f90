@@ -13,7 +13,8 @@ module AntennaPatterns_m
   private
   ! Public procedures:
   public :: Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
-  public :: Close_Antenna_Patterns_File, Destroy_Antenna_Patterns_Database
+  public :: Close_Antenna_Patterns_File
+! public :: Close_Antenna_Patterns_File, Destroy_Antenna_Patterns_Database
   public :: Dump_Antenna_Patterns_Database
 
   type, public :: AntennaPattern_T
@@ -85,7 +86,7 @@ contains
 
     if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File" )
 
-    if ( associated(AntennaPatterns) ) call destroy_antenna_patterns_database
+!   if ( associated(AntennaPatterns) ) call destroy_antenna_patterns_database
 
 
     ! First, read through the file and count how much stuff is there.
@@ -185,22 +186,22 @@ outer1: do
   end subroutine Close_Antenna_Patterns_File
 
   ! -----------------------------  Destroy_Antenna_Patterns_Database  -----
-  subroutine Destroy_Antenna_Patterns_Database
-    integer :: I, Status
-    do i = 1, size(AntennaPatterns)
-      call deallocate_test ( AntennaPatterns(i)%signals, &
-        & "AntennaPatterns(?)%Signals", moduleName )
-      call deallocate_test ( AntennaPatterns(i)%aaap, &
-        & "AntennaPatterns(?)%aaap", moduleName )
-      call deallocate_test ( AntennaPatterns(i)%d1aap, &
-        & "AntennaPatterns(?)%D1aap", moduleName )
-      call deallocate_test ( AntennaPatterns(i)%d2aap, &
-        & "AntennaPatterns(?)%D2aap", moduleName )
-    end do ! i
-    deallocate ( AntennaPatterns, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "AntennaPatterns" )
-  end subroutine Destroy_Antenna_Patterns_Database
+! subroutine Destroy_Antenna_Patterns_Database
+!   integer :: I, Status
+!   do i = 1, size(AntennaPatterns)
+!     call deallocate_test ( AntennaPatterns(i)%signals, &
+!       & "AntennaPatterns(?)%Signals", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%aaap, &
+!       & "AntennaPatterns(?)%aaap", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%d1aap, &
+!       & "AntennaPatterns(?)%D1aap", moduleName )
+!     call deallocate_test ( AntennaPatterns(i)%d2aap, &
+!       & "AntennaPatterns(?)%D2aap", moduleName )
+!   end do ! i
+!   deallocate ( AntennaPatterns, stat=status )
+!   if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!     MLSMSG_DeAllocate // "AntennaPatterns" )
+! end subroutine Destroy_Antenna_Patterns_Database
 
   ! --------------------------------  Dump_Antenna_Patterns_Database  -----
   subroutine Dump_Antenna_Patterns_Database
@@ -229,3 +230,6 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.1  2001/03/30 02:37:44  vsnyder
+! Initial Commit
+!
