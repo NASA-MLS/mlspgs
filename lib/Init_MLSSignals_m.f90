@@ -1,11 +1,13 @@
 module Init_MLSSignals_m
 
   use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, N, &
-    & NADP, NDP, NP, NR, S, T, T_Boolean, T_Last_Intrinsic, T_Numeric, &
+    & NADP, NDP, NP, NR, P, S, T, T_Boolean, T_Numeric, &
     & T_Numeric_Range, T_String, Z
 
+  use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
+  implicit NONE
+
   public
-  private :: Make_Tree
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -16,8 +18,8 @@ module Init_MLSSignals_m
 !---------------------------------------------------------------------------
 
   ! Types used in signal specifications:
-  integer, parameter :: t_sideband = t_last_intrinsic + 1
-  integer, parameter :: t_last_signal = t_sideband
+  integer, parameter :: T_sideband = Last_molecule_type + 1
+  integer, parameter :: Last_signal_type = t_sideband
 
   ! Fields used in signal specifications:
   integer, parameter :: Field_First = 1
@@ -44,7 +46,7 @@ module Init_MLSSignals_m
   integer, parameter :: Last_Signal_Field   = f_width
 
   ! Literals used in signal specifications:
-  integer, parameter :: L_FOLDED            = last_intrinsic_lit + 1
+  integer, parameter :: L_FOLDED            = last_molecule + 1
   integer, parameter :: L_LOWER             = l_folded + 1
   integer, parameter :: L_UPPER             = l_lower + 1
   integer, parameter :: Last_Signal_Lit     = l_upper
@@ -64,12 +66,20 @@ module Init_MLSSignals_m
 contains
   ! --------------------------------------------  Init_MLSSignals  -----
   subroutine Init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
-    & Spec_Indices )
+    & Parm_Indices, Section_Indices, Spec_Indices )
+
     use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+
     integer, intent(inout) :: Data_Type_Indices(:)
     integer, intent(inout) :: Lit_Indices(:)
     integer, intent(inout) :: Field_Indices(field_First:last_Signal_Field)
+    integer, intent(inout) :: Parm_Indices(:)
+    integer, intent(inout) :: Section_Indices(:)
     integer, intent(inout) :: Spec_Indices(spec_First:last_Signal_Spec)
+
+    call init_molecules ( data_type_indices, field_indices, lit_indices, &
+      & parm_indices, section_indices, spec_indices )
+
     ! Put type names into the symbol table
     data_type_indices(t_sideband) =        add_ident ( 'sideband' )
     ! Put field names into the symbol table
@@ -182,80 +192,18 @@ contains
 
   contains
     ! --------------------------------------------------  MAKE_TREE  -----
-    subroutine MAKE_TREE ( IDS )
-    ! Build a tree specified by the "ids" array.  "begin" marks the
-    ! beginning of a tree.  A tree-node marks the end of the corresponding
-    ! tree.  Pseudo-terminals are decorated with their indices.
-      use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-      implicit NONE
-
-      integer, intent(in) :: IDS(:)
-
-      integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-      integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
-
-      callno = callno + 1
-      n_ids = size(ids)
-      m = 0
-      stack(0) = 0 ! just so it's defined, in case it gets incremented
-                   ! after build_tree
-      if ( ids(1) >= 0 ) then
-        m = 1
-        stack(1) = 0
-      end if
-      do i = 1, n_ids
-        if ( ids(i) == begin ) then
-          m = m + 1
-          if ( m > ubound(stack,1) ) then
-            print *, 'INIT_MLSSIGNALS_M%MAKE_TREE-E- Stack overflow!'
-            print *, 'Your tree is taller than ', ubound(stack,1), &
-              &      '.  Detected while'
-            print *, 'processing element ', i, ' of the list for call ', callno
-            stop
-          end if
-          stack(m) = 0
-        else
-          item = mod(ids(i), 1000)
-          which = mod(ids(i) / 1000, 1000)
-          decor = ids(i) / 1000000
-          select case ( which )
-          case ( f/1000 ) ! Fields
-            string = field_indices(item)
-          case ( l/1000 ) ! Enumeration literals
-            string = lit_indices(item)
-          case ( s/1000 ) ! Specs
-            string = spec_indices(item)
-          case ( t/1000 ) ! Intrinsic data types
-            string = data_type_indices(item)
-          case ( n/1000 ) ! Tree nodes
-            call build_tree ( item, stack(m), decor )
-            m = m - 1
-            if ( m < lbound(stack,1) ) then
-              print *, 'INIT_MLSSIGNALS_M%MAKE_TREE-E- Stack underflow!'
-              print *, 'You probably forgot a "begin" somewhere.  Detected while'
-              print *, 'processing element ', i, ' of the list for call ', callno
-              stop
-            end if
-            stack(m) = stack(m) + 1
-      cycle
-          end select
-          if ( string == 0 ) then
-            print *, 'INIT_MLSSIGNALS_M%MAKE_TREE-E- The string for element ', &
-              & i, ' of a list'
-            print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
-            stop
-          end if
-          call push_pseudo_terminal ( string, 0, decor = item )
-          stack(m) = stack(m) + 1
-        end if
-      end do
-    end subroutine MAKE_TREE
+    include "make_tree.f9h"
 
   end subroutine Init_MLSSignals
 
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.7  2001/04/03 19:09:12  vsnyder
+! Change the order of initialization to intrinsic, Molecules, MLSSignals.
+! Use the revised make_tree.f9h, which requires revision of init...
+! calling sequences.
+!
 ! Revision 2.6  2001/03/28 19:50:43  vsnyder
 ! Remove frequencies and widths fields
 !
