@@ -18,7 +18,7 @@ module FGrid                    ! Frequency grid information
   private
 
   public :: FGrid_T, AddFGridToDatabase, CreateFGridFromMLSCFInfo, &
-    & DestroyFGridContents, DestroyFGridDatabase
+    & DestroyFGridContents, DestroyFGridDatabase, NullifyFgrid
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -79,6 +79,7 @@ contains ! ===================================== Public procedures =====
     real(r8) :: VALUES(2)               ! From expr
 
     ! Executable code
+    call nullifyFGrid ( fGrid ) ! for Sun's still useless compiler
     fGrid%name = name
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -135,6 +136,15 @@ contains ! ===================================== Public procedures =====
       & MLSMSG_Deallocate//'database' )
   end subroutine DestroyFGridDatabase
 
+  ! ----------------------------------------NullifyFGrid -----
+  subroutine NullifyFGrid ( F )
+    ! Given a fGrid, nullify all the pointers associated with it
+    type ( FGrid_T ), intent(out) :: F
+
+    ! Executable code
+    nullify ( f%values )
+  end subroutine NullifyFGrid
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -142,6 +152,10 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.4  2002/11/22 12:17:48  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.3  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
