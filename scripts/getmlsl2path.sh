@@ -10,7 +10,7 @@ case "$MACHINE" in
     headnode | sum* )
 	SUMS=1
 	DESKTOP=0 ;;
-    mach* | soundbarrier )
+    frontend* | compute* )
 	SOUNDBARRIER=1
 	DESKTOP=0 ;;
 esac
@@ -37,7 +37,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work1/$USER"
+	    echo "/research1/$USER"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
 	fi
@@ -51,14 +51,14 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work1/$USER/"
+	    echo "/research1/$USER/"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--truthl2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/data/emls/l2gp/$SIMULATION--t/$YEAR"
 	fi
@@ -72,21 +72,21 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l1boa" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/data/emls/l1boa/$SIMULATION--t/$YEAR"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION"
 	fi
     fi
     if [ $1 == "--l2cal" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/data/emls/l2cal"
 	fi
@@ -96,14 +96,14 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--tmp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work1/$USER"
+	    echo "/research1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--sidsrad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work1/$USER"
+	    echo "/research1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
@@ -112,6 +112,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.16  2003/08/28 00:43:31  livesey
+# Changed work3 to work1
+#
 # Revision 1.15  2003/05/22 17:41:27  livesey
 # Added sids rad option
 #
