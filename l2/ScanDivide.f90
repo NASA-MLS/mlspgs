@@ -1,4 +1,3 @@
-
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -11,7 +10,7 @@ module ScanDivide
     L_NONE, L_THZ, LAST_PARM, P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
     P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_MAX_GAP, P_OVERLAP, &
     P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, PARM_INDICES, &
-    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, S_TIME
   use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
@@ -31,8 +30,9 @@ module ScanDivide
   private :: ID, ModuleName
 
 !------------------- RCS Ident Info ------------------------------------
-  character(len=130) :: Id = &
-  "$Id$"
+  character(len=*), parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idParm)) :: Id = idParm
   character(len=*), parameter :: ModuleName= "$RCSfile$"
 !------------------------------------------------------------------------
 
@@ -48,6 +48,9 @@ module ScanDivide
 
 ! Remarks:  This prototype module contains subroutines for the Scan/Divide task
 !           of the L2 software.
+
+  logical :: TIMING                   ! For S_Time
+  real :: T1, T2                      ! For S_Time
 
 contains ! =====     Public Procedures     =============================
 
@@ -90,7 +93,7 @@ contains ! =====     Public Procedures     =============================
 
 ! Variables
 
-    type( L1BData_T ) :: DATA
+   type( L1BData_T ) :: DATA
 
     integer :: MODHOME
     integer :: MODCRITICAL
@@ -108,6 +111,8 @@ contains ! =====     Public Procedures     =============================
     integer :: NUMSCAN, OVERLAP
     integer, allocatable :: BADMAF(:), COUNTERMAF(:), FIRSTOA(:)
     integer, allocatable :: FIRSTSCAN(:), LASTOA(:), LASTSCAN(:)
+
+    timing = .false.
 
 ! Check that input times are reasonable
 
@@ -474,6 +479,8 @@ contains ! =====     Public Procedures     =============================
       msr = MLSMSG_Deallocate // ' local variables.'
       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
     end if
+
+    if ( timing ) call sayTime
 
 !------------------------------
   end subroutine ScanAndDivide
@@ -1271,31 +1278,38 @@ contains ! =====     Public Procedures     =============================
       call expr ( subtree(2,son), units, value )
 
       select case ( key )
-      case ( p_ideal_length )
+      case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
         orbLen = value(1)
-      case ( p_overlap )
+      case ( p_overlap ) ! ...........................  P_OVERLAP  .....
         overlap = value(1)
-      case ( p_home_geod_angle )
+      case ( p_home_geod_angle ) ! ...........  P_HOME_GEOD_ANGLE  .....
         home = value(1)
-      case ( p_home_module )
+      case ( p_home_module ) ! ...................  P_HOME_MODULE  .....
         modHome = value(1)
-      case ( p_scan_lower_limit )
+      case ( p_scan_lower_limit ) ! .........  P_SCAN_LOWER_LIMIT  .....
         if ( units(1) /= phyq_Length) &
           & call announce_error ( son, notLength, key )
         llb = value(1)
         lub = value(2)
-      case ( p_scan_upper_limit )
+      case ( p_scan_upper_limit ) ! .........  P_SCAN_UPPER_LIMIT  .....
         if ( units(1) /= phyq_Length) &
           & call announce_error ( son, notLength, key )
         ulb = value(1)
         uub = value(2)
-      case ( p_critical_scanning_modules )
+      case ( p_critical_scanning_modules ) ! P_CRITICAL_SCANNING_MODULES
         modCritical = value(1)
-      case ( p_critical_bands )
+      case ( p_critical_bands ) ! .............  P_CRITICAL_BANDS  .....
         bands = value(1)
-      case ( p_max_gap )
+      case ( p_max_gap ) ! ...........................  P_MAX_GAP  .....
         maxGap = value(1)
         unitsGap = units(1)
+      case ( s_time ) ! .................................  S_TIME  .....
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       end select
 
     end do
@@ -1344,11 +1358,22 @@ contains ! =====     Public Procedures     =============================
   end subroutine ScanDivide_mlscf
 !--------------------------------
 
+  ! ----------------------------------------------------  SayTime  -----
+  subroutine SayTime
+    call cpu_time ( t2 )
+    call output ( "Timing for ScanDivide = " )
+    call output ( dble(t2 - t1), advance = 'yes' )
+    timing = .false.
+  end subroutine SayTime
+
 !====================
 end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.7  2001/04/23 23:42:00  vsnyder
+!# Add 'time' command
+!#
 !# Revision 2.6  2001/03/08 23:36:19  vsnyder
 !# Make sure FLAG is defined in ScanDivide_firstGuess
 !#
@@ -1366,4 +1391,4 @@ end module ScanDivide
 !#
 !# Revision 2.1  2000/09/08 22:55:56  vsnyder
 !# Revised to use the tree output by the parser
-!#
+!# 
