@@ -8,12 +8,14 @@
 # (1) hiding any .f90, .f, .h, .f9h or .c curently in tests/misc
 # (2) copying the arg(s) to tests/misc
 # (3) cd tests/misc; make depends; make
-# (4) mv \$MLSCONFG/test ../../bin/\$MLSCONFG/test
+# (4) installing via: mv \$MLSCONFG/test ../../bin/\$MLSCONFG/test
 
 # options
 # -h[elp]            brief summary of usage and options; then exit
-# -p prog_name       name resulting program prog_name instead of test
+# -T target_name     make builds target_name instead of test e.g., lib)
+# -p prog_name       install resulting program as prog_name instead of test
 # -d prog_path       install resulting program in prog_path
+# -ni                don't install; i.e., skip step (4) above
 # -m test_dir_name   use tests/test_dir_name instead of tests/misc
 # -M MYMAKE          use MYMAKE for make command instead of make
 # -t test_dir_path   use test_dir_path/misc instead of tests/misc
@@ -21,6 +23,13 @@
 # -C MLSCFILE        use arg for MLSCFILE instead of .configure
 # -CC compiler       use arg for c compiler instead of cc
 # -FC compiler       use arg for Fortran compiler instead of MLSCONFG
+# -O opt or X=y      add an extra option to those being sent to make
+#                     consisting of a single arg; eg., "VARIABLE=value" or "-s"
+#                     you may have multiple occurrences of '-O option'
+#                     that assemble a longer list of options
+#                     e.g., '-O -f -O alt.makefile ..' => "make -f alt.makefile"
+#                     while in principle this would also allow you build 
+#                     multiple targets, that is a risky step
 # -i INC_PATHS       let arg override usual value for INC_PATHS
 #                     used for search paths when compiling
 #                     e.g., -i "../ /software/SRC..."
@@ -150,7 +159,9 @@ fi
 # Initialize settings to defaults
 DEEBUG=off
 BUILD=on
+INSTALL=on
 prog_name=test
+target_name=test
 test_dir_name=misc
 hidden_dir_name=hideme
 # The following paths work well starting from, say, mlspgs/l2
@@ -178,6 +189,10 @@ while [ "$1" != "" ] ; do
     case "$1" in
 	-p )
 	    prog_name=$2
+	    shift
+	;;
+	-T )
+	    target_name=$2
 	    shift
 	;;
 	-d )
@@ -213,6 +228,10 @@ while [ "$1" != "" ] ; do
 	    MYMAKEOPTS="FC=$2 $MYMAKEOPTS"
 	    shift
 	;;
+	-O )
+	    MYMAKEOPTS="$2 $MYMAKEOPTS"
+	    shift
+	;;
 	-I )
 	    EXTRA_PATHS="-I $2 $EXTRA_PATHS"
 	    shift
@@ -221,6 +240,9 @@ while [ "$1" != "" ] ; do
 	    INC_PATHS=$2
        override_INC_PATHS="yes"
 	    shift
+	;;
+	-ni )
+	    INSTALL=off
 	;;
 	-h | -help )
 	   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
@@ -242,6 +264,7 @@ then
    echo "prog_path: $prog_path"
    echo "test_dir_name: $test_dir_name"
    echo "test_dir_path: $test_dir_path"
+   echo "target_name: $target_name"
    echo "make command: $MYMAKE"
    echo "NEED_MLSCONFG: $NEED_MLSCONFG"
    echo "MLSCONFG: $MLSCONFG"
@@ -250,6 +273,8 @@ then
    echo "EXTRA_PATHS: $EXTRA_PATHS"
    echo "extra make options: $MYMAKEOPTS"
    echo "arglist: $arglist"
+   echo "BUILD: $BUILD"
+   echo "INSTALL: $INSTALL"
 fi
 
 # Check on args--need any more? Are they self-consistent?
@@ -356,11 +381,11 @@ then
 #      make depends ghostbuster
 #      make EXTRA_PATHS="$EXTRA_PATHS"
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $MYMAKEOPTS "$target_name"
    fi
 elif [ "$override_INC_PATHS" = "no" ]
 then
@@ -370,7 +395,11 @@ then
 #      make depends ghostbuster
 #      make
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE $MYMAKEOPTS
+      $MYMAKE $MYMAKEOPTS "$target_name"
+   fi
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo $MYMAKE $MYMAKEOPTS "$target_name"
    fi
 else
    repair_subpaths $INC_PATHS
@@ -381,16 +410,24 @@ else
 #      make depends ghostbuster
 #      make INC_PATHS="$INC_PATHS"
       $MYMAKE depends ghostbuster $MYMAKEOPTS
-      $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS
+      $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS
+      echo $MYMAKE INC_PATHS="$INC_PATHS" $MYMAKEOPTS "$target_name"
    fi
 fi
 
 # (4) Install
-if [ $DEEBUG = "on" ]
+if [ $INSTALL = "off" ]
+then
+   if [ "$DEEBUG" = "on" ]
+   then
+      echo "Done with build; INSTALL = off so exiting now"
+   fi
+   exit 0
+fi
+cif [ $DEEBUG = "on" ]
 then
    echo "Installing $prog_name in $prog_path"
 fi
@@ -402,14 +439,17 @@ then
    mkdir_cascade $prog_path
 fi
 
-if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/test" -a "$BUILD" = "on" ]
+if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/$target_name" -a "$BUILD" = "on" ]
 then
-   mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
+   mv $test_dir_path/$test_dir_name/$MLSCONFG/$target_name $prog_path/$prog_name
 fi
 
 exit 0
 
 # $Log$
+# Revision 1.10  2002/01/22 21:42:59  pwagner
+# Turned debugging off
+#
 # Revision 1.9  2001/08/29 18:09:33  pwagner
 # Added C, CC, FC options
 #
