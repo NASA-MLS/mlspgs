@@ -53,7 +53,7 @@ Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
 })
 !ifdef(gotAK,{
   output, file= $
-    '!outpathl2ak/MLS-Aura_L2AK-!l2version_!day.h5', $
+    '!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5', $
     quantities=akOutAll, type=l2pc;, /ascii
 })
 end Output
