@@ -109,7 +109,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binSelector + 1
-  integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
+  integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
+  integer, parameter :: S_CONCATENATE        = s_columnScale + 1
   integer, parameter :: S_CYCLICJACOBI       = s_concatenate + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
@@ -147,7 +148,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_REFLECT            = s_quantity + 1
   integer, parameter :: S_RESTRICTRANGE      = s_reflect + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
-  integer, parameter :: S_SIDS               = s_retrieve + 1
+  integer, parameter :: S_ROWSCALE           = s_retrieve + 1
+  integer, parameter :: S_SIDS               = s_rowScale + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
@@ -303,6 +305,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
+    spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
@@ -341,6 +344,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
+    spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
@@ -851,6 +855,16 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_eigenVectors, s+s_matrix, n+n_field_spec, &
              nadp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_columnScale, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_scale, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_rowScale, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_scale, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -1134,7 +1148,8 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
-      begin, z+z_algebra, s+s_reflect, s+s_cyclicJacobi, n+n_section+d*no_check_eq, &
+      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_reflect, &
+             s+s_rowScale, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1151,6 +1166,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.353  2004/01/30 23:25:09  livesey
+! Added columnScale and rowScale commands for algebra
+!
 ! Revision 2.352  2004/01/29 03:33:16  livesey
 ! Added reflect and cyclicJacobi for z_algebra
 !
