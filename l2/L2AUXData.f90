@@ -474,23 +474,23 @@ contains ! =====     Public Procedures     =============================
     error = max(error,1)
     call output ( '***** At ' )
 !    call print_source ( source_ref(where) )
-	if(where > 0) then
-	    call print_source ( source_ref(where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf node available)' )
+    end if
     call output ( ' OutputAndClose complained: ' )
 
 
-		CALL output("Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(code)) then
-			select case ( code )
-			end select
-		endif
-    end subroutine ANNOUNCE_ERROR
+    call output ( " Caused the following error: ", advance='yes', &
+      & from_where=ModuleName )
+    call output ( trim(full_message), advance='yes', &
+      & from_where=ModuleName )
+    if ( present(code) ) then
+      select case ( code )
+      end select
+    end if
+  end subroutine ANNOUNCE_ERROR
 
 !=============================================================================
 end module L2AUXData
@@ -498,6 +498,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.11  2001/04/12 22:19:33  vsnyder
+! Improved an error message
+!
 ! Revision 2.10  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
