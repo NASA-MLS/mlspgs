@@ -3,9 +3,9 @@
 L2OBJS = Construct.o ConstructQuantityTemplates.o \
        ConstructVectorTemplates.o dumper.o Fill.o get_3d_view.o \
        global_settings.o HGrid.o init_tables_module.o Join.o L2AUXData.o \
-       L2GPData.o MLSL2.o obtainclimatology.o obtaindao.o obtain_mlscf.o \
-       obtainncep.o open_init.o OutputAndClose.o OutputL2GP.o \
-       QuantityTemplates.o ScanDivide.o tree_walker.o VGrid.o VectorsModule.o
+       MLSL2.o obtainclimatology.o obtaindao.o obtain_mlscf.o \
+       obtainncep.o open_init.o OutputAndClose.o QuantityTemplates.o \
+       ScanDivide.o tree_walker.o VGrid.o VectorsModule.o
 
 all: mlsl2
 
@@ -54,7 +54,7 @@ init_tables_module.o: $S/init_tables_module.f90 $C/symbol_table.o \
           $C/symbol_types.o $C/tree.o $C/tree_types.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/init_tables_module.f90
 
-Join.o: $S/Join.f90 init_tables_module.o L2AUXData.o L2GPData.o \
+Join.o: $S/Join.f90 init_tables_module.o L2AUXData.o $M/L2GPData.o \
           $C/lexer_core.o $M/MLSMessageModule.o $C/output_m.o \
           QuantityTemplates.o $C/tree.o $C/tree_types.o VectorsModule.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/Join.f90
@@ -63,18 +63,15 @@ L2AUXData.o: $S/L2AUXData.f90 $S/addItemToDatabase.f9h \
           $M/Allocate_Deallocate.o $M/MLSMessageModule.o
 	$(FC) -c $(FOPTS) $I$S $I$M $S/L2AUXData.f90
 
-L2GPData.o: $S/L2GPData.f90 $S/addItemToDatabase.f9h $M/Allocate_Deallocate.o \
-          $M/MLSMessageModule.o
-	$(FC) -c $(FOPTS) $I$S $I$M $S/L2GPData.f90
-
 MatrixModule.o: $S/MatrixModule.f90 $S/addItemToDatabase.f9h \
           $M/Allocate_Deallocate.o dump_0.o $M/MLSMessageModule.o \
           $C/output_m.o $C/string_table.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/MatrixModule.f90
 
 MLSL2.o: $S/MLSL2.f90 $C/declaration_table.o init_tables_module.o \
-          $C/lexer_core.o machine.o open_init.o $C/parser.o $C/string_table.o \
-          $C/toggles_core.o $C/tree.o $C/ tree_walker.o $C/units.o
+          $C/lexer_core.o $M/machine.o open_init.o $C/parser.o \
+          $C/string_table.o $C/toggles_core.o $C/tree.o $C/ tree_walker.o \
+          $C/units.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/MLSL2.f90
 
 obtainclimatology.o: $M/Allocate_Deallocate.o $S/obtainclimatology.f90 \
@@ -95,14 +92,10 @@ open_init.o: $S/open_init.f90 $M/MLSMessageModule.o $M/MLSSignalNomenclature.o \
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/open_init.f90
 
 OutputAndClose.o: $S/OutputAndClose.f90 $C/init_tables_module.o \
-          L2AUXData.o L2GPData.o $C/lexer_core.o $M/MLSMessageModule.o \
-          $C/output_m.o OutputL2GP.o $C/string_table.o $C/tree.o \
+          L2AUXData.o $M/L2GPData.o $C/lexer_core.o $M/MLSMessageModule.o \
+          $C/output_m.o $C/string_table.o $C/tree.o \
           $C/tree_types.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/OutputAndClose.f90
-
-OutputL2GP.o: $S/OutputL2GP.f90 $M/HDF-EOS.o $M/Allocate_Deallocate.o \
-          L2GPData.o $M/MLSMessageModule.o $M/swapi.o
-	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/OutputL2GP.f90
 
 QuantityTemplates.o: $S/QuantityTemplates.f90 $S/addItemToDatabase.f9h \
           $M/Allocate_Deallocate.o $M/MLSMessageModule.o \
@@ -115,7 +108,7 @@ ScanDivide.o: $S/ScanDivide.f90 dumper.o $C/expr_m.o init_tables_module.o \
 
 tree_walker.o: $S/tree_walker.f90 Construct.o $C/declaration_table.o dumper.o \
           global_settings.o Fill.o init_tables_module.o Join.o L2AUXData.o \
-          L2GPData.o $C/lexer_core.o obtainclimatology.o \
+          $M/L2GPData.o $C/lexer_core.o obtainclimatology.o \
           obtaindao.o obtainncep.o \
           open_init.o $C/output_m.o OutputAndClose.o QuantityTemplates.o \
           ScanDivide.o \
@@ -143,27 +136,36 @@ PG =
 #PG = pgs_smf_generatestatusreport.o \
 #     $(HOME)/mlspgs/SDPToolkit/src/IO/GEN/PGS_IO_Gen_OpenF.o \
 #     $(HOME)/mlspgs/SDPToolkit/src/IO/GEN/PGS_IO_Gen_CloseF.o
-#SDP = $M/SDPToolkit.o
-#SDP = $M/
-SDP =SDPToolkitSubstitute.o
 
-GDapi.o: $L/hdfeos/src/GDapi.c
-	cc -c -DNAGf90Fortran -I/van1/vsnyder/mlspgs/SDPToolkit/include/ \
-           -I$L/hdf/linux/HDF4.1r3/include/ -I$L/hdf/linux/HDF4.1r3/include \
-           -I$L/hdfeos/include/ $L/hdfeos/src/GDapi.c
-GD=GDapi.o
+GDapi.o: $(TOOLKIT)/hdfeos/src/GDapi.c
+	cc -c -DNAGf90Fortran -I$(HOME)/mlspgs/SDPToolkit/include/ \
+           -I$(TOOLKIT)/hdf/linux/HDF4.1r3/include/ \
+           -I$(TOOLKIT)/hdf/linux/HDF4.1r3/include \
+           -I$(TOOLKIT)/hdfeos/include/ $(TOOLKIT)/hdfeos/src/GDapi.c
+#GD=GDapi.o
+GD=
 # ========================================================================
-#-L $L/lib/$P -lPGSTK \
 
-mlsl2: $(L2OBJS) $(GD) $(PG) $(SDP) $C/libCF.a $M/libmls.a
+mlsl2: $(L2OBJS) $(GD) $(PG) $M/SDPToolkit$(SDP).o $C/libCF.a $M/libmls.a
 	$(FC) -o mlsl2 $(L2OBJS) \
-                      $(SDP) $(PG) $(GD) \
+                      $M/SDPToolkit$(SDP).o $(PG) $(GD) \
                       -L$C -lCF \
                       -L$M -lmls \
                       -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
-		      -L$E/hdfeos/lib/$P -lhdfeos \
-                      -L$(HOME)/mlspgs/l2/GCT -lGCT \
-                      -L$L/hdf/$P/HDF4.1r3/lib -lmfhdf -ldf -ljpeg -lz
+                      -L$E/hdfeos/lib/$(PLATFORM) -lhdfeos \
+                      -L $(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lGctp \
+                      -L $(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
+                        -lmfhdf -ldf -ljpeg -lz
+
+#mlsl2: $(L2OBJS) $(GD) $(PG) $M/SDPToolkit$(SDP).o $C/libCF.a $M/libmls.a
+#	$(FC) -o mlsl2 $(L2OBJS) \
+#                      $M/SDPToolkit$(SDP).o $(PG) $(GD) \
+#                      -L$C -lCF \
+#                      -L$M -lmls \
+#                      -L $(TOOLKIT)/lib/$(PLATFORM) -lPGSTK \
+#                      -L $(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lhdfeos -lGctp \
+#                      -L $(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
+#                        -lmfhdf -ldf -ljpeg -lz
 
 # ========================================================================
 
@@ -177,3 +179,6 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 2.3  2000/10/05 01:38:31  vsnyder
+# Added CVS comments
+#
