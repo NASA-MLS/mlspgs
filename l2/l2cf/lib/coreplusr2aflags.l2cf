@@ -7,15 +7,15 @@
 begin Fill
   ;; ------------------------------------- H2O-190
   !define(flaggingBands,{2,3,4,5,6,23})
-  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=1.0,minRads=6500,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=1.0,minRads=3300,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- RHI-190
   !define(flaggingBands,{2,3,4,5,6,23})
-  !makeFlagsForOneProduct(product=RHI,radiometer=R2,chisqScale=1.0,minRads=6500,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=RHI,radiometer=R2,chisqScale=1.0,minRads=3300,cloudMax=5K,cloudMin= -10K)
 
   ;; --------------------------------------- N2O-190
   !define(flaggingBands,{3})
-  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=1.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=1.0,minRads=600,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- Temperature-CorePlusR2A
   !define(flaggingBands,{1,22,32})
@@ -28,6 +28,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.1  2004/11/18 23:38:03  livesey
+; First version
+;
 ; Revision 1.10  2004/09/21 23:02:59  livesey
 ; Changed chiSqWeights to 1.0 for everything.
 ;
