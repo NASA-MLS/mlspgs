@@ -12,7 +12,7 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA
+    & S_L1BRAD, S_L1BOA, P_INSTRUMENT
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN, &
     & DeallocateL1BData
   use L2GPData, only: L2GPDATA_T
@@ -22,6 +22,7 @@ module GLOBAL_SETTINGS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use MLSStrings, only: unquote, hhmmss_value
+  use MLSSignals_m, only: INSTRUMENT
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use Output_m, only: Output
   use String_Table, only: Get_String
@@ -33,6 +34,8 @@ module GLOBAL_SETTINGS
   use VGrid, only: CreateVGridFromMLSCFInfo
   use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
   use WriteMetadata, only: PCFData_T
+
+  use Intrinsic, only: L_EMLS, L_UMLS
 
   implicit NONE
 
@@ -123,6 +126,8 @@ contains
             & just_a_warning = .true.)
         case ( p_version_comment )
           version_comment = sub_rosa_index
+        case ( p_instrument )
+          instrument = decoration(subtree(2,son))
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
           if ( pcf ) &
@@ -474,6 +479,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.40  2001/07/12 23:28:15  livesey
+! Got rid of s_cloudForwardModel
+!
 ! Revision 2.39  2001/07/09 22:53:20  pwagner
 ! Obeys CloudForwardModel; for now same as ForwardModel
 !
