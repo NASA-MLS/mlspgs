@@ -83,6 +83,7 @@ contains
     real(r8), parameter :: Boltzmhz = 20836.74_r8
     REAL(rp), allocatable, dimension(:) :: PP, TT
     logical :: Do_1D, Incl_Cld
+    LOGICAL, ALLOCATABLE, dimension(:) :: true_path_flags
 
 !-----------------------------------------------------------------------------
     WC= 0._r8
@@ -112,6 +113,8 @@ contains
 !    n_ele = 2*maxVert
     n_ele = 1  ! number of pressure levels along the path, in our case =1
 
+    ALLOCATE (true_path_flags(n_ele),stat=status)
+    true_path_flags = .true.
     allocate ( gl_slabs (n_ele,n_sps), stat=status )
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -139,7 +142,7 @@ contains
                               ! in the FullCloudForwardModel, so set it 0
 
     call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
-      & gl_slabs, n_ele, Do_1D )
+      & gl_slabs, n_ele, Do_1D, true_path_flags )
 
 ! Note that expa only depends on temperature.
     tanh1 = EXP(FF / (boltzmhz * t))
@@ -185,6 +188,7 @@ contains
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // ' tt ')
+    DEALLOCATE (true_path_flags,stat=status)
 
   END SUBROUTINE get_beta_bill 
  
@@ -195,6 +199,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.18  2003/05/16 23:53:36  livesey
+! Now uses molecule indices rather than spectags
+!
 ! Revision 1.17  2003/05/09 19:43:11  jonathan
 ! delete del_temp following Van's changes
 !
