@@ -191,6 +191,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     real(r8), dimension(:), pointer :: phi_fine       ! Fine resolution for phi 
     real(r8), dimension(:), pointer :: z_fine         ! Fine resolution for z
+    real(r8), dimension(:), pointer :: zp_fine         ! Fine resolution for zp
     real(r8), dimension(:), pointer :: s_fine        ! Fine resolution for s
     real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
     real(r8), dimension(:), pointer :: w_fine        ! weight along s_fine
@@ -392,7 +393,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !      vmrInst = closestInstances(maf)
 !      instance = closestInstances(maf)
 
-	novmrSurf = vmr%template%nosurfs
+	   novmrSurf = vmr%template%nosurfs
       call InterpolateValues ( &
         & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
         & reshape(vmr%values(:,instance),(/novmrSurf/)), &     ! Old Y
@@ -740,6 +741,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       nfine=100
       allocate( phi_fine(nfine*noInstances), stat=status )
       allocate( z_fine(nfine*noInstances), stat=status )
+      allocate( zp_fine(nfine*noInstances), stat=status )
       allocate( s_fine(nfine*noInstances), stat=status )
       allocate( w_fine(nfine*noInstances), stat=status )
       allocate( ds_fine(nfine*noInstances), stat=status )
@@ -768,7 +770,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
             & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old X
             & reshape(temp%template%surfs,(/noSurf/)), &    ! Old Y
             & z_fine, &   ! New X
-            & z_fine, &                     ! New Y
+            & zp_fine, &                     ! New Y
             & 'Linear' )
 
         !--------------------------------
@@ -803,7 +805,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          do i = 1,noInstances             ! loop over profile
          do j = 1,noCldSurf                  ! loop over surface
          do k = 1, nfine*noInstances      ! sum up all the lengths
-           if(abs(z_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
+           if(abs(zp_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(j,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noInstances) = &
            & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)/ds_tot
@@ -814,6 +816,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       
       Deallocate( phi_fine, stat=status )
       Deallocate( z_fine, stat=status )
+      Deallocate( zp_fine, stat=status )
       Deallocate( ds_fine, stat=status )
       Deallocate( w_fine, stat=status )
       Deallocate( s_fine, stat=status )
@@ -841,8 +844,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              do i=1,noSgrid
              ! now we normalize cloud extinction weighting functions at 200GHz 
              ! and output the transmission functions via Jacobian
+             if(a_trans(i,mif,chan) .ne. 0._r8) then
                jBlock%values(chan,i+(mif-1)*noSgrid)= a_trans(i,mif,chan)* &
                   & (frequencies(chan)/200000._r8)**4
+             else    ! in case of very tiny IWC
+               jBlock%values(chan,i+(mif-1)*noSgrid) = -106._r8 * &
+                  & (frequencies(chan)/200000._r8)**4
+             end if
              end do
              end do
           end if  ! doChannel
@@ -904,6 +912,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.62  2001/10/18 06:06:24  dwu
+! minor
+!
 ! Revision 1.61  2001/10/12 16:58:31  dwu
 ! distinguish number surfaces between model temperature grid and retrieval ext grid
 !
