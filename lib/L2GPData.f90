@@ -2419,7 +2419,7 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = actual_ntimes
     endif
 
-    if (myLastProfile > 0) then
+    if (myLastProfile <= 0) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "No profiles in this chunk" )
     elseif (myhdfVersion == HDFVERSION_4) then
@@ -2676,6 +2676,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.69  2003/07/07 21:04:55  pwagner
+! Tries to deal sensibly with profile-less chunks
+!
 ! Revision 2.68  2003/07/02 00:55:27  pwagner
 ! Some improvements in DirectWrites of l2aux, l2gp
 !
