@@ -126,19 +126,23 @@ contains
         & write ( prunit, format, advance=my_adv ) value
     else
       write ( line, * ) value
-      i = index(line,'.')
-      j = scan(line(i:),'DdEe ') + i - 1
-      if ( i /= 0 ) then
-        if ( j == i ) j = len(line)
-        i = i + 1
-        k = j
-        do while ( j > i )
-          j = j - 1
-          if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
-        end do
-        line(j+1:) = line(k:)
+      if ( scan(line,'123456789') == 0 ) then
+        line = '0'
+      else
+        i = index(line,'.')
+        j = scan(line(i:),'DdEe ') + i - 1
+        if ( i /= 0 ) then
+          if ( j == i ) j = len(line)
+          i = i + 1
+          k = j
+          do while ( j > i )
+            j = j - 1
+            if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
+          end do
+          line(j+1:) = line(k:)
+        end if
+        line = adjustl(line)
       end if
-      line = adjustl(line)
       k = len_trim(line)
       if ( prunit == -1 .or. prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv ) line(:k)
@@ -221,19 +225,23 @@ contains
         & write ( prunit, format, advance=my_adv ) value
     else
       write ( line, * ) value
-      i = index(line,'.')
-      j = scan(line(i:),'DdEe ') + i - 1
-      if ( i /= 0 ) then
-        if ( j == i ) j = len(line)
-        i = i + 2
-        k = j
-        do while ( j > i )
-          j = j - 1
-          if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
-        end do
-        line(j:) = line(k:)
+      if ( scan(line,'123456789') == 0 ) then
+        line = '0'
+      else
+        i = index(line,'.')
+        j = scan(line(i:),'DdEe ') + i - 1
+        if ( i /= 0 ) then
+          if ( j == i ) j = len(line)
+          i = i + 2
+          k = j
+          do while ( j > i )
+            j = j - 1
+            if ( line(j:j) /= '0' .and. line(j:j) /= ' ') exit
+          end do
+          line(j:) = line(k:)
+        end if
+        line = adjustl(line)
       end if
-      line = adjustl(line)
       k = len_trim(line)
       if ( prunit == -1 .or. prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv ) line(:k)
@@ -247,6 +255,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.6  2001/04/07 01:53:28  vsnyder
+! Output 0 instead 0.0e+00
+!
 ! Revision 2.5  2001/03/16 23:14:16  vsnyder
 ! Don't trim off the last nonzero digit
 !
