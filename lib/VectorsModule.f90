@@ -318,7 +318,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(to_clear) ) then
       do i = 1, size(to_clear)
         w = (to_clear(i)-1) / b + 1
-        mask(w) = ibclr( mask(w), mod(to_clear(i)-1, b) )
+        if ( w > 0 .and. w <= size(mask) ) &
+          & mask(w) = ibclr( mask(w), mod(to_clear(i)-1, b) )
       end do
     else
       mask = 0
@@ -1248,20 +1249,39 @@ contains ! =====     Public Procedures     =============================
   end subroutine ScaleVector
 
   !-----------------------------------------------------  SetMask  -----
-  subroutine SetMask ( MASK, TO_SET )
+  subroutine SetMask ( MASK, TO_SET, MAXBIT )
   ! Set bits of MASK indexed by elements of TO_SET.  Numbering of mask
   ! elements starts at one, not zero!  If TO_SET is absent, set all of the
-  ! bits of MASK.
+  ! bits of MASK.  If MaxBit is present, do not set any bits after MaxBit.
     integer, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
-    integer :: I, W
+    integer, intent(in), optional :: MaxBit
+    integer :: I, MyMaxBit, W
+    ! Masks for last word, so as not to get the wrong answer for the number
+    ! of meaningful elements by subtracting the number of set bits from the
+    ! total number of elements.
+    integer, parameter :: Masks(1:bit_size(0)-1) = &
+      & (/ (ishft(not(0),i-bit_size(0)),i=1,bit_size(0)-1) /)
     if ( present(to_set) ) then
+      myMaxBit = huge(0)
+      if ( present(maxBit) ) myMaxBit = maxBit
       do i = 1, size(to_set)
-        w = (to_set(i)-1) / b + 1
-        mask(w) = ibset(mask(w),mod(to_set(i)-1, b))
+        if ( to_set(i) <= myMaxBit ) then
+          w = (to_set(i)-1) / b + 1
+          if ( w > 0 .and. w <= size(mask) ) &
+            & mask(w) = ibset(mask(w),mod(to_set(i)-1, b))
+        end if
       end do
     else
       mask = not(0)
+      if ( present(maxBit) ) then
+        w = max(1, (maxBit + bit_size(0) - 1) / bit_size(0))
+        if ( w <= size(mask) ) then
+          i = mod(maxBit,bit_size(0))
+          if ( i /= 0 ) mask(w) = iand(mask(w),masks(i))
+          mask(w+1:) = 0
+        end if
+      end if
     end if
   end subroutine SetMask
 
@@ -1518,6 +1538,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.64  2001/10/04 01:50:33  vsnyder
+! Add 'database' argument to CloneVector, CopyVector; cosmetic changes
+!
 ! Revision 2.63  2001/10/03 23:05:42  vsnyder
 ! Added 'VectorNameText' argument to CopyVector
 !
