@@ -42,7 +42,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  use Units, only: Deg2Rad, LN10, PHYQ_Length, PI
+  use Units, only: Deg2Rad, LN10, PHYQ_Length, PI, PHYQ_Profiles
 
   implicit NONE
 
@@ -413,7 +413,8 @@ contains ! =============== Subroutines and functions ==========================
     call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
     call Deallocate_test ( geocLat, 'geocLat', ModuleName )
 
-    fmConf%phiWindow = 4.0
+    fmConf%phiWindow = 4
+    fmConf%windowUnits = phyq_profiles
     fmConf%instrumentModule = ptan%template%instrumentModule
     fmConf%differentialScan = .false.
 
@@ -1608,9 +1609,9 @@ contains ! =============== Subroutines and functions ==========================
     & config=fmConf)
 ! get window
   CALL FindInstanceWindow(temp,phitan,fmStat%maf,FMConf%phiWindow, &
-                            & windowstart_t, windowfinish_t)
+    & FMConf%windowUnits, windowstart_t, windowfinish_t)
   CALL FindInstanceWindow(h2o,phitan,fmStat%maf,FMConf%phiWindow, &
-                            & windowstart_h2o, windowfinish_h2o)
+    & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o)
 ! convert phitan into geocentric latitude
   CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
   CALL ALLOCATE_TEST(earth_radius,ptan%template%nosurfs,'earth_radius', &
@@ -2017,6 +2018,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.54  2003/01/26 04:43:15  livesey
+! Changed to handle units for phiWindow
+!
 ! Revision 2.53  2003/01/16 23:13:35  livesey
 ! Now gets MaxRefraction (smaller value) from Geometry
 !
