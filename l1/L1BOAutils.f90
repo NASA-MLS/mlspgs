@@ -33,8 +33,10 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: more_data
 
     INTEGER, SAVE :: MAFno = 0, counterMAF = 0
-    INTEGER :: i
-    REAL :: scAngleG(0:(MaxMIFs-1)), scAngleT(0:(MaxMIFs-1))
+    INTEGER :: i, MIFsPerMAF
+    INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
+    REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
+    REAL :: encAngleG(0:last_MIF_indx), encAngleT(0:last_MIF_indx)
     REAL, PARAMETER :: APE_eps = 27.7340
     REAL, PARAMETER :: TSE_eps = 26.301
 
@@ -53,7 +55,8 @@ CONTAINS
     ENDDO
 
     CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
+         l1bFileInfo%OAId, MAFinfo, MAFno, MIFsPerMAF, numOrb, scAngleG, &
+         scAngleT, encAngleG, encAngleT)
 
     PRINT *, "outputting l1boa for MAF no ", MAFno
 
@@ -83,6 +86,9 @@ CONTAINS
 END MODULE L1BOAutils
 
 ! $Log$
+! Revision 2.4  2004/11/10 17:22:00  perun
+! Change call to L1BOA_MAF with new arguments
+!
 ! Revision 2.3  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
