@@ -36,26 +36,17 @@ include $(srclib)/Makefile.dep
 # Add them to L3OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
 
-#                  PVM v. non-PVM options
-# If we implement an option to allow non-PVM-dependent installations
-# uncomment this next line; this will set our PVM objects
-# w/o complaining if it does not exist yet;
-# the latter case leaves PVM_OBJS empty
-#-include ../PVM_OBJS.inc
-#-------------------- without the non-PVM option
-# The following lines hardwire PVM_OBJS and so *require* PVM
-# If we implement the non-PVM option, comment out all these
-#PVM_OBJS=
+l3_driver = MLSL3D.o
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building mlsl3 with PVM support
+   pvm_message=Building mlsl3d with PVM support
    PVM_OBJS=
 else
    pvm_linker_line=
-   pvm_message=Building mlsl3 without PVM support
+   pvm_message=Building mlsl3d without PVM support
    PVM_OBJS=
 endif
 
@@ -65,10 +56,10 @@ ifdef LIB_BLAS
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
-   blas_message=Building mlsl3 with externally-supplied BLAS
+   blas_message=Building mlsl3d with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building mlsl3 with internally-supplied BLAS
+   blas_message=Building mlsl3d with internally-supplied BLAS
 endif
 
 ifdef HDF5
@@ -85,19 +76,24 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
-   hdf5_message=Building mlsl3 with hdf5
+   hdf5_message=Building mlsl3d with hdf5
 else
    hdf5_linker_line=
    hdfeos5_linker_line=
-   hdf5_message=Building mlsl3 without hdf5
+   hdf5_message=Building mlsl3d without hdf5
 endif
 
 # ========================================================================
-mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
+libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
+	ar ru $@ $?
+	ar d $@ $(l3_driver)
+
+mlsl3d: libmlsl3.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
-	$(FC) $(LDOPTS) -o mlsl3 $(ALLOBJS) $(PVM_OBJS) \
+	$(FC) $(LDOPTS) -o mlsl3d $(l3_driver) \
+                      -L./ -lmlsl3 \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -116,11 +112,11 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod mlsl3
+	rm -f *.o *.mod mlsl3d
 
 tar:
 	rm -f l3.tgz
-	tar hcvzf l3.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
+	tar hcvzf l3.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3d
 
 # ========================================================================
 
@@ -130,11 +126,14 @@ L2Interface.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90 $(FAFTER)
 L3DMData.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90 $(FAFTER)
-L3DZData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90 $(FAFTER)
+#L3DZData.o:
+#	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.11  2001/06/04 22:00:28  pwagner
 # Extra shared-object instructions on hdf5 linker line
 #

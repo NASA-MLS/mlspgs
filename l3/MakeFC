@@ -31,6 +31,9 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
 
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -69,6 +72,12 @@ SHELL = /bin/sh
 #----------------------------------------------------------
 #wildcard seems to no longer work right (maybe some change to our suns?)
 libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+blaslib_f := $(shell echo $(blaslib)/*.f)
+
+#Where else to look for USEd and INCLUDED files to add to dependency list
+depends_where:=$(libmls_sources) $(srclib)
+PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+	  $(libmls_objs)/libmls.a
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -79,26 +88,29 @@ else
    $(blaslib_f)
 endif
 
-PROG=mlsl3
+PROG=mlsl3d
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+
+$(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 	@case "$(FFTW_ROOT)" in \
 	"") \
 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
-		echo "Try make -f MakeFC configure_pvm" ; \
+		echo "Try make configure_pvm" ; \
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a ; \
 		;; \
 	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl3 ghostbuster
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl3d ghostbuster
 
 tar:
 
@@ -119,7 +131,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 depends:
 	$(MLSBIN)/makemakedep.sh \
         -d synoptic_prog.f90 \
-        $(libmls_sources) $(srclib)
+	$(depends_where) 
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
@@ -157,9 +169,13 @@ tarz: tar
 
 targ:
 	rm -f ../$(PROG).tgz
-	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o \
+   --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.22  2001/05/31 20:19:31  pwagner
+# Added ghostbuster to .PHONY list
+#
 # Revision 1.21  2001/05/24 17:56:39  pwagner
 # Expanded LIB_prereqs
 #
