@@ -180,13 +180,14 @@ contains
       begin, s+s_band, &                ! Must be after radiometer and spectrometerType
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
-             begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
+             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_centerfrequency, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
              begin, f+f_direction, t+t_numeric, nr+n_field_type, &
+             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
@@ -204,6 +205,11 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.24  2004/01/16 21:37:23  livesey
+! Added the ability to defer the connection between bands and radiometers
+! until you define the signal.  This is to support some SMLS related
+! research work.
+!
 ! Revision 2.23  2003/08/16 01:14:03  vsnyder
 ! Add optional 'polarization' field to 'radiometer' spec
 !
