@@ -8,12 +8,10 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, F_SOURCE, &
-    & F_UNPACKOUTPUT, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, L_PRESSURE, L_NONE, &
+    & F_SDNAME, F_SWATH, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, L_PRESSURE, L_NONE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
-    & L2AUXData_T, L2AUXDim_Channel, L2AUXDim_geodAngle, &
-    & L2AUXDim_IntermediateFrequency, L2AUXDim_LSBFrequency, L2AUXDim_MAF, &
-    & L2AUXDim_MIF, L2AUXDim_None, L2AUXDim_USBFrequency, SetupNewL2AUXRecord
+    & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
   use LEXER_CORE, only: PRINT_SOURCE
@@ -23,7 +21,7 @@ module Join                     ! Join together chunk based data.
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_TD_TAItoUTC, PGSTD_E_NO_LEAP_SECS
-  use String_Table, only: DISPLAY_STRING
+  use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -31,8 +29,8 @@ module Join                     ! Join together chunk based data.
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
     & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
-  use Intrinsic, ONLY: L_NONE, L_INSTRUMENTCHANNEL, L_USBFREQUENCY, L_LSBFREQUENCY,&
-       L_INTERMEDIATEFREQUENCY
+  use Intrinsic, ONLY: L_NONE, L_CHANNEL, L_GEODANGLE, L_USBFREQUENCY, L_LSBFREQUENCY,&
+       L_INTERMEDIATEFREQUENCY, L_MIF, L_MAF
 
   implicit none
   private
@@ -76,12 +74,14 @@ contains ! =====     Public Procedures     =============================
     integer :: KEYNO               ! Index of subtree of KEY
     integer :: mlscfLine
     integer :: NAME                ! Sub-rosa index of name of L2GP or L2AUX
+    integer :: SWATHNAME                ! Name index
+    integer :: SDNAME                   ! Name index
     integer :: SON                 ! A son of ROOT
     integer :: SOURCE              ! Index in AST
     integer :: VALUE               ! Value of a field
     integer :: vectorIndex, quantityIndex
     type (VectorValue_T), pointer :: quantity
-    logical :: compareOverlaps, outputOverlaps, unpackOutput
+    logical :: compareOverlaps, outputOverlaps
     REAL :: T1, T2     ! for timing
     logical :: TIMING
 
@@ -126,7 +126,8 @@ contains ! =====     Public Procedures     =============================
 !     name=mlscfSection%entries(mlscfLine)%mlscfEntryName
       compareOverlaps = .FALSE.
       outputOverlaps = .FALSE.
-      unpackOutput = .FALSE.
+      sdName=name
+      swathName=name
 
       ! Loop over the fields of the mlscf line
 
@@ -148,11 +149,13 @@ contains ! =====     Public Procedures     =============================
         case ( f_compareoverlaps )
           compareOverlaps = value == l_true
         case ( f_outputoverlaps )
-          outputOverlaps = value == l_true
-        case ( f_file)
+          outputOverlaps = value == l_true 
+        case (f_swath)
+          swathName= sub_rosa(subtree(2,gson))
+        case (f_sdName)
+          sdName= sub_rosa(subtree(2,gson))
+       case ( f_file)
           call announce_error(key,NotAllowed,field_index)
-        case ( f_unpackoutput )
-          unpackOutput = value == l_true
         case default ! Can't get here if tree_checker worked properly
         end select
       end do
@@ -169,11 +172,10 @@ contains ! =====     Public Procedures     =============================
         & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
-        call JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, chunkNo )
+        call JoinL2GPQuantities ( key, swathName, quantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
-        call JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, chunkNo, &
-          & unpackOutput=unpackOutput )
+        call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo )
       endif
     end do
 
@@ -320,6 +322,7 @@ contains ! =====     Public Procedures     =============================
 
     ! name is an integer, but L2GP%name is Character data
     thisL2GP%nameIndex = name
+    call get_string(name, thisL2gp%name, strip=.true.)
     lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
@@ -361,12 +364,8 @@ contains ! =====     Public Procedures     =============================
   ! This subroutine is like the one above, except that the quantities it joins
   ! are destined to go in L2AUX quantities.
 
-  ! The unpackOutput argument warrants some explanation.  If it is set false,
-  ! then the data is output with no gaps in the arrays.  If it is true, then
-  ! the last dimension if it's MAF is used as an index into the arrays.
-
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
-    & chunkNo, firstInstance, lastInstance, unpackOutput)
+    & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
@@ -376,7 +375,6 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     integer, intent(in) :: chunkNo
     integer, intent(in), optional :: firstInstance, lastInstance
-    logical, intent(in), optional :: unpackOutput
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2aux data.
 
@@ -387,7 +385,7 @@ contains ! =====     Public Procedures     =============================
     &                                          noOutputInstances
     type (L2AUXData_T) ::                   newL2AUX
     type (L2AUXData_T), pointer ::          thisL2AUX
-    logical ::                              l2auxDataIsNew, useUnpackOutput
+    logical ::                              l2auxDataIsNew
     integer, dimension(3) ::                dimensionFamilies, dimensionSizes
     integer ::                              auxFamily     ! Channel or Frequency
     integer ::                              dimensionIndex,channel,surf,prof, &
@@ -408,7 +406,6 @@ contains ! =====     Public Procedures     =============================
       index = decoration(key)
       l2auxDataIsNew = (index>=0)
     end if
-
     ! Work out what to do with the first and last Instance information
     
     if ( PRESENT(firstInstance) ) then
@@ -423,22 +420,9 @@ contains ! =====     Public Procedures     =============================
       useLastInstance = quantity%template%noInstances- &
         & quantity%template%noInstancesUpperOverlap
     end if
-
     noOutputInstances = useLastInstance-useFirstInstance+1
     ! If we've not been asked to output anything then don't carry on
     if ( noOutputInstances < 1 ) return
-
-    ! Sort out the unpackOutput flag
-
-    if ( PRESENT(unpackOutput) ) then
-      useUnpackOutput = unpackOutput
-    else
-      useUnpackOutput = .FALSE.
-    end if
-
-    if ( useUnpackOutput.AND.(.NOT.quantity%template%minorFrame) ) call MLSMessage ( &
-      & MLSMSG_Error ,ModuleName, "Can only use the unpack output flag"// &
-      & " for minor frame quantities")
 
     ! Now if this is a new l2aux quantity, we need to setup an l2aux data type
     ! for it.
@@ -453,36 +437,19 @@ contains ! =====     Public Procedures     =============================
         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Quantity has multiple channels but no frequency coordinate" )
 
-      select case (quantity%template%frequencyCoordinate)
-      case ( L_InstrumentChannel )
-        auxFamily = L2AUXDim_Channel
-      case ( L_IntermediateFrequency )
-        auxFamily = L2AUXDim_IntermediateFrequency
-      case ( L_USBFrequency )
-        auxFamily = L2AUXDim_USBFrequency
-      case ( L_LSBFrequency )
-        auxFamily = L2AUXDim_LSBFrequency
-      case ( L_None ) ! OK to do nothing
-      case default
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Unrecognised frequency coordinate" )
-      end select
+      auxFamily=quantity%template%frequencyCoordinate
 
       if ( quantity%template%minorFrame ) then
         ! For minor frame quantities, the dimensions are:
         ! ([frequency or channel],MIF,MAF)
         !
-        if ( useUnpackOutput ) then
-          noMAFs = quantity%template%mafIndex(quantity%template%noInstances)
-        else
-          noMAFs = quantity%template%noInstances
-        end if
-
+        noMAFs = quantity%template%mafIndex(quantity%template%noInstances) - &
+          & quantity%template%noInstancesUpperOverlap
         if ( quantity%template%frequencyCoordinate==L_None ) then
-          dimensionFamilies = (/L2AUXDim_None, L2AUXDim_MIF, L2AUXDim_MAF/)
+          dimensionFamilies = (/L_None, L_MIF, L_MAF/)
           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
         else
-          dimensionFamilies = (/auxFamily, L2AUXDim_MIF, L2AUXDim_MAF/)
+          dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
           dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
             & noMAFs/)
         end if
@@ -503,43 +470,37 @@ contains ! =====     Public Procedures     =============================
           & "vertical coordinates, sorry!" )
 
         if ( quantity%template%frequencyCoordinate==L_None ) then
-          dimensionFamilies = (/L2AUXDim_geodAngle, L2AUXDim_None, &
-            & L2AUXDim_None/)
+          dimensionFamilies = (/L_geodAngle, L_None, &
+            & L_None/)
           dimensionSizes = (/quantity%template%noInstances, 1, 1/)
         else
-          dimensionFamilies = (/auxFamily, L2AUXDim_geodAngle, &
-            & L2AUXDim_None/)
+          dimensionFamilies = (/auxFamily, L_geodAngle, &
+            & L_None/)
           dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
         end if
       end if
 
       ! Now we setup the new quantity
-
       call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, newL2AUX )
+      newL2AUX%minorFrame=quantity%template%minorFrame
+      newL2AUX%instrumentModule=quantity%template%instrumentModule
 
       ! Setup the standard `vertical' and `channel' dimensions
 
-      do dimensionIndex = 1, newL2aux%noDimensionsUsed-1
+      do dimensionIndex = 1, L2AUXRank
         select case ( dimensionFamilies(dimensionIndex) )
-        case ( L2AUXDim_None )
-          newL2AUX%dimensions(dimensionIndex)%values = 1
-        case ( L2AUXDim_Channel )
+        case ( L_None )          ! Do nothing
+        case ( L_Channel )
           do channel = 1,quantity%template%noChans
             newL2AUX%dimensions(dimensionIndex)%values(channel) = channel
           end do
-        case ( L2AUXDim_IntermediateFrequency )
+        case ( L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )
           newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
-        case ( L2AUXDim_USBFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
-        case ( L2AUXDim_LSBFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
-        case ( L2AUXDim_MIF )
+        case ( L_MIF )
           do surf = 1, quantity%template%noSurfs
             newL2AUX%dimensions(dimensionIndex)%values(surf) = surf
           end do
-        case default
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Obscure error with coordinates in l2aux data" )
+        case default                    ! Ignore horizontal dimensions
         end select
         ! The error message here is rather vaugue.  The issue is that
         ! both MAF and geodAngle should only occur for the `last' dimension
@@ -553,10 +514,6 @@ contains ! =====     Public Procedures     =============================
       call decorate ( key, -index ) ! Remember where it is
       thisL2AUX => l2auxDatabase(index)
 
-      ! Finally destroy the information in the interim, non database l2aux
-!     call DestroyL2AUXContents ( newL2AUX )
-      ! No! Don't do this! It deallocates all the pointers we just
-      ! copied into the database!
     else
       ! Setup the index and pointer
       thisL2AUX => l2auxDatabase(-index)
@@ -565,12 +522,8 @@ contains ! =====     Public Procedures     =============================
       ! information.
 
       ! ??? The noMAFs computation isn't consistent with the initial case ???
-      if ( useUnpackOutput ) then
-        noMAFs = thisL2AUX%dimensions(thisL2AUX%noDimensionsUsed)%noValues+&
-          & quantity%template%noInstances
-      else
-        noMAFs = quantity%template%mafCounter(quantity%template%noInstances)
-      end if
+      noMAFs = quantity%template%mafCounter( &
+        & quantity%template%noInstances-quantity%template%noInstancesUpperOverlap)
 
       ! ??? WVS would like to make this work as in the L2GP case:  The
       ! "setup..." routine allocates zero size in the MAF's direction,
@@ -580,92 +533,36 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Now we are ready to fill up the l2aux quantity with the new data.
-    ! We do this differently depending on whether we want packed or unpacked
-    ! data.
-
     thisL2AUX%name = name
 
-    if ( .NOT. useUnpackOutput ) then
-!     lastProfile = thisL2AUX%dimensions(thisL2AUX%noDimensionsUsed)%noValues
-!     firstProfile = lastProfile-noOutputInstances+1
-    end if
-
-!    vectorQuantity = GetVectorQuantity ( vector, quantity%template%name, &
-!      & quantityIsName=.TRUE. )
-
-!    thisL2AUX%values = &
-!      & vectorQuantity%values(useFirstInstance:useLastInstance,:,:)
-    CALL unsqueeze(quantity%values(:, useFirstInstance:useLastInstance), &
-    & thisL2AUX%values, IERR)
-
+    lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
+    firstProfile = lastProfile-noOutputInstances+1
+    
+    select case (thisL2AUX%dimensions(L2AUXRank)%dimensionFamily)
+    case ( L_GeodAngle )
+      thisL2AUX%dimensions(L2AUXRank)%values(firstProfile:lastProfile)=&
+        & quantity%template%phi(1,useFirstInstance:useLastInstance)
+    case ( L_MAF )
+      thisL2AUX%dimensions(L2AUXRank)%values(firstProfile:lastProfile)=&
+        & quantity%template%mafCounter(useFirstInstance:useLastInstance)
+    case default
+    end select
+     
+    thisL2AUX%values(:,:,firstProfile:lastProfile) = &
+      & reshape(quantity%values(:,useFirstInstance:useLastInstance), &
+      &   shape(thisL2AUX%values(:,:,firstProfile:lastProfile)))
+    
     if ( toggle(gen) ) call trace_end ( "JoinL2AUXQuantities" )
 
   end subroutine JoinL2AUXQuantities
 
-  ! ---------------------------------------------------------------------------
-
-!=============================== unsqueeze ==========================
-SUBROUTINE unsqueeze(source, sink, IERR)
-!=============================== unsqueeze ==========================
-    ! takes a rank2 object source and returns a rank3 object sink
-    ! source(1..n1*n2, 1..n3) -> sink(1..n1, 1..n2, 1..n3)
-    ! unless it can't--then it returns iERR /= 0
-    ! One reason it may fail: shape of sink too small
-    !
-    ! Assuming that shape(sink) = {n1, n2, n3}
-    !     =>      shape(source) = {m1, m2}
-    ! then we must further assume (else set IERR)
-    ! m1 <= n1*n2
-    ! m2 <= n3
-    !
-    ! (A future improvement might take as optional arguments
-    !  integer arrays source_shape, sink_shape, 
-    !  or else shape-params n1, n2, m1)
-    !--------Argument--------!
-    REAL(r8), DIMENSION(:,:), INTENT(IN)     :: source
-    REAL(r8), DIMENSION(:,:,:), INTENT(OUT)  :: sink
-    INTEGER, INTENT(OUT)                     :: IERR
- 
-    !----------Local vars----------!
-    ! Error codes
-    INTEGER               :: m1_is_zero = 1
-    INTEGER               :: m2_is_zero = 2
-    INTEGER               :: m1_too_big = 4
-    INTEGER               :: m2_too_big = 5
-    
-    INTEGER, DIMENSION(4) :: source_shape
-    INTEGER, DIMENSION(4) :: sink_shape
-    INTEGER::i,icode,offset
-    !----------Executable part----------!
-    source_shape(1:2) = shape(source)
-    sink_shape(1:3) = shape(sink)
-
-    IF (source_shape(1) == 0) THEN
-    	IERR = m1_is_zero
-        RETURN
-    ELSEIF (source_shape(2) == 0) THEN
-    	IERR = m2_is_zero
-        RETURN
-    ELSEIF (sink_shape(1)*sink_shape(2) < source_shape(1)) THEN
-    	IERR = m1_too_big
-        RETURN
-    ELSEIF (sink_shape(3) < source_shape(2)) THEN
-    	IERR = m2_too_big
-        RETURN
-    ELSE
-    	IERR = 0
-    ENDIF
-
-    sink = reshape(source, sink_shape(1:3))
-    
-END SUBROUTINE unsqueeze
-
-!=============================================================================
 end module Join
-!=============================================================================
 
 !
 ! $Log$
+! Revision 2.17  2001/03/06 22:40:41  livesey
+! New L2AUX stuff
+!
 ! Revision 2.16  2001/03/05 20:46:41  livesey
 ! Removed a debugging statement left behind
 !
