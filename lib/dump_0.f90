@@ -62,14 +62,17 @@ module DUMP_0
 contains
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    logical, intent(in), optional :: TRIM
 
     integer :: J, K
+    integer :: LON
     logical :: MyClean
+    logical :: MyTRIM
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
 
@@ -78,13 +81,17 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myTrim = .false.
+    if ( present(trim) ) myTrim = trim
+    lon = len(array(1))
+    if ( myTrim ) lon = maxval(len_trim(array))
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1), advance='yes' )
+      call output ( array(1)(1:lon), advance='yes' )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
@@ -98,7 +105,7 @@ contains
         end if
         if ( myClean .or. any(array(j:min(j+9, size(array))) /= myFillValue) ) then
           do k = j, min(j+9, size(array))
-              call output ( array(k) // ' ' )
+              call output ( array(k)(1:lon) // ' ' )
           end do
           call output ( '', advance='yes' )
         end if
@@ -424,14 +431,17 @@ contains
   end subroutine DUMP_1D_REAL
 
   ! -----------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    logical, intent(in), optional :: TRIM
 
     integer :: I, J, K
+    integer :: LON
     logical :: MyClean
+    logical :: MyTRIM
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
 
@@ -440,15 +450,19 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myTrim = .false.
+    if ( present(trim) ) myTrim = trim
+    lon = len(array(1,1))
+    if ( myTrim ) lon = maxval(len_trim(array))
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), advance='yes' )
+      call output ( array(1,1)(1:lon), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, fillValue=fillValue, clean=clean )
+      call dump ( array(:,1), name, fillValue=fillValue, clean=clean, trim=trim )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
@@ -464,7 +478,7 @@ contains
           end if
           if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
             do k = j, min(j+9, size(array,2))
-                call output ( array(i,k) // ' ' )
+                call output ( array(i,k)(1:lon) // ' ' )
             end do
             call output ( '', advance='yes' )
           end if
@@ -866,13 +880,16 @@ contains
   end subroutine DUMP_2D_REAL
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN, TRIM )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    logical, intent(in), optional :: TRIM
 
-    logical :: myClean
+    integer :: LON
+    logical :: MyClean
+    logical :: MyTRIM
     integer :: I, J, K, L
     integer :: NumZeroRows
     integer, dimension(3) :: which, re_mainder
@@ -884,6 +901,10 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myTrim = .false.
+    if ( present(trim) ) myTrim = trim
+    lon = len(array(1,1,1))
+    if ( myTrim ) lon = maxval(len_trim(array))
     call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
@@ -892,13 +913,13 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), advance='yes' )
+      call output ( array(1,1,1)(1:lon), advance='yes' )
     else if ( how_many == 2 ) then
       call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
-        & clean=clean )
+        & clean=clean, trim=trim )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, fillValue=fillValue, clean=clean )
+        & name, fillValue=fillValue, clean=clean, trim=trim )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
@@ -915,7 +936,7 @@ contains
             end if
             if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+9, size(array,3))
-                  call output ( array(i,j,l) // ' ' )
+                  call output ( array(i,j,l)(1:lon) // ' ' )
               end do
               call output ( '', advance='yes' )
             end if
@@ -1463,6 +1484,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.43  2004/12/14 21:31:59  pwagner
+! Optional trim arg added to multi-dim char dumps
+!
 ! Revision 2.42  2004/08/16 17:09:14  pwagner
 ! 3d integer dumps interface redone like others
 !
