@@ -1409,7 +1409,6 @@ contains
           call comp_sps_path ( Grids_mag, 1, eta_mag_zp(1:no_ele,:), &
             & mag_path(1:no_ele,1:3) )
 
-          !??? Do we need to transpose the rotation matrix ???
           rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
           do j = 1, no_ele
             ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
@@ -1417,21 +1416,16 @@ contains
             ! pointing angle instead of interpolating.  They are nearly
             ! identical anyway.
             mag_path(j,1:3) = matmul ( rot, mag_path(j,1:3) )
-            ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4), then
-            ! normalize mag_path(j,1:3).
+            ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4)
             mag_path(j,4) = sqrt(sum(mag_path(j,1:3)**2))
+            ! Normalize mag_path(j,1:3).
+            if ( mag_path(j,4) /= 0.0_rp ) then
+              mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
+            else
+              mag_path(j,1:3) = 0.0_rp
+            end if
           end do
-          WHERE (mag_path(:,4) /= 0.0_rp) 
-            mag_path(:,1) = mag_path(:,1) / mag_path(:,4)
-            mag_path(:,2) = mag_path(:,2) / mag_path(:,4)
-            mag_path(:,3) = mag_path(:,3) / mag_path(:,4)
-          ELSEWHERE
-            mag_path(:,1) = 0.0_rp
-            mag_path(:,2) = 0.0_rp
-            mag_path(:,3) = 0.0_rp
-          ENDWHERE
 
-          !??? The second subscript depends on the ordering of the rotation matrix ???
           ct => mag_path(1:no_ele,3)   ! cos(theta)
           stcp => mag_path(1:no_ele,1) ! sin(theta) cos(phi)
           stsp => mag_path(1:no_ele,2) ! sin(theta) sin(phi)
@@ -1603,30 +1597,45 @@ contains
 
             else ! extra stuff for polarized case
 
-              call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs, &
-                & indices_c(1:npc), beta_path_polarized )
+              call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, &
+                & gl_slabs, indices_c(1:npc), beta_path_polarized )
 
-              alpha_path_polarized(-1,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
-                & beta_path_polarized(-1,1:npc,:), DIM=2 ) * tanh1_c(1:npc)
-              alpha_path_polarized( 0,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
-                & beta_path_polarized( 0,1:npc,:), DIM=2 ) * tanh1_c(1:npc)
-              alpha_path_polarized(+1,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
-                & beta_path_polarized(+1,1:npc,:), DIM=2 ) * tanh1_c(1:npc)
+              ! We put an explicit extent of -1:1 for the first dimension in
+              ! the hope a clever compiler will do better optimization with
+              ! a constant extent.
+              if ( temp_der ) then
+                ! will need beta_path_polarized * tanh1_c
+                do j = 1, npc
+                  beta_path_polarized(-1:1,j,:) = beta_path_polarized(-1:1,j,:) * tanh1_c(j)
+                  alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
+                    & sps_path(indices_c(j),:) )
+                end do
+              else
+                ! don't need beta_path_polarized * tanh1_c
+                do j = 1, npc
+                  alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
+                    & sps_path(indices_c(j),:) ) * tanh1_c(j)
+                end do
+              end if
 
               ! Turn sigma-, pi, sigma+ into 2X2 matrix
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
 
-              ! 0.5 factors scalar unpolarized "power absorption" to get "field absorption" 
+              ! Add unpolarized incremental optical depth to diagonal of
+              ! polarized incremental optical depth. 0.5 factors scalar
+              ! unpolarized "power absorption" to get "field absorption"
 
-              incoptdepth_pol(1,1,1:npc) = - incoptdepth_pol(1,1,1:npc) * del_s(1:npc) - &
-                   & 0.5*incoptdepth(1:npc)
-              incoptdepth_pol(2,1,1:npc) = - incoptdepth_pol(2,1,1:npc) * del_s(1:npc)
-              incoptdepth_pol(1,2,1:npc) = - incoptdepth_pol(1,2,1:npc) * del_s(1:npc)
-              incoptdepth_pol(2,2,1:npc) = - incoptdepth_pol(2,2,1:npc) * del_s(1:npc) - &
-                   & 0.5*incoptdepth(1:npc)
-
+              ! Do not trust the compiler to fuse loops
               do j = 1, npc
+                incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j) - &
+                     & 0.5*incoptdepth(j)
+                incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
+                incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
+                incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j) - &
+                     & 0.5*incoptdepth(j)
+
+                ! deltau_pol = exp(incoptdepth_pol)
                 call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
               end do
 
@@ -1785,8 +1794,7 @@ alpha_path_f = 0.0
               call get_d_deltau_pol_dT ( frq, npc/2, h, ct, stcp, stsp,       &
                 & my_catalog, beta_group, gl_slabs_m, gl_slabs_p,             &
                 & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
-                & beta_path_polarized(:,1:p_stop,:), tanh1_c(1:p_stop),       &
-                & sps_path,                                                   &
+                & beta_path_polarized(:,1:p_stop,:), sps_path,                &
                 & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
                 & del_s(1:npc), indices_c(1:p_stop),                          &
                 & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
@@ -2633,6 +2641,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.144  2003/06/10 15:06:54  bill
+! fixed polarized t-derivs
+!
 ! Revision 2.143  2003/06/09 20:52:37  vsnyder
 ! More work on polarized derivatives
 !
