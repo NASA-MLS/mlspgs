@@ -1196,7 +1196,7 @@ contains ! =====     Public Procedures     =============================
     if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
       ! Don't forget instanceOffset is for the first non-overlapped instance (ie MAF)
       ! Also remember the L2AUX data is already indexed from zero! Great!
-      call output ( "Doing the special calculation of first/last profile", advance='yes' )
+      if (DEEBUG) call output ( "Doing the special calculation of first/last profile", advance='yes' )
       lastProfile = quantity%template%instanceOffset + quantity%template%noInstances - &
         & quantity%template%noInstancesUpperOverlap - &
         & quantity%template%noInstancesLowerOverlap - 1
@@ -1333,6 +1333,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.85  2003/07/23 18:30:35  cvuu
+! reduce routine printing
+!
 ! Revision 2.84  2003/07/15 23:39:01  pwagner
 ! Disabled most printing
 !
