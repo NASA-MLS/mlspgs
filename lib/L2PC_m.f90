@@ -359,8 +359,8 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to create group for l2pc matrix' )
 
     ! Now dump the vectors
-    call WriteVectorAsHDF5 ( matrixID, l2pc%col%vec, 'Columns', colPack )
-    call WriteVectorAsHDF5 ( matrixID, l2pc%row%vec, 'Rows', rowPack )
+    call WriteVectorAsHDF5L2PC ( matrixID, l2pc%col%vec, 'Columns', colPack )
+    call WriteVectorAsHDF5L2PC ( matrixID, l2pc%row%vec, 'Rows', rowPack )
 
     ! Now create a group for the blocks
     call h5gCreate_f ( matrixID, 'Blocks', blocksGroupID, status )
@@ -1444,8 +1444,8 @@ contains ! ============= Public Procedures ==========================
       
   end subroutine ReadOneVectorFromHDF5
 
-  ! --------------------------------------- WriteVectorAsHDF5 ----------
-  subroutine WriteVectorAsHDF5 ( location, vector, name, packInfo )
+  ! --------------------------------------- WriteVectorAsHDF5L2PC ----------
+  subroutine WriteVectorAsHDF5L2PC ( location, vector, name, packInfo )
   use HDF5, only: H5GCLOSE_F, H5GCREATE_F
   use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     use MLSSignals_m, only: Radiometers, Radiometer_T
@@ -1529,7 +1529,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close vector group for ' // trim(name) )
 
-  end subroutine WriteVectorAsHDF5
+  end subroutine WriteVectorAsHDF5L2PC
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1538,6 +1538,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.61  2003/05/13 04:46:24  livesey
+! Renamed a routine to avoid conflict with VectorHDF5
+!
 ! Revision 2.60  2003/02/06 01:37:12  livesey
 ! Set solarZenith to zero if reading from hdf5 and not present
 !
