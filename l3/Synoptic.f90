@@ -207,8 +207,8 @@ CONTAINS
              l3dm(j)%longitude = cfProd%longGrid(:l3dm(j)%nLons)
              l3dm(j)%l3dmValue = 0.0
              l3dm(j)%l3dmPrecision = 0.0
-             do n=1,nlev
-               do m=1,cfDef%N
+             do n=1,cfDef%N
+               do m=1,nlev
                   l3dm(j)%maxDiff(n,m) = 0.0
                   l3dm(j)%maxDiffTime(n,m)  = 0.0
                end do
@@ -230,8 +230,8 @@ CONTAINS
              dmA(j)%longitude  = cfProd%longGrid(:dmA(j)%nLons)
              dmA(j)%l3dmValue  = 0.0
              dmA(j)%l3dmPrecision  = 0.0
-             do n=1,nlev
-               do m=1,cfDef%N
+             do n=1,cfDef%N
+               do m=1,nlev
                   dmA(j)%maxDiff(n,m)  = 0.0
                   dmA(j)%maxDiffTime(n,m)  = 0.0
                end do
@@ -253,8 +253,8 @@ CONTAINS
              dmD(j)%longitude  = cfProd%longGrid(:dmD(j)%nLons)
              dmD(j)%l3dmValue  = 0.0
              dmD(j)%l3dmPrecision  = 0.0
-             do n=1,nlev
-               do m=1,cfDef%N
+             do n=1,cfDef%N
+               do m=1,nlev
                  dmD(j)%maxDiff(n,m)  = 0.0
                  dmD(j)%maxDiffTime(n,m) = 0.0
                end do
@@ -290,8 +290,8 @@ CONTAINS
              dmD(j)%l3dmValue  = 0.0
              dmA(j)%l3dmPrecision  = 0.0
              dmD(j)%l3dmPrecision  = 0.0
-             do n=1,nlev
-               do m=1,cfDef%N
+             do n=1,cfDef%N
+               do m=1,nlev
                   dmA(j)%maxDiff(n,m)  = 0.0
                   dmD(j)%maxDiff(n,m)  = 0.0
                   dmA(j)%maxDiffTime(n,m)  = 0.0
@@ -341,8 +341,8 @@ CONTAINS
              l3dm(j)%l3dmPrecision = 0.0
              dmA(j)%l3dmPrecision  = 0.0
              dmD(j)%l3dmPrecision  = 0.0
-             do n=1,nlev
-               do m=1,cfDef%N
+             do n=1,cfDef%N
+               do m=1,nlev
                   l3dm(j)%maxDiff(n,m)  = 0.0
                   dmA(j)%maxDiff(n,m)  = 0.0
                   dmD(j)%maxDiff(n,m)  = 0.0
@@ -3444,6 +3444,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.36  2004/06/22 16:55:47  cvuu
+! Using SetupNewL2GPRecord for L3 Residual based on the nLevels from L3 not L2
+!
 ! Revision 1.35  2004/06/02 20:07:28  ybj
 ! *** empty log message ***
 !
