@@ -1023,7 +1023,61 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine ReadL1BAttribute_dblarr1
 
   !-------------------------------------------------  PadL1BData  -----
-  subroutine PadL1BData ( L1BDataIn, L1BDataOut, FirstMAFCtr, NoMAFs, &
+  subroutine PadL1BData ( L1BDataIn, L1BDataOut, FirstMAF, LastMAF, NoMAFs )
+    ! Pad l1bdataIn to fit NoMafs (assuming noMafs >= l1bdatain%NoMAFs)
+    ! beginning with 1st MAF number of day
+    ! (May need to pad at start, at end, or at both ends)
+    ! Return newly created padded object as l1bdataOut
+    ! If optionally supplied PrecisionIn it will return padded PrecisionOut  
+    ! where the padded values will all be cleverly set negative 
+    ! (meaning do not use)
+    ! Just as important, fill any gaps
+    ! where a gap is defined as a break in sequence in counterMAF array
+    ! .., p-2, p-1, [p], [p+1], .., p+gap-1, ..
+    ! such that the bracketed numbers above are absent from the counterMAF
+    ! Dummy arguments
+    type(L1BData_T), intent(in)  :: L1BDataIn
+    type(L1BData_T), intent(out) :: L1BDataOut
+    integer, intent(in)          :: FirstMAF ! 1st MAF
+    integer, intent(in)          :: LastMAF  ! last MAF number of day
+    integer, intent(out)         :: NoMAFs   ! number
+    ! Internal variables
+    integer, dimension(3) :: dims
+    integer               :: maf
+    integer               :: oldSize
+    logical, parameter    :: DEEBug = .false.
+    ! Executable
+    if ( associated(l1bDataIn%charField)) then
+      dims = shape(l1bDataIn%charField)
+    elseif ( associated(l1bDataIn%intField)) then
+      dims = shape(l1bDataIn%intField)
+    elseif ( associated(l1bDataIn%dpField)) then
+      dims = shape(l1bDataIn%dpField)
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Padl1bData was passed l1bDataIn w/o allocating it' )
+    endif
+    oldSize = dims(3)
+    NoMAFs = max(dims(3), lastMAF-firstMAF+1)
+    dims(3) = NoMAFs
+
+    if ( DEEBug ) print *, 'Preparing to pad ', trim(l1bDataIn%L1BName)
+    if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
+    if ( DEEBug ) print *, 'l1b(in)NoMAFs ', l1bDataIn%NoMAFs
+    if ( DEEBug ) print *, 'dims ', dims
+    if ( DEEBug ) print *, 'min(counterMAF) ', myminval(l1bDataIn%counterMAF)
+    if ( DEEBug ) print *, 'min(dpField) ',minval(l1bDataIn%dpField(1,1,:))
+    if ( DEEBug ) print *, 'max(dpField) ',maxval(l1bDataIn%dpField(1,1,:))
+    call allocateL1BData ( l1bDataOut, dims, L1bDataSibling=l1bDataIn )
+    do maf=1, NoMAFs
+      l1bDataOut%counterMAF(maf) = FirstMAF - 1 + maf
+    enddo
+    call zeroField(l1bdataOut, 1, DEFAULTUNDEFINEDVALUE, m=NoMAFs)
+    call cpField(l1bdataIn, 1, l1bdataOut, 1, m=oldSize)
+  end subroutine PadL1BData
+
+  !-------------------------------------------------  BadPadL1BData  -----
+  subroutine BadPadL1BData ( L1BDataIn, L1BDataOut, FirstMAFCtr, NoMAFs, &
     & PrecisionIn, PrecisionOut, force )
     ! Pad l1bdataIn to fit NoMafs (assuming noMafs >= l1bdatain%NoMAFs)
     ! beginning with 1st MAF number of day
@@ -1076,7 +1130,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       dims = shape(l1bDataIn%dpField)
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Padl1bData was passed l1bDataIn w/o allocating it' )
+        & 'BadPadL1BData was passed l1bDataIn w/o allocating it' )
     endif
     dims(3) = noMAFs
     rank = l1bDataIn%trueRank
@@ -1146,7 +1200,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( present(PrecisionOut) ) &
         & call zeroField(PrecisionOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
     enddo
-  end subroutine PadL1BData
+  end subroutine BadPadL1BData
 
   !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
@@ -1223,7 +1277,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( DEEBug ) print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
     if ( DEEBug ) print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
     if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
-    call PadL1BData(l1bdataTmp, l1bData, GlobalAttributes%FirstMAFCtr, NoMAFs)
+    if ( present(firstMAF) .and. present(lastMAF)) then
+      call PadL1BData(l1bdataTmp, l1bData, FirstMAF, LastMAF, NoMAFs)
+      call deallocatel1bData(l1bdataTmp)
+      return
+    endif
+    call BadPadL1BData(l1bdataTmp, l1bData, GlobalAttributes%FirstMAFCtr, NoMAFs)
     call deallocatel1bData(l1bdataTmp)
     if ( .not. present(firstMAF) .and. .not. present(lastMAF) ) return
     ! Need to contract padded l1bdata to just those MAFs requested
@@ -2099,6 +2158,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.50  2004/08/26 22:34:41  pwagner
+! No time to repair overly ambitious PadL1BData; quick patch instituted instead
+!
 ! Revision 2.49  2004/08/19 00:10:43  pwagner
 ! L2AUX option to ReadL1BData stops warning msgs about counterMAF
 !
