@@ -8,35 +8,34 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   ! This module has various functionality for constructing quantity templates.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: Dump
   use EXPR_M, only: EXPR
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_GEODANGLE, F_HGRID, F_INCLINATION, &
+  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
-  use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
+  use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,  L_CLOUDWATER,&
-    L_CLOUDEXTINCTION, L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,&
+    L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_MASSMEANDIAMETERICE, &
-    L_MASSMEANDIAMETERWATER, L_NONE, L_ORBITINCLINATION, &
+    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
+    L_NONE, L_ORBITINCLINATION, &
     L_PTAN, L_RADIANCE, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
-    L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_SURFACETYPE, &
+    L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
-    L_TOTALEXTINCTION, L_TRUE,&
+    L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
     PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PRESSURE, &
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
   use MLSSignals_m, only:  IsModuleSpacecraft, &
     & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
-    & GetRadiometerName, GetRadiometerFromSignal, GetSignal, GetSignalName,&
+    & GetRadiometerFromSignal, GetSignal,&
     & Signal_T
   use OUTPUT_M, only: OUTPUT
   use Parse_Signal_m, only: PARSE_SIGNAL
@@ -47,7 +46,6 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
-  use Units, only: DEG2RAD, RAD2DEG
   use VGridsDatabase, only: VGrid_T
 
   implicit none
@@ -97,8 +95,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    logical :: BadUnit
-    integer :: Band                     ! Tree index
     integer :: Family
     integer :: FrequencyCoordinate
     integer :: HGridIndex
@@ -122,7 +118,6 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: SignalInds ! From parse signal
     type (signal_T) :: SignalInfo       ! Details of the appropriate signal
     integer :: Son                      ! A Son of Root -- an n_assign node
-    character (len=80) :: Str
     integer :: Type_Field               ! Index in subtree of "type"
     integer :: Value                    ! Node index of value of field of spec
     integer :: VGridIndex
@@ -407,6 +402,10 @@ contains ! =====     Public Procedures     =============================
     qty%signal = signal
     qty%unit = family
 
+    if ( majorFrame ) then
+      qty%minorFrame = .false.
+      qty%majorFrame = .true.
+    endif
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
   end function CreateQtyTemplateFromMLSCFInfo
@@ -780,6 +779,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.56  2001/10/02 23:12:50  pwagner
+! More chi^2 fixes
+!
 ! Revision 2.55  2001/10/02 20:50:54  livesey
 ! No longer asserts baseline to be minor frame
 !
