@@ -247,6 +247,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+     mv Makefile.dep Makefile.nodep
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
 
 ghostbuster:
@@ -289,6 +291,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.46  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
 # Revision 2.45  2002/04/29 17:43:29  pwagner
 # Directs build of utctotai library in INSTALLDIR
 #
