@@ -581,13 +581,16 @@ contains
                 ! use this for testing
                if(.not. got(f_maxJ)) maxJacobians = 5
                if(.not. got(f_lambda)) initlambda = 10.
-               ! find how many MAFs        
-                 nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
-
-            call LowCloudRetrieval
+            call LowCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
+               & measurements,MeasurementSD, state, OutputSD, Covariance, &
+               & chunk,maxJacobians,initlambda)
               call add_to_retrieval_timing( 'low_cloud', t1 )
           case ( l_highcloud )
-            call HighCloudRetrieval
+               if(.not. got(f_maxJ)) maxJacobians = 5
+               if(.not. got(f_lambda)) initlambda = 10.
+            call HighCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
+               & measurements,MeasurementSD, state, OutputSD, Covariance, &
+               & chunk,maxJacobians,initlambda)
               call add_to_retrieval_timing( 'high_cloud', t1 )
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
@@ -2174,6 +2177,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.242  2003/05/13 20:43:05  dwu
+! a quick fix after spinout
+!
 ! Revision 2.241  2003/05/13 19:32:28  dwu
 ! spin out cloud retrievals
 !
