@@ -17,9 +17,6 @@
 a
 additional
 adopt
-adoptBoth
-adoptColumns
-adoptRows
 allLinesForRadiometer
 allowMissing
 antennaPatterns
@@ -328,6 +325,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.112  2004/01/23 19:07:25  livesey
+# Tidied up the adoption stuff
+#
 # Revision 2.111  2004/01/23 05:47:38  livesey
 # Added the adoption stuff
 #
