@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
@@ -566,7 +565,7 @@ CONTAINS
 
 ! Annotate the file with the PCF
 
-      CALL WritePCF2Hdr(spFile, anText)
+      CALL WritePCF2Hdr(spFile, anText, hdfVersion=HDFVERSION_4)
 
 !---------------------------
    END SUBROUTINE OutputL3SP_HDF4
@@ -1054,6 +1053,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.11  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.10  2003/03/22 02:42:37  jdone
 ! added HDFEOS2/HDFEOS5 functionality
 !
