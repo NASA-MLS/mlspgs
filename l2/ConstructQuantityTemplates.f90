@@ -689,6 +689,9 @@ contains ! =====     Public Procedures     =============================
     ! ourselves.
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
       if ( .not. (present(noChans)) ) &
@@ -994,6 +997,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.78  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
 ! Revision 2.77  2002/11/26 23:37:50  livesey
 ! Better handling of major frame quantities
 !
