@@ -41,9 +41,10 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
-    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,directwrite,output'
+    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,' // &
+    & 'directwrite,algebra,output'
   ! This should be the number of elements in the above ---------------
-  integer, parameter                 :: num_section_times = 13  ! <--|
+  integer, parameter                 :: num_section_times = 14    ! <--|
 
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
@@ -495,6 +496,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.20  2004/01/14 18:49:58  vsnyder
+! Stuff to support the Algebra section
+!
 ! Revision 2.19  2003/12/05 00:50:44  pwagner
 ! Numerous small bugixes related to wall clock time use
 !
