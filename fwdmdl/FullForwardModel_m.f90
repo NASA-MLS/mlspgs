@@ -34,7 +34,7 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
-  use SpectroscopyCatalog_m, only: CATALOG_T, LINES, CATALOG
+  use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
     & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH
@@ -173,6 +173,7 @@ contains ! ================================ FullForwardModel routine ======
 
     logical, dimension(:), pointer :: DO_GL ! GL indicator
     logical, dimension(:), pointer :: LIN_LOG ! Is this vmr on a log basis? (noSpecies)
+    logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
 
     logical, dimension(:,:), pointer :: DO_CALC ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_DN ! 'Avoid zeros'
@@ -289,7 +290,8 @@ contains ! ================================ FullForwardModel routine ======
     type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_M ! ***
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG ! ***
-
+    type (catalog_T), pointer :: thisCatalogEntry
+    type (line_T), pointer :: thisLine
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
@@ -334,6 +336,8 @@ contains ! ================================ FullForwardModel routine ======
       & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid )
+
+    nullify ( lineFlag )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -470,8 +474,30 @@ contains ! ================================ FullForwardModel routine ======
 
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
-      My_Catalog(j) = Catalog(FindFirst(catalog%spec_tag == spectag ) )
-    end do
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+      ! Now subset the lines according to the signal we're using
+      do sigInd = 1, size(fwdModelConf%signals)
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          if ( associated(thisLine%signals) ) then
+            lineFlag(k) = any (fwdModelConf%signals%index == thisLine%signals(sigInd) )
+            ! If we're only doing one sideband, maybe we can remove some more lines
+            if ( sidebandStart==sidebandStop ) lineFlag(k) = lineFlag(k) .and. &
+              & any( ( thisLine%sidebands == sidebandStart ) .or. &
+              & ( thisLine%sidebands == 0 ))
+          else
+            lineFlag(k) = .true.
+          end if
+        end do
+        My_Catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+        call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+          & 'my_catalog(?)%lines', ModuleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+        call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
+      end do ! Loop over signals to be processed
+    end do ! Loop over species
 
     ! Work out which frequencies we're going to need in non frequency --------
     ! averaging case
@@ -1759,6 +1785,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
 ! Revision 1.5.2.56  2001/09/14 22:19:39  livesey
 ! Fixed bug with sv_i in frequency averaging of k_atmos_frq
 !
