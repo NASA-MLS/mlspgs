@@ -109,7 +109,7 @@ module MLSHDFEOS
   end interface
 
   integer, public, parameter :: MAXNODFIELDS = 1000
-  integer, public, parameter :: MAXDLISTLENGTH = 4096
+  integer, public, parameter :: MAXDLISTLENGTH = 400000
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .true.  
@@ -781,7 +781,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_swrdfld_double_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to read 1d double field ' // trim(fieldname) )
 
   end function MLS_SWRDFLD_DOUBLE_1D
 
@@ -887,7 +887,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_swrdfld_double_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to read 3d double field ' // trim(fieldname) )
 
   end function MLS_SWRDFLD_DOUBLE_3d
 
@@ -940,7 +940,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_swrdfld_integer /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to read integer field ' // trim(fieldname) )
 
   end function MLS_SWRDFLD_INTEGER
 
@@ -993,7 +993,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_swrdfld_REAL_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to read 1d real field ' // trim(fieldname) )
 
   end function MLS_SWRDFLD_REAL_1D
 
@@ -1099,7 +1099,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_swrdfld_REAL_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to read 3d real field ' // trim(fieldname) )
 
   end function MLS_SWRDFLD_REAL_3d
 
@@ -1167,7 +1167,7 @@ contains ! ======================= Public Procedures =========================
 !>     if(DEEBUG) print *, 'data field list  ', trim(fieldlist)
     if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d char field ' // trim(fieldname) )
+          & 'Failed to write 1d char field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_CHAR_1D
 
@@ -1220,7 +1220,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_double_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d double field ' // trim(fieldname) )
+          & 'Failed to write 1d double field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_DOUBLE_1D
 
@@ -1326,7 +1326,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_double_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d double field ' // trim(fieldname) )
+          & 'Failed to write 3d double field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_DOUBLE_3d
 
@@ -1379,7 +1379,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_integer /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d integer field ' // trim(fieldname) )
+          & 'Failed to write integer field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_INTEGER
 
@@ -1432,7 +1432,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_REAL_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to write 1d real field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_REAL_1D
 
@@ -1545,7 +1545,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_REAL_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to write 3d real field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_REAL_3d
 
@@ -1559,6 +1559,7 @@ contains ! ======================= Public Procedures =========================
     character(len=MAXDLISTLENGTH)    :: fieldlist
     integer                          :: nswaths
     ! Begin execution
+    print*,'Scalar version'
     nswaths = 0
     mls_swath_in_file_sca = .false.
     select case (HdfVersion)
@@ -1711,6 +1712,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.11  2003/07/11 01:22:55  livesey
+! Bug fixes and tidyups
+!
 ! Revision 2.10  2003/07/09 21:49:07  pwagner
 ! Wont try swattaching just to see if swath already there
 !
