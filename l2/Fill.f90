@@ -60,7 +60,8 @@ contains ! =====     Public Procedures     =============================
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
-      & L_ORBITINCLINATION, L_PHITAN, L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
+      & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
+      & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
@@ -114,7 +115,7 @@ contains ! =====     Public Procedures     =============================
       & DestroyVectorInfo, Dump, &
       & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
       & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
-      & VectorTemplate_T, VectorValue_T, M_Fill
+      & VectorTemplate_T, VectorValue_T, M_Fill, M_LinAlg
     use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
 
     ! Dummy arguments
@@ -811,6 +812,13 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
+
+        case ( l_offsetRadiance ) ! ------------------- Offset radiance --
+          if ( .not. got ( f_radianceQuantity ) ) &
+            & call Announce_error ( key, 0, 'radianceQuantity not supplied' )
+          radianceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(radianceVectorIndex), radianceQuantityIndex )
+          call OffsetRadianceQuantity ( quantity, radianceQuantity )
 
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
@@ -3562,6 +3570,29 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillQuantityFromLosGrid
 
+    ! ----------------------------------------------- OffsetRadianceQuantity ---
+    subroutine OffsetRadianceQuantity ( quantity, radianceQuantity )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(inout) :: RADIANCEQUANTITY
+
+      ! Executable code
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity for offsetRadiance fill is not radiance' )
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Radiance quantity for offsetRadiance fill is not radiance' )
+      if ( quantity%template%signal /= radianceQuantity%template%signal .or. &
+        & quantity%template%sideband /= radianceQuantity%template%sideband ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
+      where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) == 1 )
+        quantity%values = quantity%values + 1000.0
+      end where
+    end subroutine OffsetRadianceQuantity
+
     ! ---------------------------------------------- TRANSFERVECTORS -----
     subroutine TransferVectors ( source, dest )
       ! Copy common items in source to those in dest
@@ -3742,6 +3773,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.140  2002/08/28 01:13:52  livesey
+! Added OffsetRadianceQuantity
+!
 ! Revision 2.139  2002/08/26 20:01:09  livesey
 ! Added instances argument to profile fill
 !
