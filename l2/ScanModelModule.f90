@@ -447,11 +447,16 @@ contains ! --------------- Subroutines and functions --------------------------
     call Deallocate_Test(lower,"lower",ModuleName)
     call Deallocate_Test(upper,"upper",ModuleName)
 
+    call Deallocate_Test(rt,"rt",ModuleName) ! Was allocated in GetBasisGPH
+
   end subroutine GetHydrostaticTangentPressure
 
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.11  2001/04/21 00:52:24  livesey
+! Fixed memory leak.
+!
 ! Revision 2.10  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
