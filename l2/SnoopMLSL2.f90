@@ -17,9 +17,11 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
 
-  use VectorsModule, only: Vector_T
+  use VectorsModule, only: Vector_T, VectorValue_T
+  use QuantityTemplates, only: QuantityTemplate_T
   !  USE MatrixModule_1, ONLY: Matrix_T
 
+  use Intrinsic, only: LIT_INDICES
   use MLSCommon, only: R4, R8, I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
@@ -29,6 +31,9 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use LEXER_CORE, only: PRINT_SOURCE
+  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Types, only: T_IDENTIFIER
+  use MLSSignals_M, only: GETSIGNALNAME
 
   implicit none
 
@@ -261,6 +266,7 @@ contains ! ========  Public Procedures =========================================
     integer :: BUFFERID                 ! ID for PVM
     integer :: INFO                     ! Flag from PVM
     character (len=132) :: Line         ! Temporary string
+    character (len=132) :: NextLine     ! Temporary string
     logical :: MyDone                   ! I'm done
 
     ! Executable code
@@ -309,10 +315,11 @@ contains ! ========  Public Procedures =========================================
         snooper%mode = SnooperObserving
       case ( 'Finishing' )
         snooper%mode = SnooperFinishing
-      case ( 'QuantityTemplate' )
-        !call SnooperRequestedQtyTemplate(snooper, vectorDatabase)
       case ( 'Quantity' )
-        !call SnooperRequestedQuantity(snooper, vectorDatabase)
+        call PVMIDLUnpack ( nextLine, info )
+        if ( info /=0 ) call PVMErrorMessage ( info, &
+          & "unpacking response from snooper" )
+        call SnooperRequestedQuantity(snooper, trim(nextLine), vectorDatabase)
       case default
       end select
 
@@ -439,4 +446,178 @@ contains ! ========  Public Procedures =========================================
     end if
   end subroutine Snoop
 
+  ! ----------------------------------------- Snooper requested quantity ---
+  subroutine SnooperRequestedQuantity ( SNOOPER, LINE, VECTORDATABASE )
+    ! This routine sends a quantity (including its template) to 
+    ! a snooping task.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of quantity to watch
+    type (Vector_T), dimension(:), pointer :: VECTORDATABASE
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: DOTPOS                   ! For parsing string
+    integer :: VECTORNAME               ! String index of vector name
+    integer :: QUANTITYNAME             ! String index of quantity name
+    integer :: VECTOR                   ! index
+    integer :: QUANTITY                 ! index
+
+    type (VectorValue_T), pointer :: q  ! This vector quantity
+    type (QuantityTemplate_T), pointer :: qt ! The quantity template
+
+    character (len=132) :: word         ! A line of text to send.
+
+    ! Executable code
+
+    dotPos = index ( line, '.' )
+    vectorName = enter_terminal ( line(1:dotPos-1), t_identifier )
+    quantityName = enter_terminal ( line(dotPos+1:), t_identifier )
+
+    do vector = 1, size(vectorDatabase)
+      if ( vectorDatabase(vector)%name == vectorName) exit
+    end do
+    if ( vectorDatabase(vector)%name /= vectorName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested vector: '//line )
+
+    do quantity = 1, size(vectorDatabase(vector)%quantities)
+      if ( vectorDatabase(vector)%quantities(quantity)%template%name == &
+        & quantityName ) exit
+    end do
+    if ( vectorDatabase(vector)%quantities(quantity)%template%name /= &
+      & quantityName ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested vector quantity: '//line )
+
+    q => vectorDatabase(vector)%quantities(quantity)
+    qt => q%template
+
+    ! Now we simply pack the quantity up and send it down the pvm spigot
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+
+    call PVMIDLPack ( (/ qt%noInstances, qt%noSurfs, qt%noChans /), &
+      & info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity dimensions." )
+
+    call PVMIDLPack ( (/ qt%coherent, qt%stacked, qt%regular, qt%minorFrame, &
+      & qt%logBasis /), info ) 
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity flags" )
+
+    call PVMIDLPack ( (/ qt%noInstancesLowerOverlap, &
+      & qt%noInstancesUpperOverlap, qt%sideband /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
+
+    ! Now pack some strings
+
+    call Get_String( lit_indices(qt%quantityType), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantityType" )
+
+    call Get_String( lit_indices(qt%verticalCoordinate), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
+
+    call Get_String( lit_indices(qt%unit), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
+
+    call Get_String( lit_indices(qt%frequencyCoordinate), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
+
+    call GetSignalName( lit_indices(qt%signal), word, sideband=qt%sideband )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing signal" )
+
+    call Get_String( lit_indices(qt%instrumentModule), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing instrumentModule" )
+
+    call Get_String( lit_indices(qt%radiometer), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing radiometer" )
+
+    call Get_String( lit_indices(qt%molecule), word, noError=.true. )
+    call PVMIDLPack ( trim(word), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
+
+    ! Now pack the arrays
+
+    call PVMIDLPack ( qt%surfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
+
+    call PVMIDLPack ( qt%phi, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phi" )
+
+    call PVMIDLPack ( qt%geodLat, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing geodLat" )
+
+    call PVMIDLPack ( qt%lon, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing lon" )
+
+    call PVMIDLPack ( qt%time, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing time" )
+
+    call PVMIDLPack ( qt%solarTime, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarTime" )
+
+    call PVMIDLPack ( qt%solarZenith, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarZenith" )
+
+    call PVMIDLPack ( qt%losAngle, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
+
+    if ( associated ( qt%mafIndex ) ) then
+      call PVMIDLPack ( qt%mafIndex, info )
+    else
+      call PVMIDLPack ( (/ 0 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex" )
+
+    if ( associated ( qt%mafCounter ) ) then
+      call PVMIDLPack ( qt%mafCounter, info )
+    else
+      call PVMIDLPack ( (/ 0 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter" )
+
+    if ( associated ( qt%frequencies ) ) then
+      call PVMIDLPack ( qt%frequencies, info )
+    else
+      call PVMIDLPack ( (/ 0.0_r8 /), info )
+    end if
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencies" )
+
+    ! Finally the two arrays for irregular quantities
+
+    if ( .not. qt%regular ) then
+      call PVMIDLPack ( qt%surfIndex, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfIndex" )
+
+      call PVMIDLPack ( qt%chanIndex, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing chanIndex" )
+    end if
+
+    ! Now we're going to send this to the snooper.
+
+    call PVMFSend ( snooper%tid, IDLMSGTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
+
+    ! Now we're going to send the values in a separate message
+    call PVMFInitSend ( PVMDataDefault, bufferID)
+
+    ! Pack the values
+    call PVMIDLPack ( q%values, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending values" )
+
+    ! Skip the mask for the moment.
+
+    ! Send this buffer
+    call PVMFSend ( snooper%tid, IDLMSGTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+      
+  end subroutine SnooperRequestedQuantity
+  
 end module SnoopMLSL2
