@@ -5,7 +5,7 @@
 !
 MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_InputVersion = 2000
-   INTEGER, PARAMETER :: mlspcf_l2_param_OutputVersion = 2001
+   INTEGER, PARAMETER :: mlspcf_l2_param_PGEVersion = 2001
    INTEGER, PARAMETER :: mlspcf_l2_param_Cycle = 2002
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSStartId = 2003
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSEndId = 2004
