@@ -35,7 +35,9 @@ MODULE SpectralBaseline ! Determine Spectral baseline radiances
 
   TYPE (BaselineInclude_T) :: BaselineInclude(NumBands)
 
-  REAL, PARAMETER :: BaselineAlt = 8.0e4   ! Minimum baseline altitude (m)
+  REAL, PARAMETER :: BaselineAlt = 80.0e3   ! Minimum baseline altitude (m)
+  REAL, PARAMETER :: BaselineAltDACS(5) = &
+       (/ 82.0e3, 80.0e3, 72.0e3, 72.0e3, 82.0e3 /) 
 
 CONTAINS
 
@@ -48,7 +50,7 @@ CONTAINS
     INTEGER, PARAMETER :: BadChans(2,NumBands) = RESHAPE ( (/ &
          8,18, 12,14,   2,2,   0,0,   0,0,   0,0, 13,13, 12,14, 13,13,   0,0, &
           0,0,   0,0, 11,15, 13,13, 11,17, 11,17, 12,14, 11,17, 11,17, 12,14, &
-         8,18, 1,129, 40,60, 38,59, 36,65, 1,129,   0,0,   6,6,   0,0,   6,6, &
+         8,18, 25,84, 36,69, 33,74, 32,71, 25,84,   0,0,   6,6,   0,0,   6,6, &
           0,0,   0,0,   0,0,   0,0 /), (/ 2, NumBands /) )
 
     DO i = 1, NumBands
@@ -74,8 +76,12 @@ CONTAINS
 
 ! Mark special band channels bad
 
-    BaselineInclude(13)%chan(25) = .FALSE.     ! Band 13
-    BaselineInclude(14)%chan(24:25) = .FALSE.  ! Band 14
+    BaselineInclude(13)%chan(25) = .FALSE.      ! Band 13
+    BaselineInclude(14)%chan(24:25) = .FALSE.   ! Band 14
+    DO i = 22, 26                               ! Bands 22-26
+       BaselineInclude(i)%chan(1) = .FALSE.
+       BaselineInclude(i)%chan(108:129) = .FALSE.
+    ENDDO
 
 ! Clear the baselines:
 
@@ -116,29 +122,34 @@ CONTAINS
   END SUBROUTINE CalcBaselineAC
 
 !=============================================================================
-  SUBROUTINE CalcBaselineDC (bandno, radNum, chans, MIFmatch, rad, prec)
+  SUBROUTINE CalcBaselineDC (bandno, radNum, chans, MIFmatch, MIFmatchDACS, &
+       rad, prec)
 !=============================================================================
 
-    USE MLSL1Common, ONLY: Bandwidth, FBchans, MBchans, WFchans, LO1
+    USE MLSL1Common, ONLY: Bandwidth, DACSchans, FBchans, MBchans, WFchans, LO1
     USE MLSL1Rad, ONLY : RadPwr
     USE MLSL1Config, ONLY: L1Config
 
     INTEGER, INTENT(IN) :: bandno, chans, radNum
-    LOGICAL, INTENT(IN) :: MIFmatch(:)
+    LOGICAL, INTENT(IN) :: MIFmatch(:), MIFmatchDACS(:,:)
     REAL, INTENT(IN) :: rad(:,:), prec(:,:)
 
     INTEGER :: i, nmatch
     INTEGER :: MIFindx(SIZE(MIFmatch))
-    LOGICAL :: match(SIZE(MIFmatch))
+    LOGICAL :: match(SIZE(MIFmatch)), AltMatch(SIZE(MIFmatch))
     REAL :: rad_sum, bw_sum, BW(FBchans), space_P
     REAL, PARAMETER :: FB_BW(FBchans) = Bandwidth%FB(:,1) * 1.0e-06
     REAL, PARAMETER :: MB_BW(MBchans) = Bandwidth%MB(:,1) * 1.0e-06
+    REAL, PARAMETER :: DACS_BW = Bandwidth%DACS(1,1) * 1.0e-06
 
     BaselineDC(bandno)%offset = 0.0     ! Clear this band
 
-    IF (COUNT (MIFmatch) == 0) RETURN   ! nothing to do
-
-    IF (chans > FBchans) RETURN         ! No DACS for now
+    IF (chans /= DACSchans) THEN
+       AltMatch = MIFmatch
+    ELSE
+       AltMatch = MIFmatchDACS(:,(bandno-21))
+    ENDIF
+    IF (COUNT (AltMatch) == 0) RETURN   ! nothing to do
 
     rad_sum = 0.0
     bw_sum = 0.0
@@ -154,7 +165,7 @@ CONTAINS
 
        IF (.NOT. BaselineInclude(bandno)%chan(i)) CYCLE   ! next one
 
-       WHERE (MIFmatch .AND. prec(i,:) >= 0.0)
+       WHERE (AltMatch .AND. prec(i,:) >= 0.0)
           match = .TRUE.
        ELSEWHERE
           match = .FALSE.
@@ -165,6 +176,9 @@ CONTAINS
           IF (chans  == WFchans) THEN   ! WF
              BaselineDC(bandno)%offset(i) = &
                   SUM (rad(i,:), mask=match) / nmatch - space_P
+          ELSE IF (chans == DACSchans) THEN  ! DACS
+             rad_sum = rad_sum + SUM (rad(i,:) * DACS_BW, mask=match)
+             bw_sum = bw_sum + SUM (MIFindx(:) * DACS_BW, mask=match)
           ELSE
              rad_sum = rad_sum + SUM (rad(i,:) * BW(i), mask=match)
              bw_sum = bw_sum + SUM (MIFindx(:) * BW(i), mask=match)
@@ -186,7 +200,8 @@ CONTAINS
     USE MLSL1Rad, ONLY : L1Brad
 
     INTEGER :: i, bandno, chans, radNum
-    LOGICAL :: MIFmatch(MIFsGHz)   ! "good" matching MIF altitudes
+    LOGICAL :: MIFmatch(MIFsGHz)   ! "good" matching MIF altitudes for non-DACS
+    LOGICAL :: MIFmatchDACS(MIFsGHz, 5) ! "good" matching MIF altitudes for DACS
     TYPE (MAFdata_T), POINTER :: CurMAFdata
     REAL :: alt(MIFsGHz)
 
@@ -194,11 +209,20 @@ print *, 'doing baseline...'
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
     alt = CurMAFdata%SciPkt(0:(MIFsGHz-1))%altg
-    WHERE (alt > BaselineAlt)
+
+    WHERE (alt > BaselineAlt)   ! non-DACS bands...
        MIFmatch = .TRUE.
     ELSEWHERE
        MIFmatch = .FALSE.
     ENDWHERE
+
+    DO i = 1, 5
+       WHERE (alt > BaselineAltDACS(i))
+          MIFmatchDACS(:,i) = .TRUE.
+       ELSEWHERE
+          MIFmatchDACS(:,i) = .FALSE.
+       ENDWHERE
+    ENDDO
 
     CALL ClearBaselines
 
@@ -208,8 +232,8 @@ print *, 'doing baseline...'
        chans = SIZE (L1Brad(i)%value(:,1))
        radNum = l1brad(i)%signal%radiometerNumber
 
-       CALL CalcBaselineDC (bandno, radNum, chans, MIFmatch, L1Brad(i)%value, &
-            L1Brad(i)%precision)
+       CALL CalcBaselineDC (bandno, radNum, chans, MIFmatch, MIFmatchDACS, &
+            L1Brad(i)%value, L1Brad(i)%precision)
 
        CALL CalcBaselineAC (bandno)
 
@@ -228,6 +252,7 @@ print *, 'doing baseline...'
 
     USE MLSL1Common, ONLY: L1BFileInfo, FBchans, MBchans, WFchans, DACSchans
     USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
+    USE MLSL1Config, ONLY: L1Config
     USE MLSL1Rad, ONLY: Rad_name
     USE MLSL1Config, ONLY: L1Config
     USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
@@ -240,12 +265,14 @@ print *, 'doing baseline...'
          BasePrecNameAC, BaseNameDC, BasePrecNameDC
     INTEGER :: i, bandno, c1, c2, Flag, noChans, noMAFs, ngood, nwin, sd_id
     INTEGER :: CalWindow, CalStart, CalEnd, mindx, avg_indx(2), rno, w1, w2
+    INTEGER :: DACS_window
     INTEGER, POINTER, DIMENSION(:,:) :: windx
     LOGICAL, POINTER, DIMENSION(:) :: rms_mask
 
     INTEGER, POINTER, DIMENSION(:) :: counterMAF => NULL()
     REAL, POINTER, DIMENSION(:,:) :: baselineAC => NULL(), &
-         baselineACprec => NULL(), baselineDC => NULL()
+         baselineACprec => NULL(), baselineDC => NULL(), &
+         baselineDCavg => NULL()
     REAL DC_avg(FBchans), DC_rms(FBchans), DCmean
     REAL, POINTER, DIMENSION(:) :: resid
 
@@ -260,6 +287,8 @@ print *, 'Updating baselines...'
     ALLOCATE (baselineDS%Dimensions(2))
     baselineDS%data_type = 'real'
     baselineDS%Dimensions(2) = 'MAF                 '
+    baselineDS%Dimensions(1) = 'chanDACS'
+
     sd_id = L1BFileInfo%RADGid
 
 ! Get counterMAFs
@@ -269,6 +298,57 @@ print *, 'Updating baselines...'
     ALLOCATE (counterMAF(noMAFs))
     counterMAF = L1BData%Intfield(1,1,:)
     CALL DeallocateL1BData (L1BData)
+
+! DACS baselines first:
+
+    IF (L1Config%Calib%CalibDACS) THEN
+       sd_id = L1BFileInfo%RADDid
+       DACS_window = L1Config%Calib%DACSwindow
+
+! Allocate baseline arrays for reading to the maximum channel size:
+
+       ALLOCATE (baselineDC(DACSchans,noMAFs))
+       ALLOCATE (baselineDCavg(DACSchans,noMAFs))
+
+! Get the DACS baselines and adjust
+
+       DO rno = 40, 44   ! DACS only names!
+
+          name = Rad_name(rno)
+          IF (.NOT. IsHDF5DSPresent (sd_id, TRIM(name))) CYCLE  ! Nothing to get
+
+          BaseName = TRIM (name) // ' Baseline'
+          BaseNameDC = TRIM (name) // ' BaselineDC'
+
+          CALL ReadL1BData (sd_id, BaseNameDC, L1BData, noMAFs, Flag, &
+               NeverFail=.TRUE., HDFversion=5)
+          baselineDC = L1BData%DpField(1,:,:)
+
+          DO mindx = 1, noMAFs
+             w1 = MAX ((mindx - DACS_window), 1)
+             w2 = MIN ((mindx + DACS_window), noMAFs)
+             nwin = w2 - w1 + 1
+             baselineDCavg(:,mindx) = SUM (baselineDC(:,w1:w2),2) / nwin
+             baselineDS%name = BaseNameDC
+             CALL Build_MLSAuxData (sd_id, baselineDS, &
+                  BaselineDCavg(:,mindx), lastIndex=mindx, &
+                  disable_attrib=.TRUE.)
+             baselineDS%name = BaseName
+             CALL Build_MLSAuxData (sd_id, baselineDS, &
+                  -BaselineDCavg(:,mindx), lastIndex=mindx, &
+                  disable_attrib=.TRUE.)
+          ENDDO
+       ENDDO
+
+       CALL DeallocateL1BData (L1BData)
+       DEALLOCATE (baselineDC)
+       DEALLOCATE (baselineDCavg)
+
+    ENDIF
+
+! Now for RADG baselines:
+
+    sd_id = L1BFileInfo%RADGid
 
 ! Determine Cal Window indexes
 
@@ -490,6 +570,9 @@ print *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.2  2004/12/01 17:11:34  perun
+! Add calculating and outputting DACS DC baseline
+!
 ! Revision 2.1  2004/11/10 15:31:21  perun
 ! Initial commit
 !
