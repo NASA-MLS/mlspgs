@@ -40,6 +40,12 @@ libfwdmdl_sources=../fwdmdl
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 
+# where sources for the forward model are stored
+libcloud_sources=../cloudfwdm
+
+# where forward model objects and libfwdmdl.a are stored
+libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -81,6 +87,7 @@ SHELL = /bin/sh
 #libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
 libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
+libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f)
 blaslib_f := $(shell echo $(blaslib)/*.f)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
@@ -88,9 +95,12 @@ l2_NEEDS_fwdmdl = true
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
 ifdef l2_NEEDS_fwdmdl
-   depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+   depends_where:=$(libmls_sources) $(srclib) \
+   $(libfwdmdl_sources) $(libcloud_sources)
    PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
-	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
+	  $(libmls_objs)/libmls.a \
+	  $(libfwdmdl_objs)/libfwdmdl.a \
+	  $(libcloud_objs)/libcloud.a     
 else
    depends_where:=$(libmls_sources) $(srclib)
    PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
@@ -136,6 +146,10 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+
+$(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libmls_objs)/libmls.a \
+               $(libfwdmdl_objs)/libfwdmdl.a $(CONFDIR)/$(MLSCFILE)
+	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
 
@@ -204,6 +218,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.31  2001/05/31 23:27:51  pwagner
+# Ended role of l2_NEEDS_fwdmdl; cloudfwdm prereq of l2
+#
 # Revision 2.30  2001/05/31 20:19:31  pwagner
 # Added ghostbuster to .PHONY list
 #
