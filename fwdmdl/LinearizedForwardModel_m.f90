@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
       & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
       & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
       & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP, &
-      & VALIDATEVECTORQUANTITY
+      & VALIDATEVECTORQUANTITY, M_LINALG
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: ForwardModelConfigData
@@ -109,6 +109,7 @@ contains ! =====     Public Procedures     =============================
 
     logical :: ANYBLOCKS                ! Flag for checking derivatives
     logical :: DODERIVATIVES            ! Flag
+    logical :: DOELEMENT                ! Flag
     logical :: FOUNDINFIRST             ! Flag for state quantities
     logical :: PTANINFIRST              ! PTan was found in the first vector
 
@@ -449,7 +450,10 @@ contains ! =====     Public Procedures     =============================
                 lower = (mifPointingsLower(mif)-1)*noChans + 1
                 upper = (mifPointingsUpper(mif)-1)*noChans + 1
                   do chan = 1, noChans
-                    if ( doChannel(chan) ) then
+                    doElement = doChannel(chan)
+                    if ( doElement .and. associated ( radiance%mask ) ) &
+                      & doElement = iand ( ichar ( radiance%mask(i,maf)), m_linAlg ) == 0
+                    if ( doElement ) then
                       jBlock%values ( i , : ) = &
                         & jBlock%values ( i , : ) + &
                         &   thisRatio(chan) * ( &
@@ -886,6 +890,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.32  2002/12/16 15:31:57  mjf
+! Use GetQuantityForForwardModel instead of GetVectorQuantityByType.
+!
 ! Revision 2.31  2002/11/14 17:54:06  livesey
 ! Changed 'no quantity found' warning message to work better.
 !
