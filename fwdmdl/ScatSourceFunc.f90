@@ -22,7 +22,7 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TB_SCAT )  
 
       use Cloud_extinction,    only: Get_beta_cloud
       use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
@@ -46,7 +46,7 @@ contains
       integer, intent(in) :: NS           ! Number of chemical species
       real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
       
-      real(rk), intent(out) :: TScat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(inout) :: TB_scat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
 
     ! Local variables
       real(rk), parameter :: COLD = 2.7_rk   ! kelvins
@@ -59,6 +59,7 @@ contains
       real(rk) :: D2
       real(rk) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
       real(rk) :: dTAU( size(temp_air) )  ! Optical depth increment at each layer 
+      real(rk) :: ext_air( size(temp_air) )
       real(rk) :: DU(NU)                  ! DELTA U
       real(rk) :: DY
       real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
@@ -75,6 +76,7 @@ contains
       real(rk) :: TGT
       real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
       real(rk) :: THETA(NU)    ! SCATTERING ANGLES
+      real(rk) :: TSCAT(NU,size(Z))
       real(rk) :: Tsource
       real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
       real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
@@ -107,9 +109,10 @@ contains
 
 !-------------------------------------------------------------------------------------
 
-      L = size(temp_air,1) ! == size(tscat,1)
+      L = size(temp_air,1) ! == size(tb_scat,1)
       TB    = 0.0_rk
-      Tscat = 0.0_rk
+      TB_scat = 0.0_rk
+      Tscat   = 0.0_rk
       tsource = 0.0_rk
 
 !--------------------------------------------------
@@ -130,43 +133,31 @@ contains
       WC=0.0
       PHH=0.0
       cld_ext=0.0
-      WC(1,10) = 0.01   !test only
-      WC(1,11) = 0.01   !test only
+!      WC(1,10) = 0.01   !test only
+!      WC(1,11) = 0.01   !test only
       dtau =0.0
 
-!      print*, NS
-!      print*, TEMP_AIR, VMRin(1,:), VMRin(2,:), VMRin(3,:)
-
-!      print*, TEMP_AIR
-
-!      print*, Pres
-!      stop
-
-      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, dtau )
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, ext_air )
 
       do I=1, L-1
         mid_Z(I) = Z(I) +(Z(I+1)-Z(I))/2.
-!        print*, Z(I), mid_Z(I)
       enddo
-
 
       do I=1, L-2
         D_mid_Z(I) = (Z(I+1)-Z(I))
-!        print*, Z(I), mid_Z(I), D_mid_Z(I)
       enddo
-!      stop
 
-
-      do K=2,L-1
+      do K=1,L
         call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,         &
      &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
-        dtau(k)= D_mid_Z(K-1) *cld_ext
-!        print*, dtau(k), D_mid_Z(K-1), cld_ext, TEMP_AIR(K), WC(1,K), W0(K)
+        
+        if (K .ge. 2 .and. K .le. L-1) then
+            dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))
+        endif
       end do
-      dtau(1)=dtau(2)
+      dtau(1)=dtau(2) 
       dtau(L)=dtau(L-1)
-!      STOP
-
+      
 !----------------------------------------------------
 !     DETERMINE NO. OF ITERATIONS
 !----------------------------------------------------
@@ -242,9 +233,8 @@ contains
 
             TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
      &              (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-!            print*, TB(I,K), I, K
+
  1100 CONTINUE
-!            stop
 
 !-----------------------------------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
@@ -274,9 +264,9 @@ contains
 
            TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
      &               (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-!           print*, TB(I,K), I,K
+
  1200 CONTINUE
-!           stop
+
 !------------------------------------
 !     CHECK CONVERGENCE
 !------------------------------------
@@ -296,7 +286,17 @@ contains
          GOTO 1000
       ENDIF
       
-   end subroutine T_SCAT
+!-------------------------------------------------------------------------
+!     AFTER TB CONVERGENCE IS FOUND, OUTPUT THE SCATERING SOURCE FUNCTION
+!-------------------------------------------------------------------------
+
+     do IP=1,NU
+         do K=1,L
+           TB_scat(K, IP) = Tscat(IP, K)
+         enddo
+     enddo
+
+  end subroutine T_SCAT
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -305,6 +305,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.5  2003/11/17 18:04:45  jonathan
+! correct working version
+!
 ! Revision 2.3  2003/10/29 17:22:35  jonathan
 ! fix bug
 !
