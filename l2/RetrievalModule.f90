@@ -1329,6 +1329,10 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
+            if ( index(switches,'sca') /= 0 ) then
+              call output ( ' | F | = ' )
+              call output ( sqrt ( aj%fnorm ), format='(1pe14.7)', advance='yes' )
+            end if
           if ( nwt_flag == nf_getJ ) exit ! taking a special iteration to get J
           aj%diag = minDiag ( factored ) ! element on diagonal with
           !       smallest absolute value, after triangularization
@@ -3018,6 +3022,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.171  2002/09/11 01:14:47  livesey
+! Added extra dump of | F |
+!
 ! Revision 2.170  2002/09/06 00:46:18  livesey
 ! Added dump of aTb
 !
