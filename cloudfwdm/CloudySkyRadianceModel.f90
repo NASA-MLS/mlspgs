@@ -512,20 +512,19 @@ contains
             ENDIF
          ENDDO
 
+!        delTAU100 will be used for transmission function calculation
+         delTAU100=TAU0                       ! Initialize to TAU0,                                         
+         if (ICON .ne. 0) then                ! only for cloudy retrieval cases
+           DO IL=1,MAX(ICLD_TOP,I100_TOP)        
+              delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
+           ENDDO                                ! 100MB or cloud top
+         endif
+
          IF (ICON .EQ. 1) THEN
             DO IL=1, ICLD_TOP                 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
             ENDDO
          ENDIF
-
-!        delTAU100 will be used for transmission function calculation
-         delTAU100=TAU0                       ! Initialize to TAU0,                                         
-         
-         if (ICON .ne. 0) then                ! only for cloudy retrieval cases
-         DO IL=1,MAX(ICLD_TOP,I100_TOP)        
-              delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
-         ENDDO                                ! 100MB or cloud top
-         endif
 !----------------------------------------------------------------------------------
 
             PHH      = 0._r8     ! phase function
@@ -596,7 +595,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-	 TT = TT0	! so that dTcir=0
+         TT = TT0	! so that dTcir=0
 
          IF(ICON .GE. 1) THEN                               
 
@@ -791,6 +790,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.26  2001/10/30 05:55:35  dwu
+! make clear sky dTcir =0
+!
 ! Revision 1.25  2001/10/26 00:01:45  jonathan
 ! fixed a bug, change from w0*0._r8 etc to w00, ph0
 !
