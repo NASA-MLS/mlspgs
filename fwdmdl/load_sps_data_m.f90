@@ -248,11 +248,11 @@ CONTAINS
       wf2 = Grids_x%windowFinish(ii)
       Grids_x%zet_basis(l:n-1) = f%template%surfs(1:kz,1)
       Grids_x%phi_basis(j:k-1) = f%template%phi(1,wf1:wf2)*Deg2Rad
-      IF (Grids_x%no_f(ii) > 1) THEN
+      if ( associated ( f%template%frequencies ) ) then
         Grids_x%frq_basis(s:m-1) = f%template%frequencies
-      ELSE
+      else
         Grids_x%frq_basis(s:m-1) = 0.0
-      ENDIF
+      endif
 !
 ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
@@ -308,6 +308,9 @@ CONTAINS
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.21  2002/07/08 17:45:41  zvi
+! Updated spectroscopy handling
+!
 ! Revision 2.20  2002/07/05 07:52:49  zvi
 ! Some cosmetic changes
 !
