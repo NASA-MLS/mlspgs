@@ -263,17 +263,17 @@ contains ! =====     Public Procedures     =============================
 
     real(r8), parameter :: SIXTH = 1.0_r8 / 6.0_r8
 
-    character (len=15), DIMENSION(noL1BItemsToRead) :: l1bItemNames
-    ! Entries in the above array follwing FirstModularItem are prefixed
+    character (len=15), dimension(noL1BItemsToRead) :: L1bItemNames
+    ! Entries in the above array following FirstModularItem are prefixed
     ! with either GHz or THz. 
 
-    integer :: L1BITEM                  ! Loop counter
     integer :: L1BFLAG                  ! Flag
+    integer :: L1BITEM                  ! Loop counter
+    integer :: MAF                      ! Loop counter etc.
+    real(r8) :: MinAngle, MaxAngle
     integer :: NOMAFS                   ! Dimension
     integer :: STATUS                   ! Flag
-    integer :: MAF                      ! Loop counter etc.
-    real(r8) :: minAngle, maxAngle
-    real(r8), dimension(:,:,:), pointer :: tpGeodAngle, tpGeodAlt
+    real(r8), dimension(:,:,:), pointer :: TpGeodAlt, TpGeodAngle
 
     ! MIFs it would choose in the non over/undersampled case
     real(r8), dimension(:), allocatable :: defaultField, interpolatedField
@@ -534,6 +534,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.14  2001/05/03 20:32:19  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.13  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

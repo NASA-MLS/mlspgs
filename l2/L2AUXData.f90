@@ -141,16 +141,16 @@ contains ! =====     Public Procedures     =============================
   ! one.
 
     ! Dummy arguments
-    type (L2AUXData_T), intent(inout) :: l2aux
-    integer, intent(in) :: newSize
+    type (L2AUXData_T), intent(inout) :: L2aux
+    integer, intent(in) :: NewSize
 
     ! Local variables
-    integer :: status           ! From ALLOCATE
+    integer :: Status           ! From ALLOCATE
+    integer :: ExpandingDimension
+    integer :: OldSize
     ! The following are temporary arrays for copying data around
-    real (r8), dimension(:), pointer :: temp1D
-    real (r8), dimension(:,:,:), pointer :: temp3D
-    integer :: expandingDimension
-    integer :: oldSize
+    real (r8), dimension(:), pointer :: Temp1D
+    real (r8), dimension(:,:,:), pointer :: Temp3D
 
     ! Executable code
 
@@ -497,6 +497,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.14  2001/05/03 20:32:19  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.13  2001/05/02 22:24:20  pwagner
 ! Removed SDPToolkit use
 !
