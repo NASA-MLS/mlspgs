@@ -161,7 +161,15 @@ machine.o: machine.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o machine.mod 
 
-ieee_arithmetic.o: infnan.o
+ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod 
+ieee_arithmetic.mod: ieee_arithmetic.f90 inf_nan_detection.mod
+	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
+infnan.o: inf_nan_detection.mod infnan.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T infnan.o inf_nan_detection.mod 
+inf_nan_detection.mod: infnan.f90
+	$(UTILDIR)/newAifBdiff.sh -a inf_nan_detection.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/infnan.f90 $(FAFTER)
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
@@ -351,6 +359,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.16  2004/03/26 21:16:53  pwagner
+# Added dependency of ieee on infnan
+#
 # Revision 1.15  2003/10/08 21:13:15  pwagner
 # Changed options to sort to tolerate duplicate entries
 #

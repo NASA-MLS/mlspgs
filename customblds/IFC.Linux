@@ -162,6 +162,11 @@ machine.o: MACHINE.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o MACHINE.mod 
 
+ieee_arithmetic.o: IEEE_ARITHMETIC.mod ieee_arithmetic.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o IEEE_ARITHMETIC.mod 
+IEEE_ARITHMETIC.mod: ieee_arithmetic.f90
+	$(UTILDIR)/newAifBdiff.sh -a IEEE_ARITHMETIC.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -328,6 +333,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.5  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
 # Revision 1.4  2003/09/29 18:23:34  pwagner
 # Fixed problem with level 1 dependencies
 #
