@@ -8,7 +8,7 @@ module GLOBAL_SETTINGS
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
-    & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
+    & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN
   use L2GPData, only: L2GPDATA_T
@@ -88,11 +88,6 @@ contains
     character(LEN=NameLen) :: name_string
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: time_conversion='(F32.0)'
-! Just until init_tables_module is updated
-!   integer, parameter :: P_CYCLE=-99, P_CCSDSSTARTTIME=-98, &
-!   & P_CCSDSENDTIME=-97, &
-!   & P_STARTTIME=-96, P_ENDTIME=-95, &
-!    & S_L1BRAD=-94, S_L1BOA=-93
 
     timing = .false.
     
@@ -472,6 +467,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.32  2001/05/24 20:36:13  pwagner
+! Warns if glob. stg. overrides pcf
+!
 ! Revision 2.31  2001/05/17 00:29:03  pwagner
 ! Works without toolkit, PCF at last
 !
