@@ -24,7 +24,7 @@ module TREE_WALKER
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
-    & COUNTCHUNKS, SINGLECHUNK )
+    & COUNTCHUNKS, SINGLECHUNK, FILEDATABASE )
 
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
@@ -54,6 +54,7 @@ contains ! ====     Public Procedures     ==============================
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
+    use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -84,6 +85,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
     integer, intent(in) ::     SINGLECHUNK ! Just run this one chunk (0 if all)
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     integer ::                                  chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
@@ -371,6 +373,10 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.99  2002/11/22 12:24:25  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.98  2002/11/22 01:14:06  vsnyder
 ! Remove USE'd but unreferenced symbols and two unused local variables
 !
