@@ -5,6 +5,7 @@
 ;------------------- RCS Ident Info -----------------------
 ;  CHARACTER(LEN=130) :: Id = &
 ;  "$Id$"
+;   Modified on 3/28/02 by ahanzel - replaced Z with GPH 
 ;----------------------------------------------------------
 
 ; This is the Level 3 Configuration file for version 0.8 of the Level 3 software
@@ -127,7 +128,8 @@ BEGIN Standard
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
         rangFrequency= -1.0:6.0,rangWavenumber=1:8
-    std,l3prodName="GeopotentialHeight",timeD="12:00:00",mode=com,label="ZL3DM", $
+;;    std,l3prodName="GeopotentialHeight",timeD="12:00:00",mode=com,label="ZL3DM", $
+    std,l3prodName="GPH",timeD="12:00:00",mode=com,label="GPHL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
         rangFrequency= -1.0:6.0,rangWavenumber=1:8
@@ -269,7 +271,8 @@ BEGIN Output
     ;; containing fields not related to granule-level identification.
     ;;
     CLOL3DM: out, mcf = "ML3DCLO.001.MCF", file="MLS-Aura_$level_ClO_"
-    ZL3DM: out, mcf = "ML3DZ.001.MCF", file="MLS-Aura_$level_Z_"
+;;    ZL3DM: out, mcf = "ML3DZ.001.MCF", file="MLS-Aura_$level_Z_"
+    GPHL3DM: out, mcf = "ML3DGPH.001.MCF", file="MLS-Aura_$level_GPH_"
     H2OL3DM: out, mcf = "ML3DH2O.001.MCF", file="MLS-Aura_$level_H2O_"
     HCLL3DM: out, mcf = "ML3DHCL.001.MCF", file="MLS-Aura_$level_HCl_"
     HCNL3DM: out, mcf = "ML3DHCN.001.MCF", file="MLS-Aura_$level_HCN_"
@@ -284,6 +287,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2001/12/10 18:31:22  nakamura
+; Reduced number of dg products to 38.
+;
 ; Revision 1.1  2001/09/26 20:24:47  nakamura
 ; L3 Daily/Monthly CF, with Dg specifications.
 ;
