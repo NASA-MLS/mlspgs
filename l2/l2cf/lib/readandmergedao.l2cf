@@ -20,8 +20,11 @@ end ReadApriori
 begin MergeGrids
   daoTemperatureInput: Concatenate, $
     a=daoTemperatureInputThis, b=daoTemperatureInputNext
+  delete, grid=daoTemperatureInputThis
+  delete, grid=daoTemperatureInputNext
   mergedTemperature: Merge, operational=daoTemperatureInput, $
     climatology=gridTemperature, height=1mb, scale=5km
   !define(flagUseOperationalTemperature,{yes})
+  delete, grid=daoTemperatureInput
 end MergeGrids
 
