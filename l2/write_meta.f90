@@ -1081,15 +1081,6 @@ contains
         call output(trim(sd_name), advance='yes')
       end if
 
-      ! quick and dirty fixed for certain l2gp species without mcf
-      ! Correct solution will require changes to l2/directWrite
-      ! lib/l2gpData and unknown fragment l2/l2cf/lib
-
-      if ( trim(sd_name) == 'ch3cn' ) then
-	     mcf = -999
-	     return
-      end if
-
       if ( len(trim(sd_name)) <= 0 ) then
         mcf=0
         return
@@ -1376,6 +1367,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.56  2005/01/14 21:37:30  pwagner
+! ch3cn now has mcf, so special treatment lifted
+!
 ! Revision 2.55  2004/12/15 23:34:32  pwagner
 ! Change REPROCESSINGACTUAL to unknown; light housecleaning
 !
