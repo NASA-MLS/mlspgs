@@ -4,8 +4,8 @@
 #
 include make.inc
 
-OBJS= mlsstrings.o signalsfile.o
-OBJS_DEBUG= mlsstrings.o_debug signalsfile.o_debug
+OBJS= mlsstrings.o mlssignalnomenclature.o
+OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug
 MODULEPATH=.
 
 all: mlslib.a
@@ -21,6 +21,9 @@ clean:
 	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
 #
 # $Log$
+# Revision 1.6  1999/11/10 01:52:00  livesey
+# Transfer to home
+#
 # Revision 1.5  1999/11/04 21:59:40  livesey
 # Move contents of util to lib and renamed to mlslib.a
 #
