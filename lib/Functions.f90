@@ -14,8 +14,10 @@ module Functions
   implicit NONE
   public
 
-  integer, parameter :: F_Cholesky = 1
-  integer, parameter :: F_Transpose = F_Cholesky + 1
+  integer, parameter :: F_Cholesky        = 1
+  integer, parameter :: F_GetDiagonal     = F_Cholesky + 1
+  integer, parameter :: F_SQRT            = F_GetDiagonal + 1
+  integer, parameter :: F_Transpose       = F_SQRT + 1
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -30,8 +32,10 @@ contains
 
   subroutine Init_Functions
 
-    call declare_func ( 'cholesky', f_cholesky )
-    call declare_func ( 'transpose', f_transpose )
+    call declare_func ( 'cholesky',        f_cholesky )
+    call declare_func ( 'getDiagonal',     f_getDiagonal )
+    call declare_func ( 'sqrt',            f_sqrt )
+    call declare_func ( 'transpose',       f_transpose )
 
   contains
     subroutine Declare_Func ( String, Index )
@@ -53,6 +57,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.2  2004/01/30 23:25:31  livesey
+! Added GetDiagonal and sqrt
+!
 ! Revision 2.1  2004/01/17 03:05:06  vsnyder
 ! Initial commit
 !
