@@ -225,6 +225,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
     use MLSFiles, only: MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF
+    use MLSHDFEOS, only: mls_swath_in_file
     use MLSL2Options, only: TOOLKIT, DEFAULT_HDFVERSION_WRITE
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
@@ -273,6 +274,9 @@ contains ! =====     Public Procedures     =============================
     integer :: RETURNSTATUS
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
+    logical :: ANOTHERLOG_VAR
+    logical, dimension(:), pointer :: logicalBuffer
+    character(len=256), dimension(:), pointer :: nameBuffer
     integer :: record_length
     integer :: l2gp_Version
 
@@ -458,6 +462,22 @@ contains ! =====     Public Procedures     =============================
       endif
       select case ( outputType )
       case ( l_l2gp )
+        ! Before opening file, see which swaths are already there
+        ! and which ones need to be created
+        print *, 'Allocating ', noSources
+        nullify(logicalBuffer, nameBuffer)
+        call Allocate_test ( logicalBuffer, noSources, 'logicalBuffer', &
+          & ModuleName )
+        call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
+          & ModuleName )
+        do source = 1, noSources
+          qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+          hdfNameIndex = qty%label
+          call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
+        enddo
+        ANOTHERLOG_VAR = MLS_SWATH_IN_FILE(fileName, nameBuffer, HdfVersion, &
+          & logicalBuffer )
         ! Call the l2gp open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
         handle = mls_io_gen_openF('sw', .true., ErrorType, &
@@ -515,8 +535,10 @@ contains ! =====     Public Procedures     =============================
           ! non-overlapped portion of qty (with possibly precision in precQty)
           ! into the l2gp swath named 'hdfName' starting at profile 
           ! qty%template%instanceOffset + 1
+          ! May optionally supply first, last profiles
           call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
-            & hdfVersion )   ! May optionally supply first, last profiles
+            & hdfVersion, filename=filename, &
+            & createSwath=(.not. logicalBuffer(source)) )
           filetype=l_swath
         case ( l_l2aux )
           ! Call the l2aux sd write routine.  This should write the 
@@ -538,6 +560,9 @@ contains ! =====     Public Procedures     =============================
       ! Close the output file of interest (does this need to be split like this?)
       select case ( outputType )
       case ( l_l2gp )
+        print *, 'Deallocating ', noSources
+        call Deallocate_test ( logicalBuffer, 'logicalBuffer', ModuleName )
+        call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
         ! Call the l2gp close routine
         errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
         ! errortype = he5_SWclose(Handle)
@@ -1286,6 +1311,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.82  2003/07/09 21:49:53  pwagner
+! Tries to figure out in advance whether to create swath
+!
 ! Revision 2.81  2003/07/08 00:15:51  livesey
 ! Various tidy ups and reworks
 !
