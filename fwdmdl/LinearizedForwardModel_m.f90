@@ -406,9 +406,11 @@ contains ! =====     Public Procedures     =============================
           ! Note that we've ignored the mask in stateQ here. We might
           ! in later versions want to apply one mask field?
 
-          ! Interpolate kStart to K if required.
+          ! Interpolate kStar to K if required.
+          if ( present ( jacobian ) ) fmStat%rows(rowJBlock) = .true.
+          ! We want to set the row flag even if we don't compute derivatives
+          ! as we want our contribution to the radiances known.
           if (doDerivatives) then
-            fmStat%rows(rowJBlock) = .true.
             colLBlock = FindBlock ( l2pc%col, l2pcQ%index, xStarInstance )
             colJBlock = FindBlock ( jacobian%col, stateQ%index, xInstance )
             l2pcBlock => l2pc%block(rowLBlock,colLBlock)
@@ -890,6 +892,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.33  2003/01/08 23:50:15  livesey
+! Now doesn't bother to create derivatives for masked radiances
+!
 ! Revision 2.32  2002/12/16 15:31:57  mjf
 ! Use GetQuantityForForwardModel instead of GetVectorQuantityByType.
 !
