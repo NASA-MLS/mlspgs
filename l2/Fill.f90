@@ -4509,7 +4509,7 @@ contains ! =====     Public Procedures     =============================
       character (len=128) :: MSTR
       ! Executable code
       call get_string ( manipulation, mstr, strip=.true. )
-      if ( mstr /= 'a+b' .or. mstr /= 'a-b' ) then
+      if ( mstr /= 'a+b' .and. mstr /= 'a-b' ) then
         call Announce_Error ( key, 0, &
           & 'Only a+b or a-b allowed for manipulation at the moment' )
         return
@@ -4546,13 +4546,23 @@ contains ! =====     Public Procedures     =============================
       end if
       ! OK do the simple work for now
       ! Later we'll do fancy stuff to parse the manipulation.
-      if ( .not. associated ( quantity%mask ) ) then
-        if(mstr .eq. 'a+b') quantity%values = a%values + b%values
-        if(mstr .eq. 'a-b') quantity%values = a%values - b%values
-      else
-        where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+      if(mstr .eq. 'a+b') then
+        if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values + b%values
-        end where
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = a%values + b%values
+          end where
+        end if
+      end if
+      if(mstr .eq. 'a-b') then
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = a%values - b%values
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = a%values - b%values
+          end where
+        end if
       end if
     end subroutine FillQuantityByManipulation
 
@@ -4767,6 +4777,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.172  2003/01/12 07:34:05  dwu
+! with some fix for a-b manipulation
+!
 ! Revision 2.171  2003/01/12 05:13:50  dwu
 ! add a-b manipulation (under the same conditions of the a+b case
 !
