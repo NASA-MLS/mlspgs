@@ -138,6 +138,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noMIFs                   ! Number of minor frames
     integer :: noSgrid                  ! no of elements in S grid
     integer :: noSurf                   ! Number of pressure levels
+    integer :: noCldSurf                   ! Number of cloud ext levels
     integer :: NOFREQS                  ! Number of frequencies
 
     integer :: chan
@@ -553,6 +554,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
 
+        ! Get number of cloud surfaces for retrieval
+        noCldSurf=state_ext%template%noSurfs
         ! Get s dimension
         noSgrid=state_los%template%noChans
         
@@ -570,7 +573,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        endif
 
        iCloudHeight = 0
-       do i = 1, noSurf  
+       do i = 1, noCldSurf
           if(state_ext%values(i,instance) .ne. 0.) then
             iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
           endif
@@ -720,16 +723,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          stop
       end if
       
-    ! Get dimension
-      noSurf = state_ext%template%noSurfs
-      
       colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf )
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
-        call CreateBlock ( jBlock, noMIFs, noSurf*noInstances, M_Full )
+        call CreateBlock ( jBlock, noMIFs, noCldSurf*noInstances, M_Full )
         jBlock%values = 0.0_r8
 
       !-------------------------------------------------------------------
@@ -792,14 +792,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! find the total length for this tangent height
         !-----------------------------------------------
         ds_tot = 2._r8*sqrt((earthradius%values(1,maf)+ & 
-            & state_ext%template%surfs(noSurf,instance))**2 - &
+            & state_ext%template%surfs(noCldSurf,instance))**2 - &
             & (earthradius%values(1,maf)+zt(mif))**2)
 
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
         !----------------------------------------------------------
          do i = 1,noInstances             ! loop over profile
-         do j = 1,noSurf                  ! loop over surface
+         do j = 1,noCldSurf                  ! loop over surface
          do k = 1, nfine*noInstances      ! sum up all the lengths
            if(abs(z_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(j,i)) < dphi/2.) &
@@ -902,6 +902,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.60  2001/10/11 22:44:01  dwu
+! modify high zt Jacobian and use cloud_der as the switch between high and low Zt
+!
 ! Revision 1.59  2001/10/11 17:01:11  jonathan
 ! for (cloud/total)extinction/output one channel per band
 !
