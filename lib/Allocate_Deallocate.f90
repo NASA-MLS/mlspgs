@@ -19,6 +19,7 @@ module Allocate_Deallocate
 ! *****     be declared with => NULL()         *****
 ! **************************************************
 
+  use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
 
@@ -31,18 +32,20 @@ module Allocate_Deallocate
 
   interface ALLOCATE_TEST
     module procedure ALLOCATE_TEST_CHARACTER_1D
-    module procedure ALLOCATE_TEST_DOUBLE_1D, ALLOCATE_TEST_DOUBLE_2D
-    module procedure ALLOCATE_TEST_DOUBLE_3D
+    module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
+    module procedure ALLOCATE_TEST_REALR8_3D
     module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
-    module procedure ALLOCATE_TEST_REAL_1D, ALLOCATE_TEST_REAL_2D
+    module procedure ALLOCATE_TEST_REALR4_1D, ALLOCATE_TEST_REALR4_2D
+    module procedure ALLOCATE_TEST_REALR4_3D
   end interface
 
   interface DEALLOCATE_TEST
     module procedure DEALLOCATE_TEST_CHARACTER_1D
-    module procedure DEALLOCATE_TEST_DOUBLE_1D, DEALLOCATE_TEST_DOUBLE_2D
-    module procedure DEALLOCATE_TEST_DOUBLE_3D
+    module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
+    module procedure DEALLOCATE_TEST_REALR8_3D
     module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
-    module procedure DEALLOCATE_TEST_REAL_1D, DEALLOCATE_TEST_REAL_2D
+    module procedure DEALLOCATE_TEST_REALR4_1D, DEALLOCATE_TEST_REALR4_2D
+    module procedure DEALLOCATE_TEST_REALR4_3D
   end interface
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -68,10 +71,10 @@ contains ! =====     Private Procedures     ============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
   end subroutine Allocate_Test_Character_1d
-  ! ------------------------------------  Allocate_Test_Double_1d  -----
-  subroutine Allocate_Test_Double_1d ( To_Allocate, Dim1, Its_Name, &
+  ! ------------------------------------  Allocate_Test_RealR8_1d  -----
+  subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, Its_Name, &
     & ModuleName, LowBound )
-    double precision, pointer, dimension(:) :: To_Allocate
+    real (r8), pointer, dimension(:) :: To_Allocate
     integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
@@ -82,11 +85,11 @@ contains ! =====     Private Procedures     ============================
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
-  end subroutine Allocate_Test_Double_1d
-  ! ------------------------------------  Allocate_Test_Double_2d  -----
-  subroutine Allocate_Test_Double_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
+  end subroutine Allocate_Test_RealR8_1d
+  ! ------------------------------------  Allocate_Test_RealR8_2d  -----
+  subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
     & ModuleName )
-    double precision, pointer, dimension(:,:) :: To_Allocate
+    real (r8), pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
@@ -95,11 +98,11 @@ contains ! =====     Private Procedures     ============================
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
-  end subroutine Allocate_Test_Double_2d
-  ! ------------------------------------  Allocate_Test_Double_3d  -----
-  subroutine Allocate_Test_Double_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+  end subroutine Allocate_Test_RealR8_2d
+  ! ------------------------------------  Allocate_Test_RealR8_3d  -----
+  subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
     & Its_Name, ModuleName )
-    double precision, pointer, dimension(:,:,:) :: To_Allocate
+    real (r8), pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
@@ -109,7 +112,7 @@ contains ! =====     Private Procedures     ============================
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
-  end subroutine Allocate_Test_Double_3d
+  end subroutine Allocate_Test_RealR8_3d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, Its_Name, &
     & ModuleName, LowBound )
@@ -138,10 +141,10 @@ contains ! =====     Private Procedures     ============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
   end subroutine Allocate_Test_Integer_2d
-  ! --------------------------------------  Allocate_Test_Real_1d  -----
-  subroutine Allocate_Test_Real_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
+  ! --------------------------------------  Allocate_Test_RealR4_1d  -----
+  subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
     & LowBound )
-    real, pointer, dimension(:) :: To_Allocate
+    real (r4), pointer, dimension(:) :: To_Allocate
     integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
@@ -152,11 +155,11 @@ contains ! =====     Private Procedures     ============================
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
-  end subroutine Allocate_Test_Real_1d
-  ! --------------------------------------  Allocate_Test_Real_2d  -----
-  subroutine Allocate_Test_Real_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
+  end subroutine Allocate_Test_RealR4_1d
+  ! --------------------------------------  Allocate_Test_RealR4_2d  -----
+  subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
     & ModuleName )
-    real, pointer, dimension(:,:) :: To_Allocate
+    real (r4), pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
@@ -165,7 +168,21 @@ contains ! =====     Private Procedures     ============================
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
-  end subroutine Allocate_Test_Real_2d
+  end subroutine Allocate_Test_RealR4_2d
+  ! ------------------------------------  Allocate_Test_RealR4_3d  -----
+  subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & Its_Name, ModuleName )
+    real (r4), pointer, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! First dimension of To_Allocate
+    integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
+    integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
+    character(len=*), intent(in) :: Its_Name, ModuleName
+    integer :: STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
+    allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // Its_Name )
+  end subroutine Allocate_Test_RealR4_3d
 
   ! -------------------------------  Deallocate_Test_Character_1d  -----
   subroutine Deallocate_Test_Character_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -181,9 +198,9 @@ contains ! =====     Private Procedures     ============================
       end if
     end if
   end subroutine Deallocate_Test_Character_1d
-  ! ----------------------------------  Deallocate_Test_Double_1d  -----
-  subroutine Deallocate_Test_Double_1d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:) :: To_Deallocate
+  ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
+  subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, Its_Name, ModuleName )
+    real (r8), pointer, dimension(:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     if ( associated(To_Deallocate) ) then
@@ -194,10 +211,10 @@ contains ! =====     Private Procedures     ============================
         dealloc_status = max(dealloc_status, status)
       end if
     end if
-  end subroutine Deallocate_Test_Double_1d
-  ! ----------------------------------  Deallocate_Test_Double_2d  -----
-  subroutine Deallocate_Test_Double_2d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:,:) :: To_Deallocate
+  end subroutine Deallocate_Test_RealR8_1d
+  ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
+  subroutine Deallocate_Test_RealR8_2d ( To_Deallocate, Its_Name, ModuleName )
+    real (r8), pointer, dimension(:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     if ( associated(To_Deallocate) ) then
@@ -208,10 +225,10 @@ contains ! =====     Private Procedures     ============================
         dealloc_status = max(dealloc_status, status)
       end if
     end if
-  end subroutine Deallocate_Test_Double_2d
-  ! ----------------------------------  Deallocate_Test_Double_3d  -----
-  subroutine Deallocate_Test_Double_3d ( To_Deallocate, Its_Name, ModuleName )
-    double precision, pointer, dimension(:,:,:) :: To_Deallocate
+  end subroutine Deallocate_Test_RealR8_2d
+  ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
+  subroutine Deallocate_Test_RealR8_3d ( To_Deallocate, Its_Name, ModuleName )
+    real (r8), pointer, dimension(:,:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     if ( associated(To_Deallocate) ) then
@@ -222,7 +239,7 @@ contains ! =====     Private Procedures     ============================
         dealloc_status = max(dealloc_status, status)
       end if
     end if
-  end subroutine Deallocate_Test_Double_3d
+  end subroutine Deallocate_Test_RealR8_3d
   ! ---------------------------------  Deallocate_Test_Integer_1d  -----
   subroutine Deallocate_Test_Integer_1d ( To_Deallocate, Its_Name, ModuleName )
     integer, pointer, dimension(:) :: To_Deallocate
@@ -251,9 +268,9 @@ contains ! =====     Private Procedures     ============================
       end if
     end if
   end subroutine Deallocate_Test_Integer_2d
-  ! ------------------------------------  Deallocate_Test_Real_1d  -----
-  subroutine Deallocate_Test_Real_1d ( To_Deallocate, Its_Name, ModuleName )
-    real, pointer, dimension(:) :: To_Deallocate
+  ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
+  subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, Its_Name, ModuleName )
+    real (r4), pointer, dimension(:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     if ( associated(To_Deallocate) ) then
@@ -264,10 +281,10 @@ contains ! =====     Private Procedures     ============================
         dealloc_status = max(dealloc_status, status)
       end if
     end if
-  end subroutine Deallocate_Test_Real_1d
-  ! ------------------------------------  Deallocate_Test_Real_2d  -----
-  subroutine Deallocate_Test_Real_2d ( To_Deallocate, Its_Name, ModuleName )
-    real, pointer, dimension(:,:) :: To_Deallocate
+  end subroutine Deallocate_Test_RealR4_1d
+  ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
+  subroutine Deallocate_Test_RealR4_2d ( To_Deallocate, Its_Name, ModuleName )
+    real (r4), pointer, dimension(:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     if ( associated(To_Deallocate) ) then
@@ -278,11 +295,28 @@ contains ! =====     Private Procedures     ============================
         dealloc_status = max(dealloc_status, status)
       end if
     end if
-  end subroutine Deallocate_Test_Real_2d
+  end subroutine Deallocate_Test_RealR4_2d
+  ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
+  subroutine Deallocate_Test_RealR4_3d ( To_Deallocate, Its_Name, ModuleName )
+    real (r4), pointer, dimension(:,:,:) :: To_Deallocate
+    character(len=*) :: Its_Name, ModuleName
+    integer :: STATUS
+    if ( associated(To_Deallocate) ) then
+      deallocate ( To_Deallocate, stat=status )
+      if ( status /= 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & MLSMSG_DeAllocate // Its_Name )
+        dealloc_status = max(dealloc_status, status)
+      end if
+    end if
+  end subroutine Deallocate_Test_RealR4_3d
 
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.4  2001/03/24 23:25:57  livesey
+! Added real(r4) 3d, and renamed routines
+!
 ! Revision 2.3  2001/02/22 01:54:41  vsnyder
 ! Periodic commit
 !
