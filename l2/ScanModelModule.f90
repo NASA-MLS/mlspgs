@@ -33,6 +33,10 @@ module ScanModelModule          ! Scan model and associated calculations
 
   implicit none
 
+  private
+
+  public :: GetBasisGPH, GetHydrostaticTangentPressure, Omega
+
   !---------------------------- RCS Ident Info -------------------------------
   character (LEN=130), private :: Id = &
     & "$Id$"
@@ -470,6 +474,9 @@ contains ! --------------- Subroutines and functions --------------------------
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.7  2001/03/15 23:31:15  livesey
+! Made it default private.
+!
 ! Revision 2.6  2001/03/07 22:42:38  livesey
 ! Got pressure guesser working
 !
