@@ -23,7 +23,7 @@ contains
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
@@ -79,7 +79,7 @@ contains
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
@@ -94,7 +94,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many to write
     character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
