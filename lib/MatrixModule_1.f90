@@ -926,10 +926,14 @@ contains ! =====     Public Procedures     =============================
     if ( present ( eps ) ) then
       myEps = eps
     else
-      myTol = sqrt ( tiny ( 0.0_rm ) )
+      myTol = epsilon ( 0.0_rm )
       if ( present ( tol ) ) myTol = tol
       myEps = myTol * FrobeniusNorm ( A )
     endif
+    call output ( 'Tolerance: ' )
+    call output ( myTol )
+    call output ( ', ' )
+    call output ( myEps, advance='yes' )
     n = A%row%nb
     ! Set V to the identity
     call ClearMatrix ( V )
@@ -970,7 +974,7 @@ contains ! =====     Public Procedures     =============================
           ! So code specially to take advantage of that.
           call CyclicJacobi ( &
             & A%block(p,p), A%block(q,p), A%block(p,q), A%block(q,q), &
-            & Vpp, Vqp, Vpq, Vqq, Vbit, tol=1e-9 )
+            & Vpp, Vqp, Vpq, Vqq, Vbit, tol=tol )
           ! This next bit is sort of taken from section 5.1.9 of Golub and Van Loan
           ! (3rd edition), but expanded to be blockwise
           ! Update A with J^T A J
@@ -1199,7 +1203,7 @@ contains ! =====     Public Procedures     =============================
         r1 = c+1
       end if
       do r = r1, m%row%nb
-        FrobeniusNorm_1 = FrobeniusNorm_1 + FrobeniusNorm ( m%block(c,c) )
+        FrobeniusNorm_1 = FrobeniusNorm_1 + FrobeniusNorm ( m%block(r,c) )
       end do
     end do
   end function FrobeniusNorm_1
@@ -2538,6 +2542,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.99  2004/01/30 23:24:48  livesey
+! Bug fixes to FrobeniusNorm and CyclicJacobi stuff
+!
 ! Revision 2.98  2004/01/29 03:31:58  livesey
 ! Added CyclicJacobi stuff.  Also version of UpdateDiagonal that doesn't
 ! insist on SPD matrices
