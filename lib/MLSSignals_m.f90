@@ -1259,6 +1259,7 @@ contains
     word = adjustl(Capitalize(word))
     if ( len_trim(string_text)+len_trim(word) < len(string_text) ) &
       & string_text = TRIM(string_text) // TRIM(word)
+    string_text = Capitalize(string_text)
   end subroutine GetSpectrometerTypeName
 
   ! -----------------------------------------  IsModuleSpacecraft  -----
@@ -1522,6 +1523,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.60  2003/07/23 21:51:36  pwagner
+! Tried to fix problem with lower case dacs
+!
 ! Revision 2.59  2003/07/23 18:04:32  livesey
 ! Ensure that the spectrometer names are capitalized when outputing them.
 !
