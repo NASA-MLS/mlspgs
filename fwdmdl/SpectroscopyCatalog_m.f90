@@ -764,6 +764,8 @@ contains ! =====  Public Procedures  ===================================
     error = .false.
     if ( capitalize(fileType) == 'HDF5' ) then
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to open HDF5 Spectroscopy file ' // trim(fileName) // '.' )
       ! Create or expand the Lines database
       call getHDF5DSDims ( fileID, 'Delta', Shp )
       nLines = shp(1)
@@ -898,7 +900,7 @@ contains ! =====  Public Procedures  ===================================
       call deallocate_test ( qLog,          'QLog', moduleName )
       call H5FClose_F ( fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to close hdf5 Spectroscopy file ' // trim(fileName) // '.' )
+        & 'Unable to close HDF5 Spectroscopy file ' // trim(fileName) // '.' )
     else if ( capitalize(fileType) == 'UNFORMATTED' ) then
       ! Open the file
       call get_lun ( lun )
@@ -1325,6 +1327,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.33  2005/01/03 18:56:31  pwagner
+! Moved use hdf5 statements to avoid Lahey internal compiler error
+!
 ! Revision 2.32  2004/12/31 02:40:44  vsnyder
 ! Read/Write HDF Spectroscopy catalog
 !
