@@ -1,43 +1,11 @@
 begin Output
 
-;; Don't do anything if the l2version macro isn't define.  This is a
-;; short cut for testing to avoid treading on files.
-!ifdef(l2version,{
-
-;; --------------------------------- Standard product L2GP files ---
-;; First those with columns
-!define(outputStandardProductWithColumn, {Output, $
-  quantities=[joined_$1,joined_$1_column], type=l2gp, $
-  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
-!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
-
-;; Now those without columns
-!define(outputStandardProductWithoutColumn, {Output, $
-  quantities=[joined_$1], type=l2gp, $
-  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
-!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
-
-;; --------------------------------- Other files ---
-;; The IWC file is a somewhat special case
-Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
-  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4'
-
-;; Now output the DGG file.
-!ifdef(flagGotDGGs,{
-Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
-  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
-
-;; Now output the DGM file
-!ifdef(flagGotDGMs,{
-Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
-  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+;; These days pretty well everything is written with directWrite
+;; statements
 
 ;; Now output any averaging kernel.
 !ifdef(flagGotAnyAKs,{
 Output,  quantities=[ !undivert(!AVKDivert) ], type=l2pc, $
   file='!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5'})
-
-;; The forward model radiances have been output using direct writes
-})
 
 end Output
