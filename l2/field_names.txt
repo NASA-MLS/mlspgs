@@ -20,10 +20,13 @@ additional
 adopt
 allForwardModels
 allHGrids
+allLines
 allLinesForRadiometer
 allLinesInCatalog
 allPFA
 allQuantityTemplates
+allSignals
+allSpectra
 allVectors
 allVectorTemplates
 allVGrids
@@ -174,6 +177,7 @@ lockBins
 logBasis
 logSpace
 losqty
+losVel   # used for MakePFA
 lowBound # for the state vector during retrieval
 lowerOverlap
 lsb
@@ -372,6 +376,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.136  2004/12/13 20:16:41  vsnyder
+# Add allLines, allSignals, allSpectra and LosVel fields
+#
 # Revision 2.135  2004/11/08 21:56:35  livesey
 # Added badRange
 #
