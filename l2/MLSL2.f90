@@ -144,6 +144,7 @@ program MLSL2
         case ( 'k' ); capIdentifiers = .false.
         case ( 'l' ); toggle(lex) = .true.
         case ( 'M' ); prunit = -2
+        case ( 'm' ); prunit = -1
         case ( 'p' ); toggle(par) = .true.
         case ( 'S' )
           switches = line(j+1:)
@@ -268,6 +269,7 @@ contains
     print *, '  -K: Capitalize identifiers.'
     print *, "  -k: Don't capitalize identifiers."
     print *, '  -M: Send output through MLSMessage.'
+    print *, "  -m: Don't send output through MLSMessage."
     print *, '  -p: Trace parsing.'
     print *, '  -Sstring: Set "switches" = "string".  Characters in'
     print *, '            "string" may control individual outputs.'
@@ -309,6 +311,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.37  2001/05/08 20:33:41  vsnyder
+! Moved usage display into a subroutine
+!
 ! Revision 2.36  2001/05/07 23:30:51  pwagner
 ! Sets USESDPToolkit
 !
