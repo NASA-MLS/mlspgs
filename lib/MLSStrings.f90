@@ -180,8 +180,7 @@ CONTAINS
   ! (unless the further optional arg leftRight is also supplied and equals
   ! one of {"l", "L"} in which case list[ordering[k]] = array[k])
 
-  SUBROUTINE Array2List(inArray, outList, &
-   & inDelim, ordering, leftRight)
+  SUBROUTINE Array2List ( inArray, outList, inDelim, ordering, leftRight )
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inArray
@@ -199,16 +198,16 @@ CONTAINS
     ! Executable code
 
     IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
-	 ELSE
-	     Delim = COMMA
-	 ENDIF
+      Delim = inDelim
+    ELSE
+      Delim = COMMA
+    END IF
 
     IF(PRESENT(leftRight)) THEN
-	     myleftRight = Capitalize(leftRight)
-	 ELSE
-	     myleftRight = "R"
-	 ENDIF
+      myleftRight = Capitalize(leftRight)
+    ELSE
+      myleftRight = "R"
+    ENDIF
 
     if ( len(outList) <= 0 ) return
     outList = BLANK
@@ -234,7 +233,7 @@ CONTAINS
       endif
       listElem = listElem + 1
       if ( listElem > min(nElems, len(outList)) ) return
-	 ENDDO
+    ENDDO
 
   END SUBROUTINE Array2List
 
@@ -673,15 +672,17 @@ CONTAINS
 
     ! Executable code
     IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
-	 ELSE
-	     Delim = COMMA
-	 ENDIF
+      Delim = inDelim
+    ELSE
+      Delim = COMMA
+    ENDIF
     if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
     nElems = NumStringElements(str, countEmpty, inDelim, LongestLen)
     if ( nElems <= 1 ) then
+      outStr = ''
       return
-    elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
+    end if
+    if ( LongestLen > MAXSTRELEMENTLENGTH ) then
       ! print *, 'str: ', trim(str)
       ! print *, 'len(str): ', len(str)
       ! print *, 'LongestLen: ', LongestLen
@@ -689,7 +690,7 @@ CONTAINS
       call MLSMessage(MLSMSG_Error, ModuleName, &
          & "Element length too long in GetUniqueList")
       return
-    endif
+    end if
     ALLOCATE (inStringArray(nElems), outStringArray(nElems), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
@@ -2604,6 +2605,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.35  2003/10/28 19:28:32  vsnyder
+! Make sure outStr always has a value
+!
 ! Revision 2.34  2003/10/15 00:34:19  pwagner
 ! Fixed the real bug in NumStringElements
 !
