@@ -1,3 +1,7 @@
+/* 
+Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
+*/
 #include <stdio.h>
 #include <regex.h>
 
@@ -56,11 +60,16 @@ main ( int argc, char* argv[] )
     /* No match; just echo the input */
     printf ( "%s", b );
   cycle:
+  /* Nonsense to get around "label at end of compound statement" prohobition */
+  i++;
   }
 }
 
 /*
 $Log$
+Revision 1.6  2004/10/30 00:32:46  vsnyder
+Changed 'puce' to 'magenta'
+
 Revision 1.5  2004/10/06 23:44:46  vsnyder
 Add 'colors' bash script at the end as a comment
 
