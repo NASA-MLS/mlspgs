@@ -3,10 +3,10 @@
 ; mlspgs/idllib/createspectroscopyl2cf.pro do NOT edit it by hand.
 ;
 ; Source file information:
-; mol_data_table.tex,v 1.3 2001/10/15 17:42:26 livesey Exp
-; line_data_table.tex,v 1.3 2001/10/15 17:42:32 livesey Exp
+; mol_data_table.tex,v 1.6 2001/11/01 00:48:51 bill Exp
+; line_data_table.tex,v 1.7 2001/11/01 22:27:51 bill Exp
 ; read_spect_dbase.pro,v 1.3 2001/10/15 17:48:16 livesey Exp
-; createspectroscopyl2cf.pro,v 1.5 2001/10/17 23:37:04 livesey Exp
+; createspectroscopyl2cf.pro,v 1.6 2001/11/03 01:34:21 livesey Exp
 
 begin spectroscopy
 
@@ -38,36 +38,36 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
   Br_81_O_L9: line, v0= 650175.8041 MHz, el= 264.34601, str= -1.7907, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L10: line, v0= 650177.2087 MHz, el= 264.34930, str= -1.8078, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L11: line, v0= 650177.7979 MHz, el= 264.34650, str= -1.7907, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L12: line, v0= 650178.6151 MHz, el= 264.34781, str= -1.8249, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L13: line, v0= 650179.0310 MHz, el= 264.34970, str= -1.8078, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L14: line, v0= 650179.4142 MHz, el= 264.34210, str= -1.8420, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L15: line, v0= 650180.4285 MHz, el= 264.34821, str= -1.8249, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   Br_81_O_L16: line, v0= 650181.3811 MHz, el= 264.34271, str= -1.8420, $
     w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B11LF', 'B28LM', 'B29LM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
 
   spectra, molecule= Br_81_O, Qlog=[ 3.5926, 3.4699, 3.2952 ], $
     lines=[ Br_81_O_L1, Br_81_O_L2, Br_81_O_L3, Br_81_O_L4, Br_81_O_L5, $
@@ -948,99 +948,187 @@ begin spectroscopy
     w= 3.8000, n= 0.600, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
     'B4LF' ]
-  HNO3_L16: line, v0= 205376.7458 MHz, el= 302.99051, str= -3.6874, $
+  HNO3_L16: line, v0= 199548.2214 MHz, el= 692.45770, str= -4.4035, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
-    , umlsSignals=[ 'B4UF' ]
-  HNO3_L17: line, v0= 205611.2000 MHz, el= 278.79831, str= -3.6641, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L17: line, v0= 200243.8295 MHz, el= 657.57953, str= -4.3386, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
-    , umlsSignals=[ 'B4UF' ]
-  HNO3_L18: line, v0= 205736.9662 MHz, el= 35.721100, str= -3.7607, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B4LF' ]
+  HNO3_L18: line, v0= 200831.2765 MHz, el= 15.651900, str= -4.5531, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L19: line, v0= 200886.9849 MHz, el= 623.51740, str= -4.2763, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L20: line, v0= 201481.4027 MHz, el= 590.27258, str= -4.2167, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L21: line, v0= 202030.4782 MHz, el= 557.84613, str= -4.1598, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  HNO3_L22: line, v0= 202485.9261 MHz, el= 29.599600, str= -3.7990, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  HNO3_L23: line, v0= 202537.3282 MHz, el= 526.23901, str= -4.0028, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  HNO3_L24: line, v0= 203004.8249 MHz, el= 495.45209, str= -3.9525, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L25: line, v0= 203320.6304 MHz, el= 28.938999, str= -4.6802, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L26: line, v0= 203435.6245 MHz, el= 465.48660, str= -3.9050, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ]
+  HNO3_L27: line, v0= 203832.1916 MHz, el= 436.34329, str= -3.8606, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_L28: line, v0= 204196.8195 MHz, el= 408.02319, str= -3.8192, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_L29: line, v0= 204531.6486 MHz, el= 380.52701, str= -3.7809, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_L30: line, v0= 204718.8340 MHz, el= 35.721100, str= -4.6695, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_L31: line, v0= 204838.6805 MHz, el= 353.85559, str= -3.7461, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_L32: line, v0= 205062.5770 MHz, el= 23.764099, str= -4.3522, $
     w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L19: line, v0= 205824.7169 MHz, el= 255.43390, str= -3.6455, $
+  HNO3_L33: line, v0= 205119.7921 MHz, el= 328.00989, str= -3.7149, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L20: line, v0= 206018.7703 MHz, el= 232.89799, str= -3.6318, $
+  HNO3_L34: line, v0= 205376.7458 MHz, el= 302.99051, str= -3.6874, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L35: line, v0= 205611.2000 MHz, el= 278.79831, str= -3.6641, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L36: line, v0= 205736.9662 MHz, el= 35.721100, str= -3.7607, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L37: line, v0= 205824.7169 MHz, el= 255.43390, str= -3.6455, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L38: line, v0= 206018.7703 MHz, el= 232.89799, str= -3.6318, $
     w= 3.1600, n= 0.850, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L21: line, v0= 206194.7518 MHz, el= 211.19119, str= -3.6241, $
+  HNO3_L39: line, v0= 206194.7518 MHz, el= 211.19119, str= -3.6241, $
     w= 3.2600, n= 0.720, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L22: line, v0= 206353.9761 MHz, el= 190.31430, str= -3.6232, $
+  HNO3_L40: line, v0= 206230.4862 MHz, el= 23.739401, str= -4.3499, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L41: line, v0= 206353.9761 MHz, el= 190.31430, str= -3.6232, $
     w= 3.1600, n= 0.830, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L23: line, v0= 206497.6860 MHz, el= 170.26781, str= -3.6304, $
+  HNO3_L42: line, v0= 206497.6860 MHz, el= 170.26781, str= -3.6304, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L24: line, v0= 206594.6855 MHz, el= 53.257900, str= -2.9445, $
+  HNO3_L43: line, v0= 206594.6855 MHz, el= 53.257900, str= -2.9445, $
     w= 3.3300, n= 0.650, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L25: line, v0= 206628.6816 MHz, el= 52.436199, str= -3.0000, $
+  HNO3_L44: line, v0= 206627.0566 MHz, el= 151.05231, str= -3.6480, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L45: line, v0= 206628.6816 MHz, el= 52.436199, str= -3.0000, $
     w= 3.4300, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L26: line, v0= 206663.1951 MHz, el= 50.773899, str= -3.0607, $
+  HNO3_L46: line, v0= 206663.1951 MHz, el= 50.773899, str= -3.0607, $
     w= 3.5300, n= 0.610, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L27: line, v0= 206703.2186 MHz, el= 48.270199, str= -3.1285, $
+  HNO3_L47: line, v0= 206703.2186 MHz, el= 48.270199, str= -3.1285, $
     w= 3.6300, n= 0.650, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L28: line, v0= 206743.1987 MHz, el= 132.66830, str= -3.6790, $
+  HNO3_L48: line, v0= 206743.1987 MHz, el= 132.66830, str= -3.6790, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L29: line, v0= 206765.0232 MHz, el= 44.923100, str= -3.2054, $
+  HNO3_L49: line, v0= 206765.0232 MHz, el= 44.923100, str= -3.2054, $
     w= 3.4700, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L30: line, v0= 206847.1622 MHz, el= 115.11640, str= -3.7289, $
+  HNO3_L50: line, v0= 206847.1622 MHz, el= 115.11640, str= -3.7289, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L31: line, v0= 206901.4468 MHz, el= 40.726200, str= -3.6600, $
+  HNO3_L51: line, v0= 206895.9348 MHz, el= 40.726200, str= -4.4462, $
     w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L32: line, v0= 206939.9384 MHz, el= 98.397003, str= -3.8081, $
-    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
-    , umlsSignals=[ 'B4UF' ]
-  HNO3_L33: line, v0= 206951.2528 MHz, el= 40.724400, str= -3.6597, $
+  HNO3_L52: line, v0= 206901.4468 MHz, el= 40.726200, str= -3.6600, $
     w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L34: line, v0= 207022.4627 MHz, el= 82.510696, str= -3.9393, $
+  HNO3_L53: line, v0= 206939.9384 MHz, el= 98.397003, str= -3.8081, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
-  HNO3_L35: line, v0= 659149.3708 MHz, el= 388.25659, str= -3.8580, $
+  HNO3_L54: line, v0= 206951.2528 MHz, el= 40.724400, str= -3.6597, $
+    w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L55: line, v0= 206956.7648 MHz, el= 40.724400, str= -4.4458, $
+    w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L56: line, v0= 207022.4627 MHz, el= 82.510696, str= -3.9393, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_L57: line, v0= 659149.3708 MHz, el= 388.25659, str= -3.8580, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
-  HNO3_L36: line, v0= 659157.9297 MHz, el= 388.25659, str= -2.9788, $
+  HNO3_L58: line, v0= 659157.9297 MHz, el= 388.25659, str= -2.9788, $
     w= 3.7400, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
-  HNO3_L37: line, v0= 659197.9058 MHz, el= 388.45490, str= -2.8639, $
+  HNO3_L59: line, v0= 659197.9058 MHz, el= 388.45490, str= -2.8639, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
-  HNO3_L38: line, v0= 659206.8279 MHz, el= 388.25470, str= -2.9787, $
+  HNO3_L60: line, v0= 659206.8279 MHz, el= 388.25470, str= -2.9787, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
-  HNO3_L39: line, v0= 659215.3868 MHz, el= 388.25470, str= -3.8578, $
+  HNO3_L61: line, v0= 659215.3868 MHz, el= 388.25470, str= -3.8578, $
     w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
@@ -1052,7 +1140,112 @@ begin spectroscopy
     HNO3_L20, HNO3_L21, HNO3_L22, HNO3_L23, HNO3_L24, HNO3_L25, $
     HNO3_L26, HNO3_L27, HNO3_L28, HNO3_L29, HNO3_L30, HNO3_L31, $
     HNO3_L32, HNO3_L33, HNO3_L34, HNO3_L35, HNO3_L36, HNO3_L37, $
-    HNO3_L38, HNO3_L39 ]
+    HNO3_L38, HNO3_L39, HNO3_L40, HNO3_L41, HNO3_L42, HNO3_L43, $
+    HNO3_L44, HNO3_L45, HNO3_L46, HNO3_L47, HNO3_L48, HNO3_L49, $
+    HNO3_L50, HNO3_L51, HNO3_L52, HNO3_L53, HNO3_L54, HNO3_L55, $
+    HNO3_L56, HNO3_L57, HNO3_L58, HNO3_L59, HNO3_L60, HNO3_L61 ]
+
+  ;; ----------------------------------- HNO3_v6
+
+  HNO3_v6_L1: line, v0= 206866.2019 MHz, el= 691.68701, str= -4.6223, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v6_L2: line, v0= 206937.2599 MHz, el= 695.06482, str= -4.5482, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+
+  spectra, molecule= HNO3_v6, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+    lines=[ HNO3_v6_L1, HNO3_v6_L2 ]
+
+  ;; ----------------------------------- HNO3_v7
+
+  HNO3_v7_L1: line, v0= 204784.7830 MHz, el= 631.82013, str= -4.2350, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  HNO3_v7_L2: line, v0= 205066.3461 MHz, el= 631.11481, str= -4.2888, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L3: line, v0= 205349.3440 MHz, el= 629.55170, str= -4.3475, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L4: line, v0= 205379.5040 MHz, el= 614.72382, str= -4.9678, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L5: line, v0= 205638.8099 MHz, el= 627.13000, str= -4.4126, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L6: line, v0= 205951.4550 MHz, el= 623.84747, str= -4.4856, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L7: line, v0= 206341.0968 MHz, el= 619.69769, str= -4.8679, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v7_L8: line, v0= 206393.9350 MHz, el= 619.69568, str= -4.8676, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+
+  spectra, molecule= HNO3_v7, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+    lines=[ HNO3_v7_L1, HNO3_v7_L2, HNO3_v7_L3, HNO3_v7_L4, HNO3_v7_L5, $
+    HNO3_v7_L6, HNO3_v7_L7, HNO3_v7_L8 ]
+
+  ;; ----------------------------------- HNO3_v8
+
+  HNO3_v8_L1: line, v0= 206460.7534 MHz, el= 815.55872, str= -4.6668, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v8_L2: line, v0= 206542.2256 MHz, el= 816.43048, str= -4.6121, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+
+  spectra, molecule= HNO3_v8, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+    lines=[ HNO3_v8_L1, HNO3_v8_L2 ]
+
+  ;; ----------------------------------- HNO3_v9
+
+  HNO3_v9_L1: line, v0= 206229.4567 MHz, el= 502.99741, str= -4.2313, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L2: line, v0= 206243.0382 MHz, el= 506.35419, str= -4.1577, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L3: line, v0= 206282.3452 MHz, el= 508.87549, str= -4.0917, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L4: line, v0= 206297.0141 MHz, el= 498.79791, str= -4.6138, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L5: line, v0= 206328.3761 MHz, el= 510.56390, str= -4.0321, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L6: line, v0= 206370.8296 MHz, el= 498.79510, str= -4.6134, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_v9_L7: line, v0= 206375.4430 MHz, el= 511.42020, str= -3.9774, $
+    w= 3.4000, n= 0.640, ps= 0.0000, ns= 0.000, delta= 0.0000, $
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+
+  spectra, molecule= HNO3_v9, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+    lines=[ HNO3_v9_L1, HNO3_v9_L2, HNO3_v9_L3, HNO3_v9_L4, HNO3_v9_L5, $
+    HNO3_v9_L6, HNO3_v9_L7 ]
 
   ;; ----------------------------------- HOCl_35
 
@@ -1092,18 +1285,20 @@ begin spectroscopy
     'B14LF' ]
   HO2_L5: line, v0= 648613.8526 MHz, el= 169.32040, str= -2.1283, $
     w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF' ]
   HO2_L6: line, v0= 648617.4877 MHz, el= 169.32001, str= -2.0947, $
     w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF' ]
   HO2_L7: line, v0= 649701.4773 MHz, el= 175.30350, str= -2.3448, $
     w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B28UM', 'B29UM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   HO2_L8: line, v0= 649701.5134 MHz, el= 175.30389, str= -2.2987, $
     w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, delta= 0.0000, $
-    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
-    'B28UM', 'B29UM' ]
+    n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
   HO2_L9: line, v0= 660115.6907 MHz, el= 118.61400, str= -2.2009, $
     w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, delta= 0.0000, $
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
