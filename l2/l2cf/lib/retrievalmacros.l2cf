@@ -119,9 +119,7 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(directWriteFwmRad,{
   !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
   sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
-{
-; --ConfigInfo-- FWM: band $1 model $2
-}
+{;} --ConfigInfo-- FWM: !TrimQ(!signal($1)) model $2
 })
 
 ;; This macro puts all the boring stuff in the Retrieve command line
@@ -138,6 +136,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.16  2002/08/15 22:46:00  livesey
+; Added regularization vector
+;
 ; Revision 1.15  2002/08/05 17:20:23  livesey
 ; Added code to convert H2O back to RHI at the end of each phase
 ;
