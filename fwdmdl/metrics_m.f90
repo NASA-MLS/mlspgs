@@ -204,10 +204,6 @@ contains
 
       ! adjust the 2d hydrostatic relative to the surface
       dhidtlm = dhidtlm - SPREAD(SPREAD(dhtdtl,1,n_vert),2,p_coeffs)
-!      if(PRESENT(dhtdtl0)) dhtdtl0 = sum(dhidtlm(tan_inds,:,:) &
-!        * SPREAD(eta_t,3,z_coeffs),dim=2)
-!      if(PRESENT(ddhtdhtdtl0)) ddhtdhtdtl0 = &
-!        sum(ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs),dim=2)
       dhtdtl0 = dhidtlm(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs)
       ddhtdhtdtl0 = ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs)
       call Deallocate_test ( dhtdtl, 'dhtdtl', ModuleName )
@@ -348,7 +344,7 @@ contains
     nullify ( junk )
     call Allocate_Test ( junk , no_of_bad_fits, 'junk', ModuleName )
     junk = PACK((/(i,i=1,n_cvf)/),mask)
-    where(h_grid < cvf_h_tan) 
+    where(h_grid < cvf_h_tan)
       h_grid = cvf_h_tan
     endwhere
 
@@ -411,7 +407,7 @@ contains
       ! we are going to assume that the tangent value is good
       ! The following is an F90 specific design which is quite different
       ! from the IDL code
-      
+
       nullify ( path_ind, tan_ind )
       call Allocate_test ( path_ind, no_of_bad_fits, 'path_ind', ModuleName )
       call Allocate_test ( tan_ind, no_of_bad_fits, 'tan_ind', ModuleName )
@@ -469,7 +465,7 @@ contains
     call Deallocate_test ( h_zf, 'h_zf', ModuleName )
     call Deallocate_test ( path_inds, 'path_inds', ModuleName )
     call Deallocate_test ( near_inds, 'near_inds', ModuleName )
-    
+
     nullify ( not_zero_p )
     call Allocate_test ( not_zero_p, n_cvf, p_coeffs, 'not_zero_p', ModuleName )
 
@@ -536,7 +532,7 @@ contains
       call Deallocate_test ( not_zero_t, 'not_zero_t', ModuleName )
 
     endif
-    
+
     call Deallocate_test ( eta_p, 'eta_p', ModuleName )
     call Deallocate_test ( cvf_ang_offset, 'cvf_ang_offset', ModuleName )
     call Deallocate_test ( cvf_z_grid, 'cvf_z_grid', ModuleName )
@@ -550,6 +546,9 @@ contains
 
 end module metrics_m
 ! $Log$
+! Revision 2.5  2002/06/07 04:50:47  bill
+! fixes and improvements--wgr
+!
 ! Revision 2.4  2002/02/08 00:48:09  zvi
 ! Restoring the t_deriv_flag code
 !

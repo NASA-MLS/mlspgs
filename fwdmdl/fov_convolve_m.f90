@@ -15,7 +15,7 @@ MODULE fov_convolve_m
      "$RCSfile$"
 !---------------------------------------------------------------------------
  CONTAINS
-! ============================================  new_fov_convolve =====
+! ============================================  fov_convolve =====
 ! This subprogram adds the effects of antenna smearing to the radiance.
 !
   SUBROUTINE fov_convolve(AntennaPattern,chi_in,rad_in,chi_out,rad_out, &
@@ -111,7 +111,7 @@ MODULE fov_convolve_m
   ffth = no_fft / 2
   CALL allocate_test(angles,no_fft,'angles',modulename)
   angles = (/(i*ang_step,i=1,no_fft)/)
-  angles = angles - angles(ffth + 1)
+  angles = angles - angles(ffth+1)
   init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 !
 ! set up the radiance array
@@ -248,7 +248,7 @@ MODULE fov_convolve_m
 !
 ! resymetrize
 !
-      rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i = 1, ffth-1)/)
+      rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i=1,ffth-1)/)
 !
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -307,7 +307,7 @@ MODULE fov_convolve_m
 !
 ! mirror reflect this
 !
-      rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth - 1)/)
+      rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i=1, ffth-1)/)
 !
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -321,7 +321,7 @@ MODULE fov_convolve_m
 ! apply convolution theorem
 !
       rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
-      DO j = 3, no_fft - 1, 2
+      DO j = 3, no_fft-1, 2
         rad_fft1(j+1) = rad_fft(j) * p(j+1)
         rad_fft1(j)   = rad_fft(j) * p(j)
       end do
@@ -1046,3 +1046,36 @@ MODULE fov_convolve_m
 !=====================================================================
 !
 END MODULE fov_convolve_m
+! $Log$
+! Revision 2.2 2002/06/17 16:31:21 bill
+! Add zvis modification, rename module
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.12  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.11  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.10  2001/04/09 23:32:29  zvi
+! Correcting a small error in radiances folding code
+!
+! Revision 1.9  2001/04/06 01:37:58  zvi
+! Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
+!
+! Revision 1.8  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
+! Revision 1.5  2001/02/26 09:01:16  zvi
+! New version - Using "Super-Structures"
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
