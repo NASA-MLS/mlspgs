@@ -11,15 +11,15 @@ module MLSSets
     & UnionSize
 
   interface FindFirst
-    module procedure FindFirstInteger, FindFirstLogical!, FindFirstCharacter
+    module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
   end interface
 
   interface FindNext
-    module procedure FindNextInteger, FindNextLogical!, FindNextCharacter
+    module procedure FindNextInteger, FindNextLogical, FindNextCharacter
   end interface
 
   interface FindAll
-    module procedure FindAllInteger, FindAllLogical!, FindAllCharacter
+    module procedure FindAllInteger, FindAllLogical, FindAllCharacter
   end interface
 
 ! === (start of toc) ===                                                 
@@ -27,6 +27,8 @@ module MLSSets
 !     - - - - - - - -                                                    
 
 !     (subroutines and functions)
+! FindAll       Find all logicals in the array that are true, or all the
+!               integers in the array equal to the probe
 ! FindFirst     Find the first logical in the array that is true, or the
 !               first integer in the array equal to the probe
 ! FindNext      Find the next logical in the array that is true, or the
@@ -39,8 +41,16 @@ module MLSSets
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
+! FindAllCharacter (char* set(:), char* it, int which(:), [int how_many], &
+!                  [char* re_mainder(:)], [int which_not(:)])      
+! FindAllInteger (int set(:), int it, int which(:), [int how_many], &
+!                  [int re_mainder(:)], [int which_not(:)])      
+! FindAllLogical (log set(:), int which(:), [int how_many], &
+!                  [int which_not(:)])      
+! int FindFirstCharacter (char* set(:), char* probe)      
 ! int FindFirstInteger (int set(:), int probe)      
 ! int FindFirstLogical (log condition(:))      
+! int FindNextCharacter (char* set(:), char* probe, int current, {log wrap}, {log repeat})      
 ! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
 ! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})
 ! logical Intersect ( int a(:), int b(:) )
@@ -59,6 +69,64 @@ module MLSSets
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! ---------------------------------------------  FindAllCharacter  -----
+  subroutine FindAllCharacter ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
+    ! Return which i of set[i] = it
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    ! optionally, may return also:
+    ! how many of them do
+    ! which_not of them (which don't)
+    ! and the re_mainder of the set != it
+    ! e.g. given set = /(4, 3, 1, 2, 1, 3 )/ and it = 1
+    ! produces which = /(3, 5)/, 
+    !      which_not = /(1, 2, 4, 6)/, 
+    !       how_many = 2,
+    !     re_mainder = /(4, 3, 2, 3)/
+    
+    ! Note that which and which_not are arrays of array indices
+    ! while re_mainder is an array of array elements
+    
+    ! This may be useful,
+    ! e.g. in dump for reshaping an array to suppress any dims 
+    ! that are identically 1
+    
+    ! Maybe this should be rewritten to use fraternal functions findfirst
+    ! or findnext
+
+    ! Formal arguments
+    character(len=*), intent(in), dimension(:)   :: set
+    character(len=*), intent(in)                 :: it
+    integer, intent(out), dimension(:)           :: which
+    integer, intent(out), optional               :: how_many
+    character(len=*), intent(out), dimension(:), optional :: re_mainder
+    integer, intent(out), dimension(:), optional :: which_not
+
+    ! local variables
+    integer :: i, i_which, i_re_mainder
+    
+    if ( size(set) < 1 .or. size(which) < 1 ) then
+      if ( present(how_many) ) how_many = 0
+      if ( present(re_mainder) ) re_mainder = ''
+      return
+    end if
+    i_which = 0
+    i_re_mainder = 0
+    do i=1, size(set)
+      if ( trim(set(i)) == trim(it) ) then
+        i_which = i_which+1
+        which(min(size(which), i_which)) = i
+      else
+        i_re_mainder = i_re_mainder+1
+        if ( present(which_not) ) &
+          & which_not(min(size(which_not), i_re_mainder)) = i
+        if ( present(re_mainder) ) &
+          & re_mainder(min(size(re_mainder), i_re_mainder)) = set(i)
+      end if
+    end do
+    if ( present(how_many) ) how_many = i_which
+
+  end subroutine FindAllCharacter
 
   ! ---------------------------------------------  FindAllInteger  -----
   subroutine FindAllInteger ( SET, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
@@ -158,6 +226,20 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FindAllLogical
 
+  ! -------------------------------------------  FindFirstCharacter  -----
+  integer function FindFirstCharacter ( Set, Probe )
+    ! Find the first element in the array Set that is equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstCharacter = 1, size(set)
+      if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
+    end do
+    FindFirstCharacter = 0
+  end function FindFirstCharacter
+
   ! -------------------------------------------  FindFirstInteger  -----
   integer function FindFirstInteger ( Set, Probe )
     ! Find the first element in the array Set that is equal to Probe
@@ -182,6 +264,52 @@ contains ! =====     Public Procedures     =============================
     end do
     FindFirstLogical = 0
   end function FindFirstLogical
+
+  ! --------------------------------------------  FindNextCharacter  -----
+  integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
+    ! Find the next element in the array Set that is equal to Probe after the
+    ! current one
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    ! May optionally wrap or repeat
+    ! e.g., if wrap is true and current is last true, return first true
+    ! e.g., if repeat is true and current is also last true, return current
+    ! wrap takes priority over repeat if both are present and true
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+    integer, intent(in) :: Current
+    logical, optional, intent(in) :: Wrap
+    logical, optional, intent(in) :: Repeat
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    logical :: myWrap
+    logical :: myRepeat
+
+    ! Executable code
+    myWrap = .false.
+    if ( present(wrap) ) myWrap = wrap
+    myRepeat = .false.
+    if ( present(repeat) ) myRepeat = repeat
+    FindNextCharacter = 0
+    ! We'll assume you gave us valid args; otherwise return 0
+    if ( current < 1 .or. current > size(set)) return
+    if ( set(current) /= probe ) return
+    ! Now check for current already at end of array
+    if ( current < size(set) ) then
+      do i = current+1, size(set)
+        if ( trim(set(i)) == trim(probe) ) then
+          FindNextCharacter = i
+          return
+        end if
+      end do
+    end if
+    ! Uh-oh, this means current is last true
+    if ( myWrap ) then
+      FindNextCharacter = FindFirst(set,probe)
+    else if ( myRepeat ) then
+      FindNextCharacter = current
+    end if
+  end function FindNextCharacter
 
   ! --------------------------------------------  FindNextInteger  -----
   integer function FindNextInteger ( Set, Probe, Current, Wrap, Repeat )
@@ -417,6 +545,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.7  2004/06/16 22:14:16  pwagner
+! character arrays can bow be args of find... methods
+!
 ! Revision 2.6  2004/06/16 01:24:38  vsnyder
 ! Add UnionSize
 !
