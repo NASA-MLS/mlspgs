@@ -1,50 +1,61 @@
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!=============================================================================
-module ConstructQuantityTemplates ! Construct templates from user supplied info
-!=============================================================================
+module ConstructQuantityTemplates
 
-  ! This module has various functionality for constructing quantity templates.
+  ! This module is responsible for constructing templates for quantities.
+  ! This version is a rewrite, aimed at tidying up a lot of the codebase
+  use Init_tables_module, only: FIRST_LIT, LAST_LIT
 
-  implicit NONE
+  implicit none
   private
+
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
 
-! -----     Private declarations     -----------------------------------
-
-  integer :: ERROR
-  logical, parameter :: DEEBUG = .FALSE.                 ! Normally FALSE
-  logical, parameter :: ALWAYSFIRSTSIGNAL = .FALSE.      ! Normally FALSE
-  logical, parameter :: BE_WHINY_ABOUT_IT = .FALSE.      ! Normally FALSE
-  integer, parameter :: HOWSEVEREISNOGOODSIGNAL = 0      ! Normally 0
-
-! Error codes for "announce_error"
-  integer, parameter :: No_Error_Code = 0
-  integer, parameter :: BadUnitMessage =         No_Error_Code+1
-  integer, parameter :: InappropriateQuantity =  BadUnitMessage+1
-  integer, parameter :: NeedGrid =               InappropriateQuantity+1
-  integer, parameter :: NoQuantityType =         NeedGrid+1
-  integer, parameter :: UnnecessaryGrid =        NoQuantityType+1
-  integer, parameter :: noModule=                UnnecessaryGrid+1
-
-!---------------------------- RCS Ident Info -------------------------------
+  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
-!---------------------------------------------------------------------------
+  !---------------------------------------------------------------------------
 
-contains ! =====     Public Procedures     =============================
-  ! -----------------------------  CreateQtyTemplateFromMLSCFInfo  -----
+  ! The various properties has/can have
+  integer, parameter :: P_CHUNKED            = 1
+  integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
+  integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
+  integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
+  integer, parameter :: P_FGRID              = P_MUSTBEZETA + 1
+  integer, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
+  integer, parameter :: P_HGRID              = P_FGRIDOPTIONAL + 1
+  integer, parameter :: P_MODULE             = P_HGRID + 1
+  integer, parameter :: P_MOLECULE           = P_MODULE + 1
+  integer, parameter :: P_SGRID              = P_MOLECULE + 1
+  integer, parameter :: P_VGRID              = P_SGRID + 1
+  integer, parameter :: P_RADIOMETER         = P_VGRID + 1
+  integer, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
+  integer, parameter :: P_SCMODULE           = P_RADIOMETEROPTIONAL + 1
+  integer, parameter :: P_SIGNAL             = P_SCMODULE + 1
+  integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNAL + 1
+  integer, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
+  integer, parameter :: P_MATRIX3X3          = P_XYZ + 1
+
+  integer, parameter :: NOPROPERTIES = P_MATRIX3X3
+
+  ! Local, saved variables (constant tables really)
+  logical, save, dimension ( noProperties, first_lit : last_lit ) :: &
+    & PROPERTYTABLE
+  integer, save, dimension ( first_lit : last_lit ) :: UNITSTABLE
+  logical, save :: FIRSTCALL = .true.
+
+contains ! ============= Public procedures ===================================
+
+  ! ------------------------------------------- CreateQtyTemplateFromMLSCFInfo ----
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation, &
-    & returnStatus ) &
-    result ( QTY )
-
+    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation, returnStatus ) &
+    & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
@@ -64,15 +75,17 @@ contains ! =====     Public Procedures     =============================
       & L_REFGPH, L_RHI, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
       & L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SPACERADIANCE, &
       & L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, &
-      & L_TNGTGEODALT, L_TOTALEXTINCTION, L_TRUE, L_VMR, L_XYZ, &
+      & L_TNGTGEODALT, L_TOTALEXTINCTION, L_TRUE, L_VMR, L_XYZ, L_ZETA, &
       & PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS, PHYQ_EXTINCTION, &
       & PHYQ_FREQUENCY, PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PCTRHI, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
-      & PHYQ_VMR, PHYQ_ZETA
+      & PHYQ_VMR, PHYQ_ZETA, &
+      & FIELD_FIRST, FIELD_LAST
+    use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES
+      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES, IsModuleSpacecraft
     use OUTPUT_M, only: OUTPUT
     use Parse_Signal_m, only: PARSE_SIGNAL
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
@@ -84,9 +97,6 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_SET_ONE
     use VGridsDatabase, only: VGrid_T
 
-  ! This routine constructs a vector quantity template based on instructions
-  ! passed in an mlscf line.
-
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
@@ -97,124 +107,74 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & MifGeolocation
-    integer, intent(out) :: returnStatus      ! 0 unless trouble
+    integer, intent(out) :: RETURNSTATUS
 
     ! Local variables
-    integer, dimension(2) :: EXPR_UNITS
-    real(rk), dimension(2) :: EXPR_VALUE
-    integer :: Family
-    integer :: FGridIndex
-    logical, save :: First = .true.
-    integer :: FrequencyCoordinate
-    integer :: HGridIndex
-    integer :: I                        ! Loop counter
-    integer :: IERR                     ! So display_string doesn't crash and burn
-    integer :: InstrumentModule         ! Database index
-    integer :: Key            ! Field name, F_... from Init_Tables_Module
-    character(len=127) :: SIGNALSTRING
     logical :: LOGBASIS                 ! To place in quantity
-    integer :: Molecule
-    character(len=127) :: moleculeString
-    integer, save :: Natural_Units(first_lit:last_lit)
-    integer :: NoInstances
-    integer :: NoSurfs
-    real(rk) :: MinValue                ! Minimumvalue
-    logical :: MinorFrame               ! Is a minor frame quantity
-    logical :: MajorFrame               ! Is a major frame quantity
-    integer :: NoChans
-    integer :: QuantityType
-    integer :: Radiometer               ! Database index
-    logical :: Regular                  ! Flag
-    real(rk) :: ScaleFactor
-    integer :: Sideband
-    integer :: Signal                   ! Database index
-    integer :: s_index
+    logical :: MAJORFRAME               ! Is a major frame quantity
+    logical :: MINORFRAME               ! Is a minor frame quantity
+    logical :: REGULAR                  ! Flag
+    logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
+    logical, dimension(field_first:field_last) :: GOT ! Fields
+    character(len=127) :: SIGNALSTRING
+
+    integer :: FGRIDINDEX               ! Index of frequency grid
+    integer :: FREQUENCYCOORDINATE      ! Literal
+    integer :: HGRIDINDEX               ! Index of horizontal grid
+    integer :: I                        ! Loop counter
+    integer :: INSTRUMENTMODULE         ! Database index
+    integer :: KEY                      ! Field name, F_...
+    integer :: MOLECULE                 ! Literal
+    integer :: NOCHANS                  ! Quantity dimension
+    integer :: NOINSTANCES              ! Quantity dimension
+    integer :: NOSURFS                  ! Quantity dimension
+    integer :: QUANTITYTYPE             ! Literal
+    integer :: RADIOMETER               ! Database index
+    integer :: SGRIDINDEX               ! Index for 'sGrid'
+    integer :: SIDEBAND                 ! -1, 0, 1
+    integer :: SIGNAL                   ! Database index
+    integer :: SON                      ! A Son of Root -- an n_assign node
+    integer :: VGRIDINDEX               ! Index in database
+    integer :: VALUE                    ! Node index of value of field of spec
+    integer :: S_INDEX                  ! Loop counter
+
+    integer, dimension(2) :: EXPR_UNITS
     integer, dimension(:), pointer :: SignalInds ! From parse signal
-    type (signal_T) :: SignalInfo       ! Details of the appropriate signal
-    integer :: Son                      ! A Son of Root -- an n_assign node
-    integer :: Type_Field               ! Index in subtree of "type"
-    integer :: Value                    ! Node index of value of field of spec
-    integer :: VGridIndex
-    integer :: SGridIndex
+
+    real(rk) :: MINVALUE                ! Minimum value allowed for quantity in fwm
+    real(rk) :: SCALEFACTOR             ! Probably not used
+    real(rk), dimension(2) :: EXPR_VALUE
+    type (signal_T) :: SIGNALINFO       ! Details of the appropriate signal
 
     ! Executable code
+    if ( firstCall ) then
+      call InitQuantityTemplates
+      firstCall = .true.
+    end if
+    returnStatus = 0
 
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "CreateQtyTemplateFromMLSCFInfo", root )
-
-! ??? Do we need a GOT_FIELD check like in VGrid, e.g. ???
-
+    ! Set appropriate defaults
     call nullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
     nullify ( signalInds )
-    error = 0
-    family = 0
+    fGridIndex = 0
     hGridIndex = 0
     instrumentModule = 0
     logBasis = .false.
-    regular = .true.
     minValue = -huge ( 0.0_rk )
     molecule = 0
-
-    if ( first ) then
-      ! Fill NATURAL_UNITS on first call only (it's a SAVE variable)
-      first = .false.
-      natural_units = 0
-      natural_units(l_baseline) =                PHYQ_Temperature
-      natural_units(l_boundaryPressure) =        PHYQ_Pressure
-      natural_units(l_chisqchan) =               PHYQ_Dimensionless
-      natural_units(l_chisqmmaf) =               PHYQ_Dimensionless
-      natural_units(l_chisqmmif) =               PHYQ_Dimensionless
-      natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
-      natural_units(l_cloudice) =                PHYQ_IceDensity
-      natural_units(l_cloudextinction) =         PHYQ_Dimensionless
-      natural_units(l_totalextinction) =         PHYQ_Dimensionless
-      natural_units(l_massmeandiameterice) =     PHYQ_Dimensionless
-      natural_units(l_earthRefl) =               PHYQ_Dimensionless
-      natural_units(l_elevOffset) =              PHYQ_Angle
-      natural_units(l_extinction) =              PHYQ_Extinction
-      natural_units(l_gph) =                     PHYQ_Length
-      natural_units(l_heightOffset ) =           PHYQ_Length
-      natural_units(l_losTransFunc) =            PHYQ_Dimensionless
-      natural_units(l_losVel) =                  PHYQ_Velocity
-      natural_units(l_orbitInclination) =        PHYQ_Angle
-      natural_units(l_noiseBandwidth) =          PHYQ_Frequency
-      natural_units(l_phitan) =                  PHYQ_Angle
-      natural_units(l_ptan) =                    PHYQ_Zeta
-      natural_units(l_radiance) =                PHYQ_Temperature
-      natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
-      natural_units(l_cloudradsensitivity) =     PHYQ_Temperature
-      natural_units(l_effectiveopticaldepth) =   PHYQ_Dimensionless
-      natural_units(l_earthradius) =             PHYQ_Length
-      natural_units(l_refGPH) =                  PHYQ_Length
-      natural_units(l_rhi) =                     PHYQ_PctRHI
-      natural_units(l_scGeocAlt ) =              PHYQ_Length
-      natural_units(l_scVel) =                   PHYQ_Velocity
-      natural_units(l_scVelECI) =                PHYQ_Velocity   
-      natural_units(l_scVelECR) =                PHYQ_Velocity   
-      natural_units(l_scanResidual ) =           PHYQ_Length
-      natural_units(l_spaceRadiance) =           PHYQ_Temperature
-      natural_units(l_systemTemperature) =       PHYQ_Temperature
-      natural_units(l_temperature) =             PHYQ_Temperature
-      natural_units(l_tngtGeocAlt) =             PHYQ_Length
-      natural_units(l_tngtGeodAlt) =             PHYQ_Length
-      natural_units(l_vmr) =                     PHYQ_Vmr
-      natural_units(l_magneticField) =           PHYQ_Gauss
-    end if
-
     noChans = 1
     quantitytype = 0
     radiometer = 0
+    regular = .true.
+    sGridIndex = 0
     scaleFactor = 1.0
     sideband = 0
     signal = 0
-    fGridIndex = 0
     vGridIndex = 0
-    sGridIndex = 0
-    signalString = ' '
-    moleculeString = ' '
+    signalString = ''
 
-    ! First we'll loop over the MLSCF keys.
-
+    ! Go through the l2cf command line and parse it.
+    got = .false.
     do i = 2, nsons(root)
       son = subtree(i,root)
       key = subtree(1,son)
@@ -223,12 +183,13 @@ contains ! =====     Public Procedures     =============================
       else
         value = decoration(subtree(2,son))
       end if
+      got ( decoration(key) ) = .true.
 
       select case ( decoration(key) )
       case ( f_fgrid )
         fGridIndex = decoration(value)
       case ( f_hgrid )
-        hGridIndex = decoration(value) ! node_id(value) == n_spec_args
+        hGridIndex = decoration(value)
       case ( f_logBasis )
         logBasis = (value == l_true)
       case ( f_irregular )
@@ -238,10 +199,8 @@ contains ! =====     Public Procedures     =============================
         minValue = expr_value(1)
       case ( f_module)
         instrumentModule = decoration(decoration(subtree(2,son)))
-!      case ( f_molecule );          molecule = value  ! I don't understand this
       case ( f_molecule )
         molecule = value
-        call get_string( sub_rosa(subtree(2,son)), moleculeString, strip=.true. )
       case ( f_radiometer )
         radiometer = decoration(decoration(subtree(2,son)))
         instrumentModule = GetModuleFromRadiometer(radiometer)
@@ -257,21 +216,15 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Unable to parse signal string' )
         end if
-        ! print *, 'Parsed ', trim(signalString), ' for ', size(signalInds), &
-        !  & ' bands'
-        if ( size(signalInds) == 1 .or. ALWAYSFIRSTSIGNAL &
-          & .or. .not. associated(L1bInfo%L1BRADIds) ) then
+        if ( size(signalInds) == 1 .or. .not. associated(L1bInfo%L1BRADIds) ) then
           signal = signalInds(1)
         else
           ! Seek a signal with any precision values !< 0
           do s_index=1, size(signalInds)
-            if ( any_good_signaldata ( signalInds(s_index), sideband, &
+            if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
               & l1bInfo, Chunk) ) exit
-          enddo
+          end do
           if ( s_index > size(signalInds) ) then
-            if ( BE_WHINY_ABOUT_IT ) call announce_error (root, No_Error_Code, &
-              & 'Warning: no good signal data found for ' &
-              & // trim(signalString), HOWSEVEREISNOGOODSIGNAL)
             signal = signalInds(1)
           else
             signal = signalInds(s_index)
@@ -284,163 +237,112 @@ contains ! =====     Public Procedures     =============================
         sGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_type )
         quantityType = value
-        type_field = son
-      case ( f_unit );              scaleFactor = value
       case ( f_vgrid )
         vGridIndex = decoration(value) ! node_id(value) == n_spec_args
       end select
     end do
 
-    ! Now we know what the user asked for, try to make sense of it.
-    ! First see that the `type' has been defined
+    ! Do a very low level sanity check, irregular quantities not supported
+    if ( .not. regular ) call announce_error ( root,&
+      & 'Inappropriate irregular quantity request' )
 
-    if ( quantityType == 0 ) call announce_error ( root, noQuantityType )
- 
-    ! Set defaults for other parameters
-    if ( fGridIndex /= 0 ) then
-      frequencyCoordinate = fGrids(fGridIndex)%frequencyCoordinate
-      noChans = fGrids(fGridIndex)%noChans
-    else
-      frequencyCoordinate = L_None
-      noChans = 1
+    ! Now get the properties for this quantity type
+    properties = propertyTable ( :, quantityType )
+
+    ! Now check various things out first check that required fields are present
+    ! according to the quantity type
+    if ( got ( f_hGrid ) .neqv. properties ( p_hGrid ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType )
+    if ( got ( f_vGrid ) .neqv. properties ( p_vGrid ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_vGrid) ) ) // ' vGrid for quantity type ', quantityType )
+    if ( got ( f_sGrid ) .neqv. properties ( p_sGrid ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_sGrid) ) ) // ' sGrid for quantity type ', quantityType )
+    if ( got ( f_Molecule ) .neqv. properties ( p_Molecule ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_Molecule) ) ) // ' molecule for quantity type ', quantityType )
+    if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_Signal) ) ) // ' signal for quantity type ', quantityType )
+    ! Now check the 'optional' ones specially
+    if ( .not. properties ( p_fGridOptional ) ) then
+      if ( got ( f_fGrid ) .neqv. properties ( p_fGrid ) ) &
+        & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+        & got(f_fGrid) ) ) // ' fGrid for quantity type ', quantityType )
+    end if
+    if ( .not. properties ( p_radiometerOptional ) ) then
+      if ( got ( f_Radiometer ) .neqv. properties ( p_Radiometer ) ) &
+        & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+        & got(f_Radiometer) ) ) // ' radiometer for quantity type ', quantityType )
+    end if
+    if ( got ( f_Module ) .neqv. ( properties ( p_Module ) .or. properties ( p_scModule) ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_Module) ) ) // ' module for quantity type ', quantityType )
+
+    ! Now do more derived checking / setting up
+    if ( properties ( p_mustBeZeta ) ) then
+      if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
+        & call Announce_error ( root, 'Expecting log pressure coordinates for', &
+        & quantityType )
+    end if
+    if ( properties ( p_scModule ) ) then
+      if ( .not. IsModuleSpacecraft ( instrumentModule ) ) &
+        & call Announce_error ( root, 'Module must be spacecraft' )
     end if
 
-    ! Now, depending on the type, check out stuff and see if it's ok to
-    ! first order.
+    ! Now establish the frequency coordinate system
+    if ( got(f_fGrid) ) then
+      frequencyCoordinate = fGrids(fGridIndex)%frequencyCoordinate
+      noChans = fGrids(fGridIndex)%noChans
+    else if ( properties(p_xyz) ) then
+      ! XYZ quantity (e.g. ECI/ECR stuff)
+      frequencyCoordinate = l_xyz
+      noChans = 3
+    else if ( properties(p_matrix3x3) ) then
+      ! XYZ^2 quantity (e.g. rotation matrix)
+      frequencyCoordinate = l_matrix3x3
+      noChans = 9
+    else if ( got(f_signal) .and. .not. properties(p_suppressChannels) ) then
+      ! This is a channel based quantity
+      signalInfo = GetSignal ( signal )
+      frequencyCoordinate = l_channel
+      noChans = size ( signalInfo%frequencies )
+    else if ( got(f_sGrid) ) then
+      ! Uses an sGrid
+      noChans = size ( vGrids(sGridIndex)%surfs )
+      frequencyCoordinate = l_losTransFunc
+    else
+      ! No frequency variation
+      noChans = 1
+      frequencyCoordinate = l_none
+    end if
 
-    if ( family == 0 ) family = natural_units(quantityType)
-    minorFrame = any(quantityType == (/ l_phiTan, l_Ptan, l_Radiance, &
-      & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
-      & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
-      & l_scanResidual, l_chisqmmif, l_opticalDepth, l_orbitInclination, &
-      & l_ECRtoFOV, l_noRadsPerMIF /) )
-
-    majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
- 
-    ! Here the code splits, for minor frame quantities, we take the information
-    ! from the previously constructed MIFGeolocation information.  Otherwise,
-    ! we'll probably need to use any supplied vGrid/hGrid information.
-
-    if ( minorFrame ) then
-
-      ! This is a minor frame type quantity.
-      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 ) ) then
-        call announce_error ( root, unnecessaryGrid )
-      end if
-      if ( instrumentModule == 0 ) then 
-        call announce_error ( root, noModule )
-      end if
-
-      ! Work out the channel information
-      if ( signal /= 0 ) then
-        signalInfo = GetSignal(signal)
-        noChans = size(signalInfo%frequencies)
-        frequencyCoordinate = l_channel
-      end if
-    
-      ! For some cases we know the quantity is an xyz vector, or a 3x3 xyz matrix
-      if ( any(quantityType == &
-       & (/ l_tngtECI, l_scECI, l_scVel, l_scVelECI, l_scVelECR /)) &
-       & ) then
-        noChans = 3
-        frequencyCoordinate = l_xyz
-      end if
-
-      if ( quantityType == l_ECRtoFOV ) then
-        noChans = 9
-        frequencyCoordinate = l_matrix3X3
-      end if
-
-      ! Make absolutely certain template's dimensions are what we want
-      if ( any ( quantityType == (/ l_chiSqMMIF, l_noRadsPerMIF /) ) ) then
-        noChans = 1
-        frequencyCoordinate = l_none
-      end if
-
-      ! Construct an empty quantity
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans, mifGeolocation=mifGeolocation, regular=regular )
-        
-    else if ( majorFrame ) then
-
-      ! This is a major frame type quantity.
-      if ( vGridIndex/=0 ) then
-        call announce_error ( root, No_Error_Code, &
-        &  'No vGrid should be specified for a major frame quantity' )
-      end if
-
-      ! Work out the channel information
-      if ( signal == 0 ) then
-        call announce_error ( root, No_Error_Code, &
-        &  'A signal is required for every major frame quantity' )
-      else if ( instrumentModule == 0 ) then 
-        call announce_error ( root, noModule )
-      else
-        signalInfo = GetSignal(signal)
-        noChans = size(signalInfo%frequencies)
-        frequencyCoordinate = l_channel
-      end if
-
-      ! Make absolutely certain template's dimensions are what we want
-      if ( quantityType == l_chisqMMAF .or. quantityType == l_chisqMMIF ) then
-        noChans = 1
-        frequencyCoordinate = l_none
-      end if
-
-      ! Construct an empty quantity
+    ! Now do the setup for the different families of quantities
+    if ( properties(p_minorFrame) ) then
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+        & instrumentModule, qty, noChans=noChans, mifGeolocation=mifGeolocation, &
+        & regular=regular )
+      ! Setup a minor frame quantity
+    else if ( properties(p_majorFrame) ) then
+      ! Setup a major frame quantity
       call ConstructMajorFrameQuantity ( chunk, instrumentModule, &
         & qty, noChans, mifGeolocation )
-      qty%frequencyCoordinate = frequencyCoordinate
-        
-   ! for losTransFunc type of quantity 
-    else if ( quantityType == l_losTransFunc ) then
-      ! replace noChans with no of grid along path which is specified from sGrid
-        noChans = VGrids(sGridIndex)%noSurfs
-        frequencyCoordinate = l_losTransFunc
-
-       ! Construct an empty quantity
-       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans )
-       call Allocate_test ( qty%frequencies, noChans, 'qty%frequencies', ModuleName )
-       
-       qty%frequencies = VGrids(sGridIndex)%surfs
-        
     else
+      ! Setup a non major/minor frame quantity
+      noInstances = 1
+      if ( properties ( p_hGrid ) ) noInstances = hGrids(hGridIndex)%noProfs
+      noSurfs =1
+      if ( properties ( p_vGrid ) ) noSurfs = vGrids(vGridIndex)%noSurfs
 
-      ! This is not a minor frame quantity, set it up from FGrids, VGrids and HGrids
-
-      if ( hGridIndex/=0 ) then
-        noInstances=hGrids(hGridIndex)%noProfs
-      else
-        noInstances=1
-      end if
-
-      if ( vGridIndex/=0 ) then
-        noSurfs=vGrids(vGridIndex)%noSurfs
-      else
-        noSurfs=1
-      end if
-      
-      ! Some special cases for certain quantities
-      select case (quantityType)
-      case ( l_SidebandRatio, l_NoiseBandwidth, l_SystemTemperature, l_elevOffset )
-        frequencyCoordinate = l_channel
-        signalInfo = GetSignal(signal)
-        noChans = size ( signalInfo%frequencies ) 
-      case ( l_magneticField )
-        frequencyCoordinate = l_xyz
-        noChans = 3
-      case default
-      end select
-      if ( .not. regular ) call announce_error ( root, no_error_code, &
-        & 'Inappropriate irregular quantity request' )
+      ! Setup the quantity template
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
-        & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE.,&
+        & noSurfs=noSurfs, coherent=.true., stacked=.true., regular=.true.,&
         & noChans=noChans )
-      ! ??? Note in later versions we'll need to think about channels here
 
-      if ( hGridIndex /=0 ) then
+      ! Setup the horizontal coordinates or zero if irrelevant
+      if ( properties(p_hGrid) ) then
         call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
       else                      ! Set `empty' values
         qty%phi = 0.0
@@ -452,34 +354,28 @@ contains ! =====     Public Procedures     =============================
         qty%losAngle = 0.0
       end if
 
-      if ( quantityType == l_columnAbundance &
-      & .or. &
-      &   quantityType == l_boundaryPressure ) then
-        if ( vGridIndex/=0 ) then
-          call announce_error( root, no_error_code, &
-          & 'No vGrid should be specified for column abundance ' &
-          & // 'boundary pressure')
-        end if
-        frequencyCoordinate = L_None
-        qty%verticalCoordinate = L_None
-      else if ( vGridIndex /= 0 ) then
+      ! Setup the vertical coordiantes or zero if irrelvant
+      if ( properties(p_vGrid) ) then 
         call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
       else
         qty%surfs = 0.0
-        qty%verticalCoordinate = L_None
+        qty%verticalCoordinate = l_none
       end if
-
-      if ( fGridIndex /= 0 ) then
-        call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
-          & ModuleName )
-        qty%frequencies = fGrids(fGridIndex)%values
-      end if
-
     end if
 
-    ! Now fill up the remaining items, e.g. name etc.
+    ! Fill the frequency information if appropriate
+    if ( got ( f_fGrid ) ) then
+      call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
+        & ModuleName )
+      qty%frequencies = fGrids(fGridIndex)%values
+    end if
+    if ( properties ( p_sGrid ) ) then
+      call Allocate_test ( qty%frequencies, noChans, 'qty%frequencies', ModuleName )
+      qty%frequencies = VGrids(sGridIndex)%surfs
+    end if
 
-    qty%badValue = -999.99              ! Think more about this later NJL !????
+    ! Set up the remaining stuff
+    qty%badValue = -999.99
     qty%frequencyCoordinate = frequencyCoordinate
     qty%instrumentmodule = instrumentmodule
     qty%logBasis = logBasis
@@ -491,40 +387,31 @@ contains ! =====     Public Procedures     =============================
     qty%scaleFactor = scaleFactor
     qty%sideband = sideband
     qty%signal = signal
-    qty%unit = family
-
-    if ( majorFrame ) then
-      qty%minorFrame = .false.
-      qty%majorFrame = .true.
-    end if
-    if ( DEEBUG .or. index(switches,'qtmp') /= 0 ) then
+    qty%unit = unitsTable ( quantityType )
+    
+    if ( index(switches,'qtmp') /= 0 ) then
       call output( 'Template name: ', advance='no' )
-      call display_string ( qty%name, advance='no', ierr=ierr )
+      call display_string ( qty%name, advance='no' )
       call output( '   quantityType: ', advance='no' )
-      call output( qty%quantityType, advance='no' )
+      call display_string( lit_indices(qty%quantityType), advance='yes<' )
       call output( '   major frame? ', advance='no' )
       call output( qty%majorFrame, advance='no' )
       call output( '   minor frame? ', advance='no' )
       call output( qty%minorFrame, advance='yes' )
-      call output( '   signal string: ', advance='no' )
-      call output( trim(signalString), advance='no' )
-      call output( '    signal: ', advance='no' )
-      if ( qty%signal < 1 ) then
-        call output( ' (none available) ', advance='yes' )
-      else
-        call display_string ( signals(qty%signal)%name, advance='yes', ierr=ierr )
-      end if
+      call output( '    signal name: ', advance='no' )
+      call output( trim(signalString), advance='yes' )
       call output( '   Instrument module: ', advance='no' )
       if ( qty%instrumentModule < 1 ) then
-        call output( ' (none available) ', advance='yes' )
+        call output( ' (none) ', advance='yes' )
       else
-        call display_string ( modules(qty%instrumentModule)%name, advance='yes', &
-          & ierr=ierr )
+        call display_string ( modules(qty%instrumentModule)%name, advance='yes' )
       end if
-!      call output( '    Molecule: ', advance='no' )
-!      call display_string ( qty%Molecule, advance='yes', ierr=ierr )
-      call output( '   molecule string: ', advance='no' )
-      call output( trim(moleculeString), advance='yes' )
+      call output( '    Molecule: ', advance='no' )
+      if  ( qty%molecule < 1 ) then
+        call output ( ' (none)', advance='yes' )
+      else
+        call display_string ( qty%Molecule, advance='yes' )
+      end if
       call output ( '   noChans = ' )
       call output ( qty%noChans, advance='no' )
       call output ( ' noSurfs = ' )
@@ -533,154 +420,13 @@ contains ! =====     Public Procedures     =============================
       call output ( qty%noInstances, advance='no' )
       call output ( ' instanceLen = ' )
       call output ( qty%instanceLen, advance='yes' )
+      call output ( ' verticalCoordinate = ' )
+      call display_string ( lit_indices(qty%verticalCoordinate) )
+      call output ( ' frequencyCoordinate = ' )
+      call display_string ( lit_indices(qty%frequencyCoordinate), advance='yes' )
     end if
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
-    returnStatus = error
 
   end function CreateQtyTemplateFromMLSCFInfo
-
-! =====     Private Procedures     =====================================
-
-! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage, severity )
-
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
-    use TREE, only: SOURCE_REF
-
-    integer, intent(in) :: WHERE   ! Tree node where error was noticed
-    integer, intent(in) :: CODE    ! Code for error message
-    character (LEN=*), intent(in), optional :: ExtraMessage
-    integer, intent(in), optional :: severity
-
-    if ( present(severity) ) then
-      error = max(error,severity)
-    else
-      error = max(error,1)
-    end if
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
-    call output ( ': ' )
-    select case ( code )
-    case ( badUnitMessage )
-      call output ( "Incorrect or absent unit.", advance='yes' )
-    case ( InappropriateQuantity )
-      call output ( "A quantity inappropriate for this version is specified.", &
-                    advance='yes' )
-    case ( needGrid )
-      call output ( "Quantity needs a vGrid or hGrid.", advance='yes' )
-    case ( noQuantityType )
-      call output ( "No quantity type specified.", advance='yes' )
-    case ( unnecessaryGrid )
-      call output ( "Quantity has an unnecessary vGrid or hGrid.", advance='yes' )
-    case ( noModule )
-      call output ( "No module given or deducible.", advance='yes' )
-    case default
-      call output ( " command caused an unrecognized programming error", advance='yes' )
-    end select
-    if ( present(ExtraMessage) ) then
-      call output(ExtraMessage, advance='yes')
-    end if
-  end subroutine ANNOUNCE_ERROR
-
-! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
-  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, Chunk )  result (answer)
-  ! Read precision of signal
-  ! if all values < 0.0, return FALSE
-  ! if no precision data in file, return FALSE
-  ! otherwise return true
-  ! Arguments
-
-    use Allocate_Deallocate, only: Deallocate_Test
-    use L1BData, only: L1BData_T, READL1BDATA, &
-      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
-    use MLSFiles, only: MLS_HDF_Version
-    use MLSL2Options, only: LEVEL1_HDFVERSION
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: GetSignalName
-
-    integer, intent(in) :: signal
-    integer, intent(in) :: sideband
-    logical             :: answer
-    type (MLSChunk_T), intent(in) :: Chunk
-    type (l1bInfo_T), intent(in) :: L1bInfo
-  ! Private
-    integer :: FileID, flag, noMAFs
-    character(len=127)  :: namestring
-    type (l1bData_T) :: MY_L1BDATA
-    integer :: hdfVersion
-
-  ! Executable
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
-    call GetSignalName ( signal, nameString, &                   
-    & sideband=sideband, noChannels=.TRUE. )                     
-    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
-    nameString = trim(nameString) // PRECISIONSUFFIX
-    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
-    if ( fileID <= 0 ) then
-      answer = .false.
-      return
-    end if
-    ! print *, 'About to read ', trim(nameString)
-    ! print *, 'From Fileid ', fileID
-    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & NeverFail= .true., hdfVersion=hdfVersion )
-    if ( flag == 0 ) then
-      answer = .not. all (my_l1bData%DpField < 0._rk)
-      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
-    else
-      answer = .false.
-    end if
-  end function ANY_GOOD_SIGNALDATA
-
-  ! --------------------------------  ConstructMajorFrameQuantity  -----
-  subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
-    & mifGeolocation )
-    ! Dummy arguments
-    use INIT_TABLES_MODULE, only: L_NONE
-    use MLSCommon, only: MLSChunk_T, RK => R8
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
-
-    type (MLSChunk_T), intent(in) :: CHUNK
-    integer, intent(in) :: INSTRUMENTMODULE
-    type (QuantityTemplate_T), intent(out) :: QTY
-    type (QuantityTemplate_T), dimension(:), target :: MIFGEOLOCATION
-    integer, intent(in) :: NOCHANS
-    ! Local variables
-    type (QuantityTemplate_T), pointer :: source
-    
-    ! Executable code
-    source => mifGeolocation(instrumentModule)
-    call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
-      & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
-      & noChans=noChans )
-    qty%phi => source%phi(1:1,:)
-    qty%geodLat => source%geodLat(1:1,:)
-    qty%lon => source%lon(1:1,:)
-    qty%time => source%time(1:1,:)
-    qty%solarTime => source%solarTime(1:1,:)
-    qty%solarZenith => source%solarZenith(1:1,:)
-    qty%losAngle => source%losAngle(1:1,:)
-    qty%mafIndex => source%mafIndex
-    qty%mafCounter => source%mafCounter
-
-    qty%verticalCoordinate = l_none
-    qty%majorFrame = .true.
-    qty%minorFrame = .false.
-
-    qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
-    qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
-  end subroutine ConstructMajorFrameQuantity
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
@@ -697,7 +443,7 @@ contains ! =====     Public Procedures     =============================
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
       & QuantityTemplateCounter
 
-  ! This routine constructs a minor frame based quantity.
+    ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
     type (L1BInfo_T), intent(in) :: l1bInfo  ! File handles for l1bdata
@@ -743,6 +489,7 @@ contains ! =====     Public Procedures     =============================
     if ( hdfversion <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
       if ( .not. (present(noChans)) ) &
@@ -781,15 +528,6 @@ contains ! =====     Public Procedures     =============================
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       
-      ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
-      !print *, 'About to SetupNewQuantityTemplate'
-      !print *, 'noInstances ', noMAFs
-      !print *, 'noSurfs ', l1bField%maxMIFs
-      !if ( present(noChans) ) then
-      !  print *, 'noChans ', noChans
-      !else
-      !  print *, 'noChans not present'
-      !end if
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
         & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.false., &
         & stacked=.false., regular=regular, instanceLen=instanceLen, &
@@ -808,8 +546,6 @@ contains ! =====     Public Procedures     =============================
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         
-        ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
-        
         call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
           & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
           & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
@@ -819,7 +555,6 @@ contains ! =====     Public Procedures     =============================
         qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
         
         ! Now we're going to deal with a VGrid for this quantity
-        
         qty%verticalCoordinate = l_geodAltitude
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
         qty%mafCounter = l1bField%counterMAF
@@ -829,7 +564,6 @@ contains ! =====     Public Procedures     =============================
         call DeallocateL1BData(l1bfield)
 
         ! Now we're going to fill in the hGrid information
-        
         do l1bItem = 1, NoL1BItemsToRead
           ! Get the name of the item to read
           l1bItemName = l1bItemsToRead(l1bItem)
@@ -893,23 +627,18 @@ contains ! =====     Public Procedures     =============================
         qty%solarTime = 0.0
         qty%solarZenith = 0.0
         qty%losAngle = 0.0
-        
         qty%mafCounter = l1bField%counterMAF
         do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
           qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
         end do
-        
         call DeallocateL1BData(l1bfield)
-        
       end if
-      
     end if
     qty%frequencyCoordinate = L_None
     qty%instrumentModule = instrumentModule
 
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
-
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
@@ -1053,6 +782,90 @@ contains ! =====     Public Procedures     =============================
     
   end subroutine ForgeMinorFrames
 
+  ! ======================================= Private proceedures ========
+  
+  ! -----------------------------------------------  Announce_Error  -----
+  subroutine Announce_Error ( where, message, extra )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+    use Intrinsic, only: LIT_INDICES
+    use String_Table, only: DISPLAY_STRING
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+
+    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+    character (LEN=*), intent(in) :: MESSAGE
+    integer, intent(in), optional :: EXTRA
+
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
+    call output ( ': ' )
+    call output ( message )
+    if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
+    call output ( '', advance='yes' )
+    call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in Construct' )
+  end subroutine Announce_Error
+
+  ! -----------------------------------------------  AnyGoodSignalData  -----
+  function AnyGoodSignalData ( signal, sideband, l1bInfo, Chunk )  result (answer)
+  ! Read precision of signal
+  ! if all values < 0.0, return FALSE
+  ! if no precision data in file, return FALSE
+  ! otherwise return true
+  ! Arguments
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use L1BData, only: L1BData_T, READL1BDATA, &
+      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSFiles, only: MLS_HDF_Version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: GetSignalName
+
+    integer, intent(in) :: signal
+    integer, intent(in) :: sideband
+    logical             :: answer
+    type (MLSChunk_T), intent(in) :: Chunk
+    type (l1bInfo_T), intent(in) :: L1bInfo
+  ! Private
+    integer :: FileID, flag, noMAFs
+    character(len=127)  :: namestring
+    type (l1bData_T) :: MY_L1BDATA
+    integer :: hdfVersion
+
+  ! Executable
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+    call GetSignalName ( signal, nameString, &                   
+    & sideband=sideband, noChannels=.TRUE. )                     
+    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
+    nameString = trim(nameString) // PRECISIONSUFFIX
+    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    if ( fileID <= 0 ) then
+      answer = .false.
+      return
+    end if
+    ! print *, 'About to read ', trim(nameString)
+    ! print *, 'From Fileid ', fileID
+    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & NeverFail= .true., hdfVersion=hdfVersion )
+    if ( flag == 0 ) then
+      answer = .not. all (my_l1bData%DpField < 0._rk)
+      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
+    else
+      answer = .false.
+    end if
+  end function AnyGoodSignalData
+
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
   subroutine CopyHGridInfoIntoQuantity ( My_hGrid, qty )
 
@@ -1113,310 +926,224 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine CopyVGridInfoIntoQuantity
 
-
-!=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-end module ConstructQuantityTemplates
-!=============================================================================
+  ! --------------------------------  ConstructMajorFrameQuantity  -----
+  subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
+    & mifGeolocation )
+    ! Dummy arguments
+    use INIT_TABLES_MODULE, only: L_NONE
+    use MLSCommon, only: MLSChunk_T, RK => R8
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
 
-!
-! $Log$
-! Revision 2.91  2003/05/22 04:04:07  livesey
-! elevOffset is now a channel dependent rather than radiometer dependent
-! quantity.
-!
-! Revision 2.90  2003/05/10 23:39:25  livesey
-! Fixed problems with chisqs and noRads
-!
-! Revision 2.89  2003/05/07 01:00:03  livesey
-! More stuff got missed in the merge, was I asleep or something?
-!
-! Revision 2.88  2003/02/13 19:05:39  vsnyder
-! Move USEs from module to procedure scope, cosmetic changes
-!
-! Revision 2.87  2003/02/12 21:53:48  pwagner
-! Fix to errant ANY_GOOD_SIGNALDATA in case of hdf5 files
-!
-! Revision 2.86  2003/02/07 03:42:50  vsnyder
-! Fill NATURAL_UNITS on first call only -- it's a SAVE variable now
-!
-! Revision 2.85  2003/02/07 03:38:05  vsnyder
-! Cosmetic change
-!
-! Revision 2.84  2003/02/07 00:41:41  livesey
-! Bug fix/workaround
-!
-! Revision 2.83  2003/02/06 23:31:00  livesey
-! New approach to Forge
-!
-! Revision 2.82  2003/01/14 00:40:29  pwagner
-! Moved GetQuantityAttributes to L2AUXData
-!
-! Revision 2.81  2003/01/09 00:09:15  pwagner
-! routine GetQuantityAttributes added
-!
-! Revision 2.80  2003/01/08 23:50:44  livesey
-! Added irregular argument
-!
-! Revision 2.79  2003/01/07 23:46:53  livesey
-! Added magnetic field stuff
-!
-! Revision 2.78  2002/12/11 22:17:05  pwagner
-! Added error checks on hdf version
-!
-! Revision 2.77  2002/11/26 23:37:50  livesey
-! Better handling of major frame quantities
-!
-! Revision 2.76  2002/11/22 12:16:08  mjf
-! Added nullify routine(s) to get round Sun's WS6 compiler not
-! initialising derived type function results.
-!
-! Revision 2.75  2002/11/13 01:05:03  pwagner
-! Actually reads hdf5 radiances
-!
-! Revision 2.74  2002/10/08 17:36:19  pwagner
-! Added idents to survive zealous Lahey optimizer
-!
-! Revision 2.73  2002/09/26 18:03:06  livesey
-! Changed extinction to a vmr
-!
-! Revision 2.72  2002/09/25 20:07:55  livesey
-! Made -g less verbose
-!
-! Revision 2.71  2002/09/24 21:37:44  livesey
-! Added minValue stuff
-!
-! Revision 2.70  2002/09/24 00:27:16  pwagner
-! Wont bomb if no l1brads; nor whine if no good signals
-!
-! Revision 2.69  2002/09/18 22:48:32  pwagner
-! Chooses signals first band with any good data
-!
-! Revision 2.68  2002/08/04 16:01:19  mjf
-! Added some nullify statements for Sun's rubbish compiler.
-!
-! Revision 2.67  2002/06/14 16:39:49  livesey
-! Orbital inclination now minor frame
-!
-! Revision 2.66  2002/06/04 22:07:35  livesey
-! Added phiTan as a state vector element
-!
-! Revision 2.65  2002/05/22 19:06:32  jonathan
-! added units for cloudextinction(m-1), totalextinction(m-1), and
-! massmeandiameterice(micron m) as dimentionless for now, may define
-! more clear later
-!
-! Revision 2.64  2002/05/14 00:27:42  livesey
-! New code for system temperatures and noise bandwidths
-!
-! Revision 2.63  2002/05/07 20:02:54  livesey
-! Added noise bandwidth
-!
-! Revision 2.62  2002/04/10 17:44:22  pwagner
-! Added rhi quantity (but is this enough?)
-!
-! Revision 2.61  2002/03/19 00:51:32  pwagner
-! Added new scVel quantity types
-!
-! Revision 2.60  2002/02/09 21:35:52  livesey
-! Added optical depth stuff
-!
-! Revision 2.59  2001/11/08 00:13:38  livesey
-! Sorted out extinction stuff
-!
-! Revision 2.58  2001/10/31 19:07:25  livesey
-! Added fGrid stuff
-!
-! Revision 2.57  2001/10/12 23:15:05  pwagner
-! Fixed biggest erros in diagnostic quantity templates
-!
-! Revision 2.56  2001/10/02 23:12:50  pwagner
-! More chi^2 fixes
-!
-! Revision 2.55  2001/10/02 20:50:54  livesey
-! No longer asserts baseline to be minor frame
-!
-! Revision 2.54  2001/09/17 23:11:50  pwagner
-! Tiny changes for chi^2
-!
-! Revision 2.53  2001/09/17 21:58:50  livesey
-! Added allocate of frequencies if needed
-!
-! Revision 2.52  2001/09/14 23:30:33  pwagner
-! Now constructs major frame quantity templates
-!
-! Revision 2.51  2001/08/01 00:04:29  dwu
-! add qty%frequencies = VGrids(sGridIndex)%surfs for quantity l_losTransFunc
-!
-! Revision 2.50  2001/07/30 23:28:38  pwagner
-! Added columnAbundances scaffolding--needs fleshing out
-!
-! Revision 2.49  2001/07/26 17:34:25  jonathan
-! add DTcir, etc, jonathan
-!
-! Revision 2.48  2001/07/19 22:17:44  jonathan
-! add cloud stuff , jonathan/dwu
-!
-! Revision 2.47  2001/07/19 17:42:31  dwu
-! add sGrid field
-!
-! Revision 2.46  2001/07/18 23:17:30  dwu
-! rename l_radiusofearth as l_earthradius
-!
-! Revision 2.45  2001/07/18 18:42:19  dwu
-! add radiusofearth quantity type
-!
-! Revision 2.44  2001/07/17 23:23:05  dwu
-! make l_losTransFunc as non-minorframe but minorframe-like quantity
-!
-! Revision 2.43  2001/07/16 18:24:45  dwu
-! add feature for losTransFunc type of quantities
-!
-! Revision 2.42  2001/07/13 18:41:59  dwu
-! fix problem after adding losTransFunc
-!
-! Revision 2.41  2001/07/13 18:10:03  dwu
-! add quantity losTransFunc
-!
-! Revision 2.40  2001/07/11 21:40:00  livesey
-! More bug fixes
-!
-! Revision 2.39  2001/07/10 23:45:16  jonathan
-! added cloudicedensity and template for cloudsfwm, paul/jonathan
-!
-! Revision 2.38  2001/07/09 22:37:23  livesey
-! Embarassing memory leak caught!  It's our old friend
-! mifGeolocation again.  I'm going to regret trying
-! to be this clever!
-!
-! Revision 2.37  2001/05/31 19:53:56  livesey
-! Whoops, debug stuff left in.
-!
-! Revision 2.36  2001/05/30 23:59:51  livesey
-! Thought I'd made this change already.  I'm confused
-!
-! Revision 2.35  2001/05/30 23:55:28  livesey
-! Previous one was debug version, this is correct one.
-!
-! Revision 2.34  2001/05/30 23:53:01  livesey
-! For new version of L1Bdata
-!
-! Revision 2.33  2001/05/29 23:21:35  livesey
-! Changed l_orbitincline to l_orbitinclination
-!
-! Revision 2.32  2001/05/26 00:20:20  livesey
-! Cosmetic changes
-!
-! Revision 2.31  2001/05/10 01:08:53  livesey
-! Changed hGrids and vGrids to pointers, rather than intent(in)
-! to allow them to be empty.
-!
-! Revision 2.30  2001/05/03 23:08:36  livesey
-! Added stuff to support scan model items.
-!
-! Revision 2.29  2001/05/03 20:30:09  vsnyder
-! Add a 'nullify' and some cosmetic changes
-!
-! Revision 2.28  2001/04/26 02:45:25  vsnyder
-! Fix up CVS stuff
-!
-! Revision 2.27  2001/04/26 02:44:17  vsnyder
-! Moved *_indices declarations from init_tables_module to intrinsic
-!
-! Revision 2.26  2001/04/25 20:33:07  livesey
-! Minor bug fix, Forge now also zeros surfs.
-!
-! Revision 2.25  2001/04/25 19:29:49  livesey
-! Fixed bug in forge, now sets mafCounter and mafIndex correctly.
-!
-! Revision 2.24  2001/04/25 00:01:23  livesey
-! Bug fix, no default units for scGeocAlt
-!
-! Revision 2.23  2001/04/24 22:21:17  livesey
-! Gave up on latitude for forge
-!
-! Revision 2.22  2001/04/23 23:25:10  livesey
-! Fixed bug in forge
-!
-! Revision 2.21  2001/04/20 23:11:39  livesey
-! Added forge stuff for minor frames
-!
-! Revision 2.20  2001/04/19 20:30:06  livesey
-! Added specific stuff for sideband ratio
-!
-! Revision 2.19  2001/04/12 23:25:29  vsnyder
-! Give "Sideband" an initial value
-!
-! Revision 2.18  2001/04/12 21:41:42  livesey
-! Signal now a string.
-!
-! Revision 2.17  2001/04/10 22:27:47  vsnyder
-! Nullify explicitly instead of with <initialization> so as not to give
-! pointers the SAVE attribute.  <initialization> is NOT executed on each
-! entry to a procedure.
-!
-! Revision 2.16  2001/04/07 01:50:48  vsnyder
-! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
-! some related stuff to fwdmdl/ForwardModelConfig.
-!
-! Revision 2.15  2001/03/28 23:48:13  livesey
-! Bug fixes zero out some stuff.
-!
-! Revision 2.14  2001/03/28 18:33:19  livesey
-! Fixed bug with logBasis (wasn't initialised!)
-!
-! Revision 2.13  2001/03/21 02:13:30  livesey
-! Bug with logBasis, put in a work around. Will need to fix later
-!
-! Revision 2.12  2001/03/17 02:23:55  livesey
-! Added logBasis (and set value for badData)
-!
-! Revision 2.11  2001/03/15 21:07:47  vsnyder
-! Cross-references between databases are by database index, not tree index
-!
-! Revision 2.10  2001/03/15 18:41:17  livesey
-! Tidied up the frequency coordinate stuff.
-!
-! Revision 2.9  2001/03/08 21:49:26  livesey
-! Added elev_offset
-!
-! Revision 2.8  2001/03/03 00:08:09  livesey
-! Lots of changes mostly with minor frame quantities
-!
-! Revision 2.7  2001/03/02 01:28:23  livesey
-! New quantity types etc.
-!
-! Revision 2.6  2001/02/28 01:17:04  livesey
-! Interim version, on the way to using proper signals stuff
-!
-! Revision 2.5  2001/02/22 23:37:24  livesey
-! Really removed all references to firstIndexChannel
-!
-! Revision 2.4  2001/02/21 01:09:00  livesey
-! Allowed for quantities with no h/v grid
-!
-! Revision 2.3  2001/02/20 18:43:50  livesey
-! Removed all references to firstIndexChannel
-!
-! Revision 2.2  2001/02/14 00:12:45  livesey
-! Removed firstIndexChannel
-!
-! Revision 2.1  2001/02/09 00:38:22  livesey
-! Various updates
-!
-! Revision 2.0  2000/09/05 18:57:02  ahanzel
-! Changing file revision to 2.0.
-!
-! Revision 1.1  2000/09/02 02:05:03  vsnyder
-! Initial entry
-!
-! Revision 1.13  2000/05/17 23:19:07  lungu
-! Added "." between MLSInstrumentModuleNames and l1bItemName.
-! Made hGridIndex=0 and vGridIndex=0 upon entry, so it does not "inherit" attributes from previous call.
-! Made caseInsensitive=.TRUE. for all searches.
-! Added type for QTY_Gph.
-! Made stacked=.TRUE. so that CopyHGridInfoIntoQuantity works.
-!
+    type (MLSChunk_T), intent(in) :: CHUNK
+    integer, intent(in) :: INSTRUMENTMODULE
+    type (QuantityTemplate_T), intent(out) :: QTY
+    type (QuantityTemplate_T), dimension(:), target :: MIFGEOLOCATION
+    integer, intent(in) :: NOCHANS
+    ! Local variables
+    type (QuantityTemplate_T), pointer :: source
+    
+    ! Executable code
+    source => mifGeolocation(instrumentModule)
+    call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
+      & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
+      & noChans=noChans )
+    qty%phi => source%phi(1:1,:)
+    qty%geodLat => source%geodLat(1:1,:)
+    qty%lon => source%lon(1:1,:)
+    qty%time => source%time(1:1,:)
+    qty%solarTime => source%solarTime(1:1,:)
+    qty%solarZenith => source%solarZenith(1:1,:)
+    qty%losAngle => source%losAngle(1:1,:)
+    qty%mafIndex => source%mafIndex
+    qty%mafCounter => source%mafCounter
+
+    qty%verticalCoordinate = l_none
+    qty%majorFrame = .true.
+    qty%minorFrame = .false.
+
+    qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+    qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+  end subroutine ConstructMajorFrameQuantity
+  
+  ! ----------------------------------------------- InitQuantityTemplates ----
+  subroutine InitQuantityTemplates
+    ! This routine initializes the quantity template properties
+    ! This is the routine one needs to update when one introduces a new quantity type.
+    use Init_Tables_Module, only:  L_BASELINE, L_BOUNDARYPRESSURE, &
+      L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
+      L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDRADSENSITIVITY, &
+      L_CLOUDWATER, L_COLUMNABUNDANCE, &
+      L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
+      L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, &
+      L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
+      L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, &
+      L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
+      L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
+      L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
+      L_ELEVOFFSET, L_EXTINCTION, L_GPH, L_HEIGHTOFFSET, &
+      L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
+      L_LOSTRANSFUNC, L_LOSVEL, &
+      L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
+      L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
+      L_NUMJ, L_OPTICALDEPTH, &
+      L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_EARTHRADIUS,&
+      L_REFGPH, L_RHI, L_SIZEDISTRIBUTION, &
+      L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
+      L_SCVELECR, L_SCGEOCALT, L_SIDEBANDRATIO, &
+      L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
+      L_TOTALEXTINCTION, L_VMR
+    use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
+      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
+      & PHYQ_PCTRHI, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
+      & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use Intrinsic, only: LIT_INDICES
+    use Output_M, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    integer, dimension(0), parameter :: NONE = (/ ( 0, i=1,0 ) /)
+    logical :: VALID                    ! Flag
+    character(len=132) :: MESSAGE       ! An error message
+
+    ! Executable code
+    ! Basically here, we're going to go through and populate the various tables
+
+    propertyTable = .false.
+    unitsTable = 0
+
+    call DefineQtyType ( l_baseline, phyq_temperature, &
+      & (/ p_hGrid, p_vGrid, p_fGrid, p_radiometer /) )
+    call DefineQtyType ( l_boundaryPressure, phyq_pressure, (/ p_hGrid /) )
+    call DefineQtyType ( l_chisqBinned, phyq_dimensionless, &
+      & (/ p_hGrid, p_vGrid, p_signal, p_suppressChannels /) )
+    call DefineQtyType ( l_chisqChan, phyq_dimensionless, (/ p_majorFrame, p_signal /) )
+    call DefineQtyType ( l_chisqMMAF, phyq_dimensionless, &
+      & (/ p_majorFrame, p_signal, p_suppressChannels /) )
+    call DefineQtyType ( l_chisqMMIF, phyq_dimensionless, &
+      & (/ p_minorFrame, p_signal, p_suppressChannels /) )
+    call DefineQtyType ( l_cloudExtinction, phyq_dimensionless, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_cloudIce, phyq_IceDensity, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_cloudInducedRadiance, phyq_temperature, &
+      & (/ p_minorFrame, p_signal /) )
+    call DefineQtyType ( l_cloudRadSensitivity, phyq_temperature, &
+      & (/ p_minorFrame, p_signal /) )
+    call DefineQtyType ( l_cloudWater, phyq_dimensionless, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_columnAbundance, phyq_dobsonunits, (/ p_hGrid, p_molecule /) )
+    call DefineQtyType ( l_dnwt_ajn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_axmax, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_cait, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_chisqminnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_chisqnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_diag, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_dxdx, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_dxdxl, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_dxn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_dxnl, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_flag, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_fnmin, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_fnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_gdx, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_gfac, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_gradn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_sq, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_dnwt_sqt, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_earthRadius, phyq_length, (/ p_hGrid /) )
+    call DefineQtyType ( l_earthRefl, phyq_dimensionless, none )
+    call DefineQtyType ( l_ecrToFOV, phyq_dimensionless, (/ p_minorFrame, p_module, &
+      & p_matrix3x3 /) )
+    call DefineQtyType ( l_effectiveOpticalDepth, phyq_dimensionless, &
+      & (/ p_minorFrame, p_signal /) )
+    call DefineQtyType ( l_elevOffset, phyq_angle, (/ p_signal /) )
+    call DefineQtyType ( l_extinction, phyq_extinction, &
+      & (/ p_hGrid, p_vGrid, p_fGrid, p_radiometer /) )
+    call DefineQtyType ( l_gph, phyq_length, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_heightOffset, phyq_length, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_isotopeRatio, phyq_dimensionless, (/ p_molecule /) )
+    call DefineQtyType ( l_jacobian_cols, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_jacobian_rows, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_losTransFunc, phyq_dimensionless, &
+      & (/ p_minorFrame, p_sGrid, p_module /) )
+    call DefineQtyType ( l_losVel, phyq_dimensionless, (/ p_minorFrame, p_module /) )
+    call DefineQtyType ( l_magneticField, phyq_gauss, (/ p_vGrid, p_hGrid, p_xyz /) )
+    call DefineQtyType ( l_massMeanDiameterIce, phyq_dimensionless, &
+      & (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_massMeanDiameterWater, phyq_dimensionless, &
+      & (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_noRadsBinned, phyq_dimensionless, &
+      & (/ p_vGrid, p_hGrid, p_signal, p_suppressChannels /) )
+    call DefineQtyType ( l_noRadsPerMIF, phyq_dimensionless, &
+      & (/ p_minorFrame, p_signal, p_suppressChannels /) )
+    call DefineQtyType ( l_noiseBandwidth, phyq_frequency, (/ p_signal /) )
+    call DefineQtyType ( l_numJ, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
+    call DefineQtyType ( l_opticalDepth, phyq_dimensionless, (/ p_minorFrame, p_signal /) )
+    call DefineQtyType ( l_orbitInclination, phyq_angle, (/ p_minorFrame, p_scModule /) )
+    call DefineQtyType ( l_phiTan, phyq_angle, (/ p_minorFrame, p_module /) ) 
+    call DefineQtyType ( l_ptan, phyq_zeta, (/ p_minorFrame, p_module /) ) 
+    call DefineQtyType ( l_radiance, phyq_temperature, (/ p_minorFrame, p_signal /) ) 
+    call DefineQtyType ( l_refGPH, phyq_length, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_rhi, phyq_dimensionless, (/ p_hGrid, p_vGrid, p_molecule /) )
+    call DefineQtyType ( l_scECI, phyq_length, (/ p_minorFrame, p_scModule, p_xyz /) )
+    call DefineQtyType ( l_scGeocAlt, phyq_length, (/ p_minorFrame, p_scModule /) )
+    call DefineQtyType ( l_scVel, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
+    call DefineQtyType ( l_scVelECI, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
+    call DefineQtyType ( l_scVelECR, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
+    call DefineQtyType ( l_scanResidual, phyq_length, (/ p_minorFrame, p_module /) )
+    call DefineQtyType ( l_sidebandratio, phyq_dimensionless, (/ p_signal /) ) 
+    call DefineQtyType ( l_sizeDistribution, phyq_dimensionless, (/ p_hGrid, p_vGrid /) ) 
+    call DefineQtyType ( l_spaceRadiance, phyq_temperature, none )
+    call DefineQtyType ( l_surfaceType, phyq_dimensionless, (/ p_hGrid /) ) 
+    call DefineQtyType ( l_systemTemperature, phyq_temperature, (/ p_signal /) )
+    call DefineQtyType ( l_temperature, phyq_temperature, (/ p_hGrid, p_vGrid /) )
+    call DefineQtyType ( l_tngtECI, phyq_length, (/ p_minorFrame, p_module, p_xyz /) )
+    call DefineQtyType ( l_tngtGeocAlt, phyq_length, (/ p_minorFrame, p_module /) )
+    call DefineQtyType ( l_tngtGeodAlt, phyq_length, (/ p_minorFrame, p_module /) )
+    call DefineQtyType ( l_vmr, phyq_vmr, (/ p_hGrid, p_vGrid, p_fGridOptional, &
+      & p_molecule, p_radiometerOptional /) )
+
+    ! Do a bit of checking
+    do i = first_lit, last_lit
+      valid = .true.
+      message =  ''
+      ! Check it's not both major and minor frame
+      if ( count ( propertyTable ( (/ p_minorFrame, p_majorFrame /), i ) ) > 1 ) then
+        valid = .false.
+        message = "Quantity cannot be both major and minor frame"
+      end if
+      ! Check that we can identify the module for major/minor frame
+      if ( ( propertyTable ( p_minorFrame, i ) .or. &
+        &    propertyTable ( p_majorFrame, i ) ) .and. &
+        & .not. any ( propertyTable ( &
+        & (/ p_radiometer, p_module, p_scModule, p_signal /), i ) ) ) then
+        valid = .false.
+        message = "Badly defined major/minor frame quantity"
+      end if
+      ! Print out any message
+      if ( .not. valid ) then
+        call output ( "Offending quantity: " )
+        call display_string ( lit_indices ( i ), strip=.true., advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, message )
+      end if
+    end do
+  contains
+    ! --------------------------- Internal subroutine
+    subroutine DefineQtyType ( qtyType, unit, properties )
+      integer, intent(in) :: QTYTYPE
+      integer, intent(in) :: UNIT
+      integer, dimension(:), intent(in) :: PROPERTIES
+      ! Executable code
+    ! First init the quantity
+      propertyTable ( :, qtyType ) = .false.
+      propertyTable ( properties, qtyType ) = .true.
+      unitsTable ( qtyType ) = unit
+    end subroutine DefineQtyType
+    
+  end subroutine InitQuantityTemplates
+
+end module ConstructQuantityTemplates
