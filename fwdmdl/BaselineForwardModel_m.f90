@@ -244,6 +244,9 @@ contains ! ======================================== BaselineForwardModel ======
       ! Do this in a loop to avoid large array temps
       do mif = 1, noMIFs
         do chan = 1, noChans
+          if ( associated ( signal%channels ) ) then
+            if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+          end if
           rad = radiance%values ( chan + noChans*(mif-1), maf )
           rad = rad + chanWt0(chan) * surfWt0(mif) * instWt0(mif) * &
             & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
@@ -280,6 +283,9 @@ contains ! ======================================== BaselineForwardModel ======
         do mif = 1, noMIFs
           mm1 = mif - 1
           do chan = 1, noChans
+            if ( associated ( signal%channels ) ) then
+              if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+            end if
             row = chan+noChans*mm1
             kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
               & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
@@ -357,6 +363,9 @@ contains ! ======================================== BaselineForwardModel ======
           do mif = 1, noMIFs
             mm1 = mif - 1
             do chan = 1, noChans
+              if ( associated ( signal%channels ) ) then
+                if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
+              end if
               gradient = 0.0
               gradient = gradient + chanWt0(chan) * surfWt0Prime(mif) * instWt0(mif) * &
                 & baseline%values(chan0(chan)+noBslChans*surf0m(mif),inst0(mif))
@@ -406,6 +415,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.13  2002/11/07 15:07:25  livesey
+! Bug fix, was doing all channels even if only asked for a few
+!
 ! Revision 2.12  2002/10/08 17:08:01  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
