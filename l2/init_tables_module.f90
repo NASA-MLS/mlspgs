@@ -846,7 +846,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
-             begin, f+f_tolerance, t+t_numeric, nr+n_field_type, &
+             begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
             ndp+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &
@@ -971,6 +971,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.119  2001/06/21 20:06:42  vsnyder
+! Make the tolerance field of the ForwardModel spec optional
+!
 ! Revision 2.118  2001/06/21 15:05:30  livesey
 ! Added tolerance field to forwardModel
 !
