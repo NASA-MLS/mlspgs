@@ -26,6 +26,14 @@ include ../Makefile.dep
 endif
 endif
 
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
 include ../../customblds/$(MLSF95).$(MLSPLAT)
 
 # where which_fftw.sh is stored
@@ -212,6 +220,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.15  2003/02/28 17:44:22  pwagner
+# Links utctotai library
+#
 # Revision 1.14  2002/10/03 23:07:44  pwagner
 # l_specials for Lahey depend on gcc_version
 #
