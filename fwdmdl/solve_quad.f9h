@@ -2,54 +2,61 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! subroutine ?_SOLVE_QUAD ( A, B, C, X1, X2 )
-!
-    real(rk), INTENT(IN)  :: A, B, C
-    real(rk), INTENT(OUT) :: X1, X2
+
+    real(rk), intent(in)  :: A, B, C
+    real(rk), intent(out) :: X1, X2
     real(rk) :: DIS, R, SA, SB, SC
 
-!---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-!---------------------------------------------------------------------------
+! $Id$
+! $RCSfile$
 
-!
 !  Scale the coefficients (for better numerical stabiliy)
-!
+
     r = max(abs(a),abs(b),abs(c))
     sa = a / r
     sb = b / r
     sc = c / r
-!
+
     x1 = 0.0
     x2 = 0.0
-    dis = sb * sb - 4.0 * sa * sc
-    if(dis < 0.0) return
-!
-    if(sa == 0.0) then
-      if(sb == 0.0) return
+
+    if ( abs(sa) < tiny(sa) ) then
+      if ( abs(sb) < tiny(sb) ) return
       x1 = -sc / sb
       x2 = x1
       return
-    endif
-!
-    if(sc == 0.0) then
+    end if
+
+    if ( abs(sc) < tiny(sc) ) then
       r = -sb / sa
       x1 = max(0.0_rk,r)
       x2 = r - x1
       return
-    endif
-!
+    end if
+
+    if ( abs(sb) < tiny(sb) ) then
+      dis = sc / sa
+      if ( dis < 0.0 ) return
+      x1 = sqrt(dis)
+      x2 = - x1
+      return
+    end if
+
+    dis = sb * sb - 4.0 * sa * sc
+    if ( dis < 0.0 ) return
     dis = sqrt(dis)
-!
-    if(sb >= 0.0) then
+
+    if ( sb >= 0.0 ) then
       x1 = (-sb - dis) / (sa + sa)
     else
       x1 = (-sb + dis) / (sa + sa)
-    endif
-!
+    end if
+
     x2 = (sc / sa) / x1
-!
+
 ! end subroutine ?_SOLVE_QUAD
 
 ! $Log$
+! Revision 2.1  2002/10/02 15:50:30  bwknosp
+! Added Id and RCS info
+!
