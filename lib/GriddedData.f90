@@ -127,10 +127,12 @@ contains
     call Deallocate_test ( qty%dateEnds, "qty%dateEnds", ModuleName )
 
     ! Now the data itself
-    deallocate(qty%field, STAT=status)
+    if ( associated(qty%field) ) then
+      deallocate(qty%field, STAT=status)
 
-    if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//"field")
+      if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//"qty%field")
+    end if
 
   end subroutine DestroyGriddedData
 
@@ -327,6 +329,10 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.15  2002/06/27 00:09:50  vsnyder
+! Don't deallocate qty%field if it's not associated.  Don't say allocate
+! failed when the deallocate fails.
+!
 ! Revision 2.14  2002/06/26 22:03:31  vsnyder
 ! Cosmetic changes
 !
