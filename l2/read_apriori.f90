@@ -21,6 +21,7 @@ module ReadAPriori
 !  use OBTAINDAO, only: READ_DAO
 !  use OBTAINNCEP, only: READ_NCEP
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
+  use MoreTree, only: Get_Spec_ID
   use String_Table, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -99,7 +100,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
-      FileType = decoration(subtree(1,decoration(subtree(1,key))))
+      FileType = get_spec_id(key)
 
       ! Now parse file and field names
       fileName = 0
@@ -240,6 +241,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.9  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.8  2001/03/15 00:34:34  pwagner
 ! Gives more info to ReadGriddedData
 !
