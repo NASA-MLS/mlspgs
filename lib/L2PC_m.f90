@@ -17,21 +17,21 @@ module L2PC_m
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use QuantityTemplates, only: QUANTITYTEMPLATE_T
-  use Init_Tables_Module, only: L_RADIANCE, L_TEMPERATURE, L_VMR
+  use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_VMR
   use String_Table, only: GET_STRING
   use MLSSignals_m, only: GETSIGNALNAME
 
   implicit NONE
   private
   
-  public :: AddL2PCBinToDatabase, DestroyL2PCBin
+  public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase
 
   ! Public types
-  type, public :: l2pcBin_T
+  type, public :: l2pc_T
     type (Vector_T) :: xStar            ! The linearisation x
     type (Vector_T) :: yStar            ! The corresponding y
     type (Matrix_T) :: kStar            ! The jacobian matrix
-  end type l2pcBin_T
+  end type l2pc_T
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -42,14 +42,14 @@ module L2PC_m
 
 contains ! ============= Public Procedures ==========================
 
-  ! --------------------------------------- WriteL2PCBin ---------------
-  subroutine WriteL2PCBin ( l2pcBin, unit )
-    ! This subroutine writes an l2pc bin to a file
+  ! --------------------------------------- WriteOneL2PC ---------------
+  subroutine WriteOneL2PC ( l2pc, unit )
+    ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pcBin_T), intent(in), target :: l2pcBin
+    type (l2pc_T), intent(in), target :: l2pc
     integer, intent(in) :: unit
 
     ! Local variables
@@ -71,9 +71,9 @@ contains ! ============= Public Procedures ==========================
     do vector = 1, 2
       ! Identify vector
       if ( vector == 1 ) then
-        v => l2pcBin%xStar
+        v => l2pc%xStar
       else
-        v => l2pcBin%yStar
+        v => l2pc%yStar
       end if
 
       ! Loop over quantities
@@ -106,10 +106,10 @@ contains ! ============= Public Procedures ==========================
     end do                              ! Loop over xStar/yStar
 
     ! Now dump kStar
-    do blockRow = 1, l2pcBin%kStar%row%NB
-      do blockCol = 1, l2pcBin%kStar%row%NB
+    do blockRow = 1, l2pc%kStar%row%NB
+      do blockCol = 1, l2pc%kStar%row%NB
         ! Print the type of the matrix
-        m0 => l2pcBin%kStar%block(blockRow, blockCol)
+        m0 => l2pc%kStar%block(blockRow, blockCol)
         write (unit,*) m0%kind
         select case (m0%kind)
         case (M_Absent)
@@ -123,16 +123,16 @@ contains ! ============= Public Procedures ==========================
       end do
     end do
 
-  end subroutine WriteL2PCBin
+  end subroutine WriteOneL2PC
   
-  ! --------------------------------------- WriteL2PCBin ---------------
-  subroutine ReadL2PCBin ( l2pcBin, unit )
-    ! This subroutine writes an l2pc bin to a file
+  ! --------------------------------------- WriteL2PC ---------------
+  subroutine ReadOneL2PC ( l2pc, unit )
+    ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pcBin_T), intent(out), target :: l2pcBin
+    type (l2pc_T), intent(out), target :: l2pc
     integer, intent(in) :: unit
 
     ! Local variables
@@ -154,9 +154,9 @@ contains ! ============= Public Procedures ==========================
 !     do vector = 1, 2
 !       ! Identify vector
 !       if ( vector == 1 ) then
-!         v => l2pcBin%xStar
+!         v => l2pc%xStar
 !       else
-!         v => l2pcBin%yStar
+!         v => l2pc%yStar
 !       end if
 
 !       ! Loop over quantities
@@ -189,10 +189,10 @@ contains ! ============= Public Procedures ==========================
 !     end do                              ! Loop over xStar/yStar
 
 !     ! Now dump kStar
-!     do blockRow = 1, l2pcBin%kStar%row%NB
-!       do blockCol = 1, l2pcBin%kStar%row%NB
+!     do blockRow = 1, l2pc%kStar%row%NB
+!       do blockCol = 1, l2pc%kStar%row%NB
 !         ! Print the type of the matrix
-!         m0 => l2pcBin%kStar%block(blockRow, blockCol)
+!         m0 => l2pc%kStar%block(blockRow, blockCol)
 !         write (unit,*) m0%kind
 !         select case (m0%kind)
 !         case (M_Absent)
@@ -206,38 +206,59 @@ contains ! ============= Public Procedures ==========================
 !       end do
 !     end do
 
-  end subroutine ReadL2PCBin
+  end subroutine ReadOneL2PC
   
-  ! ------------------------------------  Add l2pc bin to database ----
-  integer function AddL2PCBinToDatabase ( Database, Item )
+  ! ------------------------------------  Add l2pc  to database ----
+  integer function AddL2PCToDatabase ( Database, Item )
     
-    ! This function simply adds an l2pc bin to a database of said l2pc bins.
+    ! This function simply adds an l2pc  to a database of said l2pc s.
     
-    type(l2pcBin_T), dimension(:), pointer :: Database
-    type(l2pcBin_T) :: Item
+    type(l2pc_T), dimension(:), pointer :: Database
+    type(l2pc_T) :: Item
     
-    type(l2pcBin_T), dimension(:), pointer :: TempDatabase
+    type(l2pc_T), dimension(:), pointer :: TempDatabase
     
     include "addItemToDatabase.f9h"
 
-    AddL2PCBinToDatabase = newSize
-  end function AddL2PCBinToDatabase
+    AddL2PCToDatabase = newSize
+  end function AddL2PCToDatabase
 
-  ! ----------------------------------------------- DestroyL2PCBin ----
-  subroutine DestroyL2PCBin ( l2pcBin )
+  ! ----------------------------------------------- DestroyL2PC ----
+  subroutine DestroyL2PC ( l2pc )
     ! Dummy arguments
-    type (l2pcBin_T), intent(inout) :: L2PCBIN
+    type (l2pc_T), intent(inout) :: L2PC
 
     ! Exectuable code
-    call DestroyVectorInfo ( l2pcBin%xStar )
-    call DestroyVectorInfo ( l2pcBin%yStar )
-    call DestroyMatrix ( l2pcBin%kStar )
+    call DestroyVectorInfo ( l2pc%xStar )
+    call DestroyVectorInfo ( l2pc%yStar )
+    call DestroyMatrix ( l2pc%kStar )
 
-  end subroutine DestroyL2PCBin
+  end subroutine DestroyL2PC
+
+  ! ------------------------------------------- DestroyL2PCDatabase ---
+  subroutine DestroyL2PCDatabase (l2pcDatabase )
+    ! Dummy arguments
+    type (l2pc_T), dimension(:), pointer :: l2pcDatabase
+
+    ! Local variables
+    integer :: i, status
+
+    if (associated(l2pcDatabase)) then
+      do i = 1, size(l2pcDatabase)
+        call DestroyL2PC ( l2pcDatabase(i) )
+      end do
+      deallocate ( l2pcDatabase, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_deallocate // "l2pcDatabase" )
+    end if
+  end subroutine DestroyL2PCDatabase
 
 end module L2PC_m
 
 ! $Log$
+! Revision 2.2  2001/04/24 20:20:48  livesey
+! Word bin dropped from various places e.g. type
+!
 ! Revision 2.1  2001/04/24 20:07:44  livesey
 ! Moved in from l2
 !
