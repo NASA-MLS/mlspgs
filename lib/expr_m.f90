@@ -110,6 +110,8 @@ contains ! ====     Public Procedures     ==============================
           value = value * value2
         case ( n_div )
           value = value / value2
+        case ( n_into )
+          value = value2 / value
         case default
           ! Shouldn't get here -- presumably checked already
         end select
@@ -124,6 +126,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.6  2004/01/14 18:32:58  vsnyder
+! Stuff for Algebra module
+!
 ! Revision 2.5  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -23,28 +23,29 @@ module SYMBOL_TYPES
   integer, parameter :: T_MINUS = 6
   integer, parameter :: T_STAR = 7
   integer, parameter :: T_SLASH = 8
-  integer, parameter :: T_DOT = 9
-  integer, parameter :: T_COLON = 10
-  integer, parameter :: T_COLON_LESS = 11
-  integer, parameter :: T_LESS_COLON = 12
-  integer, parameter :: T_LESS_COLON_LESS = 13
-  integer, parameter :: T_EQUAL = 14
-  integer, parameter :: T_COMMA = 15
-  integer, parameter :: T_BEGIN = 16              ! BEGIN
-  integer, parameter :: T_END = 17                ! END
-  integer, parameter :: T_AND = 18                ! AND
-  integer, parameter :: T_OR = 19                 ! OR
-  integer, parameter :: T_END_OF_INPUT = 20       ! <EOF>
-  integer, parameter :: T_END_OF_STMT = 21        ! <EOS>
-  integer, parameter :: T_IDENTIFIER = 22         ! <IDENTIFIER>
-  integer, parameter :: T_NUMBER = 23             ! <NUMBER>
-  integer, parameter :: T_STRING = 24             ! <STRING>
-  integer, parameter :: T_UNK_OP = 25             ! unknown operator
-  integer, parameter :: T_UNK_PUN = 26            ! unknown punctuator
-  integer, parameter :: T_UNK_CH = 27             ! unknown character
-  integer, parameter :: T_INC_NUM = 28            ! incomplete number
-  integer, parameter :: T_INC_STR = 29            ! incomplete string
-  integer, parameter :: T_AFT_CONT = 30           ! junk after continuation
+  integer, parameter :: T_BACKSLASH = 9
+  integer, parameter :: T_DOT = 10
+  integer, parameter :: T_COLON = 11
+  integer, parameter :: T_COLON_LESS = 12
+  integer, parameter :: T_LESS_COLON = 13
+  integer, parameter :: T_LESS_COLON_LESS = 14
+  integer, parameter :: T_EQUAL = 15
+  integer, parameter :: T_COMMA = 16
+  integer, parameter :: T_BEGIN = 17              ! BEGIN
+  integer, parameter :: T_END = 18                ! END
+  integer, parameter :: T_AND = 19                ! AND
+  integer, parameter :: T_OR = 20                 ! OR
+  integer, parameter :: T_END_OF_INPUT = 21       ! <EOF>
+  integer, parameter :: T_END_OF_STMT = 22        ! <EOS>
+  integer, parameter :: T_IDENTIFIER = 23         ! <IDENTIFIER>
+  integer, parameter :: T_NUMBER = 24             ! <NUMBER>
+  integer, parameter :: T_STRING = 25             ! <STRING>
+  integer, parameter :: T_UNK_OP = 26             ! unknown operator
+  integer, parameter :: T_UNK_PUN = 27            ! unknown punctuator
+  integer, parameter :: T_UNK_CH = 28             ! unknown character
+  integer, parameter :: T_INC_NUM = 29            ! incomplete number
+  integer, parameter :: T_INC_STR = 30            ! incomplete string
+  integer, parameter :: T_AFT_CONT = 31           ! junk after continuation
 
 ! The parameters T_LAST_TERMINAL, MIN_PSEUDO, MAX_PSEUDO and CASELESS_LOOK
 ! MUST be defined.
@@ -85,10 +86,10 @@ module SYMBOL_TYPES
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
   !  t_null    (         )         [         ]         +         -
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
-  !  *         /         .         :         <:        :<        <:<
+  !  *         /         \         .         :         <:        :<      
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  =         ,         begin
-     def_op,   def_pun,  res_word, &
+  !  <:<       =         ,         begin
+     def_op,   def_op,   def_pun,  res_word, &
   !  end       and       or        <eof>     <eos>     <ident>   <numcon>
      res_word, res_word, res_word, object,   object,   ident,    numcon,   &
   !  <string>  unk_op    unk_pun     unk_ch    inc_num   inc_str   junk
@@ -120,6 +121,7 @@ contains
     case ( t_minus );             call add_char ( '-' )
     case ( t_star );              call add_char ( '*' )
     case ( t_slash );             call add_char ( '/' )
+    case ( t_backslash );         call add_char ( '\' )
     case ( t_dot );               call add_char ( '.' )
     case ( t_colon );             call add_char ( ':' )
     case ( t_less_colon );        call add_char ( '<:' )
@@ -183,6 +185,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.6  2004/01/14 18:32:58  vsnyder
+! Stuff for Algebra module
+!
 ! Revision 2.5  2002/10/08 00:09:14  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
