@@ -118,7 +118,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
   integer, parameter :: S_FLAGCLOUD          = s_filldiagonal + 1
-  integer, parameter :: S_FORGE              = s_flagCloud + 1
+  integer, parameter :: S_FLUSHL2PCBINS      = s_flagCloud + 1
+  integer, parameter :: S_FORGE              = s_flushL2PCBins + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_FREQUENCYGRID      = s_forwardModelGlobal + 1
@@ -296,6 +297,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
     spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
     spec_indices(s_flagCloud) =            add_ident ( 'flagCloud' )
+    spec_indices(s_flushL2PCBins) =        add_ident ( 'flushL2PCBins' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
@@ -370,7 +372,7 @@ contains ! =====     Public procedures     =============================
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
-             l+l_cloudFull, n+n_dt_def, &
+             l+l_cloudFull, l+l_switchingMirror, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
@@ -1015,7 +1017,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
-                       s+s_negativePrecision, s+s_matrix, s+s_destroy, &
+                       s+s_flushL2PCBins, s+s_negativePrecision, s+s_matrix, s+s_destroy, &
                        s+s_snoop, s+s_time, s+s_vector, s+s_transfer, &
                        s+s_subset, s+s_flagcloud, s+s_restrictRange, s+s_updateMask, &
                        n+n_section, &
@@ -1039,6 +1041,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.316  2003/06/03 19:24:33  livesey
+! Added flushL2PCBins
+!
 ! Revision 2.315  2003/05/29 20:02:22  livesey
 ! Added reflector temperature model and supporting stuff
 !
