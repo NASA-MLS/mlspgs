@@ -28,6 +28,7 @@ module Join                     ! Join together chunk based data.
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   logical, parameter, private :: DEEBUG = .false.           ! Usually FALSE
@@ -757,10 +758,17 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine ANNOUNCE_ERROR
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Join
 
 !
 ! $Log$
+! Revision 2.63  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.62  2002/08/20 22:10:50  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
