@@ -42,7 +42,8 @@ BEGIN MLSSignals
                     575.0 MHz: 96.0 MHz ]
 
   ;; Digital autocorrelators:
-  DACS: spectrometerType, first= 0, start= 0.0, step= 200 kHz, width= 200 kHz, last= 128
+  DACS: spectrometerType, first= 0, $
+        start= 0.0 kHz, step= 200 kHz, width= 200 kHz, last= 128
 
   ;; Mid-band:
   MB11: spectrometerType, first= 1, $
@@ -430,6 +431,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.9  2001/03/28 19:48:57  vsnyder
+; Put units on 'start' field of 'spectrometerType
+;
 ; Revision 2.8  2001/03/28 19:25:33  vsnyder
 ; frequencies/widths replaced by channels; number/per_decade replaced by formula
 ;
