@@ -61,7 +61,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
 	    soundbarrier )
-		echo "/data1/$MYUSER";;
+		echo "/data1/$MYUSER/l2pc/";;
 	    scramjet )
 		echo "/state/partition1/livesey";;
 	    lightspeed )
@@ -157,6 +157,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.36  2004/08/05 17:29:28  livesey
+# Added l1breal
+#
 # Revision 1.35  2004/07/30 19:55:35  livesey
 # Moved the output data location.
 #
