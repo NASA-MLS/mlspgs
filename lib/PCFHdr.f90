@@ -709,7 +709,7 @@ CONTAINS
 !----------------------------------------
 
       use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
+      USE MLSHDF5, only: IsHDF5DSPresent, MakeHDF5Attribute, SaveAsHDF5DS
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF5 file as 
 ! (1) a datset if MAKEDATASET is TRUE
@@ -740,6 +740,7 @@ CONTAINS
       myPCFPATHNAME = PCFPATHNAME
       if ( present(name) ) myPCFPATHNAME = name
       if ( MAKEDATASET ) then
+        if ( IsHDF5DSPresent(fileID, trim(myPCFPATHNAME) ) ) return
         anScalar = transfer(anText, anScalar)
         call SaveAsHDF5DS ( fileID, trim(myPCFPATHNAME), anScalar )
       endif
@@ -928,6 +929,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.24  2003/08/15 20:41:50  pwagner
+!# Wont try to write another /PCF dataset if already there
+!#
 !# Revision 2.23  2003/08/11 17:40:42  cvuu
 !# Write anotating with multiple attributes PCF to handle big size of PCF file for hdfeos5
 !#
