@@ -2,6 +2,13 @@
 
 #	special options for compiling some modules--override .f90 rules
 
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
 ifndef CASCADE
 #	l1
 
@@ -311,6 +318,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.8  2003/02/01 00:01:35  pwagner
+# Changed for new l1 with 3 executables
+#
 # Revision 1.7  2002/11/08 01:18:21  pwagner
 # Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
 #
