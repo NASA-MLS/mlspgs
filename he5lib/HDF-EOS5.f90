@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===========================================================================
@@ -13,6 +13,11 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   character(len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   !----------------------------------------------------------
+
+  !The following is included only because hte original file
+  ! $(HDFEOS5)/../../include/hdfeos5.inc isn't f95-compatible
+  ! as of Toolkit version 5.2.8
+  include 'hdfeos5.f9h'
 
   ! Now define f90 interfaces for some HDF-EOS.
   ! Warning: as you are calling C directly, make sure that your 
@@ -118,3 +123,6 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 1.3  2002/01/29 00:49:26  pwagner
+! Added he5_gd(open)(close) functions
+!

@@ -10,7 +10,8 @@ module MLSFiles               ! Utility file routines
   use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
-    & he5_gdopen, he5_gdclose
+    & he5_gdopen, he5_gdclose, &
+    & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use machine, only: io_error
   use MLSCommon, only: i4, BareFNLen
   use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
@@ -112,7 +113,7 @@ module MLSFiles               ! Utility file routines
   ! this and see what the toolkit code actually does,
   ! not just what the docs say
   logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
-  integer, parameter :: HDF5_ACC_DEFAULT = HDF5_ACC_RDWR
+  integer, parameter :: HDF5_ACC_DEFAULT = HE5F_ACC_RDWR ! HDF5_ACC_RDWR
   
   ! The only legal unit numbers that files may be assigned
   ! for use by Fortran opens, closes, reads and writes
@@ -880,13 +881,13 @@ contains
     select case (FileAccesshdf4)
 
     case(DFACC_CREATE)
-      FileAccesshdf5 = H5F_ACC_TRUNC
+      FileAccesshdf5 = HE5F_ACC_TRUNC   ! H5F_ACC_TRUNC
 
     case(DFACC_READ)
-      FileAccesshdf5 = H5F_ACC_RDONLY
+      FileAccesshdf5 = HE5F_ACC_RDONLY   ! H5F_ACC_RDONLY
 
     case default
-      FileAccesshdf5 = H5F_ACC_RDWR
+      FileAccesshdf5 = HE5F_ACC_RDWR   ! H5F_ACC_RDWR
 
     end select
 
@@ -984,11 +985,11 @@ contains
      if ( .not. HDF5_ACC_TYPES_TO_MET ) then
        myAccess = hdf2hdf5_fileaccess(FileAccess)
      elseif ( FileAccess == DFACC_RDWR ) then
-       myAccess = HDF5_ACC_RDWR
+       myAccess = HE5F_ACC_RDWR  ! HDF5_ACC_RDWR
      elseif ( FileAccess == DFACC_CREATE ) then
-       myAccess = HDF5_ACC_CREATE
+       myAccess = HE5F_ACC_TRUNC ! HDF5_ACC_CREATE
      elseif ( FileAccess == DFACC_RDONLY ) then
-       myAccess = HDF5_ACC_RDONLY
+       myAccess = HE5F_ACC_RDONLY ! HDF5_ACC_RDONLY
      else
        myAccess = HDF5_ACC_DEFAULT
      endif
@@ -1142,6 +1143,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.11  2002/03/14 23:31:57  pwagner
+! HDFVERSION_4 and 5 now public
+!
 ! Revision 1.10  2002/03/13 18:32:05  pwagner
 ! No longer dumps core after writing metadata to hdf5 files
 !
