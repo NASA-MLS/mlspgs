@@ -19,12 +19,14 @@
 angle
 
 baseline
+boundarypressure
 
 C
 channel
 chunk
 clear
 clear_110RH_below_top
+clear_110RH_below_tropopause
 clear_0RH
 clear_lowest_0_110RH
 cloudExtinction
@@ -164,6 +166,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.21  2003/04/22 00:18:33  dwu
+# move in boundarypressure from L2
+#
 # Revision 2.20  2003/04/09 00:10:19  livesey
 # Added literals for Dong and Jonathan
 #
