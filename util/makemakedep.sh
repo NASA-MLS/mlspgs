@@ -97,6 +97,9 @@ TRY_CLEANUP=1
 PRINT_TOO_MUCH=0
 #              ^  -- set this to 1 if willing to try patience
 #
+EDIT_GB_PERL_PATH=1
+#                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
+#
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -257,15 +260,29 @@ else
 	    		;;
 			esac
 			else
-				echo "Continuing to use $script_perl"
-              		  	change_perl=
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
 			fi
    		if [ "$change_perl" != "" ] ; then
             sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
 				chmod u+w "$the_DEPMAKER"
          	mv temp.pl "$the_DEPMAKER"
 				chmod a+x "$the_DEPMAKER"
-				echo "*** You have fixed f90makedep.f90 to look for $your_perl"
+				echo "*** You have fixed f90makedep.pl to look for $your_perl"
+   		   if [ "$EDIT_GB_PERL_PATH" = "1" ] ; then
+	            #
+	            # Prefix f90GhostFiles.pl with the path to util
+               # this assumes f90GhostFiles.pl is in same dir as this script
+	            the_GHOSTFINDER="`echo $0 | sed 's/makemakedep.sh/f90GhostFiles.pl/'`"
+            	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
+               if [ "$script_perl" != "$your_perl" ] ; then
+                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > temp.pl
+		      		chmod u+w "$the_GHOSTFINDER"
+         	      mv temp.pl "$the_GHOSTFINDER"
+		      		chmod a+x "$the_GHOSTFINDER"
+				      echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
+               fi
+            fi
          fi
        fi
 #	f90makedep.pl >> Makefile.dep
@@ -290,6 +307,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.8  2001/03/23 00:41:23  pwagner
+# Prints less
+#
 # Revision 1.7  2001/02/26 00:25:40  pwagner
 # More informative message before fixing perl path; cleanup after abort
 #
