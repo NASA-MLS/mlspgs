@@ -1663,7 +1663,7 @@ contains ! =============== Subroutines and functions ==========================
   CALL get_eta_sparse(h2o%template%surfs(:,1),(/z_surf/),eta_at_one_zeta)
   CALL refractive_index(10.0_rp**(-(/z_surf/)),(/surf_temp/),surf_refr_indx, &
   & h2o_path = (/EXP(SUM(RESHAPE(eta_at_one_zeta,(/h2o%template%nosurfs/)) &
-  & * SUM(LOG(max(h2o%values(:,windowstart_h2o:windowfinish_h2o),1e-9_rp))) &
+  & * SUM(LOG(max(h2o%values(:,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
   & * SPREAD(RESHAPE(eta_at_one_phi,(/windowfinish_h2o-windowstart_h2o+1/)), &
   & 1,temp%template%nosurfs),dim=2)))/))
   CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
@@ -1885,6 +1885,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.44  2002/06/27 00:20:43  livesey
+! Typo!
+!
 ! Revision 2.43  2002/06/27 00:19:26  livesey
 ! Fixed another log h2o
 !
