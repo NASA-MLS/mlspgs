@@ -74,8 +74,8 @@ module Hydrostatic_m
     n_coeffs = size(t_basis)
 
     where ( z_grid > 2.5_rp )
-!      mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
-! This is a second order approximation to the above
+!     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
+! This is a second order Taylor series expansion about z_grid = 5/2 of the above
       mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
     elsewhere
       mass_corr = 1.0_rp
@@ -178,6 +178,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.10  2003/09/16 00:21:32  vsnyder
+! Remove unused arguments to get_eta
+!
 ! Revision 2.9  2003/02/12 20:52:38  bill
 ! fixed serious bug in mass correction polynomial
 !
