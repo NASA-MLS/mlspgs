@@ -19,7 +19,8 @@ module L2PC_m
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T
+    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
+    & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -31,7 +32,7 @@ module L2PC_m
   use String_Table, only: GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
-  use TOGGLES, only: TAB, TOGGLE
+  use TOGGLES, only: TAB, TOGGLE, SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
 
   implicit NONE
@@ -216,6 +217,7 @@ contains ! ============= Public Procedures ==========================
     eof = .false.
     do while (.not. eof )
       call ReadOneL2PC ( l2pc, lun, eof )
+      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
       if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
@@ -725,6 +727,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.34  2002/06/22 23:12:07  livesey
+! Added sparsity dump
+!
 ! Revision 2.33  2002/06/12 18:00:12  livesey
 ! Stubs for HDF5 stuff
 !
