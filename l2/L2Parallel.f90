@@ -28,7 +28,7 @@ module L2Parallel
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
-    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, NOTIFYTAG, &
+    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & GETNICETIDSTRING
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
@@ -272,6 +272,7 @@ contains ! ================================ Procedures ======================
     external :: Usleep
 
     ! Local variables
+    logical :: USINGSUBMIT              ! Set if using the submit mechanism
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=132) :: COMMANDLINE
 
@@ -296,8 +297,8 @@ contains ! ================================ Procedures ======================
     integer :: TIDARR(1)                ! One tid
     integer :: VALIND                   ! Array index
 
-    integer, dimension(:), pointer :: SLAVECHUNKS ! Chunks for machines
-    integer, dimension(:), pointer :: SLAVETIDS ! Taks ids for machines
+    integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
+    integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
 
     logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
     logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
@@ -326,17 +327,16 @@ contains ! ================================ Procedures ======================
     ! so if it's not then quit.
     if ( finished ) return
 
+    usingSubmit = trim(parallel%submit) == ''
+
     ! Setup some stuff
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machineNames, slaveTids, slaveChunks, &
-      & machineFree, storedResults, machineOK, jobsMachineKilled )
+      & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled )
 
     ! Work out the information on our virtual machine
     call GetMachineNames ( machineNames )
     noMachines = size(machineNames)
-    call Allocate_test ( slaveTids, noMachines, 'slaveTids', ModuleName )
-    call Allocate_test ( slaveChunks, noMachines, 'slaveChunks', ModuleName )
     call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
     call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
     call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
@@ -349,6 +349,8 @@ contains ! ================================ Procedures ======================
     chunksStarted = .false.
     chunksAbandoned = .false.
     chunkFailures = 0
+    chunkTids = 0
+    chunkMachines = 0
 
     masterLoop: do ! --------------------------- Master loop -----------------------
       ! This loop is in two main parts.
@@ -372,21 +374,21 @@ contains ! ================================ Procedures ======================
         ! Did this launch work
         if ( info == 1) then
           machineFree(machine) = .false.
-          slaveChunks(machine) = nextChunk
-          slaveTids(machine) = tidArr(1)
+          chunkMachines(nextChunk) = machine
+          chunkTids(nextChunk) = tidArr(1)
           chunksStarted(nextChunk) = .true.
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Launched chunk ' )
             call output ( nextChunk )
             call output ( ' on slave ' // trim(machineNames(machine)) // &
-              & ' ' // trim(GetNiceTidString(slaveTids(machine))), &
+              & ' ' // trim(GetNiceTidString(chunkTids(nextChunk))), &
               & advance='yes' )
           end if
           call SendChunkInfoToSlave ( chunks, nextChunk, &
-            & slaveTids(machine) )
+            & chunkTids(nextChunk) )
           ! Now ask to be notified when this task exits
           call PVMFNotify ( PVMTaskExit, NotifyTag, 1, &
-            & (/ slaveTids(machine) /), info )
+            & (/ chunkTids(nextChunk) /), info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
         else
           ! Couldn't start this job, mark this machine as unreliable
@@ -416,73 +418,83 @@ contains ! ================================ Procedures ======================
           call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
-          machine = FindFirst ( slaveTids == slaveTid )
-          if ( machine == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          chunk = FindFirst ( chunkTids == slaveTid )
+          if ( chunk == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Got a message from an unknown slave")
           ! Unpack the first integer in the buffer
+          machine = chunkMachines(chunk)
           call PVMF90Unpack ( signal, info )
           if ( info /= 0 ) then
             call PVMErrorMessage ( info, "unpacking signal" )
-          else
-            select case (signal) 
-
-            case ( sig_tojoin ) ! --------------- Got a join request ---------
-              call StoreSlaveQuantity( joinedQuantities, &
-                & joinedVectorTemplates, joinedVectors, &
-                & storedResults, slaveChunks(machine), noChunks, slaveTid )
-
-            case ( sig_finished ) ! -------------- Got a finish message ----
-              if ( index(switches,'mas') /= 0 ) then
-                call output ( 'Got a finished message from ' // &
-                  & trim(machineNames(machine)) // ' ' // &
-                  & trim(GetNiceTidString(slaveTid)) // &
-                  & ' processing chunk ' )
-                call output ( slaveChunks(machine), advance='yes')
-              endif
-
-              ! Send an acknowledgement
-              call PVMFInitSend ( PVMDataDefault, bufferID )
-              if ( bufferId < 0 ) &
-                & call PVMErrorMessage ( bufferID, 'setting up finish ack.' )
-              call PVMF90Pack ( SIG_AckFinish, info )
-              if ( info /= 0 ) &
-                & call PVMErrorMessage ( info, 'packing finish ack.' )
-              call PVMFSend ( slaveTid, InfoTag, info )
-              if ( info /= 0 ) &
-                & call PVMErrorMessage ( info, 'sending finish ack.' )
-
-              ! Now update our information
-              chunksCompleted(slaveChunks(machine)) = .true.
-              machineFree(machine) = .true.
-              slaveChunks(machine) = 0
-              slaveTids(machine) = 0
-              if ( index(switches,'mas') /= 0 ) then
-                call output ( 'Master status:', advance='yes' )
-                call output ( count(chunksCompleted) )
-                call output ( ' of ' )
-                call output ( noChunks )
-                call output ( ' chunks completed, ')
-                call output ( count(chunksStarted .and. .not. chunksCompleted) )
-                call output ( ' underway, ' )
-                call output ( count(chunksAbandoned) )
-                call output ( ' abandoned, ' )
-                call output ( count(.not. &
-                  & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
-                call output ( ' left. ', advance='yes' )
-                
-                call output ( count ( .not. machineFree ) )
-                call output ( ' of ' )
-                call output ( noMachines )
-                call output ( ' machines busy, with ' )
-                call output ( count ( .not. machineOK ) )
-                call output ( ' being avoided.', advance='yes' )
-              endif
-
-            case default
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unkown signal from slave' )
-            end select
-          end if
+          endif
+          select case (signal) 
+            
+          case ( sig_register ) ! ----------------- Chunk registering ------
+            call PVMF90Unpack ( chunk, info )
+            if ( info /= 0 ) then
+              call PVMErrorMessage ( info, "unpacking chunk number" )
+            endif
+            if ( usingSubmit ) then
+              ! We only really care about this message if we're using submit
+              
+            endif
+            
+          case ( sig_tojoin ) ! --------------- Got a join request ---------
+            call StoreSlaveQuantity( joinedQuantities, &
+              & joinedVectorTemplates, joinedVectors, &
+              & storedResults, chunk, noChunks, slaveTid )
+            
+          case ( sig_finished ) ! -------------- Got a finish message ----
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Got a finished message from ' // &
+                & trim(machineNames(machine)) // ' ' // &
+                & trim(GetNiceTidString(slaveTid)) // &
+                & ' processing chunk ' )
+              call output ( chunk, advance='yes')
+            endif
+            
+            ! Send an acknowledgement
+            call PVMFInitSend ( PVMDataDefault, bufferID )
+            if ( bufferId < 0 ) &
+              & call PVMErrorMessage ( bufferID, 'setting up finish ack.' )
+            call PVMF90Pack ( SIG_AckFinish, info )
+            if ( info /= 0 ) &
+              & call PVMErrorMessage ( info, 'packing finish ack.' )
+            call PVMFSend ( slaveTid, InfoTag, info )
+            if ( info /= 0 ) &
+              & call PVMErrorMessage ( info, 'sending finish ack.' )
+            
+            ! Now update our information
+            chunksCompleted(chunk) = .true.
+            machineFree(machine) = .true.
+            chunkTids(chunk) = 0
+            chunkMachines(chunk) = 0
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Master status:', advance='yes' )
+              call output ( count(chunksCompleted) )
+              call output ( ' of ' )
+              call output ( noChunks )
+              call output ( ' chunks completed, ')
+              call output ( count(chunksStarted .and. .not. chunksCompleted) )
+              call output ( ' underway, ' )
+              call output ( count(chunksAbandoned) )
+              call output ( ' abandoned, ' )
+              call output ( count(.not. &
+                & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
+              call output ( ' left. ', advance='yes' )
+              
+              call output ( count ( .not. machineFree ) )
+              call output ( ' of ' )
+              call output ( noMachines )
+              call output ( ' machines busy, with ' )
+              call output ( count ( .not. machineOK ) )
+              call output ( ' being avoided.', advance='yes' )
+            endif
+            
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unkown signal from slave' )
+          end select
         end if
       end do receiveInfoLoop
 
@@ -494,14 +506,14 @@ contains ! ================================ Procedures ======================
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
         ! Now this may well be a legitimate exit, in which case, we won't
         ! know about this tid any more.  Otherwise we need to tidy up.
-        if ( any ( slaveTids == deadTid ) ) then
-          deadMachine = FindFirst ( slaveTids == deadTid )
+        if ( any ( chunkTids == deadTid ) ) then
+          deadChunk = FindFirst ( chunkTids == deadTid )
 
           ! Now, to get round a memory management bug, we'll ignore this
           ! if, as far as we're concerned, the task was finished anyway.
-          if ( deadMachine /= 0 ) then
+          if ( deadChunk /= 0 ) then
+            deadMachine = chunkMachines(deadChunk)
             machineFree(deadMachine) = .true.
-            deadChunk = slaveChunks ( deadMachine )
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'The run of chunk ' )
               call output ( deadChunk )
@@ -659,6 +671,10 @@ contains ! ================================ Procedures ======================
     if ( index(switches,'mas') /= 0 ) then
       call output ( 'All chunks joined', advance='yes' )
     endif
+
+    call Deallocate_test ( machineFree, 'machineFree', ModuleName )
+    call Deallocate_test ( machineOK, 'machineOK', ModuleName )
+    call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
 
   end subroutine L2MasterTask
 
@@ -849,6 +865,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.29  2002/04/24 16:53:38  livesey
+! Reordered arrays, on the way to having submit working
+!
 ! Revision 2.28  2002/04/08 20:49:17  pwagner
 ! Swath name optionally passed to JoinL2GPQuantities
 !
