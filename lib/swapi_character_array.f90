@@ -18,7 +18,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    character, intent(out) :: BUFFER(:) ! Buffer for read
+    character(len=*), intent(out) :: BUFFER(:) ! Buffer for read
 
     integer, external :: SWRDFLD
 
@@ -33,7 +33,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    character, intent(in) :: BUFFER(:)  ! Buffer for write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
 
     integer, external :: SWWRFLD
 
@@ -44,6 +44,9 @@ contains
 end module SWAPI_CHARACTER_ARRAY
 
 ! $Log$
+! Revision 2.1  2000/09/29 18:04:02  vsnyder
+! Remove incorrect use of RESHAPE; make BUFFER argument always assumed shape.
+!
 ! Revision 2.0  2000/09/05 17:41:07  dcuddy
 ! Change revision to 2.0
 !
