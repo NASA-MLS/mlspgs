@@ -83,7 +83,6 @@ contains ! ====     Public Procedures     ==============================
     use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
       & Vector_T, VectorTemplate_T
     use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
-    use WriteMetadata, only: PCFData_T
 
     integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
@@ -109,7 +108,7 @@ contains ! ====     Public Procedures     ==============================
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
-    type (PCFData_T) ::                          L2pcf
+    ! type (PCFData_T) ::                          L2pcf
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
@@ -135,7 +134,7 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
-    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
+    call OpenAndInitialize ( processingRange, l1bInfo )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
@@ -153,7 +152,7 @@ contains ! ====     Public Procedures     ==============================
         ! --------------------------------------------------------- Init sections
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
-          & l2gpDatabase, l2pcf, processingRange, l1bInfo )
+          & l2gpDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
       case ( z_mlsSignals )
         call MLSSignals ( son )
@@ -337,7 +336,7 @@ subtrees:   do while ( j <= howmany )
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-            & matrices, l2pcf, size(chunks)==1 .or. singleChunk /= 0 )
+            & matrices, size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -393,7 +392,7 @@ subtrees:   do while ( j <= howmany )
     call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
     call destroyFGridDatabase ( fGrids )
-    call DestroyL1BInfo ( l1bInfo, l2pcf )
+    call DestroyL1BInfo ( l1bInfo )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
 
@@ -433,6 +432,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.110  2003/06/30 22:56:16  cvuu
+! Print mean, std dev for fullForwardModel timing
+!
 ! Revision 2.109  2003/06/24 23:54:07  pwagner
 ! New db indexes stored for entire direct file
 !
