@@ -83,8 +83,9 @@ contains ! ====     Public Procedures     ==============================
       clockStack(depth) = t - clockStack(depth)
       call output ( values(8), 3, 'no', .true. )        ! milliseconds
       call output ( ' used ' )
-      call output ( dble(clockStack(depth) - clockStack(depth+1)), &
-        & format='(g10.3)', advance='yes' )
+!     call output ( dble(clockStack(depth) - clockStack(depth+1)), &
+!       & format='(g10.3)', advance='yes' )
+      call output ( dble(clockStack(depth)), format='(g10.3)', advance='yes' )
     else
       call output ( values(8), 3, 'yes', .true. )        ! milliseconds
     end if
@@ -92,6 +93,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.8  2001/05/03 02:13:25  vsnyder
+! Trying to print time exclusive of calls isn't working
+!
 ! Revision 2.7  2001/05/01 23:53:40  vsnyder
 ! Print CPU time exclusive of deeper ones at each end_trace
 !
