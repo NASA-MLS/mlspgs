@@ -11,8 +11,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP, DUMPSIZE
   use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
-    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, CyclicJacobi, & 
-    & DenseCyclicJacobi, Densify, &
+    & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
+    & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
     & DestroyBlock, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
     & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &            
     & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
@@ -33,7 +33,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   private
   public :: AddToMatrixDatabase, AddToMatrix, AssignMatrix
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
-  public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
+  public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: CyclicJacobi, DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
@@ -77,6 +77,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   
   interface CholeskyFactor
     module procedure CholeskyFactor_1
+  end interface
+
+  interface ClearLower
+    module procedure ClearLower_1
   end interface
 
   interface ClearRows
@@ -671,6 +675,21 @@ contains ! =====     Public Procedures     =============================
     end do ! i = 2, n
     if ( present ( status ) ) status = 0
   end subroutine CholeskyFactor_1
+
+  ! ------------------------------------------------  ClearLower  ------
+  subroutine ClearLower_1 ( X )
+    ! Zero out lower triangle of X
+    type ( matrix_T ), intent(inout) :: X
+    ! Local variables
+    integer :: I, J                     ! Subscripts
+    ! Executable code
+    do i = 1, x%row%nb
+      do j = 1, i - 1
+        call DestroyBlock ( x%block(i,j) )
+      end do
+      call ClearLower ( x%block(i,i) )
+    end do
+  end subroutine ClearLower_1
 
   ! ------------------------------------------------  ClearMatrix  -----
   subroutine ClearMatrix ( X )     ! Delete all of the blocks, but keep the
@@ -2530,6 +2549,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.102  2004/10/14 04:54:25  livesey
+! Added ClearLower_1
+!
 ! Revision 2.101  2004/07/07 19:34:30  vsnyder
 ! Add Init argument to CreateBlock
 !
