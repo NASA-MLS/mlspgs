@@ -3,14 +3,14 @@
 
 module RAD_TRAN_M
 
-  use MLSCommon, only: R8, RP, IP
+  use MLSCommon, only: RP, IP
   use GLNP, ONLY: Ng
 
   implicit NONE
   private
   public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
-  public :: Get_Do_Calc
-  private ::  Get_Del_Zeta_All, Get_Do_Calc_Indexed
+  public :: Get_Del_Zeta_All, Get_Do_Calc
+  private ::  Get_Do_Calc_Indexed
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -367,9 +367,9 @@ contains
               aa = all_inds(a)
               d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
                 & 0.5_rp * del_zeta(i) * &
-                & sum( (beta_path_f(all_inds(a:a+ng-1),sps_i) * &
-                     &  eta_zxp_f(gl_inds(all_inds(a:a+ng-1)),sv_i) * &
-                     &  sps_path(gl_inds(all_inds(a:a+ng-1)),sps_i) - &
+                & sum( (beta_path_f(aa:aa+ng-1,sps_i) * &
+                     &  eta_zxp_f(gl_inds(aa:aa+ng-1),sv_i) * &
+                     &  sps_path(gl_inds(aa:aa+ng-1),sps_i) - &
                      &  singularity(more_inds(i))) * &
                      & ds_dh(gl_inds(aa:aa+ng-1)) * dh_dz(gl_inds(aa:aa+ng-1)) * &
                      & gw )
@@ -573,9 +573,9 @@ contains
               aa = all_inds(a)
               d_delta_dx(more_inds(i)) = d_delta_dx(more_inds(i)) + &
                 & 0.5_rp * del_zeta(i) * &
-                & sum( (dbeta_path_f(all_inds(a:a+ng-1),sps_i) * &
-                     &  eta_zxp_f_f(all_inds(a:a+ng-1),sv_i) * &
-                     &  sps_path_f(all_inds(a:a+ng-1),sps_i) - &
+                & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) * &
+                     &  eta_zxp_f_f(aa:aa+ng-1,sv_i) * &
+                     &  sps_path_f(aa:aa+ng-1,sps_i) - &
                      &  singularity(more_inds(i))) * &
                      & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
               a = a + ng
@@ -637,8 +637,8 @@ contains
     real(rp), intent(in) :: h_tan           ! tangent height + req (km).
     real(rp), intent(in) :: dh_dt_tan(:)    ! derivative of path height wrt
 !                                             temperature at the tangent (km/K).
-    logical, intent(in) :: do_gl(:)         ! Indicates where to do gl
-!                                             integrations.
+    logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
+!                                             to do gl integrations.
     real(rp), intent(in) :: h_path_f(:)     ! path heights + req on gl grid km.
     real(rp), intent(in) :: t_path_f(:)     ! path temperature(K) on gl grid.
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
@@ -672,7 +672,7 @@ contains
 ! Internals
 
     integer(ip) :: A, AA
-    integer(ip) :: i, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i, sv_t
+    integer(ip) :: i, j, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i, sv_t
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -693,7 +693,7 @@ contains
                                          ! grid panel -- singular at tangent pt.
 
     logical :: do_calc(1:size(tau))      ! do_calc_t_c .or. ( do_gl .and. any
-      !                                    of the corresponding do_calc_t_f).
+                                         ! of the corresponding do_calc_t_f ).
     logical :: NeedFA                    ! Need F(A) for hydrostatic
 
 ! Begin code
@@ -727,15 +727,15 @@ contains
         i_start = max(inds(1)-1,1)
 
         do i = 1, n_inds ! Don't trust the compiler to fuse loops
-          singularity(inds(i)) = alphaxn_path_c(inds(i)) * eta_zxp_c(inds(i),sv_i) &
-                      / t_path_c(inds(i))
-          d_delta_dt(inds(i),sv_i) = singularity(inds(i)) * del_s(inds(i))
+          j = inds(i)
+          singularity(j) = alphaxn_path_c(j) * eta_zxp_c(j,sv_i) / t_path_c(j)
+          d_delta_dt(j,sv_i) = singularity(j) * del_s(j)
         end do ! i
+
+! see if anything needs to be gl-d
 
         no_to_gl = count(do_gl(inds))
         if ( no_to_gl > 0 ) then
-
-! see if anything needs to be gl-d
 
           all_inds => all_inds_B(1:ng*no_to_gl)
           del_zeta => del_zeta_B(1:no_to_gl)
@@ -765,9 +765,9 @@ contains
             aa = all_inds(a)
             d_delta_dt(more_inds(i),sv_i) = d_delta_dt(more_inds(i),sv_i) + &
               & 0.5_rp * del_zeta(i) * &
-              & sum( (alphaxn_path_f(all_inds(a:a+ng-1)) * &
-                   &  eta_zxp_f(all_inds(a:a+ng-1),sv_i) / &
-                   &  t_path_f(all_inds(a:a+ng-1)) - &
+              & sum( (alphaxn_path_f(aa:aa+ng-1) * &
+                   &  eta_zxp_f(aa:aa+ng-1,sv_i) / &
+                   &  t_path_f(aa:aa+ng-1) - &
                    &  singularity(more_inds(i))) * &
                    & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
             a = a + ng
@@ -904,6 +904,52 @@ contains
 
 ! =====     Would be private if Get_D_Deltau_Pol_d* were here     ======
 
+  ! -------------------------------------------  Get_Del_Zeta_All  -----
+  subroutine Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
+    &                           More_Inds, All_Inds, Del_Zeta )
+
+    use GLNP, ONLY: Ng
+    use MLSCommon, only: RP
+
+    implicit NONE
+
+  ! Inputs
+    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
+      !                                        gl integrations.
+    logical, intent(in) :: Do_Calc(:)
+    real(rp), intent(in) :: Z_path_c(:)      ! path -log(P) on coarse grid.
+
+  ! Outputs
+    integer, intent(out) :: More_Inds(:)
+    integer, intent(out) :: All_Inds(:)
+    real(rp), intent(out) :: Del_Zeta(:)
+
+    integer :: I, J, K, L, M, N_Path, P_I, P2
+
+    i = 1
+    j = 1
+    l = 1
+    n_path = size(do_gl)
+    p_i = 2
+    p2 = n_path / 2
+    do m = -1, 1, 2
+      do p_i = p_i , p2
+        if ( do_gl(p_i) ) then
+          if ( do_calc(p_i) ) then
+            more_inds(i) = p_i
+            all_inds(j:j+ng-1) = (/ (l + k, k = 0, ng-1 ) /)
+            del_zeta(i) = z_path_c(p_i+m) - z_path_c(p_i)
+            i = i + 1
+            j = j + Ng
+          end if
+          l = l + Ng
+        end if
+      end do
+      p2 = n_path - 1
+    end do
+
+  end subroutine Get_Del_Zeta_All
+
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc )
 
@@ -931,53 +977,6 @@ contains
   end subroutine Get_Do_Calc
 
 ! =====     Private Procedures     =====================================
-
-  ! -------------------------------------------  Get_Del_Zeta_All  -----
-  subroutine Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
-    &                           More_Inds, All_Inds, Del_Zeta )
-
-    use GLNP, ONLY: Ng
-    use MLSCommon, only: RP
-
-    implicit NONE
-
-  ! Inputs
-    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
-      !                                        gl integrations.
-    logical, intent(in) :: Do_Calc(:)
-    real(rp), intent(in) :: Z_path_c(:)      ! path -log(P) on coarse grid.
-
-  ! Outputs
-    integer, intent(out) :: More_Inds(:)
-    integer, intent(out) :: All_Inds(:)
-    real(rp), intent(out) :: Del_Zeta(:)
-
-    integer :: I, J, K, L, M, Mid, N_Path, P_I, P2
-
-    i = 1
-    j = 1
-    l = 1
-    n_path = size(do_gl)
-    mid = n_path / 2
-    p_i = 1
-    p2 = mid
-    do m = -1, 1, 2
-      do p_i = p_i , p2
-        if ( do_gl(p_i) ) then
-          if ( do_calc(p_i) ) then
-            more_inds(i) = p_i
-            all_inds(j:j+ng-1) = (/ (l + k, k = 0, ng-1 ) /)
-            del_zeta(i) = z_path_c(p_i+m) - z_path_c(p_i)
-            i = i + 1
-            j = j + Ng
-          end if
-          l = l + Ng
-        end if
-      end do
-      p2 = n_path
-    end do
-
-  end subroutine Get_Del_Zeta_All
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
   subroutine Get_Do_Calc_Indexed ( Do_Calc_all, C_Inds, F_Inds, Do_GL, Do_Calc )
@@ -1051,6 +1050,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.25  2003/10/09 21:04:38  vsnyder
+! Fix typos generated while inlining path_opacity
+!
 ! Revision 2.23  2003/09/25 20:06:03  vsnyder
 ! Insert TeXnicalities.  Insert many more comments too.  Inline path_opacity,
 ! which results in substantial savings in derivative calculations because it
