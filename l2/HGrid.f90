@@ -11,9 +11,10 @@ module HGrid                    ! Horizontal grid information
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
     & F_INTERPOLATIONFACTOR, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
-    & LIT_INDICES, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
+    & PHYQ_DIMENSIONLESS, PHYQ_LENGTH
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
+  use L2GPData, only: L2GPDATA_T
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
@@ -25,16 +26,16 @@ module HGrid                    ! Horizontal grid information
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
   use UNITS, only: DEG2RAD, RAD2DEG
-  use L2GPData, only: L2GPDATA_T
 
   implicit none
 
-  private :: Id, ModuleName
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= "$RCSfile$"
-  ! ---------------------------------------------------------------------------
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! This module contains datatypes and routines for handling HGrid information
   ! HGrids are the horizontal gridding information that get into vector
@@ -533,6 +534,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.13  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.12  2001/04/24 22:21:05  livesey
 ! Gave up on latitude stuff
 !
