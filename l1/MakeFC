@@ -91,7 +91,9 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
+   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
+   $(HDF5)/../fortran/src $(HDF5)/../include
+#   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
 endif
 
 ifdef BLAS
@@ -251,6 +253,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.30  2002/06/19 19:39:46  pwagner
+# Allows use of .mod and .f9h files from hdf5
+#
 # Revision 2.29  2002/06/18 18:53:35  pwagner
 # Modified to correctly use he5lib modules
 #
