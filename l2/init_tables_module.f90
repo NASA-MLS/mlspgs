@@ -646,10 +646,10 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
-             begin, f+f_source, s+s_vector, n+n_field_spec, &
-             begin, f+f_destination, s+s_vector, n+n_field_spec, &
+             begin, f+f_source, s+s_vector, nr+n_field_spec, &
+             begin, f+f_destination, s+s_vector, nr+n_field_spec, &
              begin, f+f_skipMask, t+t_boolean, n+n_field_spec, &
-             nadp+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
@@ -872,6 +872,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.238  2002/09/05 20:50:24  livesey
+! Fixed requirements for transfer
+!
 ! Revision 2.237  2002/09/05 20:49:30  livesey
 ! Added skipMask to transfer
 !
