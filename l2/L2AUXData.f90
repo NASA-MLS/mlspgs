@@ -379,7 +379,7 @@ contains ! =====     Public Procedures     =============================
     
   !------------------------------------------------ ReadL2AUXData ------------
   subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf)
-    
+
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
 
@@ -393,10 +393,10 @@ contains ! =====     Public Procedures     =============================
     ! Parameters
 
     character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
-         &dimension '
+      &dimension '
     character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
     character (LEN=*), parameter :: MLSMSG_l2auxRead = 'Unable to read l2aux &
-                                                     &field:'
+      &field:'
     integer, parameter :: MAXRANK = 3
     integer, parameter :: MAXDIMSIZES = 300
     logical, parameter :: CHECKDIMSIZES = .true.	! .TRUE. only while debugging
@@ -410,7 +410,7 @@ contains ! =====     Public Procedures     =============================
     character (LEN=480) :: msr
 
     integer :: sds_index, sds_id, rank, data_type, num_attrs, dim, dim_id
-    integer :: dim_sizes(MAXRANK), dim_size1
+    integer :: data_dim_sizes(MAXRANK), file_dim_sizes(MAXRANK), dim_size1
     integer :: dim_families(MAXRANK)
     character (LEN=len(quantityname)) :: sds_name
     character (LEN=132) :: dim_name
@@ -426,22 +426,21 @@ contains ! =====     Public Procedures     =============================
 
     ! find SD data set identifier
     sds_index = sfn2index(sd_id, quantityname)
-    if (sds_index == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &get sds_index.')
-         
+    if (sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to get sds_index.' )
+
     sds_id = sfselect(sd_id, sds_index)
-    if (sds_id == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &get sds_id.')
-         
-    status = sfginfo(sds_id, sds_name, rank, dim_sizes, data_type, &
-    & num_attrs)
+    if (sds_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to get sds_id.' )
+
+    status = sfginfo(sds_id, sds_name, rank, file_dim_sizes, data_type, &
+      & num_attrs)
 
     if (status == -1) then
-       call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         & get sf info.')
+      call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to get sf info.')
     elseif (sds_name /= quantityname) then
-       call MLSMessage(MLSMSG_Error, ModuleName, 'quantityname &
-         & fails to match sf info.')
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'quantityname  fails to match sf info.')
     endif
 
     ! Check optional input arguments
@@ -451,53 +450,61 @@ contains ! =====     Public Procedures     =============================
 
     ! Uncertain what to do with those just yet
     ! Now find dimension family of dimension; e.g., MAF
-    dim_families = 0
-    dim_size1 = 0
-     do dim=1, rank
+    dim_families = l_none
+    data_dim_sizes = 1
+    file_dim_sizes = 1
 
-    	write(dim_char, '(I1)') dim
-    	dim_id = sfdimid(sds_id, dim-1)		! dim starts from 0
-        if(dim_id == -1) then
-
-           msr = 'Failed to &
-           & get dim_id for dim index number ' // dim_char
-           call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    do dim=1, rank
+      write(dim_char, '(I1)') dim
+      dim_id = sfdimid(sds_id, dim-1)		! dim starts from 0
+      if(dim_id == -1) then
+        msr = 'Failed to get dim_id for dim index number ' // dim_char
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+      else
+        status = sfgdinfo(dim_id, dim_name, dim_size1, data_type, &
+          & num_attrs)
+        if(status == -1) then
+          msr = 'Failed to get dim_info for dim index number ' // &
+            & dim_char
+          call MLSMessage(MLSMSG_Error, ModuleName, msr)
         else
-            status = sfgdinfo(dim_id, dim_name, dim_size1, data_type, &
-            & num_attrs)
-
-            if(status == -1) then
-                  msr = 'Failed to &
-                  & get dim_info for dim index number ' // dim_char
-                  call MLSMessage(MLSMSG_Error, ModuleName, msr)
-            else
-                dim_families(dim) = dim_size1
-                if(dim_families(dim) == 0) then
-                     msr = 'Failed to &
-                     & find ' //dim_name // ' among L2AuxDimNames'
-                     call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                endif
-            endif
-         endif
+          file_dim_sizes(dim) = dim_size1
+          select case ( trim(dim_name) )
+          case ( 'channel' )
+            dim_families(1) = l_channel
+            data_dim_sizes(1) = dim_size1
+          case ( 'GHz.mif' )
+            dim_families(2) = l_mif
+            data_dim_sizes(2) = dim_size1
+          case ( 'GHz.maf' )
+            dim_families(3) = l_maf
+            data_dim_sizes(3) = dim_size1
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unrecognized dimension in l2aux:'//trim(dim_name) )
+          end select
+        endif
+      endif
     enddo
+
     ! Allocate result
-
-    call SetupNewl2auxRecord ( dim_families, dim_sizes, (/1,1,1/), l2aux )
-
-    ! Allocate temporary arrays
+    call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
 
     ! Read the SD
     start = 0
     stride = 1
     nullify ( tmpValues )
-    call Allocate_test ( tmpValues, max ( dim_sizes(1), 1), &
-      & max(dim_sizes(2),1), max(dim_sizes(3),1), &
+    call Allocate_test ( tmpValues, max(file_dim_sizes(1),1), &
+      & max(file_dim_sizes(2),1), max(file_dim_sizes(3),1), &
       & 'tmpValues', ModuleName )
 
-    status = sfrdata_f90(sds_id, start, stride, dim_sizes, tmpValues )
+    ! Not sure this isn't cheating with the array but we'll see
+    status = sfrdata_f90(sds_id, start(1:rank), stride(1:rank), file_dim_sizes(1:rank), &
+      & tmpValues )
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to read SD.')
-    l2aux%values = tmpValues
+    l2aux%values = reshape ( tmpValues, &
+      & (/ data_dim_sizes(1), data_dim_sizes(2), data_dim_sizes(3) /) )
 
     call Deallocate_test ( tmpValues, 'tmpValues', ModuleName )
 
@@ -508,13 +515,13 @@ contains ! =====     Public Procedures     =============================
 
     status = sfendacc(sds_id)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &end access to sds_id after reading.')
+      &end access to sds_id after reading.')
 
     !  After reading, detach from hdf interface
 
-!     status = sfend(sd_id)
-!     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-!          &detach from SD file after reading.')
+    !     status = sfend(sd_id)
+    !     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+    !          &detach from SD file after reading.')
 
   end subroutine ReadL2AUXData
 
@@ -857,6 +864,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.35  2002/11/29 22:46:28  livesey
+! Various bug fixes / improvements.
+!
 ! Revision 2.34  2002/11/29 18:50:07  livesey
 ! Initialised a variable
 !
