@@ -341,6 +341,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
+             l+l_magneticModel, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
              l+l_special, l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
@@ -370,7 +371,7 @@ contains ! =====     Public procedures     =============================
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
-             l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
+             l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
@@ -578,6 +579,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -728,7 +731,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_opticalDepth, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, ndp+n_spec_def /) )
+             begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
+             begin, f+f_reset, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_allLinesForRadiometer, t+t_boolean, n+n_field_type, &
@@ -916,6 +920,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.263  2003/01/07 23:46:26  livesey
+! Added reset for subset and magnetic model stuff
+!
 ! Revision 2.262  2003/01/06 20:13:30  livesey
 ! New overlap handling in ChunkDivide and HGrid
 !
