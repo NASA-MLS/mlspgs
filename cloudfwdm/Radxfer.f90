@@ -128,9 +128,9 @@
 !     INITIAL GUESS OF TB, L=0 IS THE SURFACE
 !------------------------------------------------
       DO K=1,L+1
+         XTB(K)=0._r8
          DO I=1,NU/2
             TB(I,K)=FIRST
-            XTB(I)=0._r8
          ENDDO
          DO I=NU/2+1,NU
             TB(I,K)=TSPACE
@@ -285,10 +285,6 @@
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 
-!         UU=(UAVE(ITT,K1)+UAVE(ITT,K1+1))*0.5
-
-         UU=UAVE(ITT,K1)
-
          TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU)+  &
      &              (1._r8-EXP(-TAU(K1)/UU))*tsource
 
@@ -327,8 +323,6 @@
          END DO
 
          tsource= (1-WW0)*TEMP(K)+WK
-
-         UU=UAVE(ITT,K)
 
          TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU)+          &
      &                (1._r8-EXP(-TAU(K)/UU))*tsource
