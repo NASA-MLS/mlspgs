@@ -1039,7 +1039,9 @@ contains ! =====     Public Procedures     =============================
         call get_beta_path ( frequencies, my_Catalog, no_ele, &
           &                  ifm%z_path(ptg_i,maf), ifm%t_path(ptg_i,maf), &
           &                  beta_path, 0.001*losVel%values(1,maf), &
-          &                  forwardModelConfig%frqGap, ier )
+          &                  forwardModelConfig%frqGap,             &
+          &                  forwardModelConfig%temp_der,           &
+          &                  forwardModelConfig%spect_der, Ier)
         if ( ier /= 0 ) goto 99
 
         ! Define the dh_dt_path for this pointing and this MAF:
@@ -1413,6 +1415,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.130  2001/05/15 03:46:31  zvi
+! Adding derivative flag to beta calculations
+!
 ! Revision 2.129  2001/05/14 23:18:26  livesey
 ! Added frqGap parameter
 !
