@@ -1,0 +1,142 @@
+mlsl3m: MLSL3M.o
+
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+
+# PGSTK
+# This variable is defined only if you will use the toolkit
+# to build the level 2 software
+# otherwise it is blank
+
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+#include $(srclib)/Makefile.dep
+
+# Add them to L2OBJS
+#ALLOBJS = $(OBJS) $(srclib_objs)
+ALLOBJS = $(OBJS)
+
+CONFDIR=../..
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building mlsl3m with PVM support
+else
+   pvm_linker_line=
+   pvm_message=Building mlsl3m without PVM support
+endif
+
+ifdef BLAS
+ifdef LIB_BLAS
+   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+else
+   blas_linker_line=-L${BLAS} -lblas
+endif
+   blas_message=Building mlsl3m with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building mlsl3m with internally-supplied BLAS
+endif
+
+mlsl3_linker_line=-L${libmlsl3dir} -lmlsl3
+mlsl3_message=Building mlsl3m with libmlsl3
+mlsl3m_prereqs=$(ALLOBJS) $(libdir)/libmls.a \
+	 $(libmlsl3dir)/libmlsl3.a
+
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+else
+   hdfeos5_linker_line=
+endif
+   hdf5_message=Building mlsl3m with hdf5
+else
+   hdf5_linker_line=
+   hdfeos5_linker_line=
+   hdf5_message=Building mlsl3m without hdf5
+endif
+
+# ========================================================================
+mlsl3m: $(mlsl3m_prereqs)
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
+		@echo "$(mlsl3_message)"
+		$(FC) $(LDOPTS) -o mlsl3m $(ALLOBJS) \
+        $(mlsl3_linker_line) \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(hdf5_linker_line) \
+	-L${FFTW_ROOT} -lrfftw -lfftw \
+        $(l_specials) $(LAFTER) \
+		  
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod mlsl3m
+
+tar:
+	rm -f l2.tgz
+	tar hcvzf l2.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3m
+
+# ========================================================================
+
+L3DZData.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+
+L3MZData.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+
+L3MMData.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+
+# ========================================================================
+
+# $Log$
