@@ -80,7 +80,7 @@ contains
     use PointingGrid_m, only: POINTINGGRIDS
     use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, &
       & DRAD_TRAN_DX
-    use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
+    use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
     use ScatSourceFunc, only: T_SCAT             !JJ
     use SpectroscopyCatalog_m, only: CATALOG_T
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
@@ -1287,6 +1287,7 @@ contains
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
         end if
+if ( (npc-2)*ng /= ngl ) stop 'Unequal'
         do i = 1, (npc-2)*ng, ng
           dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
         end do
@@ -1428,14 +1429,11 @@ contains
         call comp_refcor ( h_path_c(1:npc), n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
 
-        ! This only needs to be computed on the gl (not coarse) grid thus
-        ! there is some duplication here.
-        path_dsdh(2:brkpt-1) = path_ds_dh(h_path(2:brkpt-1), &
-              &                           Req+one_tan_ht(1))
-        path_dsdh(brkpt+2:no_ele-1)=path_ds_dh(h_path(brkpt+2:no_ele-1), &
-              &                                Req+one_tan_ht(1))
-        dsdz_gw_path(f_inds(:(npc-2)*ng)) = path_dsdh(f_inds(:(npc-2)*ng)) * &
-          & dhdz_gw_path(f_inds(:(npc-2)*ng))
+        ngl = (npc-2)*ng ! temporarily
+        path_dsdh(f_inds(:ngl)) = h_path(f_inds(:ngl)) / &
+          & ( sqrt( h_path(f_inds(:ngl))**2 - (Req+one_tan_ht(1))**2 ) )
+        dsdz_gw_path(f_inds(:ngl)) = path_dsdh(f_inds(:ngl)) * &
+          & dhdz_gw_path(f_inds(:ngl))
 
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
@@ -2692,6 +2690,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.176  2003/11/01 03:02:57  vsnyder
+! Compute del_zeta, ds_dz_gw and dh_dz_gw for [d]rad_tran*; change
+! indices_c to c_inds for consistency with usage in rad_tran_m.
+!
 ! Revision 2.175  2003/10/30 20:37:00  vsnyder
 ! Compute del_zeta here for *rad_tran_*
 !

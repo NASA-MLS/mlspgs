@@ -8,13 +8,14 @@ module REFRACTION_M
   implicit none
 
   private
-  public :: Refractive_index, Comp_refcor, Path_ds_dh
+  public :: Refractive_index, Comp_refcor
 
   real(rp), parameter, public :: RefrAterm = 0.0000776_rp
   real(rp), parameter, public :: RefrBterm = 4810.0_rp
 
   interface Refractive_index
-    module procedure Refractive_index_1, Refractive_index_0
+    module procedure Refractive_index_0,     Refractive_index_1
+    module procedure Refractive_index_0_h2o, Refractive_index_1_h2o
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -26,8 +27,80 @@ module REFRACTION_M
 !---------------------------------------------------------------------------
 contains
 
+!--------------------------------------------  Refractive_index_0  -----
+  subroutine Refractive_index_0 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental.
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+  ! output
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_index_0
+
+!----------------------------------------  Refractive_index_0_h2o  -----
+  subroutine Refractive_index_0_h2o ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental.
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+  ! output
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+  ! Keywords
+    real(rp), intent(in) :: h2o_path ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
+
+  end subroutine Refractive_index_0_h2o
+
 !--------------------------------------------  Refractive_index_1  -----
-  subroutine Refractive_index_1 ( p_path, t_path, n_path, h2o_path )
+  subroutine Refractive_index_1 ( p_path, t_path, n_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental but it might run slower due
+  ! to multiple executions of if ( PRESENT(...))
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+  ! output
+    real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+
+  end subroutine Refractive_index_1
+
+!----------------------------------------  Refractive_index_1_h2o  -----
+  subroutine Refractive_index_1_h2o ( p_path, t_path, n_path, h2o_path )
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it
@@ -45,44 +118,12 @@ contains
   ! output
     real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
   ! Keywords
-    real(rp), optional, intent(in) :: h2o_path(:) ! H2O vmr(ppv)
+    real(rp), intent(in) :: h2o_path(:) ! H2O vmr(ppv)
 
   ! begin code
-    n_path = refrAterm * p_path / t_path
-    if ( present(h2o_path) ) &
-      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
-    return
+    n_path = refrAterm * p_path / t_path * ( 1.0_rp + refrBterm*h2o_path/t_path)
 
-  end subroutine Refractive_index_1
-
-!--------------------------------------------  Refractive_index_0  -----
-  subroutine Refractive_index_0 ( p_path, t_path, n_path, h2o_path )
-
-  ! This routine computes the refractive index as a function of altitude
-  ! and phi. The returned value has one subtracted from it
-  ! We could easily make this elemental but it might run slower due
-  ! to multiple executions of if ( PRESENT(...))
-  !  ===============================================================
-  !  Declaration of variables for sub-program: refractive_index
-  !  ===============================================================
-  !  ---------------------------
-  !  Calling sequence variables:
-  !  ---------------------------
-  ! inputs
-    real(rp), intent(in) :: p_path ! pressure(hPa) vector
-    real(rp), intent(in) :: t_path ! temperature vector(K)
-  ! output
-    real(rp), intent(out) :: n_path ! refractive indicies - 1
-  ! Keywords
-    real(rp), optional, intent(in) :: h2o_path ! H2O vmr(ppv)
-
-  ! begin code
-    n_path = refrAterm * p_path / t_path
-    if ( present(h2o_path) ) &
-      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
-    return
-
-  end subroutine Refractive_index_0
+  end subroutine Refractive_index_1_h2o
 
 ! --------------------------------------------------  Comp_refcor  -----
 
@@ -271,23 +312,6 @@ jl:   do j = j1+1, j2
 
   end subroutine Comp_refcor
 
-! ---------------------------------------------------  Path_ds_dh  -----
-  elemental real(rp) function Path_ds_dh ( r_path, r_tan )
-
-  ! inputs:
-
-    real(rp), intent(in) :: r_path ! heights + req (km).
-    real(rp), intent(in) :: r_tan ! tangent height + req (km).
-
-  ! output:
-  !  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
-
-  ! calculation
-
-    path_ds_dh = r_path / sqrt(r_path**2 - r_tan**2)
-
-  end function Path_ds_dh
-
 !------------------------------------------------------------------
 
   logical function not_used_here()
@@ -296,6 +320,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.17  2003/09/26 18:23:34  vsnyder
+! Reinstate a lost CVS comment
+!
 ! Revision 2.16  2003/09/17 23:33:26  vsnyder
 ! Major revision
 !
