@@ -784,7 +784,7 @@ contains ! =====     Public Procedures     =============================
       sdId = sfSelect ( fileID, sdIndex )
     end if
     if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Error accessing SD '\\trim(sdNameStr) )
+      & 'Error accessing SD '//trim(sdNameStr) )
 
     ! What exactly will be our contribution
     stride = 1
@@ -888,6 +888,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.57  2002/08/20 04:37:06  livesey
+! Minor typo
+!
 ! Revision 2.56  2002/08/20 04:33:13  livesey
 ! Added extra check in direct write
 !
