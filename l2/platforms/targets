@@ -44,6 +44,16 @@ include $(srclib)/Makefile.dep
 ALLOBJS = $(OBJS) $(srclib_objs)
 
 CONFDIR=../..
+UTILDIR=../../util
+TESTSDIR=../../tests
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -141,6 +151,19 @@ tar:
 
 # Custom build commands for some modules
 
+# This uses the utility program init_gen to create two
+# up-to-date prereqs for init_tables_module
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) $(UTILDIR)/init_gen.f90
+
+$(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
+	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+          -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
+          $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
+
+#init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h
+
 # This keeps switch_usage up-to-date with notes/switches
 # (and similarly for options)
 MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
@@ -167,6 +190,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.25  2001/07/18 00:12:55  pwagner
+# No longer makes libfwdmdl directly
+#
 # Revision 1.24  2001/07/16 18:00:21  pwagner
 # Builds correctly with hdf5 on new and older Linux
 #
