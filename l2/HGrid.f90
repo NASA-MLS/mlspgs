@@ -1214,54 +1214,56 @@ contains ! =====     Public Procedures     =============================
     noHGrids = 0
     do chunk = 0, size(chunks)
       section = index
-      hGrid = 0
+      hGrid = 1
       ! Loop over all the setions in the l2cf, look for construct sections
       sectionLoop: do
-        print*,'Location:', chunk, section
         son = subtree ( section, root )
         select case ( decoration ( subtree ( 1, son ) ) )
         case ( z_construct )
           ! Now loop through the construct section and identify the hGrids
-          do line = 2, nsons ( son - 1 ) ! Skip begin and end
-            gson = subtree(line,son)
+          do line = 2, nsons ( son ) - 1 ! Skip begin and end
+            gson = subtree ( line, son )
             if ( node_id(gson) == n_named ) then ! Is spec labeled?
               key = subtree(2,gson)
-            else ! Son is n_spec_args
-              key = son
-            end if
-            if ( get_spec_id(key) == s_hGrid ) then
-              ! Now the intelligent bit
-              if ( chunk == 0 ) then
-                noHGrids = noHGrids + 1
-              else
-                dummyHGrid = CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
-                  & processingRange, chunks(chunk) )
-                chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
-                  & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
-                call DestroyHGridContents ( dummyHGrid )
-                hGrid = hGrid + 1
+              if ( get_spec_id(key) == s_hGrid ) then
+                ! This is an hGrid definition
+                if ( chunk == 0 ) then
+                  ! For the 'zeroth' pass just count up the chunks
+                  noHGrids = noHGrids + 1
+                else
+                  dummyHGrid = CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+                    & processingRange, chunks(chunk) )
+                  chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                    & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                  call DestroyHGridContents ( dummyHGrid )
+                  hGrid = hGrid + 1
+                end if
               end if
+            else ! Son is n_spec_args
+              key = gson
             end if
           end do
         case ( z_output )
           exit sectionLoop
+        case default
         end select
+        section = section + 1
       end do sectionLoop
 
       ! If this is the first time round, we now know how many hGrids there
       ! are, setup our arrays
       if ( chunk == 0 ) then
         do c = 1, size ( chunks )
-          call Allocate_Test ( chunks(chunk)%hGridOffsets, noHGrids, &
+          call Allocate_Test ( chunks(c)%hGridOffsets, noHGrids, &
             & 'chunks(?)%hGridOffsets', ModuleName )
-          call Allocate_Test ( chunks(chunk)%hGridTotals, noHGrids, &
+          call Allocate_Test ( chunks(c)%hGridTotals, noHGrids, &
             & 'chunks(?)%hGridTotals', ModuleName )
         end do
       else
         ! Otherwise, at least check we got the same number of hGrids each chunk
-        if ( hGrid /= noHGrids ) &
+        if ( hGrid /= noHGrids + 1 ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Got a different number of hGrids, new l2cf conditional stuff?' )
+          & 'Got a different number of hGrids for different chunks, that makes no sense!' )
       end if
     end do                              ! Chunk loop
     
@@ -1369,6 +1371,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.52  2003/06/24 23:30:30  livesey
+! Got ComputeAllHGridOffsets working (on the surface at least)
+!
 ! Revision 2.51  2003/06/20 19:37:06  pwagner
 ! Quanities now share grids stored separately in databses
 !
