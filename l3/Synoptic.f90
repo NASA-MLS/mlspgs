@@ -16,6 +16,7 @@ MODULE Synoptic
   USE MLSL3Common, ONLY: DATE_LEN, maxWindow
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_ALLOCATE, & 
        & MLSMSG_DEALLOCATE
+  USE Dump_0, only: DUMP
 
   Implicit none
   
@@ -49,7 +50,7 @@ CONTAINS
        & avgPeriod, l3sp, l3dm, dmA, dmD, l3r, residA, residD, & 
        & flags)
   !-------------------------------------------------------------------------
-  USE L2Interface, ONLY: ReadL2GPProd
+  USE L2Interface, ONLY: ReadL2GPProd, SetupL2GPProd
   USE L3DMData, ONLY: L3DMData_T, AllocateL3DM
   USE L3SPData, ONLY: L3SPData_T, AllocateL3SP
   USE OpenInit, ONLY: PCFData_T 
@@ -99,7 +100,8 @@ CONTAINS
 
     INTEGER ::  error, l2Days, nlev, nlev_temp, nwv, numDays, & 
          & numSwaths, rDays, pEndIndex, pStartIndex, &
-         & mis_l2Days_temp, i, j, iP, kP, iD, iL, n,m
+         & mis_l2Days_temp, i, j, iP, kP, iD, iL, n,m, &
+	 & totalIndex
 
      !*** Initilize variables
  
@@ -124,7 +126,7 @@ CONTAINS
        nlev_temp = -1
     END IF
      
-     
+    totalIndex = pEndIndex - pStartIndex + 1 
     !*** Initilize POINTERS
      
     IF (cfProd%mode == 'all' .or. cfProd%mode == 'ado') THEN
@@ -391,118 +393,179 @@ CONTAINS
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
-	   & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
-       l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
+       CALL SetupL2GPProd(rDays, totalIndex, l3r_temp(1)%nTimes, l3r)
+       l3r%name = TRIM(cfProd%l3prodNameD) // 'Residuals'
        DO j = 1, rDays
-       	   l3r(j)%l2gpValue         = 0.0
+	   l3r(j)%chunkNumber = l3r_temp(j)%chunkNumber
+	   l3r(j)%solarTime = l3r_temp(j)%solarTime
+	   l3r(j)%solarZenith = l3r_temp(j)%solarZenith
+	   l3r(j)%losAngle = l3r_temp(j)%losAngle
+	   l3r(j)%geodAngle = l3r_temp(j)%geodAngle
+	   l3r(j)%pressures = l3r_temp(j)%pressures(pStartIndex:pEndIndex)
+	   l3r(j)%latitude = l3r_temp(j)%latitude
+	   l3r(j)%longitude = l3r_temp(j)%longitude
+	   l3r(j)%time = l3r_temp(j)%time
+	   l3r(j)%nTimes = l3r_temp(j)%nTimes
            l3r_temp(j)%l2gpValue    = 0.0
            l3r_temp(j)%latitude     = 0.0
-           startTime(j) = l3r(j)%time(1)
-           endTime(j) = l3r(j)%time(l3r(j)%nTimes)
+           startTime(j) = l3r_temp(j)%time(1)
+           endTime(j) = l3r_temp(j)%time(l3r_temp(j)%nTimes)
        ENDDO
- 
+
     ELSE IF (cfProd%mode == 'asc') THEN
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
-	   & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       CALL SetupL2GPProd(rDays, totalIndex, residA_temp(1)%nTimes, residA)
        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
        DO j = 1, rDays
-           residA(j)%l2gpValue      = 0.0
+	   residA(j)%chunkNumber = residA_temp(j)%chunkNumber
+	   residA(j)%solarTime = residA_temp(j)%solarTime
+	   residA(j)%solarZenith = residA_temp(j)%solarZenith
+	   residA(j)%losAngle = residA_temp(j)%losAngle
+	   residA(j)%geodAngle = residA_temp(j)%geodAngle
+	   residA(j)%pressures = residA_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residA(j)%latitude = residA_temp(j)%latitude
+	   residA(j)%longitude = residA_temp(j)%longitude
+	   residA(j)%time = residA_temp(j)%time
+	   residA(j)%nTimes = residA_temp(j)%nTimes
            residA_temp(j)%l2gpValue = 0.0
            residA_temp(j)%latitude  = 0.0
            residA_temp(j)%longitude = 0.0
-           startTime(j) = residA(j)%time(1)
-           endTime(j) = residA(j)%time(residA(j)%nTimes)
+           startTime(j) = residA_temp(j)%time(1)
+           endTime(j) = residA_temp(j)%time(residA_temp(j)%nTimes)
        ENDDO
 
     ELSE IF (cfProd%mode == 'dsc') THEN
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
            & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-           & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
+       CALL SetupL2GPProd(rDays, totalIndex, residD_temp(1)%nTimes, residD)
        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
        DO j = 1, rDays
-           residD(j)%l2gpValue      = 0.0
+	   residD(j)%chunkNumber = residD_temp(j)%chunkNumber
+	   residD(j)%solarTime = residD_temp(j)%solarTime
+	   residD(j)%solarZenith = residD_temp(j)%solarZenith
+	   residD(j)%losAngle = residD_temp(j)%losAngle
+	   residD(j)%geodAngle = residD_temp(j)%geodAngle
+	   residD(j)%pressures = residD_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residD(j)%latitude = residD_temp(j)%latitude
+	   residD(j)%longitude = residD_temp(j)%longitude
+	   residD(j)%time = residD_temp(j)%time
+	   residD(j)%nTimes = residD_temp(j)%nTimes
            residD_temp(j)%l2gpValue = 0.0
            residD_temp(j)%latitude  = 0.0
            residD_temp(j)%longitude = 0.0
-           startTime(j) = residD(j)%time(1)
-           endTime(j) = residD(j)%time(residD(j)%nTimes)
+           startTime(j) = residD_temp(j)%time(1)
+           endTime(j) = residD_temp(j)%time(residD_temp(j)%nTimes)
        ENDDO
  
     ELSE IF (cfProd%mode == 'ado') THEN
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
-	   & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       CALL SetupL2GPProd(rDays, totalIndex, residA_temp(1)%nTimes, residA)
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
            & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-           & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
-        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
-        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+       CALL SetupL2GPProd(rDays, totalIndex, residD_temp(1)%nTimes, residD)
+       residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+       residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
 
-        DO j = 1, rDays
-           residA(j)%l2gpValue      = 0.0
+       DO j = 1, rDays
+	   residA(j)%chunkNumber = residA_temp(j)%chunkNumber
+	   residA(j)%solarTime = residA_temp(j)%solarTime
+	   residA(j)%solarZenith = residA_temp(j)%solarZenith
+	   residA(j)%losAngle = residA_temp(j)%losAngle
+	   residA(j)%geodAngle = residA_temp(j)%geodAngle
+	   residA(j)%pressures = residA_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residA(j)%latitude = residA_temp(j)%latitude
+	   residA(j)%longitude = residA_temp(j)%longitude
+	   residA(j)%time = residA_temp(j)%time
+	   residA(j)%nTimes = residA_temp(j)%nTimes
            residA_temp(j)%l2gpValue = 0.0
            residA_temp(j)%latitude  = 0.0
            residA_temp(j)%longitude = 0.0
-           residD(j)%l2gpValue      = 0.0
+           startTime(j) = residA_temp(j)%time(1)
+           endTime(j) = residA_temp(j)%time(residA_temp(j)%nTimes)
+	   residD(j)%chunkNumber = residD_temp(j)%chunkNumber
+	   residD(j)%solarTime = residD_temp(j)%solarTime
+	   residD(j)%solarZenith = residD_temp(j)%solarZenith
+	   residD(j)%losAngle = residD_temp(j)%losAngle
+	   residD(j)%geodAngle = residD_temp(j)%geodAngle
+	   residD(j)%pressures = residD_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residD(j)%latitude = residD_temp(j)%latitude
+	   residD(j)%longitude = residD_temp(j)%longitude
+	   residD(j)%time = residD_temp(j)%time
+	   residD(j)%nTimes = residD_temp(j)%nTimes
            residD_temp(j)%l2gpValue = 0.0
            residD_temp(j)%latitude  = 0.0
            residD_temp(j)%longitude = 0.0
-           startTime(j) = residA(j)%time(1)
-           endTime(j) = residA(j)%time(residA(j)%nTimes)
+           startTime(j) = residD_temp(j)%time(1)
+           endTime(j) = residD_temp(j)%time(residD_temp(j)%nTimes)
        ENDDO
 
     ELSE IF (cfProd%mode == 'all') THEN
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
-	   & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
+       CALL SetupL2GPProd(rDays, totalIndex, l3r_temp(1)%nTimes, l3r)
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
-	   & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       CALL SetupL2GPProd(rDays, totalIndex, residA_temp(1)%nTimes, residA)
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
            & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
-       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-           & pcf%l3StartDay, & 
-           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
-        l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
-        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
-        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
-        DO j = 1, rDays
-       	   l3r(j)%l2gpValue         = 0.0
+       CALL SetupL2GPProd(rDays, totalIndex, residD_temp(1)%nTimes, residD)
+       l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
+       residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+       residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+       DO j = 1, rDays
+	   l3r(j)%chunkNumber = l3r_temp(j)%chunkNumber
+	   l3r(j)%solarTime = l3r_temp(j)%solarTime
+	   l3r(j)%solarZenith = l3r_temp(j)%solarZenith
+	   l3r(j)%losAngle = l3r_temp(j)%losAngle
+	   l3r(j)%geodAngle = l3r_temp(j)%geodAngle
+	   l3r(j)%pressures = l3r_temp(j)%pressures(pStartIndex:pEndIndex)
+	   l3r(j)%latitude = l3r_temp(j)%latitude
+	   l3r(j)%longitude = l3r_temp(j)%longitude
+	   l3r(j)%time = l3r_temp(j)%time
+	   l3r(j)%nTimes = l3r_temp(j)%nTimes
            l3r_temp(j)%l2gpValue    = 0.0
            l3r_temp(j)%latitude     = 0.0
-           l3r_temp(j)%longitude    = 0.0
-           residA(j)%l2gpValue      = 0.0
+           startTime(j) = l3r_temp(j)%time(1)
+           endTime(j) = l3r_temp(j)%time(l3r_temp(j)%nTimes)
+	   residA(j)%chunkNumber = residA_temp(j)%chunkNumber
+	   residA(j)%solarTime = residA_temp(j)%solarTime
+	   residA(j)%solarZenith = residA_temp(j)%solarZenith
+	   residA(j)%losAngle = residA_temp(j)%losAngle
+	   residA(j)%geodAngle = residA_temp(j)%geodAngle
+	   residA(j)%pressures = residA_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residA(j)%latitude = residA_temp(j)%latitude
+	   residA(j)%longitude = residA_temp(j)%longitude
+	   residA(j)%time = residA_temp(j)%time
+	   residA(j)%nTimes = residA_temp(j)%nTimes
            residA_temp(j)%l2gpValue = 0.0
            residA_temp(j)%latitude  = 0.0
            residA_temp(j)%longitude = 0.0
-           residD(j)%l2gpValue      = 0.0
+           startTime(j) = residA_temp(j)%time(1)
+           endTime(j) = residA_temp(j)%time(residA_temp(j)%nTimes)
+	   residD(j)%chunkNumber = residD_temp(j)%chunkNumber
+	   residD(j)%solarTime = residD_temp(j)%solarTime
+	   residD(j)%solarZenith = residD_temp(j)%solarZenith
+	   residD(j)%losAngle = residD_temp(j)%losAngle
+	   residD(j)%geodAngle = residD_temp(j)%geodAngle
+	   residD(j)%pressures = residD_temp(j)%pressures(pStartIndex:pEndIndex)
+	   residD(j)%latitude = residD_temp(j)%latitude
+	   residD(j)%longitude = residD_temp(j)%longitude
+	   residD(j)%time = residD_temp(j)%time
+	   residD(j)%nTimes = residD_temp(j)%nTimes
            residD_temp(j)%l2gpValue = 0.0
            residD_temp(j)%latitude  = 0.0
            residD_temp(j)%longitude = 0.0
-           startTime(j) = l3r(j)%time(1)
-           endTime(j) = l3r(j)%time(l3r(j)%nTimes)
+           startTime(j) = residD_temp(j)%time(1)
+           endTime(j) = residD_temp(j)%time(residD_temp(j)%nTimes)
        ENDDO
     ENDIF
         
@@ -551,6 +614,7 @@ CONTAINS
         
     iP = 0
     DO kP = pStartIndex, pEndIndex 
+
        iP = iP + 1
            
        DO I = 1, rDays 
@@ -645,7 +709,6 @@ CONTAINS
                    !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
-                             
                          IF( & 
                               &((atimes(J, iL, iP)*86400.+l2gp(1)%time(1))&
                               & .ge.& 
@@ -668,10 +731,10 @@ CONTAINS
                             l3r_temp(iD)%l2gpValue(1, iP, nc(iD)) = & 
                                  & afields(J, iL, iP)-l3ret 
                             l3r_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0
-                            
                          END IF
                              
                       ENDDO
+
                       DO iL = 1, dnlats(J, iP)
                          IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
                               & startTime(iD) .AND. &
@@ -694,7 +757,7 @@ CONTAINS
                          END IF
                       ENDDO
                    ENDDO
-                  
+ 
                    !*** Calculate Precision     
                    Call CopyPrec2Data()
                    CALL FFSM(l3spPrec(1), iP, J)
@@ -1478,7 +1541,7 @@ CONTAINS
                 
                 !*** Interpolate to l2gp grid 
                 CALL Residual2L2Grid( iD, iP, l3r_temp, l3r ) 
-                
+
                 if ( associated(sortTemp) ) then 
                    DeAllocate(sortTemp, STAT=error)
                    IF ( error /= 0 ) THEN
@@ -2255,31 +2318,34 @@ CONTAINS
                          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
                       
-                      CALL my_sortp(l3r(iD)%time, 1, nc(iD), pt)
+                      CALL my_sortp(l3r_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
-                      CALL DSORT(l3r(iD)%time, 1, nc(iD))
+                      CALL DSORT(l3r_temp(iD)%time, 1, nc(iD))
                       !** do latitude
                       DO i = 1, nc(iD)
-                         sortTemp(i) = l3r(iD)%latitude(i)
+                         sortTemp(i) = l3r_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                         l3r(iD)%latitude(i) = sortTemp(pt(i))
+                         l3r_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, nc(iD)
-                         sortTemp(i) = l3r(iD)%longitude(i)
+                         sortTemp(i) = l3r_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                         l3r(iD)%longitude(i) = sortTemp(pt(i))
+                         l3r_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, nc(iD)
-                         sortTemp(i) = l3r(iD)%l2gpValue(1, iP, i)
+                         sortTemp(i) = l3r_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nc(iD)
-                         l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                         l3r_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      
+                     
+                      !*** Interpolate to l2gp grid
+                      CALL Residual2L2Grid( iD, iP, l3r_temp, l3r )
+ 
                       if ( associated(sortTemp) ) then 
                          DeAllocate(sortTemp, STAT=error)
                          IF ( error /= 0 ) THEN
@@ -2308,11 +2374,11 @@ CONTAINS
                          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
                      
-                      CALL my_sortp(-abs(l3r(iD)% & 
+                      CALL my_sortp(-abs(l3r_temp(iD)% & 
                            l2gpValue(1, iP, :)), 1, nc(iD), pt)
                      DO i = 1,cfDef%N
                         l3dm(iD)%maxDiff(i, iP) = & 
-                             & l3r(iD)%l2gpValue(1, iP, pt(i))
+                             & l3r_temp(iD)%l2gpValue(1, iP, pt(i))
                      ENDDO
                      
                      if ( associated(pt) ) then 
@@ -3378,6 +3444,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.35  2004/06/02 20:07:28  ybj
+! *** empty log message ***
+!
 ! Revision 1.34  2004/05/13 23:50:52  ybj
 ! *** empty log message ***
 !

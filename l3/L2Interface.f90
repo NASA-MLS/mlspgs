@@ -5,7 +5,7 @@
 MODULE L2Interface
 !==============================================================================
 
-  USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData
+  USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData, SetupNewL2GPRecord
   USE MLSCommon, ONLY: r8
   USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
        & mls_hdf_version, mls_inqswath, mls_io_gen_openF, mls_io_gen_closeF
@@ -17,10 +17,12 @@ MODULE L2Interface
        & mlspcf_l3dm_start, mlspcf_l3dm_end
   USE output_m, only: output
   USE PCFModule, ONLY: FindFileDay, ExpandFileTemplate
+  USE Dump_0, only: DUMP
+
   IMPLICIT NONE
   private
   PUBLIC :: GetL2GPfromPCF, ReadL2GP, ReadL2GPProd, ResidualOutput, &
-	& ReadL2DGData, ReadL2GPAttribute
+	& ReadL2DGData, ReadL2GPAttribute, SetupL2GPProd
   
   PRIVATE :: ID, ModuleName
   
@@ -324,6 +326,61 @@ CONTAINS
   !-------------------------
     
   !--------------------------------------------------------------------------
+  SUBROUTINE SetupL2GPProd (numDays, totalIndex, totalTimes, prodL2GP)
+  !--------------------------------------------------------------------------
+    ! Brief description of subroutine
+    ! This subroutine setup l2gp Records files for a quantity over a range of days.  
+    ! It returns an array of L2GPData_T structures, 
+    ! with one structure per day.
+
+    ! Arguments
+      
+    INTEGER, INTENT(IN) :: numDays, totalIndex, totalTimes
+      
+    TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
+      
+    ! Parameters
+            
+    ! Variables
+      
+    CHARACTER (LEN=480) :: msr
+
+    INTEGER :: err, i, nTimes, nTimesTotal, nFreqs, nLevels
+
+    LOGICAL :: Fillin
+
+    IF (numDays == 0) THEN
+         
+       ! If not, issue a warning
+         
+       msr = 'No L2GP data found for '
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       NULLIFY(prodL2GP)
+         
+       ! If so, open, read, & close the files for this quantity
+         
+    ELSE
+         
+       ALLOCATE( prodL2GP(numDays), STAT=err )
+       IF ( err /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' l2gp array for '
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+         
+       DO i = 1, numDays
+                        
+          ! Read information from the L2GP file
+          CALL SetupNewL2GPRecord(prodL2GP(i), nFreqs=0, nLevels=totalIndex, &
+	     & nTimes=totalTimes, nTimesTotal=totalTimes, Fillin=.false. )
+                        
+       ENDDO
+            
+    ENDIF
+      
+    !-----------------------------
+    END SUBROUTINE SetupL2GPProd
+    !-----------------------------
+  !--------------------------------------------------------------------------
   SUBROUTINE ReadL2GPProd (product, template, startDOY, endDOY, numDays, & 
        & mis_numDays, mis_Days, prodL2GP)
   !--------------------------------------------------------------------------
@@ -449,6 +506,7 @@ CONTAINS
            & record_length, DFACC_RDWR, l3File, &
            & hdfVersion=hdfVersion, debugOption=.false. )
 
+      !call dump (real(l3r(i)%l2gpValue, r8), 'l2gpValue: ')
       call WriteL2GPData(l3r(i), file_id, l3r(i)%name, & 
            & hdfVersion=hdfVersion)
 
@@ -531,7 +589,7 @@ CONTAINS
    ENDDO
       
    ! Check that numDays is at least 1, so pointer allocation is possible
-   
+
    IF (numDays == 0) THEN
          
       ! If not, issue a warning
@@ -569,6 +627,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.15  2004/05/04 15:33:15  cvuu
+!# v1.4.3: Use int array for Date in Data Field
+!#
 !# Revision 1.14  2004/01/07 21:43:18  cvuu
 !# version 1.4 commit
 !#
