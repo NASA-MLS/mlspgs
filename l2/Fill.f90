@@ -953,7 +953,7 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
             & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-            & phiWindow, phiWindowUnits )          
+            & phiWindow, phiWindowUnits, chunkNo )          
 
         case ( l_isotope ) ! --------------- Isotope based fills -------
           if (.not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
@@ -3813,11 +3813,11 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQtyWithEstNoise
 
-    ! ------------------------------------- FillVectorHydrostatically ----
+    ! ------------------------------------- FillVectorQtyHydrostatically ----
     subroutine FillVectorQtyHydrostatically ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-      & phiWindow, phiWindowUnits )
+      & phiWindow, phiWindowUnits, chunkNo )
       ! Various hydrostatic fill operations
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -3830,6 +3830,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: MAXITERATIONS
       real(r8), intent(in) :: PHIWINDOW
       integer, intent(in) :: PHIWINDOWUNITS
+      integer, intent(in), optional :: chunkNo
       ! H2OQuantity and GeocAltitudeQuantity have to be pointers
       ! as they may be absent.
 
@@ -3850,7 +3851,7 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+	       if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -3859,7 +3860,7 @@ contains ! =====     Public Procedures     =============================
           & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+	       if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -3871,7 +3872,7 @@ contains ! =====     Public Procedures     =============================
           &   h2oQuantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+	       if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -3879,7 +3880,7 @@ contains ! =====     Public Procedures     =============================
           & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed second test" )
-	  if ( toggle(gen) .and. levels(gen) > 0 )&
+	       if ( toggle(gen) .and. levels(gen) > 0 )&
             &  call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
@@ -3889,14 +3890,6 @@ contains ! =====     Public Procedures     =============================
           &   geocAltitudeQuantity%template%instrumentModule) )  then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed third test" )
-  !        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
-  !        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
-  !        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
-  !        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
-  !        print *, 'quantity%template%instrumentModule ', &
-  !        & quantity%template%instrumentModule
-  !        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
-  !        & geocAltitudeQuantity%template%instrumentModule
            call output('ValidateVectorQuantity(quantity, minorFrame=.true.) ')
            call blanks(3)
            call output( &
@@ -3920,14 +3913,14 @@ contains ! =====     Public Procedures     =============================
            call output( &
            & geocAltitudeQuantity%template%instrumentModule, &
            & advance='yes')
-	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+	        if ( toggle(gen) .and. levels(gen) > 0 ) &
             & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
           & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
           & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-          & phiWindow, phiWindowUnits )
+          & phiWindow, phiWindowUnits, chunkNo )
       case default
         call Announce_error ( 0, 0, 'No such fill yet' )
       end select
@@ -4886,6 +4879,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.190  2003/03/19 19:22:24  pwagner
+! Passes chunkNo around more widely
+!
 ! Revision 2.189  2003/03/07 03:16:12  livesey
 ! Added RestrictRange
 !
