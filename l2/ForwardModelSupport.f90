@@ -76,8 +76,7 @@ module ForwardModelSupport
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
-  integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
-  integer, parameter :: ToleranceNotK        = PhiWindowMustBeOdd + 1
+  integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
   integer, parameter :: BadHeightUnit        = TooManyCosts + 1
@@ -463,9 +462,7 @@ contains ! =====     Public Procedures     =============================
         end do                          ! End loop over listed signals
       case ( f_phiWindow )
         call expr ( subtree(2,son), units, value, type )
-        info%phiWindow = nint( value(1) )
-        if ( mod(info%phiWindow,2) /= 1 ) &
-          & call AnnounceError ( phiWindowMustBeOdd, key )
+        info%phiWindow = value(1)
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -612,8 +609,6 @@ contains ! =====     Public Procedures     =============================
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
-    case ( PhiWindowMustBeOdd )
-      call output ( 'phiWindow is not odd', advance='yes' ) 
     case ( ToleranceNotK )
       call output ( 'tolerance does not have dimensions of temperature/radiance',&
         & advance='yes' )
@@ -641,6 +636,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.32  2002/06/12 17:01:54  livesey
+! Stuff to support change to real phiWindow from integer
+!
 ! Revision 2.31  2002/05/14 22:31:31  livesey
 ! Minor bug fix associated with running in parallel mode.
 !
