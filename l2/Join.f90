@@ -47,7 +47,8 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use MLSCommon, only: MLSCHUNK_T
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
+      & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: GET_SPEC_ID
     use Output_m, only: OUTPUT, BLANKS
@@ -73,6 +74,8 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     integer :: DWINDEX                  ! Direct Write index
+    real :: DWT1                        ! Time we started
+    real :: DWT2                        ! Time we finished
     integer :: KEY                      ! Tree node
     integer :: MLSCFLINE                ! Line number in l2cf
     integer :: NODIRECTWRITES           ! Array size
@@ -111,11 +114,13 @@ contains ! =====     Public Procedures     =============================
     passLoop: do
       ! For the later passes, we wait for permission to do one of the direct writes
       if ( pass > 2 ) then
+        call time_now ( dwt2 )
         call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, createFile )
         call output ( "Got permission for ticket " )
         call output ( ticket )
         call output ( " node " )
         call output ( directWriteNodeGranted, advance='yes' )
+        call add_to_directwrite_timing ( 'waiting', dwt2)
       end if
       
       ! Simply loop over lines in the l2cf
@@ -150,14 +155,17 @@ contains ! =====     Public Procedures     =============================
             call LabelVectorQuantity ( son, vectors )
           end if
         case ( s_directWrite )
+          call time_now ( dwt1 )
           if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
             noDirectWrites = noDirectWrites + 1
             ! Unless we're not a slave in which case just get on with it.
             if ( .not. parallel%slave ) then
               if(DEEBUG)print*,'Calling DirectWrite, not slave'
+              call time_now ( dwt2 )
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks )
+              call add_to_directwrite_timing ( 'writing', dwt2)
             end if
           else if ( pass == 2 ) then
             ! On the second pass, log all our direct write requests.
@@ -168,14 +176,17 @@ contains ! =====     Public Procedures     =============================
             ! On the later passes we do the actual direct write we've been
             ! given permission for.
             if ( son == directWriteNodeGranted ) then
+              call time_now ( dwt2 )
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks, create=createFile )
+              call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
               if ( noDirectWritesCompleted == noDirectWrites ) exit passLoop
             end if
           end if
+          call add_to_section_timing ( 'directwrite', dwt1)
         end select
       end do                            ! End loop over l2cf lines
 
@@ -1361,6 +1372,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.95  2003/10/20 18:21:45  pwagner
+! Timings breakdown added for directWrite
+!
 ! Revision 2.94  2003/10/10 00:00:24  pwagner
 ! Should quit properly if SIPS and no PCFid match for file name
 !
