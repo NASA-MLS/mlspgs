@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module TREE_WALKER
@@ -127,14 +127,12 @@ contains ! ====     Public Procedures     ==============================
     totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
-    call time_now ( t1 )
     call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
     do while ( i <= howmany )
       son = subtree(i,root)
-      call time_now ( t1 )
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
@@ -200,7 +198,6 @@ contains ! ====     Public Procedures     ==============================
             end if
             j = i
 subtrees:   do while ( j <= howmany )
-              call time_now ( t1 )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
@@ -355,6 +352,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.89  2002/08/28 22:29:19  pwagner
+! Moved DestroyL1BInfo to after end of loop of chunks
+!
 ! Revision 2.88  2002/08/22 01:26:00  vsnyder
 ! Cosmetic changes
 !
