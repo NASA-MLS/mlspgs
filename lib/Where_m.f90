@@ -29,7 +29,7 @@ contains
 
     i = 0
     do p_i = 1, size(log)
-      if ( log(i) ) then
+      if ( log(p_i) ) then
         i = i + 1
         int(i) = p_i
       end if
@@ -45,6 +45,9 @@ contains
 end module Where_M
 
 ! $Log$
+! Revision 2.2  2003/05/16 21:59:43  vsnyder
+! Fix a subscript error.  Fortunately, nothing uses it yet
+!
 ! Revision 2.1  2003/05/16 01:59:53  vsnyder
 ! Initial commit
 !
