@@ -106,7 +106,7 @@ module MLSHDF5
     module procedure GetHDF5Attribute_int, GetHDF5Attribute_logical, &
       & GetHDF5Attribute_string, GetHDF5Attribute_sngl, GetHDF5Attribute_dbl, &
       & GetHDF5Attribute_snglarr1, GetHDF5Attribute_intarr1, &
-      & GetHDF5Attribute_dblarr1
+      & GetHDF5Attribute_dblarr1, GetHDF5Attribute_string_arr1
   end interface
 
   interface IsHDF5AttributePresent
@@ -570,6 +570,12 @@ contains ! ======================= Public Procedures =========================
       if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
     endif
     dataID = name_to_dataID( fileID, dataName)
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID( dataID, attrName ) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Inconsistency between file/dataName for attribute '//trim(attrName) )
+      endif
+    endif
     call MakeHDF5Attribute_string( &
      & dataID, attrName, value )
     call h5dclose_f(dataID, status)
@@ -754,6 +760,47 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute '//trim(name) )
   end subroutine GetHDF5Attribute_string
+   
+  ! ------------------------------------------- GetHDF5Attribute_string_arr1
+  subroutine GetHDF5Attribute_string_arr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    character (len=*), intent(out) :: VALUE(:) ! Result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    call h5aGet_type_f ( attrID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1-d string attribute '//trim(name) )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 1-d string attribute '//trim(name) )
+    if ( stringSize > len(value(1)) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read an array into our one value.
+    call h5aread_f ( attrID, stringType, value, & 
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read attribute '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute '//trim(name) )
+    call h5tClose_f ( stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close string type for attribute '//trim(name) )
+  end subroutine GetHDF5Attribute_string_arr1
    
   ! ------------------------------------- GetHDF5Attribute_logical
   subroutine GetHDF5Attribute_logical ( itemID, name, value )
@@ -1083,7 +1130,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_grpattr
     
     ! Executable code
-    my_grpattr = .true.
+    my_grpattr = .false.
     if ( present(is_grpattr) ) my_grpattr = is_grpattr
     if ( my_grpattr ) then
       IsHDF5AttributePresent_in_fID = IsHDF5AttributePresent_in_grp ( &
@@ -1232,7 +1279,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array'//trim(name) )
-    call h5tset_size_f(stringtype, max(len_trim(value(1)), 1), status )
+    call h5tset_size_f(stringtype, max(len(value(1)), 1), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create the dataspace
@@ -1281,7 +1328,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array'//trim(name) )
-    call h5tset_size_f(stringtype, max(len_trim(value(1,1)), 1), status )
+    call h5tset_size_f(stringtype, max(len(value(1,1)), 1), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create the dataspace
@@ -3123,6 +3170,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.34  2003/10/02 23:09:47  pwagner
+! Some small fixes; can get string array attribute
+!
 ! Revision 2.33  2003/09/30 18:29:41  perun
 ! Change len_trim to len in MakeHDF5Attribute_string_arr1.
 !
