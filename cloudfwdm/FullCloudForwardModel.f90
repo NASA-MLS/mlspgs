@@ -116,7 +116,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: CLOUDEXTINCTION            ! Profiles
     type (VectorValue_T), pointer :: modelCLOUDRADIANCE         ! modelled cloud radiance
-    type (VectorValue_T), pointer :: obsCLOUDRADIANCE           ! observed cloud radiance
+    type (VectorValue_T), pointer :: constrainCldRad           ! observed cloud radiance
     type (VectorValue_T), pointer :: CLOUDRADSENSITIVITY        ! Like radiance
     type (VectorValue_T), pointer :: EFFECTIVEOPTICALDEPTH      ! Quantity
     type (VectorValue_T), pointer :: GPH                        ! Geop height
@@ -240,10 +240,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     nullify( a_clearSkyradiance, a_cloudExtinction, a_cloudInducedradiance,  &
              a_cloudRadsensitivity, a_effectiveOpticaldepth,                 &
              a_massMeandiameter, a_totalExtinction, cloudExtinction,         &
-             cloudIce, cloudRadsensitivity, cloudWater, doChannel,           &
+             cloudIce, cloudRadsensitivity, closestInstances, cloudWater, doChannel,           &
              earthradius, effectiveOpticaldepth, frequencies, gph, jblock,   &
              lineFlag, losvel, massMeandiameterice, massMeandiameterwater,   &
-             modelCloudradiance, my_catalog, obsCloudRadiance, ptan,         &
+             modelCloudradiance, my_catalog, constrainCldRad, ptan,         &
              radiance, sizeDistribution, state_ext, state_los, superset,     &
              surfaceType, temp, thisCatalogentry, thisLine, thisRatio,       &
              totalExtinction, vmr, vmrarray )
@@ -251,7 +251,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! ------------------------------------
     ! Find which maf is called at present
     ! ------------------------------------
-
     maf = fmStat%maf
 
     !--------------------------------------------
@@ -596,39 +595,40 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           CloudType='Frontal'
        endif
 
-      ! find cloud top index from observed Tcir, threshold to be determined
-      !     for high Zt, use Tcir(maf)
-      !     for low Zt, use Tcir(maf-2)
+    ! find cloud top index from observed Tcir, threshold to be determined
+    !     for high Zt, use Tcir(maf)
+    !     for low Zt, use Tcir(maf-2)
     ! --------------------------------------------------------------------
-    ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
+    ! find the cloud top using the cloudRadiance in fwdModelExtra 
+    ! (should be only one cloud radiance quantity there)
     ! --------------------------------------------------------------------
-      obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
-          & quantityType=l_cloudInducedRadiance,                     &
-          & signal=signal%index, sideband=signal%sideband )
+!      constrainCldRad => GetVectorQuantityByType ( fwdModelExtra,     &
+!          & quantityType=l_cloudInducedRadiance)
 
-      if(.not. associated(obsCloudRadiance)) then
-         call MLSMessage( MLSMSG_Error, ModuleName,                             &
-                      'Need cloud radiances to estimate cloud top in retrieval' )
-      else
+!      if(.not. associated(constrainCldRad)) then
+!         call MLSMessage( MLSMSG_Error, ModuleName,                             &
+!                      'Need cloud radiances to estimate cloud top in retrieval' )
+!      else
        iCloudHeight = 0
-       if(forwardModelConfig%cloud_der == l_iwc_high_height) then
-         do mif = 1, noMifs
-           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) &
-                & iCloudHeight = mif
-         enddo
-       else
-         do mif = 1, noMifs
-           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) & 
-                & iCloudHeight = mif
-         enddo
-       end if
+!       if(forwardModelConfig%cloud_der == l_iwc_high_height) then
+!         do mif = 1, noMifs
+!           if(constrainCldRad%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) &
+!                & iCloudHeight = mif
+!         enddo
+!       else
+!         do mif = 1, noMifs
+!           if(constrainCldRad%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) & 
+!                & iCloudHeight = mif
+!         enddo
+!       end if
        ! if no cloud is found, cloud top is 20 km
        CloudHeight = 20.e3_r8     ! meters
        if(iCloudHeight .ne. 0) CloudHeight = min(zt(iCloudHeight),CloudHeight)
 
       ! set up artificial cloud profile for retrieval use only
-       call CLOUD_MODEL (CloudType, CloudHeight, gph%values(:,instance), noSurf, WC)
-      end if
+       call CLOUD_MODEL (CloudType, CloudHeight, gph%values(:,instance), &
+         & noSurf, WC, ForwardModelConfig%no_cloud_species)
+!      end if
       
     ENDIF
 
@@ -1056,6 +1056,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.116  2003/05/07 22:49:03  jonathan
+! some clean-up and cosmetic changes
+!
 ! Revision 1.115  2003/04/10 20:40:59  dwu
 ! make i_saturation and cloud_der as a verbal argument
 !
@@ -1102,7 +1105,7 @@ end module FullCloudForwardModel
 ! add phi_tan
 !
 ! Revision 1.100  2002/11/30 21:31:46  dwu
-! fix signal loop and move obsCloudRadiance inside jacobian loop
+! fix signal loop and move constrainCldRad inside jacobian loop
 !
 ! Revision 1.99  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
