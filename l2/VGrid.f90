@@ -34,13 +34,12 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   ! information. Note that this is only relevant for coherent quantities. 
   ! Incoherent ones deal with vGrids seperately.
 
-  integer, public, parameter :: VC_Invalid = 0
   type vGrid_T
     integer:: NAME                 ! String index of name
     integer :: verticalCoordinate  ! One of t_vGridCoordinate's literals, or
-                                   ! VC_Invalid if empty
+                                   ! L_None if empty
     integer :: noSurfs             ! Number of surfaces
-    real(r8), dimension(:), pointer :: surfs  ! Array of surfaces
+    real(r8), dimension(:), pointer :: surfs => NULL()  ! Array of surfaces
                                    ! (actually dimensioned noSurfs)
   end type vGrid_T
 
@@ -108,7 +107,7 @@ contains ! =====     Public Procedures     =============================
     number = 0
     vGrid%name = name
     vGrid%noSurfs = 0
-    vGrid%verticalCoordinate = VC_Invalid
+    vGrid%verticalCoordinate = L_None
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -446,6 +445,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.3  2001/02/22 23:43:43  livesey
+! Nullified vGrid_T%surfs by default
+!
 ! Revision 2.2  2001/02/09 19:30:16  vsnyder
 ! Move checking for required and duplicate fields to init_tables_module
 !
