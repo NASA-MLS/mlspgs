@@ -232,31 +232,37 @@ contains
   end function DoVGridsMatch
 
   ! --------------------------------------- DoVGridsMatch --------------
-  logical function DoFGridsMatch ( a, b )
+  logical function DoFGridsMatch ( a, b, sizeOnly )
     ! Returns true if the quantities have the same fGrid information
     type ( VectorValue_T ), intent(in) :: A ! First quantity
     type ( VectorValue_T ), intent(in) :: B ! Second quantity
+    logical, intent(in), optional :: SIZEONLY
 
     ! Local paramterts
     real (r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
+    logical :: MYSIZEONLY
 
     ! Executable code
     DoFGridsMatch = .false.
-    if ( a%template%frequencyCoordinate /= b%template%frequencyCoordinate ) return
+    mySizeOnly = .false.
+    if ( present ( sizeOnly ) ) mySizeOnly = sizeOnly
     if ( a%template%noChans /= b%template%noChans ) return
-    select case ( a%template%frequencyCoordinate )
-    case ( l_none )
-    case ( l_channel )
-      if ( a%template%signal /= b%template%signal ) return
-      if ( a%template%sideband /= b%template%sideband ) return
-    case default
-      if ( .not. associated ( a%template%frequencies ) .or. &
-        & .not. associated ( b%template%frequencies ) ) return
-      if ( any ( shape(a%template%frequencies) /= &
-        & shape(b%template%frequencies) ) ) return
-      if ( any ( abs ( a%template%frequencies - &
-        & b%template%frequencies ) > fTol ) ) return
-    end select
+    if ( .not. mySizeOnly ) then
+      if ( a%template%frequencyCoordinate /= b%template%frequencyCoordinate ) return
+      select case ( a%template%frequencyCoordinate )
+      case ( l_none )
+      case ( l_channel )
+        if ( a%template%signal /= b%template%signal ) return
+        if ( a%template%sideband /= b%template%sideband ) return
+      case default
+        if ( .not. associated ( a%template%frequencies ) .or. &
+          & .not. associated ( b%template%frequencies ) ) return
+        if ( any ( shape(a%template%frequencies) /= &
+          & shape(b%template%frequencies) ) ) return
+        if ( any ( abs ( a%template%frequencies - &
+          & b%template%frequencies ) > fTol ) ) return
+      end select
+    end if
     DoFGridsMatch = .true.
   end function DoFGridsMatch
 
@@ -288,6 +294,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.24  2003/08/28 00:44:43  livesey
+! Added sizeOnly option to DoFGridsMatch
+!
 ! Revision 2.23  2003/07/07 20:21:34  livesey
 ! Now uses the FindClosestMatch function
 !
