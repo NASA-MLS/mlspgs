@@ -77,8 +77,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! correspond to a single quantity.
 
   type VectorValue_T
-    type (QuantityTemplate_T), pointer :: TEMPLATE => NULL() ! Template for
-    ! this quantity.
+    type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
     integer :: index                    ! Index of this quantity into vector
     real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
     ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
@@ -97,8 +96,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type Vector_T
     integer :: Name = 0        ! Sub-rosa index of the vector name
-    type (VectorTemplate_T), pointer :: TEMPLATE => NULL() ! In the template
-    ! database
+    type (VectorTemplate_T) :: TEMPLATE ! Template for this vector
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
     ! dimension of QUANTITIES is the same as for the QUANTITIES field of the
     ! vector template.  Each element of QUANTITIES here corresponds to the
@@ -202,7 +200,7 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(in) :: X
     call destroyVectorInfo ( z )
     z%name = x%name
-    z%template => x%template
+    z%template = x%template
     z%quantities => x%quantities
   end subroutine AssignVector
 
@@ -270,13 +268,13 @@ contains ! =====     Public Procedures     =============================
     integer :: I, Status
     ! Executable statements:
     call destroyVectorInfo ( z )
-    z%template => x%template
+    z%template = x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "z%quantities" )
     z%quantities%index = x%quantities%index
     do i = 1, size(x%quantities)
-      z%quantities(i)%template => x%quantities(i)%template
+      z%quantities(i)%template = x%quantities(i)%template
     end do
     call createValues ( z )
     do i = 1, size(x%quantities)
@@ -401,13 +399,13 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = vectorName
-    vector%template => vectorTemplate
+    vector%template = vectorTemplate
     allocate ( vector%quantities(vectorTemplate%noQuantities), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Vector quantities"  )
     do quantity = 1, vectorTemplate%noQuantities
       vector%quantities(quantity)%index = quantity
-      vector%quantities(quantity)%template => &
+      vector%quantities(quantity)%template = &
         & quantities(vectorTemplate%quantities(quantity))
     end do
     call createValues ( vector )
@@ -448,7 +446,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = 0
-    nullify ( vector%template )
+    nullify ( vector%template%quantities )
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
     deallocate ( vector%quantities, stat=status )
@@ -1108,6 +1106,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.29  2001/04/25 21:57:07  livesey
+! Removed insulate vector (that didn't last very long :-( )
+!
 ! Revision 2.28  2001/04/25 20:15:23  livesey
 ! Tidied up InsulateVector
 !
