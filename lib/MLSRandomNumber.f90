@@ -5,7 +5,6 @@
 module MLSRandomNumber              ! Some random number-generating things
   !=============================================================================
 
-  use MLSCommon, only : R8
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
 
   implicit none
@@ -391,13 +390,9 @@ contains
 !        2.00 on a pentium produced -0.0 for -TWO*log(1.0), then got a
 !        floating point exception on sqrt(-0.0).
          if ( S <= 0.0 ) then
-!           print *, 'Illegal S: X, Y ', X, Y
-!           stop 
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Illegal S: X, Y " )
          elseif ( U3 == 0.0 ) then
-!           print *, 'Illegal U3: harvest ', (i, harvest(i), i=1, SPTR)
-!           stop
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Illegal U3, harvest " )
          endif
@@ -791,10 +786,6 @@ contains
                       & "invalid value for MODE in subroutine RANMOD" )
                 end select
 !  850          continue
-!*              print'(1x,a,3i3,g11.3)', 'RANPK2.. MODE,J,I,DIFF=',
-!*    *         MODE,J,I,DIFF                !****** For Testing ******
-!              print *, 'RANPK2.. MODE,J,I,DIFF'
-!              print *, MODE,J,I,DIFF
                if(DIFF .ne. 0.0d0) go to 880
 !                            Following line ends I loop.
   860         continue
@@ -807,8 +798,6 @@ contains
          XCURSP = X1SP
          return
 !
-!*        print*,'From RANPK2.. MODE =',MODE  !***** For Testing *****
-          print*, 'From RANPK2.. MODE =',MODE  !***** For Testing *****
 !                            Following line ends MODE loop.
   880 continue
 !        The computations were unsuccessful for all values of MODE.
@@ -817,9 +806,6 @@ contains
 !
 !      call ERMSG('RANPK2',1, 2,
 !     *'This random no. code will not work on this computer system.','.')
-!      print *, '***RANPK2 wishes to report the following error'
-!      print *, 'This rnc will not work on this computer system.'
-!      return
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "This rnc will not work on this computer system " )
       end subroutine RANMOD
@@ -999,6 +985,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.8  2002/01/09 23:45:20  pwagner
+! Removed vistiges of print statements
+!
 ! Revision 2.7  2001/10/18 23:30:59  pwagner
 ! Works even if change to/from intrinsic
 !
