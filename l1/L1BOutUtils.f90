@@ -12,6 +12,7 @@ MODULE L1BOutUtils
   USE SortQualify, ONLY: MAFinfo
   USE OutputL1B, ONLY: OutputL1B_rad
   USE MLSL1Rad, ONLY: L1Brad
+  USE MLSL1Config, ONLY: L1Config
 
   IMPLICIT NONE
 
@@ -31,9 +32,13 @@ CONTAINS
     counterMAF = MAFno
     MAFno = MAFno + 1
 
-    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
-         orbitNumber, scanRate, scanRateT)
+    IF (L1Config%Globals%ProduceL1BOA) THEN
+
+       CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+            orbitNumber, scanRate, scanRateT)
+
+    ENDIF
 
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, L1Brad)
 
@@ -44,6 +49,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.4  2002/07/17 14:27:26  perun
+! Added ProduceL1BOA flag
+!
 ! Revision 2.3  2002/07/17 14:19:54  perun
 ! Uncommented L1BOA_MAF
 !
