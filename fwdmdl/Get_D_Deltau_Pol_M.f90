@@ -195,9 +195,8 @@ contains
 ! using $\Delta \delta_{i \rightarrow i-1}^k$,
 ! $\frac{\partial \Delta \delta_{i \rightarrow i-1}^k}{\partial T_m}$
 ! and the {\tt dExDt} routine.
-! 
 
-  subroutine Get_D_Deltau_Pol_DT ( Frq, H, CT, STCP, STSP, My_Catalog, &
+  subroutine Get_D_Deltau_Pol_DT ( Frq, H, CT, STCP, STSP, &
                 & Beta_group, GL_slabs_M, GL_slabs_P, &
                 & T_Path_C, T_Path_M, T_Path_P, T_Path_F, &
                 & Beta_Path_C, Beta_Path_F, SPS_Path, &
@@ -218,7 +217,6 @@ contains
     use Opacity_m, only: Opacity
     use Physics, only: H_OVER_K
     use Rad_Tran_m, only: Get_Do_Calc
-    use SpectroscopyCatalog_m, only: CATALOG_T
 
   ! Arguments
     ! SVE == # of state vector elements
@@ -233,7 +231,6 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
-    type(catalog_t), intent(in) :: My_Catalog(:)
     type (beta_group_T), intent(in) :: Beta_group(:)
     type (slabs_struct), intent(in) :: GL_slabs_m(:,:), GL_slabs_p(:,:) ! for T -/+ del_T
     real(rp), intent(in) :: T_Path_c(:)     ! path temperatures on coarse grid
@@ -353,9 +350,9 @@ contains
     mid = n_path / 2
     n_sps = size(sps_path,2)
 
-    call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs_m, &
+    call get_beta_path_polarized ( frq, h, beta_group, gl_slabs_m, &
       & path_inds, beta_path_m )
-    call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs_p, &
+    call get_beta_path_polarized ( frq, h, beta_group, gl_slabs_p, &
       & path_inds, beta_path_p )
 
     a = 1
@@ -636,6 +633,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.24  2004/04/02 01:00:20  vsnyder
+! Inching toward analytic temperature derivatives
+!
 ! Revision 2.23  2004/03/08 22:56:41  vsnyder
 ! Remove calculation of complex exponent for T/T0 for beta.  Remove
 ! D_Delta_DT, which had been gotten from drad_tran_dt but is no longer
