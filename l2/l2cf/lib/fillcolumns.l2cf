@@ -6,7 +6,7 @@ begin Fill
   !ifdef(tpPressure,{},{!define(tpPressure,100mb)})
     Fill, quantity=state.tpPressure, method=explicit, $
       explicitValues=!tpPressure, /spread
-  !define(TropoName, {wmo tropopause})
+  !define(TropoName, !tpPressure)
 
 end Fill
 
