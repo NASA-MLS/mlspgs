@@ -30,6 +30,8 @@ MODULE mon_Out
 
 ! Definition -- CreateFlags_T
 ! Subroutines -- WriteMetaLogM
+!                OutputStd
+!                OutputDg
 !                OutputMON
 
 ! Remarks:  This is a prototype module for the routines needed for the L3
@@ -52,9 +54,9 @@ MODULE mon_Out
 
 CONTAINS
 
-!----------------------------------------------------
-   SUBROUTINE WriteMetaLogM (pcf, startDate, endDate)
-!----------------------------------------------------
+!--------------------------------
+   SUBROUTINE WriteMetaLogM (pcf)
+!--------------------------------
 
 ! Brief description of subroutine
 ! This subroutine writes metadata for the log file to a separate ASCII file.
@@ -62,8 +64,6 @@ CONTAINS
 ! Arguments
 
       TYPE( PCFMData_T ), INTENT(IN) :: pcf
-
-      CHARACTER (LEN=*), INTENT(IN) :: endDate, startDate
 
 ! Parameters
 
@@ -102,12 +102,12 @@ CONTAINS
                                  sval)
 
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeBeginningDate", startDate)
+                                 "RangeBeginningDate", pcf%startDay)
       sval= '00:00:00.000000'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
                                  "RangeBeginningTime", sval)
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeEndingDate", endDate)
+                                 "RangeEndingDate", pcf%endDay)
       sval= '23:59:59.999999'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
                                  "RangeEndingTime", sval)
@@ -136,6 +136,72 @@ CONTAINS
 !------------------------------
    END SUBROUTINE WriteMetaLogM
 !------------------------------
+
+!-----------------------------------------------------------------------------------
+   SUBROUTINE OutputStd(pcf, type, mode, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+                        sFiles, flag)
+!-----------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine performs the Output/Close task within the standard product loop of
+! the L3 Monthly subprogram.
+
+! Arguments
+
+
+      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+
+      TYPE( L3MMData_T ), INTENT(IN) :: mm, mmA, mmD
+
+      TYPE( L3MZData_T ), INTENT(IN) :: mz, mzA, mzD
+
+      TYPE( PCFMData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=*), INTENT(IN) :: mode, type
+
+      TYPE( OutputFiles_T ), INTENT(OUT) :: sFiles
+
+      TYPE( CreateFlags_T ), INTENT(OUT) :: flag
+
+! Parameters
+
+! Functions
+
+! Variables
+
+! Daily Zonal Mean output
+
+      CALL OutputL3DZ(type, dz, sFiles)
+      CALL OutputL3DZ(type, dzA, sFiles)
+      CALL OutputL3DZ(type, dzD, sFiles)
+
+! Monthly Zonal Mean output
+
+      CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
+      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS)
+      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS)
+
+! If required for this mode, output the monthly map
+
+      IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
+         CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
+      ENDIF
+
+! Ascending -- sort, dz, mz, mm
+
+      IF ( INDEX(mode,'a') /= 0) THEN
+         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS)
+      ENDIF
+
+! Descending
+
+      IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
+         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS)
+      ENDIF
+
+!--------------------------
+   END SUBROUTINE OutputStd
+!--------------------------
 
 !-----------------------------------------------------------------------
    SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cf, anText)
@@ -224,7 +290,7 @@ CONTAINS
 
 ! Write the log file metadata
 
-      CALL WriteMetaLogM(pcf, pcf%startDay, pcf%endDay)
+      CALL WriteMetaLogM(pcf)
 
 ! Deallocations
 
@@ -249,4 +315,6 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.1  2001/07/18 15:44:27  nakamura
+!Module for the Monthly Output/Close task.
 !
