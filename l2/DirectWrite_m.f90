@@ -774,6 +774,7 @@ contains ! ======================= Public Procedures =========================
     endif
     nProfiles = useLastInstance - useFirstInstance + 1
     lastProfile = firstProfile - 1 + nProfiles
+    if ( DEEBUG ) print *, 'noFreqsInL2GP, noSurfsInL2GP, lastProfile: ', noFreqsInL2GP, noSurfsInL2GP, lastProfile
     call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
     if ( quantity%template%verticalCoordinate == l_Pressure ) &
@@ -842,6 +843,9 @@ contains ! ======================= Public Procedures =========================
       l2gp%status(firstProfile:lastProfile) = 0
     endif
     ! l2gp%status(firstProfile:lastProfile) = 'G'
+    if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
+    if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
+    if ( DEEBUG ) print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
   end subroutine vectorValue_to_l2gp
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -883,6 +887,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.23  2004/05/05 21:31:48  pwagner
+! More debug printing
+!
 ! Revision 2.22  2004/03/03 19:25:45  pwagner
 ! Fixed poorly understood prob with single chunks; more initializing in setup
 !
