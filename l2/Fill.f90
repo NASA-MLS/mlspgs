@@ -45,6 +45,7 @@ contains ! =====     Public Procedures     =============================
     ! of the l2cf and works out what to do.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use DumpCommand_m, only: DumpCommand
     use Expr_M, only: EXPR
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
@@ -112,7 +113,6 @@ contains ! =====     Public Procedures     =============================
     use L2PC_m, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
     use L3ASCII, only: L3ASCII_INTERP_FIELD
-    use LEXER_CORE, only: PRINT_SOURCE
     use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
       & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
     use MatrixModule_0, only: Sparsify, MatrixInversion
@@ -565,45 +565,7 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_dump ) ! ============================== Dump ==========
-        ! Currently the only field here is the quantity, but let's
-        ! do a loop anyway, as I may add more later
-        do j = 2, nsons(key)
-          gson = subtree(j,key) ! The argument
-          fieldIndex = get_field_id(gson)
-          if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
-          got(fieldIndex) = .true.
-          select case ( fieldIndex )
-          case ( f_quantity )
-            vectorIndex = decoration(decoration(subtree(1,gson)))
-            quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-            ! print *, 'vectorIndex: ', vectorIndex
-            ! print *, 'quantityIndex: ', quantityIndex
-            ! print *, 'size(vector database): ', size(vectors)
-            if ( vectorIndex > size(vectors) ) then
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'vector index too big' )
-            endif
-            ! print *, 'Num of quantities: ', vectors(vectorIndex)%template%noQuantities
-            if ( quantityIndex > vectors(vectorIndex)%template%noQuantities ) then
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'quantity index too big' )
-            endif
-          case ( f_vector )
-            vectorIndex = decoration(decoration(gson))
-          end select
-        end do
-        if ( got(f_vector) ) then
-          call dump ( vectors(vectorIndex) )
-        elseif ( got(f_quantity) ) then
-          ! print *, 'About to try to obtain aQuantity'
-          aQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(vectorIndex), quantityIndex)
-          ! print *, 'About to try to dump aQuantity'
-          call dump ( aQuantity )
-        else
-          call Announce_error ( key, no_error_code, &
-          & 'Sorry-dont know how to dump this field' )
-        endif
+        call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
@@ -2393,12 +2355,14 @@ contains ! =====     Public Procedures     =============================
         &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and l2gp have different number of channels' )
-      if ( associated ( quantity%template%frequencies ) ) then
-        if ( any ( abs ( l2gp%frequency - &
-          & quantity%template%frequencies ) > fTol ) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Quantity and l2pg have different frequency grids' )
-      end if
+!       call dump ( l2gp%frequency, 'l2gp' )
+!       call dump ( quantity%template%frequencies, 'quantity' )
+!       if ( associated ( quantity%template%frequencies ) ) then
+!         if ( any ( abs ( l2gp%frequency - &
+!           & quantity%template%frequencies ) > fTol ) ) &
+!           & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!           & 'Quantity and l2gp have different frequency grids' )
+!       end if
 
       if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -6712,6 +6676,7 @@ contains ! =====     Public Procedures     =============================
     subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
 
       use Intrinsic, only: PHYQ_Indices
+      use LEXER_CORE, only: PRINT_SOURCE
       use String_Table, only: Display_String
 
       integer, intent(in) :: where   ! Tree node where error was noticed
@@ -6886,6 +6851,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.269  2004/05/01 04:04:36  vsnyder
+! Use DumpCommand
+!
 ! Revision 2.268  2004/04/28 00:30:58  livesey
 ! Added a|b option in manipulate fill.
 !
