@@ -14,7 +14,7 @@
 !
 !     subroutine *SORTQ (A, M, N, P)
       integer, intent(in) :: M, N
-      integer, intent(out) :: P(*)
+      integer, intent(inout) :: P(*)
 !
 !     *****     Local Variables     ************************************
 !
@@ -130,6 +130,9 @@
 !     end
 
 ! $Log$
+! Revision 2.2  2003/06/20 01:34:30  vsnyder
+! Change intent for A and P
+!
 ! Revision 2.1  2003/06/20 00:17:51  vsnyder
 ! Initial commit
 !
