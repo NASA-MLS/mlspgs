@@ -116,7 +116,8 @@ program MLSL2
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
-  integer :: SINGLECHUNK = 0       ! Just run one chunk
+  integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
+  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK, LastCHUNK]
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
@@ -209,10 +210,18 @@ program MLSL2
           call getarg ( i, line )
           command_line = trim(command_line) // ' ' // trim(line)
         end if
-        read ( line, *, iostat=status ) singleChunk
-        if ( status /= 0 ) then
-          call io_error ( "After --chunk option", status, line )
-          stop
+        if ( singleChunk == 0 ) then
+          read ( line, *, iostat=status ) singleChunk
+          if ( status /= 0 ) then
+            call io_error ( "After --chunk option", status, line )
+            stop
+          end if
+        else
+          read ( line, *, iostat=status ) lastChunk
+          if ( status /= 0 ) then
+            call io_error ( "After --chunk option", status, line )
+            stop
+          end if
         end if
       else if ( line(3+n:7+n) == 'ckbk ' ) then
         checkBlocks = switch
@@ -584,7 +593,7 @@ program MLSL2
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & singleChunk, filedatabase )
+        & singleChunk, lastChunk, filedatabase )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -697,10 +706,16 @@ contains
       call output(' Default hdfeos version on writes:               ', advance='no')
       call blanks(5, advance='no')
       call output(default_hdfversion_write, advance='yes')
-      if ( singleChunk /= 0 ) then
+      if ( singleChunk /= 0 .and. lastChunk == 0 ) then
       call output(' Compute only the single chunk:                  ', advance='no') 
       call blanks(5, advance='no')                                                   
       call output(singleChunk, advance='yes')
+      elseif ( singleChunk /= 0 .and. lastChunk /= 0 ) then
+      call output(' Compute chunks in range:                        ', advance='no') 
+      call blanks(5, advance='no')                                                   
+      call output(singleChunk, advance='no')
+      call blanks(5, advance='no')                                                   
+      call output(lastChunk, advance='yes')
       endif                      
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
@@ -779,6 +794,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.104  2003/11/05 21:27:54  pwagner
+! Can enter range of chunks to be processed instead of single
+!
 ! Revision 2.103  2003/10/21 00:02:32  pwagner
 ! Revert to writing just once if toolkit and parallel
 !
