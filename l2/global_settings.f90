@@ -64,8 +64,8 @@ contains
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
       & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
-      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
-      & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
+      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, S_L2PARSF, &
+      & S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
       & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
@@ -88,12 +88,13 @@ contains
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, Write_PFAData
+    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, Read_PFAData, &
+      & Write_PFAData
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
     use SDPToolkit, only: max_orbits, mls_utctotai
     use String_Table, only: Get_String
     use Time_M, only: Time_Now
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
     & DUMP_TREE_NODE, SOURCE_REF
@@ -115,7 +116,7 @@ contains
     ! type (PCFData_T) :: l2pcf
 
     integer :: Details             ! How much info about l1b files to dump
-    logical :: GOT(2) = .false.
+    logical :: GOT(2)
     integer :: I                   ! Index of son of root
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
@@ -123,24 +124,23 @@ contains
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
-    integer :: Status              ! From CreateVGridFromMLSCFInfo
-    logical :: stopEarly
+    logical :: StopEarly
     integer :: Sub_rosa_index
-    integer :: the_hdf_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
 !   integer :: UNITS(2)            ! Output from Expr
-!   double precision :: VALUE(2)  ! Output from Expr
+!   double precision :: VALUE(2)   ! Output from Expr
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical ::  ItExists
 
 
-    character(LEN=NameLen) :: Name_string
-    character(LEN=NameLen) :: End_time_string, Start_time_string
-    character(LEN=FileNameLen) :: FilenameString
+    character(len=NameLen) :: Name_string
+    character(len=NameLen) :: End_time_string, Start_time_string
+    character(len=FileNameLen) :: FilenameString
     character (len=name_len) :: QUANTITY
-    character(LEN=*), parameter :: Time_conversion='(F32.0)'
+    character(len=*), parameter :: Time_conversion='(F32.0)'
     character(len=Name_Len) :: l1bItemName
     integer :: OrbNum(max_orbits)
     real(r8) :: OrbPeriod(max_orbits)
@@ -150,6 +150,7 @@ contains
     stopEarly = STOPAFTERCHUNKDIVIDE .or. STOPAFTERGLOBAL
 
     error = 0
+    got = .false.
     startTimeIsAbsolute = .false.
     stopTimeIsAbsolute = .false.
     LeapSecFileName = ''
@@ -250,7 +251,7 @@ contains
             & just_a_warning = .false.)
             call MLSMessage ( MLSMSG_Error, ModuleName, &                      
             & '(Please check file name and path)' )    
-          elseif ( TOOLKIT ) then
+          else if ( TOOLKIT ) then
             call announce_error(0, &
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
@@ -301,7 +302,7 @@ contains
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
-          if(index(switches, 'pro') /= 0) then  
+          if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1boa', &                   
@@ -309,14 +310,14 @@ contains
           end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbNum, 'OrbitNumber', &
                & l1bFlag, hdfVersion=the_hdf_version)
-               if (l1bFlag == -1) then
+               if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbNum = -1
                else
                   GlobalAttributes%OrbNum = OrbNum
                end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbPeriod, 'OrbitPeriod', &
                & l1bFlag, hdfVersion=the_hdf_version)
-               if (l1bFlag == -1) then
+               if ( l1bFlag == -1 ) then
                   GlobalAttributes%OrbPeriod = -1.0
                else
                   GlobalAttributes%OrbPeriod = OrbPeriod
@@ -331,7 +332,7 @@ contains
           the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, l1bInfo, F_FILE, &
             & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
-          if(index(switches, 'pro') /= 0) then  
+          if ( index(switches, 'pro') /= 0 ) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1brad', &                   
@@ -345,7 +346,7 @@ contains
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
           parallel%stagingFile = FilenameString
-          if(index(switches, 'pro') /= 0) then  
+          if ( index(switches, 'pro') /= 0 ) then  
             call proclaim(FilenameString, 'l2 parallel staging file') 
           end if
           if ( TOOLKIT ) &
@@ -358,6 +359,8 @@ contains
         case ( s_pfaData )
           call Get_PFAdata_from_l2cf ( son, name, vGrids, returnStatus )
           error = max(error, returnStatus)
+        case ( s_readPFA )
+          call read_PFAdata ( son )
         case ( s_writePFA )
           call write_PFAdata ( son, returnStatus )
           error = max(error, returnStatus)
@@ -384,10 +387,10 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'File not found; make sure the name and path are correct' &
       & // trim(l1bInfo%L1BOAFileName) )
-    elseif ( the_hdf_version <= 0 ) then                                          
+    else if ( the_hdf_version <= 0 ) then                                          
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
-    endif
+    end if
     ! add maf offsets to start, end times
     ! or convert them to tai93
     ! This is optional way to define processingRange if using PCF
@@ -398,7 +401,7 @@ contains
      & ) then
 
       ! 1st--check that have L1BOA
-      if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
+      if ( l1bInfo%L1BOAID == ILLEGALL1BRADID ) then
         call announce_error(son, &
           & 'L1BOA file required by global data--but not set')
       end if
@@ -407,7 +410,7 @@ contains
       l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, hdfVersion=the_hdf_version, dontPad=.true.)
-      if ( l1bFlag==-1) then
+      if ( l1bFlag==-1 ) then
         call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
         minTime = 0.
@@ -430,9 +433,9 @@ contains
           & 'Error converting start time in mls_utctotai; code number: ')
           call output(returnStatus, advance='yes')
         end if
-      elseif(got(1)) then
+      else if ( got(1) ) then
         processingrange%starttime = minTime + start_time_from_1stMAF
-      elseif(.not. TOOLKIT) then
+      else if ( .not. TOOLKIT ) then
         processingrange%starttime = minTime
       end if
     end if
@@ -448,9 +451,9 @@ contains
           & 'Error converting end time in mls_utctotai; code number: ')
           call output(returnStatus, advance='yes')
         end if
-      elseif(got(2)) then
+      else if ( got(2) ) then
         processingrange%endtime = minTime + end_time_from_1stMAF
-      elseif(.not. TOOLKIT) then
+      else if ( .not. TOOLKIT ) then
         processingrange%endtime = maxTime + 1.0
       end if
     end if
@@ -486,7 +489,7 @@ contains
       Details = 1
     else
       Details = 0
-    endif
+    end if
     if ( index(switches, 'vgrid') /= 0 ) &
       & call dump ( vgrids, details=Details )
 
@@ -550,7 +553,7 @@ contains
           & from_where=ModuleName)
 
         if ( present(error_number) ) then
-         if (my_warning) then
+         if ( my_warning ) then
           call output ( 'Warning number ', advance='no' )
         else
           call output ( 'Error number ', advance='no' )
@@ -560,14 +563,14 @@ contains
         end if
       else
 
-        if ( .not. my_warning) then
+        if ( .not. my_warning ) then
         call output ( '***Error in module ' )
         call output ( ModuleName, advance='yes' )
         end if
 
         call output ( trim(full_message), advance='yes' )
         if ( present(error_number) ) then
-         if(my_warning) then
+         if ( my_warning ) then
           call output ( 'Warning number ' )
         else
           call output ( 'Error number ' )
@@ -635,10 +638,10 @@ contains
 
       call output ( 'L1B database:', advance='yes' )
 
-     if(associated(l1bInfo%L1BRADIDs)) then
+     if ( associated(l1bInfo%L1BRADIDs) ) then
       if ( num_l1b_files > 0 ) then
         do i = 1, num_l1b_files
-        if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+        if ( l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID ) then
   	      call output ( 'fileid:   ' )
               call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
          call output ( 'name:   ' )
@@ -688,7 +691,7 @@ contains
       call output ( ' ', advance='yes' )
       call output ( 'L1OA file:', advance='yes' )
 
-        if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
+        if ( l1bInfo%L1BOAID /= ILLEGALL1BRADID ) then
         call output ( 'fileid:   ' )
         call output ( l1bInfo%L1BOAID, advance='yes' )
         call output ( 'name:   ' )
@@ -820,17 +823,17 @@ contains
     if ( .not. TOOLKIT ) then
       Direct%handle = 0
       Direct%filename = filename
-    elseif ( Direct%Type ==  l_l2gp  ) then
+    else if ( Direct%Type ==  l_l2gp ) then
       Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
         & mlspcf_l2gp_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
-    elseif ( Direct%Type ==  l_l2dgg ) then
+    else if ( Direct%Type ==  l_l2dgg ) then
       Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
         & mlspcf_l2dgg_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
         & exactName=Direct%Filename)
-    elseif ( Direct%Type ==  l_l2fwm  ) then
+    else if ( Direct%Type ==  l_l2fwm ) then
          Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
         & mlspcf_l2fwm_full_end, &
         & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
@@ -858,6 +861,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.92  2004/12/14 22:52:38  pwagner
+! Changes related to stopping early
+!
 ! Revision 2.91  2004/12/13 20:19:48  vsnyder
 ! Added MakePFA, PFAData, WritePFA.  Improved error handling.  Removed dumps
 ! triggered by switches == vgrid2 or vgrid, since the dump command can do it now.
