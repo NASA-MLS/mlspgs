@@ -8,12 +8,12 @@ module WriteMetadata ! Populate metadata and write it out
   use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
-  use MLSFiles, only: Split_path_name, mls_sfstart, mls_sfend
+  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
-  use MLSStrings, only: Reverse, LowerCase, GetStringHashElement
+  use MLSStrings, only: LowerCase, GetStringHashElement
   use Output_m, only: Output, blanks
   use PCFHdr, only: WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
@@ -106,6 +106,11 @@ module WriteMetadata ! Populate metadata and write it out
 
     ! Note that the text matching in options (2) and (3)
     ! will not be case sensitive unless you set MCFCASESENSITIVE
+
+    !                          (*)
+    ! Finally, you can avoid any of this trickery by using the metaName=
+    ! field for each file. For example, if you set metaName='o3', the
+    ! mcf matching o3 will be selected, no matter what you named the l2gp file.
 
     character (len=fileNameLen) :: spec_keys
 
@@ -933,12 +938,13 @@ contains
 
   ! -----------------------------------------------  Get_l2gp_mcf  -----
 
-  subroutine Get_l2gp_mcf ( File_base, Mcf, L2pcf, Version )
+  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, L2pcf, Version )
 
   ! metadata configuration file (mcf) PCF number corresponding to l2gp number
   ! sdid
   ! Arguments
     character(len=*), intent(in) ::  File_base
+    character(len=*), intent(in) ::  meta_name
     integer, intent(in), optional :: Version
     integer, intent(inout) ::        Mcf
     type(PCFData_T) :: l2pcf
@@ -951,7 +957,6 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: Mcf_full
     character (len=NameLen) :: Mcf_path
     character (len=NameLen) :: Mcf_name
-    character (len=NameLen) :: Mcf_pattern
     integer :: ReturnStatus, MyVersion, I
 
     character (len=1), parameter :: COMMA = ','
@@ -986,142 +991,114 @@ contains
       return
     end if
 
-    ! Get full file name for typical MCF file
-    do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
+    if ( meta_name == ' ' ) then
+      ! * The following complication is attempting to infer
+      ! * the species name based on the file name
+      ! * It is necessary only if you disdained to specify the metaName
+      ! * field in the output command
+      ! Get full file name for typical MCF file
+      do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
 
-      if ( present(version) ) then
-	      myVersion=version
-      else
-	      myVersion = 1
-      end if
+        if ( present(version) ) then
+	        myVersion=version
+        else
+	        myVersion = 1
+        end if
 
-      returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
+        returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
 
-      if ( returnStatus == PGS_S_SUCCESS ) then 
-	      exit
-      end if
+        if ( returnStatus == PGS_S_SUCCESS ) then 
+	        exit
+        end if
 
-    end do
-
-    if ( DEBUG ) then
-      call output('returnStatus: ', advance='no')
-      call output(returnStatus, advance='yes')
-    end if
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then 
-      mcf = 0
-      return
-    end if
-
-    ! Split full_file_names into path+name
-
-    call split_path_name ( mcf_full, mcf_path, mcf_name )
-	
-! If text matching not case sensitive, shift to lower case
-    if ( .NOT. MCFCASESENSITIVE ) then
-      sd_full = LowerCase(file_base)
-      mcf_name = LowerCase(mcf_name)
-    else
-      sd_full = file_base
-    end if
-
-    if ( DEBUG ) then
-      call output('mcf_full: ', advance='no')
-      call output(trim(mcf_full), advance='yes')
-      call output('mcf_path: ', advance='no')
-      call output(trim(mcf_path), advance='yes')
-      call output('mcf_name: ', advance='no')
-      call output(trim(mcf_name), advance='yes')
-    end if
-
-    ! Get species name assuming e.g. '*l2gp_h2o'
-    call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
-
-    if ( DEBUG ) then
-      call output('sd_full: ', advance='no')
-      call output(trim(sd_full), advance='yes')
-      call output('sd_path: ', advance='no')
-      call output(trim(sd_path), advance='yes')
-      call output('sd_name: ', advance='no')
-      call output(trim(sd_name), advance='yes')
-    end if
-
-    if ( len(trim(sd_name)) <= 0 ) then
-      mcf=0
-      return
-    end if
-	
-    if ( MCFFORL2GPOPTION == 3 ) then
-
-      ! get mcfspecies name from associative array
-      ! if the species name not found in spec_keys, it will return ','
-      call GetStringHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
-        & trim(sd_name), sd_full, .TRUE. )
+      end do
 
       if ( DEBUG ) then
-        call output('keys: ', advance='no')
-        call output(trim(l2pcf%spec_keys), advance='yes')
-        call output('hash: ', advance='no')
-        call output(trim(l2pcf%spec_hash), advance='yes')
-        call output('hash for species name: ', advance='no')
-        call output(trim(sd_full), advance='yes')
+        call output('returnStatus: ', advance='no')
+        call output(returnStatus, advance='yes')
       end if
 
-      if ( trim(sd_full) == COMMA ) then
+      if ( returnStatus /= PGS_S_SUCCESS ) then 
         mcf = 0
         return
       end if
 
-      sd_name = trim(sd_full)
+      ! Split full_file_names into path+name
 
-    end if
-
-    ! Now try to find mcf file corresponding to species name
-    ! assuming, e.g. '*h2o.*'
-
-    if ( DEBUG ) then
-      call output('loop over mcf files', advance='yes')
-    end if
-
-    do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
-
-      if ( present(version) ) then
-        myVersion=version
+      call split_path_name ( mcf_full, mcf_path, mcf_name )
+	
+      ! If   text matching not case sensitive, shift to lower case
+      if ( .NOT. MCFCASESENSITIVE ) then
+        sd_full = LowerCase(file_base)
+        mcf_name = LowerCase(mcf_name)
       else
-        myVersion = 1
+        sd_full = file_base
       end if
 
-      returnStatus = PGS_PC_GetReference(i, myVersion, mcf_full)
+      if ( DEBUG ) then
+        call output('mcf_full: ', advance='no')
+        call output(trim(mcf_full), advance='yes')
+        call output('mcf_path: ', advance='no')
+        call output(trim(mcf_path), advance='yes')
+        call output('mcf_name: ', advance='no')
+        call output(trim(mcf_name), advance='yes')
+      end if
 
-      if ( returnStatus == PGS_S_SUCCESS ) then 
-        call split_path_name(mcf_full, mcf_path, mcf_name)
+      ! Get species name assuming e.g. '*l2gp_h2o'
+      call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
 
-        ! This gives 'o2h*'
-        call split_path_name(Reverse(mcf_name), mcf_path, mcf_pattern, '.')
-        if ( .NOT. MCFCASESENSITIVE ) then
-          mcf_pattern = LowerCase(mcf_pattern)
-        end if
+      if ( DEBUG ) then
+        call output('sd_full: ', advance='no')
+        call output(trim(sd_full), advance='yes')
+        call output('sd_path: ', advance='no')
+        call output(trim(sd_path), advance='yes')
+        call output('sd_name: ', advance='no')
+        call output(trim(sd_name), advance='yes')
+      end if
 
-        ! So reverse it to make h2o
-        mcf_pattern = adjustl(Reverse(mcf_pattern))
+      if ( len(trim(sd_name)) <= 0 ) then
+        mcf=0
+        return
+      end if
+	
+      if ( MCFFORL2GPOPTION == 3 ) then
+
+        ! get mcfspecies name from associative array
+        ! if the species name not found in spec_keys, it will return ','
+        call GetStringHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
+          & trim(sd_name), sd_full, .TRUE. )
 
         if ( DEBUG ) then
-          call output('mcf_pattern: ', advance='no')
-          call output(trim(mcf_pattern), advance='yes')
+          call output('keys: ', advance='no')
+          call output(trim(l2pcf%spec_keys), advance='yes')
+          call output('hash: ', advance='no')
+          call output(trim(l2pcf%spec_hash), advance='yes')
+          call output('hash for species name: ', advance='no')
+          call output(trim(sd_full), advance='yes')
         end if
-        ! Check that pattern matches species name
-        ! Warning--this could give a false matching
-        ! if the species name matches more than one mcf_pattern
-        ! May wish to check for multiple matches later
-        if ( index(trim(mcf_pattern), trim(sd_name)) > 0 ) then
-          mcf = i
+
+        if ( trim(sd_full) == COMMA ) then
+          mcf = 0
           return
-	end if
+        end if
+
+        sd_name = trim(sd_full)
+
       end if
+   elseif ( .NOT. MCFCASESENSITIVE ) then
+     sd_name = Lowercase(meta_name)
+   else
+     sd_name = meta_name
+   endif
+   ! Now try to find mcf file corresponding to species name   
+   ! assuming, e.g. '*h2o.*'                                  
+   mcf = GetPCFromRef(trim(sd_name), &
+    & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end, &
+    & MCFCASESENSITIVE, returnStatus)
 
-    end do
-
-    mcf = 0
+   if ( returnStatus /= 0 ) then
+     mcf = 0
+   endif
 
   end subroutine Get_l2gp_mcf
 
@@ -1452,6 +1429,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.25  2002/02/22 01:18:06  pwagner
+! get_l2gp_mcf accepts meta_name arg; now uses getPCFFromRef
+!
 ! Revision 2.24  2002/01/31 00:37:45  pwagner
 ! Checks return value of mls_sfend
 !
