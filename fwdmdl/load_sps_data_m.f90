@@ -14,30 +14,30 @@ module LOAD_SPS_DATA_M
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
   use SpectroscopyCatalog_m, only: CATALOG_T
-  USE manipulatevectorquantities, only: FindInstanceWindow
+  use manipulatevectorquantities, only: FindInstanceWindow
 
   implicit none
 
-  Private
-  PUBLIC :: load_sps_data, Destroygrids_t
+  private
+  public :: load_sps_data, Destroygrids_t
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:) => null()! No. of entries in frq. grid per sps
     integer,  pointer :: no_z(:) => null()! No. of entries in zeta grid per sps
     integer,  pointer :: no_p(:) => null()! No. of entries in phi  grid per sps
-    INTEGER,  pointer :: windowstart(:) => null()! horizontal starting index
+    integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
-    INTEGER,  pointer :: windowfinish(:) => null()! horizontal ending index
+    integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                   from l2gp
-    LOGICAL,  pointer :: lin_log(:) => null()   ! type of representation basis
+    logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: frq_basis(:) => null() ! frq grid entries for all
 !                                                 molecules
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
 !                                                 molecules
-    REAL(rp), pointer :: values(:) => null() ! species values (ie vmr) in lvf
-    LOGICAL,  pointer :: deriv_flags(:) => null() ! do derivatives flags in lvf
+    real(rp), pointer :: values(:) => null() ! species values (ie vmr) in lvf
+    logical,  pointer :: deriv_flags(:) => null() ! do derivatives flags in lvf
   end type Grids_T
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -46,42 +46,42 @@ module LOAD_SPS_DATA_M
   character (LEN=*), parameter :: ModuleName= &
    "$RCSfile$"
 !---------------------------------------------------------------------------
-CONTAINS
+contains
 !-------------------------------------------------------------------
 
- SUBROUTINE load_sps_data(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+ subroutine load_sps_data(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind,     &
        &    Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn, f_len_dv,     &
        &    Grids_dv)
 
-    Type(forwardModelConfig_T), intent(in) :: fwdModelConf
-    Type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
-    Type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
+    type(forwardModelConfig_T), intent(in) :: fwdModelConf
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
 
-    Integer, intent(in)  :: RADIOMETER
-    Integer, intent(in)  :: MOL_CAT_INDEX(:)
+    integer, intent(in)  :: RADIOMETER
+    integer, intent(in)  :: MOL_CAT_INDEX(:)
 
-    Integer, intent(out) :: P_LEN, F_LEN
-    Integer, intent(out) :: H2O_IND
-    Integer, intent(out) :: EXT_IND
+    integer, intent(out) :: P_LEN, F_LEN
+    integer, intent(out) :: H2O_IND
+    integer, intent(out) :: EXT_IND
 
-    Integer, optional, intent(out) :: F_LEN_DW, F_LEN_DN, F_LEN_DV
+    integer, optional, intent(out) :: F_LEN_DW, F_LEN_DN, F_LEN_DV
 
 ! All the VMR coordinates
-    Type (Grids_T), intent(out) :: Grids_f
+    type (Grids_T), intent(out) :: Grids_f
 
 ! All the spectroscopy(W) coordinates
-    Type (Grids_T), optional, intent(out) :: Grids_dw
+    type (Grids_T), optional, intent(out) :: Grids_dw
 
 ! All the spectroscopy(N) coordinates
-    Type (Grids_T), optional, intent(out) :: Grids_dn
+    type (Grids_T), optional, intent(out) :: Grids_dn
 
 ! All the spectroscopy(V) coordinates
-    Type (Grids_T), optional, intent(out) :: Grids_dv
+    type (Grids_T), optional, intent(out) :: Grids_dv
 !
 ! Begin code:
 !
-    Call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+    call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        & radiometer, mol_cat_index, f_len, 'f', Grids_f, p_len, h2o_ind,&
        & ext_ind )
 !
@@ -100,10 +100,10 @@ CONTAINS
 !   & Call load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
 !        & radiometer, mol_cat_index, f_len_dv, 'v', Grids_dv)
 !
- END SUBROUTINE load_sps_data
+ end subroutine load_sps_data
 !-------------------------------------------------------------------
 !
- SUBROUTINE load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+ subroutine load_one_grid(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, f_len, Grid_type, Grids_x, p_len,   &
        &    h2o_ind, ext_ind)
 
@@ -122,18 +122,18 @@ CONTAINS
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
-    Character(LEN=1), intent(in) :: Grid_type
+    character(LEN=1), intent(in) :: Grid_type
 !
 !** ZEBUG: When Intrinsic has (l_dw, l_dn & l_dv), get rid of the following 
 !   4 lines of code
 !
-    Integer, parameter :: l_dw = 1
-    Integer, parameter :: l_dn = 2
-    Integer, parameter :: l_dv = 3
+    integer, parameter :: l_dw = 1
+    integer, parameter :: l_dn = 2
+    integer, parameter :: l_dv = 3
 
 ! Local variables:
 
-    Integer :: i,j,k,l,m,n,r,s,kz,kp,kf,n_f_phi,n_f_zet,n_f_frq,no_mol,l_x, &
+    integer :: i,j,k,l,m,n,r,s,kz,kp,kf,n_f_phi,n_f_zet,n_f_frq,no_mol,l_x, &
             &  ii, kk, wf1, wf2
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
@@ -144,14 +144,14 @@ CONTAINS
 
     no_mol = size( mol_cat_index )
 
-    Call allocate_test ( Grids_x%no_z,no_mol,'Grids_x%no_z',ModuleName )
-    Call allocate_test ( Grids_x%no_p,no_mol,'Grids_x%no_p',ModuleName )
-    Call allocate_test ( Grids_x%no_f,no_mol,'Grids_x%no_f',ModuleName )
-    Call allocate_test ( Grids_x%windowstart,no_mol,'Grids_x%windowstart', &
+    call allocate_test ( Grids_x%no_z,no_mol,'Grids_x%no_z',ModuleName )
+    call allocate_test ( Grids_x%no_p,no_mol,'Grids_x%no_p',ModuleName )
+    call allocate_test ( Grids_x%no_f,no_mol,'Grids_x%no_f',ModuleName )
+    call allocate_test ( Grids_x%windowstart,no_mol,'Grids_x%windowstart', &
                        & ModuleName )
-    Call allocate_test ( Grids_x%windowfinish,no_mol,'Grids_x%windowfinish',&
+    call allocate_test ( Grids_x%windowfinish,no_mol,'Grids_x%windowfinish',&
                        & ModuleName )
-    Call Allocate_test ( Grids_x%lin_log, no_mol, 'lin_log', ModuleName )
+    call Allocate_test ( Grids_x%lin_log, no_mol, 'lin_log', ModuleName )
 
     Grids_x%no_z = 0
     Grids_x%no_p = 0
@@ -159,24 +159,24 @@ CONTAINS
 
     f_len = 0
 
-    if( PRESENT(p_len) ) p_len=0
-    if( PRESENT(ext_ind) ) ext_ind = 0
-    if( PRESENT(h2o_ind) ) h2o_ind = 0
+    if( present(p_len) ) p_len=0
+    if( present(ext_ind) ) ext_ind = 0
+    if( present(h2o_ind) ) h2o_ind = 0
 
     phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, &
       & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
 
     l_x = l_vmr
-    if(Grid_type == 'W' .OR. Grid_type == 'w') l_x = l_dw
-    if(Grid_type == 'N' .OR. Grid_type == 'n') l_x = l_dn
-    if(Grid_type == 'V' .OR. Grid_type == 'v') l_x = l_dv
+    if(Grid_type == 'W' .or. Grid_type == 'w') l_x = l_dw
+    if(Grid_type == 'N' .or. Grid_type == 'n') l_x = l_dn
+    if(Grid_type == 'V' .or. Grid_type == 'v') l_x = l_dv
 
     do ii = 1, no_mol
       kk = FwdModelConf%molecules(mol_cat_index(ii))
-      if(PRESENT(h2o_ind) .AND. spec_tags(kk) == 18003) h2o_ind = ii
+      if(present(h2o_ind) .and. spec_tags(kk) == 18003) h2o_ind = ii
       if ( kk == l_extinction ) then
-        if( PRESENT(ext_ind) ) ext_ind = ii
+        if( present(ext_ind) ) ext_ind = ii
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer)
       else
@@ -189,7 +189,7 @@ CONTAINS
       else
         kf = f%template%noChans
       endif
-      Call FindInstanceWindow(f,phitan,fmStat%maf,FwdModelConf%phiWindow, &
+      call FindInstanceWindow(f,phitan,fmStat%maf,FwdModelConf%phiWindow, &
                             & wf1, wf2)
       Grids_x%windowStart(ii) = wf1
       Grids_x%windowFinish(ii) = wf2
@@ -197,30 +197,30 @@ CONTAINS
       Grids_x%no_f(ii) = kf
       Grids_x%no_z(ii) = kz
       Grids_x%no_p(ii) = kp
-      if( PRESENT(p_len) ) p_len = p_len + kz * kp
+      if( present(p_len) ) p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
       if (f%template%logBasis) then
-        Grids_x%lin_log(ii) = .TRUE.
+        Grids_x%lin_log(ii) = .true.
       else
-        Grids_x%lin_log(ii) = .FALSE.
+        Grids_x%lin_log(ii) = .false.
       endif
    end do
 !
-    n_f_zet = SUM(Grids_x%no_z)
-    n_f_phi = SUM(Grids_x%no_p)
-    n_f_frq = SUM(Grids_x%no_f)
+    n_f_zet = sum(Grids_x%no_z)
+    n_f_phi = sum(Grids_x%no_p)
+    n_f_frq = sum(Grids_x%no_f)
 !
 ! Allocate space for the zeta, phi & freq. basis componenets
 !
-    Call allocate_test ( Grids_x%zet_basis,n_f_zet,'Grids_x%zet_basis', &
+    call allocate_test ( Grids_x%zet_basis,n_f_zet,'Grids_x%zet_basis', &
                        & ModuleName)
-    Call allocate_test ( Grids_x%phi_basis,n_f_phi,'Grids_x%phi_basis', &
+    call allocate_test ( Grids_x%phi_basis,n_f_phi,'Grids_x%phi_basis', &
                        & ModuleName)
-    Call allocate_test ( Grids_x%frq_basis,n_f_frq,'Grids_x%frq_basis', &
+    call allocate_test ( Grids_x%frq_basis,n_f_frq,'Grids_x%frq_basis', &
                        & ModuleName)
-    Call allocate_test ( Grids_x%values,f_len,'Grids_x%values', &
+    call allocate_test ( Grids_x%values,f_len,'Grids_x%values', &
                        & ModuleName)
-    Call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
+    call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
                        & ModuleName)
 !
     j = 1
@@ -261,22 +261,26 @@ CONTAINS
 ! ** END ZEBUG
 !
       r = f_len + kf * kz * kp
-      Grids_x%values(f_len:r-1) = RESHAPE(f%values(1:kf*kz,wf1:wf2), &
+      Grids_x%values(f_len:r-1) = reshape(f%values(1:kf*kz,wf1:wf2), &
                                       & (/kf*kz*kp/))
       if (Grids_x%lin_log(ii)) then
-        WHERE (Grids_x%values(f_len:r-1) <= 1.0e-16_rp) &
+        where (Grids_x%values(f_len:r-1) <= 1.0e-16_rp) &
              & Grids_x%values(f_len:r-1) = 1.0e-16_rp
-        Grids_x%values(f_len:r-1) = LOG(Grids_x%values(f_len:r-1))
+        Grids_x%values(f_len:r-1) = log(Grids_x%values(f_len:r-1))
       endif
 !
 ! set 'do derivative' flags
 !
-      IF (ASSOCIATED(f%mask)) THEN
-        Grids_x%deriv_flags(f_len:r-1) = RESHAPE(( iand (M_FullDerivatives,&
-                          & ICHAR(f%mask)) == 0),(/kf*kz*kp/))
-      ELSE
-        Grids_x%deriv_flags(f_len:r-1) = .TRUE.
-      ENDIF
+      if ( fwdModelConf%moleculeDerivatives(i) ) then
+        if (associated(f%mask)) then
+          Grids_x%deriv_flags(f_len:r-1) = reshape(( iand (M_FullDerivatives,&
+            & ichar(f%mask)) == 0),(/kf*kz*kp/))
+        else
+          Grids_x%deriv_flags(f_len:r-1) = .true.
+        endif
+      else
+        grids_x%deriv_flags(f_len:r-1) = .false.
+      end if
 !
       j = k
       l = n
@@ -287,29 +291,32 @@ CONTAINS
 !
     f_len = f_len - 1
 !
- END subroutine load_one_grid
+ end subroutine load_one_grid
 !
 !----------------------------------------------------------------
- Subroutine DestroyGrids_t( grids_x )
+ subroutine DestroyGrids_t( grids_x )
 !
-  TYPE(Grids_T), intent(inout) :: Grids_x
+  type(Grids_T), intent(inout) :: Grids_x
 !
-  Call deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
-  Call deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
-  Call deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
-  Call deallocate_test(grids_x%values,'grids_x%values',modulename)
-  Call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
-  Call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
-  Call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
-  Call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
-  Call deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
-  Call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
-  Call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
+  call deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
+  call deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
+  call deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
+  call deallocate_test(grids_x%values,'grids_x%values',modulename)
+  call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
+  call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
+  call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
+  call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
+  call deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
+  call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
+  call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
 
- End subroutine Destroygrids_t
+ end subroutine Destroygrids_t
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.23  2002/08/22 23:13:45  livesey
+! New frequency basis on IF
+!
 ! Revision 2.22  2002/08/20 22:37:34  livesey
 ! Minor change in handling of frequency coordinate
 !
