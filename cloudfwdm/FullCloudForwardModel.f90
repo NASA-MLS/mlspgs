@@ -156,6 +156,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     real(r8), dimension(:,:), allocatable :: TransOnS
     
+    logical, dimension(:), pointer :: doChannel ! Do this channel?
     logical :: DODERIVATIVES                    ! Flag
     logical :: Got(2) = .false.  
     logical :: QGot(8) = .false.  
@@ -171,7 +172,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
              A_TOTALEXTINCTION, A_TRANS,FREQUENCIES )
-
+             
+    nullify ( doChannel )
+    
     ! Check the model configuration 
     if ( size ( forwardModelConfig%signals ) /= 1 )                          &
       & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
@@ -185,9 +188,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & 'Only single sidebands allowed in FullForwardCloudModel for now' )
     call Allocate_test ( frequencies, count ( signal%channels ),             &
       & 'frequencies', ModuleName )
+!    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
+!      & pack ( signal%frequencies, signal%channels ) )
     frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
-      & pack ( signal%frequencies, signal%channels ) )
+      signal%frequencies)
     noFreqs = size (frequencies)
+
+    call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
+    doChannel = .true.
+    if ( associated ( signal%channels ) ) doChannel = signal%channels
 
     ! Get the quantities we need from the vectors
 
@@ -213,8 +222,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & signal=signal%index, sideband=signal%sideband )
           qgot(2) = .true.
         case (l_cloudExtinction)
-          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_cloudExtinction )
+          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &             & quantityType=l_cloudExtinction )
           qgot(3) = .true.
         case (l_cloudRADSensitivity)
           cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
@@ -272,7 +280,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       select case (l_quantity_type)
         case (l_ptan)
           ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
-          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
+          & quantityType=l_ptan,radiometer=signal%radiometer)
         
         case (l_temperature)
           temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
@@ -476,7 +484,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    print*,'No. of Frequencies:', noFreqs 
 !    print*, frequencies/1e3_r8
 
-    call CloudForwardModel (                                                 &
+    call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
       & radiance%template%noSurfs,                                           &
@@ -491,7 +499,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & WC,                                                                  &
       & int(sizeDistribution%values(:,instance)),                            &
       & 10.0**(-ptan%values(:,maf)),                                         &
-      & earthradius%values(1,1),                                             &
+      & earthradius%values(1,maf),                                           &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
@@ -611,12 +619,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        ! Now fill the jacobian
             
           do chan = 1, noChans
+          if ( doChannel(chan) ) then
           ! now, we define beta as transmission function in Sensitivity.f90
           ! and we interpolate it onto Sgrid
                     
           call FindTransForSgrid (                                   &
                       &     ptan%values(:,maf),                      &
-                      &     earthradius%values(1,maf)*1.e-3_r8,               &
+                      &     earthradius%values(1,maf)*1.e-3_r8,      &
                       &     noMIFs,                                  &
                       &     temp%template%noSurfs,                   &
                       &     noSgrid,                                 &
@@ -631,6 +640,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & = TransOnS(i,mif)
                     end do
                     end do
+         end if
          end do
 
               Deallocate(TransOnS,stat=status)
@@ -666,6 +676,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'vmrArray',                     ModuleName )
     call Deallocate_test ( closestInstances,                                 &
                           'closestInstances',             ModuleName )
+    call Deallocate_test ( doChannel, 'doChannel', ModuleName )
 !    print*, ' '
 !    print*, 'Time Instance: ', instance
 !    print*, 'Successful done with full cloud forward wapper !'
@@ -714,6 +725,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.21  2001/08/01 20:51:30  dwu
+! add delTau100
+!
 ! Revision 1.20  2001/08/01 17:24:29  jonathan
 ! updated version
 !

@@ -1,4 +1,5 @@
-      SUBROUTINE CloudForwardModel (NF, NZ, NT, NS, N, NZmodel,   &
+      SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
+             &   NZmodel,   &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
              &   WCin, IPSDin,                                    &
              &   ZT, RE, ISURF, ISWI, ICON,                       &
@@ -116,8 +117,8 @@
 !---------------------------------------
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
 !---------------------------------------
-
       INTEGER :: NF                            ! NUMBER OF FREQUENCIES
+      LOGICAL :: doChannel(NF)                 ! do only true channels
       INTEGER :: NZ                            ! NUMBER OF PRESSURE LEVELS
       INTEGER :: NT                            ! NUMBER OF TANGENT HEIGHTS
       INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
@@ -373,6 +374,7 @@
 !=========================================================================
 
        DO 2000 IFR=1, NF
+       IF ( doChannel(IFR) ) then
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
@@ -515,7 +517,7 @@
               &            N,ISWI,RE) ! COMPUTE SENSITIVITY
 
 
-
+      END IF
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 
  3000 CONTINUE                               ! END OF IWC LOOP
