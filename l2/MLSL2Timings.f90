@@ -180,33 +180,33 @@ contains ! =====     Public Procedures     =============================
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( elem_time, FORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( percent, FORMAT=PCTFORM, advance='yes' )
+      call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     enddo
     call output ( '==========================================', advance='yes' )
     percent = 100 * total / final
     call blanks ( 4, advance='no' )
     call output ( '(total)', advance='no' )
     call blanks ( 7, advance='no' )
-    call output ( total, FORMAT=TIMEFORM, advance='no' )
+    call output ( total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( percent, FORMAT=PCTFORM, advance='yes' )
+    call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     percent = 100 * (final-total) / final
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
     call blanks ( 7, advance='no' )
-    call output ( final-total, FORMAT=TIMEFORM, advance='no' )
+    call output ( final-total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( percent, FORMAT=PCTFORM, advance='yes' )
+    call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     call output ( '==========================================', advance='yes' )
     percent = 100
     call blanks ( 4, advance='no' )
     call output ( '(final)', advance='no' )
     call blanks ( 7, advance='no' )
-    call output ( final, FORMAT=TIMEFORM, advance='no' )
+    call output ( final, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( percent, FORMAT=PCTFORM, advance='yes' )
+    call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
 
     ! Subdivision of Retrieval section
     elem = StringElementNum(section_names, 'retrieve', countEmpty)
@@ -254,16 +254,16 @@ contains ! =====     Public Procedures     =============================
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( elem_time, FORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( percent, FORMAT=PCTFORM, advance='yes' )
+      call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     enddo
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
     call blanks ( 7, advance='no' )
-    call output ( final-total, FORMAT=TIMEFORM, advance='no' )
+    call output ( final-total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( 100*(final-total)/final, FORMAT=PCTFORM, advance='yes' )
+    call output ( 100*(final-total)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
   end subroutine dump_section_timings
 
 !=============================================================================
@@ -276,6 +276,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.13  2003/02/27 21:56:07  pwagner
+! Passes LOGFORMAT along with FORMAT
+!
 ! Revision 2.12  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
