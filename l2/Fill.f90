@@ -859,9 +859,9 @@ contains ! =====     Public Procedures     =============================
           gson = subtree(2,gson) ! Now the value of said argument
           select case ( fieldIndex )
           case ( f_source )
-            sourceVectorIndex = decoration(gson)
+            sourceVectorIndex = decoration(decoration(gson))
           case ( f_destination )
-            destinationVectorIndex = decoration(gson)
+            destinationVectorIndex = decoration(decoration(gson))
           case default ! Can't get here if type checker worked
           end select
         end do
@@ -993,7 +993,7 @@ contains ! =====     Public Procedures     =============================
         & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
       if ( vectors(lengthScale)%globalUnit /= phyq_length ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "fraction vector does not have dimensions of length" )
+        & "length vector does not have dimensions of length" )
       if ( fraction /= 0 ) then
         if ( covariance%m%row%vec%template%id /= &
           & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
@@ -2386,6 +2386,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     ! First copy those things in source, loop over them
+    dest%globalUnit = source%globalUnit
     do sqi = 1, size ( source%quantities )
       ! Try to find this in dest
       dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
@@ -2540,6 +2541,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.85  2001/10/18 00:46:32  livesey
+! Bug fixes in Transfer
+!
 ! Revision 2.84  2001/10/17 23:40:08  pwagner
 ! Exploits visibility of MATH77_ran_pack
 !
