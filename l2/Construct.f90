@@ -36,10 +36,11 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 
   public
 
-  private :: Id, ModuleName
+  private :: Id, IdParm, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
-  character(len=130) :: id = &
-       "$Id$"
+  character(len=*), parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
@@ -174,6 +175,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.12  2001/03/28 18:09:24  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.11  2001/03/28 01:24:55  vsnyder
 ! Move vGrid from construct section to global settings section
 !
