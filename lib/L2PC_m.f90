@@ -63,6 +63,7 @@ module L2PC_m
     integer :: selectorType             ! What quantity type does this apply to
     integer :: molecule                 ! What molecule does it apply to
     integer :: nameFragment             ! A possible name fragment
+    logical :: exact                    ! We require an exact numeric match for this selector
     real(r8), dimension(2) :: heightRange ! The height range for this selector
     real(r8) :: cost                    ! The cost for that range
   end type BinSelector_T
@@ -139,6 +140,7 @@ contains ! ============= Public Procedures ==========================
     sel%selectorType = l_latitude
     sel%molecule = 0
     sel%nameFragment = 0
+    sel%exact = .false.
     sel%heightRange = 0.0_r8
     sel%cost = 1.0_r8
     dummy = AddBinSelectorToDatabase ( binSelectors, sel )
@@ -147,8 +149,9 @@ contains ! ============= Public Procedures ==========================
     sel%selectorType = l_fieldAzimuth
     sel%molecule = 0
     sel%nameFragment = 0
+    sel%exact = .true.
     sel%heightRange = 0.0_r8
-    sel%cost = sqrt ( huge ( 0.0_r8 ) )
+    sel%cost = 1.0
     dummy = AddBinSelectorToDatabase ( binSelectors, sel )
     
   end subroutine CreateDefaultBinSelectors
@@ -1567,6 +1570,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.65  2003/08/14 20:24:23  livesey
+! Added the exact bin selector stuff
+!
 ! Revision 2.64  2003/08/13 00:47:34  livesey
 ! Added the default bin selectors stuff
 !
