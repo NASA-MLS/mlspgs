@@ -1860,7 +1860,7 @@ contains
                 & fwdModelConf%signals(sigInd), &
                 & sideband = thisSideband, channel=channel )
               sv_i = 1
-              do instance = WindowStart, WindowFinish
+              do instance = 1, no_sv_p_t, WindowFinish
                 do surface = 1, n_t_zeta
                   call Freq_Avg ( frequencies, &
                     & FilterShapes(shapeInd)%FilterGrid, &
@@ -1875,7 +1875,7 @@ contains
           else
             do i = 1, noUsedChannels
               sv_i = 1
-              do instance = WindowStart, WindowFinish
+              do instance = 1, no_sv_p_t
                 do surface = 1, n_t_zeta
                   k_temp(i,ptg_i,surface,instance) = k_temp_frq(i,sv_i)
                   sv_i = sv_i + 1
@@ -2459,6 +2459,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.93  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.92  2002/10/04 23:49:50  vsnyder
 ! More cosmetic changes
 !
