@@ -778,6 +778,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
+             begin, f+f_muMin, t+t_numeric, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
@@ -891,6 +892,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.254  2002/10/19 23:41:39  livesey
+! Added muMin
+!
 ! Revision 2.253  2002/10/19 01:51:52  livesey
 ! Added serial option to retrieve
 !
