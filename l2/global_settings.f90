@@ -395,7 +395,7 @@ contains
       quantity = 'MAFStartTimeTAI'
       l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, hdfVersion=the_hdf_version)
+        & l1bFlag, hdfVersion=the_hdf_version, dontPad=.true.)
       if ( l1bFlag==-1) then
         call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
@@ -847,6 +847,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.88  2004/08/16 17:14:42  pwagner
+! Obtains First,LastMAFCtr global attributes from l1boa file
+!
 ! Revision 2.87  2004/08/04 23:19:58  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
