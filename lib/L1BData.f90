@@ -13,11 +13,11 @@ module L1BData
     & DFNT_FLOAT32
   ! use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
-  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN, NameLen
+  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
+    & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
   use MLSStrings, only: CompressString, NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
@@ -161,7 +161,8 @@ contains ! ============================ MODULE PROCEDURES ======================
 
 
   !-------------------------------------------  DeallocateL1BData  -----
-  function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, InstrumentName ) &
+  function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
+    & InstrumentName, dont_compress_name) &
     & result(QtyName)
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
@@ -173,7 +174,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in)          :: hdfVersion  ! which QtyName must conform to
     logical, intent(in)          :: isTngtQty   ! T or F
     character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
-    character(len=NameLen)       :: QtyName
+    logical, intent(in), optional :: dont_compress_name
+    character(len=NAME_LEN)      :: QtyName
     logical, parameter           :: DEEBUG = .FALSE.
 
     ! Private
@@ -181,9 +183,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=1) :: instr_tail
     character(len=1) :: tp_tail
     character(len=4) :: my_instrument
-    character(len=NameLen) :: the_rest
+    character(len=NAME_LEN) :: the_rest
     logical          :: is_a_signal
+    logical          :: compress
     ! Executable code
+    compress = .true.
+    if ( present(dont_compress_name) ) compress = .not. dont_compress_name
     is_a_signal = (NumStringElements(trim(name), .true., ':') > 2)
     if ( DEEBUG ) then
       print *, 'name: ', trim(name)
@@ -254,7 +259,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       endif
     endif
     QtyName = trim(QtyName) // trim(name)
-    QtyName = CompressString(QtyName)
+    if ( compress ) QtyName = CompressString(QtyName)
     if ( DEEBUG ) then                            
       print *, 'more converted name: ', trim(QtyName)  
     endif                                         
@@ -501,7 +506,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
-    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
@@ -517,25 +522,32 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       myhdfVersion = L1BDEFAULT_HDFVERSION
     endif
+    ! print * 'hdfVersion: ', hdfVersion
 
     if ( myhdfVersion == HDFVERSION_4 ) then
-      call ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-      & FirstMAF, LastMAF, NEVERFAIL )
+      call ReadL1BData_hdf4 ( L1FileHandle, trim(QuantityName), L1bData, &
+      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
     else
-      call ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-      & FirstMAF, LastMAF, NEVERFAIL )
+      call ReadL1BData_hdf5 ( L1FileHandle, trim(QuantityName), L1bData, &
+      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
       !Unfortunately, hdf5-formatted l1b data have different shapes from hdf4
       ! E.g., for MAFStartTimeTAI we obtain the following
       !  hdfVERSION      shape
       !     4           1   1   5
       !     5           5   1   1
-      call Reshape_for_hdf4(L1bData)
+      if ( Flag == 0 ) then
+        call Reshape_for_hdf4(L1bData)
+      else
+        ! print *, 'Warning: ', trim(QuantityName) // ' not found in l1b files'
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to find '//trim(QuantityName)//' in l1b files')
+      endif
     endif
   end subroutine ReadL1BData
 
   !-------------------------------------------------  ReadL1BData_hdf4  -----
-  subroutine ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL )
+  subroutine ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, &
+    & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -815,8 +827,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine ReadL1BData_hdf4
 
   !-------------------------------------------------  ReadL1BData_hdf5  -----
-  subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL )
+  subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, &
+    & Flag, FirstMAF, LastMAF, NEVERFAIL )
   use HDF5, only: HSIZE_T
   use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
@@ -826,7 +838,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
-    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
@@ -873,6 +885,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
       flag = NOQUANTITYINDEX
+      ! print *, 'Oops--' // trim(QuantityName) // ' not here'
       if ( MyNeverFail ) return
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
@@ -1001,7 +1014,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 !      & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
     ! print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
     ! print *, 'dims ', dims
-    ! print *, 'noMAFs ', l1bData%noMAFs
+    ! print * 'noMAFs ', l1bData%noMAFs
     write(Char_rank, '(i1)') rank
     select case (trim(Qtype) // Char_rank)
     case ('real1')
@@ -1090,6 +1103,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & // trim(Qtype) // Char_rank)
       l1bdata%data_type = 'unknown'
     end select
+    ! print * 'datatype ', l1bdata%data_type
     if ( DEEBUG ) call dump(l1bData, 0)
     
     ! Avoid memory leaks
@@ -1294,6 +1308,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.36  2003/02/12 21:49:06  pwagner
+! Some small fixes; seems to work with latest hdf5-formats
+!
 ! Revision 2.35  2002/12/11 22:22:15  pwagner
 ! broadened error check on sd_id to any value lt 1
 !
