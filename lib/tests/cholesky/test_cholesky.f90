@@ -112,7 +112,7 @@ program TEST_CHOLESKY
 
   ! Get a solution using the Cholesky decomposition routine from Math77
   call cpu_time ( t3 )
-  call dchol ( ztzd, nc, nc, s, u, 1.0d-12, ierr )
+  call dchol ( ztzd, nc, nc, s, 0.0d0, 1.0d-12, ierr )
   call cpu_time ( t4 )
   if ( ierr /= 0 ) then
     print *, "DCHOL reports IERR =", ierr
@@ -149,6 +149,9 @@ program TEST_CHOLESKY
 end program TEST_CHOLESKY
 
 ! $Log$
+! Revision 1.2  2000/11/15 23:31:39  vsnyder
+! Correct use of a constant with unspecified intent dummy argument
+!
 ! Revision 1.1  2000/11/09 17:29:47  pwagner
 ! First commit
 !
