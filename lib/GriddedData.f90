@@ -19,6 +19,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     "$Id$"
   character(len=len(idParm)), private :: Id = idParm
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   public :: AddGriddedDataToDatabase, Dump, DestroyGriddedData, &
@@ -326,10 +327,17 @@ contains
   
   end subroutine SetupNewGriddedData
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module GriddedData
 
 !
 ! $Log$
+! Revision 2.17  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.16  2002/07/01 23:57:18  livesey
 ! Added the noYear field
 !

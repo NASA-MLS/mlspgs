@@ -27,6 +27,7 @@ module OUTPUT_M
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -391,9 +392,16 @@ contains
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.17  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.16  2001/10/19 22:31:36  pwagner
 ! Now can output (small-sized) s.p., d.p. arrays
 !

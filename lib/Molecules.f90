@@ -18,6 +18,7 @@ module Molecules
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! Definitions of types:
@@ -301,9 +302,16 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_MOLECULES
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MOLECULES
 
 ! $Log$
+! Revision 2.17  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.16  2002/07/30 20:12:13  livesey
 ! Changed the radiometer specific h2os to 18997 spectag
 !

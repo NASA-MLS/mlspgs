@@ -80,6 +80,7 @@ module LEXER_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -605,9 +606,16 @@ contains
 
   end subroutine Lex_Signal
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module LEXER_M
 
 ! $Log$
+! Revision 2.17  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.16  2002/02/13 23:39:05  vsnyder
 ! Handle characters outside 0..127 range sensibly
 !
