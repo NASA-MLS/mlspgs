@@ -371,27 +371,30 @@ contains ! =====     Public Procedures     =============================
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
-            & GriddedDatabase(gridIndex), &
+            & GriddedDatabase(gridIndex), returnStatus, &
             & dimListString, TRIM(fieldNameString), missingValue )
-          if(index(switches, 'pro') /= 0) then                            
-            call announce_success(FilenameString, 'ncep', &                    
-             & fieldNameString, hdfVersion=hdfVersion)
-             ! print *, trim(GriddedDatabase(gridIndex)%quantityName)
-             ! print *, trim(GriddedDatabase(gridIndex)%description)
-             ! print *, trim(GriddedDatabase(gridIndex)%units)
+          if ( returnStatus == 0 ) then
+            if(index(switches, 'pro') /= 0) &
+              & call announce_success(FilenameString, 'ncep', &                    
+               & fieldNameString, hdfVersion=hdfVersion)
+          else
+            call announce_success(FilenameString, 'ncep not found--carry on', &                    
+               & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
-            & GriddedDatabase(gridIndex), dimListString, TRIM(fieldNameString), &
+            & GriddedDatabase(gridIndex), returnStatus, &
+            & dimListString, TRIM(fieldNameString), &
             & missingValue )
-          if(index(switches, 'pro') /= 0) then                            
-            call announce_success(FilenameString, 'dao', &                    
-             & fieldNameString, hdfVersion=hdfVersion)    
-             ! print *, trim(GriddedDatabase(gridIndex)%quantityName)
-             ! print *, trim(GriddedDatabase(gridIndex)%description)
-             ! print *, trim(GriddedDatabase(gridIndex)%units)
+          if ( returnStatus == 0 ) then
+            if(index(switches, 'pro') /= 0) &
+              & call announce_success(FilenameString, 'dao', &                    
+               & fieldNameString, hdfVersion=hdfVersion)    
+          else
+            call announce_success(FilenameString, 'dao not found--carry on', &                    
+               & fieldNameString, hdfVersion=hdfVersion)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call decorate ( key, &
@@ -585,6 +588,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.46  2003/04/04 18:35:11  pwagner
+! Warns if dao, ncep FILENOTFOUND
+!
 ! Revision 2.45  2003/04/02 23:54:53  pwagner
 ! Checks for FILENOTFOUND
 !
