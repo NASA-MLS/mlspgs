@@ -23,10 +23,12 @@ module ForwardModelSupport
   ! Error codes
 
   integer, parameter :: AllocateError        = 1
-  integer, parameter :: BadMolecule          = AllocateError + 1
+  integer, parameter :: BadBinSelectors      = AllocateError + 1
+  integer, parameter :: BadMolecule          = BadBinSelectors + 1
   integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
-  integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
+  integer, parameter :: IncompleteBinSelectors    = DefineMoleculesFirst + 1
+  integer, parameter :: IncompleteFullFwm    = IncompleteBinSelectors + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
@@ -197,7 +199,7 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
       & F_NAMEFRAGMENT
     use Intrinsic, only: T_NUMERIC_RANGE
-    use L2PC_m, only: BINSELECTOR_T
+    use L2PC_m, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
     use MoreTree, only: Get_Field_ID
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
@@ -218,6 +220,10 @@ contains ! =====     Public Procedures     =============================
     integer :: WANTEDUNIT               ! Units wanted for cost
 
     ! Executable code
+
+    ! Make sure the default ones are created first
+    if ( .not. associated ( binSelectors ) ) &
+      & call CreateDefaultBinSelectors
 
     ! Set up appropriate initial values
     binSelector%molecule = 0
@@ -291,7 +297,8 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T, NullifyForwardModelConfig
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID
+    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
+      & L_POLARLINEAR
     use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ATMOS_DER, &
       & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
@@ -303,6 +310,7 @@ contains ! =====     Public Procedures     =============================
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND
     use Intrinsic, only: L_NONE, L_CLEAR
+    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
@@ -593,11 +601,18 @@ contains ! =====     Public Procedures     =============================
         & f_do_1d, f_incl_cld, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
-    case ( l_linear )
+
+    case ( l_linear, l_polarLinear )
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
+      ! Make sure we get a default bin selector
+      if ( .not. associated ( info%binSelectors ) ) then
+        call Allocate_test ( info%binSelectors, 1, 'info%binSelectors', ModuleName )
+        info%binSelectors = DefaultSelector_Latitude
+      end if
+
     end select
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -760,11 +775,16 @@ contains ! =====     Public Procedures     =============================
     case ( BadMolecule )
       call output ( 'asked for derivatives for an unlisted molecule.', &
         & advance='yes' )
+    case ( BadBinSelectors )
+      call output ('cannot have a fieldAzimuth binSelector for polarlinear model', &
+        & advance='yes' )
     case ( DefineMoleculesFirst )
       call output ( 'molecule must be defined before moleules derivatives.', &
         & advance='yes')
     case ( DefineSignalsFirst )
       call output ( 'signals must be defined before channels.',advance='yes')
+    case ( IncompleteBinSelectors )
+      call output ('must have some binSelectors for the polarlinear model',advance='yes' )
     case ( IncompleteFullFwm )
       call output ('incomplete full foward model specification',advance='yes' )
     case ( IncompleteLinearFwm )
@@ -819,6 +839,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.77  2003/08/13 00:49:40  livesey
+! Added the polarLinear model and now ensures that a default bin selector
+! is provided to the linear model if the user doesn't supply one.
+!
 ! Revision 2.76  2003/08/12 18:16:13  livesey
 ! Forbid non negative tolerance in polarized model.
 !
