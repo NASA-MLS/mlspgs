@@ -397,6 +397,9 @@ m:              do j = 3, nsons(field)
     type(decls) :: DECL            ! Declaration of "type"
     integer :: I                   ! Index of sons of "spec_def"
 
+    check_field_type = type >= lbound(data_type_indices,1) .and. &
+      &                type <= ubound(data_type_indices,1)
+    if ( .not. check_field_type ) return
     decl = get_decl(data_type_indices(type), type_name)
     do i = 2, nsons(field)
       check_field_type = decoration(subtree(i,field)) == decl%tree
@@ -876,6 +879,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.13  2002/05/23 20:35:57  vsnyder
+! Eliminate two unused variables
+!
 ! Revision 1.12  2001/11/28 23:48:30  vsnyder
 ! Correct blunders in arrays-of-arrays
 !
