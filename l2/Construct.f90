@@ -75,6 +75,7 @@ contains ! =====     Public Procedures     =============================
     use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
       & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
+    use DumpCommand_m, only: DumpCommand
     use Dumper, only: Dump
     use FGrid, only: FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
@@ -82,8 +83,8 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelSupport, only: ConstructForwardModelConfig
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
-    use INIT_TABLES_MODULE, only: S_FORGE, S_FORWARDMODEL, S_HGRID, S_QUANTITY, S_TIME, &
-      & S_VECTORTEMPLATE, S_PHASE
+    use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
+      & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
     use Intrinsic, ONLY: L_None
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
@@ -155,6 +156,9 @@ contains ! =====     Public Procedures     =============================
       ! Node_id(key) is now n_spec_args.
       
       select case( get_spec_id(key) )
+      case ( s_dump )
+        call dumpCommand ( key, quantityTemplatesBase, &
+          & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase )
       case ( s_forge )
         call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case ( s_forwardModel )
@@ -246,6 +250,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.43  2004/05/01 04:05:26  vsnyder
+! Add Dump command
+!
 ! Revision 2.42  2003/10/22 21:17:06  pwagner
 ! aPhaseName: Phase added to Fill, Construct sections to time phases
 !
