@@ -77,7 +77,7 @@ contains
     !                                          for each signal.
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
-    integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
     type(filterShape_T), dimension(:), pointer :: TempFilterShapes => NULL()
 
     if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
@@ -186,6 +186,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.3  2001/03/29 23:53:06  vsnyder
+! This one seems to work (not just compile)
+!
 ! Revision 1.2  2001/03/29 21:57:31  vsnyder
 ! NAG actually compiles this one
 !
