@@ -1298,7 +1298,6 @@ contains ! =============== Subroutines and functions ==========================
   NULLIFY(eta_zxp_t, eta_zxp_h2o, not_zero_z, not_zero_p_t, not_zero_p_h2o)
   NULLIFY(eta_piqxp, not_zero_t, not_zero_h2o, ratio2_gph, ratio4_gph) 
 ! Identify the vector quantities from state/extra
-!  print*,'Hello I am Bills new scan model', present(jacobian)
   orbIncline => GetVectorQuantityByType ( state, extra, &
     & quantityType=l_orbitInclination )
   temp => GetVectorQuantityByType ( state, extra, &
@@ -1355,15 +1354,9 @@ contains ! =============== Subroutines and functions ==========================
 ! compute sin^2(phi) and cos^2(phi)
   sinphi2 = SIN(red_phi_t)**2
   cosphi2 = 1.0_rp - sinphi2
-!  WRITE(*,'(a)') 'red_phi_t'
-!  WRITE(*,'(8f8.4)') red_phi_t / deg2rad
   geoclats = ASIN(earthradc**2 * SIN(red_phi_t) &
   & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf)) &
   & / SQRT(earthrada**4*cosphi2 + earthradc**4*sinphi2))
-!  WRITE(*,'(a)') 'geoclats'
-!  WRITE(*,'(8f8.4)') geoclats / deg2rad
-!  WRITE(*,'(a)') 'c-radius'
-!  WRITE(*,'(8f8.2)') earthradc/1000.0_rp
   sinlat2 = SIN(geoclats)**2
   coslat2 = 1.0_rp - sinlat2
   p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
@@ -1371,20 +1364,14 @@ contains ! =============== Subroutines and functions ==========================
 ! compute the local gravitational acceleration at the surface
   earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**4*sinphi2) &
                / (earthrada**2*cosphi2 + earthradc**2*sinphi2))
-!  WRITE(*,'(a)') 'earth-radius'
-!  WRITE(*,'(8f8.2)') earth_radius/1000.0_rp
   ratio2=(earthRadA/earth_radius)**2
   ratio4=ratio2**2
   g_ref =  GM * (1.0_rp - 3.0_rp*j2*p2*ratio2 - 5.0_rp*j4*p4*ratio4) &
   & / earth_radius**2 - omega**2*earth_radius*coslat2
-!  WRITE(*,'(a)') 'g_ref'
-!  WRITE(*,'(8f8.4)') g_ref
 ! get the effective earth radius
   eff_earth_radius = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
   & * ratio2 - 15.0_rp*j4*p4*ratio4) / earth_radius**3 &
   & + omega**2*coslat2)
-!  WRITE(*,'(a)') 'eff-radius'
-!  WRITE(*,'(8f8.2)') eff_earth_radius/1000.0_rp
 ! deallocate things we don't need
   CALL DEALLOCATE_TEST(earthradc,'earthradc',modulename)
   CALL DEALLOCATE_TEST(red_phi_t,'red_phi_t',modulename)
@@ -1428,8 +1415,6 @@ contains ! =============== Subroutines and functions ==========================
   & * eta_p_t,dim=2)
   l1refalt = g_ref*eff_earth_radius**2 / refgeomalt_denom - eff_earth_radius &
   & + earth_radius
-!  WRITE(*,'(a)') 'l1refalt'
-!  WRITE(*,'(8f8.2)') l1refalt/1000.0_rp
   tan_temp = 0.0_rp
   eta_zxp_t = 0.0_rp
   eta_piqxp = 0.0_rp
@@ -1496,10 +1481,6 @@ contains ! =============== Subroutines and functions ==========================
   & modulename)
   CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
   & tan_refr_indx,h2o_path = tan_h2o)
-!  WRITE(*,'(a)') 'refractive index'
-!  WRITE(*,'(8f8.2)') tan_temp
-!  WRITE(*,'(4e12.2)') tan_h2o
-!  WRITE(*,'(8f9.6)') tan_refr_indx
 ! compute l1 geopotential
   CALL ALLOCATE_TEST(l1altrefr,ptan%template%nosurfs,'l1altrefr', &
   & modulename)
@@ -1526,8 +1507,6 @@ contains ! =============== Subroutines and functions ==========================
   & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
   & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
   & * eta_piqxp,dim=2) / g0
-!  WRITE(*,'(a)') 'residuals'
-!  WRITE(*,'(8f8.4)') residual%values(:,fmStat%maf) / 1000.0
   IF ( fmConf%differentialScan ) residual%values(:,fmStat%maf) = &
     & EOSHIFT(residual%values(:,fmStat%maf),1, &
     & residual%values(ptan%template%nosurfs,fmStat%maf)) &
@@ -1542,7 +1521,6 @@ contains ! =============== Subroutines and functions ==========================
     dgphdr =  -(GM / (l1altrefr**2*g0)) * (1.0_rp - 3.0_rp*j2*p2*ratio2 &
     & - 5.0_rp*j4*p4*ratio4) + (omega**2*l1altrefr*coslat2) / g0
 ! Store the ptan derivatives
-!    WRITE(*,*) 'ptaninstate',ptanInState
     if ( ptanInState ) then
       col = FindBlock ( jacobian%col, ptan%index, fmStat%maf )
       block => jacobian%block(row,col)
@@ -1559,8 +1537,6 @@ contains ! =============== Subroutines and functions ==========================
         & ptan%template%nosurfs), (/ptan%template%nosurfs, &
         & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
         & * eta_zxp_t,dim=2) / g0
-!  WRITE(*,'(a)') 'dscandz'
-!  WRITE(*,'(8f8.4)') dscandz/1000.0
       if ( fmConf%differentialScan ) then
         CALL updateDiagonal ( BLOCK, EOSHIFT(dscandz,1, &
         & dscandz(ptan%template%nosurfs)) - dscandz)
@@ -1570,11 +1546,9 @@ contains ! =============== Subroutines and functions ==========================
       CALL DEALLOCATE_TEST(dscandz,'dscandz', modulename)
     end if
 ! Store refGPH derivatives
-!    print*,'Hello, refGPHInState=',refGPHInState
     if ( refGPHInState ) then
       DO sv_p = windowstart_t, windowfinish_t
         col = FindBlock ( jacobian%col, refGPH%index, sv_p )
-!        print*,'Loop:',sv_p, row, col
         block => jacobian%block(row,col)
         if ( fmConf%differentialScan ) then
           call DestroyBlock ( block )
@@ -1585,15 +1559,12 @@ contains ! =============== Subroutines and functions ==========================
             call DestroyBlock ( block )
           end if
           call CreateBlock ( jacobian, row, col, M_Full )
-          block%values(:,1) = -(GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
+          block%values(:,1) = (GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
           & - 5.0_rp*j4*p4*ratio4_gph) / l1refalt**2 &
           & + omega**2*l1refalt*coslat2) * (l1refalt+eff_earth_radius &
           & - earth_radius) * eta_p_t(:,sv_p - windowstart_t + 1) &
           & / refgeomalt_denom
-!  WRITE(*,'(a,i3)') 'dscandgph phi = ', sv_p
-!  WRITE(*,'(8f8.4)') block%values(:,1)
         end if
-!        call dump ( block%values, 'Block%values' )
         if ( fmConf%differentialScan ) then
 ! ------------- Differential model
           block%values = EOSHIFT(block%values, &
@@ -1621,8 +1592,6 @@ contains ! =============== Subroutines and functions ==========================
         & + boltz*SPREAD(mass_corr,2,temp%template%nosurfs) &
         & * eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
         & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
-!  WRITE(*,'(a,i3)') 'dscandt phi = ', sv_p
-!  WRITE(*,'(8f8.4)') block%values/1000.0
         if ( fmConf%differentialScan ) then
 ! ------------- Differential model
           block%values = EOSHIFT(block%values, &
@@ -1662,6 +1631,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.35  2002/06/25 21:55:49  bill
+! first debugged? version of 2d scan module--wgr
+!
 ! Revision 2.34  2002/06/25 17:03:30  bill
 ! fixed p4 calc in pressure guesser--wgr
 !
