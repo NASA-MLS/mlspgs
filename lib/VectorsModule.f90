@@ -837,6 +837,61 @@ contains ! =====     Public Procedures     =============================
     end do
   end function SubtractVectors
 
+  ! ---------------------------------------- ValidateVectorQuantity -------
+  
+  ! This function performes a series of tests on a quantity to make sure it
+  ! matches our requirements
+  
+  function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
+    & verticalCoordinate, quantityType)
+
+    ! Dummy arguments
+    type (VectorValue_T), intent(IN) :: quantity ! Test quantity
+    logical, optional, intent(IN) :: coherent ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: stacked  ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: regular ! .TRUE.,.FALSE. or not present
+
+    integer, optional, dimension(:), intent(IN) :: verticalCoordinate
+    integer, optional, dimension(:), intent(IN) :: quantityType
+
+    ! Result
+    logical :: ValidateVectorQuantity
+
+    ! Executable code
+
+    if (present(coherent)) then
+      if (quantity%template%coherent .neqv. coherent) then
+        ValidateVectorQuantity=.FALSE.
+        return
+      endif
+    end if
+
+    if (present(stacked)) then
+      if (quantity%template%stacked .neqv. stacked) then
+        ValidateVectorQuantity=.FALSE.
+        return
+      end if
+    end if
+
+    if (present(regular)) then
+      if (quantity%template%regular .neqv. regular) then
+        ValidateVectorQuantity=.FALSE.
+        return
+      end if
+    end if
+
+    if (present(verticalCoordinate)) then
+      ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
+      if (.not. ValidateVectorQuantity) return
+    end if
+
+    if (present(quantityType)) then
+      ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
+      if (.not. ValidateVectorQuantity) return
+    end if
+
+  end function ValidateVectorQuantity
+
 ! =====     Private Procedures     =====================================
   subroutine CreateValues ( Vector )
   ! Allocate space for the values of a vector.
@@ -857,6 +912,11 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.13  2001/02/21 21:50:38  livesey
+! Added a line to zero out a vector on creation.  Kind of like using training
+! wheels in a bicycle, but avoids painful core dumps when trying to output
+! unfilled vectors.
+!
 ! Revision 2.12  2001/02/09 00:38:56  livesey
 ! Various changes
 !
