@@ -60,6 +60,7 @@ module Fill                     ! Create vectors and fill them.
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
+  use UNITS
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
     & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
@@ -1238,7 +1239,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: i, j, maf, mif, id                ! Loop counter
-    integer :: noMAFs, noMIFs, noDepths 
+    integer :: noMAFs, noMIFs, noDepths
+    integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
     real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
     real (r8), dimension(los%template%noChans) :: x_in, y_in
     real (r8), dimension(los%template%noChans) :: sGrid ! losGrid surf values
@@ -1271,7 +1273,7 @@ contains ! =====     Public Procedures     =============================
    do j = 1, qty%template%noInstances
    do i = 1, qty%template%noSurfs
    qty%values(i,j)=qty%template%badValue
-   qty%mask(i,j)=0
+   cnt(i,j)=0
    end do 
    end do
    
@@ -1283,10 +1285,10 @@ contains ! =====     Public Procedures     =============================
       x_in = sGrid/2./(re%values(1,maf) + zt(mif))
       ! converted to zeta
       x_in = x_in/16.-3.
-        ! interpolate to get phi along s
-        do id=1,noDepths
-          y_in(id) = los%template%phi(id+(mif-1)*noDepths,maf)
-        end do
+      ! interpolate to get phi along path on the near side of tangent pt.
+      ! phi is in degree
+      y_in = los%template%phi(mif,maf) &
+        & - atan(sgrid/(re%values(1,maf) + zt(mif)))*180._r8/Pi     
         call InterpolateValues(x_in,y_in,outZeta,phi_out,method='Linear')
         ! interpolate to get values along s
         do id=1,noDepths
@@ -1302,7 +1304,7 @@ contains ! =====     Public Procedures     =============================
             & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
             do i = 1, qty%template%noSurfs
             qty%values(i,j)=qty%values(i,j) + beta_out(id)
-            qty%mask(i,j)=qty%mask(i,j)+1       ! use quantity mask as counter
+            cnt(i,j)=cnt(i,j)+1       !  counter
             end do
           end if
           end do
@@ -1310,7 +1312,7 @@ contains ! =====     Public Procedures     =============================
       end do                            ! End surface loop
     end do                              ! End instance loop
     ! average all non-zero bins
-    where (qty%mask > 0) qty%values = qty%values/qty%mask
+    where (cnt > 0) qty%values = qty%values/cnt
     
   end subroutine FillQuantityFromLosGrid
 
@@ -1485,6 +1487,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.59  2001/07/19 00:56:27  dwu
+! fix bugs in FillQuantityFromLos
+!
 ! Revision 2.58  2001/07/19 00:19:42  dwu
 ! add new method=rectanglefromlos
 !
