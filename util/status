@@ -1,0 +1,5 @@
+#!/bin/csh
+# status
+alias status 'cvs status \!* |& grep File: | grep -v Up-to'
+status $*
+exit 0
