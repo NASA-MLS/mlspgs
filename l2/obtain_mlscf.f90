@@ -5,10 +5,11 @@ module OBTAIN_MLSCF
 
 ! Open and close the MLSCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF2, only: MLSPCF_L2CF_START
   use SDPToolkit, only: Pgs_io_gen_closeF, Pgs_io_gen_openF, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm
+
   implicit NONE
+
   private
   public :: Close_MLSCF, Open_MLSCF
 
@@ -67,3 +68,6 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.2  2001/02/28 01:58:07  vsnyder
+! Get pcf # and unit # from arguments
+!
