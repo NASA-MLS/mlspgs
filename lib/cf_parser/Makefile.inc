@@ -122,9 +122,12 @@ test: $(OBJS) libCF.a
 	$(FC) $(LDOPTS) -o test $(OBJS) -L. -lCF
 
 out.test: test $S/in.test
-	./test -a <$S/in.test >out.test
+	./test -a $S/in.test out.test
 
 # $Log$
+# Revision 2.2  2000/10/03 00:54:44  vsnyder
+# Revised to account for changing getL2CF_m.f90 to getCF_m.f90
+#
 # Revision 2.1  2000/09/29 23:30:09  vsnyder
 # Revised to account for getCF_m
 #
