@@ -12,7 +12,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use FGrid, only: fGrid_T
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, F_INCLINATION, &
-    & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
+    & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
@@ -107,7 +107,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: returnStatus      ! 0 unless trouble
 
     ! Local variables
-
+    integer, dimension(2) :: EXPR_UNITS
+    real(r8), dimension(2) :: EXPR_VALUE
     integer :: Family
     integer :: FGridIndex
     integer :: FrequencyCoordinate
@@ -123,6 +124,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Natural_Units(first_lit:last_lit)
     integer :: NoInstances
     integer :: NoSurfs
+    real(r8) :: MinValue                ! Minimumvalue
     logical :: MinorFrame               ! Is a minor frame quantity
     logical :: MajorFrame               ! Is a major frame quantity
     integer :: NoChans
@@ -156,6 +158,7 @@ contains ! =====     Public Procedures     =============================
     hGridIndex = 0
     instrumentModule = 0
     logBasis = .false.
+    minValue = -huge ( 0.0_r8 )
     molecule = 0
 
     natural_units = 0
@@ -229,6 +232,9 @@ contains ! =====     Public Procedures     =============================
         hGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_logBasis )
         logBasis = (value == l_true)
+      case ( f_minValue )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        minValue = expr_value(1)
       case ( f_module)
         instrumentModule = decoration(decoration(subtree(2,son)))
 !      case ( f_molecule );          molecule = value  ! I don't understand this
@@ -473,6 +479,7 @@ contains ! =====     Public Procedures     =============================
     qty%frequencyCoordinate = frequencyCoordinate
     qty%instrumentmodule = instrumentmodule
     qty%logBasis = logBasis
+    qty%minValue = minValue
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
@@ -939,6 +946,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.71  2002/09/24 21:37:44  livesey
+! Added minValue stuff
+!
 ! Revision 2.70  2002/09/24 00:27:16  pwagner
 ! Wont bomb if no l1brads; nor whine if no good signals
 !
