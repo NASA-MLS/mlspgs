@@ -1088,6 +1088,8 @@ contains ! =====     Public Procedures     =============================
           config%maxGap_family = units(1)
         case ( p_critical_bands )
           !bands = value(1)
+        case default
+          ! Put this in while we're transitioning over to the new chunk divide
         end select
       else
         if ( node_id(son) == n_named ) son = subtree(2,son) ! ignore label
@@ -1183,6 +1185,9 @@ contains ! =====     Public Procedures     =============================
 end module ScanDivide
 
 ! $Log$
+! Revision 2.18  2001/11/09 00:03:55  livesey
+! Let it work with new l2cfs.  Will be replacing this with ChunkDivide_m later.
+!
 ! Revision 2.17  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
