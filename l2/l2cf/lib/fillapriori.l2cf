@@ -232,6 +232,11 @@ begin Fill
       215mb : 20K, 147mb : 10K, 100mb : 5.0K ] !nl})
   !forall({fillBaselineFineApriori},!allRadiometers)
 
+  !define(fillBaselineMIFApriori,{
+  Fill, quantity=aprioriPrecision.baselineMIF$1, method=explicit, $
+    explicitValues=5K, /spread !nl})
+  !forall({fillBaselineMIFApriori},!allRadiometers)
+
   ;; --------------------------------------- Bounds for species
 
   Fill, quantity=lowBound.ptanGHz, method=explicit, explicitValues= -20, /spread

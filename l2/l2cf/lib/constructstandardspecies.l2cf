@@ -181,6 +181,12 @@ begin Construct
   !forall(constructBaseline, !allRadiometers )
   !define(allBaselines, {!makelist({baseline},{},!allRadiometers)})
 
+  !define(constructMIFBaseline,{baselineMIF$1: Quantity, type=baseline, $
+    radiometer=$1, fGrid=fGridBaseline$1!nl})
+
+  !forall(constructMIFBaseline, !allRadiometers )
+  !define(allMIFBaselines, {!makelist({baselineMIF},{},!allRadiometers)})
+
   ;; ----------------------------------------- Extinctions
 
   !define(constructExtinction,{!dnl
@@ -408,6 +414,7 @@ begin Construct
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
+    !allMIFBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
