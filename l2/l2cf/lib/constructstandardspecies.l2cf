@@ -223,6 +223,18 @@ begin Construct
   !define(allUSBRadiances, {!makelist({band},{},!allBandUSBs)})
   !define(allUnfoldedRadiances,{!allLSBRadiances, !allUSBRadiances})
 
+  ;; ----------------------------------------- L1BMAFBaselines
+  ;; These are the baseline corrections supplied by level 1, and their
+  ;; precisions
+  !define(constructL1BMAFBaseline,{band$1L1BMAFBaseline: Quantity, $
+    type=l1bMAFBaseline, signal=!signal($1)!nl})
+
+  ;; Only worry about folded cases here.
+  !forall(constructL1BMAFBaseline,!allBands)
+
+  ;; Define macro
+  !define(allL1BMAFBaselines, {!makelist({band},{L1BMAFBaseline},!allBands)})
+
   ;; ----------------------------------------- OpticalDepths
 
   !define(constructDepth,{depth$1: Quantity, type=opticalDepth, signal=!signal($1)!nl})
@@ -424,6 +436,7 @@ begin Construct
 
   measurementTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, scanResidualGHz, scanResidualTHz ]
+  correctionsTemplate: VectorTemplate, quantities = [ !allL1BMAFBaselines ]
 
   depthTemplate: VectorTemplate, quantities = [ !allFoldedDepths ]
 
