@@ -407,9 +407,58 @@ contains
     use VectorsModule, only: VECTOR_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use MatrixModule_1, only: MATRIX_T
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE
+    use PVMIDL, only: PVMIDLUNPACK
+    use L2ParInfo, only: INFOTAG
+    use MatrixModule_1, only: CREATEBLOCK
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
     type (Vector_T), intent(inout) :: OUTVECTOR
     type (ForwardModelStatus_T), intent(inout) :: FMSTAT
     type (Matrix_T), intent(inout) :: JACOBIAN
+    ! Local variables
+    integer :: KIND                     ! Kind for block
+    integer :: NOVALUES                 ! Number of values for banded/sparse
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: I, J                     ! Loop counters
+    type ( MatrixElement_T), pointer :: B ! A block from the jacobian
+
+    ! Executable code
+    call PVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
+    if ( bufferID <= 0 ) &
+      & call PVMErrorMessage ( bufferID, 'Receiveing results from slave' )
+    call PVMIDLUnpack ( fmStat%rows, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking fmStat%rows' )
+    do i = 1, jacobian%row%nb
+      if ( fmStat%rows(i) ) then
+        call PVMIDLUnpack ( outVector%quantities ( &
+          & jacobian%row%quant(i) ) % values ( :, &
+          & jacobian%row%inst(i) ), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking values for fwmOut' )
+        ! Get blocks of jacobian
+        do j = 1, jacobian%col%nb
+          call PVMIDLUnpack ( kind, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking block kind' )
+          if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+            call PVMIDLUnpack ( noValues, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking noValues for block' )
+          end if
+          call CreateBlock ( jacobian, i, j, kind, noValues )
+          b => jacobian%block ( i, j )
+          if ( kind == M_Banded .or. kind == M_Column_sparse ) then
+            call PVMIDLUnpack ( b%r1, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%r1' )
+            call PVMIDLUnpack ( b%r2, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%r2' )
+          end if
+          if ( b%kind /= M_Absent ) then
+            call PVMIDLUnpack ( b%values, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking b%values' )
+          end if
+        end do
+      end if
+    end do
+
   end subroutine ReceiveSlavesOutput
 
   ! ----------------------------------------------- RequestSlavesOutput ---
@@ -540,7 +589,7 @@ contains
       if ( i == FWMExtra .or. i == FWMOut ) then
         do j = 1, size ( v%quantities )
           if ( i == FWMExtra ) then
-            call PVMPack ( v%quantities(j)%values, info )
+            call PVMIDLPack ( v%quantities(j)%values, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector values' )
           end if
           call PVMIDLPack ( associated ( v%quantities(j)%mask ), &
@@ -564,7 +613,9 @@ contains
   subroutine TriggerSlaveRun ( state, maf )
     ! This routine is used by the master to launch one run
     use VectorsModule, only: VECTOR_T
-    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK, &
+      & PVMErrorMessage
+    use PVMIDL, only: PVMIDLPACK
     use L2ParInfo, only: SIG_RUNMAF, INFOTAG
     type (Vector_T), intent(in) :: STATE
     integer, intent(in) :: MAF
@@ -604,6 +655,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.5  2002/10/07 01:23:51  livesey
+! OK, all the code written and compiles, but not tested.
+!
 ! Revision 2.4  2002/10/06 22:22:20  livesey
 ! Nearly all routines filled out now, only one more to go
 !
