@@ -52,4 +52,15 @@ changesyntax({@!})
 ; each sucessive argument
 !define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@))))})
 !define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@)))))})
+; This macro takes a prefix as $1 (which can be blank), and a set of
+; arguments $2,$3.. of the form parameter=value, and defines the macros
+; (prefix)parameter=value for each such argument.
+; One would typically call it within another macro, in the form of a
+; prefix name, followed by $@.
+!define(getpar,{!substr($1,0,!index($1,{=}))})
+!define(getval,{!substr($1,!incr(!index($1,{=})))})
+!define(processparval,{!dnl
+  !ifelse($2,{},{},{!dnl
+    !define($1!getpar($2),!getval($2))!dnl
+    !processparval($1,!shift(!shift($@)))})})
 
