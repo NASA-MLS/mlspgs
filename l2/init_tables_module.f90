@@ -406,7 +406,7 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
+      begin, t+t_fillMethod, l+l_applyBaseline, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -462,7 +462,7 @@ contains ! =====     Public procedures     =============================
              l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
              l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
-             l+l_limbSidebandFraction, &
+             l+l_l1bMAFBaseline, l+l_limbSidebandFraction, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
@@ -719,6 +719,8 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_b, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_baselineQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
@@ -793,6 +795,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_phitan, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_quadrature, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
              begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -824,6 +827,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_status, t+t_numeric, n+n_field_type, &
+             begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_systemTemperature, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1286,6 +1290,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.384  2004/09/27 20:10:51  livesey
+! Added applyBaseline fill method and it's supporting stuff
+!
 ! Revision 2.383  2004/09/25 00:15:22  livesey
 ! Added combineChannels to Algebra
 !
