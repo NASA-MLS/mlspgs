@@ -784,7 +784,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Get terms for geopotential expression
     s2 = (sin(geocLat))**2
     p2 = 0.5 * (3*s2-1) ! Polynomial terms
-    p4 = 0.125 * (35*(s2**2) - 30*s2 + 30)
+    p4 = 0.125 * (35*(s2**2) - 30*s2 + 3)
 
     ! The first part of the calculation is the geometric calculation. This is in
     ! three stages.
@@ -1662,6 +1662,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.34  2002/06/25 17:03:30  bill
+! fixed p4 calc in pressure guesser--wgr
+!
 ! Revision 2.33  2002/06/25 14:55:15  bill
 ! work in progress--wgr
 !
