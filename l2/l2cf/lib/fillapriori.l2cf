@@ -271,7 +271,7 @@ begin Fill
   Fill, quantity=vReg.clo, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
-    [ 10mb:300ppbv, 1mb:3ppmv, 0.1mb:30ppmv, 0.068mb:0ppmv ]
+    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.068mb:0ppmv ]
 
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
@@ -332,7 +332,7 @@ begin Fill
   Fill, quantity=hReg.clo, method=profile, $
     profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
-    [ 10mb:100ppbv, 1mb:1ppmv, 0.1mb:10ppmv, 0.01mb:30ppmv, 0.0068mb:0ppmv ]
+    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ]
 
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
