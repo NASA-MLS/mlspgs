@@ -79,6 +79,7 @@ integrationGrid
 integrationTime
 interpolate
 interpolationFactor
+intrinsic
 invert
 
 jacobian
@@ -138,6 +139,7 @@ refGPHquantity
 regOrders
 regQuants
 regWeight
+resetSeed
 rowChannels
 rowInstances
 rowQuantity
@@ -148,6 +150,7 @@ scale
 scECI
 scVel
 sdname
+seed
 sgrid
 signal
 signals
@@ -189,6 +192,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.11  2001/10/16 23:34:05  pwagner
+# intrinsic, resetseed, seed fields added to addnoise method
+#
 # Revision 2.10  2001/10/15 22:06:12  livesey
 # Added fields for smoothing
 #
