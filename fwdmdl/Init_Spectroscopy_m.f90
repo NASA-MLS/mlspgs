@@ -63,9 +63,9 @@ contains
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, P, S, T, &
+    use INTRINSIC, only: Add_Ident, Begin, F, G, L, N, NR, NDP, P, S, T, &
       & T_Numeric, Z, T_String
-    use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+    use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, FUNC_INDICES, &
       & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
     use Molecules, only: T_Molecule
     ! This really belongs in make_tree, but "make depends" can't see it there
@@ -184,6 +184,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.12  2004/04/02 23:58:09  vsnyder
+! Remove to names from USE that aren't referenced
+!
 ! Revision 2.11  2004/01/09 08:13:30  livesey
 ! Bug fix
 !

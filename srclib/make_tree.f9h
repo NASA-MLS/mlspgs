@@ -73,6 +73,8 @@
         select case ( which )
         case ( f/1000 ) ! Fields
           string = field_indices(item)
+        case ( g/1000 ) ! Functions
+          string = func_indices(item)
         case ( l/1000 ) ! Enumeration literals
           string = lit_indices(item)
         case ( p/1000 ) ! Parameter names
@@ -114,6 +116,9 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.7  2002/10/02 16:00:27  bwknosp
+! Added Id and RCS info
+!
 ! Revision 1.6  2002/07/18 22:01:58  vsnyder
 ! Add CONTINUE optional argument so trees needing more than 40 lines of
 ! Fortran can be constructed.

@@ -107,6 +107,7 @@ contains ! ====     Public Procedures     ==============================
         call one_cf ( son )
         num_sections = num_sections + 1
       case ( n_dt_def );    call def_type ( son ) ! Declare lits in the type
+      case ( n_func_def );  call def_func ( son ) ! Declare function
       case ( n_section );   call def_section ( son )
       case ( n_spec_def );  call def_spec ( son )
       case default ;        call announce_error ( son, no_code_for )
@@ -453,6 +454,17 @@ m:              do j = 3, nsons(field)
     end do
     check_section = 0
   end function CHECK_SECTION
+! -----------------------------------------------------  DEF_FUNC  -----
+  subroutine DEF_FUNC ( ROOT )
+  ! Process a definition of a function: Enter it into the declaration
+  ! table.
+    integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
+
+    integer :: SON       ! Son of Root
+
+    son = subtree(1,root)
+    call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
+  end subroutine DEF_FUNC
 ! --------------------------------------------------  DEF_SECTION  -----
   subroutine DEF_SECTION ( ROOT )
   ! Process a definition of a section:  Enter the section name in the
@@ -954,6 +966,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.21  2004/05/29 00:54:46  vsnyder
+! Improve some error checking and handling
+!
 ! Revision 1.20  2004/05/28 23:44:28  vsnyder
 ! Get units from either operand of *, second operand of \\
 !
