@@ -10,7 +10,7 @@ module MLSCommon                ! Common definitions for the MLS software
   implicit none
   public
 
- ! === (start of toc) ===                                                 
+! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
 
@@ -28,22 +28,18 @@ module MLSCommon                ! Common definitions for the MLS software
 ! L1BInfo_T     L1B data file names, etc.
 
 !     (subroutines and functions)
-! FindFirst     Find the first logical in the array that is true
-! FindNext      Find the next logical in the array that is true
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
-! int FindFirst (log condition(:))      
-! int FindNext (log condition(:), int current, {log wrap}, {log repeat})      
 ! === (end of api) ===
  private :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
-  character (LEN=256) :: Id = &
+  character (len=256) :: Id = &
        "$Id$"
-  character (LEN=*), parameter :: ModuleName= "$RCSfile$"
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
-  ! This module contains simple definitions which are common to all the MLS PGS
+  ! This module contains simple definitions that are common to all the MLS PGS
   ! f90 software.
 
   ! Firstly, these are standard numerical types, copied from HCP
@@ -117,68 +113,6 @@ module MLSCommon                ! Common definitions for the MLS software
 
   contains
 
-  ! -------------------------------------------- FindFirst --------------
-  integer function FindFirst ( condition )
-    ! Find the first logical in the array that is true
-    logical, dimension(:), intent(in) :: CONDITION
-
-    ! Local variables
-    integer :: I                        ! Loop counter
-
-    ! Executable code
-    FindFirst = 0
-    do i = 1, size(condition)
-      if ( condition(i) ) then
-        FindFirst = i
-        return
-      end if
-    end do
-  end function FindFirst
-
-  ! -------------------------------------------- FindNext --------------
-  integer function FindNext ( condition, current, wrap, repeat )
-    ! Find the next logical in the array that is true after the current one
-    ! May optionally wrap or repeat
-    ! e.g., if repeat is true and current is also last true, return current
-    ! e.g., if wrap is true and current is last true, return first true
-    logical, dimension(:), intent(in) :: CONDITION
-    integer, intent(in) :: CURRENT
-    logical, optional, intent(in) :: WRAP
-    logical, optional, intent(in) :: REPEAT
-
-    ! Local variables
-    integer :: I                        ! Loop counter
-    logical :: myWrap
-    logical :: myRepeat
-
-    ! Executable code
-    myWrap = .false.
-    if ( present(wrap) ) myWrap = wrap
-    myRepeat = .false.
-    if ( present(repeat) ) myRepeat = repeat
-    FindNext = 0
-    ! We'll assume you gave us valid args; otherwise return 0
-    if ( current < 1 .or. current > size(condition)) return
-    if ( .not. condition(current)) return
-    ! Now check for current already at end of array
-    if ( current < size(condition) ) then
-      do i = current+1, size(condition)
-        if ( condition(i) ) then
-          FindNext = i
-          return
-        end if
-      end do
-    endif
-    ! Uh-oh, this means current is last true
-    if ( myWrap ) then
-      FindNext = FindFirst(condition)
-    elseif ( myRepeat ) then
-      FindNext = current
-    endif
-    return
-  end function FindNext
-
-
 !=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -189,6 +123,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.20  2004/06/10 01:00:50  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.19  2004/05/19 19:16:40  vsnyder
 ! Move MLSChunks_t to Chunks_m
 !
