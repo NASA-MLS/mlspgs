@@ -102,7 +102,7 @@ contains
       son = subtree(i_sons,root)
       if ( toggle(gen) ) call trace_begin ( 'Algebra loop', son )
       if ( node_id(son) /= n_equal ) then
-        ! Error message not needed -- caught in Check_Tree.
+        call AlgebraCommands ( son, VectorDatabase, MatrixDatabase )
       else
         ! Evaluate the RHS
         rhs = subtree(2,son)
@@ -216,6 +216,68 @@ contains
 
   contains
 
+    ! ...........................................  AlgebraCommands .....
+    subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase )
+      use Tree, only: DECORATION, NSONS, SUBTREE
+      use MoreTree, only: GET_SPEC_ID
+      use MatrixModule_1, only: CYCLICJACOBI, REFLECTMATRIX, MATRIX_T
+      use VectorsModule, only: VECTOR_T
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS
+      use Init_Tables_Module, only: L_TRUE
+      use Init_Tables_Module, only: S_CYCLICJACOBI, S_REFLECT
+        
+      ! Dummy arguments
+      integer, intent(in) :: ROOT
+      type(vector_T), dimension(:), pointer :: VectorDatabase
+      type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+
+      ! Local variables
+      logical, dimension(field_first:field_last) :: GOT ! Fields
+      integer :: FIELDID                ! ID for a field (duh!)
+      integer :: I                      ! Loop counter
+      integer :: KEY                    ! Tree node
+      integer :: SON                    ! Tree node
+      integer :: VALUE                  ! Value node
+      integer :: MATRIXIND              ! Index into matrix database
+      type(Matrix_T), pointer :: MATRIX ! The matrix to work on
+      type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
+
+      ! Executable code
+      do i = 2, nsons(root)
+        son = subtree ( i, root )
+        key = subtree ( 1, son )
+        if ( node_id(son) == n_set_one ) then
+          value = l_true
+        else
+          value = decoration(subtree(2,son))
+        end if
+        fieldID = decoration(key)
+        got ( fieldID ) = .true.
+        select case ( fieldID )
+        case ( f_matrix )
+          matrixInd = decoration ( value )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
+        case ( f_eigenVectors )
+          matrixInd = decoration ( value )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), eigenVectors )
+        end select
+      end do
+
+      select case ( get_spec_id ( root ) )
+      case ( s_reflect )
+        call Dump_Struct ( matrix, 'Input matrix' )
+        call ReflectMatrix ( matrix )
+        call Dump_Struct ( matrix, 'Reflected matrix' )
+      case ( s_cyclicJacobi ) 
+        call Dump_Struct ( matrix, 'Input matrix' )
+        call Dump_Struct ( eigenVectors, 'Input eigen vectors' )
+        call CyclicJacobi ( matrix, eigenVectors, tol=1e-6 )
+        call Dump_Struct ( matrix, 'Output matrix (eigen values)' )
+        call Dump_Struct ( eigenVectors, 'Output eigen vectors' )
+      end select
+
+    end subroutine AlgebraCommands
+      
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, What )
       use LEXER_CORE, only: PRINT_SOURCE
@@ -746,6 +808,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.8  2004/01/29 03:33:26  livesey
+! Hooked up reflect and cyclicJacobi commands.
+!
 ! Revision 2.7  2004/01/24 01:04:52  livesey
 ! More bug fixes and population
 !
