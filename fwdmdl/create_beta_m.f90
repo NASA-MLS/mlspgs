@@ -1,6 +1,8 @@
 module CREATE_BETA_M
   use MLSCommon, only: R8, RP, IP
+  use ABS_CS_CONT_M,    only: ABS_CS_CONT
   use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
+  use ABS_CS_O2_CONT_M, only: ABS_CS_O2_CONT
   use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
   use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
   implicit NONE
@@ -30,7 +32,7 @@ contains
   REAL(rp), INTENT(in) :: pressure ! pressure in hPa
   REAL(rp), INTENT(in) :: temp ! temperature in K
   REAL(rp), INTENT(in) :: fgr ! frequency in MHz
-  INTEGER(ip), INTENT(in) :: nl ! no of lines (probably not really needed)
+  INTEGER(ip), INTENT(in) :: nl ! no of lines
   REAL(rp), INTENT(in) :: pfaw(:) ! line widths
   REAL(r8), INTENT(in) :: v0s(:) ! pressure shifted line centers
   REAL(rp), INTENT(in) :: x1(:) ! Doppler width
@@ -63,9 +65,14 @@ contains
 !
     Integer(ip) :: LN_I
 
-    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds,dbdw,dbdn,dbdv
+    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bv,dw,dn,ds,dbdw,dbdn,dbdv
 !
+    bv = 0.0_rp
+    bp = 0.0_rp
+    bm = 0.0_rp
     beta_value = 0.0_rp
+    tp = Temp + 10.0_rp
+    tm = Temp - 10.0_rp
 !
 !  Setup absorption coefficients function
 ! NEED TO ADD THE PARDO WATER VAPOR CONTINUUM FOR 18003
@@ -75,37 +82,66 @@ contains
 !
 !  Liquid water
 !
-      beta_value = abs_cs_liq_h2o(Fgr,Temp)
+      bv = abs_cs_liq_h2o(Fgr,Temp)
       IF (PRESENT(t_power)) THEN
-        dw = Temp + 10.0_rp
-        ra = abs_cs_liq_h2o(Fgr,dw)
-        t_power = Log(ra/beta_value)/Log(dw/Temp)
+        bm = abs_cs_liq_h2o(Fgr,tm)
+        bp = abs_cs_liq_h2o(Fgr,tp)
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
       ENDIF
-      Return
 !
     else if (spectag == 28964) then
 !
 !  Dry air contribution (N2)
 !
-      beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
+      bv = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       IF (PRESENT(t_power)) THEN
-        dw = Temp + 10.0_rp
-        ra = abs_cs_n2_cont(cont,dw,Pressure,Fgr)
-        t_power = Log(ra/beta_value)/Log(dw/Temp)
+        bm = abs_cs_n2_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
       ENDIF
-      Return
 !
     else if (spectag == 28965) then
 !
 !  EXTINCTN molecule
 !
-      beta_value = 1.0
+      bv = 1.0_rp
       IF (PRESENT(t_power)) t_power = 0.0_rp
-      Return
 !
+    else if (spectag == 32001) then
+
+      bv = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
+      IF (PRESENT(t_power)) THEN
+        bm = abs_cs_o2_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_o2_cont(cont,tp,Pressure,Fgr)
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+      ENDIF
+
+    else
+
+      bv = abs_cs_cont(cont,Temp,Pressure,Fgr)
+      IF (PRESENT(t_power)) THEN
+        bm = abs_cs_cont(cont,tm,Pressure,Fgr)
+        bp = abs_cs_cont(cont,tp,Pressure,Fgr)
+        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+      ENDIF
+
     end if
-!
-!  Check for anything but liquid water and dry air (N2):
+
+    beta_value = bv
+
+    if(nl < 1) Return
 !
     IF(PRESENT(DBETA_DW).OR.PRESENT(DBETA_DN).OR.PRESENT(DBETA_DV)) THEN
 !
@@ -125,13 +161,13 @@ contains
         w = pfaw(ln_i)
         IF(abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp) THEN
           Call Voigt_Lorentz(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
-            &  y(ln_i),w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+            &  y(ln_i),w,Temp,slabs1(ln_i),bv,dslabs1_dv0(ln_i),dw,dn,ds)
         ELSE
           Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
-         &     w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+         &     w,Temp,slabs1(ln_i),bv,dslabs1_dv0(ln_i),dw,dn,ds)
         ENDIF
 !
-        beta_value = beta_value + bb
+        beta_value = beta_value + bv
         dbdw = dbdw + dw
         dbdn = dbdn + dn
         dbdv = dbdv + ds
@@ -166,11 +202,6 @@ contains
 !
 !  Find the temperatue power dependency now:
 !
-      bp = 0.0_rp
-      bm = 0.0_rp
-      tp  = Temp + 10.0_rp
-      tm  = Temp - 10.0_rp
-!
       IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
         do ln_i = 1, nl
           ds = Fgr - v0s(ln_i)
@@ -195,10 +226,10 @@ contains
         end do
       ENDIF
 
-      bb = beta_value
-      ds = Log(bp/bb)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+      bv = beta_value
+      ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
       ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-      dw = Log(bb/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+      dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
 !
       t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
 !
@@ -207,6 +238,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.1  2001/10/16 15:07:08  zvi
+! Continuum parameters are now part of Catalog
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
