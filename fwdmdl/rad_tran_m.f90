@@ -205,8 +205,8 @@ contains
       ! s is the sum of A's eigenvalues, and d is their difference.
       ! The sum of A's eigenvalues is Tr(A).  So when the trace
       ! of Real(incoptdepth_pol) < e_stop, we can stop.
-      if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
-        &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
+!     if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
+!       &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
       if ( do_gl(p_stop+1) ) then
         call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
         &                  deltau_pol(:,:,p_stop+1), status )
@@ -674,7 +674,7 @@ contains
 ! Internals
 
     integer(ip) :: A, AA
-    integer(ip) :: i, j, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i, sv_t
+    integer(ip) :: i, j, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -699,8 +699,7 @@ contains
 
 ! Begin code
 
-    n_path = size(tau)
-    sv_t = size(eta_zxp_c,dim=2)
+    n_path = size(del_zeta)
     mid = n_path / 2
 
 ! compute the opacity derivative singularity value
@@ -708,7 +707,7 @@ contains
     d_delta_dt = 0.0_rp
     drad_dt(:) = 0.0_rp
 
-    do sv_i = 1 , sv_t
+    do sv_i = 1 , size(eta_zxp_c,dim=2)
       if ( .not. deriv_flags(sv_i)) cycle
       i_start = 1
 
@@ -732,7 +731,6 @@ contains
           singularity(j) = alphaxn_path_c(j) * eta_zxp_c(j,sv_i) / t_path_c(j)
           d_delta_dt(j,sv_i) = singularity(j) * del_s(j)
         end do ! i
-
 ! see if anything needs to be gl-d
 
         no_to_gl = count(do_gl(inds))
@@ -762,12 +760,13 @@ contains
           a = 1
           do i = 1, no_to_gl
             aa = all_inds(a)
-            d_delta_dt(more_inds(i),sv_i) = d_delta_dt(more_inds(i),sv_i) + &
-              & del_zeta(more_inds(i)) * &
+            j = more_inds(i)
+            d_delta_dt(j,sv_i) = d_delta_dt(j,sv_i) + &
+              & del_zeta(j) * &
               & sum( (alphaxn_path_f(aa:aa+ng-1) * &
                    &  eta_zxp_f(aa:aa+ng-1,sv_i) / &
                    &  t_path_f(aa:aa+ng-1) - &
-                   &  singularity(more_inds(i))) * &
+                   &  singularity(j)) * &
                    & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
             a = a + ng
           end do
@@ -825,7 +824,7 @@ contains
           i = i + 1
         end if
 
-        needFA = .true.
+        needFA = .not. do_calc(mid+1)
         s_del_s = del_s(mid+1)
         if ( do_calc(mid+1) ) then
           fa = (h_path_c(mid+2)*dh_dt_path_c(mid+2,sv_i) - &
@@ -834,7 +833,6 @@ contains
             &                      alpha_path_c(mid+1) * fa
           inds(i) = mid + 1
           i = i + 1
-          needFA = .false.
         end if
 
         ! Several subscripts in this loop are offset by 1 from the nearly-
@@ -880,7 +878,6 @@ contains
              & dh_dz_gw, gl_inds, more_inds, all_inds(::ng), gl_delta )
 
           d_delta_dt(more_inds,sv_i) = d_delta_dt(more_inds,sv_i) + gl_delta
-
         end if
 
         i_start = min(i_start,inds(1))
@@ -897,7 +894,6 @@ contains
                        &  i_stop, drad_dt(sv_i) )
 
     end do ! sv_i
-
   end subroutine DRad_tran_dt
 
   ! ------------------------------------------------  Get_Do_Calc  -----
@@ -1003,6 +999,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.31  2003/11/04 02:49:50  vsnyder
+! Use GC_INDS calculated in FullForwardModel for more_inds
+!
 ! Revision 2.30  2003/11/04 01:55:50  vsnyder
 ! Add 'FA = 0.0' in case n_path <= 4, cosmetic changes
 !
