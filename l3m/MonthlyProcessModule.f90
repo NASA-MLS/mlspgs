@@ -717,7 +717,7 @@ CONTAINS
 !*** initialization 
 
         iP = 0
-        DO kP = pStartIndex, pStartIndex
+        DO kP = pStartIndex, pEndIndex
           iP = iP + 1
 	  l3mm%pressure(iP) = l2gp(1)%pressures(kP) 
 	  mmA%pressure(iP)  = l2gp(1)%pressures(kP) 
@@ -739,7 +739,7 @@ CONTAINS
 !*** Start calculation 
 
         iP = 0
-        DO kP = pStartIndex, pStartIndex
+        DO kP = pStartIndex, pEndIndex
           iP = iP + 1
 
           DO J = 1, cfProd%nLats

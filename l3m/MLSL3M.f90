@@ -94,14 +94,19 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
          CYCLE
       ELSE
-         msr = 'Input data successfully read; begin sorting data for ' // &
+         msr = 'Input data successfully read; begin processing data for ' // &
                cfProd(i)%l3prodName
          CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
       ENDIF
 
 ! Core processing for Standard products
 
-     CALL MonthlyCoreProcessing(cfProd(i), pcf, l2Days, l2gp, mm, mmA, mmD, mz, mzA, mzD, dz, dzA, dzD)
+      CALL MonthlyCoreProcessing(cfProd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
+                                 mz, mzA, mzD, dz, dzA, dzD)
+
+      msr = 'CORE processing completed for ' // TRIM(cfProd(i)%l3prodName) &
+            // '; starting Output task ...'
+      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
 ! Output and Close for the product
 
@@ -169,18 +174,20 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 ! Monthly Core processing
 
 !        CALL MonthlyDgProcessing(pcf, cfDef, cfDg(i), latGrid, lonGrid, l2gp, mz, &
-!                                 mzA, mzD, dz, dzA, dzD, mm, mmA, mmD)
+!                                 mzA, mzD, dz, dzA, dzD, mm)
+
+         msr = 'CORE processing completed for ' // TRIM(cfDg(i)%prodName) &
+               // '; starting Output task ...'
+         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
 ! Output and Close for the product
 
-!        CALL OutputDg(pcf, cfDef, cfDg(i), dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+!        CALL OutputDg(pcf, cfDef, cfDg(i), dz, dzA, dzD, mz, mzA, mzD, mm, &
 !                      dFiles, flag)
 
 ! Deallocate the databases passed between CORE & the I/O shell
 
          CALL DeallocateL3MM(mm)
-         CALL DeallocateL3MM(mmA)
-         CALL DeallocateL3MM(mmD)
 
          CALL DeallocateL3MZ(mz)
          CALL DeallocateL3MZ(mzA)
@@ -214,6 +221,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.4  2001/08/02 23:35:52  ybj
+! Fix interface call to MonthlyCoreProcessing
+!
 ! Revision 1.3  2001/08/01 18:28:56  nakamura
 ! I/O-Core interface switched back to Daily paradigm.
 !
