@@ -58,7 +58,8 @@ contains
 ! 'brkpt' is the index of the path break-point (when it change from
 !         incoming ray to outgoing ray)
 ! 'no_ele' is the total number of entries in ?_path%values(1...no_ele)
-
+   
+    Ier = 0
     Ngp1 = Ng + 1
     brkpt = ndx_path%break_point_index
     no_ele = ndx_path%total_number_of_elements
@@ -104,6 +105,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.7  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
 ! Revision 1.6  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
