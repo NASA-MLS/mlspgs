@@ -46,13 +46,6 @@ begin Fill
 ;     ;; However, RHI is not an important input to e.g. sids.
 ;     !interpolateToHiRes(truth.RHI_HR)
 
-  ;; --------------------------------------------- trop H2O
-
-  ;; Put H2O in trop h2o
-  Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $
-    method=vector, /interpolate
-  Fill, quantity=truth.tropH2O_HR, sourceQuantity=truth.h2o_HR, $
-    method=vector, /interpolate
 
   ;; --------------------------------------------- tpPressure
   Fill, quantity=truth.tpPressure, method=wmoTropopause, $

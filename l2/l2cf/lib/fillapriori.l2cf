@@ -52,12 +52,6 @@ begin Fill
   Fill, quantity=apriori.oneHundredHPa, method=explicit, explicitValues=100hPa, /spread
   }) ;; End if flagGotClimatology
 
-  ;; --------------------------------------------- trop H2O
-
-  ;; Put H2O in trop h2o
-  Fill, quantity=apriori.tropH2O, sourceQuantity=apriori.h2o, $
-    method=vector, /interpolate
-
   ;; --------------------------------------------- hiRes Fills
 
   !ifdef(flagGotClimatology,{
@@ -72,8 +66,6 @@ begin Fill
   !fillWithClimatologyHR(Temperature)
   !fillWithClimatologyHR(H2O)
   !fillWithClimatologyHR(O3)
-  Fill, quantity=apriori.tropH2O_HR, method=gridded, sourceGrid=gridH2O
-  !interpolateToHiRes(apriori.tropH2O_HR)
   ;; Get RHI_HR from RHI.  Not sure if this should really be from
   ;; H2O_HR and temperature_HR
   !interpolateToHiRes(apriori.RHI_HR)
@@ -193,17 +185,12 @@ begin Fill
   Fill, quantity=aprioriPrecision.rhi, h2oQuantity=aprioriPrecision.h2o, $
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
 
-  ;; Put H2O precision in trop h2o
-  Fill, quantity=aprioriPrecision.tropH2O, sourceQuantity=aprioriPrecision.h2o, $
-    method=vector, /interpolate
-
   ;; This macro interpolates standard resolution quantities to the
   ;; hiRes equivalents. 
   !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!TrimLast3($1),!dnl
      method=vector, /interpolate!nl})
   !interpolateToHiRes(aprioriPrecision.temperature_HR)
   !forall(interpolateToHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
-  !interpolateToHiRes(aprioriPrecision.tropH2O_HR)
 
   ;; Get RHI_HR from RHI.  Not sure if this should really be from
   ;; H2O_HR and temperature_HR
@@ -238,15 +225,11 @@ begin Fill
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
   Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
 
-  Fill, quantity=lowBound.tropH2O, method=explicit, explicitValues=0.1ppmv, /spread
-  Fill, quantity=highBound.tropH2O, method=explicit, explicitValues=0.01, /spread
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
-  !interpolateToHiRes(lowBound.tropH2O_HR)
-  !interpolateToHiRes(highBound.tropH2O_HR)
   !forall(interpolateToHiRes,!makelist(lowBound.,{},!allHiResMolecules))
   !forall(interpolateToHiRes,!makelist(highBound.,{},!allHiResMolecules))
 
@@ -316,8 +299,6 @@ begin Fill
     [ 146mb:0ppmv, 100mb:0.3ppmv ], logSpace=false
   Fill, quantity=hReg.h2o_HR, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ], logSpace=false
-  Fill, quantity=hReg.tropH2O, method=profile, $
-    profileValues=[146mb:0ppmv, 100mb:0.03ppmv],logSpace=false
 
   Fill, quantity=hReg.hcl,   method=profile, profileValues= [ 100mb:0.3ppbv ]
   Fill, quantity=hReg.hcn,   method=profile, profileValues= [ 100mb:100pptv ]
