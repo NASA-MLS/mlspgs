@@ -87,7 +87,8 @@ module Molecules
   integer, parameter :: L_OCS =          l_ocl_37_o + 1
   integer, parameter :: L_OH =           l_ocs + 1
   integer, parameter :: L_SO2 =          l_oh + 1
-  integer, parameter :: LAST_MOLECULE =  l_so2
+  integer, parameter :: L_S_32_O2 =      l_so2 + 1
+  integer, parameter :: LAST_MOLECULE =  l_s_32_o2
 
 ! Mapping from the literals to the spec tags:
   integer, public :: SPEC_TAGS(FIRST_MOLECULE:LAST_MOLECULE)
@@ -151,6 +152,7 @@ module Molecules
   data spec_tags(l_ocs)          / 00060001 /
   data spec_tags(l_oh)           / 00017001 /
   data spec_tags(l_so2)          / 00064002 /
+  data spec_tags(l_s_32_o2)      / 00064002 /
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_MOLECULES  -----
@@ -243,6 +245,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_ocs) =          add_ident ( 'ocs' )
     lit_indices(l_oh) =           add_ident ( 'oh' )
     lit_indices(l_so2) =          add_ident ( 'so2' )
+    lit_indices(l_s_32_o2) =      add_ident ( 's_32_o2' )
 
     ! Create the type tree for the molecule type
     call make_tree ( (/ &
@@ -259,6 +262,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.11  2001/10/09 22:39:52  livesey
+! Added S_32_O2
+!
 ! Revision 2.10  2001/05/11 00:38:46  livesey
 ! Added hocl_35
 !
