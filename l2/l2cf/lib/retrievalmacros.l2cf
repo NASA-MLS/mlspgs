@@ -46,11 +46,12 @@
 !define(DGGFileName, !dnl
 {!ifdef(flagUsingPCF,{DGG},!dnl
 {!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})})
+!define(l2auxFileName, !dnl
+{!ifdef(flagUsingPCF,{L2AUX-$1},!dnl
+{!outpathl2aux/MLS-Aura_L2AUX-$1_!l2version_!day.h!hdfVersion})})
 !define(DGMFileName, !dnl
 {!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})})
-;;;!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
-;;;!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 !define(CloudFilename, !dnl
 {!ifdef(flagUsingPCF,{L2AUX-Cloud},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
@@ -544,6 +545,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.90  2004/04/16 00:45:55  livesey
+; New approach to cloud flagging etc.
+;
 ; Revision 1.89  2004/04/14 23:07:22  livesey
 ; Moved cloud output to L2AUX-Cloud
 ;
