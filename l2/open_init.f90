@@ -7,6 +7,7 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
+  use global_settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
   use Hdf, only: DFACC_READ, SFSTART, SFEND
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
@@ -49,8 +50,6 @@ module Open_Init
   !-----------------------------------------------------------------------------
 
   integer, parameter :: CCSDSLen=27
-  integer, parameter :: ILLEGALL1BRADID=-1      ! something sfstart should catch
-  integer, parameter :: MAXNUML1BRADIDS=10      ! In case more than one
   integer, private :: ERROR
   
 contains ! =====     Public Procedures     =============================
@@ -174,6 +173,9 @@ contains ! =====     Public Procedures     =============================
         if ( sd_id == -1 ) then
           call announce_error ( 0, &
             & 'Error opening L1RAD file: ' //L1physicalFilename)
+        elseif(ifl1 == MAXNUML1BRADIDS) then
+          call announce_error ( 0, "Cannot open any more L1BRAD files" )
+          exit
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
@@ -465,6 +467,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.43  2001/05/04 17:09:03  pwagner
+! Get MAXNUML1BRADIDS, ILLEGALL1BRADID from global_settings
+!
 ! Revision 2.42  2001/04/20 18:16:29  pwagner
 ! Added sfend on L1B files to DESTROYL1BInfo
 !
