@@ -6,9 +6,8 @@ module Join                     ! Join together chunk based data.
 !=============================================================================
 
   ! This module performs the 'join' task in the MLS level 2 software.
-  use intrinsic, only: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
-    & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY, &
-    & PHYQ_DIMENSIONLESS
+  use intrinsic, only: FIELD_INDICES, L_NONE, L_GEODANGLE, &
+    & L_MAF, PHYQ_DIMENSIONLESS
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -271,7 +270,7 @@ contains ! =====     Public Procedures     =============================
             if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
               & ModuleName, 'This quantity should be joined as an l2aux')
             call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
-              & l2auxDatabase, chunkNo, chunks )
+             & l2auxDatabase, chunkNo, chunks )
           end if
         end if
       end if
@@ -471,7 +470,7 @@ contains ! =====     Public Procedures     =============================
   ! are destined to go in L2AUX quantities.
 
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
-    & chunkNo, chunks, firstInstance, lastInstance )
+   & chunkNo, chunks, firstInstance, lastInstance )
 
     use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
       & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
@@ -497,10 +496,10 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T) ::                NewL2AUX
     type (L2AUXData_T), pointer ::       ThisL2AUX
     logical ::                           L2auxDataIsNew
-    integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
+!   integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
     integer ::                           AuxFamily     ! Channel or Frequency
-    integer ::                           DimensionIndex, Channel, Surf, &
-    &                                    NoMAFs,index
+!    integer ::                           DimensionIndex, Channel, Surf
+    integer   ::                         NoMAFs, index
     integer ::                           FirstProfile, LastProfile
 !   real(r8), dimension(:,:), pointer :: values !??? Not used ???
     character (LEN=32) :: quantityNameStr
@@ -556,6 +555,7 @@ contains ! =====     Public Procedures     =============================
       call output(noOutputInstances, advance='no')
       call output(' instances ', advance='no')
     end if
+
     ! Now if this is a new l2aux quantity, we need to setup an l2aux data type
     ! for it.
 
@@ -571,7 +571,7 @@ contains ! =====     Public Procedures     =============================
 
       auxFamily=quantity%template%frequencyCoordinate
 
-      if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
+      ! if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
         ! For minor frame quantities, the dimensions are:
         ! ([frequency or channel],MIF,MAF)
         !
@@ -583,73 +583,80 @@ contains ! =====     Public Procedures     =============================
         noMAFs = lastMAF - firstMAF + 1
         ! THINK HERE ABOT RUNS THAT DON'T START AT THE BEGINNING !???????
         ! MAY NEED TO CHANGE ALLOCATE
-        if ( quantity%template%frequencyCoordinate==L_None ) then
-          dimensionFamilies = (/L_None, L_MIF, L_MAF/)
-          dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
-          dimensionStarts = (/1, 1, firstMAF /)
-        else
-          dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
-          dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
-            & noMAFs/)
-          dimensionStarts = (/1, 1, firstMAF /)
-        end if
-      else
-        ! Not a minor frame quantity; for non minor frame l2aux quantities
-        ! our ability to output them will probably increase, but at the
-        ! moment, I can't really forsee what form they may take.
-
-        ! For the moment (ie. v0.1) I'm going to be restrictive and only
-        ! allow quantities with no vertical coordinate.  This may and
-        ! probably will change in later versions, leading to more L2AUXDim
-        ! paramters etc., to parallel those from type t_verticalCoordinate
-        ! in Init_Tables_Module.
-
-        if ( quantity%template%verticalCoordinate /= l_None ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Cannot currently output L2AUX quantities with obscure "// &
-          & "vertical coordinates, sorry!" )
-
-        if ( quantity%template%frequencyCoordinate==L_None ) then
-          dimensionFamilies = (/L_geodAngle, L_None, &
-            & L_None/)
-          dimensionSizes = (/quantity%template%noInstances, 1, 1/)
-          dimensionStarts = (/1, 1, 1/)
-        else
-          dimensionFamilies = (/auxFamily, L_geodAngle, &
-            & L_None/)
-          dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
-          dimensionStarts = (/1, 1, 1/)
-        end if
-      end if
+! >         if ( quantity%template%frequencyCoordinate==L_None ) then
+! >           dimensionFamilies = (/L_None, L_MIF, L_MAF/)
+! >           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
+! >           dimensionStarts = (/1, 1, firstMAF /)
+! >         else
+! >           dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
+! >           dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
+! >             & noMAFs/)
+! >           dimensionStarts = (/1, 1, firstMAF /)
+! >         end if
+! >       else
+! >         ! Not a minor frame quantity; for non minor frame l2aux quantities
+! >         ! our ability to output them will probably increase, but at the
+! >         ! moment, I can't really forsee what form they may take.
+! > 
+! >         ! For the moment (ie. v0.1) I'm going to be restrictive and only
+! >         ! allow quantities with no vertical coordinate.  This may and
+! >         ! probably will change in later versions, leading to more L2AUXDim
+! >         ! paramters etc., to parallel those from type t_verticalCoordinate
+! >         ! in Init_Tables_Module.
+! > 
+! >         if ( quantity%template%verticalCoordinate /= l_None ) &
+! >           & call MLSMessage ( MLSMSG_Error, ModuleName, &
+! >           & "Cannot currently output L2AUX quantities with obscure "// &
+! >           & "vertical coordinates, sorry!" )
+! > 
+! >         if ( quantity%template%frequencyCoordinate==L_None ) then
+! >           dimensionFamilies = (/L_geodAngle, L_None, &
+! >             & L_None/)
+! >           dimensionSizes = (/quantity%template%noInstances, 1, 1/)
+! >           dimensionStarts = (/1, 1, 1/)
+! >         else
+! >           dimensionFamilies = (/auxFamily, L_geodAngle, &
+! >             & L_None/)
+! >           dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
+! >           dimensionStarts = (/1, 1, 1/)
+! >         end if
+! >       end if
 
       ! Now we setup the new quantity
-      call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
-        & dimensionStarts, newL2AUX )
-      newL2AUX%minorFrame=quantity%template%minorFrame
-      newL2AUX%majorFrame=quantity%template%majorFrame
+!     call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
+!       & dimensionStarts, newL2AUX )
+      if ( DEEBUG ) then
+        call output('  firstMAF ', advance='no')
+        call output(firstMAF, advance='no')
+        call output('  noMAFs ', advance='no')
+        call output(noMAFs, advance='yes')
+      endif
+      call SetupNewL2AUXRecord ( newL2AUX, quantity%template, firstMAF, noMAFs )
+!     newL2AUX%minorFrame=quantity%template%minorFrame
+!     newL2AUX%majorFrame=quantity%template%majorFrame
       newL2AUX%instrumentModule=quantity%template%instrumentModule
 
       ! Setup the standard `vertical' and `channel' dimensions
 
-      do dimensionIndex = 1, L2AUXRank
-        select case ( dimensionFamilies(dimensionIndex) )
-        case ( L_None )          ! Do nothing
-        case ( L_Channel )
-          do channel = 1,quantity%template%noChans
-            newL2AUX%dimensions(dimensionIndex)%values(channel) = channel
-          end do
-        case ( L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
-        case ( L_MIF )
-          do surf = 1, quantity%template%noSurfs
-            newL2AUX%dimensions(dimensionIndex)%values(surf) = surf
-          end do
-        case default                    ! Ignore horizontal dimensions
-        end select
-        ! The error message here is rather vague.  The issue is that
-        ! both MAF and geodAngle should only occur for the `last' dimension
-        ! which our loop is explicity avoiding.
-      end do ! The `last' dimension is dealt with later on.
+! >       do dimensionIndex = 1, L2AUXRank
+! >         select case ( newL2AUX%dimensions(dimensionIndex)%dimensionFamily )
+! >         case ( L_None )          ! Do nothing
+! >         case ( L_Channel )
+! >           do channel = 1,quantity%template%noChans
+! >             newL2AUX%dimensions(dimensionIndex)%values(channel) = channel
+! >           end do
+! >         case ( L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )
+! >           newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
+! >         case ( L_MIF )
+! >           do surf = 1, quantity%template%noSurfs
+! >             newL2AUX%dimensions(dimensionIndex)%values(surf) = surf
+! >           end do
+! >         case default                    ! Ignore horizontal dimensions
+! >         end select
+! >         ! The error message here is rather vague.  The issue is that
+! >         ! both MAF and geodAngle should only occur for the `last' dimension
+! >         ! which our loop is explicity avoiding.
+! >       end do ! The `last' dimension is dealt with later on.
 
       ! Add this l2aux to the database
       index = AddL2AUXToDatabase ( l2auxDatabase, newL2AUX )
@@ -696,7 +703,25 @@ contains ! =====     Public Procedures     =============================
       call output('  firstProfile ', advance='no')
       call output(firstProfile, advance='no')
       call output('   lastProfile ', advance='no')
-      call output(lastProfile, advance='no')
+      call output(lastProfile, advance='yes')
+      call output('  FirstInstance ', advance='no')
+      call output(useFirstInstance, advance='no')
+      call output('   LastInstance ', advance='no')
+      call output(useLastInstance, advance='yes')
+      call output('  L2AUX%dimensions ', advance='no')
+      call output(trim(thisL2AUX%dim_names), advance='yes')
+      call output('  L2AUX%dim_units ', advance='no')
+      call output(trim(thisL2AUX%dim_units), advance='yes')
+      call output('  L2AUX%value_units ', advance='no')
+      call output(trim(thisL2AUX%value_units), advance='yes')
+      call output('  L2AUX%dimensions(1)%noValues ', advance='no')
+      call output(thisL2AUX%dimensions(1)%noValues, advance='no')
+      call output('  L2AUX%dimensions(2)%noValues ', advance='no')
+      call output(thisL2AUX%dimensions(2)%noValues, advance='no')
+      call output('  L2AUX%dimensions(3)%noValues ', advance='no')
+      call output(thisL2AUX%dimensions(3)%noValues, advance='yes')
+      call output('shape(l2aux values) ', advance='no')
+      call output(shape(thisL2AUX%values), advance='yes')
       if ( any( thisL2AUX%dimensions(L2AUXRank)%dimensionFamily &
         & == (/ L_GeodAngle, L_MAF /) ) ) then
         call output('   dimensions ', advance='no')
@@ -718,6 +743,29 @@ contains ! =====     Public Procedures     =============================
     case default
     end select
     
+    ! Check that reshape has a prayer of succeeding
+    if ( DEEBUG ) then
+      call output('  num l2aux values/profile ', advance='no')
+      call output(size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2), &
+       & advance='yes')
+      call output('   num dim values/profile ', advance='no')
+      call output(thisL2AUX%dimensions(1)%noValues* &
+       &              thisL2AUX%dimensions(2)%noValues, advance='yes')
+      call output('  num l2aux values (total) ', advance='no')
+      call output(size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2)* &
+       &              (lastProfile-firstProfile+1), advance='yes')
+      call output('   num qty values ', advance='no')
+      call output(size(quantity%values, 1)* &
+       &              (useLastInstance-useFirstInstance+1), advance='yes')
+    endif
+    if ( size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2) &
+     & /= thisL2AUX%dimensions(1)%noValues*thisL2AUX%dimensions(2)%noValues ) &
+     & call MLSMessage ( MLSMSG_Error, &
+     & ModuleName, "Reshape fails: size mismatch betw. dims and values" )
+    if ( size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2)*(lastProfile-firstProfile+1) &
+     & /= size(quantity%values, 1)*(useLastInstance-useFirstInstance+1) ) &
+     & call MLSMessage ( MLSMSG_Error, &
+     & ModuleName, "Reshape fails: size mismatch betw. quantity and l2aux" )
     thisL2AUX%values(:,:,firstProfile:lastProfile) = &
       & reshape(quantity%values(:,useFirstInstance:useLastInstance), &
       &   (/ thisL2AUX%dimensions(1)%noValues, &
@@ -770,6 +818,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.67  2003/01/17 23:11:26  pwagner
+! Moved most ops out of LoinL2AUXData to SetupL2AUXData
+!
 ! Revision 2.66  2002/12/19 15:53:47  livesey
 ! Allowed verticalCoordinate=l_none quantities back into the l2gp fold.
 !
