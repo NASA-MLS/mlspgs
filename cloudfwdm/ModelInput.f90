@@ -104,7 +104,7 @@ contains
 
          DO J=1,NH
 
-            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
+            CALL LOCATE (HEIGHT,NZ,NZ,ZH(J),JM)              
 
             YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
      &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
@@ -151,6 +151,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.7  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.6  2002/08/22 00:15:31  jonathan
 ! change NS to NS-1 for VMR1
 !
