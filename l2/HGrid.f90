@@ -800,15 +800,19 @@ contains ! =====     Public Procedures     =============================
     else if ( delta < -spacing/2 ) then
       first = first + spacing
     end if
-
-    ! Now work out the last point in a similar manner
-    last = origin + spacing * int ( (maxAngle-origin)/spacing )
-    delta = last - maxAngle            ! So +ve means last could be smaller
-    if ( delta > spacing/2 ) then
-      last = last - spacing
-    else if ( delta < -spacing/2 ) then
-      last = last + spacing
-    end if
+    
+    if ( .not. single ) then 
+      ! Now work out the last point in a similar manner
+      last = origin + spacing * int ( (maxAngle-origin)/spacing )
+      delta = last - maxAngle            ! So +ve means last could be smaller
+      if ( delta > spacing/2 ) then
+        last = last - spacing
+      else if ( delta < -spacing/2 ) then
+        last = last + spacing
+      end if
+    else
+      last = first
+    endif
 
     ! Now in the case where we have overlaps, let's try and have the
     ! first and last profile inside the MAF range
@@ -1453,6 +1457,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.63  2004/07/30 00:16:36  livesey
+! Minor update in the 'single' option.
+!
 ! Revision 2.62  2004/06/14 20:00:36  livesey
 ! A bit more helpful information in dumping and geometry dumping
 !
