@@ -1,17 +1,16 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-Construct.o  			MLSSignals_m.o       init_tables_module.o  \
-ConstructQuantityTemplates.o  	OutputAndClose.o     obtain_mlscf.o  \
-ConstructVectorTemplates.o  	RetrievalModule.o    obtainclimatology.o  \
-Fill.o  			ScanDivide.o  	     obtaindao.o  \
-ForwardModelInterface.o  	ScanModelModule.o    obtainncep.o  \
-HGrid.o  			VGrid.o  	     open_init.o  \
-Join.o  			dnwt_module.o        read_apriori.o  \
-L2AUXData.o  			dnwt_type.o  	     tree_walker.o  \
-MLSL2.o  			dumper.o  	     write_meta.o  \
-MLSL2Common.o  			ermsg_m.o  \
-MLSPCF2.o  			global_settings.o  \
+Construct.o  			MLSPCF2.o  	     dumper.o  \
+ConstructQuantityTemplates.o  	MLSSignals_m.o       ermsg_m.o  \
+ConstructVectorTemplates.o  	OutputAndClose.o     global_settings.o  \
+Fill.o  			RetrievalModule.o    init_tables_module.o  \
+ForwardModelInterface.o  	ScanDivide.o  	     obtain_mlscf.o  \
+HGrid.o  			ScanModelModule.o    open_init.o  \
+Join.o  			SidsModule.o  	     read_apriori.o  \
+L2AUXData.o  			VGrid.o  	     tree_walker.o  \
+MLSL2.o  			dnwt_module.o        write_meta.o  \
+MLSL2Common.o  			dnwt_type.o  \
  
 # using f90makedep.pl to calculate dependencies 
 Construct.o: Construct.f90 $(dir1)Allocate_Deallocate.o $(dir1)MLSCommon.o \
@@ -44,12 +43,17 @@ Fill.o: Fill.f90 $(dir1)GriddedData.o $(dir1)L1BData.o $(dir1)L2GPData.o \
 	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
 	$(dir1)tree.o $(dir1)tree_types.o L2AUXData.o MLSSignals_m.o \
 	ScanModelModule.o init_tables_module.o
-ForwardModelInterface.o: ForwardModelInterface.f90 $(dir1)MatrixModule_1.o \
-	$(dir1)VectorsModule.o $(dir1)lexer_core.o $(dir1)output_m.o \
+ForwardModelInterface.o: ForwardModelInterface.f90 $(dir1)MLSCommon.o \
+	$(dir1)MatrixModule_1.o $(dir1)MoreTree.o $(dir1)VectorsModule.o \
+	$(dir1)expr_m.o $(dir1)lexer_core.o $(dir1)output_m.o \
 	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
-	$(dir1)tree.o $(dir1)tree_types.o init_tables_module.o
-global_settings.o: global_settings.f90 $(dir1)toggles_core.o $(dir1)trace_m.o \
-	$(dir1)tree.o init_tables_module.o
+	$(dir1)tree.o $(dir1)tree_types.o $(dir3)l2_test_structures_m.o \
+	init_tables_module.o
+global_settings.o: global_settings.f90 $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MoreTree.o $(dir1)string_table.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir1)tree_types.o $(dir3)l2_load_m.o $(dir3)l2_test_structures_m.o \
+	ForwardModelInterface.o init_tables_module.o
 HGrid.o: HGrid.f90 $(dir1)L1BData.o $(dir1)MLSCommon.o \
 	$(dir1)MLSMessageModule.o $(dir1)MLSNumerics.o $(dir1)expr_m.o \
 	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
@@ -66,35 +70,29 @@ Join.o: Join.f90 $(dir1)L2GPData.o $(dir1)MLSCommon.o \
 	$(dir1)tree_types.o L2AUXData.o init_tables_module.o
 L2AUXData.o: L2AUXData.f90 $(dir1)Allocate_Deallocate.o $(dir1)Hdf.o \
 	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
-	addItemToDatabase.f9h
+	$(dir1)SDPToolkit.o $(dir1)dump_0.o $(dir1)intrinsic.o \
+	$(dir1)output_m.o $(dir1)string_table.o MLSSignals_m.o \
+	init_tables_module.o addItemToDatabase.f9h
 MLSL2Common.o: MLSL2Common.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o
-MLSL2.o: MLSL2.f90 $(dir1)MLSMessageModule.o $(dir1)declaration_table.o \
-	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)parser.o \
-	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)tree.o \
-	$(dir1)units.o $(dir2)tree_checker.o MLSPCF2.o init_tables_module.o \
-	obtain_mlscf.o tree_walker.o
+MLSL2.o: MLSL2.f90 $(dir1)Allocate_Deallocate.o $(dir1)MLSMessageModule.o \
+	$(dir1)QuantityTemplates.o $(dir1)VectorsModule.o \
+	$(dir1)declaration_table.o $(dir1)lexer_core.o $(dir1)output_m.o \
+	$(dir1)parser.o $(dir1)string_table.o $(dir1)toggles_core.o \
+	$(dir1)tree.o $(dir1)units.o $(dir2)tree_checker.o MLSPCF2.o \
+	init_tables_module.o obtain_mlscf.o tree_walker.o
 MLSSignals_m.o: MLSSignals_m.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)declaration_table.o $(dir1)dump_0.o $(dir1)expr_m.o \
 	$(dir1)intrinsic.o $(dir1)output_m.o $(dir1)string_table.o \
 	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
 	$(dir1)tree_types.o init_tables_module.o addItemToDatabase.f9h
-obtainclimatology.o: obtainclimatology.f90 $(dir1)Allocate_Deallocate.o \
-	$(dir1)GriddedData.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o $(dir1)dates_module.o \
-	MLSPCF2.o
-obtaindao.o: obtaindao.f90 $(dir1)GriddedData.o $(dir1)Hdf.o \
-	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o \
-	MLSPCF2.o
 obtain_mlscf.o: obtain_mlscf.f90 $(dir1)MLSMessageModule.o \
 	$(dir1)SDPToolkit.o
-obtainncep.o: obtainncep.f90 $(dir1)GriddedData.o $(dir1)HDF-EOS.o \
-	$(dir1)Hdf.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSPCF2.o
-open_init.o: open_init.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSSignalNomenclature.o \
-	$(dir1)SDPToolkit.o $(dir1)string_table.o $(dir1)toggles_core.o \
-	$(dir1)trace_m.o $(dir1)tree.o $(dir1)tree_types.o MLSPCF2.o \
+open_init.o: open_init.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)L2GPData.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
+	$(dir1)MLSSignalNomenclature.o $(dir1)SDPToolkit.o \
+	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
+	$(dir1)tree.o $(dir1)tree_types.o L2AUXData.o MLSPCF2.o \
 	init_tables_module.o
 OutputAndClose.o: OutputAndClose.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o \
 	$(dir1)L2GPData.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
@@ -104,15 +102,16 @@ OutputAndClose.o: OutputAndClose.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o \
 	init_tables_module.o
 read_apriori.o: read_apriori.f90 $(dir1)GriddedData.o $(dir1)HDF-EOS.o \
 	$(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)string_table.o $(dir1)toggles_core.o \
-	$(dir1)trace_m.o $(dir1)tree.o $(dir1)tree_types.o L2AUXData.o \
-	init_tables_module.o obtainclimatology.o obtaindao.o obtainncep.o
+	$(dir1)MLSMessageModule.o $(dir1)output_m.o $(dir1)string_table.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir1)tree_types.o L2AUXData.o MLSPCF2.o init_tables_module.o
 RetrievalModule.o: RetrievalModule.f90 $(dir1)MLSCommon.o \
 	$(dir1)MatrixModule_1.o $(dir1)MoreTree.o $(dir1)VectorsModule.o \
-	$(dir1)declaration_table.o $(dir1)expr_m.o $(dir1)lexer_core.o \
-	$(dir1)output_m.o $(dir1)string_table.o $(dir1)toggles_core.o \
-	$(dir1)trace_m.o $(dir1)tree.o $(dir1)tree_types.o \
-	ForwardModelInterface.o dnwt_module.o init_tables_module.o
+	$(dir1)expr_m.o $(dir1)lexer_core.o $(dir1)output_m.o \
+	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
+	$(dir1)tree.o $(dir1)tree_types.o $(dir3)l2_test_structures_m.o \
+	ForwardModelInterface.o SidsModule.o dnwt_module.o \
+	init_tables_module.o
 ScanDivide.o: ScanDivide.f90 $(dir1)L1BData.o $(dir1)MLSCommon.o \
 	$(dir1)MLSMessageModule.o $(dir1)MLSNumerics.o $(dir1)SDPToolkit.o \
 	$(dir1)expr_m.o $(dir1)lexer_core.o $(dir1)output_m.o \
@@ -122,11 +121,15 @@ ScanModelModule.o: ScanModelModule.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)ManipulateVectorQuantities.o $(dir1)VectorsModule.o \
 	$(dir1)dump_0.o $(dir1)intrinsic.o $(dir1)output_m.o \
 	init_tables_module.o
+SidsModule.o: SidsModule.f90 $(dir1)MatrixModule_1.o $(dir1)MoreTree.o \
+	$(dir1)VectorsModule.o $(dir1)lexer_core.o $(dir1)output_m.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir3)l2_test_structures_m.o init_tables_module.o
 tree_walker.o: tree_walker.f90 $(dir1)GriddedData.o $(dir1)L2GPData.o \
 	$(dir1)MLSCommon.o $(dir1)MatrixModule_1.o $(dir1)QuantityTemplates.o \
 	$(dir1)VectorsModule.o $(dir1)toggles_core.o $(dir1)trace_m.o \
-	$(dir1)tree.o $(dir1)tree_types.o Construct.o Fill.o Join.o \
-	L2AUXData.o MLSSignals_m.o OutputAndClose.o RetrievalModule.o \
+	$(dir1)tree.o $(dir1)tree_types.o $(dir3)l2_test_structures_m.o \
+	Construct.o Fill.o Join.o L2AUXData.o MLSSignals_m.o OutputAndClose.o \
 	ScanDivide.o dumper.o global_settings.o init_tables_module.o \
 	open_init.o read_apriori.o
 VGrid.o: VGrid.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
