@@ -17,6 +17,7 @@ MODULE ScanModelModule          ! Scan model and associated calculations
   ! vector.  This was never used in UMLS V5, and so it is not clear that it
   ! will ever be required.
 
+  USE Dump_0, only: DUMP
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
        MLSMSG_Error
   USE VectorsModule, ONLY : Vector_T, VectorValue_T, GetVectorQuantityByType, &
@@ -24,8 +25,9 @@ MODULE ScanModelModule          ! Scan model and associated calculations
   USE Init_Tables_Module, ONLY: L_Zeta, L_Temperature, L_RefGPH
   USE ManipulateVectorQuantities, ONLY: FindClosestInstances
   USE MLSNumerics, ONLY : Hunt, InterpolateValues
-  USE Intrinsic, ONLY: L_H2O, L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEODALT, L_TNGTGEOCALT
+  USE Intrinsic, ONLY: L_H2O, L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEOCALT
   USE Allocate_Deallocate, ONLY: Allocate_Test, Deallocate_Test
+  USE Output_M, only: OUTPUT
 
   USE MLSCommon, ONLY: r8
 
@@ -50,7 +52,7 @@ MODULE ScanModelModule          ! Scan model and associated calculations
   
   REAL (r8), PARAMETER :: j2=0.0010826256D0, j4=-0.0000016165D0 ! 2nd and 4th coefs.
   REAL (r8), PARAMETER :: GM=3.98600436D5 ! Big G times earth mass (km2s-2)
-  REAL (r8), PARAMETER :: g0=9.80665D-3 ! Nominal little g
+  REAL (r8), PARAMETER :: g0=9.80665    ! Nominal little g
   
   ! Now some terms to do with refraction
   
@@ -59,8 +61,8 @@ MODULE ScanModelModule          ! Scan model and associated calculations
   
   ! Now some terms to do with the gas 'constant'
   
-  REAL (r8), PARAMETER :: gasM0=25.34314957d-3, gasM1=2.896d-3, gasM2=-0.579d-3
-  REAL (r8), PARAMETER :: gasR0=8.31432d-6
+  REAL (r8), PARAMETER :: gasM0=25.34314957d-3, gasM1=2.89644d-3, gasM2=-0.579d-3
+  REAL (r8), PARAMETER :: gasR0=8.31441
     
   ! Just in case this constant isn't defined everywhere else.
   
@@ -96,22 +98,21 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
   ! This function takes a state vector, containing one and only one temperature
   ! and reference geopotential height quantity, and returns
 
-  SUBROUTINE GetBasisGPH(state,gph,R,art)
+  SUBROUTINE GetBasisGPH(temp,refGPH,gph,R,art)
 
     ! Dummy arguments
-    TYPE (Vector_T), INTENT(IN) :: state
-    REAL (r8), DIMENSION(:,:), POINTER :: gph ! Result (temp%noSurfs,temp%noInstances)
+    TYPE (VectorValue_T), INTENT(IN) :: temp
+    TYPE (VectorValue_T), INTENT(IN) :: refGPH
+    REAL (r8), DIMENSION(:,:), INTENT(OUT) :: gph ! Result (temp%noSurfs,temp%noInstances)
     REAL (r8), DIMENSION(:), POINTER, OPTIONAL :: R ! Gas constant, noSurfs
     REAL (r8), DIMENSION(:,:), POINTER, OPTIONAL :: art ! ln10*R*T (noSurfs,noInstances)
 
     ! Local variables
-    TYPE (VectorValue_T), POINTER :: temp
-    TYPE (VectorValue_T), POINTER :: refGPH
 
     REAL (r8), DIMENSION(:), ALLOCATABLE :: logP ! -log10 pressure, noSurfs
     REAL (r8), DIMENSION(:), ALLOCATABLE :: modifiedBasis ! noSurfs
-    REAL (r8), DIMENSION(:), POINTER :: myR ! Gas constant, noSurfs
-    REAL (r8), DIMENSION(:,:), POINTER :: myArt ! ln10*R*T (noSurfs,noInstances)
+    REAL (r8), DIMENSION(:), POINTER :: myR=>NULL() ! Gas constant, noSurfs
+    REAL (r8), DIMENSION(:,:), POINTER :: myArt=>NULL() ! ln10*R*T (noSurfs,noInstances)
     REAL (r8), DIMENSION(:), ALLOCATABLE :: currentRefGeopot ! (noInstances)
     REAL (r8), DIMENSION(:), ALLOCATABLE :: correction ! (noInstances)
 
@@ -127,11 +128,6 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     REAL (r8) :: refLogP        ! Log p of pressure reference surface
     REAL (r8) :: basisGap       ! Space between adjacent surfaces
 
-    ! First we identify the temperature and refGPH quantities in the vector
-    ! Note that no return if no such quantity found.
-    temp=>GetVectorQuantityByType(state, l_temperature)
-    refGPH=>GetVectorQuantityByType(state, l_refGPH)
-
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
       &            coherent=.true., &
@@ -145,11 +141,6 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
       &            verticalCoordinate=(/l_Zeta/)) ) ) &
       & call MLSMessage(MLSMSG_Error,ModuleName,&
         & 'Inappropriate temp/refGPH quantity' )
-
-    ! Now allocate a result array
-    IF (ASSOCIATED(gph)) CALL Deallocate_test(gph,"GPH in GetBasisGPH",ModuleName)
-    CALL Allocate_Test(gph,temp%template%noSurfs,temp%template%noInstances,&
-         "GPH in GetBasisGPH",ModuleName)
 
     ! Now allocate intermediate quantities
     ALLOCATE(logP(temp%template%noSurfs),STAT=status)
@@ -190,7 +181,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     basisCutoff=-gasM1/(2*gasM2) ! Set a threshold value
     modifiedBasis=MAX(logP,basisCutoff) ! Either logP or this threshold
     myR=gasR0/(gasM0+gasM1*modifiedBasis+gasM2*modifiedBasis**2)
-    
+
     ! Compute ln10*R*T for each point, avoid spread intrinsic to save memory
     ! and cpu time.
     DO instance=1,temp%template%noInstances
@@ -227,7 +218,6 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     DO surf=1,temp%template%noSurfs         
        gph(surf,:)=gph(surf,:)/g0+correction
     END DO
-
     ! Put back intermediate data if wanted.
     IF (PRESENT(R)) THEN
        R=>myR
@@ -251,65 +241,52 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
   ! a hydrostatic calculation.  The tangent point pressure is adjusted over
   ! several iterations until a good match is achieved.
 
-  SUBROUTINE GetHydrostaticTangentPressure(state,measurements,radiometer,&
-       noIterations)
+  SUBROUTINE GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt,&
+       maxIterations )
 
     ! Dummy arguments
-    TYPE (Vector_T), INTENT(INOUT) :: state ! Contains temp, refGPH and ptan
-    TYPE (Vector_T), INTENT(IN) :: measurements ! Contains l1 altitudes
-    INTEGER, INTENT(IN) :: radiometer ! L_THz or L_GHZ
-    INTEGER, INTENT(IN), OPTIONAL :: noIterations ! Number of iterations to use
+    TYPE (VectorValue_T), INTENT(INOUT) :: PTAN
+    TYPE (VectorValue_T), INTENT(IN) :: TEMP
+    TYPE (VectorValue_T), INTENT(IN) :: REFGPH
+    TYPE (VectorValue_T), INTENT(IN) :: H2O
+    TYPE (VectorValue_T), INTENT(IN) :: GEOCALT
+    INTEGER, INTENT(IN), OPTIONAL :: maxIterations ! Number of iterations to use
 
     ! Local variables
-    TYPE (VectorValue_T), POINTER :: geodAlt
-    TYPE (VectorValue_T), POINTER :: geocAlt
-    TYPE (VectorValue_T), POINTER :: temp
-    TYPE (VectorValue_T), POINTER :: refGPH
-    TYPE (VectorValue_T), POINTER :: h2o
-    TYPE (VectorValue_T), POINTER :: ptan
 
-    REAL (r8), DIMENSION(:,:), POINTER :: basisGPH ! temp(noSurfs,noInstances)
-    REAL (r8), DIMENSION(:,:), POINTER :: art ! art=ln10*R*T
+    REAL (r8), DIMENSION(:,:), POINTER :: basisGPH=> NULL() ! temp(noSurfs,noInstances)
+    REAL (r8), DIMENSION(:,:), POINTER :: art=> NULL() ! art=ln10*R*T
 
-    REAL (r8), DIMENSION(:), POINTER :: artLower
-    REAL (r8), DIMENSION(:), POINTER :: basisSpacing ! For temperature
-    REAL (r8), DIMENSION(:), POINTER :: cCoeff ! Quadratic term
-    REAL (r8), DIMENSION(:), POINTER :: deltaArt 
-    REAL (r8), DIMENSION(:), POINTER :: geometricGeopotential
-    REAL (r8), DIMENSION(:), POINTER :: n ! Refractive index
-    REAL (r8), DIMENSION(:), POINTER :: pointingH2O ! t.p. h2o
-    REAL (r8), DIMENSION(:), POINTER :: pointingTemp ! t.p. temp.
-    REAL (r8), DIMENSION(:), POINTER :: ratio2 ! minor frame
-    REAL (r8), DIMENSION(:), POINTER :: ratio4 ! minor frame
-    REAL (r8), DIMENSION(:), POINTER :: refractedGeocAlt ! minor frame
+    REAL (r8), DIMENSION(:), POINTER :: artLower=> NULL()
+    REAL (r8), DIMENSION(:), POINTER :: basisSpacing=> NULL() ! For temperature
+    REAL (r8), DIMENSION(:), POINTER :: cCoeff=> NULL() ! Quadratic term
+    REAL (r8), DIMENSION(:), POINTER :: deltaArt=> NULL() 
+    REAL (r8), DIMENSION(:), POINTER :: geometricGeopotential=> NULL()
+    REAL (r8), DIMENSION(:), POINTER :: n=> NULL() ! Refractive index
+    REAL (r8), DIMENSION(:), POINTER :: pointingH2O=> NULL() ! t.p. h2o
+    REAL (r8), DIMENSION(:), POINTER :: pointingTemp=> NULL() ! t.p. temp.
+    REAL (r8), DIMENSION(:), POINTER :: ratio2=> NULL() ! minor frame
+    REAL (r8), DIMENSION(:), POINTER :: ratio4=> NULL() ! minor frame
+    REAL (r8), DIMENSION(:), POINTER :: refractedGeocAlt=> NULL() ! minor frame
 
-    INTEGER, DIMENSION(:), POINTER :: closestTempProfiles
-    INTEGER, DIMENSION(:), POINTER :: closestH2OProfiles
-    INTEGER, DIMENSION(:), POINTER :: lower ! index into temperature profile
+    INTEGER, DIMENSION(:), POINTER :: closestTempProfiles=> NULL()
+    INTEGER, DIMENSION(:), POINTER :: closestH2OProfiles=> NULL()
+    INTEGER, DIMENSION(:), POINTER :: lower=>NULL() ! index into temperature profile
 
     REAL (r8) :: geocLat        ! Geocentric latitude
     REAL (r8) :: s2, s4, p2, p4 ! Polynomial terms
 
-    INTEGER :: myNoIterations,iteration ! Loop stuff
+    INTEGER :: myMaxIterations,iteration ! Loop stuff
     INTEGER :: maf              ! Loop counter
 
     ! Executable code
 
     ! Set default values
 
-    myNoIterations=4
-    IF (PRESENT(noIterations)) myNoIterations=noIterations
+    print*,0
 
-    ! The first stage is to identify the vector quantities involved.
-    geodAlt=> GetVectorQuantityByType(state, l_tngtGeodAlt, &
-         radiometer=radiometer)
-    geocAlt=> GetVectorQuantityByType(state, l_tngtGeocAlt, &
-         radiometer=radiometer)
-    temp=> GetVectorQuantityByType(state, l_temperature)
-    refGPH=> GetVectorQuantityByType(state, l_refGPH)
-    h2o=> GetVectorQuantityByType(state, l_vmr, molecule=l_h2o)
-    ptan=> GetVectorQuantityByType(state, l_ptan, radiometer= &
-         radiometer)
+    myMaxIterations=4
+    IF (PRESENT(maxIterations)) myMaxIterations=maxIterations
 
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
@@ -330,13 +307,13 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       &   'Inappropriate temp/refGPH/h2o quantity' )
 
-    if ( ( .not. ValidateVectorQuantity( geodAlt, minorFrame=.true.) ) .or. &
-      &  ( .not. ValidateVectorQuantity( geocAlt, minorFrame=.true.) ) .or. &
-      &  ( .not. ValidateVectorQuantity( ptan,    minorFrame=.true.) ) ) &
-      & call MLSMessage(MLSMSG_Error,ModuleName, &
-      &   'Inapporpriate geodAlt/geocAlt/ptan quantity' )
+    print*,1
 
     ! Allocate temporary arrays
+    CALL Allocate_Test(basisGPH,temp%template%noSurfs,temp%template%noInstances,&
+      & "basisGPH", ModuleName)
+
+    print*,2
     CALL Allocate_Test(artLower,ptan%template%noSurfs,"artLower",ModuleName)
     CALL Allocate_Test(basisSpacing,ptan%template%noSurfs,"basisSpacing",ModuleName)
     CALL Allocate_Test(cCoeff,ptan%template%noSurfs,"cCoeff",ModuleName)
@@ -350,24 +327,28 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     CALL Allocate_Test(ratio4,ptan%template%noSurfs,"ratio4",ModuleName)
     CALL Allocate_Test(refractedGeocAlt,ptan%template%noSurfs,"refractedGeocAlt",ModuleName)
     
+    print*,3
     CALL Allocate_Test(closestTempProfiles,ptan%template%noInstances,&
          "closestTempProfiles", ModuleName)
     CALL Allocate_Test(closestH2OProfiles,ptan%template%noInstances,&
          "closestH2OProfiles", ModuleName)
     CALL Allocate_Test(lower,ptan%template%noSurfs,"lower",ModuleName)
 
+    print*,4
     ! Now precompute the basis geopotential height
-    CALL GetBasisGPH(state,basisGPH,art=art)
+    CALL GetBasisGPH(temp,refGPH,basisGPH,art=art)
 
+    print*,5
     ! Get a really simple first guess, assuming a uniform log scale height of
     ! 16km
-    ptan%values=3.0-geodAlt%values/16e3
+    ptan%values=3.0-(geocAlt%values/16e3-6.37e6) ! Do a better job later !???
 
     ! Find the closest temperature and h2o profiles to each MAF.  Note that
     ! this makes this calculation 1D
     CALL FindClosestInstances(temp,ptan,closestTempProfiles)
     CALL FindClosestInstances(h2o,ptan,closestH2OProfiles)
 
+    print*,6
     ! Rather than try to be too clever and do this all with 2D arrays, we'll
     ! loop over major frame.
 
@@ -382,10 +363,12 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
        s2=SIN(geocLat)**2
        p2=0.5*(3*s2-1)
        p4=0.125*(35*(s2**2)-30*s2+30)
+       print*,7,maf
 
        ! Now we have an iteration loop where we try to fit the tangent pressure
-       DO iteration=1,myNoIterations
+       DO iteration=1,myMaxIterations
 
+         print*,8,iteration
           ! The first stage is to refract the tangent point altitudes, for this we
           ! need the refractive index, which is dependent on temperature, pressure
           ! and water vapor concentration for the given altitude.
@@ -397,6 +380,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
                ptan%values(:,maf), &
                pointingTemp,&
                "Linear")
+          print*,8.5
           CALL InterpolateValues( &
                h2o%template%surfs(:,1), &
                h2o%values(:,closestH2OProfiles(maf)), &
@@ -404,6 +388,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
                pointingH2O,&
                "Linear")
 
+          print*,9
           WHERE(geocAlt%values(:,maf) /= geocAlt%template%badValue)
 
              n=(refrATerm/pointingTemp*(10**ptan%values(:,maf)))*&
@@ -421,6 +406,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
                   j4*p4*ratio4)- &
                   0.5*((omega*refractedGeocAlt*COS(geocLat))**2)
           ENDWHERE
+          print*,10
 
           ! Now, we're effectively going to compare this with a hydrostatic
           ! calculation.
@@ -432,6 +418,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
           deltaArt=art(closestTempProfiles(maf),lower+1)-&
                art(closestTempProfiles(maf),lower)
           artLower=art(closestTempProfiles(maf),lower)
+          print*,11
 
           WHERE (geocAlt%values(:,maf) /= geocAlt%template%badValue)
              cCoeff=2*(geometricGeopotential-&
@@ -447,6 +434,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
        END DO                   ! End iteration loop
     END DO                      ! Major frame loop
 
+    print*,12
     ! Deallocate all the various things
     CALL Deallocate_Test(closestTempProfiles,"closestTempProfiles", ModuleName)
     CALL Deallocate_Test(closestH2OProfiles,"closestH2OProfiles", ModuleName)
@@ -454,12 +442,16 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     CALL Deallocate_Test(pointingH2O,"pointingH2O",ModuleName)
     CALL Deallocate_Test(n,"n",ModuleName)
     CALL Deallocate_Test(lower,"lower",ModuleName)
+    print*,13
 
   END SUBROUTINE GetHydrostaticTangentPressure
 
 END MODULE ScanModelModule
 
 ! $Log$
+! Revision 2.4  2001/03/05 01:20:26  livesey
+! Interim version
+!
 ! Revision 2.3  2001/02/28 17:35:36  livesey
 ! Added RCS log stuff
 !
