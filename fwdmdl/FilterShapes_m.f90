@@ -81,11 +81,12 @@ contains
     character(80) :: Line               ! From the file
     integer :: Number_in_shape          ! How many points in each filter
     integer :: Sideband                 ! From parse signal
-    !                                          shape array -- all the same
-    !                                          for each signal.
-    character(len=MaxSigLen) :: SigName      ! Signal Name
-    integer :: Status                        ! From read or allocate
+                                        ! shape array -- all the same
+                                        ! for each signal.
+    character(len=MaxSigLen) :: SigName ! Signal Name
+    integer :: Status                   ! From read or allocate
     integer :: dummy                    ! Result of add to database
+    logical, pointer, dimension(:) :: Channels ! Result of parse signal
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(filterShape_T) :: thisShape
 
@@ -104,15 +105,17 @@ contains
       line = adjustl(line)
       if ( line(1:1) == '!' ) cycle     ! Skip comments
       sigName = line
-      nullify ( thisShape%signal%channels )
+      nullify ( channels ) 
       call parse_signal ( sigName, signal_indices, sideband=sideband, &
-        channels=thisShape%signal%channels )
+        channels=channels )
+
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
       ! Just take the first one.
       thisShape%signal = signals(signal_indices(1))
       thisShape%signal%sideband = sideband
+      thisShape%signal%channels => channels
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
 
       ! Read the lhs, rhs and num_in_shape
@@ -214,6 +217,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.2  2002/05/10 00:33:18  vsnyder
+! Repair a botched comment
+!
 ! Revision 2.1  2002/05/10 00:21:39  vsnyder
 ! Revise to cope with new filter shape file.  filterShapes%filterGrid
 ! and filterShapes%filterShape are now one-dimensional.
