@@ -1,19 +1,12 @@
 ! The goal of this program is to return a matrix of h_grids
 ! and t_grids which define 2 d integration paths
 
-Module metrics_m
+module Metrics_m
 
-  USE MLSCommon, only: RP, IP
-  USE Geometry, only: earthrada,earthradb,pi
-  USE get_eta_matrix_m, only: get_eta_sparse
-  USE Allocate_deallocate, only: Allocate_test, Deallocate_test
-
-  USE dump_0, only: dump
-
-  IMPLICIT NONE
+  implicit NONE
   private
+  public :: Metrics
 
-  public :: metrics
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
     & "$Id$"
@@ -26,16 +19,22 @@ Module metrics_m
 
 contains
 
-  ! ------------------------------------------------ Metrics --------------
+  ! ----------------------------------------------------  Metrics  -----
 
-  subroutine metrics(phi_t,tan_inds,p_basis,z_grid,h_ref,t_ref,dhidzij, &
-          &  beta,t_deriv_flag,h_grid,p_grid,t_grid,dhitdzi,req,dhidtlm,&
-          &  ddhidhidtl0,dhitdtlm,eta_zxp,tan_phi_h_grid,tan_phi_t_grid,&
-          &  dhtdzt,dhtdtl0,ddhtdhtdtl0,neg_h_tan,z_basis,do_calc_t,    &
-          &  do_calc_hyd)
+  subroutine Metrics ( phi_t, tan_inds, p_basis, z_grid, h_ref, t_ref, dhidzij,&
+          &  beta, t_deriv_flag, h_grid, p_grid, t_grid, dhitdzi, req, dhidtlm,&
+          &  ddhidhidtl0, dhitdtlm, eta_zxp, tan_phi_h_grid, tan_phi_t_grid,   &
+          &  dhtdzt, dhtdtl0, ddhtdhtdtl0, neg_h_tan, z_basis, do_calc_t,      &
+          &  do_calc_hyd )
 
     ! The main change in this routine is to interchange the z_coeffs and
     ! p_coeffs so as to make it consistent with the radiative transfer program.
+
+    use Allocate_deallocate, only: Allocate_test, Deallocate_test
+    use dump_0, only: dump
+    use Geometry, only: EarthRadA, EarthRadB, Pi
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use MLSCommon, only: RP, IP
 
     ! inputs:
 
@@ -43,19 +42,19 @@ contains
     integer(ip), intent(in) :: tan_inds(:)!tangent height indicies
     Real(rp), intent(in) :: p_basis(:) !horizontal temperature representation
     !                                     basis
-    Real(rp), intent(in) :: z_grid(:)!pressures for which heights/temps are
-    !                                 needed
-    Real(rp), intent(in) :: h_ref(:,:)! heights by t_phi_basis
-    Real(rp), intent(in) :: t_ref(:,:)! temperatures by t_phi_basis
+    Real(rp), intent(in) :: z_grid(:)  !pressures for which heights/temps are
+    !                                     needed
+    Real(rp), intent(in) :: h_ref(:,:) ! heights by t_phi_basis
+    Real(rp), intent(in) :: t_ref(:,:) ! temperatures by t_phi_basis
     Real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
     Real(rp), intent(in) :: beta       !orbital incline angle (Radians)
     logical,  intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for Temp.
     ! outputs:
-    Real(rp), intent(out) :: h_grid(:)!computed heights
-    Real(rp), intent(out) :: p_grid(:)!computed phi's
-    Real(rp), intent(out) :: t_grid(:)!computed temperatures
+    Real(rp), intent(out) :: h_grid(:) !computed heights
+    Real(rp), intent(out) :: p_grid(:) !computed phi's
+    Real(rp), intent(out) :: t_grid(:) !computed temperatures
     Real(rp), intent(out) :: dhitdzi(:)!derivative of height wrt zeta
-    !                              --maybe useful in future computations
+    !                                   --may be useful in future computations
     Real(rp), intent(out) :: req       !equivalent elliptical earth radius
 
     ! Keywords:
@@ -74,9 +73,9 @@ contains
     !                                                      tangent
     Real(rp), optional, intent(out) :: dhtdzt(:)   ! height derivative wrt
     !                                                pressure along the tangent
-    Real(rp), OPTIONAL, INTENT(out) :: dhtdtl0(:,:) ! First order derivative at
+    Real(rp), optional, intent(out) :: dhtdtl0(:,:) ! First order derivative at
     !                                                the tangent
-    Real(rp), OPTIONAL, INTENT(out) :: ddhtdhtdtl0(:,:) ! Second order 
+    Real(rp), optional, intent(out) :: ddhtdhtdtl0(:,:) ! Second order 
     !          derivative at the tangent only---used for antenna affects
     !
     Real(rp), optional, intent(out) :: dhitdtlm(:,:)
@@ -143,37 +142,33 @@ contains
     Real(rp), dimension(:), pointer :: CVF_Z_GRID
     Real(rp), dimension(:), pointer :: DHTDTL
     Real(rp), dimension(:), pointer :: H_BETTER
-    Real(rp), dimension(:), pointer :: H_GRID_T
+    Real(rp), dimension(size(tan_inds)) :: H_GRID_T
     Real(rp), dimension(:), pointer :: H_GRID_TT
     Real(rp), dimension(:), pointer :: OLD_HTS
     Real(rp), dimension(:), pointer :: SOME_PHI
 
     Real(rp), dimension(:,:), pointer :: ETA_P
     Real(rp), dimension(:,:), pointer :: ETA_T
-    Real(rp), dimension(:,:), pointer :: H_TANS
+    Real(rp), dimension(2*size(z_grid),size(tan_inds)) :: H_TANS
     Real(rp), dimension(:,:), pointer :: H_ZF
-    Real(rp), dimension(:,:), pointer :: M_Z_GRID
-    Real(rp), dimension(:,:), pointer :: PHI_TANS
+    Real(rp), dimension(2*size(z_grid),size(tan_inds)) :: M_Z_GRID
+    Real(rp), dimension(2*size(z_grid),size(tan_inds)) :: PHI_TANS
 
     ! Begin program
 
-    calledTimes=calledTimes + 1
+    calledTimes = calledTimes + 1
     p_coeffs = size(p_basis)
     n_vert = size(z_grid)
     n_tan = size(tan_inds)
 
-    c = earthrada*earthradb / &
+    c = earthrada * earthradb / &
          sqrt(earthrada**2*sin(beta)**2 + earthradb**2*cos(beta)**2)
 
-    nullify ( h_grid_t, eta_t, m_z_grid, h_tans, phi_tans )
-    call Allocate_test ( h_grid_t, n_tan, 'h_grid_t', ModuleName )
+    nullify ( eta_t )
     call Allocate_test ( eta_t, n_tan, p_coeffs, 'eta_t', ModuleName )
-    call Allocate_test ( m_z_grid, 2*n_vert, n_tan, 'm_z_grid', ModuleName )
-    call Allocate_test ( h_tans, 2*n_vert, n_tan, 'h_tans', ModuleName )
-    call Allocate_test ( phi_tans, 2*n_vert, n_tan, 'phi_tans', ModuleName )
 
     ! compute the tangent height vertical
-    call get_eta_sparse(p_basis,phi_t,eta_t)
+    call get_eta_sparse ( p_basis,phi_t, eta_t )
     h_grid_t = sum(h_ref(tan_inds,:)*eta_t,dim=2)
     h_surf = sum(h_ref(1,:)*eta_t(1,:))
 
@@ -184,19 +179,19 @@ contains
                       & (earthrada**2*cp2 + c**2*sp2))
 
     ! now for the path quantities, for simplicity, we are going to set the
-    ! surface reference at the inputted z_grid(1) and adjust the req and the
+    ! surface reference at the input z_grid(1) and adjust the req and the
     ! h_grid_t relative to this
     req = req + h_surf
 
     ! adjust h_ref accordingly
     h_grid_t = h_grid_t - h_surf
-    if(present(tan_phi_h_grid)) tan_phi_h_grid = h_grid_t
-    if(present(tan_phi_t_grid)) &
+    if ( present(tan_phi_h_grid) ) tan_phi_h_grid = h_grid_t
+    if ( present(tan_phi_t_grid) ) &
       tan_phi_t_grid = sum(t_ref(tan_inds,:)*eta_t,dim=2)
-    if(present(dhtdzt)) dhtdzt = sum(dhidzij(tan_inds,:)*eta_t,dim=2)
+    if ( present(dhtdzt) ) dhtdzt = sum(dhidzij(tan_inds,:)*eta_t,dim=2)
 
     ! compute tangent temperature derivative
-    if (present(dhidtlm)) then
+    if ( present(dhidtlm) ) then
       z_coeffs = size(z_basis)
       nullify ( dhtdtl )
       call Allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
@@ -217,15 +212,15 @@ contains
 
       call Deallocate_test ( dhtdtl, 'dhtdtl', ModuleName )
 
-    endif
+    end if
 
     call Deallocate_test ( eta_t, 'eta_t', ModuleName )
 
     ss_htan = 0
-    if(PRESENT(neg_h_tan)) then
+    if ( present(neg_h_tan) ) then
       ss_htan = size(neg_h_tan)
-      if(PRESENT(tan_phi_h_grid)) tan_phi_h_grid(1:ss_htan)=neg_h_tan-h_surf
-    endif
+      if ( present(tan_phi_h_grid) ) tan_phi_h_grid(1:ss_htan)=neg_h_tan-h_surf
+    end if
 
     ! construct some basic matricies
     h_tans = SPREAD(h_grid_t,1,2*n_vert)
@@ -235,8 +230,8 @@ contains
     call Allocate_test ( eta_t, n_vert, max (1,n_tan-ss_htan), 'n_vert', ModuleName )
     call Allocate_test ( h_grid_tt, n_vert, 'h_grid_tt', ModuleName )
 
-    call get_eta_sparse(z_grid(tan_inds(min(n_tan,ss_htan+1):n_tan)),z_grid, &
-                      & eta_t)
+    call get_eta_sparse ( z_grid(tan_inds(min(n_tan,ss_htan+1):n_tan)), z_grid, &
+                        & eta_t )
     h_grid_tt = matmul(eta_t,h_grid_t(min(n_tan,ss_htan+1):n_tan))
 
     ! basic pressure grid
@@ -244,7 +239,6 @@ contains
 
     ! determine condensed vector format so we don't mess with a bunch
     ! of zeros
-    call Deallocate_test ( h_grid_t, 'h_grid_t', ModuleName )
     call Deallocate_test ( eta_t, 'eta_t', ModuleName )
 
     n_cvf = 2*sum(n_vert + 1 - tan_inds)
@@ -291,14 +285,11 @@ contains
     cvf_h_tan = PACK(h_tans,RESHAPE(mask,(/2*n_vert,n_tan/)))
     cvf_z_grid = PACK(m_z_grid,RESHAPE(mask,(/2*n_vert,n_tan/)))
 
-    call Deallocate_test ( m_z_grid, 'm_z_grid', ModuleName )
-    call Deallocate_test ( h_tans, 'h_tans', ModuleName )
-    call Deallocate_test ( phi_tans, 'phi_tans', ModuleName )
     call Deallocate_test ( h_grid_tt, 'h_grid_tt', ModuleName )
     call Deallocate_test ( mask, 'mask', ModuleName )
 
     ! These are the tangent indicies on a cvf array
-    if(n_tan > ss_htan) then
+    if ( n_tan > ss_htan ) then
       ! some tangents above the earth surface
       nullify ( force_zero )
       call Allocate_test ( force_zero, 2*(n_tan-ss_htan), 'force_zero', ModuleName )
@@ -311,14 +302,14 @@ contains
         force_zero(j+1) = force_zero(j)+1
         j = j + 2
       end do
-    endif
+    end if
 
     ! estimate the phi's using the tangent heights as a first guess
     old_hts = h_grid
     p_grid = cvf_ang_offset + cvf_sign * Acos((req+cvf_h_tan)/(req+old_hts))
 
     ! force the del phi at the tangent to be zero
-    if(n_tan > ss_htan) p_grid(force_zero) = cvf_ang_offset(force_zero)
+    if ( n_tan > ss_htan ) p_grid(force_zero) = cvf_ang_offset(force_zero)
 
     ! estimate some new heights
     ! This is going to have some small surface errors away
@@ -342,9 +333,9 @@ contains
     call Allocate_test ( mask, n_cvf, 'mask', ModuleName )
     call Allocate_test ( eta_p, n_cvf, p_coeffs, 'eta_p', ModuleName )
 
-    call get_eta_sparse(p_basis,p_grid,eta_p)
+    call get_eta_sparse ( p_basis, p_grid, eta_p )
     h_grid = sum(h_zf * eta_p,dim=2)
-    call Deallocate_test( eta_p, 'eta_p', ModuleName )
+    call Deallocate_test ( eta_p, 'eta_p', ModuleName )
 
     mask = abs(old_hts-h_grid) > 0.01_rp
     no_of_bad_fits = count(mask)
@@ -352,18 +343,16 @@ contains
     nullify ( junk )
     call Allocate_Test ( junk , no_of_bad_fits, 'junk', ModuleName )
     junk = PACK((/(i,i=1,n_cvf)/),mask)
-    where(h_grid < cvf_h_tan)
-      h_grid = cvf_h_tan
-    endwhere
+    where ( h_grid < cvf_h_tan ) h_grid = cvf_h_tan
 
     ! this construct is considered more desireable than a do while
-    ! according to the fortran explained book
+    ! according to the Fortran explained book
 
     iter = 0
     do
 
       iter = iter + 1
-      if (no_of_bad_fits == 0 .or. iter == 20) EXIT
+      if ( no_of_bad_fits == 0 .or. iter == 20 ) exit
       old_hts = h_grid
 
       ! recompute phi_s - phi_t because we have to iterate on phi_s - phi_t
@@ -382,13 +371,13 @@ contains
 
       arg = (req + cvf_h_tan(junk))/ (req + old_hts(junk))
       some_phi = cvf_ang_offset(junk) + cvf_sign(junk) * Acos(arg)
-      call get_eta_sparse(p_basis,some_phi,eta_p)
+      call get_eta_sparse ( p_basis, some_phi, eta_p )
       h_better = sum(h_zf(junk,:) * eta_p,dim=2)
       h_better = max ( cvf_h_tan(junk), h_better )
 
   !   where (h_better < cvf_h_tan(junk) )
   !     h_better = cvf_h_tan(junk)
-  !   endwhere
+  !   end where
 
       h_grid(junk) = h_better
       call Deallocate_test ( junk, 'junk', ModuleName )
@@ -408,7 +397,7 @@ contains
 
     call deallocate_test ( mask, 'mask', ModuleName )
 
-    if (no_of_bad_fits > 0) then
+    if ( no_of_bad_fits > 0 ) then
 
       print *,'Warning: full convergence not acheived on:'
       print *,'implementing an improved approximation patch'
@@ -430,9 +419,9 @@ contains
               & old_hts(junk(i))-h_grid(junk(i))
       end do
 
-      IF(no_of_bad_fits == 1) THEN
+      if ( no_of_bad_fits == 1 ) then
          ! find which side of the tangent we are on
-         if (path_ind(st_ind) < n_vert + 1) then
+         if ( path_ind(st_ind) < n_vert + 1 ) then
             ! this is the near observer side
             low_pt = junk(1) + 1
             hi_pt  = junk(1) - 1
@@ -446,20 +435,20 @@ contains
               & (h_grid(hi_pt) - h_grid(low_pt)) * &
               & (cvf_z_grid(junk(1))-cvf_z_grid(low_pt)) / &
               & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
-      ELSE
+      else
 
-         fixheights: DO
-            IF (end_ind > no_of_bad_fits) EXIT fixheights
+         fixheights: do
+            if ( end_ind > no_of_bad_fits ) exit fixheights
 
-            getrange: DO
-               if(tan_ind(end_ind) > tan_ind(st_ind)) exit getrange
+            getrange: do
+               if ( tan_ind(end_ind) > tan_ind(st_ind) ) exit getrange
                end_ind = end_ind + 1
-            END DO getrange
+            end do getrange
 
             end_ind = end_ind - 1
 
             ! find which side of the tangent we are on
-            if (path_ind(st_ind) < n_vert + 1) then
+            if ( path_ind(st_ind) < n_vert + 1 ) then
                ! this is the near observer side
                low_pt = junk(end_ind) + 1
                hi_pt  = junk(st_ind) - 1
@@ -476,14 +465,14 @@ contains
                  & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
             st_ind = end_ind + 1
             end_ind = st_ind
-         END DO fixheights
-      END IF
+         end do fixheights
+      end if
       print *,'completed re-estimation of bad points'
 
       call Deallocate_test ( path_ind, 'path_ind', ModuleName )
       call Deallocate_test ( tan_ind, 'tan_ind', ModuleName )
 
-    endif
+    end if
 
     ! deallocate the loop iteration stuff
     call Deallocate_test ( junk, 'junk', ModuleName )
@@ -497,10 +486,10 @@ contains
 
     ! compute final set of angles
     p_grid = cvf_ang_offset + cvf_sign * Acos((req+cvf_h_tan)/(req+h_grid))
-    if(n_tan > ss_htan) then
+    if ( n_tan > ss_htan ) then
       p_grid(force_zero) = cvf_ang_offset(force_zero)
       call Deallocate_test ( force_zero, 'force_zero', ModuleName )
-    endif
+    end if
 
     ! now compute the temperature grid
     nullify ( eta_p )
@@ -514,7 +503,7 @@ contains
 
     ! compute the temperature derivative grid
 
-    if (PRESENT(dhitdtlm)) then
+    if ( present(dhitdtlm) ) then
 
       nullify ( inds, eta_t, not_zero_t )
       call Allocate_test ( inds, n_cvf, 'inds', ModuleName )
@@ -526,7 +515,7 @@ contains
       where(inds >= 0) inds = inds + 1
       inds = abs(inds)
       ! compute the path temperature noting where the zeros are
-      call get_eta_sparse(z_basis,cvf_z_grid,eta_t,NOT_ZERO = not_zero_t)
+      call get_eta_sparse ( z_basis, cvf_z_grid, eta_t, NOT_ZERO = not_zero_t )
 !
 ! Initialize all ..
 !
@@ -540,15 +529,15 @@ contains
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
-          if(.NOT. t_deriv_flag(sv_t)) CYCLE
+          if ( .NOT. t_deriv_flag(sv_t) ) cycle
           where (not_zero_p(:,sv_p) .and. not_zero_t(:,sv_z))
             do_calc_t(:,sv_t) = .true.
             eta_zxp(:,sv_t) = eta_t(:,sv_z) * eta_p(:,sv_p)
-          endwhere
+          end where
           where (not_zero_p(:,sv_p) .and. dhidtlm(inds(:),sv_z,sv_p) > 0.0_rp)
             do_calc_hyd(:,sv_t) = .TRUE.
             dhitdtlm(:,sv_t) = dhidtlm(inds(:),sv_z,sv_p) * eta_p(:,sv_p)
-          endwhere
+          end where
         end do
       end do
 
@@ -556,7 +545,7 @@ contains
       call Deallocate_test ( eta_t, 'eta_t', ModuleName )
       call Deallocate_test ( not_zero_t, 'not_zero_t', ModuleName )
 
-    endif
+    end if
 
     call Deallocate_test ( eta_p, 'eta_p', ModuleName )
     call Deallocate_test ( cvf_ang_offset, 'cvf_ang_offset', ModuleName )
@@ -567,10 +556,14 @@ contains
     call Deallocate_test ( vert_inds, 'vert_inds', ModuleName )
     call Deallocate_test ( not_zero_p, 'not_zero_p', ModuleName )
 
-  end subroutine metrics
+  end subroutine Metrics
 
-end module metrics_m
+end module Metrics_m
+
 ! $Log$
+! Revision 2.9  2002/08/10 00:13:33  livesey
+! Tiny bug fix to Bill's bug fix
+!
 ! Revision 2.8  2002/08/10 00:08:47  bill
 ! fixed bad pt correction bug
 !
