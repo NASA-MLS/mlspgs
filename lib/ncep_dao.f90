@@ -11,7 +11,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use Hdf, only: DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4
+  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4, &
+    & DEFAULTUNDEFINEDVALUE
   use MLSFiles, only: FILENOTFOUND, &
     & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
     & split_path_name
@@ -1686,13 +1687,13 @@ contains
     ! Local variables
     integer :: status
     ! Executable
-    pressure = -999.99
+    pressure = DEFAULTUNDEFINEDVALUE !-999.99
     call ReplaceSubString(field_name, beheaded, INTRO, ' ' )
     call ReplaceSubString(beheaded, remainder, TAIL, ' ' )
     ! Now attempt to interpret remainder as a number
     ! print *, 'Attempting to interpret: ', trim(remainder)
     read(remainder, *, iostat=status) pressure
-    if ( status /= 0 ) pressure = -999.99
+    if ( status /= 0 ) pressure = DEFAULTUNDEFINEDVALUE !-999.99
   end subroutine ncepFieldNameTohPa
 
   ! ------------------------------------------------  announce_error  -----
@@ -1771,6 +1772,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.36  2004/08/03 17:59:35  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.35  2004/06/23 17:11:50  pwagner
 ! read_climatology now returns status, e.g. FILENOTFOUND
 !
