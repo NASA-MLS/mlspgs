@@ -5,8 +5,9 @@
 module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 !=============================================================================
 
-  use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
-    & v_is_gph, v_is_theta
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
+    & V_is_altitude, V_is_GPH, V_is_theta
   use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R8, LineLen, NameLen
   USE MLSStrings, only: Capitalize, &
@@ -86,22 +87,26 @@ contains
     ! ----Arguments ----!
     integer, intent(in) :: unit
     integer, intent(out), optional :: ErrType
-    type(GriddedData_T), intent(out) :: field
+    type(GriddedData_T), intent(inout) :: field
     logical , intent(out) :: end_of_file
     !-------Local Variables --------!
-    character(len=*),parameter :: dummyyear="1993"
+    character(len=*),parameter :: DummyYear="1993"
     logical :: opened
     character(len=LineLen) :: inline
     character(len=30) :: linetype, axistype, sdstring, edstring
     character(len=80) :: filename, unitstring
-    real(kind=r8), pointer, dimension(:) :: tmpaxis => null()
-    real(kind=r8), pointer, dimension(:) :: dateStarts => null()
-    real(kind=r8), pointer, dimension(:) :: dateEnds => null()
+    real(kind=r8), pointer, dimension(:) :: tmpaxis
+    real(kind=r8), pointer, dimension(:) :: dateStarts
+    real(kind=r8), pointer, dimension(:) :: dateEnds
     integer :: tmpaxis_len, idate, word_count
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
+
     !---- Executable statements ----! 
+
+    nullify ( tmpAxis, dateStarts, dateEnds )
     error = 0
+    call destroyGriddedData ( field ) ! Avoid memory leaks
 
     ! Abrupt termination--as with an error--means use field at own risk
     if ( present(ErrType) ) then
@@ -131,30 +136,30 @@ contains
 
     ! Automatically create a stub grid template with minimal size
     ! Each component will be deallocated && reallocated with correct sizes later
-    allocate(field%heights(1:1))
+    call allocate_test ( field%heights, 1, 'field%heights', moduleName )
     field%heights(1)=1000.0
     field%noHeights=1
     field%verticalCoordinate=1
-    allocate(field%lats(1:1))
+    call allocate_test ( field%lats, 1, 'field%lats', moduleName )
     field%lats(1)=0.0
     field%noLats=1
     field%equivalentLatitude=.false.
-    allocate(field%lons(1:1))
+    call allocate_test ( field%lons, 1, 'field%lons', moduleName )
     field%lons(1)=0.0
     field%noLons=1
-    allocate(field%lsts(1:1))
+    call allocate_test ( field%lsts, 1, 'field%lsts', moduleName )
     field%lsts(1)=12.0
     field%noLsts=1
-    allocate(field%szas(1:1))
+    call allocate_test ( field%szas, 1, 'field%szas', moduleName )
     field%szas(1)=30.0
     field%noSzas=1
-    allocate(field%dateStarts(1:1))
+    call allocate_test ( field%dateStarts, 1, 'field%dateStarts', moduleName )
     field%dateStarts(1)=30.0
     field%noDates=1
-    allocate(field%dateEnds(1:1))
+    call allocate_test ( field%dateEnds, 1, 'field%dateEnds', moduleName )
     field%dateStarts(1)=30.0
     field%noDates=1
-    allocate(field%field(1:1,1:1,1:1,1:1,1:1,1:1))
+    allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1) )
     field%dateStarts(1)=30.0
     field%noDates=1
     ! Dates are mandatory, so we don't have to give them a default value
@@ -219,8 +224,7 @@ contains
       if ( linetype(1:8) == "PRESSURE" .or. linetype(1:8) == "ALTITUDE" &
         &  .or. linetype(1:3) == "GPH" .or. linetype(1:5) == "THETA" ) then
         field%noHeights = tmpaxis_len
-        deallocate(field%heights)
-        allocate(field%heights(1:tmpaxis_len))
+        call allocate_test ( field%heights, tmpaxis_len, 'field%heights', moduleName )
         field%heights = tmpaxis
 
         if ( linetype(1:8) == "PRESSURE" ) then
@@ -235,8 +239,7 @@ contains
       else if ( linetype(1:8) == "LATITUDE" .or. &
         &  linetype(1:8) == "EQUIVLAT" ) then
         field%noLats = tmpaxis_len
-        deallocate(field%lats)
-        allocate(field%lats(1:tmpaxis_len))
+        call allocate_test ( field%lats, tmpaxis_len, 'field%lats', moduleName )
         field%lats=tmpaxis
         if ( linetype(1:8) == "LATITUDE" ) then
           field%equivalentLatitude = .false.
@@ -245,22 +248,19 @@ contains
         end if
       else if ( linetype(1:9) == "LONGITUDE" ) then
         field%noLons = tmpaxis_len
-        deallocate(field%lons)
-        allocate(field%lons(1:tmpaxis_len))
+        call allocate_test ( field%lons, tmpaxis_len, 'field%lons', moduleName )
         field%lons = tmpaxis
       else if ( linetype(1:9) == "LST" ) then
         field%noLsts = tmpaxis_len
-        deallocate(field%lsts)
-        allocate(field%lsts(1:tmpaxis_len))
+        call allocate_test ( field%lsts, tmpaxis_len, 'field%lsts', moduleName )
         field%lsts=tmpaxis
       else if ( linetype(1:9) == "SZA" ) then
         field%noSzas = tmpaxis_len
-        deallocate(field%szas)
-        allocate(field%szas(1:tmpaxis_len))
+        call allocate_test ( field%szas, tmpaxis_len, 'field%szas', moduleName )
         field%szas = tmpaxis
       end if
     end do axesloop
-    deallocate(tmpaxis)
+    call deallocate_test ( tmpaxis, 'tmpaxis', moduleName )
 
     ! We already have the first date line read and the axis type extracted
     ! It was the existence of a date line that caused us to exit from 
@@ -268,9 +268,10 @@ contains
     ! allocate large arrays and copy their contents to an array of the 
     ! right size 
     field%noDates=1
-    allocate(tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
-      1:field%noLsts,1:field%noSzas,1:maxNoDates))
-    allocate(dateStarts(1:maxNoDates),dateEnds(1:maxNoDates))
+    allocate ( tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
+      1:field%noLsts,1:field%noSzas,1:maxNoDates) )
+    call allocate_test ( dateStarts, maxNoDates, 'dateStarts', moduleName )
+    call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
 
     ! Loop to read in the data for the current date and check to see if 
     ! there is another date
@@ -342,16 +343,20 @@ contains
 
     end do datesloop
 
-    deallocate(field%dateStarts, field%dateEnds, field%field)
+    deallocate ( field%field )
 !
-    allocate(field%field(1:field%noHeights,1:field%noLats,&
-      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates))
-    allocate(field%dateStarts(1:field%noDates),&
-      & field%dateEnds(1:field%noDates))
+    allocate ( field%field(1:field%noHeights,1:field%noLats,&
+      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates) )
+    call allocate_test ( field%dateStarts, field%noDates, 'field%dateStarts', &
+      & moduleName )
+    call allocate_test ( field%dateEnds, field%noDates, 'field%dateEnds', &
+      & moduleName )
     field%dateStarts = dateStarts(1:field%noDates)
     field%dateEnds = dateEnds(1:field%noDates)
     field%field = tmpfield(:,:,:,:,:,1:field%noDates)
-    deallocate(tmpfield,dateStarts,dateEnds)
+    deallocate ( tmpfield )
+    call deallocate_test ( dateStarts, 'tdateStarts', moduleName )
+    call deallocate_test ( dateEnds, 'dateEnds', moduleName )
 
     ! Normal termination--assume field is valid maybe even correct
     if ( present(ErrType) ) then
@@ -430,7 +435,8 @@ contains
     call ilocate ( field%lsts, inlst, ilst1, ilst2 )
     ! We can't interpolate dates and prssures as they are. We construct
     ! a mean date and a log pressure
-    allocate(tmpdate(1:field%noDates),tmpalt(1:field%noHeights))
+    call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+    call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
     tmpdate = (field%dateStarts+field%dateEnds)/2.0
     tmpalt = -log10(field%heights)
     inalt = -log10(inpressure)
@@ -477,8 +483,8 @@ contains
 
     ! Allocate a 6-D hypercube that our point lies in. Some of the 
     ! dimensions may be "collapsed" 
-    allocate(hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
-      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)))
+    allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
     ! Copy data into hypercube
     hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
       & ilst1:ilst2,isza1:isza2, idate1:idate2)
@@ -535,7 +541,9 @@ contains
         &  (tmpalt(ialt2)-tmpalt(ialt1))
     end if
     outval = hcube(1,1,1,1,1,1)
-    deallocate(tmpdate,tmpalt,hcube)
+    call deallocate_test ( tmpdate, 'tmpdate', moduleName )
+    call deallocate_test ( tmpalt, 'tmpalt', moduleName )
+    deallocate ( hcube )
   end subroutine L3ascii_interp_field
 
   subroutine Ilocate ( x, xval, ix1, ix2 )
@@ -615,7 +623,7 @@ binsearch: do
   subroutine make_log_axis ( inline, axis, axis_len )
     !--------args------------!
     character(len=*),intent(in)::inline
-    real(kind=r8),pointer,dimension(:)::axis
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
     integer,intent(out)::axis_len
     !-------locals--------------!
     character(len=30)::linetype,axistype
@@ -623,12 +631,8 @@ binsearch: do
     integer,dimension(:),allocatable::n_levs_in_sec,n_levs_per_dec,axints
     integer::nwords,j,nsections,stind,st,i
     real(kind=r8)::gridstep
-    !-------Executable----------!
 
-    ! Warning: axis must be nullified or associated!
-    if ( associated(axis) ) then 
-       deallocate(axis)
-    end if
+    !-------Executable----------!
 
     if ( len(inline) <= 1 ) then
       call announce_error ( 0, &
@@ -648,8 +652,8 @@ binsearch: do
       call announce_error ( 0, "in make_log_axis: nsections < 1" )
     end if
 	
-    allocate(n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
-      &  axints(1:nsections*2))
+    allocate ( n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
+      &  axints(1:nsections*2) )
     read ( unit=inline, fmt=* ) linetype, axistype, basepressure, axints
     n_levs_in_sec = axints(1:nsections*2-1:2)
     n_levs_per_dec = axints(2:nsections*2:2)
@@ -660,7 +664,7 @@ binsearch: do
       call announce_error ( 0, "in make_log_axis: axis_len < 1" )
     end if
 	
-    allocate(axis(1:axis_len))
+    call allocate_test (axis, axis_len, 'axis', moduleName )
     axis(1) = -log10(basepressure)
     stind = 0
     do j = 1, nsections
@@ -690,7 +694,7 @@ binsearch: do
     axis = exp(-log(10.)*axis)
 !
 
-    deallocate(n_levs_in_sec, n_levs_per_dec,axints)
+    deallocate ( n_levs_in_sec, n_levs_per_dec, axints )
 
 !        call dump ( axis, &
 !          & '  log axis =' )
@@ -699,7 +703,7 @@ binsearch: do
   subroutine Make_linear_axis ( inline, axis, axis_len )
     !--------args------------!
     character(len=*),intent(in)::inline
-    real(kind=r8),pointer,dimension(:)::axis
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
     integer,intent(out)::axis_len
     !-------locals--------------!
     character(len=30)::linetype,axistype
@@ -707,11 +711,8 @@ binsearch: do
     integer,dimension(:),allocatable::n_levs_in_sec
     real(kind=r8),dimension(:),allocatable::gridstep,axints
     integer::nwords,j,nsections,stind,st,i
+
     !-------Executable----------!
-    ! Warning: axis must be nullified or associated!
-    if ( associated(axis) ) then 
-      deallocate(axis)
-    end if
 
     !Count words in inline. 
 
@@ -723,8 +724,8 @@ binsearch: do
     end do
     nsections = (nwords-3)/2
 
-    allocate(n_levs_in_sec(1:nsections),gridstep(1:nsections),&
-      & axints(1:nsections*2))
+    allocate ( n_levs_in_sec(1:nsections),gridstep(1:nsections),&
+      & axints(1:nsections*2) )
 
     read ( unit=inline, fmt=* ) linetype, axistype, baseval, axints
     n_levs_in_sec = nint(axints(1:nsections*2-1:2))
@@ -732,7 +733,7 @@ binsearch: do
 
     axis_len = sum(n_levs_in_sec)
 
-    allocate(axis(1:axis_len))
+    call allocate_test ( axis, axis_len, 'axis', moduleName )
     axis(1) = baseval
     stind = 0
     do j = 1, nsections
@@ -746,14 +747,14 @@ binsearch: do
       end do
       stind = stind+n_levs_in_sec(j)
     end do
-    deallocate(axints,gridstep,n_levs_in_sec)
+    deallocate ( axints,gridstep,n_levs_in_sec )
 
   end subroutine Make_linear_axis
 
   subroutine Read_explicit_axis ( unit, axis, axis_len )
     !--------args------------!
     integer,intent(in)::unit
-    real(kind=r8),pointer,dimension(:)::axis
+    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
     integer,intent(out)::axis_len
     !------- Local vars ---------!
     integer,parameter::ri_len=30
@@ -762,11 +763,9 @@ binsearch: do
     real(kind=r8),dimension(1:200)::tmpaxis
     integer::i,iotest
     logical::foundcb
+
     !Executables
-    ! Warning: axis must be nullified or associated!
-    if ( associated(axis) ) then 
-      deallocate(axis)
-    end if
+   
     ! readitem needs to be initialised or there is a point where it 
     ! can be used before being set.
     readitem=""
@@ -814,7 +813,7 @@ itemsloop:do
         exit itemsloop
       end if
     end do itemsloop
-    allocate(axis(1:axis_len))
+    call allocate_test ( axis, axis_len, 'axis', moduleName )
     axis = tmpaxis(1:axis_len)
   end subroutine Read_explicit_axis
 
@@ -945,6 +944,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.14  2002/07/01 23:52:19  vsnyder
+! Plug some memory leaks, cosmetic changes
+!
 ! Revision 2.13  2002/05/02 09:48:40  hcp
 ! Removed a whittering print statement
 !
