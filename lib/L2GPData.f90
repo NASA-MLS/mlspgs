@@ -928,14 +928,15 @@ contains ! =====     Public Procedures     =============================
        end if
     end if
 
-    if ( associated(l2gp%columnTypes) ) then
+!     Let's at least define the dimensions anyway
+!    if ( associated(l2gp%columnTypes) ) then
        status = swdefdim(swid, DIM_NAME4, l2gp%nColumns)
 !       status = swdefdim(swid, DIM_NAME4, size(l2gp%columnTypes))
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME4
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
-    end if
+!    end if
 
     ! Define horizontal geolocation fields using above dimensions
 
@@ -1381,7 +1382,7 @@ contains ! =====     Public Procedures     =============================
        nColumns = l2gp%nColumns
        col_start(1) = 0
        col_start(2) = 0
-       stride = 1
+       col_stride = 1
        col_edge(1) = l2gp%nTimes
        col_edge(2) = nColumns
        
@@ -1513,6 +1514,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.33  2001/08/03 00:02:26  pwagner
+! Ncolumns now a component of data type; swapi via ints not strings
+!
 ! Revision 2.32  2001/08/02 00:17:56  pwagner
 ! Added column components; untested
 !
