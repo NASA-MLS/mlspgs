@@ -23,7 +23,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, SOURCE_REF, SUBTREE
-  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
+  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T, NullifyVGrid
   use L2GPData, only: L2GPDATA_T
 
   implicit none
@@ -95,6 +95,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
+    call nullifyVGrid ( vGrid ) ! for Sun's still useless compiler
     if ( toggle(gen) ) call trace_begin ( "CreateVGridFromMLSCFInfo", root )
 
     coordType = 0
@@ -104,7 +105,6 @@ contains ! =====     Public Procedures     =============================
     vGrid%name = name
     vGrid%noSurfs = 0
     vGrid%verticalCoordinate = L_None
-    nullify ( vGrid%Surfs ) ! for Sun's rubbish compiler
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -382,6 +382,10 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.14  2002/11/22 12:23:24  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.13  2002/10/08 17:36:23  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
