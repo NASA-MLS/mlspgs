@@ -706,7 +706,6 @@ contains ! =====  Public Procedures  ===================================
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
 !   use Declaration_Table, only: Declare, Decls, Get_Decl, Label
 !   use Intrinsic, only: Phyq_Invalid
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
     use MLSHDF5, only: GetHDF5DSDims, LoadFromHDF5DS, LoadPtrFromHDF5DS
@@ -717,6 +716,7 @@ contains ! =====  Public Procedures  ===================================
     use MoreTree, only: GetLitIndexFromString, GetStringIndexFromString
     use Parse_Signal_m, only: Parse_Signal
     use Tree, only: Null_Tree
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1038,7 +1038,6 @@ contains ! =====  Public Procedures  ===================================
 ! -------------------------------------------  Write_Spectroscopy  -----
   subroutine Write_Spectroscopy ( Where, FileName, FileType )
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     use Intrinsic, only: Lit_Indices
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
@@ -1049,6 +1048,7 @@ contains ! =====  Public Procedures  ===================================
     use MoreTree, only: StartErrorMessage
     use Output_m, only: Output
     use String_Table, only: Get_String, String_Length
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -1325,6 +1325,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.32  2004/12/31 02:40:44  vsnyder
+! Read/Write HDF Spectroscopy catalog
+!
 ! Revision 2.31  2004/12/13 20:44:22  vsnyder
 ! Added Dump_Line and Dump_SpectCat_Item, added UseYi field to Line_T.
 ! Improved error checking.
