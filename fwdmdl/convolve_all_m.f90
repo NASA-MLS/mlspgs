@@ -70,7 +70,7 @@ contains
     type (VectorValue_t), pointer :: f
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
-    integer :: Ind                      ! Index
+    integer :: Ind, ht_ind(1)           ! Indecies
     integer :: Row, Col                 ! Matrix entries
     integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
     integer :: No_tan_hts, Lk, Uk, n_sps, jf, jz
@@ -194,6 +194,8 @@ contains
 
       ! Derivatives needed continue to process
 
+      ht_ind = 0
+
       do nf = windowStart, windowFinish
 
         col = FindBlock ( Jacobian%col, temp%index, nf )
@@ -212,94 +214,120 @@ contains
           ! run through representation basis coefficients
           ! Integrand over temperature derivative plus pointing differential
 
-          do ptg_i = 1, no_tan_hts
-            q = 0.0
-            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,jz)
-            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,jz,nf)
-          end do
+!  *** Bill's correction
+!
+          IF ( ANY(d2x_dxdt(:,jz) > 0.0)) THEN
+!
+            ht_ind = MAXLOC(d2x_dxdt(:,jz)) 
+
+            do ptg_i = 1, no_tan_hts
+              q = d2x_dxdt(ptg_i,jz)
+              Rad(ptg_i) = (i_raw(ptg_i) - i_raw(ht_ind(1))) * q + &
+                         &  k_temp(ptg_i,jz,nf)
+            end do
 
           ! Now, Convolve:
 
-          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve ( fft_angles, Rad, center_angle, 1, no_tan_hts, &
-            &                 fft_pts, AntennaPattern, Ier )
-          if ( Ier /= 0) Return
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 1, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
 
-          if ( fft_index(1).gt.0) then
-            do ptg_i = 1, Ktr
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
-            end do
-          end if
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
 
-          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, SRad, Ktr, j )
-          k_star_tmp(1:j) = SRad(1:j)
-
-          !  For any index off center Phi, skip the rest of the phi loop ...
-
-          if ( nf /= mafTInstance) then
-            do ptg_i = 1, j
-              ind = channel + radiance%template%noChans*(ptg_i-1)
-              q = jacobian%block(row,col)%values( ind, jz )
-              jacobian%block(row,col)%values( ind, jz ) = &
-                                          & q + sbRatio*k_star_tmp(ptg_i)
-            end do
-            CYCLE
-          end if
+            Call Cspline ( fft_press, Ptan%values(:,maf), Rad, SRad, Ktr, j )
+            k_star_tmp(1:j) = SRad(1:j)
 
           ! Now the convolution of radiance with the derivative antenna field
 
-          Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
+            Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 
           ! Now, Convolve:
 
-          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
-            &                 fft_pts, AntennaPattern, Ier )
-          if ( Ier /= 0) Return
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 2, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
 
-          if ( fft_index(1).gt.0) then
-            do ptg_i = 1, Ktr
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
-            end do
-          end if
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
 
-          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, Term, Ktr, j )
+            Call Cspline ( fft_press, Ptan%values(:,maf), Rad, Term, Ktr, j )
 
           ! Transfer dx_dt from convolution grid onto the output grid
 
-          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,jz), SRad, &
-                     & no_tan_hts, j )
+            Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,jz), SRad, &
+                       & no_tan_hts, j )
 
-          k_star_tmp = k_star_tmp + srad*term
+            k_star_tmp = k_star_tmp + srad*term
 
           ! the convolution of the radiance weighted hydrostatic derivative
           ! with the antenna derivative
 
-          Rad(1:no_tan_hts) = &
-            dx_dt(1:no_tan_hts,jz) * i_raw(1:no_tan_hts)
+            Rad(1:no_tan_hts) = dx_dt(1:no_tan_hts,jz) * &
+                            & (i_raw(1:no_tan_hts) - i_raw(ht_ind(1)))
 
           ! Now, convolve:
 
-          fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
-            &                 fft_pts, AntennaPattern, Ier )
-          if ( Ier /= 0) Return
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 2, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
 
-          if ( fft_index(1).gt.0) then
-            do ptg_i = 1, Ktr
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+
+            do ptg_i = 1, j
+              q = k_star_tmp(ptg_i)
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              r = jacobian%block(row,col)%values( ind, jz)
+              jacobian%block(row,col)%values( ind, jz) = r + &
+                                          &    sbRatio*(q - Term(ptg_i))
             end do
-          end if
+!
+          ELSE          ! On IF(ANY(d2x_dxdt(:,jz) > 0.0)) THEN
+!
+! If All the d2x_dxdt(:,jz) = 0.0 then it is a simple cycle, like VMR:
+!
+! run through the Temp. representation basis coefficients
+!
+            Rad(1:no_tan_hts) = k_temp(1:no_tan_hts,jz,nf)
 
-          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+! Now Convolve the derivative
 
-          do ptg_i = 1, j
-            q = k_star_tmp(ptg_i)
-            ind = channel + radiance%template%noChans*(ptg_i-1)
-            r = jacobian%block(row,col)%values( ind, jz)
-            jacobian%block(row,col)%values( ind, jz) = r + &
-                                             sbRatio*(q - Term(ptg_i))
-          end do
+            fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+            Call fov_convolve ( fft_angles, Rad, center_angle, 1, &
+                             &  no_tan_hts, fft_pts, AntennaPattern, Ier )
+            if ( Ier /= 0) Return
+
+            if ( fft_index(1).gt.0) then
+              do ptg_i = 1, Ktr 
+                Rad(ptg_i) = Rad(fft_index(ptg_i))
+              end do
+            end if
+
+            Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+
+            do ptg_i = 1, j
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              q = jacobian%block(row,col)%values( ind, jz )
+              jacobian%block(row,col)%values( ind, jz ) = &
+                                         &    q + sbRatio*Srad(ptg_i)
+            end do
+
+          ENDIF    ! On IF(ANY(d2x_dxdt(:,jz) > 0.0)) THEN
 
         end do
 
@@ -395,6 +423,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.3  2002/02/02 11:20:17  zvi
+! Code to overwrite the l2cf integration & tanget grids
+!
 ! Revision 2.2  2002/01/27 08:37:47  zvi
 ! Adding Users selected coefficients for derivatives
 !
