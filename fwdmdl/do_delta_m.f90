@@ -96,7 +96,8 @@ contains
     complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
                                         ! grid
     real(rp), intent(in) :: ds_dz_gw(:) ! path length derivative wrt zeta * gw
-                                        ! on entire grid
+                                        ! on entire grid.  Only the gl_inds part
+                                        ! is used.
 
 ! Output
 
@@ -168,9 +169,11 @@ contains
     real(rp), intent(in) :: eta_zxp(:)  ! basis function for temperature
                                         ! coefficient on gl grid.
     real(rp), intent(in) :: ds_dh(:)    ! path length derivative wrt height on
-                                        ! entire grid.
+                                        ! entire grid.  Only the gl_inds part
+                                        ! is used.
     real(rp), intent(in) :: dh_dz_gw(:) ! height derivative wrt zeta * gw on
-                                        ! entire grid.
+                                        ! entire grid.  Only the gl_inds part
+                                        ! is used.
     integer(ip), intent(in) :: GL_inds(:) ! GL indices, for ds_dh and dh_dz_gw
     integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for Singularity
     integer(ip), intent(in) :: F_inds(:) ! The first GL path ind for the
@@ -208,6 +211,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.11  2003/11/01 03:01:29  vsnyder
+! Use ds_dz_gw instead of ds_dh, dh_dz and gw
+!
 ! Revision 2.10  2003/10/30 20:34:42  vsnyder
 ! Use c_inds for del_zeta
 !
