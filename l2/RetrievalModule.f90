@@ -1747,9 +1747,11 @@ contains
           allocate(dx(nSgrid,nMifs),sx(nSgrid,nMifs))
 
       ! Loop over MAFs
+        cloudysky = 1
         do maf =1,nMAFs
         fmStat%maf = maf
-        print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs
+        print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'type= ',&
+         & configDatabase(configIndices(1))%cloud_width
                         
           A = 0._r8
           C = 0._r8
@@ -1761,7 +1763,6 @@ contains
           do imodel = 1, size(configIndices)
             fmStat%rows = .false.
             ! memorize cloud configuration type
-            if(maf==1) cloudysky = configDatabase(configIndices(imodel))%cloud_width
             ! to save time, only skip cloud sensitivity calculation if there is no cloud
             configDatabase(configIndices(imodel))%cloud_width=0
             if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky
@@ -2397,6 +2398,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.108  2001/10/30 16:57:43  dwu
+! fixed a bug in LowCloudREtrieval
+!
 ! Revision 2.107  2001/10/26 20:28:42  dwu
 ! Added cloud extinction SD and high cloud retrieval
 !
