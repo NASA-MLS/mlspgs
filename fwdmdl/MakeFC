@@ -1,19 +1,13 @@
 #	Makefile
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-#special case:
-#the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/configure to create .configure
-
-#i.e., if you call are building this mls
-#by calling make with a different Makefile name,
-#say: make -f MakeFC
-#then rename the Makefiles in /l2 and /lib also MakeFC
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
 
+# ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
 
 # where to store .configure
@@ -30,6 +24,9 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
 
 # where the platforms directory is
 PLATFORMS = .
@@ -75,7 +72,11 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
+  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+  $(libmls_sources)/lit_names.txt)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
+  $(blaslib)/*.f9h $(srclib)/*.f9h)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -244,6 +245,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.15  2002/10/01 22:05:25  pwagner
+# errmsg.f90 part of OMIT_SRCS
+#
 # Revision 2.14  2002/07/22 22:07:49  pwagner
 # Removed custom builds for Lahey and LinearizedForwardModel
 #

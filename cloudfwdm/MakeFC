@@ -1,19 +1,13 @@
 #	Makefile
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-#special case:
-#the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/mlsconfigure to create .configure
-
-#i.e., if you call are building this mls
-#by calling make with a different Makefile name,
-#say: make -f MakeFC
-#then rename the Makefiles in /l2 and /lib also MakeFC
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
 
+# ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
 
 # where to store .configure
@@ -90,9 +84,14 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
-libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
+  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+  $(libmls_sources)/lit_names.txt)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c \
+  $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90 \
+  $(libfwdmdl_sources)/*.f9h)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
+  $(blaslib)/*.f9h $(srclib)/*.f9h)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 ifdef BLAS
@@ -204,7 +203,8 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	fi ; \
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
-.PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
+.PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
+  tar targ tarz
 
 tar:
 
@@ -276,6 +276,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.21  2002/07/18 18:00:01  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
 # Revision 1.20  2002/07/15 16:52:58  pwagner
 # Exits make with status 2 if error in any level
 #
