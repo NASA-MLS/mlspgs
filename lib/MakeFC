@@ -72,21 +72,43 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 
 tar: clean
 
+# The configure target, and the succeeding two targets .configure and
+# $MLSCONFG, too,
+# have five lines commented-out from their build statements
+# These lines may become necessary if a later option to allow
+# non-PVM-dependent installation is implemented
+# At present, however, we *require* PVM
+
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" 
+          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
 
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" 
+          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
 
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc 
+	@case "$(PVM_ROOT)" in \
+		"") \
+		echo "Preparing mls library without PVM support" ; \
+		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
+		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
+		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
+		;; \
+		*) \
+		echo "Preparing mls library with PVM support" ; \
+		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
+		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
+		echo "PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
+		;; \
+	esac 
 
 depends:
 	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
-        -d test_sparsify.f90 -d MatrixModule_0.f90 -d MatrixModule_1.f90 
+        -d test_sparsify.f90 -d MatrixModule_0.f90 -d MatrixModule_1.f90 \
+		  -d PVM.f90 -d PVMIDL.f90
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -133,6 +155,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.11  2001/01/23 19:04:54  pwagner
+# With optional PVM support
+#
 # Revision 2.10  2001/01/16 22:52:33  pwagner
 # clean* and alltests go thru testdir
 #
