@@ -43,7 +43,7 @@ contains
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
              &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   Bill_data,                                            &
-             &   phi_tan, h_obs, elev_offset, AntennaPattern,          &
+             &   h_obs, elev_offset, AntennaPattern,          &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
              &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
 
@@ -262,7 +262,7 @@ contains
       REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
       REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
-      REAL(r8) :: TT(NZmodel/8+Nsub,NZmodel)        ! CLOUDY-SKY TB AT TANGENT 
+      REAL(r8) :: TT(NZmodel/8+Nsub,NZmodel)   ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
       REAL(r8) :: TT0(NZmodel/8+Nsub,NZmodel)       ! CLEAR-SKY TB AT TANGENT
@@ -361,7 +361,7 @@ contains
 
       REAL(r8) :: RT
 
-      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
+      REAL(r8) :: h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
 
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
@@ -377,8 +377,22 @@ contains
 
 !      CALL HEADER(1)
 
+!      print*,temperature   !OK
+!      print*,pressure      !OK
+!      print*,height        !OK
+!      print*,VMRin(1,:)    !OK
+!      print*,VMRin(2,:)    !OK
+!      print*, zt           !OK 
+!      print*, zzt          !OK
+
 ! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
+
+      tt0 = 0._r8
+      tt  = 0._r8
       Tb0 = 0._r8
+      TAU0 = 0.0_r8
+      TAU=0.0_r8
+      TAU100=0.0_r8
       DTcir = 0._r8
       trans = 0._r8
       Betac = 0._r8
@@ -386,7 +400,12 @@ contains
       Dm = 0._r8
       Taueff = 0._r8
       SS = 0._r8
-      
+      fft_pts =0_r8
+      RS=0.0_r8
+      RC0=0.0_r8
+      RC_TMP=0.0_r8
+      RC_tot=0.0_r8
+
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
@@ -432,7 +451,6 @@ contains
             if(i .gt. (multi-Nsub)/2+Nsub) zzt1(i) = &
           &                   YZ( (I-Nsub)*n2-n2+1+((multi-Nsub)/2)*(n1-n2) )
          endif
-
 
          ZPT1(I) = 0._r8    
          ZTT1(I) = 0._r8
@@ -606,7 +624,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-          
+
          TT  = TT0	   ! so that dTcir=0
           
          IF(ICON .GE. 1) THEN                               
@@ -655,6 +673,11 @@ contains
 
 	 Rs_eq = h_obs
 
+         schi = 0.0_r8
+         RT = 0.0_r8
+         ptg_angle = 0.0_r8
+         center_angle = 0.0_r8
+
   	 DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
@@ -671,6 +694,7 @@ contains
             END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
 !            print*, real(ptg_angle(i)), real(TT0(i,NZmodel))
+
   	 END DO
 
 	 center_angle = ptg_angle(1)
@@ -681,7 +705,8 @@ contains
 
          Ier = 0
          ntr = size(antennaPattern%aaap)
-
+         
+         fft_pts = 0.0_r8
 	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
 
          RAD0=0.0_r8
@@ -700,6 +725,9 @@ contains
 	         stop
 	      endif
 
+         fft_angles=0.0
+         fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
+
          Call fov_convolve_old ( fft_angles, RAD, center_angle, 1, Multi,   &
               &              fft_pts, AntennaPattern, Ier )
               if ( Ier /= 0) then
@@ -715,8 +743,8 @@ contains
               !             \___                            ___/      |      \___
               !-------------------------------------------------------------------
 
-
          !  Get 'ntr' pressures associated with the fft_angles:
+         fft_press=0.0_r8
          Call get_pressures ( 'a', ptg_angle, ZTT1, -log10(ZPT1), Multi,     &
               &                    fft_angles, fft_press, Ntr, Ier )
               if ( Ier /= 0) then
@@ -756,6 +784,9 @@ contains
 !        PRESSURES ZT (i.e. ptan).
 !        (ALSO STORE THE RADIANCE DERIVATIVES WITH RESPECT TO ZT)
 ! ----------------------------------------------------------------------------
+
+         dTB0_dZT=0.0_r8
+         dDTcir_dZT=0.0_r8
 
          Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
          Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
@@ -805,6 +836,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.34  2002/08/09 22:21:42  jonathan
+! new internal tangent heights
+!
 ! Revision 1.33  2002/08/08 22:46:15  jonathan
 ! newly improved version
 !

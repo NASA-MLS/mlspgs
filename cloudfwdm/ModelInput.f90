@@ -77,16 +77,15 @@ contains
 !----------------------------------------------------------
 !     WORK SPACE
 !----------------------------------------------------------
-      REAL(r8) :: PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
-      INTEGER :: I,JM,J
+      REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
+      INTEGER :: I,JM,J, K
 !--------------------------------------------------------------------------
 
-      PTOP = (80./16.-3.)*1._r8    ! TOP OF THE MODEL
-      PBOTTOM=-LOG10(PRESSURE(1))  ! BOTTOM OF THE MODEL
-      DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
+      HTOP = 80.e3_r8    ! TOP OF THE MODEL
+      DH=HTOP/NH         ! LAYER THICKNESS
 
       DO I=1,NH
-         ZH(I)=PBOTTOM+(I-1)*DP
+         ZH(I)=(I-1)*DH
       END DO
 
       DO I=1,NZ
@@ -98,69 +97,50 @@ contains
       END DO
 
 
-      IF (NZ .NE. NH) THEN
-
 !==========================================
 !     PRODUCE MODEL ATMOSPHERIC PROFILES
 !==========================================
 
          DO J=1,NH
 
-            CALL LOCATE (ZA,NZ,NH,ZH(J),JM)              
+            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
 
-            if (jm .le. 0) then
-              print*,'wronh JM: ',JM
-              stop
-                jm=1                               ! since there is no pressure(0)
-            endif
-
-            YP(J)=((ZA(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-ZA(JM))*  &
-     &            ZA(JM+1))/(ZA(JM+1)-ZA(JM))             
+            YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
 
             YP(J) = 10**(-YP(J))
 
-            YZ(J)=((ZA(JM+1)-ZH(J))*HEIGHT(JM)+(ZH(J)-ZA(JM))*    &
-     &            HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))
+            YZ=ZH
 
-            YT(J)=((ZA(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-ZA(JM))* &
-     &            TEMPERATURE(JM+1))/(ZA(JM+1)-ZA(JM))
+            YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
 
-            WC(1,J)=((ZA(JM+1)-ZH(J))*WCin(1,JM)+(ZH(J)-ZA(JM))*    &
-     &            WCin(1,JM+1))/(ZA(JM+1)-ZA(JM))
+! ICE QUANTITIES
 
-            WC(2,J)=((ZA(JM+1)-ZH(J))*WCin(2,JM)+(ZH(J)-ZA(JM))*    &
-     &            WCin(2,JM+1))/(ZA(JM+1)-ZA(JM))
-            
-            YQ(J)=((ZA(JM+1)-ZH(J))*ZVMR(JM)+(ZH(J)-ZA(JM))*       &
-     &            ZVMR(JM+1))/(ZA(JM+1)-ZA(JM))
+            DO K=1,2
+            WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            ENDDO
+
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
+
+            IPSD(J)=((HEIGHT(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            IPSDin(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+
+! VMR QUANTITIES
+            Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+
 
             YQ(J) =10**YQ(J)
-
-            VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*   &
-     &                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
-         
-            IPSD(J)=((ZA(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-ZA(JM))*    &
-     &            IPSDin(JM+1))/(ZA(JM+1)-ZA(JM))
-
-            CHK_CLD(J) = WC(1,J) + WC(2,J)
-
+          
+            DO K=1,1
+            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
+     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            ENDDO
+       
          ENDDO
 
-      ELSE
-         
-         DO J=1,NZ
-            YP(J)     = PRESSURE(J)    
-            YZ(J)     = HEIGHT(J)      
-            YT(J)     = TEMPERATURE(J)
-            WC(1,J)   = WCin(1,J)
-            WC(2,J)   = WCin(2,J)
-            YQ(J)     = VMR(1,J)     
-            VMR1(1,J) = VMR(2,J)    
-            IPSD(J)   = IPSDin(J)
-            CHK_CLD(J) = WC(1,J) + WC(2,J)
-         ENDDO
-
-      ENDIF
 
 !----------------------------------------------------------------------
 ! now we don't need this because tangent heights are given along with tangent pressure
@@ -189,6 +169,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.4  2001/10/22 15:42:58  jonathan
+! pretect vmr to be non-zero valus
+!
 ! Revision 1.3  2001/10/11 22:10:02  dwu
 ! remove tangent height calculation
 !

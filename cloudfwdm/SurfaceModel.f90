@@ -50,8 +50,8 @@ contains
 !         call ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
 !... simple model
 	 do i=1,np
-	 rh(i) = 0.8
-	 rv(i) = 0.8
+	 rh(i) = 0.05
+	 rv(i) = 0.05
 	 enddo
        else if(IS.lt.4 .and. IS.gt.0) then
          call ASSEAN(F,TS,IS,S,X,N,NP,RH,RV)
@@ -239,3 +239,6 @@ contains
 end module SurfaceModel
 
 ! $Log$
+! Revision 1.2  2001/09/21 15:51:38  jonathan
+! modified F95 version
+!

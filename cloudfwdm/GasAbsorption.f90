@@ -87,7 +87,7 @@ contains
       ZP     = -LOG10( max(1.e-9_r8,P) ) ! CONVERT P(hPa) TO ZP
       TT     = 300._r8/T
 
-      ABSC=0.
+      ABSC=0._r8
       I=0
 
 
@@ -97,7 +97,7 @@ contains
 !-------------------------------------
       DO IMOL=1,NMOL
 
-         B=0.
+         B=0._r8
          
          DO J=1,NCNT(IMOL)
             I=I+1
@@ -195,7 +195,16 @@ contains
       B=(7.7e-10*EXP(-1.5e-3*(F/30)**2)+1.e-13*(60**2+(F/30)**2)  &
      &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
 
-      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+! from ATBD N2-N2 continuum
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+
+! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at 640GHz
+! The Debye term is coded differently between the two models, which
+! affects R2 and R3 mostly (check it later) 
+!       ABSC = ABSC + 0.84*B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+
+! The factor 1.8 is fix to match B2U of Bill's FWM without [o2, o2]
+!      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8  
 
 !     CONT_1=1.4e-10*(1-1.2e-5*F**1.5)     ! LIEBE 1989
 !     CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)  ! LIEBE 1993
@@ -217,11 +226,16 @@ contains
 !----------------------------------------
 !      CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
 !      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
+
+! difference with Bill's FWM f15 Band2U~6K, B10L~1K
+
       CONT_1 = 7.53e-16   ! wu's version
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
       B = SC_CONST * 10.**(-2.0*ZP)* TT**CONT_2
+
+
 !--------------------------------------------------------------
 !     THE SECOND TERM FOR H2O-H2O COLLISION (GODON ET AL 1991)
 !--------------------------------------------------------------
@@ -254,14 +268,20 @@ contains
 	real(r8) ::  yy 		! interference coeff.
 	real(r8) ::  twthm, twthp
 !
+	  voffm = 0.0_r8
+	  voffp = 0.0_r8
+	  twthm = 0.0_r8
+	  twthp = 0.0_r8
+          myresult = 0.0_r8
+
 	  voffm = v0 - ff
 	  voffp = v0 + ff
 	  twthm = twth0 - voffm*yy*1.
 	  twthp = twth0 - voffp*yy*1.
+
 !... Gross function
 !	myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
 !	return
-
 !... Van Vleck-Weisskopf
 !J 	myshape = twthm/(voffm**2 + twth0**2) + &
 !J     &      twthp/(voffp**2 + twth0**2)
@@ -277,6 +297,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.8  2002/08/08 22:46:44  jonathan
+! newly improved version
+!
 ! Revision 1.7  2002/05/06 22:35:22  jonathan
 ! add Bill's version for H2O
 !

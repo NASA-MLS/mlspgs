@@ -29,7 +29,7 @@ module FullCloudForwardModel
   use SpectroscopyCatalog_m,        only: CATALOG_T, LINE_T, LINES, CATALOG
   use Toggles,                      only: Emit, Levels, Toggle
   use Trace_M,                      only: Trace_begin, Trace_end
-  use Units
+  use Units,                        only: Deg2Rad                         
   use VectorsModule,                only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T, &
                                         & VALIDATEVECTORQUANTITY
 
@@ -198,7 +198,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: FREQUENCIES 
     real(r8), dimension(:,:), allocatable :: WC
 
-    real(r8) :: phi_tan
+!    real(r8) :: phi_tan
     real(r8) :: dz                                 ! thickness of state quantity
     real(r8) :: dphi                               ! phi interval of state quantity
     real(r8) :: tLat                               ! temperature 'window' latitude
@@ -278,16 +278,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
  ! Think about sidebands
  !----------------------- 
 
-!     print*,'Signal%sideband', Signal%sideband
-!     print*,'Signal%singleSideband', Signal%singleSideband
-
    if ( ( Signal%sideband == 0 ) .and.&
      &  ( Signal%singleSideband == 0 ) ) then     ! =1 only if R1A, R1B
       ! Do a folded measurement
       sidebandStart = -1
       sidebandStop = 1
       sidebandStep = 2
-    else
+   else
       ! It's either a single sideband radiometer, or the user requested a
       ! specific sideband.
       ! Check sanity, if they are both non zero they should be the same.
@@ -305,7 +302,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       end if
       sidebandStop = sidebandStart
       sidebandStep = 1
-    end if
+   end if
  !---------------------------
  ! END of thinking sidebands
  !---------------------------
@@ -491,8 +488,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------
     ! Assemble the vmr array
     !------------------------
-
     if ( size(forwardModelConfig%molecules) .lt. 2 ) then
+!    if ( size(forwardModelConfig%molecules) .lt. 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
     call allocate_test ( vmrArray,                                           &
@@ -539,6 +536,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     end do
 
     if ( .not. got(1) .or. .not. got(2) ) then
+!    if ( .not. got(1) ) then
       call MLSMessage( MLSMSG_Error, ModuleName,          &
                       'Missing the required molecules' )
     endif
@@ -588,27 +586,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
-    phi_tan = Deg2Rad * temp%template%phi(1,instance)
+!    phi_tan = Deg2Rad * temp%template%phi(1,instance)
 
     call allocate_test ( superset, size(antennaPatterns), &
          & 'superset', ModuleName )
-
-        do j = 1, size(antennaPatterns)
-          superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
-           & ForwardModelConfig%signals, sideband=signal%sideband , channel=1 )
-        end do
-
-    whichPattern = 1
-    maxSuperset = maxval ( superset )
-    where ( superset < 0 )
-          superset = maxSuperset + 1
-    end where
-    whichPatternAsArray = minloc ( superset )
-    whichPattern = whichPatternAsArray(1)
-    if ( toggle(emit) .and. levels(emit) > 2 ) then
-       call output ( 'Using antenna pattern: ' )
-       call output ( whichPattern, advance='yes' )
-    end if
 
     if (prt_log) print*, 'jacobian is true'
 
@@ -704,14 +685,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         thisRatio = 1.0
       end if
 
-!      print*, thisRatio
-
     direction = signal%direction
 
     frequencies = signal%centerFrequency + direction*signal%frequencies 
-
-!    print*,frequencies
-!    print*, signal%lo
 
         if(signal%sideband == 0) &
         frequencies = signal%lo + thisSideband * frequencies    ! double sideband cases
@@ -723,25 +699,31 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !--------------------------------------------
 ! VELOCITY shift correction to frequencies
 !--------------------------------------------
-!          print*, vel_cor
-!          print*,' '
-!          print*,frequencies
-
-!        IF (.NOT. forwardModelConfig%default_spectroscopy) THEN
 
           frequencies =  Vel_Cor * frequencies
         
-!        ENDIF
-
-!          print*,' '
-!          print*,frequencies
-!          stop
-
     if (prt_log) then
        print*, ' '
        print*,'No. of Frequencies:', noFreqs 
        print*,'Frequency=', frequencies/1e3_r8
     endif
+
+    do j = 1, size(antennaPatterns)
+      superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
+           & ForwardModelConfig%signals( (/sigInd/) ), sideband=thisSideband, channel =1 )
+    end do
+
+    whichPattern = 1
+    maxSuperset = maxval ( superset )
+    where ( superset < 0 )
+          superset = maxSuperset + 1
+    end where
+    whichPatternAsArray = minloc ( superset )
+    whichPattern = whichPatternAsArray(1)
+    if ( toggle(emit) .and. levels(emit) > 2 ) then
+       call output ( 'Using antenna pattern: ' )
+       call output ( whichPattern, advance='yes' )
+    end if
  
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
@@ -769,7 +751,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%cloud_width,                                      &
       & forwardModelConfig%cloud_fov,                                        &
       & forwardModelConfig%default_spectroscopy,                             &
-      & phi_tan,                                                             &
       & scGeocAlt%values(1,1),                                               &
       & elevOffset%values(1,1),                                              &
       & antennaPatterns(whichPattern),                                       &
@@ -794,15 +775,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! Output minor frame quantities if they are asked: check channel and type
 
-!    do i =1 , noFreqs
-!    do mif=1, noMIFs
-!      a_clearSkyRadiance(mif,i)      = thisRatio(i)*a_clearSkyRadiance(mif,i)
-!      a_cloudInducedRadiance(mif,i)  = thisRatio(i)*a_cloudInducedRadiance(mif,i)
-!      a_effectiveOpticalDepth(mif,i) = thisRatio(i)*a_cloudRADSensitivity(mif,i)
-!      a_cloudRADSensitivity(mif,i)   = thisRatio(i)*a_cloudRADSensitivity(mif,i)
-!    enddo
-!    enddo
-
    if ( sidebandStart == sidebandStop ) then
      radiance%values ( :, maf) =                                              &
        & reshape ( transpose(a_clearSkyRadiance),                             &
@@ -816,26 +788,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
      cloudRADSensitivity%values ( :, maf ) =                                  &
        & reshape ( transpose(a_cloudRADSensitivity),                          &
        & (/cloudRADSensitivity%template%instanceLen/) )
+!     print*,maf,thissideband,a_clearSkyRadiance(:,25)
    else
     
-   IF ( thisSideband == sidebandStart ) THEN
-     do i =1 , noFreqs
-       if (doChannel(i)) then
-         do mif=1, noMIFs
-           radiance%values (i+(mif-1)*noFreqs, maf) =                               &
-             &                       thisRatio(i)*a_clearSkyRadiance(mif,i)
-           modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
-             &                       thisRatio(i)*a_cloudInducedRadiance(mif,i)
-           if(associated(effectiveOpticalDepth))                                    &
-             & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
-             &                       thisRatio(i)*a_effectiveOpticalDepth(mif,i)
-           if(associated(cloudRADSensitivity))                                      &
-             & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
-             &                       thisRatio(i)*a_cloudRADSensitivity(mif,i)
-         end do
-       endif
-     enddo
-   ELSE
      do i =1 , noFreqs
        if (doChannel(i)) then
          do mif=1, noMIFs
@@ -861,7 +816,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          enddo
        endif
      enddo
-   endif
+! print*,maf,thissideband,a_clearSkyRadiance(:,25)
    ENDIF
 
     !--------------------------------------------
@@ -1104,6 +1059,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.93  2002/08/08 22:46:30  jonathan
+! newly improved version
+!
 ! Revision 1.92  2002/05/08 17:03:39  jonathan
 ! use earthradius(1,1) for now
 !

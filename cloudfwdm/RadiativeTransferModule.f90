@@ -89,6 +89,9 @@ contains
       REAL(r8) :: WK,WK1,U1(NU),UU,X2,RSAVG,XTB(L+1),WW0,CHK(L+1)
       REAL(r8) :: tsource, wwk, wwk1,www0
 
+
+      TB=0.0_r8
+      TT=0.0_r8
 !------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
 !------------------------------------------------
@@ -363,6 +366,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.7  2002/08/08 22:47:06  jonathan
+! newly improved version
+!
 ! Revision 1.6  2001/10/25 16:45:15  dwu
 ! fix problem of  dimension index=0 in tscat calculation
 !
