@@ -16,6 +16,7 @@ MODULE L3MMData
    USE PCFHdr
    USE PCFModule
    USE SDPToolkit
+   use Time_M, only: Time_Now
    IMPLICIT NONE
    PUBLIC
 
@@ -118,6 +119,12 @@ CONTAINS
 
       REAL(r8) :: uplft(2), lowrgt(2)
       REAL(r8) :: projparm(13)
+      real(r8), dimension(:), pointer :: times
+      
+      real :: t1, t2
+      real, parameter :: WAIT_TO_REOPEN = 2.0
+      integer :: beat
+      integer, parameter :: NUMBER_BEATS = 20000
 
 ! Open the output file
 
@@ -246,6 +253,15 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+! Delay reopening for a discreet and discrete time
+! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
+!      call time_now(t1)
+!      t2 = t1
+!      do beat = 1, NUMBER_BEATS
+!        call time_now(t2)
+!        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
+!      enddo
+
 ! Re-open the file for writing
 
       gdfID = gdopen(physicalFilename, DFACC_RDWR)
@@ -269,20 +285,32 @@ CONTAINS
       edge(1) = l3mm%nLevels
       edge(2) = l3mm%nLats
       edge(3) = l3mm%nLons
+      allocate(times(l3mm%nLevels))
+      times(1:l3mm%nLevels) = l3mm%startTime
 
 ! Start Time
 
+!      status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
+!                       l3mm%startTime)
       status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
-                       l3mm%startTime)
+                       times)
       IF (status /= 0) THEN
+          print *, 'gdId ', gdId
+          print *, 'start ', start
+          print *, 'stride ', stride
+          print *, 'edge ', edge
+          print *, 'start times ', times
           msr = 'Failed to write startTime to grid ' // l3mm%name
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! End Time
 
+      times(1:l3mm%nLevels) = l3mm%endTime
       status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
-                       l3mm%endTime)
+                       times)
+!      status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
+!                       l3mm%endTime)
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' // l3mm%name
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -351,6 +379,7 @@ CONTAINS
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
       creationFlag = .TRUE.
+      deallocate(times)
 
 !------------------------------
    END SUBROUTINE OutputMMGrids
@@ -389,6 +418,11 @@ CONTAINS
 
       INTEGER :: lsize, nsize, status, swfID, swId
       INTEGER :: edge(2), start(2), stride(2)
+
+      real :: t1, t2
+      real, parameter :: WAIT_TO_REOPEN = 2.0
+      integer :: beat
+      integer, parameter :: NUMBER_BEATS = 20000
 
 ! Open the output file
 
@@ -477,6 +511,15 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+! Delay reopening for a discreet and discrete time
+! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
+!      call time_now(t1)
+!      t2 = t1
+!      do beat = 1, NUMBER_BEATS
+!        call time_now(t2)
+!        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
+!      enddo
+
 ! Re-attach to the swath for writing
 
       swId = swattach(swfID, dgName)
@@ -527,6 +570,11 @@ CONTAINS
       edge(2) = nsize
       status = swwrfld(swId, MIS_FIELD, start, stride, edge, mm%misDays)
       IF (status /= 0) THEN
+          print *, 'swID ', swID
+          print *, 'start ', start
+          print *, 'stride ', stride
+          print *, 'edge ', edge
+          print *, 'missng. days ', mm%misDays
           msr = WR_ERR //  MIS_FIELD // ' to swath ' // dgName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
@@ -1002,6 +1050,7 @@ CONTAINS
       l3mm%nLevels = nlev
       l3mm%nLats = nlat
       l3mm%nLons = nlon
+      l3mm%nMisDays = 0
 
 ! Horizontal geolocation fields
 
@@ -1138,6 +1187,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.3  2001/12/12 17:45:29  nakamura
+!# Added dg fields; removed unused subroutine DestroyL3MMDatabase.
+!#
 !# Revision 1.2  2001/11/12 20:24:56  nakamura
 !# Added L3MMDiag_T.
 !#
