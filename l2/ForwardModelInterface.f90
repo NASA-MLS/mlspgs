@@ -206,11 +206,15 @@ contains
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config), optional :: FMC
-  type(fwd_mdl_info), dimension(:), pointer, optional :: FMI
-  type(temporary_fwd_mdl_info), dimension(:), pointer, optional :: TFMI
+! type(fwd_mdl_info), dimension(:), pointer, optional :: FMI
+  type(fwd_mdl_info),                        optional :: FMI
+! type(temporary_fwd_mdl_info), dimension(:), pointer, optional :: TFMI
+  type(temporary_fwd_mdl_info),                        optional :: TFMI
 !??? End of temporary stuff to start up the forward model
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
+Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 
 Integer(i4) :: i, j, k, kk, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
                m, prev_npf, ier, mmaf, si, ptg_i, &
@@ -798,6 +802,9 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.8  2001/03/08 20:11:19  zvi
+! *** empty log message ***
+!
 ! Revision 2.7  2001/03/08 19:22:12  zvi
 ! New ForwardModelInterface with Zvi's code in it ..
 !
