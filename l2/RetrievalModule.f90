@@ -23,9 +23,9 @@ module RetrievalModule
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
     & F_criteria, F_columnScale, F_covariance, F_diagonal, F_diagonalOut, &
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
-    & F_lambda, F_maxF, F_maxJ, F_measurements, F_method, F_outputCovariance, &
-    & F_quantity, F_state, F_test, F_toleranceA, F_toleranceF, &
-    & F_toleranceR, F_weight, field_first, field_last, &
+    & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
+    & F_outputCovariance, F_quantity, F_state, F_test, F_toleranceA, &
+    & F_toleranceF, F_toleranceR, field_first, field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
@@ -147,6 +147,7 @@ contains
     integer :: MaxJacobians             ! Maximum number of Jacobian
                                         ! evaluations of Newtonian method
     type(vector_T), pointer :: Measurements  ! The measurements vector
+    type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
     integer :: Method                   ! Method to use for inversion, currently
                                         ! only l_Newtonian.
     type(matrix_SPD_T), target :: myCovariance    ! for OutputCovariance to point at
@@ -187,7 +188,7 @@ contains
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
     integer :: vectorIndex              ! Index in VectorDatabase
-    type(vector_T), pointer :: Weight   ! Scaling vector for rows
+    type(vector_T) :: Weight            ! Scaling vector for rows, 1/measurementSD
     type(vector_T) :: X                 ! for NWT
     type(vector_T) :: XminusApriori     ! X - Apriori
 
@@ -201,7 +202,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, state, weight )
+    nullify ( measurements, measurementSD, state )
     timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
@@ -316,6 +317,8 @@ contains
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
           case ( f_measurements )
             measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_measurementSD )
+            measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
             method = decoration(subtree(2,son))
           case ( f_outputCovariance )
@@ -343,8 +346,6 @@ contains
             case ( f_toleranceR )
               toleranceR = value(1)
             end select
-          case ( f_weight )
-            weight => vectorDatabase(decoration(decoration(subtree(2,son))))
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -364,9 +365,18 @@ contains
               &  covariance%m%col%vec%template%id /= state%template%id ) &
               &  call announceError ( inconsistent, f_covariance, f_state )
           end if
-          if ( got(f_weight) ) then
-            if ( weight%template%id /= measurements%template%id ) &
-              & call announceError ( inconsistent, f_weight, f_measurements )
+          if ( got(f_measurementSD) ) then
+            if ( measurementSD%template%id /= measurements%template%id ) &
+              & call announceError ( inconsistent, f_measurementSD, f_measurements )
+            call cloneVector ( weight, measurementSD )
+            do j = 1, measurementSD%template%noQuantities
+              where ( measurementSD%quantities(j)%values <= 0.0 )
+                weight%quantities(j)%values = 1.0
+              elsewhere
+                weight%quantities(j)%values = 1.0 / &
+                  & measurementSD%quantities(j)%values
+              end where
+            end do
           end if
         end if
         if ( error == 0 ) then
@@ -606,7 +616,7 @@ contains
                       call fillExtraCol ( jacobian, f, rowBlock )
                     end if
                   end do
-                  if ( got(f_weight) ) call rowScale ( weight, jacobian )
+                  if ( got(f_measurementSD) ) call rowScale ( weight, jacobian )
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
@@ -625,31 +635,30 @@ contains
                 ! Column Scale J (row and column scale J^T J):
                 select case ( columnScaling )
                 case ( l_apriori )
-                  call columnScale ( normalEquations%m, apriori )
-                  call rowScale ( apriori, normalEquations%m )
+                  call copyVector ( columnScaleVector, apriori )
+                  do j = 1, columnScaleVector%template%noQuantities
+                    where ( columnScaleVector%quantities(j)%values <= 0.0 )
+                      columnScaleVector%quantities(j)%values = 1.0
+                    elsewhere
+                      columnScaleVector%quantities(j)%values = 1.0 / &
+                        & sqrt( columnScaleVector%quantities(j)%values )
+                    end where
+                  end do
+                  call columnScale ( normalEquations%m, columnScaleVector )
+                  call rowScale ( columnScaleVector, normalEquations%m )
                 case ( l_covariance )
                   !??? Can't get here until allowed by init_tables
                 case ( l_norm )
-                  if ( index(switches,'neq') /= 0 ) then
-                    call dump_l1 ( normalEquations%m, &
-                      & 'L1 norms of blocks of Normal Equations before scaling:', &
-                      & upper=.true. )
-                    if ( index(switches,'spa') /= 0 ) &
-                      & call dump_struct ( normalEquations%m, &
-                        & 'Sparseness structure of Normal equations blocks:', &
-                        & upper=.true. )
-                  end if
                   call getDiagonal ( normalEquations, columnScaleVector )
                   if ( index(switches,'col') /= 0 ) &
                     & call dump ( columnScaleVector, name='Column scale vector' )
                   do j = 1, columnScaleVector%template%noQuantities
-                    where ( columnScaleVector%quantities(j)%values <= 0.0 ) &
-                      & columnScaleVector%quantities(j)%values = 1.0
-!                   if ( any(columnScaleVector%quantities(j)%values <= 0.0) ) &
-!                     & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                       & "Normal equations are singular" )
-                    columnScaleVector%quantities(j)%values = 1.0 / &
-                      & sqrt( columnScaleVector%quantities(j)%values )
+                    where ( columnScaleVector%quantities(j)%values <= 0.0 )
+                      columnScaleVector%quantities(j)%values = 1.0
+                    elsewhere
+                      columnScaleVector%quantities(j)%values = 1.0 / &
+                        & sqrt( columnScaleVector%quantities(j)%values )
+                    end where
                   end do
                   call columnScale ( normalEquations%m, columnScaleVector )
                   call rowScale ( columnScaleVector, normalEquations%m )
@@ -664,7 +673,8 @@ contains
 !???            apriori covariance, in order to compute a posteriori covariance
                 if ( index(switches,'neq') /= 0 ) then
                   call dump_l1 ( normalEquations%m, &
-                    & 'L1 norms of Normal Equations blocks:', upper=.true. )
+                    & 'L1 norms of Normal Equations blocks after scaling:', &
+                    & upper=.true. )
                   if ( index(switches,'spa') /= 0 ) &
                     & call dump_struct ( normalEquations%m, &
                       & 'Sparseness structure of Normal equations blocks:', &
@@ -953,6 +963,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.30  2001/05/18 23:18:42  vsnyder
+! Replace 'weight' field of 'retrieve' by 'measurementSD'
+!
 ! Revision 2.29  2001/05/18 19:46:23  vsnyder
 ! Add secret 'fuzz' field to 'retrieve' command -- for testing
 !
