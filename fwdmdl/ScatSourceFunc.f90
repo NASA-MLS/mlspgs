@@ -22,7 +22,7 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, NUA, NAB, NR, NC, TSCAT )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, NU, NUA, NAB, NR, NC, TSCAT )  
 
       use Cloud_extinction, only: Get_beta_cloud
       use CRREXP_m,         only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
@@ -35,6 +35,8 @@ contains
     ! Arguments
       real(rk), intent(in) :: Temp_Air(:) ! MEAN AIR TEMPERATURES, Kelvin
       real(rk), intent(in) :: Freq        ! FREQUENCY, MHz
+      real(rk), intent(in) :: Z(:)        ! Model height (meters)
+      integer, intent(in) :: NU           ! Number of scattering angles
       integer, intent(in) :: NUA          ! Number of azimuth angles
       integer, intent(in) :: NAB          ! Number of AB terms
       integer, intent(in) :: NR           ! Number of size bins
@@ -52,31 +54,31 @@ contains
       real(rk) :: D2
       real(rk) :: DELTA                   ! DELTA TB FOR CONVERGENCE CHECK
       real(rk) :: dTAU( size(temp_air) )  ! Optical depth increment at each layer 
-      real(rk) :: DU(size(tscat,2))       ! DELTA U
+      real(rk) :: DU(NU)                  ! DELTA U
       real(rk) :: DY
       real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
       real(rk) :: JJ0
-      real(rk) :: PHH( size(tscat,2), size(TEMP_AIR) )
+      real(rk) :: PHH( NU, size(TEMP_AIR) )
       real(rk) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
       real(rk) :: RSAVG
-      real(rk) :: RS( size(tscat,2)/2 )
+      real(rk) :: RS( NU/2 )
       real(rk) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
-      real(rk) :: TB( size(tscat,2), size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
+      real(rk) :: TB( NU, size(TEMP_AIR) ) ! TB IN FLAT PLANE GEOMETRY
                                           ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
-      real(rk) :: TB0 ( size(tscat,2) )   ! TB AT THE SURFACE
+      real(rk) :: TB0 ( NU )   ! TB AT THE SURFACE
       real(rk) :: TEMP( size(temp_air) )  ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
       real(rk) :: TGT
-      real(rk) :: THETAI(size(tscat,2),size(tscat,2),NUA) ! ANGLES FOR INCIDENT TB
-      real(rk) :: THETA(size(tscat,2))    ! SCATTERING ANGLES
+      real(rk) :: THETAI(NU,NU,NUA) ! ANGLES FOR INCIDENT TB
+      real(rk) :: THETA(NU)    ! SCATTERING ANGLES
       real(rk) :: Tsource
       real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
       real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
-      real(rk) :: U1(size(tscat,2))
+      real(rk) :: U1(NU)
       real(rk) :: UA(NUA)                 ! COSINES OF SCATTERING AZIMUTH ANGLES
       real(rk) :: UAVE(size(temp_air),size(temp_air)) ! INCIDENT ANGLES FOR EACH TANGENT HT
       real(rk) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
-      real(rk) :: UI(size(tscat,2),size(tscat,2),NUA) ! COSINES OF THETAI
-      real(rk) :: U(size(tscat,2))        ! COSINES OF THETA
+      real(rk) :: UI(NU,NU,NUA) ! COSINES OF THETAI
+      real(rk) :: U(NU)        ! COSINES OF THETA
       real(rk) :: UU
       real(rk) :: W0( size(temp_air) )
       real(rk) :: WC(2, size(temp_air) )
@@ -99,9 +101,9 @@ contains
 !-------------------------------------------------------------------------------------
 
       L = size(temp_air,1) ! == size(tscat,1)
-      NU = size(tscat,2)
       TB    = 0.0_rk
       Tscat = 0.0_rk
+      tsource = 0.0_rk
 
 !--------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
@@ -118,14 +120,19 @@ contains
 
       call ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
       
-      WC(1,10) = 0.01
-      WC(1,11) = 0.01
 
-      do K=1,L
+      WC=0.0
+      PHH=0.0
+      cld_ext=0.0
+      WC(1,10) = 0.01   !test only
+      WC(1,11) = 0.01   !test only
+      dtau =0.0
+
+      do K=1,L-1
         call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,        &
      &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
 !        print*, FREQ, TEMP_AIR(K), WC(1,K), cld_ext, W0(K)
-        dtau(k)=0._rk
+        dtau(k)=(Z(K+1)-Z(K))*cld_ext
       end do
 
 !      STOP
@@ -267,6 +274,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.1  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 1.1.2.8  2003/04/24 23:54:18  jonathan
 ! update construction
 !
