@@ -99,60 +99,63 @@ contains
   end subroutine dVoigt_spectral
 
   ! ------------------------------------------------------  Slabs  -----
-  real(rp) function Slabs ( dNu, v0s, x1, tanh1, slabs1, y )
+  real(rp) function Slabs ( Nu, v0, v0s, x1, tanh1, slabs1, y )
 
-    real(r8), intent(in) :: v0s
-    real(rp), intent(in) :: dNu, x1, tanh1, slabs1, y
-
-!  Note: dNu = v - v0s
+    real(r8), intent(in) :: Nu    ! Frequency
+    real(r8), intent(in) :: v0    ! Line center frequency
+    real(r8), intent(in) :: v0s   ! Pressure-shifted line center frequency
+    real(rp), intent(in) :: x1
+    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
+    real(rp), intent(in) :: slabs1
+    real(rp), intent(in) :: y
 
 ! If the molecular transition and temperature have not changed but
 ! frequency has enter here.
 
-! inputs: dNu , x1 , tanh1, slabs1 , y, v0s, yi
-! output: slabs
-
     real(rp) :: u
 
-    call real_simple_voigt(x1*dNu,y,u)
+    call real_simple_voigt(x1*real(nu-v0s,rp),y,u)
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
+!  >> 2004-03-18 WV Snyder Use Nu/v0 instead of Nu/v0s.
 
-    Slabs = slabs1 * (1.0_rp + dNu / v0s) * tanh1 * &
-            & (u + OneOvSPi*y/((x1*(2.0_rp*v0s+dNu))**2 + y*y))
+    Slabs = slabs1 * real(nu / v0, rp) * tanh1 * &
+      & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
   end function Slabs
 
   ! --------------------------------------------------  Slabswint  -----
-  real(rp) function Slabswint ( dNu, v0s, x1, tanh1, slabs1, y, yi )
+  real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
 
-    real(r8), intent(in) :: v0s
-    real(rp), intent(in) :: dNu, x1, tanh1, slabs1, y, yi
-
-!  Note: dNu = v - v0s
+    real(r8), intent(in) :: Nu    ! Frequency
+    real(r8), intent(in) :: v0    ! Line center frequency
+    real(r8), intent(in) :: v0s   ! Pressure-shifted line center frequency
+    real(rp), intent(in) :: x1
+    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
+    real(rp), intent(in) :: slabs1
+    real(rp), intent(in) :: y
+    real(rp), intent(in) :: yi
 
 ! If the molecular transition and temperature have not changed but
 ! frequency has enter here.
 
-! inputs: dNu , x1 , slabs1 , y, v0s, yi
-! output: slabswint (slab with interference)
-
     real(rp) :: x, u, p, y2
 
-    x = x1 * dNu
+    x = x1 * real(nu-v0s,rp)
     call real_simple_voigt(x,y,u)
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
+!  >> 2004-03-18 WV Snyder Use Nu/v0 instead of Nu/v0s.
 
-    p = x1 * (2.0_rp * v0s + dNu)
+    p = x1 * (nu + v0s)
     y2 = y*y
-    Slabswint = slabs1 *  (1.0_rp + dNu / v0s) * tanh1 * &
+    Slabswint = slabs1 * real(Nu / v0, rp) * tanh1 * &
       & (u + OneOvSPi*((y - p*yi)/(p*p + y2) + yi*x/(x*x+y2)))
 
   end function Slabswint
@@ -883,6 +886,8 @@ contains
 ! WITH INTERFERENCE ! using predominantly data from the Pickett catalogue.
 
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
+! >>2004-03-18 WV Snyder Use 1 - exp(-v0/300/Boltzmhz) in denominator instead
+!                        of 1 - exp(-v0s/300/Boltzmhz).
 
     use Physics, only: H_OVER_K
     use Units, only: Ln10, SpeedOfLight
@@ -965,11 +970,11 @@ contains
 
     betae = el / boltzcm
     betav = v0s / boltzmhz
-    Wd = v0s * Sqrt(t/m) * dc
+    Wd = v0 * Sqrt(t/m) * dc
     x1 = sqrtln2 / Wd
     y = x1 * w * p * (t3t**n)
     expn = EXP(-betav*onedt)
-    expd = EXP(-betav*oned300)
+    expd = EXP(-v0*(oned300/boltzmhz))
     slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300 - onedt)) &
          & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
     dslabs1 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
@@ -1224,6 +1229,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.24  2003/07/09 22:46:24  vsnyder
+! Futzing
+!
 ! Revision 2.23  2003/07/08 00:09:18  vsnyder
 ! Inlined several functions
 !

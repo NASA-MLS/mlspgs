@@ -102,7 +102,7 @@ contains
               &    No_mol, N_path
     real(rp) :: BB, BP, BM
     real(rp) :: T
-    real(rp), allocatable, dimension(:) :: LineWidth
+    real(r8), allocatable, dimension(:) :: LineCenter, LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
     real(rp), dimension(size(path_inds)) :: tanh1_p, tanh1_m, TM, TP
 
@@ -121,7 +121,7 @@ contains
         no_of_lines = max(no_of_lines,size(catalog(ib)%lines))
       end do
     end do
-    allocate ( LineWidth(no_of_lines) )
+    allocate ( LineCenter(no_of_lines), LineWidth(no_of_lines) )
 
     do i = 1, no_mol
       if ( associated(dBeta_dn_path) ) then
@@ -142,6 +142,7 @@ contains
         molecule = catalog(ib)%molecule
         no_of_lines = size(catalog(ib)%lines)
         do k = 1, no_of_lines
+          lineCenter(k) = lines(catalog(ib)%lines(k))%v0
           lineWidth(k) = lines(catalog(ib)%lines(k))%w
         end do
 
@@ -151,13 +152,15 @@ contains
         ! of an array temp (polarized .and. catalog(ib)%polarized).
         if ( polarized ) then
           call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-            & p_path, t_path, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-            & gl_slabs(:,ib), tanh_path, beta_path(:,i),                      &
+            & p_path, t_path,                                                 &
+            & frq, lineCenter(:no_of_lines), lineWidth(:no_of_lines),         &
+            & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, beta_path(:,i), &
             & catalog(ib)%polarized, dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
         else
           call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-            & p_path, t_path, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-            & gl_slabs(:,ib), tanh_path, beta_path(:,i),                      &
+            & p_path, t_path,                                                 &
+            & frq, lineCenter(:no_of_lines), lineWidth(:no_of_lines),         &
+            & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, beta_path(:,i), &
             & dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
         end if
       end do
@@ -184,24 +187,30 @@ contains
           end do ! k
           if ( polarized ) then
             call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-              & p_path, tm, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-              & gl_slabs_m(:,ib), tanh1_m, betam,                               &
+              & p_path, tm, frq,                                                &
+              & lineCenter(:no_of_lines), lineWidth(:no_of_lines),              &
+              & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, betam,       &
               & catalog(ib)%polarized, t_der_path_flags,                        &
               & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
             call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-              & p_path, tp, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-              & gl_slabs_p(:,ib), tanh1_p, betap,                               &
+              & p_path, tp, frq,                                                &
+              & lineCenter(:no_of_lines), lineWidth(:no_of_lines),              &
+              & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, betap,       &
               & catalog(ib)%polarized, t_der_path_flags,                        &
               & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
           else
             call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-              & p_path, tm, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-              & gl_slabs_m(:,ib), tanh1_m, betam,  path_flags=t_der_path_flags, &
-              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+              & p_path, tm, frq,                                                &
+              & lineCenter(:no_of_lines), lineWidth(:no_of_lines),              &
+              & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, betam,       &
+              & path_flags=t_der_path_flags, dBeta_dw=null(), dBeta_dn=null(),  &
+              & dBeta_dv=null() )
             call create_beta_path ( molecule, catalog(ib)%continuum, path_inds, &
-              & p_path, tp, frq, lineWidth(:no_of_lines), beta_group(i)%ratio(n), &
-              & gl_slabs_p(:,ib), tanh1_p, betap, path_flags=t_der_path_flags,  &
-              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
+              & p_path, tp, frq,                                                &
+              & lineCenter(:no_of_lines), lineWidth(:no_of_lines),              &
+              & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, betap,       &
+              & path_flags=t_der_path_flags, dBeta_dw=null(), dBeta_dn=null(),  &
+              & dBeta_dv=null() )
           end if
         end do ! n
         do j = 1 , n_path
@@ -373,7 +382,7 @@ contains
 
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( molecule, cont, pressure, Temp, Fgr, pfaw, &
+  subroutine Create_beta ( molecule, cont, pressure, Temp, Fgr, v0, pfaw, &
          &   slabs_0, tanh1, beta_value, polarized,                  &
          &   slabs_p, tanh1_p, slabs_m, tanh1_m,                     &
          &   t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
@@ -390,7 +399,7 @@ contains
 !  forward model.
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP, R8, IP
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
 
@@ -399,8 +408,9 @@ contains
     real(rp), intent(in) :: cont(:)    ! continuum parameters
     real(rp), intent(in) :: pressure   ! pressure in hPa
     real(rp), intent(in) :: temp       ! temperature in K
-    real(rp), intent(in) :: fgr        ! frequency in MHz
-    real(rp), intent(in) :: pfaw(:)    ! line widths
+    real(r8), intent(in) :: fgr        ! frequency in MHz
+    real(r8), intent(in) :: v0(:)      ! line centers
+    real(r8), intent(in) :: pfaw(:)    ! line widths
     real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
     type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
 
@@ -501,7 +511,7 @@ contains
           if ( polarized(ln_i) ) cycle
         end if
 
-        dNu = Fgr - slabs_0%v0s(ln_i)
+        dNu = Fgr - v0(ln_i)
 
         if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
         & > 100.0_rp ) then
@@ -537,18 +547,16 @@ contains
         do ln_i = 1, nl
           if ( polarized(ln_i) ) cycle
           beta_value = beta_value + &
-            &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &        slabs_0%x1(ln_i), tanh1, &
-            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+            &  Slabs(Fgr, v0(ln_i), slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &        tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
         end do
       else
         do ln_i = 1, nl
           if ( polarized(ln_i) ) cycle
           beta_value = beta_value + &
-            &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &            slabs_0%x1(ln_i), tanh1, &
-            &            slabs_0%slabs1(ln_i), &
-            &            slabs_0%y(ln_i), slabs_0%yi(ln_i))
+            &  Slabswint(Fgr, v0(ln_i), slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &            tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i),          &
+            &            slabs_0%yi(ln_i))
         end do
       end if
 
@@ -557,17 +565,15 @@ contains
       if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
         do ln_i = 1, nl
           beta_value = beta_value + &
-            &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &        slabs_0%x1(ln_i), tanh1, &
-            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+            &  Slabs(Fgr, v0(ln_i), slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &        tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
         end do
       else
         do ln_i = 1, nl
           beta_value = beta_value + &
-            &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &            slabs_0%x1(ln_i), tanh1, &
-            &            slabs_0%slabs1(ln_i), &
-            &            slabs_0%y(ln_i), slabs_0%yi(ln_i))
+            &  Slabswint(Fgr, v0(ln_i), slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
+            &            tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i),          &
+            &            slabs_0%yi(ln_i))
         end do
       end if
 
@@ -582,26 +588,22 @@ contains
           if ( present(polarized) ) then
             if ( polarized(ln_i) ) cycle
           end if
-          bp = bp + Slabs(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
-            &             slabs_p%x1(ln_i), tanh1_p, &
-            &             slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
-          bm = bm + Slabs(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
-            &             slabs_m%x1(ln_i), tanh1_m, &
-            &             slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
+          bp = bp + Slabs(Fgr, v0(ln_i), slabs_p%v0s(ln_i), slabs_p%x1(ln_i), &
+            &             tanh1_p, slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
+          bm = bm + Slabs(Fgr, v0(ln_i), slabs_m%v0s(ln_i), slabs_m%x1(ln_i), &
+            &             tanh1_m, slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
         end do
       else
         do ln_i = 1, nl
           if ( present(polarized) ) then
             if ( polarized(ln_i) ) cycle
           end if
-          bp = bp + Slabswint(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
-            &                 slabs_p%x1(ln_i), tanh1_p, &
-            &                 slabs_p%slabs1(ln_i), slabs_p%y(ln_i), &
-            &                 slabs_p%yi(ln_i))
-          bm = bm + Slabswint(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
-            &                 slabs_m%x1(ln_i), tanh1_m, &
-            &                 slabs_m%slabs1(ln_i), slabs_m%y(ln_i), &
-            &                 slabs_m%yi(ln_i))
+          bp = bp + Slabswint(Fgr, v0(ln_i), slabs_p%v0s(ln_i),             &
+            &                 slabs_p%x1(ln_i), tanh1_p, slabs_p%slabs1(ln_i), &
+            &                 slabs_p%y(ln_i), slabs_p%yi(ln_i))
+          bm = bm + Slabswint(Fgr, v0(ln_i), slabs_m%v0s(ln_i),             &
+            &                 slabs_m%x1(ln_i), tanh1_m, slabs_p%slabs1(ln_i), &
+            &                 slabs_p%y(ln_i), slabs_p%yi(ln_i))
         end do
       end if
 
@@ -617,7 +619,7 @@ contains
 ! -----------------------------------------  Create_beta_path  ---------
 
   subroutine Create_beta_path ( Molecule, Cont, Path_inds, Pressure, &
-         &   Temp, Fgr, Pfaw, Ratio,                                 &
+         &   Temp, Fgr, V0, Pfaw, Ratio,                             &
          &   Slabs_0, Tanh1, Beta_value, Polarized, Path_flags,      &
          &   Slabs_p, Tanh1_p, Slabs_m, Tanh1_m,                     &
          &   T_power, dBeta_dw, dBeta_dn, dBeta_dv  )
@@ -626,7 +628,7 @@ contains
 !  This routine should be called for primary and image separately.
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP, R8, IP
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
 
@@ -636,8 +638,9 @@ contains
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
     real(rp), intent(in) :: Pressure(:)! pressure in hPa on the find path grid
     real(rp), intent(in) :: Temp(:)    ! temperature in K along the path
-    real(rp), intent(in) :: Fgr        ! frequency in MHz
-    real(rp), intent(in) :: Pfaw(:)    ! line widths
+    real(r8), intent(in) :: Fgr        ! frequency in MHz
+    real(r8), intent(in) :: V0(:)      ! line centers
+    real(r8), intent(in) :: Pfaw(:)    ! line widths
     real(rp), intent(in) :: Ratio      ! Isotope ratio
     type(slabs_struct), intent(in) :: Slabs_0(:) ! contains, among others:
 
@@ -742,7 +745,7 @@ contains
 
             if ( polarized(ln_i) ) cycle
 
-            dNu = Fgr - slabs_0(k)%v0s(ln_i)
+            dNu = Fgr - v0(ln_i)
 
             if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
             & > 100.0_rp ) then
@@ -768,7 +771,7 @@ contains
 
           do ln_i = 1, nl
 
-            dNu = Fgr - slabs_0(k)%v0s(ln_i)
+            dNu = Fgr - v0(ln_i)
 
             if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
             & > 100.0_rp ) then
@@ -801,16 +804,16 @@ contains
         if ( maxval(ABS(slabs_0(k)%yi)) < 1.0e-06_rp ) then
           if ( present(polarized) ) then
             do ln_i = 1, nl
-              if ( .not. polarized(ln_i) ) &
-                & beta_value(j) = beta_value(j) + ratio * &
-                &   Slabs(Fgr - slabs_0(k)%v0s(ln_i), slabs_0(k)%v0s(ln_i), &
-                &        slabs_0(k)%x1(ln_i), tanh1(j), &
-                &        slabs_0(k)%slabs1(ln_i), slabs_0(k)%y(ln_i))
+              if ( polarized(ln_i) ) cycle
+              beta_value(j) = beta_value(j) + ratio * &
+              &   Slabs(Fgr, v0(ln_i), slabs_0(k)%v0s(ln_i), &
+              &         slabs_0(k)%x1(ln_i), tanh1(j), &
+              &         slabs_0(k)%slabs1(ln_i), slabs_0(k)%y(ln_i))
             end do
           else
             do ln_i = 1, nl
               beta_value(j) = beta_value(j) + ratio * &
-                &  Slabs(Fgr - slabs_0(k)%v0s(ln_i), slabs_0(k)%v0s(ln_i), &
+                &  Slabs(Fgr, v0(ln_i), slabs_0(k)%v0s(ln_i), &
                 &        slabs_0(k)%x1(ln_i), tanh1(j), &
                 &        slabs_0(k)%slabs1(ln_i), slabs_0(k)%y(ln_i))
             end do
@@ -818,20 +821,20 @@ contains
         else
           if ( present(polarized) ) then
             do ln_i = 1, nl
-              if ( .not. polarized(ln_i) ) &
-                & beta_value(j) = beta_value(j) + ratio * &
-                &   Slabswint(Fgr - slabs_0(k)%v0s(ln_i), slabs_0(k)%v0s(ln_i), &
-                &            slabs_0(k)%x1(ln_i), tanh1(j), &
-                &            slabs_0(k)%slabs1(ln_i), &
-                &            slabs_0(k)%y(ln_i), slabs_0(k)%yi(ln_i))
+              if ( polarized(ln_i) ) cycle
+              beta_value(j) = beta_value(j) + ratio * &
+              &   Slabswint(Fgr, v0(ln_i), slabs_0(k)%v0s(ln_i), &
+              &             slabs_0(k)%x1(ln_i), tanh1(j), &
+              &             slabs_0(k)%slabs1(ln_i), slabs_0(k)%y(ln_i), &
+              &             slabs_0(k)%yi(ln_i))
             end do
           else
             do ln_i = 1, nl
               beta_value(j) = beta_value(j) + ratio * &
-                &  Slabswint(Fgr - slabs_0(k)%v0s(ln_i), slabs_0(k)%v0s(ln_i), &
+                &  Slabswint(Fgr, v0(ln_i), slabs_0(k)%v0s(ln_i), &
                 &            slabs_0(k)%x1(ln_i), tanh1(j), &
-                &            slabs_0(k)%slabs1(ln_i), &
-                &            slabs_0(k)%y(ln_i), slabs_0(k)%yi(ln_i))
+                &            slabs_0(k)%slabs1(ln_i), slabs_0(k)%y(ln_i), &
+                &            slabs_0(k)%yi(ln_i))
             end do
           end if
         end if
@@ -846,22 +849,22 @@ contains
           if ( maxval(abs(slabs_0(k)%yi)) < 1.0e-6_rp ) then
             do ln_i = 1, nl
               if ( polarized(ln_i) ) cycle
-              bp = bp + Slabs(Fgr - slabs_p(k)%v0s(ln_i), slabs_p(k)%v0s(ln_i), &
-                &             slabs_p(k)%x1(ln_i), tanh1_p(j), &
+              bp = bp + Slabs(Fgr, v0(ln_i), slabs_p(k)%v0s(ln_i), &
+                &             slabs_p(k)%x1(ln_i), tanh1_p(j),     &
                 &             slabs_p(k)%slabs1(ln_i),slabs_p(k)%y(ln_i))
-              bm = bm + Slabs(Fgr - slabs_m(k)%v0s(ln_i), slabs_m(k)%v0s(ln_i), &
-                &             slabs_m(k)%x1(ln_i), tanh1_m(j), &
+              bm = bm + Slabs(Fgr, v0(ln_i), slabs_m(k)%v0s(ln_i), &
+                &             slabs_m(k)%x1(ln_i), tanh1_m(j),     &
                 &             slabs_m(k)%slabs1(ln_i),slabs_m(k)%y(ln_i))
             end do
           else
             do ln_i = 1, nl
               if ( polarized(ln_i) ) cycle
-              bp = bp + Slabswint(Fgr - slabs_p(k)%v0s(ln_i), slabs_p(k)%v0s(ln_i), &
-                &                 slabs_p(k)%x1(ln_i), tanh1_p(j), &
+              bp = bp + Slabswint(Fgr, v0(ln_i), slabs_p(k)%v0s(ln_i), &
+                &                 slabs_p(k)%x1(ln_i), tanh1_p(j),     &
                 &                 slabs_p(k)%slabs1(ln_i), slabs_p(k)%y(ln_i), &
                 &                 slabs_p(k)%yi(ln_i))
-              bm = bm + Slabswint(Fgr - slabs_m(k)%v0s(ln_i), slabs_m(k)%v0s(ln_i), &
-                &                 slabs_m(k)%x1(ln_i), tanh1_m(j), &
+              bm = bm + Slabswint(Fgr, v0(ln_i), slabs_m(k)%v0s(ln_i), &
+                &                 slabs_m(k)%x1(ln_i), tanh1_m(j),     &
                 &                 slabs_m(k)%slabs1(ln_i), slabs_m(k)%y(ln_i), &
                 &                 slabs_m(k)%yi(ln_i))
             end do
@@ -869,21 +872,21 @@ contains
         else ! not polarized
           if ( maxval(abs(slabs_0(k)%yi)) < 1.0e-6_rp ) then
             do ln_i = 1, nl
-              bp = bp + Slabs(Fgr - slabs_p(k)%v0s(ln_i), slabs_p(k)%v0s(ln_i), &
-                &             slabs_p(k)%x1(ln_i), tanh1_p(j), &
+              bp = bp + Slabs(Fgr, v0(ln_i), slabs_p(k)%v0s(ln_i), &
+                &             slabs_p(k)%x1(ln_i), tanh1_p(j),     &
                 &             slabs_p(k)%slabs1(ln_i),slabs_p(k)%y(ln_i))
-              bm = bm + Slabs(Fgr - slabs_m(k)%v0s(ln_i), slabs_m(k)%v0s(ln_i), &
-                &             slabs_m(k)%x1(ln_i), tanh1_m(j), &
+              bm = bm + Slabs(Fgr, v0(ln_i), slabs_m(k)%v0s(ln_i), &
+                &             slabs_m(k)%x1(ln_i), tanh1_m(j),     &
                 &             slabs_m(k)%slabs1(ln_i),slabs_m(k)%y(ln_i))
             end do
           else
             do ln_i = 1, nl
-              bp = bp + Slabswint(Fgr - slabs_p(k)%v0s(ln_i), slabs_p(k)%v0s(ln_i), &
-                &                 slabs_p(k)%x1(ln_i), tanh1_p(j), &
+              bp = bp + Slabswint(Fgr, v0(ln_i), slabs_p(k)%v0s(ln_i), &
+                &                 slabs_p(k)%x1(ln_i), tanh1_p(j),     &
                 &                 slabs_p(k)%slabs1(ln_i), slabs_p(k)%y(ln_i), &
                 &                 slabs_p(k)%yi(ln_i))
-              bm = bm + Slabswint(Fgr - slabs_m(k)%v0s(ln_i), slabs_m(k)%v0s(ln_i), &
-                &                 slabs_m(k)%x1(ln_i), tanh1_m(j), &
+              bm = bm + Slabswint(Fgr, v0(ln_i), slabs_m(k)%v0s(ln_i), &
+                &                 slabs_m(k)%x1(ln_i), tanh1_m(j),     &
                 &                 slabs_m(k)%slabs1(ln_i), slabs_m(k)%y(ln_i), &
                 &                 slabs_m(k)%yi(ln_i))
             end do
@@ -980,6 +983,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.50  2004/02/27 22:47:32  bill
+! fixed bug in n2 continuum calc
+!
 ! Revision 2.49  2004/01/26 21:57:00  vsnyder
 ! Improve TeXnicalities
 !
