@@ -42,7 +42,8 @@ begin Join
   Label, quantity=state.$1, label='$1'
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName($1)', $
-    source=state.$1, precision=outputPrecision.$1!nl})
+    source=state.$1, precision=outputPrecision.$1
+    status=otherDiagnostics.status$1,quality=otherDiagnostics.quality$1!nl})
   !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
 
   ;; IWC is a special case
