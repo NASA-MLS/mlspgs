@@ -242,6 +242,7 @@ contains
 
     logical, parameter :: PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
+    integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
     character (LEN=MAXFILENAMELENGTH) :: myName
     integer(i4) :: myPC
@@ -255,6 +256,7 @@ contains
 
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
+    record_length = DEFAULTRECLEN
 
     if(present(versionNum)) then
       version = versionNum
@@ -620,6 +622,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.20  2001/06/19 22:22:28  pwagner
+! Set record_length to DEFAULTRECLEN unless otherwise
+!
 ! Revision 2.19  2001/05/08 23:35:44  pwagner
 ! Fixed bug in the_eff_mode
 !
