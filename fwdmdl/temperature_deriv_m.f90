@@ -55,7 +55,9 @@ contains
 ! Compute the temperature derivative of delta:
 !
         Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
-       &     beta_path,dHdz_path,dh_dt_path(:,ip,in),N_lvls,n_sps,      &
+       &     beta_path,dHdz_path,&
+       &     dh_dt_path(:,ip-lbound(k_temp%values,3)+1,in),&
+       &     N_lvls,n_sps, &
        &     ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
        &     in,ip,elvar,d_delta_dtnp)
 !
@@ -73,6 +75,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.10  2001/04/11 00:51:44  livesey
+! Moving window implemented
+!
 ! Revision 1.9  2001/03/31 23:40:56  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
