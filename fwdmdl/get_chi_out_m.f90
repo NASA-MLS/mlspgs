@@ -35,8 +35,8 @@ MODULE get_chi_out_m
 !                          temperature horizontal basis in km
   REAL(rp), INTENT(in) :: orb_inc    ! orbital incline angle in radians
   REAL(rp), INTENT(in) :: elev_offset ! elevation offset in radians
-  REAL(rp), INTENT(in) :: req  ! Earth radius in equivalent circle
-!                                representation (km)
+  REAL(rp), INTENT(in) :: req(:)  ! Earth radius in equivalent circle
+!                                ! at each phi value representation (km)
 ! Keywords
   REAL(rp), OPTIONAL, INTENT(in) :: h2o_zeta_basis(:) ! h2o zeta basis
   REAL(rp), OPTIONAL, INTENT(in) :: h2o_phi_basis(:) ! h2o phi basis
@@ -156,7 +156,7 @@ MODULE get_chi_out_m
     DO ht_i = 1, n_out
       dhdz = dhdz_out(ht_i)
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
-         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+         & h_tan_out(ht_i),phitan(ht_i),Req(ht_i),elev_offset, &
          & tan_chi_out(ht_i),q,dhdz,RESHAPE(dhdt_tan(ht_i,:,:),&
          & (/n_t_zeta*n_t_phi/)),RESHAPE(d2hdhdt_tan(ht_i,:,:), &
          & (/n_t_zeta*n_t_phi/)),dxdt_tan(ht_i,:),d2xdxdt_tan(ht_i,:))
@@ -167,7 +167,7 @@ MODULE get_chi_out_m
 !
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
-         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+         & h_tan_out(ht_i),phitan(ht_i),Req(ht_i),elev_offset, &
          & tan_chi_out(ht_i),dx_dh_out(ht_i),dhdz_out(ht_i))
      ENDDO
 !
@@ -187,6 +187,9 @@ MODULE get_chi_out_m
 !
 END MODULE get_chi_out_m
 ! $Log$
+! Revision 2.9  2002/07/11 20:51:49  bill
+! made req an mmif quantity
+!
 ! Revision 2.8  2002/07/05 07:52:48  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !
