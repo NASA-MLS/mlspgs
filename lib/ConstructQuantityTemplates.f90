@@ -125,6 +125,10 @@ CONTAINS
     CHARACTER (LEN=NameLen) :: l1bItemName
 
     INTEGER :: noMAFs,l1bFlag,l1bItem,mafIndex,mifIndex
+    CHARACTER (LEN=3),  DIMENSION(MLSInstrumentNoModules) :: &
+       & MLSInstrumentModuleNames= (/ &
+       & "GHz", &
+       & "THz"/)
 
      MLSInstrumentModuleNames(1) = "GHz"
      MLSInstrumentModuleNames(2) ="THz"
@@ -284,7 +288,7 @@ CONTAINS
     TYPE (MLSCFCell_T) :: cell
     INTEGER :: keyNo            ! Loop counter
     LOGICAL :: needVHGrids, badUnit
-    TYPE(MLSSignal_T), DIMENSION(:), POINTER :: signals
+    TYPE(MLSSignal_T), DIMENSION(:), POINTER :: signals => null()
     INTEGER :: instrumentModule
     INTEGER :: noChans=1
     LOGICAL :: firstIndexChannel=.FALSE.
@@ -298,7 +302,6 @@ CONTAINS
     DO keyNo=1,cfInfo%mlscfEntryNoKeys
   
        cell=cfInfo%cells(keyNo)
-
        SELECT CASE(TRIM(cell%keyword))
        CASE ("NAME")
           name=cell%charValue
@@ -370,7 +373,6 @@ CONTAINS
     CASE DEFAULT
        CALL MLSMessage(MLSMSG_Error,ModuleName,"Unknown quantityType")
     END SELECT
-
     IF (badUnit) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & "Incorrect/absent unit for "//name)
 
@@ -401,7 +403,7 @@ CONTAINS
        SELECT CASE(quantityType)
        CASE(QTY_Ptan)
           CALL ParseMLSSignalRequest(radiometer,signals)
-          instrumentModule=signals(1)%instrumentModule
+          instrumentModule = signals(1)%instrumentModule
           CALL DestroyMLSSignalsInfo(signals)
 
        CASE (QTY_Radiance)
@@ -443,6 +445,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.14  2000/06/19 22:53:15  lungu
+! Fixed the weird qty%name=MLSInstrumentModuleNames(InstrumentModule) problem.
+!
 ! Revision 1.13  2000/05/17 23:19:07  lungu
 ! Added "." between MLSInstrumentModuleNames and l1bItemName.
 ! Made hGridIndex=0 and vGridIndex=0 upon entry, so it does not "inherit" attributes from previous call.
