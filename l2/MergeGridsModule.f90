@@ -27,7 +27,7 @@ contains ! =================================== Public procedures
   subroutine MergeGrids ( root, griddedDataBase )
 
     use Expr_m, only: EXPR
-    use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
+    use GriddedData, only: GRIDDEDDATA_T, rgr, SETUPNEWGRIDDEDDATA, &
       & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE, NullifyGriddedData
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE, S_MERGE
@@ -110,10 +110,10 @@ contains ! =================================== Public procedures
       integer :: UNITS(2)                 ! Units for expr
       integer :: VALUE                    ! Value of tree node
 
-      real (r8) :: CLIVAL                 ! Value from climatological grid
-      real (r8) :: CLIWEIGHT              ! Climtaological 'weight'
+      real (rgr) :: CLIVAL                 ! Value from climatological grid
+      real (r8) :: CLIWEIGHT              ! Climatological 'weight'
       real (r8) :: HEIGHT                 ! Transition height
-      real (r8) :: OPVAL                  ! Value from operational grid
+      real (rgr) :: OPVAL                  ! Value from operational grid
       real (r8) :: OPWEIGHT               ! Operational 'weight'
       real (r8) :: SCALE                  ! Transition scale
       real (r8) :: TOTALWEIGHT            ! Total weight
@@ -257,6 +257,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.7  2003/02/19 19:15:13  pwagner
+! Consistent with new GriddedData_T and rgr
+!
 ! Revision 2.6  2002/11/22 12:21:14  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
