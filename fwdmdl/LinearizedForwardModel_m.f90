@@ -344,10 +344,18 @@ contains ! =====     Public Procedures     =============================
             & l2pcQ%template%noInstances/2 + &
             & xStarInstance - 1
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
+
           ! Fill this part of xP
-          xP%quantities(qtyInd)%values(:,xStarInstance) =&
+          xP%quantities(qtyInd)%values(:,xStarInstance) = &
             & stateQ%values(:,xInstance)
 
+          ! If the state vector part has a mask, copy it to DeltaX
+          if ( associated ( stateQ%mask ) ) then
+            if ( .not. associated ( deltaX%quantities(qtyInd)%mask ) ) &
+              & CreateMask ( deltaX%quantities(qtyInd) )
+            deltaX%mask(qtyInd)%values(:,xStarInstance) = &
+              stateQ%mask(:,xInstance)
+          endif
 
           ! If so, interpolate this block of kStar and place in jacobian
           if (doDerivatives) then
@@ -425,6 +433,13 @@ contains ! =====     Public Procedures     =============================
         deltaX%quantities(qtyInd)%values = &
           & xP%quantities(qtyInd)%values - &
           & l2pc%col%vec%quantities(qtyInd)%values
+
+
+        ! NOTE FOR FUTURE ******************************************
+        ! Now make sure that the deltaX's where mask is set are zero
+        ! Write this bit later!!!!! !?????? ***********************
+        ! Also, do we need to zero out the corresponding columns of K.
+        ! I think not as Van's code skips them already.
 
       end do                              ! End loop over quantities
 
@@ -546,11 +561,15 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.8  2001/04/28 21:23:33  livesey
+! Working version.  Does folded sidebands (not tested yet), nice and fast
+!
 ! Revision 1.7  2001/04/28 19:40:37  livesey
 ! Working version. Assembles jacobian in a nice fast manner.
 ! Next thing is to do sideband folding.
 !
-! Revision 1.6  2001/04/28 07:05:25  livesey! Another interim version
+! Revision 1.6  2001/04/28 07:05:25  livesey
+! Another interim version
 !
 ! Revision 1.5  2001/04/28 04:40:56  livesey
 ! Another interim version.
