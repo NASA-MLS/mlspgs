@@ -2472,9 +2472,11 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'Writing swath attributes'
     status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
-        field_name = 'Pressure'
+    field_name = 'Pressure'
     status = he5_swwrattr(swid, 'Vertical Coordinate', HE5T_NATIVE_SCHAR, 1, &
       & field_name)
+    status = he5_swwrattr(swid, 'Fill Value', rgp_type, 1, &
+      & (/ real(UNDEFINED_VALUE, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
     ! print *, 'Writing geolocation attributes'
@@ -2494,6 +2496,8 @@ contains ! =====     Public Procedures     =============================
           & HE5T_NATIVE_SCHAR, 1, theTitles(field))
         status = he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
           & HE5T_NATIVE_SCHAR, 1, theUnits(field))
+        status = he5_swwrlattr(swid, trim(theTitles(field)), 'Fill Value', &
+          & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
       endif
     enddo
     !   - -   D a t a   A t t r i b u t e s   - -
@@ -2930,6 +2934,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.55  2003/02/12 21:50:33  pwagner
+! New api for ReadL2GPData lets you supply fileName and hdfversion, which can be wildcard
+!
 ! Revision 2.54  2003/02/10 22:04:49  pwagner
 ! ChunkNumber correctly HE5_SWdefgfld-ed as an int
 !
