@@ -610,8 +610,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%cloud_width,                                      &
       & forwardModelConfig%cloud_fov,                                        &
       & phi_tan,                                                             &
-      & scGeocAlt%values(1,maf),                                               &
-      & elevOffset%values(1,maf),                                              &
+      & scGeocAlt%values(1,1),                                               &
+      & elevOffset%values(1,1),                                              &
       & antennaPatterns(whichPattern),                                       &
       & a_clearSkyRadiance,                                                  &
       & a_cloudInducedRadiance,                                              &
@@ -864,6 +864,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.57  2001/10/10 18:33:53  dwu
+! normalize cloud extinction weighting function to 200GHz
+!
 ! Revision 1.56  2001/10/09 22:11:54  jonathan
 ! *** empty log message ***
 !
