@@ -452,7 +452,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
-             l+l_gph, n+n_dt_def, &
+             n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def, &
       begin, t+t_quantityType, l+l_baseline, l+l_extinction, l+l_gph, &
              l+l_ptan, l+l_radiance, l+l_temperature, l+l_vmr, n+n_dt_def, &
@@ -731,6 +731,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.12  2001/02/01 20:19:42  vsnyder
+! Remove "gph" from the "molecule" type
+!
 ! Revision 2.11  2001/02/01 01:23:36  vsnyder
 ! Account for the Molecules module
 !
