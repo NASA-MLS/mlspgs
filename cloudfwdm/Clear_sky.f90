@@ -53,11 +53,13 @@
 
          Z(I)=XZ(I+1)-XZ(I)
          T(I)=(XT(I+1)+XT(I))*0.5
-         P=(XP(I+1)+XP(I))*0.5               !!! NEED TO CHANGE TO P(I)
+         P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     !!! NEED TO CHANGE TO P(I)
+         P=10**P
          DQ=(XQ(I+1)+XQ(I))*0.5
 
          DO J=1,NS
-            VMR1(J)=(VMR(J,I+1)+VMR(J,I))*0.5
+            VMR1(J)=(LOG10(VMR(J,I+1))+LOG10(VMR(J,I)))*0.5
+            VMR1(J)=10**VMR1(J)
          ENDDO
 
          CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
@@ -79,3 +81,4 @@
 
 
 
+
