@@ -15,7 +15,7 @@ contains
 ! Set up array of pointing angles
 
 SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
-           phi_tan,req,elev_offset,ptg_angle,tan_dh_dt,   &
+           phi_tan,Req,elev_offset,ptg_angle,dx_dh,dh_dz,tan_dh_dt,&
            tan_d2h_dhdt,dx_dt,d2x_dxdt)
 
 !  ===============================================================
@@ -29,15 +29,18 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
   REAL(rp), INTENT(IN) :: sc_geoc_alt ! geocentric spacecraft(observer)
                                       ! altitude in km
   REAL(rp), INTENT(IN) :: tan_index_refr ! tangent index of refraction
-  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to req
+  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to Req
   REAL(rp), INTENT(IN) :: phi_tan ! tangent orbit plane projected
                                   ! geodetic angle in radians
-  REAL(rp), INTENT(IN) :: req ! equivalent earth radius in km
+  REAL(rp), INTENT(IN) :: Req ! equivalent earth radius in km
   REAL(rp), INTENT(IN) :: elev_offset ! radiometer pointing offset in radians
+  REAL(rp), INTENT(IN) :: dh_dz ! dh/dz  at the tangent point
 !
 ! output
 !
   REAL(rp), INTENT(OUT) :: ptg_angle ! pointing angle in radians
+  REAL(rp), INTENT(OUT) :: dx_dh     ! derivative of pointing angle
+                                     ! wrt height
 !
 ! keywords
 !
@@ -54,38 +57,45 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !  ----------------
 !
   Real(rp), PARAMETER :: ampl = 38.9014
-  Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
+  Real(rp), PARAMETER :: phas = 51.6814 * Deg2Rad
+  Real(rp), PARAMETER :: Ln10 = 2.302585092994045684_rp
 !
-  REAL(rp) :: ht, tp, hs, x
+  REAL(rp) :: ht, tp, hs, x, q, Np1
 !
 ! Start code:
 !
-  ht = req + tan_ht
+  ht = Req + tan_ht
+  Np1 = 1.0_rp + tan_index_refr
   hs = sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))
-  x = (1.0_rp + tan_index_refr) * ht / hs
-  ptg_angle = elev_offset + ASIN(x * min(ht,req)/req)
+  x = Np1 * ht / hs
+  ptg_angle = elev_offset + ASIN(x * min(ht,Req)/Req)
 !
-! do temperature stuff if user requests it
+  if(tan_ht >= 0.0_rp) then
+    q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
+  else
+    q = 2.0_rp * ht * Np1 / Req
+  endif
+  dx_dh = q / (hs * Cos(x))
 !
+! Do temperature stuff if user requests it
 ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
 ! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
 !
-!  First: Get table of temperature basis functions
-!
   IF(PRESENT(tan_dh_dt)) THEN
-!    IF(tan_ht > 0.0_rp) THEN
-      tp = TAN(ptg_angle)
-      dx_dt = tp * tan_dh_dt / ht
-      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
-!    ELSE
-!      dx_dt = 0.0_rp
-!      d2x_dxdt = 0.0_rp
-!    ENDIF
+    tp = TAN(ptg_angle)
+    dx_dt = tp * tan_dh_dt / ht
+    d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
   ENDIF
+
   RETURN
+
 END SUBROUTINE get_chi_angles
+
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.7  2002/06/24 21:11:24  zvi
+! Adding Grids_tmp stracture and modifying calling sequences
+!
 ! Revision 2.3  2002/06/11 22:20:45  bill
 ! eliminate zero-out feature--wgr
 !
