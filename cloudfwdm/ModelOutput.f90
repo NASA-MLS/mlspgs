@@ -28,7 +28,7 @@ contains
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,   &
         &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
         &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
-        &                    N,ISWI,RE, noS, Slevl)
+        &                    N,RE, noS, Slevl)
 !----------------------------------------------------------------
 
       INTEGER :: NH, NZ, NT, N, noS
@@ -62,7 +62,7 @@ contains
       REAL(r8) :: RE, xout, sum
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
       REAL(r8) :: ZH(NH-1),ZA(NZ-1), ZS(NoS)
-      INTEGER :: I,K,J,iflag, JM, ISWI
+      INTEGER :: I,K,J,iflag, JM
 !-----------------------------------------------------------------------------
 
 !===============================================================
@@ -114,8 +114,6 @@ contains
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
 !==========================================================================
-
-      IF (ISWI .EQ. 0) THEN
 
          DO I=1,NT
 
@@ -182,7 +180,6 @@ contains
 
          ENDDO
       
-      ENDIF
 
 !--------------------------------------------------------------------------
 
@@ -191,6 +188,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.5  2001/10/10 02:49:35  dwu
+! fix problem in trans calculation
+!
 ! Revision 1.4  2001/10/09 22:12:36  jonathan
 ! fix trans func
 !

@@ -448,23 +448,23 @@ contains
       SWIND = 0._r8
       NIWC  = 10
 
-      IF (ISWI .EQ. 0) THEN                  
+!      IF (ISWI .EQ. 0) THEN                  
          RATIO=1._r8
          MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
-      ELSE
-          MY_NIWC=NIWC
-      ENDIF
+!      ELSE
+!          MY_NIWC=NIWC
+!      ENDIF
 
 !------------------------------------------
 !     PERFORM FULL SENSITIVITY CALCULATION
 !------------------------------------------
 
       DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
-         IF (ISWI .EQ. 0) THEN
+!         IF (ISWI .EQ. 0) THEN
             RATIO=1._r8
-         ELSE
-            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
-         ENDIF
+!         ELSE
+!            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
+!         ENDIF
 
 !=========================================================================
 !                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
@@ -773,12 +773,12 @@ contains
               &                 method='Linear')
 
          ENDIF
-           
+         
+!         if (iswi == 0) &
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
               &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
-              &            N,ISWI,RE, noS, Slevl) ! COMPUTE SENSITIVITY
-
+              &            N,RE, noS, Slevl) ! COMPUTE SENSITIVITY
 
       ELSE IF ( .NOT. doChannel(IFR) ) then
          DO I = 1, NZ-1
@@ -810,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.15  2001/10/09 22:12:10  jonathan
+! *** empty log message ***
+!
 ! Revision 1.14  2001/10/04 23:35:05  dwu
 ! *** empty log message ***
 !
