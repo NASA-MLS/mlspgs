@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -120,7 +120,7 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
     USE MLSFiles, ONLY: MLS_openFile
     USE MLSL1Config, ONLY: L1Config
-    USE H5LIB
+!    USE H5LIB
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: error, returnStatus, sd_id, version
@@ -171,6 +171,9 @@ END MODULE OpenInitBOA
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2004/01/09 20:02:57  perun
+! Update BOA to HDF 5
+!
 ! Revision 2.2  2004/01/09 18:10:23  perun
 ! Version 1.4 commit
 !
