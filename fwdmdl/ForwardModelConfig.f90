@@ -846,7 +846,8 @@ contains
         call output ( Config%forwardModelDerived%channels(j)%used, before='    Used: ' )
         call output ( Config%forwardModelDerived%channels(j)%origin, before='    Origin: ' )
         call output ( Config%forwardModelDerived%channels(j)%signal, before='    Signal: ' )
-        call output ( Config%forwardModelDerived%channels(j)%DACS, before='    DACS: ' )
+        call output ( Config%forwardModelDerived%channels(j)%DACS, before='    DACS: ', &
+          & advance='yes' )
         if ( associated(Config%forwardModelDerived%channels(j)%PFAData) ) &
           & call dump ( Config%forwardModelDerived%channels(j)%PFAData, &
             & name='    PFAData' )
@@ -873,6 +874,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.56  2004/08/05 20:57:52  vsnyder
+! Put a sentinel at the end of %molecules
+!
 ! Revision 2.55  2004/08/03 21:40:06  vsnyder
 ! Inching further toward PFA
 !
