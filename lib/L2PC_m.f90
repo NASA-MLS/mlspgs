@@ -46,6 +46,9 @@ module L2PC_m
   ! kStar when destory vectors etc. are called.  If on the other hand it was
   ! read from a file, we'll have to destroy these ourselves
 
+  ! The l2pc database
+  type(l2pc_T), dimension(:), pointer, public :: L2PCDatabase => NULL()
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -384,12 +387,11 @@ contains ! ============= Public Procedures ==========================
   end subroutine Close_L2PC_File
 
   ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( lun, l2pcDatabase )
+  subroutine Read_l2pc_file ( lun )
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
     ! Read all the bins in an l2pc file
     integer, intent(in) :: lun
-    type (l2pc_T), dimension(:), pointer :: l2pcDatabase
 
     ! Local variables
     type (l2pc_T) :: l2pc
@@ -462,9 +464,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine DestroyL2PC
 
   ! ------------------------------------------- DestroyL2PCDatabase ---
-  subroutine DestroyL2PCDatabase (l2pcDatabase )
-    ! Dummy arguments
-    type (l2pc_T), dimension(:), pointer :: l2pcDatabase
+  subroutine DestroyL2PCDatabase
 
     ! Local variables
     integer :: i, status
@@ -482,6 +482,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.7  2001/04/26 20:02:26  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.6  2001/04/26 19:33:03  livesey
 ! Working version, reads and writes, (but no arithmetic :-) )
 !
