@@ -491,7 +491,7 @@ contains ! =====     Public procedures     =============================
              l+l_mif, l+l_mifs, l+l_minutes, l+l_orbits, l+l_pa, l+l_ppbv, &
              l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
              l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def, &
-      begin, t+t_vgridcoord, l+l_angle, l+l_geodAltitude, l+l_gph, l+l_none, &
+      begin, t+t_vgridcoord, l+l_angle, l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_none, &
              l+l_pressure, l+l_theta, l+l_zeta, l+l_integer, n+n_dt_def, &
       begin, t+t_vgridtype, l+l_explicit, l+l_linear, l+l_logarithmic, &
              l+l_l2gp, n+n_dt_def /) )
@@ -628,6 +628,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
              begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
+             begin, f+f_geodAlt, s+s_vGrid, n+n_field_spec, &
              begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_vGrid
@@ -1290,6 +1291,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.385  2004/10/13 02:23:35  livesey
+! Added geodAlt to Forge and geocAltitude as a vGrid coordinate
+!
 ! Revision 2.384  2004/09/27 20:10:51  livesey
 ! Added applyBaseline fill method and it's supporting stuff
 !
