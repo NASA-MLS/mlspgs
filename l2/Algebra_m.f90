@@ -58,7 +58,7 @@ contains
       & InvertCholesky, K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
-      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
+      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix, ClearLower
     use MatrixTools, only: COMBINECHANNELSINMATRIX
     use MLSCommon, only: R8, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -527,7 +527,7 @@ contains
       ! or put into a database to avoid memory leaks.
 
       use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
-      use FUNCTIONS, only: F_CHOLESKY, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
+      use FUNCTIONS, only: F_CHOLESKY, F_CLEARLOWER, F_INVERT, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT, F_XTX
       use MatrixModule_1, only: NORMALEQUATIONS
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
@@ -642,6 +642,23 @@ contains
                 & .not. matrix_s2%m%row%instFirst, .not. matrix_s2%m%col%instFirst )
               ! Fill it
               call CholeskyFactor ( matrix_c, matrix_s2 )
+              what = w_matrix_c
+            end if
+          end if
+        case ( f_clearLower )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_c%m, 0, &
+                & matrix2%row%vec, matrix2%col%vec, &
+                & .not. matrix2%row%instFirst, .not. matrix2%col%instFirst )
+              ! Fill it
+              call CopyMatrix ( matrix_c%m, matrix2 )
+              call ClearLower ( matrix_c%m )
               what = w_matrix_c
             end if
           end if
@@ -1416,6 +1433,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.16  2004/10/14 04:54:41  livesey
+! Added clearLower function
+!
 ! Revision 2.15  2004/09/25 00:16:10  livesey
 ! Added combineChannels
 !
