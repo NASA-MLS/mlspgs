@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
-      & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
+      & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
       &	F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -65,7 +65,7 @@ contains ! =====     Public Procedures     =============================
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
-      & F_RHIQUANTITY, F_Rows, &
+      & F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
@@ -75,7 +75,7 @@ contains ! =====     Public Procedures     =============================
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
-      & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQCHAN, &
+      & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
@@ -86,7 +86,7 @@ contains ! =====     Public Procedures     =============================
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
-      & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
+      & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN,  L_QUALITY, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
       & L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
       & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
@@ -335,6 +335,7 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(field_first:field_last) :: GOT
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
+    integer :: HEIGHTNODE               ! Descendant of son
     logical :: HIGHBOUND                ! Flag
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
@@ -408,6 +409,7 @@ contains ! =====     Public Procedures     =============================
     integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
+    real(r8) :: SCALE                   ! Scale factor
     integer :: SCECIQUANTITYINDEX       ! In the quantities database
     integer :: SCECIVECTORINDEX         ! In the vector database
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
@@ -498,6 +500,7 @@ contains ! =====     Public Procedures     =============================
       logSpace = .false.
       resetSeed = .false.
       refract = .false.
+      scale = 0.0
       spreadFlag = .false.
       switch2intrinsic = .false.
       seed = 0
@@ -508,6 +511,7 @@ contains ! =====     Public Procedures     =============================
       phiWindow = 4
       phiWindowUnits = phyq_angle
       phiZero = 0.0
+      heightNode = 0
 
       ! Node_id(key) is now n_spec_args.
 
@@ -772,6 +776,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_gphQuantity ) ! For magnetic field fill
             gphVectorIndex = decoration(decoration(subtree(1,gson)))
             gphQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_height )
+            heightNode = subtree(j,key)
           case ( f_h2oQuantity ) ! For hydrostatic or rhi
             h2oVectorIndex = decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -905,6 +911,11 @@ contains ! =====     Public Procedures     =============================
           case ( f_rhiQuantity ) ! For h2o from rhi
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+          case ( f_scale )
+            call expr ( gson, unitAsArray, valueAsArray )
+            scale = valueAsArray(1)
+            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
+              call Announce_Error ( key, 0, 'Bad units for scale' )
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1411,6 +1422,14 @@ contains ! =====     Public Procedures     =============================
                     & invert )    ! invert rather than convert?
                 end if
             end if
+
+          case ( l_quality )
+            if ( .not. all ( got ( (/ f_sourceQuantity, f_height, f_scale /) ) ) ) &
+              call Announce_error ( key, no_error_code, &
+              & 'Need sourceQuanitity, height and scale for quality fill' )
+            sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
+              & sourceQuantityIndex )
+            call FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
 
           case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
             if ( .not. any(got( &
@@ -6251,7 +6270,41 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillWithBoxcarFunction
 
-    ! ----------------------------------------------- OffsetRadianceQuantity ---
+    ! -------------------------------------------- FillQualityFromChisq --------
+    subroutine FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
+      integer, intent(in) :: KEY        ! Tree node
+      type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Chisq like quantity on which it's based
+      real(r8), intent(in) :: SCALE     ! A scale factor
+      integer, intent(in) :: HEIGHTNODE ! What heights
+      ! Local variables
+      integer, dimension(2) :: UNITASARRAY ! From expr
+      real(r8), dimension(2) :: VALUEASARRAY ! From expr
+      real(r8) :: HEIGHT                ! The height to consider
+      integer :: SURFACE                ! Surface index
+      ! Executable code
+      ! Do some sanity checking
+      if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+        & 'Quality quantity must be quality' )
+      if ( sourceQuantity%template%quantityType /= l_chisqBinned ) call Announce_error ( &
+        & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
+      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
+        & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
+      if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
+        & 'Only one height can be supplied for quality fill' )
+      ! Work out the height
+
+      call expr ( heightNode, unitAsArray, valueAsArray )
+      height = valueAsArray(1)
+      if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
+        call Announce_Error ( key, 0, 'Bad units for height' )
+      ! chisqBinned must be on zeta surfaces already, forced at construction, so take log.
+      height = - log10 ( height )
+      call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
+      quantity%values(1,:) = 1.0 - tanh ( sourceQuantity%values(surface,1) / scale )
+    end subroutine FillQualityFromChisq
+
+    ! ----------------------------------------------- offsetradiancequantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
@@ -6587,6 +6640,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.260  2004/03/10 22:19:51  livesey
+! Added quality fill method
+!
 ! Revision 2.259  2004/03/03 22:40:59  livesey
 ! Added a<b and a>b to manipulations
 !
