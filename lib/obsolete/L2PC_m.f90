@@ -41,7 +41,7 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
-  public :: OutputHDF5L2PC
+  public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -728,9 +728,22 @@ contains ! ============= Public Procedures =============================
     end do
   end subroutine ReadOneVector
 
+  ! Stub routines
+  subroutine ReadCompleteHDF5L2PCFile ( filename )
+    character (len=*), intent(in) :: FILENAME
+  end subroutine ReadCompleteHDF5L2PCFile
+  subroutine PopulateL2PCBin ( bin )
+    integer, intent(in) :: BIN ! The bin index to populate
+  end subroutine PopulateL2PCBin
+  subroutine FlushL2PCBins
+  end subroutine FlushL2PCBins
+
 end module L2PC_m
 
 ! $Log$
+! Revision 1.1  2002/07/12 23:36:13  pwagner
+! These transferred here having been succeeded by he5lib versions
+!
 ! Revision 2.35  2002/07/01 23:48:56  vsnyder
 ! Cosmetic changes
 !
