@@ -3110,6 +3110,7 @@ contains ! =====     Public Procedures     =============================
       integer :: USEFIRSTINSTANCE
       integer :: USELASTINSTANCE
       integer :: NOOUTPUTINSTANCES
+      real (r8) :: THISBNDPRESS
       real (r8) :: COLUMNSUM
       real (r8) :: DELTA_P_PLUS    ! p[j+1] - p[j]
       real (r8) :: DELTA_P_MINUS   ! p[j-1] - p[j]
@@ -3168,21 +3169,15 @@ contains ! =====     Public Procedures     =============================
           & 'Cant fill column--instance outside b.pres. range' )
           call deallocate_test(p, 'p', ModuleName )
           return
-        elseif ( bndPressQty%values(1,instance) <= 0. ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Cant fill column--zero boundary pressure' )
-          call deallocate_test(p, 'p', ModuleName )
-          call output('Instance: ', advance='no')
-          call output(Instance, advance='yes')
-          call announce_error(key, No_Error_code, &
-          & ' (Will try to continue)')
-          call dump ( bndPressQty )
-          return
         endif
+        thisBndPress = bndPressQty%values(1,instance)
+        ! In case where WMO algorithm failed, use bottom of basis
+        if ( thisBndPress <= 0.0 ) &
+          & thisBndPress = 10.0 ** ( - vmrQty%template%surfs(1,1) )
         call Hunt ( vmrQty%template%surfs(:,1), &
-          & -log10 ( bndPressQty%values(1,instance) ), firstSurface )
+          & -log10 ( thisBndPress ), firstSurface )
         do surface=1, vmrQty%template%noSurfs
-          if ( p(surface) <= bndPressQty%values(1, instance)) exit
+          if ( p(surface) <= thisBndPress ) exit
         end do
 
         ! Do summation
@@ -6096,6 +6091,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.247  2003/11/25 21:54:47  livesey
+! Made the column filling algorithm much less fussy.
+!
 ! Revision 2.246  2003/11/05 18:37:25  pwagner
 ! Now can dump either entire vector or a single quantity
 !
