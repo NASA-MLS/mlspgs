@@ -1,6 +1,6 @@
 begin Output
 
-!ifdef(outputVersion,{
+!ifdef(l2version,{
 
 ;  This is good for the l2cf run with the toolkit panoply
 ;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
@@ -8,13 +8,13 @@ begin Output
   !define(stdprod, {Output, $
  quantities=!ifelse($3,{}, {joined_$1}, !dnl
  {[joined_$1, $3_column]}), type=l2gp, $
- file='!file$2'})
+ file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
 
 ;  This is good for the l2cf run w/o the toolkit panoply
 ;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
 ;    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
 
-!stdprod(temp,Temp,)
+!stdprod(temperature,Temperature,)
 !stdprod(gph,GPH,)
 !stdprod(bro,BrO,bro)
 !stdprod(clo,ClO,clo)
@@ -29,7 +29,7 @@ begin Output
 !stdprod(o3,O3,o3)
 !stdprod(oh,OH,oh)
 !stdprod(so2,SO2,so2)
-!stdprod(rhi,RHI,)
+;!stdprod(rhi,RHI,)
 
 })
 end Output
