@@ -18,10 +18,12 @@
 #
 # -----------------------------------------------------------------------
 #      Options
-# -nohead           skip writing header line to  output
+# -nohead           skip writing header line to output
 # -headonly         write only header line to output
 # -head list        head table by comma-separated list of phases
 #                     (instead of the default)
+# -s2h              convert times from seconds to hours
+# -h2s              convert times from hours to seconds
 # Bugs and limitations:
 # (1) Should be able to handle toolkitless runs
 #      would need to change from $_[7] to $_[5] and
@@ -29,6 +31,7 @@
 # (2) list of phase names must be lower case
 # (3) Wouldn't you like to be able to sort these by, e.g., (final) or chunk?
 #      would need to master idea of perl references; see @results array
+#      (got past this by letting chunktimes.sh call this perl script)
 # Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -42,6 +45,8 @@ my $lastChunk;
 my $more_opts;
 my $nohead;
 my $numChunks;
+my $time;
+my $timeConvert;
 my @results;
 my $Sp;
 my @Sps;
@@ -53,6 +58,7 @@ my %times;
 $headList = "initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,coreplusr4,coreplusr5,(final)";
 $headonly = 0;
 $nohead = 0;
+$timeConvert = 1;
 $more_opts = TRUE;
 while ($more_opts) {
    if ($ARGV[0] =~ /^-nohead/) {
@@ -64,6 +70,12 @@ while ($more_opts) {
    } elsif ($ARGV[0] =~ /^-head/) {
       $headList = $ARGV[1];
       shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-s2h/) {
+      $timeConvert = 3600;
+      shift;
+   } elsif ($ARGV[0] =~ /^-h2s/) {
+      $timeConvert = 1./3600;
       shift;
    } else {
       $more_opts = 0;
@@ -101,7 +113,14 @@ while (<>) {
       if (! ($ishead && $nohead)) {
         print "$times{chunk} ";
         for $Sp (@Sps) {
-          print "$times{$Sp} ";
+          if ( $ishead ) {
+            print "$times{$Sp} ";
+          } else {
+            $time = $times{$Sp} / $timeConvert;
+            # print "$time ";
+            # printf("%.2f %s", $time, ' ');
+            &PrintTime($time);
+          }
         }
         print "\n";
       }
@@ -127,4 +146,27 @@ while (<>) {
     }
    }
 }
+#
+# &PrintTime(time);
+# --- print time nicely, with appropriate number of digits
+#
+sub PrintTime {
+   local($ptime) = shift(@_);
+   if ( $ptime < 0.0001 ) {
+     printf("%.8f %s", $ptime, ' ');
+   } elsif ( $ptime < 0.01 ) {
+     printf("%.6f %s", $ptime, ' ');
+   } elsif ( $ptime < 1. ) {
+     printf("%.4f %s", $ptime, ' ');
+   } elsif ( $ptime < 100. ) {
+     printf("%.2f %s", $ptime, ' ');
+#   } elsif ( $ptime < 10000. ) {
+#     printf("%.0f %s", $ptime, ' ');
+   } else {
+     print "$ptime ";
+   }
+}
 # $Log$
+# Revision 1.1  2004/05/13 22:51:58  pwagner
+# First commit
+#

@@ -19,6 +19,9 @@
 # -r            reverse sense of sort
 # -sort k       where k is a number: sort by column k
 #                 k=1: by chunk; k=2: by 1st phase; k=n: by (n-1)st phase
+# -sortf        sort by the final column, usu. the total timing figure
+# -s2h          convert timings from seconds to hours
+# -h2s          convert timings from hours to seconds
 # -h[elp]       print brief help message; exit
 #
 #Note:
@@ -78,32 +81,6 @@ get_unique_name()
       echo $temp${pt}$our_host_name${pt}$$
 }
       
-#------------------------------- extant_files ------------
-#
-# Function to return only those files among the args
-# that actually exist
-# Useful when passed something like *.f which may 
-# (1) expand to list of files, returned as extant_files_result, or
-# (2) stay *.f, in which case a blank is returned as extant_files_result 
-#     (unless you have perversely named a file '*.f')
-# usage: extant_files arg1 [arg2] ..
-
-extant_files()
-{
-   extant_files_result=
-   # Trivial case ($# = 0)
-   if [ "$1" != "" ]
-   then
-      for file
-      do
-         if [ -f "$file" ]
-         then
-               extant_files_result="$extant_files_result $file"
-         fi
-      done
-   fi
-}
-
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -127,11 +104,16 @@ list=""
 reverse="no"
 sort="no"
 s_column="0"
+convert=""
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
 
+    -h2s )
+	    shift
+       convert="-h2s"
+       ;;
     -head )
 	    list="$2"
        shift
@@ -141,9 +123,18 @@ while [ "$more_opts" = "yes" ] ; do
 	    shift
        reverse="yes"
        ;;
+    -s2h )
+	    shift
+       convert="-s2h"
+       ;;
     -sort )
-	    s_column="$2"
+	    s_column=`expr "$2" - 1`
        shift
+	    shift
+       sort="yes"
+       ;;
+    -sortf )
+	    s_column="final"
 	    shift
        sort="yes"
        ;;
@@ -170,6 +161,10 @@ then
 else
   extra_args="$1"
 fi
+if [ "$convert" != "" ]
+then
+  extra_args="$convert $extra_args"
+fi
 temp_file1=`get_unique_name ct1`
 temp_file2=`get_unique_name ct2`
 if [ $PRINT_TOO_MUCH = "1" ]                            
@@ -190,18 +185,31 @@ then
   # echo $the_perl_script $extra_args
   $the_perl_script $extra_args > $temp_file1
   # $the_perl_script $extra_args | head
-elif [ "$reverse" = "yes" ]
-then
-  $the_perl_script -headonly $extra_args > $temp_file1
-  $the_perl_script -nohead $extra_args > $temp_file2
-  sort -r +$s_column $temp_file2 >> $temp_file1
 else
   $the_perl_script -headonly $extra_args > $temp_file1
   $the_perl_script -nohead $extra_args > $temp_file2
-  sort +$s_column $temp_file2 >> $temp_file1
+  if [ "$s_column" = "final" ]
+  then
+    s_column=`cat $temp_file1 | wc -w`
+    s_column=`expr $s_column - 1`
+  fi
+  if [ $PRINT_TOO_MUCH = "1" ]                          
+  then                                                  
+     echo " New sort column: $s_column "
+     echo "sort -r -n +$s_column $temp_file2 "
+  fi
+  if [ "$reverse" = "yes" ]
+  then
+    sort -r -n +$s_column $temp_file2 >> $temp_file1
+  else
+    sort -n +$s_column $temp_file2 >> $temp_file1
+  fi
 fi
 cat $temp_file1
 # head $temp_file1
 rm -f $temp_file1 $temp_file2
 exit
 # $Log$
+# Revision 1.1  2004/05/13 22:51:58  pwagner
+# First commit
+#
