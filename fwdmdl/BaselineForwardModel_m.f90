@@ -38,6 +38,7 @@ contains ! ======================================== BaselineForwardModel ======
     use MLSSignals_m, only: SIGNALS, SIGNAL_T
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
       & VALIDATEVECTORQUANTITY
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
     use MLSNumerics, only: HUNT
 
     ! Dummy arguments
@@ -126,22 +127,23 @@ contains ! ======================================== BaselineForwardModel ======
 
       ! Now work out which baseline quantity we want
       ! First look for one for this band
-      baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, signal=signal%index, sideband=signal%sideband,&
-        & noError=.true., foundInFirst=bslInFirst )
+        & noError=.true., config=fwdModelConf, foundInFirst=bslInFirst )
       ! If we can't find one, look for one for this radiometer instead,
       ! if that fails, raise an error
       if ( .not. associated(baseline) ) &
-        & baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_baseline, radiometer=signal%radiometer, foundInFirst=bslInFirst )
+        & baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_baseline, radiometer=signal%radiometer, &
+        & config=fwdModelConf, foundInFirst=bslInFirst )
 
       noBslChans = baseline%template%noChans
 
       ! Get ptans, we'll need these for interpolation
-      ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
+      ptan => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra, &
         & quantityType = l_ptan, &
         & instrumentModule = radiance%template%instrumentModule,&
-        & foundInFirst=ptanInFirst )
+        & config=fwdModelConf, foundInFirst=ptanInFirst )
 
       if (present(jacobian) .and. (bslInFirst .or. ptanInFirst) ) then
         rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
@@ -443,6 +445,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.21  2004/09/13 17:39:49  livesey
+! Changed to use GetQuantityForForwardModel
+!
 ! Revision 2.20  2004/08/16 23:42:25  livesey
 ! Added option for minor frame baseline
 !
