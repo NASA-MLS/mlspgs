@@ -1,10 +1,10 @@
 ; These are the m4 definitions for l2cf's
 ; Change the quotes to braces
 changequote({,})
-; Change the comment to a semicolon
-!changecom(;)
 ; Insist all m4 stuff is prefixed with !
 changesyntax({@!})
+; Change the comment to a semicolon
+!changecom(;)
 ; Make _ not a possible part of m4 names
 !changesyntax({O_})
 ; Define a very simple for loop prototcol
