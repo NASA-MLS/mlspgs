@@ -226,7 +226,7 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
 !define(oneFwmRadTerm,{source=fwm.band$1,})
 !define(directWriteFwmRad,{!ifdef(l2version,{!dnl
 !forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
-  DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2aux, $
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2fwm, $
   file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion', $
   hdfVersion=!hdfVersion})})
 
@@ -362,6 +362,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.71  2003/09/02 22:48:43  pwagner
+; Tweaked the defines to make the quotes come out right
+;
 ; Revision 1.70  2003/09/02 22:25:25  pwagner
 ; Output/DirectWrite to abbreviated fileNames only if usingPCF
 ;
