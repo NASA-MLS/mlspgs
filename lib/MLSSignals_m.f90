@@ -1185,7 +1185,7 @@ oc:   do
   end function MatchSignal
 
   ! ----------------------------------------- AreSignalsSubset ----------
-  integer function AreSignalsSuperset ( signals, probe )
+  integer function AreSignalsSuperset ( signals, probe, sideband, channel )
     ! This is related to MatchSignal.  Given two arrays of signals: signals and
     ! probe, it returns -1 if probe is not a subset of signals, otherwise, it
     ! returns the number of channels by which signals is a superset of probe.
@@ -1195,6 +1195,8 @@ oc:   do
     ! Dummy arguments
     type (Signal_T), dimension(:), intent(in) :: SIGNALS ! Signals to search
     type (Signal_T), dimension(:), intent(in) :: PROBE ! Potential subset
+    integer, intent(in), optional :: SIDEBAND ! If present overrides one in probe
+    integer, intent(in), optional :: CHANNEL ! If present overrides one in probe
 
     ! Local variables
     integer :: I                        ! Loop counter
@@ -1211,7 +1213,7 @@ oc:   do
     ! First we identify whether they are a superset or not
     do i = 1, size(probe)
       ! Is this probe in signals?
-      match = MatchSignal ( signals, probe(i) )
+      match = MatchSignal ( signals, probe(i), sideband=sideband, channel=channel )
       if ( match == 0 ) return
 
       ! OK, now how big is this probe
@@ -1240,6 +1242,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.39  2001/05/16 23:05:06  livesey
+! Added channel argument to AreSignalsSuperset
+!
 ! Revision 2.38  2001/05/16 01:24:06  livesey
 ! Added AreSignalsSuperset routine
 !
