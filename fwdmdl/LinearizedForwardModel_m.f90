@@ -57,13 +57,11 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout), optional :: JACOBIAN
 
     ! Local variables
-    integer :: CENTERPROF               ! Center profile corresponding to MAF
     integer :: CHAN                     ! Loop counter
     integer :: CLOSESTINSTANCE          ! A closest profile to this MAF
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: COLLBLOCK                ! Column index in l2pc
     integer :: I                        ! Array index
-    integer :: INSTANCE                 ! Loop index
     integer :: INSTANCELEN              ! For the state quantity
     integer :: L2PCBIN                  ! Which l2pc to use
     integer :: LOWER                    ! Array index
@@ -79,9 +77,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SIDEBANDSTART            ! For sideband loop
     integer :: SIDEBANDSTEP             ! For sideband loop
     integer :: SIDEBANDSTOP             ! For sideband loop
-    integer :: STARTJ                   ! An index into the first index of jacobian
-    integer :: STARTL                   ! An index into the first index of jBit lower
-    integer :: STARTU                   ! An index into the first index of jBit upper
     integer :: UPPER                    ! Array index
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
     integer :: XSTARINSTANCE            ! Loop counter
@@ -248,6 +243,14 @@ contains ! =====     Public Procedures     =============================
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
         if ( l2pcQ%template%quantityType == l_vmr ) then
+
+
+
+          cycle!????????????????????******************************** DEBUG!!!!!!!
+
+
+
+
           if ( .not. any &
             & (l2pcQ%template%molecule == forwardModelConfig%molecules)) cycle
         end if
@@ -298,7 +301,6 @@ contains ! =====     Public Procedures     =============================
         closestInstance=closestInstances(maf)
 
         ! Do we need derivatives for this?
-        doDerivatives = present(jacobian)
         doDerivatives = present(jacobian) .and. foundInFirst
         if (doDerivatives .and. (l2pcQ%template%quantityType==l_temperature) ) &
           & doDerivatives = forwardModelConfig%temp_der
@@ -329,6 +331,8 @@ contains ! =====     Public Procedures     =============================
               & ( l2pcQ%template%surfs(mifPointingsUpper,1) - &
               &   l2pcQ%template%surfs(mifPointingsLower,1) )
             lowerWeight = 1.0 - lowerWeight
+            upperWeight = min ( 1.0_r8, max (upperWeight, 0.0_r8 ) )
+            lowerWeight = min ( 1.0_r8, max (lowerWeight, 0.0_r8 ) )
           else
             mifPointingsLower = 1
             mifPointingsUpper = 1
@@ -452,9 +456,22 @@ contains ! =====     Public Procedures     =============================
 
       ! Now compute yP
 
-      call cloneVector( yp, l2pc%row%vec )
-      call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP )
+      print*,'Delta X:'
+      call dump ( (/deltaX/) )
 
+      print*,'l2pc%col%inst'
+      call dump(l2pc%col%inst)
+      print*,'l2pc%col%quant'
+      call dump(l2pc%col%quant)
+
+      print*,'l2pc%row%inst'
+      call dump(l2pc%row%inst)
+      print*,'l2pc%row%quant'
+      call dump(l2pc%row%quant)
+
+      call cloneVector( yp, l2pc%row%vec )
+      call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP, update = .false. )
+      call dump ( (/yp, l2pc%row%vec/) )
       yP = yP + l2pc%row%vec
 
       ! Now we interpolate yP to ptan
@@ -568,6 +585,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.11  2001/05/01 06:55:07  livesey
+! Intermediate bug avoiding version.
+!
 ! Revision 1.10  2001/04/30 15:50:29  livesey
 ! Commented out code associated with mask
 !
