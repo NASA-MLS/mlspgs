@@ -17,7 +17,7 @@ module L2Parallel
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & GETMACHINENAMEFROMTID
+    & GETMACHINENAMEFROMTID, PVMFFREEBUF
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T, FINDFIRST
@@ -36,7 +36,8 @@ module L2Parallel
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
     & MACHINEFIXEDTAG
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
-    & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE
+    & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
+    & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
   use Toggles, only: Gen, Switches, Toggle
   use Output_m, only: Output
   use Symbol_Table, only: ENTER_TERMINAL
@@ -44,6 +45,10 @@ module L2Parallel
   use String_table, only: Display_String
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use MoreTree, only: Get_Spec_ID
+  use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
+  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
+
+  use VectorsModule, only: CHECKINTEGRITY
 
   implicit none
   private
@@ -184,7 +189,8 @@ contains ! ================================ Procedures ======================
     character(len=8) :: CHUNKNOSTR
     character(len=2048) :: COMMANDLINE
 
-    integer :: BUFFERID                 ! From PVM
+    integer :: BUFFERIDRCV              ! From PVM
+    integer :: BUFFERIDSND              ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
     integer :: COMPLETEDFILE            ! String index from slave
@@ -209,7 +215,8 @@ contains ! ================================ Procedures ======================
     integer :: REQUESTEDFILE            ! String index from slave
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
-    integer :: STATUS                   ! From deallocate
+    integer :: STATUS                   ! From deallocate etc.
+    integer :: STAGEFILEID              ! From HDF5
     integer :: TIDARR(1)                ! One tid
     integer :: VALIND                   ! Array index
 
@@ -230,7 +237,8 @@ contains ! ================================ Procedures ======================
     integer, dimension(size(chunks)) :: CHUNKFAILURES ! Failure count
 
     logical, save :: FINISHED = .false. ! This will be called multiple times
-    
+    logical :: INTEGRITY
+
     type (QuantityTemplate_T),dimension(:), pointer :: joinedQuantities 
     ! Local quantity template database
     type (VectorTemplate_T), dimension(:), pointer  :: joinedVectorTemplates
@@ -241,7 +249,9 @@ contains ! ================================ Procedures ======================
     ! Map into the above arrays
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: PRECQTY
-    
+    type (Vector_T), target :: MYVALUES
+    type (Vector_T), target :: MYPRECISIONS
+
     ! Executable code --------------------------------
 
     ! First, is this the first call. The first call does all the work
@@ -276,6 +286,13 @@ contains ! ================================ Procedures ======================
     machineOK = .true.
     jobsMachineKilled = 0
 
+    ! Setup the staging file if we're using one
+    if ( .not. parallel%stageInMemory ) then
+      call H5FCreate_F ( trim(parallel%stagingFile), H5F_ACC_TRUNC_F, stageFileID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open staging file: '//trim(parallel%stagingFile) )
+    end if
+
     ! Loop until all chunks are done
     chunksCompleted = .false.
     chunksStarted = .false.
@@ -290,8 +307,8 @@ contains ! ================================ Procedures ======================
       ! In the first part, we look to see if there are any chunks still to be
       ! started done, and any vacant machines to do them.
       ! --------------------------------------------------------- Start new jobs? --
-      if ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
-        & ( any(machineFree .and. machineOK) .or. usingSubmit ) ) then
+      do while ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
+        & ( any(machineFree .and. machineOK) .or. usingSubmit ) )
         nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
         if ( usingSubmit ) then ! --------------------- Using a batch system
           write ( chunkNoStr, '(i0)' ) nextChunk
@@ -350,205 +367,209 @@ contains ! ================================ Procedures ======================
             end where
           end if
         end if
-      end if
+      end do
 
       ! --------------------------------------------------- Messages from jobs?
       ! In this next part, we listen out for communication from the slaves and
       ! process it accordingly.
-      receiveInfoLoop: do
-        call PVMFNRecv( -1, InfoTag, bufferID )
-        if ( bufferID == 0 ) exit receiveInfoLoop
-        if ( bufferID < 0 ) then
-          call PVMErrorMessage ( info, "checking for Info message" )
-        else if ( bufferID > 0 ) then
-          ! Who sent this?
-          call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
-          if ( info /= 0 ) &
-            & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
-          call PVMF90Unpack ( signal, info )
+      call PVMFNRecv( -1, InfoTag, bufferIDRcv )
+      if ( bufferIDRcv < 0 ) then
+        call PVMErrorMessage ( info, "checking for Info message" )
+      else if ( bufferIDRcv > 0 ) then
+        ! Who sent this?
+        call PVMFBufInfo ( bufferIDRcv, bytes, msgTag, slaveTid, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+        call PVMF90Unpack ( signal, info )
+        if ( info /= 0 ) then
+          call PVMErrorMessage ( info, "unpacking signal" )
+        endif
+
+        ! Who did this come from
+        chunk = FindFirst ( chunkTids == slaveTid )
+        if ( chunk == 0 .and. &
+          &  (.not. usingSubmit .or. signal /= sig_register) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Got a message from an unknown slave")
+        else
+          ! Unpack the first integer in the buffer
+          if ( .not. usingSubmit .and. signal /= sig_register ) &
+            & machine = chunkMachines(chunk)
+        end if
+
+        select case (signal) 
+
+        case ( sig_register ) ! ----------------- Chunk registering ------
+          call PVMF90Unpack ( chunk, info )
           if ( info /= 0 ) then
-            call PVMErrorMessage ( info, "unpacking signal" )
+            call PVMErrorMessage ( info, "unpacking chunk number" )
+          endif
+          ! Note, we'll ignore the slave MAFNumber sent for fwmParallel stuff
+          if ( usingSubmit ) then
+            ! We only really care about this message if we're using submit
+            chunkTids(chunk) = slaveTid
+            call GetMachineNameFromTid ( slaveTid, thisName )
+            call WelcomeSlave ( chunk, slaveTid )
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Welcomed task ' // &
+                & trim(GetNiceTidString(slaveTid)) // &
+                & ' running chunk ' )
+              call output ( chunk, advance='yes' )
+            end if
           endif
 
-          ! Who did this come from
-          chunk = FindFirst ( chunkTids == slaveTid )
-          if ( chunk == 0 .and. &
-            &  (.not. usingSubmit .or. signal /= sig_register) ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "Got a message from an unknown slave")
+        case ( sig_tojoin ) ! --------------- Got a join request ---------
+          call StoreSlaveQuantity( joinedQuantities, &
+            & joinedVectorTemplates, joinedVectors, &
+            & storedResults, chunk, noChunks, slaveTid, noQuantitiesAccumulated, &
+            & stageFileID )
+
+        case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
+          ! What file did they ask for?
+          call PVMF90Unpack ( requestedFile, info )
+          if ( info /= 0 )  call PVMErrorMessage ( info, &
+            & "unpacking direct write request" )
+          ! Is this a new file?
+          fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
+          if ( fileIndex == 0 ) then
+            ! Clearly, if we don't know about this file it's new
+            createFile = .true.
+            noDirectWriteFiles = noDirectWriteFiles + 1
+            if ( noDirectWriteFiles > maxDirectWriteFiles ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Too many direct write files, increase limit' )
+            fileIndex = noDirectWriteFiles
+            directWriteFiles ( fileIndex ) = requestedFile
           else
-            ! Unpack the first integer in the buffer
-            if ( .not. usingSubmit .and. signal /= sig_register ) &
-              & machine = chunkMachines(chunk)
+            ! On the other hand, if the first task that tried to write to it died
+            ! we'll know about it, but we might want to recreate it anyway.
+            createFile = noDirectWriteChunks ( fileIndex ) == 0
           end if
 
-          select case (signal) 
-            
-          case ( sig_register ) ! ----------------- Chunk registering ------
-            call PVMF90Unpack ( chunk, info )
-            if ( info /= 0 ) then
-              call PVMErrorMessage ( info, "unpacking chunk number" )
-            endif
-            ! Note, we'll ignore the slave MAFNumber sent for fwmParallel stuff
-            if ( usingSubmit ) then
-              ! We only really care about this message if we're using submit
-              chunkTids(chunk) = slaveTid
-              call GetMachineNameFromTid ( slaveTid, thisName )
-              call WelcomeSlave ( chunk, slaveTid )
-              if ( index(switches,'mas') /= 0 ) then
-                call output ( 'Welcomed task ' // &
-                  & trim(GetNiceTidString(slaveTid)) // &
-                  & ' running chunk ' )
-                call output ( chunk, advance='yes' )
-              end if
-            endif
-            
-          case ( sig_tojoin ) ! --------------- Got a join request ---------
-            call StoreSlaveQuantity( joinedQuantities, &
-              & joinedVectorTemplates, joinedVectors, &
-              & storedResults, chunk, noChunks, slaveTid, noQuantitiesAccumulated )
-
-          case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
-            ! What file did they ask for?
-            call PVMF90Unpack ( requestedFile, info )
-            if ( info /= 0 )  call PVMErrorMessage ( info, &
-              & "unpacking direct write request" )
-            ! Is this a new file?
-            fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
-            if ( fileIndex == 0 ) then
-              ! Clearly, if we don't know about this file it's new
-              createFile = .true.
-              noDirectWriteFiles = noDirectWriteFiles + 1
-              if ( noDirectWriteFiles > maxDirectWriteFiles ) &
-                & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Too many direct write files, increase limit' )
-              fileIndex = noDirectWriteFiles
-              directWriteFiles ( fileIndex ) = requestedFile
-            else
-              ! On the other hand, if the first task that tried to write to it died
-              ! we'll know about it, but we might want to recreate it anyway.
-              createFile = noDirectWriteChunks ( fileIndex ) == 0
-            end if
-
+          if ( index ( switches, 'mas' ) /= 0 ) then
+            call output ( 'Direct write request for file ' )
+            call output ( requestedFile )
+            call output ( ' from ' )
+            if ( .not. usingSubmit ) &
+              & call output ( trim(machineNames(machine)) // ' ' )
+            call output ( trim(GetNiceTidString(slaveTid)) )
+            call output ( ' chunk ' )
+            call output ( chunk, advance='yes')
+          end if
+          ! Is anyone else using this file?
+          if ( any ( directWriteStatus == requestedFile ) ) then
+            ! If so, log a request for it by setting our status to 
+            ! -requestedFile, and have this chunk 'take a ticket'
             if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Direct write request for file ' )
-              call output ( requestedFile )
-              call output ( ' from ' )
-              if ( .not. usingSubmit ) &
-                & call output ( trim(machineNames(machine)) // ' ' )
-              call output ( trim(GetNiceTidString(slaveTid)) )
-              call output ( ' chunk ' )
-              call output ( chunk, advance='yes')
+              call output ( 'Request pending', &
+                & advance='yes' )
             end if
-            ! Is anyone else using this file?
-            if ( any ( directWriteStatus == requestedFile ) ) then
-              ! If so, log a request for it by setting our status to 
-              ! -requestedFile, and have this chunk 'take a ticket'
-              if ( index ( switches, 'mas' ) /= 0 ) then
-                call output ( 'Request pending', &
-                  & advance='yes' )
+            directWriteStatus(chunk) = -requestedFile
+            directWriteTicket(chunk) = nextTicket
+            nextTicket = nextTicket + 1
+            ! At this point, create file, true or otherwise, becomes irrelevant.
+          else
+            ! Otherwise, go ahead
+            if ( index ( switches, 'mas' ) /= 0 ) then
+              call output ( 'Request was granted' )
+              if ( createFile ) then
+                call output ( ' (new file)', advance='yes' )
+              else
+                call output ( ' (old file)', advance='yes' )
               end if
-              directWriteStatus(chunk) = -requestedFile
-              directWriteTicket(chunk) = nextTicket
-              nextTicket = nextTicket + 1
-              ! At this point, create file, true or otherwise, becomes irrelevant.
-            else
-              ! Otherwise, go ahead
-              if ( index ( switches, 'mas' ) /= 0 ) then
-                call output ( 'Request was granted' )
-                if ( createFile ) then
-                  call output ( ' (new file)', advance='yes' )
-                else
-                  call output ( ' (old file)', advance='yes' )
-                end if
-              end if
-              call GrantDirectWrite ( slaveTid, createFile )
-              directWriteStatus(chunk) = requestedFile
-              directWriteTicket(chunk) = 0
             end if
-
-          case ( sig_DirectWriteFinished ) ! - Finished with direct write -
-            ! Record that the chunk has finished direct write
-            completedFile = directWriteStatus(chunk)
-            fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
-            noDirectWriteChunks ( fileIndex ) = &
-              & noDirectWriteChunks ( fileIndex ) + 1
-            directWriteStatus(chunk) = 0
+            call GrantDirectWrite ( slaveTid, createFile )
+            directWriteStatus(chunk) = requestedFile
             directWriteTicket(chunk) = 0
-            if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Direct write finished on file ' )
-              call output ( completedFile )
-              call output ( ' by ' )
-              if ( .not. usingSubmit ) &
-                & call output ( trim(machineNames(machine)) // ' ' )
-              call output ( trim(GetNiceTidString(slaveTid)) )
-              call output ( ' chunk ' )
-              call output ( chunk, advance='yes')
-            end if
-            ! OK, perhaps someone else's turn to write to this file
-            call NextSlaveToWrite ( completedFile )
+          end if
 
-          case ( sig_finished ) ! -------------- Got a finish message ----
-            if ( index(switches,'mas') /= 0 ) then
-              call output ( 'Got a finished message from ' )
-              if ( .not. usingSubmit ) &
-                & call output ( trim(machineNames(machine)) // ' ' )
-              call output ( trim(GetNiceTidString(slaveTid)) // &
-                & ' processing chunk ' )
-              call output ( chunk, advance='yes')
-            endif
-            
-            ! Send an acknowledgement
-            call PVMFInitSend ( PVMDataDefault, bufferID )
-            if ( bufferId < 0 ) &
-              & call PVMErrorMessage ( bufferID, 'setting up finish ack.' )
-            call PVMF90Pack ( SIG_AckFinish, info )
-            if ( info /= 0 ) &
-              & call PVMErrorMessage ( info, 'packing finish ack.' )
-            call PVMFSend ( slaveTid, InfoTag, info )
-            if ( info /= 0 ) &
-              & call PVMErrorMessage ( info, 'sending finish ack.' )
-            
-            ! Now update our information
-            chunksCompleted(chunk) = .true.
-            chunkTids(chunk) = 0
+        case ( sig_DirectWriteFinished ) ! - Finished with direct write -
+          ! Record that the chunk has finished direct write
+          completedFile = directWriteStatus(chunk)
+          fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
+          noDirectWriteChunks ( fileIndex ) = &
+            & noDirectWriteChunks ( fileIndex ) + 1
+          directWriteStatus(chunk) = 0
+          directWriteTicket(chunk) = 0
+          if ( index ( switches, 'mas' ) /= 0 ) then
+            call output ( 'Direct write finished on file ' )
+            call output ( completedFile )
+            call output ( ' by ' )
+            if ( .not. usingSubmit ) &
+              & call output ( trim(machineNames(machine)) // ' ' )
+            call output ( trim(GetNiceTidString(slaveTid)) )
+            call output ( ' chunk ' )
+            call output ( chunk, advance='yes')
+          end if
+          ! OK, perhaps someone else's turn to write to this file
+          call NextSlaveToWrite ( completedFile )
+
+        case ( sig_finished ) ! -------------- Got a finish message ----
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Got a finished message from ' )
+            if ( .not. usingSubmit ) &
+              & call output ( trim(machineNames(machine)) // ' ' )
+            call output ( trim(GetNiceTidString(slaveTid)) // &
+              & ' processing chunk ' )
+            call output ( chunk, advance='yes')
+          endif
+
+          ! Send an acknowledgement
+          call PVMFInitSend ( PVMDataDefault, bufferIDSnd )
+          if ( bufferIdSnd < 0 ) &
+            & call PVMErrorMessage ( bufferIDSnd, 'setting up finish ack.' )
+          call PVMF90Pack ( SIG_AckFinish, info )
+          if ( info /= 0 ) &
+            & call PVMErrorMessage ( info, 'packing finish ack.' )
+          call PVMFSend ( slaveTid, InfoTag, info )
+          if ( info /= 0 ) &
+            & call PVMErrorMessage ( info, 'sending finish ack.' )
+
+          ! Now update our information
+          chunksCompleted(chunk) = .true.
+          chunkTids(chunk) = 0
+          if ( .not. usingSubmit ) then
+            machineFree(machine) = .true.
+            chunkMachines(chunk) = 0
+          end if
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Master status:', advance='yes' )
+            call output ( count(chunksCompleted) )
+            call output ( ' of ' )
+            call output ( noChunks )
+            call output ( ' chunks completed, ')
+            call output ( count(chunksStarted .and. .not. chunksCompleted) )
+            call output ( ' underway, ' )
+            call output ( count(chunksAbandoned) )
+            call output ( ' abandoned, ' )
+            call output ( count(.not. &
+              & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
+            call output ( ' left. ', advance='yes' )
             if ( .not. usingSubmit ) then
-              machineFree(machine) = .true.
-              chunkMachines(chunk) = 0
-            end if
-            if ( index(switches,'mas') /= 0 ) then
-              call output ( 'Master status:', advance='yes' )
-              call output ( count(chunksCompleted) )
+              call output ( count ( .not. machineFree ) )
               call output ( ' of ' )
-              call output ( noChunks )
-              call output ( ' chunks completed, ')
-              call output ( count(chunksStarted .and. .not. chunksCompleted) )
-              call output ( ' underway, ' )
-              call output ( count(chunksAbandoned) )
-              call output ( ' abandoned, ' )
-              call output ( count(.not. &
-                & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
-              call output ( ' left. ', advance='yes' )
-              if ( .not. usingSubmit ) then
-                call output ( count ( .not. machineFree ) )
-                call output ( ' of ' )
-                call output ( noMachines )
-                call output ( ' machines busy, with ' )
-                call output ( count ( .not. machineOK ) )
-                call output ( ' being avoided.', advance='yes' )
-              end if
+              call output ( noMachines )
+              call output ( ' machines busy, with ' )
+              call output ( count ( .not. machineOK ) )
+              call output ( ' being avoided.', advance='yes' )
             end if
-            
-          case default
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unkown signal from slave' )
-          end select
-        end if
-      end do receiveInfoLoop
+          end if
 
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unkown signal from slave' )
+        end select
+
+        ! Free the recieve buffer
+        call PVMFFreeBuf ( bufferIDRcv, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'freeing receive buffer' )
+      end if
+
+      ! ----------------------------------------------------- Administrative messages?
       ! Listen out for any message telling us to quit now
-      call PVMFNRecv ( -1, GiveUpTag, bufferID )
-      if ( bufferID > 0 ) then
+      call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
         if ( index(switches,'mas') /= 0 ) then
           call output ( 'Received an external message to give up, so finishing now', &
             & advance='yes' )
@@ -557,8 +578,8 @@ contains ! ================================ Procedures ======================
       end if
 
       ! Listen out for any message telling us that a machine is OK again
-      call PVMFNRecv ( -1, MachineFixedTag, bufferID )
-      if ( bufferID > 0 ) then 
+      call PVMFNRecv ( -1, MachineFixedTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then 
         call PVMIDLUnpack ( thisName, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'unpacking machine fixed message' )
@@ -578,8 +599,8 @@ contains ! ================================ Procedures ======================
       end if
 
       ! Listen out for any message that a slave task has died
-      call PVMFNRecv ( -1, NotifyTAG, bufferID )
-      if ( bufferID > 0 ) then
+      call PVMFNRecv ( -1, NotifyTAG, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
         ! Get the TID for the dead task
         call PVMF90Unpack ( deadTid, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
@@ -610,7 +631,7 @@ contains ! ================================ Procedures ======================
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
             directWriteStatus(deadChunk) = 0 
             directWriteTicket(deadChunk) = 0
-           if ( .not. usingSubmit ) then
+            if ( .not. usingSubmit ) then
               where ( machineNames(deadMachine) == machineNames )
                 jobsMachineKilled = jobsMachineKilled + 1
               end where
@@ -630,7 +651,7 @@ contains ! ================================ Procedures ======================
             end if
             directWriteStatus ( deadChunk ) = 0
             directWriteTicket ( deadChunk ) = 0
-            
+
             ! Does this chunk keep failing, if so, give up.
             if ( chunkFailures(deadChunk) > &
               & parallel%maxFailuresPerChunk ) then
@@ -642,7 +663,7 @@ contains ! ================================ Procedures ======================
               end if
               chunksAbandoned(deadChunk) = .true.
             end if
-            
+
             ! Does this machine have a habit of killing jobs.  If so
             ! mark it as not OK.  We can't do much about it though if
             ! we're using submit.
@@ -666,7 +687,8 @@ contains ! ================================ Procedures ======================
               & advance='yes' )
           end if
         end if
-      else if ( bufferID < 0 ) then
+
+      else if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Notify message" )
       end if
 
@@ -715,29 +737,55 @@ contains ! ================================ Procedures ======================
       call output ( 'All chunks processed, starting join task', advance='yes' )
     endif
     ! Now we join up all our results into l2gp and l2aux quantities
+
+    ! If we're staging to a file, close the file and reopen it.
+    if ( .not. parallel%stageInMemory ) then
+      call H5FClose_F ( stageFileID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close staging file:'//parallel%stagingFile )
+      call H5FOpen_F ( trim(parallel%stagingFile), H5F_ACC_RDONLY_F, stageFileID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to reopen staging file:'//parallel%stagingFile )
+    end if
+
     do resInd = 1, size ( storedResults )
       hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
       do chunk = 1, noChunks
-
+        
         if (.not. chunksAbandoned(chunk) ) then
           ! Setup for this quantity
-          valInd = storedResults(resInd)%valInds(chunk)
-          qty => joinedVectors(valInd)%quantities(1)
-          
-          if ( storedResults(resInd)%gotPrecision ) then
-            precInd = storedResults(resInd)%precInds(chunk)
-            precQty => joinedVectors(precInd)%quantities(1)
+          if ( parallel%stageInMemory ) then
+            valInd = storedResults(resInd)%valInds(chunk)
+            qty => joinedVectors(valInd)%quantities(1)
+
+            if ( storedResults(resInd)%gotPrecision ) then
+              precInd = storedResults(resInd)%precInds(chunk)
+              precQty => joinedVectors(precInd)%quantities(1)
+            else
+              nullify ( precQty )
+            endif
           else
-            nullify ( precQty )
-          endif
-          
-          if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
+            write ( thisName, '(i0)' ) storedResults(resInd)%valInds(chunk)
+            call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
+              & myValues, joinedQuantities )
+            qty => myValues%quantities(1)
+            if ( storedResults(resInd)%gotPrecision ) then
+              write ( thisName, '(i0)' ) storedResults(resInd)%precInds(chunk)
+              call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
+                & myPrecisions, joinedQuantities )
+              precQty => myPrecisions%quantities(1)
+            else
+              nullify ( precQty )
+            end if
+          end if
+
+          if ( index(switches,'mas') /= 0 ) then
             call output ( 'Joining ' )
-            call display_string ( qty%template%name, advance='yes' )
-            call output ( 'Minor frame:' )
-            call output ( qty%template%minorFrame, advance='yes' )
+            call display_string ( qty%template%name )
+            call output ( ' Chunk ' )
+            call output ( chunk, advance='yes' )
           endif
-          
+
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
             call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
@@ -748,24 +796,38 @@ contains ! ================================ Procedures ======================
               & qty, l2auxDatabase, chunk, chunks )
             ! Ignore timing and direct writes
           end select
-          
+
           ! Now destroy this vector.  We'll do this as we go along to make
           ! life easier for the computer.
-          call DestroyVectorInfo ( joinedVectors(valInd) )
-          call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
-          call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
-
-          if ( storedResults(resInd)%gotPrecision ) then
-            call DestroyVectorInfo ( joinedVectors(precInd) )
-            call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
-            call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          if ( parallel%stageInMemory ) then
+            call DestroyVectorInfo ( joinedVectors(valInd) )
+            call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+            call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+            if ( storedResults(resInd)%gotPrecision ) then
+              call DestroyVectorInfo ( joinedVectors(precInd) )
+              call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+              call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+            end if
+          else
+            call DestroyQuantityTemplateDatabase ( joinedQuantities )
+            call DestroyVectorTemplateInfo ( myValues%template )
+            call DestroyVectorInfo ( myValues )
+            if ( storedResults(resInd)%gotPrecision ) then
+              call DestroyVectorTemplateInfo ( myPrecisions%template )
+              call DestroyVectorInfo ( myPrecisions )
+            end if
           end if
-
         end if                          ! Didn't give up on this chunk
       end do
     end do
-    
+
     ! Now clean up and quit
+    if ( .not. parallel%stageInMemory ) then
+      call H5FClose_F ( stageFileID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close staging file:'//parallel%stagingFile )
+    end if
+
     call DestroyStoredResultsDatabase ( storedResults )
 
     if ( associated ( joinedQuantities ) ) then
@@ -856,7 +918,7 @@ contains ! ================================ Procedures ======================
 
       ! Local variables
       integer :: info
-      
+
       call SendChunkInfoToSlave ( chunks, chunk, tid )
       ! Now ask to be notified when this task exits
       call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ tid /), info )
@@ -903,9 +965,10 @@ contains ! ================================ Procedures ======================
       & MLSMSG_Deallocate//'stored quantities database' )
   end subroutine DestroyStoredResultsDatabase
 
-  ! -------------------------------------- StoreSlaveQuantity -------------------
+  ! -------------------------------------- StoreSlaveQuantity --------------
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
-    & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated )
+    & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated,&
+    & stageFileID )
     ! This routine reads a vector from a slave and stores it in
     ! an appropriate place.
 
@@ -917,6 +980,7 @@ contains ! ================================ Procedures ======================
     integer, intent(in) :: NOCHUNKS     ! Number of chunks
     integer, intent(in) :: TID          ! Slave tid
     integer, intent(inout) :: NOQUANTITIESACCUMULATED ! Running counter /index
+    integer, intent(in) :: STAGEFILEID  ! For using staging file
 
     ! Local parameters
     integer, parameter :: DATABASEINFLATION = 500
@@ -928,11 +992,10 @@ contains ! ================================ Procedures ======================
     ! Local variables
     integer, dimension(NINJOINPACKET) :: I2         ! Array to unpack
     integer :: INFO                                 ! Flag from pvm
-    character(len=132) :: HDFNAME                   ! HDF name for quantity
+    character(len=132) :: HDFNAME                   ! Output name for quantity
+    character(len=132) :: GNAME                     ! HDF Group name for quantity
     integer :: KEY                                  ! Tree node
     integer :: GOTPRECISION                         ! Flag
-    integer :: QTIND                                ! Index for quantity template
-    integer :: VTIND                                ! Index for vector template
     integer :: VIND                                 ! Index for vector
     integer :: PVIND                                ! Index for precision vector
     integer :: I                                    ! Loop inductor
@@ -940,6 +1003,7 @@ contains ! ================================ Procedures ======================
     logical :: SEENTHISBEFORE                       ! Flag
     logical :: NEEDTOINFLATE                        ! Flag
     real (r8), dimension(:,:), pointer :: VALUES    ! Values for this vector quantity
+    character(len=1), dimension(:,:), pointer :: MASK ! Mask for this vector quantity
     type (QuantityTemplate_T) :: qt                 ! A quantity template
     type (VectorTemplate_T) :: vt                   ! A vector template
     type (Vector_T) :: v                            ! A vector
@@ -960,40 +1024,68 @@ contains ! ================================ Procedures ======================
 
     ! Now get the quantity itself, possibly the precision and tropopause
     do i = 1, gotPrecision+1
+      ! Increment our counter
       noQuantitiesAccumulated = noQuantitiesAccumulated + 1
-      ! Perhaps inflate our databases, some extra logic to avoig doing size on
-      ! unassociated pointer
-      needToInflate = noQuantitiesAccumulated == 1
-      if ( .not. needToInflate ) &
-        & needToInflate = noQuantitiesAccumulated > size ( joinedQuantities )
-      if ( needToInflate ) then
-        noQuantitiesAccumulated = &
-          & InflateQuantityTemplateDatabase ( joinedQuantities, databaseInflation )
-        noQuantitiesAccumulated = &
-          & InflateVectorTemplateDatabase ( joinedVectorTemplates, databaseInflation )
-        noQuantitiesAccumulated = &
-          & InflateVectorDatabase ( joinedVectors, databaseInflation )
-      end if
-      call PVMReceiveQuantity ( qt, values, justUnpack=.true. )
+      ! Get the quantity
+      ! Just going to nullify qt, etc. I know it's intent in PVMRecieve..., but just
+      ! to be sure.  Ditto for values and mask
+      call NullifyQuantityTemplate ( qt )
+      nullify ( values, mask )
+      call PVMReceiveQuantity ( qt, values, mask=mask, justUnpack=.true. )
+
+      ! Now we do different things depending on whether we're staging
+      ! in memory or to a file
+      if ( parallel%stageInMemory ) then
+        ! Perhaps inflate our databases, some extra logic to avoig doing size on
+        ! unassociated pointer
+        needToInflate = noQuantitiesAccumulated == 1
+        if ( .not. needToInflate ) &
+          & needToInflate = noQuantitiesAccumulated > size ( joinedQuantities )
+        if ( needToInflate ) then
+          noQuantitiesAccumulated = &
+            & InflateQuantityTemplateDatabase ( joinedQuantities, databaseInflation )
+          noQuantitiesAccumulated = &
+            & InflateVectorTemplateDatabase ( joinedVectorTemplates, databaseInflation )
+          noQuantitiesAccumulated = &
+            & InflateVectorDatabase ( joinedVectors, databaseInflation )
+        end if
         
-      ! Now add its template to our template database
-      qt%id = joinedQTCounter
-      joinedQTCounter = joinedQTCounter + 1
-      qtInd = noQuantitiesAccumulated
-      joinedQuantities ( qtInd ) = qt
+        ! Now add its template to our template database
+        qt%id = joinedQTCounter
+        joinedQTCounter = joinedQTCounter + 1
+        joinedQuantities ( noQuantitiesAccumulated ) = qt
+        
+        ! Now make a vector template up for this
+        call ConstructVectorTemplate ( 0, joinedQuantities, &
+          & (/ noQuantitiesAccumulated /), vt )
+        vt%id = joinedVTCounter
+        joinedVTCounter = joinedVTCounter + 1
+        joinedVectorTemplates ( noQuantitiesAccumulated ) = vt
+        
+        ! Now make a vector up for this
+        v = CreateVector ( 0, joinedVectorTemplates( noQuantitiesAccumulated ), &
+          & joinedQuantities, vectorNameText='joined' )
+      else ! ------------------- Staging in a file
+
+        call ConstructVectorTemplate ( 0, (/ qt /), (/ 1 /), vt )
+        v = CreateVector ( 0, vt, (/ qt /), vectorNameText='joined', noValues=.true. )
+      end if
       
-      ! Now make a vector template up for this
-      call ConstructVectorTemplate ( 0, joinedQuantities, (/ qtInd /), vt )
-      vt%id = joinedVTCounter
-      joinedVTCounter = joinedVTCounter + 1
-      vtInd = noQuantitiesAccumulated
-      joinedVectorTemplates ( vtInd ) = vt
-      
-      ! Now make a vector up for this
-      v = CreateVector ( 0, joinedVectorTemplates(vtInd), &
-        & joinedQuantities, vectorNameText='joined' )
       v%quantities(1)%values => values
-      joinedVectors ( noQuantitiesAccumulated ) = v
+      v%quantities(1)%mask => mask
+
+      if ( parallel%stageInMemory ) then
+        joinedVectors ( noQuantitiesAccumulated ) = v
+      else
+        ! Write this in our staging file
+        write ( gName, '(i0)' ) noQuantitiesAccumulated
+        call WriteVectorAsHDF5 ( stageFileID, gName, v )
+        ! Destroy the information we got
+        call DestroyQuantityTemplateContents ( qt )
+        call DestroyVectorTemplateInfo ( vt )
+        call DestroyVectorInfo ( v )
+      end if
+
       select case ( i )
       case ( 1 )
         vInd = noQuantitiesAccumulated
@@ -1052,18 +1144,22 @@ contains ! ================================ Procedures ======================
     do res = 1, size ( storedResults )
       valInd = storedResults(res)%valInds(chunk)
       if ( valInd /= 0 ) then
-        call DestroyVectorInfo ( joinedVectors(valInd) )
-        call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
-        call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+        if ( parallel%stageInMemory ) then
+          call DestroyVectorInfo ( joinedVectors(valInd) )
+          call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+          call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+        end if
         storedResults(res)%valInds(chunk) = 0
       end if
 
       if ( storedResults(res)%gotPrecision ) then
         precInd = storedResults(res)%precInds(chunk)
         if ( precInd /= 0 ) then
-          call DestroyVectorInfo ( joinedVectors(precInd) )
-          call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
-          call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          if ( parallel%stageInMemory ) then
+            call DestroyVectorInfo ( joinedVectors(precInd) )
+            call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+            call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          end if
           storedResults(res)%precInds(chunk) = 0
         end if
       end if
@@ -1078,6 +1174,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.46  2003/05/13 04:48:06  livesey
+! Can now stage to temporary hdf5 file instead of in memory.
+!
 ! Revision 2.45  2003/05/12 02:06:48  livesey
 ! Changed to use the inflation of vectors etc for efficiency.
 !
