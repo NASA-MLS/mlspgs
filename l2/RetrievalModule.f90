@@ -580,7 +580,7 @@ contains
                   else
                     call copyMatrixValue ( normalEquations%m, covariance%m )
                   end if
-                  call scaleVector ( covarianceXApriori, -1.0_r8 )
+!                 call scaleVector ( covarianceXApriori, -1.0_r8 )
                   call fillExtraCol ( normalEquations%m, covarianceXApriori )
                   k = normalEquations%m%row%nb
                   normalEquations%m%block(k,k)%values(1,1) = aprioriNorm
@@ -957,6 +957,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.32  2001/05/19 01:17:39  vsnyder
+! Correct sign of (apriori-x)
+!
 ! Revision 2.31  2001/05/19 00:22:31  vsnyder
 ! Dump_L1 -> Dump_Linf, uncouple 'spa' and Linf dumps
 !
