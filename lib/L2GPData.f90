@@ -48,6 +48,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface DUMP
     module procedure DUMP_L2GP
     module procedure DUMP_L2GP_DataBase
+    module procedure DumpL2GP_attributes_hdf5
   end interface
 
   interface ReadL2GPData
@@ -104,6 +105,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumGeolocFields = 10
+  integer, parameter :: MAXNLEVELS = 1000
 
    ! The following are the current data fields
    character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
@@ -281,6 +283,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Sanity
     useNTimesTotal = max(useNTimesTotal, useNTimes)
+    if ( useNLevels > MAXNLEVELS ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Too many levels in SetUpNewL2GPRecord')
     ! Store the dimensionality
 
     l2gp%nTimes = useNTimes
@@ -2297,6 +2302,240 @@ contains ! =====     Public Procedures     =============================
       
   end subroutine Dump_L2GP
     
+  !----------------------------------------  DumpL2GP_attributes_hdf5  -----
+  subroutine DumpL2GP_attributes_hdf5(l2FileHandle, l2gp, swathName)
+
+  use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
+    & HE5T_NATIVE_SCHAR, &
+    & HE5_SWattach, HE5_SWdetach
+  use he5_swapi, only: he5_swrdattr, he5_swrdlattr
+  ! use MLSHDFEOS, only: he5_swwrattr, he5_swwrlattr
+  use PCFHdr, only:  GlobalAttributes_T, he5_readglobalattr
+    ! Brief description of subroutine
+    ! This subroutine dumps the attributes for an l2gp
+    ! These include
+    ! Global attributes which are file level
+    ! Swath level
+    ! Geolocation field attributes
+    ! Data field attributes
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), optional, intent(IN) :: swathName ! Defaults->l2gp%name
+
+    ! Variables
+    type (GlobalAttributes_T)         :: gAttributes
+    character(len=255)                :: ProcessLevel
+    integer                           :: DayofYear
+    double precision                  :: TAI93At0zOfGranule
+    real(rgp), dimension(MAXNLEVELS)  :: pressures
+    integer, dimension(1)             :: ibuf
+
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    ! The following pair of string list encode the Units attribute
+    ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
+    character (len=*), parameter :: GeolocationTitles = &
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,' // &
+      & 'LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+    character (len=*), parameter :: GeolocationUnits = &
+      & 'deg,deg,s,h,deg,' // &
+      & 'deg,deg,NoUnits,hPa,GHz'
+    character (len=*), parameter :: GeoUniqueFieldDefinition = &
+      & 'HMT,HMT,AS,HMT,HMT,' // &
+      & 'M,M,M,AS,M'   ! These are abbreviated values
+    character (len=*), parameter :: UniqueFieldDefKeys = &
+      & 'HM,HMT,MT,AS,M'
+    character (len=*), parameter :: UniqueFieldDefValues = &
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
+      & 'Aura-Shared,MLS-Specific'  ! Expanded values
+    ! The following associate UniqueFieldDefs with species names
+    character (len=*), parameter :: Species = &
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
+      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+    character (len=*), parameter :: SpUniqueFieldDefinition = &
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
+      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
+
+    integer :: field
+    logical :: isColumnAmt
+    integer :: rgp_type
+    integer :: status
+    integer :: swid
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
+    character(len=CHARATTRLEN) :: field_name
+    character(len=CHARATTRLEN) :: units_name
+    character(len=CHARATTRLEN) :: uniqueness
+    character(len=CHARATTRLEN) :: species_name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
+    
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    call output ( 'L2GP Attributes: (swath name) ')
+    call output ( trim(name), advance='yes' )
+    if ( rgp == r4 ) then
+      rgp_type = HE5T_NATIVE_REAL
+    elseif ( rgp == r8 ) then
+      rgp_type = HE5T_NATIVE_DOUBLE
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8')
+    endif
+    call List2Array(GeolocationTitles, theTitles, .true.)
+    call List2Array(GeolocationUnits, theUnits, .true.)
+
+    ! - -   G l o b a l   A t t r i b u t e s   - -
+    call output ( '(Global Attributes) ', advance='yes')
+    call he5_readglobalattr(l2FileHandle, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule)
+    call dump(gAttributes%orbNum, 'Orbit numbers')
+    call dump(gAttributes%orbPeriod, 'Orbit Periods')
+    call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
+    call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
+    call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
+    call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
+    call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
+    call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
+    call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
+    call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
+    call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
+    call dump_int ( DayOfYear, 'Granule day of year:' )
+    call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
+
+    swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
+    
+    !   - -   S w a t h   A t t r i b u t e s   - -
+    call output ( '(Swath Attributes) ', advance='yes')
+    status = he5_swrdattr(swid, 'Pressure', pressures)
+    call dump ( pressures, 'Vertical coordinates:' )
+    status = he5_swrdattr(swid, 'VerticalCoordinate', field_name)
+    call dump_chars ( field_name, 'Vertical coordinates type:' )
+    
+    !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
+    call output ( '(Geolocation Attributes) ', advance='yes')
+    do field=1, NumGeolocFields
+      ! Take care not to write attributes to "missing fields"
+      if ( trim(theTitles(field)) == 'Frequency' &
+        & .and. l2gp%nFreqs < 1 ) then
+        field_name = ''
+      elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels < 1 ) then
+        field_name = ''
+      else
+        call GetStringHashElement (GeolocationTitles, &
+          & GeoUniqueFieldDefinition, trim(theTitles(field)), &
+          & abbr_uniq_fdef, .false.)
+        call GetStringHashElement (UniqueFieldDefKeys, &
+          & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+          & expnd_uniq_fdef, .false.)
+        status = he5_swrdlattr(swid, trim(theTitles(field)), 'Title', field_name)
+        status = he5_swrdlattr(swid, trim(theTitles(field)), 'Units', units_name)
+        call dump_chars ( field_name, 'Field title:' )
+        call dump_chars ( units_name, 'Units:' )
+
+        status = he5_swrdlattr(swid, trim(theTitles(field)), &
+          & 'UniqueFieldDefinition', uniqueness)
+        call dump_chars ( uniqueness, 'Unique field definition:' )
+      endif
+    enddo
+    !   - -   D a t a   A t t r i b u t e s   - -
+    call output ( '(Data Attributes) ', advance='yes')
+    field_name = Name
+    species_name = name
+    isColumnAmt = ( index(species_name, 'Column') > 0 )
+    if ( isColumnAmt ) then
+      call ExtractSubString(Name, species_name, 'Column', 'wmo')
+    endif
+    call GetStringHashElement (lowercase(Species), &
+      & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
+      & abbr_uniq_fdef, .false.)
+    call GetStringHashElement (UniqueFieldDefKeys, &
+      & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+      & expnd_uniq_fdef, .false.)
+    select case (trim(lowercase(species_name)))
+    case ('temperature')
+      units_name = 'K'
+    case ('gph')
+      units_name = 'm'
+    case ('rhi')
+      units_name = '%rhi'
+    case default
+      units_name = 'vmr'
+    end select
+    if ( isColumnAmt ) units_name = 'DU'
+    status = he5_swrdlattr(swid, 'L2gpValue', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'L2gpValue', 'Units',  units_name)
+    status = he5_swrdlattr(swid, 'L2gpValue', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    status = he5_swrdlattr(swid, 'L2gpPrecision', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'L2gpPrecision', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'L2gpPrecision', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+
+    ! ('Status' data field newly written)
+    status = he5_swrdlattr(swid, 'Status', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'Status', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'Status', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = he5_swrdlattr(swid, 'Quality', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'Quality', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'Quality', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+    contains
+    subroutine dump_chars(value, name)
+      ! arguments
+      character(len=*), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(trim(value), advance='yes')
+    end subroutine dump_chars
+    subroutine dump_int(value, name)
+      ! arguments
+      integer, intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_int
+    subroutine dump_r8(value, name)
+      ! arguments
+      real(r8), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_r8
+
+  !-------------------------------------
+  end subroutine DumpL2GP_attributes_hdf5
+  !-------------------------------------
+
   ! ----------------------------------  GetGeolocUnits  -----
   function GetGeolocUnits ( Title ) result( dim_string )
 
@@ -2347,6 +2586,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.94  2004/02/11 23:05:05  pwagner
+! Undid effect of 2nd-to-last fix; seems to have been wrong
+!
 ! Revision 2.93  2004/02/11 23:04:38  pwagner
 ! Undid effect of 2nd-to-last fix; seems to have been wrong
 !
