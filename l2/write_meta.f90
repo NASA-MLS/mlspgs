@@ -20,7 +20,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSStrings, only: LowerCase, GetStringHashElement
   use Output_m, only: Output, blanks
   use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
-    & InputInputPointer,WriteInputPointer, WritePCF2Hdr
+    & InputInputPointer, WriteInputPointer, WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET !, &
@@ -131,16 +131,16 @@ module WriteMetadata ! Populate metadata and write it out
 
     ! Parts of the input pointer
     INTEGER :: L1BOAPCFId=0  ! The PCF ID for the L1BOA file
-    INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds=>NULL()
+    INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds => NULL()
 
   end type PCFData_T
 
-  integer, public, parameter :: INVENTORYMETADATA=2
-  logical, public, parameter :: MCFCASESENSITIVE=.FALSE.
-  logical, public, parameter :: ANNOTATEWITHPCF=.FALSE.
-  logical, public, parameter :: SETINPUTPOINTER=.TRUE.
-  logical, public, parameter :: SFINBETWEENSTARTEND=.FALSE.
-  integer, public, parameter :: MCFFORL2GPOPTION=3     ! 1, public, 2 or 3
+  integer, public, parameter :: INVENTORYMETADATA = 2
+  logical, public, parameter :: MCFCASESENSITIVE = .FALSE.
+  logical, public, parameter :: ANNOTATEWITHPCF = .FALSE.
+  logical, public, parameter :: SETINPUTPOINTER = .TRUE.
+  logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
+  integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
   integer, private :: Module_error
 
 contains
@@ -890,7 +890,8 @@ contains
 
     ! Annotate the file with the PCF
 
-    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
+    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
+     & hdfVersion)
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 ) then
@@ -1033,7 +1034,8 @@ contains
 
 ! Annotate the file with the PCF
 
-    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
+    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
+      & hdfVersion)
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 ) then
@@ -1574,6 +1576,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.36  2003/02/01 00:29:40  pwagner
+! Passes hdfVersion to writePCF2Hdr
+!
 ! Revision 2.35  2003/01/30 01:01:05  pwagner
 ! Lets PCFHdr prepare and write input pointer
 !
