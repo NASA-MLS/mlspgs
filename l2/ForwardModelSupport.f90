@@ -12,13 +12,13 @@ module ForwardModelSupport
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
-    & F_CLOUD_DER, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP,&
+    & F_CLOUD_DER, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
-    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
+    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE, &
     & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & S_FORWARDMODEL, &
-    & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS,&
-    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH
+    & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
+    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -243,6 +243,7 @@ contains ! =====     Public Procedures     =============================
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
     info%cloud_width = 2
+    info%cloud_fov = 1
     info%frqGap = 0.0                   ! Default to everything
 
     noChannelsSpecs=0
@@ -370,6 +371,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_cloud_width )
         call expr ( subtree(2,son), units, value, type )
         info%cloud_width = nint( value(1) )
+      case ( f_cloud_fov )
+        call expr ( subtree(2,son), units, value, type )
+        info%cloud_fov = nint( value(1) )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -465,6 +469,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.12  2001/09/04 15:58:02  jonathan
+! add cloud_fov, jonathan
+!
 ! Revision 2.11  2001/07/17 22:36:19  jonathan
 ! add cloud_width, jonathan/paul
 !
