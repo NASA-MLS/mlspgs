@@ -105,49 +105,34 @@ contains
 
 !--------------------------------------------------  Rad_Tran_PFA  -----
 
-  ! Combine the tau's for PFA and non-PFA models.
+  ! Combine the Tau's for PFA and non-PFA models.
 
-  subroutine Rad_Tran_PFA ( KLo, KHi, Channel, &
-    & Tau_LBL, Tau_PFA, T_Script_LBL, T_Script_PFA, &
-    & RadV )
+  subroutine Rad_Tran_PFA ( Channel, Tau_LBL, Tau_PFA, T_Script_PFA, RadV )
 
     use MLSCommon, only: RP
     use Tau_M, only: Tau_T
 
-    integer, intent(in) :: KLo, KHi             ! Frequency indices for Tau_LBL
     integer, intent(in) :: Channel              ! Which channel in Tau_PFA?
                                                 ! Index in channels stru, not chan#
     type(tau_t), intent(in) :: Tau_LBL, Tau_PFA ! Tau structures
-    real(rp), intent(in) :: T_Script_LBL(:,:)   ! Delta B, Path X Frequencies
     real(rp), intent(in) :: T_Script_PFA(:,:)   ! Delta B, Path X Channels
     real(rp), intent(out) :: RadV(:)            ! Radiances at frequencies
                                                 ! within the channel
 
     integer :: FRQ_I                            ! Frequency index
-    integer :: N_Tau_Min                        ! Min(N_Tau_LBL, N_Tau_PFA)
-    integer :: N_Tau_LBL, N_Tau_PFA             ! Tau_*%i_stop(channel)
+    integer :: N_Tau_PFA                        ! Tau_PFA%i_stop(channel)
     integer :: PATH_I                           ! Path index
 
     n_tau_PFA = tau_PFA%i_stop(channel)
 
-    do frq_i = klo, khi
-      n_tau_LBL = tau_LBL%i_stop(frq_i)
-      n_tau_min = min(n_tau_LBL, n_tau_PFA)
-      radV(frq_i) = t_script_lbl(1,frq_i)
-      do path_i = 2, n_tau_min
+    do frq_i = 1, size(radV)
+      radV(frq_i) = 0.0
+      do path_i = 1, min(tau_LBL%i_stop(frq_i), n_tau_PFA)
         radV(frq_i) = radV(frq_i) + &
-          & t_script_lbl(path_i,frq_i) * tau_lbl%tau(path_i,frq_i) * &
-          &                              tau_pfa%tau(path_i,channel)
+          & t_script_pfa(path_i,channel) * tau_lbl%tau(path_i,frq_i) * &
+          &                                tau_pfa%tau(path_i,channel)
       end do ! path_i
-      ! Tau's after i_stop are 1.0.  At most one of the next two loops does something.
-      do path_i = n_tau_min+1, n_tau_PFA
-        radV(frq_i) = radV(frq_i) + &
-          & t_script_pfa(path_i,channel) * tau_PFA%tau(path_i,channel)
-      end do ! path_i
-      do path_i = n_tau_min+1, n_tau_LBL
-        radV(frq_i) = radV(frq_i) + &
-          & t_script_lbl(path_i,frq_i) * tau_LBL%tau(path_i,frq_i)
-      end do ! path_i
+      ! Tau's after i_stop are 0.0.
     end do ! frq_i
 
   end subroutine Rad_Tran_PFA
@@ -1035,6 +1020,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.42  2005/03/03 02:07:42  vsnyder
+! Remove USEs for unreferenced symbols
+!
 ! Revision 2.41  2004/11/01 20:25:44  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !
