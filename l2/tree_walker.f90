@@ -122,11 +122,6 @@ contains ! ====     Public Procedures     ==============================
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
-    ! Open hdf5 (believe it or not there is no interface for this routine!)
-    call H5Open_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open HDF5' )
-
     nullify ( l2pcf%anText ) ! for Sun's rubbish compiler
     depth = 0
     totalNGC = 0
@@ -328,11 +323,6 @@ subtrees:   do while ( j <= howmany )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
 
-    ! Close hdf5 (believe it or not there is no interface for this routine!)
-    call H5Close_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Unable to close HDF5' )
-
   contains
     subroutine SayTime ( What )
       character(len=*), intent(in) :: What
@@ -365,6 +355,10 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.86  2002/08/21 00:55:35  livesey
+! Changed error to warning when fail to close hdf5 (at least for the
+! moment).
+!
 ! Revision 2.85  2002/08/20 22:10:50  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
