@@ -657,7 +657,7 @@ contains ! =====     Public procedures     =============================
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_radiusofearth,&
              l+l_refGPH, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
-             l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
+             l+l_sidebandRatio, l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -1015,6 +1015,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.136  2001/07/17 19:21:59  jonathan
+! add surface as in instrinsic, jonathan
+!
 ! Revision 2.135  2001/07/17 19:18:28  jonathan
 ! add sizedistribution as in instrinsic, jonathan
 !
