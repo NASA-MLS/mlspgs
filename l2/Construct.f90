@@ -64,7 +64,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (VGrid_T), dimension(:), pointer :: vGrids
-    type (L2GPData_T), dimension(:), intent(in) :: L2GPDatabase
+    type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.18  2001/04/23 23:24:55  livesey
+! Changed l2gpDatabase to pointer
+!
 ! Revision 2.17  2001/04/21 01:25:23  livesey
 ! New version, can construct h/v grids from l2gp
 !
