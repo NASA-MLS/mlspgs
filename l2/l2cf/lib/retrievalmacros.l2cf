@@ -23,7 +23,7 @@ begin Fill
   sdIn$1: Vector, template=x$1Template
   sdOut$1: Vector, template=x$1Template
   lb$1: Vector, template=x$1Template
-  hb$1: Vector, templtae=x$1template
+  hb$1: Vector, template=x$1template
   ;; Define measurement related vectors
   y$1: Vector, template=y$1Template
   yNoise$1: Vector, template=y$1Template
@@ -296,6 +296,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.29  2002/10/17 18:19:50  livesey
+; Added low/high bound to retrieval
+;
 ; Revision 1.28  2002/10/16 20:21:11  mjf
 ; Added GPH precision.
 ;
