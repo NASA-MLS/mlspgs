@@ -11,7 +11,7 @@ module ForwardModelConfig
 
   use MLSCommon, only: R8
   use MLSSignals_M, only: Signal_T
-  use VGridsDatabase, only: VGrid_T
+  use VGridsDatabase, only: VGrid_T, DestroyVGridContents
 
   implicit NONE
   private
@@ -128,7 +128,7 @@ contains
   end subroutine StripForwardModelConfigDatabase
 
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
-  subroutine DestroyFWMConfigDatabase ( Database )
+  subroutine DestroyFWMConfigDatabase ( Database, deep )
 
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
@@ -136,6 +136,7 @@ contains
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
+    logical, optional, intent(in) :: DEEP
 
     ! Local variables
     integer :: Config                   ! Loop counter
@@ -144,7 +145,7 @@ contains
 
     if ( associated(database) ) then
       do config = 1, size(database)
-        call DestroyOneForwardModelConfig ( database(config) )
+        call DestroyOneForwardModelConfig ( database(config), deep=deep )
       end do
 
       deallocate ( database, stat=status )
@@ -153,32 +154,227 @@ contains
     end if
   end subroutine DestroyFWMConfigDatabase
 
+  ! ------------------------------------------- PVMPackFwmConfig --------
+  subroutine PVMPackFWMConfig ( config )
+    use PVMIDL, only: PVMIDLPack
+    use PVM, only: PVMErrorMessage
+    use MorePVM, only: PVMPackLitIndex
+    use MLSSignals_m, only: PVMPackSignal
+    use VGridsDatabase, only: PVMPackVGrid
+    ! Dummy arguments
+    type ( ForwardModelConfig_T ), intent(in) :: CONFIG
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+    integer :: I                        ! Loop counter
+
+    ! Executable code
+    ! First pack the scalars
+    call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
+      & config%do_conv, config%do_freq_avg, config%differentialScan, &
+      & config%lockBins, config%spect_der, config%temp_der, config%skipOverlaps, &
+      & config%default_spectroscopy /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
+    call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
+      & config%no_cloud_species, config%no_model_surfs, &
+      & config%num_scattering_angles, config%num_azimuth_angles, &
+      & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
+      & config%cloud_width, config%cloud_fov /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
+    call PVMPackLitIndex ( config%fwmType, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig%fwmType" )
+
+    ! Now pack the arrays - molecules
+    if ( associated ( config%molecules ) ) then
+      call PVMIDLPack ( size ( config%molecules ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of molecules" )
+      if ( size ( config%molecules ) > 0 ) then
+        do i = 1, size(config%molecules)
+          call PVMPackLitIndex ( config%molecules(i), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a molecule" )
+        end do
+        call PVMIDLPack ( config%moleculeDerivatives, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule derivatives" )
+      end if
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
+    end if
+    ! Specific quantities
+    if ( associated ( config%specificQuantities ) ) then
+      call PVMIDLPack ( size ( config%specificQuantities ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of specificQuantities" )
+      call PVMIDLPack ( config%specificQuantities, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing specificQuantities" )
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 specificQuantities" )
+    end if
+
+    ! Pack the other structures - signals
+    if ( associated ( config%signals ) ) then
+      call PVMIDLPack ( size ( config%signals ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of signals" )
+      do i = 1, size ( config%signals )
+        call PVMPackSignal ( config%signals(i) )
+      end do
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 signals" )
+    end if
+
+    ! Vgrids
+    call PVMIDLPack ( (/ associated ( config%integrationGrid ), &
+      & associated ( config%tangentGrid ) /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing vGrid flags" )
+    if ( associated ( config%integrationGrid ) ) &
+      & call PVMPackVGrid ( config%integrationGrid )
+    if ( associated ( config%tangentGrid ) ) &
+      & call PVMPackVGrid ( config%tangentGrid )
+
+  end subroutine PVMPackFWMConfig
+
+  ! ----------------------------------------- PVMUnpackFWMConfig ---------
+  subroutine PVMUnpackFWMConfig ( CONFIG )
+    use PVMIDL, only: PVMIDLUnpack
+    use PVM, only: PVMErrorMessage
+    use MorePVM, only: PVMUnpackLitIndex
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use Allocate_Deallocate, only: Allocate_test
+    use MLSSignals_m, only: PVMUnpackSignal
+    use VGridsDatabase, only: PVMUnpackVGrid
+    ! Dummy arguments
+    type ( ForwardModelConfig_T ), intent(out) :: CONFIG
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+    logical, dimension(11) :: l11       ! Temporary array
+    logical, dimension(11) :: l2        ! Temporary array
+    integer, dimension(11) :: i11       ! Temporary array
+    integer :: I                        ! Loop counter
+    integer :: N                        ! Array size
+
+    ! Executable code
+    ! First the scalars
+    call PVMIDLUnpack ( l11, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
+    config%globalConfig = l11(1)
+    config%atmos_der = l11(2)
+    config%do_baseline = l11(3)
+    config%do_conv = l11(4)
+    config%do_freq_avg = l11(5)
+    config%differentialScan = l11(6)
+    config%lockBins = l11(7)
+    config%spect_der = l11(8)
+    config%temp_der = l11(9)
+    config%skipOverlaps = l11(10)
+    config%default_spectroscopy = l11(11)
+    call PVMIDLUnpack ( i11, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
+    config%instrumentModule = i11(1)
+    config%surfaceTangentIndex = i11(2)
+    config%no_cloud_species = i11(3)
+    config%no_model_surfs = i11(4)
+    config%num_scattering_angles = i11(5)
+    config%num_azimuth_angles = i11(6)
+    config%num_ab_terms = i11(7)
+    config%num_size_bins = i11(8)
+    config%cloud_der = i11(9)
+    config%cloud_width = i11(10)
+    config%cloud_fov = i11(11)
+    call PVMUnpackLitIndex ( config%fwmType, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmType" )
+
+    ! Now the arrays - molecules
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of molecules" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
+      do i = 1, n
+        call PVMUnpackLitIndex ( config%molecules(i), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule" )
+      end do
+    end if
+    ! Specific quantiites
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%molecules, n, 'config%specificQuantities', ModuleName )
+      call PVMIDLUnpack ( config%specificQuantities, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specificQuantities" )
+    end if
+
+    ! Unpack other structures - signals
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of signals" )
+    if ( n > 0 ) then
+      allocate ( config%signals(n), STAT=info )
+      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'config%signals' )
+      do i = 1, n
+        call PVMUnpackSignal ( config%signals(i) )
+      end do
+    end if
+    ! Vgrids
+    call PVMIDLUnpack ( l2, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking vGrid flags" )
+    if ( l2(1) ) then
+      allocate ( config%integrationGrid, STAT=info )
+      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'config%integrationGrid' )
+      call PVMUnpackVGrid ( config%integrationGrid )
+    end if
+    if ( l2(2) ) then
+      allocate ( config%tangentGrid, STAT=info )
+      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'config%tangentGrid' )
+      call PVMUnpackVGrid ( config%tangentGrid )
+    end if
+
+  end subroutine PVMUnpackFWMConfig
+
   ! =====     Private Procedures     =====================================
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
-  subroutine DestroyOneForwardModelConfig ( config )
+  subroutine DestroyOneForwardModelConfig ( config, deep )
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSSignals_M, only: DestroySignal
     use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
 
     ! Dummy arguments
     type ( ForwardModelConfig_T), intent(inout) :: config
+    logical, optional, intent(in) :: DEEP ! Do a really deep destroy
 
     ! Local variables
     integer :: SIGNAL                   ! Loop counter
     integer :: STATUS                   ! Flag from allocate etc.
+    logical :: MYDEEP                   ! Copy of deep
 
     ! Executable code
+    myDeep = .false.
+    if ( present ( deep ) ) myDeep = deep
     if ( associated(config%signals) ) then
       do signal = 1, size(config%signals)
         call destroySignal ( config%signals(signal), &
-          & justChannels=.true. )
+          & justChannels=.not. myDeep )
       end do
       deallocate ( config%signals, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate // "database%signals" )
+        & MLSMSG_Deallocate // "config%signals" )
     end if
-    ! Don't destroy integrationGrid and tangentGrid.  Assume they will
+    if ( myDeep ) then
+      if ( associated ( config%integrationGrid ) ) then
+        call DestroyVGridContents ( config%integrationGrid )
+        deallocate ( config%integrationGrid, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Deallocate // "config%integrationGrid" )
+      end if
+      if ( associated ( config%tangentGrid ) ) then
+        call DestroyVGridContents ( config%tangentGrid )
+        deallocate ( config%tangentGrid, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Deallocate // "config%tangentGrid" )
+      end if
+    end if
+    ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they will
     ! be (or already are) destroyed by destroyVGridDatabase.
     call deallocate_test ( config%molecules, &
       & "config%molecules", moduleName )
@@ -249,6 +445,11 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.10  2002/09/25 20:06:42  livesey
+! Added specificQuantities, which necessitated globalConfig to allow for
+! some configs inside construct.  This in turn required
+! StripForwardModelConfigDatabase
+!
 ! Revision 2.9  2002/08/21 23:53:57  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
