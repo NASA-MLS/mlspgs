@@ -27,12 +27,16 @@ contains
     fsqr = frequency * frequency
     fsxt = fsqr * theta
     abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
-                   & ( cont(1) * EXP(-cont(3) * fsxt) +               &
-                   &   cont(4) * EXP(-cont(5) * fsxt) * (cont(6)**2 + fsqr))
+                   & ( cont(1) * EXP(-cont(3) * fsxt * theta) + &
+                   &   cont(4) * EXP(-cont(5) * fsxt * theta) * &
+                   & (cont(6)**2 + fsqr))
 !
   End function abs_cs_n2_cont
 end module ABS_CS_N2_CONT_M
 ! $Log$
+! Revision 2.4  2002/07/19 23:34:38  bill
+! wrong function fixed
+!
 ! Revision 2.3  2002/02/19 19:08:19  bill
 ! constants in exp need to be negative--wgr
 !
