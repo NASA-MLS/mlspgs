@@ -9,6 +9,10 @@ module LOAD_SPS_DATA_M
   use Molecules, only: spec_tags, L_EXTINCTION
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+
+  use SpectroscopyCatalog_m, only: CATALOG_T
+  use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
+
   implicit none
 
   Private
@@ -37,7 +41,7 @@ contains
 
   subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
         &    p_len, f_len, h2o_ind, ext_ind, lin_log, sps_values, Grids_f,   &
-        &    Grids_dw, Grids_dn, Grids_dv)
+        &    Grids_dw, Grids_dn, Grids_dv, temp, MyCatalog)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     integer, intent(in)  :: MOLECULES(:)
@@ -56,6 +60,9 @@ contains
 
     real(rp), pointer :: sps_values(:)
 
+    type (VectorValue_T), pointer :: temp
+    type (CATALOG_T), dimension(:), pointer :: MyCatalog
+
     character(LEN=3), parameter :: WNV='+++'
 
 !   character(LEN=*), optional, intent(in) :: WNV
@@ -64,12 +71,17 @@ contains
     ! Local variables:
 
     Character(len=1) :: CA
-    integer :: i,j,k,l,m,n,r,s,kz,kp,kf,Spectag,accum_z_dw,accum_p_dw,j_dw, &
-           &   j_dn,l_dn,j_dv,l_dw,l_dv,n_f_phi,n_f_zet,n_f_frq,n_sps,s_dw, &
-           &   s_dn,s_dv,accum_z_dn,accum_p_dn,accum_z_dv,accum_p_dv,&
-           &   accum_f_dw,accum_f_dn,accum_f_dv
+    integer :: i,j,k,l,m,n,r,s,kz,kp,kf,mf,Spectag,j_dw,j_dn,l_dn,j_dv, &
+           &   l_dw,l_dv,n_f_phi,n_f_zet,n_f_frq,n_sps,s_dw,s_dn,s_dv
+
+    integer :: accum_z_dw,accum_p_dw,accum_z_dn,accum_p_dn,accum_z_dv, &
+           &   accum_p_dv,accum_f_dw,accum_f_dn,accum_f_dv
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
+
+    Integer :: mp, mz, jj
+    Real(r8) :: Tmp, Frq, P
+
 !
     !******************* LOAD SPECIES DATA ************
 
@@ -103,13 +115,15 @@ contains
       kz = f%template%noSurfs
       kp = f%template%noInstances
       if ( f%template%frequencyCoordinate == l_none ) then
+        mf = 0
         kf = 1
       else
+        mf = 1
         kf = f%template%noChans
       endif
+      Grids_f%no_f(i) = kf * mf
       Grids_f%no_z(i) = kz
       Grids_f%no_p(i) = kp
-      Grids_f%no_f(i) = kf
       p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
       if(spec_tags(molecules(i)) == 18003) h2o_ind = i
@@ -158,6 +172,7 @@ contains
       m = s + kf
       k = j + kp
       r = f_len + kz * kp * kf
+      Grids_f%frq_basis(s:m-1) = 0.0
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
       if ( f%template%frequencyCoordinate /= l_none ) then
         if ( f%template%frequencyCoordinate /= l_frequency ) &
@@ -170,12 +185,32 @@ contains
             & "Unable to deal with frequency coordinate for a species" )
         endif
       end if
-      Grids_f%frq_basis(s:m-1) = 0.0
       Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
+!
+! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
+!
+      if(ext_ind == i) then
+        do mp = 1, kp
+          jj = 0
+          do mz = 1, kz
+            P = 10.0_rp**(-f%template%surfs(mz,1))
+            Tmp = temp%values(mz,mp)
+            do mf = 1, kf
+              jj = jj + 1
+              Frq = f%template%frequencies(mf)
+              f%values(jj,mp) = &
+             &  0.8061 * abs_cs_n2_cont(MyCatalog(i)%continuum,Tmp,P,Frq)
+            end do
+          end do
+        end do
+      endif
+!
+! ** END ZEBUG
+!
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
       if (f%template%logBasis) then
         lin_log(i) = .true.
-        sps_values(f_len:r-1) = log(sps_values(f_len:r-1))
+        sps_values(f_len:r-1) = LOG(sps_values(f_len:r-1))
       else
         lin_log(i) = .false.
       endif
@@ -183,7 +218,7 @@ contains
       l = n
       s = m
       f_len = r
-    enddo
+    end do
     f_len = f_len - 1
     
 !
@@ -405,6 +440,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.4  2001/11/10 00:46:40  zvi
+! Adding the EXTINCTION capabilitis
+!
 ! Revision 2.3  2001/11/08 09:56:59  zvi
 ! Fixing a bug..
 !

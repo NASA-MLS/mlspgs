@@ -233,9 +233,6 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
 
-    real(rp), dimension(:), pointer :: BN2_PATH_C ! Beta for N2 on path coarse
-    real(rp), dimension(:), pointer :: BN2_PATH_F ! Beta for N2 on path fine
-
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_F ! dBeta_dn on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_C ! dBeta_dt on coarse grid
@@ -339,8 +336,6 @@ contains ! ================================ FullForwardModel routine ======
       & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, eta_fzp, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid, skip_eta_frq )
-
-    nullify ( bn2_path_c, bn2_path_f)
 
     nullify ( lineFlag )
 
@@ -557,7 +552,7 @@ contains ! ================================ FullForwardModel routine ======
     ! Setup our temporary `state vector' like arrays -------------------------
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
      & firstSignal%radiometer, p_len, f_len, h2o_ind, ext_ind, lin_log, &
-     & sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv)
+     & sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, My_Catalog)
 
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
     nlvl = size(FwdModelConf%integrationGrid%surfs)
@@ -697,11 +692,9 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_zp', ModuleName )
     call Allocate_test ( sps_path, no_ele, noSpecies, 'sps_path', ModuleName )
 
-    call Allocate_test ( bn2_path_c, npc, 'bn2_path_c', ModuleName )
-
     call Allocate_test ( skip_eta_frq, noSpecies, 'skip_eta_frq', ModuleName )
 
-    skip_eta_frq = (Grids_f%no_f < 2)
+    skip_eta_frq = (Grids_f%no_f < 1)
 
     if(FwdModelConf%temp_der) then
 
@@ -991,7 +984,7 @@ contains ! ================================ FullForwardModel routine ======
             &  h2o_path=sps_path((indecies_c(1:npc)),h2o_ind))
         else
           call refractive_index(p_path(indecies_c(1:npc)), &
-            &   t_path(indecies_c(1:npc)),n_path(1:npc))
+            &  t_path(indecies_c(1:npc)),n_path(1:npc))
         endif
 
         if(FwdModelConf%temp_der) then
@@ -1095,15 +1088,8 @@ contains ! ================================ FullForwardModel routine ======
 
           else
 
-            if(ext_ind > 0) then
-              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
-              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:), &
-              &  ext_ind=ext_ind,bn2_path=bn2_path_c(1:npc))
-              sps_path(indecies_c(1:npc),ext_ind) = 0.8061*bn2_path_c(1:npc)
-            else
-              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
               &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:))
-            endif
 
           endif
 
@@ -1124,8 +1110,6 @@ contains ! ================================ FullForwardModel routine ======
           call Allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', &
                            &   ModuleName )
           call Allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', ModuleName )
-
-          call Allocate_test ( bn2_path_f, j, 'bn2_path_f', ModuleName )
 
           gl_ndx(:,1) = pack((/(i,i=1,npc)/),do_gl(1:npc))
 
@@ -1183,22 +1167,15 @@ contains ! ================================ FullForwardModel routine ======
               & 'dbeta_dn_path_f', ModuleName )
             call Allocate_test ( dbeta_dv_path_f, j, noSpecies, &
               & 'dbeta_dv_path_f', ModuleName )
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),       &
               & my_Catalog,gl_slabs,gl_inds,beta_path_f,                    &
               & DBETA_DW_PATH=dbeta_dw_path_f,DBETA_DN_PATH=dbeta_dn_path_f,&
               & DBETA_DV_PATH=dbeta_dv_path_f)
 
           else
 
-            if(ext_ind > 0) then
-              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
-              &  my_Catalog,gl_slabs,gl_inds,beta_path_f,               &
-              &  ext_ind=ext_ind,bn2_path=bn2_path_f)
-              sps_path(gl_inds,ext_ind) = 0.8061*bn2_path_f
-            else
-              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
-              &    my_Catalog,gl_slabs,gl_inds,beta_path_f)
-            endif
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
+              &  my_Catalog,gl_slabs,gl_inds,beta_path_f)
 
           endif
 
@@ -1298,8 +1275,6 @@ contains ! ================================ FullForwardModel routine ======
           call Deallocate_test ( beta_path_f, 'beta_path_f', ModuleName )
           call Deallocate_test ( gl_ndx, 'gl_ndx', ModuleName )
           call Deallocate_Test ( gl_indgen, 'gl_indgen', ModuleName )
-
-          call Deallocate_test ( bn2_path_f, 'bn2_path_f', ModuleName )
 
           if ( FwdModelConf%temp_der ) &
             & call Deallocate_test (dbeta_dt_path_f, 'dbeta_dt_path_f', &
@@ -1812,8 +1787,6 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( eta_fzp, 'eta_fzp', ModuleName )
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
-    call Deallocate_test ( bn2_path_c, 'bn2_path_c', ModuleName )
-
     call Deallocate_test ( skip_eta_frq,   'skip_eta_frq',   ModuleName )
 
     if(FwdModelConf%temp_der) then
@@ -1866,6 +1839,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.15  2001/11/10 00:46:40  zvi
+! Adding the EXTINCTION capabilitis
+!
 ! Revision 2.14  2001/11/08 21:52:23  jonathan
 ! add spec_tags to Molecules
 !
@@ -1887,7 +1863,7 @@ contains ! ================================ FullForwardModel routine ======
 ! Revision 2.8  2001/11/03 01:33:35  livesey
 ! Add more informative message if no spectroscopy information available
 ! for a molecule
-! 
+!
 ! Revision 2.7  2001/11/02 10:47:57  zvi
 ! Implementing frequecy grid
 !
