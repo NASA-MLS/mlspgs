@@ -116,7 +116,7 @@ contains
     tanh1 = tanh( ff / ( boltzmhz2 * t))
     do i = 1, n_sps
 
-      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb )
+      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb, .false. )
       
       select case (catalog(i)%molecule)
       case (L_H2O)
@@ -156,6 +156,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.28  2004/03/30 00:44:42  vsnyder
+! Remove USE for unreferenced symbol
+!
 ! Revision 1.27  2004/03/27 03:35:52  vsnyder
 ! Use revised Create_Beta
 !
