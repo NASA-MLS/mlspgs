@@ -122,7 +122,9 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
   elev_offset = 0.0                         ! Zero elev_offset in any case
 
   Call Z_DATETIME(Dtm1)
-
+!
+! Load the "Frequency gridding by pointing" file ("Bill's" file..)
+!
   Call ptg_frq_load(FMC, FMI, Ier)
   if(ier /= 0) goto 99
 !
