@@ -621,8 +621,11 @@ contains ! =====     Public Procedures     =============================
     end do
     call createValues ( z )
     do i = 1, size(x%quantities)
-      if ( associated(x%quantities(i)%mask) ) &
-        & call createMask ( z%quantities(i) )
+      if ( associated(x%quantities(i)%mask) ) then
+        call createMask ( z%quantities(i) )
+      else
+        nullify ( z%quantities(i)%mask ) ! for Sun's rubbish compiler
+      end if
     end do
     if ( present(database) ) i = addVectorToDatabase ( database, z )
   end subroutine  CloneVector
@@ -735,6 +738,7 @@ contains ! =====     Public Procedures     =============================
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
     end if
     if ( present(quant) ) then
+      if ( doMask ) nullify ( z%quantities(quant)%mask ) ! for Sun's rubbish compiler
       if ( present(inst) ) then
         if ( doValues ) z%quantities(quant)%values(:,inst) = &
             & x%quantities(quant)%values(:,inst)
@@ -748,6 +752,7 @@ contains ! =====     Public Procedures     =============================
       end if
     else
       do i = 1, size(x%quantities)
+        if ( doMask ) nullify ( z%quantities(i)%mask ) ! for Sun's rubbish compiler
         if ( doValues ) z%quantities(i)%values = x%quantities(i)%values
         if ( doMask .and. associated (x%quantities(i)%mask ) ) then
           call CreateMask ( z%quantities(i) )
@@ -784,6 +789,7 @@ contains ! =====     Public Procedures     =============================
     ! Allocate the MASK array for a vector quantity.
     character, dimension(:,:), pointer :: MASK ! To create
     real(r8), dimension(:,:), pointer :: VALUES ! Template values
+    nullify ( mask ) ! for Sun's rubbish compiler
     call allocate_test ( mask, (size(values,1)), &
       & size(values,2), "MASK in CreateMaskArray", ModuleName )
     mask = char(0) ! All vector elements are interesting
@@ -2017,6 +2023,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.85  2002/07/22 03:26:15  livesey
+! Added CheckIntegrity
+!
 ! Revision 2.84  2002/07/01 23:51:30  vsnyder
 ! Plug a memory leak
 !
