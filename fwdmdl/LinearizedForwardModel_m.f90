@@ -679,14 +679,14 @@ contains ! =====     Public Procedures     =============================
                   & stateQ%values ( s1(1):s2(1), stateInstance ) - &
                   & l2pcQ%values ( s1(1):s2(1), l2pcInstance ) ) ) / &
                   & binSelectors(selector)%cost
-              end do
-            end if
-          end if
-        end do
-      else
+              end do                    ! End loop over state vector instances
+            end if                      ! OK to do the test
+          end if                        ! Quantity in both state and l2pc
+        end do                          ! End loop over selectors
+      else                              ! This l2pc bin not relevant
         costs ( l2pcBin ) = huge ( costs(1) )
       end if
-    end do
+    end do                              ! End loop over l2pc bins
 
     resultAsArray = minloc ( costs )
     SelectL2PCBin = resultAsArray(1)
@@ -695,6 +695,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.5  2002/01/21 22:46:08  livesey
+! Wrote, but not hooked up SelectL2PCBin
+!
 ! Revision 2.4  2002/01/17 02:17:04  livesey
 ! Somewhat temporary, skip l2pc state vector components we don't like
 !
