@@ -14,11 +14,12 @@ module INIT_TABLES_MODULE
   use Init_Spectroscopy_m ! Everything.
   use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
-    ! N, NADP, ND, NDP, NP, NR, P, S, T,
+    ! N, NADP, ND, NDP, NP, NR, P, S, T, <all>_INDICES,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING, S_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
   use MOLECULES ! Everything.
+  use Units, only: Init_Units
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
@@ -52,7 +53,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_VGRIDCOORD     = t_units+1
   integer, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
   integer, parameter :: T_LAST           = t_vgridtype
-  integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
   integer, parameter :: F_ANTENNAPATTERNS     = last_Spectroscopy_Field + 1
   integer, parameter :: F_APRIORI             = f_antennaPatterns + 1
@@ -152,7 +152,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_XSTAR               = f_weight + 1
   integer, parameter :: F_YSTAR               = f_xStar + 1
   integer, parameter :: FIELD_LAST = f_yStar
-  integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
@@ -195,7 +194,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_VGRID         = l_vector + 1
   integer, parameter :: L_WEIGHTED      = l_vGrid + 1
   integer, parameter :: LAST_LIT        = l_weighted
-  integer :: LIT_INDICES(first_lit:last_lit)
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
@@ -212,7 +210,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: Z_SPECTROSCOPY   = 2
   integer, parameter :: SECTION_FIRST = z_mlsSignals, &
                                 SECTION_LAST = z_Output
-  integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
@@ -239,7 +236,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_LAST = s_vGrid
-  integer :: SPEC_INDICES(spec_first:spec_last)
 
 ! Parameter names:
   ! In GlobalSettings section:
@@ -261,7 +257,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_SCAN_LOWER_LIMIT            = p_overlap + 1
   integer, parameter :: P_SCAN_UPPER_LIMIT            = p_scan_lower_limit + 1
   integer, parameter :: LAST_PARM = p_scan_upper_limit
-  integer :: PARM_INDICES(first_parm:last_parm)
 
 ! Table for section ordering:
   integer, parameter :: OK = 1, & ! NO = 0
@@ -297,8 +292,8 @@ contains ! =====     Public procedures     =============================
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   ! Put intrinsic predefined identifiers into the symbol table.
-    call init_Spectroscopy ( Data_Type_Indices, Field_Indices, Lit_Indices, &
-    & Parm_Indices, Section_Indices, Spec_Indices )
+    call init_Spectroscopy ( t_last, field_last, last_lit, &
+    & first_parm, last_parm, section_last, spec_last )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
@@ -516,6 +511,11 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
     spec_indices(s_sids) =                 add_ident ( 'sids' )
+
+  ! Now initialize the units tables.  Init_Units depends on the lit tables
+  ! having been initialized.
+
+    call init_units
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -852,6 +852,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.84  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.83  2001/04/26 00:07:51  livesey
 ! Stuff to support reading of l2pc files
 !
