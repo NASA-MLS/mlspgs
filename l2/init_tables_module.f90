@@ -111,9 +111,9 @@ module INIT_TABLES_MODULE
 ! based on the file field_names.txt
   include 'field_parm.f9h'    
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
-  integer, parameter :: L_ANGLE                = last_Spectroscopy_Lit + 1
-  integer, parameter :: L_ADDNOISE             = l_angle + 1
-  integer, parameter :: L_APRIORI              = l_addnoise + 1
+  integer, parameter :: L_ADDNOISE             = last_Spectroscopy_Lit + 1
+  integer, parameter :: L_ANGLE                = l_addnoise + 1
+  integer, parameter :: L_APRIORI              = l_angle + 1
   integer, parameter :: L_BOTH 	              = l_apriori + 1
   integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
   integer, parameter :: L_CHISQCHAN            = l_boundarypressure + 1
@@ -614,17 +614,15 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, s+s_fill/))    ! Must be AFTER s_vector, s_matrix and s_climatology
      call acorn((/begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_dontMask, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
-     call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_explicitValues, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_extinction, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
-     call acorn((/begin, f+f_ignoreMask, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_ignoreZero, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_integrationTime, t+t_numeric, n+n_field_type/))
@@ -637,22 +635,21 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_model, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_noFineGrid, t+t_numeric, n+n_field_type/))
+     call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
             nr+n_dot/))
-     call acorn((/begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
      call acorn((/begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_radianceQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
+            n+n_dot/))
      call acorn((/begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
+     call acorn((/begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec/))
      call acorn((/begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec/))
@@ -661,6 +658,9 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_spread, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_systemTemperature, t+t_numeric, n+n_field_type/))
+     call acorn((/begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot, ndp+n_spec_def /) )
      call make_tree ( id_cum(1:id_last) )
@@ -875,6 +875,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.163  2001/09/20 20:54:25  pwagner
+! Replaced ignoreMask with dontMask
+!
 ! Revision 2.162  2001/09/19 23:38:05  pwagner
 ! Permits Remove command in fill section
 !
