@@ -8,10 +8,15 @@
 # batch_l2gpdiff.sh [opt1] [opt2] ..  str1 [str2] .. - dir1 dir2
 # where each string is a valid species name; e.g., H2O
 # and dir1, dir2 are the directories holding the l2gp files from the two runs
+#       * Special value expanded into all standard species *
+# If str1 is StdProd it is expanded into the current standard products
+# i.e.,  
+# BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
 #
 #     O p t i o n s
 #    -append              Append the results to an existing file
 #                          (Otherwise replace any existing file)
+#    -dryrun              Merely echo the commands that would be executed
 #    -unique              Save results to a uniquely-named new file
 #    -l2gpdiff command    Use command instead of l2gpdiff
 #  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
@@ -29,13 +34,11 @@
 #     $HOME/mlspgs/bin/LF95.Linux
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
-# (3) It would be convenient to have some helpful short string that
-#      is translated into all the standard species
-# (4) Why don't you just make "-rms -ignore" the default options, either
+# (3) Why don't you just make "-rms -ignore" the default options, either
 #      here or in l2gpdiff itself?
 # --------------- End batch_l2gpdiff.sh help
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 # "$Id$"
 
@@ -120,10 +123,9 @@ extant_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
+stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
 debug=1
 #     ^  -- set this to 1 if worried
-PRINT_TOO_MUCH=0
-#              ^  -- set this to 1 if willing to try patience of users
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
@@ -133,6 +135,7 @@ reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 l2gpdiff_opts=""
 list=""
 append="no"
+dryrun="no"
 unique="no"
 more_opts="yes"
 more_strs="yes"
@@ -147,6 +150,10 @@ while [ "$more_strs" = "yes" ] ; do
        ;;
     -append )
 	    append="yes"
+	    shift
+       ;;
+    -dryrun )
+	    dryrun="yes"
 	    shift
        ;;
     -unique )
@@ -179,7 +186,11 @@ while [ "$more_strs" = "yes" ] ; do
        ;;
     * )
        more_opts="no"
-       if [ "$list" != "" ]
+       sptest=`echo $1 | grep -i st`
+       if [ "$sptest" != "" ]
+       then
+         list="$stdprods"
+       elif [ "$list" != "" ]
        then
          list="$list $1"
        else
@@ -239,7 +250,10 @@ do
   else
     outfile="$i.diff"
   fi
-  if [ ! -f "$outfile" ]
+  if [ "$dryrun" = "yes" ]
+  then
+    echo "l2gpdiff $file1 $file2 to $outfile"
+  elif [ ! -f "$outfile" ]
   then
     echo "$file1 $file2 $outfile" > "$outfile"
   elif [ "$append" = "yes" ]
@@ -255,6 +269,9 @@ do
   elif [ "$file2" = "" ]
   then
     echo "No $i file found in $dir2"
+  elif [ "$dryrun" = "yes" ]
+  then
+    echo "$L2GPDIFF $l2gpdiff_opts $file1 $file2"
   elif [ "$l2gpdiff_opts" = "" ]
   then
     $L2GPDIFF $file1 $file2 >> "$outfile"
@@ -264,6 +281,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.2  2005/01/03 18:57:55  pwagner
+# Fixed suntax errors in if--elif--fi sequence
+#
 # Revision 1.1  2004/12/29 22:26:03  pwagner
 # First commit
 #
