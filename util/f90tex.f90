@@ -12,7 +12,7 @@ program F90TEX
 
 ! =====     Declarations     ===========================================
 
-  use MACHINE, only: FILSEP, HP, IO_ERROR
+  use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
 
   implicit NONE
 
@@ -277,6 +277,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.3  2001/06/01 21:50:16  vsnyder
+! Remove 'private' from CVS stuff (oops!)
+!
 ! Revision 1.2  2001/06/01 21:49:23  vsnyder
 ! Fix up CVS log variable
 !
