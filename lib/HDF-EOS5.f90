@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===========================================================================
@@ -34,6 +34,12 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   !                        OY! NO! NOT like this! No (:)s already!
 
   interface
+    integer function HE5_EHINQGLATTS ( FILE_ID, ATTRLIST, LISTSIZE )
+      integer, intent(in)              :: FILE_ID
+      character(len=*), intent(out)    :: attrlist
+      integer, intent(out)             :: listsize
+    end function HE5_EHINQGLATTS
+
     integer function HE5_GDCLOSE ( FILE_ID )
       integer, intent(in) :: FILE_ID
     end function HE5_GDCLOSE
@@ -227,6 +233,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.9  2004/02/26 21:58:23  pwagner
+! Added HE5_EHINQGLATTS
+!
 ! Revision 2.8  2003/09/03 22:38:42  pwagner
 ! Added HE5_SWFLDINFO
 !
