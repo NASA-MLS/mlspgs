@@ -9,16 +9,21 @@ Switches (set by -S option in mlsl2's command line):
   S => MLSSignals
   V => VGrids (in globalSettings)
 
+  cab => Column Abundance-containing l2gp swaths dumped
   cho => How good was the Cholesky decomposition?
+  chu => Enslaved chunk processing
   col => Column scale vector for Newton iteration
+  diag => diagonal of factored normal equations
   dvec => 'DX' vector during Newton iteration
   fac => Factors of normal equations during retriever iterations
   fvec => 'F' vector during Newton iteration
   glo => Global settings
   gvec => Gradient vector during Newton iteration
   jac => Jacobian during retriever iterations
+  l2aux => l2aux quantities (all) dumped
+  l2gp => l2gp swaths (all) dumped
   log => Log file messages
-  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta
+  pro => Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
   mas => Activities of the PVM master task
   neq => Normal equations during retriever iterations
   ndb => Dump the Newton method's internal variables before every step
@@ -53,6 +58,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.7  2001/05/24 18:12:43  vsnyder
+ Add ndb switch
+
  Revision 1.6  2001/05/24 16:37:55  livesey
  Added comments on mas and slv switches
 
