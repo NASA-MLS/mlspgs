@@ -14,11 +14,10 @@ module RetrievalModule
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
-  use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T, &
-    & ForwardModelSetup
+  use ForwardModelInterface, only: ForwardModel, ForwardModelConfig_T
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
     & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
-    & f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
+    & f_forwardModel, f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
     & f_maxIterations, f_measurements, f_method, f_outputCovariance, &
     & f_quantity, f_state, f_test, f_toleranceA, f_toleranceF, &
     & f_toleranceR, f_weight, field_first, field_indices,field_last, &
@@ -73,8 +72,8 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
+! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelConfig )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, configDatabase, &
     & fmc, fmi, tfmi ) !??? Last line temporary
   ! Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
@@ -85,13 +84,13 @@ contains
                                         ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(forwardModelInfo_T), intent(inout) :: FwdModelInfo ! From ForwardModelSetup
+    type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
 
-!??? Begin temporary stuff to start up the forward model
-  type(fwd_mdl_config) :: FMC
-  type(fwd_mdl_info), dimension(:), pointer :: FMI
-  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
-!??? End of temporary stuff to start up the forward model
+    !??? Begin temporary stuff to start up the forward model
+    type(fwd_mdl_config) :: FMC
+    type(fwd_mdl_info), dimension(:), pointer :: FMI
+    type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+    !??? End of temporary stuff to start up the forward model
 
     ! Local variables:
     type(nwt_T) :: AJ                   ! "About the Jacobian", see NWT.
@@ -124,6 +123,7 @@ contains
     type(vector_T) :: F                 ! for NWT -- Model - Measurements
     type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
     integer :: Field                    ! Field index -- f_something
+    integer :: FwdModelConfigs          ! Tree node index
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelOut
@@ -208,11 +208,6 @@ contains
       got = .false.
       spec = get_spec_id(key)
       select case ( spec )
-      case ( s_forwardModel )
-        ! ??? This a ForwardModelSetup for one chunk ???
-        ! ??? Do we need a ForwardModelGlobalSetup?  ???
-        call forwardModelSetup ( key, vectorDatabase, matrixDatabase, &
-          & fwdModelInfo )
       case ( s_matrix )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
         if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
@@ -289,6 +284,8 @@ contains
             diagonal = get_Boolean(son)
           case ( f_diagonalOut )
             diagonalOut = get_Boolean(son)
+          case ( f_forwardModel )
+            fwdModelConfigs = son
           case ( f_fwdModelIn )
             fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelExtra )
@@ -443,8 +440,9 @@ contains
               case ( nf_evalf )
                 if ( iter > maxIterations ) exit
                 ! Compute f(x)
-                call forwardModel ( fwdModelInfo, fwdModelExtra, fwdModelIn, &
-                  fwdModelOut=fwdModelOut )
+                ! VAN HAS TO WORRY ABOUT THIS LATER AS MULTIPLE FWDMODELCONFIGs !???
+                !call forwardModel ( fwdModelConfig, fwdModelExtra, fwdModelIn, &
+                !  fwdModelOut=fwdModelOut )
                 call subtractFromVector ( f, measurements )
                 aj%fnorm = sqrt(f .dot. f)
                 call destroyVectorValue ( f )  ! free the space
@@ -475,8 +473,9 @@ contains
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
                 do rowBlock = 1, jacobian%row%nb
-                  call forwardModel ( fwdModelInfo, fwdModelExtra, &
-                    & fwdModelIn, jacobian, rowBlock, fwdModelOut )
+                  ! VAN HAS TO WORRY ABOUT THIS LATER AS MULTIPLE FWDMODELCONFIGs !???
+                  ! call forwardModel ( fwdModelConfig, fwdModelExtra, &
+                  !   & fwdModelIn, jacobian, rowBlock, fwdModelOut )
                   call subtractFromVector ( f, measurements, &
                     & jacobian%row%quant(rowBlock), &
                     & jacobian%row%inst(rowBlock) )
@@ -624,7 +623,7 @@ contains
         end do
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
-        call sids ( key, VectorDatabase, MatrixDatabase, fwdModelInfo, &
+        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, &
           & fmc, fmi, tfmi ) !??? Last line is temporary
       case ( s_time )
         if ( timing ) then
@@ -690,6 +689,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.11  2001/03/17 00:45:15  livesey
+! Moved to new ForwardModelConfig_T
+!
 ! Revision 2.10  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
 !
