@@ -153,7 +153,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: ivmr
     integer :: mif
     integer :: MAF                      ! major frame counter
-    integer :: VMRINST                  ! Instance index
+!    integer :: VMRINST                  ! Instance index
     integer :: INSTANCE                 ! Relevant instance for temperature
     integer :: GPHINST                  ! Relevant instance for GPH
     integer :: NOLAYERS                 ! temp.noSurfs - 1
@@ -382,13 +382,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & ModuleName, InvalidQuantity//'vmr' )
 
       call FindClosestInstances ( vmr, radiance, closestInstances )
-      vmrInst = closestInstances(maf)
+!      vmrInst = closestInstances(maf)
+      instance = closestInstances(maf)
 
       call InterpolateValues ( &
-        & vmr%template%surfs(:,1), &    ! Old X
-        & vmr%values(:,vmrInst), &      ! Old Y
-        & temp%template%surfs(:,1), &   ! New X
-        & vmrArray(i,:), &              ! New Y
+        & vmr%template%surfs(:,instance), &    ! Old X
+        & vmr%values(:,instance), &            ! Old Y
+        & temp%template%surfs(:,instance), &   ! New X
+        & vmrArray(i,:), &                     ! New Y
         & 'Linear', extrapolate='Clamp' )
       Got(ivmr)=.true.
     end do
@@ -551,7 +552,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        print*,'Frequency=', frequencies/1e3_r8
     endif
 
-    tLat = temp%template%geodLat(1,1)
+    tLat = temp%template%geodLat(1,instance)
 
     IF ( present(jacobian) ) THEN
 
@@ -563,7 +564,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
 
-       if (tLat .ge. -25._r8 .and. tLat .le. 25._r8) then
+       if (tLat .ge. -30._r8 .and. tLat .le. 30._r8) then
           CloudType='convective'
        else
           CloudType='frontal'
@@ -976,6 +977,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.43  2001/10/07 23:42:17  jonathan
+! add CloudProfile module
+!
 ! Revision 1.42  2001/10/05 22:25:40  dwu
 ! allow multiple signals
 !
