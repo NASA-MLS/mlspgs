@@ -61,36 +61,36 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 
     Real(rp), intent(in) :: ht
 !
-    REAL(rp), INTENT(out) :: del_s(:)
+    REAL(rp), INTENT(out) :: Del_s(:)
     Real(rp), intent(out) :: REF_CORR(:)
 
-    Integer(ip) :: i,j,k,n_c,nch
+    Integer(ip) :: i,j,k,no_ele,mid
 
     Real(rp) :: INTEGRAND_GL(Ng)
 
-    Real(rp) :: q, htan2, ntht2
-    Real(rp) :: hv,nv,dndh,x1,x2,h1,h2,n1,n2,xm,ym,nh,eps
+    Real(rp) :: q, htan2, Nt2Ht2
+    Real(rp) :: H,N,dndh,x1,x2,h1,h2,n1,n2,xm,ym,NH,eps
 !
-    n_c = Size(n_path)
-    nch = (n_c + 1) / 2
+    no_ele = Size(n_path)
+    mid = (no_ele + 1) / 2
 !
 !  Initialize the ref_corr array:
 !
-    ref_corr(1:n_c) = 1.0_rp
+    ref_corr(1:no_ele) = 1.0_rp
 !
     Del_s = 0.0
 !
     htan2 = ht * ht
-    ntht2 = (n_path(nch)*ht)**2
+    Nt2Ht2 = (n_path(mid)*ht)**2
 !
     i = 2
-    j = nch
+    j = mid
     Del_s(i:j) = &
        &    abs(Sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
        &        Sqrt(abs(h_path( i : j )**2-htan2)))
 
     i = j+1
-    j = n_c-1
+    j = no_ele-1
     Del_s(i:j) = &
        &    abs(Sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
        &        Sqrt(abs(h_path( i : j )**2-htan2)))
@@ -99,24 +99,24 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 !
     h2 = h_path(1)
     n2 = n_path(1)-1.0_rp
-    x2 = Sqrt((h_path(1)*n_path(1))**2-ntht2)
+    x2 = Sqrt((h_path(1)*n_path(1))**2-Nt2Ht2)
 
-    do j = 2, nch
+    do j = 2, mid
 !
       x1 = x2
       h1 = h2
       n1 = n2
       h2 = h_path(j)
       n2 = n_path(j)-1.0_rp
-      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+      x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
       eps = Log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x1 + x2)
       ym = 0.5_rp *(x1 - x2)
       do k = 1, Ng
         q = xm + ym * Gx(k)
-        nh = Sqrt(q*q + ntht2)
-        Call Solve_Hn(nh)
-        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+        NH = Sqrt(q*q + Nt2Ht2)
+        Call Solve_Hn(NH)
+        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
       end do
 !
       q = SUM(integrand_GL(1:)*Gw(1:))
@@ -129,27 +129,27 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 !
 ! Now, do the left hand side of the ray path:
 !
-    j = nch+1
+    j = mid+1
     h2 = h_path(j)
     n2 = n_path(j)-1.0_rp
-    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-ntht2))
+    x2 = Sqrt(abs((h_path(j)*n_path(j))**2-Nt2Ht2))
 
-    do j = nch+1, n_c-1
+    do j = mid+1, no_ele-1
 !
       x1 = x2
       h1 = h2
       n1 = n2
       h2 = h_path(j+1)
       n2 = n_path(j+1)-1.0_rp
-      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-ntht2)
+      x2 = Sqrt((h_path(j+1)*n_path(j+1))**2-Nt2Ht2)
       eps = Log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x2 + x1)
       ym = 0.5_rp *(x2 - x1)
       do k = 1, Ng
         q = xm + ym * Gx(k)
-        nh = Sqrt(q*q + ntht2)
-        Call Solve_Hn(nh)
-        Integrand_GL(k) = 1.0_rp/(nv+hv*dndh)
+        NH = Sqrt(q*q + Nt2Ht2)
+        Call Solve_Hn(NH)
+        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
       end do
 !
       q = SUM(integrand_GL(1:)*Gw(1:))
@@ -160,29 +160,27 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 !
     end do
 !
-!    DEALLOCATE(Del_s,STAT=i)
-!
     Return
 !
 Contains
 !------------------------------------------------------------------
-! Solve the equation h*(1.0+N(h)) = NxH, where N(h) is an exponential:
+! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
 !    N(h) = n1*Exp(eps*(h-h1))
 
-  Subroutine Solve_Hn(NxH)
+  Subroutine Solve_Hn(NH)
 
-    Real(rp), intent(in) :: NxH
+    Real(rp), intent(in) :: NH
 
     Integer :: iter
     Real(rp) :: v1,v2,f1,f2,df
 
-     f1 = h1 * (1.0 + n1) - NxH
-     f2 = h2 * (1.0 + n2) - NxH
+     f1 = h1 * (1.0 + n1) - NH
+     f2 = h2 * (1.0 + n2) - NH
      df = (f2 - f1) / (h2 - h1)
 
      iter = 1
      v2 = (h1*abs(f2)+h2*abs(f1))/(abs(f1)+abs(f2))
-     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
 
      DO
 
@@ -190,7 +188,7 @@ Contains
        f1 = f2
 
        v2 = v1 - f1 / df
-       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NxH
+       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
 
        if(abs(f2) < 1.0e-8_rp) EXIT
        if(abs(v2-v1) < 1.0e-8_rp) EXIT
@@ -202,10 +200,10 @@ Contains
 
      END DO
 
-     hv = v2
-     nv = n1 * Exp(eps*(hv-h1))
-     dndh = eps * nv
-     nv = 1.0_rp + nv
+     H = v2
+     df = n1 * Exp(eps*(H-h1))
+     dndh = eps * df
+     N = 1.0_rp + df
 
   End Subroutine Solve_Hn
 
@@ -232,6 +230,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.9.2.2  2001/09/12 21:38:53  zvi
 ! Added CVS stuff
 !
