@@ -17,18 +17,19 @@ module ScanModelModule          ! Scan model and associated calculations
   ! vector.  This was never used in UMLS V5, and so it is not clear that it
   ! will ever be required.
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: DUMP
   use Geometry, only: earthRadA,earthRadB, PI, LN10, GeodToGeocLat
+  use Init_Tables_Module, only: L_Zeta, L_Temperature, L_RefGPH
+  use intrinsic, only: L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEOCALT
+  use ManipulateVectorQuantities, only: FindClosestInstances
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
        MLSMSG_Error
+  use MLSNumerics, only : Hunt, InterpolateValues
+  use Molecules, only: L_H2O
+  use Output_M, only: OUTPUT
   use VectorsModule, only : Vector_T, VectorValue_T, GetVectorQuantityByType, &
     &  ValidateVectorQuantity
-  use Init_Tables_Module, only: L_Zeta, L_Temperature, L_RefGPH
-  use ManipulateVectorQuantities, only: FindClosestInstances
-  use MLSNumerics, only : Hunt, InterpolateValues
-  use intrinsic, only: L_H2O, L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEOCALT
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Output_M, only: OUTPUT
 
   use MLSCommon, only: r8
 
@@ -445,6 +446,10 @@ contains ! --------------- Subroutines and functions --------------------------
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.9  2001/04/03 19:03:07  vsnyder
+! Get L_H2O from Molecules -- can't get it from Intrinsic after the order of
+! Molecules and Intrinsic was reversed.
+!
 ! Revision 2.8  2001/03/20 21:43:41  livesey
 ! Moved geodtogeoc lat to geometry in lib
 !
