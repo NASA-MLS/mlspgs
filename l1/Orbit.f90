@@ -21,6 +21,10 @@ MODULE Orbit
    CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
 
+   INTEGER :: numOrb, orbitNumber(max_orbits)
+   REAL :: scanRage(lenG), scanRateT(lenT)
+   REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits)
+
 ! Contents:
 
 ! Subroutines -- Orbit_met
@@ -172,6 +176,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.1  2001/02/01 18:20:13  perun
+! Added data declarations outside routines
+!
 ! Revision 2.0  2000/09/05 18:55:14  ahanzel
 ! Changing file revision to 2.0.
 !
