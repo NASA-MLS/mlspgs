@@ -44,6 +44,9 @@ clouddir = ../../../cloudfwdm/$(MLSCONFG)
 
 dir4 = $(clouddir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -61,9 +64,9 @@ DUSTY = $(FOPTS) -dusty
 # Same goes for "-M" for module paths.
 INC_PATHS = $(EXTRA_PATHS) \
  -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(itmdir) -I$(fwdmdldir) \
- -I$(clouddir)\
+ -I$(clouddir) -I$(blaslib)\
  -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(itmdir) -M$(fwdmdldir) \
- -M$(clouddir)
+ -M$(clouddir) -M$(blaslib)
 	 
 
 # Define some suffix rules
@@ -86,3 +89,6 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials = -lnsl -lsocket
 
 # $Log$
+# Revision 1.1  2001/09/10 20:36:02  pwagner
+# First commit
+#

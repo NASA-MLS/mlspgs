@@ -42,6 +42,9 @@ clouddir = ../../../cloudfwdm/$(MLSCONFG)
 
 dir4 = $(clouddir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -56,7 +59,7 @@ FC = lf95
 DUSTY = $(FOPTS)
 
 INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
-	 -I $(itmdir) -I $(fwdmdldir) -I $(clouddir)
+	 -I $(itmdir) -I $(fwdmdldir) -I $(clouddir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -78,6 +81,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.7  2001/10/23 16:59:08  pwagner
+# l_specials set as in mlspgs/l2
+#
 # Revision 1.6  2001/08/15 23:12:09  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #

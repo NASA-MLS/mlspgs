@@ -63,6 +63,10 @@ l2_driver = mlsl2 test.o
 # Nope--will need to think harder about what to do about excluded modules
 delete_lib_first = no
 
+mlspack_dir=../../../blas/$(MLSCONFG)
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building $(PROG_NAME) with mlspack
+
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
    pvm_message=Building $(PROG_NAME) with PVM support
@@ -88,20 +92,12 @@ endif
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
 
-ifdef l2_NEEDS_fwdmdl
    fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
    fwdmdl_message=Building $(PROG_NAME) with forward model
    cloud_linker_line=-L${clouddir} -lcloud
    cloud_message=Building mlsl2 with cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
-else
-   fwdmdl_linker_line=
-   fwdmdl_message=Building $(PROG_NAME) without forward model
-   cloud_linker_line=
-   cloud_message=Building mlsl2 without cloud forward model
-   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a 
-endif
 
 ifdef LAPACK
 ifdef LIB_LAPACK
@@ -152,6 +148,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
 		@echo "$(hdf5_message)"
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
+		@echo "$(mlspack_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll2 \
         $(cloud_linker_line) \
@@ -167,6 +164,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
+        $(mlspack_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -181,6 +179,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
 # Revision 1.11  2001/10/11 18:15:29  pwagner
 # Allows PROG_NAME variable to specify name of executable built
 #

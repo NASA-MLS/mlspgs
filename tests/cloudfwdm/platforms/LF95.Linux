@@ -41,6 +41,9 @@ ourdir=../../../$(our_dir)/$(MLSCONFG)
 dir2 = $(itmdir)/
 dir3 = $(fwddir)/
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -57,7 +60,7 @@ DUSTY = $(FOPTS)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
- -I $(itmdir) -I $(fwddir) -I $(ourdir)
+ -I $(itmdir) -I $(fwddir) -I $(ourdir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -79,6 +82,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.5  2001/10/23 16:59:07  pwagner
+# l_specials set as in mlspgs/l2
+#
 # Revision 1.4  2001/10/12 00:11:37  pwagner
 # Now finds modules up in owndir
 #

@@ -58,6 +58,10 @@ REECHO=$(UTILDIR)/reecho.sh
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
+mlspack_dir=../../../blas/$(MLSCONFG)
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building $(PROG_NAME) with mlspack
+
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
    pvm_message=Building $(PROG_NAME) with PVM support
@@ -120,6 +124,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a $(fwddir)/libfwdmdl.a 
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
+		@echo "$(mlspack_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L${ourdir} -lcloud \
                       -L${fwddir} -lfwdmdl \
@@ -134,6 +139,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a $(fwddir)/libfwdmdl.a 
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
+        $(mlspack_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -148,6 +154,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.4  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
