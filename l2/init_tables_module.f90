@@ -88,7 +88,8 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, parameter :: T_CRITICALMODULE = Last_spectroscopy_type+1
+  integer, parameter :: T_CHUNKDIVIDEMETHOD = Last_spectroscopy_type+1
+  integer, parameter :: T_CRITICALMODULE = t_chunkDivideMethod+1
   integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
   integer, parameter :: T_FILLMETHOD     = t_fGridCoord+1
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
@@ -134,7 +135,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_DESTROY            = s_apriori + 1
+  integer, parameter :: S_CHUNKDIVIDE        = s_apriori + 1
+  integer, parameter :: S_DESTROY            = s_chunkDivide + 1
   integer, parameter :: S_DUMP               = s_destroy + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_FGRID              = s_dumpblocks + 1
@@ -232,6 +234,7 @@ contains ! =====     Public procedures     =============================
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
+    data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_fgridcoord) =      add_ident ( 'fGridCoord' )
@@ -297,6 +300,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
+    spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
@@ -353,6 +357,7 @@ contains ! =====     Public procedures     =============================
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
+      begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
@@ -458,6 +463,20 @@ contains ! =====     Public procedures     =============================
              begin, f+f_method, t+t_mergeMethod, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
              np+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_chunkDivide, &
+             begin, f+f_method, t+t_chunkDivideMethod, nr+n_field_type, &
+             begin, f+f_noChunks, t+t_numeric, n+n_field_type, &
+             begin, f+f_overlap, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
+             begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
+             begin, f+f_homeModule, t+t_module, n+n_field_type, &
+             begin, f+f_homeGeodAngle, t+t_numeric, n+n_field_type, &
+             begin, f+f_scanLowerLimit, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_scanUpperLimit, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
+             begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_template, &
              begin, f+f_copy, n+n_field_type, &
@@ -777,7 +796,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_overlap, t+t_numeric, n+n_name_def, &
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
-             s+s_time, n+n_section, &
+             s+s_time, s+s_chunkDivide, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
@@ -824,6 +843,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.185  2001/11/09 00:04:39  livesey
+! New ChunkDivide stuff
+!
 ! Revision 2.184  2001/10/31 22:00:18  livesey
 ! Added phaseName to snooper
 !
