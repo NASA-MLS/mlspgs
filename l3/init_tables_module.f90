@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module INIT_TABLES_MODULE
@@ -42,24 +42,22 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: T_LAST           = t_units
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, public, parameter :: F_BYPASS = 1
-  integer, public, parameter :: F_DF = 2
-  integer, public, parameter :: F_DLAT = 3
-  integer, public, parameter :: F_DLON = 4
-  integer, public, parameter :: F_FILE = 5
-  integer, public, parameter :: F_IMETHOD = 6
-  integer, public, parameter :: F_LABEL = 7
-  integer, public, parameter :: F_LATGRID = 8
-  integer, public, parameter :: F_LONGRID = 9
-  integer, public, parameter :: F_MCF = 10
-  integer, public, parameter :: F_MODE = 11
-  integer, public, parameter :: F_PRESLVL = 12
-  integer, public, parameter :: F_PRODNAME = 13
-  integer, public, parameter :: F_QUANTITIES = 14
-  integer, public, parameter :: F_RANGFREQ = 15
-  integer, public, parameter :: F_RANGWAVNUM = 16
-  integer, public, parameter :: F_TIME = 17
-  integer, public, parameter :: FIELD_FIRST = f_bypass, FIELD_LAST = f_time
+  integer, public, parameter :: F_DF = 1
+  integer, public, parameter :: F_DLAT = 2
+  integer, public, parameter :: F_DLON = 3
+  integer, public, parameter :: F_FILE = 4
+  integer, public, parameter :: F_IMETHOD = 5
+  integer, public, parameter :: F_LABEL = 6
+  integer, public, parameter :: F_LATGRID = 7
+  integer, public, parameter :: F_LONGRID = 8
+  integer, public, parameter :: F_MCF = 9
+  integer, public, parameter :: F_MODE = 10
+  integer, public, parameter :: F_PRESLVL = 11
+  integer, public, parameter :: F_PRODNAME = 12
+  integer, public, parameter :: F_RANGFREQ = 13
+  integer, public, parameter :: F_RANGWAVNUM = 14
+  integer, public, parameter :: F_TIME = 15
+  integer, public, parameter :: FIELD_FIRST = f_df, FIELD_LAST = f_time
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
   integer, public, parameter :: L_ALL   = last_intrinsic_lit + 1
@@ -131,7 +129,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_des) =                    add_ident ( 'des' )
     lit_indices(l_lin) =                    add_ident ( 'lin' )
     ! Put field names into the symbol table
-    field_indices(f_bypass) =               add_ident ( 'bypassPCF' )
     field_indices(f_df) =                   add_ident ( 'dF' )
     field_indices(f_dlat) =                 add_ident ( 'dLat' )
     field_indices(f_dlon) =                 add_ident ( 'dLon' )
@@ -144,7 +141,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_mode) =                 add_ident ( 'mode' )
     field_indices(f_preslvl) =              add_ident ( 'l3presLvl' )
     field_indices(f_prodname) =             add_ident ( 'l3prodNameD' )
-    field_indices(f_quantities) =           add_ident ( 'quantities' )
     field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
     field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
@@ -230,10 +226,8 @@ contains ! =====     Public procedures     =============================
              n+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &
-             begin, f+f_quantities, t+t_string, n+n_field_type, &
              begin, f+f_mcf, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
-             begin, f+f_bypass, t+t_boolean, n+n_field_type, &
              n+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
@@ -316,3 +310,6 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.1  2000/10/24 19:47:17  nakamura
+! Customized for L3.
+!
