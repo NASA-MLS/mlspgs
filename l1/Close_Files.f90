@@ -25,6 +25,9 @@ CONTAINS
   SUBROUTINE CloseFiles  ! Close production Level 1 files
 !=============================================================================
 
+    USE OpenInit, ONLY: antext
+    USE PCFHdr, ONLY: WritePCF2Hdr
+
     INTEGER :: i, returnStatus
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
@@ -51,7 +54,9 @@ CONTAINS
 
     ENDDO
 
-    ! Close L1RAD D file
+    ! Write Annotation and Close L1RAD D file
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anText)
 
     returnStatus = sfend (L1BFileInfo%RADDid)
     IF (returnStatus == -1) THEN
@@ -62,7 +67,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
-    ! Close L1RAD F file
+    ! Write Annotation and Close L1RAD F file
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anText)
 
     returnStatus = sfend (L1BFileInfo%RADFid)
     IF (returnStatus == -1) THEN
@@ -73,7 +80,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
-    ! Close L1BOA file
+    ! Write Annotation and Close L1BOA file
+
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anText)
 
     returnStatus = sfend (L1BFileInfo%OAid)
     IF (returnStatus == -1) THEN
@@ -92,6 +101,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.3  2001/03/12 16:00:01  perun
+! Write PCF file annotation to output files
+!
 ! Revision 2.2  2001/03/05 22:35:13  perun
 ! Corrected L0_Close call
 !
