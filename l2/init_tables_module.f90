@@ -120,7 +120,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FORGE              = s_flagCloud + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
-  integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
+  integer, parameter :: S_FREQUENCYGRID      = s_forwardModelGlobal + 1
+  integer, parameter :: S_GRIDDED            = s_frequencyGrid + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
   integer, parameter :: S_L1BRAD             = s_hgrid + 1
   integer, parameter :: S_L1BOA              = s_l1brad + 1
@@ -295,6 +296,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
+    spec_indices(s_frequencyGrid) =        add_ident ( 'frequencyGrid' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
@@ -925,6 +927,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_frequencyGrid, & ! Must be AFTER s_vector
+             begin, f+f_atmos, s+s_vector, nr+n_field_spec, &
+             begin, f+f_frequencies, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
              begin, f+f_phaseName, t+t_string, n+n_field_type, &
@@ -1015,6 +1022,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.305  2003/04/30 00:09:12  vsnyder
+! Add the FrequencyGrid specification, with 'atmos' and 'frequencies'
+! fields.  So far, the FrequencyGrid specification can't appear anywhere.
+! Eventually, we may hook it into the Retrieve section.
+!
 ! Revision 2.304  2003/04/23 17:06:36  livesey
 ! Added binmax binmin fills
 !
