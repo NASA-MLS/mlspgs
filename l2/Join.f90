@@ -390,7 +390,8 @@ contains ! =====     Public Procedures     =============================
         & newL2GP%pressures = quantity%template%surfs(:,1)
       if ( quantity%template%verticalCoordinate == l_Zeta ) &
         & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
-
+      ! It inherits its quantity type from the quantity template
+      newL2GP%quantityType=quantity%template%quantityType
       ! Do something about frequency
       if ( associated ( quantity%template%frequencies ) ) then
         newL2GP%frequency = quantity%template%frequencies
@@ -819,6 +820,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.69  2003/02/08 00:31:31  pwagner
+! Now saves quantityType in newl2gp
+!
 ! Revision 2.68  2003/01/30 01:03:24  pwagner
 ! Stores quantity type taken from source vector in l2aux
 !
