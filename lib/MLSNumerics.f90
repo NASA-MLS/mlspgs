@@ -6,6 +6,7 @@ module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
   use Allocate_Deallocate, only : Allocate_test, Deallocate_test
+  use DUMP_0, only : DUMP
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
   use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -522,6 +523,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.32  2005/01/19 17:16:48  pwagner
+! Now gets dump from dump_0
+!
 ! Revision 2.31  2004/09/28 23:14:24  pwagner
 ! Added isFillValue function
 !
