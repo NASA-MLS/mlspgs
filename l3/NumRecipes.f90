@@ -2,9 +2,9 @@
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 Module NumRecipesModule
-!===============================================================================
+!==============================================================================
 	
 	PUBLIC
 
@@ -108,6 +108,9 @@ End Module NumRecipesModule
 !===================
 
 ! $Log$
+! Revision 1.2  2001/08/06 17:04:05  ybj
+! fix the array size
+!
 ! Revision 1.1  2001/02/27 20:54:21  ybj
 ! Interpolation Routines From Numerical Recipes
 !
