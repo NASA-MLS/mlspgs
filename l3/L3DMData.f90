@@ -14,6 +14,7 @@ MODULE L3DMData
    USE MLSMessageModule
    USE MLSPCF
    USE MLSStrings
+   USE OpenInit
    USE PCFModule
    USE SDPToolkit
    IMPLICIT NONE
@@ -84,7 +85,7 @@ MODULE L3DMData
      CHARACTER (LEN=FileNameLen) :: name(maxwindow)
 	! array of names of the created files
 
-     CHARACTER (LEN=8) :: date(maxWindow)	! CCSDS B format date of files
+     CHARACTER (LEN=8) :: date(maxWindow)	! CCSDS B format dates of files
 
    END TYPE L3DMFiles_T
 
@@ -189,7 +190,7 @@ CONTAINS
       INTEGER :: gdfID, gdId, i, match, status
       INTEGER :: start(3), stride(3), edge(3)
 
-      REAL :: maxLat, minLat
+      REAL :: maxLat, maxLon, minLat
 
       REAL(r8) :: uplft(2), lowrgt(2)
       REAL(r8) :: projparm(13)
@@ -224,24 +225,25 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-! Set up the grid.  The region is bounded by 180.0W to 180.0E longitude &
-! varying latitude.  Grid into 91 bins along the x-axis, by nLats bins along
+! Set up the grid.  The region is bounded by 180.0W to 176.0E longitude &
+! varying latitude.  Grid into 90 bins along the x-axis, by nLats bins along
 ! the y-axis (4x2 bins).  Upper Left & Lower Right corners in DDDMMMSSS.ss.
 
          uplft(1) = -180000000.00
-         lowrgt(1) = 180000000.00
 
          projparm = 0.0
 
-! Find boundaries of measured latitude
+! Find boundaries of measured latitude, upper bound of measure longitude
 
          maxLat = MAXVAL( l3dmData(i)%latitude )
          minLat = MINVAL( l3dmData(i)%latitude )
+         maxLon = MAXVAL( l3dmData(i)%longitude )
 
 ! Convert to "packed degree format"
 
          CALL ConvertDeg2DMS(maxLat, uplft(2))
          CALL ConvertDeg2DMS(minLat, lowrgt(2))
+         CALL ConvertDeg2DMS(maxLon, lowrgt(1))
 
 ! Create the grid
 
@@ -448,54 +450,53 @@ CONTAINS
    END SUBROUTINE OutputGrids
 !----------------------------
 
-!----------------------------------------------
-   SUBROUTINE WriteMetaL3DM (files, mlspcf_mcf)
-!----------------------------------------------
+!-----------------------------------------------------
+   SUBROUTINE WriteMetaL3DM (pcf, l3cf, files, anText)
+!-----------------------------------------------------
 
 ! Brief description of subroutine
-! This routine writes the metadata for an l3dm file.
+! This routine writes the metadata for an l3dm file, and annotates it with the
+! PCF.
 
 ! Arguments
 
+      TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
+
       TYPE (L3DMFiles_T), INTENT(IN) :: files
 
-      INTEGER, INTENT(IN) :: mlspcf_mcf
+      TYPE( PCFData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
 ! Parameters
 
 ! Functions
 
       INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
-      INTEGER, EXTERNAL :: pgs_met_setAttr_s, pgs_met_write
+      INTEGER, EXTERNAL :: pgs_met_setAttr_i,pgs_met_setAttr_s, pgs_met_write
+      INTEGER, EXTERNAL :: gdinqgrid
 
 ! Variables
 
-      CHARACTER (LEN=10) :: date
-      CHARACTER (LEN=15) :: time
-      CHARACTER (LEN=21) :: sType, zoneID
-      CHARACTER (LEN=32) :: mnemonic
-      CHARACTER (LEN=480) :: msg, msr
+      CHARACTER (LEN=1) :: cNum
+      CHARACTER (LEN=12) :: shortName
+      CHARACTER (LEN=45) :: attrName, sval
+      CHARACTER (LEN=80) :: identifier
+      CHARACTER (LEN=132) :: list
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: type
+      CHARACTER (LEN=GridNameLen) :: gridName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
-      INTEGER :: hdfReturn, i, result, sdid
+      INTEGER :: hdfReturn, i, j, indx, len, numGrids, result, sdid
 
-      REAL(r8) :: maxLat, maxLon, minLat, minLon
+      REAL(r8) :: dval
 
 ! Initialize the MCF file
 
-      result = pgs_met_init(mlspcf_mcf, groups)
+      result = pgs_met_init(l3cf%mcfNum, groups)
       IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                            'Initialization error.  See LogStatus for details.')
-
-! Set nominal values for the overall file
-
-      sType = 'Horizontal & Vertical'
-      time = '12:00:00.000000'
-      zoneID = 'Other Grid System'
-      minLon = -180.0
-      maxLat = 82.0
-      maxLon = 180.0
-      minLat = -82.0
 
 ! For each l3dm file successfully created,
 
@@ -507,86 +508,316 @@ CONTAINS
          IF (sdid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
                                      &open the HDF file for metadata writing.')
  
-! Set PGE values
+! Set PGE values -- ECSDataGranule
 
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "GranuleSpatialDomainType", sType)
+         attrName = 'ReprocessingPlanned'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                           'further update anticipated using enhanced PGE')
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         date = files%date(i)
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "RangeBeginningDate", date)
+         attrName = 'ReprocessingActual'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    'processed once')
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "RangeBeginningTime", time)
+         attrName = 'LocalGranuleID'
+         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L3DM')
+         sval = TRIM(type) // files%date(i)
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "RangeEndingDate", date)
+         attrName = 'DayNightFlag'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, 'Both')
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "RangeEndingTime", time)
+         attrName = 'LocalVersionID'
+         CALL ExpandFileTemplate('$version-$cycle', sval, &
+                                 version=pcf%outputVersion, cycle=pcf%cycle)
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                   "ZoneIdentifier", zoneID)
-         IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+! MeasuredParameterContainer -- find the number of grids in the file
+
+         numGrids = gdinqgrid(files%name(i), list, len)
+         IF (numGrids == -1) THEN
+            msr = 'No grids found in file ' // TRIM( files%name(i) ) // &
+                  ' while attempting to write its metadata.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                   "WestBoundingCoordinate", minLon)
+! For each grid in the file
+
+         DO j = 1, numGrids
+
+! Extract its name
+
+            indx = INDEX(list, ',')
+            IF (indx /= 0) THEN
+               gridName = list(:indx-1)
+               list = list(indx+1:)
+            ELSE
+               gridName = list
+            ENDIF
+
+! Append a class suffix to ParameterName, and write the grid name as its value
+
+            WRITE( cNum, '(I1)' ) j
+
+            attrName = 'ParameterName' // '.' // cNum
+            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                       gridName)
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+! QAFlags Group
+
+            attrName = 'AutomaticQualityFlag' // '.' // cNum
+            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                       'Passed')
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
+            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                       'TBD')
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            attrName = 'OperationalQualityFlag' // '.' // cNum
+            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                       'Not Investigated')
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
+            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                              'TBD')
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+! QAStats Group
+
+            attrName = 'QAPercentInterpolatedData' // '.' // cNum
+            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            attrName = 'QAPercentMissingData' // '.' // cNum
+            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+            attrName = 'QAPercentOutofBoundsData' // '.' // cNum
+            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
+            IF (result /= PGS_S_SUCCESS) THEN
+               msr = METAWR_ERR // attrName
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
+
+         ENDDO
+
+! OrbitCalculatedSpatialDomainContainer
+
+         attrName = 'OrbitNumber' // '.1'
+         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 999)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                   "NorthBoundingCoordinate", maxLat)
+         attrName = 'StartOrbitNumber' // '.1'
+         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                   "EastBoundingCoordinate", maxLon)
+         attrName = 'StopOrbitNumber' // '.1'
+         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                   "SouthBoundingCoordinate", minLat)
+         attrName = 'EquatorCrossingLongitude' // '.1'
+         dval = 0.0
+         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
          IF (result /= PGS_S_SUCCESS) THEN
-            call Pgs_smf_getMsg(result, mnemonic, msg)
-            msr = mnemonic // ':  ' // msg
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'EquatorCrossingTime' // '.1'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    '00:00:00')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'EquatorCrossingDate' // '.1'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    '1899-04-29')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! InputPointer
+
+         indx = INDEX(l3cf%mcfName, '.', .TRUE.)
+         shortName = l3cf%mcfName(:indx-1)
+         indx = INDEX(shortName, '.')
+         shortName = shortName(:indx-1) // ':' // shortName(indx+1:)
+         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L2GP')
+         identifier = TRIM(type) // files%date(i)
+         sval = 'LGID:' // TRIM(shortName) // ':' // TRIM(identifier)
+         attrName = 'InputPointer'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Locality Value
+
+         attrName = 'LocalityValue'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    'Limb')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! VerticalSpatialDomain Product-Specific Attribute
+
+         attrName = 'VerticalSpatialDomainType' // '.1'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    'Atmosphere Layer')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'VerticalSpatialDomainValue' // '.1'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    'Atmosphere Profile')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! HorizontalSpatialDomainContainer
+
+         attrName = 'ZoneIdentifier'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    'Other Grid System')
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'WestBoundingCoordinate'
+         dval = -180.0
+         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'NorthBoundingCoordinate'
+         dval = 90.0
+         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'EastBoundingCoordinate'
+         dval = 180.0
+         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'SouthBoundingCoordinate'
+         dval = -90.0
+         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! RangeDateTime Group
+
+         attrName = 'RangeBeginningDate'
+         result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
+                                     files%date(i) )
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'RangeBeginningTime'
+         sval = '12:00:00.000000'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'RangeEndingDate'
+         result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
+                                     files%date(i) )
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         attrName = 'RangeEndingTime'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! PGEVersion
+
+         attrName = 'PGEVersion'
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                    pcf%outputVersion)
+         IF (result /= PGS_S_SUCCESS) THEN
+            msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -609,6 +840,10 @@ CONTAINS
          hdfReturn = sfend(sdid)
          IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                               'Error closing HDF file after writing metadata.')
+
+! Annotate the file with the PCF
+
+         CALL WritePCF2Hdr(files%name(i), anText)
 
       ENDDO
 
@@ -803,6 +1038,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.6  2000/12/29 20:50:33  nakamura
+!# Moved global parameters to MLSL3Common; added L3DMFiles_T; switched to one-product/all-days paradigm.
+!#
 !# Revision 1.5  2000/12/07 19:34:42  nakamura
 !# Added ONLY to USE L2GPData; replaced local error msgs with MLSMSG_DeAllocate.
 !#
