@@ -74,7 +74,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FRACTION            = f_first + 1
   integer, parameter :: F_FREQUENCIES         = f_fraction + 1
   integer, parameter :: F_FREQUENCY           = f_frequencies + 1
-  integer, parameter :: F_FWDMODELIN          = f_frequency + 1
+  integer, parameter :: F_FWDMODELEXTRA       = f_frequency + 1
+  integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
   integer, parameter :: F_GPH                 = f_geocAltitudeQuantity + 1
@@ -393,6 +394,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_fraction) =            add_ident ( 'fraction' )
     field_indices(f_frequencies) =         add_ident ( 'frequencies' )
     field_indices(f_frequency) =           add_ident ( 'frequency' )
+    field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
     field_indices(f_geocAltitudeQuantity) =add_ident ( 'geocAltitudeQuantity' )
@@ -785,6 +787,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_diagonalOut, t+t_boolean, n+n_field_type, &
+             begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
@@ -797,6 +800,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
+             ndp+n_spec_def, &
+      begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
+             begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
+             begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
+             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_snoop, &
@@ -847,7 +856,7 @@ contains ! =====     Public procedures     =============================
                        s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
-             s+s_subset, s+s_sids, n+n_section, &
+             s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
@@ -867,6 +876,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.42  2001/03/07 23:59:52  vsnyder
+! Add stuff for SIDS.
+!
 ! Revision 2.41  2001/03/07 23:52:16  livesey
 ! Another bug fix
 !
