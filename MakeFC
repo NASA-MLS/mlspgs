@@ -49,6 +49,7 @@ SHELL = /bin/sh
 
 #                           (functional)
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+# configure_subdirs
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  within mlspgs sub-directories with customized Makefiles
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
@@ -140,11 +141,21 @@ tar tar_subs tar_sips: clean_all
 install: all
 
 .PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
-  tar tar_subs tar_sips all install levels
+  tar tar_subs tar_sips all install levels configure_subdirs
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
+#	$(MAKE) -f $(MakeFName) configure_subdirs
+#	 for dir in $(SUBDIRS); do \
+#		cd $$dir ; \
+#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+#		cd .. ; \
+#	done
+
+configure_subdirs:
+	@echo "Configuring $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -155,13 +166,14 @@ configure:
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
-	@echo "Configuring $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
-		cd .. ; \
-	done
+#	$(MAKE) -f $(MakeFName) configure_subdirs
+#	@echo "Configuring $(SUBDIRS)"; \
+#	 for dir in $(SUBDIRS); do \
+#		cd $$dir ; \
+#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+#		cd .. ; \
+#	done
 
 depends:
 	@echo "Making dependencies for $(SUBDIRS)"; \
@@ -231,6 +243,9 @@ tar_subs:
 	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.12  2001/01/16 21:31:18  pwagner
+# clean_all option added
+#
 # Revision 1.11  2001/01/13 00:42:09  pwagner
 # Mentions mlspgs_sips.tgz and mlspgs_subs.tar
 #
