@@ -36,6 +36,7 @@ module TREE_WALKER
   use TREE_TYPES ! Everything, especially everything beginning with N_
   use VectorsModule, only: DestroyVectorDatabase, Vector_T, VectorTemplate_T
   use VGrid, only: DestroyVGridDatabase, VGrid_T
+  use WriteMetadata, only: PCFData_T
 
   implicit NONE
   private
@@ -65,6 +66,7 @@ contains ! ====     Public Procedures     ==============================
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase => NULL()
     type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase => NULL()
     type (Matrix_Database_T), dimension(:), pointer :: Matrices => NULL()
+	 type(PCFData_T) :: l2pcf
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors => NULL()
@@ -88,7 +90,7 @@ contains ! ====     Public Procedures     ==============================
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
-    call OpenAndInitialize ( processingRange, l1bInfo )
+    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
 
     i = first_section
     howmany = nsons(root)
@@ -140,7 +142,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase )
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
@@ -163,6 +165,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.24  2001/03/29 19:13:03  livesey
+! Renamed apriorDatabase to griddedData
+!
 ! Revision 2.23  2001/03/28 23:47:48  livesey
 ! Added arguments to sids etc.
 !
