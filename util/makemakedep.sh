@@ -16,7 +16,7 @@
 #(often because they are special-purpose, "test" programs, or some such)
 #
 #Usage:
-#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
+#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [dir1 dir2 ..]
 #
 #Note:
 #The option, -f77, if present must be the first option on the command line
@@ -47,8 +47,16 @@
 # -f77   include files with .f extensions as well as .f90
 #         (otherwise only .f90 files considered)
 # -d file_name  exclude file_name
-# arg1   search directory named by arg1 as well as cwd for files
+# dir1   search directory named by dir1 as well as cwd for files
 #
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id$"
+
+#
+#----------------------- UserPrompt -----------------------
+
 # Function to prompt for user response
 #
 
@@ -62,6 +70,41 @@ UserPrompt()
     read user_response
 }
 
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: mega_buck n color
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
 #this version uses either of the two depmakers
 #to trace dependencies based on USEs and INCLUDEs:
 #(1)  makedepf90 (a compiled program)
@@ -107,13 +150,7 @@ PRINT_TOO_MUCH=0
 EDIT_GB_PERL_PATH=1
 #                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-# "$Id$"
-
-#
-#----------------------- Implementation -----------------------
 #
 #           How to rename or hide excluded files so they !~= %.f90
 dsuffix=".xui"
@@ -125,7 +162,11 @@ then
 	f90suffix=".f90"
 	if [ -d "$dsuffix" ] ; then
 		if [ $TRY_CLEANUP = "1" ] ; then
-			mv "$dsuffix"/* .
+         extant_files "$dsuffix"/*
+         if [ "$extant_files_result" != "" ]
+         then
+			   mv "$dsuffix"/* .
+         fi
 			rmdir "$dsuffix"
 		else
 			echo "Sorry--$dsuffix already exists"
@@ -155,34 +196,54 @@ then
                 rm -f Makefile.dep
 	fi
 fi
-#
+# The initial settings are
+# include *.f90
+# exclude *.f
+# exclude *.c
+include_f90="yes"
+include_f77="no"
+include_c="no"
 
-if [ "$1" = "-f77" ] ; then
-   include_f77="yes"
-   shift
-else
-   include_f77="no"
-fi
-
-#                  Rename or hide excluded files so they !~= %.f90
 wrong_list=""
-while [ "$1" = "-d" ] ; do
-	if [ -f "$2" ]
-        then
-		if [ "$f90suffix" != "$dsuffix" ]
-        	then
-#        		mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
-			mv "$2" "$dsuffix"
-		else
-			echo "$2 wrongly added to dependency lists"
-                        wrong_list="$wrong_list $2"
-	        fi
-        fi
-        shift
-	shift
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
 
+    case "$1" in
+
+    -f77 )
+       include_f77="yes"
+       shift
+       ;;
+    -nf90 )
+       include_f90="no"
+       shift
+       ;;
+    -c )
+       include_c="yes"
+       shift
+       ;;
+#                  Rename or hide excluded files so they !~= %.f90
+    -d )
+	    if [ -f "$2" ]
+       then
+	       if [ "$f90suffix" != "$dsuffix" ]
+          then
+#            mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
+	          mv "$2" "$dsuffix"
+	       else
+	          echo "$2 wrongly added to dependency lists"
+                            wrong_list="$wrong_list $2"
+	       fi
+       fi
+       shift
+	    shift
+       ;;
+    * )
+       more_opts="no"
+       ;;
+    esac
 done
-#
+
 #                Create Makefile.dep; write 1st line
 echo "#Makefile.dep -- a file to be included by a Makefile" > Makefile.dep
 echo "#to compile a Fortran 9x program or library" >> Makefile.dep
@@ -210,15 +271,40 @@ fi
 echo "OBJS = \\"  >> Makefile.dep
 
 # Note:
-# The following won't work if there are no files matching the specified
+# The following didn't work if there were no files matching the specified
 # extensions in the directory;
-# instead the echo will just produce a bogus "*.f90" string
-if [ "$include_f77" = "yes" ] ; then
-   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
-   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
-else
-   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+# instead the echo would just produce a bogus "*.f90" string
+#if [ "$include_f77" = "yes" ] ; then
+#   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+#   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+#else
+#   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+#fi
+
+if [ "$include_f90" = "yes" ] ; then
+   extant_files *.f90
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
 fi
+
+if [ "$include_f77" = "yes" ] ; then
+   extant_files *.f
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
+fi
+
+if [ "$include_c" = "yes" ] ; then
+   extant_files *.c
+   if [ "$extant_files_result" != "" ]
+   then
+      (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
+   fi
+fi
+
 echo " "  >> Makefile.dep
 #
 if [ $DEPMAKER = "1" ]
@@ -332,6 +418,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.10  2001/05/30 17:37:51  pwagner
+# Added include_f77
+#
 # Revision 1.9  2001/05/01 17:04:32  pwagner
 # Also edits perl path of f90GhostFiles.pl
 #
