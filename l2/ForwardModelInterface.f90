@@ -11,6 +11,7 @@ module ForwardModelInterface
   !??? Do we want a forward model database ???
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use AntennaPatterns_m, only: AntennaPatterns
   use AntennaPatterns_m, only: Close_Antenna_Patterns_File, &
     & Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
   use Declaration_Table, only: NUM_VALUE, RANGE
@@ -1084,7 +1085,8 @@ contains
             &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
             &     TFMI%no_phi_f, FMI%spectroscopic,temp%template%surfs(:,1), &
-            &     FMI%Xlamda,FMI%Aaap, FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
+            &     AntennaPatterns(1),FMI%Ias,ier)
+!??? Need to choose some index other than 1 for AntennaPatterns ???
           if(ier /= 0) goto 99
         else
           ! Note I am replacing the i's in the k's with 1's (enclosed in
@@ -1382,6 +1384,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.64  2001/04/05 22:53:20  vsnyder
+! Use AntennaPatterns_m
+!
 ! Revision 2.63  2001/04/01 00:08:52  zvi
 ! *** empty log message ***
 !
