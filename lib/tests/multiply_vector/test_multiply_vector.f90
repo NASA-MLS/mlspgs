@@ -4,8 +4,7 @@ program TEST_MULTIPLY_VECTOR
 
   use Machine ! At least for HP, and maybe for GETARG
   use MatrixModule_0, only: CreateBlock, Densify, Dump, M_Banded, &
-    & M_Column_Sparse, M_Full, MatrixElement_T, MultiplyMatrixVector, &
-    & Sparsify
+    & M_Column_Sparse, M_Full, MatrixElement_T, MultiplyMatrixVector
   use MLSCommon, only: R8
 
   logical :: BAND = .false.        ! make a Banded matrix
@@ -168,6 +167,9 @@ program TEST_MULTIPLY_VECTOR
 end program TEST_MULTIPLY_VECTOR
 
 ! $Log$
+! Revision 1.2  2000/11/09 23:21:19  vsnyder
+! Correct type mismatch in MAX
+!
 ! Revision 1.1  2000/11/09 17:27:04  pwagner
 ! First commit
 !
