@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module NO_CONV_AT_ALL_M
@@ -26,7 +26,7 @@ CONTAINS
            & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
            & ptan_Der )
 
-    use MLSCommon, only: I4, R4, R8
+    use MLSCommon, only: I4, R4, R8, RM
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
     use MLSNumerics, ONLY: INTERPOLATEVALUES
     use dump_0,only:dump
@@ -125,7 +125,7 @@ CONTAINS
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
                            & bandHeight=noChans )
-          Jacobian%block(row,col)%values = 0.0_r8
+          Jacobian%block(row,col)%values = 0.0_rm
         case ( m_banded )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -192,7 +192,7 @@ CONTAINS
         select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
-          Jacobian%block(row,col)%values = 0.0_r8
+          Jacobian%block(row,col)%values = 0.0_rm
         case ( m_full )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -260,7 +260,7 @@ CONTAINS
           select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
-              Jacobian%block(row,col)%values = 0.0_r8
+              Jacobian%block(row,col)%values = 0.0_rm
             case ( m_full )
             case default
               call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -304,6 +304,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.14  2002/09/10 17:05:52  livesey
+! Added update argument
+!
 ! Revision 2.13  2002/08/21 23:38:56  bill
 !  added no extrapolate to interpolation calls
 !

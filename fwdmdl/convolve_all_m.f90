@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Convolve_All_m
@@ -25,7 +25,7 @@ module Convolve_All_m
            & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
            & ptan_Der )
 
-    use MLSCommon, only: I4, r4, R8, rp
+    use MLSCommon, only: I4, r4, R8, rp, RM
     use intrinsic, only: L_VMR
     use Molecules, only: L_EXTINCTION
     use Allocate_Deallocate, only: allocate_test, deallocate_test
@@ -176,7 +176,7 @@ module Convolve_All_m
         case (m_absent)
           call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
                            & bandHeight=noChans )
-          jacobian%block(row,col)%values = 0.0_r8
+          jacobian%block(row,col)%values = 0.0_rm
         case (m_banded)
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -248,7 +248,7 @@ module Convolve_All_m
         select case ( Jacobian%block(row,col)%kind )
           case ( m_absent )
             call CreateBlock ( Jacobian, row, col, m_full )
-            jacobian%block(row,col)%values = 0.0_r8
+            jacobian%block(row,col)%values = 0.0_rm
           case ( m_full )
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -320,7 +320,7 @@ module Convolve_All_m
         select case ( Jacobian%block(row,col)%kind )
           case ( m_absent )
             call CreateBlock ( Jacobian, row, col, m_full )
-            jacobian%block(row,col)%values = 0.0_r8
+            jacobian%block(row,col)%values = 0.0_rm
           case ( m_full )
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -363,6 +363,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.21  2002/09/10 17:05:45  livesey
+! Added update argument
+!
 ! Revision 2.20  2002/09/07 00:52:24  vsnyder
 ! Cosmetic changes, copyright notice
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -21,7 +21,7 @@ module LinearizedForwardModel_m
     & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
   use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
     & FINDBLOCK, CREATEBLOCK
-  use MLSCommon, only: r8
+  use MLSCommon, only: r8, rm
   use MLSSignals_m, only: Signal_T, GetSidebandLoop
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_Allocate, MLSMSG_Deallocate
@@ -422,7 +422,7 @@ contains ! =====     Public Procedures     =============================
                 call CreateBlock ( jBlock, &
                   & noChans*noMIFs, instanceLen, &
                   & M_Full )
-                jBlock%values = 0.0_r8
+                jBlock%values = 0.0_rm
               case ( M_Banded, M_Column_Sparse )
                 call MLSMessage( MLSMSG_Error, ModuleName, &
                   & "Not written code for adding to non full blocks" )
@@ -548,7 +548,7 @@ contains ! =====     Public Procedures     =============================
         case (m_absent)
           call CreateBlock ( Jacobian, rowJBlock, colJBlock, m_banded, &
             & noMIFs*noChans, bandHeight=noChans )
-          jBlock%values = 0.0_r8
+          jBlock%values = 0.0_rm
         case (m_banded)
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -850,6 +850,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.23  2002/09/03 23:46:04  livesey
+! Moved debug print statement to location where it will be less verbose.
+!
 ! Revision 2.22  2002/07/22 03:25:50  livesey
 ! Minor bug fix
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module FullCloudForwardModel
@@ -14,7 +14,7 @@ module FullCloudForwardModel
   use Hdf,                          only: DFACC_READ, DFACC_CREATE
   use HDFEOS,                       only: SWOPEN, SWCLOSE
   use L2GPData,                     only: L2GPData_T, ReadL2GPData, WriteL2GPData
-  use MLSCommon,                    only: NameLen, FileNameLen, r8, rp, FINDFIRST
+  use MLSCommon,                    only: NameLen, FileNameLen, r8, rm, rp, FINDFIRST
   use MLSMessageModule,             only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Allocate, MLSMSG_Deallocate
   use MLSSignals_m,                 only: SIGNAL_T, ARESIGNALSSUPERSET
   use MatrixModule_0,               only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
@@ -880,7 +880,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       jBlock => jacobian%block(rowJblock,colJblock)
 
         call CreateBlock ( jBlock, noMIFs, noCldSurf*noInstances, M_Full )
-        jBlock%values = 0._r8
+        jBlock%values = 0._rm
 
       !-------------------------------------------------------------------
       ! we use 100 times better resolution to compute weighting functions
@@ -996,7 +996,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       ! to save space, the jacobian is packed in a full rectangle matrix
         call CreateBlock ( jBlock, noFreqs, noSgrid*noMIFs, M_Full )
-        jBlock%values = 0.0_r8
+        jBlock%values = 0.0_rm
 
         do j = 1, noFreqs
           if ( doChannel(j) ) then
@@ -1067,6 +1067,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.95  2002/08/22 00:14:17  jonathan
+! upgrade to include more molecules
+!
 ! Revision 1.94  2002/08/19 22:22:03  jonathan
 ! debug stuff
 !
