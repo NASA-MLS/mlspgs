@@ -84,6 +84,7 @@ then
 fi
 
 # Initialize settings to defaults
+DEEBUG=off
 prog_name=test
 test_dir_name=misc
 hidden_dir_name=hideme
@@ -127,9 +128,7 @@ while [ "$1" != "" ] ; do
 
 	-h | -help )
 	   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
-   		| sed -n 's/^..//p'
-#        sed -n '2, 17 p' $me
-#	     Help
+   		| sed -n 's/^..//p' | sed '$ d'
         exit
 	;;
 
@@ -142,12 +141,15 @@ while [ "$1" != "" ] ; do
 
 done
 
-echo "Done with parsing control line"
-echo "prog_name: $prog_name"
-echo "prog_path: $prog_path"
-echo "test_dir_name: $test_dir_name"
-echo "test_dir_path: $test_dir_path"
-echo "arglist: $arglist"
+if [ $DEEBUG = "on" ]
+then
+   echo "Done with parsing control line"
+   echo "prog_name: $prog_name"
+   echo "prog_path: $prog_path"
+   echo "test_dir_name: $test_dir_name"
+   echo "test_dir_path: $test_dir_path"
+   echo "arglist: $arglist"
+fi
 
 # Check whether misc directory exists and that we have write permission
 if [ ! -w "$test_dir_path/$test_dir_name" ]
@@ -173,6 +175,10 @@ fi
 cd $test_dir_path/$test_dir_name
 
 # (1) Hide any pre-existing source files
+if [ $DEEBUG = "on" ]
+then
+   echo "Hiding any pre-existing source files"
+fi
 for source_suffix in c f f90
 do
    pre_files=*.$source_suffix
@@ -188,6 +194,10 @@ done
 cd $args_dir
 
 # (2) Copy files to misc directory
+if [ $DEEBUG = "on" ]
+then
+   echo "Copying $arglist to misc"
+fi
 for file in $arglist
 do
    if [ -w $file ]
@@ -197,11 +207,19 @@ do
 done
 
 # (3) Build the executable
+if [ $DEEBUG = "on" ]
+then
+   echo "Building the executable"
+fi
 cd $test_dir_path/$test_dir_name
 make depends ghostbuster
 make
 
 # (4) Install
+if [ $DEEBUG = "on" ]
+then
+   echo "Installing $prog_name in $prog_path"
+fi
 cd $args_dir
 
 # Check whether the final directory exists yet; if not make it
@@ -215,3 +233,6 @@ mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
 exit 0
 
 # $Log$
+# Revision 1.1  2001/07/26 22:49:56  pwagner
+# First commit
+#

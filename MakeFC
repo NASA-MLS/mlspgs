@@ -215,7 +215,8 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 # so it will be bundled up by tar
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
-EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables notes\
+EVERYTHING = $(SUBDIRS)  srclib\
+   util blas pcf idllib sids tables notes tests\
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -335,7 +336,7 @@ depends:
 
 help:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
-		| sed -n 's/^..//p'
+		| sed -n 's/^..//p' | sed '$$ d'
 
 disthelp:
 	$(CONFDIR)/README.MakeFC
@@ -602,6 +603,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.41  2001/08/07 20:59:03  pwagner
+# install now creates script versions; defines MLSHOME
+#
 # Revision 1.40  2001/07/26 23:09:25  pwagner
 # Added MLSINSTALLDIR, INSTALLDIR as destination for install
 #
