@@ -25,23 +25,26 @@ module SYMBOL_TYPES
   integer, parameter :: T_SLASH = 8
   integer, parameter :: T_DOT = 9
   integer, parameter :: T_COLON = 10
-  integer, parameter :: T_EQUAL = 11
-  integer, parameter :: T_COMMA = 12
-  integer, parameter :: T_BEGIN = 13              ! BEGIN
-  integer, parameter :: T_END = 14                ! END
-  integer, parameter :: T_AND = 15                ! AND
-  integer, parameter :: T_OR = 16                 ! OR
-  integer, parameter :: T_END_OF_INPUT = 17       ! <EOF>
-  integer, parameter :: T_END_OF_STMT = 18        ! <EOS>
-  integer, parameter :: T_IDENTIFIER = 19         ! <IDENTIFIER>
-  integer, parameter :: T_NUMBER = 20             ! <NUMBER>
-  integer, parameter :: T_STRING = 21             ! <STRING>
-  integer, parameter :: T_UNK_OP = 22             ! unknown operator
-  integer, parameter :: T_UNK_PUN = 23            ! unknown punctuator
-  integer, parameter :: T_UNK_CH = 24             ! unknown character
-  integer, parameter :: T_INC_NUM = 25            ! incomplete number
-  integer, parameter :: T_INC_STR = 26            ! incomplete string
-  integer, parameter :: T_AFT_CONT = 27           ! junk after continuation
+  integer, parameter :: T_COLON_LESS = 11
+  integer, parameter :: T_LESS_COLON = 12
+  integer, parameter :: T_LESS_COLON_LESS = 13
+  integer, parameter :: T_EQUAL = 14
+  integer, parameter :: T_COMMA = 15
+  integer, parameter :: T_BEGIN = 16              ! BEGIN
+  integer, parameter :: T_END = 17                ! END
+  integer, parameter :: T_AND = 18                ! AND
+  integer, parameter :: T_OR = 19                 ! OR
+  integer, parameter :: T_END_OF_INPUT = 20       ! <EOF>
+  integer, parameter :: T_END_OF_STMT = 21        ! <EOS>
+  integer, parameter :: T_IDENTIFIER = 22         ! <IDENTIFIER>
+  integer, parameter :: T_NUMBER = 23             ! <NUMBER>
+  integer, parameter :: T_STRING = 24             ! <STRING>
+  integer, parameter :: T_UNK_OP = 25             ! unknown operator
+  integer, parameter :: T_UNK_PUN = 26            ! unknown punctuator
+  integer, parameter :: T_UNK_CH = 27             ! unknown character
+  integer, parameter :: T_INC_NUM = 28            ! incomplete number
+  integer, parameter :: T_INC_STR = 29            ! incomplete string
+  integer, parameter :: T_AFT_CONT = 30           ! junk after continuation
 
 ! The parameters T_LAST_TERMINAL, MIN_PSEUDO, MAX_PSEUDO and CASELESS_LOOK
 ! MUST be defined.
@@ -82,8 +85,10 @@ module SYMBOL_TYPES
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
   !  t_null    (         )         [         ]         +         -
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
-  !  *         /         .         :         =         ,         begin
-     def_op,   def_op,   def_op,   def_op,   def_op,   def_pun,  res_word, &
+  !  *         /         .         :         <:        :<        <:<
+     def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
+  !  =         ,         begin
+     def_op,   def_pun,  res_word, &
   !  end       and       or        <eof>     <eos>     <ident>   <numcon>
      res_word, res_word, res_word, object,   object,   ident,    numcon,   &
   !  <string>  unk_op    unk_pun     unk_ch    inc_num   inc_str   junk
@@ -115,7 +120,10 @@ contains
     case ( t_star );              call add_char ( '*' )
     case ( t_slash );             call add_char ( '/' )
     case ( t_dot );               call add_char ( '.' )
-    case ( t_colon   );           call add_char ( ':' )
+    case ( t_colon );             call add_char ( ':' )
+    case ( t_less_colon );        call add_char ( '<:' )
+    case ( t_colon_less );        call add_char ( ':<' )
+    case ( t_less_colon_less );   call add_char ( '<:<' )
     case ( t_equal );             call add_char ( '=' )
     case ( t_comma );             call add_char ( ',' )
     case ( t_begin );             call add_char ( 'BEGIN' )
@@ -170,6 +178,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.4  2000/11/30 20:18:47  vsnyder
+! Added <: :< and <:< operators.
+!
 ! Revision 2.3  2000/11/30 00:31:12  vsnyder
 ! Make [] punctuators instead of operators.
 !
