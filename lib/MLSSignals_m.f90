@@ -80,7 +80,7 @@ module MLSSignals_M
   type, public :: SpectrometerType_T
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
     integer :: Name                     ! Sub_rosa index of declaration's label
-    integer :: Deferred                 ! size(Frequencies) if deferred
+    logical :: Deferred                 ! "Frequencies/widths are deferred"
   end type SpectrometerType_T
 
   ! This is the key type; it describes a complete signal (one band, or a
@@ -96,7 +96,7 @@ module MLSSignals_M
     !                                   element is true for "real" signals).
 
     integer :: Band                     ! Index in Bands database
-    integer :: Deferred                 ! size(Frequencies) if deferred
+    logical :: Deferred                 ! "Frequencies/widths are deferred"
     integer :: Index                    ! Index into master signals database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
@@ -140,8 +140,7 @@ contains
 
     type(band_T) :: Band                ! To be added to the database
     integer :: Channels                 ! subtree index of field
-    integer :: Deferred                 ! Set nonzero if frequencies/widths
-                                        ! deferred
+    logical :: Deferred                 ! "Frequencies/widths are deferred"
     integer :: Error                    ! Error level seen so far
     integer :: Field                    ! Field index -- f_something
     integer :: First                    ! "first" field of "spectrometer"
@@ -318,7 +317,7 @@ contains
 
       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
         spectrometerType%name = sub_rosa(name)
-        deferred = 0
+        deferred = .false.
         first = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -333,8 +332,7 @@ contains
           case ( f_channels )
             channels = son
           case ( f_deferred )
-            call expr_check ( gson, units, value, field, phyq_dimensionless )
-            deferred = value(1)
+            deferred = get_boolean(gson)
           case ( f_first, f_last )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
@@ -395,19 +393,12 @@ contains
             end do ! k
           end if
         end if
-        if ( deferred > 0 ) then        ! For deferred types, wait till later
+        if ( deferred ) then            ! For deferred types, wait till later
           if ( any(got( (/ f_channels, f_last, f_start, f_step, f_width /) )) ) &
             & call announceError ( badMix, f_channels, &
             & (/ f_last, f_start, f_step, f_width /) )
           if ( error == 0 ) then
             spectrometerType%deferred = deferred
-            call allocate_test ( spectrometerType%frequencies, deferred, &
-              & 'spectrometerType%frequencies', moduleName )
-            call allocate_test ( spectrometerType%widths, deferred, &
-              & 'spectrometerType%widths', moduleName )
-            spectrometerType%frequencies = 0.0
-            spectrometerType%widths = 0.0
-          else
             nullify(spectrometerType%frequencies)
             nullify(spectrometerType%widths)
           end if
@@ -1013,6 +1004,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.21  2001/04/11 20:19:27  vsnyder
+! Undo changes to 'deferred'
+!
 ! Revision 2.20  2001/04/11 19:57:55  vsnyder
 ! OOPS! More work on 'deferred' spectrometers
 !
