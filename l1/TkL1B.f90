@@ -233,6 +233,7 @@ CONTAINS
     ! This subroutine fills the tangent point record.
 
     USE FOV, ONLY: CalcMountsToFOV
+    USE SDPToolkit, ONLY: PGSCSC_W_LOOK_AWAY 
 
     ! Arguments
     TYPE (L1BOAtp_T) :: tp
@@ -333,6 +334,15 @@ CONTAINS
       returnStatus = Pgs_csc_grazingRay (earthModel, posECR(:,i), ecr(:,i), &
            latD(i), lon(i), tp%tpGeodAlt(i), &
            slantRange(i), tp%tpECR(:,i), posSurf(:,i))
+
+      IF (returnStatus == PGSCSC_W_LOOK_AWAY) THEN  ! looking away
+         latD(i) = HUGE_F
+         lon(i) = HUGE_F
+         tp%tpGeodAlt(i) = HUGE_F
+         slantRange(i) = HUGE_F
+         tp%tpECR(:,i) = HUGE_F
+         posSurf(:,i) = HUGE_F
+      ENDIF
 
       ! Create ECR unit vector quantities -- lat=1, lon=2, alt=3
       flagQ = 2
@@ -867,7 +877,7 @@ CONTAINS
     ! Calculate GHZ tan pt record
 
     CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp)
+         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp, ecrtosc)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
@@ -1378,6 +1388,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.18  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.17  2004/08/03 20:41:14  pwagner
 ! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
 !
