@@ -3,17 +3,14 @@
 
 module GET_GL_DELTA_M
 
-  use MLSCommon, only: RP, IP
-  use GLNP, ONLY: Ng
-  use DO_DELTA_M, ONLY: PATH_OPACITY, POLARIZED_PATH_OPACITY
-
   implicit NONE
   private
   public :: GET_GL_DELTA
   
-  interface get_gl_delta
-    module procedure scalar_get_gl_delta, polarized_get_gl_delta
-  END INTERFACE  
+  interface Get_gl_delta
+    module procedure Get_gl_delta_scalar, Get_gl_delta_polarized
+  end interface  
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
@@ -24,43 +21,41 @@ module GET_GL_DELTA_M
 contains
 !---------------------------------------------------------------------------
 
-!------------------------------------------------------  get_gl_delta  -----
+! ------------------------------------------  Get_gl_delta_scalar  -----
 
+  subroutine Get_gl_delta_scalar ( indices_c, gl_inds, do_gl, z_path, &
+                        & alpha_path_c, alpha_path_gl, ds_dh_gl, dh_dz_gl,&
+                        & gl_delta )
 
-  SUBROUTINE scalar_get_gl_delta ( indices_c, gl_inds, do_gl, z_path, &
-                        & alpha_path_c, alpha_path_gl,  ds_dh_gl, dh_dz_gl,&
-                        & gl_delta)
+    use DO_DELTA_M, ONLY: PATH_OPACITY
+    use GLNP, ONLY: Ng
+    use MLSCommon, only: RP, IP
 
-    INTEGER(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
-    logical, intent(in) :: do_gl(:) ! path flag indicating where to do
+    integer(ip), intent(in) :: Indices_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: Gl_inds(:)    ! Gauss-Legendre grid indices
+    logical, intent(in) :: Do_gl(:) ! path flag indicating where to do
   !                                   gl integrations.
-    real(rp), intent(in) :: z_path(:) ! path -log(P) on input grid.
-    real(rp), intent(in) :: alpha_path_c(:) ! absorption coefficient
-    real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
+    real(rp), intent(in) :: Z_path(:) ! path -log(P) on input grid.
+    real(rp), intent(in) :: Alpha_path_c(:) ! absorption coefficient
+    real(rp), intent(in) :: Alpha_path_gl(:) ! absorption coefficient on gl
   !                                        grid.
-    real(rp), intent(in) :: ds_dh_gl(:) ! path length wrt height derivative on
+    real(rp), intent(in) :: Ds_dh_gl(:) ! path length wrt height derivative on
   !                                        gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
+    real(rp), intent(in) :: Dh_dz_gl(:) ! path height wrt zeta derivative on
   !                                       gl grid.
   ! outputs
-    real(rp), intent(out) :: gl_delta(:) ! gl corrections to selected slabs
+    real(rp), intent(out) :: Gl_delta(:) ! gl corrections to selected slabs
 
   ! local variables
-    real(rp) :: del_zeta( size(gl_inds)/NG) 
-    integer(ip) :: more_inds( size(gl_inds)/NG) 
-    integer(ip) :: i, j, n_path, p_i
-
-
- 
-    n_path = size(indices_c)
-    if ( count(do_gl) > 0 ) then
+    real(rp) :: del_zeta( size(gl_inds)/NG ) 
+    integer(ip) :: more_inds( size(gl_inds)/NG ) 
+    integer(ip) :: i, n_path, p_i
 
   ! see if anything needs to be gl-d
 
-
+    if ( any(do_gl) ) then
+      n_path = size(indices_c)
       i = 1
-      j = 1
       do p_i = 1, n_path
         if ( do_gl(p_i) ) then
           more_inds(i) = p_i
@@ -70,71 +65,70 @@ contains
             del_zeta(i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
           end if
           i = i + 1
-          j = j + Ng
         end if
       end do
-     call path_opacity ( del_zeta,  &
-                &  alpha_path_c(more_inds), &
-                &  alpha_path_gl, ds_dh_gl(gl_inds),  &
-                &  dh_dz_gl(gl_inds), gl_delta )
-     end if
-  end subroutine scalar_get_gl_delta
 
-!------------------------------------------------------  polarized_get_gl_delta  -----
+      call path_opacity ( del_zeta,  &
+                 &  alpha_path_c(more_inds), &
+                 &  alpha_path_gl, ds_dh_gl(gl_inds),  &
+                 &  dh_dz_gl(gl_inds), gl_delta )
 
+    end if
+  end subroutine Get_gl_delta_scalar
 
-  SUBROUTINE polarized_get_gl_delta ( indices_c, gl_inds, do_gl, z_path, &
+! ---------------------------------------  Get_gl_delta_polarized  -----
+
+  subroutine Get_gl_delta_polarized ( indices_c, gl_inds, do_gl, z_path, &
                         & alpha_path_c, alpha_path_gl,  ds_dh_gl, dh_dz_gl,&
                         & gl_delta)
 
-    INTEGER(ip), intent(in) :: indices_c(:) ! coarse grid indices
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
-    logical, intent(in) :: do_gl(:) ! path flag indicating where to do
-  !                                   gl integrations.
-    real(rp), intent(in) :: z_path(:) ! path -log(P) on input grid.
-    complex(rp), intent(in) :: alpha_path_c(:,:) ! absorption coefficient
-    complex(rp), intent(in) :: alpha_path_gl(:,:) ! absorption coefficient on gl
-  !                                        grid.
-    real(rp), intent(in) :: ds_dh_gl(:) ! path length wrt height derivative on
-  !                                        gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
-  !                                       gl grid.
+    use DO_DELTA_M, ONLY: POLARIZED_PATH_OPACITY
+    use GLNP, ONLY: Ng
+    use MLSCommon, only: RP, IP
+
+    integer(ip), intent(in) :: Indices_c(:) ! coarse grid indices
+    integer(ip), intent(in) :: Gl_inds(:)    ! Gauss-Legendre grid indices
+    logical, intent(in) :: Do_gl(:) ! path flag indicating where to do
+     !                                gl integrations.
+    real(rp), intent(in) :: Z_path(:) ! path -log(P) on input grid.
+    complex(rp), intent(in) :: Alpha_path_c(:,:) ! absorption coefficient
+    complex(rp), intent(in) :: Alpha_path_gl(:,:) ! absorption coefficient on
+     !                                    gl grid.
+    real(rp), intent(in) :: Ds_dh_gl(:) ! derivative of path length wrt height
+     !                                    on gl grid.
+    real(rp), intent(in) :: Dh_dz_gl(:) ! derivative of path height wrt zeta on
+     !                                    gl grid.
   ! outputs
-    complex(rp), intent(out) :: gl_delta(:,:) ! gl corrections to selected slabs
+    complex(rp), intent(out) :: Gl_delta(:,:) ! gl corrections to selected panels
  
   ! local variables
-    real(rp) :: del_zeta( size(gl_inds)/NG) 
-    integer(ip) :: more_inds( size(gl_inds)/NG) 
-    integer(ip) :: i, j, n_path, p_i
-
-
- 
-    n_path = size(indices_c)
-    if ( count(do_gl) > 0 ) then
+    real(rp) :: del_zeta( size(alpha_path_c,2) ) 
+    integer(ip) :: i, n_path, p_i
 
   ! see if anything needs to be gl-d
 
-
-      i = 1
-      j = 1
-      do p_i = 1, n_path
-        if ( do_gl(p_i) ) then
-          more_inds(i) = p_i
-          if ( p_i > n_path/2 ) then
-            del_zeta(i) = z_path(indices_c(p_i+1)) - z_path(indices_c(p_i))
-          else
-            del_zeta(i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
-          end if
-          i = i + 1
-          j = j + Ng
+    n_path = size(indices_c)
+    i = 0
+    do p_i = 1, n_path
+      if ( do_gl(p_i) ) then
+        i = i + 1
+        if ( p_i > n_path/2 ) then
+          del_zeta(p_i) = z_path(indices_c(p_i+1)) - z_path(indices_c(p_i))
+        else
+          del_zeta(p_i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
         end if
-      end do
-     call polarized_path_opacity ( del_zeta,  &
-                &  alpha_path_c(:,more_inds), &
-                &  alpha_path_gl, ds_dh_gl(gl_inds),  &
-                &  dh_dz_gl(gl_inds), gl_delta )
-     end if
-  end subroutine polarized_get_gl_delta
+      else
+        del_zeta(p_i) = 0.0_rp
+        gl_delta(:,p_i) = 0.0_rp
+      end if
+    end do
+    if ( i > 0 ) &
+      & call polarized_path_opacity ( del_zeta, do_gl, &
+               &  alpha_path_c, &
+               &  alpha_path_gl, ds_dh_gl(gl_inds),  &
+               &  dh_dz_gl(gl_inds), gl_delta )
+
+  end subroutine Get_gl_delta_polarized
 
 ! --------------------------------------------------  not_used_here  -----
   logical function NOT_USED_HERE()
@@ -144,6 +138,15 @@ contains
 end module GET_GL_DELTA_M
 
 !$Log$
+!Revision 2.3  2003/05/05 23:00:25  livesey
+!Merged in feb03 newfwm branch
+!
+!Revision 2.2.2.2  2003/03/05 03:40:35  vsnyder
+!More polarized work
+!
+!Revision 2.2.2.1  2003/03/01 02:40:21  vsnyder
+!Cosmetic changes
+!
 !Revision 2.2  2003/02/07 00:22:35  michael
 !it will compile now
 !
