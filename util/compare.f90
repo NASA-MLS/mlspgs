@@ -37,7 +37,7 @@ program COMPARE
   logical :: DoStats = .false. ! -s option specified
   logical :: END
   character(127) :: File1, File2
-  integer :: I, J
+  integer :: I, I1, I2, J
   integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
   logical :: LOUD = .true.   ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
@@ -107,14 +107,15 @@ program COMPARE
       read ( 10, '(a)', iostat=status ) line1
       end = status /= 0
       if ( end ) exit
-      if ( index(line1,'\') /= 0 ) exit
+      i1 = index(line1,'\')
+      if ( i1 /= 0 ) exit
     end do
 
     do
       read ( 11, '(a)', iostat=status ) line2
       if ( status /= 0 ) exit
-      i = index(line2,'\')
-      if ( i /= 0 ) exit
+      i2 = index(line2,'\')
+      if ( i2 /= 0 ) exit
     end do
 
     if ( (end .neqv. status /= 0) .and. loud )  print *, 'Input file lengths unequal'
@@ -129,7 +130,7 @@ program COMPARE
       if ( .not. cont ) exit
     end if
 
-    read ( line2(i+1:), *, iostat=status ) n
+    read ( line2(i2+1:), *, iostat=status ) n
     if ( status /= 0 ) then
       call io_error ( line2, status )
       exit
@@ -137,10 +138,23 @@ program COMPARE
 
     allocate ( ad(n), r1(n), r2(n), rd(n) )
 
-    read ( 10, *, iostat=status ) r1
-    if ( status /= 0 ) exit
-    read ( 11, *, iostat=status ) r2
-    if ( status /= 0 ) exit
+    if ( n == 1 ) then
+      read ( line1(i1+1:), *, iostat=status ) n, r1
+      if ( status /= 0 ) then
+        call io_error ( line2, status )
+        exit
+      end if
+      read ( line2(i2+1:), *, iostat=status ) n, r2
+      if ( status /= 0 ) then
+        call io_error ( line2, status )
+        exit
+      end if
+    else
+      read ( 10, *, iostat=status ) r1
+      if ( status /= 0 ) exit
+      read ( 11, *, iostat=status ) r2
+      if ( status /= 0 ) exit
+    end if
 
     ! DO NOT apply deMauvre's theorem.  If you write
     !    any ( r1 > 0.0 .and. r1 < 0.0 ) it won't catch NaN's
@@ -227,6 +241,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.6  2003/10/07 02:04:03  vsnyder
+! Show NaN relative differences differently
+!
 ! Revision 1.5  2003/10/07 02:01:00  vsnyder
 ! Add option to print the version
 !
