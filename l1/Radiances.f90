@@ -164,7 +164,7 @@ CONTAINS
     REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1))
     REAL :: space_P, target_P, baffle_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
-    LOGICAL :: use_deflt_gains, do_chi2_err
+    LOGICAL :: use_deflt_gains, do_chi2_err, cntl_T
     INTEGER, PARAMETER :: DACS_FB(4) = (/ 9, 2, 7, 1 /)
 
     use_deflt_gains = L1Config%Calib%UseDefaultGains
@@ -189,7 +189,8 @@ CONTAINS
     GHz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
 
     !    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
-    GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C
+    GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C &
+         + 0.5   ! offset for R1(A/B), R2 and R3
     !    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
 
     !  Temperature combinations for S and T from cf file:
@@ -208,13 +209,15 @@ CONTAINS
 
     Scf = L1Config%Calib%GHzSpaceTemp
     Tcf = L1Config%Calib%GHzTargetTemp
-
+    cntl_T = .FALSE.
+    
     IF (Scf > 0.0 .AND. Tcf < 0.0) THEN
        space_T = Scf
        GHz_target_T = GHz_T1
     ELSE IF (Scf > 0.0 .AND. NINT (Tcf) == 0) THEN
        space_T = Scf
        GHz_target_T = GHz_T2
+       cntl_T = .TRUE.
     ELSE IF (Scf > 0.0 .AND. Tcf > 0.0) THEN
        space_T = Scf
        GHz_target_T = Tcf
@@ -227,6 +230,7 @@ CONTAINS
     ELSE IF (NINT (Scf) == 0 .AND. NINT (Tcf) == 0) THEN
        space_T = GHz_T1
        GHz_target_T = GHz_T2
+       cntl_T = .TRUE.
     ELSE IF (NINT (Scf) == 0 .AND. Tcf < 0.0) THEN
        space_T = GHz_T2
        GHz_target_T = GHz_T1
@@ -269,21 +273,26 @@ CONTAINS
     Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
     ReflecAvg = SUM((/ Reflec%Pri, Reflec%Sec, Reflec%Ter /)) / 3
 
+    ! Target temp with offset added
+
+    target_T =  GHz_target_T
+
     DO time_index = start_index, end_index   ! for every MIF in the MAF
 
        MIF_index = time_index - start_index  ! MIF # within the central MAF
 
        DO bank = 1, GHzNum
 
-          ! Determine which Target temp to use!!
-
-          target_T =  GHz_target_T
           BandNo = FBrad(bank)%bandno
           radNum = FBrad(bank)%signal%radiometerNumber
           IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
                radNum == 1) radNum = 0   ! R1A
           space_P = radPwr (LO1(radNum), space_T)
-          target_P = radPwr (LO1(radNum), target_T)
+          IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+             target_P = radPwr (LO1(radNum), (target_T+0.1))  ! additional 0.1 K
+          ELSE
+             target_P = radPwr (LO1(radNum), target_T)
+          ENDIF
           baffle_P = radPwr (LO1(radNum), GHz_T1)
           do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
@@ -327,7 +336,11 @@ CONTAINS
              bandNo = MBrad(bank)%bandno
              radNum = MBrad(bank)%signal%radiometerNumber
              space_P = radPwr (LO1(radNum), space_T)
-             target_P = radPwr (LO1(radNum), target_T)
+             IF (cntl_T .AND. radNum == 4) THEN  ! Controlled Target
+                target_P = radPwr (LO1(radNum), (target_T+0.1)) ! additional 0.1
+             ELSE
+                target_P = radPwr (LO1(radNum), target_T)
+             ENDIF
              baffle_P = radPwr (LO1(radNum), GHz_T1)
              do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
@@ -465,6 +478,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2004/11/15 16:50:06  perun
+! Adjust controlled target temperature per RFJ
+!
 ! Revision 2.10  2004/11/10 15:40:40  perun
 ! Adjust precision based on flag; change DACS precision method; call baseline
 ! calculation
