@@ -158,21 +158,27 @@ contains
   ! -------------------------------  DeriveFromForwardModelConfig  -----
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use FilterShapes_m, only: DACSFilterShapes
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
-    use MLSSets, only: FindFirst
+    use MLSSets, only: FindFirst, Intersect, Intersection, Union
     use MLSSignals_M, only: MatchSignal
     use PFADataBase_m, only: PFAData
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
 
     integer :: Channel
-    integer :: I, Ier
+    integer :: I, Ier, J
     integer :: LBoundDACs, UBoundDACs      ! How many channels in a DAC
+    integer :: HowManyPFA                  ! How many PFA data records are for the
+                                           ! molecules in fwdModelConf%pfaMolecules?
     integer :: NoUsedChannels, NoUsedDACS
+    integer :: NumPFA                      ! Like HowManyPFA, but for one channel
     integer :: SigInd
     logical :: signalFlag(size(fwdModelConf%signals))
+    integer, pointer :: T1(:), T2(:)       ! Temps for set operations
+    integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
+                                           ! molecules in fwdModelConf%pfaMolecules?
 
 
     ! Shorthand pointers into fwdModelConf%forwardModelDerived
@@ -185,7 +191,7 @@ contains
     ! Compute NoUsedDACs
     ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
 
-    nullify ( DACsStaging, usedDACSSignals )
+    nullify ( DACsStaging, usedDACSSignals, whichPFA )
     signalFlag = .false.
     lBoundDACs = 0; uBoundDACs = 0
     noUsedDACs = 0
@@ -238,9 +244,57 @@ contains
       end do
     end do
 
-    ! Work out PFA abstracts for each channel
-    do i = 1, size(channels)
-    end do
+    if ( associated(pfaData) ) then
+      ! Work out which PFA data are germane to fwdModelConf%PFAMolecules
+      ! We do this because there are thousands of PFA data, but maybe only
+      ! a few that are germane to this fwdModelConf
+      howManyPFA = 0
+      do i = 1, size(pfaData)
+        if ( intersect(fwdModelConf%PFAMolecules, PFAData(i)%molecules) ) &
+          & howManyPFA = howManyPFA + 1
+      end do
+      call allocate_test ( whichPFA, howManyPfa, 'HowManyPfa', moduleName )
+      howManyPFA = 0
+      do i = 1, size(pfaData)
+        if ( intersect(fwdModelConf%PFAMolecules, PFAData(i)%molecules) ) then
+          howManyPFA = howManyPFA + 1
+          whichPFA(howManyPFA) = i
+        end if
+      end do
+
+      ! Work out PFA abstracts for each channel
+      do i = 1, size(channels)
+        numPFA = 0
+        nullify ( t1, channels(i)%PFAMolecules )
+        call allocate_test ( channels(i)%PFAMolecules, 0, &
+          & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
+        do j = 1, howManyPFA
+          if ( matchSignal ( &
+            & fwdModelConf%signals(channels(i)%signal:channels(i)%signal), &
+            & PFAData(whichPFA(j))%theSignal ) /= 0 ) then
+            numPFA = numPFA + 1
+            t2 = intersection(fwdModelConf%pfaMolecules,PFAData(whichPFA(j))%molecules)
+            t1 = union(channels(i)%PFAMolecules,t2)
+            call deallocate_test ( t2, 't2', moduleName )
+            call deallocate_test ( channels(i)%PFAMolecules, &
+              & 'channels(i)%PFAMolecules', moduleName )
+            channels(i)%PFAMolecules => t1
+          end if
+        end do
+        call allocate_test ( channels(i)%PFAData, numPFA, 'channels(i)%PFAData', &
+          & moduleName )
+        numPFA = 0
+        do j = 1, howManyPFA
+          if ( matchSignal ( &
+            & fwdModelConf%signals(channels(i)%signal:channels(i)%signal), &
+            & PFAData(whichPFA(j))%theSignal ) /= 0 ) then
+            numPFA = numPFA + 1
+            channels(i)%PFAData(numPFA) = whichPFA(j)
+          end if
+        end do
+      end do
+      call deallocate_test ( whichPFA, 'HowManyPfa', moduleName )
+    end if ! associated(pfaData)
 
     ! Hook the shortcuts into the structure
     fwdModelConf%forwardModelDerived%channels => channels
@@ -282,9 +336,17 @@ contains
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
-    integer :: Ier
+    integer :: I, Ier
 
     if ( associated(fwdModelConf%forwardModelDerived%channels) ) then
+      do i = 1, size(fwdModelConf%forwardModelDerived%channels)
+        call deallocate_test ( &
+          & fwdModelConf%forwardModelDerived%channels(i)%PFAData, &
+          & 'fwdModelConf%forwardModelDerived%channels(i)%PFAData', moduleName )
+        call deallocate_test ( &
+          & fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules, &
+          & 'fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules', moduleName )
+      end do
       deallocate ( fwdModelConf%forwardModelDerived%channels, stat = ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'fwdModelConf%forwardModelDerived%channels' )
@@ -397,19 +459,14 @@ contains
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
     end if
 
-    ! PFA Molecules
-    if ( associated ( config%pfaMolecules ) ) then
-      call PVMIDLPack ( size ( config%pfaMolecules ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of PFA molecules" )
-      if ( size ( config%pfaMolecules ) > 0 ) then
-        do i = 1, size(config%pfaMolecules)
-          call PVMPackLitIndex ( config%molecules(i), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a PFA molecule" )
-        end do
-      end if
-    else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 PFA molecules" )
+    ! PFA Molecules -- field is always associated, even if with zero size.
+    call PVMIDLPack ( size ( config%pfaMolecules ), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of PFA molecules" )
+    if ( size ( config%pfaMolecules ) > 0 ) then
+      do i = 1, size(config%pfaMolecules)
+        call PVMPackLitIndex ( config%molecules(i), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a PFA molecule" )
+      end do
     end if
 
     ! Specific quantities
@@ -559,13 +616,11 @@ contains
     ! PFA Molecules
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of PFA molecules" )
-    if ( n > 0 ) then
-      call Allocate_test ( config%pfaMolecules, n, 'config%pfaMolecules', ModuleName )
-      do i = 1, n
-        call PVMUnpackLitIndex ( config%pfaMolecules(i), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a PFA molecule" )
-      end do
-    end if
+    call Allocate_test ( config%pfaMolecules, n, 'config%pfaMolecules', ModuleName )
+    do i = 1, n
+      call PVMUnpackLitIndex ( config%pfaMolecules(i), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a PFA molecule" )
+    end do
 
     ! Specific quantities
     call PVMIDLUnpack ( n, info )
@@ -721,13 +776,13 @@ contains
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
 !   use MLSSignals_M, only: GetSignalName, MaxSigLen
-    use Output_M, only: Output
+    use Output_M, only: NewLine, Output
     use String_Table, only: Display_String
 
     type (ForwardModelConfig_T):: Config
 
     ! Local variables
-    integer ::  J                          ! Loop counters
+    integer ::  I, J                         ! Loop counters
 !   character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
@@ -770,7 +825,7 @@ contains
       call output ( '  PFA Molecules: ', advance='yes' )
       do j = 1, size(Config%pfaMolecules)
         call output ( '    ' )
-        call display_string(lit_indices(Config%pfaMolecules(j)),advance='yes')
+        call display_string ( lit_indices(Config%pfaMolecules(j)), advance='yes')
       end do
     end if
     call output ( '  Signals:', advance='yes')
@@ -780,6 +835,33 @@ contains
       ! call output ( signalName//' channelIncluded:', advance='yes')
       call dump ( Config%signals(j)%channels )
     end do
+    ! Dump ForwardModelDerived
+    call output ( '  ForwardModelDerived:', advance='yes')
+    if ( associated(Config%forwardModelDerived%usedDACSSignals) ) &
+      call dump  ( Config%forwardModelDerived%usedDACSSignals, &
+        & name='   Used DACS Signals' )
+    if ( associated(Config%forwardModelDerived%channels) ) then
+      call output ( '   Channel info:' )
+      do j = 1, size(Config%forwardModelDerived%channels)
+        call output ( Config%forwardModelDerived%channels(j)%used, before='    Used: ' )
+        call output ( Config%forwardModelDerived%channels(j)%origin, before='    Origin: ' )
+        call output ( Config%forwardModelDerived%channels(j)%signal, before='    Signal: ' )
+        call output ( Config%forwardModelDerived%channels(j)%DACS, before='    DACS: ' )
+        if ( associated(Config%forwardModelDerived%channels(j)%PFAData) ) &
+          & call dump ( Config%forwardModelDerived%channels(j)%PFAData, &
+            & name='    PFAData' )
+        if ( associated(Config%forwardModelDerived%channels(j)%PFAMolecules) ) then
+          call output ( '    PFA Molecules:', advance='no' )
+          do i = 1, size(Config%forwardModelDerived%channels(j)%PFAMolecules)
+            call output ( ' ', advance='no' )
+            call display_string ( &
+              & lit_indices(Config%forwardModelDerived%channels(j)%PFAMolecules(i)), &
+              & advance='no' )
+          end do
+          call newLine
+        end if
+      end do
+    end if
   end subroutine Dump_ForwardModelConfig
 
   logical function not_used_here()
@@ -789,6 +871,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.51  2004/06/11 01:33:29  vsnyder
+! Declare all pointer components to be initially NULL
+!
 ! Revision 2.50  2004/06/10 00:59:55  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
