@@ -10,7 +10,7 @@ MODULE PCFModule
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
@@ -527,6 +527,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.6  2001/01/16 17:52:25  nakamura
+! Updated ExpandFileTemplate for current naming convention; added subroutines CreatePCFAnnotation & WritePCF2Hdr.
+!
 ! Revision 1.5  2000/12/29 21:45:56  nakamura
 ! Added routines FindFileType & FindFileDay.
 !
