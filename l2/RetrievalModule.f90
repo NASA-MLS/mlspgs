@@ -40,7 +40,7 @@ contains
       & F_channels, F_cloudChannels, F_cloudHeight, F_cloudRadiance, &
       & F_cloudRadianceCutOff, &
       & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
-      & F_diagnostics, F_diagonal, &
+      & F_diagnostics, F_diagonal, F_extendedAverage, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
       & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
@@ -68,7 +68,7 @@ contains
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
-      & Sparsify
+      & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlock
     use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
@@ -125,6 +125,8 @@ contains
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
     integer :: Error
+    logical :: ExtendedAverage          ! Averaging kernels based on full
+                                        ! Jacobian (last term) not masked
     integer :: Field                    ! Field index -- f_something
     real(r8) :: Fuzz                    ! For testing only.  Amount of "fuzz"
                                         ! to add to state vector before
@@ -310,6 +312,7 @@ contains
         columnScaling = l_none
         covSansReg = .false.
         diagonal = .false.
+        extendedAverage = .false.
         hRegQuants = 0
         hRegWeights = 0
         nullify ( hRegWeightVec )
@@ -349,6 +352,8 @@ contains
             diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_diagonal )
             diagonal = get_Boolean(son)
+          case ( f_extendedAverage )
+            extendedAverage = get_boolean(son)
           case ( f_forwardModel )
             call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
               & moduleName )
@@ -1033,6 +1038,8 @@ contains
       type(matrix_SPD_T), target :: KTKSep ! The Jacobian-derived part of the
                                         ! normal equations if an averaging kernel
                                         ! is requested.
+      type(matrix_T), target :: KTKStar ! The kTkStar contrbution to the averaging
+                                        
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
@@ -1081,6 +1088,10 @@ contains
       ! Create a separate matrix for J^T J in case averaging kernel requested
       call createEmptyMatrix ( kTkSep%m, &
         & enter_terminal ('_kTkSep', t_identifier), state, state )
+      ! Create another separate one for J^T(J unmasked) in case 'extended'
+      ! averaging kernel required
+      call createEmptyMatrix ( kTkStar, &
+        & enter_terminal ('_kTkStar', t_identifier), state, state )
       ! Create the vectors we need.
       call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
       call cloneVector ( v(aTb), v(x), vectorNameText='_ATb' )
@@ -1384,7 +1395,8 @@ contains
           ! Include the part of the normal equations due to the Jacobian matrix
           ! and the measurements
           call clearVector ( v(f_rowScaled) )
-          if ( got(f_average) ) then ! Need a separate matrix for K^T K
+          if ( got(f_average) .and. .not. extendedAverage ) then 
+            ! Need a separate matrix for K^T K
             kTk => kTkSep
             call clearMatrix ( kTkSep%m )
           else
@@ -1471,6 +1483,10 @@ contains
               & rhs_out=v(aTb), update=update, useMask=.true. )
               if ( index ( switches, 'atb' ) /= 0 ) call dump ( v(aTb) )
               call add_to_retrieval_timing( 'form_normeq', t1 )
+            if ( got(f_average) .and. extendedAverage ) then
+              call MultiplyMatrix_XTY ( jacobian, jacobian, kTkStar, update=update, &
+                & maskX=.true., maskY=.false. )
+            end if
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -1480,9 +1496,13 @@ contains
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
 
-          ! If an averaging kernel has been requested, K^T K was accumulated
-          ! separately from normalEquations.  So we need to add it in.
-          if ( got(f_average) ) call addToMatrix ( normalEquations%m, kTk%m )
+          ! In the case where we're forming a regular averaging kernel
+          ! (not extended), we need to add this MAFs worth of kTk into the
+          ! normal equations.  Otherwise normalEquations and kTk are in
+          ! fact pointers to the same matrix
+          if ( got(f_average) .and. .not. extendedAverage ) then
+            call addToMatrix ( normalEquations%m, kTk%m )
+          end if
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
@@ -2057,9 +2077,14 @@ contains
       ! Compute the averaging kernel
       if ( foundBetterState .and. got(f_average) ) then
         preserveMatrixName = outputAverage%name
-        ! Make sure kTk is symmetrical (outputCovariance is by virtue of its creation method 
-        Call ReflectMatrix ( kTk%m )
-        outputAverage = outputCovariance%m .tx. kTk%m
+        if ( extendedAverage ) then
+          outputAverage = outputCovariance%m .tx. kTkStar
+        else
+          ! Make sure kTk is symmetrical 
+          !  (outputCovariance is by virtue of its creation method as U^T U)
+          Call ReflectMatrix ( kTk%m )
+          outputAverage = outputCovariance%m .tx. kTk%m
+        end if
         outputAverage%name = preserveMatrixName
           if ( index(switches,'cov') /= 0 ) call output ( &
             & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
@@ -2072,6 +2097,7 @@ contains
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( kTkSep%m )
+      call destroyMatrix ( kTkStar )
       call destroyMatrix ( factored%m )
       call destroyVectorInfo ( q )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -3712,6 +3738,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.231  2003/02/12 02:11:13  livesey
+! New code for extended averaging kernels
+!
 ! Revision 2.230  2003/02/08 00:20:25  livesey
 ! Added error message to check that the right ptan (GHz/THz) is used in
 ! subset statements.
