@@ -650,7 +650,12 @@ contains ! ================================ FullForwardModel routine ======
       ! Skip if the next molecule is negative (indicates that this one is a
       ! parent)
       if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
-        if ( fwdModelConf%molecules(j+1) < 0 ) cycle
+        if ( fwdModelConf%molecules(j+1) < 0 ) then
+          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+          call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+            & ModuleName )
+          cycle
+        end if
       end if
       l=abs(fwdModelConf%molecules(j))
       Spectag = spec_tags(l)
@@ -2175,6 +2180,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.48  2002/05/23 21:01:11  livesey
+! No, that was the wrong thing to do.  Think a bit more.
+!
 ! Revision 2.47  2002/05/23 20:55:20  livesey
 ! Put more checking around case where a molecule has no lines.
 !
