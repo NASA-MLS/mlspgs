@@ -53,6 +53,8 @@ IX    CALL TO ACTION
 X     ACTUAL BUGS
 XI    IMPERFECTIONS AND COMPLICATIONS
 XII   ADVANCED SETTINGS
+XIII  ASSORTED COMMENTS
+XIV  EXAMPLE OF A .configure FILE
 
 INTRODUCTION
 An attempt has been made to minimize the amount of editing and configuring each
@@ -116,7 +118,7 @@ installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
 The next set of questions will pertain to two speciaal libraries: PVM and FFTW.
-PVM is currently optional. FFTW is required only for building level 3.
+PVM is required only for level 2. FFTW is required only for level 3.
 
 The final two questions allow to set your own default compiler and loader
 options. You can instead safely accept the default values.
@@ -186,17 +188,17 @@ configure  change configuration: compiler, (less often) platform/OS,
 (All the following apply only at the top level)
 all        builds lib, l1, l2, l3, and fwdmdl
 distclean  does a clean; restores archive nearly to initial state
-help       prints this file
+help       complete summary of targets, settings, usage of MakeFC
+disthelp   prints this file
 install    moves the built programs from l1, l2, l3 to the mlspgs top level
 makefile   makes a new symbolic link from MakeFC to Makefile
            at the top level as well as each of the subdirectories;
-           useful if you have previously configured your archive w/o the link
+           useful for older archives before the link became automatic
 update     replaces Makefiles in subdirectories with latest versions after
            recalculating dependencies; useful after a cvs update
 
 (The following are more specialized)
 configure_pvm  reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
-               allowing you to turn on or off support for PVM
 configure_fopts  reset default Fortran95 compiler and linker switches
 configure_full  combines configure, configure_pvm, configure_fopts
 configure_help  prints brief help on how to configure the build
@@ -214,40 +216,7 @@ Chronology:
 Each time make is called, it finds mlspgs/.configure among the list of
 dependencies. If it doesn't exist yet, as with a fresh copy of the archive, it
 creates one, using mlspgs/util/mlsconfigure. The contents of the resulting file
-will be something like the following:
-#       .configure for mls
-MLSF95=NAG
-MLSPLAT=Linux
-MLSCONFG=NAG.Linux
-PGSINC=/nas/user2/pwagner/TOOLKIT/include
-PGSTK=/nas/user2/pwagner/TOOLKIT/lib/linux
-HDFEOS=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
-HDF=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
-GCTP=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
-PGSLIB=/nas/user2/pwagner/TOOLKIT/lib/linux
-HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
-HDFLIB=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
-PVM_ROOT=
-PVM_ARCH=LINUX
-FFTW_ROOT=
-FOPTS=-w
-LDOPTS=
-export MLSF95
-export MLSPLAT
-export MLSCONFG
-export PGSINC
-export PGSLIB
-export HDFEOS_LIB
-export HDFLIB
-export PGSTK
-export HDFEOS
-export HDF
-export GCTP
-export PVM_ROOT
-export PVM_ARCH
-export FFTW_ROOT
-export FOPTS
-export LDOPTS
+will be similar to example shown at the end of this file.
 
 In addition, inside fwdmdl, lib, l1, l2, and l3 a new directory will be created
 with a unique name given by the value of MLSCONFG. In the example above that
@@ -306,31 +275,13 @@ mlspgs level, "make update".  Among the drawbacks to this are that an outdated
 Makefile.dep is possibly what cvs finds when checking out the archive. See the
 recommendation concerning the update target below.
 
-To create Makefile.dep the shell script util/makemakedep.sh is launched,
-and it in turn uses one of the following:
- f90makedep.pl   the default; found in util; assumes perl or an alias
-                 is at /usr/bin/perl
- makedepf90      a c++ program; not supplied with mls; not recommended;
-                 may need to be compiled
-
-The latter is available from
-        http://www.helsinki.fi/~eedelman/makedepf90.html
-in binary form for linux, or as c++ sources that need to be compiled.
-
-If for some reason you do not wish to rely on a perl script, or lack perl, the
-shell script makemakedep.sh in util may be edited to switch it to launching
-makedepf90. The line
-        DEP_MAKER=2
-is clearly marked. Change the "2" to a "1". Of course you will need to obtain
-makedepf90, too. A drawback of doing this is that future dependency lists will
-fail to show any dependency on modules in files outside the source directory.
-
-The perl script f90makedep.pl assumes your perl, or a link to it, is
+Makefile.dep is created by the shell script util/makemakedep.sh and the perl
+script f90makedep.pl. The latter assumes your perl, or a link to it, is
 /usr/bin/perl. This assumption is embodied in line 1 of the script. If your
 perl is elsewhere, edit this line to show the true path. Otherwise, you will be
-asked, when you recalculate dependencies, whether you want to have the
-makefile edit the line for you or else use it as is. Allowing this change will
-free you from being prompted about this again.
+asked, when you recalculate dependencies, whether you want to have the makefile
+edit the line for you or else use it as is. Allowing this change will free you
+from being prompted about this again.
 
 CALL TO ACTION
 This is useable now. Please try it out and inform me of any bugs you
@@ -379,40 +330,14 @@ up in this way -- the above cures will not work  in this case. You may be able
 to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
 copy.
 
+PVMWrappers.c in lib is a c source requiring a c compiler. The default value
+for CC is cc. If you get an error along the lines of "cc: Command not found",
+try "make CC=gcc" or another path to a gnu-compatible c compiler.
+
 If you get link errors you might try adding more libraries to the link
 statement. One way to do this is to use the LDOPTS or LAFTER setting (see under
 Advanced Settings). E.g., Archie MacDonald was able to link only by using "make
 LDOPTS='-lsocket'".
-
-The sources currently must reside directly under lib, srclib, or l[1-3],
-and this fact is "hard-wired" into the Makefiles.  It may become
-desirable to segregate them into a /src subdirectory parallel to the
-/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
-need to changed to accomplish this.  In general, replacing "hard-wired"
-directory paths with variable ones, set in either .configure or set in a
-more permanent file, seems like a good idea. 
-
-Under the lib directory is a lib/tests subdirectory containing five
-test programs. They were used to test libmls.a during development. It
-is possible they may no longer work, nor even compile and link properly.
-
-Another wrinkle in the lib directory is the versions of machine.f90 which lurk
-under machines with names like machines/NAG.Linux/machine.f90 They are intended
-to contain machine/OS/compiler specific information the software can obtain at
-runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
-incorrect.
-
-Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
-sources required special compiler flags to compile successfully under NAG. You
-will see them mentioned explicitly at the end with its custom build
-instructions.
-
-The dependencies calculated by makedepf90 check only among files in the same
-directory as the source files. A consequence of this is that it does not show
-dependencies of files in l2 on prerequisites in lib. A consequence of this is
-that after changes to source files in lib, if the dependencies were recalculated
-by makedepf90, files in l2 may not be recompiled, even when they should be.
-This is a good reason to use f90makedep.pl, the default.
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -448,13 +373,108 @@ FAFTER             Appears at the end of each line invoking the compiler
                    make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
 LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
-FC                 Overrides the name by which the compiler is called
+FC                 Overrides the name by which the Fortran compiler is called
                    e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
                    with Sun's own f95; then used "make FC=nagf95"
--pw                           2000-Oct-24 to 2001-Mar-8
+CC                 Overrides the name by which the c compiler is called
+                   e.g., to build on pencil, I used "make CC=gcc"
+
+ASSORTED COMMENTS
+To create Makefile.dep the shell script util/makemakedep.sh is launched,
+and it in turn uses one of the following:
+ f90makedep.pl   the default; found in util; assumes perl or an alias
+                 is at /usr/bin/perl
+ makedepf90      a c++ program; not supplied with mls; not recommended;
+                 may need to be compiled
+
+The latter is available from
+        http://www.helsinki.fi/~eedelman/makedepf90.html
+in binary form for linux, or as c++ sources that need to be compiled.
+
+If for some reason you do not wish to rely on a perl script, or lack perl, the
+shell script makemakedep.sh in util may be edited to switch it to launching
+makedepf90. The line
+        DEP_MAKER=2
+is clearly marked. Change the "2" to a "1". Of course you will need to obtain
+makedepf90, too. A drawback of doing this is that future dependency lists will
+fail to show any dependency on modules in files outside the source directory.
+
+The dependencies calculated by makedepf90 check only among files in the same
+directory as the source files. A consequence of this is that it does not show
+dependencies of files in l2 on prerequisites in lib. A consequence of this is
+that after changes to source files in lib, if the dependencies were recalculated
+by makedepf90, files in l2 may not be recompiled, even when they should be.
+This is a good reason to use f90makedep.pl, the default.
+
+The sources currently must reside directly under lib, srclib, or l[1-3],
+and this fact is "hard-wired" into the Makefiles.  It may become
+desirable to segregate them into a /src subdirectory parallel to the
+/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
+need to changed to accomplish this.  In general, replacing "hard-wired"
+directory paths with variable ones, set in either .configure or set in a
+more permanent file, seems like a good idea. 
+
+Under the lib directory is a lib/tests subdirectory containing five
+test programs. They were used to test libmls.a during development. It
+is possible they may no longer work, nor even compile and link properly.
+
+Another wrinkle in the lib directory is the versions of machine.f90 which lurk
+under machines with names like machines/NAG.Linux/machine.f90 They are intended
+to contain machine/OS/compiler specific information the software can obtain at
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
+incorrect.
+
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
+sources required special compiler flags to compile successfully under NAG. You
+will see them mentioned explicitly at the end with its custom build
+instructions.
+
+Although not mentioned above, each of the variables assigned in the file
+.configure can be treated as an advanced setting. In other words, you may
+override any of these on the command line. E.g., "make PGSTK=/some/other/path".
+
+EXAMPLE OF A .configure FILE
+#       .configure for mls
+MLSF95=NAG
+MLSPLAT=Linux
+MLSCONFG=NAG.Linux
+PGSINC=/nas/user2/pwagner/TOOLKIT/include
+PGSTK=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDF=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+PGSLIB=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDFLIB=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+PVM_ROOT=
+PVM_ARCH=LINUX
+FFTW_ROOT=
+FOPTS=-w
+LDOPTS=
+export MLSF95
+export MLSPLAT
+export MLSCONFG
+export PGSINC
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+export PGSTK
+export HDFEOS
+export HDF
+export GCTP
+export PVM_ROOT
+export PVM_ARCH
+export FFTW_ROOT
+export FOPTS
+export LDOPTS
+
+-pw                           2000-Oct-24 to 2001-Mar-16
 EOF
 exit
 # $Log$
+# Revision 1.15  2001/03/13 19:01:00  pwagner
+# In line with new clean, tar; drops -f Makefile after first use
+#
 # Revision 1.14  2001/03/08 23:52:48  pwagner
 # TAR option; complete description of 1st time
 #
