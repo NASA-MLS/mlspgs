@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module TREE_WALKER
@@ -56,7 +56,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Info
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -173,6 +173,19 @@ contains ! ====     Public Procedures     ==============================
         else
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
           if ( singleChunk /= 0 ) then
+            if ( singleChunk < 0 ) then
+              call output ( " single chunk " )
+              call output ( singleChunk, advance='yes' )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'single chunk number < 0' )
+            elseif ( singleChunk > size(chunks) ) then
+              call output ( " single chunk " )
+              call output ( singleChunk, advance='yes' )
+              call output ( " lastChunk " )
+              call output ( lastChunk, advance='yes' )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'single chunk number > lastChunk' )
+            endif
             firstChunk = singleChunk
             lastChunk = singleChunk
           else
@@ -377,6 +390,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.103  2003/02/21 21:03:39  pwagner
+! Disabled tps switch to eliminate need for Test_Parse_Signals
+!
 ! Revision 2.102  2003/01/13 20:59:14  livesey
 ! Removed a print statement
 !
