@@ -66,11 +66,12 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use Intrinsic, only: LIT_INDICES, PHYQ_INVALID
+  use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSCommon, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
+  use Molecules, only: L_EXTINCTION
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -1502,6 +1503,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: SIGNAL       ! Signal Index
     integer, intent(in), optional :: SIDEBAND ! -1, 0, +1
     logical, intent(in), optional :: NOERROR ! Don't give error if not found
+    type (QuantityTemplate_T), pointer :: QT
 
     ! Local variables
     character(len=127) :: MSG
@@ -1513,25 +1515,29 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     do search = 1, size(vector%quantities)
-      if ( quantityType == vector%quantities(search)%template%quantityType ) then
+      qt => vector%quantities(search)%template
+      if ( quantityType == qt%quantityType ) then
         if ( present(molecule) ) then
-          if ( vector%quantities(search)%template%molecule /= molecule ) cycle
+          if ( qt%molecule /= molecule ) cycle
         end if
         if ( present(instrumentModule) ) then
-          if ( vector%quantities(search)%template%instrumentModule /= &
-            &  instrumentModule ) cycle
+          if ( qt%instrumentModule /= instrumentModule ) cycle
         end if
         if ( present(radiometer) ) then
-          if ( vector%quantities(search)%template%radiometer /= &
-            &  radiometer ) cycle
+          ! We can be a little lenient with vmr here.
+          if ( quantityType == l_vmr ) then
+            if ( .not. present ( molecule ) ) call MLSMessage ( &
+              & MLSMSG_Error, ModuleName, "Requests for vmrs must have molecules" )
+            if ( radiometer /= qt%radiometer .and. molecule == l_extinction ) cycle
+          else
+            if ( radiometer /= qt%radiometer ) cycle
+          end if
         end if
         if ( present(signal) ) then
-          if ( vector%quantities(search)%template%signal /= &
-            &  signal ) cycle
+          if ( qt%signal /= signal ) cycle
         end if
         if ( present(sideband) ) then
-          if ( vector%quantities(search)%template%sideband /= &
-            &  sideband ) cycle
+          if ( qt%sideband /= sideband ) cycle
         end if
         GetVectorQuantityIndexByType = search
     return
@@ -2025,6 +2031,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.89  2002/09/13 18:08:12  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.88  2002/09/11 14:06:12  livesey
 ! Bug fix in CopyVector
 !
