@@ -511,12 +511,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
-             begin, f+f_quantities, s+s_quantity, nr+n_field_spec, &
-             begin, f+f_highBound, t+t_boolean, n+n_field_type, &
-             begin, f+f_lowBound, t+t_boolean, n+n_field_type, &
-             ndp+n_spec_def, &
+             begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
+             nadp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
+             begin, f+f_highBound, t+t_boolean, n+n_field_type, &
+             begin, f+f_lowBound, t+t_boolean, n+n_field_type, &
              begin, f+f_lengthScale, t+t_boolean, n+n_field_type, &
              begin, f+f_fraction, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
@@ -890,6 +890,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.252  2002/10/17 18:27:27  livesey
+! Put bounds in wrong place
+!
 ! Revision 2.251  2002/10/17 18:18:38  livesey
 ! Added low/high bound options to vector definitions.
 !
