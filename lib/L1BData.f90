@@ -47,6 +47,7 @@ module L1BData
 ! CANTREADCOUNTERMAF              ReadL1BData unable to read counterMAF
 ! CANTALLOCATECHARS               ReadL1BData unable to allocate memory
 ! CANTREAD3DFIELD                 ReadL1BData unable to read sds
+! UNKNOWNDATATYPE                 ReadL1BData unable to read data type
 ! CANTENDCOUNTERMAF               ReadL1BData unable to end access to counterMAF
 ! CANTENDQUANTITY                 ReadL1BData unable to end access to quantity
 
@@ -146,7 +147,8 @@ module L1BData
   integer, public, parameter :: CANTREADCOUNTERMAF = LASTMAFNOTFOUND + 1
   integer, public, parameter :: CANTALLOCATECHARS =  CANTREADCOUNTERMAF + 1
   integer, public, parameter :: CANTREAD3DFIELD =    CANTALLOCATECHARS + 1
-  integer, public, parameter :: CANTENDCOUNTERMAF =  CANTREAD3DFIELD + 1
+  integer, public, parameter :: UNKNOWNDATATYPE =    CANTREAD3DFIELD + 1
+  integer, public, parameter :: CANTENDCOUNTERMAF =  UNKNOWNDATATYPE + 1
   integer, public, parameter :: CANTENDQUANTITY =    CANTENDCOUNTERMAF + 1
 
 contains ! ============================ MODULE PROCEDURES =======================
@@ -726,6 +728,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       
       call deallocate_test ( tmpr4Field, 'tmpr4Field', ModuleName )
 
+    case default
+      status = -2
     end select ! ----------------------------------------------------
 
     if ( status == -1 ) then
@@ -733,6 +737,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( MyNeverFail ) return
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_L1BRead // quantityName )
+    elseif ( status == -2 ) then
+      flag = UNKNOWNDATATYPE
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unknown data type in readl1bData'   )
     endif
 
     ! Terminate access to the data sets
@@ -985,6 +994,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 !      l1bData%charField = MLSAuxData%CharField
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
+    case default 
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type')
     end select
     call dump(l1bData, 0)
     
@@ -1060,6 +1072,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.30  2002/12/02 23:38:32  pwagner
+! Should catch unknown data_type errors
+!
 ! Revision 2.29  2002/11/22 21:48:54  pwagner
 ! Commented out USE of MLSAUXData
 !
