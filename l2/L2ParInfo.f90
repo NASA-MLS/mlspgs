@@ -90,8 +90,11 @@ module L2ParInfo
     ! run range in comma-separated list with possible ranges
     ! e.g. '1,2-6+2,9-11,15' expands to '1,2,4,6,9,10,11,15'
     character(len=4096) :: chunkRange='' ! if blank, runs all chunks
+    character(len=4096) :: failedChunks='' ! if blank, no chunks failed
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it | staging
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
+    integer :: numFailedChunks = 0
+    integer :: numCompletedChunks = 0
   end type L2ParallelInfo_T
 
   ! This enumerated type describes the state that directWrites can be in
@@ -603,6 +606,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.38  2004/09/16 00:18:03  pwagner
+! Keeps record of completed, failed chunks
+!
 ! Revision 2.37  2004/08/05 22:47:47  pwagner
 ! New --chunkRange option to run selected chunks in parallel mode
 !
