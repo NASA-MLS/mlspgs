@@ -39,12 +39,14 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
 PROG=mlsl2
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_sources)/*.f90
+$(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar
@@ -92,6 +94,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.6  2000/11/18 00:11:06  pwagner
+# No target with *.f90 to confuse sun
+#
 # Revision 2.5  2000/11/13 17:52:23  pwagner
 # Forces rebuild of lib even from l2
 #
