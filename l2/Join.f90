@@ -17,7 +17,8 @@ module Join                     ! Join together chunk based data.
     & L2GPData_T, SetupNewL2GPRecord
   use LEXER_CORE, only: PRINT_SOURCE
   use L2PC_M, only: L2PC_T, AddL2PCToDatabase
-  use MatrixModule_1, only: Matrix_Database_T, GetFromMatrixDatabase, Matrix_T
+  use MatrixModule_1, only: CopyMatrix, Matrix_Database_T, &
+    & Dump, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Spec_ID
@@ -207,9 +208,7 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_l2pc ) ! ------------------- L2PC Bins ------------------------
         thisL2PC%xStar = vectors(xStarIndex)
-        call InsulateVector(thisL2PC%xStar)
         thisL2PC%yStar = vectors(yStarIndex)
-        call InsulateVector(thisL2PC%yStar)
         call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
         thisL2PC%kStar = tmpKStar
         call decorate ( key, AddL2PCToDatabase ( l2pcDatabase, thisL2PC ) )
@@ -610,6 +609,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.24  2001/04/25 21:51:46  livesey
+! Tidied up Join for l2pcs
+!
 ! Revision 2.23  2001/04/25 20:33:28  livesey
 ! Minor improvements to Join l2pc stuff
 !
@@ -680,7 +682,4 @@ end module Join
 ! Revision 2.1  2000/09/08 22:55:56  vsnyder
 ! Revised to use the tree output by the parser
 !
-
-
-
 
