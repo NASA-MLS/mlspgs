@@ -27,7 +27,7 @@ module TREE_WALKER
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
   use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
   use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
-  use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorsDatabase
+  use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -306,6 +306,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.78  2002/01/21 23:11:06  livesey
+! Added call to DestroyBinSelectorsDatabase etc.
+!
 ! Revision 2.77  2002/01/18 18:55:37  livesey
 ! Code to support the --chunk option
 !
