@@ -14,15 +14,22 @@ module OutputAndClose ! outputs all data from the Join module to the
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
     & FIELD_FIRST, FIELD_LAST, L_L2AUX, L_L2GP
   use L2AUXData, only: L2AUXDATA_T, L2AUXDIMNAMES
-  use L2GPData, only: L2GPData_T
+!  use L2GPData, only: L2GPData_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START
   use OUTPUT_M, only: OUTPUT
-  use OutputL2GP, only: OutputL2GP_createFile, OutputL2GP_writeData, &
+
+!These functions now in L2GPData
+!  use OutputL2GP, only: OutputL2GP_createFile, OutputL2GP_writeData, &
+!    & OutputL2GP_writeGEO
+
+  use L2GPData, only: L2GPData_T, &
+       & OutputL2GP_createFile, OutputL2GP_writeData, &
     & OutputL2GP_writeGEO
+
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
   use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
@@ -158,8 +165,16 @@ contains ! =====     Public Procedures     =============================
                 case ( f_quantities )
                   do in_field_no = 2, nsons(gson)
                     db_index = decoration(decoration(subtree(in_field_no ,gson)))
-                    call OutputL2GP_createFile ( swfid,l2gpDatabase(db_index), &
-                      & flag )
+
+!Reordered parameters in following call to reflect recoded L2GPData
+!and eliminated optional parameter flag which was of inconsistent
+!type INTEGER when CHARACTER was expected, anyway
+!                    call OutputL2GP_createFile ( swfid,l2gpDatabase(db_index), &
+!                      & flag )
+
+                    call OutputL2GP_createFile ( l2gpDatabase(db_index), &
+                      & swfid)
+
                     call OutputL2GP_writeGEO ( l2gpDatabase(db_index), swfid )
                     call OutputL2GP_writeData ( l2gpDatabase(db_index), swfid )
                   end do ! in_field_no = 2, nsons(gson)
@@ -306,6 +321,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.3  2000/10/05 16:43:00  pwagner
+! Now compiles with new L2GPData module
+!
 ! Revision 2.2  2000/09/11 19:43:47  ahanzel
 ! Removed old log entries.
 !
