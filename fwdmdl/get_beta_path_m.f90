@@ -34,7 +34,6 @@ contains
     use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
-    use Molecules, only: SP_H2O
     use Physics, only: H_OVER_K
     use SpectroscopyCatalog_m, only: CATALOG_T, LINES
 
@@ -93,7 +92,7 @@ contains
 
 ! Local variables..
 
-    integer(ip) :: I, J, K, N, IB, Spectag, No_of_lines, &
+    integer(ip) :: I, J, K, N, IB, Molecule, No_of_lines, &
               &    No_mol, N_path
     real(rp) :: Ratio, BB, VP, V0, VM, T, TM, TP, BP, BM
     real(rp), allocatable, dimension(:) :: LineWidth
@@ -116,12 +115,12 @@ contains
       do n = 1, beta_group(i)%n_elements
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
-        Spectag = Catalog(ib)%Spec_Tag
+        molecule = Catalog(ib)%molecule
          
         do j = 1, n_path
           k = path_inds(j)
 
-          call create_beta ( spectag, catalog(ib)%continuum, p_path(k),   &
+          call create_beta ( molecule, catalog(ib)%continuum, p_path(k),   &
             & t_path(j), Frq, lines(catalog(ib)%lines)%w, gl_slabs(k,ib), &
             & tanh_path(j), bb, polarized .and. catalog(ib)%polarized,    &
             & DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
@@ -150,7 +149,7 @@ contains
         do n = 1, beta_group(i)%n_elements
           ratio = beta_group(i)%ratio(n)
           ib = beta_group(i)%cat_index(n)
-          Spectag = Catalog(ib)%Spec_Tag
+          Molecule = Catalog(ib)%molecule
           no_of_lines = gl_slabs_m(1,ib)%no_lines
           allocate ( LineWidth(no_of_lines) )
           do k = 1, no_of_lines
@@ -159,12 +158,12 @@ contains
           do j = 1 , n_path
             k = path_inds(j)
             tm = t_path_m(k)
-            call create_beta ( spectag, catalog(ib)%continuum, p_path(k), &
+            call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
             &  tm, frq, linewidth, gl_slabs_m(k,ib),                      &
             &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
-            call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), &
+            call create_beta ( molecule, Catalog(ib)%continuum, p_path(k), &
             &  tp, Frq, LineWidth, gl_slabs_p(k,ib),                      &
             &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
             betap(j) = betap(j) + ratio * vp
@@ -352,6 +351,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.33  2003/05/15 03:28:52  vsnyder
+! Moved some stuff up to FullForwardModel because Get_d_Deltau_pol_dT needs it
+!
 ! Revision 2.32  2003/05/10 00:48:09  vsnyder
 ! Add TeXnicalities
 !
