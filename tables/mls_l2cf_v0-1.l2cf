@@ -529,7 +529,7 @@ BEGIN Output
     ;; Now the l2gp_others file contains the secondary l2gp quantities
     ;; and the overlaps from the primary products.
     ;;
-    output, file=l2gp_others, quantities=o3_190L2gp o3_240L2gp n2o_190 $
+    output, file=l2gp_others, quantities=o3_190L2gp o3_240L2gp n2o_190L2gp $
                                          n2o_640L2gp,  $
        overlaps=tempL2gp gphL2gp h2oL2gp hno3L2gp o3L2gp hclL2gp cloL2gp $
                 n2oL2gp
@@ -549,6 +549,10 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.5  2000/05/19 19:55:06  vsnyder
+; Added "L2gp" on end of labels of "l2gp" specs, so as not to duplicate
+; labels on "join" specs.
+;
 ; Revision 1.4  2000/05/19 01:16:31  vsnyder
 ; Replaced "apriori" specification names by "climatology"
 ;
