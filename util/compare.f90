@@ -248,7 +248,7 @@ program COMPARE
       & real(relAtAmaxG*eps,rs)
     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
       & ' Std. Devs. =', real(stdeva,rs)
-  else if ( same ) then
+  else if ( same .and. rmaxg == 0.0 ) then
     print '(a)', 'Identical'
   end if
 
@@ -300,6 +300,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.10  2004/09/17 20:59:34  vsnyder
+! Add -i option
+!
 ! Revision 1.9  2003/11/01 01:51:24  vsnyder
 ! Use single-precision epsilon for output computation
 !
