@@ -1268,66 +1268,90 @@ contains
   end function mls_hdf_version
 !-----------------------------------------------
 
-  subroutine mls_openFile(filename, access, file_id)
+  subroutine mls_openFile(filename, access, file_id, hdfVersion)
 !
 ! External Variables
 !
     character(len=*), intent(in) :: filename, access
-    integer(hid_t), intent(out) :: file_id
+    integer, intent(in) :: hdfVersion
+    integer(i4), intent(out) :: file_id
 !
 ! Internal Variables
 !
-    integer :: h5error
+    integer :: error
     logical :: is_hdf5
 
-  if (trim(access) == 'create') then 
+    error = 0
+   select case (hdfVersion)
+    case (HDFVERSION_4) 
+     if (lowercase(trim(access)) == 'create') then
+       file_id = mls_sfstart(trim(filename),DFACC_CREATE,hdfVersion)
+     elseif (lowercase(trim(access)) == 'update') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDWR,hdfVersion)
+     elseif (lowercase(trim(access)) == 'readonly') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,hdfVersion)
+     endif
+     if (file_id .eq. -1) error = file_id 
+    case (HDFVERSION_5)
+      if (trim(access) == 'create') then 
+          call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, file_id, error)
+      elseif (trim(access) == 'update') then
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, error)
+       endif
+      elseif (trim(access) == 'readonly') then 
+          is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+          call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+       if (is_hdf5) then 
+          call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, error)
+       endif
+      endif
+    case default
+     if (lowercase(trim(access)) == 'create') then 
+       file_id = mls_sfstart(trim(filename),DFACC_CREATE,hdfVersion)
+     elseif (lowercase(trim(access)) == 'update') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDWR,hdfVersion)
+     elseif (lowercase(trim(access)) == 'readonly') then
+       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,hdfVersion)
+     endif
+     if (file_id .eq. -1) error = file_id 
+    end select 
 
-  call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, file_id, h5error)
-  if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Creating File: "//trim(filename))
-
-  elseif (trim(access) == 'update') then
-
-   is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
-   call h5fis_hdf5_f(trim(filename), is_hdf5, h5error)
-
-  if (is_hdf5) then 
-   call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, h5error)
-   if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Updating File: "//trim(filename))
-  endif
-
-  elseif (trim(access) == 'readonly') then 
-
-  is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
-  call h5fis_hdf5_f(trim(filename), is_hdf5, h5error)
-
-  if (is_hdf5) then 
-  call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, h5error)
-  if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Reading File: "//trim(filename))
-  endif
-
-  endif
-
+   if (error /= 0) then 
+      call MLSMessage (MLSMSG_Error, ModuleName, & 
+           "Error: cannot "//lowercase(trim(access))//" file: "//trim(filename))
+   endif
+ 
   end subroutine mls_openFile
 
 !-----------------------------------------------
-
-  subroutine mls_closeFile(file_id)
+  subroutine mls_closeFile(file_id,hdfVersion)
 !
 ! External Variables
 !
-    integer(hid_t), intent(in) :: file_id
+    integer(i4), intent(in) :: file_id
+    integer, intent(in) :: hdfVersion
 !
 ! Internal Variables
 !
-    integer :: h5error
+    integer :: error
 
-    call h5fclose_f(file_id, h5error)
-    if (h5error /= 0) then 
+    select case (hdfVersion)
+    case (HDFVERSION_4) 
+       error = sfend(file_id)
+    case (HDFVERSION_5) 
+       call h5fclose_f(file_id, error)
+    case default
+       error = sfend(file_id)       
+    end select 
+
+    if (error /= 0) then 
        call MLSMessage (MLSMSG_Error, ModuleName, "Error closing file.")
     endif
 
   end subroutine mls_closeFile
-
 !-----------------------------------------------
 
 !====================
@@ -1340,6 +1364,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.41  2002/11/07 21:22:40  jdone
+! HDF4/HDF5 capabilities integrated
+!
 ! Revision 2.40  2002/10/29 01:02:26  pwagner
 ! Reverted DEFAULT_HDFVERSION to 4; added api
 !
