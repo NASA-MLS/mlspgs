@@ -28,7 +28,7 @@ module INIT_TABLES_MODULE
   use Init_Spectroscopy_m ! Everything.
   use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
-    ! N, NADP, ND, NDP, NP, NR, P, S, T, <all>_INDICES,
+    ! N, NADP, ND, NDP, NO_CHECK_EQ, NP, NR, P, S, T, <all>_INDICES,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING, S_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
@@ -86,6 +86,7 @@ module INIT_TABLES_MODULE
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
+  integer, parameter :: Z_ALGEBRA        = 11
   integer, parameter :: Z_CHUNKDIVIDE    = 6
   integer, parameter :: Z_CONSTRUCT      = 7
   integer, parameter :: Z_FILL           = 8
@@ -93,12 +94,12 @@ module INIT_TABLES_MODULE
   integer, parameter :: Z_JOIN           = 10
   integer, parameter :: Z_MERGEGRIDS     = 5
   integer, parameter :: Z_MLSSIGNALS     = 1
-  integer, parameter :: Z_OUTPUT         = 11
+  integer, parameter :: Z_OUTPUT         = 12
   integer, parameter :: Z_READAPRIORI    = 4
   integer, parameter :: Z_RETRIEVE       = 9
   integer, parameter :: Z_SPECTROSCOPY   = 2
   integer, parameter :: SECTION_FIRST = z_mlsSignals, &
-                                SECTION_LAST = z_Output
+                      & SECTION_LAST = z_Output
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
 !  W a r n i n g   W a r n i n g   W a r n i n g   W a r n i n g   
@@ -182,22 +183,23 @@ module INIT_TABLES_MODULE
   integer, parameter :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = reshape( &
-! To: |             globalSettings    chunkDivide       retrieve             |
-!     | mlsSignals        readApriori       construct          join          |
-!     |       spectroscopy      mergeGrids         fill             output   |
-! ====|======================================================================|== From: ==
-        (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! Start
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mlsSignals
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! spectroscopy
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! globalSettings
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! readApriori
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mergeGrids
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Join
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
+! To: |             globalSettings    chunkDivide       retrieve          output   |
+!     | mlsSignals        readApriori       construct          join                |
+!     |       spectroscopy      mergeGrids         fill             algebra        |
+! ====|============================================================================|== From: ==
+        (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! Start
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! spectroscopy
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! globalSettings
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,    0,  & ! mergeGrids
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Construct
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Fill
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Join
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Algebra
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
@@ -275,6 +277,7 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
     parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
     ! Put section names into the symbol table:
+    section_indices(z_algebra) =           add_ident ( 'algebra' )
     section_indices(z_chunkDivide) =       add_ident ( 'chunkDivide' )
     section_indices(z_construct) =         add_ident ( 'construct' )
     section_indices(z_fill) =              add_ident ( 'fill' )
@@ -1091,6 +1094,7 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
+      begin, z+z_algebra, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1107,6 +1111,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.345  2004/01/14 18:49:58  vsnyder
+! Stuff to support the Algebra section
+!
 ! Revision 2.344  2003/12/11 22:59:08  pwagner
 ! May fill DirectWriteDatabase in global settings
 !
