@@ -393,7 +393,7 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
-             l+l_numF, l+l_numJ, &
+             l+l_numF, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
@@ -678,7 +678,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, t+t_masks, n+n_field_type, &
-             begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
+             begin, f+f_opticalDepth, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
              begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
@@ -865,6 +868,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.200  2002/02/09 19:12:00  livesey
+! Added optical depth stuff
+!
 ! Revision 2.199  2002/02/07 21:40:26  livesey
 ! Added string for t_masks
 !
