@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=======================================================================================
@@ -9,10 +9,12 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use Allocate_Deallocate, only: Deallocate_Test
+  use Expr_M, only: Expr
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
   use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
     & F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
+  use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
   use L2PC_m, only: WRITEONEL2PC
@@ -124,6 +126,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SPEC_NO                  ! Index of son of Root
     integer :: SWFID
     real :: T1, T2     ! for timing
+    integer :: Type                     ! Type of value returned by EXPR
+    integer :: Units(2)                 ! Units of value returned by EXPR
+    double precision :: Value(2)        ! Value returned by EXPR
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
     logical :: TIMING
 
@@ -175,7 +180,11 @@ contains ! =====     Public Procedures     =============================
           case ( f_type )
             output_type = decoration(subtree(2,gson))
           case ( f_hdfVersion )
-            hdfVersion = subtree(2,gson)
+            call expr ( subtree(2,gson), units, value, type )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call Announce_error ( gson, &
+                & 'No units allowed for hdfVersion: just integer 4 or 5')
+            hdfVersion = value(1)
           case default                  ! Everything else processed later
           end select
         end do
@@ -258,7 +267,7 @@ contains ! =====     Public Procedures     =============================
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
             elseif(index(switches, 'pro') /= 0) then
-               call proclaim(l2gpPhysicalFilename, 'l2gp', &
+               call announce_success(l2gpPhysicalFilename, 'l2gp', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
@@ -399,7 +408,7 @@ contains ! =====     Public Procedures     =============================
               call announce_error ( root, &
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
             elseif(index(switches, 'pro') /= 0) then
-               call proclaim(l2auxPhysicalFilename, 'l2aux', &
+               call announce_success(l2auxPhysicalFilename, 'l2aux', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
@@ -475,7 +484,7 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage(MLSMSG_Error,ModuleName,&
             & 'Failed to close l2pc file:'//trim(file_base))
           elseif(index(switches, 'pro') /= 0) then
-               call proclaim(file_base, 'l2pc', &
+               call announce_success(file_base, 'l2pc', &
                & 0, quantityNames)
          endif
 
@@ -541,7 +550,7 @@ contains ! =====     Public Procedures     =============================
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
             elseif(index(switches, 'pro') /= 0) then
-               call proclaim(l2gpPhysicalFilename, 'l2dgg', &
+               call announce_success(l2gpPhysicalFilename, 'l2dgg', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
@@ -652,8 +661,8 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l2_type, num_quants, quantities, hdfVersion )
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, l2_type, num_quants, quantities, hdfVersion )
     integer, intent(in) :: num_quants 
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l2_type
@@ -685,7 +694,7 @@ contains ! =====     Public Procedures     =============================
           call output ( trim(quantities(i)), advance='yes')
       enddo
     end  if
-  end subroutine proclaim
+  end subroutine announce_success
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
@@ -718,6 +727,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.47  2002/01/26 00:10:45  pwagner
+! Correctly sets hdfVersion; changed proclaim to announce_success
+!
 ! Revision 2.46  2002/01/23 21:52:15  pwagner
 ! Accepts and uses hdfVersion optional field
 !
