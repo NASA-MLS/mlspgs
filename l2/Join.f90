@@ -376,6 +376,8 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: PATH         ! path/file_base
     integer :: record_length
     integer :: RETURNSTATUS
+    logical :: SKIPDGG
+    logical :: SKIPDGM
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
 
@@ -397,6 +399,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
+    SKIPDGG = (index(switches, 'skipdgg') /= 0)
+    SKIPDGM = (index(switches, 'skipdgm') /= 0)
     nullify(thisDirect)
 
     myMakeRequest = .false.
@@ -648,6 +652,16 @@ contains ! =====     Public Procedures     =============================
       else
         call LogDirectWriteRequest ( file, node )
       endif
+    elseif ( skipdgg .and. any ( outputType == (/ l_l2dgg /) ) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
+      call DeallocateStuff
+      return
+    elseif ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
+      call DeallocateStuff
+      return
     else
       ! OK, it's time to write this bit of the file
       if ( parallel%slave ) then
@@ -659,15 +673,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to auto-direct write ' // trim(filename) )
         elseif ( outputType /= DirectDataBase(myFile)%type ) then
-          call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
-          call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
-          call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
-          call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
-          call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
-          call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
-          call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
-          call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
-          call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+          call DeallocateStuff
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
           return
         endif
@@ -944,15 +950,11 @@ contains ! =====     Public Procedures     =============================
             print *, 'noCreatedFiles ', noCreatedFiles
           endif
         endif
-        call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
-        call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
-        call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
-        call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
-        call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
-        call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
-        call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
-        call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
-        call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+        call DeallocateStuff
+        if ( any ( outputType == (/ l_l2gp, l_l2dgg /) ) ) then
+          call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
+          call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
+        endif
         ! Don't forget to close file
         select case ( outputType )
         case ( l_l2gp, l_l2dgg )
@@ -1014,15 +1016,7 @@ contains ! =====     Public Procedures     =============================
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
     end if
 
-    call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
-    call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
-    call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
-    call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
-    call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
-    call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
-    call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
-    call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
-    call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+    call DeallocateStuff
 
   contains
     subroutine DistributeSources
@@ -1076,6 +1070,17 @@ contains ! =====     Public Procedures     =============================
        enddo
       endif
     end subroutine DistributeSources
+    subroutine DeallocateStuff
+      call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
+      call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
+      call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
+      call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+      call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
+      call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
+      call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
+      call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
+      call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+    end subroutine DeallocateStuff
   end subroutine DirectWriteCommand
 
   ! ------------------------------------------------ LabelVectorQuantity -----
@@ -1801,6 +1806,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.107  2004/02/19 23:56:23  pwagner
+! Fixed tiny memory leak; skipdgg/m skips directwrite of filetype
+!
 ! Revision 2.106  2004/02/11 23:11:38  livesey
 ! Logic wrong in calls to DoHGridsMatch
 !
