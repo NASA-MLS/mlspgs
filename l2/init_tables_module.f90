@@ -58,7 +58,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_LAST           = t_vgridtype
   integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, parameter :: F_APRIORI             = 1
+  integer, parameter :: F_ALTITUDEQUANTITY    = 1
+  integer, parameter :: F_APRIORI             = f_altitudequantity + 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, parameter :: F_BAND                = f_autofill + 1
@@ -73,7 +74,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DIAGONAL            = f_criteria + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
-  integer, parameter :: F_FILE                = f_diagonalout + 1
+  integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
+  integer, parameter :: F_FILE                = f_explicitvalues + 1
   integer, parameter :: F_FIRST               = f_file + 1
   integer, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
   integer, parameter :: F_FRACTION            = f_firstIndexChannel + 1
@@ -82,7 +84,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FWDMODELIN          = f_frequency + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GPH                 = f_fwdModelOut + 1
-  integer, parameter :: F_HEIGHT              = f_gph + 1
+  integer, parameter :: F_H2OQUANTITY         = f_gph + 1
+  integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
   integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
@@ -106,12 +109,14 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RADIOMETER          = f_quantity + 1
   integer, parameter :: F_RANGE               = f_radiometer + 1
-  integer, parameter :: F_ROWS                = f_range + 1
+  integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
+  integer, parameter :: F_ROWS                = f_refGPHQuantity + 1
   integer, parameter :: F_SCALE               = f_rows + 1
   integer, parameter :: F_SDNAME              = f_scale + 1
   integer, parameter :: F_SIGNALS             = f_sdname + 1
   integer, parameter :: F_SOURCE              = f_signals + 1
-  integer, parameter :: F_SOURCEL2AUX         = f_source + 1
+  integer, parameter :: F_SOURCEAPRIORI       = f_source + 1
+  integer, parameter :: F_SOURCEL2AUX         = f_sourceApriori + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
   integer, parameter :: F_SPECIES             = f_sourcequantity + 1
@@ -129,7 +134,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
   integer, parameter :: F_VERSIONRANGE        = f_tolerancer + 1
   integer, parameter :: F_TEMPLATE            = f_versionRange + 1
-  integer, parameter :: F_TEST                = f_template + 1
+  integer, parameter :: F_TEMPERATUREQUANTITY = f_template + 1
+  integer, parameter :: F_TEST                = f_temperaturequantity + 1
   integer, parameter :: F_TYPE                = f_test + 1
   integer, parameter :: F_UNIT                = f_type + 1
   integer, parameter :: F_UNPACKOUTPUT        = f_unit + 1
@@ -138,7 +144,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
   integer, parameter :: F_WIDTH               = f_weight + 1
   integer, parameter :: F_WIDTHS              = f_width + 1
-  integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_widths
+  integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_widths
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
@@ -154,7 +160,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, parameter :: L_HEIGHT        = l_fractional + 1
-  integer, parameter :: L_KRONECKER     = l_height + 1
+  integer, parameter :: L_HYDROSTATIC   = l_height + 1
+  integer, parameter :: L_KRONECKER     = l_hydrostatic + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2GP 	        = l_l2aux + 1
@@ -215,7 +222,8 @@ module INIT_TABLES_MODULE
   integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, parameter :: S_BAND           = last_parm + 1
+  integer, parameter :: S_APRIORI        = last_parm + 1
+  integer, parameter :: S_BAND           = s_apriori + 1
   integer, parameter :: S_CHANNEL        = s_band + 1
   integer, parameter :: S_CLIMATOLOGY    = s_channel + 1
   integer, parameter :: S_CREATE         = s_climatology + 1
@@ -317,6 +325,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
     lit_indices(l_height) =                add_ident ( 'height' )
+    lit_indices(l_hydrostatic) =           add_ident ( 'hydrostatic' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
     lit_indices(l_l1b) =                   add_ident ( 'l1b' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
@@ -340,6 +349,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
+    field_indices(f_altitudequantity) =    add_ident ( 'altitudeQuantity' )
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
@@ -355,6 +365,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
+    field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_firstIndexChannel) =   add_ident ( 'firstIndexChannel' )
@@ -364,6 +375,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
     field_indices(f_gph) =                 add_ident ( 'gph' )
+    field_indices(f_h2oquantity) =         add_ident ( 'f_h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_instrumentmodule) =    add_ident ( 'instrumentModule' )
@@ -388,11 +400,13 @@ contains ! =====     Public procedures     =============================
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_radiometer) =          add_ident ( 'radiometer' )
     field_indices(f_range) =               add_ident ( 'range' )
+    field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rows) =                add_ident ( 'rows' )
     field_indices(f_scale) =               add_ident ( 'scale' )
     field_indices(f_sdname) =              add_ident ( 'sdname' )
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_source) =              add_ident ( 'source' )
+    field_indices(f_sourceapriori) =       add_ident ( 'sourceApriori' )
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
@@ -406,6 +420,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_swath) =               add_ident ( 'swath' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_temperature) =         add_ident ( 'temperature' )
+    field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
     field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
@@ -448,6 +463,7 @@ contains ! =====     Public procedures     =============================
     section_indices(z_readApriori) =       add_ident ( 'readApriori' )
     section_indices(z_retrieve) =          add_ident ( 'retrieve' )
     ! Put spec names into the symbol table
+    spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_climatology) =          add_ident ( 'climatology' )
     spec_indices(s_channel) =              add_ident ( 'channel' )
@@ -606,7 +622,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
-             begin, f+f_values, n+n_field_type, &
+             begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Climatology
@@ -678,7 +694,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
-             np+n_spec_def, &
+             np+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
@@ -686,9 +703,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_temperatureQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_altitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
-! Will want a_apriori here.......
+             begin, f+f_sourceApriori, s+s_apriori, n+n_field_spec, &
+             begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
@@ -837,6 +863,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.22  2001/02/17 00:26:58  livesey
+! Added more stuff to Fill section
+!
 ! Revision 2.21  2001/02/16 19:19:04  vsnyder
 ! Added "diagonalOut" field to "retrieve" specification.
 !
