@@ -10,12 +10,17 @@
 #   meaning simply keep old A, and its date, unless new A different)
 # leaves record file that names A and tells whether it is new or old
 # if record file already exists, appends new line to it with above info
+# If newB not created (presumably because the_command failed)
+# then will exit with error after either
+# (a) restoring oldA (the default)
+# (b) not restoring oldA 
 #Usage:
 #newAifBdiff.sh [options] old_A old_B command [arg1] [arg2] ..
 #
 #    O p t i o n s
 # -a            no B; usage newAifBdiff.sh -a old_A command [args] ..
 #                 meaning keep old A (and its date) unless new A different
+# -c            do not restore oldA if the_command fails
 # -k            if keeping old A, keep old B, too
 #                (as no diff betw. old and new B, means keep date of old B)
 # -nr           leave no record file
@@ -64,7 +69,7 @@
 #(3) How about optionally using a user-supplied program instead of diff?
 #      that way we could get rid of relying on octal dump routine
 
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -169,6 +174,9 @@ what_diff_opt()
 # (Inferior standard versions of diff, like Sun's, lack this option)
 # usage: extant_files arg1 [arg2] ..
 # returns (number) result as the_diff: 0 if none, else non-zero
+# If at least one of the files non-existent, then
+# (i) if called with a third arg and that arg is "yes", returns "-1"
+# (ii) otherwise, complains and exits with status 1
 
 diff_fun()
 {
@@ -186,6 +194,9 @@ diff_fun()
       od -t c "$2" > $temp2
       the_diff=`diff $temp1 $temp2 | wc -l`
       rm -f $temp1 $temp2
+	elif [ "$3" = "yes" ]
+	then
+      the_diff="-1"
    else
       echo "diff_fun: file not found"
       exit 1
@@ -240,6 +251,7 @@ oldAExists="yes"
 oldBExists="yes"
 keepUnchangedB="no"
 keepRecords="yes"
+RestoreIfTheCommandFails="yes"
 me="$0"
 my_name=newAifBdiff.sh
 # Special use (4) is signaled by $the_command being $marker_name
@@ -281,6 +293,10 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
     -a )
        ASameAsB="yes"
+       shift
+	;;
+    -c )
+       RestoreIfTheCommandFails="no"
        shift
 	;;
     -k )
@@ -373,8 +389,12 @@ elif [ "$ASameAsB" = "yes" ]; then
 #  what_diff_opt $old_A
 #  echo diff $diff_opt $old_A $old_A.1 | wc -l
 #  the_diff=`diff $diff_opt $old_A $old_A.1 | wc -l`
-  diff_fun $old_A $old_A.1
-  if [ "$the_diff" -gt 0 ] ; then
+  diff_fun $old_A $old_A.1 $RestoreIfTheCommandFails
+  if [ "$the_diff" = "-1" ] ; then
+    mv "$old_A.1" "$old_A"
+    echo "$the_command failed; restoring $old_A"
+    exit 1
+  elif [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1"
       message="($the_diff) A, B same; old A, new A differ =>need new A"
       the_status="new"
@@ -400,8 +420,13 @@ else
 #  what_diff_opt $old_B
 #  echo diff $diff_opt $old_B $old_B.1 | wc -l
 #  the_diff=`diff $diff_opt $old_B $old_B.1 | wc -l`
-  diff_fun $old_B $old_B.1
-  if [ "$the_diff" -gt 0 ] ; then
+  diff_fun $old_B $old_B.1 $RestoreIfTheCommandFails
+  if [ "$the_diff" = "-1" ] ; then
+    mv "$old_A.1" "$old_A"
+    mv "$old_B.1" "$old_B"
+    echo "$the_command failed; restoring $old_A, $old_B"
+    exit 1
+  elif [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1" "$old_B.1"
       message="($the_diff) old B, new B differ =>need new A"
      the_status="new"
@@ -438,6 +463,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.10  2002/07/29 23:00:54  pwagner
+# Speedup through short-circuit for special use (4)
+#
 # Revision 1.9  2002/07/26 23:49:59  pwagner
 # Faster at marking files uptodate (but still slow)
 #
