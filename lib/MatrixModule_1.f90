@@ -17,8 +17,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
     & MultiplyMatrixVectorNoT, &
     & operator(+), &
-    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, Spill, &
-    & UpdateDiagonal
+    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, Spill, &
+    & TransposeMatrix, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -52,7 +52,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
   public :: NewMultiplyMatrixVector, NormalEquations, operator(.TX.)
-  public :: operator(+), RC_Info, RowScale, RowScale_1, ScaleMatrix
+  public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
 
@@ -159,6 +159,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface operator ( .TX. )      ! A^T B
     module procedure MultiplyMatrix_XTY_1, NewMultiplyMatrixVector
+  end interface
+
+  interface ReflectMatrix
+    module procedure ReflectMatrix_1
   end interface
 
   interface RowScale
@@ -1554,6 +1558,22 @@ contains ! =====     Public Procedures     =============================
       & call multiply ( a, rhs_in, rhs_out, my_update, useMask = my_mask )
   end subroutine NormalEquations
 
+  ! ---------------------------------------------- ReflectMatrix_1 -----
+  subroutine ReflectMatrix_1 ( M )
+    ! Given a matrix M, copy the upper triangle into the lower
+    type ( Matrix_T), intent(inout) :: M
+    ! Local variables
+    integer :: I, J             ! Loop counters
+
+    ! Executable code
+    do i = 1, m%row%nb
+      call ReflectMatrix ( m%block ( i,i ) )
+      do j = i + 1, m%col%nb
+        call TransposeMatrix ( m%block ( i, j ), m%block ( j, i ) )
+      end do
+    end do
+  end subroutine ReflectMatrix_1
+
   ! -------------------------------------------------  RowScale_1  -----
   subroutine RowScale_1 ( V, X, NEWX, RowBlock )
   ! Z = V X where V is a diagonal matrix represented by a vector and Z
@@ -2065,6 +2085,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.74  2002/08/06 02:15:20  livesey
+! Added ReflectMatrix_1
+!
 ! Revision 2.73  2002/08/03 20:41:51  livesey
 ! Added GetActualMatrixFromDatabase
 !
