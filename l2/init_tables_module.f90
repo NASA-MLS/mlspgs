@@ -97,8 +97,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationGrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, parameter :: F_KSTAR               = f_jacobian + 1
-  integer, parameter :: F_LENGTH              = f_kStar + 1
+  integer, parameter :: F_LENGTH              = f_jacobian + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
   integer, parameter :: F_L2PC                = f_logBasis + 1
   integer, parameter :: F_MAXITERATIONS       = f_l2pc + 1
@@ -117,7 +116,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_PERTURBATION        = f_overlaps + 1
   integer, parameter :: F_PHIWINDOW           = f_perturbation + 1
   integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
-  integer, parameter :: F_QUANTITIES          = f_pointingGrids + 1
+  integer, parameter :: F_PRECISION           = f_pointingGrids + 1
+  integer, parameter :: F_QUANTITIES          = f_precision + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
@@ -161,9 +161,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VALUES              = f_versionrange + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, parameter :: F_XSTAR               = f_weight + 1
-  integer, parameter :: F_YSTAR               = f_xStar + 1
-  integer, parameter :: FIELD_LAST = f_yStar
+  integer, parameter :: FIELD_LAST = f_weight
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
@@ -424,7 +422,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
-    field_indices(f_kStar) =               add_ident ( 'kStar' )
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
@@ -445,6 +442,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_perturbation) =        add_ident ( 'perturbation' )
     field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
     field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
+    field_indices(f_precision) =           add_ident ( 'precision' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -489,8 +487,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_weight) =              add_ident ( 'weight' )
-    field_indices(f_xStar) =               add_ident ( 'xStar' )
-    field_indices(f_yStar) =               add_ident ( 'yStar' )
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -719,6 +715,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
@@ -921,6 +919,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.97  2001/05/08 21:53:05  livesey
+! Added precision field to join.  Got rid of xStar, yStar and kStar
+!
 ! Revision 2.96  2001/05/08 20:35:01  vsnyder
 ! Add fillCovariance spec
 !
