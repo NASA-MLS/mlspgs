@@ -9,7 +9,6 @@ MODULE convolve_all_m
   USE VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
   USE AntennaPatterns_m, only: AntennaPattern_T
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  USE MLSNumerics, ONLY: interpolatevalues, hunt
   USE MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
   USE MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
   USE Load_sps_data_m, only: Grids_T
@@ -26,10 +25,10 @@ MODULE convolve_all_m
 ! This subprogram adds the effects of antenna smearing to the radiance.
 !
   SUBROUTINE convolve_all(FwdMdlConfig,FwdMdlIn,FwdMdlExtra,maf,channel,&
-           & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,   &
-           & rad_in,chi_out,sbRatio,AntennaPattern,t_deriv_flag,Grids_f,    &
-           & Jacobian,rowFlags,req,rsc,earth_frac,surf_angle,di_dt, &
-           & dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df)
+           & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,&
+           & rad_in,chi_out,dhdz_out,dx_dh_out,sbRatio,AntennaPattern,  &
+           & t_deriv_flag,Grids_f,Jacobian,rowFlags,req,rsc,earth_frac, &
+           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df)
 !
 ! inputs
 !
@@ -45,9 +44,11 @@ MODULE convolve_all_m
   Type (VectorValue_T), intent(in) :: TEMP
   Type (VectorValue_T), intent(in) :: PTAN
 !
-  REAL(rp), INTENT(in) :: chi_in(:)! inputted pointing angles radians
-  REAL(rp), INTENT(in) :: rad_in(:)! inputted radiances
-  REAL(rp), INTENT(in) :: chi_out(:)! outputted pointing angles radians
+  REAL(rp), INTENT(in) :: chi_in(:)    ! inputted pointing angles radians
+  REAL(rp), INTENT(in) :: rad_in(:)    ! inputted radiances
+  REAL(rp), INTENT(in) :: chi_out(:)   ! outputted pointing angles radians
+  REAL(rp), INTENT(in) :: dhdz_out(:)  ! dhdz on the outputted pointing grid
+  REAL(rp), INTENT(in) :: dx_dh_out(:) ! dx/dh on the outputted pointing grid
 !
   Real(r8), intent(in) :: SbRatio
 
@@ -101,8 +102,6 @@ MODULE convolve_all_m
 
   Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
 !
-  Logical :: Want_Deriv
-!
   REAL(r8) :: r, q
 !
   REAL(r8), POINTER :: p(:)
@@ -118,7 +117,7 @@ MODULE convolve_all_m
   REAL(r8), POINTER :: drad_dt_out(:,:)
   REAL(r8), POINTER :: drad_df_out(:,:)
 
-  Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
+  Real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
 !
   n_t_zeta = temp%template%noSurfs
   no_sv_p_t = winFinish - winStart + 1
@@ -134,59 +133,59 @@ MODULE convolve_all_m
 !
 ! Load the Radiance values into the Radiance structure:
 !
-  Term = 0.0_r8
-  CALL fov_convolve(antennaPattern,chi_in,rad_in,chi_out,Term)
-  SRad = sbRatio * Term
+  SRad = 0.0_r8
+  CALL fov_convolve(antennaPattern,chi_in,rad_in,chi_out,SRad, &
+                 &  drad_dx_out=di_dx)
+
   do ptg_i = 1, noPtan
     ind = channel + noChans * (ptg_i - 1)
-    Radiance%values(ind,maf) = Radiance%values(ind,maf) + SRad(ptg_i)
+    Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+                                     &  sbRatio * SRad(ptg_i)
   end do
 !
-  want_deriv = PRESENT(jacobian) .AND. ANY( (/FwdMdlConfig%temp_der, &
-               & FwdMdlConfig%atmos_der,FwdMdlConfig%spect_der/) )
-
-! Find out if user wants pointing derivatives
-    if ( .not. want_deriv ) Return
+  j = 0
+  IF ( PRESENT(Jacobian) ) j = 2
+  if(j < 1) Return
 !
-! Compute Ptan derivatives:
+! Compute dI/dPtan using the chain rule:
 !
-  Term(:) = 0.0_r8
-  do ptg_i = 1, noPtan
-    j = 1
-    if(ptg_i == noPtan) j = -1
-    q = Ptan%values(ptg_i+j,maf) -  Ptan%values(ptg_i,maf)
-    Term(ptg_i) = (SRad(ptg_i+j) - SRad(ptg_i) ) / q
-  end do
+  SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
 !
-! Find index location Jacobian and write the derivative
+! Now, load the dI/dPtan values into the Jacobian:
+! (First, find index location Jacobian and write the derivative)
 !
   row = FindBlock( Jacobian%row, radiance%index, maf )
-  rowFlags(row) = .true.
+  rowFlags(row) = .TRUE.
   col = FindBlock ( Jacobian%col, ptan%index, maf )
 
 ! Of course, we might not care about ptan
+
   if (col > 0) then
+
     select case (jacobian%block(Row,col)%kind)
-    case (m_absent)
-      call CreateBlock (Jacobian, row, col, m_banded, noPtan*noChans, &
-                      & bandHeight=noChans)
-      jacobian%block(row,col)%values = 0.0_r8
-    case (m_banded)
-    case default
-      call MLSMessage (MLSMSG_Error, ModuleName,&
-                    & 'Wrong matrix type for ptan derivative')
+      case (m_absent)
+        call CreateBlock (Jacobian, row, col, m_banded, noPtan*noChans, &
+                        & bandHeight=noChans)
+        jacobian%block(row,col)%values = 0.0_r8
+      case (m_banded)
+      case default
+        call MLSMessage (MLSMSG_Error, ModuleName,&
+                      & 'Wrong matrix type for ptan derivative')
     end select
+
     do ptg_i = 1, noPtan
       ind = channel + noChans * (ptg_i-1)
       jacobian%block(row,col)%values(ind, 1) = &
-              & jacobian%block(row,col)%values(ind, 1) + Term(ptg_i)
+              & jacobian%block(row,col)%values(ind, 1) + SRad(ptg_i)
       jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
       jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
     end do
-  end if
-!
-  IF (.not. FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) RETURN
 
+  endif
+
+  IF (.not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
+                &  FwdMdlConfig%spect_der/)) ) RETURN
+!
   nullify (p,dp,angles,rad_fft,rad_fft1,drad_dt_temp,drad_dt_out, &
          & drad_df_out,test1,test2,test3) 
 !
@@ -233,7 +232,7 @@ MODULE convolve_all_m
 ! Load the Temp. derivative values into the Jacobian
 !
     row = FindBlock( Jacobian%row, Radiance%index, maf )
-    rowFlags(row) = .true.
+    rowFlags(row) = .TRUE.
 
     sv_t_len = 0
     do jf = winStart, winFinish
@@ -281,7 +280,7 @@ MODULE convolve_all_m
 ! load Atmospheric derivatives into jacobian
 !
   row = FindBlock( Jacobian%row, Radiance%index, maf )
-  rowFlags(row) = .true.
+  rowFlags(row) = .TRUE.
 !
   sv_f = 0
   do sps_i = 1, no_mol
@@ -343,6 +342,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.12  2002/06/19 11:00:31  zvi
+! Removing debug statements
+!
 ! Revision 2.10  2002/06/17 23:22:36  bill
 ! Add zvis modifications, some name changing
 !

@@ -14,6 +14,7 @@ module NO_CONV_AT_ALL_M
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
   use Molecules, only: L_EXTINCTION
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+  USE Load_sps_data_m, only: Grids_T
 
   implicit NONE
   private
@@ -27,7 +28,7 @@ module NO_CONV_AT_ALL_M
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
-contains
+CONTAINS
   !-------------------------------------------------------------------------
   ! This subroutine transfers the derivatives over from the internal
   ! convolution grid to the users specified points. This module uses
@@ -35,46 +36,54 @@ contains
 
   Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
-           & ptg_angles, chi_out, I_raw, K_temp, K_atmos, SbRatio,     &
-           & Jacobian, rowFlags, mol_cat_indx )
+           & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
+           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df )
 
     Type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     Type (Vector_T), intent(in) :: FORWARDMODELIN
 
-    Integer, intent(in) :: maf
-    Integer, intent(in) :: CHANNEL
-    Integer, intent(in) :: WINDOWSTART
-    Integer, intent(in) :: WINDOWFINISH
-    Integer, intent(IN) :: mol_cat_indx(:)
+    Integer, INTENT(IN) :: maf
+    Integer, INTENT(IN) :: CHANNEL
+    Integer, INTENT(IN) :: WINDOWSTART
+    Integer, INTENT(IN) :: WINDOWFINISH
+    Integer, INTENT(IN) :: mol_cat_indx(:)
 
-    Type (VectorValue_T), intent(in) :: TEMP
-    Type (VectorValue_T), intent(in) :: PTAN
-    Type (VectorValue_T), intent(inout) :: RADIANCE
+    Type (VectorValue_T), INTENT(IN) :: TEMP
+    Type (VectorValue_T), INTENT(IN) :: PTAN
+    Type (VectorValue_T), INTENT(INOUT) :: RADIANCE
 
-    Real(r8), intent(IN) :: SBRATIO
-    Real(r8), intent(IN) :: i_raw(:),ptg_angles(:),chi_out(:)
+    Type (Grids_T), INTENT(IN) :: Grids_f
+
+    Real(r8), INTENT(IN) :: sbRatio
+    Real(r8), INTENT(IN) :: i_raw(:),ptg_angles(:),chi_out(:),dhdz_out(:), &
+                         &  dx_dh_out(:)
 !
-    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
-    Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
+! derivative of radiance w.r.t. temperature on chi_in
+    Real(r8), OPTIONAL, INTENT(IN) :: di_dt(:,:)
 
-    Type (Matrix_T), intent(inout), optional :: Jacobian
+! mixing ratio derivatives or any parameter which behaves like VMR
+    Real(r8), OPTIONAL, INTENT(IN) :: di_df(:,:)
 
-    Logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
+    Type (Matrix_T), INTENT(INOUT), OPTIONAL :: Jacobian
+!
+    Logical, DIMENSION(:), pointer :: t_deriv_flag
+
+    Logical, DIMENSION(:), INTENT(INOUT) :: rowFlags ! Flag to calling code
 
     ! -----     Local Variables     ------------------------------------
 
     Integer:: No_t, No_tan_hts
 
-    Type (VectorValue_T), pointer :: F  ! vmr quantity
+    Type (VectorValue_T), pointer :: F  ! VMR quantity
 
-    Integer :: Lk, Uk, jf, jz, no_mol, l
-    Integer :: is, j, k, nf, sv_i
+    Integer :: jf, jz, no_mol, l
+    Integer :: is, j, k, nf, sv_f, sv_t_len
     Integer :: Row, col                     ! Matrix row & column indices
     Integer :: ptg_i,noPtan,noChans,Ind     ! Indices
 
-    Real(r8) :: RAD( size(ptg_angles)), q
+    Real(r8) :: Rad( size(ptg_angles)), q
     Real(r8) :: SRad(ptan%template%noSurfs)
-    Real(r8) :: Der_all(ptan%template%noSurfs)
+    Real(r8) :: di_dx(ptan%template%noSurfs)
     Real(r8) :: I_star_all(ptan%template%noSurfs)
 
     ! -----  Begin the code  -------------------------------------------
@@ -82,61 +91,64 @@ contains
     no_t = temp%template%noSurfs
     no_tan_hts = size(ptg_angles)
 
-    ! Compute the ratio of the strengths
-
-    ! This subroutine is called by channel
-
-    col = 0
     noPtan = ptan%template%noSurfs
     noChans = radiance%template%noChans
 
-    ! Ptan derivative
-    if ( present(Jacobian) ) &
+! Ptan derivative
+
+    col = 0
+    if ( PRESENT (Jacobian) ) &
       & col = FindBlock ( Jacobian%col, ptan%index, maf )
 
     if ( col > 0 ) then
 
-      Call InterpolateValues(ptg_angles, i_raw, chi_out, i_star_all, 'S')
-      do k = 1, noPtan
-        j = 1
-        if(k == noPtan) j = -1
-        q = Ptan%values(k+j,maf) - Ptan%values(k,maf)
-        der_all(k) = (i_star_all(k+j) - i_star_all(k) ) / q
-      end do
+      Call InterpolateValues(ptg_angles, i_raw, chi_out, i_star_all, &
+                           & METHOD='S',dyByDx=di_dx)
+
+! Use the chain rule to compute dI/dPtan on the output grid:
+
+      SRad(1:noPtan) = di_dx(1:noPtan) * dx_dh_out(1:noPtan)
+      SRad(1:noPtan) = SRad(1:noPtan) * dhdz_out(1:noPtan)
 
       row = FindBlock ( Jacobian%row, radiance%index, maf )
-      rowFlags(row) = .true.
+      rowFlags(row) = .TRUE.
 
       select case ( jacobian%block(Row,col)%kind )
-      case ( m_absent )
-        call CreateBlock ( Jacobian, row, col, m_banded, &
-          & radiance%template%noSurfs*noChans,bandHeight=noChans )
-        jacobian%block(row,col)%values = 0.0_r8
-      case ( m_banded )
-      case default
-        call MLSMessage ( MLSMSG_Error, ModuleName,&
-          & 'Wrong matrix type for ptan derivative' )
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_banded, &
+            & radiance%template%noSurfs*noChans,bandHeight=noChans )
+          jacobian%block(row,col)%values = 0.0_r8
+        case ( m_banded )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName,&
+            & 'Wrong matrix type for ptan derivative' )
       end select
+
       do ptg_i = 1, noPtan
         ind = channel + noChans*(ptg_i-1)
-        jacobian%block(row,col)%values(ind ,1 ) = &
-          & jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg_i)
+        jacobian%block(row,col)%values(ind,1) = &
+           & jacobian%block(row,col)%values(ind,1) + sbRatio * SRad(ptg_i)
+        jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+        jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
       end do
+
     else
-      Call InterpolateValues ( ptg_angles, i_raw, chi_out, i_star_all, &
-                            &  METHOD='S')
-    end if
+
+      Call InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S')
+
+    endif
 
     do ptg_i = 1, noPtan
       ind = channel + noChans*(ptg_i-1)
       radiance%values( ind, maf ) = &
-        & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg_i)
+             & radiance%values ( ind, maf ) + sbRatio * i_star_all(ptg_i)
     end do
+
+    if ( .not. PRESENT(Jacobian) ) Return
 
     if ( .not. ANY((/forwardModelConfig%temp_der, &
                    & forwardModelConfig%atmos_der, &
                    & forwardModelConfig%spect_der/)) ) Return
-    if ( .not. PRESENT(jacobian) ) Return
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
     ! values
@@ -149,9 +161,13 @@ contains
 
     ! Derivatives needed continue to process
 
+      sv_t_len = 0
       Rad(1:) = 0.0
+      SRad(1:) = 0.0
       k = no_tan_hts
+
       do nf = windowStart, windowFinish
+
         col = FindBlock ( Jacobian%col, temp%index, nf )
         select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
@@ -164,12 +180,18 @@ contains
         end select
 
         do jz = 1, no_t
-          Rad(1:k) = k_temp(1:k,jz,nf)
+
+! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_t_len = sv_t_len + 1
+          if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
+
+          Rad(1:k) = di_dt(1:k,sv_t_len)
           Call InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S')
-          do ptg_i = 1,noPtan
+          do ptg_i = 1, noPtan
             ind = channel + noChans*(ptg_i-1)
-            jacobian%block(row,col)%values( ind, jz) = &
-              & jacobian%block(row,col)%values( ind, jz) + sbRatio*Srad(ptg_i)
+            q = jacobian%block(row,col)%values(ind,jz)
+            jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
           end do
         end do
 
@@ -181,8 +203,7 @@ contains
 
       ! ****************** atmospheric derivatives ******************
 
-      lk = lbound(k_atmos,4)   ! The lower Phi dimension
-      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+      sv_f = 0
       no_mol = size(mol_cat_indx)
 
       do is = 1, no_mol
@@ -198,57 +219,46 @@ contains
                 & molecule=l, noError=.true. )
         endif
 
-        if ( associated(f) ) then
-
-          Rad(1:) = 0.0
-          k = no_tan_hts
-
-          ! Derivatives needed continue to process
-
-          do nf = 1, f%template%noInstances
-
-          ! run through phi representation basis coefficients
-
-            if ( nf+lk-1 > uk) EXIT
-
-            col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
-            select case ( Jacobian%block(row,col)%kind )
+        if(.not. associated(f) ) then
+          jf = Grids_f%windowfinish(is)-Grids_f%windowStart(is)+1
+          k = Grids_f%no_f(is) * Grids_f%no_z(is)
+          sv_f = sv_f + jf * k
+          CYCLE
+        endif
+!
+        DO jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
+!
+          col = FindBlock ( Jacobian%col, f%index, jf)
+          select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
               jacobian%block(row,col)%values = 0.0_r8
             case ( m_full )
             case default
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Wrong type for vmr derivative matrix' )
-            end select
+              & 'Wrong type for temperature derivative matrix' )
+          end select
 
-            sv_i = 0
-            do jz = 1, f%template%noSurfs
+          DO k = 1, Grids_f%no_f(is) * Grids_f%no_z(is)
 
-            ! run through zeta representation basis coefficients
+! Check if derivatives are needed for this (zeta & phi) :
 
-              do jf = 1, f%template%noChans
+            sv_f = sv_f + 1
+            if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
 
-                ! run through Frequencies basis coefficients
-
-                sv_i = sv_i + 1
-                Rad(1:k) = k_atmos(1:k,jf,jz,nf+lk-1,is)
-                Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
-                do ptg_i = 1, noPtan
-                  ind = channel + noChans*(ptg_i-1)
-                  q = jacobian%block(row,col)%values( ind, sv_i)
-                  jacobian%block(row,col)%values( ind, sv_i) = &
-                                                  & q + sbRatio*Srad(ptg_i)
-                end do
-
-              end do
-
+            Rad(1:no_tan_hts) = di_df(1:no_tan_hts,sv_f)
+            Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
+            do ptg_i = 1, noPtan
+              ind = channel + noChans*(ptg_i-1)
+              q = jacobian%block(row,col)%values(ind,sv_f)
+              jacobian%block(row,col)%values(ind,sv_f) = &
+                                               &  q + sbRatio*Srad(ptg_i)
             end do
 
           end do
-
-        endif
-
+!
+        end do
+!
       end do
 
     endif
@@ -257,8 +267,11 @@ contains
 
   End Subroutine NO_CONV_AT_ALL
 
-end module NO_CONV_AT_ALL_M
+END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.6  2002/06/19 11:00:36  zvi
+! changing from Cspline to InterpolateValues routine
+!
 ! Revision 2.5  2002/05/22 19:43:03  zvi
 ! Fix a bug in the mol. index loop
 !
