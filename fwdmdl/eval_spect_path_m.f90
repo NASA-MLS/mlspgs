@@ -3,7 +3,7 @@
 !
 MODULE eval_spect_path_m
 !
-  use MLSCommon, only: RP, IP
+  use MLSCommon, only: RP, IP, R8
   USE get_eta_matrix_m, ONLY: get_eta_sparse
   use Load_sps_data_m, only: Grids_T
 !
@@ -21,10 +21,13 @@ MODULE eval_spect_path_m
  CONTAINS
 !-----------------------------------------------------------------
 !
- SUBROUTINE eval_spect_path(Grids_x,path_zeta,path_phi, &
+ SUBROUTINE eval_spect_path(Grids_x,lo,sideband, path_zeta,path_phi, &
                         &   do_calc,eta_fzp)
 ! Input:
   type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
+  real(r8), intent(in) :: lo            ! Local oscillator
+  integer, intent(in) :: sideband       ! -1 or 1
+  
 !
   REAL(rp), INTENT(in) :: path_zeta(:) ! zeta values along path
   REAL(rp), INTENT(in) :: path_phi(:)  ! phi values along path
@@ -93,7 +96,7 @@ MODULE eval_spect_path_m
 !
 ! Compute etas
 !
-    CALL get_eta_sparse(Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
+    CALL get_eta_sparse(lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
                      &  eta_f,not_zero_f)
     CALL get_eta_sparse(Grids_x%zet_basis(z_inda:z_indb-1),path_zeta, &
                      &  eta_z,not_zero_z)
@@ -151,6 +154,9 @@ MODULE eval_spect_path_m
 END MODULE eval_spect_path_m
 !
 ! $Log$
+! Revision 2.3  2002/07/08 17:45:39  zvi
+! cleaner code to find indecies
+!
 ! Revision 2.2  2002/01/27 08:37:48  zvi
 ! Adding Users selected coefficients for derivatives
 !
