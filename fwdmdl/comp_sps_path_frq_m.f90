@@ -22,7 +22,8 @@ MODULE comp_sps_path_frq_m
 !-----------------------------------------------------------------
 !
   SUBROUTINE comp_sps_path_frq(Grids_x,Frq,values,eta_zp,do_calc_zp, &
-                             & lin_log,path_values,do_calc_fzp,eta_fzp)
+              &   skip_eta_frq,lin_log,path_values,do_calc_fzp,eta_fzp)
+!
 ! Input:
 !
   type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
@@ -35,14 +36,15 @@ MODULE comp_sps_path_frq_m
 !                         vector element. This is the same length as values.
   LOGICAL, INTENT(in) :: do_calc_zp(:,:) !logical indicating whether there
 !                        is a contribution for this state vector element
+  LOGICAL, INTENT(in) :: skip_eta_frq(:) ! Flags for specie with NO Freq. dim.
   LOGICAL, INTENT(in) :: lin_log(:) ! species representation basis type
 !
 ! Output:
 !
   REAL(rp), INTENT(out) :: path_values(:,:) ! vmr values along the path
 !                          by species number
-  REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each 
-!                          state vector element. This is the same length as 
+  REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
+!                          state vector element. This is the same length as
 !                          values.
   LOGICAL, INTENT(out) :: do_calc_fzp(:,:) !logical indicating whether there
 !                         is a contribution for this state vector element
@@ -55,7 +57,7 @@ MODULE comp_sps_path_frq_m
 ! Internal declaritions
 !
   INTEGER(ip) :: n_zp, n_f, nfzp,iw
-  INTEGER(ip) :: i_sps,n_sps,sv_i,sv_zp,sv_f,sv_j
+  INTEGER(ip) :: sps_i,n_sps,sv_i,sv_zp,sv_f,sv_j
   INTEGER(ip) :: v_inda,v_indb,f_inda,f_indb,w_inda,w_indb
 
   REAL(rp), ALLOCATABLE :: eta_f(:,:)
@@ -65,23 +67,37 @@ MODULE comp_sps_path_frq_m
 !
   n_sps = SIZE(Grids_x%no_z)
 !
-  eta_fzp = 0.0
-  path_values = 0.0_rp
-  do_calc_fzp = .false.
+  IF(Frq < 1.0) THEN
+    eta_fzp = 0.0_rp
+    path_values = 0.0_rp
+    do_calc_fzp = .false.
+  ELSE
+    DO sps_i = 1, n_sps
+      IF(.NOT. skip_eta_frq(sps_i)) path_values(:,sps_i) = 0.0_rp
+    END DO
+  ENDIF
+
 !
   f_inda = 1
   v_inda = 1
   w_inda = 1
 !
-  DO i_sps = 1 , n_sps
+  DO sps_i = 1, n_sps
 !
-    n_f = Grids_x%no_f(i_sps)
-    n_zp = Grids_x%no_z(i_sps) * Grids_x%no_p(i_sps)
+    n_f = Grids_x%no_f(sps_i)
+    n_zp = Grids_x%no_z(sps_i) * Grids_x%no_p(sps_i)
     nfzp = n_f * n_zp
 
     f_indb = f_inda + n_f
     v_indb = v_inda + nfzp
     w_indb = w_inda + n_zp
+
+    IF((Frq > 1.0) .AND. skip_eta_frq(sps_i)) THEN
+      f_inda = f_indb
+      v_inda = v_indb
+      w_inda = w_indb
+      CYCLE
+    ENDIF
 !
 ! There are two ways to do this (slow and easy vs quick but difficult)
 ! For ease lets do the slow and easy (and certainly more reliable)
@@ -94,7 +110,7 @@ MODULE comp_sps_path_frq_m
     CALL get_eta_sparse(Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
                     &   eta_f,not_zero_f)
 !
-    IF(lin_log(i_sps)) THEN
+    IF(lin_log(sps_i)) THEN
 
       DO sv_i = 0 , nfzp - 1
         sv_j = v_inda + sv_i
@@ -104,7 +120,7 @@ MODULE comp_sps_path_frq_m
           WHERE(do_calc_zp(:,sv_zp))
             do_calc_fzp(:,sv_j) = .true.
             eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
-            path_values(:,i_sps) = path_values(:,i_sps) +  &
+            path_values(:,sps_i) = path_values(:,sps_i) +  &
                                &   EXP(values(sv_j) * eta_fzp(:,sv_j))
           ENDWHERE
         ENDIF
@@ -120,7 +136,7 @@ MODULE comp_sps_path_frq_m
           WHERE(do_calc_zp(:,sv_zp))
             do_calc_fzp(:,sv_j) = .true.
             eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
-            path_values(:,i_sps) = path_values(:,i_sps) +  &
+            path_values(:,sps_i) = path_values(:,sps_i) +  &
                                &   values(sv_j) * eta_fzp(:,sv_j)
           ENDWHERE
         ENDIF
@@ -142,7 +158,8 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
-! Revision 2.1  2001/11/02 10:47:37  zvi
-! Implementing frequecy grid
+! Revision 2.2  2001/11/07 09:59:12  zvi
+! More effective code for sps_path calculations
 !
 ! Revision 1.0  2001/10/30 14:00:00 zvi Exp $"
+
