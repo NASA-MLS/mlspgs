@@ -83,7 +83,7 @@ Character (LEN=80) :: Fnd, Line
 ! Read the rest of the inputs from a file...
 !
   ier = 0
-
+!
   if ( .not. present(fmi) ) then
     line = "Reading " // fmc%z
     CLOSE(11,iostat=io)
@@ -980,6 +980,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.6  2001/03/08 22:01:11  vsnyder
+! Make sure 'line' has a value, in case of an error
+!
 ! Revision 1.5  2001/03/08 00:08:04  vsnyder
 ! Modifications to work inside of MLSL2.
 !

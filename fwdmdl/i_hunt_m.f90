@@ -19,7 +19,8 @@ contains
 !
     Integer(i4), intent(in) :: ELEMENT, ARRAY(*)
 !
-    integer(i4), intent(out) :: JLO, JHI
+    integer(i4), intent(in out) :: JLO, JHI
+
     integer :: INC,JM
     logical :: ASCND
 !
@@ -74,6 +75,9 @@ contains
   end subroutine I_HUNT
 end module I_HUNT_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:04  Z.Shippony
 ! Initial conversion to Fortran 90
 !

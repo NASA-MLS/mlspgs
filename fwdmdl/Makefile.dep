@@ -90,7 +90,7 @@ hydrostatic_model_m.o: hydrostatic_model_m.f90 $(dir1)MLSCommon.o \
 	d_get_one_eta_m.o d_lintrp_m.o gl6p.o hydrostatic_intrp.o \
 	l2pc_file_parameters.o l2pcdim.o
 i_hunt_m.o: i_hunt_m.f90 $(dir1)MLSCommon.o
-l2_load_m.o: l2_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o get_lun.o gl6p.o \
+l2_load_m.o: l2_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o gl6p.o \
 	l2_test_structures_m.o l2pc_file_parameters.o l2pc_pfa_structures.o \
 	l2pcdim.o path_entities.o
 l2pcdim.o: l2pcdim.f90 $(dir1)MLSCommon.o

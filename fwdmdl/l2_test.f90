@@ -147,6 +147,7 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
        gl_count, Ier)
   IF(ier /= 0) goto 99
 !
+  jj = -1
   Zeta = -1.666667
   no_tan_hts = FMC%no_tan_hts
   Call Hunt(Zeta,FMI%tan_press,no_tan_hts,jj,i)
@@ -559,6 +560,7 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
     endif
     Print *
 !
+    klo = -1
     tau(1:Nptg) = 0.0
     kk = T_FMI%ptg_press%no_lin_values
     tau(1:kk) = dble(T_FMI%ptg_press%lin_val(1:kk))
@@ -575,6 +577,7 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
 !
     if(.not. ANY((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
 !
+    m = -1
     ch = 1
     tau(1:) = 0.0
     do i = 1, k_info_count

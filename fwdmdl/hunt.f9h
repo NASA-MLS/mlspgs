@@ -5,7 +5,8 @@
 !   real(rk), intent(in) :: ELEMENT, ARRAY(n)
     real(rk), intent(in) :: ELEMENT, ARRAY(*)
 !
-    integer(i4), intent(out) :: JLO, JHI
+    integer(i4), intent(in out) :: JLO, JHI
+!
     integer :: INC,JM
     logical :: ASCND
 !

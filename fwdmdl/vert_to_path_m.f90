@@ -196,6 +196,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
 
 !  Left hand side ray:
 
+  l = -1
   ps = 1.0D0
   DO i = ibrk, npp
     h = dum_h(i)
@@ -332,6 +333,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/06/21 21:56:18  zvi
 ! First version D.P.
 !

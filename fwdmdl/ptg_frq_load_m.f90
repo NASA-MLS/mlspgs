@@ -57,6 +57,8 @@ Character (LEN=80) :: Fnd, Line
     Read(32,*,iostat=io) r, jp
     if(io > 0) goto 10
     if(io /= 0) EXIT
+
+    k = -1
     Call Hunt(r,FMI%tan_press,kz,k,i)
     IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
 !
@@ -146,5 +148,8 @@ Character (LEN=80) :: Fnd, Line
 
 end module PTG_FRQ_LOAD_M
 ! $Log$
+! Revision 1.1  2001/03/06 09:28:28  zvi
+! *** empty log message ***
+!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90
