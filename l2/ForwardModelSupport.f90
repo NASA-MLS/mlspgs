@@ -341,7 +341,7 @@ contains ! =====     Public Procedures     =============================
     info%skipOverlaps = .false.
     info%differentialScan = .false.
     info%cloud_der = 0
-    info%no_cloud_species=1
+    info%no_cloud_species=2
     info%no_model_surfs =640
     info%NUM_SCATTERING_ANGLES=16
     info%NUM_AZIMUTH_ANGLES=8
@@ -664,6 +664,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.53  2003/02/06 00:15:01  jonathan
+! sorry no_cloud_sps=2
+!
 ! Revision 2.52  2003/02/05 23:27:32  jonathan
 ! change default no_cloud_species=1
 !
