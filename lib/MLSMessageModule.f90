@@ -66,6 +66,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   integer, private, parameter :: MLSMSG_PrefixLen = 32
 
+   ! May get some of these from MLSLibOptions? 
   type MLSMessageConfig_T
     integer :: logFileUnit                     = -1
     character (len=MLSMSG_PrefixLen) :: prefix = ''
@@ -132,7 +133,8 @@ contains
        ! Log the message using the toolkit routine
 
        if ( my_adv ) then
-         dummy = PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
+         if( MLSMessageConfig%useToolkit ) dummy = PGS_SMF_GenerateStatusReport&
+         & (TRIM(MLSMessageConfig%prefix)// &
               & TRIM(line))
 
          ! Now, if we're also logging to a file then write to that too.
@@ -165,12 +167,13 @@ contains
   ! This routine sets up the MLSMessage suite.  The defaults are of course
   ! sensible, but the user may wish to change things.
 
-  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix )
+  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit )
 
     ! Dummy arguments
     logical, optional, intent(in) :: SuppressDebugs
     integer, optional, intent(in) :: LogFileUnit
     character (len=*), optional, intent(in) :: Prefix
+    logical, optional, intent(in) :: useToolkit
 
     ! Local variables
 
@@ -187,6 +190,10 @@ contains
         & MLSMSG_Error, ModuleName,"Already writing to a log file")
       MLSMessageConfig%logFileUnit = logFileUnit
     end if
+
+    if ( present(useToolkit) ) &
+      & MLSMessageConfig%useToolkit=useToolkit
+
   end subroutine MLSMessageSetup
 
   ! --------------------------------------------  MLSMessageClose  -----
@@ -204,6 +211,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.8  2001/05/09 23:30:13  pwagner
+! Detachable from toolkit
+!
 ! Revision 2.7  2001/05/04 23:26:01  vsnyder
 ! Call Exit_with_status with nonzero status to terminate
 !
