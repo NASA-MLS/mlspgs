@@ -63,7 +63,11 @@ begin Fill
   Transfer, source=sdOut$1, destination=outputPrecision
   !ifdef(completePhasetroph2o,{!dnl
     ;; In this case copy TropH2O into H2O as requested
-    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate})
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate
+    ;; And its precision
+    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
+      method=vector, /interpolate})
+
   ;; FM output will be turned on again, sometime, for the PEs
   !ifdef(precisionEstimates,{},{Transfer, source=f$1, destination=fwm})
   ;; Clean up
@@ -85,6 +89,7 @@ begin Fill
     h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
     method=RHIPrecisionFromH2O, /dontMask
 ;  !include(fillcolumns.l2cf)
+  ;; Set precision -ve when wose than 50% apriori precision
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
 end Fill
 begin Join
@@ -328,6 +333,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.35  2002/11/21 01:19:18  livesey
+; Added call to NegativePrecision command
+;
 ; Revision 1.34  2002/11/20 19:59:37  mjf
 ; Fill columns to be added, but might break the retrieval, so commented
 ; out for just now.
