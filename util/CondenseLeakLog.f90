@@ -5,7 +5,7 @@ program CondenseLeakLog
 
   ! Condense the leak log output by mpatrol.
 
-  use Machine, only: HP, IO_Error
+  use Machine, only: HP, IO_Error, GETARG
 
   integer, parameter :: In = 11              ! Input logical unit number
   integer, parameter :: TraceLineLen = 80
@@ -342,13 +342,15 @@ contains
     character(len=traceLineLen) :: Line ! To read a line of the trace
     character(len=traceLineLen), pointer, dimension(:) :: TempTrace
     logical :: Trimmed                  ! A prefix of the trace was trimmed
+    integer :: old_size                 ! Size of trace (before doubling)
     cutAfter = .false.
     linesInTrace = 1
     trimmed = .false.
+    old_size = size(inputTrace)
     do
       if ( linesInTrace > size(inputTrace) ) then
         tempTrace => inputTrace
-        allocate ( inputTrace(2*size(inputTrace)), stat=status )
+        allocate ( inputTrace(2*old_size), stat=status )
         if ( status /= 0 ) then
           call io_error ( 'Increasing InputTrace', status )
           stop
@@ -399,3 +401,6 @@ contains
 end program CondenseLeakLog
 
 ! $Log$
+! Revision 1.1  2001/04/20 16:51:47  vsnyder
+! Initial commit
+!
