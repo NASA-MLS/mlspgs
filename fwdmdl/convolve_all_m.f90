@@ -31,7 +31,6 @@ module Convolve_All_m
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelVectorTools, only: QtyStuff_T
     use Fov_Convolve_m, only: Fov_Convolve
-    use Intrinsic, only: L_VMR
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
@@ -121,7 +120,6 @@ module Convolve_All_m
     real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
 
     logical :: my_ptan_der
-    logical :: foundInFirst             ! Flag
 
     my_ptan_der = .false.
     if ( present ( ptan_der ) ) my_ptan_der = ptan_der
@@ -356,6 +354,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.29  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.28.2.2  2003/03/21 02:47:03  vsnyder
 ! Use an array of pointers to quantities instead of GetQuantityForForwardModel
 !

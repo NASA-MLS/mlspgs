@@ -956,7 +956,7 @@ contains
   Subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
                                & v0s, x1, y, yi, slabs1, dslabs1_dv0 )
 
-    use Molecules, only: L_N2, L_Extinction
+    use Molecules, only: L_Extinction
 
     type(catalog_T) :: Catalog
 
@@ -1089,6 +1089,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.18  2003/05/16 23:53:05  livesey
+! Now uses molecule indices rather than spectags
+!
 ! Revision 2.17  2003/05/09 19:25:31  vsnyder
 ! Expect T+DT instead of T and DT separately in Get_GL_Slabs_Arrays
 !

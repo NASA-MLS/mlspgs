@@ -103,7 +103,7 @@ contains ! =====  Public Procedures  ===================================
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_string
     use Time_M, only: Time_Now
-    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Named
@@ -650,6 +650,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.16  2003/05/16 23:50:42  livesey
+! Removed spec_tag, added mass.
+!
 ! Revision 2.15  2003/05/10 22:20:57  livesey
 ! Tried to calm down -g1..
 !

@@ -26,7 +26,6 @@ contains
 
   subroutine Path_Contrib_Scalar ( incoptdepth, e_rflty, tol, do_gl )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use MLSCommon, only: RK => RP, IP
 
   ! inputs
@@ -90,8 +89,7 @@ contains
 
   subroutine Path_Contrib_Polarized ( deltau, e_rflty, tol, do_gl )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use CS_Expmat_M, only: CS_Expmat
+!   use CS_Expmat_M, only: CS_Expmat
     use MLSCommon, only: RK => RP, IP
 
   ! inputs
@@ -211,6 +209,10 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.9  2003/05/15 23:57:21  michael
+! Fixed Path_Contrib_Polarized to properly calculate Tau
+! and renamed variables to agree with polarized ATBD
+!
 ! Revision 2.8  2003/02/07 03:26:24  vsnyder
 ! Compute deltau instead of incoptdepth in Path_Contrib_Polarized
 !

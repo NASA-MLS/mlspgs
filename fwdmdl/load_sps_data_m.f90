@@ -63,7 +63,6 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
     use Intrinsic, only: L_Phitan
-    use ManipulateVectorQuantities, only: FindInstanceWindow
     use Molecules, only: l_extinction, l_h2o
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -482,6 +481,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.52  2003/05/16 23:52:26  livesey
+! Now uses molecule indices rather than spectags
+!
 ! Revision 2.51  2003/05/16 02:47:12  vsnyder
 ! Removed USE's for unreferenced symbols
 !

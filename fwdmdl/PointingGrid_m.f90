@@ -9,7 +9,7 @@ module PointingGrid_m
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Info
+    & MLSMSG_Error
   use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
 
   ! More USEs below in each procedure, if they're only used therein.
@@ -72,8 +72,7 @@ contains
   subroutine Read_Pointing_Grid_File ( Lun )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
-    use String_Table, only: Display_String
-    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
@@ -295,6 +294,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.4  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
 ! Revision 2.3  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

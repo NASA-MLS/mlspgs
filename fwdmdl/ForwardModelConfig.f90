@@ -144,7 +144,6 @@ contains
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database, deep )
 
-    use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
 
     ! Dummy arguments
@@ -170,7 +169,7 @@ contains
   subroutine PVMPackFWMConfig ( config )
     use PVMIDL, only: PVMIDLPack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex
+    use MorePVM, only: PVMPackLitIndex
     use MLSSignals_m, only: PVMPackSignal
     use VGridsDatabase, only: PVMPackVGrid
     ! Dummy arguments
@@ -283,12 +282,11 @@ contains
   subroutine PVMUnpackFWMConfig ( CONFIG )
     use PVMIDL, only: PVMIDLUnpack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
+    use MorePVM, only: PVMUnpackLitIndex
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use Allocate_Deallocate, only: Allocate_test
     use MLSSignals_m, only: PVMUnpackSignal
     use VGridsDatabase, only: PVMUnpackVGrid
-    use Output_M, only: OUTPUT
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
@@ -446,7 +444,6 @@ contains
     logical, optional, intent(in) :: DEEP ! Do a really deep destroy
 
     ! Local variables
-    integer :: SIGNAL                   ! Loop counter
     integer :: STATUS                   ! Flag from allocate etc.
     logical :: MYDEEP                   ! Copy of deep
 
@@ -550,6 +547,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.34  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.33  2003/04/04 00:26:44  jonathan
 ! change dimension(12) :: i11 TO dimension(11) :: i11
 !

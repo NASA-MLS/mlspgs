@@ -70,7 +70,7 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
-    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
@@ -252,6 +252,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.7  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
 ! Revision 2.6  2003/05/05 23:00:24  livesey
 ! Merged in feb03 newfwm branch
 !
