@@ -48,7 +48,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   TYPE Output_T
      CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
-     INTEGER :: HDFversion
+     INTEGER :: HDFversion = HDFVERSION_4           ! "version 4" for now
   END TYPE Output_T
 
   TYPE L1Config_T
@@ -236,10 +236,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       CHARACTER(LEN=80) :: line
       INTEGER :: root, i, son
-
-! Set default HDF version
-
-      L1Config%Output%HDFversion = HDFVERSION_4
 
       DO i = 2, Nsons (root) - 1
 
@@ -595,6 +591,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.10  2002/11/21 16:57:46  perun
+! Moved default HDFversion number to declaration
+!
 ! Revision 2.9  2002/11/20 18:30:50  perun
 ! Restated HDFVersionString error message
 !
