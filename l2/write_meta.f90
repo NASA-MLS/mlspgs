@@ -8,7 +8,7 @@ module WriteMetadata ! Populate metadata and write it out
   use Hdf, only: DFACC_RDWR, Sfend, Sfstart
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
-  use MLSFiles, only: Split_path_name
+  use MLSFiles, only: Split_path_name, mls_sfstart, mls_sfend
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
@@ -121,11 +121,9 @@ module WriteMetadata ! Populate metadata and write it out
   end type PCFData_T
 
   integer, public, parameter :: INVENTORYMETADATA=2
-  
   logical, public, parameter :: MCFCASESENSITIVE=.FALSE.
-
+  logical, public, parameter :: ANNOTATEWITHPCF=.FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION=3     ! 1, public, 2 or 3
-
   integer, private :: Module_error
 
 contains
@@ -175,7 +173,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_setattr_i, &
-      &  PGS_MET_write, PGS_MET_remove
+      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
 
     ! Executable code
 
@@ -289,7 +287,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove
+      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
 
     !Executable code
 
@@ -449,7 +447,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
          PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-         PGS_MET_write, PGS_MET_remove
+         PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
 
     !Executable code
 
@@ -636,7 +634,8 @@ contains
       & "Error in setting PGEVersion attribute.") 
     end if
 
-    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -657,7 +656,8 @@ contains
       end if
     end if
 
-    hdfReturn = sfend(sdid)
+!    hdfReturn = sfend(sdid)
+    hdfReturn = mls_sfend(sdid)
 
     returnStatus = pgs_met_remove() 
 
@@ -711,7 +711,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove
+      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
 
     !Executable code
 
@@ -745,7 +745,8 @@ contains
     call measured_parameter (HDF_FILE, field_name, groups, 1)
     call third_grouping (HDF_FILE, l2pcf, groups)
 
-    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -774,11 +775,12 @@ contains
       end if
     end if
 
-    hdfReturn = sfend(sdid)
+!    hdfReturn = sfend(sdid)
+    hdfReturn = mls_sfend(sdid)
 
     ! Annotate the file with the PCF
 
-    call writePCF2Hdr(physical_filename, l2pcf%anText)
+    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
 
     returnStatus = pgs_met_remove() 
 
@@ -833,7 +835,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove
+      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
 
     !Executable code
 
@@ -874,7 +876,8 @@ contains
 
     call third_grouping (HDF_FILE, l2pcf, groups)
 
-    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -904,11 +907,12 @@ contains
       end if
     end if
 
-    hdfReturn = sfend(sdid)
+!    hdfReturn = sfend(sdid)
+    hdfReturn = mls_sfend(sdid)
 
 ! Annotate the file with the PCF
 
-    call writePCF2Hdr(physical_filename, l2pcf%anText)
+    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
 
     returnStatus = pgs_met_remove() 
 
@@ -1458,6 +1462,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.20  2002/01/18 23:11:09  pwagner
+! Uses mls_sfstart; writePCF2Hdr controlled by ANNOTATEWITHPCF; dumps core (hooray)
+!
 ! Revision 2.19  2002/01/09 23:54:24  pwagner
 ! Now gets FileNameLen from MLSCommon, not SDPToolkit
 !
