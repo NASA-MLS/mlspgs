@@ -71,14 +71,12 @@ begin Fill
     temperatureQuantity=truth.temperature, $
     refract=false
 
-  !ifdef(flagSkipHydrostatic,{},{
   ;; Get full gph profile
   Fill, quantity=truth.gph, method=hydrostatic, $
     temperatureQuantity=truth.temperature, $
     refGPHquantity=truth.refGPH
-;   Fill, quantity=truth.gph_HR, method=hydrostatic, $
-;     temperatureQuantity=truth.temperature_HR, $
-;     refGPHquantity=truth.refGPH
+  !ifdef(flagSkipHydrostatic,{},{
+
   ;; Now deduce a corresponding ptan for this using hydrostatic
   ;; balance.
   Fill, quantity=truth.ptanGHz, method=hydrostatic, $
@@ -101,6 +99,16 @@ begin Fill
     maxIterations=20, $
     !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
 
+  ;; Fill the magnetic field.
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    GPHquantity=truth.gph
+  Fill, quantity=truth.fieldAzimuth, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldElevation, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldStrength, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  
   })
 
 end Fill
