@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2AUXData                 ! Data types for storing L2AUX data internally
@@ -13,6 +13,9 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+    & MLS_HDF_VERSION
+  use MLSL2Options, only: DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
@@ -517,6 +520,68 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------------------- WriteL2AUXData ------
 
   subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
+  ! Write l2aux to the file with l2FileHandle
+  ! Optionally, write a bogus CounterMAF sd so the
+  ! resulting file can masquerade as an l1BRad
+  ! (Note that this bogus sd should only be written once for each file)
+    type (L2AUXData_T), intent(in) :: L2AUX
+    integer, intent(in) :: L2FILEHANDLE
+    character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
+    character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
+                                                        ! Otherwise automatic
+                                                        ! (Requiring l2cf)
+    integer, intent(in), optional :: NoMAFS
+    logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
+    logical, intent(in), optional :: Reuse_dimNames   ! We already wrote them
+    integer, intent(in), optional :: hdfVersion
+    integer, intent(out) :: returnStatus           ! 0 unless error
+
+    ! Local variables
+    integer :: myhdfVersion
+    ! Executable code
+    myhdfVersion = default_hdfversion_write
+    if ( present(hdfVersion) ) myhdfVersion = hdfVersion
+    select case (myhdfVersion)
+    case (HDFVERSION_4)
+      call WriteL2AUXData_hdf4(l2aux, l2FileHandle, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+    case (HDFVERSION_5)
+      call WriteL2AUXData_hdf5(l2aux, l2FileHandle, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+    case default
+    end select
+  end subroutine WriteL2AUXData
+
+  !----------------------------------------------------- WriteL2AUXData_hdf5 ------
+
+  subroutine WriteL2AUXData_hdf5(l2aux, l2FileHandle, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+  ! Write l2aux to the file with l2FileHandle
+  ! Optionally, write a bogus CounterMAF sd so the
+  ! resulting file can masquerade as an l1BRad
+  ! (Note that this bogus sd should only be written once for each file)
+    type (L2AUXData_T), intent(in) :: L2AUX
+    integer, intent(in) :: L2FILEHANDLE
+    character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
+    character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
+                                                        ! Otherwise automatic
+                                                        ! (Requiring l2cf)
+    integer, intent(in), optional :: NoMAFS
+    logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
+    logical, intent(in), optional :: Reuse_dimNames   ! We already wrote them
+    integer, intent(out) :: returnStatus           ! 0 unless error
+
+    ! Local variables
+    ! Executable code
+	   call announce_error (0,&
+      & "hdf5 version of WriteL2AUXData_hdf5 not ready yet " )
+      returnStatus = 1
+  end subroutine WriteL2AUXData_hdf5
+
+  !----------------------------------------------------- WriteL2AUXData_hdf4 ------
+
+  subroutine WriteL2AUXData_hdf4(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -689,7 +754,7 @@ contains ! =====     Public Procedures     =============================
     endif
     returnStatus = error
 
-  end subroutine WriteL2AUXData
+  end subroutine WriteL2AUXData_hdf4
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
@@ -728,6 +793,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.30  2002/11/13 01:09:47  pwagner
+! Beginnings of attempt to write hdf5 L2AUX; incomplete
+!
 ! Revision 2.29  2002/11/08 23:14:41  pwagner
 ! Should work again with mlsl2
 !
