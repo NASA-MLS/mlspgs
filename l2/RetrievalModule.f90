@@ -990,6 +990,7 @@ contains
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
+      logical :: FoundBetterState       ! Set if we ever got an nf_best
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
       integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T), pointer :: KTK ! The Jacobian-derived part of the
@@ -1031,6 +1032,7 @@ contains
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
       ! Set options for NWT
+      foundBetterState = .false.
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
       call nwt ( nwt_flag, nwt_xopt, nwt_opt )
@@ -1203,6 +1205,7 @@ contains
             call copyVector ( v(x), v(bestX) ) ! x := bestX
             if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
               & got(f_average)) ) exit
+            if ( .not. foundBetterState ) exit
             nwt_flag = nf_getJ
           end if
 
@@ -1850,6 +1853,7 @@ contains
             end if
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
+          foundBetterState = .true.
           call copyVector ( v(bestX), v(x) ) ! bestX = x
           call copyVector ( v(bestGradient), v(gradient) ) ! bestGradient = gradient
         case ( nf_aitken ) ! ............................  AITKEN  .....
@@ -1939,8 +1943,8 @@ contains
         & jacobian_cols=jacobian_cols )
 
       ! Compute the covariance of the solution
-      if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-        &  got(f_average) ) then
+      if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+        &  got(f_average) ) ) then
         if ( nwt_flag /= nf_getJ ) then
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
@@ -1995,7 +1999,7 @@ contains
         end if
 
       ! Compute the averaging kernel
-      if ( got(f_average) ) then
+      if ( foundBetterState .and. got(f_average) ) then
         preserveMatrixName = outputAverage%name
         ! Make sure kTk is symmetrical (outputCovariance is by virtue of its creation method 
         Call ReflectMatrix ( kTk%m )
@@ -3314,6 +3318,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.203  2002/11/20 01:10:03  livesey
+! Added the foundBetterState stuff
+!
 ! Revision 2.202  2002/10/29 20:51:27  livesey
 ! Moved call to FillDiagVec
 !
