@@ -63,7 +63,10 @@ ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
 else
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
@@ -109,6 +112,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2001/07/02 18:30:20  pwagner
+# First commit
+#
 # Revision 1.5  2001/06/06 23:51:27  pwagner
 # hdf5 linker line if needed
 #

@@ -49,7 +49,11 @@ else
 endif
 
 ifdef BLAS
+ifdef LIB_BLAS
+   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+else
    blas_linker_line=-L${BLAS} -lblas
+endif
    blas_message=Building cloud forward model with externally-supplied BLAS
 else
    blas_linker_line=
@@ -57,10 +61,23 @@ else
 endif
 
 ifdef HDF5
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
+#    -lssl -lz
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
+   l_specials := $(l_specials) -lz
+endif
+ifdef HDFEOS5
+   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+else
+   hdfeos5_linker_line=
+endif
    hdf5_message=Building cloud forward model with hdf5
 else
    hdf5_linker_line=
+   hdfeos5_linker_line=
    hdf5_message=Building cloud forward model without hdf5
 endif
 
@@ -81,6 +98,7 @@ l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
 	-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -125,6 +143,9 @@ d_delta_dt_m.o:
 #	$(FC) -c $(DUSTY) machine.f90 $(FAFTER)
 # ========================================================================
 # $Log$
+# Revision 1.2  2001/05/30 20:45:23  pwagner
+# Set delete_lib_first to no with note to think harder
+#
 # Revision 1.1  2001/05/30 16:46:50  pwagner
 # First commit
 #
