@@ -20,17 +20,21 @@ contains
   subroutine SCRT_DN ( T_SCRIPT, E_RFLTY, INCOPTDEPTH, TAU, RADIANCE, I_STOP )
     use MLSCommon, only: IP, RP
 
+!{ Accumulate the incremental opacities multiplied by the differential
+!  temperatures to get radiative transfer:
+!  $I(\mathbf{x}) = \sum_{i=1}^{2N} \Delta B_i \tau_i$
+
 ! inputs:
 
-    real(rp), intent(in) :: t_script(:) ! differential temperatures (K).
-    real(rp), intent(in) :: e_rflty ! Earth surface reflectivity (0--1).
+    real(rp), intent(in) :: t_script(:)    ! differential temperatures (K).
+    real(rp), intent(in) :: e_rflty        ! Earth surface reflectivity (0--1).
     real(rp), intent(in) :: incoptdepth(:) ! layer incremental optical depth,
 !                           this comes in as a positive number.
 ! outputs:
 
-    real(rp), intent(out) :: tau(:) ! transmission function
-    real(rp), intent(out) :: radiance    ! radiance(K).
-    integer(ip), intent(out) :: i_stop ! integration stop index
+    real(rp), intent(out) :: tau(:)        ! transmission function
+    real(rp), intent(out) :: radiance      ! radiance(K).
+    integer(ip), intent(out) :: i_stop     ! integration stop index
 
 ! internals
 
@@ -41,14 +45,13 @@ contains
 ! begin code
 
     n_path = size(t_script)
-    half_path = n_path/2
+    half_path = n_path / 2
     tau(1) = 1.0_rp
     total_opacity = 0.0_rp
     radiance = t_script(1)
     i_stop = 2
 
-    do
-      if ( total_opacity < black_out .or. i_stop > half_path ) exit
+    do while ( total_opacity >= black_out .and. i_stop <= half_path )
       total_opacity = total_opacity - incoptdepth(i_stop)
       tau(i_stop) = exp(total_opacity)
       radiance = radiance + t_script(i_stop) * tau(i_stop)
@@ -66,15 +69,14 @@ contains
     tau(i_stop) = e_rflty * tau(i_stop-1)
     radiance = radiance + t_script(i_stop) * tau(i_stop)
 
-    do
-      if ( total_opacity < black_out .or. i_stop == n_path ) exit
+    do while ( total_opacity >= black_out .and. i_stop < n_path )
       total_opacity = total_opacity - incoptdepth(i_stop)
       i_stop = i_stop + 1
       tau(i_stop) = exp(total_opacity)
       radiance = radiance + t_script(i_stop) * tau(i_stop)
     end do
 
-    tau(i_stop:n_path) = 0.0_rp
+    tau(i_stop+1:n_path) = 0.0_rp
 
   end subroutine SCRT_DN
 !-------------------------------------------  GET_DSCRT_NO_T_DN  -------
@@ -166,6 +168,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.3  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2002/10/02 20:08:16  vsnyder
 ! Insert copyright notice, other cosmetic changes
 !
