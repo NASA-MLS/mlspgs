@@ -77,6 +77,9 @@ else
    blas_message=Building mlsl2 with internally-supplied BLAS
 endif
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
 ifdef l2_NEEDS_fwdmdl
    fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
    fwdmdl_message=Building mlsl2 with forward model
@@ -118,6 +121,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2001/03/07 23:27:24  pwagner
+# Adds SnoopMLSL2 to Makefile.dep if PVM_ROOT defined
+#
 # Revision 1.11  2001/03/06 18:17:57  pwagner
 # clean more amitious--rms * from MLSCONFGl[13]/MakeFC
 #

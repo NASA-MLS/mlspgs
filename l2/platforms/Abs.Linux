@@ -55,6 +55,9 @@ dir3 = $(fwdmdldir)/
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
 ifdef l2_NEEDS_fwdmdl
 l2: fwdmdl
      INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) -p $(fwdmdldir)
@@ -102,6 +105,9 @@ endif
 l_specials = 
 
 # $Log$
+# Revision 1.1  2001/03/06 00:15:19  pwagner
+# First commit
+#
 # Revision 1.11  2001/03/05 21:49:28  pwagner
 # fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
 #

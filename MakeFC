@@ -290,6 +290,9 @@ all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
 # This makes fwdmdl a prerequisite for l2 -- *if* l2_NEEDS_fwdmdl defined
 ifdef l2_NEEDS_fwdmdl
 l2: fwdmdl
@@ -309,6 +312,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.19  2001/03/05 21:53:26  pwagner
+# fwdmdl prerequisite to l2 if l2_NEEDS_fwdmdl
+#
 # Revision 1.18  2001/03/02 01:06:19  pwagner
 # lib part of automatic targets
 #
