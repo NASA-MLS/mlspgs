@@ -44,7 +44,7 @@ CONTAINS
     REAL :: MAF_dur, MIF_dur
     INTEGER :: nom_MIFs
     TYPE (WeightsFlags_T) :: WeightsFlags
-    TYPE (LOG_ARR1_PTR_T) :: Space_BO_Flag(3), Limb_BO_Flag(3)
+    TYPE (LOG_ARR1_PTR_T) :: Space_BO_Flag(2), Limb_BO_Flag(2)
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
 
@@ -123,12 +123,10 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Check for Bright Objects in FOVs
 
-    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%SunInFOV
-    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%MoonInFOV
-    Space_BO_flag(3)%ptr => CurMAFdata%SpaceView%VenusInFOV
-    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%SunInFOV
-    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%MoonInFOV
-    Limb_BO_flag(3)%ptr => CurMAFdata%LimbView%VenusInFOV
+    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%MoonInFOV
+    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%VenusInFOV
+    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
+    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
 
     CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, Space_BO_flag, &
          Limb_BO_flag)
@@ -536,6 +534,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2003/09/15 17:15:54  perun
+! Version 1.3 commit
+!
 ! Revision 2.7  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

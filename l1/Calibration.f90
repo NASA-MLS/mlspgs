@@ -65,7 +65,6 @@ MODULE Calibration ! Calibration data and routines
   !! Bright Objects type
 
   TYPE BrightObjects_T
-     LOGICAL :: SunInFOV(0:MaxMIFs-1)
      LOGICAL :: MoonInFOV(0:MaxMIFs-1)
      LOGICAL :: VenusInFOV(0:MaxMIFs-1)
   END TYPE BrightObjects_T
@@ -726,6 +725,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.7  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
