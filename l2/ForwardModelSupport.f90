@@ -29,7 +29,8 @@ module ForwardModelSupport
   integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
-  integer, parameter :: TangentNotSubset     = IrrelevantFwmParameter + 1
+  integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
+  integer, parameter :: TangentNotSubset     = LinearSidebandHasUnits + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
@@ -293,17 +294,17 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T, NullifyForwardModelConfig
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL
+    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID
     use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ATMOS_DER, &
       & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
-      & F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
+      & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, &
       & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TYPE
+      & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND
     use Intrinsic, only: L_NONE, L_CLEAR
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -316,7 +317,7 @@ contains ! =====     Public Procedures     =============================
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array, N_named
-    use Units, only: PHYQ_TEMPERATURE, PHYQ_PROFILES, PHYQ_ANGLE
+    use Units, only: PHYQ_TEMPERATURE, PHYQ_PROFILES, PHYQ_ANGLE, PHYQ_DIMENSIONLESS
     use VGridsDatabase, only: VGrid_T
 
     integer, intent(in) :: NAME         ! The name of the config
@@ -369,10 +370,12 @@ contains ! =====     Public Procedures     =============================
     info%do_baseline = .false.
     info%do_conv = .false.
     info%do_freq_avg = .false.
+    info%forceSidebandFraction = .false.
     info%globalConfig = global
     info%incl_cld = .false.
     info%i_saturation = l_clear
     info%lockBins = .false.
+    info%linearSideband = 0
     info%name = name
     info%no_cloud_species = 2
     info%no_model_surfs = 640
@@ -421,12 +424,19 @@ contains ! =====     Public Procedures     =============================
         info%do_freq_avg = get_boolean(son)
       case ( f_do_1d )
         info%do_1d = get_boolean(son)
+      case ( f_forceSidebandFraction )
+        info%forceSidebandFraction = get_boolean(son)
       case ( f_i_saturation )
         info%i_saturation = decoration(subtree(2,son))
       case ( f_incl_cld )
         info%incl_cld = get_boolean(son)
       case ( f_integrationGrid )
         info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
+      case ( f_linearSideband )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%linearSideband = nint ( value(1) )
+        if ( expr_units(1) /= phyq_dimensionless ) &
+          & call AnnounceError ( toleranceNotK, root )
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
       case ( f_module )
@@ -551,7 +561,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now some more error checking
     select case ( info%fwmType )
-    case ( l_full )
+    case ( l_full, l_hybrid )
       if ( .not. all(got( (/ f_molecules, f_signals, f_integrationGrid, &
         & f_tangentGrid /) )) ) call AnnounceError ( IncompleteFullFwm, root )
 
@@ -579,7 +589,7 @@ contains ! =====     Public Procedures     =============================
         & f_do_1d, f_incl_cld, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
-    case ( l_linear)
+    case ( l_linear )
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
@@ -753,6 +763,9 @@ contains ! =====     Public Procedures     =============================
     case ( IrrelevantFwmParameter )
       call output ( 'irrelevant parameter for this forward model type', &
         & advance='yes' )
+    case ( LinearSidebandHasUnits )
+      call output ( 'irrelevant units for this linear sideband', &
+        & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
@@ -790,6 +803,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.68  2003/07/15 22:10:59  livesey
+! Added support for hybrid model
+!
 ! Revision 2.67  2003/07/15 18:17:50  livesey
 ! Better handling of configuration name
 !
