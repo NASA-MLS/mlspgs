@@ -134,6 +134,17 @@ $(PROG_NAME): $(ALLOBJS)
 
 # ========================================================================
 
+# Custom build commands for some modules
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+# ========================================================================
+
 clean:
 	rm -f *.o *.mod $(PROG_NAME)
 
@@ -143,6 +154,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
 # Revision 1.6  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #
