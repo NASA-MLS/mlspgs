@@ -5,7 +5,8 @@
 
 program TEST_SPARSIFY
 
-  use MatrixModule_0, only: Dump, MatrixElement_T, R8, Sparsify
+  use MatrixModule_0, only: Dump, MatrixElement_T, Sparsify
+  use MLSCommon, only: R8
 
   real(r8), allocatable :: Z(:,:)
   type(MatrixElement_T) :: B
@@ -23,6 +24,9 @@ program TEST_SPARSIFY
 end program TEST_SPARSIFY
 
 ! $Log$
+! Revision 2.3  2000/10/12 20:10:36  vsnyder
+! Get R8 from MLSCommon instead of MatrixMultiply_0
+!
 ! Revision 2.2  2000/10/10 23:14:22  vsnyder
 ! Added copyright, cvs Id and Log
 !

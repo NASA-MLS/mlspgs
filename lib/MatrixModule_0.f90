@@ -15,9 +15,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use OUTPUT_M, only: OUTPUT
 
   implicit NONE
-  private :: Dump_Matrix_Block
-  public :: Add_Matrix_Blocks, CloneBlock, CopyBlock, Dump, MatrixElement_T
-  public :: Multiply_Matrix_Blocks, operator(+), operator(.XT.), Sparsify
+  private
+  public :: Add_Matrix_Blocks, CloneBlock, CopyBlock, CreateBlock, Densify
+  public :: DestroyBlock, Dump, MatrixElement_T, Multiply_Matrix_Blocks
+  public :: operator(+), operator(.XT.), Sparsify
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -667,6 +668,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.3  2000/10/12 20:10:08  vsnyder
+! Make default accessibility private
+!
 ! Revision 2.2  2000/10/10 23:11:34  vsnyder
 ! Correct number of rows and columns for zero matrix.
 !
