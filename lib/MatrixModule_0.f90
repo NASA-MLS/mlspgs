@@ -213,7 +213,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )                          ! X banded, Y banded
         call allocate_test ( zb%r1, size(x%r1), "zb%r1", ModuleName )
         zb%r1 = min(x%r1, y%r1)                  ! First nonzero row
-        call allocate_test ( zb%r2, size(x%r2)+1, "zb%r2", ModuleName, lowBound=0 )
+        call allocate_test ( zb%r2, size(x%r2), "zb%r2", ModuleName, lowBound=0 )
         zb%r2(0) = 0
         do k = 1, size(x%r1)                     ! Calculate size of Values
           zb%r2(k) = zb%r2(k-1) + &
@@ -588,7 +588,7 @@ contains ! =====     Public Procedures     =============================
       z = emptyBlock
     case ( M_Banded )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
-      call allocate_test ( z%r2, nCols+1, "z%r2", ModuleName, lowBound=0 )
+      call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
       z%r2(0) = 0
       call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
     case ( M_Column_sparse )
@@ -1830,6 +1830,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.19  2001/04/30 17:47:18  livesey
+! Reverted to original size of R2, the problem must be somewhere else.
+!
 ! Revision 2.18  2001/04/28 07:03:21  livesey
 ! Removed a print statement
 !
