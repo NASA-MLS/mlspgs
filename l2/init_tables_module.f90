@@ -387,7 +387,7 @@ contains ! =====     Public procedures     =============================
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
-             l+l_gloria, n+n_dt_def, &
+             l+l_strat, l+l_gloria, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
@@ -666,6 +666,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot /) )
     call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
@@ -1085,6 +1086,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.334  2003/10/06 13:16:09  cvuu
+! add new description=strat to handle reading the ncep data file
+!
 ! Revision 2.333  2003/09/11 23:15:22  livesey
 ! Added xStar and yStar to forward model config
 !
