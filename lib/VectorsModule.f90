@@ -632,7 +632,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  GetVectorQuantityByType  -----
   function GetVectorQuantityByType ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, foundInFirst, noError )
+    & molecule, instrumentModule, radiometer, signal, &
+    & sideband, foundInFirst, noError )
 
     ! Given a quantity type index (l_...), this function returns the first
     ! quantity within the vector that has that type.  If molecule and/or
@@ -649,8 +650,9 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: INSTRUMENTMODULE ! Instrument module index
     integer, intent(in), optional :: RADIOMETER   ! Radiometer index
     integer, intent(in), optional :: SIGNAL       ! Signal index
+    integer, intent(in), optional :: SIDEBAND ! -1, 0, +1
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
-    logical, intent(in), optional :: noError ! Don't give error if not found
+    logical, intent(in), optional :: NOERROR ! Don't give error if not found
     ! Result
     type (VectorValue_T), pointer :: GetVectorQuantityByType
 
@@ -663,7 +665,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
-      & quantityType, molecule, instrumentModule, radiometer, signal, &
+      & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
       &   noError = present(otherVector) )
     if ( index /= 0 ) then
       if ( present (foundInFirst) ) foundInFirst = .true.
@@ -672,7 +674,7 @@ contains ! =====     Public Procedures     =============================
       ! Can only get here if not found in first vector and 
       ! otherVector is present
       index = GetVectorQuantityIndexByType ( otherVector, &
-        &  quantityType, molecule, instrumentModule, radiometer, signal,&
+        &  quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
         &  noError=myNoError )
       if ( present (foundInFirst) ) foundInFirst = .false.
       if ( index /= 0 ) then
@@ -740,7 +742,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  GetVectorQuantityIndexByType  -----
   integer function GetVectorQuantityIndexByType ( vector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, noError )
+    & molecule, instrumentModule, radiometer, signal, sideband, noError )
 
   ! Given a quantity type index (l_...), this function returns the index
   ! of the first quantity within the vector that has that type.  If
@@ -755,6 +757,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
     integer, intent(in), optional :: RADIOMETER   ! Radiometer index
     integer, intent(in), optional :: SIGNAL       ! Signal Index
+    integer, intent(in), optional :: SIDEBAND ! -1, 0, +1
     logical, intent(in), optional :: NOERROR ! Don't give error if not found
 
     ! Local variables
@@ -782,6 +785,10 @@ contains ! =====     Public Procedures     =============================
         if ( present(signal) ) then
           if ( vector%quantities(search)%template%signal /= &
             &  signal ) cycle
+        end if
+        if ( present(sideband) ) then
+          if ( vector%quantities(search)%template%sideband /= &
+            &  sideband ) cycle
         end if
         GetVectorQuantityIndexByType = search
     return
@@ -1031,6 +1038,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.21  2001/04/10 22:38:20  vsnyder
+! Add 'details' argument to dump routines
+!
 ! Revision 2.20  2001/03/21 02:14:37  livesey
 ! Add noError argument to GetVectorQtyByType
 !
