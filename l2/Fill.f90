@@ -10,9 +10,10 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
-    & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
+    & F_GEOCALTITUDEQUANTITY, &
+    & F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, F_LOSQTY,&
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
-    & F_MATRIX, F_METHOD, F_QUANTITY, F_RADIANCEQUANTITY, &
+    & F_MATRIX, F_METHOD, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
     & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
@@ -20,8 +21,9 @@ module Fill                     ! Create vectors and fill them.
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_CHOLESKY, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
-    & L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
+    & L_PRESSURE, L_PTAN, L_RADIANCE, L_EARTHRADIUS, &
+    & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
@@ -101,7 +103,8 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
   integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
   integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
-  integer, parameter :: CantInterpolate3d = badIsotopeFill + 1
+  integer, parameter :: BadlosGridFill = badIsotopeFill + 1
+  integer, parameter :: CantInterpolate3d = badlosGridFill + 1
 
   ! Error codes resulting from FillCovariance
   integer, parameter :: NotSPD = CantInterpolate3D + 1
@@ -181,12 +184,17 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SOURCEQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
+    type (vectorValue_T), pointer :: TNGTPRESQUANTITY
+    type (vectorValue_T), pointer :: earthRadiusQty
+    type (vectorValue_T), pointer :: losQty
 
     integer :: ColVector                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: Decay                    ! Index of decay-rate vector in database
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
     !                                     -- for FillCovariance
+    integer :: EARTHRADIUSQTYINDEX
+    integer :: EARTHRADIUSVECTORINDEX
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
@@ -210,7 +218,9 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
-    integer :: L2INDEX                  ! Where source is among l2gp or l2aux database
+    integer :: L2INDEX                  ! Where source is among l2gp or l2au database
+    integer :: LOSVECTORINDEX           ! index in vector database
+    integer :: LOSQTYINDEX              ! index in QUANTITY database
     type(matrix_Cholesky_T) :: MatrixCholesky
     type(matrix_Kronecker_T) :: MatrixKronecker
     type(matrix_SPD_T) :: MatrixSPD
@@ -221,6 +231,8 @@ contains ! =====     Public Procedures     =============================
     character (LEN=LineLen) ::  Msr
     type (Vector_T) :: NewVector ! A vector we've created
     integer :: PREVDEFDQT               !
+    integer :: PTANVECTORINDEX          !
+    integer :: PTANQTYINDEX             !
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
     integer :: RADIANCEVECTORINDEX    ! For radiance quantity
@@ -396,7 +408,16 @@ contains ! =====     Public Procedures     =============================
             radianceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_refGPHQuantity ) ! For hydrostatic
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
-            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+          case ( f_earthRadius ) ! For losGrid fill
+            earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
+            earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_losQty ) ! For losGrid fill
+            losVectorIndex = decoration(decoration(subtree(1,gson)))
+            losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_PtanQuantity ) ! For losGrid fill
+            PtanVectorIndex = decoration(decoration(subtree(1,gson)))
+            PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
           case ( f_sourceGrid )
@@ -481,6 +502,18 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
+
+        case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
+          if (.not. all(got((/f_sourceVgrid,f_losQty,f_earthRadius,f_PtanQuantity/))))&
+            & call Announce_Error ( key, badlosGridFill )
+          earthRadiusQty => GetVectorQtyByTemplateIndex( &
+            & vectors(earthRadiusVectorIndex), earthRadiusQtyIndex )
+          TngtPresQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(PtanVectorIndex), PtanQtyIndex )
+          losQty => GetVectorQtyByTemplateIndex( &
+            & vectors(losVectorIndex), losQtyIndex )
+          call FillQuantityFromLosGrid ( key, Quantity, losQty, &
+            & Vgrids(vGridIndex), tngtPresQuantity, earthRadiusQty, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
           select case ( quantity%template%quantityType )
@@ -1183,6 +1216,104 @@ contains ! =====     Public Procedures     =============================
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
   end subroutine FillVectorQuantityFromL1B
 
+  !=============================== FillQuantityFromLosGrid ====
+  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, Vgrid, &
+   & Ptan, Re, errorCode )
+
+    ! This is to fill a l2gp type of quantity with a los grid type of quantity.
+    ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
+    ! where s is the path along los.
+    !
+    ! Linear interpolation is used to fill l2gp grids and unfilled grids are
+    ! marked with the baddata flag (-999.)
+
+    ! Dummy arguments
+    integer, intent(in) :: key          ! For messages    
+    type (VGrid_T), intent(in) :: VGrid
+    type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
+    type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
+    type (VectorValue_T), intent(in) :: Re ! Earth's radius
+    type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
+    integer, intent(out) :: errorCode ! Error code
+
+    ! Local variables
+    integer :: i, j, maf, mif, id                ! Loop counter
+    integer :: noMAFs, noMIFs, noDepths 
+    real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
+    real (r8), dimension(los%template%noChans) :: x_in, y_in
+    real (r8), dimension(los%template%noChans) :: sGrid ! losGrid surf values
+    real (r8), dimension(los%template%noSurfs) :: zt
+
+    if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
+
+    errorCode=0
+
+    ! Make sure this quantity is appropriate
+!    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
+!      & verticalCoordinate= (/ l_pressure, l_zeta /)) ) then
+!      errorCode=vectorWontMatchL2GP
+!      return
+!    end if
+
+    if ( qty%template%verticalCoordinate == l_pressure ) then
+        outZeta = -log10 ( qty%template%surfs(:,1) )
+    else
+        outZeta = qty%template%surfs(:,1)
+    end if
+      
+    noMAFs = los%template%noInstances
+    noMIFs = los%template%noSurfs
+    noDepths = los%template%noChans
+! get los grid surf values
+    sGrid = vGrid%surfs
+    
+! initialize quantity
+   do j = 1, qty%template%noInstances
+   do i = 1, qty%template%noSurfs
+   qty%values(i,j)=qty%template%badValue
+   qty%mask(i,j)=0
+   end do 
+   end do
+   
+    do maf=1,noMAFs  
+      zt = -log10(ptan%template%surfs(:,maf))   ! noChans=1 for ptan
+      zt = (zt-3.)*16.                      ! converted to height in km
+      do mif=1,noMIFs
+      ! find altitude of each s grid
+      x_in = sGrid/2./(re%values(1,maf) + zt(mif))
+      ! converted to zeta
+      x_in = x_in/16.-3.
+        ! interpolate to get phi along s
+        do id=1,noDepths
+          y_in(id) = los%template%phi(id+(mif-1)*noDepths,maf)
+        end do
+        call InterpolateValues(x_in,y_in,outZeta,phi_out,method='Linear')
+        ! interpolate to get values along s
+        do id=1,noDepths
+          y_in = los%values(id+(mif-1)*noDepths,maf)
+        end do
+        call InterpolateValues(x_in,y_in,outZeta,beta_out,method='Linear')
+        ! find geolocation of each s element on the los grid
+        do id=1,noDepths  
+          do j = 2, qty%template%noInstances-1
+          if(phi_out(id) .lt. &     
+            & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
+            & .and. phi_out(id) .ge. &  
+            & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
+            do i = 1, qty%template%noSurfs
+            qty%values(i,j)=qty%values(i,j) + beta_out(id)
+            qty%mask(i,j)=qty%mask(i,j)+1       ! use quantity mask as counter
+            end do
+          end if
+          end do
+        end do
+      end do                            ! End surface loop
+    end do                              ! End instance loop
+    ! average all non-zero bins
+    where (qty%mask > 0) qty%values = qty%values/qty%mask
+    
+  end subroutine FillQuantityFromLosGrid
+
   ! ---------------------------------------------- TRANSFERVECTORS -----
   subroutine TransferVectors ( source, dest )
     ! Copy common items in source to those in dest
@@ -1190,7 +1321,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), intent(inout) :: DEST
 
     ! Local variables
-    integer :: DUMMY                    ! Dummy integer
+    integer :: Dummy                   ! Dummy integer
     type (VectorValue_T), POINTER :: DQ ! Destination quantity
     integer :: SQI                      ! Quantity index in source
 
@@ -1239,6 +1370,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
     case ( badGeocAltitudeQuantity )
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
+    case ( badlosGridfill )
+      call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
     case ( badlosvelfill )
       call output ( " incomplete/incorrect information for los velocity", advance='yes' )
     case ( badIsotopeFill )
@@ -1352,6 +1485,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.58  2001/07/19 00:19:42  dwu
+! add new method=rectanglefromlos
+!
 ! Revision 2.57  2001/06/22 05:37:27  livesey
 ! First version of transfer command
 !
