@@ -8,7 +8,10 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   USE Hdf, ONLY: DFACC_RDWR
   USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  USE SDPToolkit
+  USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
+    & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
+    & PGS_PC_GETREFERENCE, &
+    & WARNIFCANTPGSMETREMOVE
   USE MLSPCF1
   USE Orbit, ONLY: orbitNumber, numOrb
 
@@ -409,9 +412,12 @@ CONTAINS
     ENDIF          
 
     returnStatus = pgs_met_remove() 
-    IF (returnStatus /= PGS_S_SUCCESS) THEN 
-       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-            "Calling pgs_met_remove() failed." )
+    IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+      ! CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+      !      "Calling pgs_met_remove() failed." )
+      write(errmsg, *) returnStatus
+      CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Calling pgs_met_remove() failed with value " // trim(errmsg) )
     ENDIF          
 
   END SUBROUTINE populate_metadata_l1
@@ -440,6 +446,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.8  2003/03/15 00:15:10  pwagner
+! Wont quit if pgs_met_remove returns non-zero value
+!
 ! Revision 2.7  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
