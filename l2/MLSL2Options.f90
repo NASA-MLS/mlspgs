@@ -6,13 +6,13 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
-  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  USE MLSMessageModule, only: MLSMSG_Error
+  use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  use MLSMessageModule, only: MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
 
-  IMPLICIT NONE
-  PUBLIC
-  PRIVATE :: Id, ModuleName
+  implicit none
+  public
+  private :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
@@ -27,21 +27,21 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! for production use, i.e. sips. Therefore, this is a convenient place
   ! to hold everything that needs to be changed before delivery.
   
-  ! See also MLSL2Common and MLSL2PCF
+  ! See also MLSL2PCF, L2ParInfo.parallel, lib/toggles.switches
 
   ! --------------------------------------------------------------------------
   ! The following should be adjusted before delivery to sips
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
-  logical, private, parameter :: SIPS_VERSION =  .false. 
+  logical, parameter :: SIPS_VERSION =  .false. 
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.42 swdev team                                          ', &       
+    & 'v1.43 swdev team                                          ', &       
     & 'Copyright (c) 2004, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -86,8 +86,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS = L_SECONDS
-  logical            :: patch = .false.       ! Set if run must not create file, swath  
-  ! Whether to skip doing the direct writes--quicker when snooping
+  logical            :: patch = .false.       ! Set if run must not create file,
+  ! Whether to skip doing the direct writes--quicker when snooping       swath  
   logical            :: SKIPDIRECTWRITES = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.         
@@ -110,6 +110,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.29  2004/07/08 22:48:44  pwagner
+! Made SIPS_VERSION public
+!
 ! Revision 2.28  2004/04/27 23:49:51  pwagner
 ! Added SKIPDIRECTWRITES option
 !
