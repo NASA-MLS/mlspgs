@@ -31,13 +31,13 @@ module L2PC_m
   use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
   use TOGGLES, only: TAB, TOGGLE
-  use Tree, only: DECORATION
+  use Tree, only: DECORATION, NSONS, SUBTREE
 
   implicit NONE
   private
   
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
-  public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file
+  public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -53,6 +53,18 @@ module L2PC_m
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
 
+  ! This datatype describes a selection rule for l2pc bins.
+  type BinSelector_T
+    integer :: quantityType             ! What quantity type does this apply to
+    integer :: molecule                 ! What molecule does it apply to
+    integer, dimension(:), pointer :: signals => NULL() ! What signals does this apply to
+    integer, dimension(:), pointer :: sidebands => NULL() ! What sidebands
+    real(r8), dimension(2) :: heightRange ! The height range for this selector
+    real(r8) :: cost                    ! The cost for that range
+  end type BinSelector_T
+
+  type(BinSelector_T), dimension(:), pointer, save :: BINSELECTORS
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -62,6 +74,17 @@ module L2PC_m
 !---------------------------------------------------------------------------
 
 contains ! ============= Public Procedures ==========================
+
+  ! ------------------------------------ AddBinSelectorToDatabase --
+  integer function AddBinSelectorToDatabase ( database, item )
+    type (BinSelector_T), dimension(:), pointer :: DATABASE
+    type (BinSelector_T) :: item
+    ! Local variables
+    type (BinSelector_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "addItemToDatabase.f9h"
+    AddBinSelectorToDatabase = newSize
+  end function AddBinSelectorToDatabase
 
   ! ------------------------------------  Add l2pc  to database ----
   integer function AddL2PCToDatabase ( Database, Item )
@@ -83,6 +106,25 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: lun
     close ( lun )
   end subroutine Close_L2PC_File
+
+  ! -------------------------------------- DestroyBinSelectorDatabase
+  subroutine DestroyBinSelectorDatabase ( database )
+    type (BinSelector_T), dimension(:), pointer :: DATABASE
+    ! Local variables
+    integer :: I                        ! Loop counter
+    integer :: STATUS                   ! Flag from deallocate
+    ! Executable code
+    if ( .not. associated ( database ) ) return
+    do i = 1, size(database)
+      call Deallocate_test ( database(i)%signals, &
+        & 'database%signals', ModuleName )
+      call Deallocate_test ( database(i)%sidebands, &
+        & 'database%sidebands', ModuleName )
+    end do
+    deallocate ( database, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//"bin selectors database" )
+  end subroutine DestroyBinSelectorDatabase
 
   ! ----------------------------------------------- DestroyL2PC ----
   subroutine DestroyL2PC ( l2pc )
@@ -680,6 +722,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.23  2002/01/21 21:13:42  livesey
+! Added BinSelector definitions and support
+!
 ! Revision 2.22  2002/01/18 00:34:23  livesey
 ! Added packed option to writeonel2pc, with supporting code.
 !
