@@ -316,7 +316,7 @@ contains
       !print*,"Read data"
       end_of_file = .false.
       call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
-      !print*,"Next date line:",inline,"EOF=",end_of_file
+      ! print*,"Next date line:",inline,"EOF=",end_of_file
       if ( end_of_file ) then
         ! No more dates and nothing else either
         exit datesloop
@@ -945,6 +945,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.13  2002/05/02 09:48:40  hcp
+! Removed a whittering print statement
+!
 ! Revision 2.12  2002/01/09 23:46:42  pwagner
 ! Added toc; removed debugging stuff
 !
