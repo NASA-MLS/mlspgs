@@ -2,18 +2,8 @@
 # $Id$
 # This shell script prints the name of the desired directory for a given file type
 # First work out where we are.
-MACHINE=$(uname -n)
+MACHINE=$(cat ~/machine.id)
 SUMS=0
-SOUNDBARRIER=0
-DESKTOP=1
-case "$MACHINE" in
-    headnode | sum* )
-	SUMS=1
-	DESKTOP=0 ;;
-    frontend* | compute* | lightspeed* )
-	SOUNDBARRIER=1
-	DESKTOP=0 ;;
-esac
 
 VERSION=v1.0.1
 SIMULATION=s5
@@ -40,86 +30,119 @@ while [ -n "$(echo $1)" ]; do
 	FWMVERSION=${1#--fwmVersion=}
     fi
     if [ $1 == "--dao" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    if [ $YEAR == "1996" ]; then
-		echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
-	    else
-		echo "/data/dao/D4FAPMIS/$YEAR"
-	    fi
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		if [ $YEAR == "1996" ]; then
+		    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+		else
+		    echo "/data/dao/D4FAPMIS/$YEAR"
+		fi
+	esac
     fi
     if [ $1 == "--output" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/bigdata/$MYUSER/$VERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/bigdata/$MYUSER/$VERSION"
+	esac
     fi
     if [ $1 == "--l2pc" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER/"
-	else
-	    echo "/bigdata/$MYUSER/$VERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/bigdata/$MYUSER/$VERSION";;
+	esac
     fi
     if [ $1 == "--truthl2gp" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/data/emls/l2gp/$SIMULATION--t/$YEAR"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l2gp/$SIMULATION--t/$YEAR";;
+	esac
     fi
     if [ $1 == "--corel2gp" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/bigdata/$MYUSER/$VERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+	    echo "/bigdata/$MYUSER/$VERSION";;
+	esac
     fi
     if [ $1 == "--l1boa" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/data/emls/l1boa/$SIMULATION--t/$YEAR"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l1boa/$SIMULATION--t/$YEAR";;
+	esac
     fi
     if [ $1 == "--l1brad" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION";;
+	esac
     fi
     if [ $1 == "--l2cal" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/data/emls/l2cal"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/data/emls/l2cal";;
+	esac
     fi
     if [ $1 == "--leapsec" ]; then
 	echo "$HOME/emls/$VERSION"
     fi
     if [ $1 == "--tmp" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/bigdata/$MYUSER/$VERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/bigdata/$MYUSER/$VERSION";;
+	esac
     fi
     if [ $1 == "--sidsrad" ]; then
-	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$MYUSER"
-	else
-	    echo "/bigdata/$MYUSER/$VERSION"
-	fi
+	case $MACHINE in
+	    soundbarrier )
+		echo "/research1/$MYUSER/";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/bigdata/$MYUSER/$VERSION";;
+	esac
     fi
     shift
 done
 
 # $Log$
+# Revision 1.24  2004/02/09 18:47:05  livesey
+# Typo!
+#
 # Revision 1.23  2004/02/09 18:37:58  livesey
 # Added lightspeed.
 #
