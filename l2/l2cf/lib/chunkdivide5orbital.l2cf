@@ -1,0 +1,9 @@
+; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment is for doing single MAF tests, but with regular
+; hGrids to follow
+begin ChunkDivide
+  ChunkDivide, method=orbital, maxLength=5 MAFs, overlap=0 MAFs, $
+    homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs, $
+    noChunks=1
+end ChunkDivide
