@@ -97,6 +97,20 @@ contains ! ====     Public Procedures     ==============================
     if ( decl%type /= enum_value )  getLitIndexFromString = -huge(0)
   end function GetLitIndexFromString
 
+  ! -----------------------------------------------------  Scalar  -----
+  logical function Scalar ( Root )
+    use Tree, only: Node_Id, Nsons, SUbtree
+    use Tree_Types, only: N_Array
+
+    ! Return "root has two sons, and the second one is not N_Array"
+    integer, intent(in) :: Root
+
+    scalar = .false.
+    if ( nsons(root) > 2 ) return
+    if ( node_id(subtree(2,root)) == n_array ) return
+    scalar = .true.
+  end function Scalar
+
   ! ------------------------------------------  StartErrorMessage  -----
   subroutine StartErrorMessage ( where )
     use LEXER_CORE, only: PRINT_SOURCE
@@ -119,6 +133,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.12  2004/11/17 20:24:20  vsnyder
+! Add SCALAR function to check for scalar field value
+!
 ! Revision 2.11  2004/06/16 19:51:25  vsnyder
 ! Move a use from module scope to procedure scope
 !
