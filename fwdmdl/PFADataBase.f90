@@ -359,7 +359,7 @@ contains ! =====     Public Procedures     =============================
       if ( nPFA == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'No PFA Data to read from ' // trim(fileName) )
       ! Create or expand the PFADatabase
-      if ( associated(PFAData) ) then
+      if ( associated(PFAData) .and. nPFA > 0 ) then
         tempPFAData => PFAData
         iPFA = size(tempPFAData)
         allocate ( PFAData(iPFA+nPFA), stat=iostat )
@@ -387,24 +387,24 @@ contains ! =====     Public Procedures     =============================
         iPFA = iPFA + 1
         if ( isHDF5AttributePresent(groupID, 'filterFile') ) then
           call getHDF5Attribute ( groupID, 'filterFile', line )
-          PFAData(i)%filterFile = getStringIndexFromString ( trim(line), .true. )
+          PFAData(iPFA)%filterFile = getStringIndexFromString ( trim(line), .true. )
         else
-          PFAData(i)%filterFile = 0
+          PFAData(iPFA)%filterFile = 0
         end if
         call getHDF5Attribute ( groupID, 'molecule', molecule )
         k = getLitIndexFromString ( trim(molecule) )
         if ( k < first_molecule .or. k > last_molecule ) call MLSMessage ( &
           & MLSMSG_Error, moduleName, 'The string ' // &
           & trim(molecule) // ' is not a molecule name.' )
-        PFAData(i)%molecule = k
-        call getHDF5Attribute ( groupID, 'signal', PFAData(i)%signal )
-        call parse_signal ( PFAData(i)%signal, signalIndices, &
+        PFAData(iPFA)%molecule = k
+        call getHDF5Attribute ( groupID, 'signal', PFAData(iPFA)%signal )
+        call parse_signal ( PFAData(iPFA)%signal, signalIndices, &
           & channels=channels )
-        PFAData(i)%signalIndex = signalIndices(1)
-        PFAData(i)%theSignal = signals(PFAData(i)%signalIndex)
-        PFAData(i)%theSignal%channels => channels
-        call getHDF5Attribute ( groupID, 'sideband', PFAData(i)%theSignal%sideband )
-        call getHDF5Attribute ( groupID, 'vel_rel', PFAData(i)%vel_rel )
+        PFAData(iPFA)%signalIndex = signalIndices(1)
+        PFAData(iPFA)%theSignal = signals(PFAData(iPFA)%signalIndex)
+        PFAData(iPFA)%theSignal%channels => channels
+        call getHDF5Attribute ( groupID, 'sideband', PFAData(iPFA)%theSignal%sideband )
+        call getHDF5Attribute ( groupID, 'vel_rel', PFAData(iPFA)%vel_rel )
         tGrid%name = 0
         nullify ( tGrid%surfs, vGrid%surfs )
         tGrid%verticalCoordinate = l_theta
@@ -416,7 +416,7 @@ contains ! =====     Public Procedures     =============================
         do j = 2, tGrid%noSurfs
           tGrid%surfs(j,1) = tGrid%surfs(j-1,1) + surfStep
         end do
-        PFAData(i)%tGrid = vGrids(addVGridIfNecessary(tGrid,vGrids))
+        PFAData(iPFA)%tGrid = vGrids(addVGridIfNecessary(tGrid,vGrids))
         vGrid%name = 0
         vGrid%verticalCoordinate = l_zeta
         call getHDF5Attribute ( groupID, 'nPress', vGrid%noSurfs )
@@ -427,12 +427,12 @@ contains ! =====     Public Procedures     =============================
         do j = 2, vGrid%noSurfs
           vGrid%surfs(j,1) = vGrid%surfs(j-1,1) + surfStep
         end do
-        PFAData(i)%vGrid = vGrids(addVGridIfNecessary(vGrid,vGrids, &
+        PFAData(iPFA)%vGrid = vGrids(addVGridIfNecessary(vGrid,vGrids, &
           &                       relErr=vGrid%noSurfs*0.2_rs*epsilon(1.0_rs)))
-        call loadPtrFromHDF5DS ( groupID, 'absorption', PFAData(i)%absorption )
-        call loadPtrFromHDF5DS ( groupID, 'dAbsDwc', PFAData(i)%dAbsDwc )
-        call loadPtrFromHDF5DS ( groupID, 'dAbsDnc', PFAData(i)%dAbsDnc )
-        call loadPtrFromHDF5DS ( groupID, 'dAbsDnu', PFAData(i)%dAbsDnu )
+        call loadPtrFromHDF5DS ( groupID, 'absorption', PFAData(iPFA)%absorption )
+        call loadPtrFromHDF5DS ( groupID, 'dAbsDwc', PFAData(iPFA)%dAbsDwc )
+        call loadPtrFromHDF5DS ( groupID, 'dAbsDnc', PFAData(iPFA)%dAbsDnc )
+        call loadPtrFromHDF5DS ( groupID, 'dAbsDnu', PFAData(iPFA)%dAbsDnu )
         call h5gClose_f ( groupID, iostat )
         if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to close HDF5 PFA group ' // trim(groups(i)) // ' in ' // &
@@ -651,6 +651,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.17  2005/02/05 01:39:12  vsnyder
+! Handle separate readPFA commands correctly
+!
 ! Revision 2.16  2005/02/05 00:02:12  vsnyder
 ! Read all of the specified tables
 !
