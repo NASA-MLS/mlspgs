@@ -16,7 +16,7 @@ module Join                     ! Join together chunk based data.
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
   use LEXER_CORE, only: PRINT_SOURCE
-  use L2PC_M, only: L2PCBin_T, AddL2PCBinToDatabase
+  use L2PC_M, only: L2PC_T, AddL2PCToDatabase
   use MatrixModule_1, only: Matrix_Database_T, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -68,7 +68,7 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_Database_T), dimension(:), pointer :: matrices
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (L2PCBin_T), dimension(:), pointer :: l2pcDatabase
+    type (L2PC_T), dimension(:), pointer :: l2pcDatabase
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
@@ -96,7 +96,7 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING
 
     type (Matrix_T), pointer :: tmpKStar
-    type (L2PCBin_T) :: thisL2PC
+    type (L2PC_T) :: thisL2PC
 
     ! Executable code
     timing = .false.
@@ -210,7 +210,7 @@ contains ! =====     Public Procedures     =============================
         thisL2PC%yStar = vectors(yStarIndex)
         call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
         thisL2PC%kStar = tmpKStar
-        call decorate ( key, AddL2PCBinToDatabase ( l2pcDatabase, thisL2PC ) )
+        call decorate ( key, AddL2PCToDatabase ( l2pcDatabase, thisL2PC ) )
         
       case default ! Timing
       end select
@@ -608,6 +608,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.22  2001/04/24 20:20:27  livesey
+! L2PC moved to lib and word bin dropped from types etc.
+!
 ! Revision 2.21  2001/04/24 20:04:54  livesey
 ! Added l2pc joining
 !
