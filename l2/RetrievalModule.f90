@@ -1418,11 +1418,11 @@ contains
       ! use this for testing
       pcut = -2.5
       
-      if(size(configIndices) > 1 .or. &
-        & size(configDatabase(configIndices(1))%signals) > 1) then
-        print*,'Only one signal is allowed in high cloud retrieval'
-        stop
-      end if
+      if (size(configIndices) > 1 .or. &
+        & size(configDatabase(configIndices(1))%signals) > 1) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Only one signal is allowed in high cloud retrieval' )
+
       ! get signal information for this model. Note: allow only 1 signal 
         signal = configDatabase(configIndices(1))%signals(1)
       
@@ -1956,7 +1956,8 @@ contains
          end do         ! end of imodel
 
          ! check if Jacobian rows are consistent with Signal rows
-         if(ich /= nChans) print*,'inconsistent channels between Jacobian and Signal'
+         if(ich /= nChans) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           & 'inconsistent channels between Jacobian and Signal' )
 
            sx = 1.e8_r8         ! sx is the inversd variance of a priori
            x = 0._r8
@@ -2311,14 +2312,15 @@ contains
         if ( got(f_channels) ) then     ! This subset is only for some channels
           channels = .false.
           do j = 2, nsons(channelsNode)
-            call expr ( subtree(j,channelsNode), units, value, type )
+            son = subtree ( j, channelsNode )
+            call expr ( son, units, value, type )
             do i = 1, merge(1,2,type==num_value)
               if ( units(i) /= phyq_dimensionless ) &
                 & call announceError ( wrongUnits, f_channels, string='no' )
             end do
             range_low = nint(value(1))
             range_hi = nint(value(merge(1,2,type==num_value)))
-            select case ( node_id(channelsNode) )
+            select case ( node_id(son) )
             case ( n_colon_less )
               range_hi = range_hi - 1
             case ( n_less_colon )
@@ -2463,21 +2465,15 @@ contains
                   ! difference probably doesn't matter anyway.
                   do height = 1, qty%template%noSurfs
                     doThisHeight = .true.
-                    if ( rangeID == n_less_colon .or. rangeID == &
-                      & n_less_colon_less ) then
-                      doThisHeight = doThisHeight .and. &
-                        & qty%template%surfs(height,instance) > value(1)
+                    if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                      doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
                     else
-                      doThisHeight = doThisHeight .and. &
-                        & qty%template%surfs(height,instance) >= value(1)
+                      doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
                     end if
-                    if ( rangeID == n_colon_less .or. rangeID == &
-                      & n_less_colon_less ) then
-                      doThisHeight = doThisHeight .and. &
-                        & qty%template%surfs(height,instance) < value(2)
+                    if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                      doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
                     else
-                      doThisHeight = doThisHeight .and. &
-                        & qty%template%surfs(height,instance) <= value(1)
+                      doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
                     end if
                     if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
                         & (/ channel+qty%template%noChans*(height-1) /) )
@@ -2567,6 +2563,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.124  2001/11/28 20:39:35  livesey
+! Fixed bug with subset, changed some of Dong's prints to MLSMessage's
+!
 ! Revision 2.123  2001/11/28 18:28:50  livesey
 ! Updated subset to include open ranges in height specification.
 ! There is possibly a bug in Van's version I'll point out to him
