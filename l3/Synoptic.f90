@@ -709,8 +709,6 @@ CONTAINS
 	     END IF
 	  ENDDO
 
-	ENDDO
-
           !*** Sort into time ascending order according to l2gp format
           IF (cfProd%mode == 'com') THEN
                 DO iD = 1, rDays
@@ -1644,6 +1642,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.19  2002/02/20 22:13:54  ybj
+! *** empty log message ***
+!
 ! Revision 1.18  2001/09/27 20:38:31  ybj
 ! Add Precision Calculation & ado mode
 !
