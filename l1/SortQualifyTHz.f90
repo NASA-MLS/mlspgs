@@ -29,7 +29,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
-    USE MLSL1Common, ONLY: MAFinfo, absZero_C
+    USE MLSL1Common, ONLY: absZero_C
     USE EngTbls, ONLY: EngMAF, CalTgtIndx 
     USE EngUtils, ONLY: NextEngMAF
     USE SciUtils, ONLY: NextSciMAF
@@ -91,10 +91,13 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
             CurMAFdata%SciMIF(CurMAFdata%last_MIF)%BandSwitch
        CurMAFdata%CalTgtTemp = &
             GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
+       CurMAFdata%LimbCalTgtTemp = &
+            GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzLimb) - absZero_C
 
-       more_data =  MAFinfo%startTAI <= L1Config%Input_TAI%endTime
+       more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
 
     ENDDO
+
     CalBuf%MAFs = CalMAFno
 
   END SUBROUTINE FillCalData
@@ -125,6 +128,10 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
           CurMAFdata%ChanType(MIF)%FB = undefined
 
+          !! Save current sw pos:
+       
+          SwMirPos = CurMAFdata%SciMIF(MIF)%SwMirPos
+
 !! Rule #1: Data quality information:
 
           IF (.NOT. CurMAFdata%SciMIF(MIF)%CRC_good) THEN
@@ -146,13 +153,11 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Rule #4: Check for "Z"ero data
 
-          !! Set the appropriate channels to "Z"ero
+          !! Discard all bands (for now)
+
+          IF (ANY (CurMAFdata%SciMIF(MIF)%MaxAtten)) SwMirPos = discard
 
 !! Rule #5: Set Switching Mirror position
-
-          !! Save current sw pos:
-       
-          SwMirPos = CurMAFdata%SciMIF(MIF)%SwMirPos
 
           !! Possibly use sequence from configuration:
 
@@ -196,6 +201,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.3  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

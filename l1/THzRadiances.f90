@@ -6,9 +6,9 @@ MODULE THzRadiances ! Determine radiances for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: THzNum, THzChans, LO1
-  USE THzCalibration, ONLY : CalBuf, SpaceTemp
-  USE MLSL1Rad, ONLY : THzRad, RadPwr
+  USE MLSL1Common, ONLY: THzNum, THzChans
+  USE THzCalibration, ONLY : CalBuf
+  USE MLSL1Rad, ONLY : THzRad
 
   IMPLICIT NONE
 
@@ -22,8 +22,6 @@ MODULE THzRadiances ! Determine radiances for the THz module
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
-
 CONTAINS
 
   SUBROUTINE CalcLimbRads (nMAF, ibgn)
@@ -34,9 +32,7 @@ CONTAINS
     INTEGER, INTENT (IN) :: nMAF
     INTEGER, INTENT (INOUT) :: ibgn
 
-    INTEGER :: iend
-    INTEGER :: i, nBank, nChan, MIF_end
-    REAL :: T
+    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end
 
     iend = ibgn + CalBuf%MAFdata(nMAF-CalBuf%Cal_start+1)%last_MIF
     MIF_end = ibgn + MIFsTHz - 1
@@ -50,12 +46,12 @@ CONTAINS
 
           DO i = ibgn, MIF_end
              DO nChan = 1, THzChans
-                T = Kelvins(nChan,nBank,i) + SpaceTemp  ! relative to Space
-                IF (ABS(T) > 1.0) THEN
-                   THzRad(nBank)%value(nChan,i-ibgn+1) = RadPwr (LO1R5, T)
-                   THzRad(nBank)%precision(nChan,i-ibgn+1) = VarK(nChan,nBank,i)
-                ENDIF
-            ENDDO
+                mindx = i-ibgn+1
+                THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) &
+                     THzRad(nBank)%precision(nChan,mindx) = &
+                     VarK(nChan,nBank,i)
+             ENDDO
           ENDDO
 
        ENDIF
@@ -66,7 +62,7 @@ CONTAINS
 
   SUBROUTINE ProcessLimbData
 
-    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+    USE MLSL1Common, ONLY: L1BFileInfo
     USE OutputL1B, ONLY: OutputL1B_rad
     USE EngTbls, ONLY: Reflec_T
 
@@ -97,6 +93,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.3  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
