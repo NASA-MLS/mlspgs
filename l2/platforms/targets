@@ -8,21 +8,57 @@ include ../Makefile.dep
 include $(srclib)/Makefile.dep
 
 # Add them to L2OBJS
-ALLOBJS = $(OBJS) $(srclib_objs)
+ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
+
+#Dependency rules for RETRIEVAL_OBJS (if we need them)
+RetrievalModule.o: RetrievalModule.f90 ${OBJS} $(srclib_objs)
+
+#                  PVM v. non-PVM options
+# If we implement an option to allow non-PVM-dependent installations
+# uncomment this next line; this will set our PVM objects
+# w/o complaining if it does not exist yet;
+# the latter case leaves PVM_OBJS empty
+-include ../PVM_OBJS.inc
+#-------------------- without the non-PVM option
+# The following lines hardwire PVM_OBJS and so *require* PVM
+# If we implement the non-PVM option, comment out all these
+#PVM_OBJS=SnoopMLSL2.o
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+SnoopMLSL2.o: SnoopMLSL2.f90 $(OBJS) $(libdir)/libmls.a
 
 # ========================================================================
-mlsl2: $(ALLOBJS) $(libdir)/libmls.a
-	$(FC) -o mlsl2 $(ALLOBJS) \
+mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
+	case "$(PVM_ROOT)" in \
+		"") \
+		echo "Building mlsl2 without PVM support" ; \
+		$(FC) -o mlsl2 $(ALLOBJS) \
                       -L${libdir} -lmls \
-	-L${PGSTK} -lPGSTK \
+		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
-	-L${HDF} -lmfhdf \
+		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
         -ljpeg \
-	-L${GCTP} -lGctp \
-        $(l_specials)
-
+		-L${GCTP} -lGctp \
+        $(l_specials) ; \
+		;; \
+		*) \
+		echo "Building mlsl2 with PVM support" ; \
+		$(FC) -o mlsl2 $(ALLOBJS) $(PVM_OBJS)  \
+                      -L${libdir} -lmls \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+		-L${GCTP} -lGctp \
+		-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3 \
+        $(l_specials) ; \
+		;; \
+	esac 
 # ========================================================================
 
 clean:
@@ -34,6 +70,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2000/11/18 00:16:39  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.4  2000/11/06 23:28:54  pwagner
 # Calculates srclib dependency
 #

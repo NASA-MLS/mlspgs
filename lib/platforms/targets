@@ -24,10 +24,11 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 #libmlsSub.a: libmlsTemp.a
 #	mv libmlsTemp.a $@
 #
-#If any of the routines from tests still are back in OBJS
-#we don't want them compiled into libmls.a
+#If any of the routines from tests come back to OBJS
+#we still don't want them compiled into libmls.a
 #(I deleted them before creating Makefile.dep, but a new make depends
-#will probably re-insert them)
+#may resurrect them)
+#Therefore they will be deleted explicitly
 
 TEST_ONLY=test_multiply.o test_sparsify.o \
 	test_cholesky.o test_multiply_vector.o
@@ -36,10 +37,39 @@ TEST_ONLY=test_multiply.o test_sparsify.o \
 MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
 MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
 
+#                  PVM v. non-PVM options
+# If we implement an option to allow non-PVM-dependent installations
+# uncomment this next line; this will set our PVM objects
+# w/o complaining if it does not exist yet;
+# the latter case leaves PVM_OBJS empty
+-include ../PVM_OBJS.inc
+#-------------------- without the non-PVM option
+# The following lines hardwire PVM_OBJS and so *require* PVM
+# If we implement the non-PVM option, comment out all these
+#PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o
+
+PVM.o: PVM.f90 ${OBJS}
+PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
+
+#--------------------- end of hardwired PVM_OBJS
+
 ${OBJS}: machine.o
-libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
+
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS}
 	ar ru $@ $?
 	ar d $@ SDPToolkit.o $(TEST_ONLY)
+#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
+#	@case "$(PVM_ROOT)" in \
+#		"") \
+#		echo "Building mls library without PVM support" ; \
+#		ar ru $@ $? ; \
+#		;; \
+#		*) \
+#		echo "Building mls library with PVM support" ; \
+#		ar ru $@ $? ${PVM_OBJS} ; \
+#		;; \
+#	esac 
+#	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
 libmls.a: libmlsSub.a
 	cp libmlsSub.a $@
@@ -60,19 +90,22 @@ tar:
 
 # ========================================================================
 
+# vpath %.c $(S) $(srclib)
+
+PVMwrappers.o: $(S)/PVMwrappers.c
+	cc -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+
 #	special options for compiling some modules--override .f90 rules
 
 L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 L2GPData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
-#machine.o: $(S)/platforms/$(MLSCONFG).machine
-#	rm -f machine.f90
-#	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
-#	chmod u+w machine.f90
-#	$(FC) -c $(DUSTY) machine.f90
 
 # $Log$
+# Revision 1.12  2001/01/13 00:24:42  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
 # Revision 1.11  2000/11/27 18:17:06  pwagner
 # MatrixModules part of lib only for LF95
 #
