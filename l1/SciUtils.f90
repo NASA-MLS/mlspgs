@@ -8,7 +8,7 @@ MODULE SciUtils ! L0 science utilities
   USE L0_sci_tbls, ONLY: sci_type, l0_sci1, l0_sci2, sci1_T1_fmt, sci2_T1_fmt, &
        sci1_T2_fmt, sci2_T2_fmt, sci1_T1, sci2_T1, sci1_T2, sci2_T2, sci_cptr, &
        Sci_pkt, SciMAF, type_sci1, THzSciMAF, DACS_pkt, DACS_MAF, Atten_T
-  USE L0Utils, ONLY: ReadL0Sci
+  USE L0Utils, ONLY: ReadL0Sci, CheckSum
   USE MLSL1Utils, ONLY: BigEndianStr, ExtractBigEndians, SwapBytes, QNan, &
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
@@ -43,10 +43,11 @@ MODULE SciUtils ! L0 science utilities
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
     USE ERMSG_M, ONLY: ermset
     USE THzUtils, ONLY: ConvertLLO
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
     LOGICAL OK
 
-    INTEGER :: i, ios, j, returnStatus
+    INTEGER :: i, ios, j, n, returnStatus
     INTEGER :: tindex   ! Type index: 1 = Type I, 2 = Type II/III
 
     !! Pointers to counts:
@@ -57,14 +58,16 @@ MODULE SciUtils ! L0 science utilities
     CHARACTER(len=1), PARAMETER :: sw_good = CHAR(7)
     CHARACTER(len=2) :: WFdat(WFchans)   ! wide filter raw data buffer
     CHARACTER (LEN=1024) :: scipkt(2)
-    CHARACTER (LEN=24) :: DN, sw_msg
+    CHARACTER (LEN=24) :: DN
+    CHARACTER (LEN=80) :: msg
+    CHARACTER(len=27) :: asciiUTC
 
     TYPE (Atten_T) :: Attenuation
     LOGICAL :: AttenMaxed
 
     INTEGER :: DACS_C_K(DACSchans)
     INTEGER :: DACS_i1, DACS_i2
-    INTEGER :: D(4), TP, DIO, LO, Zlag
+    INTEGER :: D(4), TP, DIO, LO, Zlag, IDN(512)
 
     INTEGER, PARAMETER :: type_I = 1
     INTEGER, PARAMETER :: type_II = 3
@@ -111,9 +114,35 @@ MODULE SciUtils ! L0 science utilities
 
     ENDIF
 
-!! Check for good checksums (LATER!!!):
+!! Convert raw data:
+
+    Sci_pkt%MAFno = BigEndianStr (sci_cptr(tindex)%MAF(1)%ptr)
+    Sci_pkt%MIFno = BigEndianStr (sci_cptr(tindex)%MIF(1)%ptr)
+    Sci_pkt%Orbit = BigEndianStr (sci_cptr(tindex)%orbit(1)%ptr)
+
+! Get TAI93 time
+
+    returnstatus = PGS_TD_EOSPMGIRDtoTAI (scipkt(1)(8:15), Sci_pkt%secTAI)
+    Sci_pkt%secTAI = Sci_pkt%secTAI - 0.25  ! Adjust to actual time taken
+
+!! Check for bad checksums:
 
     Sci_pkt%CRC_good = .TRUE.
+    DO i = 1, 2
+       DO j = 1, 512
+          IDN(j) = BigEndianStr (scipkt(i)((j*2-1):j*2))
+       ENDDO
+       IF (CheckSum (IDN, 511) /= IDN(512)) THEN
+          Sci_pkt%CRC_good = .FALSE.
+          n = PGS_TD_TAItoUTC (Sci_pkt%secTAI, asciiUTC)
+          WRITE (msg, &
+               '("Bad Checksum: Sci Pkt ", i1, ", MIF: ", i3, ", UTC: ", A27)')&
+               i, Sci_pkt%MIFno, asciiUTC
+          PRINT *, TRIM(msg)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
+          RETURN   ! Can't do any more
+       ENDIF
+    ENDDO
 
 !! Convert to angles:
 
@@ -158,21 +187,11 @@ MODULE SciUtils ! L0 science utilities
        ELSE IF ((Sci_pkt%BandSwitch(i) > 0) .AND. &
             (BandSwitch(i) /= Sci_pkt%BandSwitch(i))) THEN
           BandSwitch(i) = Sci_pkt%BandSwitch(i)  ! new current value
-          WRITE (sw_msg, '("S", i1, " switching to Band ", i2)')i, bandswitch(i)
-          PRINT *, sw_msg
-          CALL MLSMessage (MLSMSG_Info, ModuleName, sw_msg)
+          WRITE (msg, '("S", i1, " switching to Band ", i2)') i, bandswitch(i)
+          PRINT *, TRIM(msg)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
        ENDIF
     ENDDO
-
-!! Convert raw data:
-
-    Sci_pkt%MAFno = BigEndianStr (sci_cptr(tindex)%MAF(1)%ptr)
-    Sci_pkt%MIFno = BigEndianStr (sci_cptr(tindex)%MIF(1)%ptr)
-    Sci_pkt%Orbit = BigEndianStr (sci_cptr(tindex)%orbit(1)%ptr)
-
-! Get TAI93 time
-
-    returnstatus = PGS_TD_EOSPMGIRDtoTAI (scipkt(1)(8:15), Sci_pkt%secTAI)
 
 !! LLO data
 
@@ -422,6 +441,12 @@ MODULE SciUtils ! L0 science utilities
 
     CALL GetScAngles
 
+    IF (L1ProgType == THzType) THEN
+       DO m = 0, (MaxMIFs - 1)
+          THzSciMAF(m)%scAngle = SciMAF(m)%scAngleT
+       ENDDO
+    ENDIF
+
   END SUBROUTINE NextSciMAF
 
 !=============================================================================
@@ -477,7 +502,7 @@ MODULE SciUtils ! L0 science utilities
     REAL :: APE, TSSM
     REAL, PARAMETER :: APE_eps = 27.7340
     REAL, PARAMETER :: APE_B_A = 0.734
-    REAL, PARAMETER :: TSSM_eps = 26.301
+    REAL, PARAMETER :: TSSM_eps = 26.232   !26.301 before 9/20/04
 
     DO i = 0, (MaxMIFs - 1)
        IF (L1Config%Globals%SimOA) THEN
@@ -804,6 +829,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.10  2004/11/10 15:34:06  perun
+! New value for TSSM_eps; test checksum sci value for correctness
+!
 ! Revision 2.9  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !
@@ -826,6 +854,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.10  2004/11/10 15:34:06  perun
+! New value for TSSM_eps; test checksum sci value for correctness
+!
 ! Revision 2.9  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !

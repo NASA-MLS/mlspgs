@@ -7,7 +7,8 @@ MODULE Radiances ! Determine radiances for the GHz module
 
   USE MLSCommon, ONLY: r4, r8
   USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, tau, &
-       DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1
+       DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1, &
+       MaxMIFs, BandChanBad
   USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
   USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
@@ -38,7 +39,7 @@ CONTAINS
     REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts
     REAL(r8) :: sum_w2, sum_wg2
     REAL :: space_P, target_P, baffle_P, bandwidth, deflt_gain
-    REAL :: rad, rad_err, gain, Tsys
+    REAL :: rad, rad_err, gain, Tsys, TsysD
     LOGICAL :: use_deflt_gain
     INTEGER, OPTIONAL :: dacs
 
@@ -87,8 +88,9 @@ CONTAINS
          baffle_S) / Eta(radNum)%Limb
 
     IF (PRESENT (dacs)) THEN
-       rad_err = (Tsys + rad)**2 + Tsys**2 * sum_w2 + rad**2 * &
-            ((target_P + Tsys) / target_P)**2 + (1.0 + sum_w2) * sum_wg2
+       TsysD = Tsys / 0.87
+       rad_err = (TsysD + rad)**2 + TsysD**2 * sum_w2 + rad**2 * &
+            ((target_P + TsysD) / target_P)**2 + (1.0 + sum_w2) * sum_wg2
        rad_err = SQRT (rad_err / (bandwidth * tau))
     ELSE
        rad_err = &
@@ -151,14 +153,15 @@ CONTAINS
     USE MLSL1Config, ONLY: MIFsGHz, L1Config
     USE MLSL1Common, ONLY: L1BFileInfo, Deflt_chi2
     USE MLSL1Utils, ONLY: Finite
+    USE SpectralBaseline, ONLY: CalcBaseline
 
     TYPE (Eng_MAF_T) :: EMAF
 
     CHARACTER(LEN=1) :: GHz_Cal_Type
     INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, i
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
-    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain
-    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, rad_prec
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf, MIFprecSign(0:(MaxMIFs-1))
     REAL :: space_P, target_P, baffle_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
     LOGICAL :: use_deflt_gains, do_chi2_err
@@ -171,6 +174,7 @@ CONTAINS
     end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
     CalWin_end = CalWin%MAFdata(CalWin%size)%end_index
     EMAF = CalWin%MAFdata(windex)%EMAF
+    MIFprecSign = CalWin%MAFdata(windex)%MIFprecSign
 
     IF (ANY (INDEX (CalWin%MAFdata(windex)%scipkt(0:147)%GHz_sw_pos, "T") == &
          1)) THEN
@@ -293,9 +297,12 @@ CONTAINS
                      target_err(MIF_index)%FB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%FB(chan,bank), &
                      radNum, FBrad(bank)%value(chan,MIF_index+1), &
-                     FBrad(bank)%precision(chan,MIF_index+1), &
-                     deflt_gain%FB(chan,bank), use_deflt_gains, &
+                     rad_prec, deflt_gain%FB(chan,bank), use_deflt_gains, &
                      Tsys%FB(chan,bank), gain)
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                FBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
@@ -303,7 +310,7 @@ CONTAINS
                      FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
                 IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
-                     deflt_chi2%FB(chan,BandNo) * &
+                     SQRT (deflt_chi2%FB(chan,BandNo)) * &
                      FBrad(bank)%precision(chan,MIF_index+1)
 
                 IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
@@ -333,9 +340,12 @@ CONTAINS
                      target_err(MIF_index)%MB(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%MB(chan,bank), &
                      radNum, MBrad(bank)%value(chan,MIF_index+1), &
-                     MBrad(bank)%precision(chan,MIF_index+1), &
-                     deflt_gain%MB(chan,bank), use_deflt_gains, &
+                     rad_prec, deflt_gain%MB(chan,bank), use_deflt_gains, &
                      Tsys%MB(chan,bank), gain)
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index),  BandChanBad%Sign(Bandno, chan))
+                MBrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
@@ -343,7 +353,7 @@ CONTAINS
                      MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
                 IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
-                     deflt_chi2%MB(chan,bank) * &
+                     SQRT (deflt_chi2%MB(chan,bank)) * &
                      MBrad(bank)%precision(chan,MIF_index+1)
 
                 IF (Cgain%MB(chan,bank) == 0.0 .AND. Tsys%MB(chan,bank) > 0.0) &
@@ -372,9 +382,12 @@ CONTAINS
                      target_err(MIF_index)%WF(chan,bank), &
                      space_P, target_P, baffle_P, BandWidth%WF(chan,bank), &
                      radNum, WFrad(bank)%value(chan,MIF_index+1), &
-                     WFrad(bank)%precision(chan,MIF_index+1), &
-                     deflt_gain%WF(chan,bank), use_deflt_gains, &
+                     rad_prec, deflt_gain%WF(chan,bank), use_deflt_gains, &
                      Tsys%WF(chan,bank), gain)
+
+                IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                     MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                WFrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                 CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                      NonLimbRad)
@@ -382,7 +395,7 @@ CONTAINS
                      WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
                 IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
-                     deflt_chi2%WF(chan,bank) * &
+                     SQRT (deflt_chi2%WF(chan,bank)) * &
                      WFrad(bank)%precision(chan,MIF_index+1)
 
                 IF (Cgain%WF(chan,bank) == 0.0 .AND. Tsys%WF(chan,bank) > 0.0) &
@@ -421,9 +434,12 @@ CONTAINS
                         space_P, target_P, baffle_P, &
                         BandWidth%DACS(chan,bank), radNum, &
                         DACSrad(bank)%value(chan,MIF_index+1), &
-                        DACSrad(bank)%precision(chan,MIF_index+1), &
-                        deflt_gain%DACS(chan,bank), use_deflt_gains, &
+                        rad_prec, deflt_gain%DACS(chan,bank), use_deflt_gains, &
                         Tsys%DACS(chan,bank), gain, dacs=1)
+
+                   IF (rad_prec > 0.0) rad_prec = rad_prec * MIN ( &
+                      MIFprecSign(MIF_index), BandChanBad%Sign(Bandno, chan))
+                   DACSrad(bank)%precision(chan,MIF_index+1) = rad_prec
 
                    CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
                         NonLimbRad)
@@ -438,6 +454,10 @@ CONTAINS
        ENDIF
     ENDDO
 
+! Spectral Baseline:
+
+    CALL CalcBaseline
+
   END SUBROUTINE CalcLimbRads
 
 !=============================================================================
@@ -445,6 +465,10 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2004/11/10 15:40:40  perun
+! Adjust precision based on flag; change DACS precision method; call baseline
+! calculation
+!
 ! Revision 2.9  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !

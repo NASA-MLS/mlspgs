@@ -78,6 +78,9 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_defltchi2_start = 910
   INTEGER, PARAMETER :: mlspcf_defltchi2_end = 910
 !
+  INTEGER, PARAMETER :: mlspcf_defltbaselineAC_start = 911
+  INTEGER, PARAMETER :: mlspcf_defltbaselineAC_end = 911
+!
   INTEGER, PARAMETER :: mlspcf_sciMAF_start = 920
   INTEGER, PARAMETER :: mlspcf_sciMAF_end = 920
 !
@@ -129,6 +132,9 @@ MODULE MLSPCF1
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.10  2004/11/10 15:36:34  perun
+! Add pcf number for default baselineAC table file
+!
 ! Revision 2.9  2004/08/12 13:51:50  perun
 ! Version 1.44 commit
 !
