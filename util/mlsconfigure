@@ -432,7 +432,7 @@ EOF_5
 
  UserPrompt "Fortran 95 Compiler options [$current_FOPTS]"
    if [ "$user_response" != "" ] ; then
-		currrent_FOPTS="$user_response"
+		current_FOPTS="$user_response"
 	fi
 
  UserPrompt "Fortran 95 Linker options [$current_LDOPTS]"
@@ -454,6 +454,7 @@ Help()
     exit
 }
 
+#!/bin/sh
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -599,13 +600,52 @@ if [ "$current_FOPTS" = "" ] ; then
 		else
 			FOPTS="$MLS_default_FOPTS_LF95"
 		fi
+else
+	FOPTS=$current_FOPTS
 fi
 
 if [ "$current_LDOPTS" = "" ] ; then
 			LDOPTS="$MLS_default_LDOPTS"
+else
+	LDOPTS=$current_LDOPTS
 fi
 
 if [ $write_confg = "true" ] ; then
+# 1st--check on blank paths
+# if blank, attempt alternate settings
+# if that fails, echo regrets and abort
+	if [ "$PGSTK" = "" ] ; then
+		PGSTK=$PGSLIB
+	fi
+	if [ "$PGSTK" = "" ] ; then
+		echo " Sorry--the toolkit path must not be blank"
+		exit
+	fi
+	
+	if [ "$HDF" = "" ] ; then
+		HDF=$HDFLIB
+	fi
+	if [ "$HDF" = "" ] ; then
+		echo " Sorry--the HDF path must not be blank"
+		exit
+	fi
+	
+	if [ "$HDFEOS" = "" ] ; then
+		HDFEOS=$HDFEOS_LIB
+	fi
+	if [ "$HDFEOS" = "" ] ; then
+		echo " Sorry--the HDFEOS path must not be blank"
+		exit
+	fi
+	
+	if [ "$GCTP" = "" ] ; then
+		GCTP=$HDFEOS_LIB
+	fi
+	if [ "$GCTP" = "" ] ; then
+		echo " Sorry--the GCTP path must not be blank"
+		exit
+	fi
+	
 #	Create .configure file
 	if [ -f $conf_dir/.configure ] ; then
 		chmod u+w $conf_dir/.configure
@@ -716,6 +756,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.6  2001/02/26 00:26:49  pwagner
+# default FOPTS and LDOPTS can be set,  saved to .configure
+#
 # Revision 1.5  2001/02/10 00:06:47  pwagner
 # update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
 #
