@@ -67,11 +67,11 @@ contains
   subroutine Open_Filter_Shapes_File ( Filename, Lun )
 
     use IO_stuff, only: Get_Lun
+    use Machine, only: IO_Error
 
     character(len=*), intent(in) :: Filename ! Name of the filter shape file
     integer, intent(out) :: Lun              ! Logical unit number to read it
 
-    logical :: Exist, Opened
     integer :: Status
 
     call get_lun ( lun, msg=.false. )
@@ -79,8 +79,11 @@ contains
       & "No logical unit numbers available" )
     open ( unit=lun, file=filename, status='old', form='formatted', &
       & access='sequential', iostat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open filter shapes file " // Filename )
+    if ( status /= 0 ) then
+      call io_error ( "Unable to open filter shapes file ", status, filename )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open filter shapes file " // Filename )
+    end if
   end subroutine Open_Filter_Shapes_File
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
@@ -522,6 +525,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.17  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
 ! Revision 2.16  2004/05/22 02:27:50  vsnyder
 ! Use Get_Lun from io_stuff instead of repeating it here
 !
