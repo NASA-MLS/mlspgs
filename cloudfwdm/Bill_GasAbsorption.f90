@@ -146,8 +146,9 @@ contains
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
 
-      CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+!       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+!         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+! COMMENTED OUT FOR MERGE NJL
       
       select case (Spectag)
       case (SP_H2O)
@@ -207,6 +208,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.14  2003/02/11 00:48:22  jonathan
+! change call to create_beta
+!
 ! Revision 1.13  2003/02/06 00:21:10  jonathan
 ! change call to creat_beta
 !
