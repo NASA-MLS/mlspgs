@@ -5,7 +5,7 @@
 module ReadAPriori
 
   use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase, &
-  & READ_CLIMATOLOGY, ReadGriddedData
+  & READ_CLIMATOLOGY, ReadGriddedData, v_is_pressure
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
@@ -207,7 +207,7 @@ contains ! =====     Public Procedures     =============================
           
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
-          CALL ReadGriddedData(FileNameString, son, &
+          CALL ReadGriddedData(FileNameString, son, 'ncep', v_is_pressure, &
             & aprioriData(l2Index), &
 				& 'XDim,YDim,Height,TIME', TRIM(fieldNameString))
           
@@ -215,7 +215,7 @@ contains ! =====     Public Procedures     =============================
           
           l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
           call decorate ( key, l2Index )
-          CALL ReadGriddedData(FileNameString, son, &
+          CALL ReadGriddedData(FileNameString, son, 'dao', v_is_pressure, &
             & aprioriData(l2Index), fieldName = TRIM(fieldNameString))
           
         case ( l_climatology )
@@ -240,6 +240,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.8  2001/03/15 00:34:34  pwagner
+! Gives more info to ReadGriddedData
+!
 ! Revision 2.7  2001/03/14 19:06:08  livesey
 ! Some changes
 !

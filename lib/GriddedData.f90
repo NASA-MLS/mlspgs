@@ -9,9 +9,10 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
 
 
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
-  & gdopen, gdattach, gddetach, gdclose, &
+  & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
   & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
   use Hdf, only: SUCCEED, DFACC_RDONLY
+  use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R8, LineLen, NameLen
   USE MLSFiles, only: GetPCFromRef
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
@@ -21,6 +22,7 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
   use OUTPUT_M, only: OUTPUT
   USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
   & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   IMPLICIT NONE
   PUBLIC
@@ -45,7 +47,16 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
   private::read_explicit_axis,ilocate
   public::ReadGriddedData
   private::announce_error
-
+  integer, private :: ERROR
+  public::v_is_pressure,v_is_altitude,v_is_gph,v_is_theta
+	! These are 'enumerated types' consistent with hph's
+	! work in l3ascii_read_field
+	
+	integer, parameter :: v_is_pressure = 1
+	integer, parameter :: v_is_altitude = v_is_pressure+1
+	integer, parameter :: v_is_gph = v_is_altitude+1
+	integer, parameter :: v_is_theta = v_is_gph+1
+	
 
   ! First we'll define some global parameters and data types.
 
@@ -1147,7 +1158,8 @@ END TYPE GriddedData_T
 !----------------- Beginning of Paul's code ------------------
 
     !---------------------------- ReadGriddedData ---------------------
-  SUBROUTINE ReadGriddedData(FileName, the_g_data, GeoDimList, fieldName)
+  SUBROUTINE ReadGriddedData(FileName, lcf_where, description, v_type, &
+  & the_g_data, GeoDimList, fieldName)
     !------------------------------------------------------------------------
 
     ! This routine reads a Gridded Data file, returning a filled data structure and the !
@@ -1164,7 +1176,10 @@ END TYPE GriddedData_T
     ! Arguments
 
     CHARACTER (LEN=*), INTENT(IN) :: FileName ! Name of the file containing the grid(s)
+    INTEGER, INTENT(IN) :: lcf_where			! node of the lcf that provoked me
+    INTEGER, INTENT(IN) :: v_type			! vertical coordinate; an 'enumerated' type
      TYPE( GriddedData_T ), INTENT(OUT) :: the_g_data ! Result
+    CHARACTER (LEN=*), INTENT(IN) :: description ! e.g., 'dao'
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: GeoDimList ! Comma-delimited dim names
 	 CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: fieldName ! Name of gridded field
 
@@ -1176,8 +1191,8 @@ END TYPE GriddedData_T
   integer :: i
   integer :: nentries, ngrids, ndims, nfields
   integer :: strbufsize
-  character (len=80) :: msg, mnemonic
-  integer :: status
+!  character (len=80) :: msg, mnemonic
+!  integer :: status
 
     LOGICAL,  PARAMETER       :: CASESENSITIVE = .FALSE.
   integer, parameter :: GRIDORDER=1				! What order grid written to file
@@ -1185,11 +1200,12 @@ END TYPE GriddedData_T
   integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
   character (len=MAXLISTLENGTH) :: gridlist
   character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+  character (len=MAXLISTLENGTH), DIMENSION(1) :: dimlists
   character (len=MAXLISTLENGTH) :: fieldlist
   integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
   character (len=MAXNAMELENGTH) :: gridname, actual_field_name, the_dim
-  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType, start, stride
-  INTEGER                        :: our_rank, size
+  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberTypes, start, stride
+  INTEGER                        :: our_rank, size, numberType
 	!                                  These start out initialized to one
   INTEGER                        :: nlon=1, nlat=1, nlev=1, ntime=1
   INTEGER, PARAMETER             :: i_longitude=1
@@ -1204,86 +1220,60 @@ END TYPE GriddedData_T
 
   ! - - - begin - - -
 
+    error = 0
   file_id = gdopen(FileName, DFACC_RDONLY)
 
   IF (file_id < 0) THEN
-!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"Could not open "// FileName//" "//mnemonic//" "//msg)
-	CALL announce_error(MLSMSG_Error, "Could not open "// FileName)
+	CALL announce_error(lcf_where, "Could not open "// FileName)
   END IF
 
 ! Find list of grid names on this file
   inq_success = gdinqgrid(FileName, gridlist, strbufsize)
   IF (inq_success < 0) THEN
-!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"Could not inquire gridlist "// FileName//" "//mnemonic//" "//msg)
-	CALL announce_error(MLSMSG_Error, "Could not inquire gridlist "// FileName)
+	CALL announce_error(lcf_where, "Could not inquire gridlist "// FileName)
   END IF
 
 ! Find grid name corresponding to the GRIDORDER'th one
 	ngrids = NumStringElements(gridlist, COUNTEMPTY)
 	
 	IF(ngrids <= 0) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"NumStringElements of gridlist <= 0")
-		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist <= 0")
+		CALL announce_error(lcf_where, "NumStringElements of gridlist <= 0")
 	ELSEIF(ngrids /= inq_success) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"NumStringElements of gridlist < GRIDORDER")
-		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist /= inq_success")
+		CALL announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
 	ELSEIF(ngrids < GRIDORDER) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"NumStringElements of gridlist < GRIDORDER")
-		CALL announce_error(MLSMSG_Error, "NumStringElements of gridlist < GRIDORDER")
+		CALL announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
 	ENDIF
 	
 	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
 
   gd_id = gdattach(file_id, gridname)
   IF (gd_id < 0) THEN
-!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!               "Could not attach "//FileName//" "//mnemonic//" "//msg)
-		CALL announce_error(MLSMSG_Error, "Could not attach "//FileName)
+		CALL announce_error(lcf_where, "Could not attach "//FileName)
   END IF
 
 ! Now find dimsize(), dimname(), etc.
 	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
 
 	IF(nentries <= 0) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"nentries of gd_id <= 0")
-		CALL announce_error(MLSMSG_Error, "nentries of gd_id <= 0")
+		CALL announce_error(lcf_where, "nentries of gd_id <= 0")
 	ELSEIF(nentries > NENTRIESMAX) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"nentries of gd_id > NENTRIESMAX")
-		CALL announce_error(MLSMSG_Error, "nentries of gd_id > NENTRIESMAX")
+		CALL announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
 	ENDIF
 
 	ndims = gdinqdims(gd_id, dimlist, dims)
 
 	IF(ndims <= 0) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"ndims of gd_id <= 0")
-		CALL announce_error(MLSMSG_Error, "ndims of gd_id <= 0")
+		CALL announce_error(lcf_where, "ndims of gd_id <= 0")
 	ELSEIF(ndims > NENTRIESMAX) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"ndims of gd_id > NENTRIESMAX")
-		CALL announce_error(MLSMSG_Error, "ndims of gd_id > NENTRIESMAX")
+		CALL announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
 	ENDIF
 
-	nfields = gdinqflds(gd_id, fieldlist, rank, numberType)
+	nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
 
 	IF(nfields <= 0) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"nfields of gd_id <= 0")
-		CALL announce_error(MLSMSG_Error, "nfields of gd_id <= 0")
+		CALL announce_error(lcf_where, "nfields of gd_id <= 0")
 	ELSEIF(nfields > NENTRIESMAX) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"nfields of gd_id > NENTRIESMAX")
-		CALL announce_error(MLSMSG_Error, "nfields of gd_id > NENTRIESMAX")
+		CALL announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
 	ENDIF
 	
 	IF(.NOT. CASESENSITIVE) THEN
@@ -1307,43 +1297,20 @@ END TYPE GriddedData_T
 
 	! Now find the rank of our field
 	
-	our_rank = GetIntHashElement(fieldlist, rank, actual_field_name, status, &
-  & countEmpty)
-  IF (status /= 0) THEN
-		CALL announce_error(MLSMSG_Error, &
-		& actual_field_name // " not in " // fieldlist)
-  END IF
+	inq_success = gdfldinfo(gd_id, TRIM(actual_field_name), our_rank, dims, &
+	& numbertype, dimlists(1))
 
-	! The following accounts for possibly different ordering between dimlist
-	! and actual_dim_list
-	DO i=1, our_rank
-		CALL GetStringElement(actual_dim_list, the_dim, i, countEmpty)
-		size = gddiminfo(gd_id, the_dim)
-	  IF (size <= 0) THEN
-			CALL announce_error(MLSMSG_Error, &
-			& the_dim // " size <= 0")
-	  END IF
-	  
-        select case ( i )
-        case ( i_longitude )
-          nlon=size
-        case ( i_latitude )
-          nlat=size
-        case ( i_vertical )
-          nlev=size
-        case ( i_time )
-          ntime=size
-        end select
-		  
-		  the_g_data%noLats = nlat
-		  the_g_data%noLons = nlon
-		  the_g_data%noLsts = ntime
-		  the_g_data%noSzas = nlev
-		  
-		  the_g_data%quantityName = actual_field_name
-	  
-	ENDDO
+	dimlist = TRIM(dimlists(1))
 
+	nlon = dims(1)
+	nlat = dims(2)
+	nlev = dims(3)
+	ntime = dims(4)
+		  
+	the_g_data%quantityName = actual_field_name
+	the_g_data%description = description
+	the_g_data%verticalCoordinate = v_type
+	  
 	the_g_data%noLons = nlon
 	the_g_data%noLats = nlat
 	the_g_data%noHeights = nlev
@@ -1495,7 +1462,8 @@ END TYPE GriddedData_T
 
 !        call read_dao ( DAOphysicalFilename, vname, data_array )
 			IF(returnStatus > 0) THEN
-				call ReadGriddedData ( DAOphysicalFilename, aprioriData(returnStatus) )
+				call ReadGriddedData ( DAOphysicalFilename, root, &
+				& 'dao', v_is_pressure, aprioriData(returnStatus) )
 			ENDIF
 
       end if
@@ -1521,7 +1489,7 @@ END TYPE GriddedData_T
 	 INTEGER, INTENT(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
 
     ! Local Variables
-    character (len=80) :: MSG, MNEMONIC
+!    character (len=80) :: MSG, MNEMONIC
     integer :: NCEPFileHandle, NCEP_Version
     character (len=132) :: NCEPphysicalFilename
     type (GriddedData_T):: QTY
@@ -1547,7 +1515,8 @@ END TYPE GriddedData_T
 
 !        call read_ncep ( NCEPphysicalFilename, data_array )
 			IF(returnStatus > 0) THEN
-				call ReadGriddedData ( NCEPphysicalFilename, aprioriData(returnStatus) )
+				call ReadGriddedData ( NCEPphysicalFilename, root, &
+				& 'ncep', v_is_pressure, aprioriData(returnStatus) )
 			ENDIF
 
       end if
@@ -1558,16 +1527,16 @@ END TYPE GriddedData_T
 !===========================
 
   ! ------------------------------------------------  announce_error  -----
-  subroutine announce_error ( level, full_message, use_toolkit )
+  subroutine announce_error ( lcf_where, full_message, use_toolkit )
   
    ! Arguments
 	
-	integer, intent(in)    :: level
-	logical, intent(in), optional :: use_toolkit
+	integer, intent(in)    :: lcf_where
 	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
 	! Local
-  character (len=80) :: msg, mnemonic
-  integer :: status
+!  character (len=80) :: msg, mnemonic
+!  integer :: status
   logical :: just_print_it
   logical, parameter :: default_output_by_toolkit = .true.
 	
@@ -1583,15 +1552,29 @@ END TYPE GriddedData_T
 !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
 !    CALL MLSMessage (level, ModuleName, &
 !              &trim(full_message)//" "//mnemonic//" "//msg)
-		CALL output("An error of level ", advance='no', &
-		& from_where=ModuleName)
-		CALL output(level, advance='no' )
-		CALL output(" occurred; more specifically", advance='yes', &
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
 		& from_where=ModuleName)
 		CALL output(trim(full_message), advance='yes', &
 		& from_where=ModuleName)
 	else
-		print*, '***Error: level ', level, ' in module ', ModuleName
+		print*, '***Error in module ', ModuleName
 		print*, trim(full_message)
 	endif
 
@@ -1605,6 +1588,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.8  2001/03/15 00:37:13  pwagner
+! Still not complete; missing gdrdfld
+!
 ! Revision 2.7  2001/03/14 00:32:47  pwagner
 ! More changes--still wrong, though
 !
