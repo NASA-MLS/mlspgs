@@ -45,8 +45,9 @@ end Fill
 
 ;; Do a sids calculation
 begin Retrieve
+  !ifdef(flagSkipAdvancedSids,{},{
   sids, fwdModelIn=state, fwdModelOut=r1aY, forwardModel=[r1aSetupModel]
-  !ifdef(flagSkipHR,{},{sids, fwdModelIn=state, fwdModelOut=r1aYHR, forwardModel=[r1aSetupModelHR]})
+  !ifdef(flagSkipHR,{},{sids, fwdModelIn=state, fwdModelOut=r1aYHR, forwardModel=[r1aSetupModelHR]})})
 end Retrieve
 
 ;; Now we construct the advanced linear models to use these
