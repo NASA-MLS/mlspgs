@@ -23,7 +23,8 @@ module WriteMetadata ! Populate metadata and write it out
     & InputInputPointer, WriteInputPointer, WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
-    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET !, &
+    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
+    & WARNIFCANTPGSMETREMOVE !, &
 !    & PGS_PC_getconfigdata, &
 !    & PGS_MET_init, PGS_MET_setattr_d, &
 !      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
@@ -748,6 +749,11 @@ contains
       end if
 
       returnStatus = pgs_met_remove() 
+      if (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+        write(sval, *) returnStatus
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(sval) )
+      endif          
     endif
 
   end subroutine Third_grouping
@@ -887,10 +893,13 @@ contains
      ! & hdfVersion, isHDFEOS=isHDFEOS)
 
     returnStatus = pgs_met_remove() 
-    if ( returnStatus /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata removal in populate_metadata_std.", &
-        & error_number=hdfReturn) 
+    if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+        ! call announce_error ( 0, &
+        ! & "Error: metadata removal in populate_metadata_std.", &
+        ! & error_number=hdfReturn) 
+        write(errmsg, *) returnStatus
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(errmsg) )
     end if
 
     if ( present(metadata_error)) metadata_error=module_error
@@ -1035,10 +1044,13 @@ contains
       ! & hdfVersion, isHDFEOS)
 
     returnStatus = pgs_met_remove() 
-    if ( returnStatus /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata removal in populate_metadata_oth.", &
-        & error_number=hdfReturn) 
+    if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+        ! call announce_error ( 0, &
+        ! & "Error: metadata removal in populate_metadata_oth.", &
+        ! & error_number=hdfReturn) 
+        write(errmsg, *) returnStatus
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(errmsg) )
     end if
 
     if ( present(metadata_error)) metadata_error=module_error
@@ -1357,10 +1369,15 @@ contains
     end if
 
     result = pgs_met_remove()
-    if ( result /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata removal in WriteMetaLog.", &
-        & error_number=result) 
+    if ( result /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+        ! call announce_error ( 0, &
+        ! & "Error: metadata removal in WriteMetaLog.", &
+        ! & error_number=result) 
+      if (result /= PGS_S_SUCCESS) THEN 
+        write(sval, *) result
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+              "Calling pgs_met_remove() failed with value " // trim(sval) )
+      endif          
     end if
 
     if ( present(metadata_error)) metadata_error=module_error
@@ -1573,6 +1590,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.41  2003/03/15 00:15:52  pwagner
+! Wont quit if pgs_met_remove returns non-zero value
+!
 ! Revision 2.40  2003/03/11 00:21:36  pwagner
 ! Interfaces fit new WritePCF2Hdr flixibility
 !
