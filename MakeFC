@@ -999,6 +999,7 @@ internalmftests:
 			fi ; \
 			if [ -f MakeFC ] ; then \
 				$(LOOKS_LIKE_line) ;\
+            $(MAKE) -f $(MakeFName) $(SUBDIRS_UPDATE); \
 			fi ; \
 		../../$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
          -cf "../../$(CONFDIR)/$(MLSCFILE)" ; \
@@ -1056,6 +1057,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.81  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 1.80  2003/02/03 23:56:09  pwagner
 # New install for l1; separate installs available for each level
 #
