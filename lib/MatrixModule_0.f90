@@ -19,12 +19,14 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor, &
     & CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale, &
     & ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify, &
-    & DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, M_Full, &
-    & MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0, &
-    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
-    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
-    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
-    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
+    & DestroyBlock, DestroyBlock_0, Dump, GetDiagonal, GetDiagonal_0, &
+    & GetVectorFromColumn, GetVectorFromColumn_0,  M_Absent, M_Banded, &
+    & M_Column_Sparse, M_Full, MatrixElement_T, MaxAbsVal, MaxAbsVal_0, &
+    & MinDiag, MinDiag_0, MultiplyMatrixBlocks, MultiplyMatrixVector, &
+    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
+    & operator(.TX.), RowScale, RowScale_0, ScaleBlock, SolveCholesky, &
+    & SolveCholeskyM_0, SolveCholeskyV_0, Sparsify, UpdateDiagonal, &
+    & UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -48,8 +50,20 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure CreateBlock_0
   end interface
 
+  interface DestroyBlock
+    module procedure DestroyBlock_0
+  end interface
+
   interface DUMP
     module procedure DUMP_MATRIX_BLOCK
+  end interface
+
+  interface GetDiagonal
+    module procedure GetDiagonal_0
+  end interface
+
+  interface GetVectorFromColumn
+    module procedure GetVectorFromColumn_0
   end interface
 
   interface MaxAbsVal
@@ -621,15 +635,80 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine DENSIFY
 
-  ! -----------------------------------------------  DestroyBlock  -----
-  subroutine DestroyBlock ( B )
+  ! ---------------------------------------------  DestroyBlock_0  -----
+  subroutine DestroyBlock_0 ( B )
   ! Deallocate the pointer components of the matrix block B
     type(MatrixElement_T), intent(inout) :: B
     call deallocate_test ( b%r1, "b%r1", ModuleName )
     call deallocate_test ( b%r2, "b%r2", ModuleName )
     call deallocate_test ( b%values, "b%values", ModuleName )
     b%kind = M_Absent
-  end subroutine DestroyBlock
+  end subroutine DestroyBlock_0
+
+  ! ----------------------------------------------  GetDiagonal_0  -----
+  subroutine GetDiagonal_0 ( B, X )
+  ! Get the diagonal elements of B into X
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(out) :: X
+
+    integer :: I, J, N
+
+    n = min(b%nrows,b%ncols)
+    if ( n > size(x) ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Array "X" to small in GetDiagonal_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r8
+    case ( M_Banded )
+      do i = 1, n
+        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i+1) - b%r2(i) > i ) then
+          x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
+        else
+          x(i) = 0.0_r8
+        end if
+      end do
+    case ( M_Column_Sparse )
+      x = 0.0_r8
+      do j = b%r1(i-1)+1, b%r1(i)
+        if ( b%r2(j) == i ) then
+          x(i) = b%values(j,1)
+          exit ! j loop
+        end if
+        if ( b%r2(j) > i ) exit ! j loop
+      end do ! j
+    case ( M_Full )
+      do i = 1, n
+        x(i) = b%values(i,i)
+      end do
+    end select
+  end subroutine GetDiagonal_0
+
+  ! --------------------------------------  GetVectorFromColumn_0  -----
+  subroutine GetVectorFromColumn_0 ( B, Column, X )
+  ! Fill the vector X from "Column" of B.
+    type(MatrixElement_T), intent(in) :: B
+    integer, intent(in) :: Column
+    real(r8), dimension(:), intent(out) :: X
+
+    if ( column < 1 .or. column > b%ncols ) call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
+    if ( size(x) < b%nrows )  call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r8
+    case ( M_Banded )
+      x = 0.0_r8
+      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
+        b%values(b%r2(column-1)+1:b%r2(column),column)
+    case ( M_Column_Sparse )
+      x = 0.0_r8
+      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
+        b%values(b%r1(column-1)+1:b%r1(column),column)
+    case ( M_Full )
+      x(1:b%nrows) = b%values(1:b%nrows,column)
+    end select
+  end subroutine GetVectorFromColumn_0
 
   ! ------------------------------------------------  MaxAbsVal_0  -----
   real(r8) function MaxAbsVal_0 ( B )
@@ -1167,6 +1246,13 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine RowScale_0
 
+  ! -------------------------------------------------  ScaleBlock  -----
+  subroutine ScaleBlock ( Z, A )        ! Z := A * Z, where A is scalar
+    type(matrixElement_T), intent(inout) :: Z
+    real(r8), intent(in) :: A
+    z%values = a * z%values
+  end subroutine ScaleBlock
+
   ! -------------------------------------------  SolveCholeskyM_0  -----
   subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
@@ -1594,6 +1680,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.10  2001/01/26 19:00:01  vsnyder
+! Periodic commit
+!
 ! Revision 2.9  2001/01/19 23:50:45  vsnyder
 ! Periodic commit
 !
