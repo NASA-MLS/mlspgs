@@ -222,7 +222,7 @@ contains ! =====     Public Procedures     =============================
           
         case ( l_climatology )
           
-          CALL READ_CLIMATOLOGY(FileNameString, &
+          CALL READ_CLIMATOLOGY(FileNameString, son, &
             & aprioriData, mlspcf_l2clim_start, mlspcf_l2clim_end)
           
         case default ! Can't get here if tree_checker worked correctly
@@ -242,6 +242,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.12  2001/03/21 00:46:08  pwagner
+! Passes son to READ_CLIMATOLOGY
+!
 ! Revision 2.11  2001/03/15 21:38:00  pwagner
 ! Gets v_is_pressure from GriddedData
 !
