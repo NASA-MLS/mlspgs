@@ -104,7 +104,6 @@ contains
     !--------------------------------------------
     real(r8), dimension(:,:), pointer :: WC
     real(r8), dimension(:), pointer :: Scat_ang
-    real(r8), dimension(:), pointer :: temp_prof
     real(r8), dimension(:), pointer :: gph_prof
     integer, dimension(:), pointer :: IPSD
     !--------------------------------------------
@@ -558,7 +557,7 @@ contains
       & radiances, RadV, ref_corr, req_out, salb_path, scat_alb%values, &
       & scat_ang, scat_src%values, sps_beta_dbeta_c, sps_beta_dbeta_f, &
       & sps_path, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
-      & tan_phi, tan_temp, tau, tau_pol, temp_prof, t_der_path_flags, t_glgrid, &
+      & tan_phi, tan_temp, tau, tau_pol, t_der_path_flags, t_glgrid, &
       & t_path, t_path_c, t_path_f, t_path_m, t_path_p, true_path_flags, &
       & tscat_path, t_script, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
@@ -771,14 +770,6 @@ contains
       !make sure we have at least two molecules h2o and o3.
         call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
       end if
-
-      call allocate_test ( temp_prof, n_t_zeta, 'temp_prof', moduleName )
-      call allocate_test ( gph_prof, n_t_zeta, 'gph_prof', moduleName )
-     
-      do i=1, n_t_zeta
-        temp_prof(i) = temp%values(i,inst)
-        gph_prof(i)  = GPH%values(i,inst)
-      enddo
 
     end if ! end of cloud block
 
@@ -1680,13 +1671,13 @@ contains
 
          if ( FwdModelConf%incl_cld ) then
 !          if ( do_cld ) then !JJ
-            ! Compute Scattering source function based on temp_prof at all
+            ! Compute Scattering source function based on temp prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
 
             if (ptg_i .eq. 1) then      
 
-              call T_scat ( temp_prof, Frq, gph_prof,                        & 
+              call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst),    & 
                  & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
                  & fwdModelConf%num_scattering_angles,                       &
                  & fwdModelConf%num_azimuth_angles,                          &
@@ -3078,6 +3069,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.204  2004/04/02 00:59:24  vsnyder
+! Get catalog from slabs structure
+!
 ! Revision 2.203  2004/03/31 20:35:26  jonathan
 ! bug fix in handling clouds
 !
