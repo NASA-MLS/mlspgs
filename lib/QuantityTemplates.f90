@@ -12,7 +12,6 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSCommon, only: NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignalNomenclature, only: MLSSignal_T
   use Intrinsic, only: L_None
 
   implicit none
@@ -126,7 +125,8 @@ module QuantityTemplates         ! Quantities within vectors
 
     real(r8) :: lo     ! Local oscillator (optional)
 
-    type (MLSSignal_T), dimension(:), pointer :: signal => NULL() ! (optional)
+    integer :: signal                   ! Index into signals database
+
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
     ! This is given here if needed.
@@ -380,6 +380,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.5  2001/02/23 17:47:01  livesey
+! Nullified pointers.
+!
 ! Revision 2.4  2001/02/14 00:12:34  livesey
 ! Removed firstIndexChannel
 !
