@@ -17,29 +17,31 @@ module SYMBOL_TYPES
   integer, parameter :: T_NULL = 0                ! MUST be present and first
   integer, parameter :: T_LEFT_PARENTHESIS = 1
   integer, parameter :: T_RIGHT_PARENTHESIS = 2
-  integer, parameter :: T_PLUS = 3
-  integer, parameter :: T_MINUS = 4
-  integer, parameter :: T_STAR = 5
-  integer, parameter :: T_SLASH = 6
-  integer, parameter :: T_DOT = 7
-  integer, parameter :: T_COLON = 8
-  integer, parameter :: T_EQUAL = 9
-  integer, parameter :: T_COMMA = 10
-  integer, parameter :: T_BEGIN = 11              ! BEGIN
-  integer, parameter :: T_END = 12                ! END
-  integer, parameter :: T_AND = 13                ! AND
-  integer, parameter :: T_OR = 14                 ! OR
-  integer, parameter :: T_END_OF_INPUT = 15       ! <EOF>
-  integer, parameter :: T_END_OF_STMT = 16        ! <EOS>
-  integer, parameter :: T_IDENTIFIER = 17         ! <IDENTIFIER>
-  integer, parameter :: T_NUMBER = 18             ! <NUMBER>
-  integer, parameter :: T_STRING = 19             ! <STRING>
-  integer, parameter :: T_UNK_OP = 20             ! unknown operator
-  integer, parameter :: T_UNK_PUN = 21            ! unknown punctuator
-  integer, parameter :: T_UNK_CH = 22             ! unknown character
-  integer, parameter :: T_INC_NUM = 23            ! incomplete number
-  integer, parameter :: T_INC_STR = 24            ! incomplete string
-  integer, parameter :: T_AFT_CONT = 25           ! junk after continuation
+  integer, parameter :: T_LEFT_BRACKET = 3
+  integer, parameter :: T_RIGHT_BRACKET = 4
+  integer, parameter :: T_PLUS = 5
+  integer, parameter :: T_MINUS = 6
+  integer, parameter :: T_STAR = 7
+  integer, parameter :: T_SLASH = 8
+  integer, parameter :: T_DOT = 9
+  integer, parameter :: T_COLON = 10
+  integer, parameter :: T_EQUAL = 11
+  integer, parameter :: T_COMMA = 12
+  integer, parameter :: T_BEGIN = 13              ! BEGIN
+  integer, parameter :: T_END = 14                ! END
+  integer, parameter :: T_AND = 15                ! AND
+  integer, parameter :: T_OR = 16                 ! OR
+  integer, parameter :: T_END_OF_INPUT = 17       ! <EOF>
+  integer, parameter :: T_END_OF_STMT = 18        ! <EOS>
+  integer, parameter :: T_IDENTIFIER = 19         ! <IDENTIFIER>
+  integer, parameter :: T_NUMBER = 20             ! <NUMBER>
+  integer, parameter :: T_STRING = 21             ! <STRING>
+  integer, parameter :: T_UNK_OP = 22             ! unknown operator
+  integer, parameter :: T_UNK_PUN = 23            ! unknown punctuator
+  integer, parameter :: T_UNK_CH = 24             ! unknown character
+  integer, parameter :: T_INC_NUM = 25            ! incomplete number
+  integer, parameter :: T_INC_STR = 26            ! incomplete string
+  integer, parameter :: T_AFT_CONT = 27           ! junk after continuation
 
 ! The parameters T_LAST_TERMINAL, MIN_PSEUDO, MAX_PSEUDO and CASELESS_LOOK
 ! MUST be defined.
@@ -78,14 +80,14 @@ module SYMBOL_TYPES
 ! The array TERM_TYPES gives the terminal type of each class of terminal.
 ! It must be defined.
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
-  !  t_null    (         )         +         -         *         / 
+  !  t_null    (         )         [         ]         +         -
   (/ object,   def_pun,  def_pun,  def_op,   def_op,   def_op,   def_op,   &
-  !  .         :         =         ,         begin     end       and
-     def_op,   def_op,   def_op,   def_pun,  res_word, res_word, res_word, &
-  !  or        <eof>     <eos>     <ident>   <numcon>  <string>  unk_op
-     res_word, object,   object,   ident,    numcon,   string,   unk_op,   &
-  !  unk_pun     unk_ch    inc_num   inc_str   junk
-     unk_pun,    unk_ch,   inc_num,  inc_str,  aft_cont /)
+  !  *         /         .         :         =         ,         begin
+     def_op,   def_op,   def_op,   def_op,   def_op,   def_pun,  res_word, &
+  !  end       and       or        <eof>     <eos>     <ident>   <numcon>
+     res_word, res_word, res_word, object,   object,   ident,    numcon,   &
+  !  <string>  unk_op    unk_pun     unk_ch    inc_num   inc_str   junk
+     string,   unk_op,   unk_pun,    unk_ch,   inc_num,  inc_str,  aft_cont /)
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -106,6 +108,8 @@ contains
     case ( t_null );              call add_char ( '' )
     case ( t_left_parenthesis );  call add_char ( '(' )
     case ( t_right_parenthesis ); call add_char ( ')' )
+    case ( t_left_bracket );      call add_char ( '[' )
+    case ( t_right_bracket );     call add_char ( ']' )
     case ( t_plus );              call add_char ( '+' )
     case ( t_minus );             call add_char ( '-' )
     case ( t_star );              call add_char ( '*' )
@@ -166,6 +170,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.2  2000/11/30 00:23:10  vsnyder
+! Implement [] syntax for arrays
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
