@@ -140,8 +140,14 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
   integer, parameter :: F_WIDTH               = f_weight + 1
   integer, parameter :: F_WIDTHS              = f_width + 1
+  !??? Fields from here may be temporary for driving the forward model
   integer, parameter :: F_BILL                = f_widths + 1  !???
-  integer, parameter :: F_ZVI                 = f_bill + 1    !???
+  integer, parameter :: F_ATMOS_DER           = f_bill + 1    !???
+  integer, parameter :: F_DO_CONV             = f_atmos_der+1 !???
+  integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1 !???
+  integer, parameter :: F_SPECT_DER           = f_do_freq_avg+1 !???
+  integer, parameter :: F_TEMP_DER            = f_spect_der + 1 !???
+  integer, parameter :: F_ZVI                 = f_temp_der+1  !???
   integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
@@ -229,7 +235,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CREATE             = s_band + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
-  integer, parameter :: S_GRIDDED            = s_forwardModel + 1
+  integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1 !???
+  integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
   integer, parameter :: S_L2GP               = s_hgrid + 1
   integer, parameter :: S_L2AUX              = s_l2gp + 1
@@ -240,7 +247,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_QUANTITY           = s_output + 1
   integer, parameter :: S_RADIOMETER         = s_quantity + 1
   integer, parameter :: S_RETRIEVE           = s_radiometer + 1
-  integer, parameter :: S_SIGNAL             = s_retrieve + 1
+  integer, parameter :: S_SIDS               = s_retrieve + 1    !??? for Zvi
+  integer, parameter :: S_SIGNAL             = s_sids + 1
   integer, parameter :: S_SUBSET             = s_signal + 1
   integer, parameter :: S_SPECTROMETERTYPE   = s_subset + 1
   integer, parameter :: S_TEMPLATE           = s_spectrometerType + 1
@@ -249,7 +257,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTOR             = s_tpfill + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
-  integer, parameter :: S_L2LOAD             = s_vgrid + 1     !???
+  integer, parameter :: S_L2LOAD             = s_vgrid + 1       !??? for Zvi
   integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_l2load
 ! integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
   integer :: SPEC_INDICES(spec_first:spec_last)
@@ -449,8 +457,13 @@ contains ! =====     Public procedures     =============================
     field_indices(f_weight) =              add_ident ( 'weight' )
     field_indices(f_width) =               add_ident ( 'width' )
     field_indices(f_widths) =              add_ident ( 'widths' )
-    field_indices(f_bill) =                add_ident ( 'bill' ) !???
-    field_indices(f_zvi) =                 add_ident ( 'zvi' )  !???
+    field_indices(f_bill) =                add_ident ( 'bill' )        !???
+    field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )   !???
+    field_indices(f_do_conv) =             add_ident ( 'conv' )        !???
+    field_indices(f_do_freq_avg) =         add_ident ( 'freq_avg' )    !???
+    field_indices(f_spect_der) =           add_ident ( 'spect_der' )   !???
+    field_indices(f_temp_der) =            add_ident ( 'temp_der' )    !???
+    field_indices(f_zvi) =                 add_ident ( 'zvi' )         !???
     ! Put parameter names into the symbol table
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -484,6 +497,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
+    spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
@@ -504,7 +518,8 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
-    spec_indices(s_l2load) =               add_ident ( 'l2load' )   !???
+    spec_indices(s_l2load) =               add_ident ( 'l2load' )!??? for Zvi
+    spec_indices(s_sids) =                 add_ident ( 'sids' )  !??? for Zvi
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -751,6 +766,14 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              ndp+n_spec_def, &
+      begin, s+s_forwardModelGlobal, &                                !???
+             begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &     !???
+             begin, f+f_do_conv, t+t_boolean, n+n_field_type, &       !???
+             begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &   !???
+             begin, f+f_frequency, t+t_numeric, n+n_field_type, &     !???
+             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &     !???
+             begin, f+f_temp_der, t+t_boolean, n+n_field_type, &      !???
+             ndp+n_spec_def, &                                        !???
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
@@ -792,7 +815,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def, &
-             s+s_l2load, &                                   !???
+             s+s_time, &
+             s+s_l2load, s+s_forwardModelGlobal, &           !???
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, n+n_section, &
@@ -815,7 +839,7 @@ contains ! =====     Public procedures     =============================
                        s+s_fill, s+s_matrix, &
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
-             s+s_subset, n+n_section, &
+             s+s_subset, s+s_sids, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
@@ -835,6 +859,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.38  2001/03/07 22:46:04  vsnyder
+! Add temporary stuff for Zvi's "l2_load", which will wither away.
+!
 ! Revision 2.37  2001/03/07 22:41:55  livesey
 ! Reworked readapriori section
 !
