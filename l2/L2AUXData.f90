@@ -71,7 +71,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  SetupNewL2AUXRecord   -----
-  subroutine SetupNewL2AUXRecord ( dimensionFamilies, dimSizes, l2aux )
+  subroutine SetupNewL2AUXRecord ( dimensionFamilies, dimSizes, dimStarts, l2aux )
 
     ! This first routine sets up the arrays for an l2aux datatype.
     ! The user supplies a set of three dimensionFamilies (e.g. l_maf)
@@ -81,20 +81,25 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, dimension(L2AUXRank), intent(in) :: dimensionFamilies
     integer, dimension(L2AUXRank), intent(in) :: dimSizes
+    integer, dimension(L2AUXRank), intent(in) :: dimStarts
     type (L2AUXData_T), intent(out) :: l2aux
 
     ! Local variables
     integer :: dimIndex
     integer :: status
+    integer, dimension(L2AUXRank) :: dimEnds
 
     ! Fill the dimensions data structure
     l2aux%dimensions%dimensionFamily = dimensionFamilies
     l2aux%dimensions%noValues = dimSizes
 
+    dimEnds = dimStarts + max(1,dimSizes) - 1
+
     ! Allocate the values for each dimension
     do dimIndex = 1, L2AUXRank
       if ( dimensionFamilies(dimIndex)/=L_None ) then
-        allocate (l2aux%dimensions(dimIndex)%values(dimSizes(dimIndex)), &
+        allocate (l2aux%dimensions(dimIndex)%values( &
+          & dimStarts(dimIndex):dimEnds(dimIndex)), &
           & STAT=status)
         if ( status/=0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
           & MLSMSG_Allocate // "l2aux dimension values" )
@@ -106,9 +111,9 @@ contains ! =====     Public Procedures     =============================
     ! Allocate the values for the data itself
 
     allocate ( l2aux%values( &
-         & max(1,l2aux%dimensions(1)%noValues), &
-         & max(1,l2aux%dimensions(2)%noValues), &
-         & max(1,l2aux%dimensions(3)%noValues)), STAT=status)
+      & dimStarts(1):dimEnds(1), &
+      & dimStarts(2):dimEnds(2), &
+      & dimStarts(3):dimEnds(3)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate// "l2aux values" )
 
@@ -336,7 +341,7 @@ contains ! =====     Public Procedures     =============================
     enddo
     ! Allocate result
 
-    call SetupNewl2auxRecord ( dim_families, dim_sizes, l2aux )
+    call SetupNewl2auxRecord ( dim_families, dim_sizes, (/1,1,1/), l2aux )
 
     ! Allocate temporary arrays
 
@@ -497,6 +502,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.15  2001/05/12 00:18:40  livesey
+! Tidied up issues with array bounds etc.
+!
 ! Revision 2.14  2001/05/03 20:32:19  vsnyder
 ! Cosmetic changes
 !

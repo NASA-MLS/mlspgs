@@ -68,6 +68,7 @@ module HGrid                    ! Horizontal grid information
   integer, private, parameter :: NoFraction = LengthUnitMessage + 1
   integer, private, parameter :: NoHeight = NoFraction + 1
   integer, private, parameter :: UnitlessMessage = NoHeight + 1
+  integer, private, parameter :: NoModule = UnitlessMessage + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -180,9 +181,13 @@ contains ! =====     Public Procedures     =============================
     select case (hGridType)
 
     case ( l_height, l_fractional ) ! ----- Fractional or Height ------
-      call CreateCommonHGrids ( l1bInfo, hGridType, chunk, &
-        & got_field, root, height, fraction, interpolationFactor, &
-        & instrumentModuleName, hGrid )
+      if (.not. got_field(f_module) ) then
+        call announce_error ( root, NoModule )
+      else
+        call CreateCommonHGrids ( l1bInfo, hGridType, chunk, &
+          & got_field, root, height, fraction, interpolationFactor, &
+          & instrumentModuleName, hGrid )
+      end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
       ! For explicit hGrids, do things differently
@@ -521,6 +526,8 @@ contains ! =====     Public Procedures     =============================
         & advance='yes' )
     case ( noHeight )
       call output ( "TYPE = HEIGHT but no height is specified", advance='yes' )
+    case ( noModule )
+      call output ( "Instrument module must be specified", advance='yes' )
     case ( unitlessMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -534,6 +541,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.15  2001/05/12 00:17:24  livesey
+! Brief tidy up of constructing from l2gp.  Tree walker currently prevents
+! this however.
+!
 ! Revision 2.14  2001/05/03 20:32:19  vsnyder
 ! Cosmetic changes
 !
