@@ -9,11 +9,14 @@
 #file still "haunts" the binary-directory.
 #
 #Usage:
-#ghostbuster.sh arg1 arg2 [arg3 ..]
+#ghostbuster.sh [-lib] arg1 arg2 [arg3 ..]
 #where argn is a path, either absolute or relative to current working directory
 #Result:
 #rm the list of such files, unless it is empty in which case does nothing
-# 
+#
+#
+#Options:
+# -lib   if this flag is present, executes "rm -f *.a" if any ghosts found
 #
 # Function to prompt for user response
 #
@@ -44,6 +47,13 @@ PRINT_TOO_MUCH=0
 #
 #----------------------- Implementation -----------------------
 #
+if [ "$1" = "-lib" ] ; then
+   rm_any_libs="yes"
+   shift
+else
+   rm_any_libs="no"
+fi
+
 	if [ $# -lt "2" ]
 	then
 		echo " Usage: ghostbuster.sh arg1 arg2 [arg3 ..] "
@@ -119,6 +129,10 @@ PRINT_TOO_MUCH=0
 	   then
          	echo cd "$1"
          	echo "rm -f $the_ghosts"
+	        if [ "$rm_any_libs" = "yes" ]
+	        then
+             echo	"rm -f *.a"
+   	    fi
       else
          	echo "Sorry, the ghosts are away--may I take a message?"
 	   fi
@@ -129,8 +143,15 @@ PRINT_TOO_MUCH=0
 	then
         	cd "$1"
         	rm -f $the_ghosts
+	   if [ "$rm_any_libs" = "yes" ]
+	   then
+        	rm -f *.a
+   	fi
 	fi
 exit
 # $Log$
+# Revision 1.1  2001/05/01 17:03:31  pwagner
+# First commit
+#
 #
 
