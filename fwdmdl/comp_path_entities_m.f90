@@ -75,14 +75,25 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
   ENDIF
 
   DO l = 1, no_mmaf
-    lmin = max(1,l-phiWindow)
+    lmin = max(1,l-phiWindow/2)
     lmax = min(l+phiWindow/2,no_mmaf)
+    print*,'Window:',lmin,lmax
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
-      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
+! Zvi's original version
+!       CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
+!            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
+!            dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
+!            ppath,dhdzp,phi_eta,klo,khi,Ier)
+! Nathaniels attempt to fix...
+      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,lmax-lmin+1,no_t,h,&
            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
-           dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
-           ppath,dhdzp,phi_eta,klo,khi,Ier)
+           dhdz_glgrid(1:,lmin:lmax),t_phi_basis(lmin:lmax),zpath,hpath,tpath, &
+           ppath,dhdzp,phi_eta(:,lmin:lmax),klo,khi,Ier)
+! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs and yet
+! needs the lmin:lmax for the second dimension 
+! (it crashes on line 224 of vert to path if it doesn't have the
+! same size as h_a). Is phi_eta really dimensioned no_phi_t?
       IF(ier /= 0) RETURN
       DEALLOCATE(z_path(k,l)%values, h_path(k,l)%values,   &
                  t_path(k,l)%values, phi_path(k,l)%values, &
@@ -117,6 +128,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.19  2001/04/12 01:02:11  zvi
+! Adding phiwindow to calling seq.
+!
 ! Revision 1.18  2001/04/07 23:51:17  zvi
 ! New code - move the spsfunc & refraction along the path to get_path_spsfunc
 !
