@@ -142,6 +142,7 @@ number
 operational
 opticalDepth
 opticalDepthCutoff
+orbitInclination
 origin
 outputCovariance
 outputOverlaps
@@ -153,6 +154,7 @@ packed
 perturbation
 phaseName
 phiWindow
+phiTan
 pointingGrids
 precision
 precisionFactor
@@ -235,6 +237,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.40  2002/06/26 01:26:30  livesey
+# Added 2D pressure guessing stuff
+#
 # Revision 2.39  2002/06/12 17:58:11  livesey
 # Added ascii
 #
