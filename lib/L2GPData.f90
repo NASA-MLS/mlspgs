@@ -35,8 +35,8 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
    CHARACTER (len=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
    CHARACTER (len=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'status'
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'quality'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'Status'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'Quality'
 
    CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
@@ -45,9 +45,9 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: GEO_FIELD5 = 'SolarZenithAngle'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD6 = 'LineOfSightAngle'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD7 = 'OrbitGeodeticAngle'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'chunkNumber'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'ChunkNumber'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD10= 'frequency'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD10= 'Frequency'
 
    CHARACTER (len=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (len=*), PARAMETER :: DIM_NAME2 = 'nLevels'
@@ -1141,6 +1141,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.8  2000/12/04 23:43:59  vsnyder
+! Move more of addItemToDatabase into the include
+!
 ! Revision 2.7  2000/09/22 14:29:42  pumphrey
 ! OutputL2GP_createFile was setting LocalSolarTime as byte (should be
 ! REAL)  and Time as REAL (should be Double prec.). Fixed.
