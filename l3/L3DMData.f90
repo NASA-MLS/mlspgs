@@ -167,7 +167,6 @@ CONTAINS
       CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
       CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
       CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
-      CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
       CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
       CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dmValue'
       CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dmPrecision'
@@ -527,8 +526,10 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalGranuleID'
-         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L3DM')
-         sval = TRIM(type) // files%date(i)
+         indx = INDEX(files%name(i), '/', .TRUE.)
+         sval = files%name(i)(indx+1:)
+         indx = INDEX(sval, '.', .TRUE.)
+         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -1038,6 +1039,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.7  2001/01/16 17:44:00  nakamura
+!# Made lowrgt corner of the grid variable; updated WriteMetaL3DM for new MCF and added writing of annotation.
+!#
 !# Revision 1.6  2000/12/29 20:50:33  nakamura
 !# Moved global parameters to MLSL3Common; added L3DMFiles_T; switched to one-product/all-days paradigm.
 !#
