@@ -7,7 +7,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
    & MLSMSG_Allocate, MLSMSG_DeAllocate
-  USE MLSCommon, only: i4, r8, NameLen, BareFNLen
+  USE MLSCommon, only: i4, r8, NameLen, BareFNLen, findFirst
 
   IMPLICIT NONE
   PRIVATE
@@ -729,13 +729,15 @@ CONTAINS
 
   ! ---------------------------------------------  GetUniqueList  -----
 
-  ! This subroutine takes an string list and returns another containing
+  ! This subroutine takes a string list and returns another containing
   ! only the unique entries. The resulting list is supplied by the caller
   ! (You may safely use the same variable for str and outStr)
   ! E.g., given 'one,two,three,one,four' returns 'one,two,three,four'
+  ! If optional string list str2 is supplied, instead
+  ! returns list from str that are not also in str2
 
   SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
-    & inDelim, IgnoreLeadingSpaces)
+    & inDelim, IgnoreLeadingSpaces, str2)
     ! Dummy arguments
     CHARACTER (LEN=*), intent(in) :: str
     CHARACTER (LEN=*), intent(out) :: outstr
@@ -743,13 +745,15 @@ CONTAINS
     LOGICAL, INTENT(IN)                           :: countEmpty
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
     LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: str2
 
     ! Local variables
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
-      &                             :: inStringArray, outStringArray
+      &                             :: inStringArray, outStringArray, inStrAr2
     integer :: nElems
+    integer :: nElems2
     integer :: LongestLen
     integer :: status
 
@@ -761,10 +765,14 @@ CONTAINS
     ENDIF
     if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
     nElems = NumStringElements(str, countEmpty, inDelim, LongestLen)
-    if ( nElems <= 1 ) then
+    noUnique = nElems
+    if ( present(str2) ) then
       outStr = ''
-      return
-    end if
+      if ( nElems < 1 ) return
+    else
+      outStr = str
+      if ( nElems <= 1 ) return
+    endif
     if ( LongestLen > MAXSTRELEMENTLENGTH ) then
       ! print *, 'str: ', trim(str)
       ! print *, 'len(str): ', len(str)
@@ -779,57 +787,92 @@ CONTAINS
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
     call list2Array(str, inStringArray, countEmpty, inDelim, &
      & IgnoreLeadingSpaces)
-    call GetUniqueStrings(inStringArray, outStringArray, noUnique)
-    call Array2List(outStringArray(1:nElems), outStr, &
-     & inDelim)
-    DEALLOCATE(inStringArray, outStringArray)
+    if ( present(str2) ) then
+      nElems2 = NumStringElements(str2, countEmpty, inDelim, LongestLen)
+      ALLOCATE (inStrAr2(nElems2), STAT=status)
+      IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+           & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
+      call list2Array(str2, inStrAr2, countEmpty, inDelim, &
+       & IgnoreLeadingSpaces)
+      call GetUniqueStrings(inStringArray, outStringArray, noUnique, inStrAr2)
+      if ( noUnique > 0 ) then
+        call Array2List(outStringArray(1:noUnique), outStr, &
+         & inDelim)
+      else
+        outStr=''
+      endif
+      DEALLOCATE(inStringArray, outStringArray, inStrAr2)
+    else
+      call GetUniqueStrings(inStringArray, outStringArray, noUnique)
+      if ( noUnique > 0 ) then
+        call Array2List(outStringArray(1:noUnique), outStr, &
+         & inDelim)
+      else
+        outStr=''
+      endif
+      DEALLOCATE(inStringArray, outStringArray)
+    endif
   END SUBROUTINE GetUniqueList
 
   ! ---------------------------------------------  GetUniqueStrings  -----
 
   ! This subroutine takes an array of strings and returns another containing
   ! only the unique entries. The resulting array is supplied by the caller
+  ! If optional extra array is supplied, instead
+  ! returns entries from first array not also found in second
   ! Some checking is done to make sure it's appropriate
 
-  SUBROUTINE GetUniqueStrings(inList,outList,noUnique)
+  SUBROUTINE GetUniqueStrings(inList, outList, noUnique, extra)
     ! Dummy arguments
     CHARACTER (LEN=*), DIMENSION(:) :: inList
     CHARACTER (LEN=*), DIMENSION(:) :: outList
     INTEGER :: noUnique ! Number of unique entries
+    CHARACTER (LEN=*), optional, DIMENSION(:) :: extra
 
     ! Local variables
-    INTEGER :: i,j           ! Loop counters
+    INTEGER :: i,j,k           ! Loop counters
     LOGICAL, DIMENSION(:), ALLOCATABLE :: duplicate ! Set if already found
     INTEGER :: status        ! Status from allocate
 
+    INTEGER :: extraSize
+    integer :: howManyMax
     INTEGER :: inSize
 
     ! Executable code, setup arrays
-
     inSize=SIZE(inList)
     ALLOCATE (duplicate(inSize), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"duplicate")
-    DO i = 1, inSize
-       duplicate(i)=.FALSE.
-    END DO
+    if ( present(extra) ) then
+      extraSize=size(extra)
+      howManyMax = inSize
+      ! print *, 'SIZE(inList) ', inSize
+      ! print *, 'SIZE(extra) ', extraSize
+    else
+      extraSize = -1
+      howManyMax = inSize-1 ! Don't bother with last one
+    endif
+    duplicate = .FALSE.
 
     ! Go through and find duplicates
 
-    DO i = 1, inSize-1 ! Don't bother with last one
+    DO i = 1, howManyMax
        IF (.NOT. duplicate(i)) THEN
+         if ( extraSize < 1 ) then
           DO j = i+1, inSize
              IF (inList(j)==inList(i)) duplicate(j)=.TRUE.
           END DO
+         else
+          DO j = 1, extraSize
+             IF (extra(j)==inList(i)) duplicate(i)=.TRUE.
+          END DO
+         endif
        END IF
     END DO
 
     ! Count how many unique ones there are
 
-    noUnique=0
-    DO i = 1, inSize
-       IF (.NOT. duplicate(i)) noUnique=noUnique+1
-    END DO
+    noUnique=count(.NOT. duplicate)
 
     IF (noUnique>SIZE(outList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outList too small")
@@ -837,15 +880,34 @@ CONTAINS
          & "outList strings to small")
     outList=""
 
-    j=1
-    DO i = 1, noUnique
-       UniqueHuntLoop: DO
-          IF (.NOT. duplicate(j)) EXIT UniqueHuntLoop
-          j=j+1
-       END DO UniqueHuntLoop
-       outList(i)=inList(j)
-       j=j+1
-    END DO
+    if ( noUnique > 0 ) then
+      ! do j=1, inSize, 20
+      !   print *, (duplicate(j+i), i=0, min(19, inSize-j))
+      ! enddo
+      j=1
+      UniqueLoop: DO i = 1, noUnique
+         ! UniqueHuntLoop: DO
+         !   IF (.NOT. duplicate(j)) EXIT UniqueHuntLoop
+         !   j=j+1
+         !   if ( j > inSize ) exit UniqueLoop
+         ! END DO UniqueHuntLoop
+         k = findFirst(.not. duplicate(j:))
+         ! print *, 'j: ', j, '   k: ', k
+         if ( k+j-1 > inSize ) then
+           call MLSMessage(MLSMSG_Error, ModuleName, &
+             & "k goes past array end in GetUniqueStrings")
+           outList(i)=inList(inSize)
+           return
+         elseif ( k > 0 ) then
+           outList(i)=inList(k+j-1)  ! was inList(j)
+           j = j + k
+         else
+           exit UniqueLoop
+         endif
+         ! j=j+1
+         if ( j > inSize ) exit UniqueLoop
+      END DO UniqueLoop
+    endif
 
     DEALLOCATE(duplicate)
   END SUBROUTINE GetUniqueStrings
@@ -2932,6 +2994,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.40  2004/06/09 00:02:35  pwagner
+! GetUniqueList now accepts optional arg str2 returning str not in str2
+!
 ! Revision 2.39  2004/01/27 21:34:02  pwagner
 ! Fixed some bugs in ExtractSubString
 !
