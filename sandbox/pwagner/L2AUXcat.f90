@@ -18,8 +18,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: GetAllHDF5DSNames
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
+   use MLSMessageModule, only: MLSMessageConfig
    use MLSStrings, only: GetStringElement, NumStringElements
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
@@ -60,6 +59,8 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   real        :: t2
   real        :: tFile
   ! 
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
   CALL h5open_f(error)
   n_filenames = 0
@@ -187,3 +188,6 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.1  2004/02/27 00:27:27  pwagner
+! First commit
+!

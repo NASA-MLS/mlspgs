@@ -13,9 +13,8 @@ program L2GPcat ! catenates split L2GPData files, e.g. dgg
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R8
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
+     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use MLSMessageModule, only: MLSMessageConfig
    use MLSStrings, only: GetStringElement, NumStringElements
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
@@ -54,6 +53,8 @@ program L2GPcat ! catenates split L2GPData files, e.g. dgg
   real        :: t2
   real        :: tFile
   ! 
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
   CALL h5open_f(error)
   n_filenames = 0
@@ -168,4 +169,7 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.1  2004/02/25 00:03:34  pwagner
+! First commit
+!
 
