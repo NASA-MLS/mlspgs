@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module L2Parallel
   ! This module contains low level routines and stuff for dealing with parallel
@@ -36,7 +36,7 @@ module L2Parallel
   use MLSStringLists, only: catLists, ExpandStringRange
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
-  use Output_m, only: BLANKS, Output
+  use Output_m, only: BLANKS, Output, TimeStamp
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
@@ -55,6 +55,7 @@ module L2Parallel
     & CONSTRUCTVECTORTEMPLATE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
     & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
+  use WriteMetadata, only: L2PCF
 
   implicit none
   private
@@ -267,6 +268,7 @@ contains ! ================================ Procedures ======================
     integer :: DUMMY                    ! From inflate database
     integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
+    integer :: INDX                     ! Where "T" occurs in utc string
     integer :: INFO                     ! From PVM
     integer :: L2QTID                   ! TID of queue manager
     integer :: MACHINE                  ! Index
@@ -379,12 +381,6 @@ contains ! ================================ Procedures ======================
     else
       noMachines = 0
     end if
-    ! call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
-    ! call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
-    ! call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
-    ! machineFree = .true.
-    ! machineOK = .true.
-    ! jobsMachineKilled = 0
 
     ! Setup the staging file if we're using one
     if ( .not. parallel%stageInMemory ) then
@@ -449,7 +445,7 @@ contains ! ================================ Procedures ======================
           ! We'll have to wait for it to come one line later
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Submitted chunk ' )
-            call output ( nextChunk, advance='yes' )
+            call TimeStamp ( nextChunk, advance='yes' )
           end if
         elseif ( machine < 1 ) then
           ! Just go on; should have returned .false. anyway
@@ -466,7 +462,7 @@ contains ! ================================ Procedures ======================
             & 1, tidarr )
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Tried to spawn ' )
-            call output ( trim(commandLine), advance='yes' )
+            call TimeStamp ( trim(commandLine), advance='yes' )
             call output ( 'PvmTaskHost ' )
             call output ( PvmTaskHost, advance='yes' )
             call output ( 'on machine ' )
@@ -480,6 +476,9 @@ contains ! ================================ Procedures ======================
             machines(machine)%free = .false.
             machines(machine)%tid = tidArr(1)
             machines(machine)%chunk = nextChunk
+            indx = INDEX (L2PCF%startUTC, "T")
+            if ( indx > 0 ) &
+              & machines(machine)%master_Date = L2PCF%startUTC(1:indx-1)
             chunkMachines(nextChunk) = machine
             chunkTids(nextChunk) = tidArr(1)
             chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
@@ -491,12 +490,11 @@ contains ! ================================ Procedures ======================
               endif
               call output ( 'Launched chunk ' )
               call output ( nextChunk )
-              call output ( ' on slave ' // trim(machines(machine)%name) // &
+              call TimeStamp ( ' on slave ' // trim(machines(machine)%name) // &
                 & ' ' // trim(chunkNiceTids(nextChunk)), &
                 & advance='yes' )
             end if
             call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
-            ! if ( usingL2Q ) call ThankL2Q(chunkTids(nextChunk), L2Qtid)
             if ( usingL2Q ) call ThankL2Q(machines(machine), L2Qtid)
             skipDeathWatch = .true.
           else
@@ -505,11 +503,11 @@ contains ! ================================ Procedures ======================
               call output ( 'Unable to start slave task on ' // &
                 & trim(machines(machine)%Name) // ' info=' )
               if ( info < 0 ) then
-                call output ( info, advance='yes' )
+                call TimeStamp ( info, advance='yes' )
               else
-                call output ( tidArr(1), advance='yes' )
+                call TimeStamp ( tidArr(1), advance='yes' )
               end if
-              call output ( 'Marking this machine as not usable', advance='yes')
+              call TimeStamp ( 'Marking this machine as not usable', advance='yes')
             end if
             ! Mark all instances of this machine as not to be used.
             where ( machines%Name == machines(machine)%Name )
@@ -553,7 +551,7 @@ contains ! ================================ Procedures ======================
           if ( chunk == 0 .and. signal /= sig_register ) then
             call output ( 'Signal is:' )
             call output ( signal )
-            call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
+            call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
               & advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & "Got a message from an unknown slave")
@@ -562,12 +560,12 @@ contains ! ================================ Procedures ======================
         elseif ( machine == 0 ) then
           call output ( 'Signal is:' )
           call output ( signal )
-          call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
+          call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
             & advance='yes' )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Got a message from an unknown slave")
           call dump(chunkNiceTids, 'chunkNiceTids', trim=.true.)
-          call output(slaveTid, advance='yes')
+          call TimeStamp(slaveTid, advance='yes')
           call dump(chunkTids, 'chunkTids')
           call dump(machines%tid, 'machines%Tid')
           cycle masterLoop
@@ -595,7 +593,7 @@ contains ! ================================ Procedures ======================
               call output ( 'Welcomed task ' // &
                 & trim(GetNiceTidString(slaveTid)) // &
                 & ' running chunk ' )
-              call output ( chunk, advance='yes' )
+              call TimeStamp ( chunk, advance='yes' )
             end if
           endif
 
@@ -652,7 +650,7 @@ contains ! ================================ Procedures ======================
             call output ( ' index ' )
             call output ( fileIndex, advance='no' )
             call output ( ' file ' )
-            call output ( directWriteFilenames ( fileIndex ), advance='yes' )
+            call TimeStamp ( directWriteFilenames ( fileIndex ), advance='yes' )
             call display_string ( requestedFile, strip=.true., advance='yes' )
           end if
 
@@ -678,7 +676,7 @@ contains ! ================================ Procedures ======================
             call output ( ' chunk ' )
             call output ( chunk )
             call output ( ' ticket ' )
-            call output ( returnedTicket, advance='yes')
+            call TimeStamp ( returnedTicket, advance='yes')
             call display_string ( directWriteFilenames(fileIndex), &
               & strip=.true., advance='yes' )
           end if
@@ -690,7 +688,7 @@ contains ! ================================ Procedures ======================
               & call output ( trim(machines(machine)%Name) // ' ' )
             call output ( trim(GetNiceTidString(slaveTid)) // &
               & ' processing chunk ' )
-            call output ( chunk, advance='yes')
+            call TimeStamp ( chunk, advance='yes')
           endif
 
           ! Send an acknowledgement
@@ -704,7 +702,7 @@ contains ! ================================ Procedures ======================
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, 'sending finish ack.' )
           if ( index(switches,'mas') /= 0 ) &
-            & call output ( 'Acknowledgment sent', advance='yes')
+            & call TimeStamp ( 'Acknowledgment sent', advance='yes')
 
           ! Now update our information
           chunksCompleted(chunk) = .true.
@@ -719,7 +717,7 @@ contains ! ================================ Procedures ======================
           end if
           parallel%numCompletedChunks = parallel%numCompletedChunks + 1
           if ( index(switches,'mas') /= 0 ) then
-            call output ( 'Master status:', advance='yes' )
+            call TimeStamp ( 'Master status:', advance='yes' )
             call output ( count(chunksCompleted) )
             call output ( ' of ' )
             call output ( noChunks )
@@ -730,14 +728,14 @@ contains ! ================================ Procedures ======================
             call output ( ' abandoned, ' )
             call output ( count(.not. &
               & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
-            call output ( ' left. ', advance='yes' )
+            call TimeStamp ( ' left. ', advance='yes' )
             if ( .not. USINGOLDSUBMIT ) then
               call output ( count ( .not. machines%Free ) )
               call output ( ' of ' )
               call output ( noMachines )
               call output ( ' machines busy, with ' )
               call output ( count ( .not. machines%OK ) )
-              call output ( ' being avoided.', advance='yes' )
+              call TimeStamp ( ' being avoided.', advance='yes' )
             end if
           end if
           ! Send news back to l2 queue manager
@@ -762,7 +760,7 @@ contains ! ================================ Procedures ======================
       call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         if ( index(switches,'mas') /= 0 ) then
-          call output ( 'Received an external message to give up, so finishing now', &
+          call TimeStamp ( 'Received an external message to give up, so finishing now', &
             & advance='yes' )
         end if
         exit masterLoop
@@ -782,7 +780,7 @@ contains ! ================================ Procedures ======================
             & 'Got unexpected MachineFixed message but using submit method' )
         else
           if ( index(switches,'mas') /= 0 ) then
-            call output ( 'Received an external message to trust ' // &
+            call TimeStamp ( 'Received an external message to trust ' // &
               & trim(thisName) // ' again.' , advance='yes' )
           end if
           where ( machines%Name == thisName )
@@ -847,7 +845,7 @@ contains ! ================================ Procedures ======================
               call output ( ' ' )
               if ( .not. USINGOLDSUBMIT ) &
                 & call output ( 'on ' // trim(machines(deadMachine)%Name) // ' ' )
-              call output ( trim(GetNiceTidString(deadTid)) // &
+              call TimeStamp ( trim(GetNiceTidString(deadTid)) // &
                 & ' died, try again.', advance='yes' )
             end if
             call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
@@ -876,7 +874,7 @@ contains ! ================================ Procedures ======================
                 call output ( ' chunk ' )
                 call output ( deadChunk )
                 call output ( ' ticket ' )
-                call output ( request%ticket, advance='yes')
+                call TimeStamp ( request%ticket, advance='yes')
                 call display_string ( directWriteFilenames(request%fileIndex), &
                   & strip=.true., advance='yes' )
               end if
@@ -892,7 +890,7 @@ contains ! ================================ Procedures ======================
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Chunk ' )
                 call output ( deadChunk )
-                call output ( ' keeps dying.  Giving up on it.', &
+                call TimeStamp ( ' keeps dying.  Giving up on it.', &
                   & advance='yes' )
               end if
               chunksAbandoned(deadChunk) = .true.
@@ -905,7 +903,7 @@ contains ! ================================ Procedures ======================
               if ( machines(deadMachine)%jobsKilled >= &
                 & parallel%maxFailuresPerMachine ) then
                 if ( index(switches,'mas') /= 0 ) &
-                  & call output ('The machine ' // &
+                  & call TimeStamp ('The machine ' // &
                   & trim(machines(deadMachine)%Name) // &
                   & ' keeps killing things, marking it bad', &
                   & advance='yes' )
@@ -924,7 +922,7 @@ contains ! ================================ Procedures ======================
           else
             ! Otherwise we'd already forgotten about this slave, it told
             ! us it had finished.
-            if ( index(switches,'mas') /= 0 .and. NOTFORGOTTEN ) call output ( &
+            if ( index(switches,'mas') /= 0 .and. NOTFORGOTTEN ) call TimeStamp ( &
               & "A slave task died after giving results, " // &
               & "we won't worry about it.", &
               & advance='yes' )
@@ -947,7 +945,7 @@ contains ! ================================ Procedures ======================
           if ( index(switches,'l2q') /= 0 ) then
             call output ( 'Bad news about chunk ' )
             call output ( deadChunk )
-            call output ( ' on slave ' // trim(machines(deadMachine)%name) // &
+            call TimeStamp ( ' on slave ' // trim(machines(deadMachine)%name) // &
               & ' ' // trim(chunkNiceTids(deadChunk)), &
               & advance='yes' )
           end if
@@ -955,7 +953,7 @@ contains ! ================================ Procedures ======================
           if ( index(switches,'l2q') /= 0 ) then
             call output ( 'tID ' )
             call output ( deadTID )
-            call output ( ' finished normally ', advance='yes' )
+            call TimeStamp ( ' finished normally ', advance='yes' )
           end if
         endif
         ! Update info about dead machine
@@ -1020,7 +1018,7 @@ contains ! ================================ Procedures ======================
           call output ( ' ticket ' )
           call output ( request%ticket, advance='no' )
           call output ( ' index ' )
-          call output ( request%fileIndex, advance='yes' )
+          call TimeStamp ( request%fileIndex, advance='yes' )
           call output ( ' file ' )
           call output ( directWriteFilenames(request%fileIndex), advance='yes' )
           call display_string ( directWriteFilenames(request%fileIndex), strip=.true., &
@@ -1062,7 +1060,7 @@ contains ! ================================ Procedures ======================
       ! If we're done then exit
       if (all(chunksCompleted .or. chunksAbandoned)) then
         if ( index(switches,'mas') /= 0 ) &
-          & call output ( 'All chunks either processed or abandoned', advance='yes' )
+          & call TimeStamp ( 'All chunks either processed or abandoned', advance='yes' )
         exit masterLoop
       end if
 
@@ -1076,7 +1074,7 @@ contains ! ================================ Procedures ======================
         if ( .not. any(machines%OK) .and. &
           &  all ( chunksStarted .eqv. chunksCompleted ) ) then
           if ( index(switches,'mas') /= 0 ) &
-            & call output ( 'No machines left to do the remaining work', &
+            & call TimeStamp ( 'No machines left to do the remaining work', &
             & advance='yes' )
           exit masterLoop
         end if
@@ -1115,7 +1113,7 @@ contains ! ================================ Procedures ======================
       & 'No chunks were processed successfully.' )
 
     if ( index(switches,'mas') /= 0 ) then
-      call output ( 'All chunks processed, starting join task', advance='yes' )
+      call TimeStamp ( 'All chunks processed, starting join task', advance='yes' )
     endif
     ! Now we join up all our results into l2gp and l2aux quantities
 
@@ -1133,7 +1131,7 @@ contains ! ================================ Procedures ======================
       do resInd = 1, size ( storedResults )
         hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
         if ( index(switches,'mas') /= 0 ) then
-          call output ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
+          call TimeStamp ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
             & advance='yes' )
         endif
         
@@ -1230,7 +1228,7 @@ contains ! ================================ Procedures ======================
 
     finished = .true.
     if ( index(switches,'mas') /= 0 ) then
-      call output ( 'All chunks joined', advance='yes' )
+      call TimeStamp ( 'All chunks joined', advance='yes' )
     endif
     if ( toggle(gen) ) call trace_end ( "L2MasterTask")
 
@@ -1285,7 +1283,8 @@ contains ! ================================ Procedures ======================
           if ( machine < 1 ) then
             thisMachine%name = machineName
             machine = AddMachineToDataBase(machines, thisMachine)
-            if ( index(switches,'l2q') /=0 ) call output('Added machine to db', advance='yes')
+            if ( index(switches,'l2q') /=0 ) &
+              & call output('Added machine to db', advance='yes')
             ! machine = AddMachineNameToDataBase(machines%Name, machineName)
           endif
           ! if ( index(switches,'l2q') /=0 ) call output('Good news, l2q likes us', advance='yes')
@@ -1589,7 +1588,8 @@ contains ! ================================ Procedures ======================
     integer :: INFO                     ! From PVM
     integer :: BUFFERIDRCV              ! From PVM
     ! Identify ourselves
-    if ( index(switches,'l2q') /=0 ) call output('Requesting host from l2q', advance='yes')
+    if ( index(switches,'l2q') /=0 ) &
+      & call TimeStamp('Requesting host from l2q', advance='yes')
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( sig_requestHost, info )
     if ( info /= 0 ) &
@@ -1631,7 +1631,7 @@ contains ! ================================ Procedures ======================
         call PVMErrorMessage ( info, "checking for Granted message" )
       else if ( bufferIDRcv > 0 ) then
         if ( index(switches,'l2q') /=0 ) &
-          & call output('Weve been granted a host', advance='yes')
+          & call TimeStamp('Weve been granted a host', advance='yes')
         ! Granted us a machine
         call PVMF90Unpack ( machineName, info )
         if ( info /= 0 ) then
@@ -1646,7 +1646,7 @@ contains ! ================================ Procedures ======================
       endif
     enddo
     if ( index(switches,'l2q') /=0 .and. len_trim(machineName) > 0 ) &
-      & call output('Received from l2q ' // trim(machineName), advance='yes')
+      & call TimeStamp('Received from l2q ' // trim(machineName), advance='yes')
   end subroutine ReceiveMachineFromL2Q
 
   ! subroutine TellL2QMachineDied(tid, L2Qtid)
@@ -1682,7 +1682,7 @@ contains ! ================================ Procedures ======================
       call output('Telling l2q host died ', advance='no')
       call output(trim(machine%name), advance='no')
       call blanks(2)
-      call output(machine%tid, advance='yes')
+      call TimeStamp(machine%tid, advance='yes')
     endif
   end subroutine TellL2QMachineDied
 
@@ -1727,10 +1727,8 @@ contains ! ================================ Procedures ======================
   end subroutine TellL2QMasterFinished
 
   subroutine ThankL2Q(machine, L2Qtid)
-  ! subroutine ThankL2Q(tid, L2Qtid)
-    ! integer, intent(in)                                 :: tid
-    type(machine_T), intent(in)                         :: machine
-    integer, intent(in)                                 :: L2Qtid
+    type(machine_T), intent(in)         :: machine
+    integer, intent(in)                 :: L2Qtid
     !
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
@@ -1746,12 +1744,20 @@ contains ! ================================ Procedures ======================
     call PVMF90Pack ( machine%Name, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing machineName' )
+    call PVMF90Pack ( machine%chunk, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing machinechunk' )
+    ! info = INDEX (L2PCF%startUTC, "T")
+    ! if ( info > 0 ) machine%master_Date = L2PCF%startUTC(1:info-1)
+    call PVMF90Pack ( machine%master_date, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing machineMasterDate' )
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
     if ( index(switches, 'l2q') > 0 ) then
       call output('Thanking l2q for host', advance='no')
-      call output(machine%tid, advance='yes')
+      call TimeStamp(machine%tid, advance='yes')
     endif
   end subroutine ThankL2Q
 
@@ -1763,6 +1769,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.71  2005/02/03 19:09:15  pwagner
+! Receives master_date, master_time data from masters for each host
+!
 ! Revision 2.70  2004/12/27 23:04:21  pwagner
 ! Fixed bug affecting old submit method
 !
