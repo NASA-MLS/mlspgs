@@ -1827,7 +1827,9 @@ contains
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( index(switches,'ndb') /= 0 ) then
+            if ( index(switches,'ndb') /= 0 ) call nwtdb ( width=9, level=0 )
+            call nwtdb ( width=9, level=0 )
+            if ( index(switches,'Ndb') /= 0 ) then
               if ( index(switches,'sca') /= 0 ) then
                 call nwtdb ( width=9 )
               else
@@ -1976,7 +1978,7 @@ contains
 
         if ( index(switches,'NDB') /= 0 ) then
           call nwtdb ( aj, width=9 )
-        else if ( index(switches,'ndb') /= 0 ) then
+        else if ( index(switches,'Ndb') /= 0 ) then
           if ( index(switches,'sca') /= 0 ) then
             call nwtdb ( width=9 )
           else
@@ -3638,6 +3640,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.218  2003/01/15 01:49:29  vsnyder
+! Revise dumping stuff for Newton method
+!
 ! Revision 2.217  2003/01/14 22:14:43  dwu
 ! make FlagCloud depend on both channels and cloudChannels
 !
