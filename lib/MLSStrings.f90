@@ -1343,7 +1343,6 @@ CONTAINS
     !----------Local vars----------!
     integer, parameter         :: MAXREPLACEMENTS = 100
     INTEGER :: i, array_size
-	 CHARACTER (LEN=1) :: strChar
     character (len=5) :: my_which
     character(len=len(str)) :: head
     character(len=len(str)) :: tail
@@ -2538,6 +2537,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.31  2003/09/15 23:04:06  vsnyder
+! Remove unused local variable
+!
 ! Revision 2.30  2003/04/11 23:29:30  pwagner
 ! Fixed bug in ReplaceSubString; added ExtractSubString
 !
