@@ -555,9 +555,62 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  DUMP_VECTOR  -----
   subroutine DUMP_VECTOR ( VECTOR, DETAILS, NAME )
     type(Vector_T), intent(in) :: VECTOR
-    integer, intent(in), optional :: DETAILS
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
+    !                                        ! >0 Do dump quantity values
+    !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
-    call dump_vectors ( (/ vector /), details, name )
+    integer :: J    ! Loop inductor, subscript
+    integer :: MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( present(name) ) then
+      call output ( name ); call output ( ', ' )
+    end if
+    if ( vector%name /= 0 ) then
+      call output ( 'Name = ' )
+      call display_string ( vector%name )
+    end if
+    if ( vector%template%name /= 0 ) then
+      call output ( ' Template_Name = ' )
+      call display_string ( vector%template%name )
+    end if
+    call output ( ' Template_ID = ' )
+    call output ( vector%template%id, advance='yes' )
+    do j = 1, size(vector%quantities)
+      call output ( j, 4 )
+      call output ( "~" )
+      if ( vector%quantities(j)%template%name /= 0 ) then
+        call output ( ' Qty_Template_Name = ' )
+        call display_string ( vector%quantities(j)%template%name )
+      end if
+      call output ( ' Qty_Template_ID = ' )
+      call output ( vector%quantities(j)%template%id )
+      if ( myDetails > 0 ) then
+        call dump ( vector%quantities(j)%values, ', Elements = ' )
+        if ( associated(vector%quantities(j)%mask) ) then
+          call dump ( vector%quantities(j)%mask, format='(z8)' )
+        else
+          call output ( '      Without mask', advance='yes' )
+        end if
+      else
+        call output ( ', with' )
+        if ( .not. associated(vector%quantities(j)%values) ) &
+          & call output ( 'out' )
+        call output ( ' values, with' )
+        if ( .not. associated(vector%quantities(j)%mask ) ) &
+          & call output ( 'out' )
+        call output ( ' mask', advance='yes' )
+      end if
+      if ( associated(vector%quantities(j)%mask) ) then
+        if ( myDetails > 0 ) then
+          call dump ( vector%quantities(j)%mask, format='(z8)' )
+        else
+          call output ( '      With mask', advance='yes' )
+        end if
+      else
+        call output ( '      Without mask', advance='yes' )
+      end if
+    end do ! j
   end subroutine DUMP_VECTOR
 
   ! -----------------------------------------------  DUMP_VECTORS  -----
@@ -567,64 +620,15 @@ contains ! =====     Public Procedures     =============================
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
-    integer :: I, J, MyDetails
-    myDetails = 1
-    if ( present(details) ) myDetails = details
+    integer :: I
     if ( size(vectors) > 1 ) then
       call output ( 'VECTORS: SIZE = ' )
       call output ( size(vectors), advance='yes' )
     end if
     do i = 1, size(vectors)
       call output ( i, 4 )
-      call output ( ':' )
-      if ( present(name) ) then
-        call output ( name ); call output ( ', ' )
-      end if
-      if ( vectors(i)%name /= 0 ) then
-        call output ( ' Name = ' )
-        call display_string ( vectors(i)%name )
-      end if
-      if ( vectors(i)%template%name /= 0 ) then
-        call output ( ' Template_Name = ' )
-        call display_string ( vectors(i)%template%name )
-      end if
-      call output ( ' Template_ID = ' )
-      call output ( vectors(i)%template%id, advance='yes' )
-      do j = 1, size(vectors(i)%quantities)
-        call output ( j, 4 )
-        call output ( "~" )
-        if ( vectors(i)%quantities(j)%template%name /= 0 ) then
-          call output ( ' Qty_Template_Name = ' )
-          call display_string ( vectors(i)%quantities(j)%template%name )
-        end if
-        call output ( ' Qty_Template_ID = ' )
-        call output ( vectors(i)%quantities(j)%template%id )
-        if ( myDetails > 0 ) then
-          call dump ( vectors(i)%quantities(j)%values, ', Elements = ' )
-          if ( associated(vectors(i)%quantities(j)%mask) ) then
-            call dump ( vectors(i)%quantities(j)%mask, format='(z8)' )
-          else
-            call output ( '      Without mask', advance='yes' )
-          end if
-        else
-          call output ( ', with' )
-          if ( .not. associated(vectors(i)%quantities(j)%values) ) &
-            & call output ( 'out' )
-          call output ( ' values, with' )
-          if ( .not. associated(vectors(i)%quantities(j)%mask ) ) &
-            & call output ( 'out' )
-          call output ( ' mask', advance='yes' )
-        end if
-        if ( associated(vectors(i)%quantities(j)%mask) ) then
-          if ( myDetails > 0 ) then
-            call dump ( vectors(i)%quantities(j)%mask, format='(z8)' )
-          else
-            call output ( '      With mask', advance='yes' )
-          end if
-        else
-          call output ( '      Without mask', advance='yes' )
-        end if
-      end do ! j
+      call output ( ': ' )
+      call dump_vector ( vectors(i), details, name )
     end do ! i
   end subroutine DUMP_VECTORS
 
@@ -1166,6 +1170,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.40  2001/05/10 23:29:59  livesey
+! Added some arguments to ValidateVectorQuantity
+!
 ! Revision 2.39  2001/05/10 23:11:54  vsnyder
 ! Add a dumper for one vector
 !
