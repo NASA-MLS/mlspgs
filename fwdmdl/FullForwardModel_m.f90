@@ -58,7 +58,7 @@ contains
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
       & LIT_INDICES
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
-      & Load_Sps_Data, Modify_values_for_supersat, create_grids_1, fill_grids_1, create_grids_2, fill_grids_2
+      & Load_Sps_Data, Modify_values_for_supersat
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
                                 &  DESTROYCOMPLETESLABS
     use ManipulateVectorQuantities, only: DoHGridsMatch, FindClosestInstances
@@ -1432,8 +1432,10 @@ contains
         end do
         h_path(1:no_ele) = req + h_path(1:no_ele)
         h_path_c(1:npc) = h_path(c_inds(1:npc))
-        t_path_m = t_path - del_temp ! for computing temperature derivatives
-        t_path_p = t_path + del_temp ! for computing temperature derivatives
+        if ( temp_der ) then
+          t_path_m = t_path - del_temp ! for computing temperature derivatives
+          t_path_p = t_path + del_temp ! for computing temperature derivatives
+        end if
         t_path_c(1:npc) = t_path(c_inds(1:npc))
         ! Fill the diagnostic arrays for Nathaniel and Bill
 !       tan_temps ( ptg_i ) = one_tan_temp ( 1 )
@@ -3072,6 +3074,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.200  2004/03/27 03:35:27  vsnyder
+! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+! line centers and line widths around.  Write slabs_lines and slabswint_lines
+! to get sum of beta over all lines; put slabs_struct instead of its components
+! in the calling sequence.
+!
 ! Revision 2.199  2004/03/20 04:05:50  vsnyder
 ! Moved SpeedOfLight from units to physics
 !
