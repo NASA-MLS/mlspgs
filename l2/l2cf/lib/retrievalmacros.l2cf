@@ -495,11 +495,11 @@ Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
 
 ; ------------------ High level macros for status and quality filling
 !define(addInOneChisq,{!dnl
-Fill, quantity=diag!MFradiometer.chisqTmp, method=manipulate, manipulation='a>b', $
-  a=diag!MFradiometer.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a>b', $
+  a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
 !define(addInOneNoRads,{!dnl
-Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b', $
-  a=diag!MFradiometer.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
+  a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
 
 !define(makeFlagsForOneProduct,{!dnl
 !undefine(MFproduct)!dnl
@@ -510,28 +510,28 @@ Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b
 !undefine(MFcloudmin)!dnl
 !ProcessParVal(MF,$@)!dnl
 ;; Quality
-Fill, quantity=diag!MFradiometer.chisqTmp, method=explicit, explicitValues=0, /spread
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=explicit, explicitValues=0, /spread
 !forall(addInOneChisq,!flaggingBands)
 ;; Run a boxcar over this
-Fill, quantity=diag!MFradiometer.chisqTmp, method=boxcar, sourceQuantity=diag!MFradiometer.chisqTmp, $
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.chisqTmp, $
   boxCarMethod=max, width=3
 ;; Now fill quality from this.
 Fill, quantity=otherDiagnostics.quality!MFproduct, method=quality, $
-  sourceQuantity=diag!MFradiometer.chisqTmp, scale=!MFchisqscale
+  sourceQuantity=temporaryDiagnostics.chisqTmp, scale=!MFchisqscale
 
 ;; Status
 Fill, quantity=otherDiagnostics.status!MFproduct, method=explicit, explicitValues=0, /spread
 !ifdef(MFminrads,{
 ;; too few radiances
-Fill, quantity=diag!MFradiometer.noRadsTmp, method=explicit, explicitValues=0, /spread
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=explicit, explicitValues=0, /spread
 !forall(addInOneNoRads,!flaggingBands)
 ;; Run a boxcar over this
-Fill, quantity=diag!MFradiometer.noRadsTmp, method=boxcar, sourceQuantity=diag!MFradiometer.noRadsTmp, $
+Fill, quantity=temporaryDiagnostics.noRadsTmp, method=boxcar, sourceQuantity=temporaryDiagnostics.noRadsTmp, $
   boxCarMethod=min, width=3
 ;; Set status based on this
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
   status=!statusTooFewRadiances+!statusDoNotUse, $
-  sourceQuantity=diag!MFradiometer.noRadsTmp, minValue=!MFminrads, /additional})
+  sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
 
 !ifdef(MFcloudmax,{
 ;; Status - cloudy radiances - already had the box car run on it.
@@ -546,6 +546,10 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.93  2004/04/27 23:02:11  livesey
+; Added makeStandardProductMergeDiag and removed flagBand32Clouds (should
+; be done by parent l2cf now).
+;
 ; Revision 1.92  2004/04/24 00:24:32  pwagner
 ; Prefixes L2GP- to l2gpFileName if using PCF
 ;
