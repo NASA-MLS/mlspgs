@@ -39,7 +39,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "/work3/livesey"
 	else
-	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
+	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
 	fi
     fi
     if [ $1 == "--output" ]; then
@@ -60,7 +60,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/$VERSION"
 	else
-	    echo "/data/emls/l2gp/$SIMULATION--t/1996"
+	    echo "/data/emls/l2gp/$SIMULATION--t/$YEAR"
 	fi
     fi
     if [ $1 == "--corel2gp" ]; then
@@ -98,6 +98,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.12  2003/05/10 20:39:34  livesey
+# Bug fix for dao
+#
 # Revision 1.11  2003/05/10 20:35:41  livesey
 # Added DAO path.
 #
