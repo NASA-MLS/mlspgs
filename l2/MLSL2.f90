@@ -17,6 +17,7 @@ program MLSL2
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
+  use SDPToolkit, only: UseSDPToolkit
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
@@ -164,6 +165,8 @@ program MLSL2
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
+   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
+
    if ( .not. toolkit ) pcf = .false.
 
    if ( .not. pcf ) then
@@ -306,6 +309,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.36  2001/05/07 23:30:51  pwagner
+! Sets USESDPToolkit
+!
 ! Revision 2.35  2001/05/07 21:53:28  vsnyder
 ! Improve built-in usage display
 !
