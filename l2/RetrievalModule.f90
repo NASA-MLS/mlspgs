@@ -2157,7 +2157,8 @@ contains
         nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
 
       !memorize the initial model configuration
-        cloudysky = configDatabase(configIndices(1))%cloud_width
+!        cloudysky = configDatabase(configIndices(1))%cloud_width
+        cloudysky = configDatabase(configIndices(1))%i_saturation
 
       ! create covarianceDiag array
         call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
@@ -2213,8 +2214,10 @@ contains
           doMaf = .false.
           if(sum(ModelTcir%values(:,maf)) .ne. 0._r8) doMaf = .true.
           
-          configDatabase(configIndices(1))%cloud_width=0
-          if(doMaf) configDatabase(configIndices(1))%cloud_width=cloudysky
+!          configDatabase(configIndices(1))%cloud_width=0
+!          if(doMaf) configDatabase(configIndices(1))%cloud_width=cloudysky
+          configDatabase(configIndices(1))%i_saturation=0
+          if(doMaf) configDatabase(configIndices(1))%i_saturation=cloudysky
 
       print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs,'type=',doMaf
           fmStat%rows = .false.
@@ -2312,7 +2315,8 @@ contains
       end do ! end of mafs
       
     ! give back the model config value
-      configDatabase(configIndices(1))%cloud_width=cloudysky
+!      configDatabase(configIndices(1))%cloud_width=cloudysky
+      configDatabase(configIndices(1))%i_saturation=cloudysky
 
       ! start inversion
       x0 = 0._r8        ! A priori
@@ -2475,7 +2479,8 @@ contains
         nChans = 0
         do imodel = 1, size(configIndices)
           !memorize the initial model configuration
-           cloudysky(imodel) = configDatabase(configIndices(imodel))%cloud_width
+!           cloudysky(imodel) = configDatabase(configIndices(imodel))%cloud_width
+           cloudysky(imodel) = configDatabase(configIndices(imodel))%i_saturation
         do isignal = 1, size(configDatabase(configIndices(imodel))%signals)
           nChans = nChans + &
           & count(configDatabase(configIndices(imodel))%signals(isignal)%channels)
@@ -2520,7 +2525,8 @@ contains
         do maf =1,nMAFs
         fmStat%maf = maf
         print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'type= ',&
-         & configDatabase(configIndices(1))%cloud_width
+          & configDatabase(configIndices(1))%i_saturation
+!         & configDatabase(configIndices(1))%cloud_width
                         
           A = 0._rm
           C = 0._r8
@@ -2534,9 +2540,11 @@ contains
             nSignal = size(configDatabase(configIndices(imodel))%signals)
             ! to save time, skip cloud sensitivity calculation if there is no cloud
             ! overwrite model configuration
-            configDatabase(configIndices(imodel))%cloud_width=0
-            if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
-            
+!            configDatabase(configIndices(imodel))%cloud_width=0
+!            if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
+            configDatabase(configIndices(imodel))%i_saturation=0
+            if(doMaf(maf)) configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
+                       
             ! use the cloud radiance in last signal for cloud top indicator 
             signal = configDatabase(configIndices(imodel))%signals(nSignal)
 
@@ -2765,7 +2773,8 @@ contains
       
     ! give back the model config value
       do imodel = 1,size(configIndices)
-        configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
+!        configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
+        configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
       end do
       
     ! deallocate arrays and free memory
@@ -3612,6 +3621,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.216  2003/01/13 17:17:29  jonathan
+! change cloud_width to i_saturation
+!
 ! Revision 2.215  2003/01/12 07:33:42  dwu
 ! with some fix in flagcloud
 !
