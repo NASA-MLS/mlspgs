@@ -669,7 +669,8 @@ contains ! =====     Public Procedures     =============================
     thisL2AUX%name = name
 
     if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
-      lastProfile = quantity%template%mafIndex(quantity%template%noInstances)
+      lastProfile = quantity%template%mafIndex(quantity%template%noInstances - &
+        & quantity%template%noInstancesUpperOverlap)
     else
       lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
     endif
@@ -715,6 +716,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.58  2002/05/16 22:36:46  livesey
+! Fixed a bug with joining minor frame quantities with overlaps.
+!
 ! Revision 2.57  2002/04/08 20:49:17  pwagner
 ! Swath name optionally passed to JoinL2GPQuantities
 !
