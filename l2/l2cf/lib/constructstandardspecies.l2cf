@@ -96,7 +96,41 @@ begin Construct
   !define(allHiResColumns,
     {!makelist({column_},{},!allHiResMolecules)})
 
-  ;; ----------------------------------------- Baselines
+
+;; ----------------------------------------- Cloud Input
+  IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
+  PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = sizeDistribution
+  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
+  earthradius:     Quantity, hGrid=hGridStandard, type = earthradius
+  surfaceType:     Quantity, hGrid=hGridStandard, type = surfaceType
+
+;; ----------------------------------------- Cloud Output
+  trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
+  cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
+
+;; Folded radiance-like quantities for cloud models
+
+  !define(constructRadiance,{DTband$1: Quantity, type=cloudInducedRadiance, signal=!signal($1)!nl})
+  !forall(constructRadiance,!allBands)
+;  !define(constructRadiance,{SENSband$1: Quantity, type=cloudRADSensitivity, signal=!signal($1)!nl})
+;  !forall(constructRadiance,!allBands)
+;  !define(constructRadiance,{EODband$1: Quantity, type=effectiveOpticalDepth, signal=!signal($1)!nl})
+;  !forall(constructRadiance,!allBands)
+;  !define(constructRadiance,{CEXTband$1: Quantity, type=cloudExtinction, signal=!signal($1)!nl})
+;  !forall(constructRadiance,!allBands)
+;  !define(constructRadiance,{EXTband$1: Quantity, type=totalExtinction, signal=!signal($1)!nl})
+;  !forall(constructRadiance,!allBands)
+
+  cloudExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = cloudExtinction
+  totalExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = totalExtinction
+  massMeanDiameterIce:   Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = massMeanDiameterIce
+  massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = massMeanDiameterWater
+
+;; ----------------------------------------- Baselines
   
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline, $
