@@ -1882,6 +1882,7 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: meanDiag               ! Geometric mean diagonal value
       real (r8) :: thisFraction           ! Geometric mean diagonal value
       logical, dimension(:), pointer :: condition ! Condition
+      logical :: ANYOFFDIAG             ! Flag to indicate presence of off diagonal elements
 
       ! Executable code
 
@@ -1947,6 +1948,7 @@ contains ! =====     Public Procedures     =============================
 
           ! Loop over the instances
           do i = 1, qt%noInstances
+            anyOffDiag = .false.
             if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
 
             ! Clear the working matrix and load the diagonal
@@ -1975,8 +1977,10 @@ contains ! =====     Public Procedures     =============================
                     distance = abs ( -log10 ( surfs( (j-1)/qt%noChans + 1) ) + &
                       &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
                   end select
-                  if ( thisLength > 0.0 ) &
-                    & m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
+                  if ( thisLength > 0.0 .and. thisFraction > 0.0 ) then
+                    m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
+                    anyOffDiag = .true.
+                  end if
                 end do                    ! Loop over k (in M)
               end do                      ! Loop over j (in M)
             end if                        ! An appropriate vertical coordinate
@@ -1988,7 +1992,13 @@ contains ! =====     Public Procedures     =============================
               do j = 1, n
                 if ( condition(j) ) M(j,j) = 1.0_rm
               end do
-              call MatrixInversion(M, upper=.true.)
+              if ( anyOffDiag ) then 
+                call MatrixInversion(M, upper=.true.)
+              else
+                do j = 1, n
+                  m(j,j) = 1.0 / m(j,j)
+                end do
+              end if
               do j = 1, n
                 if ( condition(j) ) M(j,j) = 0.0_rm
               end do
@@ -5767,6 +5777,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.220  2003/05/21 18:04:30  livesey
+! Added a bit more intelligence to FillCovariance
+!
 ! Revision 2.219  2003/05/20 23:10:24  dwu
 ! complete the addition of fill IWC from extinction
 !
