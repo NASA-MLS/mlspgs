@@ -1794,6 +1794,7 @@ contains ! =====     Public Procedures     =============================
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
             n = yb%r1(j-1)+1  ! Position in YB%R2 of row subscript in YB
+            if ( n > ubound (yb%r2,1) ) cycle
             m = yb%r2(n)      ! Row subscript of nonzero in YB's column J
             do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
@@ -1875,6 +1876,7 @@ contains ! =====     Public Procedures     =============================
               if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
+            if ( l > ubound (xb%r2,1) ) cycle
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
             m = yb%r1(j)      ! Row subscript of first nonzero in YB's column J
             n = yb%r2(j-1)+1  ! Position in YB%VALUES of it
@@ -3056,6 +3058,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.93  2003/02/22 00:41:54  livesey
+! Fixed inconsequential bug in Sparse/Banded and Banded/Sparse multiplies
+!
 ! Revision 2.92  2003/02/21 04:06:14  livesey
 ! Fixed up the OpenMP stuff, seems to work now
 !
