@@ -77,6 +77,7 @@ dontMask
 
 earthRadius
 ECRtoFOV
+exact
 extendedAverage
 explicitValues
 extinction
@@ -315,6 +316,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.104  2003/08/14 20:25:11  livesey
+# Added exact
+#
 # Revision 2.103  2003/08/11 18:08:16  livesey
 # Added single
 #
