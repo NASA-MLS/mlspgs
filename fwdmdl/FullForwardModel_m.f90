@@ -46,11 +46,11 @@ contains
     use Get_Chi_Out_m, only: Get_Chi_Out
     use GLnp, only: NG, GX
     use Intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, &
-      & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
+      & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, l_boundaryPressure,&
       & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
       & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH, &
       & L_CLOUDICE, L_CLOUDWATER, L_SIZEDISTRIBUTION, &
-      & l_clear, l_clear_110RH_below_top, l_clear_0RH
+      & l_clear, l_clear_110RH_below_top, l_clear_0RH,l_clear_110RH_below_tropopause
 
     use Load_sps_data_m, ONLY: LOAD_SPS_DATA, Grids_T, destroygrids_t
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
@@ -163,7 +163,7 @@ contains
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
-    integer :: ICON                     ! i_saturation
+!-----------------------------------------------------------------------------
     integer :: NU, NUA, NAB, NR, N      ! cloud ext parameters
     integer :: status                   ! allocation status 
     integer, dimension(:), pointer :: closestInstances 
@@ -381,6 +381,7 @@ contains
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state vector
     type (VectorValue_T), pointer :: THISRADIANCE ! A radiance vector quantity
+    type (VectorValue_T), pointer :: TpPressure ! tropopause pressure
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION           ! Integer really
@@ -423,7 +424,9 @@ contains
     type (beta_group_T), dimension(:), pointer :: beta_group
 
 ! temperature on surfaces where supersaturation may need to be calculated
-    real(r8), dimension(:), pointer :: temp_supersat
+    real(r8) :: RHi                     ! relative humidity
+    real(r8) :: refP                    ! the top pressure where supersat is set
+    real(r8), dimension(:), pointer :: tempProf
 
 
     ! Executable code --------------------------------------------------------
@@ -474,7 +477,7 @@ contains
       & tan_phi, tan_press, tan_temp, tau, t_glgrid, t_path, t_path_c, t_path_f, &
       & t_script, usedchannels, usedsignals, z_all, z_basis, z_basis_dn, &
       & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_path_c, z_tmp, tan_temps, &
-      & tan_hts, reqs, cloudIce, cloudWater, sizeDistribution, temp_supersat )
+      & tan_hts, reqs, cloudIce, cloudWater, sizeDistribution)
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -522,6 +525,8 @@ contains
       & config=fwdModelConf )
     scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
+    tpPressure => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
+      & quantityType=l_boundaryPressure, noError=.true. )
     !JJ
     cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
       & quantityType=l_cloudIce, noError=.true. )    
@@ -530,16 +535,6 @@ contains
     sizeDistribution=>GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
       & quantityType=l_sizeDistribution, noError=.true. )
 
-         select case (FwdModelConf%i_saturation)
-            case (l_clear)
-               icon = 0
-            case (l_clear_110RH_below_top)
-               icon = -1
-            case (l_clear_0RH)
-               icon = -2
-            case default
-               call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
-         end select
           NU  = fwdModelConf%NUM_SCATTERING_ANGLES
           NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
           NAB = fwdModelConf%NUM_AB_TERMS
@@ -901,27 +896,42 @@ contains
 
 ! Now, allocate other variables we're going to need later ----------------
 
-    call allocate_test ( temp_supersat, n_t_zeta, 'temp_supersat', moduleName )
-    do i=1, n_t_zeta
-      temp_supersat(i) = grids_tmp%values(i)
-    enddo
+    call allocate_test ( tempProf, temp%template%noSurfs, 'tempProf', moduleName )
+    tempProf = temp%values(:,(windowStart+windowFinish)/2)
 
 ! Setup our temporary `state vector' like arrays -------------------------
 
-    !JJ
+         select case (FwdModelConf%i_saturation)
+            case (l_clear)
+               RHi = -1
+            case (l_clear_110RH_below_top)
+               RHi = 110._r8              ! 110% supersaturation
+               refP = 100._r8      ! 100 mb
+            case (l_clear_0RH)
+               RHi = 1.e-9_r8             ! 0% dry saturation
+               refP = 100._r8      ! 100 mb
+            case (l_clear_110RH_below_tropopause)
+               RHi = 110._r8              ! 110% supersaturation
+               refP = tpPressure%values(1,(windowStart+windowFinish)/2)
+            case default
+               call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
+         end select
+
     if ( spect_der ) then
       call load_sps_data ( FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
        &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,     &
        &   ext_ind, Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn,         &
-       &   f_len_dv, Grids_dv, i_supersat=ICON, temp_supersat=temp_supersat )
+       &   f_len_dv, Grids_dv, RHi=RHi, temp_supersat=tempProf, &
+       &   refPressure=refP )
     else
       call load_sps_data ( FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
        &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,     &
-       &   ext_ind, Grids_f, i_supersat=ICON, temp_supersat=temp_supersat )
+       &   ext_ind, Grids_f, RHi=RHi, temp_supersat=tempProf, &
+       &   refPressure=refP )
     end if
 
-! Deallocate our temp_supersat array
-   call deallocate_test(temp_supersat, 'temp_supersat', moduleName )
+! Deallocate our tempProf array
+   call deallocate_test(tempProf, 'tempProf', moduleName )
 
 ! set up output pointing angles------------------------------------------
 ! note we have to compute req !!!!!!!
@@ -1930,7 +1940,7 @@ contains
           call get_beta_path_cloud ( Frq,                             &
             &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
             &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
-            &  beta_path_cloud_c(1:npc),  ICON,                       &
+            &  beta_path_cloud_c(1:npc),  RHi,                       &
             &  fwdModelConf%Incl_Cld, IPSD(1:no_ele),                 &
             &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )                    
 
@@ -2858,6 +2868,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.131  2003/04/11 00:49:02  dwu
+! make i_saturation as a verbel input
+!
 ! Revision 2.130  2003/03/04 20:22:40  dwu
 ! add a temporay fix for the tangent height crossover problem
 !

@@ -46,7 +46,7 @@ contains
   subroutine Load_SPS_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind,        &
        &    Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn, f_len_dv,        &
-       &    Grids_dv, i_supersat, temp_supersat )
+       &    Grids_dv, RHi, temp_supersat, refPressure )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelStatus_t
@@ -78,18 +78,15 @@ contains
 ! All the spectroscopy(V) coordinates
     type (Grids_T), optional, intent(out) :: Grids_dv
 
-    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
-!-----------------------------------------------------------------------------
-! i_supersat indicates different clear and cloudy sky combinations:
-!        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
-!        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
-!-----------------------------------------------------------------------------
-    real(r8), dimension(:), optional, intent(in) :: &
-                                    & temp_supersat  ! What temperatures to use for supersaturation
+    real(r8), optional, intent(in)  :: RHi     ! refRHi %
+    real(r8), optional, dimension(:), intent(in) :: temp_supersat  
+                                          ! temperatures to use for supersaturation
+    real(r8), optional, intent(in) :: refPRESSURE   ! mb
+                                          ! the top pressure where supersaturation is set
 ! Begin execution
     call load_one_grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        & radiometer, mol_cat_index, f_len, l_vmr, Grids_f, p_len, h2o_ind,&
-       & ext_ind, i_supersat, temp_supersat )
+       & ext_ind, RHi, temp_supersat, refPressure )
 
 ! ** When the spectroscopy flags are properly introduced into the database,
 !    un-comment the following codes:
@@ -112,7 +109,7 @@ contains
 
   subroutine Load_One_Grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, f_len, QuantityType, Grids_x, p_len,      &
-       &    h2o_ind, ext_ind, i_supersat, temp_supersat )
+       &    h2o_ind, ext_ind, RHi, temp_supersat, refPressure )
 
     use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -143,14 +140,11 @@ contains
     integer, intent(out) :: P_LEN
     integer, intent(out) :: H2O_IND
     integer, intent(out) :: EXT_IND
-    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
-!-----------------------------------------------------------------------------
-! i_supersat indicates different clear and cloudy sky combinations:
-!        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
-!        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
-!-----------------------------------------------------------------------------
-    real(r8), optional, dimension(:), intent(in) :: &
-                                    & temp_supersat  ! What temperatures to use for supersaturation
+    real(r8), optional, intent(in)  :: RHi     ! refRHi in %
+    real(r8), optional, dimension(:), intent(in) :: temp_supersat  
+                                          ! What temperatures to use for supersaturation
+    real(r8), optional, intent(in) :: refPRESSURE 
+                                          ! the top pressure where supersaturation is set
 ! Local variables:
 
     integer :: i, j, k, l, m, n, r, s, kz, kp, kf
@@ -166,13 +160,11 @@ contains
     integer :: f_index
     integer :: z_index
     integer :: values_index
-    real(r8), parameter :: refPRESSURE = 100._r8
-    real(r8) :: RHI 
     real(rp), dimension(:), pointer :: Grids_x_values
     real :: diff, pct_diff, max_value
 
 ! Begin code:
-    if ( i_supersat /= 0 ) then
+    if ( RHi > 0._r8 ) then
       if ( size(temp_supersat) < 1 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'temp_supersat must be allocated for supersaturation' )
@@ -215,7 +207,8 @@ contains
         & quantityType=quantityType, molIndex=mol_cat_index(ii), &
         & radiometer=radiometer, config=fwdModelConf )
       kz = f%template%noSurfs
-      if ( i_supersat /= 0 ) then
+      
+      if ( RHi > 0._r8 ) then
         if ( kz /= size(temp_supersat) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'template for this molecule on different vertical grid' )
@@ -316,18 +309,10 @@ contains
       end if
 
 ! modify h2o mixing ratio if a special supersaturation /= 0
-      if ( i_supersat /= 0 .and. ii == h2o_ind ) then
-        select case ( i_supersat )
-        case ( -1 )
-          RHI=110.0_r8
-        case ( -2 )
-          RHI=1.0e-9_r8
-        end select
-
-      ! find the index for the top of saturation levels
+      if ( RHi > 0._r8 .and. ii == h2o_ind ) then
+        ! find the index for the top of saturation levels
         call Hunt (Grids_x%zet_basis(l:n-1), -log10(refPRESSURE), supersat_Index, &
-        & 1, nearest=.true.)
-
+           & 1, nearest=.true.)
         if (supersat_Index < 1) then        
            call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Could not find value of Zeta in Grid_T; returned index too small' )
@@ -363,7 +348,7 @@ contains
           endif   ! linear or log basis
 
          end if      ! check supersat_index
-      end if      ! i_supersat
+      end if      ! RH
 
       j = k
       l = n
@@ -403,6 +388,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.44  2003/02/14 17:53:34  pwagner
+! Non-supersat bug fixed
+!
 ! Revision 2.43  2003/02/13 01:26:55  dwu
 ! another cleanup
 !
