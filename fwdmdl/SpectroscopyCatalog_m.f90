@@ -361,7 +361,7 @@ contains ! =====  Public Procedures  ===================================
     end do ! i
 
     if ( index(switches,'speC') /= 0 ) then
-      dump_SpectCat_database ( catalog )
+      call dump_SpectCat_database ( catalog )
       stop
     end if
     if ( index(switches,'spec') /= 0 ) call dump_SpectCat_database ( catalog )
@@ -684,6 +684,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.28  2004/11/04 03:40:42  vsnyder
+! Index spectroscopy catalog by molecule instead of searching
+!
 ! Revision 2.27  2004/11/01 20:26:35  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !
