@@ -739,17 +739,18 @@ contains ! =====     Public Procedures     =============================
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
     end if
     if ( present(quant) ) then
-      if ( doMask ) nullify ( z%quantities(quant)%mask ) ! for Sun's rubbish compiler
+      if ( doMask .and. .not. associated ( z%quantities(quant)%mask ) ) &
+        & call CreateMask ( z%quantities(quant) )
       if ( present(inst) ) then
         if ( doValues ) z%quantities(quant)%values(:,inst) = &
             & x%quantities(quant)%values(:,inst)
         if ( doMask .and. associated (x%quantities(quant)%mask ) ) &
-          z%quantities(quant)%mask(:,inst) = x%quantities(quant)%mask(:,inst)
+          & z%quantities(quant)%mask(:,inst) = x%quantities(quant)%mask(:,inst)
       else
         if ( doValues ) &
           & z%quantities(quant)%values = x%quantities(quant)%values
         if ( doMask .and. associated (x%quantities(quant)%mask ) ) &
-        & z%quantities(quant)%mask = x%quantities(i)%mask
+          & z%quantities(quant)%mask = x%quantities(i)%mask
       end if
     else
       do i = 1, size(x%quantities)
@@ -2024,6 +2025,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.87  2002/08/08 22:06:33  vsnyder
+! Add M_Tikhonov
+!
 ! Revision 2.86  2002/08/04 15:55:56  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
