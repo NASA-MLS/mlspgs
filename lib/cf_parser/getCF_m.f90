@@ -1,4 +1,9 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!==============================================================================
 module GetCF_M
+!==============================================================================
 
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
@@ -58,14 +63,14 @@ contains ! =====     Public Procedures     =============================
   ! the MLSCF module.  InitGetCF must be called first.
 
   subroutine GetCF ( CF_Data, Status, InUnit, Listing, &
-    &                  Dump, DumpEarly, DumpTree, DumpTables )
+    &                Dump, DumpEarly, DumpTree, DumpTables )
     type(mlscf_t), intent(out) :: CF_DATA    ! The CF data
     integer, optional, intent(out) :: STATUS ! 0 => OK, -1 => Parser error,
       ! >0 => type checking error.
     integer, optional, intent(in) :: InUnit  ! Unit number from which to
       ! read input.  It is not opened or closed here.  If it is negative,
       ! input is read from standard input.  Default -1.
-    logical, optional, intent(in) :: Listing ! True => List input
+    logical, optional, intent(in) :: Listing ! True => List input, default false
     logical, optional, intent(in) :: Dump, DumpEarly, DumpTree, DumpTables
       ! Dump => Dump declaration table after type checking
       ! DumpEarly => Dump declaration table before type checking
@@ -121,6 +126,9 @@ contains ! =====     Public Procedures     =============================
 end module GetCF_M
 
 ! $Log$
+! Revision 2.2  2000/10/03 01:37:58  vsnyder
+! Add the copyright, correct some comments.
+!
 ! Revision 2.1  2000/10/03 00:54:19  vsnyder
 ! Revised name from getL2CF_m.f90 to getCF_m.f90
 !
