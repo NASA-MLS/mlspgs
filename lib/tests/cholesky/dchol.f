@@ -2,31 +2,31 @@
 c>> 1996-03-30 DCHOL Krogh  Added external statement.
 c>> 1994-10-20 DCHOL Krogh  Changes to use M77CON
 c>> 1991-06-26 DCHOL Krogh  Initial MATH77 version.
-c
+
 c     C. L. Lawson, JPL, 1970 April 30
 c     Extensively modified by F. T. Krogh, JPL, 1991, September 23.
-c
+
 c Solution of positive definite system using Cholesky decomposition.
-c
+
 c Suppose the overdetermined system to be solved in the sense of least
 c squares is   C*X = D
-c
+
 c Suppose normal equations are formed and stored as follows.
-c
+
 c                    A = (C**T)*C
 c                    B = (C**T)*D
 c                    S = (D**T)*D
-c
+
 c Given B and the upper triangle of A this subroutine computes the
 c solution vector X, storing it in place of B.
-c
+
 c On input S should either = (D**T)D, or be zero.  If the former, then
 c on return it is the euclidean norm of (CX - D).  Else the zero value
 c is returned.
-c
+
 c The upper triangle of A is replaced by the upper triangular Cholesky
 c matrix, R, satisfying  (R**T)*R = A.
-c
+
 c The value of TOL should be 10**(-k-1) where k is the minimum number of
 c significant digits in A and B.   If TOL is < the relative precision in
 c the computer's arithmetic, it is effectively replaced by that relative
@@ -35,11 +35,11 @@ c A), then IERR is set to the value of I for the algebraically smallest
 c value of R(I,I).  If R(I,I)**2 is .le. zero, then everything in the
 c I-th row of R is set to zero, as is the I-th component of the
 c solution, and IERR is replaced by -IERR to flag that this occured.
-c
+
 c--D replaces "?": ?CHOL
-c
+
 c ********************* Variable definitions ***************************
-c
+
 c A      Input matrix, only upper triangle is used.  Replace by factor.
 c B      Input right hand side, output solution.
 c D1MACH Library routine to get characteristics of floating point
@@ -60,9 +60,9 @@ c TOLI   Internal value for the tolerance.
 c TOLM   Machine tolerance, lower limit for TOLI.
 c TSQ    TOLI**2.
 c ZERO   Parameter equal to zero.
-c
+
 c ******************** Variable declarations ***************************
-c
+
       external         D1MACH
       integer          NDA, N, IERR
       double precision A(NDA, N), B(N), S, TOL
@@ -71,9 +71,9 @@ c
       parameter (ZERO = 0.D0)
       save TOLM
       data TOLM /ZERO/
-c
+
 c ******************** Start of executable code ************************
-c
+
       if (N .le. 0) return
       if (TOLM .eq. ZERO) TOLM = D1MACH(4)
       TOLI = max(TOL, TOLM)
@@ -108,7 +108,7 @@ c
                A(J, J) = sqrt(G)
             end if
    30    continue
-c
+
 c                        Solve next row of first lower triangular system
          SM = ZERO
          DO 40 K = 1, I - 1
@@ -118,8 +118,8 @@ c                        Solve next row of first lower triangular system
          SM1 = SM1 + B(I) * B(I)
    50 continue
 c                        Get the solution norm
-      S = sqrt(max(ZERO, S - SM1))
-c
+      if ( s > zero ) s = sqrt( max(zero,s-sm1) )
+
 c                        Solve the second lower triangular system.
       DO 80  I = N, 1, -1
          if (A(I, I) .ne. ZERO) then
