@@ -596,8 +596,9 @@ contains ! ================================ Procedures ======================
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'The run of chunk ' )
               call output ( deadChunk )
+              call output ( ' ' )
               if ( .not. usingSubmit ) &
-                & call output ( ' on ' // trim(machineNames(deadMachine)) // ' ' )
+                & call output ( 'on ' // trim(machineNames(deadMachine)) // ' ' )
               call output ( trim(GetNiceTidString(deadTid)) // &
                 & ' died, try again.', advance='yes' )
             end if
@@ -1055,6 +1056,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.44  2003/05/10 22:30:12  livesey
+! Tidy up a message
+!
 ! Revision 2.43  2003/02/20 20:32:56  livesey
 ! Added the 'take a ticket' approach to direct write conflicts.
 !
