@@ -102,7 +102,7 @@ contains
 !
 !  EXTINCTN molecule
 !
-      bv = 1.0_rp
+      beta_value = 1.0_rp
       IF (PRESENT(t_power)) t_power = 0.0_rp
       Return 
 !
@@ -229,6 +229,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.4  2001/10/18 15:59:26  zvi
+! Modification for speed
+!
 ! Revision 2.3  2001/10/18 07:13:04  zvi
 ! Make routine more efficient for nl=0
 !
