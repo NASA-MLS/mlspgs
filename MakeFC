@@ -545,7 +545,7 @@ l2: fwdmdl
 endif
 
 # This requires rm-ing uniquely-named sub-subs before archiving
-tar tar_subs tar_sips: clean_all
+#tar tar_subs tar_sips: clean_all
 
 install: all
 
@@ -562,6 +562,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.29  2001/03/23 21:40:41  pwagner
+# Stopped using internal_copy_number
+#
 # Revision 1.28  2001/03/23 17:12:39  pwagner
 # Realized mistake--cvs will corrupt this version
 #
