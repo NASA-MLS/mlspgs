@@ -9,7 +9,9 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 ! type are used to compose block matrices.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use DOT_M, only: DOT
   use DUMP_0, only: DUMP
+  use Gemm_M, only: GEMM
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT
@@ -161,22 +163,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
-  logical, save :: CHECKBLOCKS = .false.
-
-  ! It is important to lie about the interface for the Y argument for *DOT.
-  ! We pass an element of a rank-2 object to it, and assume the subsequent
-  ! elements are consecutive in memory with stride INCY.  *DOT then treats
-  ! this as a rank-1 stride INCY vector.
-  interface DOT
-    real function SDOT ( N, X, INCX, Y, INCY )
-      integer, intent(in) :: N, INCX, INCY
-      real, intent(in) :: X, Y
-    end function SDOT
-    double precision function DDOT ( N, X, INCX, Y, INCY )
-      integer, intent(in) :: N, INCX, INCY
-      double precision, intent(in) :: X, Y
-    end function DDOT
-  end interface
+  logical, save :: CHECKBLOCKS = .true.
 
 contains ! =====     Public Procedures     =============================
 
@@ -333,7 +320,7 @@ contains ! =====     Public Procedures     =============================
       end if
       call Deallocate_test ( xd, 'xd', ModuleName )
       call Deallocate_test ( yd, 'yd', ModuleName )
-    endif
+    end if
   end function Add_Matrix_Blocks
 
   ! ------------------------------------------------  AssignBlock  -----
@@ -405,31 +392,31 @@ contains ! =====     Public Procedures     =============================
           if ( present(status) ) then
             status = i
             return
-          endif
+          end if
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
         zt(i,1:i-1) = 0.0_r8  ! Clear left from the diagonal (helps Sparsify!)
-!       g = x%values(ii+x%r2(i-1)+1,1) - &
-!           & dot_product(zt(r1(i):i-1,i),zt(r1(i):i-1,i))
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
+!       g = x%values(ii+x%r2(i-1)+1,1) - &
+!           & dot_product( zt(r1(i):i-1,i), zt(r1(i):i-1,i) )
         if ( g <= tol .and. i < nc ) then
           if ( present(status) ) then
             status = i
             return
-          endif
+          end if
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
         d = sqrt(g)
         zt(i,i) = d
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( ij, rz, g)
         do j = i+1, nc
           ij = i - x%r1(j)    ! Offset in VALUES of (I,J) element
           rz = max(r1(i),r1(j))
-!         g = - dot_product(zt(rz:i-1,i),zt(rz:i-1,j))
           g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
+!         g = - dot_product( zt(rz:i-1,i), zt(rz:i-1,j) )
           if ( ij >= 0 .and. ij <= x%r2(j) - x%r2(j-1) ) &
             & g = x%values(ij+x%r2(j-1)+1,1) + g
           zt(i,j) = g / d
@@ -482,7 +469,7 @@ contains ! =====     Public Procedures     =============================
       end if
       call Deallocate_test ( tst1, 'tst1', ModuleName )
       call Deallocate_test ( tst2, 'tst2', ModuleName )
-    endif
+    end if
   end subroutine CholeskyFactor_0
 
   ! ------------------------------------------------  ClearRows_0  -----
@@ -704,8 +691,8 @@ contains ! =====     Public Procedures     =============================
     if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
     do i = 1, nc
       zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
-!     d = xin(i,i) - dot_product(zt(1:i-1,i),zt(1:i-1,i))
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
+!     d = xin(i,i) - dot_product( zt(1:i-1,i), zt(1:i-1,i) )
       if ( d <= tol .and. i < nc ) then
         if ( present(status ) ) then
           status = i
@@ -718,8 +705,8 @@ contains ! =====     Public Procedures     =============================
       zt(i,i) = d
 !$OMP PARALLEL DO
       do j = i+1, nc
-!       zt(i,j) = ( xin(i,j) - dot_product(zt(1:i-1,i),zt(1:i-1,j)) ) / d
         zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
+!       zt(i,j) = ( xin(i,j) - dot_product( zt(1:i-1,i), zt(1:i-1,j) ) ) / d
       end do ! j
 !$OMP END PARALLEL DO
     end do ! i
@@ -738,7 +725,7 @@ contains ! =====     Public Procedures     =============================
       print*,size(z,1),b%nRows, size(z,2), b%nCols
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Incompatible shapes in Densify" )
-    endif
+    end if
     select case ( b%kind )
     case ( M_Absent )
       z = 0.0_r8
@@ -769,7 +756,7 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( b%r2, "b%r2", ModuleName )
       call deallocate_test ( b%values, "b%values", ModuleName )
       b%kind = m_absent
-    endif
+    end if
   end subroutine DestroyBlock_0
 
   ! ----------------------------------------------  GetDiagonal_0  -----
@@ -1079,7 +1066,7 @@ contains ! =====     Public Procedures     =============================
           yr_n = yr_1 + yi_n - yi_1 ! last row index of yb
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd, xy)
           do i = 1, mz  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
@@ -1100,9 +1087,10 @@ contains ! =====     Public Procedures     =============================
             xd = xi_1 + cr_1 - xr_1
             yd = yi_1 + cr_1 - yr_1
 
-!           xy = dot_product ( xb%values(xd:xd+c_n-1,1), &
-!                          &   yb%values(yd:yd+c_n-1,1) )
-            xy = dot( c_n, xb%values(xd,1), 1, yb%values(yd,1), 1 )
+            xy = dot( c_n, xb%values(xd,1), 1, &
+              &            yb%values(yd,1), 1 )
+!           xy = dot_product( xb%values(xd:xd+c_n-1,1), &
+!             &               yb%values(yd:yd+c_n-1,1) )
             z(i,j) = z(i,j) + s * xy
           end do ! i
 !$OMP END PARALLEL DO
@@ -1125,7 +1113,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1176,14 +1164,14 @@ contains ! =====     Public Procedures     =============================
           if ( l < k ) cycle  ! Empty column in XB
           mz = 1
           if ( my_upper ) mz = i
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xy )
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
               if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-!           xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
+!           xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! j
 !$OMP END PARALLEL DO
@@ -1207,7 +1195,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1255,7 +1243,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1307,7 +1295,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( k, l, xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1315,8 +1303,8 @@ contains ! =====     Public Procedures     =============================
             k = xb%r1(i-1)+1
             l = xb%r1(i)
             ! Inner product of column I of XB with column J of YB
-!           xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
+!           xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
 !$OMP END PARALLEL DO
@@ -1342,17 +1330,15 @@ contains ! =====     Public Procedures     =============================
           l = yb%r2(j)
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-!           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1))
-            if ( l-k+1 > 0 ) then
-              xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
-              zb%values(i,j) = zb%values(i,j) + s * xy
-            endif
+            xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
+!           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1) )
+            zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
@@ -1365,12 +1351,13 @@ contains ! =====     Public Procedures     =============================
           l = yb%r1(j)
           mz = zb%nrows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
+            ! Can't productively use DOT because there's a vector subscript
             xy = dot_product( xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
@@ -1386,31 +1373,39 @@ contains ! =====     Public Procedures     =============================
             end if
             mz = zb%nrows
             if ( my_upper ) mz = j
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xy )
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
                 if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) then
             cycle
                 end if
               end if
-!             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
-              xy = dot( xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
+              xy = dot( xb%nrows, xb%values(1,i), 1, &
+                &                 yb%values(1,j), 1 )
+!             xy = dot_product( xb%values(1:xb%nrows,i), &
+!               &               yb%values(1:xb%nrows,j) )
               zb%values(i,j) = zb%values(i,j) + s * xy
             end do ! i = 1, xb%ncols
 !$OMP END PARALLEL DO
           end do ! j = 1, yb%ncols
         else if ( my_upper ) then
           do j = 1, zb%ncols  ! Columns of ZB
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO private ( xy )
             do i = 1, j       ! Rows of Z = columns of XB
-!             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
-              xy = dot(xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
+              xy = dot(xb%nrows, xb%values(1,i), 1, &
+                &                yb%values(1,j), 1 )
+!             xy = dot_product( xb%values(1:xb%nrows,i), &
+!               &               yb%values(1:xb%nrows,j) )
               zb%values(i,j) = zb%values(i,j) + s * xy
             end do ! i
 !$OMP END PARALLEL DO
           end do ! j
         else
-          zb%values = zb%values + s * matmul(transpose(xb%values),yb%values)
+          call gemm ( 'T', 'N', xb%ncols, yb%ncols, xb%nrows, s, &
+            & xb%values, xb%nrows, yb%values, yb%nrows, 1.0_r8, &
+            & zb%values, zb%nrows )
+          ! Same as the following, but could use Atlas:
+          ! zb%values = zb%values + s * matmul(transpose(xb%values),yb%values)
         end if
       end select
     end select
@@ -1424,7 +1419,7 @@ contains ! =====     Public Procedures     =============================
       call Densify ( yDns, yb )
       if ( my_upd ) then
         line = trim(line) // ' Update'
-      endif
+      end if
       if ( associated(xm) ) then
         line = trim(line) // ' xMasked'
         do i = 1, xb%nCols
@@ -1446,9 +1441,7 @@ contains ! =====     Public Procedures     =============================
       if ( my_upper ) then
         line = trim(line) // ' Upper'
         do j = 1, zb%nCols
-          do i = j+1, zb%nRows
-            zDns(i,j) = zDns2(i,j)
-          end do
+          zDns(j+1:zb%nRows,j) = zDns2(j+1:zb%nRows,j)
         end do
       end if
       call TestBlock ( zb, zDns, ok, line, xb%kind, yb%kind )
@@ -1501,6 +1494,7 @@ contains ! =====     Public Procedures     =============================
     select case ( a%kind )
     case ( M_Absent )
     case ( M_Banded )
+!$OMP PARALLEL DO private ( v1, n, m, av )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
           if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
@@ -1508,14 +1502,12 @@ contains ! =====     Public Procedures     =============================
         end if
         v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
         n = a%r2(i) - v1           ! how many values
-        if ( n > 0 ) then          ! Because v1+1 will be out-of-range if
-                                   ! there is a final zero-size column
-          m = a%r1(i)              ! starting position in V
-!         av = dot_product(a%values(v1+1:v1+n,1), v(m:m+n-1))
-          av = dot(n, a%values(v1+1,1), 1, v(m), 1)
-          p(i) = p(i) + s * av
-        end if
+        m = a%r1(i)              ! starting position in V
+        av = dot(n, a%values(v1+1,1), 1, v(m), 1)
+!       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
+        p(i) = p(i) + s * av
       end do ! i
+!$OMP END PARALLEL DO
      case ( M_Column_Sparse )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
@@ -1529,14 +1521,16 @@ contains ! =====     Public Procedures     =============================
         p(i) = p(i) + s * av
       end do ! i
     case ( M_Full )
+!$OMP PARALLEL DO
       do i = 1, size(p)
         if ( associated(my_mask) ) then
           if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
       cycle
         end if
-        av = dot(size(v), a%values(1,i), 1, v(1), 1)
-        p(i) = p(i) + s * av
+        p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
+!       p(i) = p(i) + s * dot_product( a%values(:,i), v)
       end do ! i
+!$OMP END PARALLEL DO
     end select
   end subroutine MultiplyMatrixVector_0
 
@@ -1600,18 +1594,23 @@ contains ! =====     Public Procedures     =============================
       end do ! j
     case ( M_Full )
       if ( my_diag ) then          ! do the whole matrix
+!$OMP PARALLEL DO
         do i = 1, size(p)
-!           p(i) = p(i) + dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
-          p(i) = p(i) + sign * dot_product ( b%values(i,:), v )
+          p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+!         p(i) = p(i) + sign * dot_product( b%values(i,:), v )
         end do ! i
+!$OMP END PARALLEL DO
       else                         ! skip the diagonal
+!$OMP PARALLEL DO
         do i = 1, size(p)
-!           p(i) = p(i) + dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
-!           p(i) = p(i) + &
-!             & dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
-          p(i) = p(i) + sign * dot_product ( b%values(i, 1:i-1), v(1:i-1) ) + &
-            & sign * dot_product ( b%values( i, i+1:), v(i+1:) )
+          p(i) = p(i) + &
+            & sign * dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
+!           & sign * dot_product(b%values(i,1:i-1), v(1:i-1))
+          p(i) = p(i) + &
+            & sign * dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
+!           & sign * dot_product(b%values(i,i+1:), v(i+1:))
         end do ! i
+!$OMP END PARALLEL DO
       end if
     end select
   end subroutine MultiplyMatrixVectorNoT_0
@@ -1732,14 +1731,16 @@ contains ! =====     Public Procedures     =============================
           d = u%values(u%r2(i),1)
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
+!$OMP PARALLEL DO
           do j = 1, nc
-!           xs(i,j) = ( xs(i,j) - &
-!                   &   dot_product(u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
-!                   &               xs(u%r1(i):i-1,j) ) ) / d
             xs(i,j) = ( xs(i,j) - &
                     &   dot( u%r2(i)-u%r2(i-1)-1, u%values(u%r2(i-1)+1,1), 1, &
-                    &               xs(u%r1(i),j), 1 ) ) / d
+                    &                             xs(u%r1(i),j), 1 ) ) / d
+!           xs(i,j) = ( xs(i,j) - &
+!                   &   dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+!                   &                xs(u%r1(i):i-1,j) ) ) / d
           end do ! j = 1, nc
+!$OMP END PARALLEL DO
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -1762,10 +1763,10 @@ contains ! =====     Public Procedures     =============================
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
           do j = 1, nc
-!           xs(i,j) = ( xs(i,j) - &
-!                   &   dot_product(u%values(1:i-1,i),xs(1:i-1,j) ) ) / d
             xs(i,j) = ( xs(i,j) - &
                     &   dot( i-1, u%values(1,i), 1, xs(1,j), 1) ) / d
+!           xs(i,j) = ( xs(i,j) - &
+!                   &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
           end do ! j = 1, nc
         end do ! i = 1, n
       end select
@@ -1784,12 +1785,13 @@ contains ! =====     Public Procedures     =============================
         d = ud(i,i)
         if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyM_0 is singular" )
+!$OMP PARALLEL DO
         do j = 1, nc
-!         xs(i,j) = ( xs(i,j) - &
-!                 &   dot_product(ud(i,i+1:n),xs(i+1:n,j) ) ) / d
           xs(i,j) = ( xs(i,j) - &
                   &   dot( n-i, ud(i,i+1), size(ud,1), xs(i+1,j), 1 ) ) / d
+!                 &   dot_product(ud(i,i+1:n), xs(i+1:n,j)) ) / d
         end do ! j = 1, nc
+!$OMP END PARALLEL DO
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyM_0", ModuleName )
@@ -1843,10 +1845,12 @@ contains ! =====     Public Procedures     =============================
           d = u%values(u%r2(i),1)
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
-          ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
-          ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
           x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
-            &      u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1) ) / d
+            &      u%values(u%r2(i-1)+1,1), 1, &
+            &      my_b(u%r1(i)), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product ( &
+!           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+!           &      my_b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1)) ) / d
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -1866,8 +1870,8 @@ contains ! =====     Public Procedures     =============================
           d = u%values(i,i)
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
-          ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
           x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product( u%values(1:i-1,i), x(1:i-1)) ) / d
         end do ! i = 1, n
       end select
     else             ! solve U X = B for X
@@ -1886,8 +1890,8 @@ contains ! =====     Public Procedures     =============================
         d = ud(i,i)
         if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyV_0 is singular" )
-        ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
-        x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
+!       x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
+        x(i) = ( my_b(i) - dot_product(ud(i,i+1:n), x(i+1:n)) ) / d
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
@@ -1923,11 +1927,16 @@ contains ! =====     Public Procedures     =============================
     if ( present(transpose) ) my_t = transpose
 
     if ( my_t ) then ! solve U^T X = B for X
-        do i = 1, n
+        d = u(1,1)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyA_0 is singular" )
+        x(1) = my_b(1) / d
+        do i = 2, n
           d = u(i,i)
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyA_0 is singular" )
           x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d
         end do ! i = 1, n
     else             ! solve U X = B for X
       d = u(n,n)
@@ -1939,6 +1948,7 @@ contains ! =====     Public Procedures     =============================
         if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyA_0 is singular" )
         x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
+!       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
       end do ! i = 1, n
     end if ! my_t
   end subroutine SolveCholeskyA_0
@@ -1977,13 +1987,13 @@ contains ! =====     Public Procedures     =============================
     ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_r8)))
     ! nnzc(j) = count(abs(z(:,j)) < zt(j))
       zt(j) = 0.0_r8
-      do i1 = 1, size(z,1)
-        zt(j) = max(zt(j),abs(z(i1,j)))
-      end do ! i1
-      zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_r8)))
+!     do i1 = 1, size(z,1)
+!       zt(j) = max(zt(j),abs(z(i1,j)))
+!     end do ! i1
+!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_r8)))
       nnzc(j) = 0
       do i1 = 1, size(z,1)
-        if ( abs(z(i1,j)) >= zt(j) ) nnzc(j) = nnzc(j) + 1
+        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
       end do ! i1
     end do ! j
     nnz = sum(nnzc)
@@ -2312,33 +2322,55 @@ contains ! =====     Public Procedures     =============================
       & (/'Absent', 'Banded','Sparse','Full  '/)
     ! Local variables
     real(r8), dimension(:,:), pointer :: BM ! B dense
-    character(len=132) :: LINE          ! Error message
+    real(r8) :: E = -1.0_r8
+    integer :: I, J                         ! Subscripts, loop inductors
+    real(r8), parameter :: T = tiny(1.0_r8)
 
     ! Executable code
+    if ( e < 0.0_r8 ) e = sqrt(epsilon(1.0_r8))
     ok = .true.
     nullify ( bm )
     call Allocate_test ( bm, b%nRows, b%nCols, 'bm', ModuleName )
     call Densify ( bm, b )
-    
-    if (any( abs(bm-m) > 1e3*max(tiny(m(1,1)), epsilon(m(1,1))*(abs(bm+m))) )) then
-      ok = .false.
-      call output ( 'Matrix algebra failed', advance='yes' )
-      call dump ( bm, name='L2 Result')
-      call dump ( m, name='Slow result')
-      call output ( 'Matrix algebra failed' )
-      if (present(name)) call output ( ' for '//trim(name) )
-      if (present(kinda) .or. present(kindb)) then
-        call output ( 'case' )
-        if (present(kindA)) call output ( ' '//kindNames(kindA) )
-        if (present(kindB)) call output ( ' '//kindNames(kindB) )
-      endif
-      call output ( '', advance='yes' )
-    endif
+
+  o:do j = 1, ubound(m,2)
+      do i = 1, ubound(m,1)
+        if ( abs(bm(i,j)-m(i,j)) > 1.0e3_r8 * max(t,e*(abs(bm(i,j))+abs(m(i,j)))) ) then
+          ok = .false.
+          call output ( 'Matrix algebra failed', advance='yes' )
+          call dump ( bm, name='L2 Result')
+          call dump ( m, name='Slow result')
+          call output ( 'Matrix algebra failed' )
+          if (present(name)) call output ( ' for '//trim(name) )
+          if (present(kinda) .or. present(kindb)) then
+            call output ( ' case' )
+            if (present(kindA)) call output ( ' '//kindNames(kindA) )
+            if (present(kindB)) call output ( ' '//kindNames(kindB) )
+          end if
+          call output ( '', advance='yes' )
+          call output ( 'First error at i = ' )
+          call output ( i )
+          call output ( ', j = ' )
+          call output ( j )
+          call output ( ' bm(i,j) = ' )
+          call output ( bm(i,j) )
+          call output ( ', m(i,j) = ' )
+          call output ( m(i,j), advance='yes' )
+    exit o
+        end if
+      end do
+    end do o
+    call deallocate_test ( bm, 'bm', ModuleName )
   end subroutine TestBlock
 
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.56  2001/11/08 02:08:04  vsnyder
+! Moved interfaces for DOT to dot_external
+! Added OpenMP comments
+! Improved double-checking code for sparse algebra
+!
 ! Revision 2.55  2001/10/26 18:08:57  livesey
 ! Added upper argument to MatrixInversion
 !
