@@ -3,7 +3,7 @@
 
 !=============================================================================
 module ForwardModelInterface
-!=============================================================================
+  !=============================================================================
 
   ! Set up the forward model.  Interface from the retrieve step to the
   ! forward model.
@@ -16,6 +16,7 @@ module ForwardModelInterface
   use Expr_M, only: EXPR
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
     & ForwardModelConfig_T
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
   use SpectroscopyCatalog_m, only: Catalog_T, Lines, Catalog
   use FilterShapes_m, only: Close_Filter_Shapes_File, &
     & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
@@ -66,7 +67,7 @@ module ForwardModelInterface
 
   interface Dump
     module procedure MyDump_ForwardModelConfigs
-  end interface Dump
+  end interface
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -132,7 +133,7 @@ contains
         call read_pointing_grid_file ( lun, spec_indices )
         call close_pointing_grid_file ( lun )
       case default
-      ! Can't get here if the type checker worked
+        ! Can't get here if the type checker worked
       end select
     end do
 
@@ -173,7 +174,7 @@ contains
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     logical, dimension(:), pointer :: channels=>NULL() ! From Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS=>NULL() ! From Parse_Signal
-    
+
     ! Error message codes
 
     error = 0
@@ -217,27 +218,27 @@ contains
       case ( f_frequency )
         call expr ( subtree(2,son), units, value, type )
         info%the_freq = value(1)
-!       case ( f_channels )
-!         if ( .not. associated( info%signals ) ) then
-!           call AnnounceError(DefineSignalsFirst, key)
-!         else
-!           noChannelsSpecs=noChannelsSpecs+1
-!           thisSignal => info%signals(noChannelsSpecs)
-!           ! Now default to none included
-!           thisSignal%channels = .false.
-!           do j = 2, nsons(son)
-!             call expr ( subtree(j,son), units, value, type )
-!             select case (type)
-!             case (num_value)
-!               thisFWMSignal%channelIncluded(int(value(1))) = .true.
-!             case (range)
-!               thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
-!                 & .true.
-!             case default
-!               ! Shouldn't get here if parser worked
-!             end select
-!           end do
-!         end if
+        !       case ( f_channels )
+        !         if ( .not. associated( info%signals ) ) then
+        !           call AnnounceError(DefineSignalsFirst, key)
+        !         else
+        !           noChannelsSpecs=noChannelsSpecs+1
+        !           thisSignal => info%signals(noChannelsSpecs)
+        !           ! Now default to none included
+        !           thisSignal%channels = .false.
+        !           do j = 2, nsons(son)
+        !             call expr ( subtree(j,son), units, value, type )
+        !             select case (type)
+        !             case (num_value)
+        !               thisFWMSignal%channelIncluded(int(value(1))) = .true.
+        !             case (range)
+        !               thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
+        !                 & .true.
+        !             case default
+        !               ! Shouldn't get here if parser worked
+        !             end select
+        !           end do
+        !         end if
       case ( f_molecules )
         allocate ( info%molecules(nsons(son)-1), stat = status)
         if (status /= 0) call AnnounceError( AllocateError, key )
@@ -340,8 +341,8 @@ contains
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
-  subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-    &                       Jacobian, RowBlock, FwdModelOut)
+  subroutine ForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+    &                       FwdModelOut, ifm, fmStat, Jacobian)
 
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
@@ -369,15 +370,13 @@ contains
 
     ! Dummy arguments --------------------------------------------------------
 
-! From ForwardModelSetup
-!   type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    ! From ForwardModelSetup
     type(forwardModelConfig_T), intent(inout) :: forwardModelConfig
-
-    type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn ! ???
+    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type(ForwardModelIntermediate_T), intent(inout) :: ifm ! Workspace
+    type(ForwardModelStatus_t), intent(inout) :: fmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
-    integer, intent(in), optional :: RowBlock          ! With which block of
-    ! rows of F and Jacobian are we computing? All of them if absent.
-    type(vector_T), intent(inout), optional :: FwdModelOut  ! Radiances, etc.
 
     ! Local parameters ---------------------------------------------------------
 
@@ -389,23 +388,14 @@ contains
     integer(i4), parameter :: NGT = (Ng+1) * N2lvl
 
     integer(i4) :: i, j, k, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
-                   m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
-                   mid, ilo, ihi, k_info_count, gl_count, ld, &
-                   max_phi_dim, max_zeta_dim
+      m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
+      mid, ilo, ihi, k_info_count, ld, &
+      max_phi_dim, max_zeta_dim
 
-    real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl), &
-                tan_dh_dt(Nlvl,mnm,mxco)
-
-    real(r8) :: h_glgrid(ngt,mnm), t_glgrid(ngt,mnm), z_glgrid(ngt/2)
-    real(r8) :: dh_dt_glgrid(ngt,mnm,mxco), dhdz_glgrid(ngt,mnp)
+    real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl)
 
     real(r8) :: ptg_angles(Nptg), center_angle
-    real(r8) :: tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
-
-    ! real(r4) :: K_TEMP(totalChannels,
-    ! size(ForwardModelConfig%tangentGrid%surfs,temp%template%noSurfs,phiWindow)
-    
     real(r4) :: K_TEMP(25,Nptg,mxco,mnp)
     real(r4) :: K_ATMOS(25,Nptg,mxco,mnp,Nsps)
 
@@ -449,6 +439,7 @@ contains
     integer :: MIF                      ! Loop counter
     integer :: CHANNEL                  ! Loop counter
     integer :: MAXNOFREQS               ! Used for sizing arrays
+    integer :: MAXPATH                  ! Number of points on longest path
     integer :: NOUSEDCHANNELS           ! Number of channels to output
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
@@ -465,8 +456,6 @@ contains
     integer, dimension(:), pointer :: CHANNELINDEX=>NULL() ! E.g. 1..25
     integer, dimension(:), pointer :: USEDCHANNELS=>NULL() ! Array of indices used
 
-    real(r8), dimension(:), pointer :: GEOC_LAT=>NULL() ! Geocentric latitude of maf (radians)
-    real(r8), dimension(:), pointer :: E_RAD=>NULL() ! Effective earth radius at maf (km)
     real(r4), dimension(:), pointer :: TOAVG=>NULL()   ! Stuff to be passed to frq.avg.
     real(r8), dimension(:), pointer :: FREQUENCIES=>NULL() ! Frequency points
     real(r8), dimension(:,:,:), pointer :: DH_DT_PATH=>NULL()  ! (pathSize, Tsurfs, Tinstance)
@@ -477,25 +466,11 @@ contains
 
     logical :: FOUNDINFIRST             ! Flag to indicate derivatives
 
-    type(path_index), allocatable, dimension(:,:) :: NDX_PATH ! (Nptg,mnm)
-
     type(path_vector), allocatable, dimension(:) :: N_PATH    ! (Nptg)
 
-    type(path_vector), allocatable, dimension(:,:) :: DHDZ_PATH ! (Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:) :: H_PATH    ! (Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:) :: PHI_PATH  ! (Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:) :: T_PATH    ! (Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:) :: Z_PATH    ! (Nptg,mnm)
-
-! dimensions of SPSFUNC_PATH are: (Nsps,Nptg)
+    ! dimensions of SPSFUNC_PATH are: (Nsps,Nptg)
     type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
-
-    Type(path_vector_2d), allocatable, dimension(:,:) :: ETA_PHI ! (Nptg,mnm)
-
-    Type(ELLIPSE), allocatable, dimension(:)  :: ELVAR    ! mnm
-
     type(signal_t) :: Signal
-
     type(Catalog_T), pointer, dimension(:) :: My_Catalog => NULL()
 
     ! Executable code --------------------------------------------------------
@@ -573,18 +548,18 @@ contains
       end do
     end do
 !
-! *** DEBUG
+    ! *** DEBUG
 !
-    ForwardModelConfig%temp_der = .false.
-    ForwardModelConfig%atmos_der = .false.
+    ForwardModelConfig%temp_der = .true.
+    ForwardModelConfig%atmos_der = .true.
     do j = 1, noSpecies
       forwardModelConfig%moleculeDerivatives(j) = .true.
     end do
 !
-! *** END DEBUG
+    ! *** END DEBUG
 
-! Get the max. dimension in zeta coeff. space and phi coeff. space
-! (To be used later in rad_tran_wd, for automatic arrays asignement)
+    ! Get the max. dimension in zeta coeff. space and phi coeff. space
+    ! (To be used later in rad_tran_wd, for automatic arrays asignement)
     max_phi_dim = 1
     max_zeta_dim = 1
     if(ForwardModelConfig%temp_der) then
@@ -596,7 +571,7 @@ contains
       do k = 1, noSpecies
         IF (forwardModelConfig%moleculeDerivatives(k)) THEN
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-       &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(k))
+            &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(k))
           j = f%template%noInstances
           max_phi_dim = max(max_phi_dim,j)
           j = f%template%noSurfs
@@ -621,77 +596,109 @@ contains
     usedChannels = pack ( channelIndex, signal%channels )
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
 
-!    Nptg = forwardModelConfig%tangentGrid%noSurfs
+    !    Nptg = forwardModelConfig%tangentGrid%noSurfs
+    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
 
-    ! Now we're going to create the many temporary arrays we need
-    allocate (ndx_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'ndx_path')
-    allocate (dhdz_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'dhdz_path')
-    allocate (h_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'h_path')
+    if (fmStat%newHydros) then
+
+      print*,'(re)computing hydrostatic stuff.'
+      ! Now we're going to create the many temporary arrays we need
+      allocate (ifm%ndx_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'ndx_path')
+      allocate (ifm%dhdz_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'dhdz_path')
+      allocate (ifm%h_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'h_path')
+      allocate (ifm%phi_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'phi_path')
+      allocate (ifm%t_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'t_path')
+      allocate (ifm%z_path(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'z_path')
+
+      allocate (ifm%eta_phi(Nptg,noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'eta_phi')
+
+      allocate(ifm%elvar(noMAFs), STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'elvar')
+
+      call allocate_test(ifm%geoc_lat, noMAFs, 'geoc_lat', ModuleName)
+      call allocate_test(ifm%e_rad, noMAFs, 'e_rad', ModuleName)
+
+      maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
+      call allocate_test(ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName)
+      call allocate_test(ifm%t_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName)
+      call allocate_test(ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName)
+      call allocate_test(ifm%dh_dt_glgrid, maxPath, noMAFs, &
+        & temp%template%noSurfs,'dh_dt_glgrid', ModuleName)
+      call allocate_test(ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', ModuleName)
+      call allocate_test(ifm%tan_hts, &
+        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName)
+      call allocate_test(ifm%tan_temp, &
+        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName)
+      call allocate_test(ifm%tan_dh_dt, size(ForwardModelConfig%integrationGrid%surfs), &
+        & noMAFs, temp%template%noSurfs,'tan_dh_dt',ModuleName)
+      ! Setup for hydrostatic calculation
+      ! Assert radiance%template%noInstances=temp%template%noInstances
+      if (temp%template%noInstances /= noMAFs) &
+        & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
+      do maf = 1, noMAFs
+        phi_tan = Deg2Rad*temp%template%phi(1,maf)
+        ! ??? For the moment, change this soon.
+        geod_lat= Deg2Rad*temp%template%geodLat(1,maf)
+        call geoc_geod_conv(ifm%elvar(maf),orbIncline%values(1,1), &
+          &  phi_tan,geod_lat, ifm%geoc_lat(maf),ifm%E_rad(maf))
+      end do
+
+      ! Now compute a hydrostatic grid given the temperature and refGPH
+      ! information.
+      call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
+        &  noMAFs, ifm%geoc_lat,0.001*refGPH%values(1,:), &
+        &  refGPH%template%surfs(1,1), &
+        &  ForwardModelConfig%integrationGrid%surfs, &
+        &  temp%template%surfs(:,1),temp%values,ifm%z_glgrid,ifm%h_glgrid,ifm%t_glgrid, &
+        &  ifm%dhdz_glgrid,ifm%dh_dt_glgrid, &
+        &  ForwardModelConfig%TangentGrid%surfs, &
+        &  ifm%tan_hts,ifm%tan_temp,ifm%tan_dh_dt, &
+        &  ifm%gl_count, Ier)
+      if(ier /= 0) goto 99
+
+      ! phi_window = ForwardModelConfig%phiWindow
+
+      ! Now compute stuff along the path given this hydrostatic grid.
+      call comp_path_entities(ForwardModelConfig%integrationGrid%noSurfs, &
+        &  temp%template%noSurfs,ifm%gl_count,ifm%ndx_path,ifm%z_glgrid,ifm%t_glgrid,&
+        &  ifm%h_glgrid,ifm%dhdz_glgrid,ifm%tan_hts,no_tan_hts,ifm%z_path,&
+        & ifm%h_path,ifm%t_path,&
+        &  ifm%phi_path,ifm%dhdz_path,ifm%eta_phi,temp%template%noInstances, &
+        &  temp%template%phi(1,:)*Deg2Rad,noMAFs,ifm%elvar,Ier)
+      if(ier /= 0) goto 99
+
+      fmStat%newHydros = .false.
+    endif
+
     allocate (n_path(Nptg), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'n_path')
-    allocate (phi_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'phi_path')
-    allocate (t_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'t_path')
-    allocate (z_path(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'z_path')
-
     allocate (spsfunc_path(noSpecies,Nptg), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'spsfunc_path')
-    allocate (eta_phi(Nptg,noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'eta_phi')
-
-    allocate(elvar(noMAFs), STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'elvar')
-
     call allocate_test(dx_dt, Nptg, temp%template%noSurfs, &
       & 'dx_dt', ModuleName)
     call allocate_test(d2x_dxdt, Nptg, temp%template%noSurfs, &
       & 'd2x_dxdt', ModuleName)
 
-    call allocate_test(geoc_lat, noMAFs, 'geoc_lat', ModuleName)
-    call allocate_test(e_rad, noMAFs, 'e_rad', ModuleName)
-
-    ! Assert radiance%template%noInstances=temp%template%noInstances
-    if (temp%template%noInstances /= noMAFs) &
-      & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
-    do maf = 1, noMAFs
-      phi_tan = Deg2Rad*temp%template%phi(1,maf)
-         ! ??? For the moment, change this soon.
-      geod_lat= Deg2Rad*temp%template%geodLat(1,maf)
-      call geoc_geod_conv(elvar(maf),orbIncline%values(1,1), &
-        &  phi_tan,geod_lat, geoc_lat(maf),E_rad(maf))
-    end do
-
-    ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
-    ! First extend the grid below the surface.
-
-    ! Now compute a hydrostatic grid given the temperature and refGPH
-    ! information.
-    call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
-      &  noMAFs, geoc_lat,0.001*refGPH%values(1,:), &
-      &  refGPH%template%surfs(1,1), &
-      &  ForwardModelConfig%integrationGrid%surfs, &
-      &  temp%template%surfs(:,1),temp%values,z_glgrid,h_glgrid,t_glgrid, &
-      &  dhdz_glgrid,dh_dt_glgrid, &
-      &  ForwardModelConfig%TangentGrid%surfs, &
-      &  tan_hts,tan_temp,tan_dh_dt, &
-      &  gl_count, Ier)
-    if(ier /= 0) goto 99
-
+    ! The first part of the forward model dealt with the chunks as a whole.
+    ! This next part is more complex, and is performed within a global outer
+    ! loop over major frame (maf)
     ! Now we have the full information about the number of tangent heights,
     ! including the subsrufaces ones.
 
@@ -700,365 +707,344 @@ contains
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & "There is no pointing grid for the desired signal" )
     call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
-    "Grids", moduleName )
+      "Grids", moduleName )
     call Hunt(PointingGrids(whichPointingGrid)%oneGrid%height, &
       & ForwardModelConfig%TangentGrid%surfs, grids, allowTopValue=.true.)
 
-    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
-!    phi_window = ForwardModelConfig%phiWindow
-    ! Now compute stuff along the path given this hydrostatic grid.
-    call comp_path_entities(ForwardModelConfig%integrationGrid%noSurfs, &
-      &  temp%template%noSurfs,gl_count,ndx_path,z_glgrid,t_glgrid,&
-      &  h_glgrid,dhdz_glgrid,tan_hts,no_tan_hts,z_path,h_path,t_path,&
-      &  phi_path,dhdz_path,eta_phi,temp%template%noInstances, &
-      &  temp%template%phi(1,:)*Deg2Rad,noMAFs,elvar,Ier)
+    ! ---------------------------- Begin main MAF Specific stuff --------
+
+    maf=fmStat%maf
+    print*,'Doing maf:',maf
+
+    ! Compute the specie function (spsfunc) and the refraction along
+    ! all the paths for the current maf
+
+    Call get_path_spsfunc_ngrid(fwdModelIn, fwdModelExtra, &
+      &     forwardModelConfig%molecules, ifm%ndx_path(:,maf),no_tan_hts, &
+      &     ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
+      &     spsfunc_path, Ier)
     if(ier /= 0) goto 99
 
-    ! The first part of the forward model dealt with the chunks as a whole.
-    ! This next part is more complex, and is performed within a global outer
-    ! loop over major frame (maf)
+    !??? Choose better value for phi_tan later
+    phi_tan = Deg2Rad*temp%template%phi(1,maf)
 
-    ! ---------------------------- Begin main Major Frame loop --------
+    ! Compute the ptg_angles (chi) for Antenna convolution, also the
+    ! derivatives of chi w.r.t to T and other parameters
+    call get_chi_angles(ifm%ndx_path(:,maf),n_path,&
+      &     forwardModelConfig%tangentGrid%surfs,        &
+      &     ifm%tan_hts(:,maf),ifm%tan_temp(:,maf),phi_tan,ifm%elvar(maf)%Roc,&
+      &     0.001*scGeocAlt%values(1,1),  &
+      &     elevOffset%values(1,1), &
+      &     ifm%tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs, &
+      &     temp%template%surfs(:,1),&
+      &     forwardModelConfig%SurfaceTangentIndex, &
+      &     center_angle,ptg_angles,dx_dt,d2x_dxdt,ier)
+    if(ier /= 0) goto 99
 
-   do maf = 3, 3
-!    do maf = 1, noMAFs
-      print*,'Doing maf:',maf
+    ! Compute the refraction correction scaling matrix for this mmaf:
+    call refraction_correction(no_tan_hts, ifm%tan_hts(:,maf), ifm%h_path(:,maf), &
+      &                n_path, ifm%ndx_path(:,maf), ifm%E_rad(maf), ref_corr)
 
- ! Compute the specie function (spsfunc) and the refraction along
- ! all the paths for the current maf
+    Radiances = 0.0
 
-      Call get_path_spsfunc_ngrid(fwdModelIn, fwdModelExtra, &
-     &     forwardModelConfig%molecules, ndx_path(:,maf),no_tan_hts, &
-     &     z_path(:,maf), t_path(:,maf), phi_path(:,maf), n_path, &
-     &     spsfunc_path, Ier)
-      if(ier /= 0) goto 99
-!
-!??? Choose better value for phi_tan later
-      phi_tan = Deg2Rad*temp%template%phi(1,maf)
+    ! If we're not doing frequency averaging, instead outputting radiances
+    ! corresponding to delta function responses, we can setup the frequency
+    ! information here.  In the more common case where we are doing the
+    ! averaging the frequency grid varies from pointing to pointing, and is
+    ! allocated inside the pointing loop.
+    if (.not. forwardModelConfig%do_freq_avg) then
+      ! Think later about multiple signals case!???
+      noFreqs = count ( forwardModelConfig%signals(1)%channels )
+      call allocate_test(frequencies,noFreqs,"frequencies",ModuleName)
+      frequencies = pack ( signal%frequencies, &
+        & forwardModelConfig%signals(1)%channels )
+      !%%%%%%%%%%%%% DEBUG NJL
+      signal%sideband=-1
+      !%%%%%%%%%%%%%%
+      select case (signal%sideband)
+      case ( -1 )
+        frequencies = signal%lo - (signal%centerFrequency+frequencies)
+      case ( +1 )
+        frequencies = signal%lo + (signal%centerFrequency+frequencies)
+      case ( 0 )
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Folded signal requested in forward model')
+      case default
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Bad value of signal%sideband')
+      end select
+      noFreqs = size(frequencies)
+    endif
 
-      ! Compute the ptg_angles (chi) for Antenna convolution, also the
-      ! derivatives of chi w.r.t to T and other parameters
-      call get_chi_angles(ndx_path(:,maf),n_path,&
-        &     forwardModelConfig%tangentGrid%surfs,        &
-        &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,elvar(maf)%Roc,&
-        &     0.001*scGeocAlt%values(1,1),  &
-        &     elevOffset%values(1,1), &
-        &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs, &
-        &     temp%template%surfs(:,1),&
-        &     forwardModelConfig%SurfaceTangentIndex, &
-        &     center_angle,ptg_angles,dx_dt,d2x_dxdt,ier)
-      if(ier /= 0) goto 99
+    ! First we have a mini loop over pointings to work out an upper limit
+    ! for the number of frequencies we're going to be dealing with
+    maxNoFreqs = size(PointingGrids(whichPointingGrid)%OneGrid(grids(1))%Frequencies)
+    do ptg_i = 2, no_tan_hts - 1
+      maxNoFreqs = max ( maxNoFreqs, size(PointingGrids(whichPointingGrid) &
+        & %OneGrid(grids(ptg_i))%Frequencies) )
+    end do
 
-      ! Compute the refraction correction scaling matrix for this mmaf:
-      call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
-        &                n_path, ndx_path(:,maf), E_rad(maf), ref_corr)
+    ! Now allocate arrays this size
 
-      Radiances = 0.0
+    if ( forwardModelConfig%temp_der ) then
+      call Allocate_Test(k_temp_frq%values, maxNoFreqs, &
+        &   temp%template%noSurfs, temp%template%noInstances, &
+        &   'k_temp_frq', ModuleName)
+    end if
 
-      ! If we're not doing frequency averaging, instead outputting radiances
-      ! corresponding to delta function responses, we can setup the frequency
-      ! information here.  In the more common case where we are doing the
-      ! averaging the frequency grid varies from pointing to pointing, and is
-      ! allocated inside the pointing loop.
-      if (.not. forwardModelConfig%do_freq_avg) then
-        ! Think later about multiple signals case!???
-        noFreqs = count ( forwardModelConfig%signals(1)%channels )
-        call allocate_test(frequencies,noFreqs,"frequencies",ModuleName)
-        frequencies = pack ( signal%frequencies, &
-          & forwardModelConfig%signals(1)%channels )
-        !%%%%%%%%%%%%% DEBUG NJL
-        signal%sideband=-1
-        !%%%%%%%%%%%%%%
-        select case (signal%sideband)
-        case ( -1 )
-          frequencies = signal%lo - (signal%centerFrequency+frequencies)
-        case ( +1 )
-          frequencies = signal%lo + (signal%centerFrequency+frequencies)
-        case ( 0 )
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Folded signal requested in forward model')
-        case default
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Bad value of signal%sideband')
-        end select
-        noFreqs = size(frequencies)
-      endif
+    call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
 
-      ! First we have a mini loop over pointings to work out an upper limit
-      ! for the number of frequencies we're going to be dealing with
-      maxNoFreqs = size(PointingGrids(whichPointingGrid)%OneGrid(grids(1))%Frequencies)
-      do ptg_i = 2, no_tan_hts - 1
-        maxNoFreqs = max ( maxNoFreqs, size(PointingGrids(whichPointingGrid) &
-          & %OneGrid(grids(ptg_i))%Frequencies) )
-      end do
+    do specie = 1, noSpecies
+      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
 
-      ! Now allocate arrays this size
-
-      if ( forwardModelConfig%temp_der ) then
-        call Allocate_Test(k_temp_frq%values, maxNoFreqs, &
-          &   temp%template%noSurfs, temp%template%noInstances, &
-          &   'k_temp_frq', ModuleName)
+      ! Allocate intermediate space for vmr derivatives
+      if ( forwardModelConfig%moleculeDerivatives(specie) ) then
+        call Allocate_Test( k_atmos_frq(specie)%values, &
+          & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
+          & 'k_atmos_frq(..)', ModuleName )
       end if
 
-      call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
+    end do ! End loop over speices
 
-      do specie = 1, noSpecies
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
+    ! Now we can go ahead and loop over pointings
+    ! ------------------------------ Begin loop over pointings --------
+    do ptg_i = 1, no_tan_hts - 1
+      k = ptg_i
+      h_tan = ifm%tan_hts(k,maf)
 
-        ! Allocate intermediate space for vmr derivatives
-        if ( forwardModelConfig%moleculeDerivatives(specie) ) then
-          call Allocate_Test( k_atmos_frq(specie)%values, &
-            & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
-            & 'k_atmos_frq(..)', ModuleName )
-        end if
+      ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
-      end do ! End loop over speices
+      no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
 
-      ! Now we can go ahead and loop over pointings
-      ! ------------------------------ Begin loop over pointings --------
-      do ptg_i = 1, no_tan_hts - 1
-        k = ptg_i
-        h_tan = tan_hts(k,maf)
+      ! If we're doing frequency averaging, get the frequencies we need for
+      ! this pointing.
+      if (ForwardModelConfig%do_freq_avg) then
+        frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
+        noFreqs = size(frequencies)
+      endif ! If not, we dealt with this outside the loop
 
- ! Compute the beta's along the path, for this tanget hight and this mmaf:
-
-        no_ele = ndx_path(ptg_i,maf)%total_number_of_elements
-
-        ! If we're doing frequency averaging, get the frequencies we need for
-        ! this pointing.
-        if (ForwardModelConfig%do_freq_avg) then
-!           call Allocate_Test(frequencies, &
-!             & size(PointingGrids(whichPointingGrid)%&
-!             &      oneGrid(grids(ptg_i))%frequencies),&
-!             &      'frequencies', ModuleName)
-!          Note that this deallocates the ones from the previous go round
-!          print*,'Center frequency is:',PointingGrids(whichPointingGrid)%CenterFrequency
-!          print*,'Offsets:'
-!          call dump(PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
-          frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-          noFreqs = size(frequencies)
-        endif ! If not, we dealt with this outside the loop
-
-        call get_beta_path ( frequencies, my_Catalog, no_ele, &
-          &                  z_path(ptg_i,maf), t_path(ptg_i,maf), &
-          &                  beta_path, 0.001*losVel%values(1,maf), ier )
-        if(ier /= 0) goto 99
+      call get_beta_path ( frequencies, my_Catalog, no_ele, &
+        &                  ifm%z_path(ptg_i,maf), ifm%t_path(ptg_i,maf), &
+        &                  beta_path, 0.001*losVel%values(1,maf), ier )
+      if(ier /= 0) goto 99
 !
-!  Define the dh_dt_path for this pointing and this MAF:
+      !  Define the dh_dt_path for this pointing and this MAF:
 !
-        ! Need to allocate this even if no derivatives as we pass it
-        ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
-          & temp%template%noSurfs),STAT=ier)
+      ! Need to allocate this even if no derivatives as we pass it
+      ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
+        & temp%template%noSurfs),STAT=ier)
 
-        if ( forwardModelConfig%temp_der ) then
-          if(ier == 0) ALLOCATE(dum(no_ele),STAT=ier)
-          IF(ier /= 0) then
-            Print *,'** ALLOCATE Error: dum or dh_dt_path, STAT =',ier
-            goto 99
-          else
-            do j = 1,  temp%template%noSurfs
-              do i = 1, temp%template%noInstances
-                CALL Lintrp(z_glgrid, z_path(ptg_i,maf)%values,       &
-               &            dh_dt_glgrid(:,i,j), dum, gl_count, no_ele)
-                dh_dt_path(:,i,j) = dum(:) * eta_phi(ptg_i,maf)%values(:,i)
-              end do
+      if ( forwardModelConfig%temp_der ) then
+        if(ier == 0) ALLOCATE(dum(no_ele),STAT=ier)
+        IF(ier /= 0) then
+          Print *,'** ALLOCATE Error: dum or dh_dt_path, STAT =',ier
+          goto 99
+        else
+          do j = 1,  temp%template%noSurfs
+            do i = 1, temp%template%noInstances
+              CALL Lintrp(ifm%z_glgrid, ifm%z_path(ptg_i,maf)%values,       &
+                &            ifm%dh_dt_glgrid(:,i,j), dum, ifm%gl_count, no_ele)
+              dh_dt_path(:,i,j) = dum(:) * ifm%eta_phi(ptg_i,maf)%values(:,i)
             end do
-            DEALLOCATE(dum,STAT=i)
-          endif
+          end do
+          DEALLOCATE(dum,STAT=i)
+        endif
+      end if
+
+      ! ------------------------------- Begin loop over frequencies ------
+      do frq_i = 1, noFreqs
+
+        Frq = frequencies(frq_i)
+
+        Call Rad_Tran(ifm%elvar(maf), Frq, &
+          & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
+          & noSpecies, ifm%ndx_path(k,maf), ifm%z_path(k,maf), ifm%h_path(k,maf), &
+          & ifm%t_path(k,maf), ifm%phi_path(k,maf), ifm%dHdz_path(k,maf), &
+          & earthRefl%values(1,1),beta_path(:,frq_i), spsfunc_path(:,k), &
+          & ref_corr(:,k), spaceRadiance%values(1,1), brkpt, no_ele, mid,&
+          & ilo, ihi, t_script, tau, Rad, Ier)
+        if(ier /= 0) goto 99
+
+        RadV(frq_i) = Rad
+
+        ! Now, Compute the radiance derivatives:
+
+        if (ForwardModelConfig%temp_der) k_temp_frq%values=0.0_r8
+        Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+          &  ifm%elvar(maf),frq_i,Frq,noSpecies,ifm%z_path(k,maf), &
+          &  ifm%h_path(k,maf),ifm%t_path(k,maf),ifm%phi_path(k,maf),ifm%dHdz_path(k,maf),&
+          &  beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
+          &  temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
+          &  temp%template%phi(1,:)*Deg2Rad,dh_dt_path,&
+          &  k_temp_frq,k_atmos_frq,brkpt,no_ele,mid,ilo,ihi, &
+          &  t_script,tau,max_zeta_dim,max_phi_dim,ier)
+        IF(ier /= 0) goto 99
+
+      end do                          ! Frequency loop
+
+      ! ----------------------------- End loop over frequencies ----
+
+      ! Here we either frequency average to get the unconvolved radiances, or
+      ! we just store what we have as we're using delta funciton channels
+
+      if ( forwardModelConfig%do_freq_avg ) then
+        if ( signal%sideband == 0 ) then
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Asked for folded in wrong place')
+        else
+          sense = signal%sideband
+          centerFreq = signal%lo + sense * signal%centerFrequency
         end if
+        do i = 1, noUsedChannels
+          ch = usedChannels(i)
+          call Freq_Avg(frequencies,                           &
+            &       centerFreq+sense*FilterShapes(i)%FilterGrid, &
+            &       FilterShapes(i)%FilterShape,RadV,noFreqs,    &
+            &       Size(FilterShapes(i)%FilterGrid),Radiances(ptg_i,ch))
+        end do
+      else
+        Radiances(ptg_i,usedChannels) = RadV(1:noFreqs)
+      endif
 
-
-! ------------------------------- Begin loop over frequencies ------
-        do frq_i = 1, noFreqs
-
-          Frq = frequencies(frq_i)
-
-          Call Rad_Tran(elvar(maf), Frq, &
-             & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
-             & noSpecies, ndx_path(k,maf), z_path(k,maf), h_path(k,maf), &
-             & t_path(k,maf), phi_path(k,maf), dHdz_path(k,maf), &
-             & earthRefl%values(1,1),beta_path(:,frq_i), spsfunc_path(:,k), &
-             & ref_corr(:,k), spaceRadiance%values(1,1), brkpt, no_ele, mid,&
-             & ilo, ihi, t_script, tau, Rad, Ier)
-          if(ier /= 0) goto 99
-
-          RadV(frq_i) = Rad
-
-! Now, Compute the radiance derivatives:
-
-          if (ForwardModelConfig%temp_der) k_temp_frq%values=0.0_r8
-          Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-            &  elvar(maf),frq_i,Frq,noSpecies,z_path(k,maf), &
-            &  h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
-            &  beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
-            &  temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
-            &  temp%template%phi(1,:)*Deg2Rad,dh_dt_path,&
-            &  k_temp_frq,k_atmos_frq,brkpt,no_ele,mid,ilo,ihi, &
-            &  t_script,tau,max_zeta_dim,max_phi_dim,ier)
-          IF(ier /= 0) goto 99
-
-        end do                          ! Frequency loop
-
-! ----------------------------- End loop over frequencies ----
-
-        ! Here we either frequency average to get the unconvolved radiances, or
-        ! we just store what we have as we're using delta funciton channels
-
-        if ( forwardModelConfig%do_freq_avg ) then
-          if ( signal%sideband == 0 ) then
-             call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'Asked for folded in wrong place')
-          else
-            sense = signal%sideband
-            centerFreq = signal%lo + sense * signal%centerFrequency
-          end if
+      ! Frequency Average the temperature derivatives with the appropriate
+      ! filter shapes
+      if ( forwardModelConfig%temp_der) then
+        if ( forwardModelConfig%do_freq_avg) then
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            call Freq_Avg(frequencies,                           &
-              &       centerFreq+sense*FilterShapes(i)%FilterGrid, &
-              &       FilterShapes(i)%FilterShape,RadV,noFreqs,    &
-              &       Size(FilterShapes(i)%FilterGrid),Radiances(ptg_i,ch))
-          end do
+            do instance = 1, temp%template%noInstances
+              do surface = 1, temp%template%noSurfs
+                ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
+                call Freq_Avg(frequencies,                        &
+                  &        centerFreq+sense*FilterShapes(i)%FilterGrid, &
+                  &        FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
+                  &        noFreqs,Size(FilterShapes(i)%FilterGrid),r)
+                k_temp(ch,ptg_i,surface,instance) = r
+              end do                  ! Surface loop
+            end do                    ! Instance loop
+          end do                      ! Channel loop
         else
-          Radiances(ptg_i,usedChannels) = RadV(1:noFreqs)
+          do i = 1, noUsedChannels
+            k_temp(i,ptg_i,1:temp%template%noSurfs,1:temp%template%noInstances) = &
+              &  k_temp_frq%values(1,1:temp%template%noSurfs,1:temp%template%noInstances)
+          end do
         endif
+      endif
 
-        ! Frequency Average the temperature derivatives with the appropriate
-        ! filter shapes
-        if ( forwardModelConfig%temp_der) then
+      ! Frequency Average the atmospheric derivatives with the appropriate
+      ! filter shapes
+      do specie = 1, noSpecies
+        if ( forwardModelConfig%moleculeDerivatives(specie) ) then
+          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            &  quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
           if ( forwardModelConfig%do_freq_avg) then
             do i = 1, noUsedChannels
               ch = usedChannels(i)
-              do instance = 1, temp%template%noInstances
-                do surface = 1, temp%template%noSurfs
-                  ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
-                  call Freq_Avg(frequencies,                        &
-              &        centerFreq+sense*FilterShapes(i)%FilterGrid, &
-              &        FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
-              &        noFreqs,Size(FilterShapes(i)%FilterGrid),r)
-                  k_temp(ch,ptg_i,surface,instance) = r
-                end do                  ! Surface loop
-              end do                    ! Instance loop
-            end do                      ! Channel loop
-          else
+              do instance = 1, f%template%noInstances
+                do surface = 1, f%template%noSurfs
+                  ToAvg =>   &
+                    &        k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
+                  call Freq_Avg(frequencies,                      &
+                    &          centerFreq+sense*FilterShapes(i)%FilterGrid, &
+                    &          FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
+                    &          noFreqs,Size(FilterShapes(i)%FilterGrid),r)
+                  k_atmos(ch,ptg_i,surface,instance,specie) = r
+                end do                ! Surface loop
+              end do                  ! Instance loop
+            end do                    ! Channel loop
+          else                        ! Else not frequency averaging
+            surface = f%template%noSurfs
+            instance = f%template%noInstances
             do i = 1, noUsedChannels
-              k_temp(i,ptg_i,1:temp%template%noSurfs,1:temp%template%noInstances) = &
-                &  k_temp_frq%values(1,1:temp%template%noSurfs,1:temp%template%noInstances)
+              k_atmos(i,ptg_i,1:surface,1:instance,specie) = &
+                &  k_atmos_frq(specie)%values(1,1:surface,1:instance)
             end do
+          end if                      ! Frequency averaging or not
+        end if                        ! Want derivatives for this
+      end do                          ! Loop over species
+
+
+      deallocate (dh_dt_path, STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+        & MLSMSG_Deallocate//'dh_dt_path')
+
+    end do                            ! Pointing Loop
+    ! ---------------------------------- End of Pointing Loop ---------------
+
+    ! Complete the radiances's last location, also  complete k_temp last
+    ! location.
+
+    do i = 1, noUsedChannels
+      ch = usedChannels(i)
+      Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
+      if(ForwardModelConfig%temp_der) then
+        n = temp%template%noSurfs
+        k = temp%template%noInstances
+        k_temp(i,no_tan_hts,1:n,1:k)=k_temp(i,no_tan_hts-1,1:n,1:k)
+      endif
+      if(ForwardModelConfig%atmos_der) then
+        do m = 1, noSpecies
+          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m),&
+            & foundInFirst=foundInFirst )
+          if ( foundInFirst ) then
+            k = f%template%noInstances
+            n = f%template%noSurfs
+            k_atmos(i,no_tan_hts,1:n,1:k,m)=k_atmos(i,no_tan_hts-1,1:n,1:k,m)
           endif
-        endif
-
-        ! Frequency Average the atmospheric derivatives with the appropriate
-        ! filter shapes
-        do specie = 1, noSpecies
-          if ( forwardModelConfig%moleculeDerivatives(specie) ) then
-            f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-     &  quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
-            if ( forwardModelConfig%do_freq_avg) then
-              do i = 1, noUsedChannels
-                ch = usedChannels(i)
-                do instance = 1, f%template%noInstances
-                  do surface = 1, f%template%noSurfs
-                    ToAvg =>   &
-              &        k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
-                    call Freq_Avg(frequencies,                      &
-              &          centerFreq+sense*FilterShapes(i)%FilterGrid, &
-              &          FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
-              &          noFreqs,Size(FilterShapes(i)%FilterGrid),r)
-                    k_atmos(ch,ptg_i,surface,instance,specie) = r
-                  end do                ! Surface loop
-                end do                  ! Instance loop
-              end do                    ! Channel loop
-            else                        ! Else not frequency averaging
-              surface = f%template%noSurfs
-              instance = f%template%noInstances
-              do i = 1, noUsedChannels
-                k_atmos(i,ptg_i,1:surface,1:instance,specie) = &
-                       &  k_atmos_frq(specie)%values(1,1:surface,1:instance)
-              end do
-            end if                      ! Frequency averaging or not
-          end if                        ! Want derivatives for this
-        end do                          ! Loop over species
-
-
-        deallocate (dh_dt_path, STAT=status)
-        if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-          & MLSMSG_Deallocate//'dh_dt_path')
-
-      end do                            ! Pointing Loop
-      ! ---------------------------------- End of Pointing Loop ---------------
-
-      ! Complete the radiances's last location, also  complete k_temp last
-      ! location.
-
-      do i = 1, noUsedChannels
-        ch = usedChannels(i)
-        Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
-        if(ForwardModelConfig%temp_der) then
-          n = temp%template%noSurfs
-          k = temp%template%noInstances
-          k_temp(i,no_tan_hts,1:n,1:k)=k_temp(i,no_tan_hts-1,1:n,1:k)
-        endif
-        if(ForwardModelConfig%atmos_der) then
-          do m = 1, noSpecies
-            f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m),&
-              & foundInFirst=foundInFirst )
-            if ( foundInFirst ) then
-              k = f%template%noInstances
-              n = f%template%noSurfs
-              k_atmos(i,no_tan_hts,1:n,1:k,m)=k_atmos(i,no_tan_hts-1,1:n,1:k,m)
-            endif
-          end do
-        endif
-      end do
-
-      !  Here comes the Convolution code
-      do i = 1, noUsedChannels
-
-        ch = usedChannels(i)
-
-        if(ForwardModelConfig%do_conv) then
-
-          ! Note I am replacing the i's in the k's with 1's (enclosed in
-          ! brackets to make it clear.)  We're not wanting derivatives anyway
-          ! so it shouldn't matter
-          call convolve_all(forwardModelConfig, fwdModelIn, &
-            &     ptan%values(:,maf), noSpecies, &
-            &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
-            &     tan_temp(:,maf),dx_dt, d2x_dxdt,si,center_angle,&
-            &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
-            &     no_tan_hts,k_info_count,i_star_all(i,:), &
-            &     k_star_all(i,:,:,:,:),k_star_info,&
-            &     temp%template%noSurfs,temp%template%noInstances,&
-            &     temp%template%surfs(:,1),AntennaPatterns(1),ier)
-!??? Need to choose some index other than 1 for AntennaPatterns ???
-          if(ier /= 0) goto 99
-        else
-
-          call no_conv_at_all(forwardModelConfig, fwdModelIn, &
-            &     ptan%values(:,maf), noSpecies,  &
-            &     ForwardModelConfig%tangentGrid%surfs, &
-            &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
-            &     no_tan_hts, k_info_count, i_star_all(i,:), &
-            &     k_star_all(i,:,:,:,:),k_star_info, &
-            &     temp%template%noSurfs,temp%template%noInstances, &
-            &     temp%template%surfs(:,1))
-
-        endif
-
-      end do                            ! Channel loop
-
-      do mif = 1, radiance%template%noSurfs
-        do channel = 1, noUsedChannels
-          k = usedChannels(channel)+(mif-1)*radiance%template%noChans
-          radiance%values(k,maf) = i_star_all(channel,mif)
         end do
-      end do
+      endif
+    end do
 
-    end do                              ! MAF loop
-    ! ------------------------------ End of Major Frame Loop -----------
+    !  Here comes the Convolution code
+    do i = 1, noUsedChannels
+
+      ch = usedChannels(i)
+
+      if(ForwardModelConfig%do_conv) then
+
+        ! Note I am replacing the i's in the k's with 1's (enclosed in
+        ! brackets to make it clear.)  We're not wanting derivatives anyway
+        ! so it shouldn't matter
+        call convolve_all(forwardModelConfig, fwdModelIn, &
+          &     ptan%values(:,maf), noSpecies, &
+          &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
+          &     ifm%tan_temp(:,maf),dx_dt, d2x_dxdt,si,center_angle,&
+          &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
+          &     no_tan_hts,k_info_count,i_star_all(i,:), &
+          &     k_star_all(i,:,:,:,:),k_star_info,&
+          &     temp%template%noSurfs,temp%template%noInstances,&
+          &     temp%template%surfs(:,1),AntennaPatterns(1),ier)
+        !??? Need to choose some index other than 1 for AntennaPatterns ???
+        if(ier /= 0) goto 99
+      else
+
+        call no_conv_at_all(forwardModelConfig, fwdModelIn, &
+          &     ptan%values(:,maf), noSpecies,  &
+          &     ForwardModelConfig%tangentGrid%surfs, &
+          &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
+          &     no_tan_hts, k_info_count, i_star_all(i,:), &
+          &     k_star_all(i,:,:,:,:),k_star_info, &
+          &     temp%template%noSurfs,temp%template%noInstances, &
+          &     temp%template%surfs(:,1))
+
+      endif
+
+    end do                            ! Channel loop
+
+    do mif = 1, radiance%template%noSurfs
+      do channel = 1, noUsedChannels
+        k = usedChannels(channel)+(mif-1)*radiance%template%noChans
+        radiance%values(k,maf) = i_star_all(channel,mif)
+      end do
+    end do
+
+    ! ------------------------------ End of Major Frame Specific stuff --------
+
+    ! Update status
+    fmStat%maf = fmStat%maf + 1
+    fmStat%finished = fmStat%maf > noMAFs
 
     if(ForwardModelConfig%temp_der) deallocate(k_temp_frq%values,STAT=i)
     if(ForwardModelConfig%atmos_der) then
@@ -1096,9 +1082,9 @@ contains
 
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
 
-! ** DEBUG, Zvi
-!   if(i > -22) Stop
-! ** END DEBUG
+    ! ** DEBUG, Zvi
+    !   if(i > -22) Stop
+    ! ** END DEBUG
 
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
@@ -1148,45 +1134,45 @@ contains
 
 913 format(a,a1,i2.2)
 
-    deallocate (ndx_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'ndx_path')
-    deallocate (dhdz_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'dhdz_path')
-    deallocate (h_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'h_path')
+    !     deallocate (ndx_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'ndx_path')
+    !     deallocate (dhdz_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'dhdz_path')
+    !     deallocate (h_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !      & MLSMSG_Deallocate//'h_path')
     deallocate (n_path, STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Deallocate//'n_path')
-    deallocate (phi_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'phi_path')
-    deallocate (t_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'t_path')
-    deallocate (z_path, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'z_path')
+    !     deallocate (phi_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'phi_path')
+    !     deallocate (t_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'t_path')
+    !     deallocate (z_path, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'z_path')
     deallocate (spsfunc_path, STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Deallocate//'spsfunc_path')
-    deallocate (eta_phi, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'eta_phi')
-    deallocate (elvar, STAT=status)
-    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
-      & MLSMSG_Deallocate//'elvar')
+    !     deallocate (eta_phi, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'eta_phi')
+    !     deallocate (elvar, STAT=status)
+    !     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+    !       & MLSMSG_Deallocate//'elvar')
 
     call deallocate_test(dx_dt, 'dx_dt', ModuleName)
     call deallocate_test(d2x_dxdt, 'd2x_dxdt', ModuleName)
-    call deallocate_test(geoc_lat, 'geoc_lat', ModuleName)
-    call deallocate_test(e_rad, 'e_rad', ModuleName)
+    !     call deallocate_test(geoc_lat, 'geoc_lat', ModuleName)
+    !     call deallocate_test(e_rad, 'e_rad', ModuleName)
 
-! ** DEBUG, Zvi
-!    if(i > -22) Stop
-! ** END DEBUG
+    ! ** DEBUG, Zvi
+    !    if(i > -22) Stop
+    ! ** END DEBUG
 
     Return
 
@@ -1234,6 +1220,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.80  2001/04/10 23:15:55  livesey
+! Reverse communication seems to be working. Needs a bit more tidying up though.
+!
 ! Revision 2.79  2001/04/10 22:04:16  livesey
 ! Intermediate version, slight problem with signals.
 !
