@@ -5563,7 +5563,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! If the quantity exists (or it doesn't exist but it's not a radiance)
-      if ( fileId /= 0 .or. quantity%template%quantityType /= l_radiance ) then
+      if ( fileId /= 0 .or. ( quantity%template%quantityType /= l_radiance .and. &
+        & quantity%template%quantityType /= l_L1BMAFBaseline ) ) then
         if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
 
         call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
@@ -7016,6 +7017,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.297  2004/12/01 01:24:44  livesey
+! Handles missing L1BMAFBaselines in the same manner as missing radiances.
+!
 ! Revision 2.296  2004/11/30 01:41:58  livesey
 ! Make folded sideband fill cope with absence of one sideband (for R1A
 ! case).
