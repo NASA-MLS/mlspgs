@@ -134,6 +134,9 @@ module INIT_TABLES_MODULE
                                 SECTION_LAST = z_Output
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
+!  W a r n i n g   W a r n i n g   W a r n i n g   W a r n i n g   
+! Beware of adding spec indices
+! The NAG compiler will generate code that has memory problems
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
@@ -154,8 +157,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L1BOA              = s_l1brad + 1
   integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
-  integer, parameter :: S_LEAPSECFILE        = s_l2gp + 1
-  integer, parameter :: S_MATRIX             = s_leapsecfile + 1
+  integer, parameter :: S_MATRIX             = s_l2gp + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
@@ -322,7 +324,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
-    spec_indices(s_leapsecfile) =          add_ident ( 'leapsecfile' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
@@ -736,8 +737,6 @@ contains ! =====     Public procedures     =============================
       begin, s+s_l1brad, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
       begin, s+s_l1boa, &
-             begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
-      begin, s+s_leapsecfile, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def &
              /) )
     call make_tree ( (/ &
@@ -822,7 +821,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
-             s+s_l1boa, s+s_leapsecfile, &
+             s+s_l1boa, &
              s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
              s+s_time, s+s_vgrid, s+s_binSelector, &
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
@@ -889,6 +888,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.214  2002/05/01 00:24:26  pwagner
+! Undid changes to allow leapsecfile to be read; they caused crashes
+!
 ! Revision 2.213  2002/04/29 16:38:42  pwagner
 ! Can specifiy leapsecfile in global settings
 !
