@@ -301,6 +301,8 @@ contains ! ========  Public Procedures =========================================
         if (info /= 0) call PVMErrorMessage(info, "sending control response")
       case ('Relinquish')
         snooper%mode = SnooperObserving
+      case ('Finishing')
+        snooper%mode = SnooperFinishing
       case ('QuantityTemplate')
         !call SnooperRequestedQtyTemplate(snooper, vectorDatabase)
       case ('Quantity')
@@ -418,7 +420,8 @@ contains ! ========  Public Procedures =========================================
         endif
 
         ! This shouldn't be necessary, but just to be sure...
-        if (size(snoopers)==0) doneSnoopingForNow= .true.
+        if ( (size(snoopers)==0) .or. (all(snoopers%mode/=SnooperControling)) ) &
+          & doneSnoopingForNow= .true.
         firstTime = .false.
         if (doneSnoopingForNow) exit snoopLoop
 
