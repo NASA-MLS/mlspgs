@@ -656,7 +656,7 @@ contains ! =====     Public procedures     =============================
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
-             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_radiusofearth,&
+             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
@@ -1017,6 +1017,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.139  2001/07/18 23:10:52  dwu
+! rename l_radiusofearth as l_earthradius
+!
 ! Revision 2.138  2001/07/17 22:33:51  jonathan
 ! mixed a bug Too many continuation lines, paul
 !
