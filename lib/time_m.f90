@@ -14,7 +14,8 @@ module TIME_M
 
   public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, USE_WALL_CLOCK, &
    & WAIT, WAIT_LOOP_LIMITS, RETRY, INIT_RETRY, &
-   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR, &
+   & SET_STARTTIME
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -26,7 +27,8 @@ module TIME_M
     module procedure WAIT_S
   end interface
 
-  integer, dimension(3), save :: STARTTIME = -1  ! Reset on first call to time_now
+  integer, dimension(8), save :: STARTTIME = -1  ! Reset on first call to time_now
+  integer, save          :: STARTDAYSOFF = 0
   integer, save :: TIME_DIVISOR = 1  ! Divide by this before returning result
   logical, save :: USE_WALL_CLOCK = .false.
   integer, save :: WAIT_LOOP_LIMITS = 100
@@ -38,6 +40,9 @@ module TIME_M
   integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
   integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
   real, save    :: INIT_T0
+  !                                              so first value is 0.0
+  logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
+  ! integer :: daysoff
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -50,13 +55,15 @@ module TIME_M
 
 contains
 
-  subroutine TIME_NOW_D ( T )
+  subroutine TIME_NOW_D ( T, INVALUES )
     integer, parameter :: RK = kind(0.0d0)
+    integer, dimension(8), intent(in), optional :: INVALUES
     include "time_now.f9h"
   end subroutine TIME_NOW_D
 
-  subroutine TIME_NOW_S ( T )
+  subroutine TIME_NOW_S ( T, INVALUES )
     integer, parameter :: RK = kind(0.0e0)
+    integer, dimension(8), intent(in), optional :: INVALUES
     include "time_now.f9h"
   end subroutine TIME_NOW_S
 
@@ -71,6 +78,25 @@ contains
     real(rk), intent(in) :: T
     include "wait.f9h"
   end subroutine WAIT_S
+
+  subroutine SET_STARTTIME ( VALUES )
+    integer, dimension(8), intent(in) :: VALUES
+    character (len=8) :: date   ! in yyyymmdd format
+    character (len=4) :: yyyy
+    character ( len=2) :: mm, dd
+    STARTTIME = VALUES
+    write(yyyy, '(i4)') values(1)
+    write(mm, '(i2)') values(2)
+    write(dd, '(i2)') values(3)
+    date = yyyy // mm // dd
+    call yyyymmdd_to_dai(date, startdaysoff)
+    ! print *, 'values: ', values
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    ! print *, 'date: ', date
+    ! print *, 'startdaysoff: ', startdaysoff
+  end subroutine SET_STARTTIME
 
   subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
     integer, intent(in), optional :: SUCCESSFUL_RESULT
@@ -163,6 +189,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.5  2003/12/07 23:12:14  pwagner
+!wall clock is now time elapsed from start; may set start time
+!
 !Revision 2.4  2003/12/05 00:53:26  pwagner
 !Added possible TIME_DIVISOR to scale results from time_now
 !
