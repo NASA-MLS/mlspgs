@@ -6,7 +6,7 @@ module DUMPER
   use HGRID, only: HGRID_T
   use INIT_TABLES_MODULE, only: LIT_INDICES, PHYQ_INDICES
   use MLSCommon, only: MLSCHUNK_T
-  use MLSSignals_m, only: radiometers, signals, DUMP
+  use MLSSignals_m, only: radiometers, signals, DUMP, GetRadiometerName, GetModuleName
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING
@@ -88,6 +88,7 @@ contains ! =====     Private Procedures     ============================
   subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES )
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
     integer :: I
+    character (len=80) :: str
     call output ( 'QUANTITY_TEMPLATES: SIZE = ' )
     call output ( size(quantity_templates), advance='yes' )
     do i = 1, size(quantity_templates)
@@ -111,6 +112,12 @@ contains ! =====     Private Procedures     ============================
       call output ( 'stacked ' )
       if ( .not. quantity_templates(i)%regular ) call output ( 'ir' )
       call output ( 'regular ' )
+      if ( quantity_templates(i)%logBasis ) then
+        call output ('log-')
+      else
+        call output ('linear')
+      endif
+      call output ('basis ' )  
       if ( .not. quantity_templates(i)%minorFrame ) call output ( 'non' )
       call output ( 'minorFrame', advance='yes' )
       call output ( '      NoInstancesLowerOverlap = ' )
@@ -147,18 +154,21 @@ contains ! =====     Private Procedures     ============================
         &  call output ( '     ' )
       if ( quantity_templates(i)%radiometer /= 0 ) then
         call output ( ' Radiometer = ' )
-        call display_string ( radiometers(quantity_templates(i)%radiometer)%prefix )
+        call GetRadiometerName ( quantity_templates(i)%radiometer, str )
+        call output ( str )
       end if
       if ( quantity_templates(i)%instrumentModule /= 0 ) then
         call output ( ' Instrument Module = ' )
-        call display_string ( quantity_templates(i)%instrumentModule )
-      end if
-      if ( quantity_templates(i)%signal /= 0 ) then
-        call dump ( signals( (/ quantity_templates(i)%signal /) ) )
+        call GetModuleName ( quantity_templates(i)%instrumentModule, str )
+        call output ( str )
       end if
       if ( quantity_templates(i)%molecule /= 0 ) then
         call output ( ' Molecule = ' )
         call display_string ( lit_indices(quantity_templates(i)%molecule) )
+      end if
+      call output ( '', advance = 'yes')
+      if ( quantity_templates(i)%signal /= 0 ) then
+        call dump ( signals( (/ quantity_templates(i)%signal /) ) )
       end if
       if ( quantity_templates(i)%radiometer + &
         &  quantity_templates(i)%molecule /= 0 ) &
