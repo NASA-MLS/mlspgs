@@ -35,11 +35,12 @@ module FullForwardModel_m
   use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
+  use Molecules, only: L_EXTINCTION
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
   use String_table, only: GET_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
-    & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
+    & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
     & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, LIT_INDICES
   use Units, only: Deg2Rad
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
@@ -460,8 +461,13 @@ contains ! ================================ FullForwardModel routine ======
 
     maxNoFSurfs = 0
     do specie = 1, noSpecies
-      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_vmr, molecule=fwdModelConf%molecules(specie) )
+      if ( fwdModelConf%molecules(specie) == l_extinction ) then
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_extinction, radiometer=firstSignal%radiometer )
+      else
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_vmr, molecule=fwdModelConf%molecules(specie) )
+      endif
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
 
@@ -542,8 +548,8 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Setup our temporary `state vector' like arrays -------------------------
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
-     &   p_len, f_len, h2o_ind, lin_log, sps_values, Grids_f, Grids_dw, &
-     &   Grids_dn, Grids_dv)
+     & firstSignal%radiometer, p_len, f_len, h2o_ind, lin_log, &
+     & sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv)
 
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
     nlvl = size(FwdModelConf%integrationGrid%surfs)
@@ -1830,6 +1836,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.11  2001/11/07 21:19:01  livesey
+! Put Zvi's change comments back
+!
 ! Revision 2.10  2001/11/07 21:16:56  livesey
 ! Now defaults to *not* using a line if no bands listed.
 !
@@ -2045,3 +2054,8 @@ contains ! ================================ FullForwardModel routine ======
 
 ! Revision 1.1  2001/05/29 22:53:51  livesey
 ! First version, taken from old ForwardModelInterface.f90
+
+
+
+
+
