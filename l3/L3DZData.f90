@@ -30,11 +30,9 @@ MODULE L3DZData
 ! Contents:
 
 ! Definition -- L3DZData_T
-!               L3DZFiles_T 
 ! Subroutines -- OutputL3DZ
 !                ReadL3DZData
-!                WriteMetaL3DZS
-!                WriteMetaL3DZD
+!                WriteMetaL3DZ
 !                AllocateL3DZ
 !                DeallocateL3DZ
 !                DestroyL3DZDatabase
@@ -58,41 +56,21 @@ MODULE L3DZData
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
-     REAL(r8), DIMENSION(:), POINTER :: pressure   ! dimensioned (nLevels)
+     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
 
      ! Now the horizontal geolocation information and time:
 
-     REAL(r8), DIMENSION(:), POINTER :: latitude    ! dimensioned (nLats)
+     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
 
-     REAL(r8) :: time                           ! Synoptic time
+     REAL(r8) :: time						! Synoptic time
 
      ! Now the data fields:
 
-     REAL(r8), DIMENSION(:,:), POINTER :: l3dzValue       ! Field value
-     REAL(r8), DIMENSION(:,:), POINTER :: l3dzPrecision   ! Field precision
+     REAL(r8), DIMENSION(:,:), POINTER :: l3dzValue		! Field value
+     REAL(r8), DIMENSION(:,:), POINTER :: l3dzPrecision		! Field precision
         ! dimensioned as (nLevels, nLats)
 
    END TYPE L3DZData_T
-
-! This data type is used to store information about the number of distinct l3dz
-! files of each type actually created.
-
-   TYPE L3DZFiles_T
-
-     INTEGER :: nStd	! number of distinct Standard files created
-     INTEGER :: nDg	! number of distinct Diagnostic files created
-
-     ! names of the files created
-
-     CHARACTER (LEN=FileNameLen) :: stdNames(maxWindow)
-     CHARACTER (LEN=FileNameLen) :: dgNames(maxWindow)
-
-     ! CCSDS B format dates of the created files
-
-     CHARACTER (LEN=8) :: stdDates(maxWindow)
-     CHARACTER (LEN=8) :: dgDates(maxWindow)
-
-   END TYPE L3DZFiles_T
 
 CONTAINS
 
@@ -109,7 +87,7 @@ CONTAINS
 
       TYPE( L3DZData_T ), INTENT(IN) :: dzm(:)
 
-      TYPE( L3DZFiles_T ), INTENT(OUT) :: zFiles
+      TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
 ! Parameters
 
@@ -143,25 +121,12 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-! Check whether the name is distinct; if so, save it in L3DZFiles_T under the
-! correct type
+! Check whether the name is distinct; if so, save it in zFiles
 
-         IF ( INDEX(type,'Diagnostic') /= 0 ) THEN
-
-            IF (LinearSearchStringArray(zFiles%dgNames,file) == 0) THEN
-               zFiles%nDg= zFiles%nDg+1
-               zFiles%dgNames(zFiles%nDg) = file
-               zFiles%dgDates(zFiles%nDg) = date
-            ENDIF
-
-         ELSE
-
-            IF (LinearSearchStringArray(zFiles%StdNames,file) == 0) THEN
-               zFiles%nStd = zFiles%nStd+1
-               zFiles%stdNames(zFiles%nStd) = file
-               zFiles%stdDates(zFiles%nStd) = date
-            ENDIF
-
+         IF (LinearSearchStringArray(zFiles%name,file) == 0) THEN
+            zFiles%nFiles = zFiles%nFiles+1
+            zFiles%name(zFiles%nFiles) = file
+            zFiles%date(zFiles%nFiles) = date
          ENDIF
 
 ! Open the file for appending a swath
@@ -182,7 +147,7 @@ CONTAINS
 
 ! Define the swath dimensions
 
-         status = swdefdim(swID, DIMT_NAME, 1)
+         status = swdefdim(swID, DIMT_NAME, DATE_LEN)
          IF (status == -1) THEN
             msr = DIM_ERR // DIMT_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -202,10 +167,10 @@ CONTAINS
 
 ! Define the swath geolocation fields using the above dimensions
 
-         status = swdefgfld(swID, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT64, &
+         status = swdefgfld(swID, GEO_FIELD11, DIMT_NAME, DFNT_CHAR8, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
-            msr = GEO_ERR // GEO_FIELD3
+            msr = GEO_ERR // GEO_FIELD11
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -258,17 +223,18 @@ CONTAINS
 
          start = 0
          stride = 1
-         edge(1) = dzm(i)%nLevels
+         edge(1) = DATE_LEN
          edge(2) = dzm(i)%nLats
 
 ! Geolocation fields
 
-         status = swwrfld(swID, GEO_FIELD3, start(1), stride(1), stride(1), &
-                          dzm(i)%time)
+         status = swwrfld(swID, GEO_FIELD11, start(1), stride(1), edge(1), date)
          IF (status == -1) THEN
-             msr = WR_ERR // GEO_FIELD3
+             msr = WR_ERR // GEO_FIELD11
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
+         edge(1) = dzm(i)%nLevels
 
          status = swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
                            REAL(dzm(i)%pressure) )
@@ -347,13 +313,15 @@ CONTAINS
 
 ! Functions
 
-      INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swrdfld
+      INTEGER, EXTERNAL :: pgs_td_utcToTAI, swattach, swdetach, swdiminfo, swrdfld
 
 ! Variables
 
+      CHARACTER (LEN=DATE_LEN) :: date
+      CHARACTER (LEN=CCSDSB_LEN) :: dTime
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: err, nlat, nlev, size, swid, status
+      INTEGER :: err, nlat, nlev, returnStatus, size, swid, status
       INTEGER :: start(2), stride(2), edge(2)
 
       REAL, ALLOCATABLE :: rl(:), rp(:)
@@ -401,15 +369,20 @@ CONTAINS
 
       start = 0
       stride = 1
-      edge(1) = dz%nLevels
+      edge(1) = DATE_LEN
       edge(2) = dz%nLats
 
-      status = swrdfld(swid, GEO_FIELD3, start(1), stride(1), stride(1), &
-                       dz%time)
+      status = swrdfld(swid, GEO_FIELD11, start(1), stride(1), edge(1), date)
       IF (status == -1) THEN
-         msr = RL3DZ_ERR // GEO_FIELD3
+         msr = RL3DZ_ERR // GEO_FIELD11
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+      dTime = date // 'T12:00:00.000000Z'
+      returnStatus = pgs_td_utcToTAI(dTime, dz%time)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                                 ModuleName, 'Error converting from CCSDSB to TAI.')
+
+      edge(1) = dz%nLevels
 
       status = swrdfld(swid, GEO_FIELD9, start(1), stride(1), edge(1), rp)
       IF (status == -1) THEN
@@ -463,7 +436,7 @@ CONTAINS
 !-----------------------------
 
 !-------------------------------------------------------
-   SUBROUTINE WriteMetaL3DZS (pcf, cfDef, files, anText)
+   SUBROUTINE WriteMetaL3DZ (pcf, mcfNum, files, anText)
 !-------------------------------------------------------
 
 ! Brief description of subroutine
@@ -472,11 +445,11 @@ CONTAINS
 
 ! Arguments
 
-      TYPE( L3CFDef_T ), INTENT(IN) :: cfDef
-
-      TYPE (L3DZFiles_T), INTENT(IN) :: files
+      TYPE (OutputFiles_T), INTENT(IN) :: files
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
+
+      INTEGER, INTENT(IN) :: mcfNum
 
       CHARACTER (LEN=1), POINTER :: anText(:)
 
@@ -502,19 +475,23 @@ CONTAINS
 
       REAL(r8) :: dval
 
-! L3DZ Standard products file -- initialize the MCF
+! If no L3DZ files were created, exit
 
-      result = pgs_met_init(cfDef%stdMCFnum, groups)
+      IF (files%nFiles == 0) RETURN
+
+! Initialize the MCF
+
+      result = pgs_met_init(mcfNum, groups)
       IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                            'Initialization error.  See LogStatus for details.')
 
 ! For each file successfully created,
 
-      DO i = 1, files%nStd
+      DO i = 1, files%nFiles
 
 ! Open the HDF file and initialize the SD interface
 
-         sdid = sfstart(files%stdNames(i), DFACC_WRITE)
+         sdid = sfstart(files%name(i), DFACC_WRITE)
          IF (sdid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
                                      &open the HDF file for metadata writing.')
 
@@ -537,8 +514,8 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalGranuleID'
-         indx = INDEX(files%stdNames(i), '/', .TRUE.)
-         sval = files%stdNames(i)(indx+1:)
+         indx = INDEX(files%name(i), '/', .TRUE.)
+         sval = files%name(i)(indx+1:)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -562,9 +539,9 @@ CONTAINS
 
 ! MeasuredParameterContainer -- find the number of swaths in the file
 
-         numSwaths = swinqswath(files%stdNames(i), list, len)
+         numSwaths = swinqswath(files%name(i), list, len)
          IF (numSwaths == -1) THEN
-            msr = 'No swaths found in file ' // TRIM( files%stdNames(i) ) // &
+            msr = 'No swaths found in file ' // TRIM( files%name(i) ) // &
                   ' while attempting to write its metadata.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -791,14 +768,14 @@ CONTAINS
 
          attrName = 'RangeBeginningDate'
          result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                     files%stdDates(i) )
+                                     files%date(i) )
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          attrName = 'RangeBeginningTime'
-         sval = '12:00:00.000000'
+         sval = '00:00:00.000000'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -807,13 +784,14 @@ CONTAINS
 
          attrName = 'RangeEndingDate'
          result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                     files%stdDates(i) )
+                                     files%date(i) )
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          attrName = 'RangeEndingTime'
+         sval = '23:59:59.999999'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -852,416 +830,15 @@ CONTAINS
 
 ! Annotate the file with the PCF
 
-         CALL WritePCF2Hdr(files%stdNames(i), anText)
+         CALL WritePCF2Hdr(files%name(i), anText)
 
       ENDDO
 
       result = pgs_met_remove()
 
-!-------------------------------
-   END SUBROUTINE WriteMetaL3DZS
-!-------------------------------
-
-!-------------------------------------------------------
-   SUBROUTINE WriteMetaL3DZD (pcf, cfDef, files, anText)
-!-------------------------------------------------------
-
-! Brief description of subroutine
-! This routine writes the metadata for an l3dz diagnostic file, and annotates it 
-! with the PCF.
-
-! Arguments
-
-      TYPE( L3CFDef_T ), INTENT(IN) :: cfDef
-
-      TYPE (L3DZFiles_T), INTENT(IN) :: files
-
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
-
-      CHARACTER (LEN=1), POINTER :: anText(:)
-
-! Parameters
-
-! Functions
-
-      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
-      INTEGER, EXTERNAL :: pgs_met_setAttr_i,pgs_met_setAttr_s, pgs_met_write
-      INTEGER, EXTERNAL :: swinqswath
-
-! Variables
-
-      CHARACTER (LEN=3) :: cNum
-      CHARACTER (LEN=45) :: attrName, lvid
-      CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=6000) :: list
-      CHARACTER (LEN=FileNameLen) :: sval
-      CHARACTER (LEN=GridNameLen) :: swathName
-      CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
-
-      INTEGER :: hdfReturn, i, j, indx, len, numSwaths, result, sdid
-
-      REAL(r8) :: dval
-
-
-! L3DZ Diagnostic products file -- initialize the MCF
-
-      IF (files%nDg == 0) RETURN
-
-      result = pgs_met_init(cfDef%dgMCFnum, groups)
-      IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                           'Initialization error.  See LogStatus for details.')
-
-! For each file successfully created,
-
-      DO i = 1, files%nDg
-
-! Open the HDF file and initialize the SD interface
-
-         sdid = sfstart(files%dgNames(i), DFACC_WRITE)
-         IF (sdid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-                                     &open the HDF file for metadata writing.')
-
-! Set PGE values -- ECSDataGranule
-
-         attrName = 'ReprocessingPlanned'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                           'further update anticipated using enhanced PGE')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'ReprocessingActual'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'processed once')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'LocalGranuleID'
-         indx = INDEX(files%dgNames(i), '/', .TRUE.)
-         sval = files%dgNames(i)(indx+1:)
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'DayNightFlag'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, 'Both')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'LocalVersionID'
-         CALL ExpandFileTemplate('$cycle', lvid, cycle=pcf%cycle)
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, lvid)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! MeasuredParameterContainer -- find the number of swaths in the file
-
-         numSwaths = swinqswath(files%dgNames(i), list, len)
-         IF (numSwaths == -1) THEN
-            msr = 'No swaths found in file ' // TRIM( files%dgNames(i) ) // &
-                  ' while attempting to write its metadata.'
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! For each swath in the file
-
-         DO j = 1, numSwaths
-
-! Extract its name
-
-            indx = INDEX(list, ',')
-            IF (indx /= 0) THEN
-               swathName = list(:indx-1)
-               list = list(indx+1:)
-            ELSE
-               swathName = list
-            ENDIF
-
-! Append a class suffix to ParameterName, and write the grid name as its value
-
-            IF (j < 10) THEN
-               WRITE( cNum, '(I1)' ) j
-            ELSE IF ( (j >= 10) .AND. (j < 100) ) THEN
-               WRITE( cNum, '(I2)' ) j
-            ELSE
-               WRITE( cNum, '(I3)' ) j
-            ENDIF
-
-            attrName = 'ParameterName' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       swathName)
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-! QAFlags Group
-
-            attrName = 'AutomaticQualityFlag' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'Passed')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'pending algorithm update')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'OperationalQualityFlag' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                              'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-! QAStats Group
-
-            attrName = 'QAPercentInterpolatedData' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'QAPercentMissingData' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'QAPercentOutofBoundsData' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-         ENDDO
-
-! OrbitCalculatedSpatialDomainContainer
-
-         attrName = 'OrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 999)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'StartOrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'StopOrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'EquatorCrossingLongitude' // '.1'
-         dval = 0.0
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'EquatorCrossingTime' // '.1'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    '00:00:00')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'EquatorCrossingDate' // '.1'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    '1899-04-29')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! InputPointer
-
-         attrName = 'InputPointer'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                   'See the PCF annotation to this file.')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! Locality Value
-
-         attrName = 'LocalityValue'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Limb')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! VerticalSpatialDomain Product-Specific Attribute
-
-         attrName = 'VerticalSpatialDomainType' // '.1'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Atmosphere Layer')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'VerticalSpatialDomainValue' // '.1'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Atmosphere Profile')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! HorizontalSpatialDomainContainer
-
-         attrName = 'ZoneIdentifier'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Other Grid System')
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'WestBoundingCoordinate'
-         dval = -180.0
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'NorthBoundingCoordinate'
-         dval = 90.0
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-         attrName = 'EastBoundingCoordinate'
-         dval = 180.0
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'SouthBoundingCoordinate'
-         dval = -90.0
-         result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), attrName, dval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! RangeDateTime Group
-
-         attrName = 'RangeBeginningDate'
-         result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                     files%dgDates(i) )
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'RangeBeginningTime'
-         sval = '12:00:00.000000'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'RangeEndingDate'
-         result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                     files%dgDates(i) )
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         attrName = 'RangeEndingTime'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-! PGEVersion
-
-         attrName = 'PGEVersion'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    pcf%outputVersion)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-! Write the metadata and their values to HDF attributes
-
-         result = pgs_met_write(groups(INVENTORYMETADATA), "coremetadata", &
-                                sdid)
-         IF (result /= PGS_S_SUCCESS) THEN
-            IF (result == PGSMET_E_MAND_NOT_SET) THEN
-               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Some of the &
-                               &mandatory metadata parameters were not set.')
-            ELSE
-              CALL MLSMessage(MLSMSG_Error, ModuleName, 'Metadata write &
-                              &failed.')
-            ENDIF
-         ENDIF
-
-! Terminate access to the SD interface and close the file
-
-         hdfReturn = sfend(sdid)
-         IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                              'Error closing HDF file after writing metadata.')
-
-! Annotate the file with the PCF
-
-         CALL WritePCF2Hdr(files%dgNames(i), anText)
-
-      ENDDO
-
-      result = pgs_met_remove()
-
-!-------------------------------
-   END SUBROUTINE WriteMetaL3DZD
-!-------------------------------
+!------------------------------
+   END SUBROUTINE WriteMetaL3DZ
+!------------------------------
 
 !--------------------------------------------
    SUBROUTINE AllocateL3DZ (nlev, nlat, l3dz)
@@ -1443,6 +1020,9 @@ END MODULE L3DZData
 !==================
 
 !# $Log$
+!# Revision 1.4  2001/04/24 19:38:50  nakamura
+!# Removed references to private L2 parameters.
+!#
 !# Revision 1.3  2001/03/27 19:29:13  nakamura
 !# Updated the metadata; fixed err checks on deallocate.
 !#
