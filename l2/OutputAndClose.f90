@@ -33,6 +33,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use OUTPUT_M, only: blanks, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
+  use Time_M, only: Time_Now
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE, switches
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, &
@@ -124,7 +125,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
@@ -560,7 +561,7 @@ contains ! =====     Public Procedures     =============================
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
 
@@ -606,7 +607,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -679,6 +680,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.42  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.41  2001/11/01 21:05:10  pwagner
 ! Satisfies new WriteL2AuxData interface
 !

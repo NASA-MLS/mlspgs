@@ -20,6 +20,7 @@ module MLSSignals_M
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
@@ -466,7 +467,7 @@ contains
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
       case default
@@ -567,7 +568,7 @@ contains
 
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       call output ( "Timing for MLSSignals = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -1330,6 +1331,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.42  2001/11/09 23:14:08  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.41  2001/10/12 23:07:23  pwagner
 ! Added two inverse functions to signal (module) indexes
 !
