@@ -989,8 +989,8 @@ contains
   end subroutine Slabs_Prep_Arrays
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
-  subroutine Get_GL_Slabs_Arrays ( Catalog,p_path,t_path,vel_z,gl_slabs, &
-                             &     no_ele, dt, Do_1D )
+  subroutine Get_GL_Slabs_Arrays ( Catalog, P_path, T_path, Vel_z, GL_slabs, &
+                             &     No_ele, Do_1D )
 
     use Units, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -1002,7 +1002,7 @@ contains
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
 
-    real(rp), intent(in) :: vel_z, dt
+    real(rp), intent(in) :: vel_z
 
     type (slabs_struct), pointer :: gl_slabs(:,:)
 
@@ -1038,7 +1038,7 @@ contains
 
         do j = 1, no_ele
 
-          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j)+dt, p_path(j), mass, Qlog, &
+          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j), p_path(j), mass, Qlog, &
             &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
             &  gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
 
@@ -1054,7 +1054,7 @@ contains
 
         do j = 1, no_ele/2
 
-          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j)+dt, p_path(j), mass, Qlog, &
+          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j), p_path(j), mass, Qlog, &
             &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
             & gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
 
@@ -1091,6 +1091,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.16  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.15.2.2  2003/02/27 00:57:20  vsnyder
 ! Cosmetic changes, get rid of declared but unused variables
 !
