@@ -19,13 +19,14 @@ module Open_Init
     &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
     &                mlspcf_pcf_start
   use MoreTree, only: Get_Spec_ID
+  USE output_m, only: output
   USE PCFHdr, only: CreatePCFAnnotation
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
   use String_Table, only: Get_String !, L2CFUnit => INUNIT
-  use TOGGLES, only: GEN, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED!, N_DOT
@@ -43,6 +44,8 @@ module Open_Init
     "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
+
+    integer, parameter :: CCSDSLen=27
 
 contains ! =====     Public Procedures     =============================
 
@@ -94,14 +97,13 @@ contains ! =====     Public Procedures     =============================
 
     !Local Variables
     integer, parameter :: CCSDSEndId = 10412
-    integer, parameter :: CCSDSLen=27
     integer, parameter :: CCSDSStartId = 10411
 
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     integer :: ifl1
     integer :: L1FileHandle, L1_Version
-    character (LEN=132) :: L1physicalFilename
+    character (LEN=FileNameLen) :: L1physicalFilename
     integer :: returnStatus
     integer :: sd_id
     integer :: STATUS ! From allocate
@@ -112,6 +114,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
+    if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
 ! Read the PCF into an annotation for file headers
 
       CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
@@ -228,6 +231,12 @@ contains ! =====     Public Procedures     =============================
       indx = INDEX(name, '/', .TRUE.)
       l2pcf%logGranID = name(indx+1:)
  
+    if ( toggle(gen) ) then
+      if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
+        & call dump_L1B_database(ifl1, l1binfo, l2pcf, &
+  			& CCSDSEndTime, CCSDSStartTime)
+      call trace_end ( "OpenAndInit" )
+    end if
     return
 
   end subroutine OpenAndInitialize
@@ -256,11 +265,80 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Open_MLSCF
 
+  ! -------------------------------------------------  dump_L1B_database  -----
+  subroutine dump_L1B_database(num_l1b_files, l1binfo, l2pcf, &
+  & CCSDSEndTime, CCSDSStartTime)
+  
+  ! Dump info obtained during OpenAndInitialize:
+  ! L1B databse
+  ! L1OA file
+  ! Start and end times
+  ! output version
+  ! cycle number
+  ! logfile name
+  
+
+	! Arguments
+	integer, intent(in) :: num_l1b_files
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+	 type(PCFData_T) :: l2pcf
+    character(len=CCSDSlen) CCSDSEndTime
+    character(len=CCSDSlen) CCSDSStartTime
+	
+	! Local
+
+    character (LEN=FileNameLen) :: physicalFilename
+	integer :: i, returnStatus, version
+
+	! Begin
+	version = 1
+
+  call output('L1B database:', advance='yes')
+  
+  do i=1, num_l1b_files
+    returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
+        & physicalFilename)
+  	call output('fileid:   ')
+	call output(l1bInfo%L1BRADIDs(i), advance='yes')
+  	call output('name:   ')
+  	call output(TRIM(physicalFilename), advance='yes')
+  enddo
+
+  call output('L1OA file:', advance='yes')
+  
+    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
+        & physicalFilename)
+  	call output('fileid:   ')
+	call output(l1bInfo%L1BOAID, advance='yes')
+  	call output('name:   ')
+  	call output(TRIM(physicalFilename), advance='yes')
+
+  	call output('Start Time:   ')
+	call output(CCSDSStartTime, advance='yes')
+
+  	call output('End Time:   ')
+	call output(CCSDSEndTime, advance='yes')
+
+  	call output('Output version:   ')
+	call output(l2pcf%outputVersion, advance='yes')
+
+  	call output('cycle:   ')
+	call output(l2pcf%cycle, advance='yes')
+
+  	call output('Log file name:   ')
+  	call output(TRIM(l2pcf%logGranID), advance='yes')
+
+  end subroutine dump_L1B_database
+
 end module Open_Init
+
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.27  2001/04/04 23:46:18  pwagner
+! Added trace_*, dump_l1b_database
+!
 ! Revision 2.26  2001/04/03 20:51:27  pwagner
 ! Added anText; deleted read_apriori
 !
