@@ -86,6 +86,7 @@ Contains
           Integer :: nt_a_i, nt_d_i
 	  Real    :: c0_i, tau0_i
 	  Real (r8)   :: lonD0_i, tD0_i, lonA0_i, tA0_i, lat_i, delTad_i
+	  Real (r8)   :: lonD0_i_temp, lonA0_i_temp
 	 
           lat	    = lat_i
 	  nt_a      = nt_a_i
@@ -112,7 +113,18 @@ Contains
 
  	  dtad	    = delTad_i 
  	  !dlonad    = PI-dtad*c0 
- 	  dlonad    = abs(lonD0_i-lonA0_i) 
+	  if(lonD0_i < 0) then
+		lonD0_i_temp = 2.0*PI+lonD0_i
+	  else 
+		lonD0_i_temp = lonD0_i
+	  end if
+	  if(lonA0_i < 0) then
+		lonA0_i_temp = 2.0*PI+lonA0_i
+	  else 	
+		lonA0_i_temp = lonA0_i
+	  end if
+ 	  !dlonad    = abs( lonD0_i_temp-lonA0_i_temp )
+ 	  dlonad    = abs( lonD0_i-lonA0_i)
 
 	  d1lonad   = dlonad + c0*dtad
 
@@ -355,12 +367,13 @@ Contains
 	  ENDIF
 
    	  aimgP(nt/2) = 0.0 
-	  Do i = nt/2+1, nt
+	  Do i = nt/2+1, nt-1
    	     aimgP(i) = imgPtemp(i-nt/2)
           End Do
 	  Do i = 1, nt/2-1
    	     aimgP(i) = -imgPtemp(nt/2-i)
           End Do
+	  aimgP(nt) = 0.0
 
 ! Dscending Part
 
@@ -384,12 +397,13 @@ Contains
 	  ENDIF
 
    	  dimgP(nt/2) = 0.0 
-	  Do i = nt/2+1, nt
+	  Do i = nt/2+1, nt-1
    	     dimgP(i) = imgPtemp(i-nt/2)
           End Do
 	  Do i = 1, nt/2-1
    	     dimgP(i) = -imgPtemp(nt/2-i)
           End Do
+	  dimgP(nt) = 0.0
 
  	  mtotal = 0
 
@@ -410,6 +424,7 @@ Contains
 
                if (kr < -krmax_g .or. kr > 0.0 .or. ks < 0.0) then 
                   flag = 0
+		  phikr(mtotal) = CMPLX(0.0, 0.0)
                   Goto 101
                endif
 
@@ -816,10 +831,14 @@ Contains
         	  kr     = wn(j)*sina+sigma(j)*cosa
         	  ks     = wn(j)*cosa-sigma(j)*sina
 
-        	  argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)
-        	  argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)
-        	  argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)
-        	  argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)
+        	  argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)/(2.0*PI)
+        	  argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)/(2.0*PI)
+        	  argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)/(2.0*PI)
+        	  argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)/(2.0*PI)
+        	  !argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)
+        	  !argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)
+        	  !argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)
+        	  !argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)
 
 		  sum = real( frpa*phikr(j)*CMPLX(cos(argpa), sin(argpa)) ) + &
 	      		real( frma*phikr(j)*CMPLX(cos(argma), sin(argma)) ) + &
@@ -853,8 +872,8 @@ Contains
         	  kr     = wnd(j)*sina+sigmad(j)*cosa
         	  ks     = wnd(j)*cosa-sigmad(j)*sina
 
-        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)
-        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)/(2.0*PI)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)/(2.0*PI)
 
 		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -884,8 +903,8 @@ Contains
         	  kr     = wna(j)*sina+sigmaa(j)*cosa
         	  ks     = wna(j)*cosa-sigmaa(j)*sina
 
-        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)
-        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)/(2.0*PI)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)/(2.0*PI)
 
 		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -978,10 +997,10 @@ Contains
         	  kr     = wn(j)*sina+sigma(j)*cosa
         	  ks     = wn(j)*cosa-sigma(j)*sina
 
-        	  argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)
-        	  argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)
-        	  argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)
-        	  argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)
+        	  argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)/(2.0*PI)
+        	  argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)/(2.0*PI)
+        	  argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)/(2.0*PI)
+        	  argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)/(2.0*PI)
 
 		  sum = real( frpa*phikr(j)*CMPLX(cos(argpa), sin(argpa)) ) + &
 	      		real( frma*phikr(j)*CMPLX(cos(argma), sin(argma)) ) + &
@@ -1014,8 +1033,8 @@ Contains
         	  kr     = wnd(j)*sina+sigmad(j)*cosa
         	  ks     = wnd(j)*cosa-sigmad(j)*sina
 
-        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)
-        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)/(2.0*PI)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)/(2.0*PI)
 
 		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -1044,8 +1063,8 @@ Contains
         	  kr     = wna(j)*sina+sigmaa(j)*cosa
         	  ks     = wna(j)*cosa-sigmaa(j)*sina
 
-        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)
-        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)/(2.0*PI)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)/(2.0*PI)
 
 		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -1085,7 +1104,6 @@ Contains
             Ascend(nt+1-i) = aField(i) 
          End Do
 
-
 	End Subroutine DataGenerate
 
 !===================
@@ -1093,6 +1111,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.5  2001/04/13 22:07:05  ybj
+! reasonable values
+!
 ! Revision 1.4  2001/04/11 18:29:30  ybj
 ! reasonable values
 !

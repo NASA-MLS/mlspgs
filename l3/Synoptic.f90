@@ -12,7 +12,6 @@ MODULE Synoptic
    USE MLSPCF3
    USE L3CF
    USE L3DMData
-   USE L3DZData
    USE L2GPData
    USE L2Interface
    USE OutputClose
@@ -45,7 +44,7 @@ CONTAINS
 
 !-------------------------------------------------------------------------
    SUBROUTINE DailyCoreProcessing(cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, l3dm, dmA, dmD, &
-					l3dz, dzA, dzD, l3r, residA, residD, flags)
+				  l3r, residA, residD, flags)
 !-------------------------------------------------------------------------
 
 ! Brief description of program
@@ -53,15 +52,12 @@ CONTAINS
 
 ! Parameters
 
-	integer, Parameter :: nlons = 180
-
 	! Variable definitions
 
         TYPE( PCFData_T ) :: pcf
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
         TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
-	TYPE( L3DZData_T ), POINTER :: l3dz(:), dzA(:), dzD(:)
         TYPE( L3SPData_T ), POINTER :: l3sp(:)
         TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
 
@@ -86,7 +82,7 @@ CONTAINS
 	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
 
         integer i, j, iP, kP, iD, iL
-	real zonAvg, tau0, l3ret
+	real tau0, l3ret
 	real(r8) lonD0_in, lonA0_in
 
 !*** Initilize variables
@@ -146,7 +142,6 @@ CONTAINS
 
         numDays = cfProd%nDays
         ALLOCATE( l3dm(numDays), dmA(numDays), dmD(numDays), STAT=error )
-        ALLOCATE( l3dz(numDays), dzA(numDays), dzD(numDays), STAT=error )
         IF ( error /= 0 ) THEN
            msr = MLSMSG_Allocate // ' l3dm, l3r arrays.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -190,45 +185,11 @@ CONTAINS
 
         ENDDO
 
-!!      Initialize Daily Zonal Mean 
-
-        l3dz%name = cfProd%l3prodNameD
-        dzA%name = TRIM(cfProd%l3prodNameD) // 'Ascending'
-        dzD%name = TRIM(cfProd%l3prodNameD) // 'Descending'
-
-        DO j = 1, numDays
-
-           CALL AllocateL3DZ( nlev, cfProd%nLats, l3dz(j) )
-           CALL AllocateL3DZ( nlev, cfProd%nLats, dzA(j) )
-           CALL AllocateL3DZ( nlev, cfProd%nLats, dzD(j) )
-
-           l3dz(j)%time = cfProd%timeD(j)
-           dzA(j)%time = cfProd%timeD(j)
-           dzD(j)%time = cfProd%timeD(j)
-
-           l3dz(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
-           dzA(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
-           dzD(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
-
-           l3dz(j)%latitude = cfProd%latGridMap(:l3dm(j)%nLats)
-           dzA(j)%latitude = cfProd%latGridMap(:dmA(j)%nLats)
-           dzD(j)%latitude = cfProd%latGridMap(:dmD(j)%nLats)
-
-           l3dz(j)%l3dzValue = 0.0
-           dzA(j)%l3dzValue = 0.0
-           dzD(j)%l3dzValue = 0.0
-
-           l3dz(j)%l3dzPrecision = 0.0
-           dzA(j)%l3dzPrecision = 0.0
-           dzD(j)%l3dzPrecision = 0.0
-
-        ENDDO
-
 !!      Initialize Daily Map Residues
 
-        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, l3r)
-        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, residA)
-        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, residD)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, l3r)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, residA)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
         residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
@@ -245,9 +206,7 @@ CONTAINS
         flags%writel3sp    = .FALSE.
         flags%writel3dmCom = .FALSE.
         flags%writel3dmAsc = .FALSE.
-        flags%writel3dzAsc = .FALSE.
         flags%writel3dmDes = .FALSE.
-	flags%writel3dzDes = .FALSE.
         flags%writel3rCom  = .FALSE.
         flags%writel3rAsc  = .FALSE.
         flags%writel3rDes  = .FALSE.
@@ -273,7 +232,7 @@ CONTAINS
  
 !*** Sort & Prepare the Data 
 
-	Call SortData(cfProd, l2Days, l2gp, 		&
+	Call SortData(cfProd, l2Days, l2gp, 			&
 			pStartIndex, pEndIndex,			&
 			tau0, 					&
 			anlats, dnlats, 			&
@@ -296,10 +255,13 @@ CONTAINS
 
 	  DO J = 1, cfProd%nLats
        	     IF( anlats(J, iP) > 0 ) THEN
-   		lonD0_in = FindRealLon(real(dlons(J, 1, iP)))
-   		lonA0_in = FindRealLon(real(alons(J, 1, iP)))
 
-	        CALL Init(cfProd%mode, 						&
+		IF( atimes(J, 1, iP) < dtimes(J, 1, iP) ) THEN
+
+   		  lonD0_in = FindRealLon(real(dlons(J, 1, iP)))
+   		  lonA0_in = FindRealLon(real(alons(J, 1, iP)))
+
+	          CALL Init(cfProd%mode, 						&
 			  nt_a_i   = anlats(J, iP), 				&
 			  nt_d_i   = dnlats(J, iP), 				&
 			  tau0_i   = tau0, 					&
@@ -310,7 +272,26 @@ CONTAINS
 			  lonA0_i  = lonA0_in, 					&
 			  tA0_i    = atimes(J, 1, iP), 				&
 			  lat_i    = alats(J, 1, iP) )
-          	CALL DataGenerate(afields(J, :, iP), dfields(J, :, iP) )
+          		CALL DataGenerate(afields(J, :, iP), dfields(J, :, iP) )
+		ELSE
+
+   		  lonD0_in = FindRealLon(real(dlons(J, 2, iP)))
+   		  lonA0_in = FindRealLon(real(alons(J, 1, iP)))
+
+	          CALL Init(cfProd%mode, 						&
+			  nt_a_i   = anlats(J, iP), 				&
+			  nt_d_i   = dnlats(J, iP)-1, 				&
+			  tau0_i   = tau0, 					&
+			  delTad_i = delTad(J, iP), 				&
+			  c0_i     = 2.0*PI, 					&
+			  lonD0_i  = lonD0_in, 					&
+			  tD0_i    = dtimes(J, 2, iP), 				&
+			  lonA0_i  = lonA0_in, 					&
+			  tA0_i    = atimes(J, 1, iP), 				&
+			  lat_i    = alats(J, 1, iP) )
+          		CALL DataGenerate(afields(J, :, iP), dfields(J, 2:, iP) )
+		END IF
+
 		IF (cfProd%mode == 'com') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -318,12 +299,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct(cfProd%mode, real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -356,7 +334,6 @@ CONTAINS
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmCom = .TRUE.
-		   flags%writel3dzCom = .TRUE.
 		   flags%writel3rCom  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'asc') THEN
@@ -366,12 +343,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct(cfProd%mode, real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      dzA(iD)%l3dzValue(iP, J) = zonAvg/float(dmA(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -391,7 +365,6 @@ CONTAINS
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmAsc = .TRUE.
-		   flags%writel3dzAsc = .TRUE.
 		   flags%writel3rAsc  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'des') THEN
@@ -401,12 +374,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct(cfProd%mode, real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      dzD(iD)%l3dzValue(iP, J) = zonAvg/float(dmD(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -426,7 +396,6 @@ CONTAINS
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmDes = .TRUE.
-		   flags%writel3dzDes = .TRUE.
 		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'all') THEN
@@ -436,12 +405,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct('com', real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -475,7 +441,6 @@ CONTAINS
 		   DeAllocate(l3Result)
 
 		   flags%writel3dmCom = .TRUE.
-		   flags%writel3dzCom = .TRUE.
 		   flags%writel3rCom  = .TRUE.
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
@@ -484,12 +449,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      dzA(iD)%l3dzValue(iP, J) = zonAvg/float(dmA(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -510,7 +472,6 @@ CONTAINS
 		   DeAllocate(l3Result)
 
 		   flags%writel3dmAsc = .TRUE.
-		   flags%writel3dzAsc = .TRUE.
 		   flags%writel3rAsc  = .TRUE.
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
@@ -519,12 +480,9 @@ CONTAINS
                    DO iD = 1, cfProd%nDays
         	      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
-		      zonAvg = 0.0
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
-		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
-		      dzD(iD)%l3dzValue(iP, J) = zonAvg/float(dmD(iD)%nLons) 
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -545,7 +503,6 @@ CONTAINS
 		   DeAllocate(l3Result)
 
 		   flags%writel3dmDes = .TRUE.
-		   flags%writel3dzDes = .TRUE.
 		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		END IF
@@ -561,6 +518,9 @@ CONTAINS
 	DeAllocate(startTime, endTime)
 
 	DeAllocate(alats, dlats, alons, dlons, atimes, dtimes, afields, dfields)
+
+	close(12)
+	close(13)
 
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
@@ -656,6 +616,8 @@ CONTAINS
             nstart = nstart + 1
 	  ENDDO
 	ENDDO
+
+	close(12)
 
 !*** Re-arrange the longitude into sequence 
 
@@ -847,6 +809,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.13  2001/04/12 16:04:41  ybj
+! reasonable values
+!
 ! Revision 1.12  2001/04/11 18:29:22  ybj
 ! reasonable values
 !
