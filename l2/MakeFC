@@ -97,15 +97,16 @@ depends_where:=$(libmls_sources) $(srclib) \
 PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
 	  $(libfwdmdl_objs)/libfwdmdl.a \
-	  $(libcloud_objs)/libcloud.a     
+	  $(libcloud_objs)/libcloud.a $(REECHO)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(REECHO)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f)
+   $(blaslib_f) $(REECHO)
 endif
 
 
@@ -207,6 +208,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.36  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 2.35  2001/08/15 21:01:04  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #
