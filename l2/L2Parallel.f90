@@ -829,17 +829,18 @@ contains ! ================================ Procedures ======================
         call DestroyVectorInfo ( joinedVectors(valInd) )
         call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
         call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+        storedResults(res)%valInds(chunk) = 0
       end if
+
       if ( storedResults(res)%gotPrecision ) then
         precInd = storedResults(res)%precInds(chunk)
         if ( precInd /= 0 ) then
           call DestroyVectorInfo ( joinedVectors(precInd) )
           call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
           call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          storedResults(res)%precInds(chunk) = 0
         end if
       end if
-      storedResults(res)%valInds(chunk) = 0
-      storedResults(res)%precInds(chunk) = 0
     end do
   end subroutine CleanUpDeadChunksOutput
 
@@ -847,6 +848,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.27  2002/03/14 00:15:43  livesey
+! Minor bug fix
+!
 ! Revision 2.26  2002/01/10 01:07:43  livesey
 ! Another bug fix, slave wasn't receiving chunks correctly.
 !
