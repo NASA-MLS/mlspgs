@@ -14,12 +14,12 @@ module LOAD_SPS_DATA_M
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
   use SpectroscopyCatalog_m, only: CATALOG_T
-  USE manipulatevectorquantities, only: findinstancewindow
+  USE manipulatevectorquantities, only: FindInstanceWindow
 
   implicit none
 
   Private
-  PUBLIC :: load_sps_data, destroygrids_t
+  PUBLIC :: load_sps_data, Destroygrids_t
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:) => null()! No. of entries in frq. grid per sps
@@ -84,19 +84,16 @@ contains
     ! Local variables:
 
     Character(len=1) :: CA
-    integer :: i,j,k,l,m,n,r,s,kz,kp,kf,mf,Spectag,j_dw,j_dn,l_dn,j_dv, &
+    integer :: i,j,k,l,m,n,r,s,kz,kp,kf,Spectag,j_dw,j_dn,l_dn,j_dv, &
            &   l_dw,l_dv,n_f_phi,n_f_zet,n_f_frq,no_mol,s_dw,s_dn,s_dv
 
     integer :: accum_z_dw,accum_p_dw,accum_z_dn,accum_p_dn,accum_z_dv, &
            &   accum_p_dv,accum_f_dw,accum_f_dn,accum_f_dv
-    integer :: MAF                      ! MAF under consideration
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of
-    Logical :: mask
 
-    Integer :: mp, mz, ii, jj, kk
-    Real(r8) :: Tmp, Frq, P, w, v
+    Integer :: ii, kk, wf1, wf2
 !
     !******************* LOAD SPECIES DATA ************
 
@@ -106,10 +103,10 @@ contains
     CALL allocate_test ( Grids_f%no_p,no_mol,'Grids_f%no_p',modulename )
     CALL allocate_test ( Grids_f%no_f,no_mol,'Grids_f%no_f',modulename )
     CALL allocate_test ( Grids_f%windowstart,no_mol,'Grids_f%windowstart', &
-    & modulename )
+                       & modulename )
     CALL allocate_test ( Grids_f%windowfinish,no_mol,'Grids_f%windowfinish',&
-    & modulename )
-    call Allocate_test ( grids_f%lin_log, no_mol, 'lin_log', ModuleName )
+                       & modulename )
+    call Allocate_test ( Grids_f%lin_log, no_mol, 'lin_log', ModuleName )
 
     Grids_f%no_z = 0
     Grids_f%no_p = 0
@@ -141,18 +138,20 @@ contains
       else
         kf = f%template%noChans
       endif
-      CALL findinstancewindow(f,phitan,fmStat%maf,fwdModelConf%phiWindow, &
-      & grids_f%windowStart(ii), grids_f%windowFinish(ii))
-      kp = grids_f%windowFinish(ii) - grids_f%windowStart(ii) + 1
+      CALL FindInstanceWindow(f,phitan,fmStat%maf,fwdModelConf%phiWindow, &
+                            & wf1, wf2)
+      Grids_f%windowStart(ii) = wf1
+      Grids_f%windowFinish(ii) = wf2
+      kp = wf2 - wf1 + 1
       Grids_f%no_f(ii) = kf
       Grids_f%no_z(ii) = kz
       Grids_f%no_p(ii) = kp
       p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
       if (f%template%logBasis) then
-        grids_f%lin_log(ii) = .TRUE.
+        Grids_f%lin_log(ii) = .TRUE.
       else
-        grids_f%lin_log(ii) = .FALSE.
+        Grids_f%lin_log(ii) = .FALSE.
       endif
    end do
 
@@ -164,15 +163,15 @@ contains
 ! Allocate space for the zeta, phi & freq. basis componenets
 !
     CALL allocate_test ( Grids_f%zet_basis,n_f_zet,'Grids_f%zet_basis', &
-    & ModuleName)
+                       & ModuleName)
     CALL allocate_test ( Grids_f%phi_basis,n_f_phi,'Grids_f%phi_basis', &
-    & ModuleName)
+                       & ModuleName)
     CALL allocate_test ( Grids_f%frq_basis,n_f_frq,'Grids_f%frq_basis', &
-    & ModuleName)
+                       & ModuleName)
     CALL allocate_test ( Grids_f%values,f_len,'Grids_f%values', &
-    & ModuleName)
-    CALL allocate_test ( Grids_f%deriv_flags,f_len,'Grids_f%deriv_flags', &
-    & ModuleName)
+                       & ModuleName)
+    CALL allocate_test ( Grids_f%deriv_flags,f_len,'Grids_f%deriv_flags',&
+                       & ModuleName)
 !
     j = 1
     l = 1
@@ -188,17 +187,18 @@ contains
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=kk )
       endif
-      kz = grids_f%no_z(ii)
-      kp = grids_f%no_p(ii)
-      kf = grids_f%no_f(ii)
+      kz = Grids_f%no_z(ii)
+      kp = Grids_f%no_p(ii)
+      kf = Grids_f%no_f(ii)
       n = l + kz
       m = s + kf
       k = j + kp
-      Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
-      Grids_f%phi_basis(j:k-1) = f%template%phi(1, &
-      & grids_f%windowstart(ii):grids_f%windowfinish(ii)) * Deg2Rad
-      IF (grids_f%no_f(ii) > 1) THEN
-        grids_f%frq_basis(s:m-1) = f%template%frequencies
+      wf1 = Grids_f%windowStart(ii)
+      wf2 = Grids_f%windowFinish(ii)
+      Grids_f%zet_basis(l:n-1) = f%template%surfs(1:kz,1)
+      Grids_f%phi_basis(j:k-1) = f%template%phi(1,wf1:wf2)*Deg2Rad
+      IF (Grids_f%no_f(ii) > 1) THEN
+        Grids_f%frq_basis(s:m-1) = f%template%frequencies
       ELSE
         Grids_f%frq_basis(s:m-1) = 0.0
       ENDIF
@@ -215,24 +215,25 @@ contains
 !      end if
 !
 ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
-!
-!
+!  (Some code here ...)
 ! ** END ZEBUG
 !
       r = f_len + kf * kz * kp
-      grids_f%values(f_len:r-1)=RESHAPE(f%values(1:kf*kz, &
-      & grids_f%windowstart(ii):grids_f%windowfinish(ii)),(/kf*kz*kp/))
-      if (grids_f%lin_log(ii)) then
-        WHERE (grids_f%values(f_len:r-1) <= 1.0e-16_rp) &
-        & grids_f%values(f_len:r-1) = 1.0e-16_rp
-        grids_f%values(f_len:r-1) = LOG(grids_f%values(f_len:r-1))
+      Grids_f%values(f_len:r-1) = RESHAPE(f%values(1:kf*kz,wf1:wf2), &
+                                      & (/kf*kz*kp/))
+      if (Grids_f%lin_log(ii)) then
+        WHERE (Grids_f%values(f_len:r-1) <= 1.0e-16_rp) &
+             & Grids_f%values(f_len:r-1) = 1.0e-16_rp
+        Grids_f%values(f_len:r-1) = LOG(Grids_f%values(f_len:r-1))
       endif
+!
 ! set do derivative flags
+!
       IF (ASSOCIATED(f%mask)) THEN
-        grids_f%deriv_flags(f_len:r-1) = RESHAPE((iand(M_FullDerivatives, &
-        & ICHAR(f%mask)) == 0),(/kf*kz*kp/))
+        Grids_f%deriv_flags(f_len:r-1) = RESHAPE(( iand (M_FullDerivatives,&
+                          & ICHAR(f%mask)) == 0),(/kf*kz*kp/))
       ELSE
-        grids_f%deriv_flags(f_len:r-1) = .true.
+        Grids_f%deriv_flags(f_len:r-1) = .TRUE.
       ENDIF
 !
       j = k
@@ -244,20 +245,18 @@ contains
 !
     f_len = f_len - 1
 
-
 !*** ZEBUG
-!   Print *,' f_len, m = ',f_len,m
-!   Print *,' Grids_f%deriv_flags(1...m):'
-!   Print 932,Grids_f%deriv_flags(1:m)
+!   Print *,' f_len =',f_len
+!   Print *,' Grids_f%deriv_flags(1...f_len):'
+!   Print 932,Grids_f%deriv_flags(1:f_len)
 !932 format(37(1x,l1))
-!   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
+!   if (f_len > 0) call MLSMessage(MLSMSG_Error,ModuleName,'DEBUG STOP' )
 !*** END ZEBUG
-
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
     !*** if (.not. associated(Spect_der) ) return
-    if(j > -10000) return
+    if(j > -10000) RETURN       ! *** ZEBUG, bypass Spectroscopy
 !
     if(index(WNV,'W') > 0) then
       allocate ( Grids_dw%no_z(no_mol), stat=j )
@@ -462,20 +461,25 @@ contains
     end do
 !
  end subroutine load_sps_data
-  subroutine DestroyGrids_t( grids_x )
+!
+ Subroutine DestroyGrids_t( grids_x )
+!
   TYPE(Grids_T), intent(inout) :: Grids_x
+!
   CALL deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
   CALL deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
   CALL deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
-  CALL deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
-  CALL deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
+  CALL deallocate_test(grids_x%values,'grids_x%values',modulename)
   CALL deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
   CALL deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
   CALL deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
   CALL deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
-  CALL deallocate_test(grids_x%values,'grids_x%values',modulename)
   CALL deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
-  end subroutine destroygrids_t
+  CALL deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
+  CALL deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
+
+ End subroutine Destroygrids_t
+
 end module LOAD_SPS_DATA_M
 ! $Log$
 ! Revision 2.17  2002/06/13 22:39:12  bill
