@@ -104,6 +104,7 @@ contains ! ========= Public Procedures ============================
     type (Vector_T), pointer :: MEASUREMENTS ! Measurement vector
 
     ! Executable code
+    nullify ( signals )
     ! Setup defaults
     basisFraction = 0.5
     minChannels = 1
@@ -1000,6 +1001,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.4  2003/03/19 01:58:36  livesey
+! Added nullify on signals
+!
 ! Revision 2.3  2003/03/07 03:17:12  livesey
 ! Added RestrictRange
 !
