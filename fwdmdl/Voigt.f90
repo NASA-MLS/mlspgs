@@ -460,7 +460,7 @@ contains
   end subroutine Simple_Voigt
 
   ! ---------------------------------------------------  RLorentz  -----
-    real(rp) pure function RLorentz ( x, y )
+  real(rp) elemental function RLorentz ( x, y )
 
   ! Real Lorentz
 
@@ -887,7 +887,7 @@ contains
 !{ \newpage
 
   ! ----------------------------------------  D_Real_Simple_Voigt  -----
-  subroutine D_Real_Simple_Voigt ( x, y, dx, dy, u, du )
+  elemental subroutine D_Real_Simple_Voigt ( x, y, dx, dy, u, du )
   ! Compute the real part of Fadeeva = Voigt (without Lorentz) and
   ! the real part of the derivative (which isn't just the derivative
   ! of Voigt).
@@ -915,7 +915,7 @@ contains
   end subroutine D_Real_Simple_Voigt
 
   ! ---------------------------------------------  D_Simple_Voigt  -----
-  subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
+  elemental subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
   ! Compute Fadeeva = Voigt & Lorentz and its derivative
 
 !{ Let $w^\prime(z) = a + i b$ and $z = x + i y$, and assume $x$ and $y$
@@ -944,6 +944,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.5  2005/03/29 01:58:17  vsnyder
+! Make stuff pure
+!
 ! Revision 2.4  2004/12/13 20:45:06  vsnyder
 ! Don't set V in Simple_Voigt if it's not present
 !
