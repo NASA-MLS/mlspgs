@@ -337,6 +337,7 @@ contains
 !
 ! **********************  MAIN Mmaf Loop *******************
 !
+    l = mmaf
 !   DO l = 1, FMC%no_mmaf
 !   DO l = mmaf, mmaf                 ! ** DEBUG, only one mmaf
 !
@@ -804,6 +805,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.11  2001/03/09 01:08:07  zvi
+! *** empty log message ***
+!
 ! Revision 2.10  2001/03/09 00:54:00  zvi
 ! *** empty log message ***
 !
