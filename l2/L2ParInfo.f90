@@ -7,7 +7,7 @@ module L2ParInfo
 
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-    & PVMDATADEFAULT, PVMERRORMESSAGE
+    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK
   use PVMIDL, only: PVMIDLPACK
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
@@ -17,6 +17,7 @@ module L2ParInfo
 
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, ChunkTag, InfoTag, SlaveJoin
+  public :: SIG_AckFinish, NotifyTag
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -30,9 +31,11 @@ module L2ParInfo
 
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
+  integer, parameter :: NOTIFYTAG  = InfoTag + 1
 
   integer, parameter :: SIG_TOJOIN = 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
+  integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
@@ -41,6 +44,8 @@ module L2ParInfo
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     character(len=132) :: slaveFilename ! Filename with list of slaves
+    integer :: maxFailuresPerMachine = 3 ! More than this then don't use it
+    integer :: maxFailuresPerChunk = 2 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
@@ -65,17 +70,29 @@ contains ! ==================================================================
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
 
+    integer :: SIGNAL                   ! From acknowledgement packet
+
     ! Exeuctable code
     if ( parallel%slave ) then
+      ! Send a request to finish
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( SIG_Finished, info )
       if ( info /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to pack finished signal' )
+        & call PVMErrorMessage ( info, 'packing finished signal' )
       call PVMFSend ( parallel%masterTid, InfoTag, info )
       if ( info /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to send finish packet' )
+        & call PVMErrorMessage ( info, 'sending finish packet' )
+
+      ! Wait for an acknowledgement from the master
+      call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
+      if ( bufferID <= 0 ) &
+        & call PVMErrorMessage ( bufferID, &
+        & 'receiving finish acknowledgement' )
+      call PVMF90Unpack ( signal, info )
+      if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'unpacking finish acknowledgement')
+      if ( signal /= SIG_AckFinish ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Got unrecognised signal from master' )
     end if
   end subroutine CloseParallel
 
@@ -105,8 +122,7 @@ contains ! ==================================================================
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing hdfName" )
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to send join packet' )
+      & call PVMErrorMessage( info, 'sending join packet' )
 
     call PVMSendQuantity ( quantity, parallel%masterTid )
     if ( associated ( precisionQuantity ) ) &
