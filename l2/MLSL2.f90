@@ -6,9 +6,9 @@ program MLSL2
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2CF_START
+  use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
 ! use Open_Init, only: Close_MLSCF, Open_MLSCF !!! Enormous compile time !!!
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -29,7 +29,7 @@ program MLSL2
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
-  character(len=80) :: LINE        ! Into which is read the command args
+  character(len=255) :: LINE       ! Into which is read the command args
   logical :: PCF = .false.         ! Open L2CF using PCF
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
@@ -188,6 +188,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.12  2001/03/02 02:38:17  vsnyder
+! Expand LINE, alphabetize USEs
+!
 ! Revision 2.11  2001/02/28 03:01:48  vsnyder
 ! Make presence of L2CF-name on command line take precedence over --[n]pcf
 !
