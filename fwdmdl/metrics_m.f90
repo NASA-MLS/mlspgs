@@ -388,7 +388,7 @@ contains
 
       if ( toggle(emit) ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Full convergence not, implementing an improved approximation patch' )
+          & 'Full convergence not achieved, implementing an improved approximation patch' )
         call output ( 'pth ind, error', advance='yes' )
       end if
 
@@ -406,6 +406,7 @@ contains
 
         if ( toggle(emit) ) then
           call output ( path_ind, places=7 )
+          call output ( ', ' )
           call output ( old_hts(jun(st_ind))-h_grid(jun(st_ind)), advance='yes' )
         end if
 
@@ -424,7 +425,8 @@ contains
              & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
         st_ind = end_ind + 1
-        path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
+        if ( st_ind < no_of_bad_fits ) &
+          & path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
       end do
 
     end if
@@ -520,6 +522,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.19  2003/06/27 23:43:34  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.18  2003/06/20 23:41:48  vsnyder
 ! Revise how compound etas are computed -- hopefully a faster method
 !
