@@ -2,31 +2,33 @@
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE OutputClose
-!===============================================================================
+!==============================================================================
 
-   USE L2GPData, ONLY: L2GPData_T
-   USE L2Interface
-   USE L3CF
-   USE L3DMData
-   USE L3SPData
-   USE MLSCF
-   USE MLSCommon
-   USE MLSL3Common
-   USE MLSMessageModule
-   USE MLSPCF3
-   USE MLSStrings
-   USE OpenInit
-   USE PCFModule
-   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
-   IMPLICIT NONE
-   PUBLIC
-
-   PRIVATE :: ID, ModuleName
-
+  USE L2GPData, ONLY: L2GPData_T
+  USE L2Interface, ONLY: ResidualOutput
+  USE L3CF, ONLY: L3CFProd_T
+  USE L3DMData, ONLY: L3DMData_T, OutputGrids, WriteMetaL3DM, INVENTORYMETADATA
+  USE L3SPData, ONLY: L3SPData_T, OutputL3SP
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSCommon, ONLY: FileNameLen, r8
+  USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
+  USE MLSL3Common, ONLY: NOOUT_ERR, OutputFiles_T
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, & 
+       & MLSMSG_DeAllocate
+  USE MLSPCF3, ONLY: mlspcf_mcf_l3log_start 
+  USE OpenInit, ONLY: PCFData_T
+  USE PCFModule, ONLY: ExpandFileTemplate
+  USE SDPToolkit, only: PGS_S_SUCCESS, PGSd_MET_GROUP_NAME_L, & 
+       & PGSD_MET_NUM_OF_GROUPS, Pgs_smf_getMsg, WARNIFCANTPGSMETREMOVE
+  IMPLICIT NONE
+  PUBLIC
+  
+  PRIVATE :: ID, ModuleName
+  
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   CHARACTER(LEN=130) :: Id = &                                                
    "$Id$"
    CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
@@ -49,328 +51,343 @@ MODULE OutputClose
    TYPE OutputFlags_T
 
      LOGICAL :: writel3dmCom, writel3dmAsc, writel3dmDes
-	! daily map databases (for all output days)
-
+     ! daily map databases (for all output days)
+     
      LOGICAL :: writel3rCom, writel3rAsc, writel3rDes
-	! L3Residual databases (for all output days)
-
+     ! L3Residual databases (for all output days)
+     
      LOGICAL :: writel3sp
-	! L3SP database (for asc/des/com)
-
-   END TYPE OutputFlags_T
-
+     ! L3SP database (for asc/des/com)
+     
+  END TYPE OutputFlags_T
+  
 CONTAINS
 
-!-------------------------------
-   SUBROUTINE WriteMetaLog (pcf)
-!-------------------------------
 
-! Brief description of subroutine
-! This subroutine writes metadata for the log file to a separate ASCII file.
+  !-------------------------------
+  SUBROUTINE WriteMetaLog (pcf)
+  !-------------------------------
 
-! Arguments
+    ! Brief description of subroutine
+    ! This subroutine writes metadata for the log file to separate ASCII file. 
+    ! Arguments
 
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
+    TYPE( PCFData_T ), INTENT(IN) :: pcf
+    
+    ! Variables
 
-! Parameters
+    CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+    CHARACTER (LEN=480) :: msg, msr
+    CHARACTER (LEN=45) :: sval
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=1) :: nullStr
+    
+    INTEGER :: result
+    
+    ! Functions
 
-      INTEGER, PARAMETER :: ASCII_FILE = 101
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d, & 
+         pgs_met_setAttr_s, pgs_met_write
+    
+    ! Parameters
 
-! Functions
+    INTEGER, PARAMETER :: ASCII_FILE = 101
 
-      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
-      INTEGER, EXTERNAL :: pgs_met_setAttr_s, pgs_met_write
+    nullStr = ''
 
-! Variables
+    ! Initialize the MCF file
 
-      CHARACTER (LEN=1) :: nullStr
-      CHARACTER (LEN=45) :: sval
-      CHARACTER (LEN=32) :: mnemonic
-      CHARACTER (LEN=480) :: msg, msr
-      CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+    result = pgs_met_init(mlspcf_mcf_l3log_start, groups)
+    IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & 'Initialization error.  See LogStatus for details.')
+    
+    ! Set PGE values
 
-      INTEGER :: result
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
+         & pcf%logGranID)
+    
+    CALL ExpandFileTemplate('$cycle', sval, cycle=pcf%cycle)
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
+         & sval)
+    
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+         & "RangeBeginningDate", pcf%l3StartDay)
+    sval= '00:00:00.000000'
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+         & "RangeBeginningTime", sval)
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+         & "RangeEndingDate", pcf%l3EndDay)
+    sval= '23:59:59.999999'
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+         & "RangeEndingTime", sval)
+    
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
+         & pcf%outputVersion)
+    
+    IF (result /= PGS_S_SUCCESS) THEN
+       call Pgs_smf_getMsg(result, mnemonic, msg)
+       msr = mnemonic // ':  ' // msg
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    ! Write the metadata and their values to an ASCII file
+    
+    result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
+    
+    IF (result /= PGS_S_SUCCESS) THEN
+       call Pgs_smf_getMsg(result, mnemonic, msg)
+       msr = mnemonic // ':  ' // msg
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+    
+    result = pgs_met_remove()
+    if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+       write(msr, *) result
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            & "Calling pgs_met_remove() failed with value " // trim(msr) )
+    endif
 
-      nullStr = ''
+  !-----------------------------
+  END SUBROUTINE WriteMetaLog
+  !------------------
 
-! Initialize the MCF file
+  !-------------------------------------------------------------------
+  SUBROUTINE OutputProd (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, &
+       & l3r, residA, residD, flags, hdfVersion)
+  !-------------------------------------------------------------------
+    
+    ! Brief description of subroutine
+    ! This subroutine performs the Output/Close task in the MLSL3 program.
 
-      result = pgs_met_init(mlspcf_mcf_l3log_start, groups)
-      IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                          'Initialization error.  See LogStatus for details.')
+    ! Arguments
+    
+    TYPE( PCFData_T ), INTENT(IN) :: pcf
+    
+    TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
+    
+    TYPE( OutputFlags_T ), INTENT(IN) :: flags
+    
+    TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
+    
+    TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+    
+    TYPE( L3SPData_T ), POINTER :: l3sp(:)
+    
+    CHARACTER (LEN=1), POINTER :: anText(:)
+    
+    INTEGER, INTENT(IN), OPTIONAL :: hdfVersion
+    
+    ! Parameters
+    
+    ! Functions
+    
+    ! Variables
+    
+    TYPE( OutputFiles_T ) :: files
+    
+    CHARACTER (LEN=480) :: msr
+    CHARACTER (LEN=FileNameLen) :: type
+    
+    INTEGER :: myHDFVersion
+    
+    ! Check version of HDFEOS
+   
+    IF (PRESENT(hdfVersion)) THEN 
+       myHDFVersion = hdfVersion
+    ELSE
+       myHDFVersion = HDFVERSION_4
+    ENDIF
 
-! Set PGE values
-
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
-                                 pcf%logGranID)
-
-      CALL ExpandFileTemplate('$cycle', sval, cycle=pcf%cycle)
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
-                                 sval)
-
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeBeginningDate", pcf%l3StartDay)
-      sval= '00:00:00.000000'
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeBeginningTime", sval)
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeEndingDate", pcf%l3EndDay)
-      sval= '23:59:59.999999'
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeEndingTime", sval)
-
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
-                                 pcf%outputVersion)
-
-      IF (result /= PGS_S_SUCCESS) THEN
-         call Pgs_smf_getMsg(result, mnemonic, msg)
-         msr = mnemonic // ':  ' // msg
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Write the metadata and their values to an ASCII file
-
-      result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
-
-      IF (result /= PGS_S_SUCCESS) THEN
-         call Pgs_smf_getMsg(result, mnemonic, msg)
-         msr = mnemonic // ':  ' // msg
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      result = pgs_met_remove()
-      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-        write(msr, *) result
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(msr) )
-      endif          
-
-!-----------------------------
-   END SUBROUTINE WriteMetaLog
-!-----------------------------
-
-!-------------------------------------------------------------------
-   SUBROUTINE OutputProd (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, &
-                          l3r, residA, residD, flags)
-!-------------------------------------------------------------------
-
-! Brief description of subroutine
-! This subroutine performs the Output/Close task in the MLSL3 program.
-
-! Arguments
-
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
-
-      TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
-
-      TYPE( OutputFlags_T ), INTENT(IN) :: flags
-
-      TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
-
-      TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
-
-      TYPE( L3SPData_T ), POINTER :: l3sp(:)
-
-      CHARACTER (LEN=1), POINTER :: anText(:)
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      TYPE( OutputFiles_T ) :: files
-
-      CHARACTER (LEN=FileNameLen) :: type
-      CHARACTER (LEN=480) :: msr
-
-! L3SP -- if data exist, create & write a file for this product
-
-      IF (flags%writel3sp) THEN
-         CALL OutputL3SP (l3cf, anText, l3sp)
-      ELSE
-         msr = TRIM(l3cf%l3prodNameD) // ' L3SP' // NOOUT_ERR
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      ENDIF
-
-! L3DM -- check that daily map data exist in some form for the product
-
-      IF ( .NOT.(flags%writel3dmCom) .AND. .NOT.(flags%writel3dmAsc) .AND. &
-           .NOT.(flags%writel3dmDes) ) THEN
-
-         msr = 'No l3dm data found, no file produced for ' // l3cf%l3prodNameD
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-
-      ELSE
-
-! Expand the level in the file template
-
-         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L3DM')
-
-! If combined l3dm data exist, write them to l3dm files; save the names of any
-! files created
-
-         files%nFiles = 0
-         files%name = ''
-         files%date = ''
-
-         IF (flags%writel3dmCom) THEN
-            CALL OutputGrids(type, l3dm, files)
-         ELSE
-            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
-               msr = TRIM(l3cf%l3prodNameD) // NOOUT_ERR
-               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            ENDIF
-         ENDIF
-
-! If ascending l3dm data exist, write/append them to l3dm files; add the names
-! of any new files created to the files array
-
-         IF (flags%writel3dmAsc) THEN
-            CALL OutputGrids(type, dmA, files)
-         ELSE
-            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
-               msr = TRIM(l3cf%l3prodNameD) // 'Ascending' // NOOUT_ERR
-               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            ENDIF
-         ENDIF
-
-! If descending l3dm data exist, write/append them to l3dm files, adding any
-! new names to the files array
-
-         IF (flags%writel3dmDes) THEN
-            CALL OutputGrids(type, dmD, files)
-         ELSE
-            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
-               msr = TRIM(l3cf%l3prodNameD) // 'Descending' // NOOUT_ERR
-               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            ENDIF
-         ENDIF
-
-! L3Residual -- if any residual data exist, append swaths to the l3dm files
-
-         IF (flags%writel3rCom) THEN
-            CALL ResidualOutput(type, l3r)
-         ELSE
-            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
-               msr = TRIM(l3cf%l3prodNameD) // 'Residuals' // NOOUT_ERR
-               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            ENDIF
-         ENDIF
-
-         IF (flags%writel3rAsc) THEN
-            CALL ResidualOutput(type, residA)
-         ELSE
-            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
-              msr = TRIM(l3cf%l3prodNameD) // 'AscendingResiduals' // NOOUT_ERR
-              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            ENDIF
-         ENDIF
-
-         IF (flags%writel3rDes) THEN
-           CALL ResidualOutput(type, residD)
-         ELSE
-           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
+    ! L3SP -- if data exist, create & write a file for this product
+    
+    IF (flags%writel3sp) THEN
+       CALL OutputL3SP (l3cf, anText, l3sp, myHDFVersion)
+    ELSE
+       msr = TRIM(l3cf%l3prodNameD) // ' L3SP' // NOOUT_ERR
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    ENDIF
+    
+    ! L3DM -- check that daily map data exist in some form for the product
+    
+    IF ( .NOT.(flags%writel3dmCom) .AND. .NOT.(flags%writel3dmAsc) .AND. &
+         & .NOT.(flags%writel3dmDes) ) THEN
+       
+       msr = 'No l3dm data found, no file produced for ' // l3cf%l3prodNameD
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+       
+    ELSE
+       
+       ! Expand the level in the file template
+       
+       CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L3DM')
+       
+       ! If combined l3dm data exist, write them to l3dm files; 
+       ! save the names of any files created
+       
+       files%nFiles = 0
+       files%name   = ''
+       files%date   = ''
+                     
+       IF (flags%writel3dmCom) THEN
+          CALL OutputGrids(type, l3dm, files, myHDFVersion)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+          ENDIF
+       ENDIF
+       
+       ! If ascending l3dm data exist, write/append them to l3dm files; 
+       ! add the names of any new files created to the files array
+       
+       IF (flags%writel3dmAsc) THEN
+          CALL OutputGrids(type, dmA, files, myHDFVersion)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'Ascending' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+          ENDIF
+       ENDIF
+       
+       ! If descending l3dm data exist, write/append them to l3dm files, 
+       ! adding any new names to the files array
+       
+       IF (flags%writel3dmDes) THEN
+          CALL OutputGrids(type, dmD, files, myHDFVersion)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'Descending' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+          ENDIF
+       ENDIF
+       
+       ! L3Residual--if any residual data exist, 
+       ! append swaths to the l3dm files
+       
+       IF (flags%writel3rCom) THEN
+          CALL ResidualOutput(type, l3r)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'Residuals' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+          ENDIF
+       ENDIF
+       
+       IF (flags%writel3rAsc) THEN
+          CALL ResidualOutput(type, residA)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'AscendingResiduals' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+          ENDIF
+       ENDIF
+       
+       IF (flags%writel3rDes) THEN
+          CALL ResidualOutput(type, residD)
+       ELSE
+          IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'DescendingResiduals' // NOOUT_ERR
              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-           ENDIF
-         ENDIF
+          ENDIF
+       ENDIF
+       
+       ! Write the L3DM metadata
+       CALL WriteMetaL3DM(pcf, l3cf, files, anText, hdfVersion)
+       
+    ENDIF
+    
+  !---------------------------
+  END SUBROUTINE OutputProd
+  !---------------------------
+  !------------------------------------------
+  SUBROUTINE OutputAndClose (cf, pcf, cfProd, avgPer, anText)
+  !-------------------------------------------------------------
 
-! Write the L3DM metadata
-         CALL WriteMetaL3DM(pcf, l3cf, files, anText)
+     ! Brief description of subroutine
+     ! This subroutine performs final Output & Close tasks 
+     ! outside the product loop.
 
-      ENDIF
+     ! Arguments
+     
+     TYPE( Mlscf_T ), INTENT(INOUT) :: cf
+     
+     TYPE( PCFData_T ), INTENT(IN) :: pcf
 
-!---------------------------
-   END SUBROUTINE OutputProd
-!---------------------------
+     TYPE( L3CFProd_T ), POINTER :: cfProd(:)
+     
+     CHARACTER (LEN=1), POINTER :: anText(:)
+     
+     REAL(r8), POINTER :: avgPer(:)
 
-!-------------------------------------------------------------
-   SUBROUTINE OutputAndClose (cf, pcf, cfProd, avgPer, anText)
-!-------------------------------------------------------------
+     ! Parameters
+     
+     ! Functions
 
-! Brief description of subroutine
-! This subroutine performs final Output & Close tasks outside the product loop.
+     ! Variables
+     
+     CHARACTER (LEN=480) :: msr
 
-! Arguments
+     INTEGER :: err
 
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
+     ! Write the log file metadata
 
-      TYPE( L3CFProd_T ), POINTER :: cfProd(:)
+     CALL WriteMetaLog(pcf)
 
-      CHARACTER (LEN=1), POINTER :: anText(:)
+     ! Final deallocations
+     ! Check if the pointers are associated and then deallocate. 
 
-      REAL(r8), POINTER :: avgPer(:)
+     if (associated(cfProd)) then
 
-      TYPE( Mlscf_T ), INTENT(INOUT) :: cf
+        DEALLOCATE(cfProd, STAT=err)
+        IF ( err /= 0 ) THEN
+           msr = MLSMSG_DeAllocate // '  cfProd pointer.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+     endif
+     
+     if (associated(anText)) then
+        
+        DEALLOCATE(anText, STAT=err)
+        IF ( err /= 0 ) THEN
+           msr = MLSMSG_DeAllocate // '  anText pointer.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+     endif
+     
+     if (associated(avgPer)) then
 
-! Parameters
+        DEALLOCATE(avgPer, STAT=err)
+        IF ( err /= 0 ) THEN
+           msr = MLSMSG_DeAllocate // '  avgPer pointer.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+     endif
+     
+     if ( associated(cf%Sections) ) then 
+        
+        DEALLOCATE (cf%Sections, STAT=err)
+        IF ( err /= 0 ) THEN
+           msr = MLSMSG_DeAllocate // '  cf section pointers.'
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        
+     endif
 
-! Functions
-
-! Variables
-
-      CHARACTER (LEN=480) :: msr
-
-      INTEGER :: err
-
-! Write the log file metadata
-
-      CALL WriteMetaLog(pcf)
-
-! Final deallocations
-! Check if the pointers are associated and then deallocate. 
-
-      if (associated(cfProd)) then
-
-      DEALLOCATE(cfProd, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  cfProd pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      endif
-
-      if (associated(anText)) then
-
-      DEALLOCATE(anText, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  anText pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      endif
-
-
-      if (associated(avgPer)) then
-
-      DEALLOCATE(avgPer, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  avgPer pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-      
-      endif
-
-      if ( associated(cf%Sections) ) then 
-
-      DEALLOCATE (cf%Sections, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  cf section pointers.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      endif
-
-!-------------------------------
+   !-------------------------------
    END SUBROUTINE OutputAndClose
-!-------------------------------
+   !-------------------------------
 
-!=====================
-END MODULE OutputClose
-!=====================
+ !=====================
+ END MODULE OutputClose
+ !=====================
 
 !$Log$
+!Revision 1.17  2003/03/15 00:16:38  pwagner
+!May warn if pgs_met_remove returns non-zero value
+!
 !Revision 1.16  2002/04/10 22:10:41  jdone
 !Associated statements added before deallocate.
 !
