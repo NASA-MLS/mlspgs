@@ -262,8 +262,7 @@ contains ! =====     Public Procedures     =============================
             & z(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) + &
               & x%values(x%r2(k-1)+1:x%r2(k), 1)
         end do
-        call sparsify ( z, zb )                  ! Zb = Z
-        call deallocate_test ( z, "Z in Add_Matrix_Blocks", ModuleName )
+        call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
       case ( M_Full )                            ! X banded, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
         do k = 1, size(x%r1)
@@ -286,8 +285,7 @@ contains ! =====     Public Procedures     =============================
             & z(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
               & x%values(x%r1(k-1)+1:x%r1(k),1)
         end do
-        call sparsify ( z, zb )                  ! Zb = Z
-        call deallocate_test ( z, "Z in Add_Matrix_Blocks", ModuleName )
+        call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
       case ( M_Full )                            ! X col sparse, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
 
@@ -366,8 +364,7 @@ contains ! =====     Public Procedures     =============================
       ! ??? with sparse input.
       call densify ( xin, x )
       call denseCholesky ( zt, xin )
-      call sparsify ( zt, z )
-      call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
+      call sparsify ( zt, z, "ZT in CholeskyFactor", ModuleName ) ! Z := Zt
       call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Banded )
       call allocate_test ( zt, nc, nc, "ZT in CholeskyFactor", &
@@ -842,8 +839,7 @@ contains ! =====     Public Procedures     =============================
                        & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
           end do ! i
         end do ! j
-        call sparsify ( z, zb )
-        call deallocate_test ( z, &
+        call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Column_sparse ) ! XB banded, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
@@ -890,8 +886,7 @@ contains ! =====     Public Procedures     =============================
             end do
           end do ! i
         end do ! j
-        call sparsify ( z, zb )
-        call deallocate_test ( z, &
+        call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB banded, YB full
         if ( .not. my_upd ) then
@@ -971,8 +966,7 @@ contains ! =====     Public Procedures     =============================
             end do
           end do ! i
         end do ! j
-        call sparsify ( z, zb )
-        call deallocate_test ( z, &
+        call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Column_sparse ) ! XB column-sparse, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
@@ -1022,8 +1016,7 @@ contains ! =====     Public Procedures     =============================
             end do
           end do ! i
         end do ! j
-        call sparsify ( z, zb )
-        call deallocate_test ( z, &
+        call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
         if ( .not. my_upd ) then
@@ -1423,8 +1416,7 @@ contains ! =====     Public Procedures     =============================
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyM_0", ModuleName )
     end if ! my_t
-    call sparsify ( xs, x )
-    call deallocate_test ( xs, "XS in SolveCholeskyM_0", ModuleName )
+    call sparsify ( xs, x, "XS in SolveCholeskyM_0", ModuleName ) ! X := Xs
   end subroutine SolveCholeskyM_0
 
   ! -------------------------------------------  SolveCholeskyV_0  -----
@@ -1522,11 +1514,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine SolveCholeskyV_0
 
   ! ---------------------------------------------------  Sparsify  -----
-  subroutine Sparsify ( Z, B )
+  subroutine Sparsify ( Z, B, Why, CallingModule )
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
-    real(r8), intent(in) :: Z(:,:)           ! Full array of values
+    real(r8), pointer :: Z(:,:)              ! Full array of values
     type(MatrixElement_T), intent(out) :: B  ! Z as a block, maybe sparse
+    character(len=*), intent(in), optional :: Why
+    character(len=*), intent(in), optional :: CallingModule
+    ! If either Why or CallingModule is present, Z is deallocated using
+    ! Deallocate_Test
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyBlock using the B argument of this
@@ -1609,6 +1605,15 @@ contains ! =====     Public Procedures     =============================
       call createBlock ( b, size(z,1), size(z,2), M_Full )
       b%values = z
     end if
+    if ( present(why) ) then
+      if ( present(callingModule) ) then
+        call deallocate_test ( z, why, callingModule )
+      else
+        call deallocate_test ( z, why, "No module specified" )
+      end if
+    else if ( present(callingModule) ) then
+      call deallocate_test ( z, "No variable specified", callingModule )
+    end if
   end subroutine Sparsify
 
   ! -------------------------------------------  UpdateDiagonal_0  -----
@@ -1638,7 +1643,7 @@ contains ! =====     Public Procedures     =============================
             & ModuleName )
           call densify ( t, a )
           call updateDenseDiagonal ( t, lambda, i )
-          call sparsify ( t, a )
+          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
           return
         end if
         a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
@@ -1655,7 +1660,7 @@ contains ! =====     Public Procedures     =============================
               & ModuleName )
             call densify ( t, a )
             call updateDenseDiagonal ( t, lambda, i )
-            call sparsify ( t, a )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
             return
           end if
         end do
@@ -1710,7 +1715,7 @@ contains ! =====     Public Procedures     =============================
             & ModuleName )
           call densify ( t, a )
           call updateDenseDiagonal ( t, x, s, i )
-          call sparsify ( t, a )
+          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
           return
         end if
         a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
@@ -1727,7 +1732,7 @@ contains ! =====     Public Procedures     =============================
               & ModuleName )
             call densify ( t, a )
             call updateDenseDiagonal ( t, x, s, i )
-            call sparsify ( t, a )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
             return
           end if
         end do
@@ -1813,6 +1818,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.13  2001/04/11 22:43:54  vsnyder
+! Fold Deallocate_test into sparsify
+!
 ! Revision 2.12  2001/02/22 01:55:06  vsnyder
 ! Add code to invert a Cholesky factor
 !
