@@ -234,10 +234,12 @@ CONTAINS
                 Zmatch = .FALSE.   ! no match of trailing Zeros yet
                 DO i = 1, 4
                    BitNo = 0
-                   DO
-                      IF (BTEST (DACS_MAF(MIFno)%D(i,DACSno), BitNo)) EXIT
-                      BitNo = BitNo + 1
-                   ENDDO
+                   IF (DACS_MAF(MIFno)%D(i,DACSno) /= 0) THEN
+                      DO
+                         IF (BTEST (DACS_MAF(MIFno)%D(i,DACSno), BitNo)) EXIT
+                         BitNo = BitNo + 1
+                      ENDDO
+                   ENDIF
                    IntBit1(i) = 2**BitNo   ! Value of lowest bit set to 1
                    Zmatch(i) = (IntBit1(i) >= EbitVal)   ! match if error
                 ENDDO
@@ -430,6 +432,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.3  2003/03/25 19:53:54  perun
+! Test D before bit test
+!
 ! Revision 2.2  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
