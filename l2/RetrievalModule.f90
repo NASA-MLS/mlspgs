@@ -37,7 +37,7 @@ contains
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-      & F_channels, F_cloudRadiance, F_cloudRadianceCutOff, &
+      & F_channels, F_cloudChannels, F_cloudRadiance, F_cloudRadianceCutOff, &
       & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
       & F_diagnostics, F_diagonal, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
@@ -3439,6 +3439,7 @@ contains
       ! Local variables
       integer :: CHANNEL                ! Loop index
       integer :: CHANNELSNODE           ! Tree node for channels values
+      integer :: CLOUDCHANNELSNODE      ! Tree node for CLOUDchannels values
       integer :: COORDINATE             ! Vertical coordinate type
       integer :: FIELD                  ! Field type from tree
       integer :: GSON                   ! Tree node
@@ -3466,7 +3467,9 @@ contains
 
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+      logical, dimension(:), pointer :: CLOUDCHANNELS ! Are we dealing with these cloud channels
       logical :: DOTHISHEIGHT           ! Flag
+      logical :: DOTHISCHANNEL          ! Flag
       logical :: ISCLOUD                ! Flag
 
       integer, parameter ::                      MAXCOLUMNS = 127
@@ -3493,6 +3496,8 @@ contains
           heightNode = son
         case ( f_channels )
           channelsNode = son
+        case ( f_cloudChannels )
+          cloudchannelsNode = son
         case ( f_cloudRadiance )
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -3512,7 +3517,7 @@ contains
 
       ! Check if got the cloud radiance and threshold
       if ( .not. all(got((/ f_cloudRadiance, f_cloudRadianceCutoff, &
-         & f_height, f_ptanQuantity, f_channels /))) ) &
+         & f_height, f_ptanQuantity, f_cloudChannels /))) ) &
          & call AnnounceError ( cannotFlagCloud, key )
       ! Quantity must be radiance
       if ( qty%template%quantityType /= l_radiance &
@@ -3520,15 +3525,22 @@ contains
          & call AnnounceError ( badQuantities, key )
 
       ! Process the channels field used in cloudRadiance, must have 1 channel
-      call Allocate_test ( channels, cloudRadiance%template%noChans, &
+      call Allocate_test ( cloudChannels, cloudRadiance%template%noChans, &
+          & 'cloudChannels', ModuleName )
+      call GetIndexFlagsFromList ( cloudChannelsNode, cloudChannels, status, &
+          & lower=lbound(cloudChannels,1) )
+      if(count(cloudChannels) .ne. 1) &
+         & call AnnounceError ( badChannel, key )
+      do channel = 1, cloudRadiance%template%noChans
+         if ( cloudChannels(channel) ) useThisChannel = channel
+      end do
+
+      if( got(f_channels)) then
+      call Allocate_test ( Channels, qty%template%noChans, &
           & 'channels', ModuleName )
       call GetIndexFlagsFromList ( channelsNode, channels, status, &
           & lower=lbound(channels,1) )
-      if(count(channels) .ne. 1) &
-         & call AnnounceError ( badChannel, key )
-      do channel = 1, cloudRadiance%template%noChans
-         if ( channels(channel) ) useThisChannel = channel
-      end do
+      end if
 
       ! Preprocess the height stuff.
       heightUnit = phyq_dimensionless
@@ -3597,11 +3609,15 @@ contains
                   & isCloud = .true.
                   
                do channel = 1, qty%template%noChans
+                  doThisChannel = .true.
+                  if ( associated(channels) ) doThisChannel = channels(channel)
+                  if ( doThisChannel ) then
                   ind = channel + qty%template%noChans*(height-1)
                   if ( doThisHeight .and. isCloud )  &
                   &     call SetMask ( qty%mask(:,instance), &
                   &     (/ channel+qty%template%noChans*(height-1) /), &
                   &     what=maskBit )
+               end if                   ! do this channel
                end do                   ! Channel loop
              end do                     ! Height loop
           end do                        ! Height node entries in l2cf
@@ -3609,6 +3625,7 @@ contains
 
       ! Tidy up
       call Deallocate_test ( channels, 'channels', ModuleName )
+      call Deallocate_test ( cloudChannels, 'cloudChannels', ModuleName )
 
     end subroutine FlagCloud
 
@@ -3621,8 +3638,11 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.217  2003/01/14 22:14:43  dwu
+! make FlagCloud depend on both channels and cloudChannels
+!
 ! Revision 2.216  2003/01/13 17:17:29  jonathan
-! change cloud_width to i_saturation
+!  change cloud_width to i_saturation
 !
 ! Revision 2.215  2003/01/12 07:33:42  dwu
 ! with some fix in flagcloud
