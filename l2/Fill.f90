@@ -3609,7 +3609,6 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SKIPMASK
 
       ! Local variables
-      integer :: Dummy                   ! Dummy integer
       type (VectorValue_T), pointer :: DQ ! Destination quantity
       type (VectorValue_T), pointer :: SQ ! Source quantity
       integer :: SQI                      ! Quantity index in source
@@ -3621,7 +3620,7 @@ contains ! =====     Public Procedures     =============================
       do sqi = 1, size ( source%quantities )
         ! Try to find this in dest
         sq => source%quantities(sqi)
-        dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
+        dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi) )
         if ( associated ( dq ) ) then
           dq%values = sq%values
           if ( .not. skipMask ) then
@@ -3784,6 +3783,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.143  2002/09/06 00:54:13  livesey
+! Tiny change
+!
 ! Revision 2.142  2002/09/05 21:48:54  livesey
 ! More fixes in transfer skipmask
 !
