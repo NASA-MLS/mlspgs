@@ -10,8 +10,8 @@ module TkL1B
   use MLSL1Common
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use OutputL1B, only: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, &
-    OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ, LENG, LENT
+  use OutputL1B_DataTypes, only: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, LENG, LENT
+  use OutputL1B, only: OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ
   use Scan
   use SDPToolkit
 
@@ -344,12 +344,13 @@ contains
   !--------------------------------------------------- L1BOA_MAF ----------------
   subroutine L1boa_MAF(altG, altT, ascTAI, counterMAF, dscTAI, L1FileHandle, &
     MAFinfo, noMAF, numOrb, orbIncline, orbitNumber, &
-    scRate, scRateT)
+    scRate, scRateT, L1BFileInfo)
     ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
     ! HDF output file.
 
     ! Arguments
     type (MAFinfo_T) :: MAFinfo
+    TYPE (L1BFileInfo_T), intent(inout) :: L1BFileInfo
     integer, intent(IN) :: L1FileHandle, counterMAF, noMAF, numOrb
     integer, intent(IN) :: orbitNumber(:)
     real, intent(IN) :: scRate(:)
@@ -384,18 +385,111 @@ contains
     index%MAFStartTimeTAI = mafTAI
     index%noMIFs = nV
     index%counterMAF = counterMAF
+
     call OutputL1B_index(noMAF, L1FileHandle, index)
+!    call OutputL1B_index(L1BFileInfo, noMAF, L1FileHandle, index)
 
     ! Allocate the MIF variables in the output structures
-    allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
-      sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
-      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), sc%scOrbIncl(nV), &
-      sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
-      sc%scVelECR(lenCoord,nV), &
-      tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
-      tp%scanRate(nV), STAT=error)
+
+    allocate(sc%scGeocAlt(nV), STAT=error)
     if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  s/c quantities.'
+      msr = MLSMSG_Allocate // '  s/c  GeocAlt quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scGeocLat(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c  GeocLat quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scGeodAlt(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c  GeodAlt quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate( sc%scGeodLat(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c GeodLat  quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate( sc%scLon(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c Lon quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scGeodAngle(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c GeodAngle quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scOrbIncl(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c OrbIncl quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%encoderAngle(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c encoder angle quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%scAngle(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c angle quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%scanAngle(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c scan angle quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%scanRate(nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c scan rate quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scECI(lenCoord,nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c ECI quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scECR(lenCoord,nV), STAT=error) 
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c ECR quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scVelECI(lenCoord,nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c VelECI quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%scVelECR(lenCoord,nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c VelECR quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%ypr(lenCoord,nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c ypr quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(sc%yprRate(lenCoord,nV), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  s/c ypr rate quantities.'
       call MLSMessage(MLSMSG_Error, ModuleName, msr)
     endif
 
@@ -410,6 +504,7 @@ contains
       & sc%scOrbIncl)
 
     ! Write s/c information
+!    call OutputL1B_sc(L1BFileInfo, noMAF, L1FileHandle, sc)
     call OutputL1B_sc(noMAF, L1FileHandle, sc)
 
     ! Calculate initial guess for look vector in ECR
@@ -417,14 +512,87 @@ contains
 
     ! Allocate the output structure
 
-    allocate(tp%tpECI(lenCoord,lenG), tp%tpECR(lenCoord,lenG), &
-      tp%tpOrbY(lenG), tp%tpGeocAlt(lenG), tp%tpGeocLat(lenG), &
-      tp%tpGeocAltRate(lenG), tp%tpGeodAlt(lenG), &
-      tp%tpGeodLat(lenG), tp%tpGeodAltRate(lenG), tp%tpLon(lenG), &
-      tp%tpGeodAngle(lenG), tp%tpSolarTime(lenG), &
-      tp%tpSolarZenith(lenG), tp%tpLosAngle(lenG), STAT=error)
+    allocate(tp%tpECI(lenCoord,lenG), STAT=error)
     if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  GHz tp quantities.'
+      msr = MLSMSG_Allocate // '  GHz tp quantities: ECI'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpECR(lenCoord,lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: ECR'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpOrbY(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: OrbY'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocAlt(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAlt'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocLat(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocLat'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocAltRate(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeocAltRate'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAlt(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAlt'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodLat(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodLat'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAltRate(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAltRate'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpLon(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: Lon'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAngle(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: GeodAngle'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpSolarTime(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: SolarTime'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpSolarZenith(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: SolarZenith'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpLosAngle(lenG), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  GHz tp quantities: LosAngle'
       call MLSMessage(MLSMSG_Error, ModuleName, msr)
     endif
 
@@ -441,24 +609,141 @@ contains
       & sc%scOrbIncl)
 
     ! Write GHz information
+
+!    call OutputL1B_GHz(L1BFileInfo, noMAF, L1FileHandle, tp)
     call OutputL1B_GHz(noMAF, L1FileHandle, tp)
 
-    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
-      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
-      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
-      tp%tpSolarZenith, tp%tpLosAngle, STAT=error)
+    deallocate(tp%tpECI, STAT=error)
     if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-      &deallocation of GHz quantities.')
+      &deallocation of GHz quantities: ECI')
+
+    deallocate(tp%tpECR, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: ECR')
+
+    deallocate(tp%tpOrbY, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: OrbY')
+
+    deallocate(tp%tpGeocAlt, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: GeocAlt')
+
+    deallocate(tp%tpGeocLat, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: GeocLat')
+
+    deallocate(tp%tpGeocAltRate, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: GeocAltRate')
+
+    deallocate(tp%tpGeodAltRate, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: GeodAltRate')
+
+    deallocate(tp%tpLon, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: Lon')
+
+    deallocate(tp%tpGeodAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: GeodAngle')
+
+    deallocate(tp%tpSolarTime, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: SolarTime')
+
+    deallocate(tp%tpSolarZenith, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: SolarZenith')
+
+    deallocate(tp%tpLosAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
+      &deallocation of GHz quantities: LosAngle')
 
     ! Find angle, tan pt for start of THz scan
-    allocate(tp%tpECI(lenCoord,lenT), tp%tpECR(lenCoord,lenT), &
-      tp%tpOrbY(lenT), tp%tpGeocAlt(lenT), tp%tpGeocLat(lenT), &
-      tp%tpGeocAltRate(lenT), tp%tpGeodAlt(lenT), &
-      tp%tpGeodLat(lenT), tp%tpGeodAltRate(lenT), tp%tpLon(lenT), &
-      tp%tpGeodAngle(lenT), tp%tpSolarTime(lenT), &
-      tp%tpSolarZenith(lenT), tp%tpLosAngle(lenT), STAT=error)
+
+    allocate(tp%tpECI(lenCoord,lenT), STAT=error)
     if ( error /= 0 ) then
-      msr = MLSMSG_Allocate // '  THz tp quantities.'
+      msr = MLSMSG_Allocate // '  THz tp quantities: ECI'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpECR(lenCoord,lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: ECR'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpOrbY(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: OrbY'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocAlt(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeocAlt'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocLat(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeocLat'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeocAltRate(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeocAltRate'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAlt(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAlt'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodLat(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeodLat'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAltRate(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAltRate'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpLon(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: Lon'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpGeodAngle(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: GeodAngle'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpSolarTime(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: SolarTime'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpSolarZenith(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: SolarZenith'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
+
+    allocate(tp%tpLosAngle(lenT), STAT=error)
+    if ( error /= 0 ) then
+      msr = MLSMSG_Allocate // '  THz tp quantities: LosAngle'
       call MLSMessage(MLSMSG_Error, ModuleName, msr)
     endif
 
@@ -475,22 +760,135 @@ contains
       & sc%scOrbIncl)
 
     ! Write THZ information
+
+!    call OutputL1B_THz(L1BFileInfo, noMAF, L1FileHandle, tp)
     call OutputL1B_THz(noMAF, L1FileHandle, tp)
 
-    deallocate(tp%tpECI, tp%tpECR, tp%tpOrbY, tp%tpGeocAlt, tp%tpGeocLat, &
-      tp%tpGeocAltRate, tp%tpGeodAlt, tp%tpGeodLat, &
-      tp%tpGeodAltRate, tp%tpLon, tp%tpGeodAngle, tp%tpSolarTime, &
-      tp%tpSolarZenith, tp%tpLosAngle, STAT=error)
+    deallocate(tp%tpECI, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpECR, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpOrbY, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeocAlt, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeocLat, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeocAltRate, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeodAltRate, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeodAlt, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeodLat, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpLon, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpGeodAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpSolarTime, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpSolarZenith, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of THz quantities.')
+
+    deallocate(tp%tpLosAngle, STAT=error)
     if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed deallocation of THz quantities.')
 
     ! Deallocate the MIF quantities
-    deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
-      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle, sc%scVelECI, &
-      sc%scOrbIncl, sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, &
-      tp%scanAngle, tp%scanRate, STAT=error)
+
+    deallocate(sc%scECI, STAT=error)
     if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Failed deallocation of MIF quantities.')
+      & 'Failed deallocation of MIF quantities: scECI')
+
+    deallocate(sc%scECR, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scECR')
+
+    deallocate(sc%scGeocAlt, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scGeocAlt')
+
+    deallocate(sc%scGeocLat, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scGeocLat')
+
+    deallocate(sc%scGeodAlt, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scGeodAlt')
+
+    deallocate(sc%scGeodLat, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scGeodLat')
+
+    deallocate(sc%scLon, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scLon')
+
+    deallocate(sc%scGeodAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scGeodAngle')
+
+    deallocate(sc%scVelECI, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scVelECI')
+
+    deallocate(sc%scVelECR, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scVelECR')
+
+    deallocate(sc%scOrbIncl, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scOrbIncl')
+
+    deallocate(sc%ypr, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: ypr')
+
+    deallocate(sc%yprRate, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: yprRate')
+
+    deallocate(tp%encoderAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: encoderAngle')
+
+    deallocate(tp%scAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scAngle')
+
+    deallocate(tp%scanAngle, STAT=error)
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scanAngle')
+
+    deallocate(tp%scanRate, STAT=error)   
+    if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed deallocation of MIF quantities: scanRate')
 
   end subroutine L1boa_MAF
 
@@ -870,6 +1268,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.11  2002/11/07 21:56:20  jdone
+! Added Level 1 output datatypes.
+!
 ! Revision 2.10  2002/09/26 20:52:26  vsnyder
 ! Get Omega from Geometry instead of Units
 !
