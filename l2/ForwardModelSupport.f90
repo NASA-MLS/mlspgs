@@ -197,13 +197,12 @@ contains ! =====     Public Procedures     =============================
       & L_LATITUDE, L_SZA
     use Init_Tables_Module, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
       & F_NAMEFRAGMENT, F_EXACT
-    use Intrinsic, only: T_NUMERIC_RANGE
+    use Intrinsic, only: T_NUMERIC_RANGE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+      & PHYQ_INVALID, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VMR
     use L2PC_m, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
     use MoreTree, only: Get_Field_ID, GET_BOOLEAN
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
-    use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, &
-      & PHYQ_ANGLE, PHYQ_VMR, PHYQ_INVALID
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
@@ -311,7 +310,8 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND
-    use Intrinsic, only: L_NONE, L_CLEAR
+    use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+      & PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -324,7 +324,6 @@ contains ! =====     Public Procedures     =============================
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array, N_named
-    use Units, only: PHYQ_TEMPERATURE, PHYQ_PROFILES, PHYQ_ANGLE, PHYQ_DIMENSIONLESS
     use VGridsDatabase, only: VGrid_T
 
     integer, intent(in) :: NAME         ! The name of the config
@@ -834,6 +833,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.80  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.79  2003/08/15 20:28:44  vsnyder
 ! Remove check for and prohibition against polarized VMR derivatives
 !
