@@ -31,48 +31,57 @@ module ForwardModelConfig
   ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
-    integer :: cloud_der    ! Compute cloud sensitivity in cloud models.
-    integer :: fwmType        ! l_linear, l_full or l_scan
-    integer :: i_saturation        ! Flag to determine saturation status
-    integer :: instrumentModule         ! Module for scan model
-    integer :: windowUnits              ! Either degrees or profiles
+    integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
+                                      ! l_iwc_low_height, l_iwc_high_height, l_iwp
+                                      ! l_none
+    integer :: FwmType                ! l_linear, l_full or l_scan
+    integer :: I_saturation           ! Flag to determine saturation status
+                                      ! l_clear, l_clear_110rh_below_top
+                                      ! l_clear_0rh, l_clear_lowest_0_110rh
+                                      ! l_clear_110rh_below_tropopause,
+                                      ! l_cloudy_110rh_below_top
+                                      ! l_cloudy_110rh_in_cloud,
+                                      ! l_cloudy_nearside_only
+    integer :: InstrumentModule       ! Module for scan model (actually a spec index)
     ! Now the other integers
-    integer :: no_cloud_species         ! No of Cloud Species '2'
-    integer :: no_model_surfs           ! No of Model surfaces '640'
-    integer :: num_ab_terms             ! No of AB terms '50'
-    integer :: num_azimuth_angles       ! No of azmuth angles '8'
-    integer :: num_scattering_angles    ! No of scattering angles '16'
-    integer :: num_size_bins            ! No of size bins '40'
-    integer :: surfaceTangentIndex ! Index in Tangentgrid of Earth's surface
+    integer :: No_cloud_species       ! No of Cloud Species '2'
+    integer :: No_model_surfs         ! No of Model surfaces '640'
+    integer :: Num_ab_terms           ! No of AB terms '50'
+    integer :: Num_azimuth_angles     ! No of azmuth angles '8'
+    integer :: Num_scattering_angles  ! No of scattering angles '16'
+    integer :: Num_size_bins          ! No of size bins '40'
+    integer :: SidebandStart, SidebandStop ! Folded or SSB config?
+    integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
+    integer :: WindowUnits            ! Either degrees or profiles
     ! Now the logicals
-    logical :: allLinesForRadiometer ! As opposed to just using lines designated for band.
-    logical :: atmos_der      ! Do atmospheric derivatives
-    logical :: default_spectroscopy     ! Using Bill's spectroscopy data
-    logical :: differentialScan         ! Differential scan model
-    logical :: do_1d          ! Do 1D forward model calculation
-    logical :: do_baseline    ! Do a baseline computation
-    logical :: do_conv        ! Do convolution
-    logical :: do_freq_avg    ! Do Frequency averaging
-    logical :: globalConfig   ! If set is shared between all chunks
-    logical :: incl_cld ! Include cloud extinction calculation in Bill's forward model
-    logical :: lockBins              ! Use same l2pc bin for whole chunk
-    logical :: polarized      ! Use polarized model for Zeeman-split lines
-    logical :: switchingMirror          ! Model radiance at the switching mirror
-    logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
-    logical :: spect_Der      ! Do spectroscopy derivatives
-    logical :: temp_Der       ! Do temperature derivatives
+    logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
+    logical :: Atmos_der              ! Do atmospheric derivatives
+    logical :: Default_spectroscopy   ! Using Bill's spectroscopy data
+    logical :: DifferentialScan       ! Differential scan model
+    logical :: Do_1d                  ! Do 1D forward model calculation
+    logical :: Do_baseline            ! Do a baseline computation
+    logical :: Do_conv                ! Do convolution
+    logical :: Do_freq_avg            ! Do Frequency averaging
+    logical :: GlobalConfig           ! If set is shared between all chunks
+    logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
+    logical :: LockBins               ! Use same l2pc bin for whole chunk
+    logical :: Polarized              ! Use polarized model for Zeeman-split lines
+    logical :: SkipOverlaps           ! Don't calculate for MAFs in overlap regions
+    logical :: Spect_Der              ! Do spectroscopy derivatives
+    logical :: SwitchingMirror        ! Model radiance at the switching mirror
+    logical :: Temp_Der               ! Do temperature derivatives
     ! Now the reals
-    real (r8) :: phiWindow             ! Window size for examining stuff
-    real (r8) :: tolerance ! Accuracy desired when choosing approximations
+    real (r8) :: PhiWindow            ! Window size for examining stuff
+    real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
     ! Now the arrays
-    integer, dimension(:), pointer :: binSelectors=>NULL() ! List of relevant bin selectors
-    integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
-    integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
-    logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
+    integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
+    integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
+    integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
+    logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want jacobians
     ! Finally the types
-    type (Signal_T), dimension(:), pointer :: signals=>NULL()
-    type (vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
-    type (vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
+    type (Signal_T), dimension(:), pointer :: Signals=>NULL()
+    type (vGrid_T), pointer :: IntegrationGrid=>NULL() ! Zeta grid for integration
+    type (vGrid_T), pointer :: TangentGrid=>NULL()     ! Zeta grid for integration
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -197,6 +206,7 @@ contains
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_ab_terms, config%num_azimuth_angles, &
       & config%num_scattering_angles, config%num_size_bins, &
+      & config%sidebandStart, config%sidebandStop, &
       & config%surfaceTangentIndex /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
 
@@ -294,7 +304,7 @@ contains
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(15) :: LS        ! Temporary array
-    integer, dimension(7) :: IS         ! Temporary array
+    integer, dimension(9) :: IS         ! Temporary array
     real(r8), dimension(2) :: RS        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -321,7 +331,9 @@ contains
     config%num_azimuth_angles = is(4)
     config%num_scattering_angles = is(5)
     config%num_size_bins = is(6)
-    config%surfaceTangentIndex = is(7)
+    config%sideBandStart = is(7)
+    config%sideBandStop = is(8)
+    config%surfaceTangentIndex = is(9)
 
     ! Now the logical scalars
     call PVMIDLUnpack ( ls, info )
@@ -492,7 +504,7 @@ contains
 
     ! Local variables
     integer :: I, J                          ! Loop counters
-    character (len=MaxSigLen) :: SignalName  ! A line of text
+!   character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     if ( associated(database) ) then
@@ -548,6 +560,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.36  2003/05/29 16:37:02  livesey
+! Added switchingMirror
+!
 ! Revision 2.35  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
