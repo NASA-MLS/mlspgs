@@ -47,9 +47,6 @@ module L2Parallel
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use MoreTree, only: Get_Spec_ID
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
-  use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
-  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
-
   use VectorsModule, only: CHECKINTEGRITY
 
   implicit none
@@ -222,6 +219,8 @@ contains ! ================================ Procedures ======================
 
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
+    use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
     ! This is a `master' task for the l2 software
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
@@ -1091,6 +1090,7 @@ contains ! ================================ Procedures ======================
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
     & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated,&
     & stageFileID )
+    use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
     ! This routine reads a vector from a slave and stores it in
     ! an appropriate place.
 
@@ -1290,6 +1290,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.57  2003/09/24 23:41:55  pwagner
+! Moved some USE statements around to workaround IFC bugs
+!
 ! Revision 2.56  2003/08/01 20:28:05  pwagner
 ! Spawns slave tasks with parallel%pgeName as command
 !
