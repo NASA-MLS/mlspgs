@@ -32,9 +32,9 @@ CONTAINS
     USE MLSFiles, ONLY: MLS_closeFile
     USE L1BOutUtils, ONLY: WriteHdrAnnots
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
-    USE MLSHDF5, ONLY: MakeHDF5Attribute, mls_h5close
+    USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
-!    USE H5LIB
+    USE PCFHdr, ONLY: h5_writeglobalattr
 
     CHARACTER(LEN=132) :: filename
     INTEGER :: i, returnStatus, error, grp_id
@@ -94,6 +94,21 @@ CONTAINS
 
     ENDIF
 
+    WRITE (L1BFileInfo%LogId, *) ''
+    IF (L1ProgType == THzType) THEN
+       WRITE (L1BFileInfo%LogId, *) &
+            '##################### End MLSL1T ####################'
+    ELSE
+       WRITE (L1BFileInfo%LogId, *) &
+            '##################### End MLSL1G ####################'
+    ENDIF
+    WRITE (L1BFileInfo%LogId, *) ''
+
+    CLOSE (l1BFileInfo%LogId)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BLOG file: '//l1BFileInfo%LogFileName)
+
 ! Close HDF files
 
     IF (L1ProgType == THzType) THEN
@@ -104,6 +119,15 @@ CONTAINS
        CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion=HDFversion)
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L1BRAD T file: '//L1BFileInfo%RADTFileName)
+
+       ! Write Hdr Annotations and Close L1B THz Diag file
+
+       CALL WriteHdrAnnots (L1BFileInfo%DiagTFileName, HDFversion)
+       CALL h5_writeglobalattr (L1BFileInfo%DiagTid, &
+            skip_if_already_there=.FALSE.)
+       CALL MLS_closeFile (L1BFileInfo%DiagTId, HDFversion=HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1B Diag THz file: '//L1BFileInfo%DiagTFileName)
 
        CALL WriteMetaData (IsTHz=.TRUE.)
 
@@ -140,6 +164,8 @@ CONTAINS
     ! Write Hdr Annotations and Close L1B Diag file
 
     CALL WriteHdrAnnots (L1BFileInfo%DiagFileName, HDFversion)
+    CALL h5_writeglobalattr (L1BFileInfo%Diagid, &
+         skip_if_already_there=.FALSE.)
     CALL MLS_closeFile (L1BFileInfo%DiagId, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1B Diag file: '//L1BFileInfo%DiagFileName)
@@ -155,7 +181,7 @@ CONTAINS
 
 !! Close the HDF 5 Fortran Interface
 
-    CALL mls_h5close (error)
+    CALL MLS_h5close (error)
     IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          "Fortran HDF 5 API error on closing.")
     
@@ -165,6 +191,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.15  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.14  2004/05/06 21:59:23  pwagner
 ! Uses mls_h5open/close
 !
