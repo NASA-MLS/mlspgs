@@ -619,7 +619,6 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT,0,RE)                          !CLEAR-SKY
-  print*,zzt1(6),tt0(6,nzmodel),tt(6,nzmodel)
          TT0 = min(TT, TT0)
          TT  = TT0	   ! so that dTcir=0
 
@@ -721,7 +720,6 @@ contains
 
          END IF      ! do FOV  
 
-print*,zzt(10),tb0(10,ifr)
 ! **** END OF FOV AVERAGING ****
 
 
@@ -773,6 +771,9 @@ print*,zzt(10),tb0(10,ifr)
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.52  2003/02/03 19:25:00  dwu
+! fix a bug
+!
 ! Revision 1.51  2003/02/02 01:45:17  dwu
 ! some minor changes
 !
