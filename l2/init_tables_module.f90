@@ -118,7 +118,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_PHIWINDOW           = f_perturbation + 1
   integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
   integer, parameter :: F_PRECISION           = f_pointingGrids + 1
-  integer, parameter :: F_QUANTITIES          = f_precision + 1
+  integer, parameter :: F_PREFIXSIGNAL        = f_precision + 1
+  integer, parameter :: F_QUANTITIES          = f_prefixSignal + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
@@ -445,6 +446,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
     field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
     field_indices(f_precision) =           add_ident ( 'precision' )
+    field_indices(f_prefixSignal) =        add_ident ( 'prefixSignal' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -719,6 +721,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
@@ -726,6 +729,7 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_sdname, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
@@ -922,6 +926,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.99  2001/05/10 16:31:14  livesey
+! Added the prefixSignal option to joins
+!
 ! Revision 2.98  2001/05/10 01:08:02  livesey
 ! Added destroyJacobian option to sids
 !
