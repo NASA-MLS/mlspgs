@@ -11,6 +11,23 @@ BEGIN Fill
     Fill, quantity=_bVector.r5hElev, method=explicit, explicitValues= 0.0 degrees
     Fill, quantity=_bVector.r5vElev, method=explicit, explicitValues= 0.0 degrees
 
+    ;; Now the isotope ratios
+    
+    Fill, quantity=b.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
+    Fill, quantity=b.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
+    Fill, quantity=b.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
+    Fill, quantity=b.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
+    Fill, quantity=b.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
+    Fill, quantity=b.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
+    Fill, quantity=b.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
+    Fill, quantity=b.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
+    Fill, quantity=b.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
+    Fill, quantity=b.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
+    Fill, quantity=b.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
+    Fill, quantity=b.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
+    Fill, quantity=b.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
+;   Fill, quantity=b.c_12_o_18_ratio,    method=explicit, explicitValues= 0.98652
+
     ;; Now the more minor stuff
     Fill, quantity = _bVector.earthReflectivity, $
       method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
