@@ -27,7 +27,8 @@ module L2Parallel
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
-    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, NOTIFYTAG
+    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, NOTIFYTAG, &
+    & GETNICETIDSTRING
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
   use MLSCommon, only: MLSCHUNK_T
@@ -316,12 +317,6 @@ contains ! ================================ Procedures ======================
           call PVMFCatchOut ( 1, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
         end if
-        if ( index(switches,'mas') /= 0 ) then
-          call output ( 'Launching chunk ' )
-          call output ( nextChunk )
-          call output ( ' on slave '//trim(machineNames(machine)), &
-            & advance='yes' )
-        endif
         info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
           & trim(machineNames(machine)), &
           & 1, tidarr )
@@ -332,8 +327,15 @@ contains ! ================================ Procedures ======================
           slaveChunks(machine) = nextChunk
           slaveTids(machine) = tidArr(1)
           chunksStarted(nextChunk) = .true.
-          call SendChunkToSlave ( chunks(nextChunk), nextChunk, &
-            & slaveTids(machine) )
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Launched chunk ' )
+            call output ( nextChunk )
+            call output ( ' on slave ' // trim(machineNames(machine)) // &
+              & ' ' // trim(GetNiceTidString(slaveTids(machine))), &
+              & advance='yes' )
+            call SendChunkToSlave ( chunks(nextChunk), nextChunk, &
+              & slaveTids(machine) )
+          end if
           ! Now ask to be notified when this task exits
           call PVMFNotify ( PVMTaskExit, NotifyTag, 1, &
             & (/ slaveTids(machine) /), info )
@@ -377,12 +379,6 @@ contains ! ================================ Procedures ======================
             select case (signal) 
 
             case ( sig_tojoin ) ! --------------- Got a join request ---------
-              if ( index(switches,'mas') /= 0 ) then
-                call output ( 'Got a vector join from ' // &
-                  & trim(machineNames(machine)) )
-                call output ( ' processing chunk ' )
-                call output ( slaveChunks(machine), advance='yes')
-              endif
               call StoreSlaveQuantity( joinedQuantities, &
                 & joinedVectorTemplates, joinedVectors, &
                 & storedResults, slaveChunks(machine), noChunks, slaveTid )
@@ -390,8 +386,9 @@ contains ! ================================ Procedures ======================
             case ( sig_finished ) ! -------------- Got a finish message ----
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Got a finished message from ' // &
-                  & trim(machineNames(machine)) )
-                call output ( ' processing chunk ' )
+                  & trim(machineNames(machine)) // ' ' // &
+                  & trim(GetNiceTidString(slaveTid)) // &
+                  & ' processing chunk ' )
                 call output ( slaveChunks(machine), advance='yes')
               endif
 
@@ -413,9 +410,24 @@ contains ! ================================ Procedures ======================
               slaveTids(machine) = 0
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Master status:', advance='yes' )
-                call dump ( chunksCompleted, name='Chunks completed')
-                call dump ( machineFree, name='Machines free' )
-                call dump ( machineOK, name='Machines ok' )
+                call output ( count(chunksCompleted) )
+                call output ( ' of ' )
+                call output ( noChunks )
+                call output ( ' chunks completed, ')
+                call output ( count(chunksStarted .and. .not. chunksCompleted) )
+                call output ( ' underway, ' )
+                call output ( count(chunksAbandoned) )
+                call output ( ' abandoned, ' )
+                call output ( count(.not. &
+                  & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
+                call output ( ' left. ', advance='yes' )
+                
+                call output ( count ( .not. machineFree ) )
+                call output ( ' of ' )
+                call output ( noMachines )
+                call output ( ' machines busy, with ' )
+                call output ( count ( .not. machineOK ) )
+                call output ( ' being avoided.', advance='yes' )
               endif
 
             case default
@@ -442,8 +454,11 @@ contains ! ================================ Procedures ======================
             call output ( 'The run of chunk ' )
             call output ( deadChunk )
             call output ( ' on ' // trim(machineNames(deadMachine)) // &
-              & ' seems to have died.  Being requeued.', advance='yes' )
+              & ' ' // trim(GetNiceTidString(deadTid)) // &
+              & ' died, try again.', advance='yes' )
           end if
+          call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
+            & joinedVectorTemplates, joinedVectors, storedResults )
           chunksStarted(deadChunk) = .false.
           chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
           where ( machineNames(deadMachine) == machineNames )
@@ -469,7 +484,7 @@ contains ! ================================ Procedures ======================
             if ( index(switches,'mas') /= 0 ) &
               & call output ('The machine ' // &
               & trim(machineNames(deadMachine)) // &
-              & 'keeps killing things, marking it bad', &
+              & ' keeps killing things, marking it bad', &
               & advance='yes' )
             where ( machineNames(deadMachine) == machineNames )
               machineOK = .false.
@@ -480,23 +495,27 @@ contains ! ================================ Procedures ======================
         call PVMErrorMessage ( info, "checking for Notify message" )
       end if
 
+      ! Have we abandoned everything?
+      if ( all(chunksAbandoned) ) call MLSMessage( MLSMSG_Error, ModuleName, &
+        & 'All chunks abandoned' )
+
       ! If we're done then exit
       if (all(chunksCompleted .or. chunksAbandoned)) exit masterLoop
 
-      ! If we're just going to have to give up then exit too.
+      ! Now deal with the case where we have no machines left to use.
+      ! When all the chunks that have started have finished (surely this is a
+      ! necessary condition anyway?) finish.
+      if ( .not. any(machineOK) .and. &
+        &  all ( chunksStarted .eqv. chunksCompleted ) ) exit masterLoop
 
-
-      ! If all the machines are dead, and there is still work to be done
-      ! what can we do!
-      if ( (.not. any(machineOK)) .and. (.not. all(chunksStarted) ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'None of the slave machines are reliable!' )
-
-      ! Now, rather than chew up cpu time on the master process, we'll wait a
+      ! Now, rather than chew up cpu time on the master machine, we'll wait a
       ! bit here.
       call usleep ( delay )
+    end do masterLoop ! --------------------- End of master loop --------------
 
-    end do masterLoop ! --------------------- End of master loop -----------------
+    if ( count(chunksCompleted) == 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No chunks were processed successfully.' )
 
     if ( index(switches,'mas') /= 0 ) then
       call output ( 'All chunks processed, starting join task', advance='yes' )
@@ -705,5 +724,38 @@ contains ! ================================ Procedures ======================
     if ( thisResult%gotPrecision ) thisResult%precInds(chunk) = pvInd
 
   end subroutine StoreSlaveQuantity
+
+  ! --------------------------------- CleanUpDeadChunksOutput -------------
+  subroutine CleanUpDeadChunksOutput ( chunk, joinedQuantities, &
+    & joinedVectorTemplates, joinedVectors, storedResults )
+    ! This destroys the vector info etc. associated with any output
+    ! from a dead chunk.
+    integer, intent(in) :: CHUNK        ! Index of chunk
+    type (QuantityTemplate_T), dimension(:), pointer :: JOINEDQUANTITIES
+    type (VectorTemplate_T), dimension(:), pointer :: JOINEDVECTORTEMPLATES
+    type (Vector_T), dimension(:), pointer :: JOINEDVECTORS
+    type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
+
+    ! Local variables
+    integer :: PRECIND                  ! Index for precision (if any)
+    integer :: VALIND                   ! Index for value
+    integer :: RES                      ! Loop counter
+
+    ! Executable code
+    if ( .not. associated(storedResults) ) return
+    
+    do res = 1, size ( storedResults )
+      valInd = storedResults(res)%valInds(chunk)
+      call DestroyVectorInfo ( joinedVectors(valInd) )
+      call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+      call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+      if ( storedResults(res)%gotPrecision ) then
+        precInd = storedResults(res)%precInds(chunk)
+        call DestroyVectorInfo ( joinedVectors(precInd) )
+        call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+        call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+      end if
+    end do
+  end subroutine CleanUpDeadChunksOutput
 
 end module L2Parallel
