@@ -131,13 +131,14 @@ orbits
 pa
 pctrhi
 phitan
-ptan
+polarLinear
 ppbv
 ppmv
 pptv
 pressure
 primary
 profiles
+ptan
 
 rad
 radiance
@@ -188,6 +189,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.27  2003/08/13 00:47:17  livesey
+# Added polarLinear model stuff
+#
 # Revision 2.26  2003/08/08 23:04:31  livesey
 # Added fieldAzimuth, fieldElevation and fieldStrength
 #
