@@ -3,6 +3,8 @@
 #                 mlsconfigure    configures the mls for compiler, platform
 #
 # Called for either or both of two purposes:
+#   (Note that task (3) below has been taken on by a different script
+#    updatemf.sh)
 #
 # (1) Query user for: 
 #     (a) compiler and platform; 
@@ -29,6 +31,9 @@
 #
 #     *.o, *.mod, etc. files will go in this new directory
 #     ((2) not done if $plat_dir/platforms directory fails to exist)
+#
+# (3) (superseded) In an existing directory $mcfg_dir/$MLSCONFG
+#        update the Makefile
 #
 #        O p t i o n s
 #  -h[elp]              (if present) Help (a work in progress)
@@ -1100,6 +1105,7 @@ get_confg="true"
 del_exist_dir="true"
 chngd_confg="false"
 m_update="false"
+m_option=
 
 # These three used to stand out as poorly chosen--
 # They violated the pattern current_VARIABLE=$VARIABLE
@@ -1151,6 +1157,7 @@ fi
 me="$0"
 me_simple=mlsconfigure
 REECHO="`echo $0 | sed 's/mlsconfigure/reecho.sh/'`"
+UPDATEMF="`echo $0 | sed 's/mlsconfigure/updatemf.sh/'`"
 MYPATH="`echo $0 | sed 's/mlsconfigure//'`"
 
 while [ "$1" != "" ] ; do
@@ -1230,6 +1237,7 @@ while [ "$1" != "" ] ; do
 
 	-machine )
 	    m_update="true"
+       m_option="-machine"
 	;;
 
 	-nc )
@@ -1433,94 +1441,15 @@ if [ ! -d $plat_dir/platforms ] ; then
 	exit
 fi
 
-#Re-create object-file directory for this MLSCONFG
-#unless $del_exist_dir reset to false
-#(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
-made_new_dir="false"
-
-if [ "$MLSCONFG" = "." -o "$MLSCONFG" = "" ] ; then
-	echo "MLSCONFG not yet defined--still $MLSCONFG"
-	echo "To repair this, enter 'make configure'"
-   exit
-elif [ "$del_exist_dir" != "true" ] ; then
-	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
-      mkdir $mcfg_dir/$MLSCONFG
-		made_new_dir="true"
-   else
-      rm -f $mcfg_dir/$MLSCONFG/Makefile
-	fi
-elif [ -d $mcfg_dir/$MLSCONFG ] ; then
-#	echo "Clearing out directory `pwd`$mcfg_dir/$MLSCONFG"
-#	echo "(Be careful that this is not too ambitious)"
-	chmod u+w $mcfg_dir/$MLSCONFG/*
-#	rm -f $mcfg_dir/$MLSCONFG/*.o
-#	rm -f $mcfg_dir/$MLSCONFG/*.mod
-#	rm -f $mcfg_dir/$MLSCONFG/Makefile
-	rm -f $mcfg_dir/$MLSCONFG/*
-else
-   mkdir $mcfg_dir/$MLSCONFG   
-	made_new_dir="true"        
-fi
-
-if [ ! -f $plat_dir/platforms/$MLSF95.$MLSPLAT ] ; then
-	echo "File $MLSF95.$MLSPLAT not found in $plat_dir/platforms"
-	exit
-fi
-
-if [ ! -f $plat_dir/platforms/targets ] ; then
-	echo "File targets not found in $plat_dir/platforms"
-	exit
-fi
-
-cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSF95.$MLSPLAT \
-   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
-
-if [ "$made_new_dir" = "true" ] ; then
-	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
-	echo "(This is where your object files, .mod files, libraries,"
-	echo "and executable programs will be created)"
-	echo "To build the software, enter the 'make' command again"
-	echo ""
-	echo "If you later wish to rebuild for a different compiler"
-	echo "or platform, enter 'make configure'"
-   if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" ] ; then
-     # Custom configuration name -- create a machines sub-directory for it
-     # We will assume that the machines sub-directories live under the path
-     # $conf_dir/lib/machines/$MLSCONFG
-     machines_root=$conf_dir/lib/machines
-     if [ ! -d "$machines_root" ] ; then
-        echo "Unable to locate root machines directory $machines_root"
-        exit
-     fi
-     machines_base=$machines_root/$MLSF95.$MLSPLAT
-     if [ ! -d "$machines_base" ] ; then
-        echo "Unable to locate base machines directory $machines_base"
-        exit
-     fi
-     if [ ! -d "$machines_root/$MLSCONFG" ] ; then
-        mkdir "$machines_root/$MLSCONFG"
-        cp $machines_base/*.f9* $machines_root/$MLSCONFG
-        echo "New directory $machines_root/$MLSCONFG based on $machines_base"
-     fi
-   fi
-fi
-
-if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
-# In case of a custom configuration name, make sure machine files are up-to-date
-  machines_root=$conf_dir/lib/machines            
-  machines_base=$machines_root/$MLSF95.$MLSPLAT   
-  the_files=`$REECHO -dirn $machines_root/$MLSCONFG`
-  echo "About to make sure $the_files"
-  echo "are up-to-date in $machines_root/$MLSCONFG"
-  for file in $the_files
-  do
-    make -f $MYPATH/uptodate.make \
-      SOURCE=$machines_base/$file TARGET=$machines_root/$MLSCONFG/$file \
-        $machines_root/$MLSCONFG/$file
-  done
-fi
+#Use $UPDATEMF to update the Makefile in the object file directory
+#with the newest settings
+"$UPDATEMF" -cf $conf_dir/$MLSCFILE -pc "$plat_dir" $m_option
 exit
+
 # $Log$
+# Revision 1.31  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
 # Revision 1.30  2002/07/18 19:38:32  pwagner
 # Replaced with temp.mega_buck with PID-derived unique_name
 #
