@@ -12,9 +12,9 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   implicit none
   private
   
-  public :: STAT_T, &
-    & ALLSTATS, DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, &
-    & STATFUNCTION, STATISTICS
+  public :: STAT_T             ! The data type
+  public :: ALLSTATS, DUMP, STATISTICS  ! subroutines
+  public :: MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATFUNCTION ! functions
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -28,18 +28,39 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   ! The functions and subroutines are based on
   ! (1) The MATH77 library subroutine; and
   ! (2) optionally filtering out fill values from array entries
+  ! Optionally, instead of filtering fill values, an array of precisions,
+  ! with the same shape and numeric type as the original values,
+  ! can be supplied. In this case, values for which the corresponding
+  ! precisions < 0 will be filtered out.
+  ! If both fillValue and precision are supplied, 
+  ! the precision array will be ignored.
+  
   ! Interfaces have been supplied so that most procedures accept
-  ! arrays of rank 1, 2, or 3 and either sngl or dbl precision
+  ! arrays of rank 1, 2, or 3 and either single or double precision
   ! In addition to the usual min, max, mean, stddev functions
-  ! an rms function has been created
+  ! an rms function has been created.
   ! Missing so far is a median function, mode function, chi^2, 
   ! confidence level, etc.
+  
+  ! If called via a subroutine,
+  ! an optional returned array is bincount. If supplied, nbin and bounds must
+  ! also be supplied and satisfy the conditions: 
+  ! nbins > 2, X2 > X1, size(bincount) >= nbins
+  ! where bounds = (X1, X2)
+  ! bincount will be suitable for plotting a histogram of the data. 
+  ! Let h = (X2-X1) / (nbins-2)
+  ! Then the bins are the intervals between the points in the following set:
+  ! {-Inf  X1  X1+h  X1+2h  ..  X2-2h  X2-h  X2  Inf}
+  
+  ! Also, if called via a subroutine, successive calls may "merge" data
+  ! allowing the calculation of statistics for a larger cumulative data set
+
   ! This is the main datatype, a stat.
   ! (Would making fillValue a component makes sense?)
   ! (How about a separate count of times fillValue had to be ignored?)
 
   type Stat_T
-    integer :: count = 0    ! If > 0, merging data from prior run(s)
+    integer :: count = 0    ! If > 0, merging data from prior call(s)
     real(r8) :: min
     real(r8) :: max
     real(r8) :: mean
@@ -95,7 +116,8 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 
 contains
       ! ------------------- allstats_d1r4 -----------------------
-      subroutine allstats_d1r4(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d1r4(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r4), dimension(:), intent(in)             :: values
@@ -103,6 +125,7 @@ contains
         real(r4), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
         real(r4), optional, intent(out)                :: min
         real(r4), optional, intent(out)                :: max
@@ -137,7 +160,11 @@ contains
         if ( present(addedData) ) myAddedData = addedData
         if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
         if ( present(fillValue) ) then
-          call filterValues_r4(values, XTAB, NX, fillValue)
+          call filterValues_r4(values, XTAB, NX, fillValue=fillValue)
+          call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues_r4(values, XTAB, NX, precision=precision)
           call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
           call Deallocate_test ( XTAB, 'XTAB', ModuleName )
         else
@@ -169,7 +196,8 @@ contains
       end subroutine allstats_d1r4
 
       ! ------------------- allstats_d1r8 -----------------------
-      subroutine allstats_d1r8(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d1r8(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r8), dimension(:), intent(in)             :: values
@@ -177,6 +205,7 @@ contains
         real(r8), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
         real(r8), optional, intent(out)                :: min
         real(r8), optional, intent(out)                :: max
@@ -211,7 +240,11 @@ contains
         if ( present(addedData) ) myAddedData = addedData
         if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
         if ( present(fillValue) ) then
-          call filterValues_r8(values, XTAB, NX, fillValue)
+          call filterValues_r8(values, XTAB, NX, fillValue=fillValue)
+          call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
+          call Deallocate_test ( XTAB, 'XTAB', ModuleName )
+        elseif ( present(precision) ) then
+          call filterValues_r8(values, XTAB, NX, precision=precision)
           call STAT1_r8(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
           call Deallocate_test ( XTAB, 'XTAB', ModuleName )
         else
@@ -243,7 +276,8 @@ contains
       end subroutine allstats_d1r8
 
       ! ------------------- allstats_d2r4 -----------------------
-      subroutine allstats_d2r4(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d2r4(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r4), dimension(:,:), intent(in)           :: values
@@ -251,6 +285,7 @@ contains
         real(r4), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:), optional, intent(in) :: precision
         integer, optional, intent(inout)               :: count
         real(r4), optional, intent(out)                :: min
         real(r4), optional, intent(out)                :: max
@@ -262,13 +297,23 @@ contains
         integer, dimension(2)                          :: shp
         ! Executable
         shp =shape(values)
-        call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
-          & nbins, bounds, addedData, fillValue, &
-          & count, min, max, mean, stddev, rms, bincount)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        endif
       end subroutine allstats_d2r4
 
       ! ------------------- allstats_d2r8 -----------------------
-      subroutine allstats_d2r8(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d2r8(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r8), dimension(:,:), intent(in)           :: values
@@ -276,6 +321,7 @@ contains
         real(r8), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:), optional, intent(in) :: precision
         integer, optional, intent(inout)               :: count
         real(r8), optional, intent(out)                :: min
         real(r8), optional, intent(out)                :: max
@@ -287,13 +333,23 @@ contains
         integer, dimension(2)                          :: shp
         ! Executable
         shp =shape(values)
-        call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
-          & nbins, bounds, addedData, fillValue, &
-          & count, min, max, mean, stddev, rms, bincount)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        endif
       end subroutine allstats_d2r8
 
       ! ------------------- allstats_d3r4 -----------------------
-      subroutine allstats_d3r4(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d3r4(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r4), dimension(:,:,:), intent(in)         :: values
@@ -301,6 +357,7 @@ contains
         real(r4), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r4), optional, intent(in)                 :: fillValue
+        real(r4), dimension(:,:,:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
         real(r4), optional, intent(out)                :: min
         real(r4), optional, intent(out)                :: max
@@ -312,13 +369,23 @@ contains
         integer, dimension(3)                          :: shp
         ! Executable
         shp =shape(values)
-        call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
-          & nbins, bounds, addedData, fillValue, &
-          & count, min, max, mean, stddev, rms, bincount)
+        if ( .not. present(precision) ) then
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        else
+          call allstats_d1r4(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        endif
       end subroutine allstats_d3r4
 
       ! ------------------- allstats_d3r8 -----------------------
-      subroutine allstats_d3r8(values, nbins, bounds, addedData, fillValue, &
+      subroutine allstats_d3r8(values, &
+        & nbins, bounds, addedData, fillValue, precision, &
         & count, min, max, mean, stddev, rms, bincount)
         ! Args
         real(r8), dimension(:,:,:), intent(in)         :: values
@@ -326,6 +393,7 @@ contains
         real(r8), dimension(2), optional, intent(in)   :: bounds
         logical, optional, intent(in)                  :: addeddata
         real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:,:,:), optional, intent(in)   :: precision
         integer, optional, intent(inout)               :: count
         real(r8), optional, intent(out)                :: min
         real(r8), optional, intent(out)                :: max
@@ -337,9 +405,18 @@ contains
         integer, dimension(3)                          :: shp
         ! Executable
         shp =shape(values)
-        call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
-          & nbins, bounds, addedData, fillValue, &
-          & count, min, max, mean, stddev, rms, bincount)
+        if ( .not. present(precision) ) then
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        else
+          call allstats_d1r8(reshape(values, (/shp(1)*shp(2)*shp(3)/)), &
+            & nbins, bounds, addedData, fillValue, &
+            & reshape(precision, (/shp(1)*shp(2)/)),&
+            & count=count, min=min, max=max, mean=mean, &
+            & stddev=stddev, rms=rms, bincount=bincount)
+        endif
       end subroutine allstats_d3r8
 
       ! ------------------- mlsmin_d1r4 -----------------------
@@ -613,35 +690,37 @@ contains
       end function mlsrms_d3r8
       
       ! ------------------- statFunction -----------------------
-      function statFunction(values, fillValue) result(statistic)
+      function statFunction(values, fillValue, precision) result(statistic)
         ! Given a 1-d set of dbl prec values, returns a Stat_t typed result
         ! Does not bother with bincount array
         ! Thus does not permit histogramming;
         ! for that see statistics subroutine below
         ! Args
-        real(r8), dimension(:), intent(in)  :: values
-        real(r8), optional, intent(in)      :: fillValue
-        type(stat_T)                        :: statistic
-        call allstats(values, fillValue=fillValue, &
+        real(r8), dimension(:), intent(in)             :: values
+        real(r8), optional, intent(in)                 :: fillValue
+        real(r8), dimension(:), optional,  intent(in)  :: precision
+        type(stat_T)                                   :: statistic
+        call allstats(values, fillValue=fillValue, precision=precision, &
           & min=statistic%min, max=statistic%max, mean=statistic%mean, &
           & stddev=statistic%stddev, rms=statistic%rms)
       end function statFunction
       
       ! ------------------- statistics -----------------------
-      subroutine statistics(values, statistic, fillValue)
+      subroutine statistics(values, statistic, fillValue, precision)
         ! Given a 1-d set of dbl prec values, calculates a Stat_t typed result
         ! Note that the caller has responsibility for 
         ! (1) setting nbins and bounds
         ! (2) Resetting count (or else all calls get merged together)
         ! (3) allocating bincount array (and deallocating later)
         ! Args
-        real(r8), dimension(:), intent(in)  :: values
-        real(r8), optional, intent(in)      :: fillValue
-        type(stat_T), intent(inout)         :: statistic
+        real(r8), dimension(:), intent(in)            :: values
+        real(r8), optional, intent(in)                :: fillValue
+        type(stat_T), intent(inout)                   :: statistic
+        real(r8), dimension(:), optional, intent(in)  :: precision
         ! Internal variables
-        logical                             :: addedData
-        integer                             :: nbins
-        real(r8), dimension(2)              :: bounds
+        logical                                       :: addedData
+        integer                                       :: nbins
+        real(r8), dimension(2)                        :: bounds
         ! Executable
         ! default values
         addedData = statistic%count > 0
@@ -651,11 +730,13 @@ contains
         if ( any(statistic%bounds /= 1.0d0) ) bounds = statistic%bounds
         MLSStat%count = statistic%count
         if ( associated(statistic%bincount) ) then
-          call allstats(values, nbins, bounds, addeddata, fillValue, &
+          call allstats(values, &
+            & nbins, bounds, addeddata, fillValue, precision, &
             & statistic%count, statistic%min, statistic%max, statistic%mean, &
             & statistic%stddev, statistic%rms, statistic%bincount)
         else
-          call allstats(values, nbins, bounds, addeddata, fillValue, &
+          call allstats(values, &
+            & nbins, bounds, addeddata, fillValue, precision, &
             & count=statistic%count, min=statistic%min, max=statistic%max, &
             & mean=statistic%mean, &
             & stddev=statistic%stddev, rms=statistic%rms)
@@ -696,16 +777,19 @@ contains
       
       ! ------------------- Private Procedures -----------------------
       ! ------------------- filterValues_r4 -----------------------
-      subroutine filterValues_r4(values, XTAB, NX, fillValue)
+      subroutine filterValues_r4(values, XTAB, NX, fillValue, precision)
       ! Return an array filtered of any fillValues
-      ! If fillValue is absent, return all values
+      ! or where corresponding precision array < 0
+      ! If neither fillValue, precision supplied, return all values
       ! If only fillValues in array, return length 1 array containing fillValue
+      ! If all precisions < 0, return length 1 array containing -999.99
       ! In all cases, allocate Array of appropriate size
       ! Args
       real(r4), dimension(:), intent(in)             :: values
       real(r4), dimension(:), pointer                :: xtab
       integer, intent(out)                           :: NX
       real(r4), optional, intent(in)                 :: fillValue
+      real(r4), dimension(:), optional, intent(in)   :: precision
       ! Internal variables
       integer, dimension(size(values))               :: which
       integer                                        :: i
@@ -722,6 +806,17 @@ contains
             XTAB(i) = values(which(i))
           enddo
         endif
+      elseif ( present(precision) ) then
+        call findAll(precision >= 0._r4, which, how_many=NX)
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = -999.99_r4
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
       else
         NX = size(values)
         call allocate_test(XTAB, NX, 'XTAB', moduleName)
@@ -730,16 +825,20 @@ contains
       end subroutine filterValues_r4
 
       ! ------------------- filterValues_r8 -----------------------
-      subroutine filterValues_r8(values, XTAB, NX, fillValue)
+      subroutine filterValues_r8(values, XTAB, NX, fillValue, precision)
       ! Return an array filtered of any fillValues
+      ! or where corresponding precision array < 0
       ! If fillValue is absent, return all values
+      ! If neither fillValue, precision supplied, return all values
       ! If only fillValues in array, return length 1 array containing fillValue
+      ! If all precisions < 0, return length 1 array containing -999.99
       ! In all cases, allocate Array of appropriate size
       ! Args
       real(r8), dimension(:), intent(in)             :: values
       real(r8), dimension(:), pointer                :: xtab
       integer, intent(out)                           :: NX
       real(r8), optional, intent(in)                 :: fillValue
+      real(r8), dimension(:), optional, intent(in)   :: precision
       ! Internal variables
       integer, dimension(size(values))               :: which
       integer                                        :: i
@@ -750,6 +849,17 @@ contains
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
           XTAB = fillValue
+        else
+          call allocate_test(XTAB, NX, 'XTAB', moduleName)
+          do i=1, NX
+            XTAB(i) = values(which(i))
+          enddo
+        endif
+      elseif ( present(precision) ) then
+        call findAll(precision >= 0._r8, which, how_many=NX)
+        if ( NX < 1 ) then
+          call allocate_test(XTAB, 1, 'XTAB', moduleName)
+          XTAB = -999.99_r8
         else
           call allocate_test(XTAB, NX, 'XTAB', moduleName)
           do i=1, NX
@@ -791,6 +901,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.2  2004/09/15 18:03:46  pwagner
+! Added optional precision array
+!
 ! Revision 2.1  2004/09/13 20:40:38  pwagner
 ! First commit
 !
