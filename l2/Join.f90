@@ -285,12 +285,14 @@ contains ! =====     Public Procedures     =============================
       & ExpandDirectDB, ExpandSDNames, FileNameToID
     use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
-    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
+    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, &
+      & f_QUALITY, F_STATUS, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
       & L_MAF, lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
+    use ManipulateVectorQuantities, only: DOHGRIDSMATCH
     use MLSCommon, only: FindFirst, FindNext, &
       & MLSCHUNK_T, R4, R8, RV, FileNameLen
     use MLSFiles, only: HDFVERSION_5, NAMENOTFOUND, &
@@ -352,6 +354,7 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: FILENAME     ! Output full filename
     character(len=1024) :: FILE_BASE    ! made up of
     integer :: FILETYPE
+    logical :: GOTSOURCE                ! TRUE if already had a source field
     integer :: GSON                     ! Son of son
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
     character(len=1024) :: HDFNAME      ! Output swath/sd name
@@ -380,9 +383,15 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indices
     integer, dimension(:), pointer :: PRECISIONVECTORS ! Indices
     integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indices
+    integer, dimension(:), pointer :: QUALITYVECTORS ! Indices
+    integer, dimension(:), pointer :: QUALITYQUANTITIES ! Indices
+    integer, dimension(:), pointer :: STATUSVECTORS ! Indices
+    integer, dimension(:), pointer :: STATUSQUANTITIES ! Indices
     integer, dimension(:), pointer :: DIRECTFILES ! Indices
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
+    type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
+    type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
     type(DirectData_T) :: newDirect
     type(DirectData_T), pointer :: thisDirect ! => null()
 
@@ -411,6 +420,7 @@ contains ! =====     Public Procedures     =============================
     file = 0
     filename = 'undefined'
     if ( present(namedFile) ) namedFile = .false.
+    gotsource = .false.
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
       if ( keyNo > 2 ) lastFieldIndex = fieldIndex
@@ -418,10 +428,20 @@ contains ! =====     Public Procedures     =============================
       select case ( fieldIndex )
       case ( f_source )
         noSources = noSources + 1
+        gotsource = .true.
       case ( f_precision )
-        if ( lastFieldIndex /= f_source ) &
+        ! if ( lastFieldIndex /= f_source ) &
+        if ( .not. gotsource ) &
           & call Announce_Error ( son, no_error_code, &
-            & 'A precision can only be given immediately following a source' )
+            & 'A precision can only be given following a source' )
+      case ( f_quality )
+        if ( .not. gotsource ) &
+          & call Announce_Error ( son, no_error_code, &
+            & 'A quality can only be given following a source' )
+      case ( f_status )
+        if ( .not. gotsource ) &
+          & call Announce_Error ( son, no_error_code, &
+            & 'A status can only be given following a source' )
       case ( f_hdfVersion )
         call expr ( subtree(2,son), exprUnits, exprValue )
         if ( exprUnits(1) /= phyq_dimensionless ) &
@@ -447,16 +467,26 @@ contains ! =====     Public Procedures     =============================
     distributingSources = (file < 1)
     ! Now identify the quantities we're after
     nullify ( sourceVectors, sourceQuantities, &
+      & qualityVectors, qualityQuantities, &
+      & statusVectors, statusQuantities, &
       & precisionVectors, precisionQuantities, directFiles )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
     call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', ModuleName )
     call Allocate_test ( precisionVectors, noSources, 'precisionVectors', ModuleName )
     call Allocate_test ( precisionQuantities, noSources, 'precisionQuantities', ModuleName )
+    call Allocate_test ( qualityVectors, noSources, 'qualityVectors', ModuleName )
+    call Allocate_test ( qualityQuantities, noSources, 'qualityQuantities', ModuleName )
+    call Allocate_test ( statusVectors, noSources, 'statusVectors', ModuleName )
+    call Allocate_test ( statusQuantities, noSources, 'statusQuantities', ModuleName )
     call Allocate_test ( directFiles, noSources, 'directFiles', ModuleName )
     ! Go round again and identify each quantity, work out what kind of file
     ! we're talking about
     precisionVectors = 0
     precisionQuantities = 0
+    qualityVectors = 0
+    qualityQuantities = 0
+    statusVectors = 0
+    statusQuantities = 0
     source = 0
     directFiles = 0
     do keyNo = 2, nsons(node)
@@ -476,6 +506,20 @@ contains ! =====     Public Procedures     =============================
         gson = subtree(2,son)
         precisionVectors(source) = decoration(decoration(subtree(1,gson)))
         precisionQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case ( f_quality )
+        if ( all ( outputType /= (/ l_l2gp, l_l2dgg /) ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Quality only appropriate for l2gp files" )
+        gson = subtree(2,son)
+        qualityVectors(source) = decoration(decoration(subtree(1,gson)))
+        qualityQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case ( f_status )
+        if ( all ( outputType /= (/ l_l2gp, l_l2dgg /) ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Status only appropriate for l2gp files" )
+        gson = subtree(2,son)
+        statusVectors(source) = decoration(decoration(subtree(1,gson)))
+        statusQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
       case default
       end select
     end do
@@ -488,14 +532,37 @@ contains ! =====     Public Procedures     =============================
       if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
       & "Quantity does not have a label" )
       if ( precisionVectors(source) /= 0 ) then
-      precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
-        & precisionQuantities(source) )
-      ! Check that this is compatible with it's value quantitiy
-      if ( qty%template%name /= precQty%template%name ) &
+        precQty => &
+          & GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
+          & precisionQuantities(source) )
+        ! Check that this is compatible with its value quantity
+        if ( qty%template%name /= precQty%template%name ) &
         & call Announce_Error ( son, no_error_code, &
         & "Precision and quantity do not match" )
       else
         precQty => NULL()
+      end if
+      if ( qualityVectors(source) /= 0 ) then
+        qualityQty => &
+          & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
+          & qualityQuantities(source) )
+        ! Check that value and quality share same HGrid
+        if ( DoHgridsMatch( qty, qualityQty ) ) &
+        & call Announce_Error ( son, no_error_code, &
+        & "Source and quality not on matching HGrids" )
+      else
+        qualityQty => NULL()
+      end if
+      if ( statusVectors(source) /= 0 ) then
+        statusQty => &
+          & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
+          & statusQuantities(source) )
+        ! Check that value and quality share same HGrid
+        if ( DoHgridsMatch( qty, statusQty ) ) &
+        & call Announce_Error ( son, no_error_code, &
+        & "Source and status not on matching HGrids" )
+      else
+        statusQty => NULL()
       end if
       ! Now check that things make sense
       if ( ValidateVectorQuantity ( qty, &
@@ -596,6 +663,10 @@ contains ! =====     Public Procedures     =============================
           call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
           call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
           call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+          call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
+          call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
+          call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
+          call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
           call Deallocate_test ( directFiles, 'directFiles', ModuleName )
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
           return
@@ -778,6 +849,28 @@ contains ! =====     Public Procedures     =============================
         else
           precQty => NULL()
         end if
+        if ( qualityVectors(source) /= 0 ) then
+          qualityQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
+            & qualityQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( DoHgridsMatch( qty, qualityQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and quality not on matching HGrids" )
+        else
+          qualityQty => NULL()
+        end if
+        if ( statusVectors(source) /= 0 ) then
+          statusQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
+            & statusQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( DoHgridsMatch( qty, statusQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and status not on matching HGrids" )
+        else
+          statusQty => NULL()
+        end if
         
         if ( DeeBUG ) then
           call output('CreateFileFlag: ', advance='no')
@@ -799,8 +892,8 @@ contains ! =====     Public Procedures     =============================
           ! into the l2gp swath named 'hdfName' starting at profile 
           ! qty%template%instanceOffset + 1
           ! May optionally supply first, last profiles
-          call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
-            & hdfVersion, filename=filename, &
+          call DirectWrite_l2GP ( handle, qty, precQty, qualityQty, statusQty, &
+            & hdfName, chunkNo, hdfVersion, filename=filename, &
             & createSwath=(.not. createThisSource(source)) )
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
@@ -855,6 +948,10 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
         call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
         call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+        call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
+        call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
+        call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
+        call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
         call Deallocate_test ( directFiles, 'directFiles', ModuleName )
         ! Don't forget to close file
         select case ( outputType )
@@ -921,6 +1018,10 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
     call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
     call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+    call Deallocate_test ( qualityVectors, 'qualityVectors', ModuleName )
+    call Deallocate_test ( qualityQuantities, 'qualityQuantities', ModuleName )
+    call Deallocate_test ( statusVectors, 'statusVectors', ModuleName )
+    call Deallocate_test ( statusQuantities, 'statusQuantities', ModuleName )
     call Deallocate_test ( directFiles, 'directFiles', ModuleName )
 
   contains
@@ -1700,6 +1801,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.105  2004/02/11 17:21:51  pwagner
+! May DirectWrite l2gp status and quality quantities
+!
 ! Revision 2.104  2004/02/10 19:28:36  pwagner
 ! Prevents named DirectWrites from being looped over
 !
