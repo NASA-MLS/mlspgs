@@ -5,6 +5,8 @@ module ChunkDivide_m
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use EXPR_M, only: EXPR
+  use Dumper, only: DUMP
+  use Dump_0, only: DUMP
   use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
   use MLSNumerics, only: Hunt
   use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
@@ -137,7 +139,13 @@ contains ! =================================== Public Procedures==============
     case ( l_even )
       call ChunkDivide_Even ( config, mafRange, l1bInfo, &
         & obstructions, chunks )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unexpected problem with ChunkDivide' )
     end select
+
+    call Dump ( chunks )
+    stop
 
     ! Tidy up
     if ( associated(obstructions) ) then
@@ -201,15 +209,16 @@ contains ! =================================== Public Procedures==============
     overlap = nint ( config%overlap )
     noNonOverlap = maxLength - 2 * overlap
     do i = 1, config%noChunks
-      chunks(i)%firstMAFIndex = max ( (i-1)*noNonOverlap - overlap, 0 )
-      chunks(i)%lastMAFIndex = i*noNonOverlap + overlap - 1
+      print*,'Doing:',i,noNonOverlap, maxLength, overlap
+      chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - overlap, 0 )
+      chunks(i)%lastMAFIndex = i*maxLength + overlap - 1
       chunks(i)%noMAFsUpperOverlap = overlap
       if ( i > 1 ) then
         chunks(i)%noMAFsLowerOverlap = overlap
       else
         chunks(i)%noMAFsLowerOverlap = 0
       end if
-      chunks(i)%accumulatedMAFs = (i-1)*noNonOverlap
+      chunks(i)%accumulatedMAFs = chunks(i)%firstMAFIndex
     end do
 
   end subroutine ChunkDivide_Fixed
@@ -235,13 +244,17 @@ contains ! =================================== Public Procedures==============
     integer :: CHUNK                    ! Loop counter
     integer :: FLAG                     ! From ReadL1B
     integer :: HOMEMAF                  ! first MAF after homeGeodAngle
+    integer :: HOME                     ! Index of home MAF in array
     integer :: M1, M2                   ! MafRange + 1
-    integer :: NOCOMPLETECHUNKSBELOWHOME ! Used for placing chunks
+    integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
+    integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
     integer :: NOMAFS                   ! Number of MAFs to consider
     integer :: NOMAFSREAD               ! From ReadL1B
     integer :: ORBIT                    ! Used to locate homeMAF
     integer :: STATUS                   ! From allocate etc.
-    integer :: noChunks                 ! Number of chunks
+    integer :: NOCHUNKS                 ! Number of chunks
+    integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
+    integer :: MAXLENGTH                ! Max length as integer (MAFs)
 
     integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
     integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
@@ -249,10 +262,12 @@ contains ! =================================== Public Procedures==============
     real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
     real(r8) :: MAXANGLE                ! Of range in data
     real(r8) :: MAXTIME                 ! Time range in data
+    real(r8) :: MAXV                    ! Either minTime or minAngle
     real(r8) :: MINANGLE                ! Of range in data
     real(r8) :: MINTIME                 ! Time range in data
     real(r8) :: MINV                    ! Either minTime or minAngle
     real(r8) :: TESTANGLE               ! Angle to check for
+    real(r8) :: HOMEV                   ! Value of angle/time at home
 
     real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
     real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
@@ -273,6 +288,7 @@ contains ! =================================== Public Procedures==============
     maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
     minTime = minval ( taiTime%dpField(1,1,m1:m2) )
     maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
+    print*,'Angle range:',minAngle, maxAngle
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! First try to locate the last MAF before the homeGeodAngle
@@ -293,86 +309,107 @@ contains ! =================================== Public Procedures==============
       if ( testAngle > maxAngle ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to establish a home major frame, using the first' )
-        homeMAF = mafRange(1)
+        homeMAF = m1
         exit homeHuntLoop
       end if
+      print*,'Test angle:',testAngle
       ! Find MAF which starts before this test angle
-      call Hunt ( tpGeodAngle%dpField(1,1,m1:m2), testAngle, homeMAF )
-      homeMAF = homeMAF + m1 - 1
+      call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
+        & allowTopValue = .true. )
+      homeMAF = home + m1 - 1
       ! Now if this is close enough, accept it
-      if ( abs ( tpGeodAngle%dpField(1,1,homeMAF) - &
+      if ( abs ( tpGeodAngle%dpField(1,1,home) - &
         & testAngle ) < HomeAccuracy ) exit homeHuntLoop
       ! Otherwise, keep looking
       testAngle = testAngle + angleIncrement
     end do homeHuntLoop
 
+    print*,'Home MAF is:', homeMAF, tpGeodAngle%dpField(1,1,home)
+
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! OK, now we have a home MAF, get a first cut for the chunks
-    ! First work out how many there will be
-    select case ( config%maxLengthFamily )
-    case ( PHYQ_Angle )
-      noChunks = int((maxAngle - minAngle)/config%maxLength) + 2
-    case ( PHYQ_Time )
-      noChunks = int((maxTime - minTime)/config%maxLength) + 2
-    case ( PHYQ_MAFs )
-      noChunks = int(noMAFs/config%maxLength) + 2
-    end select
-
-    ! Allocate them
-    allocate ( chunks(noChunks), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'chunks' )
-
-    ! Now place them, we'll get the chunk ends first, with code that varies
-    ! according to how the length was specified.
+    ! We work out the chunk ends for each chunk according to how the
+    ! maxLength field is specified.
     if ( config%maxLengthFamily == PHYQ_MAFs ) then
-      noCompleteChunksBelowHome = int( (homeMAF-1)/nint(config%maxLength))
-      ! Work out the boundaries (chunk starts) from there
-      chunks(1)%lastMAFIndex = homeMAF - noCompleteChunksBelowHome*nint(config%maxLength)
-      do chunk = 2, noChunks
-        chunks(chunk)%lastMAFIndex = chunks(chunk-1)%lastMAFIndex + nint(config%maxLength)
-      end do      
+      maxLength = nint ( config%maxLength )
+      noChunks = home / maxLength
+      if ( mod ( home, maxLength ) /= 0 ) noChunks = noChunks + 1
+      noChunksBelowHome = noChunks
+      noMAFsAtOrAboveHome = noMAFs - home + 1
+      noChunks = noChunks + noMAFsAtOrAboveHome / maxLength
+      if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
+        & noChunks = noChunks + 1
+      
+      ! Allocate the chunks
+      allocate ( chunks(noChunks), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'chunks (maxLength/MAFs)' )
+      
+      ! Work out their positions
+      do chunk = 1, noChunks
+        chunks(chunk)%lastMAFIndex = home + &
+          & ( chunk - noChunksBelowHome ) * maxLength
+      end do
     else
       ! For angle and time, they are similar enough we'll just do some stuff
       ! with pointers to allow us to use common code to sort them out
+      print*,'M1,M2', m1, m2
       select case ( config%maxLengthFamily )
       case ( PHYQ_Angle )
         field => tpGeodAngle%dpField(1,1,m1:m2)
         minV = minAngle
+        maxV = maxAngle
       case ( PHYQ_Time )
         field => taiTime%dpField(1,1,m1:m2)
         minV = minTime
+        maxV = maxTime
       case ( PHYQ_MAFs)
       end select
-      
-      ! Now find the chunk ends
-      call Allocate_test ( boundaries, noChunks-1, 'boundaries', ModuleName )
-      noCompleteChunksBelowHome = &
-        & int( (field(homeMAF)-minV)/config%maxLength )
-      ! Work out the boundaries (chunk starts) from there
-      boundaries(1) = field(homeMAF) - noCompleteChunksBelowHome*config%maxLength
-      do chunk = 2, noChunks
-        boundaries(chunk-1) = boundaries(chunk-2) + config%maxLength
+      homeV = field(home)
+      print*,'HomeV is:', homeV
+
+      noChunks = int ( ( homeV - minV ) / config%maxLength )
+      if ( homeV > minV ) noChunks = noChunks + 1
+      noChunksBelowHome = noChunks
+      noChunks = noChunks + int ( ( maxV - homeV ) / config%maxLength )
+      if ( homeV + config%maxLength * ( noChunks - noChunksBelowHome ) < maxV ) &
+        & noChunks = noChunks + 1
+
+      ! Allocate the chunks
+      allocate ( chunks(noChunks), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'chunks (maxLength/time/angle)' )
+
+      ! Work out their positions
+      ! Boundaries are the angles/times at the end of the chunks
+      call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
+      do chunk = 1, noChunks
+        boundaries(chunk) = field(home) + ( chunk - noChunksBelowHome ) * config%maxLength
       end do
-      ! Now look for those in the data, set them as the chunk ends
-      call Hunt ( field, boundaries, chunks(1:noChunks-1)%lastMAFIndex, &
-        & allowTopValue=.true. )
-      chunks(noChunks)%lastMAFIndex = noMAFs
+      call dump ( boundaries, 'boundaries' )
+      call Hunt ( field, boundaries, chunks%lastMAFIndex, &
+        & allowTopValue=.true., nearest=.true. )
       call Deallocate_test ( boundaries, 'boundaries', ModuleName )
     end if
+
+    print*,'noChunks is:', noChunks
+    print*,'noChunksBelowHome is:', noChunksBelowHome
+    call dump ( chunks%lastMAFIndex,'lastMAFIndex' )
 
     ! Now deduce the chunk starts from the ends of their predecessors
     chunks(2:noChunks)%firstMAFIndex = chunks(1:noChunks-1)%lastMAFIndex + 1
     chunks(1)%firstMAFIndex = 1
+    call dump ( chunks%firstMAFIndex,'firstMAFIndex' )
     
     ! Now offset these to the index in the file not the array
+    print*,'mafRange(1) is:', mafRange(1)
     chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
     chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Think about overlaps
-    call Allocate_test ( newFirstMAFs, noChunks, 'newMAFs', ModuleName )
-    call Allocate_test ( newLastMAFs, noChunks, 'newMAFs', ModuleName )
+    call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
+    call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
     if ( config%overlapFamily == PHYQ_MAFs ) then
       newFirstMAFs = max(chunks%firstMAFIndex - nint(config%overlap), mafRange(1) )
       newLastMAFs = min(chunks%lastMAFIndex + nint(config%overlap), mafRange(2) )
@@ -399,12 +436,12 @@ contains ! =================================== Public Procedures==============
       newFirstMAFs = newFirstMAFs - 1
       newLastMAFs = newLastMAFs - 1
     end if
+    chunks%noMAFsLowerOverlap = chunks%lastMAFIndex - newLastMAFs
     chunks%noMAFsUpperOverlap = newFirstMAFs - chunks%firstMAFIndex 
-    chunks%lastMAFIndex = newFirstMAFs
-    chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newLastMAFs
-    chunks%firstMAFIndex = newLastMAFs
-    call Deallocate_test ( newFirstMAFs, 'newMAFs', ModuleName )
-    call Deallocate_test ( newLastMAFs, 'newMAFs', ModuleName )
+    chunks%firstMAFIndex = newFirstMAFs
+    chunks%lastMAFIndex = newLastMAFs
+    call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
+    call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Now think about the obstructions
@@ -461,6 +498,7 @@ contains ! =================================== Public Procedures==============
     real(rp) :: VALUE(2)                ! Value of expression
 
     ! Executable code
+    error = 0
 
     ! Eventually the ChunkDivide command will be free floating, in the meantime
     ! find it within the section
@@ -478,13 +516,14 @@ contains ! =================================== Public Procedures==============
       son = subtree(i,root)
       fieldIndex = get_field_id(son)
       got(fieldIndex) = .true.
+      if (nsons(son) > 1 ) then
+        gson = subtree(2,son)
+        call expr ( gson, units, value )
+      end if
       ! Get value for this field if appropriate
-      if ( nsons(son) > 1 ) call expr ( subtree(2,son), units, value )
       select case ( fieldIndex )
       case ( f_method )
-        config%method = decoration ( son )
-        if ( units(1) /= PHYQ_DimensionLess ) &
-          & call AnnounceError ( root, BadUnits, son )
+        config%method = decoration ( gson )
       case ( f_noChunks )
         config%noChunks = nint ( value(1) )
       case ( f_maxLength )
@@ -498,7 +537,7 @@ contains ! =================================== Public Procedures==============
         if ( units(1) /= PHYQ_DimensionLess ) &
           & call AnnounceError ( root, BadUnits, fieldIndex )
       case ( f_homeModule )
-        config%homeModule = decoration ( son )
+        config%homeModule = decoration ( gson )
       case ( f_homeGeodAngle )
         config%homeGeodAngle = value(1)
         if ( units(1) /= PHYQ_Angle ) &
@@ -516,7 +555,7 @@ contains ! =================================== Public Procedures==============
         config%scanUpperLimit = value
         config%scanULSet = .true.
       case ( f_criticalModules )
-        config%criticalModules = decoration ( son )
+        config%criticalModules = decoration ( gson )
       case ( f_maxGap )
         config%maxGap = value(1)
         config%maxGapFamily = units(1)
@@ -545,7 +584,7 @@ contains ! =================================== Public Procedures==============
     ! Check we don't have unnecessary ones
     do i = 1, size(notWanted)
       if ( got(notWanted(i) ) ) &
-        & call AnnounceError ( root, notSpecified, notWanted(i) )
+        & call AnnounceError ( root, unnecessary, notWanted(i) )
     end do
 
     ! Make other checks of parameters
@@ -554,10 +593,15 @@ contains ! =================================== Public Procedures==============
         & call AnnounceError ( root, notSpecified, f_scanLowerLimit )
       if ( .not. got (f_scanUpperLimit) ) &
         & call AnnounceError ( root, notSpecified, f_scanUpperLimit )
+    else
+      if ( got(f_scanLowerLimit) ) &
+        & call AnnounceError ( root, unnecessary, f_scanLowerLimit )
+      if ( got (f_scanUpperLimit) ) &
+        & call AnnounceError ( root, unnecessary, f_scanUpperLimit )
     end if
 
     ! Now check the units for various cases
-    if ( all ( config%maxGapFamily /= &
+    if ( got(f_maxgap) .and. all ( config%maxGapFamily /= &
       & (/ PHYQ_MAFs, PHYQ_Angle, PHYQ_Time /))) &
       & call AnnounceError ( root, badUnits, f_maxGap )
     if ( config%method == l_orbital ) then
@@ -571,6 +615,9 @@ contains ! =================================== Public Procedures==============
       if ( config%overlapFamily /= PHYQ_MAFs ) &
         & call AnnounceError ( root, badUnits, f_overlap )
     end if
+
+    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Problem with ChunkDivide command' )
 
     ! That's it, we're all valid now.
 
@@ -586,7 +633,7 @@ contains ! =================================== Public Procedures==============
       case ( BadUnits )
         call output ( ' The field ' )
         call display_string ( field_indices(field) )
-        call output (' has inappropriate units' )
+        call output (' has inappropriate units', advance='yes' )
       case ( notSpecified )
         call output ( ' The parameter ' )
         call display_string ( field_indices(field) )
@@ -675,10 +722,18 @@ contains ! =================================== Public Procedures==============
     integer :: I,J                      ! Loop counters
     type (Obstruction_T) :: newObs      ! New Obstruction
     logical :: FOUNDONE                 ! Found at least one
+    integer :: STATUS                   ! Flag from allocate
 
     ! Executable code
-    if ( .not. associated ( obstructions ) ) return
-    
+    ! If no obstructions make sure allocate to size zero, not just unassociated pointer
+    if ( .not. associated(obstructions) ) then
+      allocate ( obstructions(0), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'obstructions(0)' )
+      return
+    end if
+
+    ! Otherwise, do the tidying up
     outerLoop: do
       foundOne = .false.
       i = 0
@@ -813,7 +868,7 @@ contains ! =================================== Public Procedures==============
         & 'L1B data starts after requested processing range' )
     if ( mafRange(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'L1B data ends before requested processing range' )
-    mafRange = max(mafRange, 1)
+    mafRange = mafRange - 1             ! Index from zero
     noMAFS = mafRange(2) - mafRange(1) + 1
 
     ! At this point we'd look through the L1B data for data gaps.
@@ -872,6 +927,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.10  2001/11/14 01:49:12  livesey
+! Improvements, getting closer
+!
 ! Revision 2.9  2001/11/12 21:15:34  livesey
 ! More bug fixes
 !
