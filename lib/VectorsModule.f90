@@ -219,10 +219,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! one in the same position in the QUANTITIES field of the vector template.
   end type Vector_T
 
-  ! This incrementing counter is used to set the id field for a vector template
-
-  integer, save, private :: vectorTemplateCounter = 0
-
   integer, parameter, private :: B_sizer = 0
   integer, parameter, private :: B = bit_size(b_sizer) ! can't use bit_size(b)
 
@@ -2165,6 +2161,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.104  2003/09/15 17:45:37  livesey
+! Added target declaration for fussy intel compiler
+!
 ! Revision 2.103  2003/08/27 20:06:42  livesey
 ! Bug fix in MaskVectorQty
 !
