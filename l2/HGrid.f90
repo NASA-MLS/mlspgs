@@ -6,12 +6,14 @@ module HGrid                    ! Horizontal grid information
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
   use EXPR_M, only: EXPR
   use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
     & F_INTERPOLATIONFACTOR, F_MIF, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
+    & F_SPACING, F_ORIGIN, &
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
-    & L_MIF, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
+    & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPDATA_T
@@ -64,12 +66,14 @@ module HGrid                    ! Horizontal grid information
   integer, private :: ERROR
 
 ! Error codes for "announce_error"
-  integer, private, parameter :: LengthUnitMessage = 1
+  integer, private, parameter :: AngleUnitMessage = 1
+  integer, private, parameter :: LengthUnitMessage = AngleUnitMessage + 1
   integer, private, parameter :: NoFraction = LengthUnitMessage + 1
   integer, private, parameter :: NoHeight = NoFraction + 1
   integer, private, parameter :: UnitlessMessage = NoHeight + 1
   integer, private, parameter :: NoModule = UnitlessMessage + 1
   integer, private, parameter :: NoMIF = NoModule + 1
+  integer, private, parameter :: NoSpacingOrigin = NoMIF + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -108,6 +112,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: interpolationFactor
     integer :: instrumentModule
     real(r8) :: fraction, height
+    real(r8) :: spacing, origin
     type (L2GPData_T), pointer :: L2GP  ! The l2gp to use 
 
     integer :: keyNo            ! Entry in the mlscf line
@@ -174,6 +179,16 @@ contains ! =====     Public Procedures     =============================
         interpolationFactor = expr_value(1)
         if ( expr_units(1) /= PHYQ_Dimensionless) &
           & call announce_error ( field, unitlessMessage )
+      case ( f_spacing )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        spacing = expr_value(1)
+        if ( expr_units(1) /= PHYQ_Angle) &
+          & call announce_error ( field, angleUnitMessage )
+      case ( f_origin )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        origin = expr_value(1)
+        if ( expr_units(1) /= PHYQ_Angle) &
+          & call announce_error ( field, angleUnitMessage )
       case ( f_values )
         valuesNode = son
       case ( f_sourceL2gp )
@@ -191,7 +206,7 @@ contains ! =====     Public Procedures     =============================
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
-        call CreateCommonHGrids ( l1bInfo, hGridType, chunk, &
+        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, hGrid )
       end if
@@ -213,6 +228,16 @@ contains ! =====     Public Procedures     =============================
         hGrid%phi(prof) = expr_value(1)
         hGrid%geodLat(prof) = hGrid%phi(prof) !???? Sort this out later!
       end do
+
+    case ( l_regular ) ! ----------------------- Regular --------------
+      if (.not. got_field(f_module) ) then
+        call announce_error ( root, NoModule )
+      else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
+        call announce_error ( root, NoSpacingOrigin )
+      else
+        call CreateRegularHGrid ( l1bInfo, chunk, spacing, origin, &
+          & trim(instrumentModuleName), hGrid )
+      end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
       
@@ -246,8 +271,8 @@ contains ! =====     Public Procedures     =============================
 
   end function CreateHGridFromMLSCFInfo
 
-  ! ------------------------------------- CreateCommonHGrids -----------
-  subroutine CreateCommonHGrids ( l1bInfo, hGridType, &
+  ! ------------------------------------- CreateMIFBasedHGrids -----------
+  subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
     & chunk, got_field, root, height, fraction, interpolationFactor,&
     & instrumentModuleName, mif, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
@@ -259,7 +284,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in)              :: INTERPOLATIONFACTOR
     real(r8), intent(in)              :: HEIGHT
     real(r8), intent(in)              :: FRACTION
-    character (len=*)                 :: INSTRUMENTMODULENAME
+    character (len=*), intent(in)     :: INSTRUMENTMODULENAME
     integer, intent(in)               :: MIF
     type (HGrid_T), intent(inout)     :: HGRID ! Needs inout as name set by caller
 
@@ -340,7 +365,7 @@ contains ! =====     Public Procedures     =============================
     select case ( hGridType )
     case ( l_Fractional )
       ! A fractional hGrid, we need to read the tangent point phi
-      tpGeodAngle => l1bField%dpField
+      tpGeodAngle=> l1bField%dpField
       
       ! Loop over the MAFs
       do maf = 1, noMAFs
@@ -480,7 +505,125 @@ contains ! =====     Public Procedures     =============================
     hGrid%noProfsUpperOverlap = &
       & nint(chunk%noMAFsUpperOverlap*interpolationFactor)
     
-  end subroutine CreateCommonHGrids
+  end subroutine CreateMIFBasedHGrids
+
+  ! ----------------------------------- CreateRegularHGrid ------------
+  subroutine CreateRegularHGrid ( l1bInfo, chunk, &
+    & spacing, origin, instrumentModuleName, hGrid )
+    type (L1BInfo_T), intent(in) :: L1BINFO
+    type (MLSChunk_T), intent(in) :: CHUNK
+    real(r8), intent(in) :: SPACING
+    real(r8), intent(in) :: ORIGIN
+    character (len=*), intent(in) :: INSTRUMENTMODULENAME
+    type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
+
+    ! Local variables/parameters
+    real(r8), parameter :: SECONDSINDAY = 24*60*60
+
+    integer :: NOMAFS                   ! From ReadL1B
+    integer :: FLAG                     ! From ReadL1B
+    integer :: I                        ! Loop counter
+
+    real(r8) :: MINANGLE                ! Smallest angle in chunk
+    real(r8) :: MAXANGLE                ! Largest angle in chunk
+    real(r8) :: FIRST                   ! Origin of hGrid
+    real(r8), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
+    real(r8) :: DAYSTART                ! Start of day
+    real(r8) :: INCLINE                 ! Mean orbital inclination
+
+    type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
+
+    ! Executable code
+
+    ! Setup the empircal geometry estimate of lon0
+    ! (it makes sure it's not done twice)
+    call ChooseOptimumLon0 ( l1bInfo, chunk )
+
+    ! First we're going to work out the geodetic angle range
+    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    minAngle = minval ( l1bField%dpField(1,:,1) )
+    maxAngle = maxval ( l1bField%dpField(1,:,noMAFs) )
+    nullify ( mif1GeodAngle )
+    call Allocate_test ( mif1GeodAngle, noMAFs, 'mif1Geodangle', ModuleName )
+    mif1GeodAngle = l1bField%dpField(1,1,:)
+    call DeallocateL1BData ( l1bField )
+
+    ! Now choose the geodetic angles for the hGrid
+    first = spacing * int ( (origin+minAngle)/spacing )
+    if ( minAngle < 0 ) first = first - spacing
+    hGrid%noProfs = int((maxAngle-first)/spacing)
+    call CreateEmptyHGrid ( hGrid )
+    do i = 1, hGrid%noProfs
+      hGrid%phi(i) = first + (i-1)*spacing
+    end do
+
+    ! Now fill the other geolocation information, first latitude
+    ! Get orbital inclination
+    call ReadL1BData ( l1bInfo%l1bOAID, "scOrbIncl", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    ! Use the average of all the first MIFs to get inclination for chunk
+    incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
+    call DeallocateL1BData ( l1bField )
+    hGrid%geodLat = rad2deg * asin ( sin( deg2Rad*hGrid%phi ) * &
+      & sin ( deg2Rad*incline ) )
+
+    ! Now longitude
+    call EmpiricalLongitude ( hGrid%phi, hGrid%lon )
+
+    ! Now time
+    call ReadL1BData ( l1bInfo%l1bOAID, "MAFStartTimeTAI", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+      & hGrid%phi, hGrid%time, &
+      & method='spline', extrapolate='Allow' )
+    call DeallocateL1BData ( l1bField )
+
+    ! Solar time
+    ! First get fractional day, note this neglects leap seconds.
+    ! Perhaps fix this later !???????? NJL
+    hGrid%solarTime = modulo ( hGrid%time, secondsInDay ) / secondsInDay
+    ! Now correct for longitude and convert to hours
+    hGrid%solarTime = 24.0 * ( hGrid%solarTime + hGrid%lon/360.0 )
+    hGrid%solarTime = modulo ( hGrid%solarTime, 24.0_r8 )
+
+    ! Solar zenith
+    ! This we'll have to do with straight interpolation
+    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpSolarZenith", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+      & hGrid%phi, hGrid%solarZenith, &
+      & method='spline', extrapolate='Allow' )
+    call DeallocateL1BData ( l1bField )
+
+    ! Line of sight angle
+    ! This we'll have to do with straight interpolation
+    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpLosAngle", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+      & hGrid%phi, hGrid%losAngle, &
+      & method='spline', extrapolate='Allow' )
+    call DeallocateL1BData ( l1bField )
+    hGrid%losAngle = modulo ( hGrid%losAngle, 360.0_r8 )
+
+    ! Now work out how much of this HGrid is overlap
+    ! The deal will be the first legitimate profile is the first one who's phi
+    ! is above the first non overlapped MAF
+    call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
+      & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    call Hunt ( hGrid%phi, mif1GeodAngle(noMAFs-chunk%noMAFsUpperOverlap), &
+      & hGrid%noProfsUpperOverlap, allowTopValue=.true. )
+    hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+
+    ! That's it
+    call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
+
+  end subroutine CreateRegularHGrid
 
   ! ----------------------------------- CreateEmptyHGrid ---------------
   subroutine CreateEmptyHGrid ( hGrid )
@@ -553,6 +696,11 @@ contains ! =====     Public Procedures     =============================
     call print_source ( source_ref(where) )
     call output ( ': ' )
     select case ( code )
+    case ( angleUnitMessage )
+      call output ( "Value for the " )
+      call dump_tree_node ( where, 0 )
+      call output ( " field is required to be an angle, e.g. degrees", &
+        advance='yes' )
     case ( lengthUnitMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -567,6 +715,9 @@ contains ! =====     Public Procedures     =============================
       call output ( "TYPE = FIXED but no MIF is specified", advance='yes' )
     case ( noModule )
       call output ( "Instrument module must be specified", advance='yes' )
+    case ( noSpacingOrigin )
+      call output ( "TYPE = Regular but no spacing and/or origin is specified", &
+        & advance='yes' )
     case ( unitlessMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -580,6 +731,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.20  2001/12/10 20:21:36  livesey
+! Added code for regular HGrids
+!
 ! Revision 2.19  2001/07/09 20:15:07  livesey
 ! Fixed an embarassing memory leak I thought I caught before. Also
 ! changed some allocatables to pointers to let us use Allocate_Deallocate
