@@ -2,19 +2,19 @@
 
 begin Fill
   ;; Now fill the main state quantities from the l2gp data
-  Fill, quantity=!x.temp,   method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
-  Fill, quantity=!x.refgph, method=l2gp, sourceL2GP=l2gpGphInput, /interpolate
-  Fill, quantity=!x.BrO,    method=l2gp, sourceL2GP=l2gpBroInput, /interpolate
-  Fill, quantity=!x.CO,     method=l2gp, sourceL2GP=l2gpCOInput, /interpolate
-  Fill, quantity=!x.ClO,    method=l2gp, sourceL2GP=l2gpClOInput, /interpolate
-  Fill, quantity=!x.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput, /interpolate
-  Fill, quantity=!x.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput, /interpolate
-  Fill, quantity=!x.HCl,    method=l2gp, sourceL2GP=l2gpHClInput, /interpolate
-  Fill, quantity=!x.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input, /interpolate
-  Fill, quantity=!x.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input, /interpolate
-  Fill, quantity=!x.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput, /interpolate
-  Fill, quantity=!x.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput, /interpolate
-  Fill, quantity=!x.O3,     method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
-  Fill, quantity=!x.OH,     method=l2gp, sourceL2GP=l2gpOHInput, /interpolate
+  Fill, quantity=truth.temp,   method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+  Fill, quantity=truth.refgph, method=l2gp, sourceL2GP=l2gpGphInput, /interpolate
+  Fill, quantity=truth.BrO,    method=l2gp, sourceL2GP=l2gpBroInput, /interpolate
+  Fill, quantity=truth.CO,     method=l2gp, sourceL2GP=l2gpCOInput, /interpolate
+  Fill, quantity=truth.ClO,    method=l2gp, sourceL2GP=l2gpClOInput, /interpolate
+  Fill, quantity=truth.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput, /interpolate
+  Fill, quantity=truth.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput, /interpolate
+  Fill, quantity=truth.HCl,    method=l2gp, sourceL2GP=l2gpHClInput, /interpolate
+  Fill, quantity=truth.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input, /interpolate
+  Fill, quantity=truth.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input, /interpolate
+  Fill, quantity=truth.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput, /interpolate
+  Fill, quantity=truth.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput, /interpolate
+  Fill, quantity=truth.O3,     method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+  Fill, quantity=truth.OH,     method=l2gp, sourceL2GP=l2gpOHInput, /interpolate
 
 end Fill
