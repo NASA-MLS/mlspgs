@@ -1,0 +1,674 @@
+# V1.13.2 L1 PGEs; Toolkit 5.2.8.2; HDF eph/att; utcpole/leapsec from GDAAC
+#
+# -----------------------------------------------------------------------
+?   SYSTEM RUNTIME PARAMETERS
+# -----------------------------------------------------------------------
+#########################################################################
+#
+# This section contains unique identifiers used to track instances of
+# a PGE run, versions of science software, etc.  This section must
+# contain exactly two entries.  These values will be inserted by
+# ECS just before a PGE is executed.  At the SCF the values may be set
+# to anything but these values are not normally user definable and user
+# values will be ignored/overwritten at the DAAC.
+#
+#########################################################################
+#
+# Production Run ID - unique production instance identifier
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+1
+# -----------------------------------------------------------------------
+# Software ID - unique software configuration identifier
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+1
+#
+?   PRODUCT INPUT FILES
+#########################################################################
+#
+# This section is intended for standard product inputs, i.e., major
+# input files such as Level 0 data files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next non-comment line is the default location for PRODUCT INPUT FILES
+# WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
+# data set files to the location specified by the new setting.
+!  ~/runtime
+#
+#-----------------
+# Test input files
+#-----------------
+#
+# User input files
+#
+900|PCF-moss1-hdf.041603|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA||||1
+# reference the configuration file here:
+901|l1-v1_2-h5-wL1OA.cf|/users/perun/v1.2||||1
+902|emls-signals.dat|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+903|engtlm.tbl|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+904|bandwidths.tbl|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+905|deflt-gains.tbl|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs/||||1
+906|deflt-zeros.tbl|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs/||||1
+907|dacs_consts.tbl|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs/||||1
+908|SidebandFrac.tbl|/users/perun/v1.2/||||1
+909|GHzReflSpillEffs.tbl|/users/perun/v1.2/||||1
+910|sciMAF_tmp.dat|/users/perun/v1.2/tmp/||||1
+911|engMAF_tmp.dat|/users/perun/v1.2/tmp/||||1
+912|MAF_data_tmp.dat|/users/perun/v1.2/tmp/||||1
+#
+# Level 0 data files
+#
+# APID 1732
+#
+#21000|P2041732AAAAAAAAAAAAAA03108003658700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1907|2
+#21000|P2041732AAAAAAAAAAAAAA03108003658701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2089|1
+21000|P2041732AAAAAAAAAAAAAA03118163552000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1914|2
+21000|P2041732AAAAAAAAAAAAAA03118163552001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2090|1
+21001|P2041732AAAAAAAAAAAAAA03118172107300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1920|2
+21001|P2041732AAAAAAAAAAAAAA03118172107301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2091|1
+21002|P2041732AAAAAAAAAAAAAA03118173130300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1924|2
+21002|P2041732AAAAAAAAAAAAAA03118173130301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2092|1
+21003|P2041732AAAAAAAAAAAAAA03118182657600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1929|2
+21003|P2041732AAAAAAAAAAAAAA03118182657601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2093|1
+21004|P2041732AAAAAAAAAAAAAA03118183013600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1931|2
+21004|P2041732AAAAAAAAAAAAAA03118183013601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2094|1
+21005|P2041732AAAAAAAAAAAAAA03118201055300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1943|2
+21005|P2041732AAAAAAAAAAAAAA03118201055301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2095|1
+21006|P2041732AAAAAAAAAAAAAA03118203845500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1947|2
+21006|P2041732AAAAAAAAAAAAAA03118203845501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2096|1
+21007|P2041732AAAAAAAAAAAAAA03118210803700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1955|2
+21007|P2041732AAAAAAAAAAAAAA03118210803701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2097|1
+21008|P2041732AAAAAAAAAAAAAA03118220453900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1959|2
+21008|P2041732AAAAAAAAAAAAAA03118220453901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2098|1
+21009|P2041732AAAAAAAAAAAAAA03118223209100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1965|2
+21009|P2041732AAAAAAAAAAAAAA03118223209101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2099|1
+21010|P2041732AAAAAAAAAAAAAA03118230209600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1970|2
+21010|P2041732AAAAAAAAAAAAAA03118230209601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2102|1
+21011|P2041732AAAAAAAAAAAAAA03118230730500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1971|2
+21011|P2041732AAAAAAAAAAAAAA03118230730501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2105|1
+21012|P2041732AAAAAAAAAAAAAA03118232853700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1978|2
+21012|P2041732AAAAAAAAAAAAAA03118232853701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2110|1
+21013|P2041732AAAAAAAAAAAAAA03118234733200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1732.0100:1:1981|2
+21013|P2041732AAAAAAAAAAAAAA03118234733201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1732.0100:1:2115|1
+#
+# APID 1734
+#
+21020|P2041734AAAAAAAAAAAAAA03118163556100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1905|2
+21020|P2041734AAAAAAAAAAAAAA03118163556101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1906|1
+21021|P2041734AAAAAAAAAAAAAA03118172109400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1912|2
+21021|P2041734AAAAAAAAAAAAAA03118172109401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1916|1
+21022|P2041734AAAAAAAAAAAAAA03118173130400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1917|2
+21022|P2041734AAAAAAAAAAAAAA03118173130401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1925|1
+21023|P2041734AAAAAAAAAAAAAA03118182658700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1923|2
+21023|P2041734AAAAAAAAAAAAAA03118182658701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1936|1
+21024|P2041734AAAAAAAAAAAAAA03118183014700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1926|2
+21024|P2041734AAAAAAAAAAAAAA03118183014701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1949|1
+21025|P2041734AAAAAAAAAAAAAA03118201056400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1932|2
+21025|P2041734AAAAAAAAAAAAAA03118201056401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1961|1
+21026|P2041734AAAAAAAAAAAAAA03118203845600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1942|2
+21026|P2041734AAAAAAAAAAAAAA03118203845601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1968|1
+21027|P2041734AAAAAAAAAAAAAA03118210804800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1946|2
+21027|P2041734AAAAAAAAAAAAAA03118210804801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1976|1
+21028|P2041734AAAAAAAAAAAAAA03118220456000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1948|2
+21028|P2041734AAAAAAAAAAAAAA03118220456001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1983|1
+21029|P2041734AAAAAAAAAAAAAA03118223211200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1953|2
+21029|P2041734AAAAAAAAAAAAAA03118223211201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1987|1
+21030|P2041734AAAAAAAAAAAAAA03118230210700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1957|2
+21030|P2041734AAAAAAAAAAAAAA03118230210701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1992|1
+21031|P2041734AAAAAAAAAAAAAA03118230732600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1963|2
+21031|P2041734AAAAAAAAAAAAAA03118230732601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:1999|1
+21032|P2041734AAAAAAAAAAAAAA03118232854800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1966|2
+21032|P2041734AAAAAAAAAAAAAA03118232854801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:2004|1
+21033|P2041734AAAAAAAAAAAAAA03118234735300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1734.0100:1:1974|2
+21033|P2041734AAAAAAAAAAAAAA03118234735301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1734.0100:1:2015|1
+#
+# APID 1736
+#
+21040|P2041736AAAAAAAAAAAAAA03118163556200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2008|2
+21040|P2041736AAAAAAAAAAAAAA03118163556201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1910|1
+21041|P2041736AAAAAAAAAAAAAA03118172110500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2013|2
+21041|P2041736AAAAAAAAAAAAAA03118172110501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1918|1
+21042|P2041736AAAAAAAAAAAAAA03118173132500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2019|2
+21042|P2041736AAAAAAAAAAAAAA03118173132501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1927|1
+21043|P2041736AAAAAAAAAAAAAA03118182658800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2024|2
+21043|P2041736AAAAAAAAAAAAAA03118182658801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1941|1
+21044|P2041736AAAAAAAAAAAAAA03118183014800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2028|2
+21044|P2041736AAAAAAAAAAAAAA03118183014801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1951|1
+21045|P2041736AAAAAAAAAAAAAA03118201058500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2031|2
+21045|P2041736AAAAAAAAAAAAAA03118201058501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1958|1
+21046|P2041736AAAAAAAAAAAAAA03118203847700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2034|2
+21046|P2041736AAAAAAAAAAAAAA03118203847701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1969|1
+21047|P2041736AAAAAAAAAAAAAA03118210804900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2036|2
+21047|P2041736AAAAAAAAAAAAAA03118210804901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1977|1
+21048|P2041736AAAAAAAAAAAAAA03118220458100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2038|2
+21048|P2041736AAAAAAAAAAAAAA03118220458101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1984|1
+21049|P2041736AAAAAAAAAAAAAA03118223212300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2042|2
+21049|P2041736AAAAAAAAAAAAAA03118223212301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1989|1
+21050|P2041736AAAAAAAAAAAAAA03118230211800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2044|2
+21050|P2041736AAAAAAAAAAAAAA03118230211801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1993|1
+21051|P2041736AAAAAAAAAAAAAA03118230733700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2048|2
+21051|P2041736AAAAAAAAAAAAAA03118230733701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:1998|1
+21052|P2041736AAAAAAAAAAAAAA03118232854900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2049|2
+21052|P2041736AAAAAAAAAAAAAA03118232854901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:2007|1
+21053|P2041736AAAAAAAAAAAAAA03118234737400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1736.0100:1:2052|2
+21053|P2041736AAAAAAAAAAAAAA03118234737401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1736.0100:1:2018|1
+#
+# APID 1738
+#
+21060|P2041738AAAAAAAAAAAAAA03118163557300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2061|2
+21060|P2041738AAAAAAAAAAAAAA03118163557301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1913|1
+21061|P2041738AAAAAAAAAAAAAA03118172110600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2062|2
+21061|P2041738AAAAAAAAAAAAAA03118172110601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1922|1
+21062|P2041738AAAAAAAAAAAAAA03118173135600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2063|2
+21062|P2041738AAAAAAAAAAAAAA03118173135601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1930|1
+21063|P2041738AAAAAAAAAAAAAA03118182659900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2064|2
+21063|P2041738AAAAAAAAAAAAAA03118182659901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1945|1
+21064|P2041738AAAAAAAAAAAAAA03118183015900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2065|2
+21064|P2041738AAAAAAAAAAAAAA03118183015901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1956|1
+21065|P2041738AAAAAAAAAAAAAA03118201058600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2066|2
+21065|P2041738AAAAAAAAAAAAAA03118201058601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1964|1
+21066|P2041738AAAAAAAAAAAAAA03118203847800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2067|2
+21066|P2041738AAAAAAAAAAAAAA03118203847801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1972|1
+21067|P2041738AAAAAAAAAAAAAA03118210807000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2068|2
+21067|P2041738AAAAAAAAAAAAAA03118210807001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1979|1
+21068|P2041738AAAAAAAAAAAAAA03118220459200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2069|2
+21068|P2041738AAAAAAAAAAAAAA03118220459201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1986|1
+21069|P2041738AAAAAAAAAAAAAA03118223213400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2070|2
+21069|P2041738AAAAAAAAAAAAAA03118223213401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1990|1
+21070|P2041738AAAAAAAAAAAAAA03118230224900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2071|2
+21070|P2041738AAAAAAAAAAAAAA03118230224901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:1996|1
+21071|P2041738AAAAAAAAAAAAAA03118230733800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2072|2
+21071|P2041738AAAAAAAAAAAAAA03118230733801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:2002|1
+21072|P2041738AAAAAAAAAAAAAA03118232856000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2073|2
+21072|P2041738AAAAAAAAAAAAAA03118232856001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:2011|1
+21073|P2041738AAAAAAAAAAAAAA03118234738500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1738.0100:1:2074|2
+21073|P2041738AAAAAAAAAAAAAA03118234738501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1738.0100:1:2020|1
+#
+# APID 1740
+#
+21080|P2041740AAAAAAAAAAAAAA03118163559400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2075|2
+21080|P2041740AAAAAAAAAAAAAA03118163559401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2003|1
+21081|P2041740AAAAAAAAAAAAAA03118172116700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2076|2
+21081|P2041740AAAAAAAAAAAAAA03118172116701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2012|1
+21082|P2041740AAAAAAAAAAAAAA03118173138700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2077|2
+21082|P2041740AAAAAAAAAAAAAA03118173138701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2021|1
+21083|P2041740AAAAAAAAAAAAAA03118182701000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2078|2
+21083|P2041740AAAAAAAAAAAAAA03118182701001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2027|1
+21084|P2041740AAAAAAAAAAAAAA03118183017000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2079|2
+21084|P2041740AAAAAAAAAAAAAA03118183017001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2035|1
+21085|P2041740AAAAAAAAAAAAAA03118201103700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2080|2
+21085|P2041740AAAAAAAAAAAAAA03118201103701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2041|1
+21086|P2041740AAAAAAAAAAAAAA03118203852900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2081|2
+21086|P2041740AAAAAAAAAAAAAA03118203852901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2046|1
+21087|P2041740AAAAAAAAAAAAAA03118210810100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2082|2
+21087|P2041740AAAAAAAAAAAAAA03118210810101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2050|1
+21088|P2041740AAAAAAAAAAAAAA03118220503300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2083|2
+21088|P2041740AAAAAAAAAAAAAA03118220503301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2054|1
+21089|P2041740AAAAAAAAAAAAAA03118223218500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2084|2
+21089|P2041740AAAAAAAAAAAAAA03118223218501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2056|1
+21090|P2041740AAAAAAAAAAAAAA03118230229000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2085|2
+21090|P2041740AAAAAAAAAAAAAA03118230229001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2057|1
+21091|P2041740AAAAAAAAAAAAAA03118230734900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2086|2
+21091|P2041740AAAAAAAAAAAAAA03118230734901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2058|1
+21092|P2041740AAAAAAAAAAAAAA03118232857100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2087|2
+21092|P2041740AAAAAAAAAAAAAA03118232857101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2059|1
+21093|P2041740AAAAAAAAAAAAAA03118234738600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1740.0100:1:2088|2
+21093|P2041740AAAAAAAAAAAAAA03118234738601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1740.0100:1:2060|1
+#
+# APID 1742
+#
+21100|P2041742AAAAAAAAAAAAAA03118163603500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2100|2
+21100|P2041742AAAAAAAAAAAAAA03118163603501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:1982|1
+21101|P2041742AAAAAAAAAAAAAA03118172118800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2101|2
+21101|P2041742AAAAAAAAAAAAAA03118172118801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:1988|1
+21102|P2041742AAAAAAAAAAAAAA03118173139800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2103|2
+21102|P2041742AAAAAAAAAAAAAA03118173139801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:1994|1
+21103|P2041742AAAAAAAAAAAAAA03118182703100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2104|2
+21103|P2041742AAAAAAAAAAAAAA03118182703101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:1997|1
+21104|P2041742AAAAAAAAAAAAAA03118183018100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2106|2
+21104|P2041742AAAAAAAAAAAAAA03118183018101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2006|1
+21105|P2041742AAAAAAAAAAAAAA03118201104800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2107|2
+21105|P2041742AAAAAAAAAAAAAA03118201104801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2016|1
+21106|P2041742AAAAAAAAAAAAAA03118203855000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2108|2
+21106|P2041742AAAAAAAAAAAAAA03118203855001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2023|1
+21107|P2041742AAAAAAAAAAAAAA03118210812200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2109|2
+21107|P2041742AAAAAAAAAAAAAA03118210812201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2026|1
+21108|P2041742AAAAAAAAAAAAAA03118220505400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2112|2
+21108|P2041742AAAAAAAAAAAAAA03118220505401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2033|1
+21109|P2041742AAAAAAAAAAAAAA03118223219600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2113|2
+21109|P2041742AAAAAAAAAAAAAA03118223219601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2040|1
+21110|P2041742AAAAAAAAAAAAAA03118230230100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2116|2
+21110|P2041742AAAAAAAAAAAAAA03118230230101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2045|1
+21111|P2041742AAAAAAAAAAAAAA03118230736000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2118|2
+21111|P2041742AAAAAAAAAAAAAA03118230736001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2051|1
+21112|P2041742AAAAAAAAAAAAAA03118232857200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2120|2
+21112|P2041742AAAAAAAAAAAAAA03118232857201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2053|1
+21113|P2041742AAAAAAAAAAAAAA03118234740700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1742.0100:1:2122|2
+21113|P2041742AAAAAAAAAAAAAA03118234740701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1742.0100:1:2055|1
+#
+# APID 1744
+#
+21120|P2041744AAAAAAAAAAAAAA03118163711900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2000|2
+21120|P2041744AAAAAAAAAAAAAA03118163711901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1908|1
+21121|P2041744AAAAAAAAAAAAAA03118172223200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2005|2
+21121|P2041744AAAAAAAAAAAAAA03118172223201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1921|1
+21122|P2041744AAAAAAAAAAAAAA03118173318000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2009|2
+21122|P2041744AAAAAAAAAAAAAA03118173318001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1928|1
+21123|P2041744AAAAAAAAAAAAAA03118182704300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2014|2
+21123|P2041744AAAAAAAAAAAAAA03118182704301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1935|1
+21124|P2041744AAAAAAAAAAAAAA03118183019300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2017|2
+21124|P2041744AAAAAAAAAAAAAA03118183019301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1944|1
+21125|P2041744AAAAAAAAAAAAAA03118201107000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2022|2
+21125|P2041744AAAAAAAAAAAAAA03118201107001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1954|1
+21126|P2041744AAAAAAAAAAAAAA03118203857200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2025|2
+21126|P2041744AAAAAAAAAAAAAA03118203857201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1962|1
+21127|P2041744AAAAAAAAAAAAAA03118210815400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2029|2
+21127|P2041744AAAAAAAAAAAAAA03118210815401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1973|1
+21128|P2041744AAAAAAAAAAAAAA03118220508600.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2030|2
+21128|P2041744AAAAAAAAAAAAAA03118220508601.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1980|1
+21129|P2041744AAAAAAAAAAAAAA03118223221800.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2032|2
+21129|P2041744AAAAAAAAAAAAAA03118223221801.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1985|1
+21130|P2041744AAAAAAAAAAAAAA03118230236300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2037|2
+21130|P2041744AAAAAAAAAAAAAA03118230236301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1991|1
+21131|P2041744AAAAAAAAAAAAAA03118230737200.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2039|2
+21131|P2041744AAAAAAAAAAAAAA03118230737201.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:1995|1
+21132|P2041744AAAAAAAAAAAAAA03118232901400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2043|2
+21132|P2041744AAAAAAAAAAAAAA03118232901401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:2001|1
+21133|P2041744AAAAAAAAAAAAAA03118234741900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1744.0100:1:2047|2
+21133|P2041744AAAAAAAAAAAAAA03118234741901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1744.0100:1:2010|1
+#
+# APID 1746
+#
+21140|P2041746AAAAAAAAAAAAAA03118163716100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2111|2
+21140|P2041746AAAAAAAAAAAAAA03118163716101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2119|1
+21141|P2041746AAAAAAAAAAAAAA03118172238500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2114|2
+21141|P2041746AAAAAAAAAAAAAA03118172238501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2124|1
+21142|P2041746AAAAAAAAAAAAAA03118173318100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2117|2
+21142|P2041746AAAAAAAAAAAAAA03118173318101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2128|1
+21143|P2041746AAAAAAAAAAAAAA03118182707400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2121|2
+21143|P2041746AAAAAAAAAAAAAA03118182707401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2131|1
+21144|P2041746AAAAAAAAAAAAAA03118183022400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2123|2
+21144|P2041746AAAAAAAAAAAAAA03118183022401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2134|1
+21145|P2041746AAAAAAAAAAAAAA03118201109100.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2125|2
+21145|P2041746AAAAAAAAAAAAAA03118201109101.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2137|1
+21146|P2041746AAAAAAAAAAAAAA03118203859300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2126|2
+21146|P2041746AAAAAAAAAAAAAA03118203859301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2138|1
+21147|P2041746AAAAAAAAAAAAAA03118210816500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2127|2
+21147|P2041746AAAAAAAAAAAAAA03118210816501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2139|1
+21148|P2041746AAAAAAAAAAAAAA03118220509700.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2129|2
+21148|P2041746AAAAAAAAAAAAAA03118220509701.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2140|1
+21149|P2041746AAAAAAAAAAAAAA03118223224900.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2130|2
+21149|P2041746AAAAAAAAAAAAAA03118223224901.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2141|1
+21150|P2041746AAAAAAAAAAAAAA03118230239400.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2132|2
+21150|P2041746AAAAAAAAAAAAAA03118230239401.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2142|1
+21151|P2041746AAAAAAAAAAAAAA03118230739300.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2133|2
+21151|P2041746AAAAAAAAAAAAAA03118230739301.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2143|1
+21152|P2041746AAAAAAAAAAAAAA03118232901500.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2135|2
+21152|P2041746AAAAAAAAAAAAAA03118232901501.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2144|1
+21153|P2041746AAAAAAAAAAAAAA03118234743000.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0C1746.0100:1:2136|2
+21153|P2041746AAAAAAAAAAAAAA03118234743001.PDS|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:ML0A1746.0100:1:2145|1
+#
+# Ephemeris
+#
+10501|AUREPHMH.C2003105.1200.001.2003107085630.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AUREPHMH.0001:1:1934|2
+10501|AUREPHMH.C2003106.1200.001.2003107085830.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AUREPHMH.0001:1:1952|1
+#
+# Attitude
+#
+10502|AURATTH.C2003106.0000.001.2003107181440.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|12
+10502|AURATTH.C2003106.0200.001.2003107184242.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|11
+10502|AURATTH.C2003106.0400.001.2003107191244.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|10
+10502|AURATTH.C2003106.0600.001.2003107193246.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|9
+10502|AURATTH.C2003106.0800.001.2003107195249.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|8
+10502|AURATTH.C2003106.1000.001.2003107201441.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|7
+10502|AURATTH.C2003106.1200.001.2003107203242.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|6
+10502|AURATTH.C2003106.1400.001.2003107211245.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|5
+10502|AURATTH.C2003106.1600.001.2003107213247.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|4
+10502|AURATTH.C2003106.1800.001.2003107215249.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|3
+10502|AURATTH.C2003106.2000.001.2003107221240.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|2
+10502|AURATTH.C2003106.2200.001.2003108061247.hdf|/bigdata/ahanzel/moss1-inputs/l1-inputs-0110|||LGID:AURATTH.0001:1:1975|1
+#
+#
+# -----------------------------------------------------------------------
+# These are actual ancillary data set files - supplied by ECS or the
+# user.  The following are supplied for purposes of tests and as a useful
+# set of ancillary data.  These entries may be removed IF the AA tools
+# are not being used.
+# -----------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------
+#
+#------------------------------------------------------------------------
+# Metadata Configuration File (MCF) is a template to be filled in by the
+# Instrument teams.  MCFWrite.temp is a scratch file used to dump the MCF
+# prior to writing to the hdf file. GetAttr.temp is similarly used to
+# dump metadata from the hdf attributes and is used by PGS_MET_GetPCAttr.
+# (DO NOT REMOVE THESE ENTRIES)
+#------------------------------------------------------------------------
+10250|MCF|||||1
+10252|GetAttr.temp|/users/perun/v1.2/tmp||||1
+10254|MCFWrite.temp|/users/perun/v1.2/tmp||||1
+4001|ML1OA.001.MCF|/users/perun/v1.2/tmp||||1
+4002|ML1RADG.001.MCF|/users/perun/v1.2/tmp||||1
+4003|ML1RADD.001.MCF|/users/perun/v1.2/tmp||||1
+4004|ML1RADT.001.MCF|/users/perun/v1.2/tmp||||1
+#
+# -----------------------------------------------------------------------
+# Ephemeris and Attitude files logical IDs.
+# Emphemeris files will be accessed via the logical ID 10501.
+# Attitude files will be accessed via the logical ID 10502.
+# Use file versions to allow for multiple physical ephemeris
+# or attitude files.
+# -----------------------------------------------------------------------
+#
+#10501|EOSAURA_2002-02-01.eph|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+#10502|EOSAURA_2002-02-01.att|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+#
+#------------------------------------------------------------------------
+#
+?   PRODUCT OUTPUT FILES
+#########################################################################
+#
+# This section is intended for standard product outputs, i.e., HDF-EOS
+# files generated by this PGE.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is the default location for PRODUCT OUTPUT FILES
+!  ~/runtime
+#
+#------------------
+# Test output files
+#------------------
+30000|MLS-Aura_L1BRADG_v01-01-c01_2002d032.h5|/users/perun/v1.2/tmp||||1
+30001|MLS-Aura_L1BRADD_v01-01-c01_2002d032.h5|/users/perun/v1.2/tmp||||1
+30002|MLS-Aura_L1BOA_v01-01-c01_2002d032.h5|/users/perun/v1.2/tmp||||1
+30003|MLS-Aura_L1BENG_v01-01-c01_2002d032.dat|/users/perun/v1.2/tmp||||1
+30004|MLS-Aura_L1BDIAG_v01-01-c01_2002d032.dat|/users/perun/v1.2/tmp||||1
+30005|MLS-Aura_L1BRADT_v01-01-c01_2002d032.h5|/users/perun/v1.2/tmp||||1
+30006|MLS-Aura_L1BLog_v01-01-c01_2002d032.dat|/users/perun/v1.2/tmp||||1
+#
+#------------------------------------------------------------------------
+#
+?   SUPPORT INPUT FILES
+#########################################################################
+#
+# This section is intended for minor input files, e.g., calibration
+# files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is the default location for SUPPORT INPUT FILES
+!  ~/runtime
+#
+#  
+# -----------------------------------------------------------------------
+# This ID is #defined in PGS_AA_Tools.h
+# This file contains the IDs for all support and format files (listed
+# below).  This entry may be deleted or commented out if the AA tools are
+# not being used.
+# -----------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------
+# These are support files for the data set files - to be created by user
+# (not necessarily a one-to-one relationship).
+# The IDs must correspond to the logical IDs in the index file (above).
+# These entries may be deleted or commented out if the AA tools are not
+# being used.
+# -----------------------------------------------------------------------
+#
+# -----------------------------------------------------------------------
+# The following are format files for each data set file (not necessarily
+# a one-to-one relationship).  # The IDs must correspond to the logical
+# IDs in the index file (10900, above).
+# These entries may be deleted or commented out if the AA tools are not
+# being used.
+#
+#
+# -----------------------------------------------------------------------
+# leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10301|leapsec.dat|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+#
+# -----------------------------------------------------------------------
+# polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10401|utcpole.dat|/nas/bigdata/ahanzel/test/v1-13-2/l1/061303-wL1OA/inputs||||1
+#
+# -----------------------------------------------------------------------
+# earth model tags file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10402|earthfigure.dat|~/database/common/CSC||||1
+#
+# -----------------------------------------------------------------------
+# JPL planetary ephemeris file (binary form) (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10601|de200.eos|~/database/linux/CBP||||1
+#
+# -----------------------------------------------------------------------
+# spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10801|sc_tags.dat|/bigdata/ahanzel/build/v1.13.2/v0113/toolkit5.2.9v1/database/common/EPH/||||1
+#
+# -----------------------------------------------------------------------
+# units conversion definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10302|udunits.dat|~/database/common/CUC||||1
+#
+#
+?   SUPPORT OUTPUT FILES 
+#########################################################################
+#
+# This section is intended for minor output files, e.g., log files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is default location for SUPPORT OUTPUT FILES
+!  ~/runtime
+#
+#
+# -----------------------------------------------------------------------
+# These files support the SMF log functionality. Each run will cause
+# status information to be written to 1 or more of the Log files. To
+# simulate DAAC operations, remove the 3 Logfiles between test runs.
+# Remember: all executables within a PGE will contribute status data to 
+# the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
+# -----------------------------------------------------------------------
+10100|LogStatus|/users/perun/v1.2||||1
+10101|LogReport|/users/perun/v1.2||||1
+10102|LogUser|/users/perun/v1.2||||1
+10103|TmpStatus|||||1
+10104|TmpReport|||||1
+10105|TmpUser|||||1
+10110|MailFile|||||1
+#
+# -----------------------------------------------------------------------
+# ASCII file which stores pointers to runtime SMF files in lieu of 
+# loading them to shared memory, which is a TK5 enhancement.
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10111|ShmMem|/users/perun/runtime||||1
+#  
+?   USER DEFINED RUNTIME PARAMETERS
+#########################################################################
+#
+# This section is intended for parameters used as PGE input.
+#
+# Note: these parameters may NOT be changed dynamically.
+#
+#########################################################################
+#
+# Replace DOYn with appropriate day(s)
+#
+#1001|Start UTC|2003-106T00:00:00
+#1002|End UTC|2003-106T00:01:00
+#1001|Start UTC|2003-04-16T09:59:10
+#1001|Start UTC|2003-106T00:00:04
+1001|Start UTC|2003-106T21:00:01
+#1002|End UTC|2003-106T02:20:00
+1002|End UTC|2003-106T23:59:48
+1003|OutputVersion|V01-2
+1004|Cycle|1
+#
+# -----------------------------------------------------------------------
+# These parameters are required to support the PGS_SMF_Send...() tools.
+# If the first parameter (TransmitFlag) is disabled, then none of the
+# other parameters need to be set. By default, this functionality has been
+# disabled. To enable, set TransmitFlag to 1 and supply the other 3 
+# parameters with local information. (DO NOT REMOVE THESE ENTRIES)
+# -----------------------------------------------------------------------
+10109|TransmitFlag; 1=transmit,0=disable|0
+10106|RemoteHost|sandcrab
+10107|RemotePath|/usr/kwan/test/PC/data
+10108|EmailAddresses|kwan@eos.hitc.com
+#
+# -----------------------------------------------------------------------
+# The following runtime parameters define various logging options.
+# Parameters described as lists should be space (i.e. ' ') separated.
+# The logical IDs 10117, 10118, 10119 listed below are for OPTIONAL
+# control of SMF logging.  Any of these logical IDs which is unused by a
+# PGE may be safely commented out (e.g. if logging is not disabled for
+# any status level, then the line beginning 10117 may be commented out).
+# -----------------------------------------------------------------------
+10114|Logging Control; 0=disable logging, 1=enable logging|1
+10115|Trace Control; 0=no trace, 1=error trace, 2=full trace|0
+10116|Process ID logging; 0=don't log PID, 1=log PID|0
+#10117|Disabled status level list (e.g. W S F)|
+#10118|Disabled seed list|
+#10119|Disabled status code list|
+#
+# -----------------------------------------------------------------------
+# Toolkit version for which this PCF was intended.
+# DO NOT REMOVE THIS VERSION ENTRY!
+# -----------------------------------------------------------------------
+10220|Toolkit version string|TK_VERSION_STRING
+#
+# -----------------------------------------------------------------------
+# The following parameters define the ADEOS-II TMDF values (all values
+# are assumed to be floating point types).  The ground reference time
+# should be in TAI93 format (SI seconds since 12 AM UTC 1993-01-01).
+# These formats are only prototypes and are subject to change when
+# the ADEOS-II TMDF values are clearly defined.  PGEs that do not access
+# ADEOS-II L0 data files do not require these parameters.  In this case
+# they may be safely commented out, otherwise appropriate values should
+# be supplied.
+# -----------------------------------------------------------------------
+#10120|ADEOS-II s/c reference time|
+#10121|ADEOS-II ground reference time|
+#10122|ADEOS-II s/c clock period|
+#
+# -----------------------------------------------------------------------
+# The following parameter defines the TRMM UTCF value (the value is
+# assumed to be a floating point type).  PGEs that do not access TRMM
+# data of any sort do not require this parameter.  In this case it may be
+# safely commented out, otherwise an appropriate value should be
+# supplied.
+# -----------------------------------------------------------------------
+#10123|TRMM UTCF value|
+#
+# -----------------------------------------------------------------------
+# The following parameter defines the Epoch date to be used for the
+# interpretation (conversion) of NASA PB5C times (the Epoch date should
+# be specified here in CCSDS ASCII format--A or B) (reserved for future
+# use--this quantity is not referenced in TK 5.2).  This entry may be
+# safely commented out or deleted.
+# -----------------------------------------------------------------------
+#10124|NASA PB5C time Epoch date (ASCII UTC)|
+#
+# -----------------------------------------------------------------------
+# The following parameter is a "mask" for the ephemeris data quality 
+# flag.  The value should be specified as an unsigned integer
+# specifying those bits of the ephemeris data quality flag that
+# should be considered fatal (i.e. the ephemeris data associated
+# with the quality flag should be REJECTED/IGNORED).
+# -----------------------------------------------------------------------
+10507|ephemeris data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+# The following parameter is a "mask" for the attitude data quality 
+# flag.  The value should be specified as an unsigned integer 
+# specifying those bits of the attitude data quality flag that
+# should be considered fatal (i.e. the attitude data associated
+# with the quality flag should be REJECTED/IGNORED).
+# -----------------------------------------------------------------------
+10508|attitude data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+# ECS DPS trigger for PGE debug runs
+#
+# NOTICE TO PGE DEVELOPERS: PGEs which have a debug mode
+# need to examine this parameter to evaluate activation rule
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10911|ECS DEBUG; 0=normal, 1=debug|0
+#
+# -----------------------------------------------------------------------
+# This entry defines the IP address of the processing host and is used
+# by the Toolkit when generating unique Intermediate and Temporary file
+# names.  The Toolkit no longer relies on the PGS_HOST_PATH environment
+# variable to otain this information. (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10099|Local IP Address of 'ether'|155.157.31.87
+#
+?   INTERMEDIATE INPUT
+#########################################################################
+#
+# This section is intended for intermediate input files, i.e., files
+# which are output by an earlier PGE but which are not standard
+# products.
+#
+# Each logical ID may have only one file instance.
+# Last field on the line is ignored.
+#
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE INPUT FILES
+!  ~/runtime
+#
+#
+?   INTERMEDIATE OUTPUT
+#########################################################################
+#
+# This section is intended for intermediate output files, i.e., files
+# which are to be input to later PGEs, but which are not standard
+# products.
+#
+# Each logical ID may have only one file instance.
+# Last field on the line is ignored.
+#
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE OUTPUT FILES
+!  ~/runtime
+#
+#
+?   TEMPORARY I/O
+#########################################################################
+#
+# This section is intended for temporary files, i.e., files
+# which are generated during a PGE run and deleted at PGE termination.
+#
+# Entries in this section are generated internally by the Toolkit.
+# DO NOT MAKE MANUAL ENTRIES IN THIS SECTION.
+#
+#########################################################################
+#
+# Next line is default location for TEMPORARY FILES
+!  ~/runtime
+#
+#
+?   END
