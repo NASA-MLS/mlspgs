@@ -17,14 +17,17 @@ module SidsModule
   use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
     f_fwdModelOut, f_jacobian
   use Lexer_Core, only: Print_Source
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock
   use MoreTree, only: Get_Field_Id
   use Output_M, only: Output
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
+
+  implicit none
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -57,6 +60,7 @@ contains
     integer :: IxJacobian               ! Index of Jacobian in matrix database
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: Son                      ! Of ROOT
+    integer :: STATUS                   ! Flag
 
     type (ForwardModelIntermediate_T) :: ifm ! Work space for forward model
     type (ForwardModelStatus_T) :: fmStat ! Status for forward model
@@ -119,6 +123,16 @@ contains
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
             & FwdModelOut, ifm, fmStat, Jacobian )
+
+          ! For the moment, destroy the jacobian here-----------------------
+          call DestroyBlock ( Jacobian )
+          allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
+            & STAT=status )
+          if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
+            & MLSMSG_Allocate//'jacobian%block' )
+          !-----------------------------------------------------------------
+
+          fmStat%rows = .false. 
         else
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
@@ -126,7 +140,8 @@ contains
         end if
       end do
     end do
-    call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+    if ( ixJacobian > 0 ) &
+      & call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
 
     call DestroyForwardModelIntermediate ( ifm )
 
@@ -158,6 +173,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.25  2001/05/01 06:57:30  livesey
+! *** empty log message ***
+!
 ! Revision 2.24  2001/05/01 00:20:34  livesey
 ! Sets up fmStat%rows correctly.
 !
