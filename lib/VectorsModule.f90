@@ -587,11 +587,28 @@ contains ! =====     Public Procedures     =============================
         call output ( vectors(i)%quantities(j)%template%id )
         if ( myDetails > 0 ) then
           call dump ( vectors(i)%quantities(j)%values, ', Elements = ' )
+          if ( associated(vectors(i)%quantities(j)%mask) ) then
+            call dump ( vectors(i)%quantities(j)%mask, format='(z8)' )
+          else
+            call output ( '      Without mask', advance='yes' )
+          end if
         else
           call output ( ', with' )
           if ( .not. associated(vectors(i)%quantities(j)%values) ) &
-            call output ( 'out' )
-          call output ( ' values', advance='yes' )
+            & call output ( 'out' )
+          call output ( ' values, with' )
+          if ( .not. associated(vectors(i)%quantities(j)%mask ) ) &
+            & call output ( 'out' )
+          call output ( ' mask', advance='yes' )
+        end if
+        if ( associated(vectors(i)%quantities(j)%mask) ) then
+          if ( myDetails > 0 ) then
+            call dump ( vectors(i)%quantities(j)%mask, format='(z8)' )
+          else
+            call output ( '      With mask', advance='yes' )
+          end if
+        else
+          call output ( '      Without mask', advance='yes' )
         end if
       end do ! j
     end do ! i
@@ -1122,6 +1139,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.37  2001/05/03 02:12:03  vsnyder
+! Take out a line of debugging scaffolding
+!
 ! Revision 2.36  2001/05/02 20:44:37  vsnyder
 ! Provide for text names for vectors that didn't come from CF
 !
