@@ -1494,7 +1494,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ScaleBlock ( Z, A )        ! Z := A * Z, where A is scalar
     type(matrixElement_T), intent(inout) :: Z
     real(r8), intent(in) :: A
-    z%values = a * z%values
+    if ( z%kind /= m_absent ) z%values = a * z%values
   end subroutine ScaleBlock
 
   ! -------------------------------------------  SolveCholeskyM_0  -----
@@ -2023,6 +2023,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.33  2001/05/24 23:15:24  vsnyder
+! Don't scale absent blocks -- their VALUES pointer isn't associated
+!
 ! Revision 2.32  2001/05/24 18:13:28  vsnyder
 ! Make DenseCholesky public instead of internal; cosmetic changes
 !
