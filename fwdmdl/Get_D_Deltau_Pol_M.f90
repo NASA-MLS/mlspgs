@@ -223,10 +223,6 @@ use toggles, only: Switches
         d_alpha_dT_eta(:,p_i) = d_alpha_dT(:,p_i) * eta_zxp(p_i,sv_i)
       end do
 
-if ( index(switches,'nhd') /= 0 ) then
-  do_calc=.false.
-  go to 10
-end if
       ! Now do the hydrostatic part
       !??? This only goes as far as I_Stop.  We may     ???
       !??? want to do it this way in DRad_Tran_dT also. ???
@@ -303,7 +299,6 @@ end if
         end do
       end if
 
-10 continue
       ! Apply refraction correction
       ! Then add in contribution from scalar model, 0.25 for +/- sigma,
       ! 0.5 for pi.
@@ -318,7 +313,8 @@ end if
       call opacity ( ct, stcp, stsp, d_alpha_dT_eta, d_incoptdepth_dT )
 
       do p_i = 1, i_stop             ! along the path
-        if ( eta_zxp(p_i,sv_i) /= 0.0 .or. do_calc(p_i) ) then
+        if ( eta_zxp(p_i,sv_i) /= 0.0 .or. &! d_delta_dT(p_i,sv_i) /= 0.0 .or. &
+          & do_calc(p_i) ) then
           call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_dT(:,:,p_i), &
                      & d_deltau_pol_dT(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / dT
         else
@@ -337,6 +333,9 @@ end if
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.7  2003/06/13 23:50:22  vsnyder
+! Include nonpolarized d_delta_dT even if there's no polarized stuff
+!
 ! Revision 2.6  2003/06/13 00:00:09  vsnyder
 ! Move multiplication of beta_path by tanh into FullForwardModel
 !
