@@ -1243,6 +1243,7 @@ END TYPE GriddedData_T
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"ndims of gd_id <= 0")
 		CALL announce_error(MLSMSG_Error, "ndims of gd_id <= 0")
+	ELSEIF(ndims > NENTRIESMAX) THEN
 !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !              &"ndims of gd_id > NENTRIESMAX")
 		CALL announce_error(MLSMSG_Error, "ndims of gd_id > NENTRIESMAX")
@@ -1504,7 +1505,7 @@ END TYPE GriddedData_T
               &trim(full_message)//" "//mnemonic//" "//msg)
 	else
 		print*, '***Error: level ', level, ' in module ', ModuleName
-		print*, trim(full_message)//" "//mnemonic//" "//msg
+		print*, trim(full_message)
 	endif
 
 !===========================
@@ -1517,6 +1518,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.5  2001/03/09 01:02:55  pwagner
+! Fixed announce_error
+!
 ! Revision 2.4  2001/03/08 01:08:35  pwagner
 ! Added announce_error
 !
