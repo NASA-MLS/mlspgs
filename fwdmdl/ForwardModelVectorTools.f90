@@ -44,8 +44,8 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Intrinsic, only: Lit_Indices
     use Intrinsic, only: L_VMR
-    use MLSCommon, only: FindFirst
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetSignalName
     use Molecules, only: L_EXTINCTION
     use QuantityTemplates, only: QuantityTemplate_T
@@ -287,6 +287,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.10  2004/06/10 00:59:56  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.9  2003/05/29 16:37:21  livesey
 ! New reflector argument to GetQuantityForForwardModel
 !
