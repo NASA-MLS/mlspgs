@@ -15,6 +15,7 @@
 # -p prog_name       name resulting program prog_name instead of test
 # -d prog_path       install resulting program in prog_path
 # -m test_dir_name   use tests/test_dir_name instead of tests/misc
+# -M MYMAKE          use MYMAKE for make command instead of make
 # -t test_dir_path   use test_dir_path/misc instead of tests/misc
 # -c MLSCONFG        use arg for MLSCONFG instead of any current setting
 # -i INC_PATHS       let arg override usual value for INC_PATHS
@@ -155,6 +156,7 @@ prog_path=../bin/$MLSCONFG
 override_INC_PATHS="no"
 INC_PATHS=""
 EXTRA_PATHS=""
+MYMAKE=make
 
 me="$0"
 my_name=build_f90_in_misc.sh
@@ -180,6 +182,10 @@ while [ "$1" != "" ] ; do
 	;;
 	-m )
 	    test_dir_name=$2
+	    shift
+	;;
+	-M )
+	    MYMAKE=$2
 	    shift
 	;;
 	-t )
@@ -220,6 +226,7 @@ then
    echo "prog_path: $prog_path"
    echo "test_dir_name: $test_dir_name"
    echo "test_dir_path: $test_dir_path"
+   echo "make command: $MYMAKE"
    echo "NEED_MLSCONFG: $NEED_MLSCONFG"
    echo "MLSCONFG: $MLSCONFG"
    echo "override_INC_PATHS: $override_INC_PATHS"
@@ -329,20 +336,24 @@ then
    if [ "$BUILD" = "on" ]
    then
       cd $test_dir_path/$test_dir_name
-      make depends ghostbuster
-      make EXTRA_PATHS="$EXTRA_PATHS"
+#      make depends ghostbuster
+#      make EXTRA_PATHS="$EXTRA_PATHS"
+      $MYMAKE depends ghostbuster
+      $MYMAKE EXTRA_PATHS="$EXTRA_PATHS"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo make EXTRA_PATHS="$EXTRA_PATHS"
+      echo $MYMAKE EXTRA_PATHS="$EXTRA_PATHS"
    fi
 elif [ "$override_INC_PATHS" = "no" ]
 then
    if [ "$BUILD" = "on" ]
    then
       cd $test_dir_path/$test_dir_name
-      make depends ghostbuster
-      make
+#      make depends ghostbuster
+#      make
+      $MYMAKE depends ghostbuster
+      $MYMAKE
    fi
 else
    repair_subpaths $INC_PATHS
@@ -350,12 +361,14 @@ else
    if [ "$BUILD" = "on" ]
    then
       cd $test_dir_path/$test_dir_name
-      make depends ghostbuster
-      make INC_PATHS="$INC_PATHS"
+#      make depends ghostbuster
+#      make INC_PATHS="$INC_PATHS"
+      $MYMAKE depends ghostbuster
+      $MYMAKE INC_PATHS="$INC_PATHS"
    fi
    if [ "$DEEBUG" = "on" ]
    then
-      echo make INC_PATHS="$INC_PATHS"
+      echo $MYMAKE INC_PATHS="$INC_PATHS"
    fi
 fi
 
@@ -380,6 +393,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.7  2001/08/17 23:15:26  pwagner
+# EXTRA_PATHS now implemented; relative paths w.r.t. cwd
+#
 # Revision 1.6  2001/08/14 23:45:41  pwagner
 # CHanged file requirement before hiding from -w to just -r
 #
