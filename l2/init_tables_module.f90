@@ -337,7 +337,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
-             l+l_hydrostatic, l+l_addnoise, l+l_refract, &
+             l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
              l+l_offsetRadiance, l+l_profile, l+l_vector, l+l_special, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_H2OFromRHI, l+l_fold, &
@@ -613,6 +613,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_refract, t+t_boolean, n+n_field_type, &
              begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_refGPHPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_resetSeed, t+t_boolean, n+n_field_type, &
              begin, f+f_rhiQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot /), &
@@ -884,6 +886,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.249  2002/10/16 20:18:21  mjf
+! Added GPH precision.
+!
 ! Revision 2.248  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
