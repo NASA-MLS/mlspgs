@@ -1434,7 +1434,7 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_channel, l_none, l_MAF /)
     case ( l_reflTemp )
       framing = 'major'
-      dim_names = (/ l_channel, l_none, l_MAF /)
+      dim_names = (/ l_none, l_none, l_MAF /)
     case ( l_spaceRadiance )  
       framing = 'neither'
       units_name = 'K'
@@ -1516,6 +1516,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.55  2003/05/30 00:10:02  livesey
+! Bug fix with reflTemp
+!
 ! Revision 2.54  2003/05/30 00:08:54  livesey
 ! Added antenna loss terms
 !
