@@ -59,9 +59,9 @@ MODULE L3MZData
 
      REAL(r8), DIMENSION(:), POINTER :: latitude    ! dimensioned (nLats)
 
-     REAL(r8), DIMENSION(:,:,:), POINTER :: localSolarTime
-     REAL(r8), DIMENSION(:,:,:), POINTER :: localSolarZenithAngle
-	! dimensioned as (2,nLevels,nLats)
+     REAL(r8), DIMENSION(:,:), POINTER :: localSolarTime
+     REAL(r8), DIMENSION(:,:), POINTER :: localSolarZenithAngle
+	! dimensioned as (2, nLats)
 
      REAL(r8) :: startTime	! start time of L2 data used in the analysis
      REAL(r8) :: endTime 	! end time of L2 data used in the analysis
@@ -103,7 +103,7 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
 
       INTEGER :: status, swfID, swID
-      INTEGER :: start(3), stride(3), edge(3)
+      INTEGER :: start(2), stride(2), edge(2)
 
 ! Open the file for appending a swath
 
@@ -161,13 +161,13 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swdefgfld(swID, GEO_FIELD4, DIMRLL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = swdefgfld(swID, GEO_FIELD4, DIMRL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
       IF (status == -1) THEN
          msr = GEO_ERR // GEO_FIELD4
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swdefgfld(swID, GEO_FIELD12, DIMRLL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = swdefgfld(swID, GEO_FIELD12, DIMRL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
       IF (status == -1) THEN
          msr = GEO_ERR // GEO_FIELD12
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -205,9 +205,8 @@ CONTAINS
 
       start = 0
       stride = 1
-      edge(1) = MIN_MAX
-      edge(2) = mz%nLevels
-      edge(3) = mz%nLats
+      edge(1) = mz%nLevels
+      edge(2) = mz%nLats
 
 ! Geolocation fields
 
@@ -225,20 +224,21 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swID, GEO_FIELD9, start(2), stride(2), edge(2), &
+      status = swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
                         REAL(mz%pressure) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD9
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swID, GEO_FIELD1, start(3), stride(3), edge(3), &
+      status = swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
                         REAL(mz%latitude) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      edge(1) = MIN_MAX
       status = swwrfld( swID, GEO_FIELD4, start, stride, edge, &
                         REAL(mz%localSolarTime) )
       IF (status == -1) THEN
@@ -255,14 +255,14 @@ CONTAINS
 
 ! Data fields
 
-      status = swwrfld( swID, DATA_FIELDV, start(2:3), stride(2:3), edge(2:3), &
-                        REAL(mz%l3mzValue) )
+      edge(1) = mz%nLevels
+      status = swwrfld( swID, DATA_FIELDV, start, stride, edge, REAL(mz%l3mzValue) )
       IF (status == -1) THEN
          msr = WR_ERR // DATA_FIELDV
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swID, DATA_FIELDP, start(2:3), stride(2:3), edge(2:3), &
+      status = swwrfld( swID, DATA_FIELDP, start, stride, edge, &
                         REAL(mz%l3mzPrecision) )
       IF (status == -1) THEN
          msr = WR_ERR // DATA_FIELDP
@@ -749,13 +749,13 @@ CONTAINS
 
 ! Ancillary data fields
 
-      ALLOCATE(l3mz%localSolarTime(MIN_MAX,l3mz%nLevels,l3mz%nLats), STAT=err)
+      ALLOCATE(l3mz%localSolarTime(MIN_MAX,l3mz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' local solar time pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3mz%localSolarZenithAngle(MIN_MAX,l3mz%nLevels,l3mz%nLats), &
+      ALLOCATE(l3mz%localSolarZenithAngle(MIN_MAX,l3mz%nLats), &
                STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' local solar zenith angle pointer.'
@@ -914,6 +914,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.2  2001/09/26 19:47:03  nakamura
+! Added local solar ancillary fields.
+!
 ! Revision 1.1  2001/07/18 15:42:09  nakamura
 ! Module for the L3MZ data type.
 !

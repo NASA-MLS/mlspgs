@@ -48,7 +48,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
    CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
    CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
-   CHARACTER (LEN=*), PARAMETER :: DIMRLL_NAME = 'RDim,nLevels,nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMRL_NAME = 'RDim,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
@@ -94,6 +94,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.9  2001/09/27 17:47:08  nakamura
+!# Added stuff for local solar ancillary fields.
+!#
 !# Revision 1.8  2001/07/18 15:56:29  nakamura
 !# Added a dg parameter; expanded maxWindow for calendar month.
 !#

@@ -65,9 +65,9 @@ MODULE L3DZData
 
      ! Other ancillary data
 
-     REAL(r8), DIMENSION(:,:,:), POINTER :: localSolarTime
-     REAL(r8), DIMENSION(:,:,:), POINTER :: localSolarZenithAngle
-	! dimensioned as (2, nLevels, nLats), where 1 = min, 2 = max in dim one
+     REAL(r8), DIMENSION(:,:), POINTER :: localSolarTime
+     REAL(r8), DIMENSION(:,:), POINTER :: localSolarZenithAngle
+	! dimensioned as (2, nLats), where 1 = min, 2 = max in dim one
 
      ! Now the data fields:
 
@@ -107,7 +107,7 @@ CONTAINS
       CHARACTER (LEN=FileNameLen) :: file
 
       INTEGER :: i, match, numDays, status, swfID, swID
-      INTEGER :: start(3), stride(3), edge(3)
+      INTEGER :: start(2), stride(2), edge(2)
 
 ! For each day in the output window,
 
@@ -198,14 +198,14 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefgfld(swID, GEO_FIELD4, DIMRLL_NAME, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELD4, DIMRL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD4
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefgfld(swID, GEO_FIELD12, DIMRLL_NAME, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELD12, DIMRL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD12
@@ -248,8 +248,7 @@ CONTAINS
          start = 0
          stride = 1
          edge(1) = DATE_LEN
-         edge(2) = dzm(i)%nLevels
-         edge(3) = dzm(i)%nLats
+         edge(2) = dzm(i)%nLats
 
 ! Geolocation fields
 
@@ -260,14 +259,15 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swwrfld( swID, GEO_FIELD9, start(2), stride(2), edge(2), &
+         edge(1) = dzm(i)%nLevels
+         status = swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
                            REAL(dzm(i)%pressure) )
          IF (status == -1) THEN
              msr = WR_ERR // GEO_FIELD9
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swwrfld( swID, GEO_FIELD1, start(3), stride(3), edge(3), &
+         status = swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
                            REAL(dzm(i)%latitude) )
          IF (status == -1) THEN
              msr = WR_ERR // GEO_FIELD1
@@ -291,14 +291,15 @@ CONTAINS
 
 ! Data fields
 
-         status = swwrfld( swID, DATA_FIELDV, start(2:3), stride(2:3), edge(2:3), &
+         edge(1) = dzm(i)%nLevels
+         status = swwrfld( swID, DATA_FIELDV, start, stride, edge, &
                            REAL(dzm(i)%l3dzValue) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELDV
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swwrfld( swID, DATA_FIELDP, start(2:3), stride(2:3), edge(2:3), &
+         status = swwrfld( swID, DATA_FIELDP, start, stride, edge, &
                            REAL(dzm(i)%l3dzPrecision) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELDP
@@ -359,11 +360,10 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
 
       INTEGER :: err, nlat, nlev, size, swid, status
-      INTEGER :: start(3), stride(3), edge(3)
+      INTEGER :: start(2), stride(2), edge(2)
 
       REAL, ALLOCATABLE :: rl(:), rp(:)
       REAL, ALLOCATABLE :: r2(:,:)
-      REAL, ALLOCATABLE :: r3(:,:,:)
 
 ! Attach to the swath for reading
 
@@ -394,8 +394,7 @@ CONTAINS
 
       CALL AllocateL3DZ(nlev, nlat, dz)
 
-      ALLOCATE (rp(dz%nLevels), rl(dz%nLats), r2(dz%nLevels,dz%nLats), &
-                r3(MIN_MAX,dz%nLevels,dz%nLats), STAT=err)
+      ALLOCATE (rp(dz%nLevels), rl(dz%nLats), r2(dz%nLevels,dz%nLats),  STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // '  local REAL variables.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -408,8 +407,7 @@ CONTAINS
       start = 0
       stride = 1
       edge(1) = DATE_LEN
-      edge(2) = dz%nLevels
-      edge(3) = dz%nLats
+      edge(2) = dz%nLats
 
       status = swrdfld(swid, GEO_FIELD11, start(1), stride(1), edge(1), dz%date)
       IF (status == -1) THEN
@@ -417,14 +415,15 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swrdfld(swid, GEO_FIELD9, start(2), stride(2), edge(2), rp)
+      edge(1) = dz%nLevels
+      status = swrdfld(swid, GEO_FIELD9, start(1), stride(1), edge(1), rp)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD9
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%pressure = DBLE(rp)
 
-      status = swrdfld(swid, GEO_FIELD1, start(3), stride(3), edge(3), rl)
+      status = swrdfld(swid, GEO_FIELD1, start(2), stride(2), edge(2), rl)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -432,30 +431,31 @@ CONTAINS
       dz%latitude = DBLE(rl)
 
       edge(1) = MIN_MAX
-      status = swrdfld(swid, GEO_FIELD4, start, stride, edge, r3)
+      status = swrdfld(swid, GEO_FIELD4, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD4
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      dz%localSolarTime = DBLE(r3)
+      dz%localSolarTime = DBLE(r2)
 
-      status = swrdfld(swid, GEO_FIELD12, start, stride, edge, r3)
+      status = swrdfld(swid, GEO_FIELD12, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD12
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      dz%localSolarZenithAngle = DBLE(r3)
+      dz%localSolarZenithAngle = DBLE(r2)
 
 ! Read the data fields
 
-      status = swrdfld(swid, DATA_FIELDV, start(2:3), stride(2:3), edge(2:3), r2)
+      edge(1) = dz%nLevels
+      status = swrdfld(swid, DATA_FIELDV, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DATA_FIELDV
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%l3dzValue = DBLE(r2)
 
-      status = swrdfld(swid, DATA_FIELDP, start(2:3), stride(2:3), edge(2:3), r2)
+      status = swrdfld(swid, DATA_FIELDP, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DATA_FIELDP
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -473,7 +473,7 @@ CONTAINS
 
 ! Deallocate local variables
 
-      DEALLOCATE(rp, rl, r2, r3, STAT=err)
+      DEALLOCATE(rp, rl, r2, STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_DeAllocate // '  local real variables.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -946,14 +946,13 @@ CONTAINS
 
 ! Ancillary data fields
 
-      ALLOCATE(l3dz%localSolarTime(MIN_MAX,l3dz%nLevels,l3dz%nLats), STAT=err)
+      ALLOCATE(l3dz%localSolarTime(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3DZData_T local solar time pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3dz%localSolarZenithAngle(MIN_MAX,l3dz%nLevels,l3dz%nLats), &
-               STAT=err)
+      ALLOCATE(l3dz%localSolarZenithAngle(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3DZData_T local solar zenith angle  pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1111,6 +1110,9 @@ END MODULE L3DZData
 !==================
 
 ! $Log$
+! Revision 1.2  2001/09/26 19:46:14  nakamura
+! Added local solar ancillary fields.
+!
 ! Revision 1.5  2001/05/04 18:34:50  nakamura
 ! Combined WriteMeta subroutines; removed L3DZFiles_T; truncated TIME from DATE on output.
 !
