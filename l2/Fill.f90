@@ -87,7 +87,7 @@ contains ! =====     Public Procedures     =============================
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
-      & L_REFLTEMP, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
+      & L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
       & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
@@ -1255,6 +1255,9 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_reflectorTempModel ) ! --------------- Reflector temperature model
           call FillWithReflectorTemperature ( key, quantity, phiZero, termsNode )
+
+        case ( l_resetUnusedRadiances )
+          call ResetUnusedRadiances ( quantity, offsetAmount )
 
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
           if (.not. all(got((/f_losQty,f_earthRadius,f_PtanQuantity/))))&
@@ -5736,6 +5739,20 @@ contains ! =====     Public Procedures     =============================
       end where
     end subroutine OffsetRadianceQuantity
 
+    ! ---------------------------------------------- ResetUnusedRadiances --
+    subroutine ResetUnusedRadiances ( quantity, amount )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      real (rv), intent(in) :: AMOUNT
+      ! Executable code
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity for resetUnusedRadiances fill is not radiance' )
+      where ( quantity%values > amount*0.9 )
+        quantity%values = quantity%values - amount
+      end where
+    end subroutine ResetUnusedRadiances
+
     ! ---------------------------------------------- ScaleOverlaps -------
     subroutine ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
       integer, intent(in) :: KEY        ! Tree node for command
@@ -6029,6 +6046,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.244  2003/10/15 23:12:08  livesey
+! Added ResetUnusedRadiances
+!
 ! Revision 2.243  2003/10/07 15:44:27  cvuu
 ! add new flag ignoreGeolocation in subroutine FillVectorQuantityFromL2GP
 !
