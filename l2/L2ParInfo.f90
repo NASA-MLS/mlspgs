@@ -45,6 +45,8 @@ module L2ParInfo
 
   ! Parameters
 
+  integer, parameter :: DELAYFOREACHSLAVESTDOUTBUFFER   = 500
+  integer, parameter :: FIXDELAYFORSLAVESTDOUTBUFFER   = 500000
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
   integer, parameter :: NOTIFYTAG  = InfoTag + 1
@@ -170,16 +172,17 @@ contains ! ==================================================================
   end subroutine InitParallel
 
   ! --------------------------------------------- CloseParallel -------------
-  subroutine CloseParallel
-    use Output_m, only: PRUNIT
+  subroutine CloseParallel(noSlaves)
     ! This routine closes down any parallel stuff
+    integer, intent(in) :: noSlaves     ! How many slaves
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
 
     integer :: SIGNAL                   ! From acknowledgement packet
+    integer :: slave
 
-    ! Exeuctable code
+    ! Executable code
     if ( parallel%slave ) then
       ! Send a request to finish
       call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -200,6 +203,12 @@ contains ! ==================================================================
       & call PVMErrorMessage ( info, 'unpacking finish acknowledgement')
       if ( signal /= SIG_AckFinish ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Got unrecognised signal from master' )
+    elseif ( parallel%master ) then
+      call usleep(FIXDELAYFORSLAVESTDOUTBUFFER)
+      if ( noSlaves < 1 ) return
+      do slave=1, noSlaves
+        call usleep(DELAYFOREACHSLAVESTDOUTBUFFER)
+      enddo
     end if
   end subroutine CloseParallel
 
@@ -550,6 +559,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.34  2003/12/11 23:00:58  pwagner
+! Make master task wait for slaves stdout buffers to flush
+!
 ! Revision 2.33  2003/11/14 23:37:13  pwagner
 ! Lets user change masterLoop delay via commandline option
 !
