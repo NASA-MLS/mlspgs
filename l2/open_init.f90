@@ -40,6 +40,7 @@ module Open_Init
     "$Id$"
   character(len=len(idParm)) :: Id = idParm
   character(len=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   ! integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
@@ -682,12 +683,19 @@ contains ! =====     Public Procedures     =============================
   end subroutine Announce_Error
 !===========================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Open_Init
 
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.66  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.65  2002/10/03 23:02:48  pwagner
 ! Now opens l1b files with mls_io_gen_openF
 !
