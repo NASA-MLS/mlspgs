@@ -2005,6 +2005,7 @@ contains ! =====     Public Procedures     =============================
             end do ! j = 1, yb%nCols
           end do ! r0
         else if ( my_upper ) then
+          rs = max ( subBlockLength / xb%nCols, 1 )
           do r0 = 1, xb%nRows, rs
             r1 = min ( r0 + rs - 1, xb%nRows )
             rn = r1 - r0 + 1
@@ -3134,6 +3135,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.80  2002/09/02 22:56:45  livesey
+! Embarassing bug fix.
+!
 ! Revision 2.79  2002/08/29 21:35:34  livesey
 ! New 'blocking' approach to MultiplyMatrix_XTY_0
 !
