@@ -13,6 +13,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
    USE L3DZData
    USE L3SPData
    USE MLSCF
+   USE MLSL3Common
    USE MLSMessageModule
    USE OpenInit
    USE OutputClose
@@ -35,16 +36,15 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Variables
 
-   TYPE( Mlscf_T ) :: cf
    TYPE( L3CFDef_T ) :: cfDef
+   TYPE( Mlscf_T ) :: cf
+   TYPE( OutputFiles_T ) :: dFiles, sFiles
    TYPE( OutputFlags_T ) :: flags
    TYPE( PCFData_T ) :: pcf
-   TYPE( L2GPData_T ), POINTER :: l2gp(:)
-   TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
+   TYPE( L2GPData_T ), POINTER :: l2gp(:), l3r(:), residA(:), residD(:)
    TYPE( L3CFProd_T ), POINTER :: cfProd(:)
    TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
    TYPE( L3DZData_T ), POINTER :: dzs(:), dza(:), dzd(:)
-   TYPE( L3DZFiles_T ) :: zFiles
    TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
    CHARACTER (LEN=480) :: msr
@@ -56,12 +56,12 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Initializations
 
-   zFiles%nStd = 0
-   zFiles%nDg = 0
-   zFiles%stdNames = ''
-   zFiles%dgNames = ''
-   zFiles%stdDates = ''
-   zFiles%dgDates = ''
+   sFiles%nFiles = 0
+   dFiles%nFiles = 0
+   sFiles%name = ''
+   dFiles%name = ''
+   sFiles%date = ''
+   dFiles%date = ''
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                              &started')
@@ -80,9 +80,9 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! If insufficient data found, go on to the next product
 
-      IF (l2Days < cfDef%minDays) THEN
-         msr = 'Skipping CORE processing for ' // TRIM(cfProd(i)%l3prodNameD) &
-            // ' and moving on to the next product.'
+      IF (l2Days < 1) THEN
+         msr = 'No data found for ' // TRIM(cfProd(i)%l3prodNameD) &
+            // '.  Skipping CORE processing and moving on to the next product.'
          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
          CYCLE
       ELSE
@@ -104,7 +104,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
       CALL OutputProd(pcf, cfProd(i), cfDef, anText, l3sp, l3dm, dmA, dmD, &
-                      l3r, residA, residD, dzs, dza, dzd, flags, zFiles)
+                      l3r, residA, residD, dzs, dza, dzd, flags, sFiles)
 
 ! Deallocate the databases
 
@@ -131,7 +131,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Perform final Output & Close tasks outside of the product processing loop.
 
-   CALL OutputAndClose(cf, pcf, cfProd, cfDef, avgPer, anText, zFiles)
+   CALL OutputAndClose(cf, pcf, cfProd, cfDef, avgPer, anText, sFiles, dFiles)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                                      &successfully completed!')
@@ -144,6 +144,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.12  2001/04/24 19:40:23  nakamura
+! Added ONLY to USE L2GPData statement.
+!
 ! Revision 1.11  2001/04/11 18:50:45  nakamura
 ! Moved deallocations for pointers passed between CORE & I/O up to this level.
 !
