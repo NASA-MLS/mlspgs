@@ -65,12 +65,6 @@ begin Construct
   !forall( {constructHiResLinearVMR}, !allLinearHRMolecules)
   !forall( {constructHiResLogVMR}, !allLogHRMolecules)
 
-  ;; We'll do Trop. H2O as a special one here.
-  tropH2O: Quantity, type=vmr, molecule=h2o, $
-    vGrid=vGridTropH2O, hGrid=hGridStandard, /logBasis, minValue=0.1ppmv
-  tropH2O_HR: Quantity, type=vmr, molecule=h2o, $
-    vGrid=vGridTropH2OHiRes, hGrid=hGridStandard, /logBasis, minValue=0.1ppmv
-
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
@@ -417,7 +411,7 @@ begin Construct
     iwc, iwcFine, lwc, surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
-    !allMolecules, tropH2O, tropH2O_HR, $
+    !allMolecules, $
     !allHiResMolecules, $
     rhi, rhi_HR, $
     !allColumns, $
