@@ -128,7 +128,7 @@ contains ! =====     Public Procedures     =============================
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
         if (sd_id == -1) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Error opening L1RAD file"//L1physicalFilename )
+            & "Error opening L1RAD file "//L1physicalFilename )
 
         else
           ifl1 = ifl1 + 1
@@ -364,6 +364,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.16  2001/02/23 00:53:07  vsnyder
+! Correct an error message
+!
 ! Revision 2.15  2001/02/16 00:48:07  livesey
 ! Added stuff to read l2gp's in
 !
