@@ -318,6 +318,8 @@ contains ! =====     Public Procedures     =============================
           if (.not. associated(forwardModelConfigData%molecules) ) cycle
           if ( .not. any (l2pcQ%template%molecule == &
             &   forwardModelConfigData%molecules)) cycle
+          if ( l2pcQ%template%molecule == l_extinction .and. &
+            & l2pcQ%template%radiometer /= signal%radiometer ) cycle
         end if
 
         ! Identify this quantity in x
@@ -643,6 +645,7 @@ contains ! =====     Public Procedures     =============================
       type (Vector_T), pointer :: V
 
       ! Executable code
+      foundInFirst = .false.
       select case ( l2pcQ%template%quantityType )
       case ( l_temperature )
         stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
@@ -675,6 +678,7 @@ contains ! =====     Public Procedures     =============================
               end if
             end do
           end do searchLoop
+          foundInFirst = ( vec == 1 )
         end if
       case default
         ! For the moment, just ignore things we don't understand.
@@ -688,6 +692,8 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( stateQ ) ) then
         if ( .not. DoHGridsMatch ( stateQ, l2pcQ, spacingOnly=.true. ) ) stateQ => NULL()
       end if
+
+      if ( .not. associated ( stateQ ) ) foundInFirst = .false.
 
     end subroutine FindMatchForL2PCQ
 
@@ -866,6 +872,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.27  2002/10/02 02:42:55  livesey
+! Changes to allow the new mixed extinction stuff
+!
 ! Revision 2.26  2002/09/13 22:53:22  vsnyder
 ! Move USE statements from module scope to procedure scope.  Cosmetic changes.
 ! Move some loop-invariant allocate/deallocates out of loops.
