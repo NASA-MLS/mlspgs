@@ -39,12 +39,13 @@ module ReadAPriori
 
   ! -----     Private declarations     ---------------------------------
 
-  private :: Id, ModuleName
-  !------------------------------- RCS Ident Info ------------------------------
-  character(len=130) :: id = &
-    "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
-  character(len=*), parameter :: ModuleName="$RCSfile$"
-  !-----------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
 
@@ -52,55 +53,53 @@ contains ! =====     Public Procedures     =============================
   ! Read a priori data from data files, be they l2gp, l2aux, climatology,
   ! NCEP, DAO etc.
 
-  subroutine read_apriori ( root, L2GPDatabase, l2auxDatabase, GriddedDatabase)
+  subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase)
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
-    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
 
     !Local Variables
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
-    integer :: fileHandle          ! fileHandle of a priori data file
-    integer :: fileName            ! Sub-rosa index of name in file='name'
+    integer :: FieldName        ! sub-rosa index of name in field='name'
+    character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
+    integer :: FileHandle          ! fileHandle of a priori data file
+    integer :: FileName            ! Sub-rosa index of name in file='name'
     character(len=FileNameLen) :: FileNameString   ! actual literal file name
     integer :: FileType            ! either s_l2gp or s_l2aux
-    integer :: gridIndex           ! In the griddeddata database
-    logical :: gotAlready               ! Do we need to reread this file?
+    logical, dimension(field_first:field_last) :: GOT
+    type (griddedData_T) :: GriddedData
+    integer :: GriddedOrigin            ! From tree
+    integer :: GridIndex           ! In the griddeddata database
+    logical :: GotAlready               ! Do we need to reread this file?
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
-    integer :: lastClimPCF
+    integer :: LastClimPCF
     type (L2AUXData_T) :: L2AUX
     type (L2GPData_T) :: L2GP
-    TYPE (GriddedData_T) :: GriddedData
-    integer :: l2Index             ! In the l2gp or l2aux database
+    integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
-    integer :: pcf                 ! loop index of climatology pcf numbers
-
-    integer :: sd_id
+    integer :: Pcf                 ! loop index of climatology pcf numbers
+    integer :: ReturnStatus
     integer :: SON              ! Of root, an n_spec_args or a n_named
-    integer :: swathName        ! sub-rosa index of name in swath='name'
-    integer :: sdName        ! sub-rosa index of name in sdName='name'
-    integer :: fieldName        ! sub-rosa index of name in field='name'
-    integer :: griddedOrigin            ! From tree
-    character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
-    character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
+    integer :: SdName        ! sub-rosa index of name in sdName='name'
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
-    integer :: version
-	integer :: returnStatus
+    integer :: Sd_id
+    integer :: SwathName        ! sub-rosa index of name in swath='name'
+    character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
+    integer :: Version
 
-    logical, dimension(field_first:field_last) :: got
-
-    if ( toggle (gen) ) call trace_begin( "read_apriori", root )
+    if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
 
     error = 0
-	 version = 1
-	lastClimPCF = mlspcf_l2clim_start - 1
+    version = 1
+    lastClimPCF = mlspcf_l2clim_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      got=.false.
+      got = .false.
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
@@ -119,8 +118,8 @@ contains ! =====     Public Procedures     =============================
       swathName = 0
       do j = 2, nsons(key)
         field = subtree(j,key)
-        fieldIndex=decoration(subtree(1,field))
-        got(fieldIndex)=.true.
+        fieldIndex = decoration(subtree(1,field))
+        got(fieldIndex) = .true.
         select case ( fieldIndex )
         case ( f_file )
           fileName = sub_rosa(subtree(2,field))
@@ -141,15 +140,14 @@ contains ! =====     Public Procedures     =============================
       if ( got(f_file) ) then
         call get_string ( FileName, fileNameString, strip=.true. )
       else
-        fileNameString=''
+        fileNameString = ''
       end if
         
-      select case( FileType )
+      select case ( FileType )
       case ( s_l2gp )
         if ( .not. all(got((/f_swath, f_file/)))) &
           & call announce_error ( son, &
             & 'Swath/filename name not specified in read a priori' )
-        
         call get_string ( swathName, swathNameString )
         swathNameString = swathNameString(2:LEN_TRIM(swathNameString)-1)
         ! Open the l2gp file
@@ -206,13 +204,12 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, l2Index )
         !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
         ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-        call ReadL2AUXData(sd_id, sdNameString, L2AUXDatabase(l2Index))
+        call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index) )
 
       case ( s_gridded )
 
-        if ( .not. all(got((/f_origin, f_field/)))) &
-          & call announce_error(son, &
-          & 'Incomplete gridded data information')
+        if ( .not. all(got((/f_origin, f_field/))) ) &
+          & call announce_error ( son, 'Incomplete gridded data information' )
 
         call get_string ( fieldName, fieldNameString, strip=.true. )
         
@@ -221,7 +218,7 @@ contains ! =====     Public Procedures     =============================
           
           gridIndex = AddGridTemplateToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          CALL ReadGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
+          call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
             & 'XDim,YDim,Height,TIME', TRIM(fieldNameString) )
           
@@ -238,9 +235,8 @@ contains ! =====     Public Procedures     =============================
 
           if ( .NOT. got(f_file) ) then
             
-            do pcf=lastClimPCF+1, mlspcf_l2clim_end
-              returnStatus = Pgs_pc_getReference(i, version, &
-                & fileNameString)
+            do pcf = lastClimPCF+1, mlspcf_l2clim_end
+              returnStatus = Pgs_pc_getReference(i, version, fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
             
@@ -264,10 +260,9 @@ contains ! =====     Public Procedures     =============================
           ! Locate requested grid by name, store index in gridIndex
           
           ! Check that field name is among those added by the source field
-          gridIndex=1
-          do gridIndex=1,size(griddedDatabase)
+          do gridIndex = 1, size(griddedDatabase)
             if ( trim(fieldNameString) == &
-              & trim(GriddedDatabase(gridIndex)%quantityName)) exit
+              & trim(GriddedDatabase(gridIndex)%quantityName) ) exit
           end do
 
           if ( gridIndex <= size(griddedDatabase) ) then
@@ -283,30 +278,30 @@ contains ! =====     Public Procedures     =============================
       
     end do                              ! Lines in l2cf loop
     
-    if (ERROR/=0 ) then
-	 	call MLSMessage(MLSMSG_Error,ModuleName, &
-      & 'Problem with read_apriori section')
-	end if
+    if ( ERROR/=0 ) then
+      call MLSMessage(MLSMSG_Error,ModuleName, &
+        & 'Problem with read_apriori section')
+    end if
 
     if ( toggle(gen) ) call trace_end("read_apriori")
   
   end subroutine read_apriori
 
   ! ------------------------------------------------  announce_error  -----
-  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
-  & error_number )
+  subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
+    & error_number )
   
    ! Arguments
   
-    integer, intent(in)    :: lcf_where
-    character(LEN=*), intent(in)    :: full_message
-    logical, intent(in), optional :: use_toolkit
-    integer, intent(in), optional    :: error_number
+    integer, intent(in)    :: Lcf_where
+    character(LEN=*), intent(in)    :: Full_message
+    logical, intent(in), optional :: Use_toolkit
+    integer, intent(in), optional    :: Error_number
     ! Local
 !    character (len=80) :: msg, mnemonic
 !    integer :: status
-    logical :: just_print_it
-    logical, parameter :: default_output_by_toolkit = .true.
+    logical :: Just_print_it
+    logical, parameter :: Default_output_by_toolkit = .true.
  
     if ( present(use_toolkit) ) then
       just_print_it = .not. use_toolkit
@@ -351,7 +346,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
 !===========================
-  end subroutine announce_error
+  end subroutine Announce_error
 !===========================
 
 end module ReadAPriori
@@ -360,6 +355,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.18  2001/05/03 20:34:08  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.17  2001/04/16 23:50:01  pwagner
 ! Tiny change to announce_error
 !
