@@ -218,7 +218,7 @@ contains
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
   subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -233,6 +233,7 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(out), optional :: dNewByDOld ! Derivatives
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     type(coefficients_r4) :: Coeffs
 
@@ -243,7 +244,7 @@ contains
 ! ------------------------------------------  InterpolateArray_r8  -----
 
   subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -258,6 +259,7 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     type(coefficients_r8) :: Coeffs
 
@@ -336,7 +338,7 @@ contains
 ! This subroutine is a scalar wrapper for the array one.
 
   subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -351,6 +353,7 @@ contains
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r4
@@ -358,7 +361,7 @@ contains
 ! -----------------------------------------  InterpolateScalar_r8  -----
 
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+    & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -373,6 +376,7 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
@@ -380,7 +384,7 @@ contains
 ! -------------------------------  InterpolateScalarUsingSetup_r4  -----
 
   subroutine InterpolateScalarUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -395,6 +399,7 @@ contains
     real(rk), optional, intent(in) :: badvalue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateScalarUsingSetup.f9h"
 
@@ -403,7 +408,7 @@ contains
 ! -------------------------------  InterpolateScalarUsingSetup_r8  -----
 
   subroutine InterpolateScalarUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -418,6 +423,7 @@ contains
     real(rk), optional, intent(in) :: badvalue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:), optional, intent(out) :: dyByDx
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateScalarUsingSetup.f9h"
 
@@ -426,7 +432,7 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r4  -----
 
   subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -441,6 +447,7 @@ contains
     real(rk), optional, intent(in) :: badvalue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateUsingSetup.f9h"
 
@@ -449,7 +456,7 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r8  -----
 
   subroutine InterpolateUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -464,6 +471,7 @@ contains
     real(rk), optional, intent(in) :: badvalue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+    logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
 
     include "InterpolateUsingSetup.f9h"
 
@@ -479,6 +487,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.29  2003/09/11 23:09:18  livesey
+! Added skipNewY argument
+!
 ! Revision 2.28  2003/04/04 00:10:08  livesey
 ! Added EssentiallyEqual
 !
