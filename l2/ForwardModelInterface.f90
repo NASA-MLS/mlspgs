@@ -869,8 +869,8 @@ contains ! =====     Public Procedures     =============================
         
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_begin ( 'ForwardModel.NotFreqAvg' )
-
-        call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
+        
+        call allocate_test ( frequencies,noUsedChannels, "frequencies", ModuleName )
         do channel = 1, noUsedchannels
           frequencies(channel) = &
             & fwdModelConf%signals(usedSignals(channel))%centerFrequency + &
@@ -1477,6 +1477,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.134  2001/05/17 01:44:16  livesey
+! Bug fix for non frequency avg. case
+!
 ! Revision 2.133  2001/05/17 00:49:54  livesey
 ! Interim version.  Slight problem somewhere with convolution for some bands.
 !
