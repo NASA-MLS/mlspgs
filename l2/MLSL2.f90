@@ -297,6 +297,7 @@ contains
   subroutine switch_usage
     print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
+   ! === (start of automatic usage lines) ===
     print *, '  A => AntennaPatterns'
     print *, '  C => SpectroscopyCatalog'
     print *, '  F => FilterShapes'
@@ -318,6 +319,7 @@ contains
     print *, '  slv => Output from slave processes (using pvmfcatchout)'
     print *, '  spa => Sparsity structure of fac, jac, neq'
     print *, '  tps => Test_Parse_Signals'
+   ! === (end of automatic usage lines) ===
     stop
   end subroutine switch_usage
 
@@ -386,6 +388,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.46  2001/05/23 22:31:30  pwagner
+! Automatically updates based on notes/switches
+!
 ! Revision 2.45  2001/05/23 21:59:43  livesey
 ! Interim version, almost there
 !
