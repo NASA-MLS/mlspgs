@@ -49,21 +49,17 @@ contains
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
 !----------------------------------------------------------------------------C
 !                                                                            C
-!     THIS PROGRAM IS USED IN LEVEL 2 DATA PROCESSING TO SIMULATE CLOUD      C
-!     INDUCED RADIANCES AND CLOUD RADIANCE SENSITIVITY.  IT CAN ALSO BE      C
-!     IN CLEAR-SKY CONDITION AS A CLEAR-SKY FORWARD MODEL, THAT WILL BE      C
-!     IN CLOUD FLAGING PROCESS. IN THE CLOUD FLAGING CASE, THIS PROGRAM      C
-!     MUST BE CALLED TWICE TO COMPUTE CLEAR-SKY RADIANCES IN BOTH DRY &      C
-!     WET (100% RELATIVE HUMIDITY) CONDITIONS.                               C
+!     THIS PROGRAM IS USED IN EOS/AURA MLS LEVEL 2 DATA PROCESSING SOFTWARE  C
+!     TO SIMULATE CLOUD INDUCED RADIANCES AND TO COMPUTE THE CLOUD RADIANCE  C
+!     SENSITIVITY.  IT CAN ALSO BE USED IN CLEAR-SKY CONDITIONS AS A CLEAR-  C
+!     SKY FORWARD MODEL.                                                     C
 !                                                                            C
 !     JONATHAN H. JIANG                                                      C
-!     -- MAY 18, 2001: FIRST WORKING VERSION.                                C
-!     -- JUNE 9, 2001: ELIMINATE INTERNAL GRID SO THAT THE INPUT/OUTPUT      C
-!                      GRID ARE THE SAME AS THE INTERNAL GRID. HOWEVER,      C
-!                      THE NUMBER OF MODEL PARAMETER NEEDED TO PASSE TO      C
-!                      LEVEL 2 WAS THEREFORE INCREASED.                      C
+!     -- MAY 18, 2001: FIRST F77 WORKING VERSION.                            C
+!     -- JUNE 9, 2001: FIRST F90 VERSION.                                    C
 !     -- AUG 6,  2001: ADDED TRANS FUNCTION FOR CLOUD RETRIEVAL              C
 !     -- AUG 18, 2001: ADDED FIELD OF VIEW AVERAGING                         C
+!     -- SEP 19, 2001: MODIFIED TO MODULES                                   C  
 !----------------------------------------------------------------------------C
 !                                                                            C
 !     <<< INPUT PARAMETERS >>>                                               C
@@ -74,14 +70,14 @@ contains
 !     NF:             -> Number of Frequencies.                              C
 !     NZ:             -> Number of Pressure Levels.                          C
 !                        -------------------------------------------------   C
-!               NOTE:    The internal model grid resuires NZ=640, and        C
-!                        PRESSURE levels are defined as the following:       C
-!                            NZ=640                                          C
-!                            Ptop = 40./16.-3.                               C
-!                            Pbottom=-ALOG10(PRESSURE(lowest-level))         C
-!                            dP=(Ptop-Pbottom)/NZ                            C
-!                            ZH(I)=Pbottom+(I-1)*dP,      I=1,NZ             C
-!                            PRESSURE(I) = 10**(-ZH(I)) , I=1,NZ             C
+!               NOTE:    The internal model grid resuires NZmodel=640,       C
+!                        where pressure levels are defined as following:     C
+!                            NZmodel=640                                     C
+!                            Ptop = 80./16.-3.                               C
+!                            Pbottom=-ALOG10(PRESSURE(lowest_level))         C
+!                            dP=(Ptop-Pbottom)/NZmodel                       C
+!                            ZH(I)=Pbottom+(I-1)*dP,      I=1,NZmodel        C
+!                            P(I) = 10**(-ZH(I)) ,        I=1,NZmodel        C
 !                        -------------------------------------------------   C
 !     NT:             -> Number of Tangent Pressures.                        C
 !     NS:             -> Number of Chemical Species.                         C
@@ -122,7 +118,9 @@ contains
 !     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
 !     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
 !     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
-!     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron). Note:1=Ice,2=Liquid.  C
+!     Trans(NZ-1,NF)  -> Clear Sky Transmittance Function                    C
+!     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron).                       C 
+!                        Note:1=Ice,2=Liquid.                                C 
 !                                                                            C
 !     -----------------------------------------------                        C
 !                                                                            C
@@ -130,10 +128,11 @@ contains
 !                                                                            C
 !     5. INTERNAL MODEL PARAMETERS                                           C
 !     ----------------------------                                           C
-!     NU  = 16        -> Number of scattering angles.                        C
-!     NUA = 8         -> Number of azimuth angles.                           C
-!     NAB = 50        -> Maximum number of truncation terms.                 C
-!     NR  = 40        -> Number of particle size bins.                       C 
+!     NZmodel = 640   -> Number of pressure levels.                          C
+!     NU      = 16    -> Number of scattering angles.                        C
+!     NUA     = 8     -> Number of azimuth angles.                           C
+!     NAB     = 50    -> Maximum number of truncation terms.                 C
+!     NR      = 40    -> Number of particle size bins.                       C 
 !     --------------------------------------------------------------         C
 !                                                                            C
 !     FREQUENCY RANGE: 1-3000GHz                                             C
@@ -765,4 +764,7 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.10  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
 
