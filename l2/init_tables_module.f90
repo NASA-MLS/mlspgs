@@ -575,6 +575,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_a, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_allowMissing, t+t_boolean, n+n_field_type, &
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_b, s+s_vector, f+f_template, &
@@ -593,7 +594,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    n+n_dot /) )
+    call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
@@ -610,7 +612,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_manipulation, t+t_string, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot /) )
+                    f+f_quantities, n+n_dot /), &
+             continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_model, s+s_vector, f+f_template, &
@@ -955,6 +958,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.289  2003/03/05 19:11:22  livesey
+! Added allow missing to fill.
+!
 ! Revision 2.288  2003/03/01 00:24:27  pwagner
 ! Added missingValue as filed to reading Gridded data
 !
