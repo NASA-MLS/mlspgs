@@ -124,6 +124,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -193,6 +196,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.17  2002/05/10 22:17:07  pwagner
+# Handles NOCASCADE and HDFVERSIONS like l1
+#
 # Revision 1.16  2002/04/18 20:55:28  pwagner
 # .configure now a prerequisite for executable
 #

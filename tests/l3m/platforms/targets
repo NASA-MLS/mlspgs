@@ -118,6 +118,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -176,6 +179,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.6  2001/11/21 00:25:34  pwagner
 # Added hdfeos5_linker_line
 #
