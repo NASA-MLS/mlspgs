@@ -655,7 +655,7 @@ contains ! =====     Public procedures     =============================
              l+l_losTransFunc,l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_radiusofearth,&
-             l+l_refGPH, &
+             l+l_refGPH, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
@@ -1015,6 +1015,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.135  2001/07/17 19:18:28  jonathan
+! add sizedistribution as in instrinsic, jonathan
+!
 ! Revision 2.134  2001/07/17 19:01:44  jonathan
 ! add radiusofearth as in instrinsic, jonathan
 !
