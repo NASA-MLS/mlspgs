@@ -933,7 +933,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_file, t+t_string, ndr+n_field_type, &
+             begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
              np+n_spec_def /) )
@@ -1295,6 +1295,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.390  2004/11/19 20:52:50  livesey
+! File no longer required in direct write (how come we didn't have problem
+! with this before?)
+!
 ! Revision 2.389  2004/11/08 21:56:43  livesey
 ! Added badRange
 !
