@@ -65,6 +65,7 @@ module L2Parallel
   type StoredResult_T
     integer :: key                      ! Tree node for this join
     logical :: gotPrecision             ! If set have precision as well as value
+    logical :: gotColumn                ! If set have column quantities
     integer, dimension(:), pointer :: valInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     integer, dimension(:), pointer :: precInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     character(len=HDFNameLen) :: hdfName ! Name of swath/sd
@@ -253,6 +254,8 @@ contains ! ================================ Procedures ======================
     ! Map into the above arrays
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: PRECQTY
+    type (VectorValue_T), pointer :: ColumnQty
+    type (VectorValue_T), pointer :: BoundaryPressures
     
     ! Executable code --------------------------------
 
@@ -543,6 +546,10 @@ contains ! ================================ Procedures ======================
             nullify ( precQty )
           endif
           
+          if ( storedResults(resInd)%gotColumn ) then
+ ! Figure this out tomorrow
+          endif
+          
           if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
             call output ( 'Joining ' )
             call display_string ( qty%template%name, advance='yes' )
@@ -551,7 +558,8 @@ contains ! ================================ Procedures ======================
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
             call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, precQty, l2gpDatabase, chunk )
+              & qty, precQty, BoundaryPressures, ColumnQty, &
+              & l2gpDatabase, chunk )
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
               & qty, l2auxDatabase, chunk, chunks )
@@ -774,6 +782,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.15  2001/08/02 00:18:55  pwagner
+! Began adding column quantities; incomplete
+!
 ! Revision 2.14  2001/06/22 05:19:46  livesey
 ! Moved FindFirst into MLSL2Common
 !
