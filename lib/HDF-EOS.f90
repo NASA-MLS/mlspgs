@@ -8,6 +8,11 @@ module HDFEOS               ! F90 interface to HDF-EOS.
   implicit none
   public
 
+!  I don't know how to do an interface block for this function 
+  real:: SWRDFLD
+  external SWRDFLD
+
+
   !------------------- RCS Ident Info -----------------------
   character(len=130), private :: Id = &
     & "$Id$"
@@ -81,9 +86,43 @@ module HDFEOS               ! F90 interface to HDF-EOS.
        integer,intent(in)::SWATHID
        character(len=*),intent(IN)::DIMNAME
     end function SWDIMINFO
-      
+
 
   end interface
+
+
+    contains
+
+    ! We provide functions SWRDFLD_REAL, SWRDFLD_CHAR and SWRDFIELD_DBLE.
+    ! This is done because one of the arguments of SWRDFLD can be of any 
+    ! type  -- you can read fields which are real, integer, double etc.
+
+    integer function SWRDFLD_REAL(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       real,intent(out),dimension(*)::BUFFER
+       SWRDFLD_REAL=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_REAL
+
+    integer function SWRDFLD_DBLE(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       double precision,intent(out),dimension(*)::BUFFER
+       SWRDFLD_DBLE=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_DBLE
+
+
+    integer function SWRDFLD_CHAR(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(in)::FIELDNAME
+       integer,intent(in),dimension(*)::START,STRIDE,EDGE
+       character,intent(out),dimension(*)::BUFFER
+       SWRDFLD_CHAR=SWRDFLD(SWATHID,FIELDNAME,START,STRIDE,EDGE,BUFFER)
+    end function SWRDFLD_CHAR
+
+
 
 !====================
 end module HDFEOS
@@ -91,6 +130,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.3  2000/09/14 11:16:00  pumphrey
+! HCP added SWRDFLD_REAL etc as ways to call SWRDFLD. Is there a better way?
+!
 ! Revision 2.2  2000/09/13 16:56:22  pumphrey
 ! HCP added  swdiminfo and swinqdims -- more to do, though.
 !
