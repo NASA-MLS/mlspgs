@@ -615,12 +615,16 @@ contains ! =====     Public procedures     =============================
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
+      begin, t+t_quantityType, l+l_baseline, l_cloudInducedRadiance, &
+             l_cloudSensitivity, l_cloudOpticalDepth, &
+             l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_losVel, &
+             l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
-             l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
+             l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
+             l+l_totalOpticalDepth, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
@@ -959,6 +963,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.114  2001/05/31 20:29:55  livesey
+! Added new vector types for cloud stuff.
+!
 ! Revision 2.113  2001/05/30 20:16:27  vsnyder
 ! Add 'invert' field to 'fillCovariance' spec
 !
