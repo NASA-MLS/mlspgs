@@ -61,6 +61,10 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     REAL, POINTER, DIMENSION(:) :: quality
     ! Both the above dimensioned (noProfs)
 
+    INTEGER :: accumulatdProfiles
+    ! This last one is needed by Join to keep track of which profiles
+    ! have been output so far.
+
   END TYPE L2GPData_T
 
 CONTAINS
@@ -197,6 +201,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.6  1999/12/18 01:06:28  livesey
+! Added USE of MLSStrings
+!
 ! Revision 1.5  1999/12/17 21:41:31  livesey
 ! Added check for duplicate name
 !
