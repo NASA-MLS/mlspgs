@@ -47,12 +47,14 @@ module Open_Init
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyL1BInfo  -----
-  subroutine DestroyL1BInfo ( L1BInfo )
+  subroutine DestroyL1BInfo ( L1BInfo, L2pcf )
 
-    use Global_Settings, only: ILLEGALL1BRADID
+    use MLSL2Options, only: ILLEGALL1BRADID
     use MLSFiles, only: MLS_sfend
+    use WriteMetadata, only: PCFData_T
 
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type (PCFData_T) ::                          L2pcf
     integer :: STATUS ! from deallocate
     integer :: id
     error = 0
@@ -71,6 +73,11 @@ contains ! =====     Public Procedures     =============================
       deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
       if ( status /= 0 ) then
         call announce_error ( 0, 'Error deallocating l1bInfo' )
+      end if
+      if(associated(L2pcf%L1BRADPCFIDs)) &
+           deallocate(L2pcf%L1BRADPCFIDs, stat=status)
+      if ( status /= 0 ) then
+        call announce_error ( 0, 'Error deallocating L2pcf%L1BRADPCFIDs' )
       end if
     end if
     
@@ -99,12 +106,11 @@ contains ! =====     Public Procedures     =============================
     ! Opens and reads the signal nomenclature file
     ! Gets the start and end times from the PCF
 
-    use Global_Settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
     use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
     use MLSFiles, only: MLS_sfstart
     use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
       &                      PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
-      &                      PCF, CREATEMETADATA
+      &                      PCF, CREATEMETADATA, MAXNUML1BRADIDS, ILLEGALL1BRADID
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -239,6 +245,10 @@ contains ! =====     Public Procedures     =============================
         l1bInfo%L1BRADIDs = ILLEGALL1BRADID
         if ( status /= 0 ) &
           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
+        allocate ( L2pcf%L1BRADPCFIds(MAXNUML1BRADIDS), stat=status )
+        L2pcf%L1BRADPCFIds = ILLEGALL1BRADID
+        if ( status /= 0 ) &
+          & call announce_error ( 0, 'Allocation failed for L1BRADPCFIDs' )
       end if
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
@@ -253,6 +263,7 @@ contains ! =====     Public Procedures     =============================
           exit
         else
           ifl1 = ifl1 + 1
+          L2pcf%L1BRADPCFIds(ifl1) = L1FileHandle
           l1bInfo%L1BRADIDs(ifl1) = sd_id
           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
           if(index(switches, 'pro') /= 0) then  
@@ -286,6 +297,7 @@ contains ! =====     Public Procedures     =============================
 
         call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
+        l2pcf%L1BOAPCFId = mlspcf_l1b_oa_start
         l1bInfo%L1BOAID = sd_id
         l1bInfo%L1BOAFileName = L1physicalFilename
         if(index(switches, 'pro') /= 0) then  
@@ -480,7 +492,7 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use Global_Settings, only: ILLEGALL1BRADID
+    use MLSL2Options, only: ILLEGALL1BRADID
     use L1BData, only: ReadL1BData, L1BData_T, DeallocateL1BData, Dump
     use WriteMetadata, only: PCFData_T
 
@@ -510,6 +522,10 @@ contains ! =====     Public Procedures     =============================
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
         if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+         if(associated(l2pcf%L1BRADPCFIds)) then
+  	        call output ( 'PCFid:   ' )
+	        call output ( l2pcf%L1BRADPCFIds(i), advance='yes' )
+         endif
   	      call output ( 'fileid:   ' )
 	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
          call output ( 'name:   ' )                                       
@@ -542,6 +558,8 @@ contains ! =====     Public Procedures     =============================
     call output ( 'L1OA file:', advance='yes' )
   
    if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
+      call output ( 'PCFid:   ' )
+      call output ( l2pcf%L1BOAPCFId, advance='yes' )
       call output ( 'fileid:   ' )
       call output ( l1bInfo%L1BOAID, advance='yes' )
       call output ( 'name:   ' )
@@ -651,6 +669,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.63  2002/08/28 22:28:37  pwagner
+! Saves PCFids for l1boa, l1brad for input pointer metadata
+!
 ! Revision 2.62  2002/08/21 02:23:39  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
