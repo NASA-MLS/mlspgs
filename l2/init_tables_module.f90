@@ -359,6 +359,7 @@ contains ! =====     Public procedures     =============================
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
+             l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, &
              l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
              l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
@@ -895,6 +896,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.257  2002/10/25 22:25:14  livesey
+! Added the dnwt chisquared vector types
+!
 ! Revision 2.256  2002/10/23 04:11:25  livesey
 ! Fixed up a 'too many continuation lines' problem.
 !
