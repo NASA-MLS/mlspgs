@@ -17,8 +17,8 @@ module ForwardModelSupport
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, F_INCL_CLD, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
-    & F_MOLECULEDERIVATIVES, &
-    & F_PHIWINDOW, F_POINTINGGRIDS, F_POLARIZED, F_SPECT_DER, &
+    & F_MOLECULESPOL, F_MOLECULEDERIVATIVES, F_MOLECULEDERIVATIVESPOL, &
+    & F_PHIWINDOW, F_POINTINGGRIDS, F_SPECT_DER, &
     & F_TANGENTGRID, F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_I_SATURATION, F_CLOUD_FOV, &
@@ -56,7 +56,8 @@ module ForwardModelSupport
   integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
-  integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
+  integer, parameter :: Pol_and_not_Pol      = IrrelevantFwmParameter + 1
+  integer, parameter :: TangentNotSubset     = Pol_and_not_Pol + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
@@ -93,7 +94,7 @@ contains ! =====     Public Procedures     =============================
 
     logical, parameter :: DEBUG = .false.
     character(len=255) :: FileName      ! Duh
-    integer :: I,J                      ! Loop inductor, subscript
+    integer :: I, J                     ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
     character(len=255) :: PCFFileName
     integer :: returnStatus             ! non-zero means trouble
@@ -316,6 +317,7 @@ contains ! =====     Public Procedures     =============================
     integer :: J                        ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: MoleculeSign             ! in the info%molecules array.
+    integer :: Mol, MolPol              ! Tree indices of f_molecules, ...Pol
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
@@ -361,7 +363,6 @@ contains ! =====     Public Procedures     =============================
     info%DEFAULT_spectroscopy = .false.
     info%incl_cld = .false.
     info%lockBins = .false.
-    info%polarized = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
@@ -417,8 +418,6 @@ contains ! =====     Public Procedures     =============================
         info%incl_cld = get_boolean(son)
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
-      case ( f_polarized )
-        info%polarized = get_boolean(son)
       case ( f_DEFAULT_spectroscopy )
         info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
@@ -431,6 +430,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
+        mol = son
         nelts = 0
         do j = 2, nsons(son)
           call countElements ( subtree(j,son), nelts )
@@ -445,6 +445,22 @@ contains ! =====     Public Procedures     =============================
           moleculeSign = +1 ! Indicate "root of a tree of molecules"
           call fillElements ( subtree(j,son), nelts, 0, info%molecules )
         end do
+      case ( f_moleculesPol )
+        molPol = son
+        nelts = 0
+        do j = 2, nsons(son)
+          call countElements ( subtree(j,son), nelts )
+        end do
+        call allocate_test ( info%moleculesPol, nelts, "info%moleculesPol", &
+          & ModuleName )
+        call allocate_test ( info%moleculeDerivativesPol, nelts, &
+          & "info%moleculeDerivativesPol", ModuleName )
+        info%moleculeDerivativesPol = .false.
+        nelts = 0
+        do j = 2, nsons(son)
+          moleculeSign = +1 ! Indicate "root of a tree of molecules"
+          call fillElements ( subtree(j,son), nelts, 0, info%moleculesPol )
+        end do
       case ( f_moleculeDerivatives )
         if ( .not. associated(info%molecules) ) then
           call announceError( DefineMoleculesFirst, key)
@@ -456,7 +472,20 @@ contains ! =====     Public Procedures     =============================
             where ( info%molecules == thisMolecule )
               info%moleculeDerivatives = .true.
             end where
-          end do                          ! End loop over listed signals
+          end do                          ! End loop over listed species
+        end if
+      case ( f_moleculeDerivativesPol )
+        if ( .not. associated(info%moleculesPol) ) then
+          call announceError( DefineMoleculesFirst, key)
+        else
+          do j = 1, nsons(son)-1
+            thisMolecule = decoration( subtree( j+1, son ) )
+            if ( .not. any(info%moleculesPol == thisMolecule ) ) &
+              & call announceError( BadMolecule, key )
+            where ( info%moleculesPol == thisMolecule )
+              info%moleculeDerivativesPol = .true.
+            end where
+          end do                          ! End loop over listed species
         end if
       case ( f_signals )
         allocate ( info%signals (nsons(son)-1), stat = status )
@@ -582,6 +611,18 @@ contains ! =====     Public Procedures     =============================
         & call AnnounceError ( IrrelevantFwmParameter, root )
     end select
 
+    if ( got(f_molecules) .and. got(f_moleculesPol) ) then
+      ! Make sure no molecules are both polarized and unpolarized.  The
+      ! Derivatives will take care of themselves because f_moleculeDerivatives
+      ! have to have values from f_molecules (and similarly for ...Pol).
+      do i = 1, size(info%molecules)
+        do j = 1, size(info%moleculesPol)
+          if ( info%molecules(i) == info%moleculesPol(j) ) &
+            & call announceError ( Pol_and_not_Pol, mol, info%moleculesPol(j) )
+        end do
+      end do
+    end if
+
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An error occured' )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -623,8 +664,10 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
 
+    use Intrinsic, only: Lit_Indices
     use Lexer_Core, only: PRINT_SOURCE
     use Output_M, only: Output
+    use String_Table, only: Display_String
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
@@ -653,6 +696,10 @@ contains ! =====     Public Procedures     =============================
         & advance='yes' )
     case ( IrrelevantFwmParameter )
       call output ( 'irrelevant parameter for this forward model type', &
+        & advance='yes' )
+    case ( Pol_and_not_Pol )
+      call display_string ( lit_indices(fieldIndex) ) ! Actually a molecule index
+      call output ( ' cannot be both polarized and not polarized.', &
         & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
@@ -691,6 +738,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.55  2003/02/06 22:04:48  vsnyder
+! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+!
 ! Revision 2.54  2003/02/06 00:45:51  livesey
 ! Added new binSelector stuff
 !
