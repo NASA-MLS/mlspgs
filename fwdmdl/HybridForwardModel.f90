@@ -22,7 +22,7 @@ module HybridForwardModel_m
 contains ! =====     Public Procedures     =============================
 
   subroutine HybridForwardModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian )
+    & FwdModelOut, Ifm, fmStat, Jacobian, Vectors )
 
     ! Import stuff
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, COPYVECTOR, ADDTOVECTOR, &
@@ -45,6 +45,7 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(vector_T), dimension(:), pointer, optional :: VECTORS
 
     ! Local variables
     integer :: SIDEBAND                 ! Loop counter
@@ -87,18 +88,18 @@ contains ! =====     Public Procedures     =============================
         if ( sideband == fmConf%linearSideband ) then
           if ( present(jacobian) ) then
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & linearRadiance, ifm, fmStat, linearJacobian )
+              & linearRadiance, ifm, fmStat, linearJacobian, vectors=vectors )
           else
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & linearRadiance, ifm, fmStat )
+              & linearRadiance, ifm, fmStat, vectors=vectors )
           end if
         else
           if ( present(jacobian) ) then
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & fwdModelOut, ifm, fmStat, jacobian )
+              & fwdModelOut, ifm, fmStat, jacobian, vectors )
           else
             call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-              & fwdModelOut, ifm, fmStat )
+              & fwdModelOut, ifm, fmStat, vectors=vectors )
           end if
         end if
       end do                              ! Signal loop
@@ -140,6 +141,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.3  2003/09/11 23:11:28  livesey
+! Now includes the vectors argument to push down into the linear model.
+!
 ! Revision 2.2  2003/08/13 00:47:49  livesey
 ! Cosmetic change
 !

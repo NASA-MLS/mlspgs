@@ -24,7 +24,7 @@ module PolarLinearModel_m
 contains ! =====     Public Procedures     =============================
 
   subroutine PolarLinearModel ( fmConf, FwdModelIn, FwdModelExtra,&
-    & FwdModelOut, Ifm, fmStat, Jacobian )
+    & FwdModelOut, Ifm, fmStat, Jacobian, vectors )
 
     ! Import stuff
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -53,6 +53,7 @@ contains ! =====     Public Procedures     =============================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(vector_T), dimension(:), pointer, optional :: VECTORS
 
     ! Local parameters
     ! Local variables
@@ -131,10 +132,10 @@ contains ! =====     Public Procedures     =============================
       if ( present ( jacobian ) ) then
         call ClearMatrix ( jacobianContribution )
         call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-          & radianceContribution, ifm, fmStat, jacobianContribution )
+          & radianceContribution, ifm, fmStat, jacobianContribution, vectors )
       else
         call LinearizedForwardModel ( thisConfig, fwdModelIn, fwdModelExtra, &
-          & radianceContribution, ifm, fmStat )
+          & radianceContribution, ifm, fmStat, vectors=vectors )
       end if
       call AddToVector ( fwdModelOut, radianceContribution, scaling )
       if ( present ( jacobian ) ) &
