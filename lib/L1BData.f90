@@ -1591,8 +1591,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local Parameters
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
-!   integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
+    integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
     integer, parameter :: SD_NO_COUNTERMAF = -2
+    integer, dimension(:), pointer :: cm_array
 
     ! Local Variables
 
@@ -1622,6 +1623,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       MAFoffset = max(0, FirstMAF)   ! Never let this be < 0
     endif
     call deallocateL1BData ( l1bData ) ! Avoid memory leaks
+    sds1_id = 0
 
     flag = 0
     MyNeverFail = .false.
@@ -1678,6 +1680,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( lastMAF < l1bData%firstMAF ) then
         flag = LASTMAFNOTFOUND
         if ( MyNeverFail ) return
+        call dump( (/lastMAF, l1bData%firstMAF/), 'lastMAF, l1bData%firstMAF')
         call MLSMEssage ( MLSMSG_Error, ModuleName, &
         & input_err // 'last' )
       end if
@@ -1701,6 +1704,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Find data sets for counterMAF & quantity by name
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, '/counterMAF') ) then
+      if ( DEEBUG) print *, 'no counterMAF array in file'
       if ( .not. JUSTLIKEL2AUX ) then
         flag = NOCOUNTERMAFINDX
         if ( MyNeverFail ) return
@@ -1716,12 +1720,17 @@ contains ! ============================ MODULE PROCEDURES ======================
         end do
       end if
     else
+      if ( DEEBUG) print *, 'Getting counterMAF rank'
       call GetHDF5DSRank(L1FileHandle, '/counterMAF', cmrank)
+      if ( DEEBUG) print *, cmrank
       allocate ( cmdims(cmrank), cmmaxDims(cmrank) )
+      if ( DEEBUG) print *, 'getting counterMAF dims'
       call GetHDF5DSDims(L1FileHandle, '/counterMAF', cmdims, cmmaxDims)
+      if ( DEEBUG) print *, cmdims, cmmaxDims
       ! allocate(countermaf_ptr(MAX_NOMAFS))
       ! countermaf_ptr = 0
       if ( present(FirstMAF) ) then
+        if ( DEEBUG) print *, 'reading counterMAF ', MAFoffset, l1bData%noMAFs
         call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf, &
           & (/MAFoffset/), (/l1bData%noMAFs/) )
       elseif ( cmdims(1) /= l1bData%noMAFs ) then
@@ -1744,19 +1753,29 @@ contains ! ============================ MODULE PROCEDURES ======================
           & 'Sorry--ReadL1BData_hdf5 says counterMaf sized differently from ' &
           & // trim(QuantityName) )
       else
-        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf)
+        if ( DEEBUG) print *, 'reading counterMAF '
+        ! This intermediate cm_array shouldn't be necessary 
+        ! unfortunately, w/o it sometimes hdf5 bombs
+        ! allocate(cm_array(cmdims(1)), stat=status)
+        allocate(cm_array(MAX_NOMAFS), stat=status)
+        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', cm_array)
+        l1bData%counterMaf = cm_array(1:cmdims(1))
+        deallocate(cm_array)
       end if
+      if ( DEEBUG) print *, 'deallocating counterMAF dims'
       deallocate(cmdims, cmmaxdims)
-      if ( sds1_id == -1 ) then
-        flag = NOCOUNTERMAFID
-        deallocate(dims, maxdims)
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find identifier of counterMAF data set.')
-      end if
+      ! if ( sds1_id == -1 ) then
+      !   flag = NOCOUNTERMAFID
+      !   deallocate(dims, maxdims)
+      !   if ( MyNeverFail ) return
+      !   call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'Failed to find identifier of counterMAF data set.')
+      ! end if
     end if
 
+    if ( DEEBUG) print *, 'computing FirstMAFCtr'
     l1bData%FirstMAFCtr = myminval(l1bData%counterMAF)
+    if ( DEEBUG) print *, 'computing LastMAFCtr'
     l1bData%LastMAFCtr = maxval(l1bData%counterMAF)
     if ( DEEBUG) print *, 'l1bData%FirstMAFCtr ', l1bData%FirstMAFCtr
     if ( DEEBUG) print *, 'l1bData%LastMAFCtr ', l1bData%LastMAFCtr
@@ -2158,6 +2177,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.51  2004/12/14 21:37:11  pwagner
+! Some unnecessary debug printing and a temp array
+!
 ! Revision 2.50  2004/08/26 22:34:41  pwagner
 ! No time to repair overly ambitious PadL1BData; quick patch instituted instead
 !
