@@ -240,7 +240,7 @@ contains
     ! This is for the case of a two-element path, which has no layers,
     ! and just the middle boundary twice.  It doesn't need to be inside
     ! the loops, because dTauDx will always be zero in this case.
-    if ( i_tan == 1 ) dTauDx = 0.0_rk
+    dTauDx = 0.0_rk
 
     ! dTauDx is Hermitian, so we calculate the elements explicitly, saving
     ! eleven multiplies on each diagonal (where we know the imaginary part
@@ -400,6 +400,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.18  2004/04/12 18:19:12  vsnyder
+! Make sure dTauDx is defined for paths of length 2
+!
 ! Revision 2.17  2004/03/06 00:16:03  bill
 ! fixed a bug in mcrt_der
 !
