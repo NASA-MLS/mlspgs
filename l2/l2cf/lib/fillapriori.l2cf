@@ -47,23 +47,7 @@ begin Fill
   ;; Now fill some remaining stuff
   Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
 
-  !ifdef(skipHydrostatic,{},{
-  ;; Now compute the tangent presssures for apriori
-  Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, $
-    refGPHQuantity=apriori.refGPH, $
-    geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
-    maxIterations=10
-  Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, $
-    refGPHQuantity=apriori.refGPH, $
-    geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
-    maxIterations=10
-  })
-
-  ;; Compute refracted phitans for apriori
+  ;; Compute non refracted phitans for apriori
   Fill, quantity=apriori.phiTanGHz, method=refract, $
     ptanQuantity=apriori.ptanGHz, $
     h2oQuantity=apriori.h2o, $
@@ -72,6 +56,27 @@ begin Fill
     ptanQuantity=apriori.ptanTHz, $
     h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, refract=false
+
+  !ifdef(skipHydrostatic,{},{
+  ;; Now compute the tangent presssures for apriori
+  Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, $
+    refGPHQuantity=apriori.refGPH, $
+    geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    orbitInclination=apriori.orbitInclination, $
+    phiTan=apriori.phiTanGHz, $
+    maxIterations=10
+  Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, $
+    refGPHQuantity=apriori.refGPH, $
+    geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
+    orbitInclination=apriori.orbitInclination, $
+    phiTan=apriori.phiTanTHz, $
+    maxIterations=10
+  })
+
 })
 
 end Fill

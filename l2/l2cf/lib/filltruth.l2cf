@@ -37,24 +37,7 @@ begin Fill
 
   ;; --------------------------------------------- Ptan
 
-  ;; Now deduce a corresponding ptan for this using hydrostatic
-  ;; balance.
-
-  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
-    h2oQuantity=truth.h2o, $
-    temperatureQuantity=truth.temperature, $
-    refGPHQuantity=truth.refGPH, $
-    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
-    maxIterations=10
-
-  Fill, quantity=truth.ptanTHz, method=hydrostatic, $
-    h2oQuantity=truth.h2o, $
-    temperatureQuantity=truth.temperature, $
-    refGPHQuantity=truth.refGPH, $
-    geocAltitudeQuantity=truth.tngtGeocAltTHz, $
-    maxIterations=10
-
-  ;; Compute refracted phitans for truth
+  ;; Compute non refracted phitans for truth
   Fill, quantity=truth.phiTanGHz, method=refract, $
     ptanQuantity=truth.ptanGHz, $
     h2oQuantity=truth.h2o, $
@@ -65,6 +48,28 @@ begin Fill
     h2oQuantity=truth.h2o, $
     temperatureQuantity=truth.temperature, $
     refract=false
+
+  ;; Now deduce a corresponding ptan for this using hydrostatic
+  ;; balance.
+
+  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    orbitInclination=truth.orbitInclination, $
+    phiTan=truth.phiTanGHz, $
+    maxIterations=10
+
+  Fill, quantity=truth.ptanTHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltTHz, $
+    orbitInclination=truth.orbitInclination, $
+    phiTan=truth.phiTanTHz, $
+    maxIterations=10
+
 
 end Fill
 
