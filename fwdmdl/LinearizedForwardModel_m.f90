@@ -9,7 +9,7 @@ module LinearizedForwardModel_m
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
   use Intrinsic, only: LIT_INDICES
-  use L2PC_m, only: L2PC_T, L2PCDATABASE
+  use L2PC_m, only: L2PCDATABASE
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
     & FORWARDMODELINTERMEDIATE_T
@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     type(vector_T) :: DELTAX            ! xp-xStar
     type(Signal_T) :: signal            ! A signal
 
-    type(L2PC_T), pointer :: L2PC       ! The l2pc to use
+    type(Matrix_T), pointer :: L2PC       ! The l2pc to use
     type(VectorValue_T), pointer :: RADIANCE ! The radiance quantity to fill
     type(VectorValue_T), pointer :: RADINL2PC ! The relevant radiance part of yStar
     type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
@@ -115,10 +115,8 @@ contains ! =====     Public Procedures     =============================
     ! For the moment choose the first
     l2pcBin = 1
     l2pc => l2pcDatabase(l2pcBin)
-!    print*,'Before l2pc forward model:'
-!    call dump (l2pc%kStar)
 
-    radInl2pc => GetVectorQuantityByType (l2pc%yStar, quantityType=l_radiance, &
+    radInl2pc => GetVectorQuantityByType (l2pc%row%vec, quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband )
 
     ! Create a boring vector containing only this MAF for this band but with
@@ -137,7 +135,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now we loop over the quantities in the l2pc file and construct an xPrime
     ! for them
-    call cloneVector ( xP, l2pc%xStar )
+    call cloneVector ( xP, l2pc%col%vec )
     call cloneVector ( deltaX, xP )     ! Note sets values to 0.0
 
     ! Set up some other stuff before main loop
@@ -145,11 +143,11 @@ contains ! =====     Public Procedures     =============================
       & 'closestInstances', ModuleName )
 
     ! -------- Main loop over xStar quantities -------------------------------
-    do qtyInd = 1, size ( l2pc%xStar%quantities )
+    do qtyInd = 1, size ( l2pc%col%vec%quantities )
 
       print*,'Doing l2pc quantity:',qtyInd
       ! Identify this quantity in xStar
-      l2pcQ => l2pc%xStar%quantities(qtyInd)
+      l2pcQ => l2pc%col%vec%quantities(qtyInd)
       call display_string(lit_indices(l2pcQ%template%quantityType), &
         & advance='yes')
       if (l2pcQ%template%quantityType == l_vmr) &
@@ -238,30 +236,23 @@ contains ! =====     Public Procedures     =============================
       ! Compute this instance of deltaX
       deltaX%quantities(qtyInd)%values = &
         & xP%quantities(qtyInd)%values - &
-        & l2pc%xStar%quantities(qtyInd)%values
+        & l2pc%col%vec%quantities(qtyInd)%values
 
     end do
 
     ! Now compute yP
-    print*,'Testing earlier:',&
-      & associated(l2pc%xStar%template, l2pc%kStar%col%vec%template), &
-      & associated(l2pc%yStar%template, l2pc%kStar%row%vec%template)
-    print*,'Just testing:', associated (deltaX%template, l2pc%kStar%col%vec%template)
-    print*,'One more test:',&
-      & associated(l2pc%xStar%template), associated(l2pc%kStar%col%vec%template), &
-      & associated(l2pc%yStar%template), associated(l2pc%kStar%row%vec%template)
 
-    l2pc%kStar%col%vec%template => deltaX%template
-    print*,"Now, having forced it:",&
-      & associated(deltaX%template, l2pc%kStar%col%vec%template)
-
-    call MultiplyMatrixVectorNoT ( l2pc%kStar, deltaX, yP )
+    print*,'Got to the multiply'
+    call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP )
+    print*,'Survived the multiply'
 
     ! Now we interpolate yP to ptan
 
     ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
       & quantityType = l_ptan, &
       & instrumentModule = radiance%template%instrumentModule )
+
+    print*,0
     
     call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
       & radInL2PC%template%noChans, 'ypMapped', ModuleName )
@@ -269,10 +260,12 @@ contains ! =====     Public Procedures     =============================
       & radInL2PC%template%noChans, 'resultMapped', ModuleName )
     call allocate_test( dyByDx, radiance%template%noSurfs, &
       & radInL2PC%template%noChans, 'dyByDX', ModuleName )
+    print*,1
 
     yPmapped = transpose ( &
       & reshape ( yp%quantities(1)%values(:,1), &
       &           (/radInL2PC%template%noChans, radInL2PC%template%noSurfs/) ) )
+    print*,2
 
     call InterpolateValues ( &
       & radInL2PC%template%surfs(:,1), & ! OldX
@@ -282,6 +275,9 @@ contains ! =====     Public Procedures     =============================
       & 'Spline', &                      ! use spline
       & extrapolate='Constant', &        ! dont extrapolate, clamp
       & dyByDx=dyByDx )
+
+    print*,3
+
 
     ! For the moment, overwrite, may make it an addition later for unfolded
     ! cases
@@ -304,6 +300,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.3  2001/04/27 17:35:42  livesey
+! An interim version for some testing.
+!
 ! Revision 1.2  2001/04/26 23:54:32  livesey
 ! Interim version
 !
