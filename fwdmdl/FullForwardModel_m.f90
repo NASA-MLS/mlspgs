@@ -883,6 +883,20 @@ CONTAINS
 !
     z_all = (/-3.000_rp,RESHAPE(temp%template%surfs(:,1), &
          &  (/temp%template%nosurfs/)),4.0_rp/)
+! see if pointing grid is associated, if so concatenate it to the
+! state vector
+    IF (ASSOCIATED(FwdModelConf%tangentGrid)) THEN
+      CALL ALLOCATE_TEST(z_tmp,SIZE(z_ALL) + FwdModelConf%tangentGrid%nosurfs, &
+      & 'z_tmp',modulename)
+      z_tmp = (/z_all,FwdModelConf%tangentGrid%surfs/)
+!
+! Move z_tmp to z_all
+!
+      Call Deallocate_test(z_all,'z_all',ModuleName)
+      Call Allocate_test(z_all,SIZE(z_tmp),'z_all',ModuleName)
+      z_all = z_tmp
+      Call Deallocate_Test(z_tmp,'z_tmp',ModuleName)
+    ENDIF
 !
     DO sps_i = 1 , no_mol
 !
@@ -2477,6 +2491,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.78  2002/07/31 00:03:45  livesey
+! Embarassing bug fix, was seeking wrong vector quantity.
+!
 ! Revision 2.77  2002/07/30 20:03:59  livesey
 ! More sideband fixes
 !
