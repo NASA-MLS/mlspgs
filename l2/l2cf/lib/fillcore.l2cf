@@ -7,6 +7,8 @@ begin Fill
   ;; Define our stateCore and outputPrecisionCore vectors
   stateCore: Vector, template=stateTemplate
   outputPrecisionCore: Vector, template=stateTemplate
+  Transfer, source=apriori, destination=stateCore
+  Transfer, source=aprioriPrecision, destination=outputPrecisionCore
 
   !define(fillFromOneCoreL2GP,{!dnl
     Fill, quantity=stateCore.$1, method=l2gp, $
