@@ -18,7 +18,7 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
-  use L2PC_m, only: L2PCBin_T
+  use L2PC_m, only: L2PC_T, DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -72,7 +72,7 @@ contains ! ====     Public Procedures     ==============================
     type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
     type (Matrix_Database_T), dimension(:), pointer :: Matrices
 	 type(PCFData_T) :: l2pcf
-    type(L2PCBin_T), dimension(:), pointer :: l2pcDatabase
+    type(L2PC_T), dimension(:), pointer :: l2pcDatabase
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors
@@ -154,6 +154,7 @@ subtrees: do while ( j <= howmany )
         call DestroyChunkDatabase (chunks )
         call DestroyL2GPDatabase ( l2gpDatabase )
         call DestroyL2AUXDatabase ( l2auxDatabase )
+        call DestroyL2PCDatabase ( l2pcDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
 
@@ -178,6 +179,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.38  2001/04/24 20:05:50  livesey
+! New stuff to support joining of l2pc's
+!
 ! Revision 2.37  2001/04/21 01:41:35  vsnyder
 ! Fix memory leaks
 !
