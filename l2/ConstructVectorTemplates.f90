@@ -45,7 +45,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: I, J, K        ! Loop inductors
     integer :: nSelections    ! How many selections?
-    integer, dimension(:), pointer :: SELECTED
+    integer, dimension(:), pointer :: SELECTED => NULL()
     integer :: SON            ! Son of Root
     integer :: SOURCE         ! 256*line + column of erroneous input
 
@@ -115,6 +115,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.3  2001/02/22 21:58:42  livesey
+! Nullified a pointer
+!
 ! Revision 2.2  2000/12/19 20:14:57  vsnyder
 ! Add test for duplicate quantities.
 !
