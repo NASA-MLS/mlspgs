@@ -278,13 +278,13 @@ contains
     config%do_baseline = l12(3)
     config%do_conv = l12(4)
     config%do_freq_avg = l12(5)
-    config%differentialScan = l12(6)
-    config%lockBins = l12(7)
-    config%spect_der = l12(8)
-    config%temp_der = l12(9)
-    config%skipOverlaps = l12(10)
-    config%default_spectroscopy = l12(11)
-    config%do_1d = l12(12)
+    config%do_1d = l12(6)
+    config%differentialScan = l12(7)
+    config%lockBins = l12(8)
+    config%spect_der = l12(9)
+    config%temp_der = l12(10)
+    config%skipOverlaps = l12(11)
+    config%default_spectroscopy = l12(12)
     call PVMIDLUnpack ( i11, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i11(1)
@@ -500,6 +500,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.20  2003/01/16 05:50:59  livesey
+! Bug fix in do_1d handling
+!
 ! Revision 2.19  2003/01/16 00:55:27  jonathan
 ! add do_1d, also fix bug of reversed  do_freq_avg do_baseline order
 !
