@@ -6,9 +6,11 @@
 MODULE PCFModule
 !===============================================================================
 
+   USE Hdf
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
+   USE MLSPCF
    USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
@@ -27,6 +29,8 @@ MODULE PCFModule
 !                SearchPCFNames
 !                FindFileType
 !                FindFileDay
+!                CreatePCFAnnotation 
+!                WritePCF2Hdr
 
 ! Remarks:  This module contains subroutines related to getting file names from
 !           the PCF.
@@ -56,9 +60,9 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=4) :: field
+      CHARACTER (LEN=4) :: field, zCy
 
-      INTEGER :: i, indx, numFields
+      INTEGER :: i, iCy, indx, numFields
 
 ! Initializations
 
@@ -105,11 +109,27 @@ CONTAINS
          ELSE IF (field == '$cyc') THEN
 
             IF ( PRESENT(cycle) ) THEN
-               fileName = fileName(:(indx-1)) // 'c' // TRIM(cycle) // &
+
+! Convert from CHARACTER to INTEGER
+
+               READ(cycle, '(I2)') iCy
+
+! Add a leading zero, if less than 10
+
+               IF (iCy < 10) THEN
+                  zCy = '0' // TRIM(cycle)
+               ELSE 
+                  zCy = cycle
+               ENDIF
+
+               fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
                           fileName((indx+6):)
+
             ELSE
+
                CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input cycle &
                                             &required to expand the template.')
+
             ENDIF
 
          ELSE IF (field == '$day') THEN
@@ -367,11 +387,149 @@ CONTAINS
    END SUBROUTINE FindFileDay
 !----------------------------
 
+!-----------------------------------------
+   SUBROUTINE CreatePCFAnnotation (anText)
+!-----------------------------------------
+
+! Brief description of subroutine
+! This subroutine stores the PCF as an annotation for writing to file headers.
+
+! Arguments
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_pc_getFileSize
+
+! Variables
+
+      CHARACTER (LEN=10) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+
+      INTEGER :: err, ios, pcfHandle, returnStatus, size, version
+
+! Get the size of the PCF
+
+      version = 1
+      returnStatus = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+
+      ALLOCATE(anText(size), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' anText PCF array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Open the PCF for reading
+
+      version = 1
+      returnStatus = Pgs_io_gen_openF (mlspcf_pcf_start, PGSd_IO_Gen_RDirUnf, &
+                                       size, pcfHandle, version)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the PCF text into the CHAR anText variable
+
+      READ(UNIT=pcfHandle, REC=1, IOSTAT=ios) anText
+
+! Close the PCF
+
+      returnStatus = Pgs_io_gen_closeF (pcfHandle)
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!------------------------------------
+   END SUBROUTINE CreatePCFAnnotation
+!------------------------------------
+
+!----------------------------------------
+   SUBROUTINE WritePCF2Hdr (file, anText)
+!----------------------------------------
+
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS file as an annotation.
+
+! Arguments
+
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
+      INTEGER, EXTERNAL :: hClose, hOpen
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: anID, annID, fileID, status
+
+! Open the HDF-EOS file for writing
+
+      fileID = hOpen(file, DFACC_WRITE, 0)
+      IF (fileID == -1) THEN
+         msr = MLSMSG_Fileopen // file
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Initialize the AN interface
+
+      anID = afStart(fileID)
+      IF (anID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                              &initialize the AN interface.')
+
+! Create a file annotation
+
+      annID = afFCreate(anID, AN_FILE_DESC)
+      IF (annID == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                               &create the file annotation.')
+
+! Write the PCF as an annotation to the file
+
+      status = afWriteAnn( annID, anText, SIZE(anText) )
+
+! Terminate access to the annotation
+
+      status = afEndAccess(annID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                    &terminate access to the file annotation.')
+
+! Terminate access to the AN interface
+
+      status = afEnd(anID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                       &terminate access to the AN interface.')
+
+! Close the HDF file
+
+      status = hClose(fileID)
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                                                       &close the HDF file.')
+
+!-----------------------------
+   END SUBROUTINE WritePCF2Hdr
+!-----------------------------
+
 !===================
 END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.5  2000/12/29 21:45:56  nakamura
+! Added routines FindFileType & FindFileDay.
+!
 ! Revision 1.4  2000/12/07 21:23:04  nakamura
 ! Changed SearchPCFNames so that input name is always returned with a path, negative PCF number means no file found.
 !
@@ -384,3 +542,4 @@ END MODULE PCFModule
 ! Revision 1.1  2000/10/17 20:31:58  nakamura
 ! Module for getting file names based on input in the PCF and CF.
 !
+
