@@ -297,6 +297,7 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PHIWINDOW, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE
+    use intrinsic, only: l_clear, l_none
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
@@ -370,8 +371,8 @@ contains ! =====     Public Procedures     =============================
     info%spect_der = .false.
     info%skipOverlaps = .false.
     info%differentialScan = .false.
-    info%cloud_der = 0
-    info%no_cloud_species=2
+    info%cloud_der = l_none
+    info%no_cloud_species=1
     info%no_model_surfs =640
     info%NUM_SCATTERING_ANGLES=16
     info%NUM_AZIMUTH_ANGLES=8
@@ -379,7 +380,7 @@ contains ! =====     Public Procedures     =============================
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
     info%windowUnits = phyq_profiles
-    info%i_saturation = 0
+    info%i_saturation = l_clear
 
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
@@ -701,6 +702,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.59  2003/04/11 00:48:13  dwu
+! change default values for i_saturation=l_clear, cloud_der = l_none, no_cloud_species=1
+!
 ! Revision 2.58  2003/04/02 21:49:33  jonathan
 ! remove cloud_fov
 !
