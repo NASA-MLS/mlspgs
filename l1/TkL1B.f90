@@ -20,11 +20,14 @@ MODULE TkL1B
 
   PRIVATE
 
-  PUBLIC :: L1BOA_MAF, Flag_Bright_Objects, LOG_ARR1_PTR_T
+  PUBLIC :: L1BOA_MAF, Flag_Bright_Objects, LOG_ARR1_PTR_T, GHz_GeodAlt, &
+       GHz_GeodLat, GHz_GeodAngle
 
   TYPE LOG_ARR1_PTR_T
      LOGICAL, DIMENSION(:), POINTER :: ptr
   END TYPE LOG_ARR1_PTR_T
+
+  REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG)
 
   LOGICAL, PARAMETER :: ORBINCLINE_IS_CONSTANT = .FALSE.
   REAL, PARAMETER ::    UNDEFINED_VALUE = -999.99
@@ -854,6 +857,12 @@ CONTAINS
     CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
       & q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, sc%scOrbIncl)
 
+    ! Save info for baseline corrections
+
+    GHz_GeodAlt = tp%tpGeodAlt
+    GHz_GeodLat = tp%tpGeodLat
+    GHz_GeodAngle = tp%tpGeodAngle
+
     ! Write GHz information
 
     CALL OutputL1B_GHz (noMAF, L1FileHandle, tp)
@@ -1312,9 +1321,12 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.15  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.14  2003/09/15 21:50:04  pwagner
 ! Removed illegal midline continuation--Lahey disapproves
-!
+! 
 ! Revision 2.13  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !

@@ -87,16 +87,18 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
   INTEGER, PUBLIC, PARAMETER :: P_THZSPACETEMP = p_GHzTargetTemp + 1
   INTEGER, PUBLIC, PARAMETER :: P_THZTARGETTEMP = p_THzSpaceTemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MIF_DURATION = p_THzTargetTemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_THZSpaceAngle = p_THzTargetTemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MIF_DURATION = p_THzSpaceAngle + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
+  INTEGER, PUBLIC, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
 
   ! In Output section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_HDF_VERSION_STRING = P_MIFsPerMAF + 1
+  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_THzMaxBias + 1
 
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_HDF_VERSION_STRING
+  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_REMOVEBASELINE
 
 ! Table for section ordering:
 
@@ -156,14 +158,16 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_GHzTargetTemp)=          add_ident ( 'GHzTargetTemp' )
     parm_indices(p_THzSpaceTemp)=           add_ident ( 'THzSpaceTemp' )
     parm_indices(p_THzTargetTemp)=          add_ident ( 'THzTargetTemp' )
+    parm_indices(p_THzSpaceAngle)=          add_ident ( 'THzSpaceAngle' )
+    parm_indices(p_THzMaxBias)=             add_ident ( 'THzMaxBias' )
     parm_indices(p_mif_duration)=           add_ident ( 'MIF_Duration' )
     parm_indices(p_mif_dead_time)=          add_ident ( 'MIF_DeadTime' )
     parm_indices(p_mifspermaf)=             add_ident ( 'MIFsPerMAF' )
     parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =       add_ident ( 'VersionComment' )
     parm_indices(p_produce_l1boa)=          add_ident ( 'ProduceL1BOA' )
-    parm_indices(p_simoa)=          add_ident ( 'SimOA' )
-    parm_indices(p_hdf_version_string) =    add_ident ( 'HDFVersionString' )
+    parm_indices(p_simoa)=                  add_ident ( 'SimOA' )
+    parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
 
     ! Put section names into the symbol table
 
@@ -282,6 +286,8 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_GHzTargetTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_THzSpaceTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_THzTargetTemp, t+t_numeric, n+n_name_def, &
+             begin, p+p_THzSpaceAngle, t+t_numeric, n+n_name_def, &
+             begin, p+p_THzMaxBias, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
@@ -290,7 +296,7 @@ CONTAINS ! =====     Public procedures     =============================
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
              s+s_switch, n+n_section, &
       begin, z+z_output, &
-             begin, p+p_hdf_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
@@ -301,10 +307,16 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.15  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.14  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.15  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.14  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
