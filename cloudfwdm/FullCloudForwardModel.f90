@@ -1,4 +1,3 @@
-
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -89,7 +88,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                                             fmStat, Jacobian                 )  
     ! Dummy arguments
     type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
-    type(vector_T),                   intent(in) ::  FWDMODELIN, FwdModelExtra
+    type(vector_T),                   intent(in)    :: FWDMODELIN, FwdModelExtra
     type(vector_T),                   intent(inout) :: FWDMODELOUT             ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: IFM                     ! Workspace
     type(forwardModelStatus_t),       intent(inout) :: FMSTAT                  ! Reverse comm. stuff
@@ -117,15 +116,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: SCGEOCALT                  ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: ELEVOFFSET                 ! Elevation offset quantity
     type (VectorValue_T), pointer :: LOSVEL                     ! Line of sight velocity
-    type (Signal_T) :: signal                                   ! A signal
-    type(VectorValue_T), pointer :: STATE_ext                   ! A state vector quantity
-    type(VectorValue_T), pointer :: STATE_los                   ! A state vector quantity
-    type(VectorValue_T), pointer :: SIDEBANDRATIO               ! From the state vector
+    type (Signal_T)               :: signal                     ! A signal
+    type(VectorValue_T),  pointer :: STATE_ext                  ! A state vector quantity
+    type(VectorValue_T),  pointer :: STATE_los                  ! A state vector quantity
+    type(VectorValue_T),  pointer :: SIDEBANDRATIO              ! From the state vector
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG 
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T),    pointer :: thisLine
-
 
     ! for jacobian
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
@@ -240,21 +238,23 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     maf = fmStat%maf
   
-    !-------------------------------------------------------
+    !------------------------------------------
     ! Determine which retrieval is to be used
     !    cloud_der = 0     high tangent height
     !    cloud_der = 1     low tangent height
-    !-------------------------------------------------------
+    !------------------------------------------
     doHighZt = .false.
-    doLowZt = .false.
+    doLowZt  = .false.
     if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
-    if(forwardModelConfig%cloud_der == 1) doLowZt = .true.
+    if(forwardModelConfig%cloud_der == 1) doLowZt  = .true.
 
     signal = forwardModelConfig%signals(size(forwardModelConfig%signals))
 
+    ! --------------------------------------------------------------------
     ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
+    ! --------------------------------------------------------------------
     obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
-          & quantityType=l_cloudInducedRadiance, &
+          & quantityType=l_cloudInducedRadiance,                     &
           & signal=signal%index, sideband=signal%sideband )
       noFreqs0 = size (signal%frequencies)
       do i=1, noFreqs0
@@ -370,8 +370,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call FindClosestInstances ( temp, radiance, closestInstances )
     instance = closestInstances(maf)
     tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
-!   print*,'Lat=',tLat
-
 
     ivmr=0
     do i = 1, size(forwardModelConfig%molecules)
@@ -398,6 +396,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !      instance = closestInstances(maf)
 
 	   novmrSurf = vmr%template%nosurfs
+
       call InterpolateValues ( &
         & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
         & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
@@ -483,7 +482,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Allocate_test ( a_massMeanDiameter,                                 &
       & 2, temp%template%noSurfs,                                            &
       & 'a_massMeanDiameter', ModuleName )
-
     
     if (noSurf /= GPH%template%nosurfs) then
       call MLSMessage ( MLSMSG_Error, ModuleName,                            &
@@ -507,9 +505,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
            & ForwardModelConfig%signals, sideband=signal%sideband , channel=1 )
         end do
-
-    !    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !           & "No matching antenna patterns." )
 
     whichPattern = 1
     maxSuperset = maxval ( superset )
@@ -626,11 +621,28 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       My_Catalog(j) = thisCatalogEntry
     enddo
 
-    !------------------------------------------
-    ! Now call the full CloudForwardModel code
-    !------------------------------------------
+    !---------------------------------------------
+    ! Now call the Full CloudForwardModel routine
+    !---------------------------------------------
 
     ! all demensions are in meters
+!    if (instance .gt. size(gph%values, 2)) then
+!      print*, 'gph values array size exceeded ' , instance
+!    else if (instance .gt. size(temp%values, 2)) then
+!      print*, 'temp values array size exceeded ' , instance
+!    else if (maf .gt. size(ptan%values, 2)) then
+!      print*, 'ptan ' , maf
+!    else if (maf .gt. size(earthradius%values, 2)) then
+!      print*, 'earthradius ' , maf
+!      print*, 'ptansize ' , size(ptan%values, 2)
+!    else if (instance .gt. size(sizeDistribution%values, 2)) then
+!      print*, 'sizeDistribution ' , instance
+!    else if (instance .gt. size(surfacetype%values, 2)) then
+!      print*, 'surfacetype ' , instance
+!    else if (maf .gt. size(losVel%values, 2)) then
+!      print*, 'losVel ' , maf
+!    endif
+
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
@@ -647,7 +659,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & int(sizeDistribution%values(:,instance)),                            &
       & 10.0**(-ptan%values(:,maf)),                                         &
       & zt,                                                                  &
-      & earthradius%values(1,maf),                                           &
+      & earthradius%values(1,1),                                             &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
@@ -670,7 +682,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
-      & My_Catalog, losVel%values(1,maf) )                                                         
+      & My_Catalog, losVel%values(1,1) )   
+!      & My_Catalog, losVel%values(1,maf) )                    
+                                
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
@@ -919,6 +933,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.91  2002/01/14 19:30:16  jonathan
+! minor changes
+!
 ! Revision 1.90  2001/11/16 00:49:05  jonathan
 ! clean log
 !
