@@ -67,11 +67,12 @@ contains
   subroutine Freq_Avg_DACS ( F_grid, F_grid_fltr, Fltr_func, LO_Apod, CH_Norm, &
     & Rad, Avg )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use D_CSPLINE_M, only: CSPLINE
     use D_HUNT_M, only: HUNT
     use DFFT_M, only: DTCST
     use MLSCommon, only: I4, R8, RP
+    use SineTables_m, only: CreateSineTable, n_sine => LogSize_SineTable_R8, &
+      & sines => SineTable_R8
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(r8), intent(in) :: LO_Apod(:), CH_Norm(:)
@@ -81,11 +82,6 @@ contains
 
     ! Saved stuff for DTCST
     integer, save :: L_Long, L_Short  ! Log_2 of lengths
-    integer, save :: N_Sine = 0       ! Sine table flag/size
-    real(r8), save, pointer :: Sines(:) => NULL() ! Sine table.  We can use the
-                                      ! same sine table for both transforms,
-                                      ! because the small one is a prefix of
-                                      ! the large one.
 
     integer(i4) :: I, Khi, Klo, N, Nfp, Nshort, NSines
     real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(f_grid_fltr))
@@ -97,15 +93,10 @@ contains
 
     ! Allocate sine table
     nSines = max(nfp,nshort) / 2 - 1
-    if ( associated(sines) ) then
-      if ( size(sines) /= nSines ) &
-        & call deallocate_test ( sines, 'Sines', moduleName )
-    end if
-    if ( .not. associated(sines) ) then
-      call allocate_test ( sines, nSines, 'Sines', moduleName )
-      n_sine = 0
+    if ( nSines > 2 ** n_sine - 1 ) then
       call check_size ( nfp, l_long, 'F_Grid_Fltr' )
       call check_size ( nShort, l_short, 'LO_Apod' )
+      call createSineTable ( l_long - 1 )
     end if
 
     if ( F_grid_fltr(i+1) > F_grid_fltr(i) ) then
@@ -160,6 +151,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.7  2004/02/03 02:49:23  vsnyder
+! Work on DACs frequency convolution
+!
 ! Revision 2.6  2003/07/15 23:07:05  vsnyder
 ! Simplify Freq_Avg, implement Freq_Avg_DACS
 !

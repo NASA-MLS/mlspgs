@@ -89,7 +89,6 @@ module Fov_Convolve_m
 
     integer, parameter :: pwr=12, no_fft=2**pwr
     integer(i4), save :: INIT = 0, MS = 0
-    real(r8), save :: S(no_fft)
 
     real(r8), dimension(no_fft) :: p, dp, angles, rad_fft, rad_fft1
 
@@ -358,9 +357,12 @@ module Fov_Convolve_m
 
     subroutine DRFT1_T ( A, Mode )
     ! Call DRFT1 and test its status flag
+      use SineTables_m, only: CreateSineTable, LogSize_SineTable_R8, &
+        & SineTable_R8
       real(r8) :: A(:)
       character :: Mode
-      call drft1 ( a, mode, pwr, ms, s )
+      call createSineTable ( pwr - 2 )
+      call drft1 ( a, mode, pwr, logSize_SineTable_R8, sineTable_R8 )
       if ( ms == -2 ) then
         init = 0
         call MLSMessage ( MLSMSG_Error, ModuleName, "Error in drft1" )
@@ -545,6 +547,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.15  2004/01/29 18:49:03  vsnyder
+! Change A from assumed-size to assumed-shape array
+!
 ! Revision 2.14  2003/02/07 00:05:38  bill
 ! fixed temperature derivative spike at high alitudes
 !
