@@ -97,6 +97,7 @@ mlsl2: $(mlsl2_prereqs)
 		@echo "$(blas_message)"
 		@echo "$(fwdmdl_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
+        $(fwdmdl_linker_line) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -107,7 +108,6 @@ mlsl2: $(mlsl2_prereqs)
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-        $(fwdmdl_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
 # ========================================================================
@@ -121,6 +121,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2001/03/12 23:57:46  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
 # Revision 1.13  2001/03/08 00:53:21  pwagner
 # l2_NEEDS_fwdmdl now set by default
 #
