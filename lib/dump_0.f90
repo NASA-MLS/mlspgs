@@ -35,7 +35,7 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 5
-        call output ( j, 4 ); call output ( afterSub )
+        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
         do k = j, min(j+4, size(array))
           call output ( array(k), '(1x,1pg13.6)' )
         end do
@@ -55,7 +55,7 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 10
-        call output ( j, 4 ); call output ( afterSub )
+        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
         do k = j, min(j+9, size(array))
           call output ( array(k), 6 )
         end do
@@ -75,7 +75,7 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 34
-        call output ( j, 4 ); call output ( afterSub )
+        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
         do k = j, min(j+33, size(array))
           call output ( array(k) )
         end do
@@ -98,8 +98,9 @@ contains
       if ( present(name) ) call output ( name, advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), 5
-          call output ( i, 4 )
-          call output ( j, 4 ); call output ( afterSub )
+          call output ( i, max(4,ilog10(size(array,1))+1) )
+          call output ( j, max(4,ilog10(size(array,2))+1) )
+          call output ( afterSub )
           do k = j, min(j+4, size(array,2))
             call output ( array(i,k), '(1x,1pg13.6)' )
           end do
@@ -123,8 +124,8 @@ contains
       if ( present(name) ) call output ( name, advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
-          call output ( i, 4 )
-          call output ( j, 4 ); call output ( afterSub )
+          call output ( i, max(4,ilog10(size(array,1))+1) )
+          call output ( j, max(4,ilog10(size(array,2))+1) ); call output ( afterSub )
           do k = j, min(j+9, size(array,2))
             call output ( array(i,k), 6 )
           end do
@@ -151,9 +152,10 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
-            call output ( i, 4 )
-            call output ( j, 4 )
-            call output ( k, 4 ); call output ( afterSub )
+            call output ( i, max(4,ilog10(size(array,1))+1) )
+            call output ( j, max(4,ilog10(size(array,2))+1) )
+            call output ( k, max(4,ilog10(size(array,3))+1) )
+            call output ( afterSub )
             do l = k, min(k+4, size(array,3))
               call output ( array(i,j,l), '(1x,1pg13.6)' )
             end do
@@ -163,9 +165,18 @@ contains
       end do
     end if
   end subroutine DUMP_3D_DOUBLE
+
+  integer function ilog10(int)
+    integer, intent(in) :: int
+    ilog10=nint(log10(real(int)))
+  end function ilog10
+
 end module DUMP_0
 
 ! $Log$
+! Revision 2.3  2001/03/02 01:32:08  livesey
+! Handles larger arrays better
+!
 ! Revision 2.2  2001/02/28 21:35:27  livesey
 ! Added dump logical 1d
 !
