@@ -415,6 +415,67 @@ CONTAINS
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
+                ELSE IF (cfProd%mode == 'ado') THEN
+                   ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
+                   CALL CordTransform(cfProd%mode)
+                   CALL FFSMA(l3sp(2), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0,       &
+                                    dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%l3dmValue(iP, J, I) = l3Result(I)
+                      ENDDO
+                   ENDDO 
+
+                   DO iD = 1, rDays
+                      DO iL = 1, anlats(J, iP)
+                        IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+                           atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+                           nca(iD) = nca(iD) + 1
+                           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret)
+                           residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                           residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J)  
+                           residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+                           residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret
+                           residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0
+                        END IF
+                      ENDDO
+                   ENDDO
+                   DeAllocate(l3Result) 
+
+                   flags%writel3dmAsc = .TRUE. 
+                   flags%writel3rAsc  = .TRUE.
+
+                   ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
+                   CALL CordTransform(cfProd%mode)
+                   CALL FFSMD(l3sp(3), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0,       &
+                                    dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%l3dmValue(iP, J, I) = l3Result(I)
+                      ENDDO
+                   ENDDO 
+
+                   DO iD = 1, rDays
+                      DO iL = 1, dnlats(J, iP)
+                        IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+                           dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+                           ncd(iD) = ncd(iD) + 1
+                           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret)
+                           residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                           residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
+                           residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+                           residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
+                           residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
+                        END IF
+                      ENDDO
+                   ENDDO
+                   DeAllocate(l3Result) 
+
+                   flags%writel3dmDes = .TRUE. 
+                   flags%writel3rDes  = .TRUE.
+                   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'all') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform('com')
@@ -983,6 +1044,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.17  2001/09/27 20:07:14  ybj
+! Add Precision Calculation
+!
 ! Revision 1.16  2001/09/06 18:45:37  nakamura
 ! Initialized pStart/EndIndex; removed some unused variables.
 !
