@@ -348,8 +348,12 @@ begin Construct
     dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, $
     jacobian_rows, jacobian_cols)})
   hGridDiag: hGrid, type=explicit, module=GHz, geodAngle= 0 degrees
-  !define(constructRetrievalDiagnostic,{$1: Quantity, type=$1, $
-    vGrid=vGridDiag, hGrid=hGridDiag!nl})
+  !define(constructRetrievalDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,!dnl
+  {$1: Quantity, type=$1, $
+    vGrid=vGridDiag, hGrid=hGridDiag!nl}, !dnl
+  {$1: Quantity, type=$1, $
+    vGrid=vGridIterations!nl})})
   !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
   !define(outputRetrievalDiagnostics,{!tidyList( $
     dnwt_chiSqNorm, dnwt_chiSqMinNorm, $

@@ -1,3 +1,4 @@
+!divert(-1)
 ; $Id$
 
 ; This l2cf fragment defines macros we're going to use a lot
@@ -116,6 +117,13 @@ begin Fill
   Transfer, source=measurementNoise, destination=yNoise$1
 end Fill})
 
+;; This form depends on whether the output diagnostics are to
+;; written to the dgg or dgm file
+!define(joinOneDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,{!joinOneDiagDGG($1)}, {!joinOneDiagDGM($1)})})
+!define(directWriteOneDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,{!directWriteOneDiagDGG($1)}, {!directWriteOneDiagDGM($1)})})
+
 ;; This macro is called at the end of a retrieval phase to store the
 ;; results back.
 !define(completePhase,{!dnl
@@ -165,10 +173,10 @@ end Fill
 
 !ifdef(flagSuppressRegularOutput,{},{
 !ifdef(flagPrecisionEstimates,{},{
-  begin Join
-    !ifdef(flagAvoidDirectWrite,
-    {!forall(joinOneDiagDGG,!outputRetrievalDiagnostics)},
-    {!forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)})
+  begin Join !dnl
+    !nl!ifdef(flagAvoidDirectWrite,
+    {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
+    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)})
   end Join
 })})
 })
@@ -249,7 +257,7 @@ Label, quantity=outputPrecision.$1, $
   label='$2 precision'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGM({source=state.$1,source=outputPrecision.$1})})
 !define(directWriteDGMNotState,{!dnl
-Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGM({source=$1})})
 
 ;; This macro is used to write one Cloud species.  The quantity is in $1
@@ -305,6 +313,8 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
 
 ;; This macro writes the misc. diagnostics
 !define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGM,{!directWriteDGMNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
 
 ; ------------------------------------------------------------- Join
 
@@ -364,6 +374,11 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
     swath='!translit($1,{_},{-})-!phase'!nl})
 
+;; This macro uses the joinDGM to join the diagnostics stuff
+!define(joinOneDiagDGM,{!storeJoinedDGM(joinedDGM_$1_!phase)!dnl
+  joinedDGM_$1_!phase: l2aux, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+
 ; --------------------------------------------------------------- Filling diagnostics
 
 ;; This macro is used to fill radiance chi squares
@@ -403,8 +418,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      !forall(fillMinorFrameDiagnostics,$*)
      !forall(fillMappedDiagnostics,$*)
    end Fill
-   begin Join
-     !ifdef(flagAvoidDirectWrite,
+   begin Join !dnl
+     !nl!ifdef(flagAvoidDirectWrite,
        {!forall(joinRadianceDiagnostics,$*)},
        {!forall(directWriteRadianceDiagnostics,$*)})
    end Join!nl})
@@ -546,6 +561,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.96  2004/05/04 20:38:27  livesey
+; Changed a comment
+;
 ; Revision 1.95  2004/04/28 00:31:36  livesey
 ; Bug fix in lowcloud flagging
 ;
@@ -836,3 +854,4 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 ; Revision 1.1  2002/04/29 21:54:59  pwagner
 ; First commit
 ;
+!divert!dnl

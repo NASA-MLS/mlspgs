@@ -44,6 +44,9 @@ vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], 
 vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
 vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
 
+vGridIterations: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
+vGridPhases: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
+
 sGridStandard:  vGrid, type=Explicit,   $
        values=[20,40,60,80,100,120,140,160,180,200,$
                220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
@@ -55,6 +58,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.20  2004/05/04 01:05:29  livesey
+; Changed the R1 grids (never used) and low cloud grids for R2.
+;
 ; Revision 1.19  2004/04/28 23:06:13  livesey
 ; Changed the cloud flagging height grids
 ;
