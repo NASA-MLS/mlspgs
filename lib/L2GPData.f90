@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -83,6 +83,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
+
+  ! TRUE means we can avoid using unlimited dimension and its time penalty
+  logical, public            :: AVOIDUNLIMITEDDIMS = .true.
 
   integer, parameter :: CHARATTRLEN = GA_VALUE_LENGTH
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
@@ -1821,11 +1824,13 @@ contains ! =====     Public Procedures     =============================
           & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
         l2gp%nTimes = actual_ntimes
       case (HDFVERSION_5)
-        ! Currently force unlimited, remove the .false. .and. to allow limited
+        ! By default allow limited; 
+        ! may force unlimited by setting avoidUnlimitedDims to FALSE
         ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf (l2gp, L2FileHandle, myhdfVersion, &
-          & myswathName, filename, notUnlimited=present(totNumProfs))
-          ! & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
+          & myswathName, filename,&
+          & notUnlimited=(avoidUnlimitedDims .and. present(totNumProfs)) )
+          ! & myswathName, filename, notUnlimited=present(totNumProfs))
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
@@ -2103,6 +2108,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.86  2003/12/03 17:51:14  pwagner
+! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
+!
 ! Revision 2.85  2003/11/19 22:14:08  livesey
 ! Added option (not invoked at the moment) for 'limited' dimensions in
 ! AppendL2GP
