@@ -94,7 +94,7 @@ contains
     integer,intent(in)::imonth
     integer::day
     if(imonth < 1 .or. imonth >12) then
-       call MLSMessage( MLSMSG_Warning,moduleNameIn,&
+       call MLSMessage( MLSMSG_Warning,ModuleName,&
        "in function lastday: month is out of range")
        day=31
     else
@@ -261,7 +261,7 @@ contains
     year=eudtf/1000
     dayofyear=modulo(eudtf,1000)
     if(year <1) then ! Trap bad year
-       call MLSMessage(MLSMSG_Warning,moduleNameIn,&
+       call MLSMessage(MLSMSG_Warning,ModuleName,&
             "Module dates_module,function eudtf2cal: year <1" // &
             "I Can not do BC dates. Why on earth do you want one?") 
        cal="01 Jan 0001"
@@ -279,7 +279,7 @@ contains
        dayofyear=max(1,dayofyear)
        dayofyear=min(dayofyear,daysinyear)
        write(str2,fmt="(i5)")dayofyear
-       call MLSMessage( MLSMSG_Warning,moduleNameIn,&
+       call MLSMessage( MLSMSG_Warning,ModuleName,&
        " in function eudtf2cal: day "//str1//" is out of range."//&
        "Setting it to "//str2 )
     endif
@@ -353,7 +353,7 @@ contains
            iw=iw+1
         endif
         if (iw > 3) then
-           call MLSMessage( MLSMSG_Warning,moduleNameIn,&
+           call MLSMessage( MLSMSG_Warning,ModuleName,&
            "in fn cal2eudtf: Warning: date"//caldate//" contains >3 words")
            exit l1
         endif
@@ -368,7 +368,7 @@ contains
     read(unit=tmpstring(3),fmt=*)year
     !    print*,"dayofmonth=",dayofmonth,"Month= -->",monthstring,"<--","yr=",year
     if(year <1) then ! Trap bad year
-       call MLSMessage( MLSMSG_Warning,moduleNameIn,&
+       call MLSMessage( MLSMSG_Warning,ModuleName,&
             "Module dates_module,function cal2eudtf: year <1" // &
             "I Can not do BC dates. Why on earth do you want one?" ) 
        year=0000
@@ -397,13 +397,13 @@ contains
            endif
        enddo mcloop
        if(month==0) then 
-          call MLSMessage(MLSMSG_Warning,moduleNameIn,&
+          call MLSMessage(MLSMSG_Warning,ModuleName,&
                "in function cal2eudtf: Cannot interpret month "//monthstring)
        endif
     endif
     if (month < 1 .or. month > 12) then
        write(unit=errstr,fmt="(i5)")month
-        call MLSMessage(MLSMSG_Warning,moduleNameIn,&
+        call MLSMessage(MLSMSG_Warning,ModuleName,&
              "in function cal2eudtf Month "//errstr//" Not valid. "//&
              "Setting it to 1 (==Jan)")
         month=1
@@ -447,3 +447,6 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.4  2002/10/01 18:40:35  bwknosp
+! Added RCS Ident Info Block
+!
