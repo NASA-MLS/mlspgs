@@ -103,6 +103,7 @@ model
 mif
 moleculeDerivatives
 molecules
+multiplier
 
 nabterms
 nazimuthangles
@@ -187,11 +188,15 @@ type
 unit
 
 values
+vector
 versionRange
 vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.12  2001/10/18 23:43:13  pwagner
+# Added multiplier, vector
+#
 # Revision 2.11  2001/10/16 23:34:05  pwagner
 # intrinsic, resetseed, seed fields added to addnoise method
 #
