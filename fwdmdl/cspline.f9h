@@ -19,7 +19,7 @@
 !   logical, intrinsic :: ALL
     integer :: I, JIN, KHI, KLO, KPL
     real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
-    real(rk) :: X, Y, XL, XH, YL, YH, YLIN, DYDX, H, TOL
+    real(rk) :: X, Y, XL, XH, YL, YH, YLIN, DYDX, H
 
     if ( all(yin(2:) == yin(1)) ) then
       yout = yin(1)
@@ -73,6 +73,9 @@
 ! end subroutine ?_CSPLINE
 
 ! $Log$
+! Revision 2.7  2003/11/08 02:17:30  vsnyder
+! Simplification, polishing
+!
 ! Revision 2.6  2002/12/03 01:29:21  vsnyder
 ! Typo in a comment
 !
