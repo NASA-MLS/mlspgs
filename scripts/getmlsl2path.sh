@@ -2,7 +2,7 @@
 # $Id$
 # This shell script prints the name of the desired directory for a given file type
 # First work out where we are.
-if [ -f "$MACHINE" ]
+if [ -f ~/machine.id ]
 then
   MACHINE=$(cat ~/machine.id)
 else
@@ -145,6 +145,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.27  2004/04/07 23:51:19  jonathan
+# No longer requires ~/machine.id
+#
 # Revision 1.26  2004/03/10 22:36:41  livesey
 # Added scramjet
 #
