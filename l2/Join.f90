@@ -57,13 +57,14 @@ contains ! =====     Public Procedures     =============================
   ! routine has to create the l2gp and l2aux structures with the correct size
   ! in order to be able to store all the chunks.
 
-  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
+  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), intent(in) :: vectors
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in) :: chunkNo
 
     ! Local variables
@@ -176,7 +177,7 @@ contains ! =====     Public Procedures     =============================
         call JoinL2GPQuantities ( key, swathName, quantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
-        call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo )
+        call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo, chunks )
       endif
     end do
 
@@ -366,7 +367,7 @@ contains ! =====     Public Procedures     =============================
   ! are destined to go in L2AUX quantities.
 
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
-    & chunkNo, firstInstance, lastInstance )
+    & chunkNo, chunks, firstInstance, lastInstance )
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
@@ -375,6 +376,7 @@ contains ! =====     Public Procedures     =============================
 !   integer, intent(in) :: quantityNo
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     integer, intent(in) :: chunkNo
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in), optional :: firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2aux data.
@@ -444,8 +446,13 @@ contains ! =====     Public Procedures     =============================
         ! For minor frame quantities, the dimensions are:
         ! ([frequency or channel],MIF,MAF)
         !
-        noMAFs = quantity%template%mafIndex(quantity%template%noInstances) - &
-          & quantity%template%noInstancesUpperOverlap
+        ! For minor frame quantities, we're going to allocate them to the full
+        ! size from the start, rather than expand them, as this will be more
+        ! efficient
+        noMAFs = maxval( chunks%lastMAFIndex ) - &
+          &      minval( chunks%firstMAFIndex ) + 1
+        ! THINK HERE ABOT RUNS THAT DON'T START AT THE BEGINNING !???????
+        ! MAY NEED TO CHANGE ALLOCATE
         if ( quantity%template%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L_None, L_MIF, L_MAF/)
           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
@@ -530,13 +537,20 @@ contains ! =====     Public Procedures     =============================
       ! "setup..." routine allocates zero size in the MAF's direction,
       ! Then "expand..." is called in either case (but does no copying when
       ! called immediately after the initial one).
-      call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
+      ! For minor frame quantities we don't need to expand, as they're created
+      ! at full size from the start.
+      if (.not. quantity%template%minorFrame) &
+        & call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
     end if
 
     ! Now we are ready to fill up the l2aux quantity with the new data.
     thisL2AUX%name = name
 
-    lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
+    if (quantity%template%minorFrame) then
+      lastProfile = quantity%template%mafIndex(quantity%template%noInstances)
+    else
+      lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
+    endif
     firstProfile = lastProfile-noOutputInstances+1
     
     select case (thisL2AUX%dimensions(L2AUXRank)%dimensionFamily)
@@ -548,10 +562,12 @@ contains ! =====     Public Procedures     =============================
         & quantity%template%mafCounter(useFirstInstance:useLastInstance)
     case default
     end select
-     
+    
     thisL2AUX%values(:,:,firstProfile:lastProfile) = &
       & reshape(quantity%values(:,useFirstInstance:useLastInstance), &
-      &   shape(thisL2AUX%values(:,:,firstProfile:lastProfile)))
+      &   (/ thisL2AUX%dimensions(1)%noValues, &
+      &      thisL2AUX%dimensions(2)%noValues, &
+      &      lastProfile-firstProfile+1/) )
     
     if ( toggle(gen) ) call trace_end ( "JoinL2AUXQuantities" )
 
@@ -561,6 +577,10 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.19  2001/03/15 23:26:56  livesey
+! Avoid calling ExpandL2AUXQuantitiesInPlace for minor frame quantities.
+! Really saves on memory thrashing.
+!
 ! Revision 2.18  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
 !
