@@ -297,8 +297,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
-    real(r8) :: SYSTEMTEMPERATURE       ! For estimated noise
     real :: T1, T2                      ! for timing
+    integer :: SYSTEMPNODE              ! Tree node
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
@@ -593,10 +593,7 @@ contains ! =====     Public Procedures     =============================
               spread = decoration(subtree(2,gson)) == l_true
             end if
           case ( f_systemTemperature )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, badUnitsForSystemTemperature )
-            systemTemperature = valueAsArray(1)
+            sysTempNode = subtree(j,key)
           case ( f_tngtECI )              ! For special fill of losVel
             tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
             tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -987,7 +984,7 @@ contains ! =====     Public Procedures     =============================
           radianceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(radianceVectorIndex), radianceQuantityIndex )
           call FillVectorQtyWithEstNoise ( &
-            & quantity, radianceQuantity, systemTemperature, integrationTime )
+            & quantity, radianceQuantity, sysTempNode, integrationTime )
 
         case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
@@ -2607,22 +2604,25 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
   subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
-    & systemTemperature, integrationTime )
+    & sysTempNode, integrationTime )
 
     use MLSSignals_m, only: signals
 
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
-    real(r8), intent(in) :: SYSTEMTEMPERATURE ! System temperature in K
+    integer, intent(in) :: SYSTEMPNODE ! Node describing system temperature
     real(r8), intent(in) :: INTEGRATIONTIME ! Integration time in seconds
 
     ! Local variables
     integer :: C                        ! Channel loop counter
     integer :: S                        ! Surface loop counter
     integer :: I                        ! Index into first dimension of values
+    real (r8), dimension(2) :: VALUEASARRAY
+    integer, dimension(2) :: UNITASARRAY
 
     real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
+    real (r8), dimension(quantity%template%noChans) :: SYSTEMTEMPERATURE
 
     ! Executable code
 
@@ -2646,11 +2646,30 @@ contains ! =====     Public Procedures     =============================
 
     width => signals(radiance%template%signal)%widths
 
+    if ( nsons(sysTempNode) > 2 ) then
+      if ( nsons(sysTempNode) /= 1+quantity%template%noChans ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Inappropriate number of values for system temperature' )
+      do c = 1, quantity%template%noChans
+        call expr ( subtree ( c+1, sysTempNode ) , unitAsArray, valueAsArray )
+        if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Bad units for system temperature' )
+        systemTemperature(c) = valueAsArray(1)
+      end do
+    else
+      call expr ( subtree ( 2, sysTempNode ) , unitAsArray, valueAsArray )
+      if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Bad units for system temperature' )
+      systemTemperature(:) = valueAsArray(1)
+    end if
+
     i = 1
     do s = 1, quantity%template%noSurfs
       do c = 1, quantity%template%noChans
-        quantity%values(i,:) = ( radiance%values(i,:) + systemTemperature ) / &
-          & sqrt ( integrationTime * 10e6 * width(c) )
+        quantity%values(i,:) = ( radiance%values(i,:) + systemTemperature(c) ) / &
+          & sqrt ( integrationTime * 1e6 * width(c) )
         i = i + 1
       end do
     end do
@@ -3348,6 +3367,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.121  2002/04/25 20:47:02  livesey
+! Added channel dependent system temperature, and removed
+! embarassing bug whereby radiance noise was sqrt(10) too small!
+!
 ! Revision 2.120  2002/04/18 20:14:52  pwagner
 ! Fills either rhi from h2o or inverse; passes non-interpolating test
 !
