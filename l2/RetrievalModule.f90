@@ -19,14 +19,14 @@ module RetrievalModule
   use ForwardModelWrappers, only: ForwardModel
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
-  use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
-    & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
-    & f_forwardModel, f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
-    & f_maxIterations, f_measurements, f_method, f_outputCovariance, &
-    & f_quantity, f_state, f_test, f_toleranceA, f_toleranceF, &
-    & f_toleranceR, f_weight, field_first, field_last, &
-    & l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
-    & s_forwardModel, s_sids, s_matrix, s_subset, s_retrieve, s_time
+  use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
+    & F_criteria, F_columnScale, F_covariance, F_diagonal, F_diagonalOut, &
+    & F_forwardModel, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
+    & F_maxIterations, F_measurements, F_method, F_outputCovariance, &
+    & F_quantity, F_state, F_test, F_toleranceA, F_toleranceF, &
+    & F_toleranceR, F_weight, field_first, field_last, &
+    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
+    & S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, S_time
   use Intrinsic, only: Field_indices, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
@@ -122,7 +122,6 @@ contains
     type (ForwardModelStatus_T) :: FmStat ! Status for forward model
     type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
     type(vector_T), pointer :: FwdModelExtra
-    type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
     type(vector_T) :: Gradient          ! for NWT
@@ -184,7 +183,7 @@ contains
     integer, parameter :: NotSPD = notExtra + 1   ! Not symmetric pos. definite
 
     error = 0
-    nullify ( apriori, configIndices, covariance, fwdModelIn, fwdModelOut )
+    nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, state, weight, x )
     timing = .false.
 
@@ -287,8 +286,6 @@ contains
             do k = 2, nsons(son)
               configIndices(k-1) = decoration(decoration(subtree(k,son)))
             end do
-          case ( f_fwdModelIn )
-            fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelExtra )
             fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
@@ -455,7 +452,7 @@ contains
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
                   call forwardModel ( configDatabase(configIndices(k)), &
-                    & fwdModelIn, fwdModelExtra, f, fmw, fmStat )
+                    & x, fwdModelExtra, f, fmw, fmStat )
                   end do ! k
                   call subtractFromVector ( f, measurements )
                   aj%fnorm = aj%fnorm + ( f .dot. f )
@@ -501,8 +498,7 @@ contains
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
                   call forwardModel ( configDatabase(configIndices(k)), &
-                    & fwdModelIn, fwdModelExtra, f, fmw, fmStat, &
-                    & jacobian )
+                    & x, fwdModelExtra, f, fmw, fmStat, jacobian )
                   end do ! k
                   do rowBlock = 1, size(fmStat%rows)
                     if ( fmStat%rows(rowBlock) ) then
@@ -733,6 +729,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.22  2001/04/26 23:43:23  vsnyder
+! Remove forwardModelIn from retrieve spec
+!
 ! Revision 2.21  2001/04/26 19:48:20  livesey
 ! Now uses ForwardModelWrappers
 !
