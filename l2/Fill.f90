@@ -2452,7 +2452,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------- FillVectorQuantityFromL1B ----
   subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
-  & isPrecision, PrecisionQuantity )
+    & isPrecision, PrecisionQuantity )
     integer, intent(in) :: root
     type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
     type (MLSChunk_T), INTENT(IN) ::              CHUNK
@@ -2494,11 +2494,11 @@ contains ! =====     Public Procedures     =============================
       call Announce_Error ( root, cantFillFromL1B )
     end select
 
-   if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+    if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
 
     call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & NeverFail=.true. )
+      & NeverFail= .false. )
     ! We'll have to think about `bad' values here .....
     if ( flag /= 0 ) then
       call Announce_Error ( root, errorReadingL1B )
@@ -2511,20 +2511,20 @@ contains ! =====     Public Procedures     =============================
       do column=1, size(quantity%values(1, :))
         do row=1, size(quantity%values(:, 1))
           if ( quantity%values(row, column) < 0.d0 ) &
-          & call MaskVectorQty(quantity, row, column)
+            & call MaskVectorQty(quantity, row, column)
         enddo
       enddo
     elseif ( present(precisionQuantity) ) then
       do column=1, size(quantity%values(1, :))
         do row=1, size(quantity%values(:, 1))
           if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
-          & call MaskVectorQty(quantity, row, column)
+            & call MaskVectorQty(quantity, row, column)
         enddo
       enddo
     endif
-    
+
     if ( index(switches, 'l1b') /= 0 ) &
-     & call Dump( l1bData )
+      & call Dump( l1bData )
     call DeallocateL1BData(l1bData)
 
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
@@ -2875,6 +2875,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.102  2002/01/16 18:06:31  livesey
+! Changed neverFail flag in ReadL1B to false.  I want to see
+! the error message.
+!
 ! Revision 2.101  2002/01/09 00:00:04  pwagner
 ! Replaced write or print statements with calls to output
 !
