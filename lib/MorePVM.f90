@@ -47,8 +47,12 @@ contains
     ! Local variables
     character (len=80) :: WORD
     ! Executable code
-    call get_string ( index, word, strip=.true., noError=.true. )
-    call PVMIDLPack ( trim(word), info )
+    if ( index == 0 ) then
+      call PVMIDLPack ( '', info )
+    else
+      call get_string ( index, word, strip=.true., noError=.true. )
+      call PVMIDLPack ( trim(word), info )
+    end if
   end subroutine PVMPackStringIndex
 
   ! ------------------------------------------ PVMUnpackLitIndex ---
@@ -83,7 +87,13 @@ contains
     character (len=80) :: WORD
     ! Executable code
     call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) index = GetStringIndexFromString ( trim(word) )
+    if ( info == 0 ) then
+      if ( len_trim ( word ) > 0 ) then
+        index = GetStringIndexFromString ( trim(word) )
+      else
+        index = 0
+      end if
+    end if
   end subroutine PVMUnpackStringIndex
 
   logical function not_used_here()
@@ -93,6 +103,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.4  2002/12/04 21:54:12  livesey
+! Minor bug fixes with string stuff
+!
 ! Revision 2.3  2002/10/08 17:42:46  livesey
 ! Bug fix
 !
