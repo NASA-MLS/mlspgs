@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module AntennaPatterns_m
 
   ! Read the antenna patterns file.
@@ -27,7 +30,8 @@ module AntennaPatterns_m
   end type AntennaPattern_T
 
   ! The antanna pattern database:
-  type(AntennaPattern_T), dimension(:), pointer, public :: AntennaPatterns => NULL()
+  type(AntennaPattern_T), dimension(:), pointer, save, public :: &
+    & AntennaPatterns => NULL()
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -82,7 +86,9 @@ contains
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
     integer :: SignalCount
-    integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
+    integer, pointer, dimension(:) :: Signal_Indices => NULL() ! From Parse_Signal, q.v.
+    !                                          It's never allocated because of
+    !                                          the "only_count_em" argument
     real(r8) :: V(2)                         ! To read a line from the file
 
     if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File" )
@@ -222,6 +228,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.13  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.12  2001/04/25 23:52:59  livesey
 ! Added implicit none
 !
