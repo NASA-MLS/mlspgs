@@ -26,13 +26,14 @@ module L2Parallel
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
   use Machine, only: SHELL_COMMAND
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_Deallocate
+    & MLSMSG_Deallocate, MLSMSG_WARNING
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
-    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES
+    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
+    & MACHINEFIXEDTAG
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
   use Toggles, only: Gen, Switches, Toggle
@@ -557,6 +558,28 @@ contains ! ================================ Procedures ======================
         end if
         exit masterLoop
       end if
+
+      ! Listen out for any message telling us that a machine is OK again
+      call PVMFNRecv ( -1, MachineFixedTag, bufferID )
+      if ( bufferID > 0 ) then 
+        call PVMIDLUnpack ( thisName, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'unpacking machine fixed message' )
+        if ( usingSubmit ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Got unexpected MachineFixed message but using submit method' )
+        else
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Received an external message to trust ' // &
+              & trim(thisName) // ' again.' , advance='yes' )
+          end if
+          where ( machineNames == thisName )
+            machineOK = .true.
+            jobsMachineKilled = 0
+          end where
+        end if
+      end if
+
       ! Listen out for any message that a slave task has died
       call PVMFNRecv ( -1, NotifyTAG, bufferID )
       if ( bufferID > 0 ) then
@@ -1013,6 +1036,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.42  2003/01/17 21:54:12  livesey
+! Added the machineFixed stuff.
+!
 ! Revision 2.41  2002/11/08 21:24:00  livesey
 ! Minor tidy ups associated with the non-submit mode of doing things.
 ! Now manages dead macines in a more transparent way.
