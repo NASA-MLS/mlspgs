@@ -120,7 +120,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
   integer, parameter :: F_SPECIES             = f_sourcequantity + 1
   integer, parameter :: F_SPECTROMETER        = f_species + 1
-  integer, parameter :: F_START               = f_spectrometer + 1
+  integer, parameter :: F_SPREAD              = f_spectrometer + 1
+  integer, parameter :: F_START               = f_spread + 1
   integer, parameter :: F_STATE               = f_start + 1
   integer, parameter :: F_STEP                = f_state + 1
   integer, parameter :: F_STOP                = f_step + 1
@@ -410,6 +411,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
+    field_indices(f_spread) =              add_ident ( 'spread' )
     field_indices(f_start) =               add_ident ( 'start' )
     field_indices(f_state) =               add_ident ( 'state' )
     field_indices(f_step) =                add_ident ( 'step' )
@@ -519,8 +521,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_apriori, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, &
-             n+n_dt_def, &
+      begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_l1b, l+l_l2aux, &
+             l+l_l2gp, l+l_vector, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -711,6 +713,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceApriori, s+s_apriori, n+n_field_spec, &
+             begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
@@ -860,6 +863,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.24  2001/02/20 23:17:33  livesey
+! Added more stuff for fill.
+!
 ! Revision 2.23  2001/02/20 18:44:02  livesey
 ! Removed firstIndexChannel
 !
