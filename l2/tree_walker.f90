@@ -366,7 +366,6 @@ subtrees:   do while ( j <= howmany )
           call Dump(griddedDataBase)
         end if
         call DestroyGriddedDataDatabase ( griddedDataBase )
-        call DestroyChunkDatabase (chunks )
         if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
           call Dump(l2gpDatabase)
         elseif ( index(switches,'cab') /= 0 .and. .not. parallel%slave) then
@@ -388,6 +387,7 @@ subtrees:   do while ( j <= howmany )
 
     ! Now finish up
     call CloseParallel(size(Chunks))
+    call DestroyChunkDatabase ( chunks )
     call destroy_ant_patterns_database
     call DestroyBinSelectorDatabase
     call DestroyL2PCDatabase
@@ -443,6 +443,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.121  2003/12/11 22:59:32  pwagner
+! May fill DirectWriteDatabase in global settings
+!
 ! Revision 2.120  2003/12/05 00:42:05  pwagner
 ! Removed last vestige of explicit garbage collection
 !
