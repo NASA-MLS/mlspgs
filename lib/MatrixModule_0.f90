@@ -40,7 +40,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0
   public :: operator(+), operator(.TX.), ReflectMatrix, RowScale
   public :: RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0
-  public :: SolveCholeskyV_0, Sparsify, Spill, Spill_0
+  public :: SolveCholeskyV_0, Sparsify, Spill, Spill_0, SubBlockLength
   public :: TransposeMatrix, UpdateDiagonal, UpdateDiagonal_0
   public :: UpdateDiagonalVec_0
 
@@ -217,6 +217,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
   logical, save :: CHECKBLOCKS = .false.
+  integer, save :: SUBBLOCKLENGTH = 32768
 
 contains ! =====     Public Procedures     =============================
 
@@ -1586,6 +1587,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K, L, M, MZ, N
     integer :: XI_1, XI_N, XR_1, XR_N, YI_1, YI_N, YR_1, YR_N, CR_1, CR_N, C_N
+    integer :: RS, R0, R1, RN           ! Row indicies used for 'blocking' full/full
     logical :: MY_SUB, MY_UPD, MY_UPPER
     real(r8) :: S                            ! Sign, subtract => -1 else +1
     integer :: XD, YD
@@ -1974,41 +1976,50 @@ contains ! =====     Public Procedures     =============================
         end do ! j
       case ( M_Full )         ! XB full, YB full
         if ( associated(xm) .or. associated(ym) ) then
-          do j = 1, zb%nCols  ! Columns of ZB
-            if ( associated(ym) ) then
-              if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) then
-          cycle
-              end if
-            end if
-            mz = zb%nRows
-            if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xy )
-            do i = 1, mz      ! Rows of Z = columns of XB
-              if ( associated(xm) ) then
-                if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) then
-            cycle
+          rs = max ( subBlockLength / xb%nCols, 1 )
+          do r0 = 1, xb%nRows, rs
+            r1 = min ( r0 + rs - 1, xb%nRows )
+            rn = r1 - r0 + 1
+            do j = 1, zb%nCols  ! Columns of ZB
+              if ( associated(ym) ) then
+                if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) then
+                  cycle
                 end if
               end if
-              xy = dot( xb%nRows, xb%values(1,i), 1, &
-                &                 yb%values(1,j), 1 )
-!             xy = dot_product( xb%values(1:xb%nRows,i), &
-!               &               yb%values(1:xb%nRows,j) )
-              zb%values(i,j) = zb%values(i,j) + s * xy
-            end do ! i = 1, xb%nCols
-!$OMP END PARALLEL DO
-          end do ! j = 1, yb%nCols
-        else if ( my_upper ) then
-          do j = 1, zb%nCols  ! Columns of ZB
+              mz = zb%nRows
+              if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( xy )
-            do i = 1, j       ! Rows of Z = columns of XB
-              xy = dot(xb%nRows, xb%values(1,i), 1, &
-                &                yb%values(1,j), 1 )
-!             xy = dot_product( xb%values(1:xb%nRows,i), &
-!               &               yb%values(1:xb%nRows,j) )
-              zb%values(i,j) = zb%values(i,j) + s * xy
-            end do ! i
+              do i = 1, mz      ! Rows of Z = columns of XB
+                if ( associated(xm) ) then
+                  if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) then
+                    cycle
+                  end if
+                end if
+                xy = dot( rn, xb%values(r0,i), 1, &
+                  &           yb%values(r0,j), 1 )
+!               xy = dot_product( xb%values(r0:r1,i), &
+!                 &               yb%values(r0:r1,j) )
+                zb%values(i,j) = zb%values(i,j) + s * xy
+              end do ! i = 1, xb%nCols
 !$OMP END PARALLEL DO
-          end do ! j
+            end do ! j = 1, yb%nCols
+          end do ! r0
+        else if ( my_upper ) then
+          do r0 = 1, xb%nRows, rs
+            r1 = min ( r0 + rs - 1, xb%nRows )
+            rn = r1 - r0 + 1
+            do j = 1, zb%nCols  ! Columns of ZB
+!$OMP PARALLEL DO private ( xy )
+              do i = 1, j       ! Rows of Z = columns of XB
+                xy = dot( rn, xb%values(r0,i), 1, &
+                  &           yb%values(r0,j), 1 )
+!               xy = dot_product( xb%values(r0:r1,i), &
+!                 &               yb%values(r0:r1,j) )
+                zb%values(i,j) = zb%values(i,j) + s * xy
+              end do ! i
+            end do ! j
+!$OMP END PARALLEL DO
+          end do ! r0
         else
           call gemm ( 'T', 'N', xb%nCols, yb%nCols, xb%nRows, s, &
             & xb%values, xb%nRows, yb%values, yb%nRows, 1.0_r8, &
@@ -3123,6 +3134,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.79  2002/08/29 21:35:34  livesey
+! New 'blocking' approach to MultiplyMatrix_XTY_0
+!
 ! Revision 2.78  2002/08/29 04:44:53  livesey
 ! Made the MultiplyMatrix_XY and XT_T slightly more efficient.
 !
