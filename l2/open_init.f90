@@ -35,7 +35,7 @@ module Open_Init
 
   implicit none
   private
-  public :: Close_MLSCF, DestroyL1BInfo, OpenAndInitialize, Open_MLSCF
+  public :: DestroyL1BInfo, OpenAndInitialize
 
   ! -----     Private declarations     ---------------------------------
 
@@ -390,6 +390,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.29  2001/04/05 23:44:53  pwagner
+! Fixed tiny error
+!
 ! Revision 2.28  2001/04/05 23:40:50  pwagner
 ! Deleted open_mlscf and close_mlscf and all MLSMessages
 !
