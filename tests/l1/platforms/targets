@@ -3,6 +3,31 @@ include ../Makefile.dep
 # "$Id$"
 
 # ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+
+# ========================================================================
 ALLOBJS = $(OBJS)
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
@@ -15,29 +40,32 @@ libl1_objs := $(wildcard $(itmdir)/*.o)
 
 l1_driver = MLSL1.o
 
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building mlsl1 test with PVM support
+   PVM_OBJS=
+else
+   pvm_linker_line=
+   pvm_message=Building mlsl1 test without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+   blas_linker_line=-L${BLAS} -lblas
+   blas_message=Building mlsl1 test with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building mlsl1 test with internally-supplied BLAS
+endif
+
 # ========================================================================
 libl1.a: $(libl1_objs)
 	ar ru $@ $?
 	ar d $@ $(itmdir)/$(l1_driver)
 
 test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
-	case "$(PVM_ROOT)" in \
-		"") \
-		echo "Building test without PVM support" ; \
-		$(FC) $(LDOPTS) -o test $(ALLOBJS) \
-                      -L./ -ll1 \
-                      -L${libdir} -lmls \
-		-L${PGSTK} -lPGSTK \
-        -L${HDFEOS} -lhdfeos \
-		-L${HDF} -lmfhdf \
-        -ldf \
-        -lz \
-        -ljpeg \
-		-L${GCTP} -lGctp \
-        $(l_specials) ; \
-		;; \
-		*) \
-		echo "Building test with PVM support" ; \
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
 		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll1 \
                       -L${libdir} -lmls \
@@ -48,10 +76,10 @@ test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
         -lz \
         -ljpeg \
 		-L${GCTP} -lGctp \
-		-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3 \
-        $(l_specials) ; \
-		;; \
-	esac 
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(l_specials) \
+
 # ========================================================================
 
 clean:
@@ -63,6 +91,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2001/02/05 19:40:17  pwagner
+# LDOPTS added to load statements
+#
 # Revision 1.1  2001/02/01 23:12:32  pwagner
 # First commit
 #

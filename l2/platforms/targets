@@ -3,6 +3,38 @@ include ../Makefile.dep
 # "$Id$"
 
 # ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+
+# RETRIEVAL_OBJS
+# This variable is defined only if MLSCONFG=LF95.Linux
+# otherwise it is blank
+# This is because it needs MatrixModule_0 in lib which the NAG f95 v4.0
+# compiler cannot handle
+
+# ========================================================================
 #       The objects for the shared source files (in srclib)
 # Include their dependencies
 include $(srclib)/Makefile.dep
@@ -11,14 +43,15 @@ include $(srclib)/Makefile.dep
 ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
 
 #Dependency rules for RETRIEVAL_OBJS (if we need them)
-RetrievalModule.o: RetrievalModule.f90 ${OBJS} $(srclib_objs)
+ForwardModelInterface.o: ForwardModelInterface.f90 ${OBJS} $(srclib_objs)
+RetrievalModule.o: RetrievalModule.f90 ForwardModelInterface.o ${OBJS} $(srclib_objs)
 
 #                  PVM v. non-PVM options
 # If we implement an option to allow non-PVM-dependent installations
 # uncomment this next line; this will set our PVM objects
 # w/o complaining if it does not exist yet;
 # the latter case leaves PVM_OBJS empty
--include ../PVM_OBJS.inc
+#-include ../PVM_OBJS.inc
 #-------------------- without the non-PVM option
 # The following lines hardwire PVM_OBJS and so *require* PVM
 # If we implement the non-PVM option, comment out all these
@@ -28,12 +61,29 @@ PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 SnoopMLSL2.o: SnoopMLSL2.f90 $(OBJS) $(libdir)/libmls.a
 
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building mlsl2 with PVM support
+   PVM_OBJS=SnoopMLSL2.o
+else
+   pvm_linker_line=
+   pvm_message=Building mlsl2 without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+   blas_linker_line=-L${BLAS} -lblas
+   blas_message=Building mlsl2 with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building mlsl2 with internally-supplied BLAS
+endif
+
 # ========================================================================
 mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
-	case "$(PVM_ROOT)" in \
-		"") \
-		echo "Building mlsl2 without PVM support" ; \
-		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) $(PVM_OBJS) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -42,23 +92,10 @@ mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
         -lz \
         -ljpeg \
 		-L${GCTP} -lGctp \
-        $(l_specials) ; \
-		;; \
-		*) \
-		echo "Building mlsl2 with PVM support" ; \
-		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) $(PVM_OBJS)  \
-                      -L${libdir} -lmls \
-		-L${PGSTK} -lPGSTK \
-        -L${HDFEOS} -lhdfeos \
-		-L${HDF} -lmfhdf \
-        -ldf \
-        -lz \
-        -ljpeg \
-		-L${GCTP} -lGctp \
-		-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3 \
-        $(l_specials) ; \
-		;; \
-	esac 
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(l_specials) \
+		  
 # ========================================================================
 
 clean:
@@ -70,6 +107,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/02/05 19:37:37  pwagner
+# LDOPTS added to load statements
+#
 # Revision 1.6  2001/01/23 19:09:24  pwagner
 # With optional PVM support
 #
