@@ -75,7 +75,7 @@ l2_test: libfwdmdl.a
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean targ tarz
+.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
 
 tar:
 
@@ -131,6 +131,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.9  2001/03/13 19:07:59  pwagner
+# clean now removes executables, too
+#
 # Revision 1.8  2001/03/12 22:46:57  pwagner
 # Revised clean, tar; automatic symlink to Makefile
 #
