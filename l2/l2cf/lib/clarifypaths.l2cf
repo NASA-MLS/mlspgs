@@ -7,7 +7,7 @@
 !ifdef(calpath,{},{!define(calpath,{!inpath/l2cal})})
 !ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{!inpath/l2gp/s5--t/!year(!day)})})
 !ifdef(inpathcli,{},{!define(inpathcli,!calpath)})
-!ifdef(climatologyFile,{}{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr-v1-0-1_0000d000.txt'})})
+!ifdef(climatologyFile,{},{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr-v1-0-1_0000d000.txt'})})
 })
 
 !ifdef(calpath,{},{!define(calpath,{/data/emls/l2cal})})
@@ -22,7 +22,7 @@
 !ifdef(outpathl2aux,{},{!define(outpathl2aux,!outpath)})
 ; ------------------------------------------ Climatology files
 !ifdef(inpathcli,{},{!define(inpathcli,!calpath)})
-!ifdef(climatologyFile,{}{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'})})
+!ifdef(climatologyFile,{},{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'})})
 ; ------------------------------------------ Forward model input
 !ifdef(inpathfwm,{},{!define(inpathfwm,!calpath)})
 ; ------------------------------------------ L2PCs
