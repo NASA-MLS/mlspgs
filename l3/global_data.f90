@@ -7,6 +7,7 @@ Module global_data
 !===============================================================================
 
 	USE MLSCommon
+	USE SDPTOOLKIT
 	Implicit None
 	Save
 	PUBLIC
@@ -25,10 +26,8 @@ Module global_data
 
 ! Parameters
 
-	Real, Parameter :: PI=3.14159265
-
-	Integer	:: nt, nwave, mtotal
-	Real    :: orbitfreq, c0, lonD0, lonDA0, t0
+	Integer	:: nt, nt_a, nt_d, nwave, mtotal
+	Real    :: orbitfreq, c0, lonD0, lonA0, lonDA0, t0
 	Real    :: tau0, tD0, tA0, tDA0, dtad, dlonad, d1lonad, sina, cosa, ds
 	Real    :: sD0, sA0, rD0, rA0, sDA0, rDA0
 	Real    :: krmax 
@@ -42,7 +41,7 @@ Module global_data
 
         Real, Allocatable, Dimension(:) :: lonDA, tDA, sDA, rDA
         Real(r8), Allocatable, Dimension(:) :: DAcend
-        double complex, Allocatable, Dimension(:) :: phikrda
+        double complex, Allocatable, Dimension(:) :: phikra, phikrd
 
 	Type Loc_T
 	   Real :: lon
@@ -59,3 +58,6 @@ End Module global_data
 !=====================
 
 ! $Log$
+! Revision 1.1  2000/10/05 18:17:01  nakamura
+! Module split from synoptic.f90 and modified to be more like the standard template.
+!
