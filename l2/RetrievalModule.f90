@@ -49,10 +49,6 @@ module RetrievalModule
     & GetVectorQuantityIndexByName, MultiplyVectors, operator(.DOT.), &
     & ScaleVector, SetMask, SubtractFromVector, Vector_T
 
-  !??? The next USE statement is Temporary for l2load:
-  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
-    & TEMPORARY_FWD_MDL_INFO
-
   implicit NONE
   private
   public :: RETRIEVE
@@ -74,8 +70,7 @@ contains
 
   ! ---------------------------------------------------  Retrieve  -----
 ! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelConfig )
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, configDatabase, &
-    & fmc, fmi, tfmi ) !??? Last line temporary
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, configDatabase )
   ! Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
@@ -86,12 +81,6 @@ contains
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
-
-    !??? Begin temporary stuff to start up the forward model
-    type(fwd_mdl_config) :: FMC
-    type(fwd_mdl_info), dimension(:), pointer :: FMI
-    type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
-    !??? End of temporary stuff to start up the forward model
 
     ! Local variables:
     type(nwt_T) :: AJ                   ! "About the Jacobian", see NWT.
@@ -624,8 +613,7 @@ contains
         end do
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
-        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, &
-          & fmc, fmi, tfmi ) !??? Last line is temporary
+        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase)
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -690,6 +678,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.13  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.12  2001/04/07 01:50:48  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
