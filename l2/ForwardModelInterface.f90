@@ -925,7 +925,6 @@ contains ! =====     Public Procedures     =============================
 
       maf=fmStat%maf
       if ( toggle(emit) .and. levels(emit) > 0 ) then
-        call trace_begin ( 'ForwardModel.MAF' )
         call output ( 'Doing MAF: ' )
         call output ( maf, advance='yes' )
       end if
@@ -1038,7 +1037,7 @@ contains ! =====     Public Procedures     =============================
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-        if ( toggle(emit) .and. levels(emit) > 0 ) then
+        if ( toggle(emit) .and. levels(emit) > 1 ) then
           call trace_begin ( 'ForwardModel.Pointing' )
           call output ( 'Ptg = ' ); call output ( ptg_i, advance='yes' )
         end if
@@ -1091,7 +1090,7 @@ contains ! =====     Public Procedures     =============================
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
-          if ( toggle(emit) .and. levels(emit) > 0 ) then
+          if ( toggle(emit) .and. levels(emit) > 2 ) then
             call trace_begin ( 'ForwardModel.Frequencies' )
             call output ( 'Frq = ' ); call output ( frq_i, advance='yes' )
           end if
@@ -1120,7 +1119,7 @@ contains ! =====     Public Procedures     =============================
             &  max_zeta_dim, max_phi_dim, ier )
           if ( ier /= 0 ) goto 99
 
-          if ( toggle(emit) .and. levels(emit) > 0 ) &
+          if ( toggle(emit) .and. levels(emit) > 2 ) &
             & call trace_end ( 'ForwardModel.Frequencies' )
         end do                          ! Frequency loop
 
@@ -1129,7 +1128,7 @@ contains ! =====     Public Procedures     =============================
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
 
-        if ( toggle(emit) .and. levels(emit) > 0 ) &
+        if ( toggle(emit) .and. levels(emit) > 1 ) &
           & call trace_begin ( 'ForwardModel.FrequencyAvg' )
         if ( forwardModelConfig%do_freq_avg ) then
           centerFreq = signal%lo + thisSideband * signal%centerFrequency
@@ -1201,12 +1200,12 @@ contains ! =====     Public Procedures     =============================
           end if                        ! Want derivatives for this
         end do                          ! Loop over species
 
-        if ( toggle(emit) .and. levels(emit) > 0 ) &
+        if ( toggle(emit) .and. levels(emit) > 1 ) &
           & call trace_end ( 'ForwardModel.FrequencyAvg' )
 
         call deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
 
-        if ( toggle(emit) .and. levels(emit) > 0 ) &
+        if ( toggle(emit) .and. levels(emit) > 1 ) &
           & call trace_end ( 'ForwardModel.Pointing' )
 
       end do                            ! Pointing Loop
@@ -1439,6 +1438,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.113  2001/04/25 00:09:48  vsnyder
+! Use 'levels(emit)' to control output detail
+!
 ! Revision 2.112  2001/04/24 23:11:04  vsnyder
 ! Use 'emit' toggle (set by -f option or @E) to control output
 !
