@@ -221,7 +221,7 @@ contains ! =====     Public Procedures     =============================
     use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
-    use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
+    use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
@@ -272,7 +272,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: NOSOURCES                ! No. things to output
-    integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux
+    integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2dgg
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
     integer :: RETURNSTATUS
@@ -365,7 +365,8 @@ contains ! =====     Public Procedures     =============================
         sourceVectors(source) = decoration(decoration(subtree(1,gson)))
         sourceQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
       case ( f_precision )
-        if ( outputType /= l_l2gp ) call Announce_Error ( son, no_error_code, &
+        if ( all ( outputType /= (/ l_l2gp, l_l2dgg /) ) ) &
+          & call Announce_Error ( son, no_error_code, &
           & "Precision only appropriate for l2gp files" )
         gson = subtree(2,son)
         precisionVectors(source) = decoration(decoration(subtree(1,gson)))
@@ -399,7 +400,8 @@ contains ! =====     Public Procedures     =============================
       else
         expectedType = l_l2aux
       end if
-      if ( outputType /= expectedType ) then
+      if ( outputType /= expectedType .and. .not. &
+        & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) ) then
         call output ( "Offending quantity " )
         call display_string ( qty%template%name, strip=.true., advance='yes' )
         call Announce_Error ( son, no_error_code, &
@@ -443,7 +445,7 @@ contains ! =====     Public Procedures     =============================
       call split_path_name(filename, path, file_base)
       if ( .not. TOOLKIT ) then
         handle = 0
-      elseif ( outputType == l_l2gp ) then
+      elseif ( any ( outputType == (/ l_l2gp, l_l2dgg /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
@@ -462,7 +464,7 @@ contains ! =====     Public Procedures     =============================
       endif
       select case ( outputType )
 
-      case ( l_l2gp )
+      case ( l_l2gp, l_l2dgg )
         ! Before opening file, see which swaths are already there
         ! and which ones need to be created
         if ( DeeBUG ) print *, 'Allocating ', noSources
@@ -539,7 +541,7 @@ contains ! =====     Public Procedures     =============================
         endif
         
         select case ( outputType )
-        case ( l_l2gp )
+        case ( l_l2gp, l_l2dgg )
           ! Call the l2gp swath write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
           ! into the l2gp swath named 'hdfName' starting at profile 
@@ -568,7 +570,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Close the output file of interest (does this need to be split like this?)
       select case ( outputType )
-      case ( l_l2gp )
+      case ( l_l2gp, l_l2dgg )
         if ( DeeBUG ) print *, 'Deallocating ', noSources
         call Deallocate_test ( logicalBuffer, 'logicalBuffer', ModuleName )
         call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
@@ -1333,6 +1335,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.86  2003/07/25 00:51:06  livesey
+! Added file type l2dgg to support metadata.
+!
 ! Revision 2.85  2003/07/23 18:30:35  cvuu
 ! reduce routine printing
 !
