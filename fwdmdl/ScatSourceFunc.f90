@@ -47,7 +47,7 @@ contains
       integer, intent(in) :: NS           ! Number of chemical species
       real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
       
-      real(rk), intent(inout) :: TB_scat(:,:)  ! TB FROM SCATTERING PHASE FUNCTION
+      real(rk), intent(inout) :: TB_scat(:,:)   ! TB FROM SCATTERING PHASE FUNCTION
       real(rk), intent(inout) :: Scat_alb(:,:) ! Single Scattering albedo 
       real(rk), intent(inout) :: Cloud_ext(:,:) ! Cloud extinction
 
@@ -138,9 +138,10 @@ contains
       cld_ext=0.0
       W0=0.0_rk
       Cloud_ext =0.0_rk
-!      WC(1,10) = 0.01   !test only
-!      WC(1,11) = 0.01   !test only
+      WC(1,10) = 0.01   !test only
+      WC(1,11) = 0.01   !test only
       dtau =0.0
+      ext_air=0.0
 
       CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, ext_air )
 
@@ -159,8 +160,13 @@ contains
         if (K .ge. 2 .and. K .le. L-1) then
             dtau(k)= D_mid_Z(K-1) * (cld_ext + ext_air(K))            
         endif
-        W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
+        if (cld_ext + ext_air(K) .gt. 0.0) then
+           W0(K) = (W0(K)*cld_ext)/(cld_ext + ext_air(K))
+        else
+           W0(K) = 0.0_rk
+        endif
         Cloud_ext(K,1) = cld_ext
+        Cloud_ext(K,2) = cld_ext
       end do
       dtau(1)=dtau(2) 
       dtau(L)=dtau(L-1)
@@ -302,7 +308,8 @@ contains
            TB_scat(K, IP) = Tscat(IP, K)
          enddo
          Scat_alb(K,1)=W0(K)
-     enddo
+         Scat_alb(K,2)=W0(K)
+    enddo
 
   end subroutine T_SCAT
 
@@ -327,14 +334,17 @@ contains
       No_ele= size(PHI_angle)
       No_ang= size(THETA)
 
-      PHI_90 = pi + PHI_angle
+!      PHI_90 = pi + PHI_angle
+       PHI_90 = pi/2. + (PHI_angle - PHI_angle(No_ele/2))
 
       DO I=1, No_ele
 
           CALL LOCATE ( THETA, No_ang, No_ang, PHI_90(I), JM )
-          TT_SCAT(I,1) = ( TB_SCAT(I,JM)   * (THETA(JM+1)-PHI_90(I)) + &
-                       &   TB_SCAT(I,JM+1) * (PHI_90(I)-THETA(JM)) ) / &
-                       &   (THETA(JM+1)-THETA(JM))
+
+          eta=(THETA(JM+1)-PHI_90(I)) / (THETA(JM+1)-THETA(JM))
+
+          TT_SCAT(I,1) = eta*TB_SCAT(I,JM) + (1-eta)*TB_SCAT(I,JM+1)
+
       ENDDO
 
   end subroutine Interp_Tscat
@@ -366,7 +376,6 @@ contains
     n_path = size(path_inds)
 
     do j = 1, n_path
-
        k = path_inds(j)
        beta_path_cloud(j) = beta_path_cloud(j) + Cext_path(k,1)
        w0_path(j)         = w0_path(j)         + Salb_path(k,1)     
@@ -383,6 +392,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.9  2003/12/08 17:53:28  jonathan
+! add tt_path in convert_grid
+!
 ! Revision 2.8  2003/12/07 19:46:25  jonathan
 ! update for use in 2D cloud FWM
 !
