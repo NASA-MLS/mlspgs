@@ -10,9 +10,10 @@ module CONVOLVE_ALL_M
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
   use ForwardModelConfig, only: ForwardModelConfig_T
   use MLSCommon, only: I4, R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Intrinsic, only: L_VMR
   use String_table, only: GET_STRING
-  use MatrixModule_0, only: M_BANDED, M_FULL, DUMP
+  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
 
   implicit NONE
@@ -34,7 +35,7 @@ contains
     windowStart, windowFinish, mafTInstance, temp, ptan, radiance, &
     tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,  &
     si,center_angle,i_raw, k_temp, k_atmos, &
-    i_star_all, Jacobian,AntennaPattern,Ier)
+    sbRatio, Jacobian,AntennaPattern,Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -54,15 +55,13 @@ contains
     real(r8), intent(IN) :: I_RAW(:)
     real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
     real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
-    real(r8), intent(OUT) :: i_star_all(:) 
+    real(r8), intent(in) :: SBRATIO
     type(antennaPattern_T), intent(in) :: AntennaPattern
 
-    Real(r4) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
-    Real(r4) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
+    Real(r4), intent(in) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
 
-    real(r8) :: k_star_tmp(temp%template%noSurfs, &
-      & windowFinish-windowStart+1, &
-      & ptan%template%noSurfs)
+    real(r8) :: k_star_tmp(ptan%template%noSurfs)
 
     integer, intent(out) :: ier         ! Flag
 
@@ -74,6 +73,7 @@ contains
     integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc, fft_pts
     integer :: row,col                  ! Matrix entries
     integer :: no_t, no_tan_hts, no_phi_t, phiWindow
+    integer :: ind                      ! Index
 
     Real(r8) :: Q, R
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
@@ -141,19 +141,37 @@ contains
     ! (Store the radiances derivative with respect to pointing pressures in: Term)
 
     Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j)
-    i_star_all(1:j) = SRad(1:j)
+    do ptg_i = 1, j
+      ind = channel + radiance%template%noChans*(ptg_i-1)
+      radiance%values( ind, maf ) = radiance%values ( ind, maf ) + &
+        & sbRatio*SRad(ptg_i)
+    end do
 
     ! Find out if user wants pointing derivatives
     if (present(Jacobian) ) then                    ! Add a condition later !??? NJL
       ! Derivatives wanted,find index location k_star_all and write the derivative
       row = FindBlock( Jacobian%row, radiance%index, maf )
       col = FindBlock ( Jacobian%col, ptan%index, maf )
-      call CreateBlock ( Jacobian, row, col, m_banded, &
-        & radiance%template%noSurfs*radiance%template%noChans )
-      jacobian%block(row,col)%values = 0.0_r8
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          &    radiance%template%noSurfs*radiance%template%noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+        do ptg_i = 1, j
+          jacobian%block(row,col)%r1(ptg_i) = &
+            & 1 + radiance%template%noChans*(ptg_i-1)
+          jacobian%block(row,col)%r2(ptg_i) = &
+            & radiance%template%noChans*ptg_i
+        end do
+      case (m_banded)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative')
+      end select
       do ptg_i = 1, j
-        jacobian%block(row,col)%values( channel + &
-          & radiance%template%noChans*(ptg_i-1),1 ) = term(ptg_i)
+        ind = channel + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%values( ind, 1 ) = &
+          & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
         jacobian%block(row,col)%r1(ptg_i) = &
           & 1 + radiance%template%noChans*(ptg_i-1)
         jacobian%block(row,col)%r2(ptg_i) = &
@@ -180,11 +198,17 @@ contains
 
       ! Derivatives needed continue to process
 
-
       do nf = 1, phiWindow
         col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
-        call CreateBlock ( Jacobian, row, col, m_full )
-        
+        select case ( Jacobian%block(row,col)%kind ) 
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_full )
+          jacobian%block(row,col)%values = 0.0_r8
+        case ( m_full )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong type for temperature derivative matrix' )
+        end select
         do sv_i = 1, temp%template%noSurfs
 
           ! run through representation basis coefficients
@@ -210,16 +234,16 @@ contains
           endif
 
           Call Cspline(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
-          k_star_tmp(sv_i,nf,1:j) = SRad(1:j)
+          k_star_tmp(1:j) = SRad(1:j)
 
           !  For any index off center Phi, skip the rest of the phi loop ...
 
           if(nf /= mafTInstance) then
             do ptg_i = 1, j
-              q = k_star_tmp(sv_i,nf,ptg_i)
-              jacobian%block(row,col)%values( channel+&
-                & radiance%template%noChans*(ptg_i-1),sv_i) = &
-                k_star_tmp(sv_i,nf,ptg_i)
+              ind = channel + radiance%template%noChans*(ptg_i-1)
+              jacobian%block(row,col)%values( ind, sv_i ) = &
+                & jacobian%block(row,col)%values( ind, sv_i ) + &
+                &   sbRatio*k_star_tmp(ptg_i)
             end do
             cycle
           endif
@@ -247,11 +271,7 @@ contains
 
           Call Lintrp(tan_press,Ptan%values(:,maf),dx_dt(1:,sv_i),SRad,no_tan_hts,j)
 
-          do ptg_i = 1, j
-            r = SRad(ptg_i) * Term(ptg_i)
-            q = k_star_tmp(sv_i,nf,ptg_i)
-            k_star_tmp(sv_i,nf,ptg_i) = q + r
-          end do
+          k_star_tmp = k_star_tmp + srad*term
 
           ! the convolution of the radiance weighted hydrostatic derivative
           ! with the antenna derivative
@@ -275,9 +295,10 @@ contains
           Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
 
           do ptg_i = 1, j
-            q = k_star_tmp(sv_i,nf,ptg_i)
-            jacobian%block(row,col)%values( channel+&
-              & radiance%template%noChans*(ptg_i-1),sv_i) = q - Term(ptg_i)
+            q = k_star_tmp(ptg_i)
+            ind = channel + radiance%template%noChans*(ptg_i-1)
+            jacobian%block(row,col)%values( ind, sv_i ) = &
+              jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*(q - Term(ptg_i))
           end do
 
         end do
@@ -301,7 +322,15 @@ contains
 
           do nf = 1, f%template%noInstances
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
-            call CreateBlock ( Jacobian, row, col, m_full )
+            select case ( Jacobian%block(row,col)%kind ) 
+            case ( m_absent )
+              call CreateBlock ( Jacobian, row, col, m_full )
+              jacobian%block(row,col)%values = 0.0_r8
+            case ( m_full )
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Wrong type for vmr derivative matrix' )
+            end select
 
             do sv_i = 1, f%template%noSurfs
 
@@ -326,8 +355,9 @@ contains
 
               Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
               do ptg_i = 1,j
-                jacobian%block(row,col)%values( channel+&
-                  & radiance%template%noChans*(ptg_i-1),sv_i) = Srad(ptg_i)
+                ind = channel+ radiance%template%noChans*(ptg_i-1)
+                jacobian%block(row,col)%values( ind, sv_i ) = &
+                  & jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*Srad(ptg_i)
               end do                    ! Pointing
             end do                      ! F surfs
           end do                        ! F instances
@@ -419,6 +449,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.17  2001/04/20 02:57:09  livesey
+! Writes derivatives in matrix_t
+!
 ! Revision 1.16  2001/04/19 23:56:52  livesey
 ! New parameters
 !
