@@ -16,7 +16,7 @@ MODULE MLSPCF
    INTEGER, PARAMETER :: mlspcf_l1b_eng_start = 20081
    INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 20081
    !
-   INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000                 
+   INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000
    INTEGER, PARAMETER :: mlspcf_l2gp_end = 21050
    !
    INTEGER, PARAMETER :: mlspcf_MCF_start = 40260 
