@@ -219,14 +219,14 @@ contains ! ===================================== Public Procedures =====
       call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
       & obstructions )
       if ( index(switches, 'chu') /= 0 ) then
-        call output ( ' processingRange ' )          
+        call output ( 'Requested time range ' )          
         call output ( processingRange%startTime )              
-        call output ( ' ', advance='no' )    
-        call output ( processingRange%endTime )              
-        call output ( ' ', advance='yes' )    
-        call output ( ' mafRange ' )          
-        call output ( mafRange )              
-        call output ( ' ', advance='yes' )    
+        call output ( ' : ' )    
+        call output ( processingRange%endTime, advance='yes' )    
+        call output ( 'Corresponding MAF range ' )          
+        call output ( mafRange(1) )              
+        call output ( ' : ' )
+        call output ( mafRange(2), advance='yes' )
       endif
     endif
 
@@ -543,23 +543,22 @@ contains ! ===================================== Public Procedures =====
 
       integer :: CHUNK                    ! Loop counter
       integer :: FLAG                     ! From ReadL1B
-      integer :: HOMEMAF                  ! first MAF after homeGeodAngle
       integer :: HOME                     ! Index of home MAF in array
       integer :: M1, M2                   ! MafRange + 1
       integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
       integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
+      integer :: NOMAFSBELOWHOME          ! Fairly self descriptive
       integer :: NOMAFS                   ! Number of MAFs to consider
       integer :: NOMAFSREAD               ! From ReadL1B
-      integer :: ORBIT                    ! Used to locate homeMAF
+      integer :: ORBIT                    ! Used to locate home
       integer :: STATUS                   ! From allocate etc.
       integer :: NOCHUNKS                 ! Number of chunks
       integer :: MAXLENGTH                ! Max length as integer (MAFs)
-      integer :: two                      ! Min(2, NoChunks)
 
       integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
       integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
 
-      real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
+      real(r8) :: ANGLEINCREMENT          ! Increment in hunt for home
       real(r8) :: MAXANGLE                ! Of range in data
       real(r8) :: MAXTIME                 ! Time range in data
       real(r8) :: MAXV                    ! Either minTime or minAngle
@@ -603,6 +602,18 @@ contains ! ===================================== Public Procedures =====
       maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
       minTime = minval ( taiTime%dpField(1,1,m1:m2) )
       maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
+      if ( index ( switches, 'chu' ) /= 0 ) then
+        call output ( 'No MAFs in file: ' )
+        call output ( noMAFsRead, advance='yes' )
+        call output ( 'MAF time range: ' )
+        call output ( minTime )
+        call output ( ' : ' )
+        call output ( maxTime, advance='yes' )
+        call output ( 'Angle range: ' )
+        call output ( minAngle )
+        call output ( ' : ' )
+        call output ( maxAngle, advance='yes' )
+      end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! First try to locate the last MAF before the homeGeodAngle
@@ -656,17 +667,14 @@ contains ! ===================================== Public Procedures =====
         ! Otherwise, keep looking
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
-      homeMAF = home + m1 - 1
       if ( index(switches, 'chu') /= 0 ) then    
-        call output ( '    testAngle  ', advance='no' )   
+        call output ( 'Test Angle  ' )   
         call output ( testAngle , advance='yes' )      
-        call output ( '    Angle(home)  ', advance='no' )   
+        call output ( 'Angle(home)  ' )   
         call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )      
-        call output ( ' home  ', advance='no' )   
-        call output ( home , advance='no' )      
-        call output ( ' homeMAF  ', advance='no' )   
-        call output ( homeMAF , advance='yes' )      
-        call output ( ' diff  ', advance='no' )   
+        call output ( 'Home  ' )   
+        call output ( home  )      
+        call output ( 'Difference  ' )   
         call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
           & testAngle ) , advance='yes' )      
       end if
@@ -677,9 +685,10 @@ contains ! ===================================== Public Procedures =====
       ! maxLength field is specified.
       if ( config%maxLengthFamily == PHYQ_MAFs ) then
         maxLength = nint ( config%maxLength )
-        noChunksBelowHome = home / maxLength
-        if ( mod ( home, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
-        noMAFsAtOrAboveHome = noMAFs - home + 1
+        noMAFsBelowHome = home - m1 + 1
+        noChunksBelowHome = noMAFsBelowHome / maxLength
+        if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
+        noMAFsAtOrAboveHome = m2 - home + 1
         if ( config%noChunks == 0 ) then
           ! If user did not request specific number of chunks choose them
           noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
@@ -697,8 +706,9 @@ contains ! ===================================== Public Procedures =====
 
         ! Work out their positions
         do chunk = 1, noChunks
-          chunks(chunk)%lastMAFIndex = homeMAF + &
-            & ( chunk - noChunksBelowHome ) * maxLength
+          chunks(chunk)%lastMAFIndex = home + &
+            & ( chunk - noChunksBelowHome ) * maxLength - 1
+          ! Subtract one to convert from index in array to index in file
         end do
       else
         ! For angle and time, they are similar enough we'll just do some stuff
@@ -716,6 +726,8 @@ contains ! ===================================== Public Procedures =====
         end select
         homeV = field(home)
 
+        noMAFsBelowHome = -999
+        noMAFsAtOrAboveHome = -999
         noChunksBelowHome = int ( ( homeV - minV ) / config%maxLength )
         if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
         if ( config%noChunks == 0 ) then
@@ -726,7 +738,6 @@ contains ! ===================================== Public Procedures =====
         else
           noChunks = config%noChunks
         end if
-        two = min(2, noChunks)
 
         ! Allocate the chunks
         allocate ( chunks(noChunks), stat=status )
@@ -742,22 +753,29 @@ contains ! ===================================== Public Procedures =====
         end do
         boundaries = min ( boundaries, maxV )
         boundaries = max ( boundaries, minV )
-        call Hunt ( field, boundaries, chunks%lastMAFIndex, &
-          & allowTopValue=.true., nearest=.true. )
+
+        ! Do some dumping
         if ( index(switches, 'chu') /= 0 ) then
-          call output ( ' minV: ', advance='no' ) 
-          call output ( minV , advance='no' ) 
-          call output ( ' maxV: ', advance='no' ) 
+          call output ( ' minV: ' ) 
+          call output ( minV  ) 
+          call output ( ' maxV: ' ) 
           call output ( maxV , advance='yes' ) 
-          call output ( ' homeV: ', advance='no' ) 
+          call output ( ' homeV: ' ) 
           call output ( homeV , advance='yes' ) 
-          call output ( ' NoChunks: ', advance='no' ) 
+          call output ( ' noMAFSBelowHome: ' )
+          call output ( noMAFsBelowHome, advance='yes' )
+          call output ( ' noMAFSAtOrAboveHome: ' )
+          call output ( noMAFsAtOrAboveHome, advance='yes' )
+          call output ( ' NoChunks: ' ) 
           call output ( NoChunks , advance='yes' ) 
-          call output ( ' noChunksBelowHome: ', advance='no' ) 
+          call output ( ' noChunksBelowHome: ' ) 
           call output ( noChunksBelowHome , advance='yes' ) 
           call dump ( boundaries , 'boundaries' ) 
-          call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
+          call dump ( field, 'field' )
         end if
+
+        call Hunt ( field, boundaries, chunks%lastMAFIndex, start=m1, &
+          & allowTopValue=.true., nearest=.true. )
         call Deallocate_test ( boundaries, 'boundaries', ModuleName )
       end if
 
@@ -765,17 +783,31 @@ contains ! ===================================== Public Procedures =====
       if ( noChunks > 1 ) &
         & chunks(2:noChunks)%firstMAFIndex = &
         & chunks(1:noChunks-1)%lastMAFIndex + 1
-      ! chunks(1)%firstMAFIndex = 1
-      chunks(1)%firstMAFIndex = mafRange(1)
-      if ( index(switches, 'chu') /= 0 ) then                      
-        call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )  
-      end if
+      chunks(1)%firstMAFIndex = m1
+
+      ! Now bound the chunks to be within the processing range
+      chunks%firstMAFIndex = min ( max ( chunks%firstMAFIndex, m1 ), m2 )
+      chunks%lastMAFIndex = min ( max ( chunks%lastMAFIndex, m1 ), m2 )
 
       ! Now offset these to the index in the file not the array
       ! chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
       ! chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
       chunks%firstMAFIndex = chunks%firstMAFIndex - 1
       chunks%lastMAFIndex = chunks%lastMAFIndex - 1 
+
+      ! If at this point the last two chunks end in the same place, this is
+      ! a subtle defect in our chunking algorihtm, lets avoid it
+      if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
+        call DeleteChunk ( chunks, noChunks )
+        noChunks = noChunks - 1
+      end if
+
+      ! Do some dumping
+      if ( index(switches, 'chu') /= 0 ) then                      
+        call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
+        call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )  
+      end if
+
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Think about overlaps
       nullify ( newFirstMAFs, newLastMAFs )
@@ -789,50 +821,38 @@ contains ! ===================================== Public Procedures =====
           & mafRange(1) )
         newLastMAFs = min(chunks%lastMAFIndex + nint(config%upperOverlap), &
           & mafRange(2) )
-        if ( index(switches, 'chu') /= 0 ) then
-          call output ( 'config%overlap  ' )
-          call output ( config%overlap, advance='yes')
-          call output ( 'config%lowerOverlap  ' )
-          call output ( config%lowerOverlap, advance='yes')
-          call output ( 'config%upperOverlap  ' )
-          call output ( config%upperOverlap, advance='yes')
-          call output ( 'new 1st MAF  ' )
-          call output ( chunks(1:two)%firstMAFIndex - nint(config%overlap) )
-          call output ( '   new last MAF  ' )
-          call output ( chunks(1:two)%lastMAFIndex + nint(config%overlap) , advance='yes')
-        endif
       else
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'The code for non MAF based overlaps has not been tested, do not use!' )
-        ! For angle and time, they are similar enough we'll just do some stuff
-        ! with pointers to allow us to use common code to sort them out
-        ! Note that before we search only over the range in mafRange, here we
-        ! search over the whole file as we can spill over the processing range
-        ! for overlaps.
-        select case ( config%maxLengthFamily )
-        case ( PHYQ_Angle )
-          field => tpGeodAngle%dpField(1,1,:)
-          minV = minAngle
-        case ( PHYQ_Time )
-          field => taiTime%dpField(1,1,:)
-          minV = minTime
-        case ( PHYQ_MAFs)
-        end select
-        call Hunt ( field, field(chunks%firstMAFIndex-1) + &
-          & config%lowerOverlap, newFirstMAFs, allowTopValue=.true. )
-        call Hunt ( field, field(chunks%firstMAFIndex-1) - &
-          & config%upperOverlap, newLastMAFs, allowTopValue=.true. )
-        if ( index(switches, 'chu') /= 0 ) then
-          call dump ( field(chunks%firstMAFIndex-1) + &
-            & config%lowerOverlap , 'fields+lowerOverlap' )
-          call dump ( field(newFirstMAFs) , 'hunted values' )
-          call dump ( field(chunks%firstMAFIndex-1) - &
-            & config%upperOverlap , 'fields-upperOverlap' )
-          call dump ( field(newLastMAFs) , 'hunted values' )
-        end if
-        ! Correct this to be real MAF indices (starting from zero)
-        newFirstMAFs = newFirstMAFs - 1
-        newLastMAFs = newLastMAFs - 1
+          & 'The bit of code that deals with non-MAF overlaps is probably broken' )
+!         ! For angle and time, they are similar enough we'll just do some stuff
+!         ! with pointers to allow us to use common code to sort them out
+!         ! Note that before we search only over the range in mafRange, here we
+!         ! search over the whole file as we can spill over the processing range
+!         ! for overlaps.
+!         select case ( config%maxLengthFamily )
+!         case ( PHYQ_Angle )
+!           field => tpGeodAngle%dpField(1,1,:)
+!           minV = minAngle
+!         case ( PHYQ_Time )
+!           field => taiTime%dpField(1,1,:)
+!           minV = minTime
+!         case ( PHYQ_MAFs)
+!         end select
+!         call Hunt ( field, field(chunks%firstMAFIndex-1) + &
+!           & config%lowerOverlap, newFirstMAFs, allowTopValue=.true. )
+!         call Hunt ( field, field(chunks%firstMAFIndex-1) - &
+!           & config%upperOverlap, newLastMAFs, allowTopValue=.true. )
+!         if ( index(switches, 'chu') /= 0 ) then
+!           call dump ( field(chunks%firstMAFIndex-1) + &
+!             & config%lowerOverlap , 'fields+lowerOverlap' )
+!           call dump ( field(newFirstMAFs) , 'hunted values' )
+!           call dump ( field(chunks%firstMAFIndex-1) - &
+!             & config%upperOverlap , 'fields-upperOverlap' )
+!           call dump ( field(newLastMAFs) , 'hunted values' )
+!         end if
+!         ! Correct this to be real MAF indices (starting from zero)
+!         newFirstMAFs = newFirstMAFs - 1
+!         newLastMAFs = newLastMAFs - 1
       end if
       chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newFirstMAFs
       chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
@@ -862,10 +882,10 @@ contains ! ===================================== Public Procedures =====
       ! Delete any zero length or all overlapped chunks
       call PruneChunks ( chunks )
 
-      ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
-      noChunks = size ( chunks )
-      chunks(1)%noMAFsLowerOverlap = 0
-      chunks(noChunks)%noMAFsUpperOverlap = 0
+!       ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
+!       noChunks = size ( chunks )
+!       chunks(1)%noMAFsLowerOverlap = 0
+!       chunks(noChunks)%noMAFsUpperOverlap = 0
 
       if ( index(switches, 'chu') /= 0 ) then
         call output ( 'After dealing with obstructions', advance='yes' )
@@ -2073,9 +2093,8 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
-! Revision 2.48  2004/07/30 00:25:49  livesey
-! Roped off the non MAF based overlap section, as I'm suspicious that it
-! doesn't work.
+! Revision 2.49  2004/07/31 19:58:28  livesey
+! Various bug fixes and clean ups in the light of real data.
 !
 ! Revision 2.47  2004/06/10 00:58:44  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
