@@ -1466,7 +1466,7 @@ contains ! =====     Public Procedures     =============================
       &  (tngtECI%template%quantityType /= l_tngtECI) .or. &
       &  (scECI%template%quantityType /= l_scECI) .or. &
       & .not. any( &
-      &  (scVel%template%quantityType /= &
+      &  (scVel%template%quantityType == &
       & (/ l_scVel, l_scVelECI, l_scVelECR /))) ) then
       call Announce_Error ( key, badLOSVelFill )
       return
@@ -2940,6 +2940,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.112  2002/03/14 17:29:59  pwagner
+! Fixed check in FillLOSVelocity
+!
 ! Revision 2.111  2002/03/14 01:01:17  pwagner
 ! Can fill scVelECI and scVelECR from l1b
 !
