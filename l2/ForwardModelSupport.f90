@@ -10,7 +10,8 @@ module ForwardModelSupport
   use Expr_M, only: EXPR
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_VMR
-  use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
+  use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, &
+    & F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
@@ -353,6 +354,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Set sensible defaults
+    info%allLinesForRadiometer = .false.
     info%globalConfig = global
     info%do_conv = .false.
     info%do_baseline = .false.
@@ -390,6 +392,8 @@ contains ! =====     Public Procedures     =============================
       select case ( field )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
+      case ( f_allLinesForRadiometer )
+        info%allLinesForRadiometer = get_boolean(son)
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
       case ( f_differentialScan )
@@ -668,6 +672,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.40  2002/11/15 01:33:24  livesey
+! Added allLinesForRadiometer stuff
+!
 ! Revision 2.39  2002/10/18 22:44:11  vsnyder
 ! Remove some unreferenced USE names
 !
