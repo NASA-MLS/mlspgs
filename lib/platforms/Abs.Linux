@@ -23,7 +23,15 @@ dir2 =
 # This is the blas directory
 dir3 = $(blaslib)/
 
+# Do the load options include garbage collection?
+# The answer  will determine what we do to the machine.f90 file from
 MACH_DIR=../machines/$(MLSCONFG)
+GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
+ifeq ($(GC_IN_LDOPTS),)
+BAD_MATCH=-gc  (not applicable yet for this compiler/platform)
+else
+BAD_MATCH=no -gc  (not applicable yet for this compiler/platform)
+endif
 
 # Set paths for finding source files (different from .o and .mod)
 
@@ -67,6 +75,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
 MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o 
 
 # $Log$
+# Revision 1.9  2002/02/06 00:42:59  pwagner
+# Where to get machine.f90 now depends on whether to collect garbage
+#
 # Revision 1.8  2001/11/20 00:08:47  pwagner
 # Small changes to work better--or go farther before failing
 #

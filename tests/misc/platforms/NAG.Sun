@@ -33,12 +33,13 @@ itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 dir2 = $(itmdir)/
 
 # Do the load options include garbage collection?
-# The answer  will determine where we get out machine.f90 file from
+# The answer  will determine what we do to the machine.f90 file from
+MACH_DIR=../../../lib/machines/$(MLSCONFG)
 GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
 ifeq ($(GC_IN_LDOPTS),)
-MACH_DIR=../machines/NAG.nogc
+BAD_MATCH=-gc
 else
-MACH_DIR=../machines/$(MLSCONFG)
+BAD_MATCH=no -gc
 endif
 
 # Set paths for finding source files (different from .o and .mod)
@@ -77,6 +78,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $S
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.5  2002/02/06 18:48:52  pwagner
+# Where to get machine.f90 now depends on whether to collect garbage
+#
 # Revision 1.4  2001/08/15 23:12:09  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #
