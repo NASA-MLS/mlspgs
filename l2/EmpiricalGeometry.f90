@@ -76,9 +76,9 @@ contains ! ========================= Public Procedures ====================
 
     use Expr_M, only: EXPR
     use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
+    use Intrinsic, only: PHYQ_DimensionLess
     use MoreTree, only: Get_Field_ID
     use Tree, only: NSONS, SUBTREE
-    use Units, only: PHYQ_DimensionLess
 
     integer, intent(in) :: ROOT         ! Root of tree
 
@@ -214,6 +214,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.9  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.8  2002/12/11 22:17:05  pwagner
 ! Added error checks on hdf version
 !
