@@ -93,12 +93,23 @@ module HDFEOS               ! F90 interface to HDF-EOS.
 
   end interface
 
+!PAGE_BREAK
+!---------------------------------
+! Access types for gdnentries
+!---------------------------------
+
+   INTEGER, PARAMETER :: HDFE_NENTDIM            =     0
+   INTEGER, PARAMETER :: HDFE_NENTDFLD           =     4
+
 !====================
 end module HDFEOS
 !====================
 
 !
 ! $Log$
+! Revision 2.6  2001/02/23 17:27:20  pwagner
+! Added Access types for gdnentries
+!
 ! Revision 2.5  2001/02/02 21:39:56  pwagner
 ! Added swinqdflds
 !
