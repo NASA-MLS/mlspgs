@@ -6,8 +6,12 @@
 MODULE Sd
 !===============================================================================
 
-   USE Hdf
-   USE MLSMessageModule
+   USE Hdf, only: sfcreate, sfdimid, sfend, sfendacc, sfstart,sfsdmname,  &
+     & sfn2index, sfselect, sfsfill, sfwdata, &
+     & SD_NOFILL, SD_FILL, SD_UNLIMITED, DFACC_CREATE, &
+     & DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT32, DFNT_FLOAT64
+  ! Note: sfsflmd, sfwcdata missing from Hdf
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
    USE OutputL1B
    IMPLICIT NONE
    PUBLIC
@@ -685,7 +689,7 @@ CONTAINS
       status = sfwdata(sds5_id, start, stride, edge, sc%scECR)
 
       status = sfsfill(sds12_id, FILL_DP)
-      status = sfwdata(sds12_id, start, stride, edge, sc%scVel)
+      status = sfwdata(sds12_id, start, stride, edge, sc%scVelECI)
 
       status = sfsfill(sds13_id, FILL_DP)
       status = sfwdata(sds13_id, start, stride, edge, sc%ypr)
@@ -1086,4 +1090,7 @@ END MODULE Sd
 !===============================================================================
 
 !# $Log$
+!# Revision 1.1  2000/11/30 16:30:07  nakamura
+!# Module with subroutines to write SIDS L1BOA data as an SDS-HDF file.
+!#
 !#
