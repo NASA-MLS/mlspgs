@@ -5,8 +5,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
-  USE MLSCommon
-  USE MLSMessageModule
+  USE MLSMessageModule, only: MLSMSG_Error
 
   IMPLICIT NONE
 
@@ -29,18 +28,18 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! --------------------------------------------------------------------------
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! Set the following to TRUE before delivering level 2 to sips
+  ! Set each of the following to TRUE before delivering level 2 to sips
   logical, parameter :: PUNISH_FOR_INVALID_PCF=.false.  ! set to true
   logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false.  ! set to true
   logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.  ! set to true
   logical :: PCF = .false.                         ! Open L2CF using PCF ?
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-   ! Change the following to 1 before delivering to sips;
+   ! Set the following to 1 before delivering to sips;
    ! when set to 0, it allows program to run w/o creating metadata
    integer, parameter :: PENALTY_FOR_NO_METADATA = 0
 
-   ! Change the following to -2 before delivering to sips;
+   ! Set the following to -2 before delivering to sips;
    ! (its possible values and their effects on normal output:
    ! -1          sent to stdout (via print *, '...')
    ! -2          sent to Log file (via MLSMessage)
@@ -48,12 +47,20 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
    integer, parameter :: OUTPUT_PRINT_UNIT = -1
 
+   ! Set the following to MLSMSG_Error before delivering to sips;
+   ! when set higher, it allows program keep going despite errors
+   ! when set lower, the program would quit even on warnings
+   integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+
 !=============================================================================
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.3  2001/04/20 20:41:52  pwagner
+! Added QUIT_ERROR_THRESHOLD
+!
 ! Revision 2.2  2001/04/17 20:26:28  pwagner
 ! Added OUTPUT_PRINT_UNIT
 !
