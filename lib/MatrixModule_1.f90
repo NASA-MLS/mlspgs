@@ -705,7 +705,7 @@ contains ! =====     Public Procedures     =============================
       do j = 1, x%col%nb
         do i = 1, x%row%nb
           call ColumnScale ( x%block(i,j), &
-            & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)), &
+            & v%quantities(x%col%quant(j))%values(:,x%col%inst(j)), &
             & newx%block(i,j) )
         end do ! i = x%row%nb
       end do ! j = x%col%nb
@@ -713,7 +713,7 @@ contains ! =====     Public Procedures     =============================
       do j = 1, x%col%nb
         do i = 1, x%row%nb
           call ColumnScale ( x%block(i,j), &
-            & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)) )
+            & v%quantities(x%col%quant(j))%values(:,x%col%inst(j)) )
         end do ! i = x%row%nb
       end do ! j = x%col%nb
     end if
@@ -2085,6 +2085,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.75  2002/08/15 22:13:33  livesey
+! Bug fix in ColumnScale
+!
 ! Revision 2.74  2002/08/06 02:15:20  livesey
 ! Added ReflectMatrix_1
 !
