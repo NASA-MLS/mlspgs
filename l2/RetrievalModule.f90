@@ -20,6 +20,7 @@ module RetrievalModule
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, &
     & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, F_maxJ, &
     & F_measurements, F_measurementSD, F_method, F_opticalDepth, &
+    & F_opticalDepthCutoff, &
     & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
     & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
     & F_toleranceA, F_toleranceF, F_toleranceR, Field_first, Field_last, &
@@ -30,7 +31,7 @@ module RetrievalModule
     & L_dnwt_sq,  L_dnwt_sqt, L_full_derivatives, &
     & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
     & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
-    & L_numJ, L_pressure, L_zeta, &
+    & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
     & S_subset, S_time
   use Intrinsic, only: PHYQ_Dimensionless
@@ -188,15 +189,19 @@ contains
     type(vector_T), dimension(firstVec:lastVec) :: V   ! Database for snoop
 
     ! Error message codes
-    integer, parameter :: BothOrNeither = 1       ! Only one of two required
-                                                  !    fields supplied
+    integer, parameter :: BadOpticalDepthSignal = 1
+    integer, parameter :: BadOpticalDepthQuantities = BadOpticalDepthSignal + 1
+    ! Only one of two required fields supplied
+    integer, parameter :: BothOrNeither = BadOpticalDepthQuantities + 1
     integer, parameter :: IfAThenB = BothOrNeither + 1
     integer, parameter :: IfUnitsAThenB = IfAThenB + 1
     integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
     integer, parameter :: InconsistentUnits = Inconsistent + 1
-    integer, parameter :: NoFields = InconsistentUnits + 1  ! No fields are allowed
+    integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
+    integer, parameter :: NoFields = NeedBothDepthAndCutoff + 1  ! No fields are allowed
     integer, parameter :: NotSPD = noFields + 1   ! Not symmetric pos. definite
-    integer, parameter :: WrongUnits = notSPD + 1
+    integer, parameter :: RangeNotAppropriate = NotSPD + 1
+    integer, parameter :: WrongUnits = RangeNotAppropriate + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -480,6 +485,11 @@ contains
       call print_source ( source_ref(son) )
       call output ( ' RetrievalModule complained: ' )
       select case ( code )
+      case ( badOpticalDepthSignal )
+        call output ( 'Mismatch in signal/sideband for radiance and optical depth', &
+          & advance='yes' )
+      case ( badOpticalDepthQuantities )
+        call output ( 'Bad quantity type for radiance or optical depth' )
       case ( bothOrNeither )
         call output ( 'One of ' )
         call display_string ( field_indices(fieldIndex) )
@@ -516,8 +526,15 @@ contains
         call output ( 'the elements of the "' )
         call display_string ( field_indices(fieldIndex) )
         call output ( '" field have inconsistent units.', advance='yes' )
+      case ( needBothDepthAndCutoff )
+        call output ( 'OpticalDepth specified but no cutoff, or visa versa', &
+          & advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
+        call display_string ( spec_indices(fieldIndex) )
+        call output ( ' specification.', advance='yes' )
+      case ( rangeNotAppropriate )
+        call output ( 'Ranges are not appropriate for a ' )
         call display_string ( spec_indices(fieldIndex) )
         call output ( ' specification.', advance='yes' )
       case ( wrongUnits )
@@ -2245,13 +2262,13 @@ contains
       integer :: CHANNEL                ! Loop index
       integer :: CHANNELSNODE           ! Tree node for channels values
       integer :: COORDINATE             ! Vertical coordinate type
-      integer :: DEPTHNODE              ! Tree node for optical depth
       integer :: FIELD                  ! Field type from tree
       integer :: GSON                   ! Tree node
       integer :: HEIGHT                 ! Loop counter
       integer :: HEIGHTNODE             ! Tree node for height values
       integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: I, J                   ! Subscripts, loop inductors
+      integer :: IND                    ! An array index
       integer :: INSTANCE               ! Loop counter
       integer :: MASK                   ! Which thing are we talking about?
       integer :: MaskBit                ! Bits corresponding to Mask
@@ -2269,8 +2286,10 @@ contains
       real(r8) :: HeightMin, HeightMax
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
       real(r8) :: VALUE(2)              ! Value returned by expr
+      real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
       type (VectorValue_T), pointer :: QTY ! The quantity to mask
       type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+      type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
@@ -2281,7 +2300,7 @@ contains
       character(len=5) ::                        decades
 
       ! Executable code
-      nullify ( channels, qty, ptan )
+      nullify ( channels, qty, ptan, opticalDepth )
       got = .false.
       ignore = .false.
       maskBit = m_linalg
@@ -2314,7 +2333,16 @@ contains
             end select
           end do
         case ( f_opticalDepth )
-          depthNode = son
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          opticalDepth => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_opticalDepthCutoff )
+          call expr ( subtree (2, son), units, value, type )
+          if ( type /= num_value ) call announceError ( &
+            & rangeNotAppropriate, f_opticalDepthCutoff )
+          if ( units(1) /= phyq_dimensionless ) &
+            & call announceError ( wrongUnits, f_opticalDepthCutoff, string='no' )
+          opticalDepthCutoff = value(1)
         case ( f_ignore )
           ignore = Get_Boolean ( son )
         case default
@@ -2322,6 +2350,18 @@ contains
         end select
         got(field) = .true.
       end do ! j = 2, nsons(key)
+
+      ! Do some error checking for the optical depth issues
+      if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
+        if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
+          & call AnnounceError ( needBothDepthAndCutoff, key )
+        if ( qty%template%quantityType /= l_radiance .or. &
+          &  opticalDepth%template%quantityType /= l_opticalDepth ) &
+          & call AnnounceError ( badOpticalDepthQuantities, key )
+        if ( qty%template%signal /= opticalDepth%template%signal .or. &
+          &  qty%template%sideband /= opticalDepth%template%sideband ) &
+          & call AnnounceError ( badOpticalDepthSignal, key )
+      endif
 
       ! Process the channels field.
       if ( qty%template%frequencyCoordinate /= l_none ) then
@@ -2473,9 +2513,14 @@ contains
                   do height = s1(1), s2(1)
                     !??? Make sure mask bit numbers begin at 1, even when
                     !??? channel numbers don't.
-                    call ClearMask ( qty%mask(:,instance), &
-                      & (/ channel+qty%template%noChans*(height-1) /), &
-                      & what=maskBit )
+                    ind = channel + qty%template%noChans*(height-1)
+                    
+                    if ( associated( opticalDepth ) ) then
+                      if ( opticalDepth%values ( ind, instance ) < opticalDepthCutoff ) &
+                        & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    else
+                      call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    end if
                   end do                ! Height loop
                 else
                   ! For Incoherent quantities check each height individually
@@ -2484,6 +2529,7 @@ contains
                   ! being exactly equal to the range given is remote, and the
                   ! difference probably doesn't matter anyway.
                   do height = 1, qty%template%noSurfs
+                    ind = channel + qty%template%noChans*(height-1)
                     doThisHeight = .true.
                     if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
                       doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
@@ -2495,9 +2541,12 @@ contains
                     else
                       doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
                     end if
+                    if ( associated ( opticalDepth ) ) then
+                      doThisHeight = doThisHeight .and. &
+                        & opticalDepth%values ( ind, instance ) < opticalDepthCutoff
+                    end if
                     if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
-                        & (/ channel+qty%template%noChans*(height-1) /), &
-                        & what=maskBit )
+                        & (/ ind /), what=maskBit )
                   end do                ! Height loop
                 end if                  ! Coherent
               end if                    ! Do this channel
@@ -2584,6 +2633,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.132  2002/02/09 19:11:34  livesey
+! Modified subset to add optical depth cutoffs
+!
 ! Revision 2.131  2002/02/08 22:51:59  livesey
 ! Added call to CopyVectorMask to transfer mask from measurements to forward
 ! model.
