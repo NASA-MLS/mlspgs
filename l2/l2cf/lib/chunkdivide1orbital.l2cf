@@ -5,5 +5,5 @@
 begin ChunkDivide
   ChunkDivide, method=orbital, maxLength=1 MAF, overlap=0 MAFs, $
     homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs, $
-    noChunks=1
+    noChunks=2
 end ChunkDivide
