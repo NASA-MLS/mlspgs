@@ -1032,13 +1032,16 @@ END SUBROUTINE measured_parameter
 		integer, optional, intent(out) :: metadata_error
 
 ! Parameters
+!     These are PCF numbers that *must* be in the PCF file
 
       INTEGER, PARAMETER :: ASCII_FILE = 101
+      INTEGER, PARAMETER :: THE_LOG_FILE = 100
 
 ! Functions
 
       INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
       INTEGER, EXTERNAL :: pgs_met_setAttr_s, pgs_met_write
+    integer, external :: pgs_pc_getconfigdata
 
 ! Internal
 
@@ -1066,12 +1069,24 @@ END SUBROUTINE measured_parameter
 			return
     ENDIF
 
-    version = 1
-    result = PGS_PC_GetReference (ASCII_FILE, version , physical_filename)
+! Check that the PCF file contains the entries for the ASCII file
+! and for the log file itself
+!    version = 1
+!    result = PGS_PC_GetReference (ASCII_FILE, version , physical_filename)
+    result = pgs_pc_getconfigdata (ASCII_FILE, physical_filename)
 
 	if(result /= PGS_S_SUCCESS) then
        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-            "Failed to find the PCF reference for the Log in WriteMetaLog" ) 
+            "Failed to find the PCF reference for the ASCII in WriteMetaLog" ) 
+			return
+    ENDIF
+
+    version = 1
+    result = PGS_PC_GetReference (THE_LOG_FILE, version , physical_filename)
+
+	if(result /= PGS_S_SUCCESS) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Failed to find the PCF reference for the LOG in WriteMetaLog" ) 
 			return
     ENDIF
 
@@ -1260,6 +1275,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.6  2001/04/11 20:20:37  pwagner
+! Checks correctly on PCF file before attempting LOG.met
+!
 ! Revision 2.5  2001/04/10 23:03:57  pwagner
 ! Finally seems to work
 !
