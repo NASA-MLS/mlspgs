@@ -283,6 +283,7 @@ contains
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
+    io = 0
     ch1 = FMC%Channels_range(1)
     ch2 = FMC%Channels_range(2)
     no_pfa_ch = min(2,ch2-ch1+1)
@@ -808,6 +809,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.14  2001/03/09 02:46:15  vsnyder
+! Make sure "io" has a value
+!
 ! Revision 2.13  2001/03/09 02:27:20  zvi
 ! *** empty log message ***
 !
