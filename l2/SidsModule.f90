@@ -122,7 +122,6 @@ contains
             & FwdModelIn, FwdModelExtra, &
             & FwdModelOut, ifm, fmStat )
         end if
-        print*,'Done forward model!'
       end do
     end do
 
@@ -156,6 +155,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.21  2001/04/24 23:11:40  vsnyder
+! Remove 'Done forward model!' print
+!
 ! Revision 2.20  2001/04/19 23:56:01  livesey
 ! New fmStat
 !
