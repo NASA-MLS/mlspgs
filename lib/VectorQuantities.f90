@@ -8,6 +8,7 @@ MODULE VectorQuantities         ! Quantities within vectors
   USE MLSCommon
   USE MLSMessageModule
   USE MLSSignalNomenclature
+  USE VGrid
 
   IMPLICIT NONE
   PUBLIC
@@ -358,12 +359,23 @@ MODULE VectorQuantities         ! Quantities within vectors
     ENDIF
   END SUBROUTINE DestroyQuantityTemplateDatabase
 
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine creates a new quantity template from the l2cf information
+
+!   SUBROUTINE CreateQtyTemplateFromMLSCFInfo(qty,cfInfo,&
+!        & vGridDatabase,hGridDatabase)
+!   END SUBROUTINE CreateQtyTemplateFromMLSCFInfo
+
 !=============================================================================
 END MODULE VectorQuantities
 !=============================================================================
 
 !
 ! $Log$
+! Revision 1.8  1999/12/14 00:55:29  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
 ! Revision 1.7  1999/12/04 00:26:33  livesey
 ! Added a few comments.
 !
