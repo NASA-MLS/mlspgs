@@ -11,6 +11,7 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSEndId = 2004
    INTEGER, PARAMETER :: mlspcf_l2_param_spec_keys = 2005
    INTEGER, PARAMETER :: mlspcf_l2_param_spec_hash = 2006
+   INTEGER, PARAMETER :: mlspcf_l2_param_switches = 2007
    !
    INTEGER, PARAMETER :: mlspcf_pcf_start = 900
    INTEGER, PARAMETER :: mlspcf_pcf_end = 900
