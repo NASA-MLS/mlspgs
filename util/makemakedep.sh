@@ -1,14 +1,22 @@
 #!/bin/sh
     #makemakedep.sh
 #Creates file Makefile.dep of dependencies to be included by Makefile
-#to compile a Fortran 9x program or library
-#In case of (2) (see below) any args are passed through to
-#f90makedep.pl where they will be interpreted as directories
-#in which to search for additional modules that may be among
+#to compile a Fortran 9x program or library among files =~ the pattern %.f90
+#
+#All files and Makefile.dep are in the current working directory
+#except in case of (2) (see below) any args are passed through to
+#f90makedep.pl where they will be interpreted as additional directories
+#in which to search for additional prerequisite modules that may be among
 #the lists of dependencies (please see f90makedep.pl for details)
+#except for any args preceded by the "-d" flag (all of which should
+#come first, before any of the directory args)
+#Arguments preceded by the "-d" flag, each of which must appear
+#separately and with its own flag, are Fortran 9x files in the
+#current working directory to be excluded from the list of dependencies
+#(often because they are special-purpose, "test" programs, or some such)
 #
 #Usage:
-#makemakedep.sh [arg1 arg2 ..]
+#makemakedep.sh [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
 #
 #Result:
 #creates Makefile.dep in current working directory
@@ -22,8 +30,8 @@
 #  mlspgs/l2%ls
 #Makefile.dep  source1.f90  source2.f90  source3.f90
 #  mlspgs/l2%cat Makefile.dep
-#Makefile.dep -- a file to be included by a Makefile
-#to compile a Fortran 9x program or library
+##Makefile.dep -- a file to be included by a Makefile
+##to compile a Fortran 9x program or library
 #OBJS = \
 #source1.o               source2.o          source3.o  \
 #
@@ -31,7 +39,7 @@
 #source2.o: source2.f90 source3.o
 #source3.o: source3.f90
 # 
-#End of Makefile.dep
+##End of Makefile.dep
 # 
 #this version uses either of the two depmakers
 #to trace dependencies based on USEs and INCLUDEs:
@@ -56,7 +64,7 @@ DEPMAKER=2
 # 	/dir1/dir2/../dirn/makedepf90 | sed ...
 #where /dir1.. is directory where you created makedepf90 (use 'pwd')
 #
-#if you use f90makedep.pl, you may have a problem if the path
+#if you use f90makedep.pl, you may have a problem if the path where you keep
 #your copy of perl is different from the one in its 1st line
 #compare 'which perl' with 'sed -n "1 p" f90makedep.pl
 #
@@ -64,13 +72,37 @@ DEPMAKER=2
 #if makemakedep.sh finds there is already a file named Makefile.dep
 #it will attempt to rename the older file rather than deleting it
 #
-# P.A. Wagner (October 31 2000)
-# (see mlsconfigure.sh for copyright statement)
-#
 ACT_COURTEOUS=1
-#             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes
+#             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes it
 #
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 # "$Id$"
+
+#
+#----------------------- Implementation -----------------------
+#
+#           How to rename or hide excluded files so they !~= %.f90
+dsuffix=".xui"
+#         ^^^----- this is the suffix stuck onto any excluded files
+#                   or else the name of a temp directory hiding them
+# Do we have write permission in the current working directory
+if [ -w "`pwd`" ]
+then
+	f90suffix=".f90"
+	if [ -d "$dsuffix" ]
+	then
+		echo "Sorry--$dsuffix already exists"
+		echo "Aborting new Makefile.dep"
+                exit
+        fi
+        mkdir "$dsuffix"
+else
+	f90suffix="$dsuffix"
+fi
+
+#   Rename older Makefile.dep if one already exists
 if [ -f Makefile.dep ]
 then
 	if [ $ACT_COURTEOUS = "1" ]
@@ -84,9 +116,36 @@ then
                 rm -f Makefile.dep
 	fi
 fi
+#
+#                  Rename or hide excluded files so they !~= %.f90
+wrong_list=""
+while [ "$1" = "-d" ] ; do
+	if [ -f "$2" ]
+        then
+		if [ "$f90suffix" != "$dsuffix" ]
+        	then
+#        		mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
+			mv "$2" "$dsuffix"
+		else
+			echo "$2 wrongly added to dependency lists"
+                        wrong_list="$wrong_list $2"
+	        fi
+        fi
+        shift
+	shift
+
+done
+#
+#                Create Makefile.dep; write 1st line
 echo "#Makefile.dep -- a file to be included by a Makefile" > Makefile.dep
 echo "#to compile a Fortran 9x program or library" >> Makefile.dep
 #
+#Warn of files wrongly added to dependency lists
+if [ "$wrong_list" != "" ]
+then
+	echo "#Delete the following files from the dependency lists:" >> Makefile.dep
+        echo "#$wrong_list" >> Makefile.dep
+fi
 #The following may be useful in rare circumstances
 #but violates assertion that Makefile.dep includes only dependency info
 #so for purity we should avoid relying on it
@@ -106,6 +165,7 @@ if [ $DEPMAKER = "1" ]
 then
 	#
 	# use makedepf90 to calculate dependencies
+	# this assumes makedepf90 both exists && is in PATH
 	echo " using makedepf90 to calculate dependencies "
 	echo "# using makedepf90 to calculate dependencies "  >> Makefile.dep
 	#
@@ -120,7 +180,7 @@ else
 	echo "# using f90makedep.pl to calculate dependencies "  >> Makefile.dep
 	#
 	# Prefix f90makedep.pl with the path to util
-        # which is assumed to be the same as the path to this script
+        # this assumes f90makedep.pl is in same dir as this script
 	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
 	echo " Your perl is `which perl` "
 	echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
@@ -131,7 +191,24 @@ echo " "  >> Makefile.dep
 echo "#End of Makefile.dep" >> Makefile.dep
 echo " "  >> Makefile.dep
 
+#         clean up
+# renamed or hidden files
+if [ -w "$dsuffix" ]
+then
+	moved_files_list="$dsuffix"/*
+	moved_files=`echo $moved_files_list`
+#	the above will expand the wild card * if dsuffix is non-empty
+	if [ "$moved_files" != "$dsuffix/*" ]
+	then
+        	mv "$dsuffix"/* .
+	fi
+        rmdir "$dsuffix"
+fi
+
 # $Log$
+# Revision 1.4  2000/11/02 23:22:38  pwagner
+# Dependencies may cross directories
+#
 # Revision 1.3  2000/10/27 23:22:37  pwagner
 # works with f90makedep.pl
 #
