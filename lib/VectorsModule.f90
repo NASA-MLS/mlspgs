@@ -72,7 +72,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T
+  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -84,7 +84,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
   ! Specifics
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
-  public :: AddVectorToDatabase, AssignVector, AXPY, ClearMask
+  public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity, ClearMask
   public :: ClearUnderMask, ClearVector, CloneVector, ConstantXVector
   public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
@@ -107,6 +107,11 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface Assignment (=)
     module procedure AssignVector
+  end interface
+
+  interface CheckIntegrity
+    module procedure CheckIntegrity_VectorValue, CheckIntegrity_VectorTemplate, &
+      & CheckIntegrity_Vector
   end interface
 
   interface DUMP
@@ -337,6 +342,174 @@ contains ! =====     Public Procedures     =============================
         & a * x%quantities(i)%values + y%quantities(i)%values
     end do
   end function AXPY
+
+  ! ------------------------------------------ CheckIntegrity_Vector -----------
+  logical function CheckIntegrity_Vector ( vector, noError )
+    type ( Vector_T), intent(in) :: VECTOR
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    character (len=132) :: NAME
+    integer :: QTY                      ! Loop counter
+    integer :: totalInstances
+    integer :: totalElements
+
+    ! Executable code
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    if ( vector%name /= 0 ) then
+      call get_string ( vector%name, name, strip=.true. )
+    else
+      name = '<no name>'
+    end if
+
+    call output ( 'Checking integrity for vector '//trim(name), advance='yes' )
+    CheckIntegrity_Vector = CheckIntegrity ( vector%template, .true. )
+
+    if ( .not. associated ( vector%quantities ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector '//trim(name)//' does not have quantities associated' )
+      CheckIntegrity_Vector = .false.
+    end if
+
+    totalInstances = 0
+    totalElements = 0
+    do qty = 1, vector%template%noQuantities
+      call output ( 'Checking integrity for quantity ' )
+      call output ( qty, advance='yes' )
+      CheckIntegrity_Vector = CheckIntegrity_Vector .and. &
+        & CheckIntegrity ( vector%quantities(qty), .true. )
+      totalInstances = totalInstances + vector%quantities(qty)%template%noInstances
+      totalElements = totalElements + vector%quantities(qty)%template%noInstances * &
+        & vector%quantities(qty)%template%instanceLen
+    end do
+
+    if ( totalElements /= vector%template%totalElements ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector '//trim(name)//' does not have the right totalElements' )
+      CheckIntegrity_Vector = .false.
+    end if
+    if ( totalInstances /= vector%template%totalInstances ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector '//trim(name)//' does not have the right totalInstances' )
+      CheckIntegrity_Vector = .false.
+    end if
+
+  end function CheckIntegrity_Vector
+
+  ! ------------------------------------------ CheckIntegrity_VectorTemplate ---
+  logical function CheckIntegrity_VectorTemplate ( template, noError )
+    type ( VectorTemplate_T), intent(in) :: TEMPLATE
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    character (len=132) :: NAME
+
+    ! Executable code
+    CheckIntegrity_VectorTemplate = .true.
+
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    if ( template%name /= 0 ) then
+      call get_string ( template%name, name, strip=.true. )
+    else
+      name = '<no name>'
+    end if
+
+    ! Check stuff
+    if ( .not. associated ( template%quantities ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector template '//trim(name)//' does not have quantities associated' )
+      CheckIntegrity_VectorTemplate = .false.
+    end if
+
+    if ( lbound ( template%quantities, 1 ) /= 1 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector template '//trim(name)//' has the wrong lbound for quantities' )
+      CheckIntegrity_VectorTemplate = .false.
+    end if
+
+    if ( ubound ( template%quantities, 1 ) /= template%noQuantities ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector template '//trim(name)//' has the wrong ubound for quantities' )
+      CheckIntegrity_VectorTemplate = .false.
+    end if
+
+    if ( any ( template%quantities < 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector template '//trim(name)//' contains a bad quantity index' )
+      CheckIntegrity_VectorTemplate = .false.
+    end if
+
+  end function CheckIntegrity_VectorTemplate
+
+  ! ------------------------------------------ CheckIntegrity_VectorValue ---
+  logical function CheckIntegrity_VectorValue ( value, noError ) 
+    type ( VectorValue_T), intent(in) :: VALUE
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    character (len=132) :: NAME
+
+    ! Executable code
+    ! Executable code
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    ! Check the integrity of the template
+    CheckIntegrity_VectorValue = CheckIntegrity ( value%template, .true. )
+
+    if ( value%template%name /= 0 ) then
+      call get_string ( value%template%name, name, strip=.true. )
+    else
+      name = '<no name>'
+    end if
+
+    ! Check the integrity of the values
+    if ( .not. associated ( value%values ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector_value for '//trim(name)//' does not have <values> associated' )
+      CheckIntegrity_VectorValue = .false.
+    end if
+
+    if ( any ( lbound ( value%values ) /= (/1,1/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector_value for '//trim(name)//' has the wrong lbound for values' )
+      CheckIntegrity_VectorValue = .false.
+    end if
+    if ( any ( ubound ( value%values ) /= &
+      & (/value%template%instanceLen,value%template%noInstances/) ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'The vector_value for '//trim(name)//' has the wrong ubound for values' )
+      CheckIntegrity_VectorValue = .false.
+    end if
+
+    if ( associated ( value%mask ) ) then
+      if ( any ( lbound ( value%mask ) /= (/1,1/) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'The vector_value for '//trim(name)//' has the wrong lbound for mask' )
+        CheckIntegrity_VectorValue = .false.
+      end if
+      if ( any ( ubound ( value%mask ) /= &
+        & (/value%template%instanceLen,value%template%noInstances/) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'The vector_value for '//trim(name)//' has the wrong ubound for mask' )
+        CheckIntegrity_VectorValue = .false.
+      end if
+    end if
+
+  end function CheckIntegrity_VectorValue
 
   !---------------------------------------------------  ClearMask  -----
   subroutine ClearMask ( MASK, TO_CLEAR, WHAT )
@@ -1844,6 +2017,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.84  2002/07/01 23:51:30  vsnyder
+! Plug a memory leak
+!
 ! Revision 2.83  2002/05/17 17:56:01  livesey
 ! More checks in ValidateVectorQuantity
 !
