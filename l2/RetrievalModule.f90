@@ -11,6 +11,7 @@ module RetrievalModule
 ! This module and ones it calls consume most of the cycles.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Declaration_table, only: NUM_VALUE, RANGE
   use DNWT_Module, only: FlagName, NF_EVALF, NF_EVALJ, NF_SOLVE, NF_NEWX, &
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_START, NF_TOLX, &
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
@@ -22,15 +23,18 @@ module RetrievalModule
     & ForwardModelStatus_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
     & F_criteria, F_columnScale, F_covariance, F_diagonal, &
-    & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
+    & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, F_ignore, &
+    & F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
-    & F_outputCovariance, F_outputSD, F_quantity, F_regOrders, F_regWeight, &
+    & F_opticalDepth, &
+    & F_outputCovariance, F_ptanQuantity, F_outputSD, F_quantity, F_regOrders, F_regWeight, &
     & F_state, F_test, F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
-    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
+    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
-  use Intrinsic, only: Field_indices, PHYQ_Dimensionless, Spec_indices
+  use Intrinsic, only: Field_indices, PHYQ_Dimensionless, &
+    & PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_ZETA, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
     & ClearMatrix, ColumnScale, CopyMatrix, CopyMatrixValue, CreateEmptyMatrix, &
@@ -55,8 +59,9 @@ module RetrievalModule
   use Tree_Types, only: N_named
   use VectorsModule, only: AddToVector, CloneVector, CopyVector, CreateMask, &
     & DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, Dump, &
-    & GetVectorQuantityIndexByName, Multiply, operator(.DOT.), &
-    & operator(-), ScaleVector, SetMask, SubtractFromVector, Vector_T
+    & GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName, &
+    & Multiply, operator(.DOT.), &
+    & operator(-), ScaleVector, SetMask, SubtractFromVector, Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -240,40 +245,7 @@ contains
         if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
       case ( s_subset )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
-        do j = 2, nsons(key) ! fields of the "subset" specification
-          son = subtree(j, key)
-          field = get_field_id(son)   ! tree_checker prevents duplicates
-          got(field) = .true.
-          select case ( field )
-          case ( f_channels )
-            channels = subtree(2,son)
-          case ( f_criteria )
-            criteria = subtree(2,son)
-          case ( f_quantity )
-            quantity = subtree(2,son) ! vector.quantity
-          case ( f_test )
-            test = subtree(2,son)
-          case default
-            ! Shouldn't get here if the type checker worked
-          end select
-        end do ! j = 2, nsons(key)
-        if ( error == 0 ) then
-          ! Compute the mask for the vector
-          vectorIndex = decoration(decoration(subtree(1,quantity)))
-          quantityIndex = getVectorQuantityIndexByName &
-            & ( vectorDatabase(vectorIndex), sub_rosa(subtree(2,quantity)) )
-          if ( .not. associated(vectorDatabase(vectorIndex)% &
-            & quantities(quantityIndex)%mask) ) then ! create and fill with 1's
-            call createMask ( vectorDatabase(vectorIndex)% &
-              & quantities(quantityIndex) )
-            do j = 1, size(vectorDatabase(vectorIndex)% &
-              & quantities(quantityIndex)%mask, 2)
-              call setMask ( vectorDatabase(vectorIndex)% &
-                & quantities(quantityIndex)%mask(:,j) )
-            end do
-          end if ! mask exists
-          !??? Fill the mask according to the specified criteria ???
-        end if ! error == 0
+        call SetupSubset ( key, vectorDatabase )
         if ( toggle(gen) ) call trace_end ( "Retrieve.subset" )
       case ( s_retrieve )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
@@ -1118,11 +1090,177 @@ contains
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
+
+    ! -------------------------------------------------- SetupSubset ---
+    subroutine SetupSubset ( key, vectors )
+      integer, intent(in) :: KEY        ! Tree node
+      type (Vector_T), dimension(:) :: VECTORS
+
+      ! Local variables
+      integer :: GSON                   ! Tree node
+      integer :: SON                    ! Tree node
+      integer :: FIELD                  ! Field type from tree
+      integer :: VECTORINDEX            ! Index
+      integer :: QUANTITYINDEX          ! Index
+      integer :: UNITS(2)               ! Units returned by expr
+      integer :: TYPE                   ! Type of value returned by expr
+      integer :: CHANNELSNODE           ! Tree node for channels values
+      integer :: HEIGHTNODE             ! Tree node for height values
+      integer :: HEIGHTUNIT             ! Unit for heights command
+      integer :: COORDINATE             ! Vertical coordinate type
+      integer :: DEPTHNODE              ! Tree node for optical depth
+      integer :: INSTANCE               ! Loop counter
+
+      integer :: S1(1), S2(1)           ! Results of minloc intrinsic
+
+      integer, pointer, dimension(:) :: TOCHANGE ! Indices
+
+      real(r8) :: VALUE(2)              ! Value returned by expr
+      real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+      type (VectorValue_T), pointer :: QTY ! The quantity to mask
+      type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+      logical :: Got(field_first:field_last)   ! "Got this field already"
+      logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+      logical :: IGNORE                 ! Flag
+
+      ! Executable code
+      nullify ( channels, qty, ptan, tochange )
+      do j = 2, nsons(key) ! fields of the "subset" specification
+        son = subtree(j, key)
+        field = get_field_id(son)   ! tree_checker prevents duplicates
+        got(field) = .true.
+        if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+        select case ( field )
+        case ( f_quantity )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          qty => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_ptanquantity )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_channels )
+          channelsNode = gson
+        case ( f_height )
+          heightNode = gson
+        case ( f_opticalDepth )
+          depthNode = gson
+        case ( f_ignore )
+          ignore = Get_Boolean ( son )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
+
+      ! Now deal with the channels and heights fields
+      if ( qty%template%frequencyCoordinate /= l_none ) then
+        call Allocate_test ( channels, qty%template%noChans, &
+          & 'channels', ModuleName )
+        if ( got(f_channels) ) then     ! This subset is only for some channels
+          channels = .false.
+          do j = 1, nsons(channelsNode)
+            call expr ( subtree(j,channelsNode), units, value, type )
+            select case ( type )
+            case ( num_value )
+              if ( units(1) /= phyq_dimensionless ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Invalid unit for channel' )
+              channels ( nint(value(1)) ) = .true.
+            case ( range )
+              if ( any ( units /= phyq_dimensionless ) ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Invalid unit for channel range' )
+              channels ( nint(value(1)):nint(value(2)) ) = .true.
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unrecognised type for channels' )
+            end select
+          end do
+        else
+          channels = .true.             ! Apply this to all channels
+        end if
+      endif
+
+      ! Now deal with the height stuff, at least preprocess it.
+      if ( got(f_height) ) then
+        heightUnit = phyq_dimensionless
+        do j = 1, nsons(heightNode)
+          call expr ( subtree(j,heightNode), units, value, type )
+          if ( type /= range ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Only allow range for height' )
+          if ( units(1) /= units(2) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Conflicting units for height' )
+          if ( heightUnit == phyq_dimensionless ) then
+            heightUnit = units(1)
+          else 
+            if ( heightUnit /= units(1) ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Conflicting units for height' )
+          endif
+        end do
+      end if
+      if ( .not. any ( heightUnit == (/ phyq_pressure, phyq_length /) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Height must be either length or pressure.' )
+
+      ! Now one final check over all the things we've been asked to do.
+      if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
+        & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'must supply ptan for this subset if using pressure' )
+
+      ! Setup a temporary array
+      call allocate_test ( tochange, qty%template%instanceLen, 'tochange', ModuleName )
+      do j = 1, qty%template%instanceLen 
+        toChange(j)=j
+      end do
+
+      ! Now we loop over the instances
+      do instance = 1, qty%template%noInstances
+        if ( qty%template%coherent ) then
+          theseHeights => qty%template%surfs(:,1)
+          coordinate = qty%template%verticalCoordinate
+        else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
+          theseHeights => ptan%values(:,instance)
+          coordinate = phyq_zeta
+        else
+          theseHeights => qty%template%surfs(:,instance)
+          coordinate = qty%template%verticalCoordinate
+        endif
+
+        if ( got(f_height) ) then
+          do j = 1, nsons(heightNode)
+            call expr ( subtree(j,heightNode), units, value, type )
+            ! Now maybe do something nasty to value to get in right units
+            if ( coordinate == phyq_zeta .and. units(1) == phyq_pressure ) then
+              value = -log10(value)
+            else if ( coordinate /= units(1) ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Inappropriate units for height in subset' )
+            end if
+            if ( qty%template%verticalCoordinate == l_pressure ) then
+              s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+              s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+            else
+              s1 = minloc ( abs ( theseHeights - value(1) ) )
+              s2 = minloc ( abs ( theseHeights - value(2) ) )
+            end if
+            call ClearMask ( qty%mask(:,instance), tochange(s1(1):s2(1)) )
+          end do
+        end if
+
+      end do
+
+    end subroutine SetupSubset
+
   end subroutine Retrieve
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.44  2001/06/26 16:26:32  livesey
+! It at least compiles, but subset certainly doesn't work yet.
+!
 ! Revision 2.43  2001/06/22 01:26:54  vsnyder
 ! Process fields for regularization, but regularization isn't done yet
 !
