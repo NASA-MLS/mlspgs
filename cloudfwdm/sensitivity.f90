@@ -16,9 +16,9 @@
       REAL(r8) :: SS(NT)                         ! CLOUD RADIANCE SENSITIVITY
       REAL(r8) :: TAUeff(NT)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
+      REAL(r8) :: Trans(NH-1)                      ! Clear Transmission Func 
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
-      REAL(R8) :: TRANS(NH-1)
 
       REAL(r8) :: BETA(NZ-1)                     ! TOTAL EXTINCTION
       REAL(r8) :: BETAc(NZ-1)                    ! CLOUDY-SKY EXTINCTION

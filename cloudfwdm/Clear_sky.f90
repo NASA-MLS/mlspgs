@@ -44,6 +44,9 @@
       DO I=1,NU/2
          X(I)=U(I)
       ENDDO
+
+      wind=0._r8
+
       CALL SURFACE(F,TS,LORS,S,WIND,X,NU/2,NP,RH,RV)
       DO I=1,NU/2
          RS(I)=RH(I)
