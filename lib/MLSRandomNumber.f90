@@ -14,6 +14,9 @@ module MLSRandomNumber              ! Some random number-generating things
   public :: srang, drang
   public :: mls_random_number, mls_random_seed
   
+  ! Calculate random numbers via MATH77 routines from ran_pack (if true)
+  ! or else via the f95 intrinsic (if false)
+  logical, public, save  ::                   MATH77_RAN_PACK = .true.
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -23,11 +26,9 @@ module MLSRandomNumber              ! Some random number-generating things
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  integer, private, parameter          ::      haystack =         97
+  integer, private, parameter          ::      haystack =        97
   real, private, dimension(haystack), save  :: harvest
-  ! Use MATH77 routines from ranpack to calculate random numbers (if true)
-  ! or else the f95 intrinsic
-  logical, private, save  ::                   MATH77_RAN_PACK = .true.
+
   ! The following recapture the effects of ranpk common blocs
   real, private, save  ::                      XCURSP =          123456789.0e0
   double precision, private, save  ::          XCURDP =          123456789.0D0
@@ -37,14 +38,19 @@ module MLSRandomNumber              ! Some random number-generating things
   integer, private, save  ::                   SPTR =            1
   logical, private, save  ::                   SGFLAG =          .false.
   logical, private, save  ::                   FIRST =           .true.
+  logical, private, save  ::                   was_last_time_m77 = .true.
 
 !     c o n t e n t s
 !     - - - - - - - -
 
+!      settable parameter
+! MATH77_RAN_PACK   Whether to use MATH77 routines (if TRUE) or intrinsic f95
+
+!      functions and subroutines
 ! drang             gauss. distribution: 0 mean, 1 s.d. (double)
 ! srang             gauss. distribution: 0 mean, 1 s.d. (single)
 ! mls_random_number uniform distribution in interval [0,1]
-! mls_random_seed   put or set or size seed; or switch methods
+! mls_random_seed   put or set or size seed
 
 ! Modified to use f95 intrinsic random_number instead of ranpk1 and ranpk2
 ! Unfortunately, using NAG f95, this has side-effect of making test case
@@ -65,11 +71,13 @@ contains
       else
         call random_number(array_arg)
       endif
+      was_last_time_m77 = MATH77_RAN_PACK
       return
       end subroutine mls_random_number
 
 !     -------------- mls_random_seed -----------------------
-      subroutine MLS_RANDOM_SEED(ssize, pput, gget, MATH77_ranpack, new_seed)
+!      subroutine MLS_RANDOM_SEED(ssize, pput, gget, MATH77_ranpack, new_seed)
+      subroutine MLS_RANDOM_SEED(ssize, pput, gget, new_seed)
       ! Formal arguments
       ! (Esssentially stammerings of random_zeed's)
       integer, optional, intent(out) :: ssize
@@ -78,7 +86,7 @@ contains
       integer, optional, intent(inout) :: new_seed(:)
       ! (Use MATH77's implementation of random numbers (if true),
       ! or switch to f95 intrinsic)
-      logical, optional, intent(in) ::  MATH77_ranpack
+      ! logical, optional, intent(in) ::  MATH77_ranpack
       
       ! Local variables
       integer               ::          count
@@ -113,8 +121,8 @@ contains
         else
           call random_seed(put=new_seed(1:))
         endif
-      elseif ( present(MATH77_ranpack) ) then
-        MATH77_RAN_PACK = MATH77_ranpack
+      ! elseif ( present(MATH77_ranpack) ) then
+      !  MATH77_RAN_PACK = MATH77_ranpack
       else
         if ( MATH77_RAN_PACK ) then
           call RAN1
@@ -255,6 +263,7 @@ contains
 !         DRANG = (XX-YY)*R
          DRANG = (X-Y)*(X+Y)*R
          DGFLAG = .true.
+         was_last_time_m77 = MATH77_RAN_PACK
          return
       endif
 !     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -263,6 +272,7 @@ contains
 !                                Compute result as  R*Cos(PHI)
       DRANG = TWO*X*Y*R
       DGFLAG=.false.
+      was_last_time_m77 = MATH77_RAN_PACK
       return
       end function  DRANG
 
@@ -397,6 +407,7 @@ contains
 !
 !         SRANG = (XX-YY)*R
          SRANG = (X-Y)*(X+Y)*R
+         was_last_time_m77 = MATH77_RAN_PACK
          return
       endif
 !     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -405,6 +416,7 @@ contains
 !                                Compute result as  R*Cos(PHI)
       SRANG = TWO*X*Y*R
       SGFLAG=.false.
+      was_last_time_m77 = MATH77_RAN_PACK
       return
       end function  SRANG
 
@@ -576,16 +588,10 @@ contains
 !      save FIRST
 !      data FIRST / .true. /
 !
-!   print *, 'before RANMOD'
-!   print *, 'FIRST: ', FIRST
-!   print *, 'MODE: ', MODE
-      if (FIRST) then
+      if (FIRST .or. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
-!   print *, 'after RANMOD'
-!   print *, 'FIRST: ', FIRST
-!   print *, 'MODE: ', MODE
 !      go to (310, 320, 330, 340), MODE
     select case (MODE)
 !  310 stop'In file RANPK2, subroutine SRANUA -- Ivalid value for MODE'
@@ -656,7 +662,7 @@ contains
 !      save FIRST
 !      data FIRST / .true. /
 !
-      if (FIRST) then
+      if (FIRST .or. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -857,7 +863,7 @@ contains
       save FIRST
       data FIRST / .true. /
 !
-      if (FIRST) then
+      if (FIRST .or. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -887,7 +893,7 @@ contains
       save FIRST
       data FIRST / .true. /
 !
-      if (FIRST) then
+      if (FIRST .or. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -990,6 +996,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.6  2001/10/17 23:38:32  pwagner
+! MATH77_ran_pack now publicly settable
+!
 ! Revision 2.5  2001/10/15 23:49:58  pwagner
 ! Added back some MATH77 stuff, mls_random number and seed
 !
