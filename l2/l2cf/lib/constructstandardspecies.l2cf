@@ -8,12 +8,22 @@ begin Construct
   ;; Define all the molecules we'll consider.  Note that this is only
   ;; non-isotopic species (at least for the moment).
   ;; *** NOTE NO CONTINUATION LINES ALLOWED, SORRY!
+  !ifdef(precisionEstimates,{
+  !define(allLinearSRMolecules,{BrO, CH3CN, CO, ClO, HCl, HCN, H2O2, HNO3, HOCl, HO2, N2, N2O, OH, O2, SO2})
+
+;  No log standard resolution molecules, so must not add to lists
+;  !define(allLogSRMolecules,{})
+
+  !define(allLinearVRMolecules,{O3})
+  !define(allLogVRMolecules,{H2O})
+  },{
   !define(allLinearMolecules,{BrO, CH3CN, CO, ClO, HCl, HCN, H2O2, HNO3, HOCl, HO2, N2, N2O, OH, O2, O3, SO2})
 
   !define(allLogMolecules,{H2O})
 
   !define(allLinearHRMolecules,{O3})
   !define(allLogHRMolecules,{H2O})
+  })
 
   ;; Most users can pretty much ignore the stuff below here.
   ;; (And much of the stuff above really!)
@@ -21,9 +31,17 @@ begin Construct
   ;; ----------------------------------------- Derived macros
 
   ;; These are macros derived from above
+  !ifdef(precisionEstimates,{
+  !define(allSRMolecules,{!allLinearSRMolecules})
+;  !define(allSRMolecules,{!allLinearSRMolecules,!allLogSRMolecules})
+  !define(allVRMolecules,{!allLinearVRMolecules,!allLogVRMolecules})
+  !define(allMolecules,{!allSRMolecules,!allVRMolecules})
+  },{
   !define(allMolecules,{!allLinearMolecules, !allLogMolecules})
   !define(allHiResMolecules,
     {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
+  })
+
   ;; ----------------------------------------- Tangent pressures and phis
 
   ptanGHz: Quantity, type=ptan, module=GHz
@@ -34,15 +52,63 @@ begin Construct
 
   ;; ----------------------------------------- Temperature / refgph
   
+  !ifdef(precisionEstimates,{
+  !ifelse(!resolution,standard,!dnl
+    {temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+     type=temperature},!dnl
+    {temperature: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, $
+     type=temperature})
+  },{
   temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   temperature_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=temperature
+  })
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  !ifdef(precisionEstimates,{
+  !ifelse(!resolution,{standard},!dnl
+    {GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+     type=GPH},!dnl
+    {GPH: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, $
+     type=GPH})
+  },{
   GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
+  })
   
   ;; ----------------------------------------- Volume mixing ratios
 
   ;; We'll make extensive use of m4 macros here.
   ;; First macros that define individual molecules.
+  !ifdef(precisionEstimates,{
+  !define(constructLinearSRVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructLogSRVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis!nl})
+  !define(constructLinearHRVMR,{$1: Quantity, vGrid=vGridHiRes, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructLogHRVMR,{$1: Quantity, vGrid=vGridHiRes, $
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis!nl})
+
+  ;; Define the 'standard' vmrs
+  !forall( {constructLinearSRVMR}, !allLinearSRMolecules )
+;  !forall( {constructLogSRVMR}, !allLogSRMolecules )
+
+  ;; Define the 'variable resolution' vmrs
+  ;; Note! Do not put a space before the closing parentheses as it
+  ;; screws ends up between the molecule name and the _HR for the last
+  ;; molecule in the list!
+  !ifelse(!resolution,{standard},!dnl
+    {!forall( {constructLinearSRVMR}, !allLinearVRMolecules)},!dnl
+    {!forall( {constructLinearHRVMR}, !allLinearVRMolecules)})
+  !ifelse(!resolution,{standard},!dnl
+    {!forall( {constructLogSRVMR}, !allLogVRMolecules)},!dnl
+    {!forall( {constructLogHRVMR}, !allLogVRMolecules)})
+
+  ;; ----------------------------------------- RHI
+  !ifelse(!resolution,{standard},!dnl
+    {rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+     type=rhi, molecule=h2o},!dnl
+    {rhi: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, $
+     type=rhi, molecule=h2o})
+  },{
   !define(constructLinearVMR,{$1: Quantity, vGrid=vGridStandard, $
     hGrid=hGridStandard, type=vmr, molecule=$1!nl})
   !define(constructLogVMR,{$1: Quantity, vGrid=vGridStandard, $
@@ -66,6 +132,7 @@ begin Construct
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
+  })
   
   ;; ----------------------------------------- Baselines
   
@@ -213,9 +280,10 @@ begin Construct
   ;; running this with NAG.
   stateTemplate: VectorTemplate, quantities = [ $
     ptanGHZ, ptanTHz, phitanGHz, phitanTHz, temperature, $
-    !ifdef(skipHiRes,{},{temperature_HR,}) refGPH, GPH, $
+    !ifdef(precisionEstimates,{},{!ifdef(skipHiRes,{},{temperature_HR,})}) $
+    refGPH, GPH, $
     !allMolecules, $
-    !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
+    !ifdef(precisionEstimates,{},{!ifdef(skipHiRes,{},{!allHiResMolecules,})}) $
     rhi, !allBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $
