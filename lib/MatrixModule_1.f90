@@ -10,7 +10,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
+  use MatrixModule_0, only: Assignment(=), CheckIntegrity, CholeskyFactor, ClearRows, &
     & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
     & GetDiagonal, GetMatrixElement, GetVectorFromColumn, InvertCholesky, &
     & M_Absent, M_Column_Sparse, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
@@ -23,13 +23,14 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use String_Table, only: Display_String
-  use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T
+  use String_Table, only: Display_String, get_string
+  use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T, &
+    & CheckIntegrity
 
   implicit NONE
   private
   public :: AddToMatrixDatabase, AddToMatrix
-  public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
+  public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
@@ -66,6 +67,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure AssignMatrix
   end interface
 
+  interface CheckIntegrity
+    module procedure CheckIntegrity_RC, CheckIntegrity_1
+  end interface
+  
   interface CholeskyFactor
     module procedure CholeskyFactor_1
   end interface
@@ -365,6 +370,182 @@ contains ! =====     Public Procedures     =============================
     z%row = x%row
     z%block => x%block
   end subroutine AssignMatrix
+
+  ! ------------------------------------------- CheckIntegrity_RC ------
+  logical function CheckIntegrity_RC ( rc, noError )
+    type ( RC_Info ), intent(in) :: RC
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    integer :: I                        ! Loop counter
+    
+    ! Executable code
+
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    checkIntegrity_RC = CheckIntegrity ( rc%vec, .true. )
+    if ( rc%nb /= rc%vec%template%totalInstances ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Row/col info has bad NB' )
+      checkIntegrity_RC = .false.
+    end if
+
+    ! Check arrays, must give errors here as later code will fail anyway
+    if ( .not. associated ( rc%nelts ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has no nelts associated' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( .not. associated ( rc%inst ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has no inst associated' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( .not. associated ( rc%quant ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has no quant associated' )
+      checkIntegrity_RC = .false.
+    end if
+    ! Check lbounds
+    if ( lbound ( rc%nelts,1 ) /= 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad lbound for nelts' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( lbound ( rc%inst,1 ) /= 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad lbound for inst' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( lbound ( rc%quant,1 ) /= 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad lbound for quant' )
+      checkIntegrity_RC = .false.
+    end if
+    ! Check ubounds
+    if ( ubound ( rc%nelts,1 ) /= rc%nb ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad ubound for nelts' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( ubound ( rc%inst,1 ) /= rc%nb ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad ubound for inst' )
+      checkIntegrity_RC = .false.
+    end if
+    if ( ubound ( rc%quant,1 ) /= rc%nb ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has bad ubound for quant' )
+      checkIntegrity_RC = .false.
+    end if
+    ! Check arrays min values
+    if ( any ( rc%quant < 0 ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has -ve values for quant' )
+      checkIntegrity_RC = .false.
+    end if
+    ! Check arrays max values
+    if ( any ( rc%quant > rc%vec%template%noQuantities ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Row/col info has too high values for quant' )
+      checkIntegrity_RC = .false.
+    end if
+
+    do i = 1, rc%nb
+      call output ( 'Checking row/col block ' )
+      call output ( i )
+      call output ( '/' )
+      call output ( rc%nb, advance='yes' )
+      if ( rc%inst(i) > rc%vec%quantities(rc%quant(i))%template%noInstances ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Row/col info has too high values for inst' )
+        checkIntegrity_RC = .false.
+      end if
+      if ( rc%nelts(i) /= rc%vec%quantities(rc%quant(i))%template%instanceLen ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Row/col info has bad value for inst' )
+        checkIntegrity_RC = .false.
+      end if
+    end do
+
+  end function CheckIntegrity_RC
+
+  ! ------------------------------------------- CheckIntegrity_1 -------
+  logical function CheckIntegrity_1 ( matrix, noError )
+    type ( Matrix_T ), intent(in) :: MATRIX
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    character ( len=132 ) :: NAME
+    integer :: ROW, COL                 ! Loop counters
+    
+    ! Executable code
+
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+    if ( matrix%name /= 0 ) then
+      call get_string ( matrix%name, name, strip=.true. )
+    else
+      name = '<no name>'
+    end if
+
+    call output ( 'Checking integrity for matrix '//trim(name), advance='yes' )
+    call output ( 'Checking row info', advance='yes' )
+    checkIntegrity_1 = CheckIntegrity ( matrix%row )
+    call output ( 'Checking col info', advance='yes' )
+    checkIntegrity_1 = checkIntegrity_1 .and. CheckIntegrity ( matrix%col )
+    if ( .not. associated ( matrix%block ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Matrix '//trim(name)//' has no block associated' )
+      checkIntegrity_1 = .false.
+    end if
+    if ( any ( lbound ( matrix%block ) /= 1 ) ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Matrix '//trim(name)//' has bad lbound on block' )
+      checkIntegrity_1 = .false.
+    end if
+
+    do row = 1, matrix%row%nb
+      do col = 1, matrix%col%nb
+        call output ( 'Checking integrity of block [ ' )
+        call output ( row )
+        call output ( ', ' )
+        call output ( col )
+        call output ( ' ] ( ' )
+        call display_string ( matrix%row%vec%quantities ( &
+          & matrix%row%quant(row) )%template%name )
+        call output ( '[' )
+        call output ( matrix%row%inst(row) )
+        call output ( '], ' )
+        call display_string ( matrix%col%vec%quantities ( &
+          & matrix%col%quant(col) )%template%name )
+        call output ( '[' )
+        call output ( matrix%col%inst(col) )
+        call output ( '] )', advance='yes' )       
+
+        if ( matrix%block(row,col)%nRows /= matrix%row%nelts(row) ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Matrix '//trim(name)//' has inconsistent block row sizes' )
+          checkIntegrity_1 = .false.
+        end if
+        if ( matrix%block(row,col)%nCols /= matrix%col%nelts(col) ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Matrix '//trim(name)//' has inconsistent block col sizes' )
+          checkIntegrity_1 = .false.
+        end if
+        checkIntegrity_1 = checkIntegrity_1 .and. &
+          & CheckIntegrity ( matrix%block(row,col), .true. )
+      end do
+    end do
+    
+  end function CheckIntegrity_1
 
   ! -------------------------------------------  CholeskyFactor_1  -----
   subroutine CholeskyFactor_1 ( Z, X )
@@ -1864,6 +2045,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.72  2002/07/22 03:26:37  livesey
+! Added checkIntegrity
+!
 ! Revision 2.71  2002/07/17 06:01:10  livesey
 ! Added trivial handling of M_Unknown
 !
