@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
@@ -23,6 +26,12 @@ program MLSL2
   integer :: J                     ! index within option
   character(len=80) :: LINE        ! Into which is read the command args
   integer :: ROOT                  ! of the abstract syntax tree
+
+  !------------------------------- RCS Ident Info ------------------------------
+  CHARACTER(LEN=130) :: Id = & 
+     "$Id$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  !-----------------------------------------------------------------------------
 
 ! Initialize the lexer, symbol table, and tree checker's tables:
   call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=1003 )
@@ -98,3 +107,8 @@ program MLSL2
     end if
   end if
 end program MLSL2
+
+! $Log$
+! Revision 2.3  2000/10/12 00:33:47  vsnyder
+! Insert CVS variables and copyright notice
+!
