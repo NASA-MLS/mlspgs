@@ -7,11 +7,13 @@ begin ReadApriori
   !ifdef(flagPrecisionEstimates,{
   ;; PEs have all the species, plus O2 and N2 which vary in the
   ;; mesosphere / thermosphere
-  !ifdef(allClimatologicalSpecies,{},{!define(allClimatologicalSpecies,{BrO,CH3Cl,CH3CN,ClO,CO,H2CO,H2O,H2O2,H2S,HCl,HCN,HNO3,HO2,HOCl,N2,N2O,NO,NO2,O2,O3,OCS,OH,refGPH,SO2,Temperature})})
+  !ifdef(allClimatologicalSpecies,{},{
+    !define(allClimatologicalSpecies,{BrO,CH3Cl,CH3CN,ClO,CO,H2CO,H2O,H2O2,H2S,HCl,HCN,HNO3,HO2,HOCl,N2,N2O,NO,NO2,O2,O3,OCS,OH,refGPH,SO2,Temperature})})
   },{
-  !define(allClimatologicalSpecies,{TEMPERATURE,H2O,O3,N2O,HNO3,HCL,CLO,HO2,CO,HCN,CH3CN,OH})
-  !ifelse(!version,{v1.3.6},{!define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO,HCN,CH3CN,OH})})
-  
+  !ifdef(allClimatologicalSpecies,{},{
+    !define(allClimatologicalSpecies,{TEMPERATURE,H2O,O3,N2O,HNO3,HCL,CLO,HO2,CO,HCN,CH3CN,OH})
+    !ifelse(!version,{v1.3.6},{!define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO,HCN,CH3CN,OH})})
+    })
   })
 
   ;; This macro reads one entry from grid format file into the gridded
