@@ -37,7 +37,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/$USER"
+	    echo "/work1/$USER"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
 	fi
@@ -51,7 +51,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/$USER/"
+	    echo "/work1/$USER/"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
@@ -96,14 +96,14 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--tmp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/$USER"
+	    echo "/work1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--sidsrad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/$USER"
+	    echo "/work1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
@@ -112,6 +112,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.15  2003/05/22 17:41:27  livesey
+# Added sids rad option
+#
 # Revision 1.14  2003/05/13 04:13:28  livesey
 # Changed livesey's to $USERS and added --tmp option
 #
