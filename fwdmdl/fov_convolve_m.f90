@@ -124,8 +124,13 @@ module Fov_Convolve_m
 
 ! set up for interpolations
 
-    call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
-      & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
+    if ( present(drad_dt_out) ) then
+      ! find the surface dimension
+      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out )
+      call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
+        & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
+    end if
+
     call interpolateArraySetup ( chi_in-init_angle, angles(ffth:no_fft), &
       & METHOD='S', coeffs=coeffs_2, EXTRAPOLATE='C' )
     call interpolateArraySetup ( angles(ffth:no_fft)-ang_step, chi_out-init_angle, &
@@ -180,10 +185,6 @@ module Fov_Convolve_m
 ! compute the antenna derivative function
 
       n_coeffs = size(di_dt,dim=2)
-
-! find the surface dimension
-
-      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out )
 
 ! third term first (its fft is coefficient independent)
 ! apply convolution theorem
@@ -533,6 +534,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.12  2002/11/23 02:49:07  vsnyder
+! Use pre-computed interpolation coefficients
+!
 ! Revision 2.11  2002/10/10 19:36:22  vsnyder
 ! Add di_dt_flag
 !
