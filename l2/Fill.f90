@@ -24,33 +24,33 @@ module Fill                     ! Create vectors and fill them.
     & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,L_CHOLESKY, &
+    & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PTAN, L_RADIANCE, L_EARTHRADIUS, &
+    & L_PRESSURE, L_PTAN, L_RADIANCE, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
+    & L_TNGTGEOCALT, L_TRUE, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_REMOVE, &
     & S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
   ! Now some arrays
-  use Intrinsic, only: Field_Indices, Lit_Indices
-  use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
-    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
+  use Intrinsic, only: Field_Indices
+  use Intrinsic, only: &
+    & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
     & PHYQ_Time
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
-  use L2AUXData, only: L2AUXData_T, L2AUXRank
+  use L2AUXData, only: L2AUXData_T
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
-  use MatrixModule_1, only: AddToMatrixDatabase, ClearMatrix, CreateEmptyMatrix, &
+  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & Dump, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
-  use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSNumerics, only: InterpolateValues
@@ -62,12 +62,12 @@ module Fill                     ! Create vectors and fill them.
   use QuantityTemplates, only: QuantityTemplate_T
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
   use SnoopMLSL2, only: SNOOP
-  use String_Table, only: Display_String, Get_string
-  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+  use String_Table, only: Display_String
+  use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
+  use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use UNITS
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
     & GetVectorQtyByTemplateIndex, isVectorQtyMasked, &
@@ -200,7 +200,6 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: earthRadiusQty
     type (vectorValue_T), pointer :: losQty
     type (vectorValue_T), pointer :: bndPressQty
-    type (vectorValue_T), pointer :: colAbundQty
     type (vectorValue_T), pointer :: vmrQty
     type (vectorValue_T), pointer :: measQty
     type (vectorValue_T), pointer :: modelQty
@@ -229,12 +228,11 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Descendant of Son
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
-    integer :: I, J, K                  ! Loop indices for section, spec, expr
+    integer :: I, J                     ! Loop indices for section, spec, expr
   !  The next three are FALSE by default
     logical :: DONTMASK                 ! Use even masked values if TRUE
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
-    integer :: IND                      ! Temoprary index
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
@@ -242,7 +240,6 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
-    integer :: L2INDEX                  ! Where source is among l2gp or l2au database
     integer :: LOSVECTORINDEX           ! index in vector database
     integer :: LOSQTYINDEX              ! index in QUANTITY database
     type(matrix_Cholesky_T) :: MatrixCholesky
@@ -252,10 +249,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MatrixToFill             ! Index in database
     integer :: MatrixType               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
-    character (LEN=LineLen) ::  Msr
-    type (Vector_T) :: NewVector ! A vector we've created
     integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
-    integer :: PREVDEFDQT               !
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
     integer :: QUANTITYINDEX            ! Within the vector
@@ -301,6 +295,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
     dontMask = .false.
     ignoreZero = .false.
     ignoreNegative = .false.
@@ -1565,8 +1560,6 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
     real (r8) :: Delta_log_plus  ! ln p[j+1] - ln p[j]
     real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
-    real (r8) :: Delta_p_0       ! p[j+1] - p[j]
-    real (r8) :: Delta_log_0     ! ln p[j+1] - ln p[j]
 
     real (r8), allocatable, dimension(:) :: p         ! p[i] in hPa
 
@@ -2219,12 +2212,6 @@ contains ! =====     Public Procedures     =============================
     call output ( ': ' )
     call output ( "The " );
 
-!   if ( where > 0 ) then
-!     call dump_tree_node ( where, 0 )
-!   else
-!     call output ( '(no lcf node available)' )
-!   end if
-
     select case ( code )
     case ( allocation_err )
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
@@ -2345,6 +2332,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.79  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.78  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
