@@ -24,7 +24,6 @@ module Fill                     ! Create vectors and fill them.
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSSignals_m, only: GetSignalName, GetModuleName
-  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
@@ -386,7 +385,9 @@ contains ! =====     Public Procedures     =============================
 
 
         case default
-          call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
+!          call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
+          call Announce_error(key,0, &
+			 & 'This fill method not yet implemented')
         end select
         
         ! End of fill operations
@@ -405,7 +406,11 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if (ERROR/=0) call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
+    if (ERROR/=0) then
+	 !	call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
+          call Announce_error(key,0, &
+			 & 'Problem with Fill section')
+	endif
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
@@ -754,7 +759,9 @@ contains ! =====     Public Procedures     =============================
       call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
         & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
     case default
-      call MLSMessage(MLSMSG_Error, ModuleName, 'No such fill yet')
+!      call MLSMessage(MLSMSG_Error, ModuleName, 'No such fill yet')
+          call Announce_error(0, 0, &
+			 & 'No such fill yet')
     end select
 
     if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
@@ -1275,10 +1282,22 @@ contains ! =====     Public Procedures     =============================
 
     error = max(error,1)
     call output ( '***** At ' )
+
+	if(where > 0) then
     call print_source ( source_ref(where) )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
     call output ( ': ' )
     call output ( "The " );
+
+	if(where > 0) then
     call dump_tree_node ( where, 0 )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
     select case ( code )
     case ( badUnitsForExplicit )
       call output ( " has inappropriate units for Fill instruction.", advance='yes' )
@@ -1372,6 +1391,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.34  2001/04/05 23:45:39  pwagner
+! Deleted all MLSMessages
+!
 ! Revision 2.33  2001/03/29 19:12:40  livesey
 ! Added gridded data fill
 !
