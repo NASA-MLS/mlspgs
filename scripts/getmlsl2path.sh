@@ -60,8 +60,10 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
-	    soundbarrier | scramjet)
+	    soundbarrier )
 		echo "/research1/$MYUSER/";;
+	    scramket )
+		echo "/state/partition1/livesey/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -145,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.28  2004/04/08 17:15:17  livesey
+# Bug fix
+#
 # Revision 1.27  2004/04/07 23:51:19  jonathan
 # No longer requires ~/machine.id
 #
