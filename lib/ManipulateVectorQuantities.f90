@@ -26,7 +26,8 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   private
 
   public :: FindClosestInstances, FindOneClosestInstance, &
-    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
+    & DoQtysDescribeSameThing
 
 contains
 
@@ -252,9 +253,33 @@ contains
     DoFGridsMatch = .true.
   end function DoFGridsMatch
 
+  ! ---------------------------------- DoQtysDescribeSameThing ----
+  logical function DoQtysDescribeSameThing ( a, b )
+    ! Returns true if the quantities describe the same geophysical
+    ! parameter, albeit at a different resolution perhaps
+    type ( VectorValue_T ), intent(in) :: A ! First quantity
+    type ( VectorValue_T ), intent(in) :: B ! Second quantity
+
+    DoQtysDescribeSameThing = .true.
+    if ( a%template%quantityType /= b%template%quantityType ) return
+    if ( a%template%logBasis .neqv. b%template%logBasis ) return
+    if ( a%template%verticalCoordinate /= b%template%verticalCoordinate ) return
+    if ( a%template%unit /= b%template%unit ) return
+    if ( a%template%signal /= b%template%signal ) return
+    if ( a%template%sideband /= b%template%sideband ) return
+    if ( a%template%instrumentModule /= b%template%instrumentModule ) return
+    if ( a%template%radiometer /= b%template%radiometer ) return
+    if ( a%template%molecule /= b%template%molecule ) return
+    DoQtysDescribeSameThing = .true.
+
+  end function DoQtysDescribeSameThing
+
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.18  2002/09/10 20:47:44  livesey
+! Added DoQtysDescribeSameThing
+!
 ! Revision 2.17  2002/08/23 01:24:18  livesey
 ! Added DoFGridsMatch
 !
