@@ -1592,16 +1592,18 @@ contains
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
-            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,windowstart), &
-            & vmrArray, nspec,                                                 &
-            & fwdModelConf%num_scattering_angles,                              &
-            & fwdModelConf%num_azimuth_angles,                                 &
-            & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,           &
+
+            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst), &
+            & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
+            & fwdModelConf%num_scattering_angles,                       &
+            & fwdModelConf%num_azimuth_angles,                          &
+            & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
             & fwdModelConf%no_cloud_species, scat_src%values )
 
             scat_src%template = temp%template
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
             call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
+
             !! Jonathan's construction zone
 !!            call get_beta_path_cloud ( Frq,                              &
 !!              &  p_path(1:no_ele), t_path(1:no_ele),                     &  
@@ -2747,6 +2749,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.183  2003/11/12 00:10:55  jonathan
+! some changes due to cloud construction
+!
 ! Revision 2.182  2003/11/07 03:18:49  vsnyder
 ! Cosmetic changes
 !
