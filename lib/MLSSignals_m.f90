@@ -82,15 +82,17 @@ module MLSSignals_M
     integer :: Name                     ! Sub_rosa index of declaration's label
   end type SpectrometerType_T
 
-  ! This is the key type, it describes a complete signal (one band, or a
-  ! subset of the channels in one band).  We have to main variables of this
-  ! type flying around, see later.
+  ! This is the key type; it describes a complete signal (one band, or a
+  ! subset of the channels in one band).
 
   type, public :: Signal_T
     real(r8) :: CenterFrequency         ! Band local oscillator
     real(r8) :: LO                      ! Radiometer local oscillator
     real(r8), pointer, dimension(:) :: Frequencies=>NULL() ! Mainly a shallow copy
-    real(r8), pointer, dimension(:) :: Widths=>NULL() ! Mainly a shallow copy
+    real(r8), pointer, dimension(:) :: Widths=>NULL()  ! Mainly a shallow copy
+    logical, pointer, dimension(:) :: Channels=>NULL() ! The ones actually used
+    !                                   (This is for derived signals.  Every
+    !                                   element is true for "real" signals).
 
     integer :: Band                     ! Index in Bands database
     integer :: InstrumentModule         ! Index in Modules database
@@ -287,6 +289,8 @@ contains
               & 'signal%frequencies', moduleName )
             call allocate_Test ( signal%widths, nsons(channels)-1, &
               & 'signal%widths', moduleName)
+            call allocate_Test ( signal%channels, nsons(channels)-1, &
+              & 'signal%channels', moduleName)
             do k = 2, nsons(channels)
               call expr ( subtree(k,channels), units, value )
               signal%frequencies(k-1) = value(1)
@@ -295,6 +299,7 @@ contains
             if ( any(units /= phyq_frequency) ) &
               & call announceError ( wrongUnits, f_channels, &
                 & (/ phyq_frequency /) )
+            signal%channels = .true.
           end if
         else
           signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
@@ -953,6 +958,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.12  2001/04/03 01:48:25  vsnyder
+! No need to declare Make_Tree private -- It's internal!
+!
 ! Revision 2.11  2001/03/29 23:52:31  vsnyder
 ! Added MaxSigLen parameter
 !
