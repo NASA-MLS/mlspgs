@@ -7,10 +7,12 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFEND, &
-    & SFENDACC, SFSTART, SFRDATA, sfn2index, sfselect, sfgetinfo
+    & SFENDACC, SFSTART, SFRDATA, sfn2index, sfselect, sfgetinfo, &
+    & sfgdinfo
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSCommon, only: R8
+  use MLSStrings, only: LinearSearchStringArray
 
   implicit none
 
@@ -31,7 +33,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! This is a set of possible values for dimension%dimensionFamily
 
   integer, parameter :: NoL2AUXDimTypes = 7
-  character(len=25), dimension(NoL2AUXDimTypes), parameter :: &
+  integer, parameter :: L2AUXDimNameLen = 25
+  character(len=L2AUXDimNameLen), dimension(NoL2AUXDimTypes), parameter :: &
     & L2AUXDimNames= (/ &
        & "MLS Channel             ", &
        & "Intermediate Frequency  ", &
@@ -40,7 +43,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
        & "Minor Frame             ", &
        & "Major Frame             ", &
        & "Geodetic Angle          " /)
-  character (len=10), dimension(NoL2AUXDimTypes), parameter :: &
+  integer, parameter :: L2AUXDimUnitLen = 10
+  character (len=L2AUXDimUnitLen), dimension(NoL2AUXDimTypes), parameter :: &
     & L2AUXDimUnits= (/ &
        & "          ", &
        & "MHz       ", &
@@ -294,10 +298,12 @@ contains ! =====     Public Procedures     =============================
     CHARACTER (LEN=80) :: list
     CHARACTER (LEN=480) :: msr
 
-    INTEGER :: sds_index, sds_id, rank, data_type, num_attrs
+    INTEGER :: sds_index, sds_id, rank, data_type, num_attrs, dim, dim_id
     INTEGER :: dim_sizes(MAXRANK)
     INTEGER :: dim_families(MAXRANK)
     CHARACTER (LEN=LEN(quantityname)) :: sds_name
+    CHARACTER (LEN=L2AUXDimNameLen) :: dim_name
+    CHARACTER (LEN=1)                  :: dim_char
 
     INTEGER :: alloc_err, first, freq, lev, nDims, size, status
     INTEGER :: start(3), stride(3), edge(3), dims(3)
@@ -337,37 +343,55 @@ contains ! =====     Public Procedures     =============================
     lastCheck = PRESENT(lastProf)
 
 
+    ! Uncertain what to do with those just yet
+    ! Now find dimension family of dimension; e.g., MAF
+    DO dim=1, rank
+    	WRITE(dim_char, '(I1)') dim
+    	dim_id = sfdimid(sds_id, dim)
+        if(dim_id == -1) THEN
+           msr = 'Failed to &
+           & get dim_id for dim index number ' // dim_char
+           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ELSE
+            status = sfgdinfo(dim_id, dim_name, dim_sizes(dim), data_type, &
+            & num_attrs)
+            IF(status == -1) THEN
+                  msr = 'Failed to &
+                  & get dim_info for dim index number ' // dim_char
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ELSE
+                dim_families(dim) = LinearSearchStringArray(L2AUXDimNames, dim_name)
+                IF(dim_families(dim) == 0) THEN
+                     msr = 'Failed to &
+                     & find ' //dim_name // ' among L2AuxDimNames'
+                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                ENDIF
+            ENDIF
+         ENDIF
+    ENDDO
     ! Allocate result
 
     CALL SetupNewl2auxRecord ( dim_families, dim_sizes, l2aux )
 
     ! Allocate temporary arrays
 
-!    nFreqsOr1=MAX(nFreqs,1)
-!    nLevelsOr1=MAX(nLevels, 1)
-!    ALLOCATE(realProf(numProfs), realSurf(l2aux%nLevels), &
-!         realFreq(l2aux%nFreqs), &
-!         real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
-
-    ! Read the horizontal geolocation fields
-
-
-    ! Read the pressures vertical geolocation field, if it exists
-
-
-    ! Read the frequency geolocation field, if it exists
-
-
-    ! Read the data fields that may have 1-3 dimensions
-
-
-    ! Read the data fields that are 1-dimensional
-
+    ! Read the SD
+    start = 0
+    stride = 1
+    status = sfrdata(sds_id, start, stride, dim_sizes, l2aux%values)
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         & write SD.')
 
     ! Deallocate local variables
 
 
-    !  After reading, detach from swath interface
+    ! Terminate access to the data set
+
+    status = sfendacc(sds_id)
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &end access to sds_id after reading.')
+
+    !  After reading, detach from hdf interface
 
     status = sfend(sd_id)
     IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
@@ -383,6 +407,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.2  2000/12/04 21:48:29  pwagner
+! ReadL2AUXData completed
+!
 ! Revision 2.1  2000/12/02 01:12:00  pwagner
 ! Added ReadL2AUXData
 !
