@@ -108,16 +108,16 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTERPOLATIONFACTOR = f_interpolate + 1
   integer, parameter :: F_INVERT              = f_interpolationFactor + 1
   integer, parameter :: F_JACOBIAN            = f_invert + 1
-  integer, parameter :: F_LAMBDA              = f_jacobian + 1
+  integer, parameter :: F_L2PC                = f_jacobian + 1
+  integer, parameter :: F_LAMBDA              = f_l2pc + 1
   integer, parameter :: F_LENGTH              = f_lambda + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
   integer, parameter :: F_LOSQTY              = f_logbasis + 1
-  integer, parameter :: F_L2PC                = f_losqty + 1
-  integer, parameter :: F_MAXF                = f_l2pc + 1
+  integer, parameter :: F_MATRIX              = f_losqty + 1
+  integer, parameter :: F_MAXF                = f_matrix + 1
   integer, parameter :: F_MAXITERATIONS       = f_maxf + 1
   integer, parameter :: F_MAXJ                = f_maxIterations + 1
-  integer, parameter :: F_MATRIX              = f_maxJ + 1
-  integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
+  integer, parameter :: F_MEASUREMENTS        = f_maxJ + 1
   integer, parameter :: F_MEASUREMENTSD       = f_measurements + 1
   integer, parameter :: F_METHOD              = f_measurementSD + 1
   integer, parameter :: F_MIF                 = f_method + 1
@@ -146,9 +146,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_PTANQUANTITY        = f_prefixSignal + 1
   integer, parameter :: F_QUANTITIES          = f_ptanQuantity + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
-  integer, parameter :: F_RANGE               = f_quantity + 1
-  integer, parameter :: F_RADIANCEQUANTITY    = f_range + 1
-  integer, parameter :: F_RATIOQUANTITY       = f_radianceQuantity + 1
+  integer, parameter :: F_RADIANCEQUANTITY    = f_quantity + 1
+  integer, parameter :: F_RANGE               = f_radianceQuantity + 1
+  integer, parameter :: F_RATIOQUANTITY       = f_range + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_ratioQuantity + 1
   integer, parameter :: F_REGORDERS           = f_refGPHQuantity + 1
   integer, parameter :: F_REGQUANTS           = f_regOrders + 1
@@ -183,10 +183,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SWATH               = f_superDiagonal + 1
   integer, parameter :: F_SYSTEMTEMPERATURE   = f_swath + 1
   integer, parameter :: F_TANGENTGRID         = f_systemTemperature + 1
-  integer, parameter :: F_TEMP_DER            = f_tangentGrid + 1
-  integer, parameter :: F_TEMPERATUREQUANTITY = f_temp_der + 1
-  integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
-  integer, parameter :: F_TEST                = f_template + 1
+  integer, parameter :: F_TEMPERATUREQUANTITY = f_tangentGrid + 1
+  integer, parameter :: F_TEMPLATE            = f_temperatureQuantity + 1
+  integer, parameter :: F_TEMP_DER            = f_template + 1
+  integer, parameter :: F_TEST                = f_temp_der + 1
   integer, parameter :: F_TNGTECI             = f_test + 1
   integer, parameter :: F_TOLERANCE           = f_tngtECI + 1
   integer, parameter :: F_TOLERANCEA          = f_tolerance + 1
@@ -194,9 +194,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
   integer, parameter :: F_TYPE                = f_tolerancer + 1
   integer, parameter :: F_UNIT                = f_type + 1
-  integer, parameter :: F_VERSIONRANGE        = f_unit + 1
-  integer, parameter :: F_VALUES              = f_versionrange + 1
-  integer, parameter :: F_VGRID               = f_values + 1
+  integer, parameter :: F_VALUES              = f_unit + 1
+  integer, parameter :: F_VERSIONRANGE        = f_values + 1
+  integer, parameter :: F_VGRID               = f_versionrange + 1
   integer, parameter :: FIELD_LAST = f_vGrid
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
@@ -425,7 +425,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
     field_indices(f_colSurfaces) =         add_ident ( 'colSurfaces' )
     field_indices(f_columns) =             add_ident ( 'columns' )
-    field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
     field_indices(f_comment) =             add_ident ( 'comment' )
     field_indices(f_compareOverlaps) =     add_ident ( 'compareOverlaps' )
@@ -434,8 +433,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_decay) =               add_ident ( 'decay' )
-    field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
     field_indices(f_destination) =         add_ident ( 'destination' )
+    field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
@@ -469,11 +468,10 @@ contains ! =====     Public procedures     =============================
     field_indices(f_invert) =              add_ident ( 'invert' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_lambda) =              add_ident ( 'lambda' )
+    field_indices(f_L2PC) =                add_ident ( 'l2pc' )
     field_indices(f_length) =              add_ident ( 'length' )
-    field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
     field_indices(f_losqty) =              add_ident ( 'losqty' )
-    field_indices(f_L2PC) =                add_ident ( 'l2pc' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxF) =                add_ident ( 'maxF' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
@@ -490,11 +488,11 @@ contains ! =====     Public procedures     =============================
     field_indices(f_nmodelsurfs) =         add_ident ( 'nmodelsurfs' )
     field_indices(f_noFineGrid) =          add_ident ( 'noFineGrid' )
     field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
-    field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_nscatteringangles) =   add_ident ( 'nscatteringangles' )
     field_indices(f_nsizebins) =           add_ident ( 'nsizebins' )
-    field_indices(f_origin) =              add_ident ( 'origin' )
+    field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_opticalDepth) =        add_ident ( 'opticalDepth' )
+    field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_outputSD) =            add_ident ( 'outputSD' )
@@ -507,18 +505,18 @@ contains ! =====     Public procedures     =============================
     field_indices(f_ptanQuantity) =        add_ident ( 'ptanQuantity' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
-    field_indices(f_range) =               add_ident ( 'range' )
     field_indices(f_radianceQuantity ) =   add_ident ( 'radianceQuantity' )
+    field_indices(f_range) =               add_ident ( 'range' )
     field_indices(f_ratioQuantity) =       add_ident ( 'ratioQuantity' )
+    field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_regOrders) =           add_ident ( 'regOrders' )
     field_indices(f_regQuants) =           add_ident ( 'regQuants' )
     field_indices(f_regWeight) =           add_ident ( 'regWeight' )
-    field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
     field_indices(f_rowInstances) =        add_ident ( 'rowInstances' )
     field_indices(f_rowQuantity) =         add_ident ( 'rowQuantity' )
-    field_indices(f_rowSurfaces) =         add_ident ( 'rowSurfaces' )
     field_indices(f_rows) =                add_ident ( 'rows' )
+    field_indices(f_rowSurfaces) =         add_ident ( 'rowSurfaces' )
     field_indices(f_scale) =               add_ident ( 'scale' )
     field_indices(f_scECI) =               add_ident ( 'scECI' )
     field_indices(f_scVel) =               add_ident ( 'scVel' )
@@ -544,9 +542,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_swath) =               add_ident ( 'swath' )
     field_indices(f_systemTemperature) =   add_ident ( 'systemTemperature' )
     field_indices(f_tangentGrid) =         add_ident ( 'tangentGrid' )
-    field_indices(f_temp_der) =            add_ident ( 'temp_der' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
     field_indices(f_template) =            add_ident ( 'template' )
+    field_indices(f_temp_der) =            add_ident ( 'temp_der' )
     field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
     field_indices(f_tolerance) =           add_ident ( 'tolerance' )
@@ -555,9 +553,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
     field_indices(f_type) =                add_ident ( 'type' )
     field_indices(f_unit) =                add_ident ( 'unit' )
-    field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
+    field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -1035,6 +1033,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.147  2001/07/25 02:02:01  vsnyder
+! Sort field names, remove 'lines' (it's defined in Init_Spectroscopy)
+!
 ! Revision 2.146  2001/07/20 19:24:18  dwu
 ! add f_noFineGrid
 !
