@@ -17,10 +17,10 @@ module ScanDivide
   use Intrinsic, only: PARM_INDICES
   use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Lexer_Core, only: Print_Source
-  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
+  use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, R8, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
-  use MLSNumerics, only: HUNT, R8
+  use MLSNumerics, only: HUNT
   !  use MLSStrings, only: MLSMSG_L1BRead
   use MoreTree, only: Get_Spec_ID
   use Output_M, only: Output
@@ -1401,6 +1401,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.13  2001/05/03 21:47:30  vsnyder
+!# Get R8 from MLSCommon instead of MLSNumerics
+!#
 !# Revision 2.12  2001/04/26 02:44:17  vsnyder
 !# Moved *_indices declarations from init_tables_module to intrinsic
 !#
