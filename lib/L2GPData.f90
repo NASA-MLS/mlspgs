@@ -39,12 +39,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
-  interface DUMP !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
+  interface DUMP
     module procedure DUMP_L2GP
     module procedure DUMP_L2GP_DataBase
   end interface
 
-  interface ReadL2GPData !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
+  interface ReadL2GPData
     module procedure ReadL2GPData_fileID
     module procedure ReadL2GPData_fileName
   end interface
@@ -96,6 +96,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: DATA_FIELD3 = 'Status'
    character (len=*), parameter :: DATA_FIELD4 = 'Quality'
 
+   ! The old names of the following lacked "MLS.."
    character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
    character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
    character (len=*), parameter :: GEO_FIELD3 = 'Time'
@@ -104,8 +105,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
    character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
    character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
+   ! character (len=*), parameter :: GEO_FIELD7 = 'MLSOrbitGeodeticAngle'
+   ! character (len=*), parameter :: GEO_FIELD8 = 'MLSChunkNumber'
    character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
    character (len=*), parameter :: GEO_FIELD10= 'Frequency'
+   ! character (len=*), parameter :: GEO_FIELD10= 'MLSFrequency'
 
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
    character (len=*), parameter :: DIM_NAME2 = 'nLevels'
@@ -181,6 +185,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
+     ! Unfortunately, currently we are neither reading nor writing this field
+     ! As explained in several places below, the cwrappers beneath have failed
+     ! to observe the right number of memory places required to represent
+     ! the fortran data.
+     ! paw has an idea of how to do it eventually:
+     ! it will require writing a separate module in which to read/write
+     ! character-valued swath data fields, named something like 
+     ! char_swdata_m.f90
+     ! In this new module, he5_swrdfld and he5_swwrfld will simply
+     ! be integer externals, preventing any type conversion
+     ! before it gives their start addresses to the c-wrappers beneath
+     ! Then just make sure that the right number of bytes get transferred
      character (len=1), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
@@ -711,6 +727,12 @@ contains ! =====     Public Procedures     =============================
 
     status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
       &    realProf)
+    ! Give it a 2nd chance--perhaps saved under old name
+    if ( status == -1 .and. GEO_FIELD7 /= 'OrbitGeodeticAngle' ) then
+        status = swrdfld(swid, 'OrbitGeodeticAngle', &
+         & start(3:3), stride(3:3), edge(3:3), &
+         &    realProf)
+    end if
     if ( status == -1 ) then
        msr = MLSMSG_L2GPRead // GEO_FIELD7
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -719,6 +741,12 @@ contains ! =====     Public Procedures     =============================
 
     status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
       &    l2gp%chunkNumber)
+    ! Give it a 2nd chance--perhaps it was saved under an old name
+    if ( status == -1 .and. GEO_FIELD8 /= 'ChunkNumber' ) then
+      status = swrdfld(swid, 'ChunkNumber', &
+        & start(3:3), stride(3:3), edge(3:3), &
+        &    l2gp%chunkNumber)
+    end if
     if ( status == -1 ) then
        msr = MLSMSG_L2GPRead // GEO_FIELD8
        call MLSMessage ( MLSMSG_Warning, ModuleName, msr )
@@ -747,6 +775,12 @@ contains ! =====     Public Procedures     =============================
 
        status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
          & l2gp%frequency)
+       ! Give it a 2nd chance--perhaps saved under old name
+       if ( status == -1 .and. GEO_FIELD10 /= 'Frequency' ) then
+         status = swrdfld(swid, 'Frequency', start(1:1), stride(1:1), &
+           & edge(1:1), &
+           & l2gp%frequency)
+       end if
        if ( status == -1 ) then
           msr = MLSMSG_L2GPRead // GEO_FIELD10
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -830,6 +864,7 @@ contains ! =====     Public Procedures     =============================
 !    end if
 !    l2gp%status = the_status_buffer(:)(1:1)
 
+    ! (   see note above concerning char_swdata_m.f90   )
 
     l2gp%status = ' ' ! So it has a value.
 
@@ -1105,6 +1140,12 @@ contains ! =====     Public Procedures     =============================
 
     status = HE5_SWrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3),&
       &   realProf)
+    ! Give it a 2nd chance--perhaps saved under old name
+    if ( status == -1 .and. GEO_FIELD7 /= 'OrbitGeodeticAngle' ) then
+    status = HE5_SWrdfld(swid, 'OrbitGeodeticAngle', &
+      & start(3:3), stride(3:3), edge(3:3),&
+      &   realProf)
+    endif
     if (status == -1) then
        msr = MLSMSG_L2GPRead // GEO_FIELD7
        call MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1113,6 +1154,12 @@ contains ! =====     Public Procedures     =============================
 
     status = HE5_SWrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3),&
       &    l2gp%chunkNumber)
+    ! Give it a 2nd chance--perhaps saved under old name
+    if ( status == -1 .and. GEO_FIELD8 /= 'ChunkNumber' ) then
+      status = HE5_SWrdfld(swid, 'ChunkNumber', &
+        &  start(3:3), stride(3:3), edge(3:3),&
+        &    l2gp%chunkNumber)
+    endif
     if (status == -1) then
        msr = MLSMSG_L2GPRead // GEO_FIELD8
        call MLSMessage(MLSMSG_Warning, ModuleName, msr)
@@ -1141,6 +1188,12 @@ contains ! =====     Public Procedures     =============================
 
        status = HE5_SWrdfld(swid,GEO_FIELD10,start(1:1),stride(1:1),edge(1:1),&
          & realFreq)
+       ! Give it a 2nd chance--perhaps saved under old name
+       if ( status == -1 .and. GEO_FIELD10 /= 'Frequency' ) then
+         status = HE5_SWrdfld(swid, 'Frequency', &
+           & start(1:1), stride(1:1), edge(1:1),&
+           & realFreq)
+       endif
        if (status == -1) then
           msr = MLSMSG_L2GPRead // GEO_FIELD10
           call MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1230,6 +1283,8 @@ contains ! =====     Public Procedures     =============================
     ! version has similar problems so these lines are commented too.
     !         status = HE5_SWrdfld(swid, DATA_FIELD3,start(3:3),&
     !    stride(3:3),edge(3:3), l2gp%status)
+    !
+    ! (   see note above concerning char_swdata_m.f90   )
 
     l2gp%status = ' ' ! So it has a value.
 
@@ -1989,7 +2044,13 @@ contains ! =====     Public Procedures     =============================
           msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
-
+       ! Set Fill Value
+       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+         & UNDEFINED_VALUE)
+       if ( status == -1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName,&
+            & 'Unable to set Fill Value for data field '// DATA_FIELD1)
+       end if
 
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
@@ -2020,9 +2081,12 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
-           status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-           status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
-            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
+       ! Set Fill Value
+       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+         & UNDEFINED_VALUE)
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
+        HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
@@ -2042,6 +2106,9 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
+       ! Set Fill Value
+       status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+         & UNDEFINED_VALUE)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
        HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
@@ -2420,12 +2487,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Variables
 
-    character (len=480) :: msr
     character (len=132) :: name     ! Either swathName or l2gp%name
+    ! The following pair of string list encode the Units attribute
+    ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
     character (len=*), parameter :: GeolocationTitles = &
       & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
     character (len=*), parameter :: GeolocationUnits = &
-      & 'degrees,degrees,seconds,seconds,degrees,degrees,degrees,none,hPa,GHz'
+      & 'deg,deg,s,h,deg,deg,deg,NoUnits,hPa,GHz'
+    ! & 'degrees,degrees,seconds,hours,degrees,degrees,degrees,none,hPa,GHz'
 
     integer :: field
     integer :: rgp_type
@@ -2473,9 +2542,9 @@ contains ! =====     Public Procedures     =============================
     status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
     field_name = 'Pressure'
-    status = he5_swwrattr(swid, 'Vertical Coordinate', HE5T_NATIVE_SCHAR, 1, &
+    status = he5_swwrattr(swid, 'VerticalCoordinate', HE5T_NATIVE_SCHAR, 1, &
       & field_name)
-    status = he5_swwrattr(swid, 'Fill Value', rgp_type, 1, &
+    status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
       & (/ real(UNDEFINED_VALUE, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
@@ -2496,7 +2565,7 @@ contains ! =====     Public Procedures     =============================
           & HE5T_NATIVE_SCHAR, 1, theTitles(field))
         status = he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
           & HE5T_NATIVE_SCHAR, 1, theUnits(field))
-        status = he5_swwrlattr(swid, trim(theTitles(field)), 'Fill Value', &
+        status = he5_swwrlattr(swid, trim(theTitles(field)), 'FillValue', &
           & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
       endif
     enddo
@@ -2781,6 +2850,14 @@ contains ! =====     Public Procedures     =============================
       framing = 'major'
       units_name = 'chunk'
       dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_cloudIce )  
+      framing = 'major'
+      units_name = 'g/m3'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_columnAbundance )  
+      framing = 'major'
+      units_name = 'DU'
+      dim_names = (/ l_none, l_none, l_none /)                  
     case ( l_effectiveOpticalDepth )  
       framing = 'minor'
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
@@ -2934,6 +3011,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.57  2003/02/26 17:36:11  pwagner
+! Repaired ReadL2GPData to close swath when given WILDCARDHDFVERSION
+!
 ! Revision 2.56  2003/02/21 23:41:53  pwagner
 ! Also writes Fill Value attribute
 !
