@@ -166,7 +166,7 @@ install    moves the built programs from l1, l2, l3 to the mlspgs top level
 
 (The following perform a top-level "clean" before archiving as compressed "tgz")
 tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
-tar_subs   tar lib, l1, .. for distribution: mlspgs_subs.tgz
+tar_subs   tar lib, l1, .. : lib.tgz, l1,tgz, .., and mlspgs_subs.tar
 tar_sips   tar everything from mlspgs needed by the SIPS: mlspgs_sips.tgz
 
 HOW IT WORKS
@@ -353,6 +353,9 @@ optional way to build, coexisting in parallel with other ways.
 EOF
 exit
 # $Log$
+# Revision 1.7  2001/01/12 17:59:16  pwagner
+# Mentions install, tar_sips options
+#
 # Revision 1.6  2001/01/05 22:56:04  pwagner
 # Mentioned Hugh's fix for Toolkit; make all option
 #

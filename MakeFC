@@ -4,26 +4,24 @@
 
 # Details and a general explanation of how to use this file can be found
 # by entering
-#	README.*
+#	README.name_of_this_file
+#    (where of course for name_of_this_file use the name of this file)
 
-#special case:
-#the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/configure to create .configure
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = MakeFC
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
 
-#This file name may be named Makefile but may be $(MakeFName) ;
-#the same file name must be used in each of $(SUBDIRS)
-#i.e., if you are calling make with a different Makefile name,
+# The name of this file must be used in each of $(SUBDIRS)
+# i.e., if you are calling make with a different Makefile name,
 #        say: make -f MakeFC
-#then rename the Makefiles in /l2 /lib etc. also MakeFC
+# then (re)name the Makefiles in /l2 /lib etc. also MakeFC
 
 # "$Id$"
 
-MakeFName = MakeFC
-#
-#To make mls with this file you must then use
-#make -f $(MakeFName)
-
-# where to store .configure; also install programs
+# ---------------------- Paths to special directories
+# where to store .configure; also where to install mls programs
 CONFDIR=.
 
 # where configure and makemakedep.sh are stored
@@ -31,12 +29,12 @@ MLSBIN=util
 
 # where the platforms directory is w.r.t. each of SUBDIRS:
 # "." means for l2 it is l2/platforms
-# this also where each uniquely-named sub-sub will be created:
+# also where each uniquely-named sub-sub will be created:
 # "." means for l2 it is l2/NAG.Linux
 PLATFORMS = .
 
 # This will set our MLS platform, compiler. etc.
-# w/o complaining if it does nor exist yet
+# w/o complaining if it does not exist yet
 -include $(CONFDIR)/.configure
 
 SHELL = /bin/sh
@@ -62,7 +60,7 @@ SHELL = /bin/sh
 # W a r n i n g :  The following automatically perform "clean"
 # tar            -- creates an archive of whole mlspgs suitable for distribution
 # tar_subs       -- creates archives of sub-directories suitable for distribution
-# tar_sips       -- creates archives of mlspgs suitable for SIPS
+# tar_sips       -- creates archive of mlspgs suitable for SIPS
 #
 
 #----------------------------------------------------------
@@ -101,10 +99,10 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
 all: $(SUBDIRS)
 
-# This isn't really everything, just everything from mlspgs
-# the SIPS might need
+# This isn't really everything, just everything the SIPS might need
 # so it will be bundled up by tar_sips
-# Note that it does *not* include the Toolkit nor PVM nor FFTW nor ...
+# Note that it does *not* include the Toolkit nor PVM nor FFTW 
+# because they are outside mlspgs
 EVERYTHING = CVS $(SUBDIRS) util blas srclib pcf idllib sids tables\
    $(MakeFName) README.$(MakeFName) PCF.v0-01
      
@@ -186,9 +184,9 @@ tar:
 	tar hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure
 
 tar_sips:
-	@echo "tar-ing everything mlspgs for sips"; \
-        rm -f ../mlspgs.tgz; \
-	tar hcvzf ../mlspgs.tgz $(EVERYTHING)
+	@echo "tar-ing mlspgs for sips"; \
+        rm -f ../mlspgs_sips.tgz; \
+	tar hcvzf ../mlspgs_sips.tgz $(EVERYTHING)
 
 tar_subs:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -200,9 +198,15 @@ tar_subs:
 	tar hcvzf srclib.tgz srclib; \
 	echo "tar-ing util"; \
         rm -f util.tgz; \
-	tar hcvzf util.tgz util
+	tar hcvzf util.tgz util; \
+	echo "tar-ing *.tgz"; \
+	rm -f mlspgs_subs.tar; \
+	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.10  2001/01/12 00:30:18  pwagner
+# Added tar_sips and install options
+#
 # Revision 1.9  2001/01/10 23:45:33  pwagner
 # General housekeeping
 #
