@@ -80,16 +80,10 @@ DUSTY = -g -dusty -abi=n32
 #HDF =/software/SRC/TOOLKIT-5.2.5v1.00/hdf/sgi/HDF4.1r3/lib
 #GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
 
+#Special load libraries
+l_specials = 
+
 # $Log$
-# Revision 1.3  2000/11/03 18:18:41  pwagner
-# Shares sources in srclib
-#
-# Revision 1.2  2000/11/02 23:27:37  pwagner
-# Dependencies may cross directories
-#
-# Revision 1.1  2000/10/21 00:22:12  pwagner
-# First commit
-#
-# Revision 1.1  2000/10/18 22:08:01  pwagner
+# Revision 1.1  2000/11/15 18:03:57  pwagner
 # First commit
 #
