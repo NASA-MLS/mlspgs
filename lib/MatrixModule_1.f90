@@ -22,7 +22,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use String_Table, only: Display_String, get_string
+  use String_Table, only: Display_String, Get_String
+  use Symbol_Table, only: Enter_Terminal
+  use Symbol_Types, only: T_identifier
   use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T, &
     & CheckIntegrity
 
@@ -779,7 +781,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
-    &,                           Row_Quan_First, Col_Quan_First )
+    &,                           Row_Quan_First, Col_Quan_First, Text )
     type(Matrix_T), intent(inout) :: Z  ! The matrix to create -- inout so
       !                                   destroyMatrix makes sense
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
@@ -793,12 +795,15 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Col_Quan_First    ! True (default false)
       ! means the quantity is the major order of the columns of blocks and the
       ! instance is the minor order.
+    character(len=*), intent(in), optional :: Text     ! A name to use
+      ! instead of "Name."
 
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
 
     call destroyMatrix ( z )  ! Avoid a memory leak if it isn't freshly minted
     z%name = name
+    if ( present(text) ) z%name = enter_terminal ( text, t_identifier )
     call defineInfo ( z%row, row, row_Quan_First )
     call defineInfo ( z%col, col, col_Quan_First )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
@@ -2088,6 +2093,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.78  2002/08/21 20:38:24  vsnyder
+! Add 'text' argument to CreateEmptyMatrix
+!
 ! Revision 2.77  2002/08/20 19:49:26  vsnyder
 ! Embellish dump_struct -- add total rows and columns
 !
