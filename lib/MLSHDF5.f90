@@ -9,12 +9,14 @@ module MLSHDF5
 
   ! Lets break down our use, parameters first
   use HDF5, only: H5S_SCALAR_F, H5T_NATIVE_INTEGER, H5T_NATIVE_CHARACTER, &
-    & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, HID_T, HSIZE_T
+    & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, HID_T, HSIZE_T, &
+    & H5F_ACC_RDONLY_F
   ! Now routines
   use HDF5, only: H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, H5AREAD_F, &
     & H5AWRITE_F, H5ACLOSE_F, &
     & H5DCREATE_F, H5DGET_SPACE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
+    & H5FOPEN_F, H5FCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SCLOSE_F, &
     & H5SGET_SIMPLE_EXTENT_NDIMS_F, H5SGET_SIMPLE_EXTENT_DIMS_F, &
     & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F, &
@@ -26,7 +28,9 @@ module MLSHDF5
   private
 
   public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
-    & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS
+    & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
+    & IsHDF5DSInFile, IsHDF5AttributeInFile, &
+    & GetHDF5DSRank, GetHDF5DSDims
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -231,19 +235,142 @@ contains ! ======================= Public Procedures =========================
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logical
 
-  ! --------------------------------------------- IsHDF5AttributePresent ---
-  logical function IsHDF5AttributePresent ( locID, name )
+  ! ------------------------------------- GetHDF5DSDims
+  subroutine GetHDF5DSDims ( FileID, name, DIMS, maxDims )
+    integer, intent(in) :: FILEID       ! fileID
+    character (len=*), intent(in) :: NAME ! Name of DS
+    integer(kind=hSize_t), dimension(:), intent(out) :: DIMS        ! Values of dimensions
+    integer(kind=hSize_t), dimension(:), optional, intent(out) :: MAXDIMS ! max Values
+
+    ! Local variables
+    integer :: dspace_id                ! spaceID for DS
+    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer :: my_rank, rank
+    integer :: SETID                    ! ID for DS
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before getting dims '//trim(name) )
+    call h5dOpen_f ( FileID, trim(name), setID, status ) 
+    call h5dget_space_f(setID,dspace_id,status)
+    call h5sget_simple_extent_ndims_f(dspace_id,rank,status)
+    my_rank = min(rank, size(dims))
+    allocate(maxdims_ptr(my_rank))
+    call h5sget_simple_extent_dims_f(dspace_id,dims(1:my_rank),&
+         maxdims_ptr(1:my_rank),status)
+    call h5dClose_f ( setID, status )
+    if ( present(maxDims) ) then
+      maxdims = maxdims_ptr(1:my_rank)
+    endif
+    deallocate(maxdims_ptr)
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after getting dims '//trim(name) )
+  end subroutine GetHDF5DSDims
+
+  ! ------------------------------------- GetHDF5DSRank
+  subroutine GetHDF5DSRank ( FileID, name, rank )
+    integer, intent(in) :: FILEID       ! fileID
+    character (len=*), intent(in) :: NAME ! Name of DS
+    integer, intent(out) :: rank        ! How many dimensions
+
+    ! Local variables
+    integer :: dspace_id                ! spaceID for DS
+    integer :: SETID                    ! ID for DS
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before getting rank '//trim(name) )
+    call h5dOpen_f ( FileID, trim(name), setID, status ) 
+    call h5dget_space_f(setID,dspace_id,status)
+    call h5sget_simple_extent_ndims_f(dspace_id,rank,status)
+    call h5dClose_f ( setID, status )
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after getting rank '//trim(name) )
+  end subroutine GetHDF5DSRank
+
+  ! --------------------------------------------- IsHDF5AttributeInFile ---
+  logical function IsHDF5AttributeInFile ( filename, DSname, name )
     ! This routine returns true if the given HDF5 DS is present
-    integer, intent(in) :: LOCID        ! Where to look
+    character (len=*), intent(in) :: FILENAME ! Where to look
+    character (len=*), intent(in) :: DSNAME ! Name for the dataset
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    ! Local variables
+    integer :: fileID                   ! Where to look
+    integer :: ATTRID                   ! ID for attribute if present
+    integer :: SETID                    ! ID for DS if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    IsHDF5AttributeInFile = .false.
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
+    call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
+    if ( status == 0 ) then
+      call h5dOpen_f ( fileid, trim(DSname), setID, status )
+      if ( status == 0 ) then
+        call h5aopen_name_f(setID, trim(name), attrid, status)
+        if ( status == 0 ) then
+          IsHDF5AttributeInFile = .true.
+          call h5aclose_f(attrid, status)
+        endif
+        call h5dClose_f ( setID, status )
+      end if
+      call h5fclose_f(fileID, status)
+    end if
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
+  end function IsHDF5AttributeInFile
+
+  ! --------------------------------------------- IsHDF5DSInFile ---
+  logical function IsHDF5DSInFile ( filename, name )
+    ! This routine returns true if the given HDF5 DS is present
+    character (len=*), intent(in) :: FILENAME ! Where to look
     character (len=*), intent(in) :: NAME ! Name for the dataset
     ! Local variables
-    integer :: ATTRID                   ! ID for DS if present
+    integer :: FILEID                   ! Where to look
+    integer :: SETID                    ! ID for DS if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    IsHDF5DSInFile = .false.
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for DS '//trim(name) )
+    call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
+    if ( status == 0 ) then
+      call h5dOpen_f ( fileid, trim(name), setID, status )
+      if ( status == 0 ) then
+        IsHDF5DSInFile = .true.
+        call h5dClose_f ( setID, status )
+      end if
+      call h5fclose_f(fileID, status)
+    end if
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for DS '//trim(name) )
+  end function IsHDF5DSInFile
+
+  ! --------------------------------------------- IsHDF5AttributePresent ---
+  logical function IsHDF5AttributePresent ( locID, name )
+    ! This routine returns true if the given HDF5 attribute is present
+    integer, intent(in) :: LOCID        ! Where to look
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute if present
     integer :: STATUS                   ! Flag
     
     ! Executable code
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages off before looking for DS '//trim(name) )
+      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
     call h5aOpen_name_f ( locID, name, attrID, status ) 
     if ( status /= 0 ) then
       IsHDF5AttributePresent = .false.
@@ -253,7 +380,7 @@ contains ! ======================= Public Procedures =========================
     end if
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages back on after looking for DS '//trim(name) )
+      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
   end function IsHDF5AttributePresent
 
   ! --------------------------------------------- IsHDF5DSPresent ---
@@ -268,7 +395,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
+      & 'Unable to turn error messages off before looking for DS '//trim(name) )
     call h5dOpen_f ( locID, name, setID, status ) 
     if ( status /= 0 ) then
       IsHDF5DSPresent = .false.
@@ -278,7 +405,7 @@ contains ! ======================= Public Procedures =========================
     end if
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
+      & 'Unable to turn error messages back on after looking for DS '//trim(name) )
   end function IsHDF5DSPresent
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr1
@@ -734,6 +861,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.6  2002/09/26 23:56:15  pwagner
+! Added some things for MLSAux and l1bdata
+!
 ! Revision 2.5  2002/09/13 18:08:12  pwagner
 ! May change matrix precision rm from r8
 !
