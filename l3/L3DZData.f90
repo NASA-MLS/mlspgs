@@ -16,6 +16,7 @@ MODULE L3DZData
    USE MLSStrings
    USE MLSPCF3
    USE OpenInit
+   USE PCFHdr
    USE PCFModule
    IMPLICIT NONE
    PUBLIC
@@ -468,7 +469,7 @@ CONTAINS
 !-------------------------------------------------------
 
 ! Brief description of subroutine
-! This routine writes the metadata for an l3dm file, and annotates it with the
+! This routine writes the metadata for an l3dz file, and annotates it with the
 ! PCF.
 
 ! Arguments
@@ -540,8 +541,6 @@ CONTAINS
          attrName = 'LocalGranuleID'
          indx = INDEX(files%stdNames(i), '/', .TRUE.)
          sval = files%stdNames(i)(indx+1:)
-         indx = INDEX(sval, '.', .TRUE.)
-         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -556,8 +555,7 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalVersionID'
-         CALL ExpandFileTemplate('$version-$cycle', lvid, &
-                                 version=pcf%outputVersion, cycle=pcf%cycle)
+         CALL ExpandFileTemplate('$cycle', lvid, cycle=pcf%cycle)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, lvid)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -617,7 +615,7 @@ CONTAINS
 
             attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'TBD')
+                                       'pending algorithm update')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -633,7 +631,7 @@ CONTAINS
 
             attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                              'TBD')
+                                              'Not Investigated')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -871,8 +869,8 @@ CONTAINS
 !-------------------------------------------------------
 
 ! Brief description of subroutine
-! This routine writes the metadata for an l3dm file, and annotates it with the
-! PCF.
+! This routine writes the metadata for an l3dz diagnostic file, and annotates it 
+! with the PCF.
 
 ! Arguments
 
@@ -946,8 +944,6 @@ CONTAINS
          attrName = 'LocalGranuleID'
          indx = INDEX(files%dgNames(i), '/', .TRUE.)
          sval = files%dgNames(i)(indx+1:)
-         indx = INDEX(sval, '.', .TRUE.)
-         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -962,6 +958,7 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalVersionID'
+         CALL ExpandFileTemplate('$cycle', lvid, cycle=pcf%cycle)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, lvid)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -1021,7 +1018,7 @@ CONTAINS
 
             attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'TBD')
+                                       'pending algorithm update')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1037,7 +1034,7 @@ CONTAINS
 
             attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                              'TBD')
+                                              'Not Investigated')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1337,7 +1334,7 @@ CONTAINS
 !----------------------------------
 
 ! Brief description of subroutine
-! This subroutine deallocates the internal field pointers of the L2GP_T
+! This subroutine deallocates the internal field pointers of the L3DZData_T
 ! derived type, after the calling program has finished with the data.
 
 ! Arguments
@@ -1356,33 +1353,40 @@ CONTAINS
 
 ! Horizontal geolocation field
 
-      IF ( ASSOCIATED(l3dz%latitude) ) DEALLOCATE (l3dz%latitude, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dz latitude pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dz%latitude) ) THEN
+         DEALLOCATE (l3dz%latitude, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dz latitude pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Vertical geolocation field
 
-      IF ( ASSOCIATED(l3dz%pressure) ) DEALLOCATE (l3dz%pressure, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dz pressure pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dz%pressure) ) THEN
+         DEALLOCATE (l3dz%pressure, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dz pressure pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Data fields
 
-      IF ( ASSOCIATED(l3dz%l3dzValue) ) DEALLOCATE (l3dz%l3dzValue, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dzValue pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dz%l3dzValue) ) THEN
+         DEALLOCATE (l3dz%l3dzValue, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dzValue pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3dz%l3dzPrecision) ) DEALLOCATE (l3dz%l3dzPrecision, &
-                                                        STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dzPrecision pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dz%l3dzPrecision) ) THEN
+         DEALLOCATE (l3dz%l3dzPrecision, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dzPrecision pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 !-------------------------------
@@ -1441,6 +1445,9 @@ END MODULE L3DZData
 !==================
 
 !# $Log$
+!# Revision 1.2  2001/02/21 21:02:50  nakamura
+!# Changed MLSPCF to MLSPCF3; shifted some parameters; added ReadL3DZData; allowed for expanded swath list; changed InputPointer.
+!#
 !# Revision 1.1  2001/02/12 19:23:42  nakamura
 !# Module for the L3DZ data type.
 !#
