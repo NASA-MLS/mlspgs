@@ -98,7 +98,7 @@ contains ! ====     Public Procedures     ==============================
       case ( z_globalsettings )
 !       call set_global_settings ( son, forwardModelConfigDatabase, vGrids ) !??? Restore when l2load isn't needed
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
-          & fmc ) !??? This line is temporary for l2load
+          & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
 !       call test_parse_signals  ! Uncomment this to test Parse_Signals
@@ -163,6 +163,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.22  2001/03/28 01:24:55  vsnyder
+! Move vGrid from construct section to global settings section
+!
 ! Revision 2.21  2001/03/17 03:30:25  vsnyder
 ! Remove FMI and TFMI from the call to set_global_settings, since it no
 ! longer uses them.
