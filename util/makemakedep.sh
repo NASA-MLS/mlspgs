@@ -94,6 +94,9 @@ ACT_COURTEOUS=1
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
 #
+PRINT_TOO_MUCH=0
+#              ^  -- set this to 1 if willing to try patience
+#
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -130,7 +133,10 @@ if [ -f Makefile.dep ]
 then
 	if [ $ACT_COURTEOUS = "1" ]
 	then
-		echo "Renaming older Makefile.dep Make.dep.n"
+		if [ $PRINT_TOO_MUCH = "1" ]
+		then
+			echo "Renaming older Makefile.dep Make.dep.n"
+		fi
 		name=Make.dep.`ls -1 Make*.dep* | wc -l`
 		cname=`echo $name | sed 's/ //'g`
 		mv Makefile.dep $cname
@@ -176,7 +182,10 @@ fi
 #
 if [ -f Makefile.mac ]
 then
-	echo "Including special macro definitions from Makefile.mac"
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo "Including special macro definitions from Makefile.mac"
+	fi
 	echo "include ../Makefile.mac"  >> Makefile.dep
 fi
 #
@@ -189,7 +198,10 @@ then
 	#
 	# use makedepf90 to calculate dependencies
 	# this assumes makedepf90 both exists && is in PATH
-	echo " using makedepf90 to calculate dependencies "
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " using makedepf90 to calculate dependencies "
+	fi
 	echo "# using makedepf90 to calculate dependencies "  >> Makefile.dep
 	#
 	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
@@ -199,14 +211,20 @@ then
 else
 	#
 	# use f90makedep.pl to calculate dependencies
-	echo " using f90makedep.pl to calculate dependencies "
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " using f90makedep.pl to calculate dependencies "
+	fi
 	echo "# using f90makedep.pl to calculate dependencies "  >> Makefile.dep
 	#
 	# Prefix f90makedep.pl with the path to util
         # this assumes f90makedep.pl is in same dir as this script
 	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
-	echo " Your perl is `which perl` "
-	echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+	if [ $PRINT_TOO_MUCH = "1" ]
+	then
+		echo " Your perl is `which perl` "
+		echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+	fi
 
 # Check whether script is looking for perl in right place
 # && give user a chance to redirect it if it is not
@@ -272,6 +290,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.7  2001/02/26 00:25:40  pwagner
+# More informative message before fixing perl path; cleanup after abort
+#
 # Revision 1.6  2000/11/21 00:47:34  pwagner
 # Warns user if script's perl not which's; allows change
 #
