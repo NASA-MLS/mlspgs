@@ -177,23 +177,21 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & signal=signal%index, sideband=signal%sideband )
         case (l_cloudInducedRadiance)
           cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
-          & quantityType=l_cloudInducedRadiance,                             &
+          & quantityType=l_radiance,                             &
           & signal=signal%index, sideband=signal%sideband )
         case (l_cloudExtinction)
           cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_cloudExtinction,                                  &
-          & signal=signal%index, sideband=signal%sideband )
+          & quantityType=l_cloudExtinction )
         case (l_cloudRADSensitivity)
           cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_cloudRADSensitivity,                              &
+          & quantityType=l_radiance,                              &
           & signal=signal%index, sideband=signal%sideband )
         case (l_totalExtinction)
           totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_totalExtinction,                                  &
-          & signal=signal%index, sideband=signal%sideband )
+          & quantityType=l_totalExtinction )
         case (l_effectiveOpticalDepth)
           effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_effectiveOpticalDepth,                            &
+          & quantityType=l_radiance,                            &
           & signal=signal%index, sideband=signal%sideband )
         case (l_massMeanDiameterIce)
           massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
