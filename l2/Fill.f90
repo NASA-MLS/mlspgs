@@ -56,13 +56,15 @@ module Fill                     ! Create vectors and fill them.
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
   use MatrixModule_0, only: Sparsify, MatrixInversion
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & DestroyMatrix, Dump, GetDiagonal, &
+    & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
     & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
+  ! NOTE: If you ever want to include defined assignment for matrices, please
+  ! carefully check out the code around the call to snoop.
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
   use MLSNumerics, only: InterpolateValues
   use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
   use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
@@ -232,6 +234,9 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: USBFRACTION
     type (vectorValue_T), pointer :: VMRQTY
 
+    type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
+    type (Matrix_T), pointer :: ONEMATRIX
+
     integer :: aprPrecVctrIndex         ! Index of apriori precision vector
     integer :: aprPrecQtyIndex          ! Index of apriori precision quantity    
     integer :: bndPressQtyIndex
@@ -289,7 +294,8 @@ contains ! =====     Public Procedures     =============================
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
-    integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
+    integer :: NOFINEGRID               ! no of fine grids for cloud extinction calculation
+    integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
@@ -319,6 +325,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREAD                   ! Do we spread values accross instances in explict
+    integer :: STATUS                   ! Flag from allocate etc.
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
@@ -1262,7 +1269,28 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case ( s_snoop )
-        call Snoop ( key=key, vectorDatabase=vectors )
+        ! Generate a matrix database
+        noSnoopedMatrices = 0
+        do j = 1, size ( matrices )
+          call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
+          if ( associated ( oneMatrix ) ) &
+            & noSnoopedMatrices = noSnoopedMatrices + 1
+        end do
+        allocate ( snoopMatrices ( noSnoopedMatrices ), STAT=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'snoopMatrices' )
+        noSnoopedMatrices = 1
+        do j = 1, size ( matrices )
+          call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
+          if ( associated ( oneMatrix ) ) then 
+            snoopMatrices(noSnoopedMatrices) = oneMatrix
+            noSnoopedMatrices = noSnoopedMatrices + 1
+          end if
+        end do
+        call Snoop ( key=key, vectorDatabase=vectors, matrixDatabase=snoopMatrices )
+        deallocate ( snoopMatrices, STAT=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Deallocate//'snoopMatrices' )
 
       case default ! Can't get here if tree_checker worked correctly
       end select
@@ -3573,6 +3601,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.132  2002/08/03 20:41:40  livesey
+! Added snooping of matrices
+!
 ! Revision 2.131  2002/06/26 01:26:21  livesey
 ! Added 2D pressure guesser
 !
