@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -106,8 +106,8 @@ CONTAINS
        DO n = 0, (MaxMIFs - 1)
           Sci_pos%APE(:,n) = SciMAF(n)%APE_pos
           Sci_pos%ASE(:,n) = SciMAF(n)%ASA_pos
-          Sci_pos%GME(:,n) = SciMAF(n)%GSA_pos
-          Sci_pos%TSE(:,n) = SciMAF(n)%TSSA_pos
+          Sci_pos%GME(:,n) = SciMAF(n)%GSM_pos
+          Sci_pos%TSE(:,n) = SciMAF(n)%TSSM_pos
           PLL_DN(n) = SciMAF(n)%PLL_DN
           LLO_EU(:,n) = SciMAF(n)%LLO_EU
        ENDDO
@@ -137,8 +137,8 @@ CONTAINS
              DO n = 0, (MaxMIFs - 1)
                 Sci_pos%APE(:,n) = SciMAF(n)%APE_pos
                 Sci_pos%ASE(:,n) = SciMAF(n)%ASA_pos
-                Sci_pos%GME(:,n) = SciMAF(n)%GSA_pos
-                Sci_pos%TSE(:,n) = SciMAF(n)%TSSA_pos
+                Sci_pos%GME(:,n) = SciMAF(n)%GSM_pos
+                Sci_pos%TSE(:,n) = SciMAF(n)%TSSM_pos
              ENDDO
 
           ENDIF
@@ -147,7 +147,7 @@ CONTAINS
 ! Reset GHz SW mirror pos:
 
        DO n = 0, (MaxMIFs - 1)
-          SciMAF(n)%GHz_sw_pos = SwMirPos ("G", SciMAF(n)%GSA_pos)
+          SciMAF(n)%GHz_sw_pos = SwMirPos ("G", SciMAF(n)%GSM_theta)
           GHz_sw_pos(n) = SciMAF(n)%GHz_sw_pos
        ENDDO
 
@@ -215,6 +215,9 @@ print *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.4  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.3  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
