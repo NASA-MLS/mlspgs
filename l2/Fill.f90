@@ -52,11 +52,11 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
-      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_H2OQUANTITY, &
+      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
-      & F_LENGTHSCALE, F_LOSQTY, F_LSB, F_LSBFRACTION, &
+      & F_LENGTHSCALE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
@@ -291,6 +291,7 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(field_first:field_last) :: GOT
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
+    logical :: HIGHBOUND                ! Flag
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
@@ -311,8 +312,9 @@ contains ! =====     Public Procedures     =============================
     integer :: LENGTHSCALE              ! Index of lengthscale vector in database
     integer :: LOSVECTORINDEX           ! index in vector database
     integer :: LOSQTYINDEX              ! index in QUANTITY database
-    integer :: LSBVECTORINDEX           ! Inddex in vector database
-    integer :: LSBQUANTITYINDEX         ! Inddex in vector database
+    logical :: LOWBOUND                 ! Flag
+    integer :: LSBVECTORINDEX           ! Index in vector database
+    integer :: LSBQUANTITYINDEX         ! Index in vector database
     integer :: LSBFRACTIONVECTORINDEX   ! Index in vector database
     integer :: LSBFRACTIONQUANTITYINDEX ! Index in vector database
     type(matrix_Cholesky_T) :: MatrixCholesky
@@ -441,6 +443,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_vector ) ! ===============================  Vector  =====
         got = .false.
         globalUnit = PHYQ_Invalid
+        lowBound = .false.
+        highBound = .false.
         do j = 2, nsons(key)
           son = subtree(j,key)              ! The field
           fieldIndex = get_field_id(son)
@@ -457,6 +461,10 @@ contains ! =====     Public Procedures     =============================
             if ( get_boolean(fieldValue) ) globalUnit = phyq_length
           case ( f_fraction )
             if ( get_boolean(fieldValue) ) globalUnit = phyq_dimensionless
+          case ( f_lowBound )
+            lowBound = get_boolean ( fieldValue )
+          case ( f_highBound )
+            highBound = get_boolean ( fieldValue )
           end select
         end do
 
@@ -465,7 +473,7 @@ contains ! =====     Public Procedures     =============================
         ! Create the vector, and add it to the database.
         call decorate ( key, AddVectorToDatabase ( vectors, &
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
-          & qtyTemplates, globalUnit=globalUnit ) ) )
+          & qtyTemplates, globalUnit=globalUnit, highBound=highBound, lowBound=lowBound ) ) )
 
         ! That's the end of the create operation
 
@@ -4499,6 +4507,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.156  2002/10/17 18:18:50  livesey
+! Added low/high bound to vector creation
+!
 ! Revision 2.155  2002/10/16 20:15:27  mjf
 ! Added GPH precision.
 !
