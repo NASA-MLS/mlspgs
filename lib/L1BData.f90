@@ -12,7 +12,7 @@ module L1BData
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
   use Lexer_Core, only: PRINT_SOURCE
-  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
+  use MLSCommon, only: R4, R8, L1BINFO_T, DEFAULTUNDEFINEDVALUE, FILENAMELEN
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
@@ -117,7 +117,8 @@ module L1BData
   integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
   ! suffix of sd precision; check against 'grep -i precision l1/OutputL1B.f90'
   character  (len=*), parameter :: PRECISIONSUFFIX = ' precision'
-  real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as l2/templates, Fill
+  ! The following should be same as l2/Fill
+  real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99 
   ! If TRUE, treats l1brad and l2aux files the same
   ! Among other things, this means forgiving absence of counterMAF
   ! so we may read l2aux and l1brad files alike
@@ -1486,6 +1487,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.45  2004/08/03 17:59:35  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.44  2004/03/12 00:36:33  pwagner
 ! Added diff subroutine; hdf version default increased to 5
 !
