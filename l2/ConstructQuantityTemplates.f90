@@ -8,9 +8,9 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   ! This module has various functionality for constructing quantity templates.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use HGrid, only: hGrid_T
   use Dump_0, only: Dump
   use EXPR_M, only: EXPR
+  use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_GEODANGLE, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
@@ -21,7 +21,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
-    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA, SPEC_INDICES
+    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -38,9 +38,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
-  use VGridsDatabase, only: VGrid_T
-  use Init_tables_module, ONLY: LIT_INDICES
   use Units, only: DEG2RAD, RAD2DEG
+  use VGridsDatabase, only: VGrid_T
 
   implicit none
   private
@@ -185,7 +184,7 @@ contains ! =====     Public Procedures     =============================
         call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
         !??? Here we would do intelligent stuff to work out which bands
         !??? are present, for the moment choose the first
-        call parse_Signal ( signalString, signalInds, spec_indices, &
+        call parse_Signal ( signalString, signalInds, &
           & tree_index=son, sideband=sideband )
         if ( .not. associated(signalInds) ) then ! A parse error occurred
           call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -693,6 +692,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.27  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.26  2001/04/25 20:33:07  livesey
 ! Minor bug fix, Forge now also zeros surfs.
 !

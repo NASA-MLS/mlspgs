@@ -7,20 +7,24 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
-  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, F_SOURCE, &
-    & F_SDNAME, F_SWATH, F_XSTAR, F_YSTAR, F_KSTAR, FIELD_FIRST, FIELD_INDICES, FIELD_LAST
+  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
+    & F_SOURCE, F_SDNAME, F_SWATH, F_XSTAR, F_YSTAR, F_KSTAR, FIELD_FIRST, &
+    & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_L2PC, S_TIME
+  use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
+    & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
-  use LEXER_CORE, only: PRINT_SOURCE
   use L2PC_M, only: L2PC_T, AddL2PCToDatabase
+  use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: CopyMatrix, Matrix_Database_T, &
     & Dump, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MatrixModule_1, only: Matrix_Database_T, GetFromMatrixDatabase, Matrix_T
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -33,18 +37,18 @@ module Join                     ! Join together chunk based data.
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
     & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
-  use Intrinsic, ONLY: L_NONE, L_CHANNEL, L_GEODANGLE, L_USBFREQUENCY, L_LSBFREQUENCY,&
-       L_INTERMEDIATEFREQUENCY, L_MIF, L_MAF
 
   implicit none
   private
   public :: MLSL2Join
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= "$RCSfile$"
-  !---------------------------------------------------------------------------
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! Parameters for Announce_Error
 
@@ -612,6 +616,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.27  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.26  2001/04/26 00:07:16  livesey
 ! Insulate vector is gone
 !
