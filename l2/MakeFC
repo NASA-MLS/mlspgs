@@ -1,6 +1,7 @@
 #	Makefile
-#	targets: configure and depends and clean
-#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/mlsl2
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
 #the 1st time through, before .configure exists yet,
@@ -39,9 +40,25 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# clean          -- deletes uniquely-named sub-sub-directories
+# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
 libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
 
 PROG=mlsl2
+
+#----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
@@ -49,7 +66,7 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar
+.PHONY: configure depends clean tar clean_objs
 
 tar: clean
 
@@ -94,6 +111,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.7  2001/01/10 23:45:34  pwagner
+# General housekeeping
+#
 # Revision 2.6  2000/11/18 00:11:06  pwagner
 # No target with *.f90 to confuse sun
 #
