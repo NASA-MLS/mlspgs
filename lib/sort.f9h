@@ -2,13 +2,6 @@
 !     .  All rights reserved.  U. S. Government sponsorship under
 !     .  NASA contract NAS7-918 is acknowledged.
 
-!---------------------------- RCS Ident Info -------------------------------
-      character (len=*), parameter :: IdParm = &
-        "$Id$"
-      character(len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-!---------------------------------------------------------------------------
-
       integer M, N
 
 !     *****     Local Variables     ************************************
@@ -123,6 +116,9 @@
       return
 
 ! $Log$
+! Revision 2.3  2002/10/02 16:50:21  pwagner
+! Removed RCS Ident Block
+!
 ! Revision 2.2  2002/10/02 15:36:23  bwknosp
 ! Added RCS info
 !
