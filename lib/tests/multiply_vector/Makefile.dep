@@ -1,0 +1,10 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+test_multiply_vector.o  \
+ 
+# using f90makedep.pl to calculate dependencies 
+test_multiply_vector.o: test_multiply_vector.f90
+ 
+#End of Makefile.dep
+ 

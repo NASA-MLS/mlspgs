@@ -1,0 +1,79 @@
+#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../
+vpath %.f9h ../
+
+FC = f95
+
+# Compiler options:
+FOPTS = -g -C=all -abi=n32
+
+DUSTY = -g -dusty -abi=n32
+
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+# Use the lib directory, too
+# Assume we in  mlspgs/lib/tests/test_cf_parser/$(MLSCONFG)
+# need to reach mlspgs/lib/$(MLSCONFG)
+libdir = ../../../$(MLSCONFG)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90
+.f90.o:
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+
+#These are the locations of the libraries
+#
+#  Name                 Default value
+#  PGSTK                 $(PGSLIB)
+# HDFEOS                 $(HDFEOS_LIB)
+#   HDF                  $(HDFLIB)
+#  GCTP                  $(HDEOS_LIB)
+#
+#PGSTK =$(PGSLIB)
+#HDFEOS =$(HDFEOS_LIB)
+#HDF =$(HDFLIB)
+#GCTP =$(HDFEOS_LIB)
+#The following can be uncommented to override the defaults
+
+#PGSTK =/software/SRC/TOOLKIT-5.2.5v1.00/lib/sgi/
+#HDFEOS =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
+#HDF =/software/SRC/TOOLKIT-5.2.5v1.00/hdf/sgi/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
+
+# $Log$
+# Revision 1.1  2000/10/24 21:01:01  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/20 23:38:54  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/18 22:08:01  pwagner
+# First commit
+#

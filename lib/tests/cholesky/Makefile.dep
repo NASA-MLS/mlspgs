@@ -1,0 +1,10 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+test_cholesky.o  \
+ 
+# using f90makedep.pl to calculate dependencies 
+test_cholesky.o: test_cholesky.f90
+ 
+#End of Makefile.dep
+ 
