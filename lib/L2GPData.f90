@@ -16,8 +16,8 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   USE SWAPI, ONLY: SWWRFLD!,SWRDFLD
   
   IMPLICIT NONE
-  INTEGER:: SWRDFLD
-!  EXTERNAL SWRDFLD !Should USE SWAPI
+  INTEGER :: SWRDFLD
+  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER(len=256), PRIVATE :: Id = &
        & "$Id$"
@@ -1141,6 +1141,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.10  2001/02/02 17:15:02  livesey
+! Changed order of DIM_NAME12 and DIM_NAME123, this should be right now!
+!
 ! Revision 2.9  2001/01/29 18:17:49  livesey
 ! Changed status, quality and frequency to upper case first character.
 !
