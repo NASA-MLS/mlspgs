@@ -3,10 +3,10 @@
 
 Module Bill_GasAbsorption
 
-   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   implicit NONE
   private
-  public :: get_beta_bill
+  public :: Get_Beta_Bill
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -14,16 +14,14 @@ Module Bill_GasAbsorption
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
   "$RCSfile$"
-  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 
-  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
+  subroutine Get_Beta_Bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
 !      USING BILL'S NEW SPECTROSCOPY DATA. 
-!      LATEST UPDATE: J.JIANG, NOVEMBER 14, 2001
 !==============================================================
 
     use Get_Beta_Path_m, only: CREATE_BETA
@@ -79,9 +77,9 @@ contains
     Integer(ip) :: n_sps, i
     integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
     Integer(ip) :: status
-    real(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
+    real(rp) :: bb, WC(2), tanh1
     real(r8), parameter :: Boltzmhz2 = 0.5 / h_over_k
-    logical :: Do_1D, Incl_Cld
+    logical :: Do_1D
 
 !-----------------------------------------------------------------------------
     WC= 0._r8
@@ -107,7 +105,6 @@ contains
     FF = F*1000.0_r8
 
     n_sps = Size(Catalog)
-!    maxVert = Ng +1
 
     allocate ( gl_slabs(1,n_sps), stat=status )
     if ( status /= 0 ) &
@@ -124,7 +121,7 @@ contains
     call get_gl_slabs_arrays ( Catalog, (/ p /), (/ t /), myLosVel, gl_slabs, &
       & Do_1D, (/ .true. /) )
 
-! Note that expa only depends on temperature.
+    ! Note that expa only depends on temperature.
     tanh1 = tanh( ff / ( boltzmhz2 * t))
     do i = 1, n_sps
 
@@ -169,6 +166,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.22  2003/07/09 00:00:20  vsnyder
+! Remove arrays known to have length 1
+!
 ! Revision 1.21  2003/07/07 19:09:07  vsnyder
 ! Get Create_Beta from get_beta_path
 !
@@ -232,7 +232,3 @@ End Module Bill_GasAbsorption
 ! Revision 1.1  2001/11/09 22:07:38  jonathan
 ! using Bill Read's new spec data
 !
-
-
-
-
