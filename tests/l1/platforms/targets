@@ -93,10 +93,10 @@ ifdef LIB_LAPACK
 else
    lapack_linker_line=-L${LAPACK} -llapack
 endif
-   lapack_message=Building mlsl2 with externally-supplied LAPACK
+   lapack_message=Building $(PROG_NAME) with externally-supplied LAPACK
 else
    lapack_linker_line=
-   lapack_message=Building mlsl2 with internally-supplied LAPACK
+   lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
 endif
 
 ifdef HDF5
@@ -168,6 +168,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
 # Revision 1.11  2001/10/11 18:15:29  pwagner
 # Allows PROG_NAME variable to specify name of executable built
 #

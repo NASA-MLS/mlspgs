@@ -91,10 +91,10 @@ ifdef LIB_LAPACK
 else
    lapack_linker_line=-L${LAPACK} -llapack
 endif
-   lapack_message=Building mlsl2 with externally-supplied LAPACK
+   lapack_message=Building mlsl3d with externally-supplied LAPACK
 else
    lapack_linker_line=
-   lapack_message=Building mlsl2 with internally-supplied LAPACK
+   lapack_message=Building mlsl3d with internally-supplied LAPACK
 endif
 
 ifdef HDF5
@@ -183,6 +183,9 @@ L3DMData.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.16  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
 # Revision 1.15  2001/10/09 20:52:51  pwagner
 # Uses which_fftw to pick fftw libraries
 #

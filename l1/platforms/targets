@@ -86,10 +86,10 @@ ifdef LIB_LAPACK
 else
    lapack_linker_line=-L${LAPACK} -llapack
 endif
-   lapack_message=Building mlsl2 with externally-supplied LAPACK
+   lapack_message=Building mlsl1 with externally-supplied LAPACK
 else
    lapack_linker_line=
-   lapack_message=Building mlsl2 with internally-supplied LAPACK
+   lapack_message=Building mlsl1 with internally-supplied LAPACK
 endif
 
 ifdef HDF5
@@ -153,6 +153,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
 # Revision 1.12  2001/09/10 18:03:58  pwagner
 # MAde custom build of OutputL1B use INC_PATHS
 #
