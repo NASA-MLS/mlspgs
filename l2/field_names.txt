@@ -15,6 +15,7 @@
 
 antennaPatterns
 apriori
+aprioriPrecision
 aprioriScale
 atmos_der
 autofill
@@ -148,6 +149,7 @@ phaseName
 phiWindow
 pointingGrids
 precision
+precisionFactor
 prefixSignal
 ptanQuantity
 
@@ -221,6 +223,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.30  2002/04/04 16:32:42  livesey
+# Added negative error bar stuff
+#
 # Revision 2.29  2002/03/14 00:38:16  pwagner
 # Added scVelECI and scVelECR
 #
