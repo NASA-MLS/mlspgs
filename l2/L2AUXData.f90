@@ -6,7 +6,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
   use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
-    & SFENDACC, SFSTART, SFRDATA, SFN2INDEX, SFSELECT, SFGINFO, &
+    & SFENDACC, SFSTART, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA
   use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
@@ -348,7 +348,7 @@ contains ! =====     Public Procedures     =============================
     ! Read the SD
     start = 0
     stride = 1
-    status = sfrdata(sds_id, start, stride, dim_sizes, l2aux%values)
+    status = sfrdata_f90(sds_id, start, stride, dim_sizes, l2aux%values)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          & write SD.')
 
@@ -502,6 +502,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.16  2001/05/30 23:53:31  livesey
+! Changed for new version of L1BData
+!
 ! Revision 2.15  2001/05/12 00:18:40  livesey
 ! Tidied up issues with array bounds etc.
 !

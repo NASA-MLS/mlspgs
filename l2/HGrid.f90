@@ -348,7 +348,7 @@ contains ! =====     Public Procedures     =============================
     end select
     
     ! Done with this piece of l1b data for the moment
-    call DeallocateL1BData ( l1bField, l1bFlag )
+    call DeallocateL1BData ( l1bField )
     
     ! Now we have a default MIFs array; this is a list of the `standard'
     ! MIFs we would choose in the interpolationFactor=1 case.
@@ -541,6 +541,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.16  2001/05/30 23:53:15  livesey
+! For new version of L1BData
+!
 ! Revision 2.15  2001/05/12 00:17:24  livesey
 ! Brief tidy up of constructing from l2gp.  Tree walker currently prevents
 ! this however.
