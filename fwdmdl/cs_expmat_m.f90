@@ -79,7 +79,7 @@ contains
       Ex(1,2) = A(1,2)
       Ex(2,1) = A(2,1)
       Ex(2,2) = A(2,2) + 1.0_rk
-      status = 0
+      if ( present(status) ) status = 0
       return
     end if
 
@@ -129,6 +129,9 @@ contains
 end module CS_ExpMat_M
 
 ! $Log$
+! Revision 2.5  2003/07/02 17:19:38  vsnyder
+! Don't set status if it's not present!
+!
 ! Revision 2.4  2003/07/02 00:43:16  vsnyder
 ! Make sure STATUS gets set
 !
