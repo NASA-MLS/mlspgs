@@ -58,7 +58,7 @@
    &         h * coeff(4,klo) / 3.0) / 2.0)
 !
       h = max(abs(ylin),abs(yspl))
-      dp = 100.0*abs(ylin-yspl)/(h+tiny(ylin))
+      dp = 100.0*abs(ylin-yspl)/(h+epsilon(ylin))
 !
 ! If the spline is more than 25% different from linear, revert to
 ! linear interpolation
