@@ -46,6 +46,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -67,8 +71,7 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-#wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -153,6 +156,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.19  2001/07/25 23:19:58  pwagner
+# Removed unnecessary lib...a from target prereqs
+#
 # Revision 1.18  2001/05/31 20:24:49  pwagner
 # ghostbuster called with -lib option
 #

@@ -28,15 +28,21 @@ include ../Makefile.dep
 # e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
 
 # ========================================================================
+
+MLSBIN=../../../util
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 ALLOBJS = $(OBJS)
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 libl1_sources = ../../../$(init_m_dir)/
 
-libl1_f90 := $(shell echo $(libl1_sources)/*.f90)
+libl1_f90 := $(shell ${REECHO} $(libl1_sources)/*.f90)
 
-libl1_objs := $(shell echo $(itmdir)/*.o)
+libl1_objs := $(shell ${REECHO} $(itmdir)/*.o)
 
 l1_driver = MLSL1.o
 
@@ -126,6 +132,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.7  2001/06/06 23:51:27  pwagner
 # hdf5 linker line if needed
 #

@@ -49,6 +49,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -71,8 +75,8 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 #wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
-blaslib_f := $(shell echo $(blaslib)/*.f)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
 depends_where:=$(libmls_sources) $(srclib)
@@ -173,6 +177,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.23  2001/07/19 22:48:52  pwagner
+# Builds libmlsl3.a; renamed prog to mlsl3d
+#
 # Revision 1.22  2001/05/31 20:19:31  pwagner
 # Added ghostbuster to .PHONY list
 #

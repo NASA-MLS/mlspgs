@@ -46,6 +46,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 TAR=tar
 
 SHELL = /bin/sh
@@ -64,8 +68,8 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-#wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -148,6 +152,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.5  2001/05/31 20:21:59  pwagner
+# Added ghostbuster to .PHONY list
+#
 # Revision 1.4  2001/05/24 23:23:24  pwagner
 # Fixed prob with LIB_prereqs being undefined
 #

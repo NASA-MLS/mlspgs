@@ -55,6 +55,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -76,10 +80,9 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
-libmlsl3_f90 := $(shell echo $(libmlsl3_sources)/*.f90)
-blaslib_f := $(shell echo $(blaslib)/*.f)
-
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libmlsl3_f90 := $(shell ${REECHO} $(libmlsl3_sources)/*.c $(libmlsl3_sources)/*.f $(libmlsl3_sources)/*.f90)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
 depends_where:=$(libmls_sources) $(srclib) \
    $(libmlsl3_sources)
@@ -180,6 +183,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.2  2001/08/06 17:20:11  pwagner
+# Fixed prob where l3 complained about no rule for libmlsl3
+#
 # Revision 1.1  2001/07/20 00:01:42  pwagner
 # First commit
 #

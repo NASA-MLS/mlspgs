@@ -28,15 +28,20 @@ include ../Makefile.dep
 # e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
 
 # ========================================================================
+MLSBIN=../../../util
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 ALLOBJS = $(OBJS)
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 libl3m_sources = ../../../$(own_dir)/
 
-libl3m_f90 := $(shell echo $(libl3m_sources)/*.f90)
+libl3m_f90 := $(shell ${REECHO} $(libl3m_sources)/*.f90)
 
-libl3m_objs := $(shell echo $(owndir)/*.o)
+libl3m_objs := $(shell ${REECHO} $(owndir)/*.o)
 
 l3_driver = MLSL3M.o
 
@@ -129,3 +134,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2001/07/24 20:51:58  pwagner
+# First commit
+#

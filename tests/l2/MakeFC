@@ -61,6 +61,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 TAR=tar
 
 SHELL = /bin/sh
@@ -79,13 +83,10 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-#These seem to no longer work right (maybe some change to our suns?)
-#libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
-#libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
-libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
-libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f)
-blaslib_f := $(shell echo $(blaslib)/*.f)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
+libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f $(libcloud_sources)/*.c)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
@@ -198,6 +199,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.7  2001/06/06 23:52:52  pwagner
+# cloud forward model now a part of l2
+#
 # Revision 1.6  2001/05/31 20:24:49  pwagner
 # ghostbuster called with -lib option
 #

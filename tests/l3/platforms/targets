@@ -28,15 +28,20 @@ include ../Makefile.dep
 # e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
 
 # ========================================================================
+MLSBIN=../../../util
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 ALLOBJS = $(OBJS)
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 libl3_sources = ../../../$(init_m_dir)/
 
-libl3_f90 := $(shell echo $(libl3_sources)/*.f90)
+libl3_f90 := $(shell ${REECHO} $(libl3_sources)/*.f90)
 
-libl3_objs := $(shell echo $(itmdir)/*.o)
+libl3_objs := $(shell ${REECHO} $(itmdir)/*.o)
 
 l3_driver = MLSL3D.o
 
@@ -129,6 +134,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2001/07/24 18:31:48  pwagner
+# Brought up to date with changes in mlspgs/l3
+#
 # Revision 1.8  2001/07/16 18:00:21  pwagner
 # Builds correctly with hdf5 on new and older Linux
 #
