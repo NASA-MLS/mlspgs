@@ -225,7 +225,7 @@ BEGIN GlobalSettings
     AllowClimatologyOverloads=FALSE
 
 ;; Stuff to start up the forward model from Zvi's and Bill's files
-    forwardModelGlobal, atmos_der=false, conv=false, freq_avg=true, $
+    forwardModelGlobal, atmos_der=false, conv=true, freq_avg=true, $
       spect_der=false, temp_der=false, frequency= -1.0
     l2load, bill='/user5/zvi/ptg_frq_grid_b05.dat', zvi='/user5/zvi/seez'
 ;; End of stuff to start up the forward model from Zvi's and Bill's files
@@ -392,6 +392,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.4  2001/03/09 01:49:31  zvi
+; *** empty log message ***
+;
 ; Revision 2.3  2001/03/09 00:54:00  zvi
 ; *** empty log message ***
 ;
