@@ -29,7 +29,7 @@
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
-!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
@@ -569,6 +569,10 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.102  2004/11/29 21:54:08  livesey
+; Changed chisqProfile to be mean not max chi squared in the MAF.  It's
+; used in deriving quality.
+;
 ; Revision 1.101  2004/10/30 00:04:20  livesey
 ; Added bit 9 for status (never actually used as such).
 ;
