@@ -8,15 +8,16 @@ module GLOBAL_SETTINGS
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
   use ForwardModelSupport, only: ConstructForwardModelConfig, &
-    & ForwardModelGlobalSetup
+    & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY
+    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY, S_BINSELECTOR
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
     & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
   use L2GPData, only: L2GPDATA_T
+  use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
   use MLSL2Options, only: PCF
@@ -190,6 +191,9 @@ contains
           name = 0
         end if
         select case ( get_spec_id(son) )
+        case ( s_binSelector )
+          call decorate (son, AddBinSelectorToDatabase ( &
+            & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           call forwardModelGlobalSetup ( son, returnStatus )
           error = max(error, returnStatus)
@@ -590,6 +594,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.51  2002/01/24 00:14:26  pwagner
+! Proclaims level 1 files as input; comments concerning hdf5 conversion
+!
 ! Revision 2.50  2001/12/16 00:57:26  livesey
 ! Temporary fix to deal with tai93 time issues for sids
 !
