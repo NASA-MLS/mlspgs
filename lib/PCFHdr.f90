@@ -61,6 +61,11 @@ MODULE PCFHdr
   integer, parameter, public :: UTC_A_VALUE_LENGTH = 27
   integer, parameter, public :: UTC_B_VALUE_LENGTH = 25
   character(len=*), parameter, private :: PCFATTRIBUTENAME = 'PCF'
+  character(len=*), parameter, private :: PCFPATHNAME = '/PCF'
+  character(len=*), parameter, private :: HDFEOSINPTPTRVALUE = 'Found at ' // &
+    & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF'
+  character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
+    & '/PCF'
 
    ! May get some of these from MLSLibOptions? 
   type GlobalAttributes_T
@@ -504,30 +509,43 @@ CONTAINS
 !------------------------------------------------------------
 
 !----------------------------------------
-   FUNCTION WriteInputPointer (groups, attrName, inpt)
+   FUNCTION WriteInputPointer (groups, attrName, inpt, fileType)
 !----------------------------------------
 
 !  Write InputPointer metadata
-!  Moved here to hide inconsistency of arguments from NAGging inquiry
-!  in the style of Enron's offshore limited partnerships
 
 !  Arguments
     character (len = PGSd_MET_GROUP_NAME_L) :: Groups
-    character (len=132), intent(in) :: Attrname
-    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in)  :: inpt(:)
+    character (len=*), intent(in) :: Attrname
+    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
+    character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
 
     integer             :: WriteInputPointer
     integer, external   :: pgs_met_setAttr_s
+    character (len=6) :: the_type
 
 !   Executable statements
+    if ( present(inpt) ) then
        WriteInputPointer = pgs_met_setAttr_s(groups, attrName, inpt)
-
+       return
+    endif
+    the_type = 'hdf'
+    if ( present(fileType) ) the_type = lowercase(fileType)
+    select case(the_type)
+    case ('hdf')
+      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+        &  (/HDFINPTPTRVALUE/) )
+    case default
+      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+        &  (/HDFEOSINPTPTRVALUE/) )
+    end select      
+    
 !------------------------------------
    END FUNCTION WriteInputPointer
 !------------------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType)
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
 !----------------------------------------
       use HDF5, only: H5F_ACC_RDWR_F, &
         & h5fopen_f, h5fclose_f
@@ -542,6 +560,7 @@ CONTAINS
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
       character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      character(len=*), intent(in), optional :: name
       ! logical, intent(in), optional         :: isHDFEOS
 
 ! Parameters
@@ -594,7 +613,7 @@ CONTAINS
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Error opening hdf5 file for annotating with PCF' )
           ! call WritePCF2Hdr_hdf5 (file, anText)
-          call WritePCF2Hdr_hdf5 (fileID, anText)
+          call WritePCF2Hdr_hdf5 (fileID, anText, name)
           call h5fclose_f(fileID, status)
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -681,7 +700,7 @@ CONTAINS
 !-----------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText)
+   SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
 !----------------------------------------
 
       use HDF5, only: h5gclose_f, h5gopen_f
@@ -698,10 +717,11 @@ CONTAINS
 
 ! Arguments
 
+      integer :: fileID
       CHARACTER (LEN=1), POINTER              :: anText(:)
+      character(len=*), intent(in), optional :: name
 
 ! Local variables
-      integer :: fileID
       integer :: grp_id
       integer :: status
       CHARACTER (LEN=1), dimension(:), POINTER              :: an40
@@ -710,10 +730,13 @@ CONTAINS
       logical, parameter :: MAKEDATASET = .true.
       logical, parameter :: MAKEATTRIBUTE = .true.
       character(len=size(anText)) :: anScalar
+      character(len=80) :: myPCFPATHNAME
       ! Executable
+      myPCFPATHNAME = PCFPATHNAME
+      if ( present(name) ) myPCFPATHNAME = name
       if ( MAKEDATASET ) then
         anScalar = transfer(anText, anScalar)
-        call SaveAsHDF5DS ( fileID, '/PCF', anScalar )
+        call SaveAsHDF5DS ( fileID, trim(myPCFPATHNAME), anScalar )
       endif
       if ( .not. MAKEATTRIBUTE ) return
       call h5gopen_f(fileID, '/', grp_id, status)
@@ -914,6 +937,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.20  2003/05/30 23:47:00  pwagner
+!# Now standardized to write PCF, InputPointer for all levels
+!#
 !# Revision 2.19  2003/04/11 23:33:13  pwagner
 !# Gets he5_EHwrglatt from new MLSHDFEOS module
 !#
