@@ -113,7 +113,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binSelector + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
-  integer, parameter :: S_CONCATENATE        = s_columnScale + 1
+  integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
+  integer, parameter :: S_CONCATENATE        = s_combineChannels + 1
   integer, parameter :: S_CYCLICJACOBI       = s_concatenate + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
@@ -314,6 +315,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
+    spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
@@ -1162,6 +1164,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rhsOut, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
+      begin, s+s_combineChannels, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_sourceMatrix, s+s_matrix, nr+n_field_spec, &
+             ndp+n_spec_def /) )
+    call make_tree( (/ &
       begin, s+s_regularization, & ! Must be AFTER s_matrix
              begin, f+f_horizontal, t+t_boolean, n+n_field_type, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
@@ -1260,8 +1267,8 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
-      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_disjointEquations, &
-             s+s_normalEquations, &
+      begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
+             s+s_disjointEquations, s+s_normalEquations, &
              s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
@@ -1279,6 +1286,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.383  2004/09/25 00:15:22  livesey
+! Added combineChannels to Algebra
+!
 ! Revision 2.382  2004/09/10 23:53:36  livesey
 ! Added centervertically option for bin mean/max/min fill.
 !
