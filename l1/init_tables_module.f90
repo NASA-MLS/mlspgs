@@ -55,9 +55,10 @@ MODULE INIT_TABLES_MODULE
 ! Section identities:
 
   INTEGER, PUBLIC, PARAMETER :: Z_GLOBALSETTINGS = 1
-  INTEGER, PUBLIC, PARAMETER :: Z_CALIBRATION = 2
+  INTEGER, PUBLIC, PARAMETER :: Z_CALIBRATION = Z_GLOBALSETTINGS + 1
+  INTEGER, PUBLIC, PARAMETER :: Z_OUTPUT = Z_CALIBRATION + 1
   INTEGER, PUBLIC, PARAMETER :: SECTION_FIRST = z_globalSettings, &
-                                SECTION_LAST = z_Calibration
+                                SECTION_LAST = Z_OUTPUT
 
 ! Specification indices:
 
@@ -87,20 +88,26 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
 
+  ! In Output section:
+
+  INTEGER, PUBLIC, PARAMETER :: P_HDF_VERSION_STRING = P_MIFsPerMAF + 1
+
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_MIFsPerMAF
+  INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_HDF_VERSION_STRING
 
 ! Table for section ordering:
 
   INTEGER, PUBLIC, PARAMETER :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = RESHAPE( &
-! To: | globalSettings       |
-!     |      Calibration     |
+! To: | globalSettings        |
+!     |      Calibration      |
+!     |            Output     |
 ! ====|==============================|== From: ==
-        (/OK,    0,  & ! Start
-           0,   OK,  & ! GlobalSettings
-           0,   OK/) & ! Calibration
+        (/OK,    0,  0,    & ! Start
+           0,   OK,  0,    & ! GlobalSettings
+           0,   OK,  OK,   & ! Calibration
+           0,    0,  OK /) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
@@ -150,11 +157,13 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =       add_ident ( 'VersionComment' )
     parm_indices(p_produce_l1boa)=          add_ident ( 'ProduceL1BOA' )
+    parm_indices(p_hdf_version_string) =    add_ident ( 'HDFVersionString' )
 
     ! Put section names into the symbol table
 
     section_indices(z_calibration) =        add_ident ( 'Calibration' )
     section_indices(z_globalsettings) =     add_ident ( 'GlobalSettings' )
+    section_indices(z_output) =             add_ident ( 'Output' )
 
     ! Put spec names into the symbol table
 
@@ -270,7 +279,10 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_usedefaultgains, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
-             s+s_switch, n+n_section /) )
+             s+s_switch, n+n_section, &
+      begin, z+z_output, &
+             begin, p+p_hdf_version_string, t+t_string, n+n_name_def, &
+             n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
     
@@ -280,6 +292,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.12  2002/11/07 21:34:42  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.11  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
@@ -287,6 +302,9 @@ END MODULE INIT_TABLES_MODULE
 ! For the latest parser version.
 !
 ! $Log$
+! Revision 2.12  2002/11/07 21:34:42  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.11  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
