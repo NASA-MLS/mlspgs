@@ -2,21 +2,35 @@
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE L3MMData
-!===============================================================================
+!==============================================================================
 
-   USE Hdf
+   USE HDF, ONLY: DFACC_RDWR, DFACC_WRITE, DFNT_FLOAT64, DFNT_FLOAT32, &
+        & DFNT_INT32, DFNT_CHAR8
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
    USE L3DMData, ONLY: ConvertDeg2DMS
-   USE MLSCommon
-   USE MLSL3Common
-   USE MLSMessageModule
+   USE MLSCommon, ONLY: r8
+   USE MLSFiles, ONLY: MLS_SFEND, MLS_SFSTART, HDFVERSION_4, HDFVERSION_5
+   USE MLSL3Common, ONLY: INVENTORYMETADATA, DATE_LEN, HDFE_NOMERGE, MIN_MAX, &
+        & GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, GEO_FIELD9, DIM_ERR, DIM_NAME2, &
+        & maxWindow, GridNameLen, DATE_LEN, GCTP_GEO, DIMR_NAME, &
+        & DIMX_NAME, DIMY_NAME, DIMZ_NAME, DIMT_NAME, DIM_ERR, DIMXYZ_NAME, &
+        & DG_FIELD2, GEO_ERR, DAT_ERR, GD_ERR, SW_ERR, WR_ERR, &
+        & METAWR_ERR
+   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+        & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_WARNING
    USE MLSPCF3
    USE mon_Open, ONLY: PCFMData_T
-   USE PCFHdr
+   USE PCFHdr, ONLY: WritePCF2Hdr
    USE PCFModule
-   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE
-   use Time_M, only: Time_Now
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
+        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET
+   USE Time_M, only: Time_Now
+   USE SWAPI
+   USE HE5_SWAPI
+
    IMPLICIT NONE
    PUBLIC
 
@@ -46,12 +60,16 @@ MODULE L3MMData
 
    TYPE L3MMData_T
 
+     CHARACTER (LEN=DATE_LEN), DIMENSION(maxWindow) :: misDays
+	! Missing days, dimensioned (nDays)
+
      CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
-     INTEGER :: nLevels				! Total number of surfaces
-     INTEGER :: nLats				! Total number of latitudes
-     INTEGER :: nLons				! Total number of longitudes
-     INTEGER :: nMisDays			! Number of missing days in the month
+     ! Now the data fields:
+
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3mmValue	  ! Field value
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3mmPrecision ! Field precision
+	! dimensioned as (nLevels, nLats, nLons)
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
@@ -65,26 +83,365 @@ MODULE L3MMData
      REAL(r8) :: startTime	! start time of L2 data used in the analysis
      REAL(r8) :: endTime 	! end time of L2 data used in the analysis
 
-     ! Now the data fields:
-
-     REAL(r8), DIMENSION(:,:,:), POINTER :: l3mmValue	  ! Field value
-     REAL(r8), DIMENSION(:,:,:), POINTER :: l3mmPrecision ! Field precision
-	! dimensioned as (nLevels, nLats, nLons)
-
      ! Now the diagnostic fields:
 
-     INTEGER, DIMENSION(:), POINTER :: perMisPoints	! Missing points (percentage)
+     INTEGER, DIMENSION(:), POINTER :: perMisPoints	
+     ! Missing points (percentage)
 	! dimensioned (nLevels)
 
-     CHARACTER (LEN=DATE_LEN), DIMENSION(maxWindow) :: misDays
-	! Missing days, dimensioned (nDays)
+     INTEGER :: nLevels			! Total number of surfaces
+     INTEGER :: nLats			! Total number of latitudes
+     INTEGER :: nLons			! Total number of longitudes
+     INTEGER :: nMisDays		! Number of missing days in the month
 
    END TYPE L3MMData_T
 
 CONTAINS
 
 !-----------------------------------------------------------------
-   SUBROUTINE OutputMMGrids (physicalFilename, l3mm, creationFlag)
+  SUBROUTINE OutputMMGrids (physicalFilename, l3mm, creationFlag, &
+       & hdfVersion)
+!-----------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the grid portion of l3mm files.
+
+! Arguments
+
+    CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+
+    TYPE (L3MMData_T), INTENT(IN) :: l3mm
+
+    LOGICAL, INTENT(INOUT) :: creationFlag
+   
+    INTEGER, INTENT(IN) :: hdfVersion
+
+    IF (hdfVersion==HDFVERSION_4) THEN 
+       CALL OutputMMGrids_HE2 (physicalFilename, l3mm, creationFlag)
+    ELSE IF (hdfVersion==HDFVERSION_5) THEN 
+       CALL OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
+    ENDIF
+
+  END SUBROUTINE OutputMMGrids
+
+!-----------------------------------------------------------------
+  SUBROUTINE OutputMMGrids_HE2 (physicalFilename, l3mm, creationFlag)
+!-----------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the grid portion of l3mm files.
+
+! Arguments
+
+    CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+
+    TYPE (L3MMData_T), INTENT(IN) :: l3mm
+
+    LOGICAL, INTENT(INOUT) :: creationFlag
+   
+! Parameters
+
+    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDMV = 'L3mmValue'
+    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDMP = 'L3mmPrecision'
+
+! Functions
+
+    INTEGER, EXTERNAL :: gdattach, gdclose, gdcreate, gddefdim, gddeffld, &
+         & gddefproj, gddetach, gdopen, gdwrfld
+
+! Variables
+
+    CHARACTER (LEN=480) :: msr
+
+    REAL(r8), dimension(:), pointer :: times
+    REAL(r8) :: projparm(13)
+    REAL(r8) :: uplft(2), lowrgt(2)
+
+    REAL :: maxLat, maxLon, minLat, minLon
+    REAL, parameter :: WAIT_TO_REOPEN = 2.0
+
+    INTEGER :: start(3), stride(3), edge(3)
+    INTEGER :: gdfID, gdId, status, err
+    INTEGER, parameter :: NUMBER_BEATS = 20000
+      
+! Open the output file
+
+    gdfID = gdopen(physicalFilename, DFACC_RDWR)
+    IF (gdfID == -1) THEN
+       msr = MLSMSG_Fileopen // trim(physicalFilename)
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Set up the grid.  The region is bounded by 180.0W to 176.0E longitude &
+! varying latitude.  Grid into 90 bins along the x-axis, by nLats bins along
+! the y-axis (4x2 bins).  Upper Left & Lower Right corners in DDDMMMSSS.ss.
+
+    projparm = 0.0
+
+! Find boundaries of measured latitude, upper bound of measure longitude
+
+    maxLat = MAXVAL( l3mm%latitude  )
+    minLat = MINVAL( l3mm%latitude  )
+    maxLon = MAXVAL( l3mm%longitude )
+    minLon = MINVAL( l3mm%longitude )
+
+! Convert to "packed degree format"
+
+    CALL ConvertDeg2DMS(maxLat, uplft(2) )
+    CALL ConvertDeg2DMS(minLat, lowrgt(2))
+    CALL ConvertDeg2DMS(maxLon, lowrgt(1))
+    CALL ConvertDeg2DMS(minLon, uplft(1) )
+
+! Create the grid
+
+    gdId = gdcreate(gdfID, l3mm%name, l3mm%nLons, l3mm%nLats, uplft, lowrgt)
+    IF (gdId == -1) THEN
+       msr = 'Failed to create grid ' // trim(l3mm%name)
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Define the dimensions
+
+    status = gddefdim(gdId, DIMX_NAME, l3mm%nLons)
+    IF (status /= 0) THEN
+       msr = DIM_ERR // DIMX_NAME
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddefdim(gdId, DIMY_NAME, l3mm%nLats)
+    IF (status /= 0) THEN
+       msr = DIM_ERR // DIMY_NAME
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddefdim(gdId, DIMZ_NAME, l3mm%nLevels)
+    IF (status /= 0) THEN
+       msr = DIM_ERR // DIMZ_NAME
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddefdim(gdId, DIMT_NAME, MIN_MAX)
+    IF (status /= 0) THEN
+       msr = DIM_ERR // DIMT_NAME
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Define a "Geographic projection," using defaults in all unneeded fields
+
+    status = gddefproj(gdId, GCTP_GEO, 0, 0, projparm)
+    IF (status /= 0) THEN
+       msr = 'Failed to define projection for grid ' // l3mm%name
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Define the "geolocation" fields
+
+    status = gddeffld(gdId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT64,HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = GEO_ERR // GEO_FIELD3
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddeffld(gdId, GEO_FIELD9, DIMZ_NAME, DFNT_FLOAT32,HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = GEO_ERR // GEO_FIELD9
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddeffld(gdId, GEO_FIELD1, DIMY_NAME, DFNT_FLOAT32,HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = GEO_ERR // GEO_FIELD1
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddeffld(gdId, GEO_FIELD2, DIMX_NAME, DFNT_FLOAT32,HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = GEO_ERR // GEO_FIELD2
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Define the "data" fields
+
+    status = gddeffld(gdId, DATA_FIELDMV, DIMXYZ_NAME, DFNT_FLOAT32, & 
+         & HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = DAT_ERR // DATA_FIELDMV
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gddeffld(gdId, DATA_FIELDMP, DIMXYZ_NAME, DFNT_FLOAT32, & 
+         & HDFE_NOMERGE)
+    IF (status /= 0) THEN
+       msr = DAT_ERR // DATA_FIELDMP
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Detach from and close the grid interface.  This step is necessary to store
+! properly the grid information within the file and must be done before writing
+! or reading data to or from the grid.
+
+    status = gddetach(gdId)
+    IF (status /= 0) THEN
+       msr = GD_ERR // TRIM( l3mm%name ) // ' after definition.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    status = gdclose(gdfID)
+    IF (status /= 0) THEN
+       msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+            & ' after definition.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Delay reopening for a discreet and discrete time
+! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
+!      call time_now(t1)
+!      t2 = t1
+!      do beat = 1, NUMBER_BEATS
+!        call time_now(t2)
+!        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
+!      enddo
+
+! Re-open the file for writing
+
+    gdfID = gdopen(physicalFilename, DFACC_RDWR)
+    IF (gdfID == -1) THEN
+       msr = MLSMSG_Fileopen // TRIM(physicalFilename) // ' for writing.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Re-attach to the grid for writing
+
+    gdId = gdattach(gdfID, l3mm%name)
+    IF (gdId == -1) THEN
+       msr = 'Failed to attach to grid ' // trim(l3mm%name)
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Write to fields
+
+    start = 0
+    stride = 1
+    edge(1) = l3mm%nLevels
+    edge(2) = l3mm%nLats
+    edge(3) = l3mm%nLons
+
+    allocate(times(l3mm%nLevels), STAT=err)
+    IF ( err /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' times pointer.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    times(1:l3mm%nLevels) = l3mm%startTime
+
+! Start Time
+
+!      status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
+!                       l3mm%startTime)
+    status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
+         & times)
+    IF (status /= 0) THEN
+       print *, 'gdId ', gdId
+       print *, 'start ', start
+       print *, 'stride ', stride
+       print *, 'edge ', edge
+       print *, 'start times ', times
+       msr = 'Failed to write startTime to grid ' // trim(l3mm%name)
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! End Time
+
+    times(1:l3mm%nLevels) = l3mm%endTime
+    status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
+         & times)
+!      status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
+!                       l3mm%endTime)
+    IF (status /= 0) THEN
+       msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' & 
+            & // trim(l3mm%name)
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+! Pressure, latitude, & longitude
+
+    status = gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
+         & REAL(l3mm%pressure) )
+      IF (status /= 0) THEN
+         msr = 'Failed to write field ' //  GEO_FIELD9 // ' to grid ' & 
+              & // trim(l3mm%name)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = gdwrfld( gdId, GEO_FIELD1, start(2), stride(2), edge(2), &
+           & REAL(l3mm%latitude) )
+      IF (status /= 0) THEN
+          msr = 'Failed to write field ' //  GEO_FIELD1 // ' to grid ' & 
+               & // trim(l3mm%name)
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
+           & REAL(l3mm%longitude) )
+      IF (status /= 0) THEN
+          msr = 'Failed to write field ' //  GEO_FIELD2 // ' to grid ' & 
+               & // trim(l3mm%name)
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Data fields
+
+      status = gdwrfld( gdId, DATA_FIELDMV, start, stride, edge, &
+           & REAL(l3mm%l3mmValue) )
+      IF (status /= 0) THEN
+          msr = 'Failed to write field ' //  DATA_FIELDMV // ' to grid ' // &
+               & trim(l3mm%name)
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = gdwrfld( gdId, DATA_FIELDMP, start, stride, edge, &
+           & REAL(l3mm%l3mmPrecision) )
+      IF (status /= 0) THEN
+          msr = 'Failed to write field ' //  DATA_FIELDMP // ' to grid ' // &
+               & trim(l3mm%name)
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the grid after writing
+
+      status = gddetach(gdId)
+      IF (status /= 0) THEN
+          msr = GD_ERR // TRIM( l3mm%name ) // ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Close the file after writing
+
+      status = gdclose(gdfID)
+      IF (status /= 0) THEN
+          msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+               & ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      msr = 'Grid ' // TRIM(l3mm%name) // ' successfully written to file ' // &
+           & trim(physicalFilename)
+      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+      creationFlag = .TRUE.
+
+      deallocate(times, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Deallocate // ' times pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!------------------------------
+   END SUBROUTINE OutputMMGrids_HE2
+!------------------------------
+
+!-----------------------------------------------------------------
+   SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
 !-----------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -105,32 +462,30 @@ CONTAINS
 
 ! Functions
 
-      INTEGER, EXTERNAL :: gdattach, gdclose, gdcreate, gddefdim, gddeffld
-      INTEGER, EXTERNAL :: gddefproj, gddetach, gdopen, gdwrfld
+      INTEGER, EXTERNAL :: he5_gdattach, he5_gdclose, he5_gdcreate, & 
+           & he5_gddefdim, he5_gddeffld, he5_gddefproj, he5_gddetach, & 
+           & he5_gdopen, he5_gdwrfld
 
 ! Variables
 
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: gdfID, gdId, status
-      INTEGER :: start(3), stride(3), edge(3)
+      REAL(r8), dimension(:), pointer :: times
+      REAL(r8) :: projparm(13)
+      REAL(r8) :: uplft(2), lowrgt(2)
 
       REAL :: maxLat, maxLon, minLat, minLon
+      REAL, parameter :: WAIT_TO_REOPEN = 2.0
 
-      REAL(r8) :: uplft(2), lowrgt(2)
-      REAL(r8) :: projparm(13)
-      real(r8), dimension(:), pointer :: times
+      INTEGER :: start(3), stride(3), edge(3)
+      INTEGER :: gdfID, gdId, status, err
+      INTEGER, parameter :: NUMBER_BEATS = 20000
       
-      real :: t1, t2
-      real, parameter :: WAIT_TO_REOPEN = 2.0
-      integer :: beat
-      integer, parameter :: NUMBER_BEATS = 20000
-
 ! Open the output file
 
-      gdfID = gdopen(physicalFilename, DFACC_RDWR)
+      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_TRUNC)
       IF (gdfID == -1) THEN
-         msr = MLSMSG_Fileopen // physicalFilename
+         msr = MLSMSG_Fileopen // trim(physicalFilename)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -142,47 +497,48 @@ CONTAINS
 
 ! Find boundaries of measured latitude, upper bound of measure longitude
 
-      maxLat = MAXVAL( l3mm%latitude )
-      minLat = MINVAL( l3mm%latitude )
+      maxLat = MAXVAL( l3mm%latitude  )
+      minLat = MINVAL( l3mm%latitude  )
       maxLon = MAXVAL( l3mm%longitude )
       minLon = MINVAL( l3mm%longitude )
 
 ! Convert to "packed degree format"
 
-      CALL ConvertDeg2DMS(maxLat, uplft(2))
+      CALL ConvertDeg2DMS(maxLat, uplft(2) )
       CALL ConvertDeg2DMS(minLat, lowrgt(2))
       CALL ConvertDeg2DMS(maxLon, lowrgt(1))
-      CALL ConvertDeg2DMS(minLon, uplft(1))
+      CALL ConvertDeg2DMS(minLon, uplft(1) )
 
 ! Create the grid
 
-      gdId = gdcreate(gdfID, l3mm%name, l3mm%nLons, l3mm%nLats, uplft, lowrgt)
+      gdId = he5_gdcreate(gdfID, trim(l3mm%name), l3mm%nLons, l3mm%nLats, & 
+           & uplft, lowrgt)
       IF (gdId == -1) THEN
-          msr = 'Failed to create grid ' // l3mm%name
+          msr = 'Failed to create grid ' // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Define the dimensions
 
-      status = gddefdim(gdId, DIMX_NAME, l3mm%nLons)
+      status = he5_gddefdim(gdId, DIMX_NAME, l3mm%nLons)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMX_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddefdim(gdId, DIMY_NAME, l3mm%nLats)
+      status = he5_gddefdim(gdId, DIMY_NAME, l3mm%nLats)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMY_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddefdim(gdId, DIMZ_NAME, l3mm%nLevels)
+      status = he5_gddefdim(gdId, DIMZ_NAME, l3mm%nLevels)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMZ_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddefdim(gdId, DIMT_NAME, MIN_MAX)
+      status = he5_gddefdim(gdId, DIMT_NAME, MIN_MAX)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMT_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -190,33 +546,37 @@ CONTAINS
 
 ! Define a "Geographic projection," using defaults in all unneeded fields
 
-      status = gddefproj(gdId, GCTP_GEO, 0, 0, projparm)
+      status = he5_gddefproj(gdId, GCTP_GEO, 0, 0, projparm)
       IF (status /= 0) THEN
-          msr = 'Failed to define projection for grid ' // l3mm%name
+          msr = 'Failed to define projection for grid ' // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Define the "geolocation" fields
 
-      status = gddeffld(gdId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT64, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, GEO_FIELD3, DIMT_NAME, "", & 
+           & HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD3
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddeffld(gdId, GEO_FIELD9, DIMZ_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, GEO_FIELD9, DIMZ_NAME, "", & 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD9
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddeffld(gdId, GEO_FIELD1, DIMY_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, GEO_FIELD1, DIMY_NAME, "", & 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD1
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddeffld(gdId, GEO_FIELD2, DIMX_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, GEO_FIELD2, DIMX_NAME, "", & 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD2
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -224,13 +584,15 @@ CONTAINS
 
 ! Define the "data" fields
 
-      status = gddeffld(gdId, DATA_FIELDMV, DIMXYZ_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, DATA_FIELDMV, DIMXYZ_NAME, "",& 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = DAT_ERR // DATA_FIELDMV
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddeffld(gdId, DATA_FIELDMP, DIMXYZ_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = he5_gddeffld(gdId, DATA_FIELDMP, DIMXYZ_NAME, "",& 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = DAT_ERR // DATA_FIELDMP
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -240,16 +602,16 @@ CONTAINS
 ! properly the grid information within the file and must be done before writing
 ! or reading data to or from the grid.
 
-      status = gddetach(gdId)
+      status = he5_gddetach(gdId)
       IF (status /= 0) THEN
           msr = GD_ERR // TRIM( l3mm%name ) // ' after definition.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gdclose(gdfID)
+      status = he5_gdclose(gdfID)
       IF (status /= 0) THEN
           msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-                ' after definition.'
+                & ' after definition.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -264,7 +626,7 @@ CONTAINS
 
 ! Re-open the file for writing
 
-      gdfID = gdopen(physicalFilename, DFACC_RDWR)
+      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
       IF (gdfID == -1) THEN
           msr = MLSMSG_Fileopen // TRIM(physicalFilename) // ' for writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -272,9 +634,9 @@ CONTAINS
 
 ! Re-attach to the grid for writing
 
-      gdId = gdattach(gdfID, l3mm%name)
+      gdId = he5_gdattach(gdfID, trim(l3mm%name) )
       IF (gdId == -1) THEN
-          msr = 'Failed to attach to grid ' // l3mm%name
+          msr = 'Failed to attach to grid ' // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -285,81 +647,91 @@ CONTAINS
       edge(1) = l3mm%nLevels
       edge(2) = l3mm%nLats
       edge(3) = l3mm%nLons
-      allocate(times(l3mm%nLevels))
+
+      allocate(times(l3mm%nLevels), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' times pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
       times(1:l3mm%nLevels) = l3mm%startTime
 
 ! Start Time
 
 !      status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
 !                       l3mm%startTime)
-      status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
-                       times)
+      status = he5_gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
+           & times)
       IF (status /= 0) THEN
           print *, 'gdId ', gdId
           print *, 'start ', start
           print *, 'stride ', stride
           print *, 'edge ', edge
           print *, 'start times ', times
-          msr = 'Failed to write startTime to grid ' // l3mm%name
+          msr = 'Failed to write startTime to grid ' // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! End Time
 
       times(1:l3mm%nLevels) = l3mm%endTime
-      status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
-                       times)
+      status = he5_gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
+           & times)
 !      status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
 !                       l3mm%endTime)
       IF (status /= 0) THEN
-          msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' // l3mm%name
+          msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' & 
+               & // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Pressure, latitude, & longitude
 
-      status = gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
-                        REAL(l3mm%pressure) )
+      status = he5_gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
+           & REAL(l3mm%pressure) )
       IF (status /= 0) THEN
-          msr = 'Failed to write field ' //  GEO_FIELD9 // ' to grid ' // l3mm%name
+          msr = 'Failed to write field ' //  GEO_FIELD9 // ' to grid ' & 
+               & // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gdwrfld( gdId, GEO_FIELD1, start(2), stride(2), edge(2), &
-                        REAL(l3mm%latitude) )
+      status = he5_gdwrfld( gdId, GEO_FIELD1, start(2), stride(2), edge(2), &
+           & REAL(l3mm%latitude) )
       IF (status /= 0) THEN
-          msr = 'Failed to write field ' //  GEO_FIELD1 // ' to grid ' // l3mm%name
+          msr = 'Failed to write field ' //  GEO_FIELD1 // ' to grid ' & 
+               & // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
-                        REAL(l3mm%longitude) )
+      status = he5_gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
+           & REAL(l3mm%longitude) )
       IF (status /= 0) THEN
-          msr = 'Failed to write field ' //  GEO_FIELD2 // ' to grid ' // l3mm%name
+          msr = 'Failed to write field ' //  GEO_FIELD2 // ' to grid ' & 
+               & // trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Data fields
 
-      status = gdwrfld( gdId, DATA_FIELDMV, start, stride, edge, &
-                        REAL(l3mm%l3mmValue) )
+      status = he5_gdwrfld( gdId, DATA_FIELDMV, start, stride, edge, &
+           & REAL(l3mm%l3mmValue) )
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  DATA_FIELDMV // ' to grid ' // &
-                 l3mm%name
+               & trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gdwrfld( gdId, DATA_FIELDMP, start, stride, edge, &
-                        REAL(l3mm%l3mmPrecision) )
+      status = he5_gdwrfld( gdId, DATA_FIELDMP, start, stride, edge, &
+           & REAL(l3mm%l3mmPrecision) )
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  DATA_FIELDMP // ' to grid ' // &
-                 l3mm%name
+               & trim(l3mm%name)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Detach from the grid after writing
 
-      status = gddetach(gdId)
+      status = he5_gddetach(gdId)
       IF (status /= 0) THEN
           msr = GD_ERR // TRIM( l3mm%name ) // ' after writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -367,26 +739,54 @@ CONTAINS
 
 ! Close the file after writing
 
-      status = gdclose(gdfID)
+      status = he5_gdclose(gdfID)
       IF (status /= 0) THEN
           msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-                ' after writing.'
+               & ' after writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       msr = 'Grid ' // TRIM(l3mm%name) // ' successfully written to file ' // &
-            physicalFilename
+           & trim(physicalFilename)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
       creationFlag = .TRUE.
-      deallocate(times)
+
+      deallocate(times, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Deallocate // ' times pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
 
 !------------------------------
-   END SUBROUTINE OutputMMGrids
+   END SUBROUTINE OutputMMGrids_HE5
 !------------------------------
 
 !------------------------------------------------
-   SUBROUTINE OutputMMDiags(physicalFilename, mm)
+   SUBROUTINE OutputMMDiags(physicalFilename, mm, hdfVersion)
+!------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the diagnostic portion of l3mm files.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+
+      TYPE (L3MMData_T), INTENT(IN) :: mm
+
+      INTEGER, INTENT(IN) :: hdfVersion
+
+      IF (hdfVersion==HDFVERSION_4) THEN 
+         CALL OutputMMDiags_HE2(physicalFilename, mm)
+      ELSE IF (hdfVersion==HDFVERSION_5) THEN
+         CALL OutputMMDiags_HE5(physicalFilename, mm)
+      ENDIF
+
+    END SUBROUTINE OutputMMDiags
+
+!------------------------------------------------
+   SUBROUTINE OutputMMDiags_HE2(physicalFilename, mm)
 !------------------------------------------------
 
 ! Brief description of subroutine
@@ -400,35 +800,32 @@ CONTAINS
 
 ! Parameters
 
-      CHARACTER (LEN=*), PARAMETER :: DIMD_NAME = 'lDate'
+      CHARACTER (LEN=*), PARAMETER :: DIMD_NAME   = 'lDate'
       CHARACTER (LEN=*), PARAMETER :: DIMMIS_NAME = 'nMisDays'
-      CHARACTER (LEN=*), PARAMETER :: DIMDM_NAME = 'lDate,nMisDays'
-
-      CHARACTER (LEN=*), PARAMETER :: MIS_FIELD = 'MissingDays'
+      CHARACTER (LEN=*), PARAMETER :: DIMDM_NAME  = 'lDate,nMisDays'
+      CHARACTER (LEN=*), PARAMETER :: MIS_FIELD   = 'MissingDays'
 
 ! Functions
 
-      INTEGER, EXTERNAL :: swattach, swclose, swcreate, swdefdfld, swdefdim, swdefgfld
-      INTEGER, EXTERNAL :: swdetach, swopen, swwrfld
+      INTEGER, EXTERNAL :: swattach, swclose, swcreate, swdefdfld, swdefdim, & 
+           & swdefgfld, swdetach, swopen, swwrfld
 
 ! Variables
 
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=GridNameLen) :: dgName
 
-      INTEGER :: lsize, nsize, status, swfID, swId
-      INTEGER :: edge(2), start(2), stride(2)
+      REAL, PARAMETER :: WAIT_TO_REOPEN = 2.0
 
-      real :: t1, t2
-      real, parameter :: WAIT_TO_REOPEN = 2.0
-      integer :: beat
-      integer, parameter :: NUMBER_BEATS = 20000
+      INTEGER :: edge(2), start(2), stride(2)
+      INTEGER :: lsize, nsize, status, swfID, swId
+      INTEGER, PARAMETER :: NUMBER_BEATS = 20000
 
 ! Open the output file
 
       swfID = swopen(physicalFilename, DFACC_RDWR)
       IF (swfID == -1) THEN
-         msr = MLSMSG_Fileopen // physicalFilename
+         msr = MLSMSG_Fileopen // trim(physicalFilename)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -437,7 +834,7 @@ CONTAINS
       dgName = TRIM(mm%name) // 'Diagnostics'
       swId = swcreate(swfID, dgName)
       IF (swId == -1) THEN
-          msr = 'Failed to create swath ' // dgName
+          msr = 'Failed to create swath ' // trim(dgName)
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -477,13 +874,15 @@ CONTAINS
 
 ! Define the "geolocation" fields
 
-      status = swdefgfld(swID, GEO_FIELD3, DIMR_NAME, DFNT_FLOAT64, HDFE_NOMERGE)
+      status = swdefgfld(swID, GEO_FIELD3, DIMR_NAME, DFNT_FLOAT64, & 
+           & HDFE_NOMERGE)
       IF (status == -1) THEN
          msr = GEO_ERR // GEO_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swdefgfld(swId, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, HDFE_NOMERGE)
+      status = swdefgfld(swId, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, & 
+           & HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD9
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -524,7 +923,7 @@ CONTAINS
 
       swId = swattach(swfID, dgName)
       IF (swId == -1) THEN
-          msr = 'Failed to re-attach to swath ' // TRIM(dgName) // ' for writing.'
+          msr = 'Failed to re-attach to swath '// TRIM(dgName)//' for writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -537,21 +936,21 @@ CONTAINS
 ! Geolocation -- time & pressure
 
       status = swwrfld(swID, GEO_FIELD3, start(1), stride(1), stride(1), &
-                       mm%startTime)
+           & mm%startTime)
       IF (status == -1) THEN
           msr = WR_ERR // GEO_FIELD3
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       status = swwrfld(swID, GEO_FIELD3, stride(1), stride(1), stride(1), &
-                       mm%endTime)
+           & mm%endTime)
       IF (status == -1) THEN
           msr = WR_ERR // GEO_FIELD3
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       status = swwrfld( swId, GEO_FIELD9, start(1), stride(1), edge(1), &
-                        REAL(mm%pressure) )
+           & REAL(mm%pressure) )
       IF (status /= 0) THEN
           msr = WR_ERR //  GEO_FIELD9 // ' to swath ' // dgName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -560,7 +959,7 @@ CONTAINS
 ! Data fields
 
       status = swwrfld(swId, DG_FIELD2, start(1), stride(1), edge(1), &
-                       mm%perMisPoints)
+           & mm%perMisPoints)
       IF (status /= 0) THEN
           msr = WR_ERR //  DG_FIELD2 // ' to swath ' // dgName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -592,20 +991,241 @@ CONTAINS
       status = swclose(swfID)
       IF (status /= 0) THEN
           msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-                ' after writing.'
+                & ' after writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       msr = 'Swath ' // TRIM(dgName) // ' successfully written to file ' // &
-            physicalFilename
+            & trim(physicalFilename)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
 !------------------------------
-   END SUBROUTINE OutputMMDiags
+   END SUBROUTINE OutputMMDiags_HE2
+!------------------------------
+
+!------------------------------------------------
+   SUBROUTINE OutputMMDiags_HE5(physicalFilename, mm)
+!------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the diagnostic portion of l3mm files.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+
+      TYPE (L3MMData_T), INTENT(IN) :: mm
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: DIMD_NAME   = 'lDate'
+      CHARACTER (LEN=*), PARAMETER :: DIMMIS_NAME = 'nMisDays'
+      CHARACTER (LEN=*), PARAMETER :: DIMDM_NAME  = 'lDate,nMisDays'
+      CHARACTER (LEN=*), PARAMETER :: MIS_FIELD   = 'MissingDays'
+
+! Functions
+
+      INTEGER, EXTERNAL :: he5_swattach, he5_swclose, he5_swcreate, & 
+           & he5_swdefdfld, he5_swdefdim, & 
+           & he5_swdefgfld, he5_swdetach, he5_swopen, he5_swwrfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=GridNameLen) :: dgName
+
+      REAL, PARAMETER :: WAIT_TO_REOPEN = 2.0
+
+      INTEGER :: edge(2), start(2), stride(2)
+      INTEGER :: lsize, nsize, status, swfID, swId
+      INTEGER, PARAMETER :: NUMBER_BEATS = 20000
+
+! Open the output file
+
+      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
+      IF (swfID == -1) THEN
+         msr = MLSMSG_Fileopen // trim(physicalFilename)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Create the swath
+
+      dgName = TRIM(mm%name) // 'Diagnostics'
+      swId = he5_swcreate(swfID, trim(dgName))
+      IF (swId == -1) THEN
+          msr = 'Failed to create swath ' // trim(dgName)
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the dimensions
+
+      status = he5_swdefdim(swID, DIMR_NAME, MIN_MAX)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIMR_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (mm%nMisDays == 0) THEN
+         nsize =1
+         lsize = 4
+      ELSE
+         nsize = mm%nMisDays
+         lsize = DATE_LEN
+      ENDIF
+
+      status = he5_swdefdim(swId, DIMD_NAME, lsize)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIMD_NAME
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swdefdim(swId, DIMMIS_NAME, nsize)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIMMIS_NAME
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swdefdim(swId, DIM_NAME2, mm%nLevels)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIM_NAME2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the "geolocation" fields
+
+      status = he5_swdefgfld(swID, GEO_FIELD3, DIMR_NAME, "", & 
+           & HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swdefgfld(swId, GEO_FIELD9, DIM_NAME2, "", & 
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = GEO_ERR // GEO_FIELD9
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the "data" fields
+
+      status = he5_swdefdfld(swId, DG_FIELD2, DIM_NAME2, "", & 
+           & HE5T_NATIVE_INT, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = DAT_ERR // DG_FIELD2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swdefdfld(swId, MIS_FIELD, DIMDM_NAME, "", & 
+           & HE5T_NATIVE_CHAR, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = DAT_ERR // MIS_FIELD
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the swath interface after definition.
+
+      status = he5_swdetach(swId)
+      IF (status /= 0) THEN
+          msr = SW_ERR // TRIM(dgName) // ' after L3MM dg definition.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Delay reopening for a discreet and discrete time
+! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
+!      call time_now(t1)
+!      t2 = t1
+!      do beat = 1, NUMBER_BEATS
+!        call time_now(t2)
+!        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
+!      enddo
+
+! Re-attach to the swath for writing
+
+      swId = he5_swattach(swfID, trim(dgName) )
+      IF (swId == -1) THEN
+          msr = 'Failed to re-attach to swath '// TRIM(dgName)//' for writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Write to fields
+
+      start = 0
+      stride = 1
+      edge(1) = mm%nLevels
+
+! Geolocation -- time & pressure
+
+      status = he5_swwrfld(swID, GEO_FIELD3, start(1), stride(1), stride(1), &
+           & mm%startTime)
+      IF (status == -1) THEN
+          msr = WR_ERR // GEO_FIELD3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swwrfld(swID, GEO_FIELD3, stride(1), stride(1), stride(1), &
+           & mm%endTime)
+      IF (status == -1) THEN
+          msr = WR_ERR // GEO_FIELD3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = he5_swwrfld( swId, GEO_FIELD9, start(1), stride(1), edge(1), &
+           & REAL(mm%pressure) )
+      IF (status /= 0) THEN
+          msr = WR_ERR //  GEO_FIELD9 // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Data fields
+
+      status = he5_swwrfld(swId, DG_FIELD2, start(1), stride(1), edge(1), &
+           & mm%perMisPoints)
+      IF (status /= 0) THEN
+          msr = WR_ERR //  DG_FIELD2 // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      edge(1) = lsize
+      edge(2) = nsize
+      status = he5_swwrfld(swId, MIS_FIELD, start, stride, edge, mm%misDays)
+      IF (status /= 0) THEN
+          print *, 'swID ', swID
+          print *, 'start ', start
+          print *, 'stride ', stride
+          print *, 'edge ', edge
+          print *, 'missng. days ', mm%misDays
+          msr = WR_ERR //  MIS_FIELD // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the swath after writing
+
+      status = he5_swdetach(swId)
+      IF (status /= 0) THEN
+          msr = SW_ERR // TRIM(dgName) // ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Close the file after writing
+
+      status = he5_swclose(swfID)
+      IF (status /= 0) THEN
+          msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+                & ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      msr = 'Swath ' // TRIM(dgName) // ' successfully written to file ' // &
+            & trim(physicalFilename)
+      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+!------------------------------
+   END SUBROUTINE OutputMMDiags_HE5
 !------------------------------
 
 !---------------------------------------------------------------
-   SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText)
+   SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText, hdfVersion)
 !---------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -622,29 +1242,35 @@ CONTAINS
 
       INTEGER, INTENT(IN) :: mlspcf_mcf_l3mm
 
+      INTEGER, INTENT(IN) :: hdfVersion
+
 ! Parameters
 
 ! Functions
 
-      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
-      INTEGER, EXTERNAL :: pgs_met_setAttr_i, pgs_met_setAttr_s, pgs_met_write
-      INTEGER, EXTERNAL :: gdinqgrid, pgs_pc_getUniversalRef
+      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d, &
+           & pgs_met_setAttr_i, pgs_met_setAttr_s, pgs_met_write, &
+           & gdinqgrid, he5_gdinqgrid, pgs_pc_getUniversalRef
 
 ! Variables
 
-      CHARACTER (LEN=3) :: cNum
-      CHARACTER (LEN=45) :: attrName
-      CHARACTER (LEN=150) :: sval
-      CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=6000) :: list
-      CHARACTER (LEN=GridNameLen) :: gridName
-      CHARACTER (LEN=98) :: inpt(31)
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
-
-      INTEGER :: dg, hdfReturn, i, indx, j, len, numGrids, result, returnStatus
-      INTEGER :: sdid, version
+      CHARACTER (LEN=6000) :: list
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=98) :: inpt(31)
+      CHARACTER (LEN=GridNameLen) :: gridName
+      CHARACTER (LEN=150) :: sval
+      CHARACTER (LEN=45) :: attrName
+      CHARACTER (LEN=3) :: cNum
+      CHARACTER (LEN=2) :: fileType
 
       REAL(r8) :: dval
+
+      INTEGER :: dg, hdfReturn, i, indx, j, len, numGrids, result, & 
+           & returnStatus, sdid, version
+
+! Initialize the fileType
+      fileType = 'gd'
 
 ! Check to see whether this is a Diagnostic product
 
@@ -656,19 +1282,20 @@ CONTAINS
 
       result = pgs_met_init(mlspcf_mcf_l3mm, groups)
       IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                           'Initialization error.  See LogStatus for details.')
+           & 'Initialization error.  See LogStatus for details.')
 
 ! Open the HDF file and initialize the SD interface
 
-      sdid = sfstart(file, DFACC_WRITE)
-      IF (sdid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-                                  &open the HDF file for metadata writing.')
+      sdid = mls_sfstart(trim(file), DFACC_RDWR, hdfVersion=hdfVersion, & 
+           &  addingMetaData=.TRUE.)
+      IF (sdid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+           & 'Failed to open the HDF file for metadata writing.')
 
 ! Set PGE values -- ECSDataGranule
 
       attrName = 'ReprocessingPlanned'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                               'further update anticipated using enhanced PGE')
+           & 'further update anticipated using enhanced PGE')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -676,7 +1303,7 @@ CONTAINS
 
       attrName = 'ReprocessingActual'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 'processed once')
+           & 'processed once')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -708,10 +1335,17 @@ CONTAINS
 
 ! MeasuredParameterContainer -- find the number of grids in the file
 
-      numGrids = gdinqgrid(file, list, len)
-      IF (numGrids == -1) THEN
+      numGrids = 0
+
+      IF (hdfVersion==HDFVERSION_4) THEN 
+         numGrids = gdinqgrid(trim(file), list, len)
+      ELSE IF (hdfVersion==HDFVERSION_5) THEN
+         numGrids = he5_gdinqgrid(trim(file), list, len)
+      ENDIF
+
+      IF (numGrids .LE. 0) THEN
          msr = 'No grids found in file ' // TRIM(file) // &
-               ' while attempting to write its metadata.'
+              & ' while attempting to write its metadata.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -739,9 +1373,9 @@ CONTAINS
             WRITE( cNum, '(I3)' ) i
          ENDIF
 
-         attrName = 'ParameterName' // '.' // cNum
+         attrName = 'ParameterName' // '.' // trim(cNum)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    gridName)
+              & gridName)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -749,33 +1383,33 @@ CONTAINS
 
 ! QAFlags Group
 
-         attrName = 'AutomaticQualityFlag' // '.' // cNum
+         attrName = 'AutomaticQualityFlag' // '.' // trim(cNum)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Passed')
+              & 'Passed')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
+         attrName = 'AutomaticQualityFlagExplanation' // '.' // trim(cNum)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'pending algorithm update')
+              & 'pending algorithm update')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         attrName = 'OperationalQualityFlag' // '.' // cNum
+         attrName = 'OperationalQualityFlag' // '.' // trim(cNum)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                    'Not Investigated')
+              & 'Not Investigated')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
+         attrName = 'OperationalQualityFlagExplanation' // '.' // trim(cNum)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                           'Not Investigated')
+              & 'Not Investigated')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -783,21 +1417,21 @@ CONTAINS
 
 ! QAStats Group
 
-         attrName = 'QAPercentInterpolatedData' // '.' // cNum
+         attrName = 'QAPercentInterpolatedData' // '.' // trim(cNum)
          result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         attrName = 'QAPercentMissingData' // '.' // cNum
+         attrName = 'QAPercentMissingData' // '.' // trim(cNum)
          result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         attrName = 'QAPercentOutofBoundsData' // '.' // cNum
+         attrName = 'QAPercentOutofBoundsData' // '.' // trim(cNum)
          result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -839,7 +1473,7 @@ CONTAINS
 
       attrName = 'EquatorCrossingTime' // '.1'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 '00:00:00')
+           & '00:00:00')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -847,7 +1481,7 @@ CONTAINS
 
       attrName = 'EquatorCrossingDate' // '.1'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 '1899-04-29')
+           & '1899-04-29')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -881,7 +1515,7 @@ CONTAINS
 
       attrName = 'LocalityValue'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 'Limb')
+           & 'Limb')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -891,7 +1525,7 @@ CONTAINS
 
       attrName = 'VerticalSpatialDomainType' // '.1'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 'Atmosphere Layer')
+           & 'Atmosphere Layer')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -899,7 +1533,7 @@ CONTAINS
 
       attrName = 'VerticalSpatialDomainValue' // '.1'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 'Atmosphere Profile')
+           & 'Atmosphere Profile')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -909,7 +1543,7 @@ CONTAINS
 
       attrName = 'ZoneIdentifier'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 'Other Grid System')
+           & 'Other Grid System')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -951,7 +1585,7 @@ CONTAINS
 
       attrName = 'RangeBeginningDate'
       result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                  pcf%startDay )
+           & pcf%startDay )
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -967,7 +1601,7 @@ CONTAINS
 
       attrName = 'RangeEndingDate'
       result = pgs_met_setAttr_s( groups(INVENTORYMETADATA), attrName, &
-                                  pcf%endDay )
+           & pcf%endDay )
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -985,7 +1619,7 @@ CONTAINS
 
       attrName = 'PGEVersion'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                 pcf%outputVersion)
+           & pcf%outputVersion)
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -994,32 +1628,33 @@ CONTAINS
 ! Write the metadata and their values to HDF attributes
 
       result = pgs_met_write(groups(INVENTORYMETADATA), "coremetadata", &
-                             sdid)
+           & sdid)
       IF (result /= PGS_S_SUCCESS) THEN
          IF (result == PGSMET_E_MAND_NOT_SET) THEN
-            CALL MLSMessage(MLSMSG_Error, ModuleName, 'Some of the &
-                            &mandatory metadata parameters were not set.')
+            CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                 & 'Some of the mandatory metadata parameters were not set.')
          ELSE
-           CALL MLSMessage(MLSMSG_Error, ModuleName, 'Metadata write &
-                           &failed.')
+           CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                & 'Metadata write failed.')
          ENDIF
       ENDIF
 
 ! Terminate access to the SD interface and close the file
 
-      hdfReturn = sfend(sdid)
+      hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion, & 
+           & addingMetaData=.TRUE.)
       IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                           'Error closing HDF file after writing metadata.')
+           & 'Error closing HDF file after writing metadata.')
 
 ! Annotate the file with the PCF
 
-      CALL WritePCF2Hdr(file, anText)
+      CALL WritePCF2Hdr(file, anText, hdfVersion=hdfVersion, fileType=fileType)
 
       result = pgs_met_remove()
       if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
         write(msr, *) result
         CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(msr) )
+             & "Calling pgs_met_remove() failed with value " // trim(msr) )
       endif          
 
 !------------------------------
@@ -1192,6 +1827,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.5  2003/03/15 00:20:02  pwagner
+!# May warn if pgs_met_remove returns non-zero value
+!#
 !# Revision 1.4  2002/08/22 23:32:01  pwagner
 !# Made start,endtimes pointer; initialize nMisDays
 !#

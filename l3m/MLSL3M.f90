@@ -6,214 +6,217 @@
 PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 !==============================================
 
-   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
-   USE L2Interface
-   USE L3DZData
-   USE L3MMData
-   USE L3MZData
-   USE MLSCF
-   USE MLSCommon
-   USE MLSL3Common
-   USE MLSMessageModule
-   USE MLSPCF3
-   USE mon_L3CF
-   USE mon_Open
-   USE mon_Out
-   USE MonthlyProcessModule
+  USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
+  USE L2Interface, ONLY: GetL2GPfromPCF, ReadL2DGData, ReadL2GPProd
+  USE L3DZData, ONLY: L3DZData_T
+  USE L3MMData, ONLY: L3MMData_T
+  USE L3MZData, ONLY: L3MZData_T
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSL3Common, ONLY: OutputFiles_T, maxWindow, DATE_LEN, FILENAMELEN
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+       & MLSMSG_Info, MLSMessageExit
+  USE MLSPCF3
+  USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T
+  USE mon_Open, ONLY: PCFMData_T, OpenMON
+  USE mon_Out, ONLY: CreateFlags_T, OutputDg, OutputStd, OutputMON
+  USE MonthlyProcessModule, ONLY: MonthlyCoreProcessing
 
-   IMPLICIT NONE
+  IMPLICIT NONE
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
-   "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
-!----------------------------------------------------------
+  !------------------- RCS Ident Info -----------------------
+  CHARACTER(LEN=130) :: Id = &                                                 
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  !----------------------------------------------------------
 
-! Brief description of program
-! This is the MLS Level 3 Monthly subprogram.
+  ! Brief description of program
+  ! This is the MLS Level 3 Monthly subprogram.
 
-! Parameters
+  ! Parameters
 
-! Functions
+  ! Functions
 
-! Variables
+  ! Variables
 
-   TYPE( CreateFlags_T ) :: flag
-   TYPE( L3CFMDef_T ) :: cfDef
-   TYPE( L3MMData_T ) :: mm, mmA, mmD
-   TYPE( L3MZData_T ) :: mzA, mzD
-   TYPE( Mlscf_T ) :: cf
-   TYPE( PCFMData_T ) :: pcf
-   TYPE( L2GPData_T ), POINTER :: l2gp(:)
-   TYPE( L3CFMProd_T ), POINTER :: cfStd(:), cfDg(:)
-   TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
-   TYPE( OutputFiles_T ) :: dFiles, sFiles
+  TYPE( CreateFlags_T ) :: flag
+  TYPE( L3CFMDef_T )    :: cfDef
+  TYPE( L3MMData_T )    :: mm, mmA, mmD
+  TYPE( L3MZData_T )    :: mzA, mzD
+  TYPE( Mlscf_T )       :: cf
+  TYPE( PCFMData_T )    :: pcf
+  TYPE( L2GPData_T ),  POINTER :: l2gp(:)
+  TYPE( L3CFMProd_T ), POINTER :: cfStd(:), cfDg(:)
+  TYPE( L3DZData_T ),  POINTER :: dzA(:), dzD(:)
+  TYPE( OutputFiles_T ) :: dFiles, sFiles
 
-   CHARACTER (LEN=480) :: msr
-   CHARACTER (LEN=FileNameLen) :: pcfNames(maxWindow)
-   CHARACTER (LEN=1), POINTER :: anText(:)
+  CHARACTER (LEN=480) :: msr
+  CHARACTER (LEN=FileNameLen) :: pcfNames(maxWindow)
+  CHARACTER (LEN=DATE_LEN)    :: mis_Days(maxWindow)
+  CHARACTER (LEN=1), POINTER  :: anText(:)
 
-   CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+  INTEGER :: i, l2Days, numFiles, mis_l2Days, error, hdfVersion
+  INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
 
-   INTEGER :: i, l2Days, numFiles, mis_l2Days, error
-   integer, parameter :: NORMAL_EXIT_STATUS = 2
+  ! Initializations
+  call h5open_f(error)
+  if (error /= 0) then
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_open_f" )
+  endif
 
-! Initializations
-   call h5open_f(error)
-   if (error /= 0) then
-       call MLSMessage ( MLSMSG_Error, moduleName, &
-         & "Unable to h5_open_f" )
-   endif    
+  sFiles%nFiles = 0
+  dFiles%nFiles = 0
+  sFiles%name   = ''
+  dFiles%name   = ''
+  sFiles%date   = ''
+  dFiles%date   = ''
 
-   sFiles%nFiles = 0
-   dFiles%nFiles = 0
-   sFiles%name = ''
-   dFiles%name = ''
-   sFiles%date = ''
-   dFiles%date = ''
+  flag%createMS = .FALSE.
+  flag%createMD = .FALSE.
+  flag%createZS = .FALSE.
+  flag%createZD = .FALSE.
 
-   flag%createMS = .FALSE.
-   flag%createMD = .FALSE.
-   flag%createZS = .FALSE.
-   flag%createZD = .FALSE.
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & 'EOS MLS Level 3 Monthly data processing started')
 
-   CALL MLSMessage (MLSMSG_Info, ModuleName, &
-                                 'EOS MLS Level 3 Monthly data processing started')
+  ! Fill structures with input data from the PCF and L3CF.
 
-! Fill structures with input data from the PCF and L3CF.
+  CALL OpenMON(pcf, cf, cfStd, cfDg, cfDef, anText)
+  hdfVersion = cfDef%hdfVersion
 
-   CALL OpenMON(pcf, cf, cfStd, cfDg, cfDef, anText)
+  ! For each Standard product requested in the cf,
 
-! For each Standard product requested in the cf,
+  DO i = 1, SIZE(cfStd)
+     print *, i,  SIZE(cfStd)
+     
+     ! Read all available data in the input window
 
-   DO i = 1, SIZE(cfStd)
-	print *, i,  SIZE(cfStd)
+     CALL ReadL2GPProd(cfStd(i)%l3prodName, cfStd(i)%fileTemplate, &
+          & pcf%startDay, pcf%endDay, l2Days, mis_l2Days, mis_Days, l2gp)
 
-! Read all available data in the input window
+     ! If no data found, go on to the next product
 
-      CALL ReadL2GPProd(cfStd(i)%l3prodName, cfStd(i)%fileTemplate, &
-                        pcf%startDay, pcf%endDay, l2Days, mis_l2Days, mis_Days, l2gp)
+     IF (l2Days < 1) THEN
+        msr = 'No data found for ' // TRIM(cfStd(i)%l3prodName) // &
+             &'.Skipping Monthly processing and moving on to the next product.'
+        CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+        CYCLE
+     ELSE
+        msr = 'Input data successfully read; begin processing data for ' // &
+             & trim(cfStd(i)%l3prodName)
+        CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+     ENDIF
+     
+     ! Core processing for Standard products
+     
+     CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, & 
+          & mmD, mzA, mzD, dzA, dzD, mis_Days)
 
-! If no data found, go on to the next product
+     msr = 'CORE processing completed for ' // TRIM(cfStd(i)%l3prodName) &
+          & // '; starting Output task ...'
+     CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-      IF (l2Days < 1) THEN
-         msr = 'No data found for ' // TRIM(cfStd(i)%l3prodName) // &
-               '.  Skipping Monthly processing and moving on to the next product.'
-         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
-         CYCLE
-      ELSE
-         msr = 'Input data successfully read; begin processing data for ' // &
-               cfStd(i)%l3prodName
-         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
-      ENDIF
+     ! Deallocate the L2GP database
 
-! Core processing for Standard products
+     CALL DestroyL2GPDatabase(l2gp)
 
-      CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
-                                 mzA, mzD, dzA, dzD, mis_l2Days, mis_Days)
+     ! Output and Close for the product
 
-      msr = 'CORE processing completed for ' // TRIM(cfStd(i)%l3prodName) &
-            // '; starting Output task ...'
-      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+     CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dzA, dzD, mzA, mzD, &
+          & mm, mmA, mmD, sFiles, flag, hdfVersion)
 
-! Deallocate the L2GP database
+  ENDDO
 
-      CALL DestroyL2GPDatabase(l2gp)
+  ! Begin Diagnostic processing
 
-! Output and Close for the product
+  msr = 'Standard product loop completed; beginning Diagnostic product loop .'
+  CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dzA, dzD, mzA, mzD, &
-                     mm, mmA, mmD, sFiles, flag)
+  ! Get the names of any L2GP Diagnostics files from the PCF
 
-   ENDDO
+  CALL GetL2GPfromPCF(mlspcf_l2dg_start, mlspcf_l2dg_end, cfDef%l2dgType, &
+       & pcf%startDay, pcf%EndDay, numFiles, pcfNames, mis_l2Days, mis_Days)
 
-! Begin Diagnostic processing
+  ! If no files are found, skip to Output/Close
 
-   msr = 'Standard product loop completed; beginning Diagnostic product loop ...'
-   CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+  IF (numFiles < 1) THEN
 
-! Get the names of any L2GP Diagnostics files from the PCF
+     CALL MLSMessage (MLSMSG_Warning, ModuleName, & 
+          & 'No L2GP Diagnostics files found in the PCF' // & 
+          & 'for the given day range.')
 
-   CALL GetL2GPfromPCF(mlspcf_l2dg_start, mlspcf_l2dg_end, cfDef%l2dgType, &
-                       pcf%startDay, pcf%EndDay, numFiles, pcfNames, mis_l2Days, mis_Days)
+  ELSE
+      
+     ! For each product in the Diagnostic section of the cf,
 
-! If no files are found, skip to Output/Close
-
-   IF (numFiles < 1) THEN
-
-      CALL MLSMessage (MLSMSG_Warning, ModuleName, 'No L2GP Diagnostics files &
-                      &found in the PCF for the given day range.')
-
-   ELSE
-
-! For each product in the Diagnostic section of the cf,
-
-      DO i = 1, SIZE(cfDg)
+     DO i = 1, SIZE(cfDg)
 	print *, 'Diagnostic=', i,  SIZE(cfDg)
+        
+        ! Read all the l2gp data which exist in input window for that product
 
-! Read all the l2gp data which exist in the input window for that product
+        CALL ReadL2DGData(cfDg(i)%l3prodName, numFiles, pcfNames, l2Days, l2gp)
 
-         CALL ReadL2DGData(cfDg(i)%l3prodName, numFiles, pcfNames, l2Days, l2gp)
+        ! If insufficient data found, go on to the next product
 
-! If insufficient data found, go on to the next product
+        IF (l2Days < 1) THEN
+           msr = 'No data found for ' // TRIM(cfDg(i)%l3prodName) &
+                & // '.  Skipping CORE processing and moving on' //  & 
+                & 'to the next product.'
+           CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+           CYCLE
+        ELSE
+           msr = 'Input data successfully read for ' //  &
+                & TRIM(cfDg(i)%l3prodName) // '; CORE processing started ..'
+           CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+        ENDIF
 
-         IF (l2Days < 1) THEN
-            msr = 'No data found for ' // TRIM(cfDg(i)%l3prodName) &
-               // '.  Skipping CORE processing and moving on to the next product.'
-            CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
-            CYCLE
-         ELSE
-            msr = 'Input data successfully read for ' //  &
-                   TRIM(cfDg(i)%l3prodName) // '; CORE processing started ...'
-            CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
-         ENDIF
+        ! Monthly Core processing
 
-! Monthly Core processing
+        CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, &
+             & mm, mmA, mmD, mzA, mzD, dzA, dzD, mis_Days)
 
-         CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, &
-                                    mm, mmA, mmD, mzA, mzD, dzA, dzD, mis_l2Days, mis_Days)
+        msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
+             & // '; starting Output task ...'
+        CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-         msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
-               // '; starting Output task ...'
-         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+        ! Deallocate the L2GP database
+         
+        CALL DestroyL2GPDatabase(l2gp)
 
-! Deallocate the L2GP database
+        ! Output and Close for the product
 
-         CALL DestroyL2GPDatabase(l2gp)
+        CALL OutputDg(pcf, cfDef%dgType, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
+             & dFiles, flag, hdfVersion)
 
-! Output and Close for the product
+     ENDDO
 
-         CALL OutputDg(pcf, cfDef%dgType, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
-                       dFiles, flag)
+  ENDIF
 
-      ENDDO
+  ! Perform final Output & Close tasks outside of the product processing loop.
 
-   ENDIF
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & 'Product processing completed; beginning Output/Close task ... ')
+  
+  CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cfDg, cf, anText,hdfVersion)
 
-! Perform final Output & Close tasks outside of the product processing loop.
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & 'EOS MLS Level 3 Monthly data processing successfully completed!')
+  call h5close_f(error)                            
+  if (error /= 0) then                             
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_close_f" )
+  endif
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
 
-   CALL MLSMessage (MLSMSG_Info, ModuleName, &
-            'Product processing completed; beginning Output/Close task ... ')
-
-   CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cfDg, cf, anText)
-
-   CALL MLSMessage (MLSMSG_Info, ModuleName, &
-    'EOS MLS Level 3 Monthly data processing successfully completed!')
-   call h5close_f(error)                            
-   if (error /= 0) then                             
-     call MLSMessage ( MLSMSG_Error, moduleName, &  
-      & "Unable to h5_close_f" )                    
-   endif                                            
-   call MLSMessageExit(NORMAL_EXIT_STATUS)
-
-! Detailed description of program
-! The program is a prototype for the MLS Level 3 Monthly subprogram.
+   ! Detailed description of program
+   ! The program is a prototype for the MLS Level 3 Monthly subprogram.
 
 !=================
 END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.12  2002/08/22 23:33:05  pwagner
+! Made ready for hdf5
+!
 ! Revision 1.11  2002/04/03 21:42:01  pwagner
 ! Sets status on normal exit to 2
 !
