@@ -36,11 +36,11 @@ PROGRAM L2GPDump ! dumps L2GPData files
 
 
 ! Then run it
-! rm -f l2gp.h4 l2gptest-4.out ; echo "1,4" | LF95.Linux/test > l2gptest-4.out
-! rm -f l2gp.h5 l2gptest-5.out ; echo "1,5" | LF95.Linux/test > l2gptest-5.out
+! LF95.Linux/test [options] [filenames]
 
-     integer ::          details
-     logical ::          columnsOnly
+     integer ::          details = 1
+     logical ::          columnsOnly = .false.
+     logical ::          attributesToo = .false.
      CHARACTER(LEN=255) :: filename          ! filename
      integer            :: n_filenames
      INTEGER     ::  i, count, status, error ! Counting indices & Error flags
@@ -50,25 +50,26 @@ PROGRAM L2GPDump ! dumps L2GPData files
      CALL h5open_f(error)
   n_filenames = 0
   do      ! Loop over filenames
-     call get_filename(filename, n_filenames, details, columnsOnly)
+     call get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
      if ( filename == ' ' ) exit
      n_filenames = n_filenames + 1
      call h5fis_hdf5_f(trim(filename), is_hdf5, error)
      if ( .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
      endif
-     call dump_one_file(trim(filename), details, columnsOnly)
+     call dump_one_file(trim(filename), details, columnsOnly, attributesToo)
   enddo
    call h5close_f(error)
 contains
 !------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, details, columnsOnly)
+    subroutine get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
     ! Added for command-line processing
      CHARACTER(LEN=255), intent(out) :: filename          ! filename
      integer, intent(in) ::             n_filenames
      integer, intent(inout) ::          details
      logical, intent(inout) ::          columnsOnly
-     integer ::                         error = 0
+     logical, intent(inout) ::          attributesToo
+     integer ::                         error = 1
      integer, save ::                   i = 1
   ! Get inputfile name, process command-line args
   ! (which always start with -)
@@ -77,8 +78,8 @@ contains
     do
       call getarg ( i+hp, filename )
       ! print *, i, ' th Arg: ', trim(filename)
-      if ( filename(1:1) /= '-' ) exit
       error = 0
+      if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
       elseif ( filename(1:3) == '-0 ' ) then
@@ -87,6 +88,8 @@ contains
         details = -1
       elseif ( filename(1:3) == '-2 ' ) then
         details = -2
+      elseif ( filename(1:3) == '-a ' ) then
+        attributesToo = .true.
       elseif ( filename(1:3) == '-c ' ) then
         columnsOnly = .true.
       else if ( filename(1:3) == '-f ' ) then
@@ -116,17 +119,23 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'Usage: MLS_h5ls [options] [filenames]'
+      & 'Usage: l2gpdump [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
+      write (*,*) '          -0          => dump only scalars, 1-d array'
+      write (*,*) '          -1          => dump only scalars'
+      write (*,*) '          -2          => dump only swath names'
+      write (*,*) '          -c          => dump only column abundances'
+      write (*,*) '          -a          => dump attributes, too'
       stop
   end subroutine print_help
 
-   subroutine dump_one_file(filename, details, columnsOnly)
+   subroutine dump_one_file(filename, details, columnsOnly, attributesToo)
     character(len=*), intent(in) :: filename          ! filename
     integer, intent(inout) ::          details
+    logical, intent(inout) ::          attributesToo
     logical, intent(inout) ::          columnsOnly
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     integer :: File1
@@ -141,9 +150,11 @@ contains
     ! Get swath list
     noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
+    print *, 'Opening: ', trim(filename)
     File1 = mls_io_gen_openF('swopen', .TRUE., status, &
-       & record_length, DFACC_READ, FileName=filename, &
+       & record_length, DFACC_READ, FileName=trim(filename), &
        & hdfVersion=HDFVERSION_5, debugOption=.false. )
+    ! print *, 'Status: ', status
     ! Executable code
     noSwaths = NumStringElements(trim(swathList), countEmpty)
     if ( noSwaths < 1 ) then
@@ -154,25 +165,29 @@ contains
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
       ! Allocate and fill l2gp
-      print *, 'Reading swath from file: ', trim(swath)
+      ! print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
            & hdfVersion=HDFVERSION_5 )
-        print *, 'Dumping swath: ', trim(swath)
-        print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
-        print *, 'l2gp%nLevels: ', l2gp%nLevels
-        print *, 'l2gp%nTimes:  ', l2gp%nTimes
-        print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
-      ! Write the filled l2gp to file2
-      call dump(file1, l2gp)
+      ! print *, 'Dumping swath: ', trim(swath)
+      ! print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
+      ! print *, 'l2gp%nLevels: ', l2gp%nLevels
+      ! print *, 'l2gp%nTimes:  ', l2gp%nTimes
+      ! print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
+      ! Dump the swath- and file-level attributes
+      if ( attributesToo ) call dump(file1, l2gp)
+      ! Dump the actual swath
       call dump(l2gp, columnsOnly, details)
-      status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
-        & hdfVersion=HDFVERSION_5, debugOption=.false.)
       call DestroyL2GPContents ( l2gp )
     enddo
+    status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
+      & hdfVersion=HDFVERSION_5, debugOption=.false.)
    end subroutine dump_one_file
 !==================
 END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.1  2004/02/21 00:10:10  pwagner
+! First commit
+!
 
