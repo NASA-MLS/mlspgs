@@ -123,11 +123,9 @@ contains
         & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg)
     end do
 
-
     if ( .not. ANY((/forwardModelConfig%temp_der, forwardModelConfig%atmos_der, &
       & forwardModelConfig%spect_der/)) ) Return
     if ( .not. present(jacobian) ) return
-
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
     ! values
@@ -164,7 +162,6 @@ contains
         end do
 
       end do
-
 
     end if
 
@@ -246,6 +243,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.3  2002/02/15 22:51:58  livesey
+! Bug fix for case where no ptan derivative wanted
+!
 ! Revision 2.2  2002/01/27 08:37:50  zvi
 ! Adding Users selected coefficients for derivatives
 !
