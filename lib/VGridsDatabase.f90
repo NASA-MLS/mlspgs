@@ -135,7 +135,7 @@ contains
   integer function GetUnitForVerticalCoordinate ( coordinate )
     use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
       & L_PRESSURE, L_THETA, L_ZETA, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
-      & PHYQ_Length, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Invalid
+      & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
     integer, intent(in) :: coordinate
     ! Excutable code
     select case ( coordinate )
@@ -162,15 +162,12 @@ contains
     use PVMIDL, only: PVMIDLPack
     use MorePVM, only: PVMPackStringIndex, PVMPackLitIndex
     use PVM, only: PVMErrorMessage
-    use String_table, only: GET_STRING
-    use Intrinsic, only: LIT_INDICES
 
     ! Dummy argument
     type ( VGrid_T), intent(in) :: VGRID
 
     ! Local variables
     integer :: INFO                     ! Flag from PVM
-    character ( len=80 ) :: WORD        ! String
 
     ! Executable code
 
@@ -196,7 +193,6 @@ contains
     use PVMIDL, only: PVMIDLUnpack
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
     use PVM, only: PVMErrorMessage
-    use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
     use Allocate_Deallocate, only: Allocate_test
 
     ! Dummy argument
@@ -204,7 +200,6 @@ contains
 
     ! Local variables
     integer :: INFO                     ! Flag from PVM
-    character ( len=80 ) :: WORD        ! String
 
     ! Executable code
 
@@ -239,6 +234,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.10  2003/09/15 23:19:04  vsnyder
+! Remove unused local variables and USEs
+!
 ! Revision 2.9  2003/08/16 00:32:50  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
