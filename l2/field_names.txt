@@ -224,7 +224,7 @@ systemTemperature
 
 tangentGrid
 temperatureQuantity
-temperaturePrecisionQuantity
+tempPrecisionQuantity
 template
 temp_der
 terms
@@ -253,6 +253,10 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.53  2002/10/03 13:43:37  mjf
+# Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
+# names < 31 long.
+#
 # Revision 2.52  2002/10/01 18:30:07  mjf
 # Added new quantitites for new Fill for RHi precision including T
 # error.
