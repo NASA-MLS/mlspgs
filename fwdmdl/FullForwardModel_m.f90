@@ -193,6 +193,9 @@ contains ! ================================ FullForwardModel routine ======
     real(rp) :: REQ                     ! Equivalent Earth Radius
     real(rp) :: THISRATIO               ! A sideband ratio
  
+    real(rp), dimension(1) :: ONE_TAN_HT ! ***
+    real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
+
     real(r8), dimension(:), pointer :: FREQUENCIES ! What frequencies to compute for
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid Sing.
     real(rp), dimension(:), pointer :: DEL_S ! Integration lengths along the path
@@ -205,8 +208,6 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:), pointer :: H_PATH ! Heights on path
     real(rp), dimension(:), pointer :: INCOPTDEPTH ! Incremental Optical depth
     real(rp), dimension(:), pointer :: N_PATH ! Refractivity on path
-    real(rp), dimension(:), pointer :: ONE_TAN_HT ! ***
-    real(rp), dimension(:), pointer :: ONE_TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: PATH_DSDH ! dS/dH on path
     real(rp), dimension(:), pointer :: PHI_BASIS ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_BASIS_DN ! phi basis per species
@@ -332,7 +333,7 @@ contains ! ================================ FullForwardModel routine ======
     nullify ( frequencies )
     nullify ( alpha_path_c, del_s, dhdz_path, drad_df, drad_dn, &
       & drad_dt, drad_dv, drad_dw, h_path, incoptdepth, n_path, &
-      & one_tan_ht, one_tan_temp, path_dsdh, phi_basis, phi_basis_dn, &
+      & path_dsdh, phi_basis, phi_basis_dn, &
       & phi_basis_dv, phi_basis_dw, phi_path, p_glgrid, p_path, radv, &
       & ref_corr, sps_values, tau, t_path, t_script, xm, ym, zgx,&
       & z_basis, z_basis_dn, z_basis_dv, z_basis_dw, z_glgrid, z_path )
@@ -561,6 +562,7 @@ contains ! ================================ FullForwardModel routine ======
     nullify ( gl_inds )
  
     ! Work out which spectroscopy we're going to need ------------------------
+    nullify ( my_catalog )
     allocate ( My_Catalog(noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
@@ -603,6 +605,7 @@ contains ! ================================ FullForwardModel routine ======
       else
         ! No lines for this species
         my_catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
         call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
           & ModuleName )
       end if
@@ -612,9 +615,6 @@ contains ! ================================ FullForwardModel routine ======
     ! averaging case
  
     ! Now, allocate other variables we're going to need later ----------------
- 
-    call allocate_test ( one_tan_ht, 1, 'one_tan_ht', ModuleName )
-    call allocate_test ( one_tan_temp, 1, 'one_tan_temp', ModuleName )
  
     allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, &
       & windowStart:windowFinish), stat=ier )
@@ -641,7 +641,7 @@ contains ! ================================ FullForwardModel routine ======
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
      &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind, &
      &   ext_ind, lin_log, sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, &
-     &   temp, My_Catalog)
+     &   temp, My_Catalog )
  
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
     nlvl = size(FwdModelConf%integrationGrid%surfs)
@@ -1821,10 +1821,14 @@ contains ! ================================ FullForwardModel routine ======
  
     ! Now deallocate lots of stuff
     do i = 1, size(my_catalog)
-      call Deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
+      if ( associated ( my_catalog(i)%lines ) ) &
+        & call Deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
         & ModuleName )
     end do
     deallocate ( my_catalog, stat=ier )
+    ! Note that we don't deallocate the signals/sidebands stuff for each line
+    ! as these are shallow copies of the main spectroscopy catalog stuff
+
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'my_catalog' )
 !
@@ -1838,9 +1842,7 @@ contains ! ================================ FullForwardModel routine ======
 !
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
     call Deallocate_test ( usedSignals, 'usedSignals', ModuleName )
-    call Deallocate_test ( one_tan_ht, 'one_tan_ht', ModuleName )
-    call Deallocate_test ( one_tan_temp, 'one_tan_temp', ModuleName )
- 
+
     deallocate ( k_temp, stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'k_temp' )
@@ -1953,6 +1955,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.21  2001/12/26 04:05:04  zvi
+! Convert phi_tan to Radians
+!
 ! Revision 2.20  2001/12/14 23:43:05  zvi
 ! Modification for Grouping concept
 !
