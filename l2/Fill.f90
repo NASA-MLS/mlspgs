@@ -16,7 +16,8 @@ module Fill                     ! Create vectors and fill them.
     & F_MATRIX, F_METHOD, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
     & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
-    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
+    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCESGRID, F_SOURCEVGRID, &
+    & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_CHOLESKY, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
@@ -423,6 +424,8 @@ contains ! =====     Public Procedures     =============================
             valuesNode=subtree(j,key)
           case ( f_sourceGrid )
             gridIndex=decoration(decoration(gson))
+          case ( f_sourceSGrid )
+            vGridIndex=decoration(decoration(gson))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
           case ( f_systemTemperature )
@@ -505,7 +508,7 @@ contains ! =====     Public Procedures     =============================
             & ratioQuantity )
 
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
-          if (.not. all(got((/f_sourceVgrid,f_losQty,f_earthRadius,f_PtanQuantity/))))&
+          if (.not. all(got((/f_sourceSGrid,f_losQty,f_earthRadius,f_PtanQuantity/))))&
             & call Announce_Error ( key, badlosGridFill )
           earthRadiusQty => GetVectorQtyByTemplateIndex( &
             & vectors(earthRadiusVectorIndex), earthRadiusQtyIndex )
@@ -1487,6 +1490,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.60  2001/07/19 18:05:42  dwu
+! add sourceSGRID
+!
 ! Revision 2.59  2001/07/19 00:56:27  dwu
 ! fix bugs in FillQuantityFromLos
 !
