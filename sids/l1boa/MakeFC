@@ -28,6 +28,12 @@ libmls_sources=../../lib
 # where objects and libmls.a are stored
 libmls_objs=$(libmls_sources)/$(MLSCONFG)
 
+# where sources for libmlsl1.a are stored
+mlsl1_sources=../../l1
+
+# where objects and libmlsl1.a are stored
+mlsl1_objs=$(mlsl1_sources)/$(MLSCONFG)
+
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
@@ -48,6 +54,10 @@ endif
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
 
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -72,6 +82,7 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+mlsl1_f90 := $(shell ${REECHO} $(mlsl1_sources)/*.f $(mlsl1_sources)/*.f90 $(mlsl1_sources)/*.c)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
 ifdef BLAS
@@ -83,17 +94,27 @@ else
    $(blaslib_f)
 endif
 
-PROG=test
+PROG=sids_l1boa
+# PROG=test
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) $(libmls_objs)/libmls.a
-		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) $(PROG)
+#$(DESIRED_PROG_NAME): $(PROG)
+#	cd $(OBJ_DIR)/$(MLSCONFG) && mv $(PROG) $(DESIRED_PROG_NAME)
+#
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) \
+     $(libmls_objs)/libmls.a $(OBJ_DIR)/$(MLSCONFG)/libl1.a
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG)
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
+$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libmls_objs)/libmls.a $(mlsl1_f90)
+	$(MAKE) -f $(MakeFName) -C $(mlsl1_sources)
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) libl1.a
+
+.PHONY: configure depends clean tar mostlyclean tarz targ \
+  $(PROG) $(DESIRED_PROG_NAME) update ghostbuster
 
 tar:
 
@@ -158,5 +179,8 @@ update: depends
           -mc "$(OBJ_DIR)" -nc -nd
 
 # $Log$
+# Revision 1.1  2001/10/10 23:19:29  pwagner
+# First commit
+#
 
 
