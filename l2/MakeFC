@@ -127,7 +127,9 @@ PROG=mlsl2
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	@case "$(PVM_ROOT)" in \
 	"") \
 		echo "Sorry--PVM_ROOT must be defined to build mlsl2" ; \
@@ -140,14 +142,24 @@ $(PROG): $(PROG_prereqs)
 	esac 
 
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(LIB_prereqs)
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(LIB_prereqs) \
+   $(libfwdmdl_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 $(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libfwdmdl_f90) \
-               $(LIB_prereqs)
+               $(LIB_prereqs) $(libcloud_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libcloud_objs)/libcloud.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
@@ -208,6 +220,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.37  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
 # Revision 2.36  2001/08/22 22:46:13  pwagner
 # Made reecho.sh a prerequisite where appropriate
 #
