@@ -39,6 +39,7 @@ Switches (set by -S option in mlsl2's command line):
   NDB =>    Dump all the Newton method's internal variables before every call
   neq =>    Normal equations during retriever iterations
   ngc =>    Show how many times garbage collected during each chunk
+  nin =>    Turn on Newton Method's internal output
   nwt =>    Action flag at each return from Newton solver
   opt[n] => Print command line options [higher the n, more the info]
   pcf[n] => open init params obtained from pcf,
@@ -87,6 +88,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.30  2003/01/15 01:48:02  vsnyder
+ Stuff about Newton-method-dumping switches
+
  Revision 1.29  2002/10/02 23:07:50  vsnyder
  Added 'seez' switch
 
