@@ -158,7 +158,7 @@ contains ! =====     Public Procedures     =============================
           & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
           & hGrids=hGrids )
       case ( s_forge )
-        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+        call ForgeMinorFrames ( key, chunk, mifGeolocation, vGrids )
       case ( s_forwardModel )
         call decorate ( key, AddForwardModelConfigToDatabase ( &
           & forwardModelConfigDatabase, &
@@ -238,6 +238,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.49  2004/10/13 02:24:02  livesey
+! Added vGrids to Forge command
+!
 ! Revision 2.48  2004/05/20 19:47:55  vsnyder
 ! Do all dumping by way of DumpCommand
 !
