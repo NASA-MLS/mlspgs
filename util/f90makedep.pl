@@ -582,15 +582,15 @@ sub MakeDependsf90 {
          /^\s*include\s+["\']([^"\']+)["\']/i && push(@incs, $1);
          /^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
          }
-      if (defined @incs || defined @modules) {
+      if (defined @incs || defined @modules || $var_1_mod) {
          ($objfile = $file) =~ s/\.f90$/.o/;
          undef @dependencies;
          if ( $var_1_mod ) {
-#           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
-           print MAKEFILE "$objfile: ";
-           if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
-              print MAKEFILE "$modulename_by_file{$objfile}.mod ";
-           }
+           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
+#           print MAKEFILE "$objfile: ";
+#           if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
+#              print MAKEFILE "$modulename_by_file{$objfile}.mod ";
+#           }
            foreach $module (@modules) {
               $value = "$modulename_by_module{$module}.mod";
               if ($value !~ /^\./) {
@@ -615,7 +615,7 @@ sub MakeDependsf90 {
                      @dependencies, &uniq(sort(@incs)));
          print MAKEFILE "\n";
          if ( $var_1_mod && ("$modulename_by_file{$objfile}.mod" !~ /^\./)) {
-           print MAKEFILE "$modulename_by_file{$objfile}.mod: \n";
+#           print MAKEFILE "$modulename_by_file{$objfile}.mod: \n";
 #           print MAKEFILE "$modulename_by_file{$objfile}.mod: $file\n";
            if ($dont_build{$file} != 1) {
              print MAKEFILE "\t";
@@ -624,21 +624,36 @@ sub MakeDependsf90 {
              print MAKEFILE $BUILD_PART2;
              print MAKEFILE $file;
              print MAKEFILE "\n";
-             print MAKEFILE "$objfile: \n";
-             print MAKEFILE "\t";
-             print MAKEFILE $BUILD_PART1;
-             print MAKEFILE "$modulename_by_file{$objfile}.mod ";
-             print MAKEFILE $BUILD_PART2;
-             print MAKEFILE $file;
-             print MAKEFILE "\n";
+#             print MAKEFILE "$objfile: $file\n";
+#             print MAKEFILE "\t";
+#             print MAKEFILE $BUILD_PART1;
+#             print MAKEFILE "$modulename_by_file{$objfile}.mod ";
+#             print MAKEFILE $BUILD_PART2;
+#             print MAKEFILE $file;
+#             print MAKEFILE "\n";
            }
          }
          undef @incs;
          undef @modules;
          }
       }
+     if ( $var_1_mod ) {
+         print MAKEFILE " MODULES=";
+         while (($key, $value) = each %modulename_by_file) {
+              $value = $value . ".mod";
+              if ($value !~ /^\./ && $value !~ /\(dir/) {
+                 push(@modules, $value);
+              }
+         }
+         &PrintWords(length($objfile) + 2, 0,
+                     @modules);
+         print MAKEFILE "\n";
+     }
    }
 # $Log$
+# Revision 1.4  2002/05/22 00:37:26  pwagner
+# Work with new (1)-mod variant dependency files
+#
 # Revision 1.3  2002/04/09 19:39:36  pwagner
 # Alternate usages 2-4 (depending on options) added
 #
