@@ -197,12 +197,12 @@ contains ! =====     Public Procedures     =============================
     useNLevels=MAX(useNLevels,1)
     useNFreqs=MAX(useNFreqs,1)    
 
-    ! Allocate the frequency coordinate
+    ! Allocate the vertical coordinate
 
     call allocate_test ( l2gp%pressures, useNLevels, "l2gp%pressures", &
          & ModuleName )
 
-    ! Allocate the vertical coordinate
+    ! Allocate the frequency coordinate
 
     call allocate_test ( l2gp%frequency, useNFreqs, "l2gp%frequency", ModuleName)
 
@@ -449,7 +449,7 @@ contains ! =====     Public Procedures     =============================
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck
 
-    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+    real, allocatable :: realSurf(:), realProf(:), real3(:,:,:)
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -556,7 +556,6 @@ contains ! =====     Public Procedures     =============================
     nLevelsOr1=MAX(nLevels, 1)
     allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
       &   string_buffer(1,myNumProfs), &
-      &   realFreq(l2gp%nFreqs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' various things in ReadL2GPData' )
@@ -656,12 +655,11 @@ contains ! =====     Public Procedures     =============================
        edge(1) = l2gp%nFreqs
 
        status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
-         & realFreq)
+         & l2gp%frequency)
        if ( status == -1 ) then
           msr = MLSMSG_L2GPRead // GEO_FIELD10
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
-       l2gp%frequency = realFreq
 
     end if
 
@@ -764,7 +762,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Deallocate local variables
 
-    deallocate ( realFreq, realSurf, realProf, real3, STAT=alloc_err )
+    deallocate ( realSurf, realProf, real3, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.' )
 
@@ -842,7 +840,7 @@ contains ! =====     Public Procedures     =============================
        end if
     end if
 
-    if ( l2gp%nFreqs > 1 ) then
+    if ( l2gp%nFreqs > 0 ) then
        status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
@@ -918,7 +916,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       status = swdefgfld(swid, GEO_FIELD10, DIM_NAME3, DFNT_FLOAT32, &
+       status = swdefgfld(swid, GEO_FIELD10, DIM_NAME3, DFNT_FLOAT64, &
             HDFE_NOMERGE)
        if ( status == -1 ) then
           msr = GEO_ERR // GEO_FIELD10
@@ -1121,9 +1119,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       l2gp%frequency = 0
        status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
-            real(l2gp%frequency))
+         l2gp%frequency )
        if ( status == -1 ) then
           msr = WR_ERR // GEO_FIELD10
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1432,6 +1429,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.44  2002/07/17 19:02:09  livesey
+! Put in bug fix associated with expand in place (lf only?)
+!
 ! Revision 2.43  2002/07/17 18:57:32  livesey
 ! Gone back to 2.40, 2.42 didn't work, no time to investigate now
 !
