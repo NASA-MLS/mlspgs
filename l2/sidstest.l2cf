@@ -274,7 +274,7 @@ spectra, molecule=hcn, Qlog=[2.6277, 2.5031, 2.3276], $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_8: line, v0= 237146.1921 MHz, el= 93.6687, str= -3.69, w= 2.3, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_9: line, v0= 242318.7357 MHz, el= 70.45569999999999, str= -3.7166, w= 2.31, $
+  o3_9: line, v0= 242318.7357 MHz, el= 70.4557, str= -3.7166, w= 2.31, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_10: line, v0= 243453.7 MHz, el= 56.805, str= -3.7609, w= 2.31, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -288,7 +288,7 @@ spectra, molecule=hcn, Qlog=[2.6277, 2.5031, 2.3276], $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_15: line, v0= 249961.96 MHz, el= 50.6432, str= -3.7595, w= 2.294, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_16: line, v0= 623687.8456999999 MHz, el= 281.833, str= -3.1677, w= 2.15, $
+  o3_16: line, v0= 623687.8457 MHz, el= 281.833, str= -3.1677, w= 2.15, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_17: line, v0= 625371.4686 MHz, el= 192.5235, str= -3.8734, w= 2.071, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -306,7 +306,7 @@ spectra, molecule=hcn, Qlog=[2.6277, 2.5031, 2.3276], $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_24: line, v0= 651556.9699 MHz, el= 56.805, str= -3.4321, w= 2.27, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_25: line, v0= 653762.5698000001 MHz, el= 116.552, str= -3.0558, w= 2.109, $
+  o3_25: line, v0= 653762.5698 MHz, el= 116.552, str= -3.0558, w= 2.109, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_26: line, v0= 658815.2932 MHz, el= 325.1934, str= -3.9109, w= 2.071, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -322,7 +322,7 @@ spectra, molecule=hcn, Qlog=[2.6277, 2.5031, 2.3276], $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_32: line, v0= 2534224.3415 MHz, el= 790.3635, str= -3.053, w= 1.995, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_33: line, v0= 2536301.7542 MHz, el= 762.2311999999999, str= -5.571, w= 1.951, $
+  o3_33: line, v0= 2536301.7542 MHz, el= 762.2312, str= -5.571, w= 1.951, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_34: line, v0= 2542119.3911 MHz, el= 1023.0811, str= -3.5181, w= 1.939, $
           ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -362,9 +362,9 @@ spectra, molecule=h2o, Qlog=[2.2507, 2.0645, 1.804], lines=[h2o_1, h2o_2]
             ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_12: line, v0= 181789.2 MHz, el= 32.3793, str= -3.7743, w= 3.7, $
             ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-  hno3_13: line, v0= 181848.4311 MHz, el= 80.85290000000001, str= -3.8873, w= 3.5, $
+  hno3_13: line, v0= 181848.4311 MHz, el= 80.8529, str= -3.8873, w= 3.5, $
             ps= 0, n= 0.7, delta= 0, n1= 0, gamma= 0, n2= 0
-  hno3_14: line, v0= 181927.2032 MHz, el= 66.63849999999999, str= -4.0207, w= 3.6, $
+  hno3_14: line, v0= 181927.2032 MHz, el= 66.6385, str= -4.0207, w= 3.6, $
             ps= 0, n= 0.7, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_15: line, v0= 183413.8725 MHz, el= 28.1106, str= -3.8618, w= 3.8, $
             ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -400,7 +400,7 @@ spectra, molecule=h2o, Qlog=[2.2507, 2.0645, 1.804], lines=[h2o_1, h2o_2]
             ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_31: line, v0= 206901.4468 MHz, el= 40.7262, str= -3.66, w= 3.64, $
             ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-  hno3_32: line, v0= 206939.9384 MHz, el= 98.39700000000001, str= -3.8081, w= 3.17, $
+  hno3_32: line, v0= 206939.9384 MHz, el= 98.397, str= -3.8081, w= 3.17, $
             ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_33: line, v0= 206951.2528 MHz, el= 40.7244, str= -3.6597, w= 3.64, $
             ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -410,7 +410,7 @@ spectra, molecule=h2o, Qlog=[2.2507, 2.0645, 1.804], lines=[h2o_1, h2o_2]
             ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_36: line, v0= 659157.9297 MHz, el= 388.2566, str= -2.9788, w= 3.74, $
             ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-  hno3_37: line, v0= 659197.9057999999 MHz, el= 388.4549, str= -2.8639, w= 3.17, $
+  hno3_37: line, v0= 659197.9058 MHz, el= 388.4549, str= -2.8639, w= 3.17, $
             ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
   hno3_38: line, v0= 659206.8279 MHz, el= 388.2547, str= -2.9787, w= 3.17, $
             ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -471,11 +471,11 @@ spectra, molecule=o_18_o, Qlog=[2.6638, 2.5387, 2.3625], lines=o_18_o_1
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_v2_5: line, v0= 652188.1959 MHz, el= 1177.4709, str= -4.9517, w= 2.074, $
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_v2_6: line, v0= 652270.6459999999 MHz, el= 731.2868999999999, str= -4.694, w= 2.185, $
+  o3_v2_6: line, v0= 652270.646 MHz, el= 731.2869, str= -4.694, w= 2.185, $
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_v2_7: line, v0= 653460.2649 MHz, el= 906.0238000000001, str= -4.5232, w= 2.133, $
+  o3_v2_7: line, v0= 653460.2649 MHz, el= 906.0238, str= -4.5232, w= 2.133, $
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_v2_8: line, v0= 659091.0854 MHz, el= 873.1248000000001, str= -4.5007, w= 2.124, $
+  o3_v2_8: line, v0= 659091.0854 MHz, el= 873.1248, str= -4.5007, w= 2.124, $
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_v2_9: line, v0= 2502973.9957 MHz, el= 1193.2393, str= -3.9794, w= 2.068, $
              ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -490,14 +490,14 @@ spectra, molecule=o3_v2, Qlog=[3.5506, 3.3484, 3.0787], $
                 o3_v2_7, o3_v2_8, o3_v2_9, o3_v2_10, o3_v2_11, o3_v2_12]
   hcl_1: line, v0= 625901.603 MHz, el= 0, str= -1.3118, w= 2.557, $
            ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-  hcl_2: line, v0= 625918.7560000001 MHz, el= 0, str= -1.1357, w= 2.557, $
+  hcl_2: line, v0= 625918.756 MHz, el= 0, str= -1.1357, w= 2.557, $
            ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
   hcl_3: line, v0= 625932.007 MHz, el= 0, str= -1.6128, w= 2.557, $
            ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
 spectra, molecule=hcl, Qlog=[1.9211, 1.8018, 1.6369], lines=[hcl_1, hcl_2, hcl_3]
   hcl_35_1: line, v0= 625901.603 MHz, el= 0, str= -1.3118, w= 2.557, $
               ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-  hcl_35_2: line, v0= 625918.7560000001 MHz, el= 0, str= -1.1357, w= 2.557, $
+  hcl_35_2: line, v0= 625918.756 MHz, el= 0, str= -1.1357, w= 2.557, $
               ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
   hcl_35_3: line, v0= 625932.007 MHz, el= 0, str= -1.6128, w= 2.557, $
               ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -531,7 +531,7 @@ spectra, molecule=hcl_37, Qlog=[1.9218, 1.8024, 1.6375], lines=[hcl_37_1, hcl_37
                ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
   br_81_o_11: line, v0= 650177.7979 MHz, el= 264.3465, str= -1.7907, w= 2.34, $
                ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-  br_81_o_12: line, v0= 650178.6151000001 MHz, el= 264.3478, str= -1.8249, w= 2.34, $
+  br_81_o_12: line, v0= 650178.6151 MHz, el= 264.3478, str= -1.8249, w= 2.34, $
                ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
   br_81_o_13: line, v0= 650179.031 MHz, el= 264.3497, str= -1.8078, w= 2.34, $
                ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -546,21 +546,21 @@ spectra, molecule=br_81_o, Qlog=[3.5926, 3.4699, 3.2952], $
                 br_81_o_6, br_81_o_7, br_81_o_8, br_81_o_9, br_81_o_10, $
                 br_81_o_11, br_81_o_12, br_81_o_13, br_81_o_14, br_81_o_15, $
                 br_81_o_16]
-  ho2_1: line, v0= 624008.954 MHz, el= 97.79949999999999, str= -2.1248, w= 3.2, $
+  ho2_1: line, v0= 624008.954 MHz, el= 97.7995, str= -2.1248, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
   ho2_2: line, v0= 624014.1264 MHz, el= 97.7991, str= -2.1735, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-  ho2_3: line, v0= 625660.3541999999 MHz, el= 119.4374, str= -2.1242, w= 3.2, $
+  ho2_3: line, v0= 625660.3542 MHz, el= 119.4374, str= -2.1242, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
   ho2_4: line, v0= 625663.7997 MHz, el= 119.437, str= -2.0845, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
   ho2_5: line, v0= 648613.8526 MHz, el= 169.3204, str= -2.1283, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-  ho2_6: line, v0= 648617.4877000001 MHz, el= 169.32, str= -2.0947, w= 3.2, $
+  ho2_6: line, v0= 648617.4877 MHz, el= 169.32, str= -2.0947, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
   ho2_7: line, v0= 649701.4773 MHz, el= 175.3035, str= -2.3448, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-  ho2_8: line, v0= 649701.5134000001 MHz, el= 175.3039, str= -2.2987, w= 3.2, $
+  ho2_8: line, v0= 649701.5134 MHz, el= 175.3039, str= -2.2987, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
   ho2_9: line, v0= 660115.6907 MHz, el= 118.614, str= -2.2009, w= 3.2, $
            ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -579,11 +579,11 @@ spectra, molecule=ho2, Qlog=[3.641, 3.4536, 3.1896], $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_v1_3_3: line, v0= 635316.5654 MHz, el= 1324.038, str= -5.0909, w= 2.036, $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_v1_3_4: line, v0= 636672.3675000001 MHz, el= 1071.822, str= -5.4256, w= 2.188, $
+  o3_v1_3_4: line, v0= 636672.3675 MHz, el= 1071.822, str= -5.4256, w= 2.188, $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_v1_3_5: line, v0= 659212.6886 MHz, el= 1077.7053, str= -5.3814, w= 2.168, $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_v1_3_6: line, v0= 659465.1985000001 MHz, el= 1240.8279, str= -5.2588, w= 2.048, $
+  o3_v1_3_6: line, v0= 659465.1985 MHz, el= 1240.8279, str= -5.2588, w= 2.048, $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_v1_3_7: line, v0= 2534560.2526 MHz, el= 1721.3582, str= -5.0392, w= 2.059, $
                ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
@@ -598,35 +598,35 @@ spectra, molecule=hocl, Qlog=[3.9787, 3.7911, 3.5268], lines=hocl_1
   hocl_37_1: line, v0= 2515171.7266 MHz, el= 212.7575, str= -1.4991, w= 2.7, $
                ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
 spectra, molecule=hocl_37, Qlog=[3.9863, 3.7987, 3.5344], lines=hocl_37_1
-  o3_asym_18_1: line, v0= 636124.0614 MHz, el= 195.1492, str= -3.3757, w= 2.133, $
+  o3_asym_o_18_1: line, v0= 636124.0614 MHz, el= 195.1492, str= -3.3757, w= 2.133, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_2: line, v0= 649137.1089 MHz, el= 306.9562, str= -3.4672, w= 2.036, $
+  o3_asym_o_18_2: line, v0= 649137.1089 MHz, el= 306.9562, str= -3.4672, w= 2.036, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_3: line, v0= 649138.5046 MHz, el= 685.5488, str= -4.1816, w= 1.963, $
+  o3_asym_o_18_3: line, v0= 649138.5046 MHz, el= 685.5488, str= -4.1816, w= 1.963, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_4: line, v0= 649152.1200999999 MHz, el= 330.2889, str= -4.199, w= 2.033, $
+  o3_asym_o_18_4: line, v0= 649152.1201 MHz, el= 330.2889, str= -4.199, w= 2.033, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_5: line, v0= 649152.9292 MHz, el= 330.2888, str= -4.199, w= 2.071, $
+  o3_asym_o_18_5: line, v0= 649152.9292 MHz, el= 330.2888, str= -4.199, w= 2.071, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_6: line, v0= 660150.1537 MHz, el= 422.1055, str= -3.6114, w= 2.112, $
+  o3_asym_o_18_6: line, v0= 660150.1537 MHz, el= 422.1055, str= -3.6114, w= 2.112, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_7: line, v0= 2510299.3261 MHz, el= 625.199, str= -2.7403, w= 2.051, $
+  o3_asym_o_18_7: line, v0= 2510299.3261 MHz, el= 625.199, str= -2.7403, w= 2.051, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_8: line, v0= 2513742.9096 MHz, el= 545.3744, str= -2.6068, w= 2.059, $
+  o3_asym_o_18_8: line, v0= 2513742.9096 MHz, el= 545.3744, str= -2.6068, w= 2.059, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_9: line, v0= 2531428.7404 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
+  o3_asym_o_18_9: line, v0= 2531428.7404 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_asym_18_10: line, v0= 2531429.4581 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
+  o3_asym_o_18_10: line, v0= 2531429.4581 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
                   ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
 spectra, molecule=o3_asym_o_18, Qlog=[3.8582, 3.6708, 3.4065], $
-         lines=[o3_asym_18_1, o3_asym_18_2, o3_asym_18_3, o3_asym_18_4, $
-                o3_asym_18_5, o3_asym_18_6, o3_asym_18_7, o3_asym_18_8, $
-                o3_asym_18_9, o3_asym_18_10]
-  o3_sym_18_1: line, v0= 661047.7728 MHz, el= 218.7333, str= -3.0757, w= 2.177, $
+         lines=[o3_asym_o_18_1, o3_asym_o_18_2, o3_asym_o_18_3, o3_asym_o_18_4, $
+                o3_asym_o_18_5, o3_asym_o_18_6, o3_asym_o_18_7, o3_asym_o_18_8, $
+                o3_asym_o_18_9, o3_asym_o_18_10]
+  o3_sym_o_18_1: line, v0= 661047.7728 MHz, el= 218.7333, str= -3.0757, w= 2.177, $
                  ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-  o3_sym_18_2: line, v0= 2535208.0603 MHz, el= 649.4622000000001, str= -2.7769, w= 2.051, $
+  o3_sym_o_18_2: line, v0= 2535208.0603 MHz, el= 649.4622, str= -2.7769, w= 2.051, $
                  ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-spectra, molecule=o3_sym_o_18, Qlog=[3.5472, 3.3599, 3.0959], lines=[o3_sym_18_1, o3_sym_18_2]
+spectra, molecule=o3_sym_18, Qlog=[3.5472, 3.3599, 3.0959], lines=[o3_sym_18_1, o3_sym_18_2]
 
 END Spectroscopy
 
@@ -853,6 +853,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.15  2001/04/05 18:22:12  vsnyder
+; Correct names of two molecules
+;
 ; Revision 2.14  2001/04/05 01:37:14  vsnyder
 ; Insert 'large' spectroscopy catalog
 ;
