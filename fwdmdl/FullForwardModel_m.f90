@@ -58,7 +58,7 @@ contains
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
       & LIT_INDICES
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
-      & Load_Sps_Data, Modify_values_for_supersat
+      & Load_Sps_Data, Modify_values_for_supersat, create_grids_1, fill_grids_1, create_grids_2, fill_grids_2
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
                                 &  DESTROYCOMPLETESLABS
     use ManipulateVectorQuantities, only: DoHGridsMatch, FindClosestInstances
@@ -1651,6 +1651,7 @@ contains
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
+
             call allocate_test ( Scat_ang, fwdModelConf%num_scattering_angles, 'Scat_ang', moduleName )
 
             call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst), &
@@ -1670,8 +1671,13 @@ contains
 
             call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values),              &
                                & 'do_calc_tscat', moduleName )
+
+            call allocate_test ( do_calc_tscat_zp, max_ele, grids_tscat%p_len,                  &
+                               & 'do_calc_tscat_zp', moduleName )
+
             call allocate_test ( eta_tscat,     max_ele, size(grids_tscat%values),              &
                                & 'eta_tscat',     moduleName )
+                        
             call allocate_test ( eta_tscat_zp,  max_ele, grids_tscat%p_len,                     &
                                & 'eta_tscat_zp',  moduleName )
             call allocate_test ( tscat_path,    max_ele, fwdModelConf%num_scattering_angles, &
@@ -1683,13 +1689,14 @@ contains
 
             Frq=0.0
             call comp_sps_path_frq ( Grids_tscat, firstSignal%lo, thisSideband, &
-              & Frq, eta_zp(1:no_ele,:), &
-              & do_calc_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
+              & Frq, eta_tscat_zp(1:no_ele,:), &
+              & do_calc_tscat_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
               & do_calc_tscat(1:no_ele,:), eta_tscat(1:no_ele,:) )
 
             call allocate_test ( tt_path, max_ele, 1, 'tt_path', moduleName )
 
             ! project Tscat onto LOS
+
             call interp_tscat ( tscat_path(1:no_ele,:), Scat_ang(:), phi_path(1:no_ele), tt_path )
 
             if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
@@ -1833,7 +1840,7 @@ contains
 
             end if
 
-          end if
+          end if   ! end of check cld 
 
           ! Where we don't do GL, replace the rectangle rule by the
           ! trapezoid rule.
@@ -3037,6 +3044,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.195  2004/02/14 00:23:48  vsnyder
+! New DACS convolution algorithm
+!
 ! Revision 2.194  2004/02/05 23:30:01  livesey
 ! Finally implemented code to do correct handing of sideband fraction in
 ! single sideband radiometers.
