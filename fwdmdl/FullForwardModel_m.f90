@@ -56,7 +56,7 @@ contains
       & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_ORBITINCLINATION,  &
       & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_LIMBSIDEBANDFRACTION, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
-      & L_CLEAR, L_BOUNDARYPRESSURE
+      & L_CLEAR, L_BOUNDARYPRESSURE, L_GPH
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
       & Load_Sps_Data, Modify_values_for_supersat                    ! JJ
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
@@ -391,6 +391,7 @@ contains
     type (VectorValue_T), pointer :: PHITAN        ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN          ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
+    type (VectorValue_T), pointer :: GPH           ! Geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION ! Integer really   !JJ
@@ -497,7 +498,7 @@ contains
       & tan_phi, tan_temp, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
       & t_script, t_der_path_flags, true_path_flags, &
-      & usedchannels, usedsignals, wc, z_path, z_path_c )
+      & usedchannels, usedsignals, wc, z_path, z_path_c, gph )
 
     ! Extra DEBUG for Nathaniel and Bill
 !   nullify ( reqs, tan_hts, tan_temps )
@@ -537,6 +538,7 @@ contains
     ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule, &
       & foundInFirst=ptan_der, config=fwdModelConf )
+    gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule, &
       & config=fwdModelConf )
@@ -1476,7 +1478,9 @@ contains
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
-            call T_scat (temp_prof, Frq, fwdModelConf%num_azimuth_angles,&
+            call T_scat (temp_prof, Frq, GPH%values(:,windowstart),  &
+            & fwdModelConf%num_scattering_angles,                    &
+            & fwdModelConf%num_azimuth_angles,                       &
             & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins, &
             & fwdModelConf%no_cloud_species, scat_src%values )
 
@@ -2665,6 +2669,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.172  2003/10/09 19:30:18  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.170  2003/09/09 00:04:27  vsnyder
 ! Supply E and Sqrt_Earth_Rflty to mcrt_der
 !
