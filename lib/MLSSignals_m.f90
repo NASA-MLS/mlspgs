@@ -781,25 +781,35 @@ contains
   end subroutine DestroySpectrometerTypeDatabase
 
   ! ------------------------------------------  DisplaySignalName  -----
-  subroutine DisplaySignalName ( Signal, Advance )
+  subroutine DisplaySignalName ( Signal, Advance, Before, Sideband, Channel )
     ! Given a signal object, this routine displays a full signal name.
     use String_Table, only: Display_String
     type(signal_T), intent(in) :: SIGNAL
-    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: Advance, Before
+    integer, intent(in), optional :: Sideband ! Use this instead of Signal's
+    integer, intent(in), optional :: Channel  ! Use this instead of Signal's
     character(len=15) :: BandName
     logical :: First
-    integer :: I, J
+    integer :: I, J, SB
 
+    if ( present(before) ) call output ( before )
+    if ( present(sideband) ) then
+      sb = sideband
+    else
+      sb = signal%sideband
+    end if
     call display_string ( radiometers(signal%radiometer)%prefix )
     call output ( ':' )
     call display_string ( radiometers(signal%radiometer)%suffix, strip=.true. )
     call output ( '.' )
-    call GetBandName ( signal%band, bandName, sideband=signal%sideband )
+    call GetBandName ( signal%band, bandName, sideband=sb )
     call output ( trim(bandName) )
     call output ( signal%switch, before='.S', after='.' )
     call display_string ( spectrometerTypes(signal%spectrometerType)%name )
     call output ( signal%spectrometer, before='-' )
-    if ( associated(signal%channels) ) then
+    if ( present(channel) ) then
+      call output ( channel, before='.C' )
+    else if ( associated(signal%channels) ) then
       if ( .not. all(signal%channels) .or. &
         & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
         & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
@@ -1759,6 +1769,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.79  2005/04/06 23:15:31  vsnyder
+! Add Before, Sideband and Channel arguments for Display_Signal_Name
+!
 ! Revision 2.78  2005/03/15 23:48:55  pwagner
 ! PVMERRORMESSAGE now part of MLSMessageModule
 !
