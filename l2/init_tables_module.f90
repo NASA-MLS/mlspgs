@@ -621,7 +621,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
-             begin, f+f_signal, s+s_signal, n+n_field_spec, &
+             begin, f+f_signal, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
              np+n_spec_def, &
@@ -807,6 +807,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.73  2001/04/12 21:42:39  livesey
+! Signal field in s_quantity now string.
+!
 ! Revision 2.72  2001/04/12 19:48:45  livesey
 ! Removed channels from forwardModel, signal string now conveys that information.
 !
