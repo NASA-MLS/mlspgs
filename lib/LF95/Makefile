@@ -1,29 +1,42 @@
 # $Id$
-#
-# This is an include file for makefiles that is intended to be as
-# platform independent as possible.  Where things are platform dependent,
-# an if statement is used.
-#
 
-F90=lf95
-MODULEPATHPREFIX=-I
-F90DEBUGFLAGS=-g
-INCLUDE=-I/usr/local/TOOLKIT/include
+# Places to look for sources without being explicitly told to do so:
 VPATH=..
 
-# Platform path
-P=LF95
+# Fortran compiler:
+F90=lf95
+
+# Compiler options:
+FOPTS=-g --chk --info
+
+# DUSTY is used to allow picky compilers to handle references to "sfrdata",
+# which has an inconsistent interface in that it can have any type
+# object for its fifth argument.
+
+DUSTY=
+
+# Loader options:
+LDOPTS = -g --chk
+
+# Option to specify path to .mod and include files:
+I = -I
 
 # Path to source files
 S=..
 
 # Path to cf_parser
-C=$S/cf_parser/$P
+CF=$S/cf_parser/LF95
+
+# Beginning of path to toolkit libraries:
+TOOLKIT = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
 include ../Makefile.inc
 
 #
 # $Log$
+# Revision 2.1  2000/09/13 20:41:07  vsnyder
+# Support to compile dump_0.o
+#
 # Revision 2.0  2000/09/05 17:41:31  dcuddy
 # Change revision to 2.0
 #
