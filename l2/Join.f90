@@ -40,7 +40,6 @@ contains ! =====     Public Procedures     =============================
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & DirectDataBase, chunkNo, chunks )
     ! Imports
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
@@ -53,8 +52,8 @@ contains ! =====     Public Procedures     =============================
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: GET_SPEC_ID
-    use Output_m, only: OUTPUT, BLANKS
-    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use Output_m, only: OUTPUT
+    use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use Tree, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
     use TREE_TYPES, only: N_NAMED
     use Time_M, only: Time_Now
@@ -79,7 +78,6 @@ contains ! =====     Public Procedures     =============================
     integer :: DBINDEX
     logical :: DIDTHEWRITE
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
-    integer :: DWINDEX                  ! Direct Write index
     real :: DWT1                        ! Time we started
     real :: DWT2                        ! Time we finished
     integer :: KEY                      ! Tree node
@@ -97,7 +95,6 @@ contains ! =====     Public Procedures     =============================
     real :: T1                          ! Time we started
     real :: T2                          ! Time we finished
     logical :: namedFile                ! set true if DirectWrite named file
-    integer :: I
     logical :: DEEBUG
     
     ! Executable code
@@ -111,8 +108,8 @@ contains ! =====     Public Procedures     =============================
     if ( associated(DirectDataBase) ) then
       if ( size(DirectDataBase) > 0 ) then
         autoDirectWrite = any(DirectDataBase%autoType > 0)
-      endif
-    endif
+      end if
+    end if
     ! This is going to be somewhat atypical, as the code may run in 'passes'
     ! In pass 1 we do all the regular join statements and count the direct writes
     ! In pass 2 we log all our direct write requests.
@@ -194,7 +191,7 @@ contains ! =====     Public Procedures     =============================
                     & theFile=DirectDataBase(dbIndex)%fileNameBase, &
                     & namedFile=namedFile )
                   if ( namedFile ) exit
-                enddo
+                end do
               else
                 call DirectWriteCommand ( son, ticket, vectors, &
                   & DirectdataBase, chunkNo, chunks )
@@ -249,7 +246,7 @@ contains ! =====     Public Procedures     =============================
                 & 'noDirectWrites: ', noDirectWrites        
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'We received permission to write, but could not find node' )
-      endif
+      end if
     end do passLoop                     ! End loop over passes
 
     ! Check for errors
@@ -265,8 +262,7 @@ contains ! =====     Public Procedures     =============================
       call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
+        call output ( dble(t2), after='    ', advance = 'no' )
       end if
       call output ( "Timing for MLSL2Join =" )
       call output ( dble(t2 - t1), advance = 'yes' )
@@ -282,22 +278,20 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T, &
-      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
+      & DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
       & ExpandDirectDB, ExpandSDNames, FileNameToID
     use Expr_m, only: EXPR
-    use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
+    use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, &
       & f_QUALITY, F_STATUS, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
-    use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
-      & L_MAF, lit_indices, PHYQ_DIMENSIONLESS
+    use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-    use MLSCommon, only: FindFirst, FindNext, R4, R8, RV, FileNameLen
-    use MLSFiles, only: HDFVERSION_5, NAMENOTFOUND, &
-      & MLS_EXISTS, split_path_name, GetPCFromRef, &
-      & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
+    use MLSCommon, only: FindFirst, FindNext, R8, FileNameLen
+    use MLSFiles, only: Split_path_name, GetPCFromRef, MLS_IO_gen_openF, &
+      & MLS_IO_gen_closeF
     use MLSHDFEOS, only: mls_swath_in_file
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PATCH, SKIPDIRECTWRITES, TOOLKIT
@@ -307,12 +301,11 @@ contains ! =====     Public Procedures     =============================
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MoreTree, only: GET_FIELD_ID
-    use Output_m, only: OUTPUT, BLANKS
+    use Output_m, only: Blanks, OUTPUT
     use OutputAndClose, only: add_metadata
     use String_Table, only: DISPLAY_STRING, GET_STRING
-    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-      & SUB_ROSA, SUBTREE
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
       & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy arguments
@@ -338,7 +331,6 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
     integer :: AFILE
-    integer :: DBINDEX
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical, dimension(:), pointer :: CREATETHISSOURCE
     logical :: DEEBUG
@@ -394,7 +386,6 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
-    type(DirectData_T) :: newDirect
     type(DirectData_T), pointer :: thisDirect ! => null()
 
     ! Executable code
@@ -462,11 +453,11 @@ contains ! =====     Public Procedures     =============================
 
     if ( file > 0 ) then
       call get_string ( file, filename, strip=.true. )
-   !  elseif ( myTheFile > 0 ) then
+   !  else if ( myTheFile > 0 ) then
    !   call get_string ( myTheFile, filename, strip=.true. )
-    elseif ( myTheFile /= 'undefined' ) then
+    else if ( myTheFile /= 'undefined' ) then
       filename = myTheFile
-    endif
+    end if
     myFile =  FileNameToID(trim(filename), DirectDataBase ) 
     distributingSources = (file < 1)
     ! Now identify the quantities we're after
@@ -596,7 +587,7 @@ contains ! =====     Public Procedures     =============================
     ! Distribute sources among available DirectWrite files if filename undefined
     if ( distributingSources ) then
        call DistributeSources
-    endif
+    end if
     if ( DeeBUG ) then
       call output('Direct write to file', advance='yes')
       call output('File name: ', advance='no')
@@ -608,10 +599,10 @@ contains ! =====     Public Procedures     =============================
       if ( present(theFile) ) then
         call output('my(theFile): ', advance='no')
         call output(trim(myTheFile), advance='yes')
-      endif
+      end if
       call output('size(DirectDB): ', advance='no')
       call output(size(DirectDatabase), advance='yes')
-    endif
+    end if
 
     ! If this is the first pass through, then we just log our request
     ! with the master
@@ -628,7 +619,7 @@ contains ! =====     Public Procedures     =============================
           call output(node, advance='no')
           call output('  (named): ', advance='no')
           call display_string(DirectDatabase(nextfile)%fileIndex, advance='yes')
-        endif
+        end if
         if ( noSources > 1 ) then
           do source = 2, noSources
             aFile = nextFile
@@ -643,22 +634,22 @@ contains ! =====     Public Procedures     =============================
               call output(node, advance='no')
               call output('  (named): ', advance='no')
               call display_string(DirectDatabase(nextfile)%fileIndex, advance='yes')
-            endif
-          enddo
-        endif
+            end if
+          end do
+        end if
         if ( DEEBug .and. present(noExtraWrites) ) then
           call output('noExtraWrites: ', advance='no')
           call output(noExtraWrites, advance='no')
-        endif
+        end if
       else
         call LogDirectWriteRequest ( file, node )
-      endif
-    elseif ( skipdgg .and. any ( outputType == (/ l_l2dgg /) ) ) then
+      end if
+    else if ( skipdgg .and. any ( outputType == (/ l_l2dgg /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
       call DeallocateStuff
       return
-    elseif ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
+    else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
@@ -668,16 +659,16 @@ contains ! =====     Public Procedures     =============================
       if ( parallel%slave ) then
         createFileFlag = .false.
         if ( present ( create ) ) createFileFlag = create
-      elseif ( distributingSources ) then
+      else if ( distributingSources ) then
         ! Short-circuit this direct write if outputType fails to match
         if ( myFile < 1 ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to auto-direct write ' // trim(filename) )
-        elseif ( outputType /= DirectDataBase(myFile)%type ) then
+        else if ( outputType /= DirectDataBase(myFile)%type ) then
           call DeallocateStuff
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
           return
-        endif
+        end if
         createFileFlag = .not. any ( createdFilenames == myFile )
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
@@ -706,31 +697,31 @@ contains ! =====     Public Procedures     =============================
           call output('Did we need to expand DB for ' // trim(file_base), &
             & advance='yes')
           call output(isnewdirect, advance='yes')
-        endif
+        end if
         if ( .not. associated(thisDirect) ) then
           call Announce_Error ( son, NO_ERROR_CODE, &
               & 'ExpandDirectDB returned unassociated thisDirect' )
           call dump(DirectDatabase)
           call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'ExpandDirectDB returned unassociated thisDirect' )
-        endif
-      endif
+        end if
+      end if
       if ( .not. TOOLKIT ) then
         handle = 0
-      elseif ( .not. isnewdirect ) then
+      else if ( .not. isnewdirect ) then
         Filename = thisDirect%fileName
         Handle = thisDirect%Handle
-      elseif ( any ( outputType == (/ l_l2gp /) ) ) then
+      else if ( any ( outputType == (/ l_l2gp /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
-      elseif ( any ( outputType == (/ l_l2dgg /) ) ) then
+      else if ( any ( outputType == (/ l_l2dgg /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
           & mlspcf_l2dgg_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
-      elseif ( any ( outputType == (/ l_l2fwm /) ) ) then
+      else if ( any ( outputType == (/ l_l2fwm /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
           & mlspcf_l2fwm_full_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
@@ -747,18 +738,18 @@ contains ! =====     Public Procedures     =============================
          call MLSMessage ( &
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
-      endif
+      end if
       if ( isnewdirect .and. TOOLKIT ) then
         thisDirect%Handle = Handle
         thisDirect%FileName = FileName
-      endif
+      end if
       if ( isnewdirect .and. distributingSources ) then
           call Announce_Error ( node, NO_ERROR_CODE, &
           & 'Uh-oh' )
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'ExpandDirectDB thinks we need a new directFile; ' // &
           & 'did you enter any in global settings?' )
-      endif
+      end if
       ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
       ! if ( checkPaths ) return
       if ( SKIPDIRECTWRITES .or. checkPaths ) return
@@ -767,7 +758,7 @@ contains ! =====     Public Procedures     =============================
         fileaccess = DFACC_CREATE
       else
         fileaccess = DFACC_RDWR
-      endif
+      end if
       if ( DeeBUG ) then
         print *, 'Trying to open ', trim(FileName)
         print *, 'FileAccess ', FileAccess
@@ -775,13 +766,13 @@ contains ! =====     Public Procedures     =============================
         print *, 'outputType ', outputType
         print *, 'myFile ', myFile
         print *, 'createFileFlag ', createFileFlag
-      endif
+      end if
       if ( .not. isnewdirect ) then
         if ( outputType /= thisDirect%type ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'DirectWriteCommand mismatched outputTypes for ' // trim(filename) )
-        endif
-      endif
+        end if
+      end if
       select case ( outputType )
       case ( l_l2gp, l_l2dgg )
         ! Before opening file, see which swaths are already there
@@ -801,7 +792,7 @@ contains ! =====     Public Procedures     =============================
             if(DEEBUG)call display_string ( hdfNameIndex, strip=.true., advance='yes' )
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
             if(DEEBUG)print*,'Done'
-          enddo
+          end do
           dummy = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
             & createThisSource )
           if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
@@ -827,7 +818,7 @@ contains ! =====     Public Procedures     =============================
         print *, 'createFileFlag ', createFileFlag
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to open ' // trim(filename) )
-      endif
+      end if
       ! Loop over the quantities to output
       NumPermitted = 0
       NumOutput = 0
@@ -840,7 +831,7 @@ contains ! =====     Public Procedures     =============================
             & .and. &
             & DirectDataBase(directfiles(source))%filenameBase /= myTheFile &
             & ) cycle
-        endif
+        end if
         NumPermitted = NumPermitted + 1
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
@@ -892,7 +883,7 @@ contains ! =====     Public Procedures     =============================
           call output(outputType, advance='yes')
           call output('sd name: ', advance='no')
           call output(trim(hdfname), advance='yes')
-        endif
+        end if
         
         select case ( outputType )
         case ( l_l2gp, l_l2dgg )
@@ -909,7 +900,7 @@ contains ! =====     Public Procedures     =============================
             filetype=l_l2dgg
           else
             filetype=l_swath
-          endif
+          end if
         case ( l_l2aux, l_l2fwm )
           ! Call the l2aux sd write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
@@ -933,7 +924,7 @@ contains ! =====     Public Procedures     =============================
       if ( DEEBUG ) then
         print *, 'Num permitted to ', trim(FileName), ' ', NumPermitted
         print *, 'Num actually output ', NumOutput
-      endif
+      end if
       if ( NumPermitted < 1 ) then
         if ( parallel%slave) then
           call Announce_Error ( son, no_error_code, &
@@ -951,13 +942,13 @@ contains ! =====     Public Procedures     =============================
             print *, 'myFile ', myFile
             print *, 'createFileFlag ', createFileFlag
             print *, 'noCreatedFiles ', noCreatedFiles
-          endif
-        endif
+          end if
+        end if
         call DeallocateStuff
         if ( any ( outputType == (/ l_l2gp, l_l2dgg /) ) ) then
           call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
           call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
-        endif
+        end if
         ! Don't forget to close file
         select case ( outputType )
         case ( l_l2gp, l_l2dgg )
@@ -973,18 +964,18 @@ contains ! =====     Public Procedures     =============================
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to close ' // trim(filename) )
         return
-      endif
+      end if
       if ( isnewdirect .and. TOOLKIT ) then
         thisDirect%type = outputType
         thisDirect%fileNameBase = file_base
-      endif
+      end if
       
       if ( DEEBug ) then
         call output('outputType: ', advance='no')
         call DISPLAY_STRING(lit_indices(outputType), advance='yes')
         call output('fileType: ', advance='no')
         call DISPLAY_STRING(lit_indices(fileType), advance='yes')
-      endif
+      end if
 
       ! Close the output file of interest (does this need to be split like this?)
       select case ( outputType )
@@ -1000,7 +991,7 @@ contains ! =====     Public Procedures     =============================
           print *, 'Handle ', Handle
           print *, 'hdfVersion ', hdfVersion
           print *, 'errortype ', errortype
-        endif
+        end if
       case ( l_l2aux, l_l2fwm )
         ! Call the l2aux close routine
         errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
@@ -1014,7 +1005,7 @@ contains ! =====     Public Procedures     =============================
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(filename) )
-      endif
+      end if
       
       ! Tell the master we're done
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
@@ -1039,7 +1030,7 @@ contains ! =====     Public Procedures     =============================
       do afile = 1, size(DirectDataBase)
         if ( outputType == DirectDataBase(afile)%autoType ) &
           & NumSuitablesFiles = NumSuitablesFiles + 1
-      enddo
+      end do
       if ( NumSuitablesFiles < 1 ) then
         call Announce_Error ( son, NO_ERROR_CODE, &
               & 'No suitable files in directDatabaset' )
@@ -1049,14 +1040,14 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( &
         & MLSMSG_Error, ModuleName, &
         & 'No suitable files in directDatabase to distribute sources among' )
-      endif
+      end if
       nextfile = FindFirst(outputType == DirectDataBase%autoType)
       do source = 1, noSources
         afile = nextFile
         directfiles(source) = afile
         nextFile = FindNext(outputType == DirectDataBase%autoType, afile, &
           & wrap=.true.)
-      enddo
+      end do
       if ( DeeBug ) then
        call output ( "NumSources = " )
        call output ( NoSources, advance='no' )
@@ -1064,15 +1055,13 @@ contains ! =====     Public Procedures     =============================
        call output ( NumSuitablesFiles, advance='yes' )
        do source=1, noSources
          aFile= directfiles(source)
-         call output ( source, advance='no' )
-         call blanks ( 4, advance = 'no' )
-         call output ( aFile, advance='no' )
-         call blanks ( 4, advance = 'no' )
+         call output ( source, after='    ', advance='no' )
+         call output ( aFile, after='    ', advance='no' )
          call output ( trim(DirectDatabase(aFile)%fileName), advance='no' )
-         call blanks ( 4, advance = 'no' )
+         call blanks ( 4, advance='no' )
          call display_string(DirectDatabase(aFile)%fileIndex, advance='yes')
-       enddo
-      endif
+       end do
+      end if
     end subroutine DistributeSources
     subroutine DeallocateStuff
       call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
@@ -1164,24 +1153,19 @@ contains ! =====     Public Procedures     =============================
       & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
       & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
       & FIELD_LAST
-    use INIT_TABLES_MODULE, only: L_PRESSURE, &
-      & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME, S_LABEL
-    use intrinsic, only: L_NONE, L_GEODANGLE, &
-      & L_MAF, PHYQ_DIMENSIONLESS
+    use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, S_L2AUX, S_L2GP
+    use intrinsic, only: L_NONE, PHYQ_DIMENSIONLESS
     use L2AUXData, only: L2AUXData_T
     use L2GPData, only: L2GPData_T
     use L2ParInfo, only: PARALLEL, SLAVEJOIN
     use MLSCommon, only: R8
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_M, only: GetSignalName
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use String_Table, only: GET_STRING
     use Symbol_Table, only: ENTER_TERMINAL
     use Symbol_Types, only: T_STRING
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-      & SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_SET_ONE
+    use TREE, only: DECORATION, NSONS, NULL_TREE, SUB_ROSA, SUBTREE
     use VectorsModule, only: GetVectorQtyByTemplateIndex, &
       & ValidateVectorQuantity, Vector_T, VectorValue_T
 
@@ -1194,29 +1178,24 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
     ! Local variables
-    logical :: COMPAREOVERLAPS
-    integer :: FIELDINDEX              ! F_..., see Init_Tables_Module
-    integer :: FILE                 ! Name of output file for direct write
-    integer :: SON                      ! Son of Key
-    integer :: HDFVERSION               ! Version of hdf for directwrite
+    integer :: EXPRUNITS(2)                 ! From expr
+    integer :: FIELDINDEX               ! F_..., see Init_Tables_Module
+    integer :: FILE                     ! Name of output file for direct write
     integer :: HDFNAMEINDEX             ! Name of swath/sd
+    integer :: HDFVERSION               ! Version of hdf for directwrite
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
-    integer :: MLSCFLine
-    logical :: OutputOverlaps
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
-    integer :: SOURCE                   ! Index in AST
-    integer :: VALUE                    ! Value of a field
-    integer :: VECTORINDEX              ! Index for vector to join
-    integer :: QUANTITYINDEX            ! ind in qty tmpl database, not vector
-    logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
-    integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
-    logical :: TIMING
-    integer :: EXPRUNITS(2)                 ! From expr
+    integer :: PRECVECTORINDEX          ! Index for precision vector
+    integer :: QUANTITYINDEX            ! ind in qty tmpl database, not vector
+    integer :: SON                      ! Son of Key
+    integer :: SOURCE                   ! Index in AST
+    integer :: VECTORINDEX              ! Index for vector to join
+    logical :: COMPAREOVERLAPS
+    logical :: OutputOverlaps
+    logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
     real (r8) :: EXPRVALUE(2)               ! From expr
-
-    real :: T1, T2     ! for timing
 
     character(len=132) :: HDFNAME          ! Name for swath/sd
     logical :: GOT(field_first:field_last)
@@ -1319,7 +1298,7 @@ contains ! =====     Public Procedures     =============================
             & 'This quantity should be joined as an l2gp' )
           call MLSMessage ( MLSMSG_Error,&
             & ModuleName, 'This quantity should be joined as an l2gp')
-        endif
+        end if
         call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
           & precisionQuantity, l2gpDatabase, chunkNo )
       else
@@ -1329,7 +1308,7 @@ contains ! =====     Public Procedures     =============================
             & 'This quantity should be joined as an l2aux' )
           call MLSMessage ( MLSMSG_Error,&
             & ModuleName, 'This quantity should be joined as an l2aux')
-        endif
+        end if
         call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
           & l2auxDatabase, chunkNo, chunks )
       end if
@@ -1354,12 +1333,11 @@ contains ! =====     Public Procedures     =============================
     use intrinsic, only: L_NONE
     use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
       & L2GPData_T, SetupNewL2GPRecord, RGP
-    use MLSCommon, only: R4, R8, RV
+    use MLSCommon, only: RV
     use String_Table, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use TOGGLES, only: GEN, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-      & SUB_ROSA, SUBTREE
+    use TREE, only: DECORATE, DECORATION
     use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
@@ -1383,8 +1361,7 @@ contains ! =====     Public Procedures     =============================
     integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
     logical :: L2gpDataIsNew
     real(rv) :: HUGERGP
-!   real(r8), dimension(:,:), pointer :: Values !??? Not used ???
-    
+   
     hugeRgp = real ( huge(0.0_rgp), rv )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2GPQuantities", key )
@@ -1523,18 +1500,16 @@ contains ! =====     Public Procedures     =============================
    & chunkNo, chunks, firstInstance, lastInstance )
 
     use Chunks_m, only: MLSChunk_T
-    use intrinsic, only: L_NONE, L_GEODANGLE, &
-      & L_MAF, PHYQ_DIMENSIONLESS
+    use intrinsic, only: L_GEODANGLE, L_MAF
     use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
       & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
-    use MLSCommon, only: R4, R8, RV
+    use MLSCommon, only: R4, R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use OUTPUT_M, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-      & SUB_ROSA, SUBTREE
+    use TREE, only: DECORATE, DECORATION
     use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
@@ -1562,7 +1537,6 @@ contains ! =====     Public Procedures     =============================
     integer :: USELASTINSTANCE
     logical :: L2AUXDATAISNEW
 
-    character (LEN=32) :: QUANTITYNAMESTR
     real(r8) :: HUGER4
     type (L2AUXData_T) :: NEWL2AUX
     type (L2AUXData_T), pointer :: THISL2AUX
@@ -1634,7 +1608,7 @@ contains ! =====     Public Procedures     =============================
           call output(firstMAF, advance='no')
           call output('  noMAFs ', advance='no')
           call output(noMAFs, advance='yes')
-        endif
+        end if
       else
         ! Otherwise, we don't know how big it will be (at least in the Join
         ! scenario), so create it empty to begin with.
@@ -1739,7 +1713,7 @@ contains ! =====     Public Procedures     =============================
       call output('   num qty values ', advance='no')
       call output(size(quantity%values, 1)* &
        &              (useLastInstance-useFirstInstance+1), advance='yes')
-    endif
+    end if
     if ( size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2) &
      & /= thisL2AUX%dimensions(1)%noValues*thisL2AUX%dimensions(2)%noValues ) &
      & call MLSMessage ( MLSMSG_Error, &
@@ -1792,10 +1766,9 @@ contains ! =====     Public Procedures     =============================
 
     use intrinsic, only: FIELD_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use OUTPUT_M, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-      & SUB_ROSA, SUBTREE
+    use TREE, only: SOURCE_REF
 
     integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -1837,6 +1810,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.113  2004/05/19 20:16:29  vsnyder
+! Remove declarations and uses for unreferenced symbols, polish some cannonballs
+!
 ! Revision 2.112  2004/05/19 19:16:10  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
