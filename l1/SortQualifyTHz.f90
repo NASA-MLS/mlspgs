@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -34,11 +34,13 @@ CONTAINS
     USE EngUtils, ONLY: NextEngMAF
     USE SciUtils, ONLY: NextSciMAF
     USE MLSL1Utils, ONLY : GetIndexedAvg
+    USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T
 
     LOGICAL :: more_data
 
     INTEGER :: sci_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
     REAL :: MAF_dur, MIF_dur
+    TYPE (LOG_ARR1_PTR_T) :: Limb_BO_Flag(2)
 
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     MIF_dur = L1Config%Calib%MIF_duration
@@ -94,6 +96,13 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        CurMAFdata%LimbCalTgtTemp = &
             GetIndexedAvg (EngMAF%eng%value, CalTgtIndx%THzLimb) - absZero_C
 
+!! Check for Bright Objects in FOVs
+
+       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
+       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
+
+       CALL Flag_Bright_Objects (CurMAFdata%SciMIF%secTAI, &
+            CurMAFdata%SciMIF%scAngle, Limb_BO_flag)
        more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
 
     ENDDO
@@ -107,14 +116,23 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 !=============================================================================
 
     USE MLSL1Config, ONLY: THz_seq, THz_seq_use
+    USE MLSL1Common, ONLY: L1BFileInfo
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
-    INTEGER :: MAF, MIF
+    INTEGER :: MAF, MIF, n
+    CHARACTER(len=80) :: msg
+    CHARACTER(len=27) :: asciiUTC
+    LOGICAL :: MoonInLimbView, VenusInLimbView
+    REAL :: encoder(2)
 
     CHARACTER(len=1) :: SwMirPos
     CHARACTER(len=1), PARAMETER :: discard = "D"
+    CHARACTER(len=1), PARAMETER :: limb = "L"
     CHARACTER(len=1), PARAMETER :: match = "M"
     CHARACTER(len=1), PARAMETER :: override = "O"
     CHARACTER(len=1), PARAMETER :: undefined = "U"
+    REAL, PARAMETER :: BadLimbRange(2) = (/ 6.0, 354.0 /)
 
     print *, 'qualifying all the MAFs'
 
@@ -176,11 +194,39 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
              !! NOTE: The GHz module could be using FB 12 (FB(:,6)!
           END WHERE
 
+!! Discard if out of "good" limb angle range:
+
+          IF (SwMirPos == limb) THEN
+             encoder =  CurMAFdata%SciMIF(MIF)%TSSM_pos
+             IF (ANY (encoder > BadLimbRange(1) .AND. &
+                  encoder < BadLimbRange(2))) SwMirPos = discard
+          ENDIF
+
 ! Reset Sw Pos
 
           CurMAFdata%SciMIF(MIF)%SwMirPos = SwMirPos
 
        ENDDO
+
+!! Check for bright objects in Limb FOV and mark as "D"iscards
+
+       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV)
+       IF (VenusInLimbView) msg = 'Venus in Limb View' 
+       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV)
+       IF (MoonInLimbView) msg = 'Moon in Limb View'
+       IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
+          n = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+               TRIM(msg)//' at '//asciiUTC)
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+          DO n = 0, CurMAFdata%last_MIF
+             IF (CurMAFdata%LimbView%MoonInFOV(n) .OR. &
+                  CurMAFdata%LimbView%VenusInFOV(n)) THEN
+                CurMAFdata%SciMIF(n)%SwMirPos = discard
+             ENDIF
+          ENDDO
+       ENDIF
 
     ENDDO
 
@@ -201,6 +247,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/11/10 15:36:11  perun
+! Check for "Bright Objects" in FOV; check encoder for good range (-/+ 6.0)
+!
 ! Revision 2.4  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
