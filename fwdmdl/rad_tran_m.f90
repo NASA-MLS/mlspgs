@@ -671,7 +671,7 @@ contains
                          &  do_gl, gl_inds, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
                          &  ds_dh, dh_dz_gw, ds_dz_gw, t_script, dt_scr_dt, &
-                         &  tau, i_stop, deriv_flags, d_delta_dt, drad_dt )
+                         &  tau, i_stop, deriv_flags, drad_dt )
 
     use GLNP, only: NG
     use MLSCommon, only: RP, IP
@@ -734,10 +734,6 @@ contains
 !                                             derivatives to do
 
 ! Outputs
-
-    real(rp), intent(out) :: d_delta_dt(:,:) ! incremental opacity derivatives,
-!                                             in case the polarized model
-!                                             needs them.  path x sve.
     real(rp), intent(out) :: drad_dt(:)     ! derivative of radiances wrt
 !                                             mixing ratio state vector
 !                                             element. (K)
@@ -756,6 +752,8 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
+    real(rp) :: d_delta_dt(size(eta_zxp_c,1),size(eta_zxp_c,2)) ! incremental
+                                         ! opacity derivatives
     real(rp) :: fa, fb
     real(rp) :: S_DEl_S                  ! Running sum of Del_S
     real(rp) :: singularity(1:size(del_zeta)) ! integrand on left edge of coarse
@@ -1068,6 +1066,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.35  2004/02/03 02:47:55  vsnyder
+! Progress (hopefully) on polarized temperature derivatives
+!
 ! Revision 2.34  2004/01/23 01:16:05  vsnyder
 ! Repair mistakes in polarized radiance calculation:  CS_EXPMAT needs to be
 ! applied to incoptdepth_pol even if no GL is done, because the earlier

@@ -310,9 +310,6 @@ contains
     real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
                                            ! schlep from drad_tran_dt to
                                            ! get_d_deltau_pol_df.  Path x SVE.
-    real(rp), dimension(:,:), pointer :: D_DELTA_DT ! Incremental opacity derivative
-                                           ! schlep from drad_tran_dt to
-                                           ! get_d_deltau_pol_dt.  Path x SVE.
     real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
                                            ! path x state-vector-components
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
@@ -528,7 +525,7 @@ contains
       & d2xdxdt_tan, DACsStaging, DACsStaging2, dbeta_dn_path_c, &
       & dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, dbeta_dv_path_c, &
       & dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, d_delta_df, &
-      & d_delta_dt, ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
+      & ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_c, dh_dt_path_f, dhdz_glgrid, &
       & dhdz_gw_path, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_Cext, do_calc_Cext_zp, do_calc_dn, do_calc_dn_c, &
@@ -996,8 +993,6 @@ contains
 
       call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
       call allocate_test ( d_t_scr_dt,         npc, sv_t_len, 'd_t_scr_dt', &
-                                                              & moduleName )
-      call allocate_test ( d_delta_dt,         npc, sv_t_len, 'd_delta_dt', &
                                                               & moduleName )
       call allocate_test ( dbeta_dt_path_c,    npc, no_mol,   'dbeta_dt_path_c', &
                                                               & moduleName )
@@ -2033,7 +2028,7 @@ contains
                 & sps_beta_dbeta_f(:ngl), eta_zxp_t_f(:ngl,:),                &
                 & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path, &
                 & t_script(1:npc), d_t_scr_dt(1:npc,:), tau(1:npc), i_stop,   &
-                & grids_tmp%deriv_flags, d_delta_dt(1:npc,:), drad_dt )
+                & grids_tmp%deriv_flags, drad_dt )
               k_temp_frq(frq_i,:) = drad_dt
 
             else ! FwdModelConf%polarized
@@ -2058,7 +2053,7 @@ contains
                 & h_path_c(1:npc), h_path_f(:ngl), dh_dt_path_c(1:p_stop,:),  &
                 & dh_dt_path_f(:ngl,:), Req + one_tan_ht(1), dh_dt_path(brkpt,:), &
                 & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
-                & d_delta_dt(1:p_stop,:), de_dt(:,:,1:p_stop,:) )
+                & de_dt(:,:,1:p_stop,:) )
 
               ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
               ! and DE / DT.
@@ -2702,7 +2697,6 @@ contains
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
-      call deallocate_test ( d_delta_dt,      'd_delta_dt',      moduleName )
       call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
       call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
       call deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', moduleName )
@@ -3044,6 +3038,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.196  2004/03/01 19:22:14  jonathan
+! following the changes made to load_one_item
+!
 ! Revision 2.195  2004/02/14 00:23:48  vsnyder
 ! New DACS convolution algorithm
 !
