@@ -1,9 +1,8 @@
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-Module Bill_GasAbsorption
+module Bill_GasAbsorption
 
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   implicit NONE
   private
   public :: Get_Beta_Bill
@@ -25,7 +24,7 @@ contains
 !==============================================================
 
     use Get_Beta_Path_m, only: CREATE_BETA
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
       & DESTROYCOMPLETESLABS
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
@@ -75,23 +74,23 @@ contains
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
     Integer(ip) :: n_sps, i
-    integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
-    Integer(ip) :: status
-    real(rp) :: bb, WC(2), tanh1
+    real(rp) :: bb, tanh1
     real(r8), parameter :: Boltzmhz2 = 0.5 / h_over_k
     logical :: Do_1D
 
 !-----------------------------------------------------------------------------
-    WC= 0._r8
-    IF (RH /= 100.0_r8) THEN
-       VMR_H2O = RH                     ! RH HERE IS WATER VAPOR MIXING RATIO
-       VP = VMR_H2O*PB                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
-       P = PB - VP                      ! PRESSURE, P IS DRY-AIR PRESSURE
-    ELSE IF (VMR_H2O == 100.0_r8) THEN
-       CALL RHtoEV ( T, 100.0_r8, VP )  ! RH HERE IS 100% RELATIVE HUMIDITY 
+    if ( rh == 0.0_r8 ) then
+      p = pb
+      vmr_h2o = vp / max(1.e-19_r8, p)
+    else if ( rh == 110.0_r8 ) then
+       call RHtoEV ( T, rh, VP )
        P = PB - VP
-       VMR_H2O = VP / max(1.e-19_r8, P)
-    END IF
+       vmr_h2o = vp / max(1.e-19_r8, p)
+    else
+       vmr_h2o = rh                     ! RH HERE IS WATER VAPOR MIXING RATIO
+       vp = vmr_h2o*pb                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+       p = pb - vp                      ! PRESSURE, P IS DRY-AIR PRESSURE
+    end if
 
     VMR_O2     = 0.2095_r8
     VMR_N2     = 0.805_r8
@@ -106,13 +105,7 @@ contains
 
     n_sps = Size(Catalog)
 
-    allocate ( gl_slabs(1,n_sps), stat=status )
-    if ( status /= 0 ) &
-      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // ' gl_slabs ')
-    do i = 1, n_sps
-      Call AllocateOneSlabs ( gl_slabs(1, i), size(Catalog(i)%Lines) )
-    enddo
+    call allocateSlabs ( gl_slabs, 1, catalog, moduleName )
 
                               ! Bill uses km/sec 
     myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
@@ -163,9 +156,12 @@ contains
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-End Module Bill_GasAbsorption
+end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.23  2003/07/09 00:39:51  vsnyder
+! Remove three unused variables
+!
 ! Revision 1.22  2003/07/09 00:00:20  vsnyder
 ! Remove arrays known to have length 1
 !
