@@ -81,7 +81,7 @@ contains
     use Physics, only: H_OVER_K
     use PointingGrid_m, only: POINTINGGRIDS
     use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, &
-      & DRAD_TRAN_DX, RAD_TRAN_CLD
+      & DRAD_TRAN_DX
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
     use ScatSourceFunc, only: T_SCAT,  Interp_Tscat,  Convert_Grid
     use SpectroscopyCatalog_m, only: CATALOG_T
@@ -183,6 +183,7 @@ contains
 
     logical :: Any_Der                  ! temp_der .or. atmos_der .or. spect_der
     logical :: cld_fine = .false.
+    logical :: do_cld = .false.
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Update                   ! Just update radiances etc.
 
@@ -310,6 +311,9 @@ contains
     real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
                                            ! schlep from drad_tran_dt to
                                            ! get_d_deltau_pol_df.  Path x SVE.
+!    real(rp), dimension(:,:), pointer :: D_DELTA_DT ! Incremental opacity derivative
+!                                           ! schlep from drad_tran_dt to
+!                                           ! get_d_deltau_pol_dt.  Path x SVE.
     real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
                                            ! path x state-vector-components
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
@@ -477,6 +481,7 @@ contains
 !  The 'all_radiometers grid file' approach variables declaration:
 
     real(rp) :: max_ch_freq_grid, min_ch_freq_grid
+    real(r8) :: TOL = 1.D-190
 
 ! *** Beta & Molecules grouping variables:
     integer, dimension(:), pointer :: mol_cat_index
@@ -713,8 +718,8 @@ contains
       call allocate_test ( scat_src%values, n_t_zeta, &
       & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
 
-      call allocate_test ( scat_alb%values, n_t_zeta, 1, 'scat_alb', moduleName )
-      call allocate_test (  cld_ext%values, n_t_zeta, 1, 'cld_ext', moduleName )
+      call allocate_test ( scat_alb%values, n_t_zeta, 2, 'scat_alb', moduleName )
+      call allocate_test (  cld_ext%values, n_t_zeta, 2, 'cld_ext', moduleName )
 
       if ( size(FwdModelConf%molecules) .lt. 2 ) then
          !   make sure we have enough molecules
@@ -1642,7 +1647,10 @@ contains
 
           do_gl = .false.
 
+          do_cld = .true. !JJ !for Jonathan use Only
+
           if ( FwdModelConf%incl_cld ) then
+!          if ( do_cld ) then !JJ
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
@@ -1664,18 +1672,18 @@ contains
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
               & fwdModelConf, .false., .true. )
 
-            call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values),              &
+            call allocate_test ( do_calc_tscat, no_ele, size(grids_tscat%values),           &
                                & 'do_calc_tscat', moduleName )
 
-            call allocate_test ( do_calc_tscat_zp, max_ele, grids_tscat%p_len,                  &
+            call allocate_test ( do_calc_tscat_zp, no_ele, grids_tscat%p_len,               &
                                & 'do_calc_tscat_zp', moduleName )
 
-            call allocate_test ( eta_tscat,     max_ele, size(grids_tscat%values),              &
+            call allocate_test ( eta_tscat,     no_ele, size(grids_tscat%values),           &
                                & 'eta_tscat',     moduleName )
                         
-            call allocate_test ( eta_tscat_zp,  max_ele, grids_tscat%p_len,                     &
+            call allocate_test ( eta_tscat_zp,  no_ele, grids_tscat%p_len,                  &
                                & 'eta_tscat_zp',  moduleName )
-            call allocate_test ( tscat_path,    max_ele, fwdModelConf%num_scattering_angles, &
+            call allocate_test ( tscat_path,    no_ele, fwdModelConf%num_scattering_angles, &
                                  & 'tscat_path',  moduleName )
 
             call comp_eta_docalc_no_frq ( Grids_Tscat, z_path(1:no_ele), &
@@ -1688,29 +1696,45 @@ contains
               & do_calc_tscat_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
               & do_calc_tscat(1:no_ele,:), eta_tscat(1:no_ele,:) )
 
-            call allocate_test ( tt_path, max_ele, 1, 'tt_path', moduleName )
+            call allocate_test ( tt_path, no_ele, 1, 'tt_path', moduleName )
 
             ! project Tscat onto LOS
-
             call interp_tscat ( tscat_path(1:no_ele,:), Scat_ang(:), phi_path(1:no_ele), tt_path )
 
             if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
 
               scat_alb%template = temp%template
-              cld_ext%template = temp%template
+              cld_ext%template  = temp%template
+                            
+              call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false.)
+              call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false.)             
 
-              call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
-              call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false. )
+              do i=1, size(grids_salb%values)
+                 if ( abs(grids_salb%values(i)) < TOL) then
+                         grids_salb%values(i) = 0.0
+                 end if
+                 if ( abs(grids_cext%values(i)) < TOL) then
+                         grids_cext%values(i) = 0.0
+                 end if
+              enddo
 
-              call allocate_test (do_calc_salb,max_ele,size(grids_salb%values),'do_calc_salb',moduleName)
-              call allocate_test (eta_salb, max_ele, size(grids_salb%values), 'eta_salb', moduleName)
-              call allocate_test (eta_salb_zp,  max_ele, grids_salb%p_len, 'eta_salb_zp', moduleName)
-              call allocate_test ( salb_path,    max_ele, 1, 'salb_path', moduleName )
+              call allocate_test (do_calc_salb, no_ele, size(grids_salb%values),'do_calc_salb',moduleName)
 
-              call allocate_test (do_calc_cext,max_ele,size(grids_cext%values),'do_calc_cext',moduleName)
-              call allocate_test (eta_cext, max_ele, size(grids_cext%values), 'eta_cext', moduleName)
-              call allocate_test (eta_cext_zp, max_ele, grids_cext%p_len,  'eta_cext_zp', moduleName)
-              call allocate_test (cext_path,  max_ele, 1, 'cext_path', moduleName)
+              call allocate_test (do_calc_salb_zp, no_ele, grids_salb%p_len,               &
+                                 & 'do_calc_salb_zp', moduleName )
+
+              call allocate_test (eta_salb,    no_ele, size(grids_salb%values), 'eta_salb', moduleName)
+
+              call allocate_test (eta_salb_zp, no_ele, grids_salb%p_len, 'eta_salb_zp', moduleName)
+
+              call allocate_test ( salb_path,  no_ele, 1, 'salb_path', moduleName )
+
+              call allocate_test (do_calc_cext,no_ele,size(grids_cext%values),'do_calc_cext',moduleName)
+              call allocate_test (do_calc_cext_zp, no_ele, grids_cext%p_len,               &
+                                 & 'do_calc_cext_zp', moduleName )
+              call allocate_test (eta_cext,    no_ele, size(grids_cext%values), 'eta_cext', moduleName)
+              call allocate_test (eta_cext_zp, no_ele, grids_cext%p_len,  'eta_cext_zp', moduleName)
+              call allocate_test (cext_path,   no_ele, 1, 'cext_path', moduleName)
 
               call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:no_ele), &
                 &  phi_path(1:no_ele), eta_salb_zp(1:no_ele,:), &
@@ -1718,8 +1742,8 @@ contains
 
               Frq=0.0
               call comp_sps_path_frq ( Grids_salb, firstSignal%lo, thisSideband, &
-                & Frq, eta_zp(1:no_ele,:), &
-                & do_calc_zp(1:no_ele,:), salb_path(1:no_ele,:),      &
+                & Frq, eta_salb_zp(1:no_ele,:), &
+                & do_calc_salb_zp(1:no_ele,:), salb_path(1:no_ele,:),          &
                 & do_calc_salb(1:no_ele,:), eta_salb(1:no_ele,:) )
 
               call comp_eta_docalc_no_frq ( Grids_cext, z_path(1:no_ele), &
@@ -1728,8 +1752,8 @@ contains
 
               Frq=0.0
               call comp_sps_path_frq ( Grids_cext, firstSignal%lo, thisSideband, &
-                & Frq, eta_zp(1:no_ele,:), &
-                & do_calc_zp(1:no_ele,:), cext_path(1:no_ele,:),      &
+                & Frq, eta_cext_zp(1:no_ele,:), &
+                & do_calc_cext_zp(1:no_ele,:), cext_path(1:no_ele,:),      &
                 & do_calc_cext(1:no_ele,:), eta_cext(1:no_ele,:) )
 
               call convert_grid ( salb_path(1:no_ele,:), cext_path(1:no_ele,:),   &
@@ -1739,10 +1763,10 @@ contains
 
             else                           ! re-compute cext and w0 along the LOS
 
-              call get_beta_path_cloud ( Frq,                              &
-                &  p_path(1:no_ele), t_path(1:no_ele),                     &
-                &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),    &
-                &  w0_path_c(1:npc),        &
+              call get_beta_path_cloud ( Frq,                               &
+                &  p_path(1:no_ele), t_path(1:no_ele), tt_path(1:no_ele,:), &
+                &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),     &
+                &  w0_path_c(1:npc),  tt_path_c(1:npc),      &
                 &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf )
 
             end if
@@ -1759,7 +1783,7 @@ contains
 
             call path_contrib ( incoptdepth(1:npc), e_rflty, &
               & fwdModelConf%tolerance, do_gl(1:npc) )
-
+          
           else ! Not cloud model
 
             do j = 1, npc ! Don't trust compilers to fuse loops
@@ -1767,6 +1791,10 @@ contains
                                     & beta_path_c(j,:) )
 
               incoptdepth(j) = alpha_path_c(j) * del_s(j)
+
+              tt_path_c(j) =0.0
+              w0_path_c(j) =0.0
+
             end do
 
             if ( .not. FwdModelConf%polarized ) then
@@ -1874,16 +1902,16 @@ contains
           end do
 
           ! Needed by both rad_tran and rad_tran_pol
-          call two_d_t_script ( t_path_c(1:npc), spaceRadiance%values(1,1), &
-            & frq, t_script(1:npc) )
+          call two_d_t_script ( t_path_c(1:npc), tt_path_c(1:npc),  &  
+            & w0_path_c, spaceRadiance%values(1,1), frq,            &
+            & t_script(1:npc) )
 
           if ( .not. FwdModelConf%polarized ) then
+
 
           ! Compute SCALAR radiative transfer ---------------------------------------
 
           ! Compute radiative transfer ---------------------------------------
-
-            if ( .not. FwdModelConf%incl_cld ) then        ! Clear Sky Rad
 
               call rad_tran ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,     &
                 & del_zeta(1:npc), alpha_path_c(1:npc), ref_corr(1:npc),   &
@@ -1891,20 +1919,9 @@ contains
                 & dsdz_gw_path, t_script(1:npc),  &
                 & tau(1:npc), RadV(frq_i), i_stop )
 
-            else                                           ! Include scattering source
-
-              call rad_tran_cld ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, &
-                & del_zeta(1:npc), alpha_path_c(1:npc), ref_corr(1:npc),   &
-                & do_gl(1:npc), incoptdepth(1:npc), alpha_path_f(1:ngl),   &
-                & dsdz_gw_path, t_script(1:npc),tau(1:npc), RadV(frq_i),   &
-                & i_stop, tt_path_c(1:npc), w0_path_c(1:npc)  )
-
-            end if
-
           else ! Polarized model
 
             i_stop = npc ! needed by drad_tran_df
-
 
             ! get the corrections to integrals for layers that need gl for
             ! the polarized species
