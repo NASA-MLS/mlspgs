@@ -230,6 +230,7 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
     integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
     integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
+    integer, parameter :: MissingDataInGrid = BadRefractFill + 1
 
     real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
@@ -1814,6 +1815,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: instance,surf            ! Loop counter
       integer :: instIndex,surfIndex      ! Indices
+      real(rv) :: newValue
 
       ! Executable code
       errorCode = 0
@@ -1831,13 +1833,17 @@ contains ! =====     Public Procedures     =============================
 
         do surf = 1, quantity%template%noSurfs
           if (.not. quantity%template%coherent) surfIndex=surf
-          call l3ascii_interp_field(grid, quantity%values(surf,instance), &
+          call l3ascii_interp_field(grid, newValue, &
             & pressure=10.0**(-quantity%template%surfs(surf,instIndex)), &
             & lat=quantity%template%geodLat(surfIndex,instance), &
             & lon=quantity%template%lon(surfIndex,instance), &
             & lst=quantity%template%solarTime(surfIndex,instance), &
             & sza=quantity%template%solarZenith(surfIndex,instance), &
             & date=quantity%template%time(surfIndex,instance))
+          if ( newValue >= nearest ( grid%missingValue, -1.0 ) .and. &
+            &  newValue <= nearest ( grid%missingValue,  1.0 ) ) &
+            & errorCode = MissingDataInGrid
+          quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
     end subroutine FillVectorQuantityFromGrid
@@ -4832,6 +4838,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " command found zero profiles.", advance='yes' )
       case ( badRefractFill )
         call output ( " missing information for phiTan refract fill", advance='yes' )
+      case ( missingDataInGrid )
+        call output ( " missing/bad data points in grid for fill", advance='yes' )
       case default
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
@@ -4850,6 +4858,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.186  2003/02/28 02:26:23  livesey
+! Added checking for bad/missing data in fill from gridded data.
+!
 ! Revision 2.185  2003/02/27 00:38:52  livesey
 ! Better handling of missing length scale in FillCovariance
 !
