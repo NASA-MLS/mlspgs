@@ -228,7 +228,7 @@ contains ! ====     Public Procedures     ==============================
         call add_to_section_timing ( 'chunk_divide', t1)
 
       case ( z_algebra )
-        call algebra ( son, vectors, matrices )
+        call algebra ( son, vectors, matrices, chunks(1), forwardModelConfigDatabase )
         ! --------------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
@@ -283,7 +283,7 @@ subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_algebra )
-                call algebra ( son, vectors, matrices )
+                call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
               case ( z_construct )
                 if ( .not. checkPaths) &
                 & call MLSL2Construct ( son, l1bInfo, processingRange, &
@@ -460,6 +460,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.125  2004/02/10 19:29:36  pwagner
+! Prints time for processing each chunk at chunks end
+!
 ! Revision 2.124  2004/01/17 00:28:09  vsnyder
 ! Provide for Algebra section
 !
