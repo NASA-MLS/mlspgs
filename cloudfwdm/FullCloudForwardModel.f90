@@ -574,9 +574,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        iCloudHeight = 0
        do i = 1, noCldSurf
 !          if(state_ext%values(i,instance) > 1.e-6_r8) then
+         if(instance > 2) then
           if(IWC1%values(i,instance-2) > 0.0_r8) then
-            iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
+            iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP
           endif
+         endif
        enddo
 
        CloudHeight = 18.e3_r8     ! meters
@@ -748,14 +750,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          & 1._r8*(i-1)/nfine/noInstances * &
          & (maxval(state_ext%template%phi(1,:)) - minval(state_ext%template%phi(1,:)))
       end do
-      
-      do mif = 1, noMIFs      
-        !----------------------------------
-        ! find intervals of stateQ at maf
-        !----------------------------------
-        dz = abs(state_ext%template%surfs(2,instance)-state_ext%template%surfs(1,instance))
-        dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
 
+      !----------------------------------
+      ! find intervals of stateQ at maf
+      !----------------------------------
+      dz = abs(state_ext%template%surfs(2,1)-state_ext%template%surfs(1,1))
+      if(instance < noInstances) &
+         & dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
+      
+      do mif = 1, noMIFs
+      ! only for tangent heights less than the top level of retrieval
+      if(gph%values(noCldSurf,instance) > zt(mif)) then
         !------------------------------
         ! find z for given phi_fine
         !------------------------------
@@ -792,23 +797,23 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !-----------------------------------------------
         ! find the total length for this tangent height
         !-----------------------------------------------
-        ds_tot = 2._r8*sqrt((earthradius%values(1,maf)+ & 
-            & gph%values(noCldSurf,instance))**2 - &
-            & (earthradius%values(1,maf)+zt(mif))**2)
+        ds_tot = 2._r8*sqrt(2._r8*earthradius%values(1,maf)* & 
+            & (gph%values(noCldSurf,instance)-zt(mif)))
 
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
         !----------------------------------------------------------
          do i = 1,noInstances             ! loop over profile
-         do j = 1,noCldSurf                  ! loop over surface
-         do k = 1, nfine*noInstances      ! sum up all the lengths
-           if(abs(zp_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
+         do j = 1,noCldSurf               ! loop over cloudQty surface
+         do k = 1,nfine*noInstances       ! sum up all the lengths
+           if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2. &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noCldSurf) = &
            & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/ds_tot
          end do
          end do
-         end do 
+         end do
+      end if
       end do         ! mif
       
       Deallocate( phi_fine, stat=status )
@@ -817,7 +822,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       Deallocate( ds_fine, stat=status )
       Deallocate( w_fine, stat=status )
       Deallocate( s_fine, stat=status )
-
+      
     end if     ! doHighZt
 
     !--------------------------------------------
@@ -906,6 +911,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.72  2001/11/02 01:14:17  dwu
+! correction in high cloud Jacobian
+!
 ! Revision 1.71  2001/11/02 01:00:13  jonathan
 ! add IWC1
 !
