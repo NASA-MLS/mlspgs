@@ -8,7 +8,7 @@ module PFAData_m
 
   implicit NONE
   private
-  public :: Get_PFAdata_from_l2cf, Make_PFAData, Write_PFAData
+  public :: Get_PFAdata_from_l2cf, Make_PFAData, Read_PFAData, Write_PFAData
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -73,7 +73,7 @@ contains ! =====     Public Procedures     =============================
     real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
     logical, pointer :: Channels(:)
     integer :: dAbsDncTree, dAbsDnuTree, dAbsDwcTree
-    integer :: Field, FileIndex, FilterFileIndex ! Where in the tree is the filename?
+    integer :: Field, FileIndex ! Where in the tree is the filename?
     character(255) :: FileName, FileType ! Formatted(default), Unformatted
     character(255) :: FilterFile ! From PFAData file, not from L2cf
     logical :: Got(field_first:field_last)
@@ -386,6 +386,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Create_PFAData_m, only: Create_PFAData
     use Expr_m, only: Expr
+    use FilterShapes_m, only: FilterShapes
     use Init_Tables_Module, only: F_LOSVEL, F_Molecules, F_Signals, &
       & F_Temperatures, F_VGrid, L_Zeta
     use Intrinsic, only: PHYQ_Velocity
@@ -418,7 +419,8 @@ contains ! =====     Public Procedures     =============================
     double precision :: Values(2) ! of losVel
 
     ! Error codes
-    integer, parameter :: NoFolded = 1
+    integer, parameter :: NoFilterShapes = 1
+    integer, parameter :: NoFolded = noFilterShapes + 1
     integer, parameter :: NoGroup = noFolded + 1
     integer, parameter :: NotVelocity = noGroup + 1
     integer, parameter :: NotZeta = notVelocity + 1
@@ -494,6 +496,7 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( subtree(1,son), notZeta )
       end select
     end do ! i
+    if ( .not. associated(filterShapes) ) call announce_error ( root, noFilterShapes )
     if ( error /= 0 ) return
 
     call decorate ( root, &
@@ -511,6 +514,8 @@ contains ! =====     Public Procedures     =============================
       error = 1
       call startErrorMessage ( where )
       select case ( what )
+      case ( noFilterShapes )
+        call output ( 'Filter shapes are required to compute PFA', advance='yes' )
       case ( noFolded )
         call output ( 'Folded sidaband PFA not allowed: ' )
         call output ( trim(string), advance='yes' )
@@ -528,6 +533,116 @@ contains ! =====     Public Procedures     =============================
     end subroutine Announce_Error
 
   end subroutine Make_PFAData
+
+  ! -----------------------------------------------  Read_PFAData  -----
+  subroutine Read_PFAData ( Root )
+
+    ! Read PFA data.  If the file= field is a range, the second element
+    ! specifies the format.  Default is "UNFORMATTED".
+
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use Init_Tables_Module, only: F_AllPFA, F_File, F_Molecules, F_Signals
+    use PFADataBase_m, only: Read_PFADatabase
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: MaxSigLen
+    use MLSStrings, only: Capitalize
+    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use String_Table, only: Get_String
+    use Tree, only: Node_Id, NSons, Sub_Rosa, Subtree
+    use Tree_Types, only: N_String
+
+    integer, intent(in) :: Root ! of the MakePFA subtree, below name if any
+
+    logical :: AllPFA
+    logical :: Error
+    character(255) :: FileName, FileType ! HDF5(default), Unformatted
+    integer :: Gson, I, J
+    character(31), pointer :: Molecules(:)
+    character(maxSigLen), pointer :: Signals(:)
+    integer :: Son
+
+    integer, parameter :: BadFileType = 1 ! Neither HDF5 nor Unformatted
+    integer, parameter :: NoRange = badFileType + 1 ! Range not allowed
+    integer, parameter :: NoSignals = noRange + 1   ! Need Signals or AllPFA
+
+    error = .false.
+    nullify ( molecules, signals )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      select case ( get_field_id(son) )
+      case ( f_allPFA )
+        allPFA = get_boolean(son)
+      case ( f_file )
+        j = subtree(2,son)
+        fileType = 'HDF5'
+        if ( node_id(j) /= n_string ) then ! must be n_*colon
+          call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
+          fileType = capitalize(fileType)
+          if ( fileType /= 'HDF5' .and. fileType /= 'UNFORMATTED' ) &
+            & call announce_error ( subtree(2,j), badFileType )
+          j = subtree(1,j)
+        end if
+        call get_string ( sub_rosa(j), fileName, strip=.true. )
+      case ( f_molecules )
+        call fillArray ( son, molecules, 'Molecules' )
+      case ( f_signals )
+        call fillArray ( son, signals, 'Signals' )
+      end select
+    end do
+    if ( .not. associated(molecules) ) &
+      & call allocate_test ( molecules, 0, 'Molecules', moduleName )
+    if ( .not. associated(signals) ) then
+      if ( .not. allPFA ) then
+        call announce_error ( root, noSignals )
+      else
+        call allocate_test ( signals, 0, 'Signals', moduleName )
+      end if
+    end if
+    if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error trying to read PFAData' )
+    call read_PFADatabase ( fileName, fileType, molecules, signals, allPFA )
+    call deallocate_test ( molecules, 'Molecules', moduleName )
+    call deallocate_test ( signals, 'Signals', moduleName )
+
+  contains
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( Where, What )
+      use MoreTree, only: StartErrorMessage
+      use Output_m, only: Output
+      integer, intent(in) :: Where, What
+      error = .true.
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( badFileType )
+        call output ( 'Unsupported file type', advance='yes' )
+      case ( noRange )
+        call output ( 'Range not allowed', advance='yes' )
+      case ( noSignals )
+        call output ( 'Need either Signals or AllPFA=true', advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+    ! ................................................  FillArray  .....
+    subroutine FillArray ( Where, Array, ArrayName )
+      use MLSStrings, only: Capitalize
+      use Tree, only: Node_Kind, Pseudo
+      integer, intent(in) :: Where ! in the tree
+      character(len=*), pointer :: Array(:)
+      character(len=*), intent(in) :: ArrayName
+      integer :: Gson, J
+      call allocate_test ( array, nsons(son)-1, arrayName, moduleName )
+      do j = 2, nsons(where)
+        gson = subtree(j,where)
+        if ( node_kind(gson) == pseudo ) then
+          call get_string ( sub_rosa(gson), array(j-1), strip=.true. )
+          array(j-1) = capitalize(array(j-1))
+        else
+          call announce_error ( where, noRange )
+        end if
+      end do
+    end subroutine FillArray
+
+  end subroutine Read_PFAData
 
   ! ----------------------------------------------  Write_PFAData  -----
   subroutine Write_PFAData ( Root, Error )
@@ -621,6 +736,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.12  2004/12/31 02:41:56  vsnyder
+! Working on read/write PFA database
+!
 ! Revision 2.11  2004/12/13 23:58:48  vsnyder
 ! Add Make_PFAData; add HDF5 to Write_PFAData
 !

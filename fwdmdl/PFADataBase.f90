@@ -6,7 +6,7 @@ module PFADataBase_m
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
 
   use MLSCommon, only: R4
-  use MLSSignals_m, only: Signal_T
+  use MLSSignals_m, only: MaxSigLen, Signal_T
   use Molecules, only: First_Molecule, Last_Molecule
   use VGridsDatabase, only: VGrid_t
 
@@ -28,7 +28,7 @@ module PFADataBase_m
     integer :: Name = 0                            ! of the pfaData spec
     integer :: FilterFile = 0                      ! Index in string table
     integer, pointer :: Molecules(:) => NULL()     ! Molecule indices
-    character(len=127) :: Signal                   ! The signal string
+    character(len=maxSigLen) :: Signal             ! The signal string
     integer :: SignalIndex                         ! in Signals database
     type(signal_t) :: TheSignal                    ! The signal, with channels
                                                    ! and sidebands added
@@ -109,7 +109,6 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  Dump_PFADataBase  -----
   subroutine Dump_PFADataBase ( Details )
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Output_m, only: Output
     integer, intent(in), optional :: Details
     integer :: I, J
     if ( .not. associated(pfaData) ) &
@@ -228,8 +227,32 @@ contains ! =====     Public Procedures     =============================
   end function PFADataOrderIndexed
 
   ! -------------------------------------------  Read_PFADatabase  -----
-  subroutine Read_PFADatabase ( FileName )
+  subroutine Read_PFADatabase ( FileName, FileType, Molecules, Signals, &
+    & AllPFA )
+  ! Read the PFA data from FileName.  If FileType is UNFORMATTED (case
+  ! insensitive) several file names are constructed from the Cartesian
+  ! product of Molecules and Signals.  If UseMolecules is absent or present
+  ! but false, the output file name consists of the part of FileName before
+  ! "$" (or all of it if "$" does not appear, followed by Signals(i),
+  ! followed by the part of FileName after the "$".  If UseMolecules is
+  ! present and true, instead of the signal, the embedded part consists of
+  ! Molecules(j), followed by an underscore, followed by the signal.  If
+  ! FileType is HDF5 (case insensitive) the file name is taken literally
+  ! from FileName.  If AllPFA is present and true, all PFA data are read
+  ! from FileName.  If AllPFA is absent or present but false and Molecules
+  ! has nonzero size the PFA data for the Cartesian product of Molecules and
+  ! Signals are read from FileName.  Otherwise the PFA data for all molecules
+  ! for each specified signal are read from FileName.
+
     character(len=*), intent(in) :: FileName
+    character(len=*), intent(in) :: FileType ! Upper case, HDF5 or UNFORMATTED
+    character(len=*), intent(in) :: Molecules(:), Signals(:)
+    logical, intent(in), optional :: AllPFA ! Only if FileType == HDF5
+    integer :: I
+
+    if ( fileType == 'HDF5' ) then
+    else if ( fileType == 'UNFORMATTED' ) then
+    end if
   end subroutine Read_PFADatabase
 
   ! -------------------------------------------  Sort_PFADatabase  -----
@@ -283,12 +306,18 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Write_PFADatabase  -----
   subroutine Write_PFADatabase ( FileName, FileType )
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: MakeHDF5Attribute
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStrings, only: Capitalize
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+    use String_Table, only: Get_String
+    use HDF5, only: H5FCreate_F, H5FClose_F, & ! HDF5 USE intentionally last
+      & H5F_ACC_TRUNC_F, H5GClose_F, H5GCreate_F
     character(len=*), intent(in) :: FileName, FileType
-    integer :: FileID
+    integer :: FileID, GroupID
     integer :: I, IOSTAT
+    character(len=31) :: Molecules(size(pfaData))
+
     if ( capitalize(fileType) == 'HDF5' ) then ! open HDF5 file here
       call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, fileID, &
         & iostat )
@@ -297,6 +326,18 @@ contains ! =====     Public Procedures     =============================
       do i = 1, size(pfaData)
         call write_PFADatum ( pfadata(i), FileName, FileType, lun=fileID )
       end do
+      ! Make an Index group
+      call h5gCreate_f ( fileID, 'Index', groupID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create hdf5 Index group in ' // trim(fileName) // '.' )
+      call MakeHDF5Attribute ( groupID, 'Signals', pfaData%signal )
+      do i = 1, size(pfaData)
+        call get_string ( lit_indices(pfaData(i)%molecules(1)), molecules(i) )
+      end do
+      call MakeHDF5Attribute ( groupID, 'Molecules', molecules )
+      call h5gClose_F ( groupID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close hdf5 Index group in ' // trim(fileName) // '.' )
       call H5FClose_F ( fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & 'Unable to close hdf5 PFA file ' // trim(fileName) // '.' )
@@ -305,6 +346,7 @@ contains ! =====     Public Procedures     =============================
         call write_PFADatum ( pfadata(i), FileName, FileType, useMolecule=.true. )
       end do 
     end if
+
   end subroutine Write_PFADatabase
 
   ! ---------------------------------------------  Write_PDADatum  -----
@@ -329,8 +371,8 @@ contains ! =====     Public Procedures     =============================
     use Physics, only: SpeedOfLight
     use String_Table, only: Get_String, String_Length
     use Toggles, only: Switches
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F, &
-      & H5GCLOSE_F, H5GCREATE_F
+    use HDF5, only: H5FCreate_F, H5FClose_F, & ! HDF5 USE intentionally last
+      & H5F_ACC_TRUNC_F, H5GClose_F, H5GCreate_F
 
     type(PFAData_t), intent(in) :: PFADatum
     character(len=*), intent(in) :: FileName, FileType
@@ -350,18 +392,19 @@ contains ! =====     Public Procedures     =============================
     character(len=31) :: Molecules(size(pfaDatum%molecules))
     character(len=5) :: What
 
-    doMolecule = .false.
-    if ( present(useMolecule) ) doMolecule = useMolecule
-
-    if ( doMolecule ) then
-      call get_string ( lit_indices(pfaDatum%molecules(1)), molecule )
-      molecule = trim(molecule) // '_'
-    else
-      molecule = ''
-    end if
 
     if ( present(lun) ) myLun = lun
     if ( capitalize(fileType) == 'UNFORMATTED' ) then
+      doMolecule = .false.
+      if ( present(useMolecule) ) doMolecule = useMolecule
+
+      if ( doMolecule ) then
+        call get_string ( lit_indices(pfaDatum%molecules(1)), molecule )
+        molecule = trim(molecule) // '_'
+      else
+        molecule = ''
+      end if
+
       if ( .not. present(lun) ) then
         i = index(fileName,'$')
         if ( i == 0 ) then
@@ -478,6 +521,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.12  2004/12/31 02:41:24  vsnyder
+! Working on read/write PFA database
+!
 ! Revision 2.11  2004/12/13 23:59:37  pwagner
 ! Re-ordered use hdf5 statements to avoid familiar Lahey internal compiler error
 !
