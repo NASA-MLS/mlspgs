@@ -48,7 +48,8 @@ contains ! =====     Public Procedures     =============================
     use Expr_M, only: EXPR
     use GriddedData, only: GriddedData_T
     ! We need many things from Init_Tables_Module.  First the fields:
-    use INIT_TABLES_MODULE, only: F_A, F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
+    use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
+      & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
@@ -275,6 +276,7 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
     type (Matrix_T), pointer :: ONEMATRIX
 
+    logical :: ALLOWMISSING             ! Flag from l2cf
     integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity    
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
@@ -440,6 +442,7 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      allowMissing = .false.
       dontMask = .false.
       extinction = .false.
       got= .false.
@@ -574,6 +577,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_a )
             aVecIndex = decoration(decoration(subtree(1,gson)))
             aQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_allowMissing )
+            allowMissing = get_boolean ( gson )
           case ( f_aprioriPrecision )
             aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
             aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1252,7 +1257,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got(f_sourceGrid) ) &
             & call Announce_Error ( key,noSourceGridGiven )
           call FillVectorQuantityFromGrid &
-            & ( quantity, griddedDataBase(gridIndex), errorCode )
+            & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
@@ -1806,10 +1811,11 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillCovariance
 
     !=============================== FillVectorQuantityFromGrid ============
-    subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
+    subroutine FillVectorQuantityFromGrid(quantity, grid, allowMissing, errorCode)
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (GriddedData_T), intent(in) :: GRID ! Grid to fill it from
+      logical, intent(in) :: ALLOWMISSING ! If set missing data in grid ok
       integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
       ! Local variables
@@ -1841,8 +1847,8 @@ contains ! =====     Public Procedures     =============================
             & sza=quantity%template%solarZenith(surfIndex,instance), &
             & date=quantity%template%time(surfIndex,instance))
           if ( newValue >= nearest ( grid%missingValue, -1.0 ) .and. &
-            &  newValue <= nearest ( grid%missingValue,  1.0 ) ) &
-            & errorCode = MissingDataInGrid
+            &  newValue <= nearest ( grid%missingValue,  1.0 ) .and. &
+            & .not. allowMissing ) errorCode = MissingDataInGrid
           quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
@@ -4858,6 +4864,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.187  2003/03/05 19:11:11  livesey
+! Added allowMissing capability to gridded fill.
+!
 ! Revision 2.186  2003/02/28 02:26:23  livesey
 ! Added checking for bad/missing data in fill from gridded data.
 !
