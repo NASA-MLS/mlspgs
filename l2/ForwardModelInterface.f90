@@ -45,6 +45,7 @@ module ForwardModelInterface
     & MLSMSG_Error
   use MLSNumerics, only: Hunt
   use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName
+  use Molecules, only: spec_tags
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output, Blanks
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
@@ -552,28 +553,6 @@ contains
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt)
 
-!
-!  Create a subset of the catalog composed only of those molecules to be 
-!  used for this run
-!
-    ALLOCATE(My_Catalog(FMI%n_sps),STAT=ier)
-    IF(ier /= 0) then
-      Print *,'** ALLOCATE Error: My_Catalog, STAT =',ier
-      goto 99
-    ENDIF
-!
-    do j = 1, FMI%n_sps
-      Spectag = FMI%Pfa_spectrum(j)%SPECTAG
-      do i = 1, Size(Catalog)
-        if(Catalog(i)%Spec_Tag == Spectag) then
-          My_Catalog(j) = Catalog(i)
-          EXIT
-        endif
-      end do
-    end do
-!      
-    print*,'Just some checks:',temp%template%noInstances, &
-      & radiance%template%noInstances, ptan%template%noInstances
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
@@ -597,6 +576,24 @@ contains
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
 
+    noSpecies = size(forwardModelConfig%molecules)
+    !  Create a subset of the catalog composed only of those molecules to be 
+    !  used for this run
+
+    ALLOCATE(My_Catalog(noSpecies),STAT=ier)
+    if (ier /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'my_catalog')
+
+    do j = 1, noSpecies
+      Spectag = spec_tags(forwardModelConfig%molecules(j))
+      do i = 1, Size(Catalog)
+        if(Catalog(i)%Spec_Tag == Spectag) then
+          My_Catalog(j) = Catalog(i)
+          exit
+        endif
+      end do
+    end do
+
     ! Work out what signal we're after
     signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
 
@@ -612,9 +609,6 @@ contains
     end do
     usedChannels = pack ( channelIndex, forwardModelConfig%sigInfo(1)%channelIncluded)
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
-
-    ! Look at the species
-    noSpecies = size(forwardModelConfig%molecules)
 
 !    Nptg = forwardModelConfig%tangentGrid%noSurfs
 
@@ -666,7 +660,6 @@ contains
     do maf = 1, noMAFs
       phi_tan = degToRad*temp%template%phi(1,maf)
          ! ??? For the moment, change this soon.
-      print*,'MAF ',maf,' phi_tan ',phi_tan
       geod_lat= degToRad*temp%template%geodLat(1,maf)
       call geoc_geod_conv(elvar(maf),orbIncline%values(1,1), &
         &  phi_tan,geod_lat, geoc_lat(maf),E_rad(maf))
@@ -718,8 +711,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    do maf = 3, 3
-      !do maf = 1, noMAFs
+    !do maf = 3, 3
+    do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
       phi_tan = degtorad*temp%template%phi(1,maf) !??? Choose better value later
@@ -767,8 +760,6 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
-!       print*,'Doing frequencies'
-!       print*,frequencies
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -817,7 +808,6 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-!       print*,'  Doing pointing:',ptg_i
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
@@ -840,7 +830,7 @@ contains
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
-        call get_beta_path(frequencies,Catalog,no_ele,z_path(ptg_i,maf), &
+        call get_beta_path(frequencies,My_Catalog,no_ele,z_path(ptg_i,maf), &
           &                t_path(ptg_i,maf),beta_path,                  &
           &                1.0e-3*losVel%values(1,maf),ier)
         if(ier /= 0) goto 99
@@ -869,7 +859,6 @@ contains
 
         ! ------------------------------- Begin loop over frequencies ------
         do frq_i = 1, noFreqs
-
           Frq = frequencies(frq_i)
 
           call Rad_Tran(elvar(maf), Frq, &
@@ -963,6 +952,7 @@ contains
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
 
+            print*,'Doing a vmr derivative'
             if ( forwardModelConfig%do_freq_avg) then
               do i = 1, noUsedChannels
                 ch = usedChannels(i)
@@ -1182,11 +1172,6 @@ contains
 905 format(4(2x,1pg15.8))
 
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
-!   print*,'At the end radiances are:'
-!   call dump(radiance%values)
-!  *** Zvi DEBUG   
-     if(i > -2) Stop
-!  *** END Zvi DEBUG   
 
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
@@ -1495,6 +1480,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.67  2001/04/07 01:38:22  livesey
+! Another interim working version
+!
 ! Revision 2.66  2001/04/06 21:53:40  vsnyder
 ! Move duplicate-field checking to init_tables
 !
