@@ -150,13 +150,22 @@ MODULE MLSFiles               ! Utility file routines
     ! Local variables
 
 	INTEGER, PARAMETER :: UNKNOWNFILEACCESSTYPE=-999
-	INTEGER, PARAMETER :: NOFREEUNITS=UNKNOWNFILEACCESSTYPE+1
+	INTEGER, PARAMETER :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
+	INTEGER, PARAMETER :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
+	INTEGER, PARAMETER :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+	INTEGER, PARAMETER :: FH_ON_ERROR=-99
+	INTEGER, PARAMETER :: KEYWORDLEN=12			! Length of keywords in OPEN(...)
 	CHARACTER (LEN=NameLen) :: myName
 	INTEGER(i4) :: myPC
 	INTEGER                       :: version, returnStatus
    LOGICAL       :: tiedup
-	CHARACTER (LEN=9) :: access, action, form, position, status
+	CHARACTER (LEN=KEYWORDLEN) :: access, action, form, position, status
 	INTEGER                       :: unit
+
+	! begin
+
+	! In case of premature return
+	theFileHandle = FH_ON_ERROR
 
 	IF(PRESENT(versionNum)) THEN
 		version = versionNum
@@ -168,10 +177,15 @@ MODULE MLSFiles               ! Utility file routines
 		myPC = thePC
 		returnStatus = Pgs_pc_getReference(thePC, version, &
               & myName)
-	ELSE
+	elseif(PRESENT(FileName)) then
 		myName = FileName
-		myPC = GetPCFromRef(FileName, PCBottom, PCTop, &
-  & caseSensitive, returnStatus, versionNum)
+		if(LowerCase(toolbox_mode(1:2)) == 'pg') then
+			myPC = GetPCFromRef(FileName, PCBottom, PCTop, &
+  &	 caseSensitive, returnStatus, versionNum)
+  		endif
+	else
+		ErrType = MUSTSUPPLYFILENAMEORPC
+		return
 	ENDIF
 	
 	select case (LowerCase(toolbox_mode(1:2)))
@@ -207,8 +221,7 @@ MODULE MLSFiles               ! Utility file routines
 		endif
 	
 	case('op')
-	
-	case default
+		theFileHandle = FH_ON_ERROR
 		if(FileAccessType == PGSd_IO_Gen_RSeqFrm) then
 			status = 'old'
 			access = 'sequential'
@@ -316,15 +329,33 @@ MODULE MLSFiles               ! Utility file routines
 			return
 		endif
 			
+		print*, 'Fortran opening unit ', unit
+		print*, 'access ', access
+		print*, 'action ', action
+		print*, 'form ', form
+		print*, 'position ', position
+		print*, 'status ', status
+
 		if(access /= 'direct') then
 			open(unit=unit, access=access, action=action, form=form, &
-			& position=position, status=status)
+			& position=position, status=status, iostat=ErrType)
 		else
 			open(unit=unit, access=access, action=action, form=form, &
-			& status=status)
+			& status=status, iostat=ErrType)
 		endif
+		
+		print*, 'iostat ', ErrType
+
+		theFileHandle = unit
 			
+	case default
+		ErrType = UNKNOWNTOOLBOXMODE
+
 	end select
+	
+	if(ErrType /= 0) then
+		theFileHandle = FH_ON_ERROR
+	endif
 
   END FUNCTION mls_io_gen_openF
 
@@ -334,6 +365,9 @@ END MODULE MLSFiles
 
 !
 ! $Log$
+! Revision 2.3  2001/03/21 00:48:43  pwagner
+! Corrected mls_io_gen_openF
+!
 ! Revision 2.2  2001/03/20 00:41:28  pwagner
 ! Added mls_io_gen_openF
 !
