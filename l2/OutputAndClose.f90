@@ -12,10 +12,10 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
   use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
-    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
+    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
-  use L2PC_m, only: WRITEONEL2PC, L2PCDATABASE
+  use L2PC_m, only: WRITEONEL2PC
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
@@ -35,7 +35,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE, switches
-  use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
+  use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, &
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
   use WriteMetadata, only: PCFData_T, Populate_metadata_std, &
@@ -121,6 +121,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
@@ -655,6 +656,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.39  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.38  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
