@@ -21,11 +21,11 @@ module MLSSignals_M
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
   use Time_M, only: Time_Now
-  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
-  use Tree_Types, only: N_named, N_Set_One
+  use Tree_Types, only: N_named
 
   implicit none
 
@@ -1514,6 +1514,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.57  2003/05/16 02:44:18  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.56  2003/05/10 22:21:12  livesey
 ! Tried to calm down -g1..
 !
