@@ -1,7 +1,6 @@
 module GET_CHI_ANGLES_M
   use MLSCommon, only: RP, IP
   use L2PC_FILE_PARAMETERS, only: DEG2RAD
-  use GET_ETA_M, only: GET_ETA
   Implicit NONE
   Private
   Public :: get_chi_angles
@@ -17,7 +16,7 @@ contains
 
 SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
            phi_tan,req,elev_offset,ptg_angle,tan_dh_dt,   &
-           zeta_basis,phi_basis,tan_temp,tan_press,dx_dt,d2x_dxdt)
+           tan_d2h_dhdt,dx_dt,d2x_dxdt)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_chi_angles
@@ -42,16 +41,14 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !
 ! keywords
 !
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:,:) ! derivative of tangent
 !                                                  height wrt temperature
-  REAL(rp), OPTIONAL, INTENT(IN) :: zeta_basis(:) ! temperature zeta basis
-  REAL(rp), OPTIONAL, INTENT(IN) :: phi_basis(:) ! temperature phi basis
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_temp ! tangent temperature
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_press ! tangent pressure
-  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:,:) ! 2nd derivative of
+! tangent height wrt temperature & height
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:,:) ! derivative of pointing angle
 !                                       wrt temperature
-  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of tangent
-!                                       wrt temperature, pointing angle
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:,:) ! second derivative of
+! tangent wrt temperature, pointing angle
 !  ----------------
 !  Local variables:
 !  ----------------
@@ -59,10 +56,7 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
   Real(rp), PARAMETER :: ampl = 38.9014
   Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
 !
-  INTEGER(ip) :: p_coeffs, z_coeffs
-
   REAL(rp) :: ht, tp, hs, x
-  REAL(rp), ALLOCATABLE :: Eta(:,:)
 !
 ! Start code:
 !
@@ -80,15 +74,9 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !
   IF(PRESENT(tan_dh_dt)) THEN
     IF(tan_ht > 0.0_rp) THEN
-      p_coeffs = SIZE(phi_basis)
-      z_coeffs = SIZE(zeta_basis)
-      ALLOCATE(eta(1:1,1:z_coeffs))
-      CALL get_eta((/tan_press/),zeta_basis,1,z_coeffs,Eta)
       tp = TAN(ptg_angle)
       dx_dt = tp * tan_dh_dt / ht
-      d2x_dxdt = (2.0_rp+tp*tp)*tan_dh_dt/ht +  &
-              &  RESHAPE(eta,(/z_coeffs/)) / tan_temp
-      DEALLOCATE(eta)
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
     ELSE
       dx_dt = 0.0_rp
       d2x_dxdt = 0.0_rp
@@ -98,6 +86,9 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.1  2001/10/16 22:32:11  zvi
+! Correcting for Earth intersection case
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

@@ -41,7 +41,7 @@ contains
   & windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
   & ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
   & k_atmos, sbRatio, t_deriv_flag, Grids_f, Jacobian, rowFlags,             &
-  & AntennaPattern, mol_cat_indx, Ier)
+  & AntennaPattern, mol_cat_indx, Ier, lu_debug)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -86,6 +86,8 @@ contains
     Real(r8) :: Q, R
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
+! bills debug
+    INTEGER(i4), intent(in) :: lu_debug
 
  ! -----  Begin the code  -----------------------------------------
 
@@ -119,6 +121,12 @@ contains
 
     Call get_pressures ( 'a', ptg_angles, tan_temp, tan_press, no_tan_hts, &
       &                   fft_angles, fft_press, Ntr, Ier )
+! bills debug
+    WRITE(lu_debug,'(a)') 'fft_angles, fft_press, rad'
+    DO  is = 1 , ntr 
+      WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') fft_angles(is), &
+           fft_press(is), rad(is)
+    ENDDO
     if ( Ier /= 0) Return
 
     ! Make sure the fft_press array is MONOTONICALY increasing:
@@ -467,6 +475,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.7  2002/06/04 10:28:02  zvi
+! Encorporate deriv. flag into convolution, fixing a bug with species ruuning index
+!
 ! Revision 2.6  2002/05/22 19:42:44  zvi
 ! Fix a bug in the mol. index loop
 !

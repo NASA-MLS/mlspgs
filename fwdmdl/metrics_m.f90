@@ -74,9 +74,9 @@ contains
     !                                                      tangent
     real(rp), optional, intent(out) :: dhtdzt(:)     !height derivative wrt
     !                                                   pressure along the tangent
-    real(rp), optional, intent(out) :: dhtdtl0(:,:)!First order derivative at
+    REAL(rp), OPTIONAL, INTENT(out) :: dhtdtl0(:,:,:)!First order derivative at
     !                                                 the tangent
-    real(rp), optional, intent(out) :: ddhtdhtdtl0(:,:)!second order derivative
+    REAL(rp), OPTIONAL, INTENT(out) :: ddhtdhtdtl0(:,:,:)!second order derivative
     !                            at the tangent only---used for antenna affects
     real(rp), optional, intent(out) :: dhitdtlm(:,:)
     !                             derivative of path position wrt temperature
@@ -204,10 +204,12 @@ contains
 
       ! adjust the 2d hydrostatic relative to the surface
       dhidtlm = dhidtlm - SPREAD(SPREAD(dhtdtl,1,n_vert),2,p_coeffs)
-      if(PRESENT(dhtdtl0)) dhtdtl0 = sum(dhidtlm(tan_inds,:,:) &
-        * SPREAD(eta_t,3,z_coeffs),dim=2)
-      if(PRESENT(ddhtdhtdtl0)) ddhtdhtdtl0 = &
-        sum(ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs),dim=2)
+!      if(PRESENT(dhtdtl0)) dhtdtl0 = sum(dhidtlm(tan_inds,:,:) &
+!        * SPREAD(eta_t,3,z_coeffs),dim=2)
+!      if(PRESENT(ddhtdhtdtl0)) ddhtdhtdtl0 = &
+!        sum(ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs),dim=2)
+      dhtdtl0 = dhidtlm(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs)
+      ddhtdhtdtl0 = ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs)
       call Deallocate_test ( dhtdtl, 'dhtdtl', ModuleName )
     endif
 
@@ -548,6 +550,9 @@ contains
 
 end module metrics_m
 ! $Log$
+! Revision 2.4  2002/02/08 00:48:09  zvi
+! Restoring the t_deriv_flag code
+!
 ! Revision 2.2  2002/01/30 01:11:21  zvi
 ! Fix bug in user selectable coeff. code
 !
