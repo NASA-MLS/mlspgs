@@ -401,7 +401,7 @@ contains ! =====     Public Procedures     =============================
           & associated(fmConf%molecules) ) then
           doDerivatives = fmConf%atmos_der
           if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
-            & pack(fmConf%molecules, fmConf%moleculeDerivatives))) &
+            & pack(fmConf%molecules(1:size(fmConf%molecules)-1), fmConf%moleculeDerivatives))) &
             & doDerivatives = .false.
         end if
 
@@ -1135,6 +1135,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.54  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
 ! Revision 2.53  2004/02/07 00:45:36  livesey
 ! Fixed a bug in the sideband handling.  Was overzelous yesterday.
 !
