@@ -157,7 +157,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: j                                   ! Loop counter
     integer :: k                                   ! Loop counter
     integer :: IER                                 ! Status flag from allocates
-    integer :: ivmr
     integer :: mif
     integer :: MAF                                 ! major frame counter
     integer :: INSTANCE                            ! Relevant instance for temperature
@@ -217,7 +216,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     logical, dimension(:), pointer :: doChannel    ! Do this channel?
     logical :: DoHighZt                            ! Flag
     logical :: DoLowZt                             ! Flag
-    logical :: Got( LAST_MOLECULE - FIRST_MOLECULE + 1 ) = .false.  
+    logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )
     logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
@@ -237,20 +236,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Nullify all the pointers
     !--------------------------
 
-    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, modelCLOUDRADIANCE,         &
-             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, obsCLOUDRADIANCE, GPH, &
-             MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,                  &
-             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,              &
-             TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,             &
-             A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                        &
-             A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                          &
-             A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                       &
-             A_TOTALEXTINCTION,FREQUENCIES, thisRatio,                          &
-             superset, JBLOCK, state_ext, state_los,                            &
-             MY_CATALOG, thisCatalogEntry, thisLine, LOSVEL )
-             
-    nullify ( doChannel, lineFlag )
-    
+    nullify( a_clearSkyradiance, a_cloudExtinction, a_cloudInducedradiance,  &
+             a_cloudRadsensitivity, a_effectiveOpticaldepth,                 &
+             a_massMeandiameter, a_totalExtinction, cloudExtinction,         &
+             cloudIce, cloudRadsensitivity, cloudWater, doChannel,           &
+             earthradius, effectiveOpticaldepth, frequencies, gph, jblock,   &
+             lineFlag, losvel, massMeandiameterice, massMeandiameterwater,   &
+             modelCloudradiance, my_catalog, obsCloudRadiance, ptan,         &
+             radiance, sizeDistribution, state_ext, state_los, superset,     &
+             surfaceType, temp, thisCatalogentry, thisLine, thisRatio,       &
+             totalExtinction, vmr, vmrarray )
+ 
     ! ------------------------------------
     ! Find which maf is called at present
     ! ------------------------------------
@@ -264,8 +260,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------------------
     doHighZt = .false.
     doLowZt  = .false.
-    if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
-    if(forwardModelConfig%cloud_der == 1) doLowZt  = .true.
+    if (forwardModelConfig%cloud_der == 0) doHighZt = .true.
+    if (forwardModelConfig%cloud_der == 1) doLowZt  = .true.
 
     !--------------------------------------------------------------------
     
@@ -513,27 +509,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     instance = closestInstances(maf)
     tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
 
-    ivmr=0
+    got = .false.
     do i = 1, size(forwardModelConfig%molecules)
       select case (forwardModelConfig%molecules(i))
-        case(L_H2O)
-          ivmr=1
-        case(L_O3)
-          ivmr=2
-        case(L_N2O)
-          ivmr=3
-        case(L_HNO3)
-          ivmr=4
-        case(L_N2)
-          ivmr=5
-        case(L_O2)
-          ivmr=6
+        case ( L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2)
+          got(forwardModelConfig%molecules(i)) = .true.
         case default
-          ivmr=0
+          cycle
       end select
-      if(ivmr==0) then
-        cycle
-      endif
 
       vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
         & quantityType=l_vmr, molecule=forwardModelConfig%molecules(i) )
@@ -549,10 +532,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
         & vmrArray(i,:),                                  &    ! New Y
         & 'Linear', extrapolate='Clamp' )
-      Got(ivmr)=.true.
     end do
 
-    if ( .not. got(1) .or. .not. got(2) ) then
+    if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
 !   make sure we have at least two molecules h2o and o3. 
       call MLSMessage( MLSMSG_Error, ModuleName,          &
                       'Missing the required molecules' )
@@ -560,7 +542,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
      
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
     
-         allocate(zt(noMifs))
+    allocate ( zt(noMifs) )
 
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
@@ -1076,6 +1058,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.97  2002/10/03 23:25:52  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 1.96  2002/09/11 17:43:39  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
