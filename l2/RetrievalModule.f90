@@ -1516,8 +1516,8 @@ contains
                & Tb0%template%instrumentModule)
 
           ! get earthradius from forward model
-          Re => GetVectorQuantityByType ( fwdModelExtra,      &
-               & quantityType=l_earthradius)
+!          Re => GetVectorQuantityByType ( fwdModelExtra,      &
+!               & quantityType=l_earthradius)
           
           ! get sensitivity from forward model for this signal
           Slope => GetVectorQuantityByType ( fwdModelOut1,      &
@@ -2513,6 +2513,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.121  2001/11/27 23:49:48  jonathan
+! remove Re in HighCloudRetrieval
+!
 ! Revision 2.120  2001/11/27 23:34:49  pwagner
 ! Split forward model timings into four types
 !
