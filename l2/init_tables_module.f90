@@ -740,7 +740,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
+             begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
              begin, f+f_destroyJacobian, t+t_boolean, n+n_field_type, &
@@ -855,6 +855,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.191  2002/01/08 18:15:34  livesey
+! Made fwdModelExtra optional for sids
+!
 ! Revision 2.190  2001/12/10 20:21:47  livesey
 ! Added code for regular hGrids
 !
