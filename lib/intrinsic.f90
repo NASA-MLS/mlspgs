@@ -169,6 +169,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
     phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
     phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
+    phyq_indices(phyq_gauss) =             add_ident ( 'gauss' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -233,6 +234,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.47  2003/05/29 16:36:09  livesey
+! Added ident for phyq_gauss
+!
 ! Revision 2.46  2003/01/26 04:41:53  livesey
 ! Added phyq_profiles
 !
