@@ -5,6 +5,7 @@ program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
+  use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2CF_START
@@ -69,14 +70,10 @@ program MLSL2
         select case ( line(j:j) )
         case ( ' ' )
       exit
-        case ( 'A' )
-          dump_tree = .true.
-        case ( 'a' )
-          toggle(syn) = .true.
-        case ( 'c' )
-          toggle(con) = .true.
-        case ( 'd' )
-          do_dump = .true.
+        case ( 'A' ); dump_tree = .true.
+        case ( 'a' ); toggle(syn) = .true.
+        case ( 'c' ); toggle(con) = .true.
+        case ( 'd' ); do_dump = .true.
         case ( 'g' )
           toggle(gen) = .true.
           if ( j < len(line) ) then
@@ -94,41 +91,40 @@ program MLSL2
           print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
-          &                      'more output.'
+            &                    'more output.'
           print *, '  -l: Trace lexical analysis.'
+          print *, '  -K: Capitalize identifiers.'
+          print *, "  -k: Don't capitalize identifiers."
           print *, '  -M: Send output through MLSMessage.'
           print *, '  -p: Trace parsing.'
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
           print *, '  The above options can be concatenated after one hyphen.'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
-          &          'and the PCF.'
+            &        'and the PCF.'
           if ( pcf ) then
             print *, '    --npcf assumed if L2CF-name is present.  ', &
-            &        'Default: --pcf'
+              &      'Default: --pcf'
           else
             print *, '    --npcf assumed if L2CF-name is present.  ', &
-            &        'Default: --npcf'
+              &      'Default: --npcf'
           end if
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
-          &          'configuration file'
+            &        'configuration file'
           print *, '  by @A, @C, @G, @L, @P and @S respectively.  @L and ', &
-          &          '@P are processed'
+            &        '@P are processed'
           print *, '  synchronously with the input.  The others are ', &
-          &           'examined later.'
+            &         'examined later.'
           print *, '  @T in the configuration file dumps the string table ', &
-          &           'at that instant.'
+            &         'at that instant.'
           stop
-        case ( 'l' )
-          toggle(lex) = .true.
-        case ( 'M' )
-          prunit = -2
-        case ( 'p' )
-          toggle(par) = .true.
-        case ( 't' )
-          toggle(tab) = .true.
-        case ( 'v' )
-          do_listing = .true.
+        case ( 'K' ); capIdentifiers = .true.
+        case ( 'k' ); capIdentifiers = .false.
+        case ( 'l' ); toggle(lex) = .true.
+        case ( 'M' ); prunit = -2
+        case ( 'p' ); toggle(par) = .true.
+        case ( 't' ); toggle(tab) = .true.
+        case ( 'v' ); do_listing = .true.
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
         end select
@@ -188,6 +184,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.14  2001/03/14 18:59:03  vsnyder
+! Add K and k options to control whether the lexer capitalizes identifiers
+!
 ! Revision 2.13  2001/03/08 00:39:37  vsnyder
 ! Improve some debugging output
 !
