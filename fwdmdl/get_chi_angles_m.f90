@@ -55,6 +55,7 @@ Real(r8), PARAMETER :: phas = 51.6814 * deg2rad
 Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
 Real(r8) :: Eta(Nlvl,mxco)
 
+  ier = 0
   Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
 
 ! Get 'No_tan_hts' convolution angles
@@ -108,6 +109,9 @@ Real(r8) :: Eta(Nlvl,mxco)
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.3  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
 ! Revision 1.2  2001/02/19 22:14:21  zvi
 !
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
