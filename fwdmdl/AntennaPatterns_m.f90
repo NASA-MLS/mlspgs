@@ -5,7 +5,6 @@ module AntennaPatterns_m
 
   ! Read the antenna patterns file.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
@@ -67,6 +66,7 @@ contains
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
   subroutine Read_Antenna_Patterns_File ( Lun )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Levels, Switches, Toggle
@@ -235,6 +235,7 @@ outer1: do
 
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
+    use Allocate_Deallocate, only: Deallocate_Test
     integer :: I, J, Status
     if (.not. associated(AntennaPatterns) ) return
     do i = 1, size(AntennaPatterns)
@@ -262,7 +263,7 @@ outer1: do
   ! --------------------------------  Dump_Antenna_Patterns_Database  -----
   subroutine Dump_Antenna_Patterns_Database
     use Dump_0, only: Dump
-  use Output_m, only: Blanks, Output
+    use Output_m, only: Blanks, Output
 
     integer :: I, J                ! Subscripts, loop inductors
     character(len=MaxSigLen) :: SIGNAME ! Signal name
@@ -290,6 +291,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.4  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2002/09/06 22:31:06  vsnyder
 ! Cosmetic changes
 !
