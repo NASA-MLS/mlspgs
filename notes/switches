@@ -45,6 +45,7 @@ Switches (set by -S option in mlsl2's command line):
   reg =>    Dump regularization matrix
   sca =>    Scalars of interest to the Newton method
   slv =>    Show output of slaves using pvmfcatchout
+  snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
@@ -79,6 +80,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.24  2002/08/08 22:04:48  vsnyder
+ Add 'reg' to description of -S
+
  Revision 1.23  2002/06/29 05:56:20  livesey
  Added geom and pGuess
 
