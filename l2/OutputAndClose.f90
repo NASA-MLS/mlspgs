@@ -181,7 +181,7 @@ contains ! =====     Public Procedures     =============================
             file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
           case ( f_metaName )
             call get_string ( sub_rosa(subtree(2,gson)), meta_name )
-            meta_name = file_base(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
+            meta_name = meta_name(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
           case ( f_type )
             output_type = decoration(subtree(2,gson))
           case ( f_hdfVersion )
@@ -732,6 +732,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.50  2002/02/22 19:19:48  pwagner
+! Fixed bug in metaName use
+!
 ! Revision 2.49  2002/02/22 01:16:17  pwagner
 ! Uses new metaName field for mcf file hint
 !
