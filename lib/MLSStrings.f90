@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -359,7 +359,7 @@ CONTAINS
   end Function depunctuate
 
   ! --------------------------------------------------  ExtractSubString  -----
-  SUBROUTINE ExtractSubString (str, outstr, sub1, sub2, how, no_trim)
+  SUBROUTINE ExtractSubString (instr, outstr, sub1, sub2, how, no_trim)
     ! Takes a string and extracts what is sandwiched between sub1 and sub2
 	 ! Defaults to choosing only the first occurrence of sub1 and sub2
     ! But if how == 'greedy' chooses last occurrence of sub2
@@ -375,35 +375,91 @@ CONTAINS
     ! Replace substrings sub1 and sub2 with separator character
     ! and then use GetStringElement to get subelement number 2
     !  
+    ! A fundamental issue arises if sub2 occurs before sub1 in the string
+    ! Do we want to interpret the request such that we
+    ! (1) return a blank
+    ! (2) look for occurrences of sub2 in the string after sub1
+    ! I think we should aim for 2, as it produces a generalization
+    ! of picking elements out of a comma-separated list
+    !
     ! Will this still work if sub1 has leading or trailing blanks? 
     ! How about sub2?
     ! Do we need an optional arg, no_trim, say, that will leave them?
     ! Tried coding it, but can't say for sure it works
     ! What if sub1 is a substring of sub2, or vice versa?
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=*), INTENT(IN) :: instr
     CHARACTER (LEN=*), INTENT(IN) :: sub1
     CHARACTER (LEN=*), INTENT(IN) :: sub2
-    CHARACTER (LEN=LEN(str)) :: outstr
+    CHARACTER (LEN=*), INTENT(INOUT) :: outstr
     character (len=*), intent(in), optional :: how
     logical, intent(in), optional :: no_trim
 
     !----------Local vars----------!
+    CHARACTER (LEN=len(instr)) :: str
     integer, parameter         :: MAXREPLACEMENTS = 100
-    INTEGER :: i
+    integer, parameter         :: EARLYSUB2INTERPRETATION = 2 ! 2 or 1
+    INTEGER :: i, isub1, isub2, strlen, tmpstrlen
     character (len=7) :: my_how
     character(len=1) :: separator
     character(len=*), parameter :: separators =',.$%#{}()'
-    character (len=len(str)) :: tmpstr
-    logical :: my_no_trim
+    character (len=max(len(str), len(outstr))) :: tmpstr
+    character (len=max(len(str), len(outstr))) :: tmpstr2
+    logical :: my_no_trim, trimming
     !----------Executable part----------!
     my_how = 'first'
     if ( present(how) ) my_how = lowercase(how)
     my_no_trim = .false.
     if ( present(no_trim) ) my_no_trim = no_trim
+    trimming = .not. my_no_trim
     outstr = ' '
-    if ( .not. my_no_trim) then
-      if (LEN_trim(str) < 1 .or. len_trim(sub1) < 1 &
+    strlen = LEN_trim(instr)
+    if (strlen < 1 .or. instr == ' ') return
+    ! print *, 'instr: ', trim(instr)
+    ! print *, 'strlen: ', strlen
+    ! Which interpretation of sub2 occurring before sub1 do we make?
+    isub1 = index(instr, trim(sub1))
+    isub2 = index(instr, trim(sub2))
+    ! print *, 'sub1: ', trim(sub1)
+    ! print *, 'isub1: ', isub1
+    ! print *, 'sub2: ', trim(sub2)
+    ! print *, 'isub2: ', isub2
+    if ( isub2 < isub1 ) then
+      if ( isub2 == 0 ) then
+        return
+      elseif ( EARLYSUB2INTERPRETATION == 2 ) then
+        ! zap every occurrence of sub2 up to position isub1
+        ! print *, 'zap every occurrence of sub2 up to position isub1'
+        ! print *, 'before zapping: ', instr(1:isub1-1)
+        ! print *, 'tail: ', instr(isub1:strlen)
+        call ReplaceSubString (instr(1:isub1-1), tmpstr, sub2, '', &
+          & which='all', no_trim=.false.)
+        ! print *, 'afterzapping: ', trim(tmpstr), '//', instr(isub1:strlen)
+        tmpstrlen = len_trim(tmpstr)
+        ! print *, 'tmpstrlen: ', tmpstrlen
+        tmpstrlen = len(trim(tmpstr))
+        ! print *, 'tmpstrlen(2): ', tmpstrlen
+        str = ''
+        if ( tmpstrlen < 1 ) then
+          str = instr(isub1:strlen)
+        else
+          str = tmpstr(1:tmpstrlen) // instr(isub1:strlen)
+          ! str = tmpstr(1:tmpstrlen)
+          ! print *, tmpstr(1:tmpstrlen)
+          ! print *, str(1:tmpstrlen)
+          ! str(tmpstrlen+1:) = instr(isub1:strlen)
+          ! print *, instr(isub1:strlen)
+          ! print *, trim(str(tmpstrlen+1:))
+        endif
+      else
+        str = instr
+      endif
+    else
+      str = instr
+    endif
+    ! print *, 'str: ', trim(str)
+    if ( trimming ) then
+      if (len_trim(sub1) < 1 &
         & .or. &
         & len_trim(sub2) < 1 .or. index(str, trim(sub1)) == 0 &
         & .or. &
@@ -418,36 +474,42 @@ CONTAINS
     enddo
     if ( i > len(separators) ) return   ! This means our method will fail
     separator = separators(i:i)
+    ! print *, 'separator: ', separator
     select case (trim(my_how))
     case ('greedy')
-      if ( .not. my_no_trim) then
+      if ( trimming ) then
         call ReplaceSubString (Reverse(trim(str)), tmpstr, &
           & Reverse(trim(sub2)), separator)
-        outstr = Reverse(trim(tmpstr))
-        call ReplaceSubString (outstr, tmpstr, sub1, separator)
+        tmpstr2 = Reverse(trim(tmpstr))
+        call ReplaceSubString (tmpstr2, tmpstr, sub1, separator)
       else
         call ReplaceSubString (Reverse(str), tmpstr, &
           & Reverse(sub2), separator, no_trim=.true.)
-        outstr = Reverse(tmpstr)
-        call ReplaceSubString (outstr, tmpstr, sub1, separator, no_trim=.true.)
+        tmpstr2 = Reverse(tmpstr)
+        call ReplaceSubString (tmpstr2, tmpstr, sub1, separator, no_trim=.true.)
       endif
     case ('stingy')
-      if ( .not. my_no_trim) then
+      if ( trimming ) then
         call ReplaceSubString (Reverse(trim(str)), tmpstr, &
           & Reverse(trim(sub1)), separator)
-        outstr = Reverse(trim(tmpstr))
-        call ReplaceSubString (outstr, tmpstr, sub2, separator)
+        tmpstr2 = Reverse(trim(tmpstr))
+        call ReplaceSubString (tmpstr2, tmpstr, sub2, separator)
       else
         call ReplaceSubString (Reverse(str), tmpstr, &
           & Reverse(sub1), separator, no_trim=.true.)
-        outstr = Reverse(tmpstr)
-        call ReplaceSubString (outstr, tmpstr, sub2, separator, no_trim=.true.)
+        tmpstr2 = Reverse(tmpstr)
+        call ReplaceSubString (tmpstr2, tmpstr, sub2, separator, no_trim=.true.)
       endif
     case default
-      call ReplaceSubString (str, outstr, sub1, separator, &
+      ! print *, 'Replacing: ', sub1, ' with ', separator
+      ! print *, 'in: ', trim(str)
+      call ReplaceSubString (str, tmpstr2, sub1, separator, &
         & which='first', no_trim=no_trim)
-      call ReplaceSubString (outstr, tmpstr, sub2, separator, &
+      ! print *, 'results in: ', trim(tmpstr2)
+      ! print *, 'Replacing: ', sub2, ' with ', separator
+      call ReplaceSubString (tmpstr2, tmpstr, sub2, separator, &
         & which='first', no_trim=no_trim)
+      ! print *, 'results in: ', trim(tmpstr)
     end select
     call GetStringElement (tmpstr, outstr, 2, .true., &
       & inDelim=separator )
@@ -1460,7 +1522,7 @@ CONTAINS
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=*), INTENT(IN) :: sub1
     CHARACTER (LEN=*), INTENT(IN) :: sub2
-    CHARACTER (LEN=LEN(str)) :: outstr
+    CHARACTER (LEN=*) :: outstr
     character (len=*), intent(in), optional :: which
     logical, intent(in), optional :: no_trim
 
@@ -1468,12 +1530,16 @@ CONTAINS
     integer, parameter         :: MAXREPLACEMENTS = 100
     INTEGER :: i, array_size
     character (len=5) :: my_which
-    character(len=len(str)) :: head
-    character(len=len(str)) :: tail
-    character(len=len(str)) :: sub_str
-    character(len=len(str)), dimension(MAXREPLACEMENTS) :: str_array
+    character(len=max(len(str), len(outstr))) :: head
+    character(len=max(len(str), len(outstr))) :: tail
+    character(len=max(len(str), len(outstr))) :: sub_str
+    character(len=max(len(str), len(outstr))), dimension(MAXREPLACEMENTS) &
+      &                                      :: str_array
     logical :: my_no_trim
     !----------Executable part----------!
+    head = ''
+    tail = ''
+    sub_str = ''
     outstr = str
     IF (LEN_trim(str) < 1 .or. len_trim(sub1) < 1) RETURN
     my_which = 'first'
@@ -1533,7 +1599,7 @@ CONTAINS
         ! Either the first instance (if back == FALSE) or the last
         ! Arguments
         character(len=*), intent(in)  :: the_orig
-        character(len=*), intent(out) :: after_sub
+        character(len=*), intent(inout) :: after_sub
         logical, intent(in)           :: back
         ! Local variables
         integer :: istrt1, istrt2, ihead
@@ -1553,8 +1619,13 @@ CONTAINS
         if ( istrt2 < len_trim(the_orig)+1 ) then
           tail = the_orig(istrt2:)
         endif
+        ! print *, 'len(after_sub): ', len(after_sub)
+        ! print *, 'len(head): ', len(head)
+        ! print *, 'len(tail): ', len(tail)
         ! print *, 'head: ', trim(head), '  ihead: ', ihead
-        ! print *, 'tail: ', trim(tail), ' sub2: ', sub2
+        ! print *, 'tail: ', trim(tail), len_trim(tail)
+        ! print *, 'sub1: ', trim(sub1), len_trim(sub1)
+        ! print *, 'sub2: ', trim(sub2), len_trim(sub2)
         if ( sub2 /= ' ' ) then
           after_sub = adjustl(head(1:ihead) // trim(sub2) // trim(tail))
         else
@@ -1567,7 +1638,7 @@ CONTAINS
         ! Either the first instance (if back == FALSE) or the last
         ! Arguments
         character(len=*), intent(in)  :: the_orig
-        character(len=*), intent(out) :: after_sub
+        character(len=*), intent(inout) :: after_sub
         logical, intent(in)           :: back
         ! Local variables
         integer :: istrt1, istrt2, ihead
@@ -2861,6 +2932,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.39  2004/01/27 21:34:02  pwagner
+! Fixed some bugs in ExtractSubString
+!
 ! Revision 2.38  2003/12/11 23:02:35  pwagner
 ! yyyymmdd_to_dai may take 3 ints or str
 !
