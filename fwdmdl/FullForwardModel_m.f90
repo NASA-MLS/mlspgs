@@ -280,7 +280,7 @@ contains
 
     real(rp), dimension(:,:), pointer :: BETA_PATH   ! Beta on path
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
-    real(rp), dimension(:,:), pointer :: BETA_PATH_cloud_C ! Beta on path coarse
+    real(rp), dimension(:),   pointer :: BETA_PATH_cloud_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
@@ -1337,7 +1337,7 @@ contains
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
-    call allocate_test ( beta_path_cloud_c, npc, no_mol, 'beta_path__cloud_c',   moduleName )
+    call allocate_test ( beta_path_cloud_c, npc, 'beta_path_cloud_c',    moduleName )
     call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   no_ele, f_len,  'do_calc_fzp',   moduleName )
     call allocate_test ( do_calc_iwc,   no_ele, f_len,  'do_calc_iwc',   moduleName )
@@ -1917,10 +1917,10 @@ contains
           ! JHJ         
           IF ( associated(CloudIce) ) THEN
 
-          call get_beta_path_cloud ( Frq,                                   &
+          call get_beta_path_cloud ( Frq,                             &
             &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
             &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
-            &  beta_path_cloud_c(1:npc,:),  ICON,                           &
+            &  beta_path_cloud_c(1:npc),  ICON,                       &
             &  fwdModelConf%Incl_Cld, IPSD(1:no_ele),                 &
             &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )                    
 
@@ -1936,7 +1936,7 @@ contains
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   &  beta_path_c(1:npc,:), DIM=2) +  &
-                                  & SUM (beta_path_cloud_c(1:npc,:), DIM=2)
+                                  & SUM (beta_path_cloud_c(1:npc), DIM=1)
 
           incoptdepth(1:npc) = alpha_path_c(1:npc) * del_s(1:npc)
 
@@ -2721,6 +2721,7 @@ contains
     call deallocate_test ( t_script,         't_script',         moduleName )
 
     call deallocate_test ( beta_path_c,   'beta_path_c',   moduleName )
+    call deallocate_test ( beta_path_cloud_c,   'beta_path_cloud_c',   moduleName )
     call deallocate_test ( beta_path_f,   'beta_path_f',   moduleName )
     call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
     call deallocate_test ( do_calc_iwc_zp,'do_calc_iwc_zp',moduleName )
@@ -2844,6 +2845,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.127  2003/02/13 17:25:07  bill
+! subscripted gl_inds to call in drad_df per Vans suggestion
+!
 ! Revision 2.126  2003/02/11 00:48:18  jonathan
 ! changes made after adding get_beta_path_cloud
 !
