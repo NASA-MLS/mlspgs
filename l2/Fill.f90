@@ -1221,7 +1221,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQuantityFromL1B
 
   !=============================== FillQuantityFromLosGrid ====
-  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, Vgrid, &
+  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, Sgrid, &
    & Ptan, Re, errorCode )
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
@@ -1233,7 +1233,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in) :: key          ! For messages    
-    type (VGrid_T), intent(in) :: VGrid
+    type (VGrid_T), intent(in) :: SGrid
     type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
     type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
     type (VectorValue_T), intent(in) :: Re ! Earth's radius
@@ -1241,12 +1241,13 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: errorCode ! Error code
 
     ! Local variables
-    integer :: i, j, maf, mif, id                ! Loop counter
-    integer :: noMAFs, noMIFs, noDepths
+    integer :: i, j, maf, mif                ! Loop counter
+    integer :: maxZ, minZ                    ! pressure range indices of sGrid
+    integer :: noMAFs, noMIFs, noDepths    
     integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
+    real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
     real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
     real (r8), dimension(los%template%noChans) :: x_in, y_in
-    real (r8), dimension(los%template%noChans) :: sGrid ! losGrid surf values
     real (r8), dimension(los%template%noSurfs) :: zt
 
     if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
@@ -1269,54 +1270,71 @@ contains ! =====     Public Procedures     =============================
     noMAFs = los%template%noInstances
     noMIFs = los%template%noSurfs
     noDepths = los%template%noChans
-! get los grid surf values
-    sGrid = vGrid%surfs
     
 ! initialize quantity
    do j = 1, qty%template%noInstances
    do i = 1, qty%template%noSurfs
    qty%values(i,j)=qty%template%badValue
    cnt(i,j)=0
+   out(i,j)=0._r8
    end do 
    end do
    
     do maf=1,noMAFs  
-      zt = -log10(ptan%template%surfs(:,maf))   ! noChans=1 for ptan
-      zt = (zt-3.)*16.                      ! converted to height in km
+      zt = ptan%values(:,maf)   ! noChans=1 for ptan
+      zt = (zt+3.)*16.                      ! converted to height in km
       do mif=1,noMIFs
+      if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
       ! find altitude of each s grid
-      x_in = sGrid/2./(re%values(1,maf) + zt(mif))
+      x_in = sGrid%surfs**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
       ! converted to zeta
-      x_in = x_in/16.-3.
-      ! interpolate to get phi along path on the near side of tangent pt.
-      ! phi is in degree
-      y_in = los%template%phi(mif,maf) &
-        & - atan(sgrid/(re%values(1,maf) + zt(mif)))*180._r8/Pi     
-        call InterpolateValues(x_in,y_in,outZeta,phi_out,method='Linear')
-        ! interpolate to get values along s
-        do id=1,noDepths
-          y_in = los%values(id+(mif-1)*noDepths,maf)
+      x_in = x_in/16. + ptan%values(mif,maf)
+      ! find minimum and maximum pressures indices in sGrid
+        do i = 2,qty%template%noSurfs-1
+        if (ptan%values(mif,maf) < (outZeta(i)+outZeta(i+1))/2. .and. &
+          & ptan%values(mif,maf) > (outZeta(i)+outZeta(i-1))/2.) &
+          & minZ = i
         end do
-        call InterpolateValues(x_in,y_in,outZeta,beta_out,method='Linear')
-        ! find geolocation of each s element on the los grid
-        do id=1,noDepths  
+        if (ptan%values(mif,maf) < (outZeta(1)+outZeta(2))/2.) minZ=1
+        if (ptan%values(mif,maf) > outZeta(qty%template%noSurfs)) cycle ! goto next mif
+        
+        do i = 2,qty%template%noSurfs-1
+        if (x_in(noDepths) < (outZeta(i)+outZeta(i+1))/2. .and. &
+          & x_in(noDepths) > (outZeta(i)+outZeta(i-1))/2.) &
+          & maxZ = i
+        end do
+        if (x_in(noDepths) < (outZeta(1)+outZeta(2))/2.) cycle    ! goto next mif
+        if (x_in(noDepths) > outZeta(qty%template%noSurfs)) maxZ=qty%template%noSurfs
+
+      ! get phi along path for each mif (phi is in degree)
+      y_in = los%template%phi(mif,maf) &
+        & - atan(sgrid%surfs/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+        ! interpolate phi onto standard vertical grids     
+        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
+           & method='Linear')
+        ! interpolate quantity to standard vertical grids
+        do i=1,noDepths
+          y_in = los%values(i+(mif-1)*noDepths,maf)
+        end do
+        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
+           & method='Linear')
+        ! interpolate quantity to standard phi grids
+        do i=minZ,maxZ  
           do j = 2, qty%template%noInstances-1
-          if(phi_out(id) .lt. &     
+          if(phi_out(i) .lt. &     
             & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
-            & .and. phi_out(id) .ge. &  
+            & .and. phi_out(i) .ge. &  
             & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
-            do i = 1, qty%template%noSurfs
-            qty%values(i,j)=qty%values(i,j) + beta_out(id)
+            out(i,j)=out(i,j) + beta_out(i)
             cnt(i,j)=cnt(i,j)+1       !  counter
-            end do
           end if
           end do
         end do
       end do                            ! End surface loop
     end do                              ! End instance loop
     ! average all non-zero bins
-    where (cnt > 0) qty%values = qty%values/cnt
-    
+     where (cnt > 0) qty%values = out/cnt
+
   end subroutine FillQuantityFromLosGrid
 
   ! ---------------------------------------------- TRANSFERVECTORS -----
@@ -1490,6 +1508,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.61  2001/07/19 21:45:33  dwu
+! some fixes for FillQuantityFromLOS
+!
 ! Revision 2.60  2001/07/19 18:05:42  dwu
 ! add sourceSGRID
 !
