@@ -85,10 +85,6 @@ module L2PC_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! Local saved variables - these keep track of the l2pc vector/quantity databases
-  integer, save :: L2PCQTCOUNTER = CounterStart ! To place in qt%id
-  integer, save :: L2PCVTCOUNTER = CounterStart ! To place in vt%id
-    
 contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ AddBinSelectorToDatabase --
@@ -981,16 +977,12 @@ contains ! ============= Public Procedures ==========================
       end if
       
       ! Now add this template to our private database 
-      qt%id = l2pcQTCounter
-      l2pcQTCounter = l2pcQtCounter + 1
       qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
       
     end do                            ! First Loop over quantities
     
     ! Now create a vector template with these quantities
     call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
-    vt%id = l2pcVTCounter
-    l2pcVtCounter = l2pcVtCounter + 1
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
     
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
@@ -1219,6 +1211,7 @@ contains ! ============= Public Procedures ==========================
     integer :: NOSURFSOR1               ! Dimension
     integer :: OBJTYPE                  ! Irrelevant argument to HDF5
     integer :: QID                      ! HDF5 ID of quantity group
+    integer :: QT0                      ! Offset into l2pc quantity templates database
     integer :: QTINDEXOFFSET            ! First free index in quantity template database
     integer :: QUANTITY                 ! Loop inductor
     integer :: QUANTITYTYPE             ! Enumerated
@@ -1284,6 +1277,7 @@ contains ! ============= Public Procedures ==========================
     end do
 
     qtIndexOffset = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
+    qt0 = size ( l2pcQTs ) - noQuantities
 
     ! Now go through quantities in order
     do quantity = 1, noQuantities
@@ -1357,8 +1351,6 @@ contains ! ============= Public Procedures ==========================
         & noInstances=noInstances, noSurfs=noSurfs, noChans=noChans, &
         & coherent=coherent, stacked=stacked )
 
-      qt%noInstancesLowerOverlap = 0
-      qt%noInstancesUpperOverlap = 0
       qt%quantityType = quantityType
       qt%name = nameIndex
       qt%molecule = molecule
@@ -1367,8 +1359,6 @@ contains ! ============= Public Procedures ==========================
       qt%sideband = sideband
       qt%verticalCoordinate = verticalCoordinate
       qt%frequencyCoordinate = frequencyCoordinate
-      qt%regular = .true.
-      qt%instanceLen = qt%noChans* qt%noSurfs
       
       if (qt%coherent) then
         noInstancesOr1 = 1
@@ -1397,8 +1387,7 @@ contains ! ============= Public Procedures ==========================
       end if
 
       ! Now record the index for this quantity template
-      qt%id = qtIndexOffset + quantity - 1
-      qtInds ( quantity ) = qt%id
+      qtInds ( quantity ) = quantity + qt0
 
       ! For the moment, close the quantity. We'll come back to it later to fill
       ! up the values for the vector
@@ -1409,8 +1398,6 @@ contains ! ============= Public Procedures ==========================
 
     ! Now create a vector template with these quantities
     call ConstructVectorTemplate ( 0, l2pcQTs, qtInds, vt )
-    vt%id = l2pcVTCounter
-    l2pcVtCounter = l2pcVtCounter + 1
     vtIndex = AddVectorTemplateToDatabase ( l2pcVTs, vt )
     
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
@@ -1538,6 +1525,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.62  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.61  2003/05/13 04:46:24  livesey
 ! Renamed a routine to avoid conflict with VectorHDF5
 !
