@@ -1,8 +1,8 @@
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
              &   NZmodel,                                         &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
-             &   WCin, IPSDin,                                    &
-             &   ZT, RE, ISURF, ISWI, ICON,                       &
+             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON,         &
+             &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
              &   NU, NUA, NAB, NR)
 
@@ -109,6 +109,11 @@
 !     FAX:   (818) 393-5065                                                  C
 !============================================================================C
 
+      use AntennaPatterns_m, only: AntennaPattern_T
+      use DCSPLINE_DER_M, only: CSPLINE_DER
+      use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+      use HYDROSTATIC_INTRP, only: GET_PRESSURES
+      use L2PC_FILE_PARAMETERS, only: DEG2RAD
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
 
@@ -163,6 +168,8 @@
                                                ! N=1: ICE; N=2: LIQUID
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
+
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -224,10 +231,10 @@
       REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
       REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
-      REAL(r8) :: TT(NZmodel/8,NZmodel)             ! CLOUDY-SKY TB AT TANGENT 
+      REAL(r8) :: TT(NZmodel/8,NZmodel)        ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL(r8) :: TT0(NZmodel/8,NZmodel)            ! CLEAR-SKY TB AT TANGENT
+      REAL(r8) :: TT0(NZmodel/8,NZmodel)       ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 !---------------------------------------------
@@ -283,9 +290,27 @@
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: CHK_CLD(NZmodel)                        
       REAL(r8) :: ZZT(NT)
-      REAL(r8) :: ZZT1(NZmodel/8-1)            ! ZT LEVEL FOR CALCULATION 
+      REAL(r8) :: ZZT1(NZmodel/8-1)            ! TANGENT HEIGHTS (meters) FOR CALCULATION 
                                                ! (a subset OF YZ)
                                                ! THE RESULT WILL BE INTERPOLATED TO ZZT
+
+      REAL(r8) :: ZPT1(NZmodel/8-1)            ! TANGENT PRESSURE (mb) FOR CALCULATION 
+                                               ! (a subset OF YP)
+                                               ! THIS IS ASSOCIATED WITH ZZT1
+
+      REAL(r8) :: ZTT1(NZmodel/8-1)            ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
+                                               ! (a subset OF YT)
+                                               ! THIS IS ASSOCIATED WITH ZZT1
+
+      REAL(r8) :: ptg_angle(NZmodel/8-1)       ! POINTING ANGLES CORRESPONDING TO ZZT1
+
+      type(antennaPattern_T), intent(in) :: AntennaPattern
+      integer :: FFT_INDEX(size(antennaPattern%aaap))
+      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i
+      REAL(r8) :: schi, center_angle, Q
+      Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
+
+      Real(r8), dimension(size(fft_index)) :: FFT_ANGLES, FFT_PRESS, RAD0, RAD
 
 !      REAL(r8) :: TMP(NZmodel/8-1)                 
 
@@ -327,6 +352,8 @@
 
       DO I=1, Multi
         ZZT1(I)=YZ(I*8)
+        ZPT1(I)=YP(I*8)
+        ZTT1(I)=YT(I*8)
       ENDDO
      
 !-----------------------------------------------
@@ -381,15 +408,13 @@
 
          CALL HEADER(3)
 
-!-----------------------------------------------------
+!-----------------------------------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
-!-----------------------------------------------------
-! ==============================================================================
-! My original intention is that ICON=0 is Clear-Sky only 
-!                               ICON=1 is for 100%RH inside and below Cloud
-!                               ICON=2 is default for 100%RH inside cloud ONLY
-!                               ICON=3 is for near-side cloud only 
-! ==============================================================================
+! 	 N.B.	ICON=0 is Clear-Sky only 
+!		ICON=1 is for 100%RH inside and below Cloud
+!		ICON=2 is default for 100%RH inside cloud ONLY
+!		ICON=3 is for near-side cloud only 
+!-----------------------------------------------------------------------------
 
          ICLD_TOP = 0
          I100_TOP = 0
@@ -502,7 +527,7 @@
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
-        IF(ICON .GE. 1) THEN                               
+         IF(ICON .GE. 1) THEN                               
 
            CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
@@ -510,21 +535,127 @@
 
          ENDIF
 
+! ==========================================================================
+!    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
+! ==========================================================================
+	 Ier = 0
+!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+	 Rs_eq = h_obs
+
+!---------------------------------------------------------------------------
+!	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
+!---------------------------------------------------------------------------
+
+  	 DO I = 1, Multi
+            schi = (ZZT1(I) + RE) / Rs_eq
+    	    IF(ABS(schi) > 1.0) THEN
+      	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
+               PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
+               STOP
+            END IF
+    	    ptg_angle(i) = Asin(schi) + elev_offset
+  	 END DO
+
+	 center_angle = ptg_angle(1)
+
+! ----------------------------------------------------------------
+! 	 THEN DO THE FIELD OF VIEW AVERAGING
+! ----------------------------------------------------------------
+
+         ntr = size(antennaPattern%aaap)
+
+	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
+
+         RAD0=0.0
+         RAD0(1:Multi)=TT0(1:Multi,NZmodel)
+
+         RAD=0.0
+         RAD(1:Multi)=TT(1:Multi,NZmodel)
+
+         fft_angles=0.0
+         fft_angles(1:Multi) = ptg_angle(1:Multi)             ! Multi = No. of tangent heights
+	
+         Call fov_convolve ( fft_angles, RAD0, center_angle, 1, Multi,   &
+              &              fft_pts, AntennaPattern, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in FOV CONV'
+	         stop
+	      endif
+
+         Call fov_convolve ( fft_angles, RAD, center_angle, 1, Multi,   &
+              &              fft_pts, AntennaPattern, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in FOV CONV'
+	         stop
+	      endif
+
+              !------------------------------------------------------------------
+              !  TT   ___                                     RAD  ___|___
+              !          \                                        /   |   \
+              !           \          after fov_convolve ==>      /    |    \
+              !            \                                    /  -  | +   \
+              !             \___                            ___/      |      \___
+              !-------------------------------------------------------------------
+
+
+         !  Get 'ntr' pressures associated with the fft_angles:
+         Call get_pressures ( 'a', ptg_angle, ZTT1, -log10(ZPT1), Multi,     &
+              &                    fft_angles, fft_press, Ntr, Ier )
+              if ( Ier /= 0) then
+	         print*,'error in get_pressures'
+	         stop
+	      endif
+           
+         ! Make sure the fft_press array is MONOTONICALY increasing:
+         is = 1
+         do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1)) 
+            is = is + 1                                                  
+         end do                                                         
+          ! There is an error in zvi's code, in which he wrote is<Ntr. This will cause 
+          ! subscript fft_press(is+1) out of range when run the program after compile 
+          ! with -C, as "Subscript 1 of FFT_PRESS (value 1025) is out of range (1:1024)"
+ 
+         Ktr = 1
+         Rad0(Ktr) = Rad0(is)
+         Rad(Ktr) = Rad(is)
+         fft_index(Ktr) = is
+         fft_press(Ktr) = fft_press(is)
+
+         do ptg_i = is+1, Ntr
+           q = fft_press(ptg_i)
+           if ( q > fft_press(Ktr)) then
+             Ktr = Ktr + 1
+             fft_press(Ktr) = q
+             Rad0(Ktr) = Rad0(ptg_i)
+             Rad(Ktr) = Rad(ptg_i)
+             fft_index(Ktr) = ptg_i
+           end if
+         end do
+ 
+! ----------------------------------------------------------------------------
+!        INTERPOLATE THE OUTPUT VALUES RAD0 TO TB0 WITH RESPECT TO L2 TANGENT
+!        PRESSURES ZT (i.e. ptan).
+!        (ALSO STORE THE RADIANCE DERIVATIVES WITH RESPECT TO ZT)
+! ----------------------------------------------------------------------------
+
+         Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
+         Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
+
 !====================================
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 !====================================
 
          ! CLEAR-SKY BACKGROUND
-         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+!         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
          ! CLOUD-INDUCED RADIANCE
-         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR),method='Linear')
+!         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
+!              &                 method='Linear')
            
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
               &            Trans(:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
               &            N,ISWI,RE) ! COMPUTE SENSITIVITY
-
 
       END IF
 
@@ -540,6 +671,10 @@
       END
 
 ! $Log: CloudForwardModel.f90,v      
+
+
+
+
 
 
 

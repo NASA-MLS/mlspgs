@@ -6,22 +6,29 @@ module FullCloudForwardModel
 
 ! -------------------------------------------------------------------------
 ! THIS MODULE CONTAINS THE FULL CLOUD FORWARD MODEL  
-! Jonathan Jiang, Paul Wagner, Jul 16, 2001 
+! Jonathan Jiang,  Paul Wagner, July 16, 2001 
+! Jonathan Jiang,  Dong Wu, add Jacobian, August 3, 2001
+! Jonathan Jiang,  add Field Of View Convolution, August 16, 2001  
 ! -------------------------------------------------------------------------
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
-  use Hdf,      only: DFACC_READ, DFACC_CREATE
-  use HDFEOS,   only: SWOPEN,     SWCLOSE
+  use AntennaPatterns_m, only: ANTENNAPATTERNS
+  use Hdf, only: DFACC_READ, DFACC_CREATE
+  use HDFEOS, only: SWOPEN,     SWCLOSE
   use L2GPData, only: L2GPData_T, ReadL2GPData, WriteL2GPData
   use MLSCommon,only: NameLen,    FileNameLen, r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSignals_m, only: SIGNAL_T
+  use MLSSignals_m, only: SIGNAL_T, ARESIGNALSSUPERSET
   use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
                           & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MLSNumerics, only: InterpolateValues
   use Molecules, only: L_H2O, L_O3
+  use Output_m, only: OUTPUT
+  use PointingGrid_m, only: POINTINGGRIDS
+  use Toggles, only: Emit, Levels, Toggle
+  use Units, only: Deg2Rad
   use VectorsModule, only: GETVECTORQUANTITYBYTYPE,                          &
                          & VECTOR_T, VECTORVALUE_T,                          &
                          & VALIDATEVECTORQUANTITY
@@ -53,7 +60,9 @@ module FullCloudForwardModel
                      & L_EARTHRADIUS,                                        &
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER,                                         &
-                     & L_LOSTRANSFUNC
+                     & L_LOSTRANSFUNC,                                       &
+		     & L_SCGEOCALT,                                          &
+		     & L_ELEVOFFSET
 
   implicit none
   private
@@ -105,11 +114,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: TEMP                       ! Temperature 
     type (VectorValue_T), pointer :: TOTALEXTINCTION            ! Profile
     type (VectorValue_T), pointer :: VMR                        ! Quantity
+    type (VectorValue_T), pointer :: SCGEOCALT     ! Geocentric spacecraft altitude
+    type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset quantity
 
-    type (Signal_T) :: signal               ! I don't know how to define this!
+    type (Signal_T) :: signal                      ! I don't know how to define this!
 
-    type(MatrixElement_T), pointer :: JBLOCK     ! A block from the jacobian
-    type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
+    type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
+    type(VectorValue_T), pointer :: STATEQ         ! A state vector quantity
 
     ! for jacobian
     integer :: COLJBLOCK                ! Column index in jacobian
@@ -122,6 +133,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: chan
 
     integer :: i                        ! Loop counter
+    integer :: j                        ! Loop counter
     integer :: ivmr
     integer :: NQ1
     integer :: NQ2
@@ -140,6 +152,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     integer, dimension(:), pointer :: closestInstances 
 
+    integer :: WHICHPATTERN             ! Index of antenna pattern
+    integer :: MAXSUPERSET              ! Max. value of superset
+    integer, dimension(:), pointer :: SUPERSET ! Result of AreSignalsSuperset
+    integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
+
     real(r8), dimension(:,:), pointer :: A_CLEARSKYRADIANCE
     real(r8), dimension(:,:), pointer :: A_CLOUDINDUCEDRADIANCE
     real(r8), dimension(:,:), pointer :: A_CLOUDEXTINCTION
@@ -150,11 +167,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: VMRARRAY               ! The VMRs
 
     real(r8), dimension(:,:), pointer :: A_TRANS
-
     real(r8), dimension(:), pointer :: FREQUENCIES
     real(r8), dimension(:,:), allocatable :: WC
-
     real(r8), dimension(:,:), allocatable :: TransOnS
+    real(r8) :: phi_tan
     
     logical, dimension(:), pointer :: doChannel ! Do this channel?
     logical :: DODERIVATIVES                    ! Flag
@@ -171,7 +187,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
-             A_TOTALEXTINCTION, A_TRANS,FREQUENCIES )
+             A_TOTALEXTINCTION, A_TRANS,FREQUENCIES, superset )
              
     nullify ( doChannel )
     
@@ -189,14 +205,38 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & 'Only single sidebands allowed in FullForwardCloudModel for now' )
     call Allocate_test ( frequencies, noFreqs,             &
       & 'frequencies', ModuleName )
+
 !    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
 !      & pack ( signal%frequencies, signal%channels ) )
+
     frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
       signal%frequencies)
 
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
+
+    call allocate_test ( superset, size(antennaPatterns), &
+         & 'superset', ModuleName )
+
+    do j = 1, size(antennaPatterns)
+       superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
+           & ForwardModelConfig%signals, sideband=signal%sideband , channel=chan )
+    end do
+
+    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & "No matching antenna patterns." )
+
+    maxSuperset = maxval ( superset )
+    where ( superset < 0 )
+          superset = maxSuperset + 1
+    end where
+    whichPatternAsArray = minloc ( superset )
+    whichPattern = whichPatternAsArray(1)
+    if ( toggle(emit) .and. levels(emit) > 2 ) then
+       call output ( 'Using antenna pattern: ' )
+       call output ( whichPattern, advance='yes' )
+    end if
 
     ! Get the quantities we need from the vectors
 
@@ -303,6 +343,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         case (l_earthradius)
           earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_earthradius ) 
+	case (l_scGeocAlt)
+	  scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_scGeocAlt )
+	case (l_elevOffset)
+          elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
         case (l_vmr)
 !          need to do nothing, will be treated below.
         case default
@@ -365,7 +411,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & quantityType=l_sizeDistribution )
     earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_earthradius ) 
-
+    scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_scGeocAlt )
    endif
 !-------------------------------
 ! end of N. Livesey's version
@@ -480,6 +527,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
+     phi_tan = Deg2Rad * temp%template%phi(1,instance)
+
 !    print*, ' '
 !    print*,'No. of Frequencies:', noFreqs 
 !    print*, frequencies/1e3_r8
@@ -503,9 +552,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
+      & phi_tan,                                                             &
+      & scGeocAlt%values(1,1),                                               &
+      & elevOffset%values(1,1),                                              &
+      & antennaPatterns(whichPattern),                                       &
       & a_clearSkyRadiance,                                                  &
       & a_cloudInducedRadiance,                                              &
-      & a_trans,                                                   &
+      & a_trans,                                                             &
       & a_totalExtinction,                                                   &
       & a_cloudExtinction,                                                   &
       & a_massMeanDiameter,                                                  &
@@ -530,13 +583,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     print*, 'about to assign radiance value'
     print*, 'radiance instance length: ', radiance%template%instanceLen
 
-!   the following will cause error if only 1 channel is specified
     radiance%values ( :, maf) =                                              &
       & reshape ( transpose(a_clearSkyRadiance),                             &
       & (/radiance%template%instanceLen/) )
 
     print*, 'Successfully assigned radiance value!'
-!    stop  ! successful!
 
     print*, 'about to assign cloud inducedradiance values'
     print*, 'radiance instance length: ', cloudInducedRadiance%template%instanceLen
@@ -553,8 +604,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & reshape ( transpose(a_cloudRADSensitivity),                          &
       & (/cloudRADSensitivity%template%instanceLen/) )
 
-     print*, 'about to zero cloud extinction'   
-!     stop
+!     print*, 'about to zero cloud extinction'   
 
  ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
     cloudExtinction%values(:,instance) =       0.0_r8
@@ -563,8 +613,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     totalExtinction%values(:,instance) =       0.0_r8
 
 !     print*, 'about to assign cloud extinction values'   
-!     stop
-
 !    cloudExtinction%values ( :, instance ) =                        &
 !      & reshape ( transpose(a_cloudExtinction),                     &
 !      & (/noLayers*noFreqs/) )
@@ -656,6 +704,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 
     ! Remove temporary quantities
+
+    call deallocate_test ( superset, 'superset', ModuleName )
+
     call Deallocate_test ( a_massMeanDiameter,                               &
                           'a_massMeanDiameter',           ModuleName )
     call Deallocate_test ( a_cloudExtinction,                                &
@@ -677,12 +728,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Deallocate_test ( closestInstances,                                 &
                           'closestInstances',             ModuleName )
     call Deallocate_test ( doChannel, 'doChannel', ModuleName )
-!    print*, ' '
-!    print*, 'Time Instance: ', instance
+    print*, ' '
+    print*, 'Time Instance: ', instance
 !    print*, 'Successful done with full cloud forward wapper !'
 !    stop
 
     if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
+    print*, 'Successful done with full cloud forward wapper !'
 
   end subroutine FullCloudForwardModelWrapper
 
@@ -725,6 +777,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.23  2001/08/07 17:17:50  jonathan
+! add radiance%template%instrumentModule to ptan
+!
 ! Revision 1.22  2001/08/02 01:03:16  dwu
 ! add doChannel to frequency loop
 !
