@@ -230,7 +230,7 @@ contains ! =====     Public Procedures     =============================
       got(field) = .true.
       select case ( field )
       case ( f_type )
-        binSelector%quantityType = decoration(gson)
+        binSelector%selectorType = decoration(gson)
       case ( f_molecule )
         binSelector%molecule = decoration(gson)
       case ( f_height )
@@ -280,16 +280,9 @@ contains ! =====     Public Procedures     =============================
     end do
 
     ! Just check a few last details
-    select case ( binSelector%quantityType ) 
-    case ( l_temperature )
-    case ( l_vmr )
-      if ( .not. got(f_molecule) ) call AnnounceError ( &
-        & NoMolecule, son )
-    case default
-      call AnnounceError ( BadQuantityType, son, f_type )
-    end select
-    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "An error occured when parsing the BinSelector specification" )
+    if ( ( binSelector%selectorType == l_vmr ) &
+      & .and. ( .not. got(f_molecule) ) ) call AnnounceError ( &
+      & NoMolecule, son )
   end function CreateBinSelectorFromMLSCFINFO
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
@@ -643,6 +636,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.29  2002/03/15 21:22:31  livesey
+! Dealt with new BinSelector type
+!
 ! Revision 2.28  2002/03/14 23:30:21  pwagner
 ! Changed id of who announcesError
 !
