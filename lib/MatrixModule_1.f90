@@ -9,7 +9,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! quantities in MLS Level 2 software, and related programs.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use DUMP_0, only: DUMP
+  use DUMP_0, only: DUMP, DUMPSIZE
   use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
     & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, CyclicJacobi, & 
     & DenseCyclicJacobi, Densify, &
@@ -2454,9 +2454,6 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Upper   ! Only do the upper triangle
     !                                          if present and true.
 
-    integer, parameter :: KB = 1024
-    integer, parameter :: MB = KB * 1024
-    integer, parameter :: GB = MB * 1024
     !                         Absent Banded Sparse   Full
     character :: CHARS(0:4) = (/ '-',   'B',   'S',   'F',  '?' /)
     integer :: I, J, N
@@ -2507,21 +2504,9 @@ contains ! =====     Public Procedures     =============================
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Unrecognized value for rm' )
     end select
-      
+
     ! Make a 'nice' output
-    if ( n < kb ) then
-      call output ( n*1.0, format='(f5.1)' )
-      call output ( ' bytes', advance='yes' )
-    else if ( n < Mb ) then
-      call output ( n*1.0/kb, format='(f5.1)' )
-      call output ( ' kb', advance='yes' )
-    else if ( n < Gb ) then
-      call output ( n*1.0/Mb, format='(f5.1)' )
-      call output ( ' Mb', advance='yes' )
-    else
-      call output ( n*1.0/Gb, format='(f5.1)' )
-      call output ( ' Gb', advance='yes' )
-    end if
+    call DumpSize ( n, advance='yes' )
   end subroutine Dump_Struct
 
   ! --------------------------------------------------  MinDiag_1  -----
@@ -2542,6 +2527,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.100  2004/04/03 05:43:43  livesey
+! Moved the DumpSize functionality into Dump_0
+!
 ! Revision 2.99  2004/01/30 23:24:48  livesey
 ! Bug fixes to FrobeniusNorm and CyclicJacobi stuff
 !
