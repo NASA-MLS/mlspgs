@@ -235,6 +235,7 @@ contains
       stop
     end if
     symbols(:size(old_symbol)) = old_symbol
+    symbols(size(old_symbol)+1:) = t_null
     deallocate ( old_symbol )
     return
   end subroutine INCREASE_SYMBOLS
@@ -246,6 +247,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.9  2003/05/14 06:44:24  vsnyder
+! Make sure new elements of 'symbols' are not undefined
+!
 ! Revision 2.8  2003/05/14 01:42:25  vsnyder
 ! Add Dump_Symbol_Table
 !
