@@ -23,18 +23,23 @@ contains
 
 ! ================================================     GET_LUN     =====
 
-  subroutine GET_LUN ( LUN )
+  subroutine GET_LUN ( LUN, MSG )
   ! Find a Fortran logical unit number that's not in use.
-    integer, intent(out) :: LUN    ! The logical unit number
-    logical :: OPENED              ! Used to inquire about the unit
-    do lun = 1, 100
-      inquire ( unit=lun, opened=opened )
-      if (.not. opened) return
+    integer, intent(out) :: LUN          ! The logical unit number
+    logical, intent(in), optional :: MSG ! Print failure message if absent or .true.
+    logical :: EXIST, OPENED             ! Used to inquire about the unit
+    do lun = 20, 100
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) return
     end do
-    write(*,*) 'IO_STUFF%GET_LUN-E- Unable to get a logical unit number'
     lun = -1
+    if ( present(msg) ) then
+      if ( .not. msg ) return
+    end if
+    write(*,*) 'IO_STUFF%GET_LUN-E- Unable to get a logical unit number'
     return
   end subroutine GET_LUN
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -42,6 +47,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.4  2004/05/19 23:00:18  vsnyder
+! Add optional MSG argument
+!
 ! Revision 2.3  2002/10/08 00:09:10  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
