@@ -332,7 +332,7 @@ contains ! =====     Public procedures     =============================
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
       begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
-             n+n_dt_def, &
+             l+l_nameFragment, l+l_sza, n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
              l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
@@ -944,6 +944,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.279  2003/02/06 00:45:20  livesey
+! Added sza and nameFragment to binSelectors type
+!
 ! Revision 2.278  2003/02/05 21:56:27  livesey
 ! binSelectors don't contain signals, instead forward model configs
 ! contain bin selectors.
