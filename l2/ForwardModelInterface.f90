@@ -123,7 +123,7 @@ contains
                                         ! "spec_args" vertex.
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(forwardModelInfo_T), intent(out) :: ForwardModelInfo
+    type(forwardModelInfo_T), intent(inout) :: ForwardModelInfo
 
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -199,6 +199,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.6  2001/03/08 03:23:45  vsnyder
+! More stuff to work with L2_Load
+!
 ! Revision 2.5  2001/03/08 00:42:09  vsnyder
 ! Add temporary stuff to use with L2_Load
 !
