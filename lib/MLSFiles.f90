@@ -53,7 +53,14 @@ module MLSFiles               ! Utility file routines
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: DEFAULT_HDFVERSION = 4
+   integer, parameter :: HDFVERSION_4 = 4
+   integer, parameter :: HDFVERSION_5 = 5
+   integer, parameter :: DEFAULT_HDFVERSION = HDFVERSION_4
+   
+  ! Given this hdfVersion, try to autorecognize hdfversion
+  ! then perform appropriate version of open/close; i.e., forgiving
+  ! (must *not* be 4 or 5)
+  integer, parameter, public :: WILDCARDHDFVERSION=HDFVERSION_4+HDFVERSION_5
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -840,6 +847,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.28  2002/01/29 23:45:26  pwagner
+! Added WILDCARDHDFVERSION as public param
+!
 ! Revision 2.27  2002/01/29 00:47:41  pwagner
 ! Converted mls_hdf_version to integer function
 !
