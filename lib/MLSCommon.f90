@@ -107,24 +107,6 @@ module MLSCommon                ! Common definitions for the MLS software
 
   ! --------------------------------------------------------------------------
 
-  ! This datatype defines the `chunks' into which the input dataset is split
-
-  type MLSChunk_T
-    integer :: firstMAFIndex   ! Index of first MAF in the chunk
-    integer :: lastMAFIndex    ! Index of last MAF in the chunk
-    integer :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
-    integer :: noMAFsUpperOverlap ! Number of MAFs in the upper overlap region
-    integer :: chunkNumber              ! Index of this chunk
-    integer, dimension(:), pointer :: HGridOffsets => NULL()
-    ! This for each chunk is the index of the first non-overlapped profile in 
-    ! each hGrid into the relevant output (l2gp?) file.
-    integer, dimension(:), pointer :: HGridTotals => NULL()
-    ! This is somewhat repetetive.  It's the total number of profiles in
-    ! the output hGrid.  It's only really used in parallel runs.
-  end type MLSChunk_T
-
-  ! --------------------------------------------------------------------------
-
   ! The TAI93 time range
 
   type TAI93_Range_T
@@ -207,6 +189,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.19  2004/05/19 19:16:40  vsnyder
+! Move MLSChunks_t to Chunks_m
+!
 ! Revision 2.18  2004/01/09 00:38:04  pwagner
 ! Added FindNext function
 !
