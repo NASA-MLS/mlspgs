@@ -137,6 +137,7 @@ contains
 
     field%sourceFileName = filename
     field%missingValue = defaultMissingValue
+    field%empty = .false.
 
     ! Fix axis arrays: set to default values with length 1 and a sensible 
     ! value. These will be used if the file does not have variation 
@@ -852,6 +853,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.24  2003/04/04 00:09:55  livesey
+! Added initialization for empty field
+!
 ! Revision 2.23  2003/02/28 02:27:37  livesey
 ! Now using missing value stuff
 !
