@@ -263,7 +263,8 @@ contains
           call decorate (son, AddDirectToDatabase ( &
             & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
         case ( s_dump )
-          call dumpCommand ( son, vGrids=vGrids )
+          call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase, &
+            & vGrids=vGrids )
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_fgrid )
@@ -331,7 +332,7 @@ contains
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
         case ( s_pfaData )
-          call Get_PFAdata_from_l2cf ( son, vGrids )
+          call Get_PFAdata_from_l2cf ( son, name, vGrids )
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -824,6 +825,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.81  2004/05/22 02:31:40  vsnyder
+! Hook in PFAData, dump
+!
 ! Revision 2.80  2004/03/24 01:02:55  livesey
 ! Make LeapSecFile public
 !
