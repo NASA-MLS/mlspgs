@@ -282,7 +282,7 @@ contains
     ! Executable code
 
     nullify ( a, aa, b, bb, c, cc, d, dd, gap2, gap, lowerInds, maskVector, &
-      &       oldSecondLower, oldSecondUpper, oldYlower, oldYupper, p, &
+      &       oldSecond, oldSecondLower, oldSecondUpper, oldYlower, oldYupper, p, &
       &       spreadGap, temp, tempDNewByDOld, upperInds )
 
     ! Size the problem, check sanity, set up arrays etc.
@@ -540,6 +540,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.10  2001/05/08 23:25:58  livesey
+! Added a nullify for oldSecond (how did I miss that?)
+!
 ! Revision 2.9  2001/05/03 23:13:28  livesey
 ! Made Van's changes compile with NAG
 !
