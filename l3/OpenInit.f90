@@ -6,14 +6,14 @@
 MODULE OpenInit 
 !===============================================================================
 
-   USE MLSCommon
-   USE SDPToolkit
-   USE MLSPCF
-   USE MLSMessageModule
-   USE L3DMData
-   USE dates_module
-   USE MLSCF
    USE L3CF
+   USE MLSCF
+   USE MLSCommon
+   USE MLSL3Common
+   USE MLSMessageModule
+   USE MLSPCF
+   USE SDPToolkit
+   USE dates_module
    use GETCF_M, only: GetCF, InitGetCF
    IMPLICIT NONE
    PUBLIC
@@ -32,6 +32,7 @@ MODULE OpenInit
 ! Subroutines -- GetPCFParameters
 !                SetProcessingWindow
 !                OpenAndInitialize
+!                AvgOrbPeriod
 
 ! Remarks:  This is a prototype module for the routines needed for the L3 Daily
 ! Open/Init task.
@@ -99,7 +100,7 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: name
 
-      INTEGER ::  i, indx, mlspcf_log, returnStatus, version
+      INTEGER ::  indx, mlspcf_log, returnStatus, version
 
 ! Retrieve values set in PCF & assign them to variables.
 
@@ -157,12 +158,8 @@ CONTAINS
       returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
                         ModuleName, 'Error retrieving log file name from PCF.')
-
-      DO i = 1, 10
-         indx = INDEX(name, '/')
-         IF (indx == 0) EXIT
-         name = name(indx+1:)
-      ENDDO
+      indx = INDEX(name, '/', .TRUE.)
+      name = name(indx+1:)
 
       indx = INDEX(name, '.')
       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No file type &
@@ -253,9 +250,9 @@ CONTAINS
    END SUBROUTINE SetProcessingWindow
 !------------------------------------
 
-!------------------------------------------------
-   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf)
-!------------------------------------------------
+!--------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, avgPer)
+!--------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
@@ -267,6 +264,8 @@ CONTAINS
       TYPE( Mlscf_T ), INTENT(OUT) :: cf
 
       TYPE( L3CFProd_T ), POINTER :: l3cf(:)
+
+      REAL(r8), POINTER :: avgPer(:)
 
 ! Parameters
 
@@ -282,6 +281,10 @@ CONTAINS
 ! Retrieve values set in PCF & assign them to variables.
 
       CALL GetPCFParameters(l3pcf)
+
+! Calculate the average orbit period for each day in the input window
+
+      CALL AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
 
 ! Calculate the dates, number of days for the processing window
 
@@ -318,11 +321,123 @@ CONTAINS
    END Subroutine OpenAndInitialize
 !----------------------------------
 
+!----------------------------------------------------
+   SUBROUTINE AvgOrbPeriod (startDay, endDay, avgPer)
+!----------------------------------------------------
+
+! Brief description of subroutine
+! This program calculates the average orbital period for each day in the input
+! window.
+
+! Arguments
+
+      CHARACTER (LEN=8), INTENT(IN) :: endDay, startDay
+
+      REAL(r8), POINTER :: avgPer(:)
+
+! Parameters
+
+      INTEGER, PARAMETER :: numOffset = 43200
+
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_eph_getEphMet, Pgs_td_asciiTime_bToA
+      INTEGER, EXTERNAL :: Pgs_td_timeInterval, Pgs_td_utcToTAI
+
+! Variables
+
+      CHARACTER (LEN=26) :: startB
+      CHARACTER (LEN=CCSDS_LEN) :: startA
+      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=480) :: msg, msr
+      CHARACTER (LEN=8) :: dates(maxWindow)
+      CHARACTER (LEN=CCSDS_LEN) :: orbitAscendTime(max_orbits)
+      CHARACTER (LEN=CCSDS_LEN) :: orbitDescendTime(max_orbits)
+
+      INTEGER :: err, i, j, numDays, numOrbits, returnStatus
+      INTEGER :: orbitNumber(max_orbits)
+
+      REAL(r8) :: sum
+      REAL(r8) :: offsets(numOffset)
+      REAL(r8) :: ascTAI(max_orbits), int(max_orbits)
+      REAL(r8) :: orbitDownLongitude(max_orbits)
+
+! Calculate the offsets
+
+      DO i = 1, numOffset
+         offsets(i) = (i-1) * 2.0
+      ENDDO
+
+! Find the number of days in the input window
+
+      CALL SetProcessingWindow(startDay, endDay, dates, numDays)
+
+      ALLOCATE(avgPer(numDays), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' array of period averages.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! For each day in the input window,
+
+      DO i = 1, numDays
+
+! Convert the start time to CCSDS A format
+
+         startB = dates(i) // 'T00:00:00.000000Z'
+
+         returnStatus = Pgs_td_asciiTime_bToA(startB, startA)
+         IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                         ModuleName, 'Failed to convert input date to CCSDS A')
+
+! Get orbit metadata
+
+         returnStatus = Pgs_eph_getEphMet(spacecraftId, numOffset, startA, &
+                           offsets,  numOrbits, orbitNumber, orbitAscendTime, &
+                           orbitDescendTime, orbitDownLongitude)
+         IF (returnStatus /= PGS_S_SUCCESS) THEN
+            call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+            msr = mnemonic // ':  ' // msg
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Convert orbitAscendTime to TAI93
+
+         DO j = 1, numOrbits
+            returnStatus = Pgs_td_utcToTAI( orbitAscendTime(j), ascTAI(j) )
+            IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                            ModuleName, 'Error converting from CCSDSB to TAI.')
+         ENDDO
+
+! Get the differences between successive times and add them for the day
+
+         sum = 0.0 
+
+         DO j = 1, numOrbits-1
+            returnStatus = Pgs_td_timeInterval( ascTAI(j), ascTAI(j+1), int(j) )
+            IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+              ModuleName, 'Failed to find interval between orbitsAscendTimes.')
+            sum = sum + int(j)
+         ENDDO
+
+! Get the average period for the day
+
+         avgPer(i) = sum/(numOrbits-1)
+
+      ENDDO
+
+!-----------------------------
+   END SUBROUTINE AvgOrbPeriod
+!-----------------------------
+
 !==================
 END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.3  2000/11/15 21:28:05  nakamura
+! Changed MLSPCF parameter names to mlspcf_l3_param_*.
+!
 ! Revision 1.2  2000/10/24 19:31:48  nakamura
 ! Added logGranID to PCFData_T; replaced ReadParseMLSCF stub with calls to actual parser.
 !
