@@ -37,7 +37,7 @@ module Fill                     ! Create vectors and fill them.
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
+    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
     & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
@@ -64,7 +64,7 @@ module Fill                     ! Create vectors and fill them.
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSNumerics, only: InterpolateValues
   use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-  use MLSSignals_m, only: GetSignalName, GetModuleName
+  use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -1612,37 +1612,30 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     ! First check that things are OK.
-    if ( (qty%template%quantityType /= l_losVel) .or. &
-      &  (tngtECI%template%quantityType /= l_tngtECI) .or. &
-      &  (scECI%template%quantityType /= l_scECI) .or. &
-      & .not. any( &
-      &  (scVel%template%quantityType == &
-      & (/ l_scVelECI /))) ) then
-      call Announce_Error ( key, badLOSVelFill )
-      return
-    end if
-
-    if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) then
-      call Announce_Error ( key, badLOSVelFill )
-      return
-    end if
+    if ( .not. ValidateVectorQuantity ( qty, &
+      & quantityType=(/l_losVel/), &
+      & minorFrame=.true., &
+      & frequencyCoordinate=(/l_none/) ) ) call Announce_Error ( key, No_Error_Code, &
+      & 'Quantity to fill is not a valid LOS Velocity' )
+    if ( .not. ValidateVectorQuantity ( tngtECI, &
+      & quantityType=(/l_tngtECI/), &
+      & minorFrame=.true., &
+      & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
+      & 'Tangent ECI quantity is not of an appropriate form' )
+    if ( .not. ValidateVectorQuantity ( scECI, &
+      & quantityType=(/l_scECI/), &
+      & minorFrame=.true., &
+      & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
+      & 'Spacecraft ECI quantity is not of an approriate form' )
+    if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) &
+      & call Announce_Error ( key, No_Error_Code, &
+      & 'LOS Velocity and Tangent ECI quantities are not for the same module' )
+    if ( .not. IsModuleSpacecraft ( scECI%template%instrumentModule ) ) &
+      & call Announce_Error ( key, No_Error_Code, &
+      & 'Spacecraft ECI quantity is not for the spacecraft' )
 
     noMAFs = qty%template%noInstances
     noMIFs = qty%template%noSurfs
-
-    if ( size(qty%values(:,1)) < noMIFs ) then
-      call Announce_Error ( key, No_Error_code, &
-       & 'noMIFs too large for los quantity' )
-      return
-    elseif ( size(qty%values(1,:)) < noMAFs ) then
-      call Announce_Error ( key, No_Error_code, &
-       & 'noMAFs too large for los quantity' )
-      return
-    elseif ( size(scVel%values(1,:)) < 3 ) then
-      call Announce_Error ( key, No_Error_code, &
-       & 'scVel has too few components' )
-      return
-    end if
 
     do maf = 1, noMAFs
       do mif = 1, noMIFs
@@ -3472,6 +3465,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.125  2002/05/23 20:51:53  livesey
+! Bug fix, checking wrong in special fill for los velocity.
+!
 ! Revision 2.124  2002/05/17 17:55:48  livesey
 ! Added sideband folding fill
 !
