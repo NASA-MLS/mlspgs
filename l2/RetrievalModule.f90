@@ -16,7 +16,7 @@ module RetrievalModule
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelInterface, only: ForwardModel
+  use ForwardModelWrappers, only: ForwardModel
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
@@ -733,6 +733,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.21  2001/04/26 19:48:20  livesey
+! Now uses ForwardModelWrappers
+!
 ! Revision 2.20  2001/04/26 02:53:37  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
