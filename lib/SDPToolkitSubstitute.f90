@@ -31,11 +31,11 @@
 !CONTAINS
 
        INTEGER FUNCTION PGS_SMF_GenerateStatusReport(msg)
-             CHARACTER (LEN=*):: msg
-             !INTEGER :: PGS_SMF_GenerateStatusReport
+         CHARACTER (LEN=*):: msg
+         !INTEGER :: PGS_SMF_GenerateStatusReport
 
-             PRINT*,msg
-             PGS_SMF_GenerateStatusReport=0
+         PRINT*,msg
+         PGS_SMF_GenerateStatusReport=0
        END FUNCTION PGS_SMF_GenerateStatusReport
 
       INTEGER FUNCTION PGS_IO_Gen_OpenF(file_logical,file_access, &
@@ -45,7 +45,7 @@
         INTEGER, INTENT(IN) :: record_length
         INTEGER, INTENT(OUT) :: file_handle
         INTEGER, INTENT(IN) :: file_version
-        
+        file_handle = 0
         PGS_IO_Gen_OpenF=-99
       END FUNCTION PGS_IO_Gen_OpenF
 
@@ -59,7 +59,8 @@
          file_version, physicalfilename)
         INTEGER, INTENT(IN) :: file_handle
         INTEGER, INTENT(INOUT) :: file_version
-        character (LEN=*), INTENT(OUT) :: physicalfilename
+        character (LEN=*), INTENT(OUT) :: physicalFilename
+        physicalFilename = ' '
         Pgs_pc_getReference=-99
       END FUNCTION Pgs_pc_getReference
 
@@ -67,6 +68,9 @@
         integer, intent(out) :: CODE              ! Previously stored code
         character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
         character(len=*), intent(out) :: MSG      ! Previously stored message
+        code = 0
+        mnemonic = ' '
+        msg = ' '
       end subroutine Pgs_smf_getMsg
 
       INTEGER FUNCTION PGS_TD_TAItoUTC(sectai93,asciiutc)
@@ -78,74 +82,72 @@
 
       INTEGER FUNCTION PGS_PC_GetConfigData(param_id, param_val)
         INTEGER, INTENT(IN) :: param_id
-         character (len=*), intent(out) :: param_val
-         param_val = "Use the Real PGSTK"
-         PGS_PC_GetConfigData=-99
+        character (len=*), intent(out) :: param_val
+        param_val = "Use the Real PGSTK"
+        PGS_PC_GetConfigData=-99
       END FUNCTION PGS_PC_GetConfigData
 
       INTEGER FUNCTION PGS_PC_GetFileSize(pcf_id, file_version, size)
         INTEGER, INTENT(IN) :: pcf_id
         INTEGER, INTENT(INOUT) :: file_version
         INTEGER, INTENT(INOUT) :: size
-         PGS_PC_GetFileSize=-99
-         size=0
+        PGS_PC_GetFileSize=-99
+        size=0
       END FUNCTION PGS_PC_GetFileSize
 
       INTEGER FUNCTION pgs_td_utctotai(time, dtime)
         character(len = *), INTENT(IN) :: time
         DOUBLE PRECISION, INTENT(out) :: dtime
-         pgs_td_utctotai=-99
-         dtime=0.D0
+        pgs_td_utctotai=-99
+        dtime=0.D0
       END FUNCTION pgs_td_utctotai
 
 ! Metadata functions
 
       INTEGER FUNCTION PGS_MET_Init(file_id,groups)
         INTEGER, INTENT(IN) :: file_id
-         character (len = *), dimension(:) :: Groups
-         PGS_MET_Init=-99
+        character (len = *), dimension(:) :: Groups
+        PGS_MET_Init=-99
       END FUNCTION PGS_MET_Init
 
       INTEGER FUNCTION PGS_MET_Setattr_d(imd_group, attr_name, dval)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
+        character (len = *) :: imd_group
+        character (len=*), intent(in) :: attr_name
         DOUBLE PRECISION, INTENT(IN) :: dval
-         PGS_MET_Setattr_d=-99
+        PGS_MET_Setattr_d=-99
       END FUNCTION PGS_MET_Setattr_d
 
       INTEGER FUNCTION PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
-         character (len=*), intent(in) :: attr_value
-         PGS_MET_Setattr_s=-99
+        character (len = *) :: imd_group
+        character (len=*), intent(in) :: attr_name
+        character (len=*), intent(in) :: attr_value
+        PGS_MET_Setattr_s=-99
       END FUNCTION PGS_MET_Setattr_s
 
       INTEGER FUNCTION PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
+        character (len = *) :: imd_group
+        character (len=*), intent(in) :: attr_name
         DOUBLE PRECISION, INTENT(OUT), DIMENSION(:) :: dval_array
-        if(size(dval_array) > 0) then
-            dval_array = 0.
-         endif
-         PGS_MET_Getsetattr_d=-99
+        dval_array = 0.
+        PGS_MET_Getsetattr_d=-99
       END FUNCTION PGS_MET_Getsetattr_d
 
       INTEGER FUNCTION PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
-         integer, intent(in) :: attr_value
-         PGS_MET_Setattr_i=-99
+        character (len = *) :: imd_group
+        character (len=*), intent(in) :: attr_name
+        integer, intent(in) :: attr_value
+        PGS_MET_Setattr_i=-99
       END FUNCTION PGS_MET_Setattr_i
 
       INTEGER FUNCTION PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: hdf_attr_name
-         integer, intent(in) :: sd_id
-         PGS_MET_Write=-99
+        character (len = *) :: imd_group
+        character (len=*), intent(in) :: hdf_attr_name
+        integer, intent(in) :: sd_id
+        PGS_MET_Write=-99
       END FUNCTION PGS_MET_Write
 
       INTEGER FUNCTION PGS_MET_Remove( )
-         PGS_MET_Remove=-99
+        PGS_MET_Remove=-99
       END FUNCTION PGS_MET_Remove
 !=============================================================================
 !END MODULE SDPToolkitSubstitute
@@ -153,6 +155,11 @@
 
 !
 ! $Log$
+! Revision 2.5  2001/05/24 18:39:37  vsnyder
+! Give a value to every intent(out) argument, so as not to trigger the
+! undefined-variable stop when running with maximum run-time checks.
+! Also made some cosmetic changes.
+!
 ! Revision 2.4  2001/05/09 23:26:35  pwagner
 ! Added new functions
 !
