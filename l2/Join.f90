@@ -7,11 +7,10 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
-  use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, F_COLUMNABUNDANCE, &
-    & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
+  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_COLUMNABUNDANCE, L_PRESSURE, &
+  use INIT_TABLES_MODULE, only: L_PRESSURE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
@@ -57,8 +56,6 @@ module Join                     ! Join together chunk based data.
   integer, parameter :: NO_ERROR_CODE=0
   integer, parameter :: NotAllowed=1
 
-  integer, parameter :: MAXNCOLUMNS=30 ! Why would you need more tropopauses defs
-
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------  MLSL2Join  -----
@@ -99,15 +96,7 @@ contains ! =====     Public Procedures     =============================
     logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
     integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
-    integer :: NCOLUMNS                 ! number of elements in column field
-    integer :: COLUMNINDEX              ! Index for looping over nColumns
-    integer :: NBNDPRESS                ! n. of els in boundaryPressure field
     logical :: TIMING
-
-    integer :: COLMVECTORINDEX(MAXNCOLUMNS) ! Index for column vector
-    integer :: COLMQTYINDEX(MAXNCOLUMNS)    ! Index for col. qty (in database not vector)
-    integer :: BPRSVECTORINDEX(MAXNCOLUMNS) ! Index for bnd. press. vector
-    integer :: BPRSQTYINDEX(MAXNCOLUMNS)    ! Index for bnd. press. qty (in database not vector)
 
     real :: T1, T2     ! for timing
 
@@ -115,8 +104,6 @@ contains ! =====     Public Procedures     =============================
     logical :: GOT_FIELD(field_first:field_last)
     type (VectorValue_T), pointer :: Quantity
     type (VectorValue_T), pointer :: PrecisionQuantity
-    type (VectorValue_T), pointer :: ColAbundQuantity
-    type (VectorValue_T), pointer :: BndPressQuantity
 
     ! Executable code
     timing = .false.
@@ -160,8 +147,6 @@ contains ! =====     Public Procedures     =============================
       outputOverlaps = .FALSE.
       hdfNameIndex=name
       prefixSignal = .false.
-      ncolumns = 0
-      nbndpress = 0
 
       ! Loop over the fields of the mlscf line
 
@@ -184,32 +169,6 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           precVectorIndex = decoration(decoration(subtree(1,source)))
           precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
-        case ( f_columnAbundance )
-          ncolumns = nsons(gson)-1  ! less the "column" name
-          if(ncolumns > MAXNCOLUMNS) then
-             call announce_error(key,NO_ERROR_CODE, &
-             & 'Too many columnAbundances in field' )
-          endif
-          do columnindex = 1, nColumns
-            source = subtree(columnindex+1,gson) ! required to be an n_dot vertex
-            colmVectorIndex(columnindex) = &
-              & decoration(decoration(subtree(1,source)))
-            colmQtyIndex(columnindex) = &
-              & decoration(decoration(decoration(subtree(2,source))))
-          enddo
-        case ( f_boundaryPressure )
-          nbndpress = nsons(gson)-1  ! less the "column" name
-          if(nbndpress > MAXNCOLUMNS) then
-             call announce_error(key,NO_ERROR_CODE, &
-             & 'Too many boundaryPressures in field' )
-          endif
-          do columnindex = 1, nbndpress
-            source = subtree(columnindex+1,gson) ! required to be an n_dot vertex
-            bPrsVectorIndex(columnindex) = &
-              & decoration(decoration(subtree(1,source)))
-            bPrsQtyIndex(columnindex) = &
-              & decoration(decoration(decoration(subtree(2,source))))
-          enddo
         case ( f_prefixSignal )
           prefixSignal= value == l_true
         case ( f_compareoverlaps )
@@ -226,12 +185,6 @@ contains ! =====     Public Procedures     =============================
         end select
       end do
 
-   ! Check that same num of columns and bnd. press.
-      if( ncolumns /= nbndpress ) then
-             call announce_error(key, NO_ERROR_CODE, &
-             & 'nColumns != nBoundaryPressures in Join' )
-      endif
-
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
 
@@ -246,39 +199,6 @@ contains ! =====     Public Procedures     =============================
             & 'Quantity and precision quantity do not match')
         else
           precisionQuantity => NULL()
-        endif
-        if ( got_field ( f_columnAbundance ) ) then
-          do columnindex=1, nColumns
-             ColAbundQuantity => &
-               & GetVectorQtyByTemplateIndex( &
-               & vectors(colmVectorIndex(columnindex)), &
-               & colmQtyIndex(columnindex) &
-               & )
-!              What features of quantity and ColAbundQuantity need to match?
-!             if ( quantity%template%id /= &
-!               & ColAbundQuantity%template%id ) then
-             if ( l_ColumnAbundance /= &
-               & ColAbundQuantity%template%QuantityType ) then
-               call announce_error(key,NO_ERROR_CODE, &
-               & 'Column abundance not of proper type')
-               call output(' l_columnAbundance type: ', advance='no')
-               call output(l_columnAbundance, advance='yes')
-               call output(' column abundance type: ', advance='no')
-               call output(ColAbundQuantity%template%QuantityType, advance='yes')
-             endif
-           enddo
-        else
-          ColAbundQuantity => NULL()
-        endif
-        if ( got_field ( f_boundaryPressure ) ) then
-          do columnindex=1, nColumns
-             BndPressQuantity => &
-               & GetVectorQtyByTemplateIndex( &
-               & vectors(bPrsVectorIndex(columnindex)), &
-               & bPrsQtyIndex(columnindex))
-          enddo
-        else
-          BndPressQuantity => NULL()
         endif
 
         hdfName = ''
@@ -303,9 +223,7 @@ contains ! =====     Public Procedures     =============================
             if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
               & ModuleName, 'This quantity should be joined as an l2gp')
             call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
-              & precisionQuantity, vectors, l2gpDatabase, &
-              & colmvectorindex, colmqtyindex, &
-              & bprsvectorindex, bprsqtyindex, nColumns, chunkNo )
+              & precisionQuantity, l2gpDatabase, chunkNo )
           else
             ! All others go in l2aux files.
             if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
@@ -376,9 +294,7 @@ contains ! =====     Public Procedures     =============================
   ! defaults to the non overlapped region.
 
   subroutine JoinL2GPQuantities ( key, name, quantity, &
-    & precision, vectors, l2gpDatabase, &
-    & colmvectorindex, colmqtyindex, &
-    & bprsvectorindex, bprsqtyindex, nColumns, chunkNo, &
+    & precision, l2gpDatabase, chunkNo, &
     & firstInstance, lastInstance )
 
     ! Dummy arguments
@@ -386,13 +302,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME         ! For the swath
     type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
     type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
-    type (Vector_T), dimension(:), pointer :: vectors
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
-    integer, intent(in), dimension(:) :: COLMVECTORINDEX 
-    integer, intent(in), dimension(:) :: COLMQTYINDEX    
-    integer, intent(in), dimension(:) :: BPRSVECTORINDEX 
-    integer, intent(in), dimension(:) :: BPRSQTYINDEX    
-    integer, intent(in) :: NCOLUMNS
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
     ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -400,11 +310,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer :: FreqNo, ProfNo, Status, ColumnIndex
+    integer :: FreqNo, ProfNo, Status
     type (L2GPData_T) :: NewL2GP
     type (L2GPData_T), pointer :: ThisL2GP
-    type (VectorValue_T), pointer :: BndPressQuantity ! Vector quantity
-    type (VectorValue_T), pointer :: ColAbundQuantity ! Vector quantity
     integer :: Index
     integer :: FirstProfile, LastProfile ! Profile range in the l2gp to output to
     integer :: NoSurfsInL2GP, NoFreqsInL2GP
@@ -478,8 +386,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Expand l2gp (initially all zero-size arrays) to take the new information
     call ExpandL2GPDataInPlace ( thisL2GP, &
-      & newNTimes=thisL2GP%nTimes+noOutputInstances, &
-      & newNColumns=nColumns )
+      &thisL2GP%nTimes+noOutputInstances )
 
     ! Now copy the information from the quantity to the l2gpData
 
@@ -524,26 +431,6 @@ contains ! =====     Public Procedures     =============================
     end if
     thisL2GP%status(firstProfile:lastProfile)='G'
     thisL2GP%quality(firstProfile:lastProfile)=0.0
-
-   ! Column stuff
-   if(nColumns > 0) then
-      do columnindex=1, nColumns
-         ColAbundQuantity => &
-           & GetVectorQtyByTemplateIndex( &
-           & vectors(colmVectorIndex(columnindex)), &
-           & colmQtyIndex(columnindex) &
-           & )
-         BndPressQuantity => &
-           & GetVectorQtyByTemplateIndex( &
-           & vectors(bPrsVectorIndex(columnindex)), &
-           & bPrsQtyIndex(columnindex))
-         thisL2GP%columnTypes(columnindex) = 'Tropopause not defined'
-         thisL2GP%columnValues(firstProfile:lastProfile,columnindex) = &
-           & ColAbundQuantity%values(1,useFirstInstance:useLastInstance)
-         thisL2GP%boundaryPressures(firstProfile:lastProfile,columnindex) = &
-           & BndPressQuantity%values(1,useFirstInstance:useLastInstance)
-      enddo
-   endif
 
     if ( toggle(gen) ) call trace_end ( "JoinL2GPQuantities" )
   end subroutine JoinL2GPQuantities
@@ -771,6 +658,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.47  2001/09/05 20:34:56  pwagner
+! Reverted to pre-columnAbundance state
+!
 ! Revision 2.46  2001/08/03 23:13:52  pwagner
 ! Began testing; at least now exits normally again
 !
