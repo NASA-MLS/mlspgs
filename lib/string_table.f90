@@ -402,6 +402,7 @@ contains
       if ( status == inserted ) then
         found = .false.
         nstring = nstring + 1
+        if ( nstring >= ubound(strings,1) ) then; call double_strings; end if
         hash_table(2,loc) = nstring
         string = nstring
         strings(nstring+1) = strings(nstring)
@@ -411,7 +412,9 @@ contains
         write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
                        'Either the hash table is full'
         write ( *, * ) 'or the program is using the hash software ', &
-                       'incorrectly'
+                       'incorrectly.'
+        write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
+                       'to increase the hash table size.'
         stop
       end if
       ! The hash key matches; check whether the string does
@@ -517,7 +520,7 @@ contains
     integer, optional, intent(out) :: STAT
     integer :: MY_STAT
     character, allocatable :: OLD_CHAR(:)
-    allocate ( old_char(0:ubound(char_table,1)), stat=my_stat )
+    allocate ( old_char(ubound(char_table,1)), stat=my_stat )
     if ( my_stat /= 0 ) then
       if ( present(stat) ) then
         stat = my_stat
@@ -530,7 +533,7 @@ contains
     end if
     old_char = char_table
     deallocate ( char_table )
-    allocate( char_table(0:2*ubound(old_char,1)), stat=my_stat )
+    allocate( char_table(2*ubound(old_char,1)), stat=my_stat )
     if ( my_stat /= 0 ) then
       if ( present(stat) ) then
         stat = my_stat
@@ -541,7 +544,7 @@ contains
       stat, '' )
       stop
     end if
-    char_table(0:ubound(old_char,1)) = old_char
+    char_table(:ubound(old_char,1)) = old_char
     deallocate ( old_char )
     return
   end subroutine DOUBLE_CHAR_TABLE
@@ -606,6 +609,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.4  2001/04/05 00:54:59  vsnyder
+! Correct 'increase table sizes automatically' code
+!
 ! Revision 2.3  2001/03/03 00:07:24  livesey
 ! Added strip argument to get_string
 !

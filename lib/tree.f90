@@ -77,6 +77,7 @@ contains
     integer :: S                        ! Temp
     if ( tree_point >= tree_sp ) then
       call tree_error ( no_tree_space, null_tree )
+!     call double_tree
     end if
     ns = nsons(t)
     s = subtree(ns,t)
@@ -164,6 +165,7 @@ contains
     ! Push new node onto the stack
     if ( tree_sp <= tree_point ) then
       call tree_error ( no_tree_space, null_tree )
+!     call double_tree
     end if
                                    ! node      decor   nsons  source
     the_tree(tree_sp) = tree_node( new_node, my_decor, nsons, source_ref, &
@@ -377,6 +379,7 @@ contains
     if ( present(decor) ) my_decor = decor
     if ( tree_sp <= tree_point ) then
       call tree_error ( no_tree_space, null_tree )
+!     call double_tree
     end if
                                    ! node                       decor
     the_tree(tree_sp) = tree_node( tree_map(symbol(sub_rosa)), my_decor, &
@@ -486,6 +489,42 @@ contains
   end function TREE_TEXT
 ! =====     Private procedures     =======================================
 
+  subroutine DOUBLE_TREE ( STATUS )
+  ! Double the tree space
+    integer, intent(out), optional :: STATUS
+    type(tree_node), allocatable :: Old_Tree(:)
+    integer :: New_SP         ! New tree stack pointer
+    integer :: STAT           ! From ALLOCATE
+
+    allocate ( old_tree(size(the_tree)), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
+        stat, ' ' )
+      stop
+    end if
+    old_tree = the_tree
+    deallocate ( the_tree )
+    allocate ( the_tree(2*size(old_tree)), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error ( 'TREE%DOUBLE_TREE-E- Unable to allocate tree', &
+        stat, ' ' )
+      stop
+    end if
+    new_sp = size(the_tree) - ( size(old_tree) - tree_sp )
+    the_tree(:tree_point) = old_tree(:tree_point)
+    the_tree(new_sp:) = old_tree(tree_sp:)
+    deallocate( old_tree )
+    tree_sp = new_sp
+  end subroutine DOUBLE_TREE
+
   subroutine POP_TO_TREE ( NSONS )
   ! Pop the top nSons nodes from the tree stack into the end of the tree
   ! space.
@@ -559,8 +598,10 @@ contains
                                           advance="yes" )
     case ( not_pseudo );    call output ( " is not pseudo-terminal.", &
                                           advance="yes" )
-    case ( no_tree_space ); call output ( "No Tree space remains.", &
-                                          advance="yes" )
+    case ( no_tree_space )
+      call output ( "No Tree space remains.", advance="yes" )
+      call output ( "Unfortunately, 'tree' doesn't know how to increase its space", &
+        & advance="yes" )
     case ( underflow );     call output ( "Tree stack underflow.", &
                                                advance="yes" )
     end select
@@ -570,6 +611,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.4  2001/04/05 00:55:27  vsnyder
+! Try to write 'increase tree size automatically' code -- failed -- try again later
+!
 ! Revision 2.3  2001/02/23 00:33:11  vsnyder
 ! Move source_ref to the beginning of the subtree (from the end)
 !
