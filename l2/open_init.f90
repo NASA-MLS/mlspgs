@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -11,7 +11,9 @@ module Open_Init
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
+  use MLSStrings, only: utc_to_yyyymmdd
   use Output_m, only: BLANKS, Output
+  use PCFHdr, only: GlobalAttributes
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
 
@@ -441,6 +443,14 @@ contains ! =====     Public Procedures     =============================
       l2pcf%logGranID = '(not found)'
     end if
  
+    ! Store appropriate user input as global attributes
+    GlobalAttributes%InputVersion = l2pcf%inputVersion
+    GlobalAttributes%StartUTC = l2pcf%StartUTC
+    GlobalAttributes%EndUTC = l2pcf%EndUTC
+    GlobalAttributes%PGEVersion = l2pcf%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay) 
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
@@ -702,6 +712,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.69  2003/02/01 00:38:33  pwagner
+! Defines Global Attributes from user data
+!
 ! Revision 2.68  2002/12/11 22:18:48  pwagner
 ! broadened error check on sd_id to any value lt 1
 !
