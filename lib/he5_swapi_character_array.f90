@@ -42,6 +42,49 @@ contains
          strides, edges, buffer )
   end function HE5_SWWRFLD_CHARACTER_ARRAY
 
+  integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_ARRAY
+
+  integer function HE5_SWWRATTR_CHARACTER_ARRAY ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRATTR
+
+    he5_swwrattr_character_ARRAY = he5_swwrattr(swathid, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWWRLATTR_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_SWWRLATTR
+
+    he5_swwrlattr_character_ARRAY = he5_swwrlattr(swathid, fieldname, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRLATTR_CHARACTER_ARRAY
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
