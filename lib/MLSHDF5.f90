@@ -99,7 +99,7 @@ module MLSHDF5
   interface SaveAsHDF5DS
     module procedure SaveAsHDF5DS_intarr1, &
       SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, &
-      SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, &
+      SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
       SaveAsHDF5DS_charsclr
   end interface
 
@@ -740,25 +740,63 @@ contains ! ======================= Public Procedures =========================
     shp = shape(value)
     call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D integer array '//trim(name) )
+      & 'Unable to create dataspace for 2D real array '//trim(name) )
     ! Create the dataset
     call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D integer array '//trim(name) )
+      & 'Unable to create dataset for 2D real array '//trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
       & int ( (/ shp, ones(1:5) /), hID_T ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to write to dataset for 2D integer array '//trim(name) )
+      & 'Unable to write to dataset for 2D real array '//trim(name) )
     ! Close things
     call h5dClose_F ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataset for 2D integer array '//trim(name) )
+      & 'Unable to close dataset for 2D real array '//trim(name) )
     call h5sClose_F ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataspace for 2D integer array '//trim(name) )
+      & 'Unable to close dataspace for 2D real array '//trim(name) )
   end subroutine SaveAsHDF5DS_snglarr2
+
+  ! --------------------------------------------- SaveAsHDF5DS_snglarr3
+  subroutine SaveAsHDF5DS_snglarr3 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real(r4), intent(in) :: VALUE(:,:,:)  ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape
+
+    ! Executable code
+    ! Create the dataspace
+    shp = shape(value)
+    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 3D real array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 3D real array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+      & int ( (/ shp, ones(1:4) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 3D real array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 3D real array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 3D real array '//trim(name) )
+  end subroutine SaveAsHDF5DS_snglarr3
 
   ! ----------------------------------- LoadFromHDF5DS_intarr1
   subroutine LoadFromHDF5DS_intarr1 ( locID, name, value, &
@@ -1358,6 +1396,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.15  2002/12/07 00:24:40  pwagner
+! Added SaveAsHDF5DS_snglarr3
+!
 ! Revision 2.14  2002/12/02 23:35:57  pwagner
 ! Should provide more info when something goes awry
 !
