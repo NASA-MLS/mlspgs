@@ -7,7 +7,7 @@
 # (1) Query user for: 
 #     (a) compiler and platform; 
 #     (b) SDP, HDF, HDF-EOS paths; 
-#     (c) paths to BLAS, PVM and FFTW libraries; 
+#     (c) paths to BLAS, LAPACK, PVM and FFTW (the "pv") libraries; 
 #     
 #     ((1)not done if I am called with -nc option)
 #     these get written to .configure
@@ -56,12 +56,76 @@
 
 UserPrompt()
 {
-    if [ "$BRAND" = "linux" ] ; then
+#    if [ "$BRAND" = "linux" ] ; then
+    if [ "$OSTYPE" = "linux" ] ; then
 	/bin/echo -n "$* " > /dev/tty
     else
 	echo "$* \\c" > /dev/tty
     fi
     read user_response
+}
+
+#------------------------------- eecchhoo ------------
+# Function to echo each of its args on a separate line
+# unless there are no args, in which case echo the
+# current definition of BLANKLINE
+
+eecchhoo()
+{
+    if [ "$#" = 0 ] ; then
+	    echo $BLANKLINE
+    else
+       for line
+       do
+	       echo "$line"
+       done
+    fi
+}
+
+#------------------------------- which_blas ------------
+#
+# Function to determine Which of possible BLAS options {a b c} is active
+# usage: which_blas $BLAS $LIB_BLAS
+# returns which_blas_option and which_blas_msg
+
+which_blas()
+{
+
+if [ "$1" != "" ] ; then
+#  Use externally-supplied library to satisfy blas calls
+	which_blas_msg="$1/lib${2}.a"
+	which_blas_option="a"
+elif [ "$2" = "f95" ] ; then
+#  Use f95 intrinsic functions
+	which_blas_msg="(Use f95 intrinsic functions for any BLAS routines)"
+	which_blas_option="b"
+else
+#  Let the mls software build its own BLAS routines
+	which_blas_msg="(Let the mls software build its own BLAS routines)"
+	which_blas_option="c"
+fi
+
+}
+
+#------------------------------- which_lapack ------------
+#
+# Function to determine Which of possible lapack options {a b} is active
+# usage: which_lapack $LAPACK $LIB_LAPACK
+# returns which_lapack_option and which_lapack_msg
+
+which_lapack()
+{
+
+if [ "$1" != "" ] ; then
+#  Use externally-supplied library to satisfy lapack calls
+	which_lapack_msg="$1/lib${2}.a"
+	which_lapack_option="a"
+else
+#  Use f95 intrinsic functions
+	which_lapack_msg="(Use f95 intrinsic functions for any lapack routines)"
+	which_lapack_option="b"
+fi
+
 }
 
 #------------------------------- mega_buck ------------
@@ -141,6 +205,7 @@ EOF_1
 
 #accept user compiler and platforms settings to be written to file .configure
 
+   eecchhoo "" "f 9 5"
  UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun) [$current_compiler]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
@@ -178,6 +243,7 @@ EOF_1
 		chngd_confg="true"
 	fi
 
+   eecchhoo "" "p l a t f o r m"
  UserPrompt "Platform (Linux, Sun, SGI) [$current_platform]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
@@ -285,6 +351,7 @@ fi
 
 if [ $change_paths = "true" ] ; then
 #Change Includes path
+   eecchhoo "" "p g s i n c"
  UserPrompt "include files path (must be non-blank) [$current_PGSINC]"
    if [ "$user_response" != "" ] ; then
 	 PGSINC=$user_response
@@ -299,6 +366,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change Toolkit path
+   eecchhoo "" "p g s t k"
  UserPrompt "Toolkit path (must be non-blank) [$current_PGSTK]"
    if [ "$user_response" != "" ] ; then
 	 PGSTK=$user_response
@@ -313,6 +381,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdfeos(1) path
+   eecchhoo "" "h d f e o s"
  UserPrompt "HDFEOS(1) path (must be non-blank) [$current_HDFEOS]"
    if [ "$user_response" != "" ] ; then
 	 HDFEOS=$user_response
@@ -329,6 +398,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdfeos(5) path
+   eecchhoo "" "h d f e o s 5"
  UserPrompt "HDFEOS(5) path (may be blank) [$current_HDFEOS5]"
    if [ "$user_response" = "<b>" ] ; then
 	 HDFEOS5=""
@@ -346,6 +416,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdf(4) path
+   eecchhoo "" "h d f"
  UserPrompt "HDF(4) path (must be non-blank) [$current_HDF]"
    if [ "$user_response" != "" ] ; then
 	 HDF=$user_response
@@ -360,6 +431,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdf(5) path
+   eecchhoo "" "h d f 5"
  UserPrompt "HDF(5) path (may be blank) [$current_HDF5]"
    if [ "$user_response" = "<b>" ] ; then
 	 HDF5=""
@@ -377,6 +449,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change gctp path
+   eecchhoo "" "g c t p"
  UserPrompt "GCTP path [$current_GCTP]"
    if [ "$user_response" != "" ] ; then
 	 GCTP=$user_response
@@ -405,22 +478,27 @@ fi
 GetPVM()
 {
 
+which_blas "$current_BLAS" "$current_LIB_BLAS"
+which_lapack "$current_LAPACK" "$current_LIB_LAPACK"
+
 if [ "$add_PVM_PATH" != "true" ] ; then
 	change_paths="false"
 else
         more << EOF_4
                     *        *        *
 
-The next questions refer to three special libraries: BLAS, PVM and FFTW. Here
-too, it is possible that during the installation, these paths were
+The next questions refer to four special libraries: BLAS, LAPACK, PVM and FFTW.
+Here too, it is possible that during the installation, these paths were
 automatically "hard wired" as environment variables, and if so the values shown
 below may be correct. If they are correct, simply answer Y[es] to the next
 question. Otherwise you will be asked to supply the correct paths.
 
 Currently these paths are given by:
 
-        BLAS root      :  $current_BLAS
-        BLAS lib name  :  $current_LIB_BLAS
+        BLAS option    :  $which_blas_option
+           meaning     :  $which_blas_msg
+        LAPACK option  :  $which_lapack_option
+           meaning     :  $which_lapack_msg
         PVM root       :  $current_PVM_ROOT
         FFTW path      :  $current_FFTW_ROOT
 
@@ -452,38 +530,114 @@ EOF_4
 fi
 
 if [ $change_paths = "true" ] ; then
-#Change BLAS root path
- UserPrompt "BLAS root (enter <b> to force back to blank) [$current_BLAS]"
-   if [ "$user_response" = "<b>" ] ; then
-	 BLAS=""
-	 echo "You will build a mls software version with internally-supplied BLAS"
-   elif [ "$user_response" != "" ] ; then
-	 BLAS=$user_response
-   elif [ "$current_BLAS" != "" ] ; then
-	echo "BLAS root path is still $current_BLAS."
-        BLAS=$current_BLAS
-   else
-	echo "You will build a mls software version with internally-supplied BLAS"
-	echo "unless you reconfigure; enter 'make configure_pvm'."
-	BLAS=""
-   fi
 
-#Change BLAS library name
- UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"
-   if [ "$user_response" = "<b>" ] ; then
-	 LIB_BLAS=""
-	 echo "BLAS library name is blas (default)"
-   elif [ "$user_response" != "" ] ; then
-	 LIB_BLAS=$user_response
-   elif [ "$current_LIB_BLAS" != "" ] ; then
-	echo "BLAS lib name is still $current_LIB_BLAS."
-        LIB_BLAS=$current_LIB_BLAS
-   else
-	echo "BLAS library name is blas (default)"
-	LIB_BLAS=""
-   fi
+#BLAS options
+   eecchhoo "" "b l a s"
+   echo "The following options for satisfying BLAS routines are available"
+   echo "(a) Use an externally-supplied library of BLAS routines"
+   echo "(b) Use f95 intrinsics"
+   echo "(c) Let the mls software build its own BLAS routines"
 
+   UserPrompt "Which of (a b c) do you choose [$which_blas_option]"
+   case "$user_response" in
+     a | A)
+     #Change BLAS root path
+     UserPrompt "BLAS root [$current_BLAS]"
+     if [ "$user_response" = "<b>" ] ; then
+	   BLAS=""
+	   echo "You will rely upon internally-supplied BLAS"
+     elif [ "$user_response" != "" ] ; then
+	   BLAS=$user_response
+     elif [ "$current_BLAS" != "" ] ; then
+	   echo "BLAS root path is still $current_BLAS."
+          BLAS=$current_BLAS
+     else
+	   echo "You will rely upon internally-supplied BLAS"
+      echo "unless you reconfigure; enter 'make configure_pvm'."
+      BLAS=""
+     fi
+
+     #Change BLAS library name                                               
+     UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"  
+     if [ "$user_response" = "<b>" ] ; then                                  
+      LIB_BLAS=""                                                            
+      echo "BLAS library name is blas (default)"                             
+     elif [ "$user_response" != "" ] ; then                                  
+      LIB_BLAS=$user_response                                                
+     elif [ "$current_LIB_BLAS" != "" ] ; then                               
+      echo "BLAS lib name is still $current_LIB_BLAS."                        
+          LIB_BLAS=$current_LIB_BLAS                                         
+     else                                                                    
+      echo "BLAS library name is blas (default)"                             
+      LIB_BLAS=""                                                            
+     fi                                                                      
+         ;;
+     b | B)
+      echo "Using f95 intrinsics to satisfy BLAS routines"                             
+	   BLAS=""
+      LIB_BLAS="f95"                                                            
+         ;;
+
+     # c | C)
+     *)
+      echo "Let the mls software build its own BLAS routines"                             
+	   BLAS=""
+      LIB_BLAS=""                                                            
+         ;;
+
+   esac
+   
+#LAPACK options
+   eecchhoo "" "l a p a c k"
+   echo "The following options for satisfying LAPACK routines are available"
+   echo "(a) Use an externally-supplied library of LAPACK routines"
+   echo "(b) Use f95 intrinsics"
+
+   UserPrompt "Which of (a b) do you choose [$which_lapack_option]"
+   case "$user_response" in
+     a | A)
+     #Change LAPACK root path
+     UserPrompt "LAPACK root [$current_LAPACK]"
+     if [ "$user_response" = "<b>" ] ; then
+	   LAPACK=""
+	   echo "You will rely upon f95 intrinsics for LAPACK"
+     elif [ "$user_response" != "" ] ; then
+	   LAPACK=$user_response
+     elif [ "$current_LAPACK" != "" ] ; then
+	   echo "LAPACK root path is still $current_LAPACK."
+          LAPACK=$current_LAPACK
+     else
+	   echo "You will rely upon f95 intrinsics for LAPACK"
+      echo "unless you reconfigure; enter 'make configure_pvm'."
+      LAPACK=""
+     fi
+
+     #Change LAPACK library name                                               
+     UserPrompt "LAPACK library name (if x, then libx.a) [$current_LIB_LAPACK]"  
+     if [ "$user_response" = "<b>" ] ; then                                  
+      LIB_LAPACK=""                                                            
+      echo "LAPACK library name is lapack (default)"                             
+     elif [ "$user_response" != "" ] ; then                                  
+      LIB_LAPACK=$user_response                                                
+     elif [ "$current_LIB_LAPACK" != "" ] ; then                               
+      echo "LAPACK lib name is still $current_LIB_LAPACK."                        
+          LIB_LAPACK=$current_LIB_LAPACK                                         
+     else                                                                    
+      echo "LAPACK library name is lapack (default)"                             
+      LIB_LAPACK=""                                                            
+     fi                                                                      
+         ;;
+     # b | B)
+     *)
+      echo "Using f95 intrinsics to satisfy LAPACK routines"                             
+	   LAPACK=""
+      LIB_LAPACK="f95"                                                            
+         ;;
+
+   esac
+   
 #Change PVM root path
+   eecchhoo "" "p v m"
  UserPrompt "PVM root (enter <b> to force back to blank) [$current_PVM_ROOT]"
    if [ "$user_response" = "<b>" ] ; then
 	 PVM_ROOT=""
@@ -501,6 +655,7 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change FFTW root path
+   eecchhoo "" "f f t w"
  UserPrompt "FFTW root (enter <b> to force back to blank) [$current_FFTW_ROOT]"
    if [ "$user_response" = "<b>" ] ; then
 	 FFTW_ROOT=""
@@ -520,6 +675,8 @@ if [ $change_paths = "true" ] ; then
 else
     BLAS=$current_BLAS
     LIB_BLAS=$current_LIB_BLAS
+    LAPACK=$current_LAPACK
+    LIB_LAPACK=$current_LIB_LAPACK
     PVM_ROOT=$current_PVM_ROOT
 #    PVM_ARCH=$current_PVM_ARCH
     FFTW_ROOT=$current_FFTW_ROOT
@@ -560,6 +717,7 @@ EOF_5
 
 #accept user compiler/linker options to be written to file .configure
 
+   eecchhoo "" "F O P T S"
  UserPrompt "Fortran 95 Compiler options [$current_FOPTS]"
    if [ "$user_response" = "default" ] ; then
 		current_FOPTS=
@@ -567,6 +725,7 @@ EOF_5
 		current_FOPTS="$user_response"
 	fi
 
+   eecchhoo "" "L D O P T S"
  UserPrompt "Fortran 95 Linker options [$current_LDOPTS]"
    if [ "$user_response" = "default" ] ; then
 		current_LDOPTS=
@@ -599,8 +758,8 @@ basic and an absolute prerequisite; the other two are optional
        automatically be prompted for it. To change these settings later,
        enter "make configure"
 (ii)   Decide if you want to build the software with support for external BLAS,
-       PVM and FFTW. The first two may improve performance, while the third
-       is needed to build level 3. These require setting paths to installed
+       LAPACK, PVM and FFTW. The first three may improve performance, while the
+       last is needed to build level 3. These require setting paths to installed
        libraries. To learn where to obtain them, enter "BEFORE.mls". To 
        change these settings later, enter "make configure_pvm"
 (iii)  Choose compiler and linker options. Although these are automatically
@@ -662,10 +821,14 @@ MLS_default_LDOPTS=
 #PGSLIB     PGSTK (duplicate)
 #HDFEOS_LIB HDFEOS (duplicate)
 #HDFLIB     HDF (duplicate)
-#BLAS       root of path to the blas library BLAS/libblas.a,
+#BLAS       if non-blank, root of path to the blas library BLAS/libblas.a,
 #           if blank, then use internally supplied library
 #LIB_BLAS   name x of the blas library BLAS/libx.a,
-#           if blank, then libblas.a
+#           if blank, then x of libx.a
+#LAPACK     if non-blank, root of path to the blas library LAPACK/liblapack.a,
+#           if blank, then use internally supplied library
+#LIB_LAPACK   name x of the blas library LAPACK/libx.a,
+#           if blank, then x of libx.a
 #PVM_ROOT   root of path to the pvm library lib/PVM_ARCH/libpvm3.a, etc.
 #PVM_ARCH   OS & platform type: LINUX, SGI6, SGI64, SUN4SOL2
 #FFTW_ROOT  path to the fftw library libfftw.a, etc.
@@ -680,8 +843,8 @@ MLS_default_LDOPTS=
 
 # List all settings (some are duplicates--see above)
 all_my_opts="MLSF95 MLSPLAT MLSCONFG PGSINC PGSTK HDFEOS HDFEOS5 \
-HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS PVM_ROOT PVM_ARCH \
-FFTW_ROOT FOPTS LDOPTS"
+HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS LAPACK LIB_LAPACK \
+PVM_ROOT PVM_ARCH FFTW_ROOT FOPTS LDOPTS"
 
 MLSCFILE=.configure
 
@@ -707,6 +870,8 @@ current_HDFEOS5=$HDFEOS5
 add_PVM_PATH="false"
 current_BLAS=$BLAS
 current_LIB_BLAS=$LIB_BLAS
+current_LAPACK=$LAPACK
+current_LIB_LAPACK=$LIB_LAPACK
 current_PVM_ROOT=$PVM_ROOT
 current_PVM_ARCH=$PVM_ARCH
 current_FFTW_ROOT=$FFTW_ROOT
@@ -996,6 +1161,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.22  2001/10/10 23:23:54  pwagner
+# New parameter allows use of single platforms directory by > 1 (MLSCONFG)
+#
 # Revision 1.21  2001/09/04 23:33:35  pwagner
 # Added Sun's own f95 option for MLSF95
 #
