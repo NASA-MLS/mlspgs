@@ -188,8 +188,8 @@ contains
         SUM1=0.
         SUM2=0.
         do i=1,nr
-           SUM1=SUM1+rn(i)*r(I)**4*2
-           SUM2=SUM2+rn(i)*r(I)**3
+           SUM1=SUM1+r(I)**4
+           SUM2=SUM2+r(I)**3
         enddo
         Dm=sum1/max(1.e-29_r8,sum2)
 
@@ -254,8 +254,8 @@ contains
         SUM1=0.
         SUM2=0.
         do i=1,nr
-           SUM1=SUM1+rn(i)*r(I)**4*2
-           SUM2=SUM2+rn(i)*r(I)**3
+           SUM1=SUM1+r(I)**4
+           SUM2=SUM2+r(I)**3
         enddo
         Dm=sum1/max(1.e-29_r8,sum2)
 
@@ -266,6 +266,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.4  2001/10/19 18:50:21  jonathan
+! fixed a bug
+!
 ! Revision 1.3  2001/10/18 17:01:07  jonathan
 ! pretect divided by zero
 !
