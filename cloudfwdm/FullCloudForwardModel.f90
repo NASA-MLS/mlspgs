@@ -264,16 +264,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if (forwardModelConfig%cloud_der == 0) doHighZt = .true.
     if (forwardModelConfig%cloud_der == 1) doLowZt  = .true.
 
-    !--------------------------------------------------------------------
-    
-    signal = forwardModelConfig%signals(size(forwardModelConfig%signals))
+    !--------------------------------------------
+    ! Loop over signals
+    !--------------------------------------------
 
-    ! --------------------------------------------------------------------
-    ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
-    ! --------------------------------------------------------------------
-    obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
-          & quantityType=l_cloudInducedRadiance,                     &
-          & signal=signal%index, sideband=signal%sideband )
+    do sigInd = 1, size(forwardModelConfig%signals)
+
+    ! -------------------------------------
+    ! Identify the signal (band)
+    ! -------------------------------------
+
+       signal = forwardModelConfig%signals(sigInd)
+
+       if (prt_log) print*,'signal%index', signal%index
 
       ! find which channel is used
       noFreqs = size (signal%frequencies)
@@ -343,15 +346,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
           if ( associated(thisLine%signals) ) then
-            do sigInd = 1, size(forwardModelConfig%signals)
               doThis = any ( thisLine%signals == &
-                & forwardModelConfig%signals(sigInd)%index )
+                & signal%index )
                 ! If we're only doing one sideband, maybe we can remove some more lines
                 if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
                 & ( thisLine%sidebands == 0 ) )
               lineFlag(k) = lineFlag(k) .or. doThis
-            end do ! End loop over signals requested in fwm
           end if
         end do               ! End loop over lines
 
@@ -379,20 +380,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     enddo ! End of Loop over species
 
-    !--------------------------------------------
-    ! Loop over signals
-    !--------------------------------------------
-
-    do sigInd = 1, size(forwardModelConfig%signals)
-
-    ! -------------------------------------
-    ! Identify the signal (band)
-    ! -------------------------------------
-
-       signal = forwardModelConfig%signals(sigInd)
-
-       if (prt_log) print*,'signal%index', signal%index
-
     ! --------------------------------------------
     ! Get the quantities we need from the vectors
     ! --------------------------------------------
@@ -407,12 +394,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_cloudInducedRadiance,                             &
           & signal=signal%index, sideband=signal%sideband )
         cloudExtinction => GetVectorQuantityByType ( fwdModelOut,            & 
-            & quantityType=l_cloudExtinction, noerror=.true. )
+            & quantityType=l_cloudExtinction, noerror=.true.)
         cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,        &
           & quantityType=l_cloudRADSensitivity, noerror=.true.,              &
           & signal=signal%index, sideband=signal%sideband )
         totalExtinction => GetVectorQuantityByType ( fwdModelOut,            &
-          & quantityType=l_totalExtinction, noerror=.true. )
+          & quantityType=l_totalExtinction, noerror=.true.)
         effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,      &
           & quantityType=l_effectiveOpticalDepth, noerror=.true.,            &
           & signal=signal%index, sideband=signal%sideband )
@@ -613,6 +600,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       ! find cloud top index from observed Tcir, threshold to be determined
       !     for high Zt, use Tcir(maf)
        !     for low Zt, use Tcir(maf-2)
+    ! --------------------------------------------------------------------
+    ! find the last cloudRadiance in fwdModelExtra for cloud top indicator
+    ! --------------------------------------------------------------------
+      obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
+          & quantityType=l_cloudInducedRadiance,                     &
+          & signal=signal%index, sideband=signal%sideband )
+
       if(.not. associated(obsCloudRadiance)) then
          call MLSMessage( MLSMSG_Error, ModuleName,                             &
                       'Need cloud radiances to estimate cloud top in retrieval' )
@@ -724,7 +718,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        call output ( 'Using antenna pattern: ' )
        call output ( whichPattern, advance='yes' )
     end if
- 
+
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
     !---------------------------------------------
@@ -782,10 +776,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
      modelCloudRadiance%values ( :, maf ) =                                   &
        & reshape ( transpose(a_cloudInducedRadiance),                         &
        & (/modelCloudRadiance%template%instanceLen/) )
-     effectiveOpticalDepth%values ( :, maf ) =                                &
+     if(associated(effectiveOpticalDepth))                                    &
+       & effectiveOpticalDepth%values ( :, maf ) =                                &
        & reshape ( transpose(a_effectiveOpticalDepth),                        &
        & (/effectiveOpticalDepth%template%instanceLen/) )
-     cloudRADSensitivity%values ( :, maf ) =                                  &
+     if(associated(cloudRADSensitivity))                                      &
+       & cloudRADSensitivity%values ( :, maf ) =                                  &
        & reshape ( transpose(a_cloudRADSensitivity),                          &
        & (/cloudRADSensitivity%template%instanceLen/) )
 !     print*,maf,thissideband,a_clearSkyRadiance(:,25)
@@ -1063,6 +1059,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.99  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.98  2002/10/04 00:02:15  vsnyder
 ! Change handling of GOT variable, some cosmetic changes
 !
