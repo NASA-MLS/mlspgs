@@ -524,7 +524,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   ! --------------------------------------------------  READ_CLIMATOLOGY  -----
   SUBROUTINE READ_CLIMATOLOGY ( fname, root, aprioriData, &
-  & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data )
+  & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
   ! --------------------------------------------------
   ! Brief description of program
   ! This subroutine reads a l3ascii file and returns
@@ -536,7 +536,8 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 	 INTEGER, OPTIONAL, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
-    LOGICAL, OPTIONAL, intent(in) :: echo_data        ! Root of the L2CF abstract syntax tree
+    LOGICAL, OPTIONAL, intent(in) :: echo_data        ! echo climatology quantity name
+    LOGICAL, OPTIONAL, intent(in) :: dump_data        ! dump climatology data
 	 
 	 ! Local
     type (GriddedData_T)        :: gddata 
@@ -545,7 +546,9 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 	 LOGICAL :: end_of_file
 	 LOGICAL, PARAMETER :: debug=.FALSE.
 	 LOGICAL, PARAMETER :: ECHO_GRIDDED_QUANTITIES=.TRUE.
+	 LOGICAL, PARAMETER :: DUMP_GRIDDED_QUANTITIES=.TRUE.
 	 LOGICAL :: echo
+	 LOGICAL :: dump
     integer:: processCli, CliUnit, record_length
 	 
 	! begin
@@ -554,6 +557,12 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 		echo = echo_data
 	ELSE
 		echo = ECHO_GRIDDED_QUANTITIES
+	ENDIF
+	
+	if(present(dump_data)) then
+		dump = dump_data
+	ELSE
+		dump = DUMP_GRIDDED_QUANTITIES
 	ENDIF
 	
 	! use PCF
@@ -599,21 +608,28 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
 			if(debug) call output('reading l3ascii file', advance = 'yes')
 
-        call l3ascii_read_field ( CliUnit, gddata, end_of_file)
-		  if(debug) then
-			call output('adding to grid database', advance='yes')
-			call output('adding grid template to database ', advance='yes')
-		endif
-		  if(echo .OR. debug) then
-			call output('quantity name ' // gddata%quantityName, advance='yes')
-			call output('description ' // gddata%description, advance='yes')
-			call output('units ' // gddata%units, advance='yes')
-		endif
+        call l3ascii_read_field ( CliUnit, gddata, end_of_file, ErrType)
+
+			if(ErrType == 0) then
+		  		if(debug) then
+					call output('adding to grid database', advance='yes')
+					call output('adding grid template to database ', advance='yes')
+				endif
+		 	 if(echo .OR. debug) then
+				call output('quantity name ' // gddata%quantityName, advance='yes')
+				call output('description ' // gddata%description, advance='yes')
+				call output('units ' // gddata%units, advance='yes')
+			endif
+
+		  if(dump) then
+			call Dump_Gridded_Data(gddata, root)
+			endif
 
         ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
 
 			if(debug) call output('Destroying our grid template', advance='yes')
 			
+		endif
         call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
@@ -764,63 +780,89 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
     ! Local Variables
     logical, parameter :: MAYDUMPFIELDVALUES = .FALSE.
-    integer :: I, J                ! Subscripts, loop inductors
+	 integer            :: i
 
-    call output ( 'a priori grids: SIZE = ' )
+	if ( .NOT. associated(GriddedData)) then
+		call announce_error(ROOT, 'Gridded database still null')
+		return
+	endif
+
+    call output ( 'database: a priori grids: SIZE = ' )
     call output ( size(GriddedData), advance='yes' )
     do i = 1, size(GriddedData)
-			call output('quantity name ' // GriddedData(i)%quantityName, advance='yes')
-			call output('description ' // GriddedData(i)%description, advance='yes')
-			call output('units ' // GriddedData(i)%units, advance='yes')
+
+    call output ( 'item number ' )
+    call output ( i, advance='yes' )
+
+		call Dump_Gridded_Data(GriddedData(i), root)
+    end do ! i
+  end subroutine Dump_Gridded_Database
+
+  ! --------------------------------  Dump_Gridded_Data  -----
+  subroutine Dump_Gridded_Data(GriddedData, root)
+    use Dump_0, only: Dump
+
+	! Imitating what dump_pointing_grid_database does, but for gridded data
+	! which may come from climatology, ncep, dao
+	
+    type (GriddedData_T) :: GriddedData 
+
+    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+
+    ! Local Variables
+    logical, parameter :: MAYDUMPFIELDVALUES = .FALSE.
+
+			call output('quantity name ' // GriddedData%quantityName, advance='yes')
+			call output('description ' // GriddedData%description, advance='yes')
+			call output('units ' // GriddedData%units, advance='yes')
 
       call output ( ' ************ Geometry ********** ' ,advance='yes')
 
       call output ( ' Vertical coordinate = ' )
-      call output ( GriddedData(i)%verticalCoordinate, advance='yes' )
+      call output ( GriddedData%verticalCoordinate, advance='yes' )
       call output ( ' No. of heights = ' )
-      call output ( GriddedData(i)%noHeights, advance='yes' )
-        call dump ( GriddedData(i)%heights, &
+      call output ( GriddedData%noHeights, advance='yes' )
+        call dump ( GriddedData%heights, &
           & '    Heights =' )
 
       call output ( ' Equivalent latitude = ' )
-      call output ( GriddedData(i)%equivalentLatitude, advance='yes' )
+      call output ( GriddedData%equivalentLatitude, advance='yes' )
       call output ( ' No. of latitudes = ' )
-      call output ( GriddedData(i)%noLats, advance='yes' )
-        call dump ( GriddedData(i)%lats, &
+      call output ( GriddedData%noLats, advance='yes' )
+        call dump ( GriddedData%lats, &
           & '    latitudes =' )
 
       call output ( ' No. of longitudes = ' )
-      call output ( GriddedData(i)%noLons, advance='yes' )
-        call dump ( GriddedData(i)%lons, &
+      call output ( GriddedData%noLons, advance='yes' )
+        call dump ( GriddedData%lons, &
           & '    longitudes =' )
 
       call output ( ' No. of local times = ' )
-      call output ( GriddedData(i)%noLsts, advance='yes' )
-        call dump ( GriddedData(i)%lsts, &
+      call output ( GriddedData%noLsts, advance='yes' )
+        call dump ( GriddedData%lsts, &
           & '    local times =' )
 
       call output ( ' No. of solar zenith angles = ' )
-      call output ( GriddedData(i)%noSzas, advance='yes' )
-        call dump ( GriddedData(i)%szas, &
+      call output ( GriddedData%noSzas, advance='yes' )
+        call dump ( GriddedData%szas, &
           & '    solar zenith angles =' )
 
       call output ( ' No. of dates = ' )
-      call output ( GriddedData(i)%noDates, advance='yes' )
-        call dump ( GriddedData(i)%dateStarts, &
+      call output ( GriddedData%noDates, advance='yes' )
+        call dump ( GriddedData%dateStarts, &
           & '    starting dates =' )
-        call dump ( GriddedData(i)%dateEnds, &
+        call dump ( GriddedData%dateEnds, &
           & '    ending dates =' )
 
 		if(MAYDUMPFIELDVALUES) then
      	 call output ( ' ************ tabulated field values ********** ' ,advance='yes')
 
 	! No dump for 6-dimensional double arrays yet, anyway
-   !     call dump ( GriddedData(i)%field, &
+   !     call dump ( GriddedData%field, &
     !      & '    gridded field values =' )
 		endif
 
-    end do ! i
-  end subroutine Dump_Gridded_Database
+  end subroutine Dump_Gridded_Data
 
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
@@ -893,6 +935,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.7  2001/03/28 00:25:14  pwagner
+! More changes, but not perfect yet
+!
 ! Revision 2.6  2001/03/27 17:28:31  pwagner
 ! Can dump gridded database
 !
