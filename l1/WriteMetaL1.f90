@@ -85,7 +85,7 @@ ENDIF
 
 attrName = 'ReprocessingPlanned'
 returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, &
-               'not kwon at this time')
+               'not known at this time')
 IF (returnStatus /= PGS_S_SUCCESS) THEN
    errmsg = METAWR_ERR // attrName
    CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
@@ -394,6 +394,9 @@ END SUBROUTINE WriteMetadata
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.2  2001/03/06 21:03:48  perun
+! Fixed typo in 'ReprocessingPlanned' attribute
+!
 ! Revision 2.1  2001/02/23 18:44:57  perun
 ! Fixed sval length
 !
