@@ -389,12 +389,93 @@ CONTAINS
     
   END FUNCTION GetSubVectorPointer
 
+  ! --------------------------------------------------------------------------
+
+  ! This function uses the one above, and retuns a 2D array for a subVector
+  ! The array defaults to (noChans,noSurfs), but if the firstIndexChannel
+  ! flag is set .FALSE., the indices are (noSurfs,noChans)
+
+  FUNCTION GetSubVectorAs2DArray(vector,quantity,profile,quantityName,&
+       & firstIndexChannel)
+    
+    ! Dummy arguments
+    TYPE (Vector_T), INTENT(IN) :: vector
+    INTEGER, INTENT(IN), OPTIONAL :: quantity
+    INTEGER, INTENT(IN), OPTIONAL :: profile
+    CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: quantityName
+    LOGICAL, INTENT(IN), OPTIONAL :: firstIndexChannel
+
+    ! Result
+    REAL(r8), DIMENSION(:,:), POINTER :: GetSubVectorAs2DArray
+
+    ! Local variables
+    LOGICAL :: useFirstIndexChannel
+    REAL(r8), DIMENSION(:), POINTER :: values
+    REAL(r8), DIMENSION(:,:), POINTER :: tmpResult
+    INTEGER :: useQuantity,useProfile,surf,chan,status
+    TYPE (QuantityTemplate_T), POINTER :: qty
+
+    ! Executable code
+
+    IF (PRESENT(firstIndexChannel)) THEN
+       useFirstIndexChannel=firstIndexChannel
+    ELSE
+       useFirstIndexChannel=.TRUE.
+    END IF
+
+    IF (PRESENT(quantityName)) THEN
+       IF (PRESENT(quantity)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "Cannot use both quantity and quantityName in GetSubVectorPointer")
+       useQuantity=LinearSearchStringArray(vector%template%quantities%name,&
+            & quantityName,caseInsensitive=.TRUE.)
+    ELSE
+       IF (.NOT. PRESENT(quantity)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+        & "Must supply either quantity or quantityName in GetSubVectorPointer")
+       useQuantity=quantity
+    END IF
+
+    IF (PRESENT(profile)) THEN
+       useProfile=profile
+    ELSE
+       useProfile=1
+    ENDIF
+
+    values=>GetSubVectorPointer(vector,useQuantity,useProfile)
+    qty=>vector%template%quantities(useQuantity)
+
+    IF (useFirstIndexChannel) THEN
+       ALLOCATE(tmpResult(qty%noChans,qty%noSurfs),STAT=status)
+    ELSE
+       ALLOCATE(tmpResult(qty%noSurfs,qty%noChans),STAT=status)
+    END IF
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "tmpResult")
+
+    IF (useFirstIndexChannel.AND.qty%firstIndexChannel) THEN
+       tmpResult=RESHAPE(values,(/qty%noChans,qty%noSurfs/))
+    ELSE IF (useFirstIndexChannel.AND.(.NOT. qty%firstIndexChannel)) THEN
+       tmpResult=TRANSPOSE(RESHAPE(values,(/qty%noSurfs,qty%noChans/)))
+    ELSE IF ((.NOT. useFirstIndexChannel).AND.(qty%firstIndexChannel)) THEN
+       tmpResult=TRANSPOSE(RESHAPE(values,(/qty%noChans,qty%noSurfs/)))
+    ELSE
+       tmpResult=RESHAPE(values,(/qty%noSurfs,qty%noChans/))
+    END IF
+
+    GetSubVectorAs2DArray=>tmpResult
+  END FUNCTION GetSubVectorAs2DArray
+       
+
 !=============================================================================
 END MODULE VectorsModule
 !=============================================================================
 
 !
 ! $Log$
+! Revision 1.5  2000/01/19 18:36:46  livesey
+! Sorted out the sub vector layout stuff.  Added the layout element of
+! the template, and wrote code to deal with it.  Also wrote
+! GetSubVectorPointer
+!
 ! Revision 1.4  1999/12/17 21:43:17  livesey
 ! Added check for duplicate name
 !
