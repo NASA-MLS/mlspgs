@@ -28,7 +28,8 @@ module ForwardModelSupport
   use Toggles, only: Gen, Levels, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-  use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS
+  use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, PHYQ_PROFILES, &
+    & PHYQ_ANGLE
 
 
   implicit none
@@ -60,6 +61,7 @@ module ForwardModelSupport
   integer, parameter :: BadHeightUnit        = TooManyCosts + 1
   integer, parameter :: NoMolecule           = BadHeightUnit + 1
   integer, parameter :: BadQuantityType      = NoMolecule + 1
+  integer, parameter :: WrongUnitsForWindow  = BadQuantityType + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -493,6 +495,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_phiWindow )
         call expr ( subtree(2,son), units, value, type )
         info%phiWindow = value(1)
+        if ( all ( units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+          call AnnounceError ( WrongUnitsForWindow, root )
+        info%windowUnits = units(1)
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -664,6 +669,9 @@ contains ! =====     Public Procedures     =============================
     case ( NoMolecule )
       call output ( 'A bin selector of type vmr must have a molecule',&
         & advance='yes' )
+    case ( WrongUnitsForWindow )
+      call output ( 'phiWindow must be in degrees or profiles', &
+        & advance='yes' )
    case default
       call output ( '(no specific description of this error)', advance='yes' )
     end select
@@ -677,6 +685,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.45  2003/01/26 04:42:55  livesey
+! Added units for phiWindow
+!
 ! Revision 2.44  2003/01/16 00:55:41  jonathan
 ! add do_1d
 !
