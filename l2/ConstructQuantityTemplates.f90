@@ -143,6 +143,7 @@ contains ! =====     Public Procedures     =============================
     radiometer = 0
     instrumentModule = 0
     signal = 0
+    logBasis = .false.
     scaleFactor = 1.0
 
     ! First we'll loop over the MLSCF keys.
@@ -165,7 +166,7 @@ contains ! =====     Public Procedures     =============================
         quantityType = value
         type_field = son
       case ( f_logBasis )
-        logBasis = (value == l_true)    ! But this seems to get hosed !???? VAN!!!!
+        logBasis = (value == l_true)
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
       case ( f_radiometer )
@@ -272,11 +273,7 @@ contains ! =====     Public Procedures     =============================
     ! Now fill up the remaining items, e.g. name etc.
 
     qty%unit = family
-    call output('In the ideal world I would be setting logBasis to: ')
-    call output(logBasis)
-    call output(' for ')
-    call display_string(name,advance='yes')
-    qty%logBasis = .false. ! logBasis
+    qty%logBasis = logBasis
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
@@ -568,6 +565,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.14  2001/03/28 18:33:19  livesey
+! Fixed bug with logBasis (wasn't initialised!)
+!
 ! Revision 2.13  2001/03/21 02:13:30  livesey
 ! Bug with logBasis, put in a work around. Will need to fix later
 !
