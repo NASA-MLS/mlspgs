@@ -70,6 +70,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure CreateBlock_0
   end interface
 
+  interface Densify
+    module procedure DensifyA, DensifyB
+  end interface
+
   interface DestroyBlock
     module procedure DestroyBlock_0
   end interface
@@ -166,7 +170,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface Sparsify
-    module procedure Sparsify_r4, Sparsify_r8, Sparsify_0
+    module procedure SparsifyA, SparsifyB
   end interface
 
   interface Spill
@@ -573,14 +577,9 @@ contains ! =====     Public Procedures     =============================
           & 'Banded block has bad first value in R2' )
         checkIntegrity_0 = .false.
       end if
-      if ( any ( (/ block%r1(:), block%r2(1:) /) < 1 ) ) then
+      if ( any ( (/ block%r1(:), block%r2(:) /) < 0 ) ) then
         call MLSMessage ( messageType, ModuleName, &
-          & 'Banded block has 0/-ve value(s) in R1/R2' )
-        checkIntegrity_0 = .false.
-      end if
-      if ( any ( (/ block%r1(:) /) > block%nRows ) ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'Banded block has too large value(s) in R1' )
+          & 'Banded block has -ve value(s) in R1/R2' )
         checkIntegrity_0 = .false.
       end if
       if ( any ( (/ block%r2(:) /) > ubound ( block%values,1 ) ) ) then
@@ -589,16 +588,22 @@ contains ! =====     Public Procedures     =============================
         checkIntegrity_0 = .false.
       end if
       do i = 1, block%nCols
-        n =  block%r2(i) - block%r2(i-1) - 1
+        n =  block%r2(i) - block%r2(i-1)
         if ( n < 0 ) then
           call MLSMessage ( messageType, ModuleName, &
             & 'Banded block has too small a delta in R2' )
           checkIntegrity_0 = .false.
         end if
-        if ( block%r1(i) + n > block%nRows ) then
-          call MLSMessage ( messageType, ModuleName, &
-            & 'Banded block has too large a delta in R2' )
-          checkIntegrity_0 = .false.
+        if ( n > 0 ) then
+          if ( block%r1(i) + n > block%nRows ) then
+            call MLSMessage ( messageType, ModuleName, &
+              & 'Banded block has too large a delta in R2 or R1 value' )
+            checkIntegrity_0 = .false.
+          end if
+          if ( block%r1(i) == 0 ) then
+            call MLSMessage ( messageType, ModuleName, &
+              'Banded block contains 0 for R1 in non empty column' )
+          end if
         end if
       end do
       if ( ubound(block%values,2) /= 1 ) then
@@ -1060,8 +1065,8 @@ contains ! =====     Public Procedures     =============================
     if ( present(status) ) status = 0
   end subroutine DenseCholesky
 
-  ! ----------------------------------------------------  Densify  -----
-  subroutine Densify ( Z, B )
+  ! ----------------------------------------------------  DensifyA  -----
+  subroutine DensifyA ( Z, B )
   ! Given a matrix block B, produce a full matrix Z, even if the matrix
   ! block had a sparse representation.
     real(rm), intent(out) :: Z(:,:)          ! Full matrix to produce
@@ -1089,7 +1094,26 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       z = b%values
     end select
-  end subroutine DENSIFY
+  end subroutine DensifyA
+
+  ! ---------------------------------------------  DensifyB ------------
+  subroutine DensifyB ( B )
+    ! Densify a block 'in place'
+    type ( MatrixElement_T ), intent(inout) :: B
+    ! Local variables
+    real(rm), dimension(:,:), pointer :: Z
+    ! Executable code
+    if ( b%kind == m_banded .or. b%kind == m_column_sparse ) then
+      nullify ( z )
+      call Allocate_test ( z, b%nRows, b%nCols, 'Z', ModuleName )
+      call Densify ( z, b )
+      call Deallocate_test ( b%values, 'b%values', ModuleName )
+      call Deallocate_test ( b%r1, 'b%r1', ModuleName )
+      call Deallocate_test ( b%r2, 'b%r2', ModuleName )
+      b%values => z
+      b%kind = m_full
+    end if
+  end subroutine DensifyB
 
   ! ---------------------------------------------  DestroyBlock_0  -----
   subroutine DestroyBlock_0 ( B )
@@ -2571,11 +2595,11 @@ contains ! =====     Public Procedures     =============================
     include "solvecholeskyv_0.f9h"
   end subroutine SolveCholeskyV_0_r8
 
-  ! ---------------------------------------------------  Sparsify_r4  -----
-  subroutine Sparsify_r4 ( Z, B, Why, CallingModule )
+  ! ---------------------------------------------------  SparsifyA  -----
+  subroutine SparsifyA ( Z, B, Why, CallingModule )
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
-    real(r4), pointer :: Z(:,:)              ! Full array of values
+    real(rm), pointer :: Z(:,:)              ! Full array of values
     type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
     ! B is intent(inout) so that createBlock gets a chance to clean up surds
     character(len=*), intent(in), optional :: Why
@@ -2600,43 +2624,90 @@ contains ! =====     Public Procedures     =============================
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
 
-    include "sparsify.f9h"
-  end subroutine Sparsify_r4
-
-  ! ---------------------------------------------------  Sparsify_r8  -----
-  subroutine Sparsify_r8 ( Z, B, Why, CallingModule )
-  ! Given an array Z, compute its sparse representation and store it
-  ! in the matrix block B.
-    real(r8), pointer :: Z(:,:)              ! Full array of values
-    type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
-    ! B is intent(inout) so that createBlock gets a chance to clean up surds
-    character(len=*), intent(in), optional :: Why
-    character(len=*), intent(in), optional :: CallingModule
-    ! If either Why or CallingModule is present, Z is deallocated using
-    ! Deallocate_Test
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyBlock using the B argument of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignBlock.
-  ! !!!!! ===== END NOTE ===== !!!!! 
-
-    integer :: I1, I2              ! Row indices in Z
-    integer :: J                   ! Column index in Z
-    integer :: KIND                ! Representation to use for B
-    integer :: NNZ                 ! Number of nonzeroes in Z
-    integer :: NNZC(size(z,2))     ! Number of nonzeroes in a column of Z
-    integer :: R1(size(z,2))       ! Row number of first nonzero in a column
-    real(rm), save :: SQ_EPS = -1.0_rm  ! sqrt(epsilon(1.0_rm))
-    real(r8) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
-      ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
-      ! in magnitude are considered to be zero.
-
-    include "sparsify.f9h"
-  end subroutine Sparsify_r8
+    if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
+    do j = 1, size(z,2)
+    ! zt(j) = maxval(abs(z(:,j)))
+    ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+    ! nnzc(j) = count(abs(z(:,j)) < zt(j))
+      zt(j) = 0.0_rm
+!     do i1 = 1, size(z,1)
+!       zt(j) = max(zt(j),abs(z(i1,j)))
+!     end do ! i1
+!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+      nnzc(j) = 0
+      do i1 = 1, size(z,1)
+        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
+      end do ! i1
+    end do ! j
+    nnz = sum(nnzc)
+    if ( nnz == 0 ) then ! Empty
+      call createBlock ( b, size(z,1), size(z,2), M_Absent )
+    else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
+      kind = M_Banded
+      do j = 1, size(z,2)
+        do i1 = 1, size(z,1)       ! Find row number of first nonzero
+          if ( abs(z(i1,j)) > zt(j) ) exit
+        end do
+        r1(j) = i1
+        do i2 = size(z,1), 1, -1   ! Find row number of last nonzero
+          if ( abs(z(i2,j)) > zt(j) ) exit
+        end do
+        if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
+          kind = M_Column_Sparse
+          do i1 = 1, j-1 ! I1 is a column number in this case
+            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
+          end do ! i1
+          exit
+        end if
+        nnzc(j) = max(i2 - i1 + 1,0)
+      end do ! j
+      if ( kind == M_Banded ) then
+        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
+        b%r1 = r1        ! Row number of first nonzero in the column
+        do j = 1, size(z,2)
+          b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
+                                        ! column
+          b%values(b%r2(j-1)+1:b%r2(j),1) = &
+            & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
+        end do
+      else
+        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
+        i1 = 0
+        do j = 1, size(z,2)
+          do i2 = 1, size(z,1)
+            if ( abs(z(i2,j)) > zt(j) ) then
+              i1 = i1 + 1
+              b%values(i1,1) = z(i2,j)
+              b%r2(i1) = i2
+            end if
+            b%r1(j) = i1
+          end do ! i2
+        end do ! j
+      end if
+    else ! full
+      if ( present(why) .or. present(callingModule) ) then
+        ! Don't worry, create block still deallocates b%values even with noValues set
+        call createBlock ( b, size(z,1), size(z,2), M_Full, noValues=.true. )
+        b%values => z
+        nullify ( z )
+      else
+        call createBlock ( b, size(z,1), size(z,2), M_Full )
+        b%values = z
+      end if
+    end if
+    if ( present(why) ) then
+      if ( present(callingModule) ) then
+        call deallocate_test ( z, why, callingModule )
+      else
+        call deallocate_test ( z, why, "No module specified" )
+      end if
+    else if ( present(callingModule) ) then
+      call deallocate_test ( z, "No variable specified", callingModule )
+    end if
+  end subroutine SparsifyA
 
   ! ----------------------------------------------- Sparsify_0 ---------
-  subroutine Sparsify_0 ( B )
+  subroutine SparsifyB ( B )
     ! Sparsify a block in place
     type (MatrixElement_T), intent(inout) :: B
     ! Local variable
@@ -2646,7 +2717,7 @@ contains ! =====     Public Procedures     =============================
     z => b%values
     nullify ( b%values )
     call Sparsify ( z, b, 'z', ModuleName )
-  end subroutine Sparsify_0
+  end subroutine SparsifyB
 
   ! ----------------------------------------------------  Spill_0  -----
   subroutine Spill_0 ( A, Unit )
@@ -2985,6 +3056,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.90  2003/01/10 02:47:06  livesey
+! Added quasi in-place densify, and brought sparsify back into the fold.
+!
 ! Revision 2.89  2003/01/09 01:21:27  livesey
 ! Fixed bugs in column sparse representation, turned it back on.
 !
