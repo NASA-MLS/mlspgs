@@ -66,8 +66,8 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
       & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
-      & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
+    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
+      & DEFAULT_HDFVERSION_WRITE
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
@@ -225,14 +225,14 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output('output file type l2gp', advance='yes')
           ! Get the l2gp file name from the PCF
 
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             call split_path_name(file_base, path, file_base)
            if ( DEBUG ) call output('file_base after split: ', advance='no')
            if ( DEBUG ) call output(trim(file_base), advance='yes')
 
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
             & mlspcf_l2gp_end, &
-            & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
           else
             l2gpPhysicalFilename = file_base
@@ -293,7 +293,7 @@ contains ! =====     Public Procedures     =============================
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
-            if ( .not. CREATEMETADATA ) cycle
+            if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
 
@@ -364,11 +364,11 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
           ! Get the l2aux file name from the PCF
 
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             call split_path_name(file_base, path, file_base)
             l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
             & mlspcf_l2dgm_end, &
-            & PCFL2CFSAMECASE, returnStatus, l2aux_Version, DEBUG, &
+            & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
             & exactName=l2auxPhysicalFilename)
           else
             l2auxPhysicalFilename = file_base
@@ -438,7 +438,7 @@ contains ! =====     Public Procedures     =============================
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
-            if ( .not. CREATEMETADATA ) cycle
+            if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
             if ( numquantitiesperfile <= 0 ) then
@@ -546,11 +546,11 @@ contains ! =====     Public Procedures     =============================
           if ( DEBUG ) call output('output file type l2dgg', advance='yes')
           ! Get the l2gp file name from the PCF
 
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             call split_path_name(file_base, path, file_base)
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
             & mlspcf_l2dgg_end, &
-            & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
           else
             l2gpPhysicalFilename = file_base
@@ -606,7 +606,7 @@ contains ! =====     Public Procedures     =============================
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
-            if ( .not. CREATEMETADATA ) cycle
+            if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
 
@@ -671,7 +671,7 @@ contains ! =====     Public Procedures     =============================
         call output('About to write log file metadata' , advance='yes')
       end if
 
-      if (CREATEMETADATA ) then
+      if ( TOOLKIT ) then
         call writeMetaLog ( l2pcf, metadata_error )
         error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
       end if
@@ -724,8 +724,8 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
       & GetPCFromRef, split_path_name
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
-      & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
+    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
+      & DEFAULT_HDFVERSION_WRITE
     use MLSPCF2, only: mlspcf_l2fwm_full_start, mlspcf_l2fwm_full_end
     use VectorsModule, only: VectorValue_T
 
@@ -752,14 +752,14 @@ contains ! =====     Public Procedures     =============================
     ! Setup information, sanity checks etc.
     call get_string ( file, file_base, strip=.true. )
     l2fwm_Version = 1
-    if ( PCF ) then
+    if ( TOOLKIT ) then
       call split_path_name(file_base, path, file_base)
       if ( DEBUG ) call output('file_base after split: ', advance='no')
       if ( DEBUG ) call output(trim(file_base), advance='yes')
 
       L2fwmFileHandle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
-      & PCFL2CFSAMECASE, returnStatus, L2fwm_Version, DEBUG, &
+      & TOOLKIT, returnStatus, L2fwm_Version, DEBUG, &
       & exactName=Filename)
     else
       Filename = file_base
@@ -895,7 +895,7 @@ contains ! =====     Public Procedures     =============================
       &  ) ) ) ) )
     if ( status /= 0 ) then
       call announce_error (0,&
-        & "Error writing SDS data to l2aux file:  " )
+        & "Error writing SDS data " // trim(sdNameStr) // " to l2aux file:  " )
     end if
 
     ! End access to the SD and close the file
@@ -1147,6 +1147,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.72  2003/06/09 22:49:33  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.71  2003/05/12 02:07:06  livesey
 ! Bound r8->r4 conversion in direct write
 !

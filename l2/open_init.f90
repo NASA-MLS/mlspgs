@@ -119,9 +119,8 @@ contains ! =====     Public Procedures     =============================
     use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
     use L2ParInfo, only: parallel
     use MLSFiles, only: mls_io_gen_openF, mls_hdf_version
-    use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
-      &                   PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
-      &                   PCF, CREATEMETADATA, MAXNUML1BRADIDS, ILLEGALL1BRADID
+    use MLSL2Options, only: TOOLKIT, PENALTY_FOR_NO_METADATA, &
+      &                   MAXNUML1BRADIDS, ILLEGALL1BRADID
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -193,7 +192,7 @@ contains ! =====     Public Procedures     =============================
 
 ! Read the PCF into an annotation for file headers
 
-    if ( .not.( PCF .and. CREATEMETADATA) ) then
+    if ( .not. TOOLKIT ) then
        Status = PGS_S_SUCCESS - 1
     else
      version = 1
@@ -203,7 +202,7 @@ contains ! =====     Public Procedures     =============================
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
     else
-      if ( PCF .and. CREATEMETADATA ) call announce_error ( 0, DEFAULTANTEXT )
+      if ( TOOLKIT ) call announce_error ( 0, DEFAULTANTEXT )
       size = LEN(DEFAULTANTEXT) + 1
       allocate ( l2pcf%anText(size), STAT=Status )
       l2pcf%anText(1:size-1) = DEFAULTANTEXT(1:size-1)
@@ -223,7 +222,7 @@ contains ! =====     Public Procedures     =============================
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
 
-   if( .not. PCF ) then
+   if( .not. TOOLKIT ) then
      if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) then
        call output('====== No parameters or radiances read :: no pcf ======', &
          & advance='yes')
@@ -293,7 +292,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
-    if ( ifl1 == 0 .AND. PUNISH_FOR_NO_L1BRAD ) &
+    if ( ifl1 == 0 .AND. TOOLKIT ) &
       &  call announce_error ( 0, "Could not find any L1BRAD files" )
 
     ! Open L1OA File
@@ -329,17 +328,17 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-    else if ( PUNISH_FOR_NO_L1BOA ) then
+    else if ( TOOLKIT ) then
       call announce_error ( 0, "Could not find L1BOA file" )
     end if
 
     ! Get the Start and End Times from PCF
     ! Temporarily we allow the use of older PCFids: CCSDSStartId, CCSDEndId
-    ! (if PUNISH_FOR_INVALID_PCF is FALSE)
+    ! (if TOOLKIT is FALSE)
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
                                            CCSDSStartTime)
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSStartTime" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
@@ -357,7 +356,7 @@ contains ! =====     Public Procedures     =============================
 
    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSEndId, &
                                           CCSDSEndTime)
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSEndTime" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
@@ -378,7 +377,7 @@ contains ! =====     Public Procedures     =============================
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_inputVersion, &
                                           l2pcf%inputVersion)
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: input version" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       l2pcf%inputVersion = 'V0-5'
@@ -386,7 +385,7 @@ contains ! =====     Public Procedures     =============================
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_PGEVersion, &
                                           l2pcf%PGEVersion)
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: output version" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       l2pcf%PGEVersion = 'V0-5'
@@ -394,7 +393,7 @@ contains ! =====     Public Procedures     =============================
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
 
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: cycle" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       l2pcf%cycle = '1'
@@ -402,7 +401,7 @@ contains ! =====     Public Procedures     =============================
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_keys, l2pcf%spec_keys)
 
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_keys" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       l2pcf%spec_keys = DEFAULT_SPEC_KEYS
@@ -410,7 +409,7 @@ contains ! =====     Public Procedures     =============================
 	
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_hash, l2pcf%spec_hash)
 
-    if ( returnstatus /= PGS_S_SUCCESS .and. PUNISH_FOR_INVALID_PCF ) then
+    if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Missing pcf param: spec_hash" )
     else if ( returnstatus /= PGS_S_SUCCESS ) then
       l2pcf%spec_hash = DEFAULT_SPEC_HASH
@@ -435,7 +434,7 @@ contains ! =====     Public Procedures     =============================
     version = 1
 
     returnStatus = Pgs_pc_getReference(MLSPCF_LOG, version, name)
-    if ( returnStatus /= PGS_S_SUCCESS .AND. PUNISH_FOR_INVALID_PCF) then
+    if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, "Error retrieving log file name from PCF" )
     elseif ( returnStatus == PGS_S_SUCCESS) then
       indx = INDEX(name, '/', .TRUE.)
@@ -725,6 +724,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.72  2003/06/09 22:49:34  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.71  2003/05/29 17:55:23  pwagner
 ! Can get name of parallel%stagingFile from PCF
 !
