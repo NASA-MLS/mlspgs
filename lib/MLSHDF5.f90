@@ -270,11 +270,9 @@ contains ! ======================= Public Procedures =========================
     call h5dOpen_f ( locID, name, setID, status ) 
     if ( status /= 0 ) then
       IsHDF5DSPresent = .false.
-      return
     else
       IsHDF5DSPresent = .true.
       call h5dClose_f ( setID, status )
-      return
     end if
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -554,6 +552,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.4  2002/08/26 16:42:09  livesey
+! Bug fix with error messages in IsHDF5DSPresent
+!
 ! Revision 2.3  2002/08/23 01:23:21  livesey
 ! Added IsHDF5DSPresent and IsHDF5AttributePresent
 !
