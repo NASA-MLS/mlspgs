@@ -158,7 +158,7 @@ contains
     integer, intent(in) :: Maf
     type(forwardModelConfig_t), intent(in) :: FwdModelConf
     logical, intent(in) :: SetDerivFlags
-    logical, intent(in) :: SetTscatFlag 
+    logical, intent(in), optional :: SetTscatFlag 
 
     call create_grids_1 ( grids_x, 1 )
     call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf, SetTscatFlag )
@@ -343,23 +343,29 @@ contains
     type (vectorValue_T), intent(in) :: PHITAN  ! Tangent geodAngle component of
     integer, intent(in) :: MAF
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
-    logical, intent(in) :: ScatFlag 
+    logical, intent(in), optional :: ScatFlag 
 
     integer :: KF, KP, KZ
+    logical :: MyScatFlag
 
+    myScatFlag = .false.
+    if ( present(scatFlag) ) myScatFlag = scatFlag
 
-    IF (ScatFlag) then
+    if ( myScatFlag) then
+
       kp=FwdModelConf%num_scattering_angles
       grids_x%windowStart(ii) = 1
       grids_x%windowFinish(ii)= kp
-    ELSE
 
-    kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
-    call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-      & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+    else
+
+      kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
+      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
 
       kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
-    ENDIF
+
+    end if
 
     kz = qty%template%noSurfs
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
@@ -493,6 +499,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.54  2004/01/23 19:13:10  jonathan
+! add SetTscatFlag and related changes
+!
 ! Revision 2.53  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
