@@ -673,7 +673,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    nr+n_dot, &
+                    n+n_dot, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
@@ -863,6 +863,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.25  2001/02/22 23:26:30  vsnyder
+! Removed "required" from "source" field of "l2gp" spec
+!
 ! Revision 2.24  2001/02/20 23:17:33  livesey
 ! Added more stuff for fill.
 !
