@@ -209,7 +209,8 @@ contains
   subroutine DRad_tran_df ( indices_c, gl_inds, z_path_c, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
                          &  beta_path_f, do_gl, del_s, ref_cor, ds_dh_gl, &
-                         &  dh_dz_gl, t_script, tau, i_stop, drad_df )
+                         &  dh_dz_gl, t_script, tau, &
+                         &  i_stop, d_delta_df, drad_df )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -246,6 +247,9 @@ contains
 
 ! Outputs
 
+    real(rp), intent(out) :: d_delta_df(:,:) ! path x sve.  derivative of delta
+!                                              wrt mixing ratio state vector
+!                                              element. (K)
     real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
 !                                              mixing ratio state vector
 !                                              element. (K)
@@ -259,7 +263,6 @@ contains
     integer(ip), pointer :: inds(:)      ! inds => part_of_inds_B
     integer(ip), pointer :: more_inds(:) ! more_inds => part_of_more_inds_B
 
-    real(rp) :: d_delta_df(1:size(tau))
     real(rp), target, dimension(1:size(tau)) :: del_zeta_B, gl_delta_B
     real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
     real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
@@ -281,7 +284,7 @@ contains
 
         if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
 
-        d_delta_df = 0.0_rp
+        d_delta_df(:,sv_i) = 0.0_rp
 
         call get_do_calc ( do_calc_f(indices_c,sv_i), do_calc_f(gl_inds,sv_i), &
           & do_gl, do_calc )
@@ -316,7 +319,7 @@ contains
             singularity = beta_path_c(inds,sps_i) &
                       & * eta_zxp_f(indices_c(inds),sv_i) &
                       & * sps_path(indices_c(inds),sps_i)
-            d_delta_df(inds) = singularity * del_s(inds)
+            d_delta_df(inds,sv_i) = singularity * del_s(inds)
 
             if ( no_to_gl > 0 ) then
 
@@ -328,11 +331,11 @@ contains
                  & ds_dh_gl(gl_inds(all_inds)),         &     
                  & dh_dz_gl(gl_inds(all_inds)), gl_delta )  
 
-              d_delta_df(more_inds) = d_delta_df(more_inds) + gl_delta
+              d_delta_df(more_inds,sv_i) = d_delta_df(more_inds,sv_i) + gl_delta
 
             end if
 
-            d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds) &
+            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) &
                              / exp(grids_f%values(sv_i))
 
           else
@@ -340,7 +343,7 @@ contains
             singularity = beta_path_c(inds,sps_i) &
                       & * eta_zxp_f(indices_c(inds),sv_i)
 
-            d_delta_df(inds) = singularity * del_s(inds)
+            d_delta_df(inds,sv_i) = singularity * del_s(inds)
 
             if ( no_to_gl > 0 ) then
 
@@ -351,18 +354,18 @@ contains
                  & ds_dh_gl(gl_inds(all_inds)),         &
                  & dh_dz_gl(gl_inds(all_inds)), gl_delta)
 
-              d_delta_df(more_inds) = d_delta_df(more_inds) + gl_delta
+              d_delta_df(more_inds,sv_i) = d_delta_df(more_inds,sv_i) + gl_delta
 
             end if
 
-            d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds)
+            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
 
           end if
 
           i_start = MIN(inds(1),i_stop)
 
-          call get_dscrt_no_t_dn ( d_delta_df, t_script, tau, i_start, i_stop, &
-                                &  drad_df(sv_i))
+          call get_dscrt_no_t_dn ( d_delta_df(:,sv_i), t_script, tau, &
+                                &  i_start, i_stop, drad_df(sv_i))
 
         end if
 
@@ -893,6 +896,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.18  2003/06/27 22:05:48  vsnyder
+! Check status from cs_expmat
+!
 ! Revision 2.17  2003/06/18 17:24:05  bill
 ! added temperature derivative subsetting
 !

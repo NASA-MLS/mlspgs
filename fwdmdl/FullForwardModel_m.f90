@@ -279,6 +279,9 @@ contains
     real(rp), dimension(:,:), pointer :: BETA_PATH_PHH_C   ! Scattering phase function !JJ 
     real(rp), dimension(:),   pointer :: BETA_PATH_W0_C    ! Single scattering albedo 
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
+    real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
+                                           ! schlep from drad_tran_dt to
+                                           ! get_d_deltau_pol_df.  Path x SVE.
     real(rp), dimension(:,:), pointer :: D_DELTA_DT ! Incremental opacity derivative
                                            ! schlep from drad_tran_dt to
                                            ! get_d_deltau_pol_dt.  Path x SVE.
@@ -460,7 +463,7 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & channelOrigins, d_rad_pol_dt, d_delta_dt, d_t_scr_dt, &
+      & channelOrigins, d_rad_pol_dt, d_delta_df, d_delta_dt, d_t_scr_dt, &
       & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
@@ -820,37 +823,37 @@ contains
     ! This can be put outside the mmaf loop
 
     call allocate_test ( alpha_path_c,        npc, 'alpha_path_c',     moduleName )
-    call allocate_test ( alpha_path_f,     max_ele, 'alpha_path_f',     moduleName )
+    call allocate_test ( alpha_path_f,    max_ele, 'alpha_path_f',     moduleName )
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c', moduleName ) !JJ
     call allocate_test ( beta_path_w0_c,      npc, 'beta_path_w0_c',   moduleName ) !JJ
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
-    call allocate_test ( dhdz_path,        max_ele, 'dhdz_path',        moduleName )
+    call allocate_test ( dhdz_path,       max_ele, 'dhdz_path',        moduleName )
     call allocate_test ( do_gl,               npc, 'do_gl',            moduleName )
-    call allocate_test ( gl_inds,          max_ele, 'gl_inds',          moduleName )
+    call allocate_test ( gl_inds,         max_ele, 'gl_inds',          moduleName )
     call allocate_test ( h_path_c,            npc, 'h_path_c',         moduleName )
-    call allocate_test ( h_path_f,         max_ele, 'h_path_f',         moduleName )
-    call allocate_test ( h_path,           max_ele, 'h_path',           moduleName )
+    call allocate_test ( h_path_f,        max_ele, 'h_path_f',         moduleName )
+    call allocate_test ( h_path,          max_ele, 'h_path',           moduleName )
     call allocate_test ( incoptdepth,         npc, 'incoptdept',       moduleName )
     call allocate_test ( indices_c,           npc, 'indices_c',        moduleName )
     call allocate_test ( n_path,              npc, 'n_path',           moduleName )
-    call allocate_test ( path_dsdh,        max_ele, 'path_dsdh',        moduleName )
-    call allocate_test ( phi_path,         max_ele, 'phi_path',         moduleName )
+    call allocate_test ( path_dsdh,       max_ele, 'path_dsdh',        moduleName )
+    call allocate_test ( phi_path,        max_ele, 'phi_path',         moduleName )
     call allocate_test ( p_path_c,            npc, 'p_path_c',         moduleName )
-    call allocate_test ( p_path,           max_ele, 'p_path',           moduleName )
+    call allocate_test ( p_path,          max_ele, 'p_path',           moduleName )
     call allocate_test ( ref_corr,            npc, 'ref_corr',         moduleName )
     call allocate_test ( sps_beta_dbeta_c,    npc, 'sps_beta_dbeta_c', moduleName )
     call allocate_test ( sps_beta_dbeta_f, max_ele, 'sps_beta_dbeta_f', moduleName )
     call allocate_test ( tanh1_c,             npc, 'tanh1_c',          moduleName )
-    call allocate_test ( tanh1_f,          max_ele, 'tanh1_f',          moduleName )
+    call allocate_test ( tanh1_f,         max_ele, 'tanh1_f',          moduleName )
     call allocate_test ( tau,                 npc, 'tau',              moduleName )
     call allocate_test ( t_path_c,            npc, 't_path_c',         moduleName )
-    call allocate_test ( t_path_f,         max_ele, 't_path_f',         moduleName )
-    call allocate_test ( t_path_m,         max_ele, 't_path_m',         moduleName )
-    call allocate_test ( t_path_p,         max_ele, 't_path_p',         moduleName )
-    call allocate_test ( t_path,           max_ele, 't_path',           moduleName )
+    call allocate_test ( t_path_f,        max_ele, 't_path_f',         moduleName )
+    call allocate_test ( t_path_m,        max_ele, 't_path_m',         moduleName )
+    call allocate_test ( t_path_p,        max_ele, 't_path_p',         moduleName )
+    call allocate_test ( t_path,          max_ele, 't_path',           moduleName )
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
     call allocate_test ( z_path_c,            npc, 'z_path_c',         moduleName )
-    call allocate_test ( z_path,           max_ele, 'z_path',           moduleName )
+    call allocate_test ( z_path,          max_ele, 'z_path',           moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
     call allocate_test ( beta_path_phh_c,  npc, fwdModelConf%num_scattering_angles,     'beta_path_phh_c', moduleName ) !JJ
@@ -927,6 +930,8 @@ contains
     end if ! temp_der
 
     if ( atmos_der ) then
+      call allocate_test ( d_delta_df, npc, size(grids_f%values), 'd_delta_df', &
+                                                              & moduleName )
       call allocate_test ( k_atmos, noUsedChannels, no_tan_hts, size(grids_f%values), &
         & 'k_atmos', moduleName )
       k_atmos = 0.0
@@ -1560,27 +1565,26 @@ contains
               ! We put an explicit extent of -1:1 for the first dimension in
               ! the hope a clever compiler will do better optimization with
               ! a constant extent.
-              if ( temp_der ) then
-                ! will need beta_path_polarized * tanh1_c
+              if ( temp_der .or. atmos_der ) then
+                ! Will need beta_path_polarized * tanh1_c
+                ! Add contributions from nonpolarized molecules 1/4 1/2 1/4 
+                ! to alpha here
                 do j = 1, npc
                   beta_path_polarized(-1:1,j,:) = beta_path_polarized(-1:1,j,:) * tanh1_c(j)
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(indices_c(j),:) )
+                    & sps_path(indices_c(j),:) ) + &
+                    & (/ 0.25, 0.50, 0.25 /) * alpha_path_c(j)
                 end do
               else
-                ! won't need beta_path_polarized * tanh1_c
+                ! Won't need beta_path_polarized * tanh1_c
+                ! Add contributions from nonpolarized molecules 1/4 1/2 1/4 
+                ! to alpha here
                 do j = 1, npc
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(indices_c(j),:) ) * tanh1_c(j)
+                    & sps_path(indices_c(j),:) ) * tanh1_c(j) + &
+                    & (/ 0.25, 0.50, 0.25 /) * alpha_path_c(j)
                 end do
               end if
-
-              !  Add contributions from nonpolarized molecules 1/4 1/2 1/4 here
-              do j=1, npc
-                alpha_path_polarized(-1,j) = alpha_path_polarized(-1,j) + 0.25 * alpha_path_c(j)
-                alpha_path_polarized( 0,j) = alpha_path_polarized( 0,j) + 0.50 * alpha_path_c(j)
-                alpha_path_polarized( 1,j) = alpha_path_polarized( 1,j) + 0.25 * alpha_path_c(j)
-              end do
 
               ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
@@ -1716,9 +1720,9 @@ contains
 
             call drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), z_path_c, Grids_f,  &
               &  beta_path_c(1:npc,:), eta_fzp, sps_path, do_calc_fzp(1:no_ele,:), &
-              &  beta_path_f, do_gl(1:npc), del_s(1:npc), &
-              &  ref_corr(1:npc), path_dsdh, dhdz_path, &
-              &  t_script(1:npc), tau(1:npc), i_stop, k_atmos_frq(frq_i,:) )
+              &  beta_path_f, do_gl(1:npc), del_s(1:npc), ref_corr(1:npc), &
+              &  path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc), &
+              &  i_stop, d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
 
           end if
 
@@ -2365,11 +2369,12 @@ contains
       call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
       call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
-      call deallocate_test ( true_path_flags, 'true_path_flags',moduleName )
+      call deallocate_test ( true_path_flags, 'true_path_flags', moduleName )
     end if
 
     if ( atmos_der ) then
-      call deallocate_test ( k_atmos, 'k_atmos', moduleName )
+      call deallocate_test ( d_delta_df,      'd_delta_df',      moduleName )
+      call deallocate_test ( k_atmos,         'k_atmos',         moduleName )
     end if
 
     if ( spect_der ) then
@@ -2619,6 +2624,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.166  2003/08/12 23:07:32  vsnyder
+! Futzing with comments
+!
 ! Revision 2.165  2003/08/12 21:58:37  vsnyder
 ! Use trapezoid instead of rectangle to integrate non-GL panels
 !
