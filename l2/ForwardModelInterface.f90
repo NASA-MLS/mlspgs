@@ -64,7 +64,7 @@ module ForwardModelInterface
 
   implicit none
   private
-  public :: ConstructForwardModelConfig, ForwardModel, &
+  public :: ConstructForwardModelConfig, FullForwardModel, &
     ForwardModelGlobalSetup
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -360,7 +360,7 @@ contains ! =====     Public Procedures     =============================
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
-  subroutine ForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+  subroutine FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
     &                       FwdModelOut, Ifm, FmStat, Jacobian )
 
     use GL6P, only: NG
@@ -1391,7 +1391,7 @@ contains ! =====     Public Procedures     =============================
 
     Return
 
-  end subroutine ForwardModel
+  end subroutine FullForwardModel
 
   ! =====     Private Procedures     =====================================
   ! ----------------------------------------------  AnnounceError  -----
@@ -1434,6 +1434,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.119  2001/04/26 19:47:53  livesey
+! Renamed main routine to full forward model
+!
 ! Revision 2.118  2001/04/26 02:50:47  vsnyder
 ! Cosmetic changes
 !
