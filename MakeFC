@@ -57,7 +57,13 @@ SHELL = /bin/sh
 # clean_objs     -- deletes only *.o, *.mod from sub-subs
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
 #
-# W a r n i n g :  The following automatically perform "clean"
+#    The following are useful if you stored multiple configurations
+#     besides current one
+# clean_config   -- deletes the sub-subs "name"d in MLSCONFG="name" on command-line
+#                    e.g., make -f MakeFC clean_config MLSCONFG=NAG.Sun
+# clean_all      -- deletes every configuration
+#
+# W a r n i n g :  The following automatically perform "clean_all"
 # tar            -- creates an archive of whole mlspgs suitable for distribution
 # tar_subs       -- creates archives of sub-directories suitable for distribution
 # tar_sips       -- creates archive of mlspgs suitable for SIPS
@@ -97,8 +103,6 @@ OTHER_SUBDIRS = l2pc fwdmdl
 
 SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
-all: $(SUBDIRS)
-
 # This isn't really everything, just everything the SIPS might need
 # so it will be bundled up by tar_sips
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
@@ -106,9 +110,15 @@ all: $(SUBDIRS)
 EVERYTHING = CVS $(SUBDIRS) util blas srclib pcf idllib sids tables\
    $(MakeFName) README.$(MakeFName) PCF.v0-01
      
+# These are all the configurations that will be removed by clean_all
+EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
+
 #----------------------- Build instructions
 
-subdirs: $(SUBDIRS)
+levels:
+	 @for dir in $(LEVELS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir; \
+	done
 
 $(LEVELS):
 	$(MAKE) -f $(MakeFName) -C $@
@@ -120,13 +130,17 @@ $(OTHER_SUBDIRS):
 
 $(OTHER_SUBDIRS): lib
 
-# This requires rm-ing uniquely-named sub-dirs before archiving
-tar tar_subs tar_sips: clean
+all: $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+# This requires rm-ing uniquely-named sub-subs before archiving
+tar tar_subs tar_sips: clean_all
 
 install: all
 
-.PHONY: configure depends subdirs clean clean_objs \
-  tar tar_subs tar_sips all install
+.PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
+  tar tar_subs tar_sips all install levels
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -172,6 +186,19 @@ clean_objs:
 	  $(MAKE) -f $(MakeFName) -C $$dir clean_objs; \
 	done
 
+clean_config:
+	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+	 mv $(CONFDIR)/.configure $(CONFDIR)/temp.configure; \
+	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/.configure; \
+	 $(MAKE) -f $(MakeFName) clean; \
+	 mv $(CONFDIR)/temp.configure $(CONFDIR)/.configure
+
+clean_all:
+	@echo "Cleaning configurations $(EVERY_MLSCONFG)"; \
+	 for dir in $(EVERY_MLSCONFG); do \
+	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
+	done
+
 install:
 	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
 	 for dir in $(LEVELS); do \
@@ -204,6 +231,9 @@ tar_subs:
 	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.11  2001/01/13 00:42:09  pwagner
+# Mentions mlspgs_sips.tgz and mlspgs_subs.tar
+#
 # Revision 1.10  2001/01/12 00:30:18  pwagner
 # Added tar_sips and install options
 #

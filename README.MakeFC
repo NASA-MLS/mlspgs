@@ -158,13 +158,13 @@ depends    recalculates dependencies;
            may require editing first line of f90makedep.pl (see below)
 configure  change configuration: compiler, (less often) platform/OS,
            paths
-tar        tar the current directory for distribution as compressed "tgz"
 
 (The following apply only at the top level)
 all        builds lib, l1, l2, l3, l2pc, and fwdmdl
 install    moves the built programs from l1, l2, l3 to the mlspgs top level
+clean_all  does a clean; more thorough in case of multiple configurations
 
-(The following perform a top-level "clean" before archiving as compressed "tgz")
+(The following perform a top-level "clean_all" before archiving)
 tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
 tar_subs   tar lib, l1, .. : lib.tgz, l1,tgz, .., and mlspgs_subs.tar
 tar_sips   tar everything from mlspgs needed by the SIPS: mlspgs_sips.tgz
@@ -353,6 +353,9 @@ optional way to build, coexisting in parallel with other ways.
 EOF
 exit
 # $Log$
+# Revision 1.8  2001/01/13 00:42:09  pwagner
+# Mentions mlspgs_sips.tgz and mlspgs_subs.tar
+#
 # Revision 1.7  2001/01/12 17:59:16  pwagner
 # Mentions install, tar_sips options
 #
