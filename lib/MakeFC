@@ -1,20 +1,13 @@
 #	Makefile
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-#special case:
-#the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/mlsconfigure to create .configure
-
-#This file name is usu. Makefile but may be different;
-#i.e., if you call are building this mls
-#by calling make with a different Makefile name,
-#say: make -f MakeFC
-#then rename the Makefiles in /l2 and /lib also MakeFC
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
 
+# ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
 
 # where to store .configure
@@ -81,7 +74,8 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f $(libblas_sources)/*.f90)
+libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f \
+  $(libblas_sources)/*.f90 $(libblas_sources)/*.f9h $(srclib)/*.f90)
 PROG=libmls.a
 #PROG=all
 
@@ -303,6 +297,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.47  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
 # Revision 2.46  2002/09/13 22:54:17  pwagner
 # Dependencies cross over into blas
 #
