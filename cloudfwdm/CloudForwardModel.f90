@@ -5,8 +5,6 @@
              &   TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,         &
              &   NU, NUA, NAB, NR)
 
-          use MLSNumerics, only: INTERPOLATEVALUES
-
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
 !----------------------------------------------------------------------------C
@@ -111,6 +109,8 @@
 !============================================================================C
 
       use MLSCommon, only: r8
+      use MLSNumerics, only: INTERPOLATEVALUES
+
       IMPLICIT NONE
 
 !---------------------------------------
