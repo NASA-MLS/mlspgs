@@ -1449,22 +1449,27 @@ CONTAINS
 
 ! OrbitCalculatedSpatialDomainContainer
 
-      attrName = 'OrbitNumber' // '.1'
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-      IF (result /= PGS_S_SUCCESS) THEN
-         msr = METAWR_ERR // attrName
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+      ! This changes confirm James Johnson suggestion on 6/12/03
+      ! Use 99999 for invalid value for now
+
+      !attrName = 'OrbitNumber' // '.1'
+      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      !IF (result /= PGS_S_SUCCESS) THEN
+      !   msr = METAWR_ERR // attrName
+      !   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      !ENDIF
 
       attrName = 'StartOrbitNumber' // '.1'
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       attrName = 'StopOrbitNumber' // '.1'
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1844,6 +1849,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.11  2003/07/08 00:17:46  pwagner
+!# fileType now a lit_name instead of a char string
+!#
 !# Revision 1.10  2003/06/03 20:46:15  pwagner
 !# Writes global attributes
 !#

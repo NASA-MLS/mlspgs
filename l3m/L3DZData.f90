@@ -1703,22 +1703,27 @@ MODULE L3DZData
 
          ! OrbitCalculatedSpatialDomainContainer
 
-         attrName = 'OrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         IF (result /= PGS_S_SUCCESS) THEN
-            msr = METAWR_ERR // attrName
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+	 ! This changes confirm James Johnson suggestion on 6/12/03
+	 ! Use 99999 for invalid value for now
+
+         !attrName = 'OrbitNumber' // '.1'
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+         !IF (result /= PGS_S_SUCCESS) THEN
+         !   msr = METAWR_ERR // attrName
+         !   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         !ENDIF
 
          attrName = 'StartOrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          attrName = 'StopOrbitNumber' // '.1'
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2166,6 +2171,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.11  2003/07/08 00:17:45  pwagner
+! fileType now a lit_name instead of a char string
+!
 ! Revision 1.10  2003/06/02 23:45:15  pwagner
 ! metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
 !

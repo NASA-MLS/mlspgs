@@ -120,7 +120,9 @@ CONTAINS
                   zCy = cycle
                ENDIF
 
-               fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
+               !fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
+               !     & fileName((indx+6):)
+               fileName = fileName(:(indx-1)) // 'c' // TRIM(zCy) // &
                     & fileName((indx+6):)
 
             ELSE
@@ -477,6 +479,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.11  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.10  2003/03/22 02:55:53  jdone
 ! use only and indentation added
 !
