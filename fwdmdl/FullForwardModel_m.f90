@@ -1853,11 +1853,10 @@ alpha_path_f = 0.0
             if ( shapeInd == 0 ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               &    "No matching channel shape information" )
-            k = size(FilterShapes(shapeInd)%FilterGrid)
             call Freq_Avg ( frequencies, &
               &   FilterShapes(shapeInd)%FilterGrid,  &
               &   FilterShapes(shapeInd)%FilterShape, &
-              &   RadV, noFreqs, k, Radiances(ptg_i,i) )
+              &   RadV, Radiances(ptg_i,i) )
           end do
         else
           Radiances(ptg_i,1:noUsedChannels) = RadV(1:)
@@ -1882,8 +1881,7 @@ alpha_path_f = 0.0
                   call Freq_Avg ( frequencies, &
                     & FilterShapes(shapeInd)%FilterGrid, &
                     & FilterShapes(shapeInd)%FilterShape, &
-                    & k_temp_frq(:,sv_i), noFreqs, &
-                    & size(FilterShapes(shapeInd)%FilterGrid), r )
+                    & k_temp_frq(:,sv_i), r )
                   k_temp(i,ptg_i,surface,instance) = r
                   sv_i = sv_i + 1
                 end do                  ! Surface loop
@@ -1907,7 +1905,6 @@ alpha_path_f = 0.0
                 do i = 1, noUsedChannels
                   sigInd = usedSignals(i)
                   channel = usedChannels(i)
-                  j = Size(FilterShapes(shapeInd)%FilterGrid)
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd),             &
                     & sideband = thisSideband, channel=channel )
@@ -1916,7 +1913,7 @@ alpha_path_f = 0.0
                       call Freq_Avg ( frequencies,            &
                         & FilterShapes(shapeInd)%FilterGrid,  &
                         & FilterShapes(shapeInd)%FilterShape, &
-                        & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
+                        & k_atmos_frq(1:noFreqs,sv_i), r )
                     else
                       r = 0.0
                     end if
@@ -2474,7 +2471,6 @@ alpha_path_f = 0.0
           shapeInd = MatchSignal ( filterShapes%signal, &
             & fwdModelConf%signals(sigInd),             &
             & sideband = thisSideband, channel=channel )
-          j = Size(FilterShapes(shapeInd)%FilterGrid)
           sv_i = Grids_dS%l_v(k-1)
           do instance = Grids_dS%WindowStart(k), Grids_dS%WindowFinish(k)
             do surface = 1, Grids_dS%l_z(k) - Grids_dS%l_z(k-1)
@@ -2483,7 +2479,7 @@ alpha_path_f = 0.0
                 call Freq_Avg ( frequencies,           &
                   & FilterShapes(shapeInd)%FilterGrid, &
                   & FilterShapes(shapeInd)%FilterShape,&
-                  & k_spect_dS_frq(:,sv_i), noFreqs, j, r )
+                  & k_spect_dS_frq(:,sv_i), r )
                 k_spect_dS(i,ptg_i,jf,surface,instance,k) = r
               end do              ! Frequencies loop
             end do                ! Surface loop
@@ -2600,6 +2596,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.162  2003/07/15 22:10:09  livesey
+! Added support for hybridModel
+!
 ! Revision 2.161  2003/07/15 18:16:48  livesey
 ! Catalog now split by sideband, also changed no_ele to max_ele in
 ! allocates
