@@ -1224,9 +1224,10 @@ CONTAINS
 !---------------------------------------------------------------
    SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText, hdfVersion)
 !---------------------------------------------------------------
+   USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
    USE MLSPCF3
    USE mon_Open, ONLY: PCFMData_T
-   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
+   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
    USE SDPToolkit, ONLY: PGS_S_SUCCESS, &
      & WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
@@ -1664,6 +1665,13 @@ CONTAINS
              & "Calling pgs_met_remove() failed with value " // trim(msr) )
       endif          
 
+        ! Write global attributes
+      if ( HDFVersion == HDFVERSION_5 ) then                        
+        sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
+        call he5_writeglobalattr(sdid) 
+        result = he5_gdclose (sdid)                                   
+      endif                                                           
+
 !------------------------------
    END SUBROUTINE WriteMetaL3MM
 !------------------------------
@@ -1834,6 +1842,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.9  2003/06/02 23:45:15  pwagner
+!# metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
+!#
 !# Revision 1.8  2003/05/30 23:54:07  pwagner
 !# Relies on lib/PCFHdr to WriteInputPointer
 !#

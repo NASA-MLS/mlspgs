@@ -1388,9 +1388,10 @@ CONTAINS
     !-----------------------------------------------------
   USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
        & DFACC_WRITE
+  USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE OpenInit, ONLY: PCFData_T
-  USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
+  USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr
   USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
   USE SDPToolkit, ONLY: PGSd_MET_NUM_OF_GROUPS, PGSd_MET_GROUP_NAME_L, & 
      & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, WARNIFCANTPGSMETREMOVE
@@ -1809,6 +1810,12 @@ CONTAINS
          CALL WritePCF2Hdr(files%name(i), anText, & 
               & hdfVersion=MyHDFVersion, fileType=fileType)
                   
+        ! Write global attributes
+        if ( MyHDFVersion == HDFVERSION_5 ) then
+          sdid = he5_gdopen (files%name(i), HE5F_ACC_RDWR)
+          call he5_writeglobalattr(sdid)
+          result = he5_gdclose (sdid)
+        endif
       ENDDO
 
       result = pgs_met_remove()
@@ -1817,6 +1824,7 @@ CONTAINS
          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
               & "Calling pgs_met_remove() failed with value " // trim(msr) )
       endif
+      
 
 !------------------------------
    END SUBROUTINE WriteMetaL3DM
@@ -2158,6 +2166,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.26  2003/06/02 23:45:15  pwagner
+!# metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
+!#
 !# Revision 1.25  2003/05/30 23:52:42  pwagner
 !# Relies on lib/PCFHdr to WriteInputPointer
 !#
