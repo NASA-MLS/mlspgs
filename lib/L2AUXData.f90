@@ -135,6 +135,79 @@ CONTAINS
 
   !---------------------------------------------------------------------------
 
+  ! This subroutine expands an L2AUXData_T in place, allowing the user to
+  ! add more `profiles' to it.  Note that the `profile' dimension is the last
+  ! one.
+
+  SUBROUTINE ExpandL2AUXDataInPlace(l2aux,newSize)
+
+    ! Dummy arguments
+    TYPE (L2AUXData_T), INTENT(INOUT) :: l2aux
+    INTEGER, INTENT(IN) :: newSize
+
+    ! Local variables
+    INTEGER :: status           ! From ALLOCATE
+    ! The following are temporary arrays for copying data around
+    REAL (r8), DIMENSION(:), POINTER :: temp1D
+    REAL (r8), DIMENSION(:,:,:), POINTER :: temp3D
+    INTEGER :: expandingDimension
+    INTEGER :: oldSize
+
+    ! Executable code
+
+    ! First identity which is the `last' dimension.
+
+    expandingDimension=3
+    DO WHILE( (l2Aux%dimensions(expandingDimension)%dimensionFamily==&
+         & L2AUXDim_None).AND.(expandingDimension>1))
+       expandingDimension=expandingDimension-1
+    END DO
+
+    ! Now see how long this is
+    oldSize=l2aux%dimensions(expandingDimension)%noValues
+
+    ! Do a sanity check
+    IF (newSize<oldSize) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "This l2aux is getting smaller not bigger")
+
+    ! Now expand this dimension
+    temp1D=>l2aux%dimensions(expandingDimension)%values
+    ALLOCATE(l2aux%dimensions(expandingDimension)%values(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "New dimension information")
+    l2aux%dimensions(expandingDimension)%values(1:oldSize)=temp1D
+    DEALLOCATE(temp1D)
+
+    ! Now expand the data in this dimension
+    temp3d=>l2aux%values
+    SELECT CASE (expandingDimension)
+    CASE (1)
+       ALLOCATE(l2aux%values(newSize,1,1),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(1:oldSize,:,:)=temp3d
+    CASE(2)
+       ALLOCATE(l2aux%values(l2aux%dimensions(1)%noValues,newSize,1),&
+            & STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(:,1:oldSize,:)=temp3d
+    CASE(3)
+       ALLOCATE(l2aux%values(l2aux%dimensions(1)%noValues, &
+            &                l2aux%dimensions(2)%noValues,&
+            &                newSize),STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & "New l2aux values")
+       l2aux%values(:,:,1:oldSize)=temp3d
+    END SELECT
+    DEALLOCATE(temp3d)
+
+    ! That's it.
+
+  END SUBROUTINE ExpandL2AUXDataInPlace
+
+  !---------------------------------------------------------------------------
+
   ! This subroutine adds an l2aux data type to a database of said types,
   ! creating a new database if it doesn't exist
 
@@ -197,6 +270,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.8  2000/01/19 21:42:18  livesey
+! Just tided up some comments.
+!
 ! Revision 1.7  2000/01/07 23:53:34  livesey
 ! Nearly integrated, just a few tweaks.
 !
