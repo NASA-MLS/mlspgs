@@ -239,8 +239,10 @@ contains
                 
                 ! If so, this column of the block (creating if necessary)
                 m0 => jacobian%block(row,col)
-                if ( m0%kind == M_Absent ) &
-                  & call CreateBlock ( jacobian, row, col, m_full )
+                if ( m0%kind == M_Absent ) then
+                  call CreateBlock ( jacobian, row, col, m_full )
+                  m0%values = 0.0
+                end if
                 if ( any (m0%kind == (/ m_banded, m_column_sparse /) ) ) &
                   & call MLSMessage(MLSMSG_Error, ModuleName, &
                   & 'Unable to fill banded/column sparse blocks numerically')
@@ -310,6 +312,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.33  2001/05/26 00:21:38  livesey
+! Added zeroing of jacobian blocks in numerical derivative case.
+!
 ! Revision 2.32  2001/05/10 01:08:11  livesey
 ! Added destroyJacobian option
 !
