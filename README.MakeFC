@@ -124,7 +124,7 @@ multiple configurations simultaneously with different compiler or linker
 options, linked libraries, and so on.
 
 Next it will prompt you to enter the paths to the SDP Toolkit includes
-directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
+directories and to some toolkit-related libraries. These may
 already be known if they were set as environmental variables  when the
 Toolkit was installed. If so, you will see the current non-blank paths
 and be asked to confirm that they are correct. Then you will be done
@@ -135,7 +135,7 @@ installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
 Note whether you have the latest version of the toolkit (currently
-5.2.7.3v1.00) or an earlier one. The latest version includes version 5 of both
+5.2.7.4v1.00) or an earlier one. The latest version includes version 5 of both
 the HDF and HDFEOS libraries, and so their paths need to be set. For earlier
 versions, leave their paths blank.
 
@@ -143,7 +143,8 @@ The next set of questions will pertain to four special libraries: BLAS, LAPACK,
 PVM and FFTW. BLAS and LAPACK are completely optional, with the understanding
 that not supplying any paths for them will result in building an executable
 successfully, although perhaps one running a little slower than the fastest
-possible. PVM is required only for level 2. FFTW is required only for level 3.
+possible. PVM is required only for level 2. FFTW is required only for levels 1
+and 3.
 
 The final two questions allow you to set your own default compiler and loader
 options. You can instead safely accept the default values.
@@ -423,7 +424,9 @@ CALL TO ACTION
 This is usable now. Please try it out and inform me of any bugs you
 find. And tell me their solutions if you can, of course. Also of any
 improvements you think of. The configuration step is laborious, especially
-changing the paths, and has become even more so as the system evolved.
+changing the paths, and has become even more so as the system evolved. Since
+it essentially amounts to creating/editing a text file you may prefer to edit
+your own. See the sample at the end of this file.
 
 ACTUAL BUGS
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
@@ -485,7 +488,10 @@ put the NOCLEANING setting to "yes", or in fact to anything other than its
 blank default. Another way to forestall the massive recompilation in this case
 is to immediately enter "make update" after modifying the .configure file, e.g.
 after "make configure_pvm". Indeed, these two can be conveniently entered on
-the same line as "make configure_pvm update".
+the same line as "make configure_pvm update". However, beware of forestalling
+needed recompilations. For example, if you reset FOPTS by "make configure_fopts
+update", you probably want to recompile everything, but the "update" target
+will prevent that.
 
 There may be cases where make can be observed "hunting", where it enters a
 prerequisite-containing directory repeatedly, as if to rebuild the
@@ -527,7 +533,7 @@ BLAS               Path to an external blas library; unless LIB_BLAS set the
                    library must then be named \$BLAS/libblas.a
                    You would use this if you already had a precompiled, 
                    highly-optimized library of the usual blas routines
-FFTW_ROOT          Path to the FFTW library; required for mlsl3
+FFTW_ROOT          Path to the FFTW library; required for levels 1 and 3
 FOPTS              Override default compiler option; note that you must
                    use only legal options
 LAPACK             Path to an external lapack library; unless LIB_LAPACK
@@ -588,7 +594,8 @@ runtime. As a start, I simply copied NAG.Linux into NAG.*, which has worked so
 far. The ones under the NAG rubric are processed by sed into sub-versions
 depending on the presence or absence of the string "-gc" in LDOPTS. You may
 encounter a link error if you set LDOPTS=-gc while configuring, but then build
-with the statement "make LDOPTS=" effectively erasing "-gc" from the link.
+with the statement "make LDOPTS=" effectively erasing "-gc" from the link. (So
+say what the solution to this problem is!)
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -622,14 +629,14 @@ EXAMPLE OF A .configure FILE
 MLSF95=NAG
 MLSPLAT=Linux
 MLSCONFG=customized
-PGSINC=/software/SRC/TOOLKIT-5.2.7.3v1.00/include
-PGSTK=/software/SRC/TOOLKIT-5.2.7.3v1.00/lib/linux
+PGSINC=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/include
+PGSTK=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
 HDFEOS=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
-HDFEOS5=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos5.0/lib/linux
+HDFEOS5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
 HDF=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
-HDF5=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/lib
-GCTP=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
-PGSLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/lib/linux
+HDF5=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdf5/hdf5-1.4.1/lib
+GCTP=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/hdfeos5.0/lib/linux
+PGSLIB=/software/SRC/HDF-EOS/TOOLKIT-5.2.7.4mls1.0/lib/linux
 HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
 HDFLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
 BLAS=
@@ -664,10 +671,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2002-Feb-21
+-pw                           2000-Oct-24 to 2002-Apr-18
 EOF
 exit
 # $Log$
+# Revision 1.29  2002/02/21 21:57:05  pwagner
+# Separates .configure-able settings from command-line ones
+#
 # Revision 1.28  2002/02/12 19:11:48  pwagner
 # Mention illegal configuration names, HDFVERSIONS, -gc effect on machine.f90
 #
