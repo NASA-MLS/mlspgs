@@ -895,7 +895,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     lb = 1
     if ( present(lowBound) ) lb = lowBound
-    call getHDF5DSDims ( itemID, trim(name), shp, maxShp )
+    call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
     call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1010,7 +1010,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     lb = 1
     if ( present(lowBound) ) lb = lowBound
-    call getHDF5DSDims ( itemID, trim(name), shp, maxShp )
+    call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
     call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1130,7 +1130,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     lb = 1
     if ( present(lowBound) ) lb = lowBound
-    call getHDF5DSDims ( itemID, trim(name), shp, maxShp )
+    call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
     call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1244,7 +1244,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     lb = 1
     if ( present(lowBound) ) lb = lowBound
-    call getHDF5DSDims ( itemID, trim(name), shp, maxShp )
+    call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
     call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4117,6 +4117,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.51  2005/01/07 01:57:53  vsnyder
+! Don't try to get DS dims from an Attrib
+!
 ! Revision 2.50  2005/01/07 01:14:26  vsnyder
 ! Allocate the correct upper bound in LoadPtrFromHDF5DS_logarr1
 !
