@@ -203,7 +203,7 @@ contains ! =====     Public Procedures     =============================
          & ModuleName )
 
     ! Allocate the frequency coordinate
-
+    
     call allocate_test ( l2gp%frequency, useNFreqs, "l2gp%frequency", ModuleName)
 
     ! Allocate the horizontal coordinates
@@ -309,6 +309,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
+    l2gp%frequency=templ2gp%frequency
 
     ! Now go through the parameters one by one, and copy the previous contents
     l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
@@ -1429,6 +1430,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.45  2002/08/20 19:48:29  livesey
+! Bug fix in handling of frequencies.
+!
 ! Revision 2.44  2002/07/17 19:02:09  livesey
 ! Put in bug fix associated with expand in place (lf only?)
 !
