@@ -22,7 +22,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: Display_String
-  use VectorsModule, only: CloneVector, CopyVector, Vector_T
+  use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T
 
   implicit NONE
   private
@@ -432,13 +432,25 @@ contains ! =====     Public Procedures     =============================
   end subroutine ClearMatrix
 
   ! ------------------------------------------------  ClearRows_1  -----
-  subroutine ClearRows_1 ( X )
+  subroutine ClearRows_1 ( X, RowBlock, Vec )
   ! Clear the rows of X for which the mask in X's row-defining vector
-  ! has nonzero bits.
+  ! has nonzero bits.  If RowBlock is present, it specifies that only
+  ! the rows in that row block are to be cleared.  Otherwise, rows in
+  ! all row blocks are cleared.  If the vector Vec is present, its
+  ! elements that correspond to nonzero bits of its mask are cleared.
     type(Matrix_T), intent(inout) :: X
+    integer, intent(in), optional :: RowBlock
+    type(Vector_T), intent(inout), optional :: Vec
+    integer :: I1, I2              ! Bounds for I
     integer :: I, J                ! Subscripts and row indices
     integer :: NI, NQ              ! Instance and quantity indices
-    do i = 1, x%row%nb
+    i1 = 1
+    i2 = x%row%nb
+    if ( present(rowBlock) ) then
+      i1 = rowBlock
+      i2 = rowBlock
+    end if
+    do i = i1, i2
       ni = x%row%inst(i)
       nq = x%row%quant(i)
       if ( associated(x%row%vec%quantities(nq)%mask) ) then
@@ -446,6 +458,7 @@ contains ! =====     Public Procedures     =============================
           call clearRows ( x%block(i,j), x%row%vec%quantities(nq)%mask(:,ni) )
         end do ! j = 1, x%col%nb
       end if
+      if ( present(vec) ) call clearUnderMask ( vec, ni, nq )
     end do ! i = 1, x%row%nb
   end subroutine ClearRows_1
 
@@ -1134,9 +1147,11 @@ contains ! =====     Public Procedures     =============================
   ! RHS_IN. If ROW_BLOCK is present, it specifies that only that row of
   ! blocks of A is to be accumulated.
   ! Only the upper triangle of A^T A is formed or updated.
-    type(Matrix_T), intent(in) :: A
+    type(Matrix_T), intent(inout) :: A       ! inout only to allow
+    !                                          clearing masked rows
     type(Matrix_SPD_T), intent(inout) :: Z
-    type(Vector_T), intent(in), optional :: RHS_IN
+    type(Vector_T), intent(inout), optional :: RHS_IN ! inout only to allow
+    !                                          clearing masked rows
     type(Vector_T), intent(inout), optional :: RHS_OUT
     logical, intent(in), optional :: UPDATE  ! True (default false) means
     !                                          to update Z and RHS_OUT
@@ -1160,6 +1175,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
+    call clearRows ( a, row_block, rhs_in )
     r1 = 1
     if ( present(row_block) ) r1 = row_block
     do j = 1, a%col%nb
@@ -1313,8 +1329,8 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( present(invert) ) then
       if ( invert ) then
-        if ( myLambda == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Updating with inverse of zero in UpdateDiagonal_1" )
+        if ( abs(myLambda) < tiny(0.0_r8) ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "Updating with inverse of near-zero in UpdateDiagonal_1" )
         myLambda = 1.0_r8 / myLambda
       end if
     end if
@@ -1623,6 +1639,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.51  2001/09/20 23:03:01  vsnyder
+! Call ClearRows and ClearUnderMask from NormalEquations
+!
 ! Revision 2.50  2001/07/26 20:34:04  vsnyder
 ! Eliminate the 'extra' field
 !
