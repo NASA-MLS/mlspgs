@@ -23,7 +23,7 @@ module SLABS_SW_M
   public :: Real_Simple_Voigt, D_Real_Simple_Voigt,                     &
          &  Simple_Voigt, D_Simple_Voigt,                               &
          &  RLorentz, CLorentz, RVoigth2, CVoigth2, RVoigth6, CVoigth6, &
-         &  RHui6, CHui6, RDrayson, CDrayson
+         &  RHui6, CHui6, RDrayson, CDrayson, Taylor
 
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
@@ -1142,7 +1142,8 @@ contains
 
 ! Near line center where Doppler dominates Pressure broadening
 
-      uv = cdrayson(xa,y)
+      uv = taylor(xa,y)
+!     uv = cdrayson(xa,y)
 
     end if
 
@@ -1532,6 +1533,41 @@ contains
     cdrayson = cdrayson + cmplx(wr,wi,kind=rp)
 
   end function CDrayson
+
+  ! -----------------------------------------------------  Taylor  -----
+  complex(rp) elemental function Taylor ( x, y )
+
+  !{ $w(z) = \sum_{n=0}^\infty \frac{(iz)^n}{\Gamma(\frac{n}2+1)}$.
+  !  Separating even and odd terms, we have
+  !  $w(z) = \sum_{n=0}^\infty \frac{(-z^2)^n}{n!} +
+  !          \frac{2 i z}{\sqrt{\pi}}
+  !            \sum_{n=0}^\infty \frac{(-z^2)^n}{1\cdot3\cdot\cdot\cdot(2n+1)}$
+  !  The even terms are $e^{-z^2}$; the odd ones are erf$(iz)$.  We only use
+  !  terms up to second order in each of the even and odd series, so this
+  !  approximation gets seven digits only for $x, y \leq 0.06$.
+
+    use MLSCommon, only: RP
+    use Units, only: SqrtPi
+    real(rp), intent(in) :: X, Y
+    real(rp) :: U, V
+    real(rp) :: X2, Y2, Y4, TR, TI
+    real(rp), parameter :: TwoOvSqpi = 2.0_rp / sqrtPi
+
+    real(rp), parameter :: Q0 = TwoOvSqpi, Q1 = 2.0 * TwoOvSqpi / 3.0
+    real(rp), parameter :: Q2 = 4.0 * TwoOvSqpi / 15.0, Q3 = 2.0 * q2
+
+    ! (x2,y2) = -z**2
+    x2 = y*y - x*x
+    y2 = -2.0_rp * x * y
+    y4 = y2 * y2
+
+    tr = q0 - q2 * y4 + ( q1 + q2 * x2 ) * x2
+    ti = ( q1 + q3 * x2 ) * y2
+    u = ( 1.0_rp + 0.5_rp * x2 ) * x2 + 1.0 - 0.5 * y4 - tr * y - ti * x
+    v = ( x2 + 1.0_rp ) * y2 + x * tr - y * ti
+    taylor = cmplx(u,v)
+
+  end function Taylor
 
 !{ \newpage
 
@@ -1962,9 +1998,9 @@ contains
   subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
                              &     Do_1D, t_der_flags )
 
-    use Physics, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use Molecules, only: L_Extinction
+    use Physics, only: SpeedOfLight
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
@@ -2077,6 +2113,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.31  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.30  2004/04/06 23:40:21  vsnyder
 ! Do slabs_prep where derivatives not requested in get_gl_slabs_arrays
 ! instead of doing nothing.
