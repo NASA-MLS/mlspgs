@@ -28,7 +28,7 @@ MakeFName = MakeFC
 # This is how big COPY_NUMBER may grow before being reset
 # ---> and triggering internalcleanup <---
 # (formerly 10)
-MAX_COPIES = 4
+MAX_COPIES = 1
 ONE = 1
 
 # This keeps track of the number of times MakeFC -> Makefile
@@ -114,7 +114,7 @@ SHELL = /bin/sh
 #            (code sub-directories of mlspgs excluding util, sandbox)
 # $LEVELS        -- automatic; built when target is not specified
 #                   (for current value see below)
-# .configure     -- automatic (if not yet extant; prerequisite for everything else)
+# .configure     -- automatic (if not yet found; prerequisite for everything else)
 #                    (its name by default; actual value stored in MLSCFILE)
 # $OTHER_SUBDIRS -- not automatic
 # all            -- all the sub-directories: $LEVELS + $OTHER_SUBDIRS + lib
@@ -148,13 +148,13 @@ SHELL = /bin/sh
 # h5subset       -- build and install this prog out of util directory
 # hl             -- build and install this prog out of util directory
 # makefile       -- allows you to summon this custom Makefile with shorter
-#                    "make" rather than "make -f $(MakeFName)" nonsense
+#                    "make" rather than laborious "make -f $(MakeFName)"
 # update         -- replaces customized Makefiles with latest versions
 #                    also recalculates dependenencies, removes orphaned .o, .mod
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
-# clean_config   -- deletes the sub-subs "name"d in MLSCONFG="name" on command-line
+# clean_config   -- deletes configurations named using MLSCONFG on command-line
 #                    e.g., make clean_config MLSCONFG=NAG.Sun
 # distclean      -- deletes every configuration
 #
@@ -180,9 +180,13 @@ SHELL = /bin/sh
 # PVM_ARCH           (see above)
 # FFTW_ROOT          Path to the FFTW library; required for mlsl3
 #
-# The following cannot be set by configure_full
 # BLAS               Path to an external blas library; note that the library
-#                    must then be named \$BLAS/libblas.a
+#                    by default is named \$BLAS/libblas.a
+# LIB_BLAS           Alternate name x if blas lib named \$BLAS/libx.a
+# LAPACK             Path to an external lapack library; note that the library
+#                    by default is named \$LAPACK/liblapack.a
+# LIB_LAPACK         Alternate name x if lapack lib named \$LAPACK/libx.a
+# The following cannot be set by configure_full
 # TAR                Overrides name of tar command; e.g. path to GNU tar 
 #                    in case your tar won't gzip for targets *targ
 # FAFTER             Appears at the end of each line invoking the compiler
@@ -191,6 +195,11 @@ SHELL = /bin/sh
 # LAFTER             Appears at the end of the very long link statement
 # FC                 Overrides the name by which the Fortran compiler is called
 # CC                 Overrides the name by which the c compiler is called
+# INSTALLDIR         Destination where install moves mlsl1, etc.
+# MLSCFILE           Overrides the name of the .configure file
+# NOHUNTING          Stop make from hunting if non-blank
+# EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
+#                    files while compiling
 #
 # --------------- End MakeFC help
 
@@ -674,6 +683,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.53  2001/10/18 16:43:37  pwagner
+# Removed target convert_spectroscopy anticipating its removal from util
+#
 # Revision 1.52  2001/10/10 23:29:14  pwagner
 # Fixed bug when upfating sids
 #
