@@ -11,31 +11,40 @@ L2AUXData.o  			get_3d_view.o  		write_meta.o  \
 MLSL2.o  			global_settings.o  \
 MLSL2Common.o  			init_tables_module.o  \
  
-Construct.o : Construct.f90 ConstructQuantityTemplates.o ConstructVectorTemplates.o dumper.o HGrid.o init_tables_module.o VectorsModule.o VGrid.o 
-ConstructQuantityTemplates.o : ConstructQuantityTemplates.f90 HGrid.o init_tables_module.o VGrid.o 
-ConstructVectorTemplates.o : ConstructVectorTemplates.f90 init_tables_module.o VectorsModule.o 
-Fill.o : Fill.f90 init_tables_module.o VectorsModule.o 
-HGrid.o : addItemToDatabase.f9h HGrid.f90 init_tables_module.o 
-Join.o : Join.f90 init_tables_module.o L2AUXData.o VectorsModule.o 
-L2AUXData.o : addItemToDatabase.f9h L2AUXData.f90 
-MLSL2.o : MLSL2.f90 init_tables_module.o tree_walker.o 
-MLSL2Common.o : MLSL2Common.f90 
-MatrixModule.o : addItemToDatabase.f9h MatrixModule.f90 dumper.o VectorsModule.o 
-OutputAndClose.o : OutputAndClose.f90 init_tables_module.o L2AUXData.o 
-ScanDivide.o : ScanDivide.f90 init_tables_module.o 
-VGrid.o : addItemToDatabase.f9h VGrid.f90 init_tables_module.o 
-VectorsModule.o : addItemToDatabase.f9h VectorsModule.f90 dumper.o 
-dumper.o : dumper.f90 HGrid.o init_tables_module.o VGrid.o 
-get_3d_view.o : get_3d_view.f90 
-global_settings.o : global_settings.f90 init_tables_module.o 
-init_tables_module.o : init_tables_module.f90 
-obtain_mlscf.o : obtain_mlscf.f90 
-obtainclimatology.o : obtainclimatology.f90 
-obtaindao.o : obtaindao.f90 
-obtainncep.o : obtainncep.f90 
-open_init.o : open_init.f90 
-tree_walker.o : tree_walker.f90 Construct.o dumper.o Fill.o global_settings.o init_tables_module.o Join.o L2AUXData.o obtainclimatology.o obtaindao.o obtainncep.o open_init.o OutputAndClose.o ScanDivide.o VectorsModule.o 
-write_meta.o : write_meta.f90 L2AUXData.o 
+# using f90makedep.pl to calculate dependencies 
+Construct.o: Construct.f90 ConstructQuantityTemplates.o \
+	ConstructVectorTemplates.o HGrid.o VGrid.o VectorsModule.o dumper.o \
+	init_tables_module.o
+ConstructQuantityTemplates.o: ConstructQuantityTemplates.f90 HGrid.o VGrid.o \
+	init_tables_module.o
+ConstructVectorTemplates.o: ConstructVectorTemplates.f90 VectorsModule.o \
+	init_tables_module.o
+dumper.o: dumper.f90 HGrid.o VGrid.o init_tables_module.o
+Fill.o: Fill.f90 VectorsModule.o init_tables_module.o
+get_3d_view.o: get_3d_view.f90
+global_settings.o: global_settings.f90 init_tables_module.o
+HGrid.o: HGrid.f90 init_tables_module.o addItemToDatabase.f9h
+init_tables_module.o: init_tables_module.f90
+Join.o: Join.f90 L2AUXData.o VectorsModule.o init_tables_module.o
+L2AUXData.o: L2AUXData.f90 addItemToDatabase.f9h
+MatrixModule.o: MatrixModule.f90 VectorsModule.o dumper.o \
+	addItemToDatabase.f9h
+MLSL2Common.o: MLSL2Common.f90
+MLSL2.o: MLSL2.f90 init_tables_module.o tree_walker.o
+obtainclimatology.o: obtainclimatology.f90
+obtaindao.o: obtaindao.f90
+obtain_mlscf.o: obtain_mlscf.f90
+obtainncep.o: obtainncep.f90
+open_init.o: open_init.f90
+OutputAndClose.o: OutputAndClose.f90 L2AUXData.o init_tables_module.o
+ScanDivide.o: ScanDivide.f90 init_tables_module.o
+tree_walker.o: tree_walker.f90 Construct.o Fill.o Join.o L2AUXData.o \
+	OutputAndClose.o ScanDivide.o VectorsModule.o dumper.o \
+	global_settings.o init_tables_module.o obtainclimatology.o \
+	obtaindao.o obtainncep.o open_init.o
+VectorsModule.o: VectorsModule.f90 dumper.o addItemToDatabase.f9h
+VGrid.o: VGrid.f90 init_tables_module.o addItemToDatabase.f9h
+write_meta.o: write_meta.f90 L2AUXData.o
  
 #End of Makefile.dep
  
