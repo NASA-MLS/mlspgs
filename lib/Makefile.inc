@@ -95,20 +95,23 @@ swapi.o: swapi_character_array.o swapi_character_scalar.o swapi_double.o \
 test_multiply.o: $S/test_multiply.f90 MatrixModule_0.o
 	$(F90) -c $(FOPTS) $I$(CF) $S/test_multiply.f90
 
-test_multiply: test_multiply.o
+test_multiply: test_multiply.o libmls.a
 	$(F90) $(LDOPTS) -o test_multiply test_multiply.o -L. -lmls -L$(CF) -lCF \
                  -L$(PGSTK) -lPGSTK \
 
 test_sparsify.o: $S/test_sparsify.f90 MatrixModule_0.o
 	$(F90) -c $(FOPTS) $I$(CF) $S/test_sparsify.f90
 
-test_sparsify: test_sparsify.o
+test_sparsify: test_sparsify.o libmls.a
 	$(F90) $(LDOPTS) -o test_sparsify test_sparsify.o -L. -lmls -L$(CF) -lCF \
                  -L$(PGSTK) -lPGSTK \
 
 # ========================================================================
 
 # $Log$
+# Revision 2.9  2000/10/10 22:44:22  vsnyder
+# Correct actions for test_sparsify and test_multiply
+#
 # Revision 2.8  2000/10/09 23:31:49  vsnyder
 # Must have changed something -- permissions weren't r--r--r--.
 #
