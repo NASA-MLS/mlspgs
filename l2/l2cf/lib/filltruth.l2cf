@@ -22,14 +22,14 @@ begin Fill
   
   ;; This macro fills one truth quantity with l2gp data
   !define(fillWithL2GP,{Fill, quantity=truth.$1, method=l2gp, $
-    sourceL2GP={l2gp}$1{Input},/interpolate!nl})
+    sourceL2GP={l2gpTruth}$1{Input},/interpolate!nl})
 
   ;; Now execute this macro for all the species for which we have l2gp
   ;; data
   !forall(fillWithL2GP,!l2gpInputSpecies)
 
   ;; We'll also do the same for refgph, which is a special case
-  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpGPHInput, /interpolate
+  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpTruthGPHInput, /interpolate
 
   ;; Put H2O in trop h2o
   Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $

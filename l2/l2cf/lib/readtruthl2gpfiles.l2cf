@@ -3,10 +3,10 @@
 begin ReadApriori
 
   !ifdef(edinburgh,{
-  !define(readTruthL2GP,{l2gp$1Input: l2gp, $
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
     file='!inpath/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
   },{
-  !define(readTruthL2GP,{l2gp$1Input: l2gp, $
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
     file='/data/emls/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
   })
 
