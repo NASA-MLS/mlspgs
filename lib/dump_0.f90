@@ -187,13 +187,14 @@ contains
 
     logical :: MyClean
     integer :: J, K, MyWidth
+    integer, parameter :: DefaultWidth = 5
     character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    myWidth = 5
+    myWidth = defaultWidth
     if ( present(width) ) myWidth = width
-    myFormat = MyFormatDefault
+    myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -206,7 +207,7 @@ contains
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
-          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
+          call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
           call output ( afterSub )
         end if
         do k = j, min(j+myWidth-1, size(array))
@@ -310,13 +311,14 @@ contains
 
     logical :: myClean
     integer :: J, K, MyWidth
+    integer, parameter :: DefaultWidth = 5
     character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    myWidth = 5
+    myWidth = defaultWidth
     if ( present(width) ) myWidth = width
-    myFormat = MyFormatDefault
+    myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -329,7 +331,7 @@ contains
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
-          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
+          call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
           call output ( afterSub )
         end if
         do k = j, min(j+myWidth-1, size(array))
@@ -1348,6 +1350,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.31  2004/01/21 22:02:19  vsnyder
+! Don't use number of entities per line as default width for counter
+!
 ! Revision 2.30  2003/09/19 02:00:14  vsnyder
 ! More about the goofy Intel compiler
 !
