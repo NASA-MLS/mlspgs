@@ -1,3 +1,26 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module GasAbsorption
+
+! -------------------------------------------------------------------------  
+! COMPUTE ATMOSPHERIC GASES ABSORPTION COEFFICIENTS
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: r8
+      IMPLICIT NONE
+      Private
+      Public :: GET_BETA
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
 
       SUBROUTINE GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2, &
                  &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS)
@@ -7,8 +30,6 @@
 !      LATEST UPDATE: J.JIANG, MAY 18, 2001
 !==============================================================
 
-      use MLSCommon, only: r8
-      IMPLICIT NONE
       INCLUDE 'spectra.f9h' 
 
       INTEGER :: NS
@@ -174,8 +195,7 @@
       ABSC = ABSC + B * VMR_H2O
       ABSC = ABSC * 1.e-3       ! converted from 1/km to 1/m
 
-      RETURN
-      END
+      END SUBROUTINE GET_BETA
 
 !--------------------------------------------------------------
 !     DEFINE LINE-SHAPE FUNCTIONS
@@ -213,8 +233,16 @@
        &      twthp/(voffp**2 + twth0**2)
  	 myresult = myresult * (ff/v0)/pi
 
-!...
-	return
-	end
+       return
+       end function myshape
 
-! $Log: get_beta.f90,v      
+end module GasAbsorption
+
+! $Log: GasAbsorption.f90,v      
+
+
+
+
+
+
+

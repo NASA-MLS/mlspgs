@@ -7,6 +7,7 @@ module ClearSkyModule
 ! MLS CLEAR SKY RADIANCE MODEL
 ! -------------------------------------------------------------------------
 
+      use GasAbsorption, only: GET_BETA
       use MLSCommon, only: r8
 
       IMPLICIT NONE
