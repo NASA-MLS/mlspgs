@@ -25,8 +25,8 @@ contains ! =====     Public Procedures     =============================
     & FwdModelOut, Ifm, fmStat, Jacobian, Vectors )
 
     ! Import stuff
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, COPYVECTOR, ADDTOVECTOR, &
-      & CLEARVECTOR, DESTROYVECTORINFO
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, CLONEVECTOR, ADDTOVECTOR, &
+      & DESTROYVECTORINFO
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
@@ -63,8 +63,7 @@ contains ! =====     Public Procedures     =============================
         & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst, &
         & 'linearJacobian' )
     end if
-    call CopyVector ( linearRadiance, fwdModelOut )
-    call ClearVector ( linearRadiance )
+    call CloneVector ( linearRadiance, fwdModelOut )
 
     ! First we do the linear model.  We do this for both sidebands,
     ! though the second one we update/overwrite with the full forward model
@@ -75,6 +74,7 @@ contains ! =====     Public Procedures     =============================
         ! Set it up to do this signal
         thisConfig = fmConf
         thisConfig%fwmType = l_linear
+        thisConfig%forceFoldedOutput = .true.
         thisSignal(1) = thisConfig%signals(signal)
         thisSignal%sideband = sideband
         thisConfig%signals => thisSignal
@@ -141,6 +141,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.4  2003/10/28 23:44:25  livesey
+! Various deficiencies and bugs fixed.
+!
 ! Revision 2.3  2003/09/11 23:11:28  livesey
 ! Now includes the vectors argument to push down into the linear model.
 !
