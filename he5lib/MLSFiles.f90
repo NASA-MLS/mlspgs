@@ -4,8 +4,8 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !===============================================================================
-  use Hdf, only: DFACC_CREATE, DFACC_READ
-!  use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
+  use Hdf, only: DFACC_CREATE, DFACC_READ, sfstart, sfend
+  use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
   use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
   use HDFEOS, only: gdclose, gdopen, swclose, swopen
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath
@@ -49,6 +49,10 @@ module MLSFiles               ! Utility file routines
 ! split_path_name    splits the input full_file_name into its components path and name
 ! hdf2hdf5_fileaccess
 !                    Translates version 4 hdf access codes to version 5
+
+   ! Assume hdf files w/o explicit hdfVersion field are this
+   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   integer, parameter :: DEFAULT_HDFVERSION = 5
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -788,19 +792,29 @@ contains
     integer                       :: returnStatus
     integer                       :: nameLength
     integer                       :: access_prp_default
+    integer                       :: myhdfVersion
     
     integer, parameter :: h5p_default_f = 0
     integer, external :: PGS_MET_SFstart
 
     ! begin
+   if ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if ( myhdfVersion == 4) then
+     mls_sfstart = sfstart (FileName, FileAccess)
+     return
+   endif
 !    mls_sfstart = PGS_MET_SFstart(FileName, hdf2hdf5_fileaccess(FileAccess))
    if ( PGS_MET4MLS_SF ) then
      returnStatus = PGS_MET_SFstart(trim(FileName), &
       & hdf2hdf5_fileaccess(FileAccess), mls_sfstart)
    else
      access_prp_default = h5p_default_f
-!     call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
-!      & mls_sfstart, returnStatus, access_prp_default)
+     call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
+      & mls_sfstart, returnStatus, access_prp_default)
    endif
 !     nameLength = LEN(FileName)
 !     returnStatus = h5fopen_c(FileName, nameLength, &
@@ -827,14 +841,24 @@ contains
     integer :: mls_sfend            
     integer, optional, intent(in) :: hdfVersion
 
+    integer                       :: myhdfVersion
     integer, external :: PGS_MET_SFend
 
     ! begin
+   if ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
+   if ( myhdfVersion == 4) then
+     mls_sfend = sfend (sdid)
+     return
+   endif
 !    mls_sfend = h5fclose_c(sdid)
    if ( PGS_MET4MLS_SF ) then
      mls_sfend = PGS_MET_SFend(sdid)
    else
-!     call h5fclose_f(sdid, mls_sfend)
+     call h5fclose_f(sdid, mls_sfend)
    endif
 !    mls_sfend = 0
 
@@ -858,11 +882,13 @@ contains
       integer :: returnStatus
       logical :: is_hdf5
     ! begin
-    if ( PGS_MET4MLS_SF ) then
-      hdf_version = '????'
-      return
-    endif
-!    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
+    returnStatus = 0
+    is_hdf5 = (DEFAULT_HDFVERSION == 5)
+!    if ( PGS_MET4MLS_SF ) then
+!      hdf_version = '????'
+!      return
+!    endif
+    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
     if ( returnStatus /= 0 ) then
       hdf_version = '????'
     elseif ( is_hdf5 ) then
@@ -880,6 +906,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.4  2002/01/23 22:41:21  pwagner
+! Handles optional hdfVersion parameter
+!
 ! Revision 1.3  2002/01/23 00:54:10  pwagner
 ! Added mls_hdf_version function
 !
