@@ -165,7 +165,7 @@ begin Construct
     !makelist({extinctionShaped},{_HR},!allRadiometers)})
   !define(allConstantExtinctions, {!makelist({extinctionConstant},{},!allRadiometers),$
     !makelist({extinctionConstant},{_HR},!allRadiometers)})
-    
+  
   !define(allExtinctions, {!allShapedExtinctions,!allConstantExtinctions})
 
   ;; ----------------------------------------- Isotope ratios
