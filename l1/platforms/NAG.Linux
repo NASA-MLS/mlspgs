@@ -35,7 +35,7 @@ vpath %.f9h ../
 FC = f95
 
 # Compiler options:
-FOPTS = -g -C=all
+#FOPTS = -g -C=all
 
 DUSTY = $(FOPTS) -dusty
 
@@ -84,6 +84,9 @@ DUSTY = $(FOPTS) -dusty
 l_specials =
 
 # $Log$
+# Revision 1.4  2001/02/05 23:12:29  pwagner
+# DUSTY now based directly on FOPTS
+#
 # Revision 1.3  2000/11/18 00:36:18  pwagner
 # odd stuff removed from l_special=
 #

@@ -41,7 +41,7 @@ vpath %.f9h ../ $(srclib)
 FC = f95
 
 # Compiler options:
-FOPTS = -g -C=all
+#FOPTS = -g -C=all
 
 DUSTY = $(FOPTS) -dusty
 
@@ -94,6 +94,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
 l_specials =
 
 # $Log$
+# Revision 1.2  2001/02/05 23:13:07  pwagner
+# DUSTY now based directly on FOPTS
+#
 # Revision 1.1  2001/02/01 23:12:31  pwagner
 # First commit
 #

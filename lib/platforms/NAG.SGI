@@ -27,7 +27,7 @@ vpath %.f $(PGSINC) $(blaslib)
 FC = f95
 
 # Compiler options:
-FOPTS = -g -C=all -abi=n32
+#FOPTS = -g -C=all -abi=n32
 
 DUSTY = $(FOPTS) -dusty
 
@@ -67,6 +67,9 @@ MATRIX_OBJS =
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.7  2001/02/08 00:31:44  pwagner
+# Conditionally links sdot and ddot unless BLAS defined
+#
 # Revision 1.6  2001/02/05 23:12:30  pwagner
 # DUSTY now based directly on FOPTS
 #

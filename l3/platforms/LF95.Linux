@@ -34,7 +34,7 @@ FC = lf95
 
 # Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
-FOPTS = -g --chk --info
+#FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # Beginning of path to libraries:
@@ -82,5 +82,8 @@ DUSTY = $(FOPTS)
 l_specials = 
 
 # $Log$
+# Revision 1.2  2000/11/17 23:48:45  pwagner
+# Now links on sun (pencil)
+#
 # First commit
 #

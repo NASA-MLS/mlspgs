@@ -28,7 +28,7 @@ FC = lf95
 
 # Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
-FOPTS = -g --chk --info
+#FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # Beginning of path to libraries:
@@ -67,6 +67,9 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.7  2001/02/08 00:31:44  pwagner
+# Conditionally links sdot and ddot unless BLAS defined
+#
 # Revision 1.6  2001/01/13 00:24:42  pwagner
 # uses lib/machines/MLSCONFG/machine.f90
 #
