@@ -183,7 +183,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
-!       call dump ( ??? )
+!       call dump ( ???, details=levels(gen)-1 )
       end if
       call trace_end ( "MLSL2Join" )
     end if
@@ -577,6 +577,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.20  2001/04/10 23:44:44  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.19  2001/03/15 23:26:56  livesey
 ! Avoid calling ExpandL2AUXQuantitiesInPlace for minor frame quantities.
 ! Really saves on memory thrashing.
