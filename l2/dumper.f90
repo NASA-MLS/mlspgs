@@ -50,8 +50,9 @@ contains ! =====     Private Procedures     ============================
     call output ( 'CHUNKS: SIZE = ' )
     call output ( size(chunks), advance='yes' )
     do i = 1, size(chunks)
-      call output ( i, 4 )
-      call output ( ':  firstMAFIndex: ' )
+      call output ( ' Chunk ' )
+      call output ( i, advance='yes' )
+      call output ( '  firstMAFIndex: ' )
       call output ( chunks(i)%firstMAFIndex )
       call output ( '  lastMAFIndex: ' )
       call output ( chunks(i)%lastMAFIndex, advance='yes' )
@@ -231,6 +232,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.18  2003/08/26 18:04:52  livesey
+! Minor changes in dumping of chunks.
+!
 ! Revision 2.17  2003/06/20 19:37:06  pwagner
 ! Quanities now share grids stored separately in databses
 !
