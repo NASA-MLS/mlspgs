@@ -34,8 +34,9 @@ contains ! ============= Public Procedures ==========================
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
-      & L_SWITCHINGMIRROR, L_HYBRID
+      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+    use PolarLinearModel_m, only: POLARLINEARMODEL
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
     use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
@@ -75,7 +76,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Do the actual forward models
     radianceModel = any ( config%fwmType == &
-      & (/ l_full, l_linear, l_hybrid, l_cloudFull /) )
+      & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
     select case (config%fwmType)
     case ( l_full )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -87,6 +88,10 @@ contains ! ============= Public Procedures ==========================
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_hybrid )
       call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'full_fwm' )
+    case ( l_polarLinear )
+      call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_scan )
@@ -137,6 +142,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.21  2003/08/13 00:49:56  livesey
+! Added PolarLinear model
+!
 ! Revision 2.20  2003/07/15 22:11:12  livesey
 ! Added hybrid model and slight reorganization
 !
