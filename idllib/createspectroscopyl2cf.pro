@@ -17,7 +17,8 @@ Read_Spect_Dbase, molName, lineName, '', data,  $
 myID='$Id$'
 
 ; Sort out nitrogen
-change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' ) )
+change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
+  or strmid(data.name,0,10) eq 'H$_{2}$O-r') )
 data(change).q=1.0
 
 ; Open the output file
