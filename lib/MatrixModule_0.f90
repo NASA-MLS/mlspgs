@@ -135,7 +135,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface operator (+)
-    module procedure Add_Matrix_Blocks
+    module procedure Add_Matrix_Blocks_Unscaled
   end interface
 
   interface operator ( .TX. ) ! A^T * B
@@ -221,8 +221,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Add_Matrix_Blocks  -----
-  function Add_Matrix_Blocks ( XB, YB ) result ( ZB ) ! ZB = XB + YB
+  function Add_Matrix_Blocks ( XB, YB, SCALE ) result ( ZB )
+  ! ZB = XB + [SCALE *] YB
     type(MatrixElement_T), intent(in), target :: XB, YB
+    real(r8), intent(in), optional :: SCALE
     type(MatrixElement_T) :: ZB
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -232,11 +234,16 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, N
+    real(r8) :: S                            ! My copy of Scale
     type(MatrixElement_T), pointer :: X, Y
     real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse/banded
     real(kind(zb%values)), pointer :: W(:,:) ! May be used if X is banded
     real(r8), dimension(:,:), pointer :: XD, YD ! For testing
     logical :: OK                       ! For testing
+
+    s = 1.0
+    if ( present(scale) ) s = scale
+
     if ( xb%kind <= yb%kind ) then
       x => xb
       y => yb
@@ -270,7 +277,7 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         call densify ( z, x )
         call densify ( w, y )
-        z = z + w
+        z = z + s * w
         call sparsify ( z, zb, 'Z in Add_matrix_block', ModuleName )
         call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
         
@@ -326,6 +333,7 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( z, y%nRows, y%nCols, "Z in Add_Matrix_Blocks", &
           & ModuleName )
         call densify ( z, y )                    ! z = y%values
+        if ( present(scale) ) z = s * z
         do k = 1, size(x%r1)
           z(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) = &
             & z(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) + &
@@ -334,6 +342,7 @@ contains ! =====     Public Procedures     =============================
         call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
       case ( M_Full )                            ! X banded, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
+        if ( present(scale) ) zb%values = s * zb%values
         do k = 1, size(x%r1)
           zb%values(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) = &
             & zb%values(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) + &
@@ -349,6 +358,7 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( z, y%nRows, y%nCols, "Z in Add_Matrix_Blocks", &
           & ModuleName )
         call densify ( z, y )                    ! z = y%values
+        if ( present(scale) ) z = s * z
         do k = 1, size(x%r1)
           z(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
             & z(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
@@ -357,6 +367,7 @@ contains ! =====     Public Procedures     =============================
         call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
       case ( M_Full )                            ! X col sparse, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
+        if ( present(scale) ) zb%values = s * zb%values
 
 ! Commented-out on account of internal NAG v4.0 bug
          do k = 1, size(x%r1)
@@ -371,7 +382,7 @@ contains ! =====     Public Procedures     =============================
 !     case ( M_Column_sparse ) ! Not needed because of commuted arguments
       case ( M_Full )                            ! X full, Y full
         call CloneBlock ( zb, y )                ! Zb = y, except the values
-        zb%values = x%values + y%values
+        zb%values = x%values + s * y%values
       end select
     end select
 
@@ -390,6 +401,21 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( yd, 'yd', ModuleName )
     end if
   end function Add_Matrix_Blocks
+
+  ! ---------------------------------  Add_Matrix_Blocks_Unscaled  -----
+  function Add_Matrix_Blocks_Unscaled ( XB, YB ) result ( ZB ) ! ZB = XB + YB
+    type(MatrixElement_T), intent(in), target :: XB, YB
+    type(MatrixElement_T) :: ZB
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    zb = add_matrix_blocks ( xb, yb )
+
+  end function Add_Matrix_Blocks_Unscaled 
 
   ! ------------------------------------------------  AssignBlock  -----
   subroutine AssignBlock ( Z, X )
@@ -1224,7 +1250,7 @@ contains ! =====     Public Procedures     =============================
     ! Invert the diagonal elements
     n = size(u,1)
     do j = 1, n
-      if ( U(j,j) == 0.0_r8 ) then
+      if ( abs(U(j,j)) <= tiny(0.0_r8) ) then
         if ( present(status) ) then
           status = j
           return
@@ -2866,7 +2892,8 @@ contains ! =====     Public Procedures     =============================
         a%r1(i) = j
         a%r2(i) = j + m - 1
         if ( myInvert ) then
-          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           ! Don't misinterpret the use of r1 and r2 here, it does make sense
           ! see their assignment above.
@@ -2888,7 +2915,8 @@ contains ! =====     Public Procedures     =============================
           return
         end if
         if ( myInvert ) then
-          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           v = s / x(i)
         else
@@ -2902,7 +2930,8 @@ contains ! =====     Public Procedures     =============================
         do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
           if ( a%r2(j) == i ) then
             if ( myInvert ) then
-              if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+              if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
+                & MLSMSG_Error, moduleName, &
                 & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
               v = s / x(i)
             else
@@ -2934,7 +2963,8 @@ contains ! =====     Public Procedures     =============================
       integer :: I
       do i = start, n
         if ( myInvert ) then
-          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           v = s / x(i)
         else
@@ -3087,6 +3117,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.77  2002/08/19 20:50:56  vsnyder
+! Add Add_Matrix_Blocks_Unscaled, clean up x(i) == 0.0_r8
+!
 ! Revision 2.76  2002/08/15 22:12:47  livesey
 ! Bug work around in Add_Matrix_Blocks and fix in TransposeMatrix_0
 !
