@@ -66,17 +66,16 @@ contains
   ! ------------------------------------  Open_Filter_Shapes_File  -----
   subroutine Open_Filter_Shapes_File ( Filename, Lun )
 
+    use IO_stuff, only: Get_Lun
+
     character(len=*), intent(in) :: Filename ! Name of the filter shape file
     integer, intent(out) :: Lun              ! Logical unit number to read it
 
     logical :: Exist, Opened
     integer :: Status
 
-    do lun = 20, 99
-      inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
-    end do
-    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+    call get_lun ( lun, msg=.false. )
+    if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "No logical unit numbers available" )
     open ( unit=lun, file=filename, status='old', form='formatted', &
       & access='sequential', iostat=status )
@@ -507,6 +506,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.15  2004/03/30 00:45:31  vsnyder
+! Remove USE for unreferenced symbol
+!
 ! Revision 2.14  2004/02/14 00:23:48  vsnyder
 ! New DACS convolution algorithm
 !
