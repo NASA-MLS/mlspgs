@@ -158,6 +158,7 @@ maxUpperOverlap
 maxValue
 measurements
 measurementSD
+metaDataOnly
 metaName
 method
 model
@@ -307,6 +308,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.99  2003/06/23 18:07:03  pwagner
+# Added metaDataOnly
+#
 # Revision 2.98  2003/06/20 19:39:06  pwagner
 # Added label field
 #
