@@ -4,7 +4,8 @@ program TEST_MULTIPLY_VECTOR
 
   use Machine ! At least for HP, and maybe for GETARG
   use MatrixModule_0, only: CreateBlock, Densify, Dump, M_Banded, &
-    & M_Column_Sparse, M_Full, MatrixElement_T, MultiplyMatrixVector
+    & M_Column_Sparse, M_Full, MatrixElement_T, MultiplyMatrixVector, &
+    & Sparsify
   use MLSCommon, only: R8
 
   logical :: BAND = .false.        ! make a Banded matrix
@@ -29,7 +30,7 @@ program TEST_MULTIPLY_VECTOR
   real :: T1, T2                   ! For timing
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=256) :: Id = &
     & "$Id$"
   !---------------------------------------------------------------------------
 
@@ -98,7 +99,7 @@ program TEST_MULTIPLY_VECTOR
       stop
     end if
     n = nrm * ncm
-    nnz = max( int(n * sparsity), ncm)
+    nnz = max(INT(n * sparsity), ncm)
     call createBlock ( m, nrm, ncm, M_Column_Sparse, nnz )
     call random_number ( m%values )
     m%r2 = m%values(:,1) * n
@@ -167,11 +168,11 @@ program TEST_MULTIPLY_VECTOR
 end program TEST_MULTIPLY_VECTOR
 
 ! $Log$
-! Revision 1.2  2000/11/09 23:21:19  vsnyder
-! Correct type mismatch in MAX
+! Revision 2.3  2000/11/09 23:23:57  vsnyder
+! Moved to tests/multiply
 !
-! Revision 1.1  2000/11/09 17:27:04  pwagner
-! First commit
+! Revision 2.2  2000/11/09 01:22:06  vsnyder
+! Removed "private" in a parameter statement -- can't work in a main program
 !
 ! Revision 2.1  2000/10/31 23:35:52  vsnyder
 ! Initial commit
