@@ -990,7 +990,7 @@ contains
       use DNWT_Module, only: FlagName, NF_EVALF, NF_EVALJ, NF_SOLVE, &
         & NF_NEWX, NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, &
         & NF_SMALLEST_FLAG, NF_START, NF_TOLX, NF_TOLX_BEST, NF_TOLF, &
-        & NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
+        & NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, NWTOP, RK
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -1136,6 +1136,8 @@ contains
       prev_nwt_flag = huge(0)
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
+            if ( index(switches,'nin') /= 0 ) &
+              & call nwtop ( (/ 1, 1, 0 /) ) ! Turn on NWTA's internal output
           call nwta ( nwt_flag, aj )
           if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
             prev_nwt_flag = nf_evalj
@@ -1827,13 +1829,13 @@ contains
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( index(switches,'ndb') /= 0 ) call nwtdb ( width=9, level=0 )
-            call nwtdb ( width=9, level=0 )
+            if ( index(switches,'ndb') /= 0 ) &
+              & call nwtdb ( width=9, level=0, why='After Solve' )
             if ( index(switches,'Ndb') /= 0 ) then
               if ( index(switches,'sca') /= 0 ) then
-                call nwtdb ( width=9 )
+                call nwtdb ( width=9, why='After Solve' )
               else
-                call nwtdb ( aj, width=9 )
+                call nwtdb ( aj, width=9, why='After Solve' )
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
@@ -1897,7 +1899,9 @@ contains
               & call dump ( v(dx), name='Gradient move from best X' )
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%gfac = ' )
-              call output ( aj%gfac, format='(1pe14.7)', advance='yes' )
+              call output ( aj%gfac, format='(1pe14.7)' )
+              call output ( ' |DX| = ' )
+              call output ( aj%gradn * aj%gfac, advance='yes' )
             end if
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
@@ -3640,6 +3644,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.219  2003/01/16 04:06:58  vsnyder
+! Change some output in DNWT
+!
 ! Revision 2.218  2003/01/15 01:49:29  vsnyder
 ! Revise dumping stuff for Newton method
 !
