@@ -884,7 +884,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     CALL ReadL1BData(sd_id, QuantityName, L1bData, NoMAFs, status, &
       & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
-      & HDFVersion=HDFVERSION_5, dontPad=.true. )
+      & HDFVersion=HDFVERSION_5, dontPad=.true., L2AUX=.true. )
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read ' &
@@ -1754,6 +1754,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.67  2004/08/19 00:19:28  pwagner
+! Tells ReadL1BData to skip warnings about missing counterMAFs
+!
 ! Revision 2.66  2004/08/17 17:09:45  pwagner
 ! L2AUX files shouldn't need padding when read as l1b
 !
