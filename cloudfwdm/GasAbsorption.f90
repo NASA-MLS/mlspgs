@@ -44,7 +44,7 @@ contains
       REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
       REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
       REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-      REAL(r8) :: VMR(NS-1)                      ! MINOR SPECIES 1-O3
+      REAL(r8) :: VMR(NS-1)                   ! MINOR SPECIES 1=O3, 2=N2O
       REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
@@ -91,8 +91,6 @@ contains
       ABSC=0._r8
       I=0
 
-
-
 !-------------------------------------
 !     LINE EMISSION
 !-------------------------------------
@@ -130,6 +128,9 @@ contains
             ELSE IF(IMOL .EQ. 5) THEN                    ! O3
               PS   = 0.00_r8
               NPS  = 0.00_r8
+            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
             END IF
 
             v01(i) = 0.0_r8
@@ -153,12 +154,13 @@ contains
 !           DOPPLER WIDTH
 !-------------------------------------
 
-            IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF
-            IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF
-            IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF
-            IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF
-            IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF
-            
+            IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+            IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+            IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+            IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+            IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+            IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+
 !--------------------------------------------------
 !           WHITING'S APPROXIMATION FOR THE VOIGT
 !--------------------------------------------------
@@ -186,6 +188,7 @@ contains
          IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
          IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
          IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
+         IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
 
       ENDDO  
 
@@ -197,8 +200,10 @@ contains
      &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
 
 ! from ATBD N2-N2 continuum
-       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8
+!      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
 
+!=====================================================================================
 ! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at 640GHz
 ! The Debye term is coded differently between the two models, which
 ! affects R2 and R3 mostly (check it later) 
@@ -206,6 +211,7 @@ contains
 
 ! The factor 1.8 is fix to match B2U of Bill's FWM without [o2, o2]
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8  
+!======================================================================================
 
 !     CONT_1=1.4e-10*(1-1.2e-5*F**1.5)     ! LIEBE 1989
 !     CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)  ! LIEBE 1993
@@ -228,14 +234,17 @@ contains
 !      CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
 !      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
 
+!      the following cont_1 is adjusted based on bill's 
+      ! H2O_R2  continuum=[ 2.52300e-16, 3.62800 ]
+
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
-      CONT_1 = 7.53e-16   ! wu's version
+!      CONT_1 = 7.53e-16     ! wu's version
+      CONT_1 = 7.53e-16/1.6
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
       B = SC_CONST * 10.**(-2.0*ZP)* TT**CONT_2
-
 
 !--------------------------------------------------------------
 !     THE SECOND TERM FOR H2O-H2O COLLISION (GODON ET AL 1991)
@@ -302,6 +311,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.11  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.10  2002/08/22 00:14:42  jonathan
 ! upgrade to include more molecules
 !

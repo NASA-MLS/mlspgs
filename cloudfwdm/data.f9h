@@ -3,11 +3,12 @@
       INTEGER :: N_O18O_LINES
       INTEGER :: N_H2O18_LINES
       INTEGER :: N_O3_LINES
+      INTEGER :: N_N2O_LINES
 
       PARAMETER (N_O2_LINES=44, N_H2O_LINES=103, N_O18O_LINES=93, &
-      &           N_H2O18_LINES=17, N_O3_LINES=722 )
+      &           N_H2O18_LINES=17, N_O3_LINES=722, N_N2O_LINES=2 )
 
-      REAL(r8) :: QQ_O2(3),QQ_H2O(3),QQ_O_18_O(3),QQ_H2O_18(3),QQ_O3(3) 
+      REAL(r8) :: QQ_O2(3),QQ_H2O(3),QQ_O_18_O(3),QQ_H2O_18(3),QQ_O3(3),QQ_N2O(3)
       integer :: nl, nll
       parameter (nl=95, nll=57)
       
@@ -60,6 +61,16 @@
       real(r8) ::  n1_O3_pt7   (nl), n1_O3_pt8   (nll)
       real(r8) ::  gamma_O3_pt7(nl), gamma_O3_pt8(nll)
       real(r8) ::  n2_O3_pt7   (nl), n2_O3_pt8   (nll)
+
+      real(r8) :: v0_n2o   (2)
+      real(r8) :: gse_n2o  (2)
+      real(r8) :: ist_n2o  (2)
+      real(r8) :: wth_n2o  (2)
+      real(r8) :: nth_n2o  (2)
+      real(r8) :: delta_n2o(2)
+      real(r8) :: n1_n2o   (2)
+      real(r8) :: gamma_n2o(2)
+      real(r8) :: n2_n2o   (2)
 
 ! ------------------------------- O2 -------------------------------
 
@@ -2079,8 +2090,43 @@
      & 0.00_r8, 0.00_r8, 0.00_r8, 0.00_r8, 0.00_r8,&
      & 0.00_r8, 0.00_r8 /
 
+! ------------------------------- N2O --------------------------------
+
+      DATA QQ_N2O / 2.6972_r8, 2.5724_r8, 2.3965_r8 /
+
+      DATA V0_N2O / 				&
+     &200975.2600_r8, 652833.7897_r8 /
+
+      DATA GSE_N2O / 				&
+     &   23.464100_r8, 272.28259_r8 /
+
+      DATA IST_N2O /				&
+     &-4.0066_r8, -3.0051_r8 /
+
+      DATA WTH_N2O /			  	&
+     & 2.4300_r8, 2.3000_r8 /
+
+      DATA NTH_N2O /		     		&
+     & 0.870_r8, 0.750_r8 /
+
+      DATA DELTA_N2O /				&
+     & 0.0000E+00_r8, 0.0000E+00_r8 /
+
+      DATA N1_N2O /		     		&
+     & 0.00_r8, 0.00_r8 /
+
+      DATA GAMMA_N2O /				&
+     & 0.0000E+00_r8, 0.0000E+00_r8 /
+
+      DATA N2_N2O /		     		&
+     & 0.00_r8, 0.00_r8 /
+
+
 ! ----------------------------------------------------------------------------------
 ! $Log$
+! Revision 1.7  2002/10/02 17:02:22  pwagner
+! Removed RCS Ident Block
+!
 ! Revision 1.6  2002/10/02 15:54:42  bwknosp
 ! Added Id, RCS, and Log info
 !

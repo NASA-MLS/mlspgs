@@ -189,12 +189,31 @@ contains
             N2(I)    = N2_O3_PT8(I-J)        
       ENDDO
 
+      J=N_O2_LINES+N_H2O_LINES+N_O18O_LINES+N_H2O18_LINES+7*NL+NLL
+
+        DO I=J+1, J+N_N2O_LINES
+            QLG(1,I)=QQ_N2O(1)
+            QLG(2,I)=QQ_N2O(2)
+            QLG(3,I)=QQ_N2O(3)
+            V0(I)    = V0_N2O(I-J)
+            GSE(I)   = GSE_N2O(I-J)
+            IST(I)   = IST_N2O(I-J)
+            WTH(I)   = WTH_N2O(I-J)
+            NTH(I)   = NTH_N2O(I-J)
+            DELTA(I) = DELTA_N2O(I-J)
+            N1(I)    = N1_N2O(I-J)
+            GAMMA(I) = GAMMA_N2O(I-J)
+            N2(I)    = N2_N2O(I-J)
+      ENDDO
+    
+
       NCNT(1)=N_O2_LINES
       NCNT(2)=N_H2O_LINES
       NCNT(3)=N_O18O_LINES
       NCNT(4)=N_H2O18_LINES
       NCNT(5)=N_O3_LINES
-      NMOL=5
+      NCNT(6)=N_N2O_LINES
+      NMOL=6
 
       END SUBROUTINE SETUP_SPECTRA
 
@@ -205,6 +224,9 @@ contains
 end module SpectraLines
 
 ! $Log$
+! Revision 1.3  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.2  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
