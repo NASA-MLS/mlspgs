@@ -146,10 +146,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! The following, if true, says to encode strings as ints
   ! before swapi write; also decode ints to strings after read
   ! otherwise, try swapi read, write directly with strings
-  logical, parameter :: USEINTS4STRINGS = .false.  
+  ! logical, parameter :: USEINTS4STRINGS = .false.  
   
   ! So far, the nameIndex component of the main data type is never set
   logical, parameter :: NAMEINDEXEVERSET = .false.  
+  
+  ! Do you want to write file and swath attributes when you append values
+  logical, parameter :: APPENDSWRITEATTRIBUTES = .true.  
+
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
   ! (1) normal swaths, which have geolocations along nTimes
@@ -627,7 +631,7 @@ contains ! =====     Public Procedures     =============================
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
-    integer, allocatable, dimension(:,:) :: string_buffer
+!    integer, allocatable, dimension(:,:) :: string_buffer
 
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
@@ -743,8 +747,8 @@ contains ! =====     Public Procedures     =============================
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
     allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
-      &   string_buffer(1,myNumProfs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
+      ! &   string_buffer(1,myNumProfs), &
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' various things in ReadL2GPData' )
 
@@ -862,7 +866,7 @@ contains ! =====     Public Procedures     =============================
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.' )
 
-    deallocate ( string_buffer, STAT=alloc_err )
+    ! deallocate ( string_buffer, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of status buffer.' )
 
@@ -932,7 +936,7 @@ contains ! =====     Public Procedures     =============================
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
-    integer, allocatable, dimension(:,:) :: string_buffer
+!    integer, allocatable, dimension(:,:) :: string_buffer
     
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
@@ -1061,8 +1065,8 @@ contains ! =====     Public Procedures     =============================
     nLevelsOr1=max(nLevels, 1)
     allocate(realProf(myNumProfs), realSurf(l2gp%nLevels), &
       &   realFreq(l2gp%nFreqs), &
-      &   string_buffer(1,myNumProfs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
+    !   &   string_buffer(1,myNumProfs), &
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' various things in ReadL2GPData' )
 
@@ -1180,7 +1184,7 @@ contains ! =====     Public Procedures     =============================
     if ( alloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.')
 
-    deallocate ( string_buffer, STAT=alloc_err )
+    ! deallocate ( string_buffer, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of status buffer.' )
 
@@ -1518,7 +1522,7 @@ contains ! =====     Public Procedures     =============================
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
-    integer, allocatable, dimension(:,:) :: string_buffer
+!    integer, allocatable, dimension(:,:) :: string_buffer
 
     ! Begin
     if (present(offset)) then
@@ -1991,7 +1995,7 @@ contains ! =====     Public Procedures     =============================
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
-    integer, allocatable, dimension(:,:) :: string_buffer
+!    integer, allocatable, dimension(:,:) :: string_buffer
 
     ! Begin
     if (present(offset)) then
@@ -2485,6 +2489,10 @@ contains ! =====     Public Procedures     =============================
     else
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, myswathName, offset)
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, myswathName, offset)
+      if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
+        call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+        call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
+      endif
     endif
 
   end subroutine AppendL2GPData_fileID
@@ -2728,6 +2736,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.73  2003/07/15 23:35:11  pwagner
+! Disabled most printing; uses mls_SWdetach
+!
 ! Revision 2.72  2003/07/10 22:18:49  livesey
 ! More minor bug fixes, but lots of print statements.
 !
