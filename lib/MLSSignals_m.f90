@@ -1393,7 +1393,7 @@ oc:     do
 
   ! ------------------------------------------------  MatchSignal  -----
   integer function MatchSignal ( Signals, Probe, sideband, channel, matchFlags, &
-    & NoMatchFails, FromWhere )
+    & NoMatchFails, FromWhere, DSBSSB )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
@@ -1407,20 +1407,23 @@ oc:     do
     integer, intent(in), optional :: CHANNEL      ! Just this channel
     logical, intent(in), optional :: NoMatchFails ! Fail if no match
     character(len=*), intent(in), optional :: FromWhere ! For an error message
+    logical, intent(in), optional :: DSBSSB       ! OK if one sig is DSB, other is SSB
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
     logical :: Match                    ! Channels in probe are in signal
     integer :: NumChannelsMatch
-    integer :: mySideband               ! Either sideband or probe%sideband
+    logical :: MyDSBSSB
+    integer :: MySideband               ! Either sideband or probe%sideband
+    logical :: SidebandOK
 
     if ( present(matchFlags) ) matchFlags = .false.
 
-    if ( present(sideband) ) then
-      mySideband = sideband
-    else
-      mySideband = probe%sideband
-    end if
+    mySideband = probe%sideband
+    if ( present(sideband) ) mySideband = sideband
+
+    myDSBSSB = .false.
+    if ( present(DSBSSB) ) myDSBSSB = DSBSSB
 
     bestMatch = huge(bestMatch)
     matchSignal = 0
@@ -1428,10 +1431,12 @@ oc:     do
       ! First, the signal must have the same band, instrument module,
       ! radiometer, spectrometer, spectrometer type and switch number as
       ! the probe signal
+      sidebandOK = (signals(i)%sideband == mySideband) .or. &
+        &          myDSBSSB .and. (signals(i)%sideband * mySideband == 0)
       if ( signals(i)%band /= probe%band .or. &
         &  signals(i)%instrumentModule /= probe%instrumentModule.or. &
         &  signals(i)%radiometer /= probe%radiometer .or. &
-        &  signals(i)%sideband /= mySideband .or. &
+        &  .not. sidebandOK .or. &
         &  signals(i)%spectrometer /= probe%spectrometer .or. &
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
@@ -1659,6 +1664,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.74  2004/08/03 21:49:05  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.73  2004/07/23 19:48:12  vsnyder
 ! Some cannonball polishing
 !
