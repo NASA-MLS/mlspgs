@@ -48,7 +48,8 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    CHARACTER (LEN=1), POINTER :: anText(:)
    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
 
-   INTEGER :: i, l2Days, mis_l2Days
+   INTEGER :: i, l2Days
+   INTEGER :: mis_l2Days
 
    REAL(r8), POINTER :: avgPer(:)
    integer, parameter :: NORMAL_EXIT_STATUS = 2
@@ -70,7 +71,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
 ! If no data , go on to the next product
 
-      IF (l2Days < cfDef%minDays ) THEN
+      IF (l2Days .le. cfDef%minDays ) THEN
          msr = 'Insufficient data found for ' // TRIM(cfProd(i)%l3prodNameD) // &
                '.  Skipping CORE processing and moving on to the next product.'
          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
