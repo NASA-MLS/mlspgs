@@ -65,7 +65,7 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 #wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 
 PROG=test
 
@@ -74,8 +74,7 @@ PROG=test
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ test
@@ -137,6 +136,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.2  2001/05/18 23:30:22  pwagner
+# Brought into harmony with latest non-tests versions
+#
 # Revision 1.1  2001/02/01 23:11:11  pwagner
 # First commit
 #
