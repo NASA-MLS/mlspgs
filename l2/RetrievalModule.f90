@@ -16,18 +16,24 @@ module RetrievalModule
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
-    & F_columnScale, F_covariance, F_diagnostics, F_diagonal, F_forwardModel, &
-    & F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, F_ignore, F_jacobian, &
-    & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
-    & F_opticalDepth, F_outputCovariance, F_outputSD, F_ptanQuantity, &
-    & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
-    & F_toleranceA, F_toleranceF, F_toleranceR, &
+    & F_columnScale, F_Comment, F_covariance, F_diagnostics, F_diagonal, &
+    & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, &
+    & F_ignore, F_jacobian, F_lambda, F_Level, F_maxF, F_maxJ, F_measurements, &
+    & F_measurementSD, F_method, F_opticalDepth, F_outputCovariance, &
+    & F_outputSD, F_ptanQuantity, F_quantity, F_regOrders, F_regQuants, &
+    & F_regWeight, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
-    & L_apriori, L_covariance, L_newtonian, L_lowcloud, &
-    & L_none, L_norm, L_pressure, L_zeta, &
-    & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
-    & S_time
-  use Intrinsic, only: L_Jacobian_Cols, L_Jacobian_Rows, PHYQ_Dimensionless
+    & L_apriori, L_covariance, &
+    & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, &
+    & L_dnwt_diag,  L_dnwt_dxdx,  L_dnwt_dxdxl, &
+    & L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_fnmin, &
+    & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
+    & L_dnwt_gradn,  L_dnwt_sq,  L_dnwt_sq,  L_dnwt_sqt,&
+    & L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
+    & L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
+    & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
+    & S_subset, S_time
+  use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
     & Matrix_SPD_T
@@ -38,6 +44,7 @@ module RetrievalModule
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SidsModule, only: SIDS
+  use SnoopMLSL2, only: SNOOP
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
@@ -69,7 +76,8 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, chunk )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, &
+    & chunk )
 
   !{Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
@@ -78,7 +86,7 @@ contains
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
                                         ! Indexes an n_cf vertex
-    type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
+    type(vector_T), dimension(:), pointer :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
@@ -98,8 +106,6 @@ contains
                                         ! convergence, then put in the whole
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
-    type(vectorValue_T), pointer :: DOF_Qty  ! Degrees of freedom quantity in
-                                        ! Diagnostics vector
     integer :: Error
     type(vector_T) :: F                 ! Residual -- Model - Measurements
     integer :: Field                    ! Field index -- f_something
@@ -115,10 +121,8 @@ contains
     integer :: IxJacobian               ! Index in tree of jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: Jacobian_Cols            ! Number of columns of the Jacobian.
-    type(vectorValue_T), pointer :: Jac_Col_Qty   ! To output Jacobian_Cols
     integer :: Jacobian_Rows            ! (Number of rows of Jacobian) -
                                         ! (masked-off rows of Jacobian)
-    type(vectorValue_T), pointer :: Jac_Row_Qty   ! To output Jacobian_Rows
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
     integer :: MaxFunctions             ! Maximum number of function
@@ -138,6 +142,8 @@ contains
     integer :: RegQuants                ! Regularization quantities
     real(r8) :: RegWeight               ! Weight of regularization conditions
     integer :: Son                      ! Of Root or Key
+    integer :: SnoopKey                 ! Tree point of S_Snoop spec.
+    integer :: SnoopLevel               ! From level field of S_Snoop spec.
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
     real :: T1, T2                      ! for timing
@@ -168,6 +174,8 @@ contains
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, myVectors, state, outputSD )
+    snoopKey = 0
+    snoopLevel = 1
     timing = section_times
     if ( timing ) call cpu_time ( t1 )
 
@@ -194,6 +202,20 @@ contains
         call destroyMatrix( matrixDatabase(decoration(key)) ) ! avoids a memory leak
         call decorate ( key, 0 )
         if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
+      case ( s_snoop )
+        snoopKey = key
+        do j = 2, nsons(key)
+          field = get_field_id(son)  ! tree_checker prevents duplicates
+          select case ( field )
+          case ( f_comment )
+            ! Processed by snoop
+          case ( f_level )
+            call expr ( subtree(2,son), units, value, type )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call announceError ( wrongUnits, field, string='no' )
+            snoopLevel = nint(value(1))
+          end select
+        end do
       case ( s_subset )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
         call SetupSubset ( key, vectorDatabase )
@@ -464,6 +486,21 @@ contains
       end select
     end subroutine AnnounceError
 
+    ! ----------------------------------------------  FillDiagVec  -----
+    subroutine FillDiagVec ( QuantityIndex, Value )
+      ! Put Value into the first element of the values field of the
+      ! quantity of the Diagnostics vector given by QuantityIndex.
+      ! We assume the Diagnostics vector is associated, so you better
+      ! check before you call!
+      integer, intent(in) :: QuantityIndex
+      real(r8), intent(in) :: Value
+      type(vectorValue_T), pointer :: Diag_Qty    ! A quantity in the
+                                        ! Diagnostics vector
+      diag_qty => GetVectorQuantityByType ( diagnostics, &
+        & quantityType=l_dnwt_ajn, noError=.true. )
+      if ( associated(diag_qty) ) diag_qty%values(1,1) = value
+    end subroutine FillDiagVec
+    ! 
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
@@ -517,6 +554,11 @@ contains
       type(vector_T) :: Reg_X_X         ! Regularization * X_n
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
+      integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
+      ! dx_aitken dx aitken best gmove newx solve evalj evalf
+        &      3, 2,     3,   2,    2,   1,    2,    2,    2,  &
+      ! start tolx tolx_best tolf too_small fandj
+        &  9,   2,        2,   2,        3,    9  /)
       real :: T1
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       type(vector_T) :: Weight          ! Scaling vector for rows, 1/measurementSD
@@ -594,7 +636,7 @@ contains
           end if
           call output ( ' initLambda = ' )
           call output ( initLambda, advance='yes' )
-        end if
+        end if;
 
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call cpu_time ( t1 )
@@ -1158,6 +1200,25 @@ contains
           ! STOP
         end select
       ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
+        if ( got(f_diagnostics) ) then
+          call fillDiagVec ( l_dnwt_ajn, aj%ajn )
+          call fillDiagVec ( l_dnwt_axmax, aj%axmax )
+          call fillDiagVec ( l_dnwt_cait, aj%cait )
+          call fillDiagVec ( l_dnwt_diag, aj%diag )
+          call fillDiagVec ( l_dnwt_dxdx, aj%dxdx )
+          call fillDiagVec ( l_dnwt_dxdxl, aj%dxdxl )
+          call fillDiagVec ( l_dnwt_dxn, aj%dxn )
+          call fillDiagVec ( l_dnwt_dxnl, aj%dxnl )
+          call fillDiagVec ( l_dnwt_fnmin, aj%fnmin )
+          call fillDiagVec ( l_dnwt_fnorm, aj%fnorm )
+          call fillDiagVec ( l_dnwt_gdx, aj%gdx )
+          call fillDiagVec ( l_dnwt_gfac, aj%gfac )
+          call fillDiagVec ( l_dnwt_gradn, aj%gradn )
+          call fillDiagVec ( l_dnwt_sq, aj%sq )
+          call fillDiagVec ( l_dnwt_sqt, aj%sqt )
+        end if
+        if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) &
+          & call snoop ( key, vectorDatabase, myVectors )
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
         if ( got(f_diagnostics) ) then
@@ -1165,10 +1226,6 @@ contains
           ! to Levenberg-Marquardt stabilization.  Do count rows due to a
           ! priori or regularization.  Put numbers of rows and columns
           ! into diagnostic vector.
-          jac_col_qty => GetVectorQuantityByType ( diagnostics, &
-            & quantityType=l_jacobian_cols, noError=.true. )
-          jac_row_qty => GetVectorQuantityByType ( diagnostics, &
-            & quantityType=l_jacobian_rows, noError=.true. )
           jacobian_cols = sum(normalEquations%m%col%nelts)
           jacobian_rows = sum(normalEquations%m%row%nelts)
           do j = 1, normalEquations%m%col%nb
@@ -1180,8 +1237,8 @@ contains
             & jacobian_rows = jacobian_rows + jacobian_cols
           if ( got(f_regOrders) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
-          if ( associated(jac_col_qty) ) jac_col_qty%values(1,1) = jacobian_cols
-          if ( associated(jac_row_qty) ) jac_row_qty%values(1,1) = jacobian_rows
+          call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
+          call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
         end if
         ! Subtract sum of Levenberg-Marquardt updates from normal
         ! equations
@@ -1715,6 +1772,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.85  2001/10/05 01:46:25  vsnyder
+! Put in stuff to snoop in the Newtonian iteration loop
+!
 ! Revision 2.84  2001/10/04 01:48:59  vsnyder
 ! Move temporary vectors into 'myVectors' database, for snooping
 !
