@@ -132,6 +132,7 @@ lengthScale
 level
 lockBins
 logBasis
+logSpace
 losqty
 lowBound # for the state vector during retrieval
 lowerOverlap
@@ -295,6 +296,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.85  2003/03/27 20:44:05  livesey
+# Added logSpace
+#
 # Revision 2.84  2003/03/07 03:18:06  livesey
 # Added basisFraction and minChannels
 #
