@@ -993,33 +993,37 @@ contains ! =============== Subroutines and functions ==========================
       row = FindBlock ( jacobian%row, residual%index, maf )
       
       ! Store the ptan derivatives
-      col = FindBlock ( jacobian%col, ptan%index, maf )
-      block => jacobian%block(row,col)
-      if ( block%kind /= M_Absent ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Found a prexisting d(residual)/d(ptan), removing' )
-        call DestroyBlock ( block )
-      endif
-      call CreateBlock ( jacobian, row, col, M_Banded, noMIFs )
-      do i = 1, noMIFs
-        block%r1(i) = i
-        block%r2(i) = i
-      end do
-      block%values(:,1) = dL1GPHByDPtan-dHydrosGPHByDPtan
+      if ( ptanInState ) then
+        col = FindBlock ( jacobian%col, ptan%index, maf )
+        block => jacobian%block(row,col)
+        if ( block%kind /= M_Absent ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Found a prexisting d(residual)/d(ptan), removing' )
+          call DestroyBlock ( block )
+        endif
+        call CreateBlock ( jacobian, row, col, M_Banded, noMIFs )
+        do i = 1, noMIFs
+          block%r1(i) = i
+          block%r2(i) = i
+        end do
+        block%values(:,1) = dL1GPHByDPtan-dHydrosGPHByDPtan
+      end if
 
       ! Store refGPH derivatives
-      col = FindBlock ( jacobian%col, refGPH%index, maf )
-      block => jacobian%block(row,col)
-      if ( block%kind /= M_Absent ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Found a prexisting d(residual)/d(refGPH), removing' )
-        call DestroyBlock ( block )
+      if ( refGPHInState ) then
+        col = FindBlock ( jacobian%col, refGPH%index, maf )
+        block => jacobian%block(row,col)
+        if ( block%kind /= M_Absent ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Found a prexisting d(residual)/d(refGPH), removing' )
+          call DestroyBlock ( block )
+        endif
+        call CreateBlock ( jacobian, row, col, M_Full )
+        block%values = -1.0
       endif
-      call CreateBlock ( jacobian, row, col, M_Full )
-      block%values = -1.0
-
+        
       ! Store heightOffset derivatives if any
-      if ( associated (heightOffset) ) then
+      if ( associated (heightOffset) .and. heightOffsetInState) then
         col = FindBlock ( jacobian%col, heightOffset%index, maf )
         block => jacobian%block(row,col)
         if ( block%kind /= M_Absent ) then
@@ -1032,23 +1036,25 @@ contains ! =============== Subroutines and functions ==========================
       end if
 
       ! Now the temperature derivatives
-      col = FindBlock ( jacobian%col, temp%index, maf )
-      block => jacobian%block(row,col)
-      if ( block%kind /= M_Absent ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Found a prexisting d(residual)/d(temp), removing' )
-        call DestroyBlock ( block )
-      endif
-      call CreateBlock ( jacobian, row, col, M_Full )
-      block%values = - dHydrosGPHByDTemp
-      do i = 1, noMIFs
-        block%values(i,pointTempLayer(i)) = &
-          & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-        block%values(i,pointTempLayer(i)+1) = &
-          & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-      end do
+      if ( tempInState ) then
+        col = FindBlock ( jacobian%col, temp%index, maf )
+        block => jacobian%block(row,col)
+        if ( block%kind /= M_Absent ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Found a prexisting d(residual)/d(temp), removing' )
+          call DestroyBlock ( block )
+        endif
+        call CreateBlock ( jacobian, row, col, M_Full )
+        block%values = - dHydrosGPHByDTemp
+        do i = 1, noMIFs
+          block%values(i,pointTempLayer(i)) = &
+            & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+          block%values(i,pointTempLayer(i)+1) = &
+            & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+        end do
+      end if
 
-    endif
+    end if
 
     ! Now deallocate pointers
     call deallocate_test ( pointTempLayer, 'pointTempLayer', ModuleName )
@@ -1110,6 +1116,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.16  2001/05/04 05:41:26  livesey
+! Added some more conditions for derivative calculation
+!
 ! Revision 2.15  2001/05/04 05:05:46  livesey
 ! The scan calculation works in ScanModel, haven't tested the
 ! derivatives yet though.
