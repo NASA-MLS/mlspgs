@@ -49,7 +49,8 @@ contains
       & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
       & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
       & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH, &
-      & L_CLOUDICE, L_CLOUDWATER, L_SIZEDISTRIBUTION
+      & L_CLOUDICE, L_CLOUDWATER, L_SIZEDISTRIBUTION, &
+      & l_clear, l_clear_110RH_below_top, l_clear_0RH
 
     use Load_sps_data_m, ONLY: LOAD_SPS_DATA, Grids_T, destroygrids_t
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
@@ -529,7 +530,16 @@ contains
     sizeDistribution=>GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
       & quantityType=l_sizeDistribution, noError=.true. )
 
-          ICON = FwdModelConf%i_saturation
+         select case (FwdModelConf%i_saturation)
+            case (l_clear)
+               icon = 0
+            case (l_clear_110RH_below_top)
+               icon = -1
+            case (l_clear_0RH)
+               icon = -2
+            case default
+               call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
+         end select
           NU  = fwdModelConf%NUM_SCATTERING_ANGLES
           NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
           NAB = fwdModelConf%NUM_AB_TERMS
@@ -2848,6 +2858,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.130  2003/03/04 20:22:40  dwu
+! add a temporay fix for the tangent height crossover problem
+!
 ! Revision 2.129  2003/02/20 23:29:54  livesey
 ! Bug fix in -Srad for DACS.
 !
