@@ -63,7 +63,7 @@ module Comp_Sps_Path_Frq_m
 ! Internal declarations
 
     logical :: MyPFA
-    integer(ip) :: mol_1, mol_n, n_f, no_mol
+    integer(ip) :: n_f, no_mol
     integer(ip) :: sps_i, sv_zp, sv_f
     integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
 
@@ -77,11 +77,7 @@ module Comp_Sps_Path_Frq_m
 
     no_mol = ubound(grids_x%l_z,1)
     if ( myPFA ) then
-      mol_1 = grids_x%lastNonPFA + 1
-      mol_n = no_mol
     else
-      mol_1 = 1
-      mol_n = grids_x%lastNonPFA 
     end if
 
     if ( frq <= 1.0_r8 ) then
@@ -91,7 +87,7 @@ module Comp_Sps_Path_Frq_m
       not_zero_f = .TRUE.
       sps_path = 0.0_rp
     else
-      do sps_i = mol_1, mol_n
+      do sps_i = 1, no_mol
         if ( grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) > 1 ) sps_path(:,sps_i) = 0.0_rp
       end do
     end if
@@ -99,7 +95,7 @@ module Comp_Sps_Path_Frq_m
     f_inda = 0
     w_inda = 0
 
-    do sps_i = 1, mol_n ! begins at 1 instead of mol_1 to get w_ind[ab] right
+    do sps_i = 1, no_mol
 
       f_indb = grids_x%l_f(sps_i)
       n_f = f_indb - f_inda
@@ -109,8 +105,7 @@ module Comp_Sps_Path_Frq_m
 
       ! n_f == 1 means qty%template%frequencyCoordinate == l_none, i.e.,
       ! sps_path is not frequency dependent.
-      if ( (frq <= 1.0 .or. n_f /= 1) .and. &
-        &  ( (sps_i > grids_x%lastNonPFA) .eqv. myPFA) ) then
+      if ( frq <= 1.0 .or. n_f /= 1 ) then
 
 ! There are two ways to do this (slow and easy vs quick but difficult)
 ! For ease lets do the slow and easy (and certainly more reliable)
@@ -211,6 +206,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.19  2004/11/01 20:20:46  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA broken for now
+!
 ! Revision 2.18  2004/08/03 21:59:49  vsnyder
 ! Inching further toward PFA
 !
