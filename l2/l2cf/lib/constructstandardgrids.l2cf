@@ -30,8 +30,10 @@ vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
 ;; These ones are specifically for diagnostic quantities.
 vGridGlobal: vGrid, type=Explicit, coordinate=Zeta, values=1000mb
 
-vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
-vGridHighCloudR1: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR1A:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1A: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR1B:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1B: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
 
 vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
 vGridHighCloudR2:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
@@ -42,8 +44,10 @@ vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb, 46mb], 
 vGridLowCloudR4:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
 vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
 
-vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
-vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5H:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5H: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5V:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5V: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
 
 !define(allIterationLevels,{!forloop({i},1,19,{!i, })20}) ; 1,2,3..20
 !define(allPhaseLevels,{!forloop({i},1,99,{!i, })100}) ; 1,2,3..100
@@ -64,6 +68,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.24  2004/10/29 23:38:45  dwu
+; add vGridRefIWC
+;
 ; Revision 1.23  2004/07/28 23:01:31  cvuu
 ; Increase vGridPhases to 100
 ;
