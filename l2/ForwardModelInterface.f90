@@ -394,6 +394,9 @@ contains
     integer :: SURFACE                  ! Loop counter
     integer :: INSTANCE                 ! Loop counter
 
+    real (r8) :: CENTERFREQ             ! Of band
+    real (r8) :: SENSE                  ! Multiplier (+/-1)
+
     integer, dimension(:), pointer :: CHANNELINDEX=>NULL() ! E.g. 1..25
     integer, dimension(:), pointer :: USEDCHANNELS=>NULL() ! Array of indices used
 
@@ -750,10 +753,21 @@ contains
 
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
-        if ( forwardModelConfig%do_freq_avg ) then
+
+        if ( forwardModelConfig%do_freq_avg ) then 
+          select case (signal%sideband)
+          case (l_lower)
+            centerFreq = signal%lo - signal%centerFrequency
+            sense = -1.0
+          case (l_upper)
+            centerFreq = signal%lo + signal%centerFrequency
+            sense = +1.0
+          case default              ! Put error message here later
+          end select
+
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            call Freq_Avg(frequencies,FMI%F_grid_filter(:,i),  &
+            call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i),  &
               &     FMI%Filter_func(:,ch),RadV,noFreqs,FMI%no_filt_pts, &
               &     Radiances(ptg_i,ch))
           end do
@@ -771,7 +785,7 @@ contains
                 do surface = 1, temp%template%noSurfs
                   toAverage => k_temp_frq%values( &
                     & 1:noFreqs,surface,instance)
-                  call Freq_Avg(frequencies, FMI%F_grid_filter(:,i), &
+                  call Freq_Avg(frequencies, centerFrequency+sense*FMI%F_grid_filter(:,i), &
                     & FMI%Filter_func(:,i), real(toAverage,r8), &
                     & noFreqs,FMI%no_filt_pts,r)
                   k_temp(ch,ptg_i,surface,instance) = r
@@ -796,7 +810,7 @@ contains
                 do instance = 1, TFMI%no_phi_f(j)
                   do surface = 1, TFMI%no_coeffs_f(j)
                     toAverage => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
-                    call Freq_Avg(frequencies,FMI%F_grid_filter(:,i), &
+                    call Freq_Avg(frequencies,centerFrequency+sense*FMI%F_grid_filter(:,i), &
                       & FMI%Filter_func(:,i), real(toAverage, r8), &
                       & noFreqs,FMI%no_filt_pts,r)
                     k_atmos(ch,ptg_i,surface,instance,specie) = r
@@ -833,7 +847,7 @@ contains
 !                       RadV(1:noFreqs) = k_spect_dnu_frq(m)%values(1:noFreqs,n,k)
 !                     end select
 !                     if(FMC%do_frqavg) then
-!                       call Freq_Avg(frequencies,FMI%F_grid_filter(:,i), &
+!                       call Freq_Avg(frequencies,centerFrequency+sense*FMI%F_grid_filter(:,i), &
 !                         &              FMI%Filter_func(:,i),&
 !                         &              RadV,noFreqs,FMI%no_filt_pts,r)
 !                     else
@@ -1173,6 +1187,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.35  2001/03/24 00:32:56  livesey
+! Modified use of FMI%f_grid_filter
+!
 ! Revision 2.34  2001/03/23 23:55:54  livesey
 ! Another interim version.  Frequency averaging doesn't crash but
 ! produces bad numbers. Note that the handling of k_... when passed to
