@@ -809,7 +809,7 @@ contains
       sb = c * y * d1
       sc = c * sigmaX1 * yi * d1
       sd = c * yi * d2
-      beta = beta + sa + sb - sc + sd
+      beta = beta + sa + sb - sc + sd * a
 
       c = slabs%dSlabs1_dT(l) + dtanh_dT
       dd1 = -2.0_rp * d1 * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
@@ -1383,6 +1383,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.39  2004/09/16 22:16:21  vsnyder
+! Avoid dividing by zero in Slabswint_dT also
+!
 ! Revision 2.38  2004/09/16 20:24:23  vsnyder
 ! Avoid dividing by zero in Slabswing_Lines_dT
 !
