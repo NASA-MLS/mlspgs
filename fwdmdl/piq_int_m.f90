@@ -17,7 +17,7 @@ module Piq_int_m
   contains
 !---------------------------------------------------------------------------
 
-  subroutine Piq_int ( z_grid, t_basis, z_ref, piq )
+  SUBROUTINE Piq_int ( z_grid, t_basis, z_ref, piq, z_mass, c_mass)
 
 ! Compute the piq (sans mass) used in the L2PC
 ! hydrostatic function
@@ -31,18 +31,29 @@ module Piq_int_m
 
     real(rp), intent(in) :: z_grid(:), t_basis(:), z_ref
     real(rp), intent(out) :: piq(:,:)
+    REAL(rp), OPTIONAL, intent(in) :: z_mass
+    REAL(rp), OPTIONAL, intent(in) :: c_mass
 
 ! inside code variables
 
-    real(rp) :: a,c,aa,cc
-    real(rp), dimension(1:size(z_grid)) :: b, d, bb, dd
-    integer(ip) :: n_coeffs, i, ind(1)
+    REAL(rp) :: a,c,aa,cc, zm, mc
+    REAL(rp), DIMENSION(1:SIZE(z_grid)) :: b, d, bb, dd, ee, ff
+    INTEGER(ip) :: n_coeffs, i, ind(1)
 
 ! begin code
+  if (present(z_mass)) then
+    zm = z_mass
+    mc = c_mass
+  else
+    zm = 2.5_rp
+    mc = 0.02_rp
+  endif
 ! Establish dimensions
 
-    n_coeffs = size(t_basis)
+  n_coeffs = size(t_basis)
 
+  if (n_coeffs > 1) then
+    
 ! locate z_ref relative to t_basis
 ! I don't know if this is the fastest way to do this but this is a
 ! method derived from idl's ind_scl routine
@@ -69,14 +80,45 @@ module Piq_int_m
              + ((t_basis(2)-0.5_rp*(a+b))*(b-a) &
              -  (t_basis(2)-0.5_rp*(c+d))*(c-d))/(t_basis(2)-t_basis(1))
 
+! do mass reduction correction (2nd order approximation)
+    a = zm
+    b = MIN(MAX(zm,t_basis(1)),MAX(z_grid,zm))
+    c = MAX(zm,t_basis(1))
+    d = MIN(MAX(c,z_grid),MAX(t_basis(2),zm))
+    ff = 1.0 / (t_basis(2) - t_basis(1))
+    ee = t_basis(2) * ff
+    ff = -ff
+    piq(:,1) = piq(:,1) + mc * ((b**3-a**3)/3.0_rp &
+           & - zm * (b**2-a**2) + zm**2*(b-a) &
+           & + 0.25_rp*ff*(d**4-c**4) &
+           & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+           & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) &
+           & + ee*zm**2*(d-c))
+
 ! these are wholly negative contributions only
 
     do i = 2,ind(1) - 1
-      b = min(max(z_grid,t_basis(i-1)),t_basis(i))
+      b = MIN(MAX(z_grid,t_basis(i-1)),t_basis(i))
       d = min(max(z_grid,t_basis(i)),t_basis(i+1))
       piq(:,i) = (t_basis(i) - b)*(0.5_rp*(t_basis(i) - b) &
                / (t_basis(i) - t_basis(i-1)) - 1.0_rp) &
                - 0.5_rp*(t_basis(i+1) - d)**2 / (t_basis(i+1)-t_basis(i))
+! do mass reduction correction (2nd order approximation)
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
     end do
 
 ! coefficients where z_ref is amongst t_basis
@@ -96,6 +138,22 @@ module Piq_int_m
                + ((t_basis(i+1)-0.5_rp*(aa+bb))*(bb-aa) &
                -  (t_basis(i+1)-0.5_rp*(cc+dd))*(cc-dd)) &
                / (t_basis(i+1)-t_basis(i))
+! do mass reduction correction (2nd order approximation)
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
     end do
 
 ! for all coeffients above ind use
@@ -106,6 +164,22 @@ module Piq_int_m
       piq(:,i) = 0.5_rp*(b - t_basis(i-1))**2 / (t_basis(i)-t_basis(i-1)) &
                + (d - t_basis(i))*(1.0 - 0.5_rp*(d - t_basis(i)) &
                / (t_basis(i+1)-t_basis(i)))
+! do mass reduction correction (2nd order approximation)
+      a = MAX(zm,t_basis(i-1))
+      b = MIN(MAX(a,z_grid),MAX(t_basis(i),zm))
+      c = MAX(zm,t_basis(i))
+      d = MIN(MAX(c,z_grid),MAX(t_basis(i+1),zm))
+      cc = 1.0 / (t_basis(i) - t_basis(i-1))
+      aa = -t_basis(i-1) * cc
+      ff = 1.0 / (t_basis(i+1) - t_basis(i))
+      ee = t_basis(i+1) * ff
+      ff = -ff
+      piq(:,i) = piq(:,i) + mc * (0.25_rp*cc*(b**4-a**4) &
+             & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+             & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+             & + 0.25_rp*ff*(d**4-c**4) &
+             & + (ee - 2.0_rp*ff*zm)*(d**3-c**3)/3.0_rp &
+             & + 0.5_rp*zm*(ff*zm - 2.0_rp*ee)*(d**2-c**2) + ee*zm**2*(d-c))
     end do
 
 ! upper coefficient
@@ -121,6 +195,23 @@ module Piq_int_m
                     - max(t_basis(n_coeffs),z_ref) &
                     - min(z_ref,max(z_grid,t_basis(n_coeffs))) &
                     + min(t_basis(n_coeffs),z_ref)
+! do mass reduction correction (2nd order approximation)
+    a = MAX(zm,t_basis(n_coeffs-1))
+    b = MIN(MAX(a,z_grid),MAX(t_basis(n_coeffs),zm))
+    c = MAX(zm,t_basis(n_coeffs))
+    d = MAX(z_grid,c)
+    cc = 1.0 / (t_basis(n_coeffs) - t_basis(n_coeffs-1))
+    aa = -t_basis(n_coeffs-1) * cc
+    piq(:,n_coeffs) = piq(:,n_coeffs) + mc * (0.25_rp*cc*(b**4-a**4) &
+           & + (aa - 2.0_rp*cc*zm)*(b**3-a**3)/3.0_rp &
+           & + 0.5_rp*zm*(cc*zm - 2.0_rp*aa)*(b**2-a**2) + aa*zm**2*(b-a) &
+           & + (d**3-c**3)/3.0_rp - zm*(d**2-c**2) + zm**2*(d-c))
+  else
+
+    b = MAX(z_grid,zm)
+    piq(:,1) = z_grid - z_ref + mc*((b**3 - zm**3)/3.0_rp - zm*b*(b-zm))
+
+  endif
 
   end subroutine Piq_int
 
@@ -131,6 +222,9 @@ module Piq_int_m
 end module Piq_int_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/09/25 20:35:30  vsnyder
 ! Move USE from module scope to procedure scope.  Change allocatable arrays
 ! to automatic arrays.  Insert the copyright notice.  Cosmetic changes.
