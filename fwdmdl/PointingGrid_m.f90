@@ -18,8 +18,7 @@ module PointingGrid_m
   ! Public procedures:
   public :: Open_Pointing_Grid_File, Read_Pointing_Grid_File
   public :: Close_Pointing_Grid_File, Destroy_Pointing_Grid_Database
-  public :: Dump_Pointing_Grid_Database, Get_Grids_Near_Tan_Pressures
-  public :: Get_Nearest_Tan_Pressure
+  public :: Dump_Pointing_Grid_Database
 
   type, public :: OneGrid_T
     real(r8) :: Height                            ! Zeta, actually
@@ -46,10 +45,6 @@ module PointingGrid_m
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
-
-  ! Has Get_Nearest_Tan_Pressure been called?  (Get_Grids_Near_Tan_Pressures
-  ! needs it to have been done.)
-  logical, private, save :: Got_Nearest_Tan_Press = .false.
 
 contains
 
@@ -226,7 +221,6 @@ outer2: do
     deallocate ( pointingGrids, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       MLSMSG_DeAllocate // "PointingGrids" )
-    Got_Nearest_Tan_Press = .false.
   end subroutine Destroy_Pointing_Grid_Database
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
@@ -257,65 +251,12 @@ outer2: do
     end do ! i
   end subroutine Dump_Pointing_Grid_Database
 
-  ! -------------------------------  Get_Grids_Near_Tan_Pressures  -----
-  subroutine Get_Grids_Near_Tan_Pressures ( Which_Pointing_Grid, Tan_Press, &
-    & Tol, Grids )
-  ! Get the index of the grid nearest to each tangent pressure, and
-  ! within TOL of it.  Assumes that Get_Nearest_Tan_Pressure has been
-  ! called already.
-
-    integer, intent(in) :: Which_Pointing_Grid    ! Database index
-    real(r8), intent(in), dimension(:) :: Tan_Press
-    real(r8), intent(in) :: Tol                   ! How close?
-    integer, intent(out) :: Grids(:)              ! Database indices
-
-    integer :: I
-
-    call Get_Nearest_Tan_Pressure ( tan_press ) ! Just in case
-
-    grids = 0
-    do i = 1, size(pointingGrids(which_pointing_grid)%oneGrid)
-      if ( abs(pointingGrids(which_pointing_grid)%oneGrid(i)%height - &
-        &      tan_press(pointingGrids(which_pointing_grid)%oneGrid(i)% &
-               & whichTanPress) ) <= tol ) then
-        if ( grids(pointingGrids(which_pointing_grid)%oneGrid(i)% &
-          & whichTanPress) /= 0 ) &
-            & call MLSMessage ( MLSMSG_Error, moduleName, &
-              & "More than one frequency grid for a tangent height" )
-        grids(pointingGrids(which_pointing_grid)%oneGrid(i)%whichTanPress) = i
-      end if
-    end do ! i = 1, size(pointingGrids(which_pointing_grid))
-    grids = max( grids , 1)             ! Always return lowest at least
-  end subroutine Get_Grids_Near_Tan_Pressures
-  
-  ! -----------------------------------  Get_Nearest_Tan_Pressure  -----
-  subroutine Get_Nearest_Tan_Pressure ( Tan_Press )
-  ! Find the nearest tangent pressure to each PointingGrids%oneGrid
-
-    real(r8), intent(in), dimension(:) :: Tan_Press
-
-    integer :: I, J, K, L
-
-    if ( got_Nearest_Tan_Press ) return ! No point in doing it twice
-
-    Got_Nearest_Tan_Press = .true.
-
-    do i = 1, size(pointingGrids)
-      do j = 1, size(pointingGrids(i)%oneGrid)
-        k = -1
-        call Hunt ( pointingGrids(i)%oneGrid(j)%height, tan_press, &
-          & size(tan_press), k, l )
-        if ( abs( pointingGrids(i)%oneGrid(j)%height - tan_press(l) ) < &
-             abs( pointingGrids(i)%oneGrid(j)%height - tan_press(k) ) ) k = l
-        pointingGrids(i)%oneGrid(j)%nearestTanPress = tan_press(k)
-        pointingGrids(i)%oneGrid(j)%whichTanPress = k
-      end do ! j = 1, size(pointingGrids%oneGrid)
-    end do ! i = 1, size(pointingGrids)
-
-  end subroutine Get_Nearest_Tan_Pressure
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.6  2001/03/20 02:31:32  livesey
+! Modified so always returns at least lowest grid rather than 0
+!
 ! Revision 1.5  2001/03/17 19:17:57  vsnyder
 ! Destroy database if it exists before reading a new one
 !
