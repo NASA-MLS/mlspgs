@@ -10,8 +10,9 @@
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
 
 ; These macros define the MLS standard products
+; IWC is somewhat special
 !define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
-!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,IWC})
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!allStandardProductsWithColumns,!allStandardProductsWithoutColumns})
 
 ;; This macro is used in sids runs to get the band number part of a band
@@ -263,6 +264,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.55  2003/06/04 17:14:07  livesey
+; Added filename stuff to directWrite
+;
 ; Revision 1.54  2003/05/29 16:41:17  livesey
 ; Made allBandUSBs skip the upper sidebands in R1A/R1B
 ;
