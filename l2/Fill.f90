@@ -7,7 +7,7 @@ module Fill                     ! Create vectors and fill them.
 
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: F_ALTITUDEQUANTITY, F_EXPLICITVALUES, &
+  use INIT_TABLES_MODULE, only: F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, &
     & F_H2OQUANTITY, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
     & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L1B, L_L2GP, &
@@ -81,6 +81,11 @@ module Fill                     ! Create vectors and fill them.
   ! miscellaneous
   integer, parameter :: miscellaneous_err = deallocation_err+1
   integer, parameter :: errorReadingL1B = miscellaneous_err+1
+  integer, parameter :: needTempREFGPH = errorReadingL1B+1
+  integer, parameter :: needGeocAltitude = needTempRefGPH+1
+  integer, parameter :: badGeocAltitudeQuantity = needGeocAltitude+1
+  integer, parameter :: badTemperatureQuantity = badGeocAltitudeQuantity+1
+  integer, parameter :: badREFGPHQuantity = badTemperatureQuantity+1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
@@ -115,13 +120,16 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: chunkNo
 
     ! Local variables
-    type (VectorValue_T), POINTER :: quantity ! Quantity to be filled
+    type (VectorValue_T), POINTER :: QUANTITY ! Quantity to be filled
+    type (VectorValue_T), POINTER :: TEMPERATUREQUANTITY ! Source quantity
+    type (VectorValue_T), POINTER :: REFGPHQUANTITY ! Source quantity
+    type (VectorValue_T), POINTER :: GEOCALTITUDEQUANTITY ! Source quantity
     type (Vector_T) :: newVector ! A vector we've created
     character (LEN=LineLen) ::              msr
     real :: T1, T2              ! for timing
     
-    integer :: ALTITUDEQUANTITYINDEX    ! In the source vector
-    integer :: ALTITUDEVECTORINDEX      ! In the vector database
+    integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
+    integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FILLMETHOD               ! How will we fill this quantity
@@ -228,9 +236,9 @@ contains ! =====     Public Procedures     =============================
           case (f_h2oQuantity) ! For hydrostatic
             h2oVectorIndex=decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_altitudeQuantity) ! For hydrostatic
-            altitudeVectorIndex=decoration(decoration(subtree(1,gson)))
-            altitudeQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_geocAltitudeQuantity) ! For hydrostatic
+            geocAltitudeVectorIndex=decoration(decoration(subtree(1,gson)))
+            geocAltitudeQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
           case (f_refGPHQuantity) ! For hydrostatic
             refGPHVectorIndex=decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
@@ -248,6 +256,30 @@ contains ! =====     Public Procedures     =============================
         ! Now call various routines to do the filling
         quantity=>GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
         select case (fillMethod)
+        case (l_hydrostatic)
+          ! Need a temperature and a refgph quantity
+          if (.not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /)))) &
+            call Announce_Error(key,needTempREFGPH)
+          temperatureQuantity => GetVectorQtyByTemplateIndex( &
+            &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
+          if (temperatureQuantity%template%quantityType /= l_Temperature) &
+            & call Announce_Error (key, badTemperatureQuantity)
+          if (refGPHQuantity%template%quantityType /= l_refGPH) &
+            & call Announce_Error (key, badrefGPHQuantity)
+          refGPHQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(refGPHVectorIndex), refGPHQuantityIndex)
+          if (quantity%template%quantityType==l_ptan) then
+            if (.not. got(f_geocAltitudeQuantity)) &
+              & call Announce_Error( key, needGeocAltitude )
+            geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
+            if (geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt) &
+              & call Announce_Error( key, badGeocAltitudeQuantity )
+          else
+            geocAltitudeQuantity=>NULL()
+          endif
+          call FillVectorQtyHydrostatically(quantity, temperatureQuantity, &
+            & refGPHQuantity, geocAltitudeQuantity)          
         case (l_l2gp)
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
           call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
@@ -481,6 +513,21 @@ contains ! =====     Public Procedures     =============================
       &   quantity%template%noInstances/))
 
   end subroutine FillVectorQuantityFromL2GP
+
+  ! ------------------------------------- FillVectorHydrostatically ----
+  subroutine FillVectorQtyHydrostatically(quantity, &
+    & temperatureQuantity, refGPHQuantity, geocAltitudeQuantity)
+    ! Various hydrostatic fill operations
+    type (VectorValue_T), intent(inout) :: QUANTITY
+    type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
+    type (VectorValue_T), intent(in) :: REFGPHQUANTITY
+    type (VectorValue_T), intent(in) :: GEOCALTITUDEQUANTITY
+
+    ! Local variables
+
+    ! Executable code
+
+  end subroutine FillVectorQtyHydrostatically
 
   !=============================== FillPrevDefd ==========================
   subroutine FillPrevDefd(OldVector, PrevDefdQt, qtyTemplates, &
@@ -1050,6 +1097,16 @@ contains ! =====     Public Procedures     =============================
       call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
     case ( invalidExplicitFill )
       call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
+    case ( needTempREFGPH )
+      call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
+    case ( needGeocAltitude )
+      call output ( " needs geocAltitudeQuantity.", advance='yes' )
+    case ( badTemperatureQuantity )
+      call output ( " temperatureQuantity is not temperature", advance='yes' )
+    case ( badREFGPHQuantity )
+      call output ( " refGPHQuantity is not refGPH", advance='yes' )
+    case ( badGeocAltitudeQuantity )
+      call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
     case default
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
@@ -1064,6 +1121,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.23  2001/03/03 05:54:29  livesey
+! Started hydrostic stuff
+!
 ! Revision 2.22  2001/03/03 00:10:14  livesey
 ! Removed debuging dump.
 !
