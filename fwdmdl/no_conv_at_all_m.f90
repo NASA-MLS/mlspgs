@@ -148,7 +148,6 @@ CONTAINS
       radiance%values( ind, maf ) = &
              & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
     end do
-    WRITE(*,'(f7.2)') radiance%values(channel+125, maf )
 
     if ( .not. PRESENT(Jacobian) ) Return
 
@@ -275,6 +274,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.10  2002/07/29 21:42:02  bill
+! no changes, just debugging
+!
 ! Revision 2.9  2002/07/23 22:26:52  livesey
 ! Added ptan_der handling
 !
