@@ -14,11 +14,17 @@ module Test_Parse_Signals_m
   use Parse_Signal_m, only: Parse_Signal
   use MLSSignals_m, only: GetSignalName
 
+  implicit NONE
+
+  private
+
+  public :: Test_Parse_Signals
+
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
+  character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter, private :: ModuleName= &
+  character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -54,6 +60,9 @@ contains
 end module Test_Parse_Signals_m
 
 ! $Log$
+! Revision 2.7  2002/03/12 23:43:26  vsnyder
+! Added IMPLICIT NONE and PRIVATE statements
+!
 ! Revision 2.6  2001/06/07 21:58:28  pwagner
 ! Added Copyright statement
 !
