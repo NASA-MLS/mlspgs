@@ -1428,15 +1428,15 @@ contains
 
         call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
           &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
-          &  fwdModelConf%Do_1D,true_path_flags(1:no_ele))
+          &  fwdModelConf%Do_1D, true_path_flags(1:no_ele) )
 
         if ( temp_der ) then
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_p(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
-            &  fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
+            &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_m(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
-            &  fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
+            &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -1685,22 +1685,10 @@ alpha_path_f = 0.0
               call output ( 'Exp(incoptdepth_pol(:,:,' )
               call output ( -p_stop )
               call output ( ') failed.  Value is', advance='yes' )
-              call output ( real(incoptdepth_pol(1,1,-p_stop)), &
-                & format='("(",1pg15.7,",")' )
-              call output ( aimag(incoptdepth_pol(1,1,-p_stop)), &
-                & format='(1pg15.7,")")   ' )
-              call output ( real(incoptdepth_pol(1,2,-p_stop)), &
-                & format='("(",1pg15.7,",")' )
-              call output ( aimag(incoptdepth_pol(1,2,-p_stop)), &
-                & format='(1pg15.7,")")', advance='yes' )
-              call output ( real(incoptdepth_pol(2,1,-p_stop)), &
-                & format='("(",1pg15.7,",")' )
-              call output ( aimag(incoptdepth_pol(2,1,-p_stop)), &
-                & format='(1pg15.7,")")   ' )
-              call output ( real(incoptdepth_pol(2,2,-p_stop)), &
-                & format='("(",1pg15.7,",")' )
-              call output ( aimag(incoptdepth_pol(2,2,-p_stop)), &
-                & format='(1pg15.7,")")', advance='yes' )
+              call dump ( incoptdepth_pol(:,:,-p_stop), clean=.true. )
+              call output ( 'thisSideband = ' ); call output ( thisSideband )
+              call output ( ', ptg_i = ' ); call output ( ptg_i )
+              call output ( ', frq_i = ' ); call output ( frq_i, advance='true' )
               call MLSMessage ( MLSMSG_Error, moduleName, &
                 & 'exp(incoptdepth_pol) failed' )
             end if
@@ -2620,6 +2608,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.155  2003/07/04 02:50:15  vsnyder
+! Simplify interface to Get_GL_Slabs_Arrays, correct a blunder introduced around July 17
+!
 ! Revision 2.154  2003/06/27 23:43:34  vsnyder
 ! Remove unreferenced USE names
 !
