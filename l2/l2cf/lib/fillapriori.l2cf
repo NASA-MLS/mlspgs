@@ -114,7 +114,6 @@ begin Fill
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 500 pptv
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
   Fill, quantity=aprioriPrecision.co,   method=explicit, /spread, explicitValues= 500 ppbv
-  Fill, quantity=aprioriPrecision.h2o,  method=explicit, /spread, explicitValues= 3 ppmv
   Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 3 ppbv
   Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 0.2 ppbv
   Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 10 ppbv
@@ -127,16 +126,10 @@ begin Fill
 
   Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
+  Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
+    [ 464mb : 10000ppmv, 316mb : 5000ppmv, $
+      215mb : 1000ppmv, 147mb : 200ppmv, 100mb : 5.0ppmv ]
 
-  ;; Now make the h2o error 1000ppmv in the troposphere.
-  ;; A bit messy this one.
-end Fill
-begin Retrieve
-  Subset, quantity=aprioriPrecision.h2o, height=[1000.0mb:150.0mb], mask=fill
-end Retrieve
-begin Fill
-  Fill, quantity=aprioriPrecision.h2o, method=explicit, /spread, $
-    explicitValues=1000 ppmv
   })
 
   ;; Now we're going to fill the a priori length scales up
