@@ -31,6 +31,7 @@ module FilterShapes_m
   ! specification, including the channel number.  It isn't necessary
   ! for all of the filter shapes to have the same size.
   type, public :: FilterShape_T
+    integer :: File          ! Index of file name in string table
     real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
     real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
     type (Signal_T) :: Signal
@@ -41,6 +42,7 @@ module FilterShapes_m
     & FilterShapes => NULL()
 
   type, public :: DACSFilterShape_T
+    integer :: File          ! Index of file name in string table
     integer :: LogApod, LogFilter, LogNorm
     real(r8), dimension(:), pointer :: FilterGrid => NULL()  ! Abscissae, 2**logFilter+1
     real(r8), dimension(:), pointer :: FilterShape => NULL() ! Ordinates, ditto
@@ -64,13 +66,15 @@ module FilterShapes_m
 contains
 
   ! ------------------------------------  Open_Filter_Shapes_File  -----
-  subroutine Open_Filter_Shapes_File ( Filename, Lun )
+  subroutine Open_Filter_Shapes_File ( Filename, Lun, FileIndex )
 
     use IO_stuff, only: Get_Lun
     use Machine, only: IO_Error
+    use String_Table, only: Create_String
 
     character(len=*), intent(in) :: Filename ! Name of the filter shape file
     integer, intent(out) :: Lun              ! Logical unit number to read it
+    integer, intent(out) :: FileIndex        ! In the string table
 
     integer :: Status
 
@@ -84,10 +88,11 @@ contains
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open filter shapes file " // Filename )
     end if
+    fileIndex = create_string ( trim(fileName), caseless=.false. )
   end subroutine Open_Filter_Shapes_File
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
-  subroutine Read_Filter_Shapes_File ( Lun )
+  subroutine Read_Filter_Shapes_File ( Lun, FileIndex )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
@@ -95,6 +100,7 @@ contains
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
+    integer, intent(in) :: FileIndex    ! In the string table
 
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
@@ -153,6 +159,7 @@ contains
       if ( status < 0 ) exit
       if ( status > 0 ) go to 99
       n = n + 1
+      filterShapes(n)%file = fileIndex
       sigName = line
       nullify ( channels, signal_indices ) 
       call parse_signal ( sigName, signal_indices, sideband=sideband, &
@@ -199,7 +206,7 @@ contains
   end subroutine Read_Filter_Shapes_File
 
   ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
-  subroutine Read_DACS_Filter_Shapes_File ( Lun )
+  subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
@@ -207,6 +214,7 @@ contains
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
+    integer, intent(in) :: FileIndex    ! In the string table
 
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
@@ -288,6 +296,7 @@ contains
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
       n = n + 1
+      DACSfilterShapes(n)%file = fileIndex
       sigName = line
       nullify ( channels, signal_indices ) 
       call parse_signal ( sigName, signal_indices, sideband=sideband, &
@@ -525,6 +534,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.18  2004/09/01 00:28:11  vsnyder
+! Delete some unused variables, better error handling
+!
 ! Revision 2.17  2004/05/26 23:54:14  vsnyder
 ! Don't dump the database if it's not allocated
 !
