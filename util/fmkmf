@@ -1,5 +1,5 @@
-#!/bin/sh
 #!/usr/local/GNU/bin/bash
+#!/bin/sh
 # Copyright (c) The University of Edinburgh
 # This is a utility to generate make files 
 # for Fortran 90. A basic makefile entry for bork.f90 would be
@@ -40,10 +40,10 @@ fi
 
 if [ "${FMKMF_GREP}" ] 
 then
-#    echo \# FMKMF_F90 set to ${FMKMF_F90}
-    GREP=${FMKMF_F90}
+#    echo \# FMKMF_GREP set to ${FMKMF_GREP}
+    GREP=${FMKMF_GREP}
 else
-#    echo \# FMKMF_F90 not set, using f90
+#    echo \# FMKMF_GREP not set, using f90
     GREP=grep
 fi
 
@@ -74,6 +74,9 @@ LINKOPTS=${FMKMF_LINKOPTS}
 
 issub=xx
 
+# assume forward ls. 
+revlist=
+
 while [ $# -gt 1 ]
 do
 #echo \# Processing arg $1 with Dolhash $#
@@ -96,6 +99,10 @@ do
     elif [ $1 = -sub ]
     then
 	issub=sub
+    elif [ $1 = -r ]
+    then
+	revlist=-r # used in ls commands.
+	echo \# Reversing lists.
     else
 	echo Don\'t Understand arg $1
     fi
@@ -103,6 +110,7 @@ do
     
 done
 
+echo \# revlist is ${revlist}
 
 sourcefile=$1
 
@@ -124,11 +132,13 @@ modfilelist=
 objfilelist=
 for module in ${modulelist} 
 do
+  echo \# searching for module ${module}
   found=false
   for directory in ${SPATHLIST}
   do
-    for modfile in `ls ${directory}/*.${SFTAG}` 
+    for modfile in `ls ${revlist} ${directory}/*.${SFTAG}` 
     do
+      echo \# checking modfile ${modfile}
       if ${GREP} -i -q -w "^ *module *${module}" ${modfile} 
       then
          echo \# module ${module} is in file ${modfile}
@@ -138,7 +148,7 @@ do
          else
             echo \# Adding ${modfile} to list
  	    modfilelist="${modfilelist} ${modfile}"
-	    #echo \# modfile list is now ${modfilelist}
+#	    echo \# modfile list is now ${modfilelist}
          fi
 	 found=true
 	 break 2 
@@ -165,7 +175,7 @@ do
   foo=`echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" `
 #  echo \# foo is ${foo}
   objlist="${objlist} ${foo}"
-#  objlist="${objlist} `echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" ` "
+  objlist="${objlist} `echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" ` "
 done
 #echo \# objlist is ${objlist}
 echo >> fmkmf_tmp_makefile
@@ -184,7 +194,7 @@ then
 else
 #    echo \# root node blanking global list
     globalmodfilelist=${sourcefile}
-#    echo globalmodfilelist  > fmkmf_tmp_list
+    echo globalmodfilelist  > fmkmf_tmp_list
 fi
 #echo \# Global list is now ${globalmodfilelist}
 
@@ -195,13 +205,13 @@ do
         echo \# ${modfile} Already in global list
         
     else
-        #echo \# Adding ${modfile} to globallist
+#        echo \# Adding ${modfile} to globallist
  	globalmodfilelist="${globalmodfilelist} ${modfile}"
-	#echo \# Sending ${globalmodfilelist} to file
+#	echo \# Sending ${globalmodfilelist} to file
 	echo ${globalmodfilelist} > fmkmf_tmp_list
 	fmkmf -sub -p ${SPATH} ${modfile}
 	globalmodfilelist=`cat fmkmf_tmp_list`
-	#echo \# Got ${globalmodfilelist} from file
+#	echo \# Got ${globalmodfilelist} from file
     fi
 done
 
