@@ -45,7 +45,9 @@ begin Fill
 
   !ifdef(gotClimatology,{
   ;; Now fill some remaining stuff
+  !ifdef(precisionEstimates,{},{
   Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
+  })
 
   ;; Compute non refracted phitans for apriori
   Fill, quantity=apriori.phiTanGHz, method=refract, $
@@ -89,6 +91,25 @@ end Fill
 
 begin Fill
   ;; Now we're going to fill the apriori errors up
+  !ifdef(precisionEstimates,{
+  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1000 pptv
+  Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 1000 pptv
+  Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 4 ppbv
+  Fill, quantity=aprioriPrecision.co,   method=explicit, /spread, explicitValues= 30000 ppmv
+  Fill, quantity=aprioriPrecision.h2o,  method=explicit, /spread, explicitValues= 10000 ppmv
+  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 30 ppmv
+  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 30 ppbv
+  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 3 ppmv
+  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 300 ppbv
+  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 300 ppbv
+  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 10 ppmv
+  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 30000 ppmv
+  Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 30 ppmv
+  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 1 ppmv
+
+  Fill, quantity=aprioriPrecision.temperature,   method=explicit, /spread, explicitValues= 300 K
+  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 10 km
+  },{
   Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 500 pptv
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
@@ -116,9 +137,14 @@ end Retrieve
 begin Fill
   Fill, quantity=aprioriPrecision.h2o, method=explicit, /spread, $
     explicitValues=1000 ppmv
+  })
 
   ;; Now we're going to fill the a priori length scales up
+  !ifdef(precisionEstimates,{
+  !ifdef(standardLength,{},{!define(standardLength, 2.67 km)})
+  },{
   !ifdef(standardLength,{},{!define(standardLength, 5 km)})
+  })
   Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.ch3cn,   method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.clo,     method=explicit, /spread, explicitValues= !standardLength
@@ -139,6 +165,22 @@ begin Fill
 
   ;; Now do the same for baseline
   !define(baselinePrecision, 5 K )
+  !ifdef(precisionEstimates,{
+  Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
+    explicitValues= 0.245 K
+  Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
+    explicitValues= 0.245 K
+  Fill, quantity=aprioriPrecision.baselineR2, method=explicit, /spread, $
+    explicitValues= 0.653 K
+  Fill, quantity=aprioriPrecision.baselineR3, method=explicit, /spread, $
+    explicitValues= 0.653 K
+  Fill, quantity=aprioriPrecision.baselineR4, method=explicit, /spread, $
+    explicitValues= 1.96 K
+  Fill, quantity=aprioriPrecision.baselineR5H, method=explicit, /spread, $
+    explicitValues= 24.5 K
+  Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
+    explicitValues= 24.5 K
+  },{
   Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
     explicitValues= !baselinePrecision
   Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
@@ -153,6 +195,7 @@ begin Fill
     explicitValues= !baselinePrecision
   Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
     explicitValues= !baselinePrecision
+  })
 
 end Fill
 
