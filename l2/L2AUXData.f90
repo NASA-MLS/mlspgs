@@ -62,6 +62,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
 !     (subroutines and functions)
 ! AddL2AUXToDatabase              Adds an l2aux data type to a database of that type
+! cpL2AUXData                     Copies an l2aux quantity from file1 to file2
 ! DestroyL2AUXContents            Deallocates all the arrays for one l2aux
 ! DestroyL2AUXDatabase            Deallocates all the arrays for entire database
 ! Dump                            Prints info on one quantity or entire database
@@ -69,6 +70,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! ReadL2AUXData                   Reads an l2aux quantity from a file
 ! SetupNewL2AUXRecord             Allocates the arrays for an l2aux quantity
 ! WriteL2AUXData                  Writes an l2aux quantity to a file
+! WriteL2AUXAttributes            Writes l2aux sttributes to a file
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -98,7 +100,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
   public :: AddL2AUXToDatabase, cpL2AUXData, DestroyL2AUXDatabase, Dump
   public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
-  public :: ReadL2AUXData, WriteL2AUXData
+  public :: ReadL2AUXData, WriteL2AUXData, WriteL2AUXAttributes
 ! public :: GetDimString, GetQuantityAttributes
 
   interface DUMP
@@ -223,8 +225,9 @@ contains ! =====     Public Procedures     =============================
     if ( present(sdList) ) then
       mysdList = sdList
     else
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No way yet to find sdList in ' // trim(File1) )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No way yet to find sdList in ' // trim(File1) )
+      return
     endif
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
@@ -314,7 +317,7 @@ contains ! =====     Public Procedures     =============================
     ! (Option 2)
     ! The user supplies a set of three dimensionFamilies (e.g. l_maf)
     ! and their sizes and starts
-    ! Quantities can have upto three valid dimensions.  l_none can be used
+    ! Quantities can have up to three valid dimensions.  l_none can be used
     ! to indicate later dimensions are invalid.
 
     ! Dummy arguments
@@ -1219,6 +1222,10 @@ contains ! =====     Public Procedures     =============================
   character(len=2) :: i_char
   character(len=*), parameter :: ottff = '1,2,3,4,5'
   ! Executable
+  if ( DEEBUG ) then
+    call output('Writing attributes to: ', advance='no')
+    call output(trim(Name), advance='yes')
+  endif
   call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
   call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
     & trim(l2aux%VALUE_Units))
@@ -1660,6 +1667,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.59  2004/02/05 23:36:41  pwagner
+! WriteL2AUXAttributes now public
+!
 ! Revision 2.58  2004/01/27 21:38:09  pwagner
 ! Added cpL2AUXData
 !
