@@ -3,13 +3,7 @@ $Id$
 Switches (set by -S option in mlsl2's command line):
 
 ========================= mlsl2 =========================
-  A => AntennaPatterns
-  C => SpectroscopyCatalog
-  F => FilterShapes
-  P => PointingGrids
-  S => MLSSignals
-  V => VGrids (in globalSettings)
-
+  ant =>    Antenna patterns
   apr[n] => apriori file info [higher the n, more the info]
   atb =>    Dump ATb vector
   binsel => L2PC bin selection motivation
@@ -21,6 +15,7 @@ Switches (set by -S option in mlsl2's command line):
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
   fac =>    Factors of normal equations during retriever iterations
+  filt =>   Filter shapes
   fnorm =>  Dump the individual contributions to fnorm
   fvec =>   'F' vector during Newton iteration
   geom =>   Show geometry of chunks/hGrids
@@ -47,6 +42,7 @@ Switches (set by -S option in mlsl2's command line):
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
   pguess => Iterations of the pressure guesser
+  point =>  Pointing grids
   pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input
   qtmp =>   Quantity templates being constructed
@@ -54,12 +50,15 @@ Switches (set by -S option in mlsl2's command line):
   reg =>    Dump regularization matrix
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
+  sig =>    MLS Signals
   slv =>    Show output of slaves using pvmfcatchout
   snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
+  spec =>   Spectroscopy caltalog
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
   tps =>    Test_Parse_Signals
+  vgrid =>  Dump vGrids
   vir =>    Dump 'virgin' matrix (before forming KTK)
   xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
@@ -90,6 +89,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.33  2003/02/06 01:13:21  livesey
+ Added binsel
+
  Revision 1.32  2003/01/29 22:43:55  livesey
  Added fnorm
 
