@@ -344,8 +344,8 @@ endfor
 database = ReadValidSignals()
 for radiometer = 0, database.noRadiometers-1 do begin
   relevantBands = where ( database.bands.radiometerIndex eq radiometer )
-  array(*,relevantBands, $
-    where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix ) ) = 1
+  o3rs = where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix )
+  if o3rs(0) ne -1 then array(*,relevantBands, o3rs ) = 1
 endfor
 
 ;; Now, add some extra virtual bands which are the radiometers and one
