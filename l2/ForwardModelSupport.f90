@@ -32,8 +32,7 @@ module ForwardModelSupport
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
-  integer, parameter :: NoPolarizedAtmosDer  = LinearSidebandHasUnits + 1
-  integer, parameter :: TangentNotSubset     = NoPolarizedAtmosDer + 1
+  integer, parameter :: TangentNotSubset     = LinearSidebandHasUnits + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: ToleranceNotPolarized  = ToleranceNotK + 1
   integer, parameter :: TooManyHeights       = ToleranceNotPolarized + 1
@@ -585,10 +584,6 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
-      ! Make sure that we don't ask for mixing ratio derivatives from the polarized model
-      if ( info%polarized .and. info%atmos_der ) &
-        & call AnnounceError ( NoPolarizedAtmosDer, root )
-
       if ( info%polarized .and. info%tolerance >= 0.0 ) &
         & call AnnounceError ( ToleranceNotPolarized, root )
 
@@ -799,9 +794,6 @@ contains ! =====     Public Procedures     =============================
     case ( LinearSidebandHasUnits )
       call output ( 'irrelevant units for this linear sideband', &
         & advance='yes' )
-    case ( NoPolarizedAtmosDer )
-      call output ( 'illegally asked for mixing ratio derivatives from the polarized model', &
-        & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
@@ -842,6 +834,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.79  2003/08/15 20:28:44  vsnyder
+! Remove check for and prohibition against polarized VMR derivatives
+!
 ! Revision 2.78  2003/08/14 20:25:06  livesey
 ! Added the exact bin selector stuff
 !
