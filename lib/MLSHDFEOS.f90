@@ -7,7 +7,7 @@ module MLSHDFEOS
   ! tasks not specifically found in he5_swapi or he5_gdapi.
 
   use MLSStrings, only: GetStringElement, NumStringElements
-  use HE5_SWAPI, only: HE5_SWSETFILL
+  use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
   use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
   use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE
@@ -18,6 +18,8 @@ module MLSHDFEOS
   private
 
   public :: HE5_EHWRGLATT, MLS_SWSETFILL
+  logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
+  character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -37,7 +39,7 @@ module MLSHDFEOS
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value) 
+! int HE5_EHWRGLATT (int fileID, char* attrName, int datatype, int count, value)
 !     value can be one of:
 !    {char* value, char* value(:), int value(:), r4 value(:), r8 value(:)}
 ! int MLS_SWSETFILL (int swathID, char* names, int datatype, value) 
@@ -71,8 +73,14 @@ contains ! ======================= Public Procedures =========================
     if ( numFields < 1 ) return
     do Field=1, numFields
       call GetStringElement(fieldnames, fieldname, Field, .true.)
-      mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
-        & fillvalue)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_double = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
       if ( mls_swsetfill_double == -1 ) return
     enddo
 
@@ -93,8 +101,14 @@ contains ! ======================= Public Procedures =========================
     if ( numFields < 1 ) return
     do Field=1, numFields
       call GetStringElement(fieldnames, fieldname, Field, .true.)
-      mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
-        & fillvalue)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_integer = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
       if ( mls_swsetfill_integer == -1 ) return
     enddo
 
@@ -106,18 +120,27 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in) :: FIELDNAMES     ! Field names
     integer, intent(in) :: DATATYPE
     real, intent(in) :: FILLVALUE
-
     integer, external :: HE5_SWsetfill
     integer :: Field
     integer :: numFields
     character(len=len(FIELDNAMES)) :: FIELDNAME
+    print *, 'SWATHID: ', SWATHID
+    print *, 'FIELDNAMES: ', FIELDNAMES
     mls_swsetfill_real = 0
     numFields = NumStringElements(fieldnames, .false.)
     if ( numFields == -1 ) return
+    print *, 'numFields: ', numFields
     do Field=1, numFields
       call GetStringElement(fieldnames, fieldname, Field, .true.)
-      mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), datatype, &
-        & fillvalue)
+      print *, 'trim(fieldname): ', trim(fieldname)
+      if ( HE5_SWSETFILL_BROKEN ) then
+        mls_swsetfill_real = he5_swwrlattr(swathid, trim(fieldname), &
+          & trim(SETFILLTITLE), &
+          & DATATYPE, 1, (/ FILLVALUE /) )
+      else
+        mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), &
+        & datatype, fillvalue)
+      endif
       if ( mls_swsetfill_real == -1 ) return
     enddo
 
@@ -133,6 +156,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.2  2003/04/15 21:58:54  pwagner
+! Now sets _FillValue attribute because swsetfill seems broken
+!
 ! Revision 2.1  2003/04/11 23:28:44  pwagner
 ! FIrst commit
 !
