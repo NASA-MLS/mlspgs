@@ -562,6 +562,22 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyQuantityTemplateDatabase
 
+  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  integer function InflateQuantityTemplateDatabase ( database, extra )
+    ! Make a quantity template database bigger by extra
+    ! Return index of first new element
+
+    ! Dummy arguments
+    type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
+    integer, intent(in) :: EXTRA
+
+    ! Local variables
+    type (QuantityTemplate_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "inflateDatabase.f9h"
+    InflateQuantityTemplateDatabase = firstNewItem
+  end function InflateQuantityTemplateDatabase
+
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, source, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame )
@@ -724,6 +740,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.24  2002/07/22 03:26:05  livesey
+! Added checkIntegrity
+!
 ! Revision 2.23  2002/07/01 23:51:07  vsnyder
 ! Plug a memory leak
 !
