@@ -1,0 +1,65 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+#       The objects for the shared source files (in lib)
+LIB_OBJS = machine.o MLSCommon.o
+LIB_SRCS_DIR = $(libdir)/..
+
+# Add them to L2PCOBJS
+ALLOBJS = $(OBJS) $(LIB_OBJS) units.o
+
+${OBJS}: $(LIB_OBJS) units.o
+
+# ========================================================================
+l2pc_file: $(ALLOBJS) $(libdir)/libmls.a
+	$(FC) -o l2pc_file $(ALLOBJS) \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+	-L${GCTP} -lGctp \
+        $(l_specials)
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod l2pc_file
+
+tar:
+	rm -f l2pc.tgz
+	tar hcvzf l2pc.tgz * --exclude \*.o --exclude \*.mod --exclude l2pc_file
+
+# ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+
+eos_mdb.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/eos_mdb.f90
+get_delta_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_delta_m.f90
+get_pfa_delta_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90
+pfa_db_delta_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90
+d_delta_dt_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/d_delta_dt_m.f90
+fwd_mdl_set_up_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90
+MLSCommon.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90
+machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
+	rm -f machine.f90
+	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
+	chmod u+w machine.f90
+	$(FC) -c $(DUSTY) machine.f90
+# ========================================================================
+# $Log$
+# Revision 1.1  2000/11/22 22:55:25  pwagner
+# First commit
+#
+#

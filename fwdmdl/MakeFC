@@ -1,0 +1,105 @@
+#	Makefile
+#	targets: configure and depends and clean
+#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/l2pc_file
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
+PROG=l2pc_file
+
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(libmls_objs)/libmls.a: $(libmls_f90)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+
+.PHONY: configure depends clean tar
+
+tar: clean
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+
+depends:
+	$(MLSBIN)/makemakedep.sh -d MLSCommon.f90 -d machine.f90 -d driver0.f90 \
+        -d units.f90 -d l2_numder.f90 $(libmls_sources) $(srclib)
+
+clean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.f90 ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/core ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+
+clean_objs:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi
+
+tar:
+	rm -f ../$(PROG).tgz
+	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude l2pc_file
+
+# $Log$
+# Revision 1.1  2000/11/22 22:51:32  pwagner
+# First commit
+#
+#
+
+
