@@ -7,13 +7,15 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, i4, NameLen
+  use L1BData, only: ReadL1BAttribute
+  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, R8, i4, NameLen
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSStrings, only: utc_to_yyyymmdd
   use Output_m, only: BLANKS, Output
   use PCFHdr, only: GlobalAttributes
+  use SDPToolkit, only: max_orbits
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
 
@@ -179,9 +181,12 @@ contains ! =====     Public Procedures     =============================
 
     integer                      :: Indx, Version                            
 
-    integer                      :: the_hdf_version                          
+    integer                      :: the_hdf_version, l1bFlag
     real                         :: T1, T2                      ! for timing 
     logical                      :: TIMING                                   
+
+    integer :: OrbNum(max_orbits) = 0
+    real(r8) :: OrbPeriod(max_orbits) = 0.0
 
     ! Executable code
     timing = section_times
@@ -325,6 +330,24 @@ contains ! =====     Public Procedures     =============================
         if(index(switches, 'pro') /= 0) then  
           call announce_success(L1physicalFilename, 'l1boa', &                     
           & hdfVersion=the_hdf_version)                    
+        end if
+
+        ! read l1boa attributes
+
+        l1bFlag = 0
+        call ReadL1BAttribute(l1bInfo%L1BOAID, OrbNum, 'OrbitNumber', &
+	   & l1bFlag, hdfVersion=the_hdf_version)
+        if (l1bFlag == -1) then
+           GlobalAttributes%OrbNum = -1
+        else
+           GlobalAttributes%OrbNum = OrbNum
+        end if
+        call ReadL1BAttribute(l1bInfo%L1BOAID, OrbPeriod, 'OrbitPeriod', &
+	   & l1bFlag, hdfVersion=the_hdf_version)
+        if (l1bFlag == -1) then
+           GlobalAttributes%OrbPeriod = -1.0
+        else
+           GlobalAttributes%OrbPeriod = OrbPeriod
         end if
       end if
 
@@ -724,6 +747,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.74  2003/09/12 16:28:56  cvuu
+! Read OrbitNumber and OrbitPeriod attributes from L1BOA
+!
 ! Revision 2.73  2003/07/07 23:50:05  pwagner
 ! Now uses saved variable L2pcf from writeMetaData
 !
