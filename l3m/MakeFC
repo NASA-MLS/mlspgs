@@ -19,6 +19,20 @@ else
    INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
 endif
 
+# ---------------------- Paths to special directories
+# This is where this Makefile is located
+# Also beginning path for all relative paths defined below; e.g. CONFDIR
+# This assumes therefore that you have summoned this via
+#    cd $(MLSHOME)
+#    make
+# otherwise the following definition will fail
+# You might try something like
+#    make -f mlspgs/Makefile MLSHOME=$HOME/mlspgs
+# but this has not been tested.
+# Anyway, why would you want to
+# make things more difficult?
+MLSHOME := $(shell pwd)
+
 # where configure and makemakedep.sh are stored
 MLSBIN=../util
 
@@ -340,6 +354,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.22  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 1.21  2003/03/06 19:45:58  pwagner
 # Added libutctotai as explicit prerequisite
 #
