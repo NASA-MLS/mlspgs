@@ -25,8 +25,6 @@ module OUTPUT_M
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
   logical, save, public :: SKIPMLSMSGLOGGING = .false.
-  ! Private internal variables
-  logical :: my_dont_log
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -38,29 +36,36 @@ module OUTPUT_M
 
 contains
 
-  function Advance_is_yes_or_no (str) result (outstr)
+  ! .......................................  Advance_is_yes_or_no  .....
+  function Advance_is_yes_or_no ( str ) result ( outstr )
     ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
     ! also does the same with '[Tt]..' and '[Ff]..'
-    ! leaves all other patterns unchanged
+    ! leaves all other patterns unchanged, but truncated to three
+    ! characters.  Returns 'no' if the argument is absent.
     !--------Argument--------!
-    character (len=*), intent(iN) :: Str
-    character (len=len(str)) :: Outstr
+    character (len=*), intent(in), optional :: Str
+    character (len=3) :: Outstr
 
     !----------Local vars----------!
     character (len=*), parameter :: yeses = 'YyTt'
     character (len=*), parameter :: nose = 'NnFf'
 
+    if ( .not. present(str)  ) then
+      outstr = 'no'
+      return
+    end if
+
     outstr = adjustl(str)
-    if ( index( yeses, outstr(:1)) > 0 ) then
+    if ( index( yeses, outstr(:1)) > 0  ) then
       outstr = 'yes'
-    else if ( index( nose, outstr(:1)) > 0 ) then
+    else if ( index( nose, outstr(:1)) > 0  ) then
       outstr = 'no'
     else
       outstr = str
     end if
-    return
   end function Advance_is_yes_or_no
 
+  ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
   ! Output N_BLANKS blanks to PRUNIT.
   ! (or optionally that many copies of fillChar)
@@ -75,17 +80,15 @@ contains
     integer :: N    ! Blanks remaining to write
     character(len=3) :: MY_ADV
     ! Executable
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
+    my_adv = Advance_is_yes_or_no(advance)
     n = max(n_blanks, 1)
-    if ( present(fillChar) ) then
+    if ( present(fillChar)  ) then
       do i=1, min(n, len(BlankSpace))
         b(i:i) = fillChar
-      enddo
+      end do
     else
       b = BLANKSPACE
-    endif
+    end if
     adv = 'no'
     do
       i = min(n,len(b))
@@ -94,13 +97,14 @@ contains
       call output ( b(:i), advance=adv )
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
-    return
   end subroutine BLANKS
 
+  ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
     call output ( '', advance='yes' )
   end subroutine NewLine
 
+  ! ------------------------------------------------  OUTPUT_CHAR  -----
   subroutine OUTPUT_CHAR ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK)
   ! Output CHARS to PRUNIT.
@@ -112,28 +116,30 @@ contains
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     character(len=max(16,len(chars)+1)) :: my_chars
     character(len=max(16,len(chars)+1)) :: the_chars
+    logical :: my_dont_log
     integer :: n_chars
     character(len=3) :: MY_ADV
     !
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(advance)
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
-    my_adv = Advance_is_yes_or_no(my_adv)
-    the_chars = chars // ' '
-    if (present(log_chars)) my_chars = trim(log_chars) // ' '
-    n_chars = max(len(chars), 1)
-    if ( the_chars == ' ' .and. present(insteadofblank) ) then
-      my_chars = trim(insteadofblank) // ' '
-      n_chars = max(len(insteadofblank), 1)
-    else
-      my_chars = the_chars
-    endif
-    if ( my_adv == 'no' ) n_chars = n_chars+1
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
-    if ( prunit < -1 .and. .not. my_dont_log ) then
-      if ( present(from_where) ) then
+    if ( prunit < -1 .and. .not. my_dont_log  ) then
+      the_chars = chars // ' '
+      n_chars = max(len(chars), 1)
+      if ( present(log_chars) ) then
+        n_chars = len_trim(log_chars) + 1
+        the_chars = log_chars(:n_chars-1) // ' '
+      end if
+      if ( the_chars == ' ' .and. present(insteadofblank)  ) then
+        my_chars = trim(insteadofblank) // ' '
+        n_chars = max(len(insteadofblank), 1)
+      else
+        my_chars = the_chars
+      end if
+      if ( my_adv == 'no' ) n_chars = n_chars+1
+      if ( present(from_where)  ) then
         call MLSMessage ( MLSMSG_Level, from_where, my_chars(1:n_chars), &
           & advance=my_adv )
       else
@@ -142,33 +148,31 @@ contains
       end if
     end if
     
-    if ( prunit < 0 ) then
+    if ( prunit < 0  ) then
       ! Already logged; no output to stdout
-    elseif ( chars == ' ' .and. present(insteadofblank) ) then
-      write ( prunit, '(a)', advance=my_adv ) insteadofblank
+    else if ( chars == ' ' .and. present(insteadofblank)  ) then
+      write ( prunit, '(a)', advance=my_adv ) trim(insteadofblank)
     else
       write ( prunit, '(a)', advance=my_adv ) chars
-    endif
+    end if
   end subroutine OUTPUT_CHAR
 
+  ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
   subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    character(len=3) :: MY_ADV
     integer :: I ! loop inductor
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
     do i = 1, size(chars)
       call output ( chars(i), insteadofblank=insteadofblank )
     end do
-    if ( present(advance) ) then
-      call output ( '', advance=my_adv )
+    if ( present(advance)  ) then
+      call output ( '', advance=advance )
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
+  ! ---------------------------------------------  OUTPUT_COMPLEX  -----
   subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE, Before, After )
     complex, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
@@ -176,13 +180,13 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=60) :: LINE
 
-    if ( present(Format) ) then
+    if ( present(Format)  ) then
       write ( line, format ) value
     else
       write ( line, '("(",1pg15.7,",",1pg15.7,")")' ) value
     end if
     if ( present(before) ) call output ( before, dont_log = .true. )
-    if ( present(after) ) then
+    if ( present(after)  ) then
       call output ( trim(line), dont_log = .true. )
       call output ( after, advance=advance, dont_log = .true. )
     else
@@ -190,6 +194,7 @@ contains
     end if
   end subroutine OUTPUT_COMPLEX
 
+  ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
   subroutine OUTPUT_DATE_AND_TIME ( date, time, &
     & from_where, msg, dateFormat, timeFormat )
     logical, intent(in), optional :: date ! output date as character string
@@ -209,25 +214,26 @@ contains
     myTime = .true.
     if ( present(time) ) myTime = time
     if ( .not. (myDate .or. myTime) ) return ! Why call if won't print?
-    MY_ADV = 'no'
-    if ( .not. present(msg) ) MY_ADV = 'yes'
-    call date_and_time(date=dateString, time=timeString)
-    dateString=reFormatDate(trim(dateString), dateFormat)
-    timeString=reFormatTime(trim(timeString), timeFormat)
-    if( myDate .and. myTime ) then
-      call output_char(trim(dateString), from_where=from_where, advance='no')
+    my_adv = 'no'
+    if ( .not. present(msg) ) my_adv = 'yes'
+    call date_and_time ( date=dateString, time=timeString )
+    dateString = reFormatDate(trim(dateString), dateFormat)
+    timeString = reFormatTime(trim(timeString), timeFormat)
+    if ( myDate .and. myTime  ) then
+      call output ( trim(dateString), from_where=from_where, advance='no' )
       call blanks(3)
-      call output_char(trim(timeString), from_where=from_where, advance=MY_ADV)
-    elseif( myDate ) then
-      call output_char(trim(dateString), from_where=from_where, advance=MY_ADV)
-    elseif( myTime ) then
-      call output_char(trim(TimeString), from_where=from_where, advance=MY_ADV)
-    endif
+      call output ( trim(timeString), from_where=from_where, advance=my_adv )
+    else if ( myDate  ) then
+      call output ( trim(dateString), from_where=from_where, advance=my_adv )
+    else if ( myTime  ) then
+      call output ( trim(TimeString), from_where=from_where, advance=my_adv )
+    end if
     if ( .not. present(msg) ) return
-    call blanks(3)
-    call output_char(trim(msg), from_where=from_where, advance='yes')
+    call blanks ( 3 )
+    call output ( trim(msg), from_where=from_where, advance='yes' )
   end subroutine OUTPUT_DATE_AND_TIME
 
+  ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
   subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE, Before, After )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: VALUE
@@ -236,13 +242,13 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=60) :: LINE
 
-    if ( present(Format) ) then
+    if ( present(Format)  ) then
       write ( line, format ) value
     else
       write ( line, '("(",1pg22.14,",",1pg22.14,")")' ) value
     end if
     if ( present(before) ) call output ( before, dont_log = .true. )
-    if ( present(after) ) then
+    if ( present(after)  ) then
       call output ( trim(line), dont_log = .true. )
       call output ( after, advance=advance, dont_log = .true. )
     else
@@ -250,6 +256,7 @@ contains
     end if
   end subroutine OUTPUT_DCOMPLEX
 
+  ! ----------------------------------------------  OUTPUT_DOUBLE  -----
   subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE, Before, After )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
@@ -260,21 +267,16 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
-    character(len=3) :: MY_ADV
 
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-
-    if ( .not. present(Format) ) then
+    if ( .not. present(Format)  ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
-      if ( scan(line,'123456789') == 0 ) then
+      if ( scan(line,'123456789') == 0  ) then
         line = '0'
       else
         i = index(line,'.')
         j = scan(line(i:),'DdEe ') + i - 1
-        if ( i /= 0 ) then
+        if ( i /= 0  ) then
           if ( j == i ) j = len(line)
           i = i + 1
           k = j
@@ -296,19 +298,20 @@ contains
     end if
 
     log_chars = line
-    if ( present(LogFormat) ) then
+    if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
     if ( present(before) ) call output ( before )
-    if ( present(after) ) then
+    if ( present(after)  ) then
       call output ( line(:k), log_chars=log_chars )
       call output ( after, advance=advance )
     else
-      call output ( line(:k), advance=my_adv, log_chars=log_chars )
+      call output ( line(:k), advance=advance, log_chars=log_chars )
     end if
 
   end subroutine OUTPUT_DOUBLE
 
+  ! ----------------------------------------  OUTPUT_DOUBLE_ARRAY  -----
   subroutine OUTPUT_DOUBLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
   ! Output double-precision values to PRUNIT.
     double precision, intent(in) :: values(:)
@@ -317,15 +320,12 @@ contains
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     character(len=3) :: MY_ADV
     integer :: I ! loop inductor
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       call blanks ( 3, advance='no' )
     end do
-    if ( present(advance) ) then
+    if ( present(advance)  ) then
       if ( prunit == -1 .or. prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
       if ( prunit < -1 ) &
@@ -335,6 +335,7 @@ contains
     end if
   end subroutine OUTPUT_DOUBLE_ARRAY
 
+  ! ---------------------------------------------  OUTPUT_INTEGER  -----
   subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT, Before, After )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
@@ -348,21 +349,17 @@ contains
     logical :: My_Fill
     integer :: I, J
     character(len=12) :: LINE
-    character(len=3) :: MY_ADV
     integer :: MY_PLACES
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
     my_places = 0
-    if ( present(places) ) then; my_places = places; end if
+    if ( present(places)  ) then; my_places = places; end if
     my_fill = .false.
     if ( present(places) .and. present(fill) ) my_fill = fill
-    if ( present(format) ) then
+    if ( present(format)  ) then
       line = ' '
       write ( line, format ) int
       i = 1
       j = len_trim(line)
-    else if ( my_fill ) then
+    else if ( my_fill  ) then
       write ( line, '(i6.6)' ) int
       i = 1
       j = 6
@@ -372,15 +369,15 @@ contains
       j = len(line)
     end if
     if ( present(before) ) call output ( before )
-    if ( present(after) ) then
+    if ( present(after)  ) then
       call output ( line(i:j) )
       call output ( after, advance=advance )
     else
-      call output ( line(i:j), advance=my_adv )
+      call output ( line(i:j), advance=advance )
     end if
-    return
   end subroutine OUTPUT_INTEGER
 
+  ! ---------------------------------------  OUTPUT_INTEGER_ARRAY  -----
   subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE, FORMAT )
   ! Output INTEGERS to PRUNIT.
     integer, intent(in) :: INTEGERS(:)
@@ -388,15 +385,12 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     character(len=3) :: MY_ADV
     integer :: I ! loop inductor
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
       call blanks ( 3, advance='no' )
     end do
-    if ( present(advance) ) then
+    if ( present(advance)  ) then
       if ( prunit == -1 .or. prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
       if ( prunit < -1 ) &
@@ -406,23 +400,23 @@ contains
     end if
   end subroutine OUTPUT_INTEGER_ARRAY
 
-  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE )
+  ! ---------------------------------------------  OUTPUT_LOGICAL  -----
+  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, intent(in) :: LOG
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
     character(len=2) :: LINE
-    character(len=3) :: MY_ADV
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-    if (log) then
+    if ( log ) then
       line=' T'
     else
       line=' F'
     end if
-    call output ( line, advance=my_adv )
+    if ( present(before) ) call output ( before )
+    call output ( line, advance=advance )
   end subroutine OUTPUT_LOGICAL
 
+  ! ----------------------------------------------  OUTPUT_SINGLE  -----
   subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE, Before, After )
   ! Output "SINGLE" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
@@ -433,21 +427,16 @@ contains
     character(len=*), intent(in), optional :: Before, After ! text to print
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
-    character(len=3) :: MY_ADV
 
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-
-    if ( .not. present(Format) ) then
+    if ( .not. present(Format)  ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
-      if ( scan(line,'123456789') == 0 ) then
+      if ( scan(line,'123456789') == 0  ) then
         line = '0'
       else
         i = index(line,'.')
         j = scan(line(i:),'DdEe ') + i - 1
-        if ( i /= 0 ) then
+        if ( i /= 0  ) then
           if ( j == i ) j = len(line)
           i = i + 1
           k = j
@@ -469,19 +458,19 @@ contains
     end if
 
     log_chars = line
-    if ( present(LogFormat) ) then
+    if ( present(LogFormat)  ) then
       write ( log_chars, LogFormat ) value
     end if
     if ( present(before) ) call output ( before )
-    if ( present(after) ) then
+    if ( present(after)  ) then
       call output ( line(:k), log_chars=log_chars )
       call output ( after, advance=advance )
     else
-      call output ( line(:k), advance=my_adv, log_chars=log_chars )
+      call output ( line(:k), advance=advance, log_chars=log_chars )
     end if
-
   end subroutine OUTPUT_SINGLE
 
+  ! ----------------------------------------  OUTPUT_SINGLE_ARRAY  -----
   subroutine OUTPUT_SINGLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
   ! Output single-precision values to PRUNIT.
     real, intent(in) :: values(:)
@@ -490,15 +479,12 @@ contains
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     integer :: I ! loop inductor
     character(len=3) :: MY_ADV
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
-    my_adv = Advance_is_yes_or_no(my_adv)
-    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       call blanks ( 3, advance='no' )
     end do
-    if ( present(advance) ) then
+    if ( present(advance)  ) then
       if ( prunit == -1 .or. prunit < -2 ) &
         & write ( *, '(a)', advance=my_adv )
       if ( prunit < -1 ) &
@@ -508,6 +494,7 @@ contains
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
+  ! ----------------------------------------------  OUTPUT_STRING  -----
   subroutine OUTPUT_STRING ( STRING, LENSTRING, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS )
   ! Output STRING to PRUNIT.
     character(len=*), intent(in) :: STRING
@@ -519,18 +506,19 @@ contains
     integer :: n_chars
     !
     n_chars = min(len(string), lenstring)
-    if ( len(string) < 1 ) then
+    if ( len(string) < 1  ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Bad string arg in OUTPUT_STRING' )
-    else if( len_trim(string) < 1 .or. LENSTRING < 1 ) then
-      call blanks(0, advance)
+    else if ( len_trim(string) < 1 .or. LENSTRING < 1  ) then
+      call output ( '', advance )
     else
-      call output_char(string(:n_chars), advance, from_where, dont_log, log_chars )
-    endif
+      call output ( string(:n_chars), advance, from_where, dont_log, log_chars )
+    end if
   end subroutine OUTPUT_STRING
 
-  function nCharsinFormat(Format) result(nplusm)
-    ! Utility to calculated how many characters in a format spec:         
+  ! .............................................  nCharsinFormat  .....
+  function nCharsinFormat ( Format ) result(nplusm)
+    ! Utility to calculate how many characters in a format spec:         
     ! [n{xX}][,]{DEFGdefg}m.b                                             
     ! where n, m, and b are digits (we care only about n and m)           
     ! return (n+m)
@@ -571,7 +559,8 @@ contains
     nplusm = n + m                                                        
   end function nCharsinFormat
 
-  subroutine ourExtractSubString(instr, outstr, sub1, sub2)
+  ! ........................................  ourExtractSubString  .....
+  subroutine ourExtractSubString ( instr, outstr, sub1, sub2 )
     ! Extract portion of instr between sub1 and sub2 and return as outstr
     ! Args
     character (len=*), intent(in) :: instr
@@ -590,7 +579,8 @@ contains
     outstr = instr(pos1+1:pos2-1)
   end subroutine ourExtractSubString
 
-  subroutine ourReplaceSubString(instr, outstr, sub1, sub2)
+  ! ........................................  ourReplaceSubString  .....
+  subroutine ourReplaceSubString ( instr, outstr, sub1, sub2 )
     ! Swap a single instance in instr of sub1 with sub2 and return as outstr
     ! Args
     character (len=*), intent(in) :: instr
@@ -624,6 +614,8 @@ contains
       & 'Not yet able to replace shorter substring with longer' ) 
     endif
   end subroutine ourReplaceSubString
+
+  ! ..............................................  not_used_here  .....
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -631,6 +623,10 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.36  2004/12/31 02:39:51  vsnyder
+! Simplified computing My_Adv, simplified Output_Char, added Before argument
+! to Output_Logical, some cannonball-polishing.
+!
 ! Revision 2.35  2004/12/28 19:29:57  pwagner
 ! Changes to handle formats like f0.3, en10.2, es8.2
 !
