@@ -6,14 +6,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
-  use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+  use Hdf, only: DFACC_READ, DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-       & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
+    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use MLSStrings, only: ints2Strings, list2array, strings2Ints
   use OUTPUT_M, only: OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH
@@ -41,6 +42,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface DUMP !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
     module procedure DUMP_L2GP
     module procedure DUMP_L2GP_DataBase
+  end interface
+
+  interface ReadL2GPData !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
+    module procedure ReadL2GPData_fileID
+    module procedure ReadL2GPData_fileName
   end interface
 
 ! interface my_swwrattr 
@@ -410,15 +416,17 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyL2GPDatabase
 
-  ! ---------------------- ReadL2GPData  -----------------------------
+  ! ---------------------- ReadL2GPData_fileID  -----------------------------
 
-  subroutine ReadL2GPData(L2FileHandle, swathname, l2gp, numProfs, &
+  subroutine ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf, hdfVersion)
     !------------------------------------------------------------------------
 
+    ! Given a file handle,
     ! This routine reads an L2GP file, in either hdfVersion,
     ! returning a filled data structure and the !
     ! number of profiles read.
+    ! if present, hdfVersion must be one of HDFVERSION_4, HDFVERSION_5
 
     ! Arguments
 
@@ -453,7 +461,51 @@ contains ! =====     Public Procedures     =============================
     endif
     !print*,"In readl2gpdata: first/last/read prof=",firstProf,&
     !  lastProf,numProfs
-  end subroutine ReadL2GPData
+  end subroutine ReadL2GPData_fileID
+
+  ! ---------------------- ReadL2GPData_fileName  -----------------------------
+
+  subroutine ReadL2GPData_fileName(fileName, swathname, l2gp, numProfs, &
+       firstProf, lastProf, hdfVersion)
+    !------------------------------------------------------------------------
+
+    ! Given a file name,
+    ! This routine reads an L2GP file, in either hdfVersion,
+    ! returning a filled data structure and the !
+    ! number of profiles read.
+    ! hdfVersion may be WILDCARDHDFVERSION
+
+    ! Arguments
+
+    character (len=*), intent(in) :: swathname ! Name of swath
+    character (len=*), intent(in) :: fileName ! Name of swath
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: l2gp ! Result
+    integer, intent(out), optional :: numProfs ! Number actually read
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: L2FileHandle
+    integer :: record_length
+    integer :: status
+    integer :: the_hdfVersion
+    
+    ! Executable code
+    the_hdfVersion = MLS_HDF_VERSION(FileName, hdfVersion)
+    L2FileHandle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, DFACC_READ, FileName=FileName, &
+       & hdfVersion=hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
+    call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
+       & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion)
+    status = mls_io_gen_closeF('swclose', L2FileHandle, &
+      & hdfVersion=hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
+  end subroutine ReadL2GPData_fileName
 
   ! ---------------------- ReadL2GPData_hdf4  -----------------------------
 
@@ -2878,6 +2930,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.54  2003/02/10 22:04:49  pwagner
+! ChunkNumber correctly HE5_SWdefgfld-ed as an int
+!
 ! Revision 2.53  2003/02/08 00:33:32  pwagner
 ! Writes he5 attributes w/o bombing
 !
