@@ -91,7 +91,7 @@ contains
 
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
-        & call dump ( vgrids )
+        & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
 
@@ -100,6 +100,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.13  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.12  2001/04/07 01:50:49  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.

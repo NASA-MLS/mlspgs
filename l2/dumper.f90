@@ -83,10 +83,15 @@ contains ! =====     Private Procedures     ============================
   end subroutine DUMP_HGRIDS
 
   ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
-  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES )
+  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS )
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
-    integer :: I
-    character (len=80) :: str
+    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    integer :: I, MyDetails
+    character (len=80) :: Str
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ( 'QUANTITY_TEMPLATES: SIZE = ' )
     call output ( size(quantity_templates), advance='yes' )
     do i = 1, size(quantity_templates)
@@ -129,59 +134,67 @@ contains ! =====     Private Procedures     ============================
       call output ( ' ScaleFactor = ' )
       call output ( quantity_templates(i)%scaleFactor, advance='yes' )
       call output ( '      InstanceLen = ' )
-      call output ( quantity_templates(i)%InstanceLen )
-      call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
-      call dump ( quantity_templates(i)%phi, '      Phi = ' )
-      call dump ( quantity_templates(i)%geodLat, '      GeodLat = ' )
-      call dump ( quantity_templates(i)%lon, '      Lon = ' )
-      call dump ( quantity_templates(i)%time, '      Time = ' )
-      call dump ( quantity_templates(i)%solarTime, '      SolarTime = ' )
-      call dump ( quantity_templates(i)%solarZenith, '      SolarZenith = ' )
-      call dump ( quantity_templates(i)%losAngle, '      LosAngle = ' )
-      if ( associated(quantity_templates(i)%mafIndex) ) then
-        call dump ( quantity_templates(i)%mafIndex, '      MAFIndex = ' )
-        call dump ( quantity_templates(i)%mafCounter, '      MAFCounter = ' )
+      call output ( quantity_templates(i)%InstanceLen, advance='yes' )
+      if ( myDetails < 0 ) then
+        call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
+        call dump ( quantity_templates(i)%phi, '      Phi = ' )
+        call dump ( quantity_templates(i)%geodLat, '      GeodLat = ' )
+        call dump ( quantity_templates(i)%lon, '      Lon = ' )
+        call dump ( quantity_templates(i)%time, '      Time = ' )
+        call dump ( quantity_templates(i)%solarTime, '      SolarTime = ' )
+        call dump ( quantity_templates(i)%solarZenith, '      SolarZenith = ' )
+        call dump ( quantity_templates(i)%losAngle, '      LosAngle = ' )
+        if ( associated(quantity_templates(i)%mafIndex) ) then
+          call dump ( quantity_templates(i)%mafIndex, '      MAFIndex = ' )
+          call dump ( quantity_templates(i)%mafCounter, '      MAFCounter = ' )
+        end if
+        if ( associated(quantity_templates(i)%frequencies) ) then
+          call output ( '      FrequencyCoordinate = ' )
+          call output ( quantity_templates(i)%frequencyCoordinate )
+          call dump ( quantity_templates(i)%frequencies, ' Frequencies = ' )
+        end if
       end if
-      if ( associated(quantity_templates(i)%frequencies) ) then
-        call output ( '      FrequencyCoordinate = ' )
-        call output ( quantity_templates(i)%frequencyCoordinate )
-        call dump ( quantity_templates(i)%frequencies, ' Frequencies = ' )
-      end if
-      if ( quantity_templates(i)%radiometer + &
-        &  quantity_templates(i)%molecule /= 0 ) &
-        &  call output ( '     ' )
       if ( quantity_templates(i)%radiometer /= 0 ) then
-        call output ( ' Radiometer = ' )
+        call output ( '      Radiometer = ' )
         call GetRadiometerName ( quantity_templates(i)%radiometer, str )
-        call output ( str )
+        call output ( trim(str), advance='yes' )
       end if
-      if ( quantity_templates(i)%instrumentModule /= 0 ) then
-        call output ( ' Instrument Module = ' )
-        call GetModuleName ( quantity_templates(i)%instrumentModule, str )
-        call output ( str )
+      if ( quantity_templates(i)%molecule + &
+        &  quantity_templates(i)%instrumentModule /= 0 ) then
+        call output ( '     ' )
+        if ( quantity_templates(i)%molecule /= 0 ) then
+          call output ( ' Molecule = ' )
+          call display_string ( lit_indices(quantity_templates(i)%molecule) )
+        end if
+        if ( quantity_templates(i)%instrumentModule /= 0 ) then
+          call output ( ' Instrument Module = ' )
+          call GetModuleName ( quantity_templates(i)%instrumentModule, str )
+          call output ( trim(str) )
+        end if
+        call output ( '', advance = 'yes')
       end if
-      if ( quantity_templates(i)%molecule /= 0 ) then
-        call output ( ' Molecule = ' )
-        call display_string ( lit_indices(quantity_templates(i)%molecule) )
-      end if
-      call output ( '', advance = 'yes')
-      if ( quantity_templates(i)%signal /= 0 ) then
-        call dump ( signals( (/ quantity_templates(i)%signal /) ) )
-      end if
-      if ( quantity_templates(i)%radiometer + &
-        &  quantity_templates(i)%molecule /= 0 ) &
-        &  call output ( '', advance='yes' )
-      if ( associated(quantity_templates(i)%surfIndex) ) then
-        call dump ( quantity_templates(i)%surfIndex, '      SurfIndex = ' )
-      end if
-      if ( associated(quantity_templates(i)%chanIndex) ) then
-        call dump ( quantity_templates(i)%chanIndex, '      ChanIndex = ' )
+      if ( myDetails > 0 ) then
+        if ( quantity_templates(i)%signal /= 0 ) then
+          call dump ( signals( (/ quantity_templates(i)%signal /) ) )
+        end if
+        if ( quantity_templates(i)%radiometer + &
+          &  quantity_templates(i)%molecule /= 0 ) &
+          &  call output ( '', advance='yes' )
+        if ( associated(quantity_templates(i)%surfIndex) ) then
+          call dump ( quantity_templates(i)%surfIndex, '      SurfIndex = ' )
+        end if
+        if ( associated(quantity_templates(i)%chanIndex) ) then
+          call dump ( quantity_templates(i)%chanIndex, '      ChanIndex = ' )
+        end if
       end if
     end do
   end subroutine DUMP_QUANTITY_TEMPLATES
 end module DUMPER
 
 ! $Log$
+! Revision 2.8  2001/03/28 03:03:38  vsnyder
+! Remove use, only's that aren't used
+!
 ! Revision 2.7  2001/03/28 01:25:38  vsnyder
 ! Move DUMP_VGRIDS from dumper.f90 to VGrid.f90
 !
