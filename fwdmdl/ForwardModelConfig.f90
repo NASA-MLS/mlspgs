@@ -64,7 +64,6 @@ module ForwardModelConfig
     integer :: num_size_bins            ! No of size bins '40'
     integer :: cloud_der    ! Compute cloud sensitivity in cloud models.
     integer :: i_saturation        ! Flag to determine saturation status
-    integer :: cloud_fov ! Flag for cloud model field-of-view averaging.
     ! Specifics for linearised forward model
     logical :: LockBins              ! Use same l2pc bin for whole chunk
     integer, dimension(:), pointer :: binSelectors=>NULL() ! List of relevant bin selectors
@@ -191,7 +190,7 @@ contains
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_scattering_angles, config%num_azimuth_angles, &
       & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
-      & config%i_saturation, config%cloud_fov, config%windowUnits /), info )
+      & config%i_saturation, config%windowUnits /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
     call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
@@ -295,7 +294,7 @@ contains
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(13) :: l13       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
-    integer, dimension(12) :: i12       ! Temporary array
+    integer, dimension(12) :: i11       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -317,20 +316,19 @@ contains
     config%temp_der = l13(11)
     config%skipOverlaps = l13(12)
     config%default_spectroscopy = l13(13)
-    call PVMIDLUnpack ( i12, info )
+    call PVMIDLUnpack ( i11, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
-    config%instrumentModule = i12(1)
-    config%surfaceTangentIndex = i12(2)
-    config%no_cloud_species = i12(3)
-    config%no_model_surfs = i12(4)
-    config%num_scattering_angles = i12(5)
-    config%num_azimuth_angles = i12(6)
-    config%num_ab_terms = i12(7)
-    config%num_size_bins = i12(8)
-    config%cloud_der = i12(9)
-    config%i_saturation = i12(10)
-    config%cloud_fov = i12(11)
-    config%windowUnits = i12(12)
+    config%instrumentModule = i11(1)
+    config%surfaceTangentIndex = i11(2)
+    config%no_cloud_species = i11(3)
+    config%no_model_surfs = i11(4)
+    config%num_scattering_angles = i11(5)
+    config%num_azimuth_angles = i11(6)
+    config%num_ab_terms = i11(7)
+    config%num_size_bins = i11(8)
+    config%cloud_der = i11(9)
+    config%i_saturation = i11(10)
+    config%windowUnits = i11(11)
     call PVMIDLUnpack ( r2, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
     config%phiWindow = r2(1)
@@ -554,6 +552,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.31  2003/03/07 03:16:00  livesey
+! Changed use of DestroySignal
+!
 ! Revision 2.30  2003/02/06 22:04:25  vsnyder
 ! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
 !
