@@ -1,5 +1,5 @@
 !
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 !
 !=============================================================================
@@ -62,34 +62,35 @@ CONTAINS
     hdfVersion = L1Config%Output%HDFversion
 
     ! Write Annotations and Close L1RAD D file
-!
-! Commented for now due to the fact that lib/PCFHdr.f90 is HDF4 only.
-! 
-!     CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
-!
-!     CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
-!
+
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
+    ENDIF
+
     CALL mls_closeFile (L1BFileInfo%RADDid, hdfVersion)
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
     ! Write Annotations and Close L1RAD F file
-!
-!    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
-!
-!    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
-!
+
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
+    ENDIF
+
     CALL mls_closeFile (L1BFileInfo%RADFid, hdfVersion)
     
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
     ! Write Annotations and Close L1BOA file
-!
-!    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
-!
-!    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
+
+    IF (hdfVersion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
+       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
+    ENDIF
 
     CALL mls_closeFile (L1BFileInfo%OAid, hdfVersion)
 
@@ -130,6 +131,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.8  2002/11/20 17:50:27  perun
+! Reinstated writing PCF annotations for HDF 4 files
+!
 ! Revision 2.7  2002/11/19 21:33:23  perun
 ! Use HDFversion instead of HDFVersionString
 !
