@@ -148,12 +148,14 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: status           ! From ALLOCATE
     ! The following are temporary arrays for copying data around
-    real (r8), dimension(:), pointer :: temp1D=>NULL()
-    real (r8), dimension(:,:,:), pointer :: temp3D=>NULL()
+    real (r8), dimension(:), pointer :: temp1D
+    real (r8), dimension(:,:,:), pointer :: temp3D
     integer :: expandingDimension
     integer :: oldSize
 
     ! Executable code
+
+    nullify ( temp1D, temp3D )
 
     if (l2aux%dimensions(3)%dimensionFamily==L_None) &
       call MLSMessage (MLSMSG_Error, ModuleName, &
@@ -168,7 +170,7 @@ contains ! =====     Public Procedures     =============================
     ! Now expand this dimension
     temp1D => l2aux%dimensions(3)%values
     ! Nullify old one so allocate_test doesn't clobber temp1D
-    nullify(l2aux%dimensions(3)%values)
+    nullify ( l2aux%dimensions(3)%values )
     call allocate_test(l2aux%dimensions(3)%values,newSize, &
       & 'New l2aux%dimensions(3)%values', ModuleName)
     l2aux%dimensions(3)%noValues = newSize
@@ -180,7 +182,7 @@ contains ! =====     Public Procedures     =============================
     temp3d => l2aux%values
     ! Need to nullify old one, else next call will clobber it
     ! loosing us temp3d
-    nullify(l2aux%values)
+    nullify ( l2aux%values )
     call allocate_test ( l2aux%values, &
       & max(1, l2aux%dimensions(1)%noValues), &
       & max(1, l2aux%dimensions(2)%noValues), &
@@ -204,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), intent(in) :: ITEM
 
     ! local variables
-    type (L2AUXData_T), dimension(:), pointer :: tempDatabase=>NULL()
+    type (L2AUXData_T), dimension(:), pointer :: tempDatabase
 
     include "addItemToDatabase.f9h"
 
@@ -372,7 +374,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: NODIMENSIONSUSED         ! No. real dimensions
-    integer, dimension(:), pointer :: DIMSIZES=>NULL() ! Size of each dimension
+    integer, dimension(:), pointer :: DIMSIZES ! Size of each dimension
     integer :: sdId                   ! sd id from sfcreate
     logical, dimension(L2AUXRank) :: GOODDIM ! Not L_None
     integer :: dimensionInData     ! Index
@@ -386,6 +388,7 @@ contains ! =====     Public Procedures     =============================
 
 
     ! Executable code
+    nullify ( dimSizes )
     error = 0
 
     if (present(sdName)) then
@@ -495,6 +498,11 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.10  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.9  2001/04/07 00:14:27  pwagner
 ! Added announce_error
 !

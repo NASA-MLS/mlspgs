@@ -88,8 +88,8 @@ contains ! --------------- Subroutines and functions --------------------------
 
     real (r8), dimension(:), allocatable :: logP ! -log10 pressure, noSurfs
     real (r8), dimension(:), allocatable :: modifiedBasis ! noSurfs
-    real (r8), dimension(:), pointer :: myR=>NULL() ! Gas constant, noSurfs
-    real (r8), dimension(:,:), pointer :: myRT=>NULL() ! R*T (noSurfs,noInstances)
+    real (r8), dimension(:), pointer :: myR      ! Gas constant, noSurfs
+    real (r8), dimension(:,:), pointer :: myRT   ! R*T (noSurfs,noInstances)
     real (r8), dimension(:), allocatable :: currentRefGPH ! (noInstances)
     real (r8), dimension(:), allocatable :: correction ! (noInstances)
 
@@ -105,6 +105,7 @@ contains ! --------------- Subroutines and functions --------------------------
     real (r8) :: refLogP        ! Log p of pressure reference surface
     real (r8) :: basisGap       ! Space between adjacent surfaces
 
+    nullify ( myR, myRT )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
       &            coherent=.true., &
@@ -233,32 +234,32 @@ contains ! --------------- Subroutines and functions --------------------------
 
     ! Local variables
 
-    real (r8), dimension(:,:), pointer :: rt=> NULL() ! rt=R*T
-    real (r8), dimension(:,:), pointer :: basisGPH=> NULL() ! temp(noSurfs,noInstances)
-    real (r8), dimension(:,:), pointer :: earthRadius=> NULL()
-    real (r8), dimension(:,:), pointer :: geocLat=> NULL()
+    real (r8), dimension(:,:), pointer :: rt           ! rt=R*T
+    real (r8), dimension(:,:), pointer :: basisGPH     ! temp(noSurfs,noInstances)
+    real (r8), dimension(:,:), pointer :: earthRadius
+    real (r8), dimension(:,:), pointer :: geocLat
 
-    real (r8), dimension(:), pointer :: aCoeff=> NULL() ! Quadratic term
-    real (r8), dimension(:), pointer :: rtLower=> NULL()
-    real (r8), dimension(:), pointer :: rtUpper=> NULL()
-    real (r8), dimension(:), pointer :: basisLower=> NULL() ! For temperature
-    real (r8), dimension(:), pointer :: basisUpper=> NULL() ! For temperature
-    real (r8), dimension(:), pointer :: basisSpacing=> NULL() ! For temperature
-    real (r8), dimension(:), pointer :: bCoeff=> NULL() ! Quadratic term
-    real (r8), dimension(:), pointer :: cCoeff=> NULL() ! Quadratic term
-    real (r8), dimension(:), pointer :: deltaRT=> NULL() 
-    real (r8), dimension(:), pointer :: geometricGPH=> NULL()
-    real (r8), dimension(:), pointer :: n=> NULL() ! Refractive index
-    real (r8), dimension(:), pointer :: pointingH2O=> NULL() ! t.p. h2o
-    real (r8), dimension(:), pointer :: pointingTemp=> NULL() ! t.p. temp.
-    real (r8), dimension(:), pointer :: ratio2=> NULL() ! minor frame
-    real (r8), dimension(:), pointer :: ratio4=> NULL() ! minor frame
-    real (r8), dimension(:), pointer :: refractedGeocAlt=> NULL() ! minor frame
+    real (r8), dimension(:), pointer :: aCoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: rtLower
+    real (r8), dimension(:), pointer :: rtUpper
+    real (r8), dimension(:), pointer :: basisLower     ! For temperature
+    real (r8), dimension(:), pointer :: basisUpper     ! For temperature
+    real (r8), dimension(:), pointer :: basisSpacing   ! For temperature
+    real (r8), dimension(:), pointer :: bCoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: cCoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: deltaRT 
+    real (r8), dimension(:), pointer :: geometricGPH
+    real (r8), dimension(:), pointer :: n              ! Refractive index
+    real (r8), dimension(:), pointer :: pointingH2O    ! t.p. h2o
+    real (r8), dimension(:), pointer :: pointingTemp   ! t.p. temp.
+    real (r8), dimension(:), pointer :: ratio2         ! minor frame
+    real (r8), dimension(:), pointer :: ratio4         ! minor frame
+    real (r8), dimension(:), pointer :: refractedGeocAlt ! minor frame
 
-    integer, dimension(:), pointer :: closestTempProfiles=> NULL()
-    integer, dimension(:), pointer :: closestH2OProfiles=> NULL()
-    integer, dimension(:), pointer :: lower=>NULL() ! index into temperature profile
-    integer, dimension(:), pointer :: upper=>NULL() ! index into temperature profile
+    integer, dimension(:), pointer :: closestTempProfiles
+    integer, dimension(:), pointer :: closestH2OProfiles
+    integer, dimension(:), pointer :: lower ! index into temperature profile
+    integer, dimension(:), pointer :: upper ! index into temperature profile
 
     real (r8) :: s2, s4, p2, p4 ! Polynomial terms
 
@@ -268,6 +269,11 @@ contains ! --------------- Subroutines and functions --------------------------
 
     ! Executable code
 
+    nullify ( rt, basisGPH, earthRadius, geocLat, aCoeff, rtLower, rtUpper, &
+      & basisLower, basisUpper, basisSpacing, bCoeff, cCoeff, deltaRT, &
+      & geometricGPH, n, pointingH2O, pointingTemp, ratio2, ratio4, &
+      & refractedGeocAlt, closestTempProfiles, closestH2OProfiles, lower, &
+      & upper )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
       &            coherent=.true., &
@@ -446,6 +452,11 @@ contains ! --------------- Subroutines and functions --------------------------
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.10  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.9  2001/04/03 19:03:07  vsnyder
 ! Get L_H2O from Molecules -- can't get it from Intrinsic after the order of
 ! Molecules and Intrinsic was reversed.
