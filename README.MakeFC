@@ -26,7 +26,7 @@ it is mostly self-configuring. First, you will need:
  (6) FFTW--a library to accomplish fast Fourier transforms
 
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
-lib, srclib, and util directories) simply type
+l3m, lib, fwmdl, cloudfwdm, srclib, and util directories) simply type
   make -f MakeFC update
 and you'll be asked to respond to some questions about your compiler, platform,
 and where the various libraries are installed. Then the software will be built.
@@ -85,8 +85,11 @@ software, the "make" command must be accompanied by the "-f MakeFC" the first
 time it is used. After that, however, "make" alone suffices. E.g., the usual
 way becomes
          make
-This will automatically build lib and mls[1-3]. To build other parts see
-the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+This will automatically build lib and mlsln where n={1,2,3,3m}. To build other
+parts see the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+
+To simplify things the set of directories {l1, l2, l3, l3m, lib, fwdmdl,
+cloudfwdm} will be henceforth called simply the "mlslevels".
 
 WHAT YOU NEED
 You may begin when you checkout a fresh copy of the mlspgs archive or obtain
@@ -94,20 +97,20 @@ the tar file. If you already have an archive with some changes you wish to
 keep but not share yet, make sure you update the following files and
 directories:
 
-   mlspgs/     mlspgs/util/     mlspgs/[c-l]*/   mlspgs/srclib
-   ------      ------------       ----------       -----------
-   MakeFC      mlsconfigure         MakeFC       (shared
-BEFORE.mls    makemakedep.sh     Makefile.dep      source
-README.MakeFC  f90makedep.pl      platforms/*         files)
-              f90ghostfiles.pl                    Makefile.dep
+   mlspgs/     mlspgs/util/    mlspgs/mlslevels/   mlspgs/srclib
+   ------      ------------       ----------        -----------
+   MakeFC      mlsconfigure         MakeFC        (shared
+BEFORE.mls    makemakedep.sh     Makefile.dep       source
+README.MakeFC  f90makedep.pl      platforms/*          files)
+              f90ghostfiles.pl                     Makefile.dep
               ghostbuster.sh
 
 BUILDING THE SOFTWARE
-Then to make the mls software, both the lib and all levels, from the top
-level of the mlspgs directory, enter the command "make -f MakeFC". This
-should launch util/mlsconfigure. It will first query you for your
-compiler (only two choices available: NAG or Lahey) and for your
-platform/OS (only three choices available: Sun, SGI, or Linux).
+Then to make the mls software, both the lib and all mlslevels, from the top
+level of the mlspgs directory, enter the command "make -f MakeFC". This should
+launch util/mlsconfigure. It will first query you for your compiler (only two
+choices available: NAG or Lahey) and for your platform/OS (only three choices
+available: Sun, SGI, or Linux).
 
 Next it will prompt you to enter the paths to the SDP Toolkit includes
 directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
@@ -169,12 +172,11 @@ BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
 i.e.
         make lib
-and similarly for l1, l2, l3, cloudfwdm, or fwdmdl. Alternatively, if you are
-in lib, perhaps changing some of its modules, then while there you may use the
-simple
+and similarly for the mlslevels. Alternatively, if you are in lib, perhaps
+changing some of its modules, then while there you may use the simple
         make
 and only libmls.a will be rebuilt. Again the same is true while in the other
-levels when only the software in that level will be built.
+mlslevels when only the software in that level will be built.
 
 MULTIPLE PLATFORMS
 If you wish to build the software on more than one platform, one reliable
@@ -236,7 +238,7 @@ invoking make takes precedence for that invocation.
 
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
-the other levels.
+the other mlslevels.
 
 make the_option
 
@@ -254,11 +256,11 @@ configure  change configuration: compiler, (less often) platform/OS,
            paths to Toolkit and other necessary libraries
 
 (All the following apply only at the top level)
-all        builds lib, l1, l2, l3, and fwdmdl
+all        builds all the mlslevels
 distclean  does a clean; restores archive nearly to initial state
 help       complete summary of targets, settings, usage of MakeFC
 disthelp   prints this file
-install    moves the built programs from l1, l2, l3 to the mlspgs top level
+install    moves the built programs from the mlslevels to the mlspgs top level
 makefile   makes a new symbolic link from MakeFC to Makefile
            at the top level as well as each of the subdirectories;
            useful for older archives before the link became automatic
@@ -287,11 +289,11 @@ dependencies. If it doesn't exist yet, as with a fresh copy of the archive, it
 creates one, using mlspgs/util/mlsconfigure. The contents of the resulting file
 will be similar to example shown at the end of this file.
 
-In addition, inside fwdmdl, lib, l1, l2, and l3 a new directory will be created
-with a unique name given by the value of MLSCONFG. In the example above that
-name would be NAG.Linux. In this directory mlsconfigure places a Makefile which
-is the catenation of .configure with two files found in the directory
-platforms: e.g., assuming the value of MLSCONFG is NAG.Linux:
+In addition, inside the mlslevels a new directory will be created with a unique
+name given by the value of MLSCONFG. In the example above that name would be
+NAG.Linux. In this directory mlsconfigure places a Makefile which is the
+catenation of .configure with two files found in the directory platforms: e.g.,
+assuming the value of MLSCONFG is NAG.Linux:
         cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
 Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
@@ -311,23 +313,24 @@ Also, in subsequent uses, .configure already exists, so make simply executes
 any commands needed to build the end products if any prerequisites are newer.
 
 Hierarchy of make
-The following is a partial org chart showing how make invoked at higher levels
-will call make in lower levels, and the names of the Makefile thus summoned.
+The following is a partial org chart showing how make invoked at the top will
+call make in the mlslevels which in turn will call make in subdirectories, and
+the names of the Makefile thus summoned.
 
-                <----------mlspgs/MakeFC-------------------->
-               /              /   |    \             \      \
-       l1/MakeFC      l2/MakeFC---+--->cloudfwdm--->fwdmdl  l3/MakeFC
-           |   \              \   |    /             /      /
-           |    -------------->lib/MakeFC<------------------
-           |                      |
-       MLSCONFG/Makefile   MLSCONFG/Makefile
+            <----------mlspgs/MakeFC-------------------------------------->
+           /              /   |    \             \        \               \
+   l1/MakeFC      l2/MakeFC---+--->cloudfwdm--->fwdmdl  l3m/MakeFC--->l3/MakeFC
+       |   \              \   |    /             /        /               /
+       |    -------------->lib/MakeFC<------------------------------------
+       |                      |
+   MLSCONFG/Makefile   MLSCONFG/Makefile
            
 where the bottom MLSCONFG directories only below lib and l1 have been shown,
-although they exist in the other levels, too. Note also the ability of make at
-the levels of l1, l2, ... to call make in lib. l2 is also able to call make in
-cloudfwdm and fwdmdl. cloudfwdm is also able to call make in fwdmdl. The full
-path and name of the file shown at bottom center is (assuming a typical
-location for the archive)
+although they exist in the other mlslevels, too. Note also the ability of make
+at the levels of l1, l2, ... to call make in lib. l2 is also able to call make
+in cloudfwdm and fwdmdl. cloudfwdm is also able to call make in fwdmdl. l3m is
+also able to call make in l3. The full path and name of the file shown at
+bottom center is (assuming a typical location for the archive)
 	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
 
 MLSCONFG/Makefile has the command near its start
@@ -419,9 +422,9 @@ unacceptable for reasons of performance or because debugging flags need to be
 set for the compiler and loader. There may be more than one way to give a value
 to any of these settings. One way is to assign the value on the same line where
 make is invoked; e.g.
-	make target FOPTS="-gline -gc" LDOPTS="-gc"
-would compile and link for debugging and garbage collection, assuming use of
-NAG f95. Alternatively, the first five of the following can be set by
+	make target FOPTS="-g90 -gline" LDOPTS="-g90"
+would compile and link for debugging rather than speed-optimized, assuming use
+of NAG f95. Alternatively, the first seven of the following can be set by
 configure_full.
 
 make the_option SETTING=value
@@ -549,6 +552,7 @@ export HDFEOS_LIB
 export HDFLIB
 export PGSTK
 export HDFEOS
+export HDFEOS5
 export HDF
 export HDF5
 export GCTP
@@ -562,6 +566,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.18  2001/07/07 00:27:30  pwagner
+# Mentions new version of Toolkit, LIB_BLAS, and cloudfwdm
+#
 # Revision 1.17  2001/05/17 23:17:57  pwagner
 # New section on multiple platforms; mentions toolkit-free version
 #
