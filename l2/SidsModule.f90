@@ -110,8 +110,12 @@ contains
     fmStat%newHydros = .true.
     fmStat%maf = 0
     fmStat%finished = .false.
-    if ( ixJacobian > 0 ) &
-      & call allocate_test(fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName)
+    if ( ixJacobian > 0 ) then
+      call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+        & ModuleName )
+    else ! because it's not optional in many places in the forward model
+      call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
+    end if
 
     ! Loop over mafs
     do while ( .not. fmStat%finished )
@@ -140,8 +144,7 @@ contains
         end if
       end do
     end do
-    if ( ixJacobian > 0 ) &
-      & call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+    call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
 
     call DestroyForwardModelIntermediate ( ifm )
 
@@ -173,6 +176,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.26  2001/05/01 23:52:54  vsnyder
+! Allocate and deallocate fmStat%rows here
+!
 ! Revision 2.25  2001/05/01 06:57:30  livesey
 ! *** empty log message ***
 !
