@@ -292,7 +292,7 @@ contains ! =====     Public Procedures     =============================
       sourceName = 0
       do j = 2, nsons(key)
         field = subtree(j,key)
-        select case ( decoration(subtree(1,decoration(subtree(1,field)))) )
+        select case ( decoration(subtree(1,field)) )
         case ( f_file )
           if ( fileName /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
             & 'File name specified twice in read a priori')
@@ -389,6 +389,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.12  2001/02/08 00:58:14  vsnyder
+! Correct calculation of "field"
+!
 ! Revision 2.11  2001/01/03 00:47:21  pwagner
 ! Calls READL2AUXData from L2AUXData module
 !
