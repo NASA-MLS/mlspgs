@@ -14,8 +14,6 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & MLS_HDF_VERSION
   use MLSL2Options, only: DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
@@ -543,6 +541,9 @@ contains ! =====     Public Procedures     =============================
 
   subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
+
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
@@ -878,6 +879,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.39  2002/12/05 19:46:23  pwagner
+! Changes to speed up compiling tree-walker
+!
 ! Revision 2.38  2002/12/03 18:04:02  pwagner
 ! Repaired bug that caused WriteL2AUXData files to be tiny
 !
