@@ -42,9 +42,9 @@ program MLSL2
   !-----------------------------------------------------------------------------
 
 ! Initialize the lexer, symbol table, and tree checker's tables:
-  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=1003 )
+  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2017 )
   call allocate_decl ( ndecls=1000 )
-  call allocate_tree ( n_tree=10000 )
+  call allocate_tree ( n_tree=15000 )
   call init_tables
   call init_units ( lit_indices )
 
@@ -193,6 +193,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.17  2001/04/05 01:33:46  vsnyder
+! Increase initial sizes for sevaral paraer tables
+!
 ! Revision 2.16  2001/03/28 01:29:48  vsnyder
 ! Add description of -G to -h output
 !
