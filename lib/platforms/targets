@@ -131,14 +131,19 @@ PVMwrappers.o: $(S)/PVMwrappers.c
 
 #	special options for compiling some modules--override .f90 rules
 
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O//')
+
 L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 #L2GPData.o:
 #	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 string_table.o:
-	$(FC) -c $(INC_PATHS) $(S)/string_table.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90
 
 # $Log$
+# Revision 1.18  2001/02/27 17:28:25  pwagner
+# Added special treatment for string_table: FOPTS=-O causes NAG to panic on it
+#
 # Revision 1.17  2001/02/09 18:38:49  pwagner
 # Removed special treatment of Matrix_OBJS
 #
