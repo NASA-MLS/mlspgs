@@ -3,30 +3,29 @@
 OBJS = \
 abs_cs_air_cont_m.o  	      get_drad_m.o  \
 abs_cs_h2o_213g_cont_m.o      get_eta_m.o  \
-abs_cs_liq_h2o_m.o  	      get_filters_m.o  \
-comp_path_entities_m.o        get_lun.o  \
-convolve_all_m.o  	      gh06.o  \
-create_beta_m.o  	      gl6p.o  \
-d_cspline_m.o  		      hydrostatic_intrp.o  \
-d_delta_dt_m.o  	      hydrostatic_model_m.o  \
-d_get_one_eta_m.o  	      i_hunt_m.o  \
-d_hunt_m.o  		      l2_load_m.o  \
-d_lintrp_m.o  		      l2_test_structures_m.o  \
-d_pcspl_m.o  		      l2pc_file_parameters.o  \
-d_solve_quad_m.o  	      l2pc_file_structures.o  \
-d_stat_temp_m.o  	      l2pc_pfa_structures.o  \
-d_t_script_dtnp_m.o  	      l2pcdim.o  \
-dcspline_der_m.o  	      mdbeta.o  \
-do_t_script_m.o  	      no_conv_at_all_m.o  \
-dsimpson_module.o  	      path_entities.o  \
-earth_intersection_m.o        pfa_db_delta_m.o  \
-ellipse.o  		      physics.o  \
-ellipse_sw_m.o  	      rad_tran_m.o  \
-eos_mdb.o  		      rad_tran_wd_m.o  \
-errmsg.o  		      refraction_m.o  \
-fast_delta_m.o  	      scrt_dn_m.o  \
-fast_zopacity_m.o  	      slabs_sw_m.o  \
-filter_sw_m.o  		      spectro_derivative_m.o  \
+abs_cs_liq_h2o_m.o  	      get_lun.o  \
+comp_path_entities_m.o        gl6p.o  \
+convolve_all_m.o  	      hydrostatic_intrp.o  \
+create_beta_m.o  	      hydrostatic_model_m.o  \
+d_cspline_m.o  		      i_hunt_m.o  \
+d_delta_dt_m.o  	      l2_load_m.o  \
+d_get_one_eta_m.o  	      l2_test_structures_m.o  \
+d_hunt_m.o  		      l2pc_file_parameters.o  \
+d_lintrp_m.o  		      l2pc_file_structures.o  \
+d_pcspl_m.o  		      l2pc_pfa_structures.o  \
+d_solve_quad_m.o  	      l2pcdim.o  \
+d_stat_temp_m.o  	      mdbeta.o  \
+d_t_script_dtnp_m.o  	      no_conv_at_all_m.o  \
+dcspline_der_m.o  	      path_entities.o  \
+do_t_script_m.o  	      pfa_db_delta_m.o  \
+dsimpson_module.o  	      physics.o  \
+earth_intersection_m.o        ptg_frq_load_m.o  \
+ellipse.o  		      rad_tran_m.o  \
+ellipse_sw_m.o  	      rad_tran_wd_m.o  \
+eos_mdb.o  		      refraction_m.o  \
+errmsg.o  		      scrt_dn_m.o  \
+fast_delta_m.o  	      slabs_sw_m.o  \
+fast_zopacity_m.o  	      spectro_derivative_m.o  \
 fov_convolve_m.o  	      strings.o  \
 freq_avg_m.o  		      temperature_deriv_m.o  \
 generic_delta_integral_m.o    two_d_polate.o  \
@@ -45,22 +44,22 @@ convolve_all_m.o: convolve_all_m.f90 $(dir1)MLSCommon.o d_cspline_m.o \
 create_beta_m.o: create_beta_m.f90 $(dir1)MLSCommon.o abs_cs_air_cont_m.o \
 	abs_cs_h2o_213g_cont_m.o abs_cs_liq_h2o_m.o l2pc_pfa_structures.o \
 	slabs_sw_m.o
+dcspline_der_m.o: dcspline_der_m.f90 d_hunt_m.o d_pcspl_m.o cspline_der.f9h
 d_cspline_m.o: d_cspline_m.f90 d_hunt_m.o d_pcspl_m.o cspline.f9h
 d_delta_dt_m.o: d_delta_dt_m.f90 $(dir1)MLSCommon.o d_get_one_eta_m.o \
 	ellipse.o gl6p.o path_entities.o
 d_get_one_eta_m.o: d_get_one_eta_m.f90 $(dir1)MLSCommon.o get_one_eta.f9h
 d_hunt_m.o: d_hunt_m.f90 $(dir1)MLSCommon.o hunt.f9h
 d_lintrp_m.o: d_lintrp_m.f90 d_hunt_m.o lintrp.f9h
+do_t_script_m.o: do_t_script_m.f90 $(dir1)MLSCommon.o d_stat_temp_m.o \
+	l2pcdim.o path_entities.o
 d_pcspl_m.o: d_pcspl_m.f90 pcspl.f9h
+dsimpson_module.o: dsimpson_module.f90 $(dir1)MLSCommon.o d_cspline_m.o \
+	simpson.f9h
 d_solve_quad_m.o: d_solve_quad_m.f90 solve_quad.f9h
 d_stat_temp_m.o: d_stat_temp_m.f90 $(dir1)MLSCommon.o physics.o stat_temp.f9h
 d_t_script_dtnp_m.o: d_t_script_dtnp_m.f90 $(dir1)MLSCommon.o \
 	d_get_one_eta_m.o d_stat_temp_m.o l2pcdim.o path_entities.o physics.o
-dcspline_der_m.o: dcspline_der_m.f90 d_hunt_m.o d_pcspl_m.o cspline_der.f9h
-do_t_script_m.o: do_t_script_m.f90 $(dir1)MLSCommon.o d_stat_temp_m.o \
-	l2pcdim.o path_entities.o
-dsimpson_module.o: dsimpson_module.f90 $(dir1)MLSCommon.o d_cspline_m.o \
-	simpson.f9h
 earth_intersection_m.o: earth_intersection_m.f90 $(dir1)MLSCommon.o ellipse.o
 ellipse.o: ellipse.f90 $(dir1)MLSCommon.o
 ellipse_sw_m.o: ellipse_sw_m.f90 $(dir1)MLSCommon.o ellipse.o
@@ -68,7 +67,6 @@ eos_mdb.o: eos_mdb.f90 $(dir1)MLSCommon.o
 fast_delta_m.o: fast_delta_m.f90 $(dir1)MLSCommon.o \
 	generic_delta_integral_m.o path_entities.o
 fast_zopacity_m.o: fast_zopacity_m.f90 $(dir1)MLSCommon.o
-filter_sw_m.o: filter_sw_m.f90 $(dir1)MLSCommon.o get_lun.o strings.o
 fov_convolve_m.o: fov_convolve_m.f90 $(dir1)MLSCommon.o d_cspline_m.o \
 	l2pcdim.o
 freq_avg_m.o: freq_avg_m.f90 $(dir1)MLSCommon.o d_cspline_m.o \
@@ -85,9 +83,6 @@ get_delta_m.o: get_delta_m.f90 $(dir1)MLSCommon.o generic_delta_integral_m.o \
 	path_entities.o
 get_drad_m.o: get_drad_m.f90 $(dir1)MLSCommon.o
 get_eta_m.o: get_eta_m.f90 $(dir1)MLSCommon.o
-get_filters_m.o: get_filters_m.f90 $(dir1)MLSCommon.o dsimpson_module.o \
-	filter_sw_m.o
-gh06.o: gh06.f90 $(dir1)MLSCommon.o
 gl6p.o: gl6p.f90 $(dir1)MLSCommon.o
 hydrostatic_intrp.o: hydrostatic_intrp.f90 $(dir1)MLSCommon.o d_hunt_m.o \
 	d_solve_quad_m.o
@@ -95,18 +90,17 @@ hydrostatic_model_m.o: hydrostatic_model_m.f90 $(dir1)MLSCommon.o \
 	d_get_one_eta_m.o d_lintrp_m.o gl6p.o hydrostatic_intrp.o \
 	l2pc_file_parameters.o l2pcdim.o
 i_hunt_m.o: i_hunt_m.f90 $(dir1)MLSCommon.o
-l2_load_m.o: l2_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o dsimpson_module.o \
-	filter_sw_m.o get_lun.o gl6p.o l2_test_structures_m.o \
-	l2pc_file_parameters.o l2pc_pfa_structures.o l2pcdim.o \
-	path_entities.o
-l2_test_structures_m.o: l2_test_structures_m.f90 $(dir1)MLSCommon.o \
-	l2pc_pfa_structures.o l2pcdim.o path_entities.o
+l2_load_m.o: l2_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o get_lun.o gl6p.o \
+	l2_test_structures_m.o l2pc_file_parameters.o l2pc_pfa_structures.o \
+	l2pcdim.o path_entities.o
+l2pcdim.o: l2pcdim.f90 $(dir1)MLSCommon.o
 l2pc_file_parameters.o: l2pc_file_parameters.f90 $(dir1)MLSCommon.o l2pcdim.o
 l2pc_file_structures.o: l2pc_file_structures.f90 $(dir1)MLSCommon.o \
 	l2pc_file_parameters.o
 l2pc_pfa_structures.o: l2pc_pfa_structures.f90 $(dir1)MLSCommon.o \
 	l2pc_file_parameters.o l2pcdim.o
-l2pcdim.o: l2pcdim.f90 $(dir1)MLSCommon.o
+l2_test_structures_m.o: l2_test_structures_m.f90 $(dir1)MLSCommon.o \
+	l2pc_pfa_structures.o l2pcdim.o path_entities.o
 mdbeta.o: mdbeta.f90 $(dir1)MLSCommon.o
 no_conv_at_all_m.o: no_conv_at_all_m.f90 $(dir1)MLSCommon.o d_cspline_m.o \
 	d_lintrp_m.o l2pc_file_parameters.o l2pc_pfa_structures.o l2pcdim.o
@@ -114,6 +108,8 @@ path_entities.o: path_entities.f90 $(dir1)MLSCommon.o
 pfa_db_delta_m.o: pfa_db_delta_m.f90 $(dir1)MLSCommon.o \
 	generic_delta_integral_m.o path_entities.o
 physics.o: physics.f90 $(dir1)MLSCommon.o
+ptg_frq_load_m.o: ptg_frq_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o \
+	l2_test_structures_m.o l2pcdim.o
 rad_tran_m.o: rad_tran_m.f90 $(dir1)MLSCommon.o do_t_script_m.o \
 	earth_intersection_m.o ellipse.o fast_delta_m.o fast_zopacity_m.o \
 	gl6p.o l2pcdim.o path_entities.o scrt_dn_m.o

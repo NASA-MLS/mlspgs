@@ -14,6 +14,7 @@ C     DDOT = SUM FOR I = 0 TO N-1 OF  X(LX+I*INCX) * Y(LY+I*INCY),
 C     WHERE LX = 1 IF INCX .GE. 0, ELSE LX = (-INCX)*N, AND LY IS
 C     DEFINED IN A SIMILAR WAY USING INCY.
 C
+
       INTEGER N, INCX, INCY, IX, IY, I, M, MP1, NS
       DOUBLE PRECISION X(*),Y(*)
       DDOT = 0.0D0
@@ -61,3 +62,4 @@ C
    70     CONTINUE
       RETURN
       END
+! $Log$

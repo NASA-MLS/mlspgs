@@ -5,7 +5,7 @@
 #
 #special case:
 #the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/configure to create .configure
+#execute $(MLSBIN)/mlsconfigure to create .configure
 
 #i.e., if you call are building this mls
 #by calling make with a different Makefile name,
@@ -90,36 +90,19 @@ $(CONFDIR)/.configure:
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Preparing mlsl3 without PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l3 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#		*) \
-#		echo "Preparing mlsl3 with PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l3 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#	esac 
 
-#The following explicitly excludes synoptic* and main_func from mlsl3
-#(otherwise makemakedep.sh assumes *.f90 needed)
+#The following explicitly excludes synoptic_prog from mlsl3
+#(otherwise makemakedep.sh assumes every .f90 needed)
 depends:
 	$(MLSBIN)/makemakedep.sh \
-        -d synoptic.f90 -d synoptic_prog.f90 -d main_func.f90\
+        -d synoptic_prog.f90 \
         $(libmls_sources) $(srclib)
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
@@ -138,6 +121,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.9  2001/03/01 18:20:46  pwagner
+# Hide case statement
+#
 # Revision 1.8  2001/02/28 23:33:20  pwagner
 # Build only if FFTW_ROOT defined
 #

@@ -83,15 +83,19 @@ endif
 ifdef l2_NEEDS_fwdmdl
    fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
    fwdmdl_message=Building mlsl2 with forward model
+   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a \
+	 $(fwdmdldir)/libfwdmdl.a
 else
    fwdmdl_linker_line=
    fwdmdl_message=Building mlsl2 without forward model
+   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
 endif
 
 # ========================================================================
-mlsl2: $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
+mlsl2: $(mlsl2_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(fwdmdl_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) $(PVM_OBJS) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -117,6 +121,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2001/03/05 21:50:00  pwagner
+# links to libfwdmdl if l2_NEEDS_fwdmdl
+#
 # Revision 1.9  2001/02/12 17:44:34  pwagner
 # RetrievalModule and ForwardModelInterface now included
 #

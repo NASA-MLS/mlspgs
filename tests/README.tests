@@ -11,16 +11,16 @@
 #  BEFORE.mls        a self-reading guide to prerequisites to the software
 
         more << EOF
-tests--A set of sub-directories for testing the mls software
+tests--A set of subdirectories for testing the mls software
 
 SUMMARY
 To test the mls software first make sure that you have properly built each of
 the levels with the following set of names: {l1 l2 l3 fwdmdl lib}. These are
 the subdirectories in the parent directory to tests, which is the one where you
-are reading this one. For more information on building the mls software, enter
+are reading this. For more information on building the mls software, enter
 ../README.MakeFC. Sub-directories with the same set of names are contained in
-tests, and they allow easy testing of the corresponding level of the mls
-software.
+tests, and they are intended to allow easy testing of the corresponding level
+of the mls software.
 
 INTRODUCTION
 During development it may be necessary to test portions of the mls software
@@ -85,4 +85,7 @@ the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change, and
 EOF
 exit
 # $Log$
+# Revision 1.1  2001/02/01 23:09:33  pwagner
+# First commit
+#
 #
