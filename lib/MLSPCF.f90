@@ -50,8 +50,7 @@ MODULE MLSPCF
    INTEGER, PARAMETER :: mlspcf_l3_param_OutputVersion = 3001
    INTEGER, PARAMETER :: mlspcf_l3_param_Cycle = 3002
    INTEGER, PARAMETER :: mlspcf_l3_param_L2DayRange = 3003
-   INTEGER, PARAMETER :: mlspcf_l3_param_MinDays = 3004
-   INTEGER, PARAMETER :: mlspcf_l3_param_RangDays = 3005
+   INTEGER, PARAMETER :: mlspcf_l3_param_RangDays = 3004
    !
    INTEGER, PARAMETER :: mlspcf_l3cf_start = 30000
    INTEGER, PARAMETER :: mlspcf_l3cf_end = 30002
