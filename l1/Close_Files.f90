@@ -27,6 +27,7 @@ CONTAINS
 
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
+    USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
 
     INTEGER :: i, returnStatus
 
@@ -101,12 +102,25 @@ CONTAINS
 
     CALL WriteMetaData
 
+    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%EngId)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BENG file: '//l1BFileInfo%EngFileName)
+
+    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%DiagId)
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1BDIAG file: '//l1BFileInfo%DiagFileName)
+    
   END Subroutine CloseFiles
 
 !=============================================================================
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.5  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.4  2001/03/12 19:40:11  perun
 ! Write PCF and CF contents as annotations
 !
