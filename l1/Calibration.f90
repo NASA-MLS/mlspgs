@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,7 +7,7 @@ MODULE Calibration ! Calibration data and routines
 
   USE MLSL1Common, ONLY: Chan_R_T, Chan_R8_T, FBchans, FBnum, MBchans, MBnum, &
        WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_zero, R8, &
-       BankLogical_T, BankInt_T, tau
+       GHzNum, BankLogical_T, BankInt_T, tau
   USE L0_sci_tbls, ONLY: Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE Interpolation, ONLY : QuadInterpW
@@ -388,25 +388,31 @@ CONTAINS
 
     INTEGER :: i, j, Istat, cal1, cal2, calen, calMAFs
     REAL(r8) :: errmul
+    REAL(r8), TARGET :: comVec(0:Max_cal_index)
 
     !! Previous arguments
     
-    REAL(r8), SAVE :: tVecP(0:Max_cal_index), comVecP(0:Max_cal_index), &
-         comVec(0:Max_cal_index)
+    REAL(r8), SAVE, TARGET :: comVecP(0:Max_cal_index)
+    REAL(r8), SAVE :: tVecP(0:Max_cal_index)
     REAL(r8), SAVE :: timeP, errmulP
     INTEGER, SAVE :: qualVecP(0:Max_cal_index)
     INTEGER, SAVE :: statusP
 
+    REAL(r8), DIMENSION (:), POINTER :: comVecPtr
+
     LOGICAL :: is_same
     INTEGER, PARAMETER :: MinCalMAFs = 3  ! minimum calibration MAFs needed
 
-comVecP(0:nVec-1) = GHz_comVec   !! TEST!!!
-errmulP = GHz_errmul   !! TEST!!!
-is_same = .true.       !! TEST!!!
+! Set these until futher notice since comvec is calculated on a MAF basis
+!  before calling this routine
+
+    comVecP(0:nVec-1) = GHz_comVec   !! TEST!!!
+    errmulP = GHz_errmul   !! TEST!!!
+    is_same = .TRUE.       !! TEST!!!
 
 ! Interpolate calibration values
 
-    DO j = 1, (FBnum-5)   ! Don't need to do THz here!!!
+    DO j = 1, GHzNum
        cal1 = BankCalInd(1)%FB(j)
        cal2 = BankCalInd(2)%FB(j)
        calen = cal2 - cal1 + 1
@@ -414,14 +420,13 @@ is_same = .true.       !! TEST!!!
 
        IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
             cal2 < cal_index(2)) THEN
-! if (calMAFs > MinCalMAFs) print *, 'calMAFs: ', calMAFs
           cal_interp%FB(:,j) = 0.0
           cal_err%FB(:,j) = 0.0
        ELSE
           DO i = 1, FBchans
 
              IF (is_same .AND. calen == nVec) THEN
-                comVec = comVecP
+                comVecPtr => comVecP
                 errmul = errmulP
                 Istat = statusP
              ELSE
@@ -431,6 +436,8 @@ is_same = .true.       !! TEST!!!
                      cal_qual%FB(cal1:cal2,i,j), time, calen, &
                      comVec(0:calen-1), errmul, Istat)
 
+                comVecPtr => comVec
+
                 !! Save for next call:
 
                 tVecP = cal_time%FB(:,i,j)
@@ -439,8 +446,8 @@ is_same = .true.       !! TEST!!!
                 statusP = Istat
              ENDIF
 
-             cal_interp%FB(i,j) = &
-                  SUM (comVec(0:calen-1) * cal_cnts%FB(cal1:cal2,i,j))
+             cal_interp%FB(i,j) = SUM (comVecPtr(0:calen-1) * &
+                  cal_cnts%FB(cal1:cal2,i,j))
              cal_err%FB(i,j) = errmul
           ENDDO
        ENDIF
@@ -450,56 +457,76 @@ is_same = .true.       !! TEST!!!
        cal1 = BankCalInd(1)%MB(j)
        cal2 = BankCalInd(2)%MB(j)
        calen = cal2 - cal1 + 1
-       DO i = 1, MBchans
+       calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-          IF (is_same .AND. calen == nVec) THEN
-             comVec = comVecP
-             errmul = errmulP
-             Istat = statusP
-          ELSE
-             CALL QuadInterpW (cal_time%MB(cal1:cal2,i,j), &
-                  cal_weight%MB(cal1:cal2,i,j), cal_qual%MB(cal1:cal2,i,j), &
-                  time, calen, comVec(0:calen-1), errmul, Istat)
+       IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
+            cal2 < cal_index(2)) THEN
+          cal_interp%MB(:,j) = 0.0
+          cal_err%MB(:,j) = 0.0
+       ELSE
+          DO i = 1, MBchans
 
-             !! Save for next call:
-             
-             tVecP = cal_time%MB(:,i,j)
-             qualVecP = cal_qual%MB(:,i,j)
-             timeP = time
-             statusP = Istat
-          ENDIF
-          cal_interp%MB(i,j) = &
-               SUM (comVec(0:calen-1) * cal_cnts%MB(cal1:cal2,i,j))
-          cal_err%MB(i,j) = errmul
-       ENDDO
+             IF (is_same .AND. calen == nVec) THEN
+                comVecPtr => comVecP
+                errmul = errmulP
+                Istat = statusP
+             ELSE
+                CALL QuadInterpW (cal_time%MB(cal1:cal2,i,j), &
+                     cal_weight%MB(cal1:cal2,i,j), cal_qual%MB(cal1:cal2,i,j), &
+                     time, calen, comVec(0:calen-1), errmul, Istat)
+
+                comVecPtr => comVec
+
+                !! Save for next call:
+
+                tVecP = cal_time%MB(:,i,j)
+                qualVecP = cal_qual%MB(:,i,j)
+                timeP = time
+                statusP = Istat
+             ENDIF
+             cal_interp%MB(i,j) = SUM (comVecPtr(0:calen-1) * &
+                  cal_cnts%MB(cal1:cal2,i,j))
+             cal_err%MB(i,j) = errmul
+          ENDDO
+       ENDIF
     ENDDO
 
     DO j = 1, WFnum
        cal1 = BankCalInd(1)%WF(j)
        cal2 = BankCalInd(2)%WF(j)
        calen = cal2 - cal1 + 1
-       DO i = 1, WFchans
+       calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-          IF (is_same .AND. calen == nVec) THEN
-             comVec = comVecP
-             errmul = errmulP
-             Istat = statusP
-          ELSE
-             CALL QuadInterpW (cal_time%WF(cal1:cal2,i,j), &
-                  cal_weight%WF(cal1:cal2,i,j), cal_qual%WF(cal1:cal2,i,j), &
-                  time, calen, comVec(0:calen-1), errmul, Istat)
+       IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
+            cal2 < cal_index(2)) THEN
+          cal_interp%WF(:,j) = 0.0
+          cal_err%WF(:,j) = 0.0
+       ELSE
+          DO i = 1, WFchans
 
-             !! Save for next call:
-             
-             tVecP = cal_time%WF(:,i,j)
-             qualVecP = cal_qual%WF(:,i,j)
-             timeP = time
-             statusP = Istat
-          ENDIF
-          cal_interp%WF(i,j) = &
-               SUM (comVec(0:calen-1) * cal_cnts%WF(cal1:cal2,i,j))
-          cal_err%WF(i,j) = errmul
-       ENDDO
+             IF (is_same .AND. calen == nVec) THEN
+                comVecPtr => comVecP
+                errmul = errmulP
+                Istat = statusP
+             ELSE
+                CALL QuadInterpW (cal_time%WF(cal1:cal2,i,j), &
+                     cal_weight%WF(cal1:cal2,i,j), cal_qual%WF(cal1:cal2,i,j), &
+                     time, calen, comVec(0:calen-1), errmul, Istat)
+
+                comVecPtr => comVec
+
+                !! Save for next call:
+
+                tVecP = cal_time%WF(:,i,j)
+                qualVecP = cal_qual%WF(:,i,j)
+                timeP = time
+                statusP = Istat
+             ENDIF
+             cal_interp%WF(i,j) = SUM (comVecPtr(0:calen-1) * &
+                  cal_cnts%WF(cal1:cal2,i,j))
+             cal_err%WF(i,j) = errmul
+          ENDDO
+       ENDIF
     ENDDO
 
     IF (L1Config%Calib%CalibDACS) THEN
@@ -508,29 +535,39 @@ is_same = .true.       !! TEST!!!
           cal1 = BankCalInd(1)%DACS(j)
           cal2 = BankCalInd(2)%DACS(j)
           calen = cal2 - cal1 + 1
-          DO i = 1, DACSchans
+          calMAFs = calen / L1Config%Calib%MIFsPerMAF
 
-             IF (is_same .AND. calen == nVec) THEN
-                comVec = comVecP
-                errmul = errmulP
-                Istat = statusP
-             ELSE
-                CALL QuadInterpW (cal_time%DACS(cal1:cal2,i,j), &
-                     cal_weight%DACS(cal1:cal2,i,j), &
-                     cal_qual%DACS(cal1:cal2,i,j), time, calen, &
-                     comVec(0:calen-1), errmul, Istat)
+          IF (calMAFs < MinCalMAFs .OR. cal1 > cal_index(1) .OR. &
+               cal2 < cal_index(2)) THEN
+             cal_interp%DACS(:,j) = 0.0
+             cal_err%DACS(:,j) = 0.0
+          ELSE
+             DO i = 1, DACSchans
 
-                !! Save for next call:
+                IF (is_same .AND. calen == nVec) THEN
+                   comVecPtr => comVecP
+                   errmul = errmulP
+                   Istat = statusP
+                ELSE
+                   CALL QuadInterpW (cal_time%DACS(cal1:cal2,i,j), &
+                        cal_weight%DACS(cal1:cal2,i,j), &
+                        cal_qual%DACS(cal1:cal2,i,j), time, calen, &
+                        comVec(0:calen-1), errmul, Istat)
 
-                tVecP = cal_time%DACS(:,i,j)
-                qualVecP = cal_qual%DACS(:,i,j)
-                timeP = time
-                statusP = Istat
-             ENDIF
-             cal_interp%DACS(i,j) = &
-                  SUM (comVec(0:calen-1) * cal_cnts%DACS(cal1:cal2,i,j))
-             cal_err%DACS(i,j) = errmul
-          ENDDO
+                   comVecPtr => comVec
+
+                   !! Save for next call:
+
+                   tVecP = cal_time%DACS(:,i,j)
+                   qualVecP = cal_qual%DACS(:,i,j)
+                   timeP = time
+                   statusP = Istat
+                ENDIF
+                cal_interp%DACS(i,j) = SUM (comVecPtr(0:calen-1) * &
+                     cal_cnts%DACS(cal1:cal2,i,j))
+                cal_err%DACS(i,j) = errmul
+             ENDDO
+          ENDIF
        ENDDO
 
     ENDIF
@@ -708,6 +745,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.9  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !

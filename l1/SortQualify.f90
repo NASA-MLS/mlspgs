@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -128,8 +128,8 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
     Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
 
-    CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, Space_BO_flag, &
-         Limb_BO_flag)
+    CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, &
+         CurMAFdata%SciPkt%scAngleG, Space_BO_flag, Limb_BO_flag)
 
 !! Update MAFinfo from central MAF
 
@@ -158,12 +158,19 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use, THz_seq, THz_seq_use
     USE MLSL1Common, ONLY: SwitchBank
     USE MLSL1Rad, ONLY: BandToBanks
-
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
+    USE OutputL1B_DataTypes, ONLY: lenG
+ 
 !! Qualify the Current MAF data in the cal window
 
     CHARACTER(len=1) :: GHz_sw_pos, THz_sw_pos
+    CHARACTER(len=80) :: msg
+    CHARACTER(len=27) :: asciiUTC
     INTEGER :: MIF, last_MIF, i, band(2), bank(2), n, bno, sw
     LOGICAL :: bandMask(150)   ! large enough for the maximum MIFs
+    LOGICAL :: MoonInSpaceView, VenusInSpaceView, &
+               MoonInLimbView, VenusInLimbView
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
     CHARACTER(len=1), PARAMETER :: discard = "D"
     CHARACTER(len=1), PARAMETER :: match = "M"
@@ -200,7 +207,7 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
           CurMAFdata%ChanType(MIF)%MB = discard
           CurMAFdata%ChanType(MIF)%WF = discard
           CurMAFdata%ChanType(MIF)%DACS = discard
-         CYCLE                              !! All done for this packet
+          CYCLE                              !! All done for this packet
        ENDIF
 
 !! Rule #2: User Input qualifications:
@@ -213,19 +220,36 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
 !! Rule #4: Check for "Z"ero data
 
-       !! Set the appropriate bands to "Z"ero (as a "wall")
+       !! Set the appropriate bands to a "wall"
 
-       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%FB)
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%FB .OR. &
+            CurMAFdata%SciPkt(MIF)%DeltaAtten%FB)
           CurMAFdata%BankWall%FB = .TRUE.
        ENDWHERE
 
-       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%MB)
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%MB .OR. &
+            CurMAFdata%SciPkt(MIF)%DeltaAtten%MB)
           CurMAFdata%BankWall%MB = .TRUE.
        ENDWHERE
 
-       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%WF)
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%WF .OR. &
+            CurMAFdata%SciPkt(MIF)%DeltaAtten%WF)
           CurMAFdata%BankWall%WF = .TRUE.
        ENDWHERE
+
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%DACS .OR. &
+            CurMAFdata%SciPkt(MIF)%DeltaAtten%DACS)
+          CurMAFdata%BankWall%DACS = .TRUE.
+       ENDWHERE
+
+       IF (ANY (CurMAFdata%BankWall%FB) .OR. ANY (CurMAFdata%BankWall%MB) .OR. &
+         ANY (CurMAFdata%BankWall%WF) .OR. ANY (CurMAFdata%BankWall%DACS)) THEN
+          n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+          msg = 'Attenuation change'
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+          WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
+       ENDIF
 
 !! Rule #5: Set Switching Mirror position
 
@@ -299,6 +323,46 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
 !! Rule #6: Discard based on other qualifications such as commanded "W"alls
 
+!! Check for bright objects in Space FOV and mark as "W"alls
+
+    MoonInSpaceView = ANY (CurMAFdata%SpaceView%MoonInFOV)
+    IF (MoonInSpaceView) msg = 'Moon in Space View'
+    VenusInSpaceView = ANY (CurMAFdata%SpaceView%VenusInFOV)
+    IF (VenusInSpaceView) msg = 'Venus in Space View'
+    IF (MoonInSpaceView .OR. VenusInSpaceView) THEN   ! Mark all banks as Walls
+       n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg)//' at '//asciiUTC)
+       WRITE (L1BFileInfo%LogId, *) ''
+       WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+       WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
+       CurMAFdata%BankWall%FB = .TRUE.
+       CurMAFdata%BankWall%MB = .TRUE.
+       CurMAFdata%BankWall%WF = .TRUE.
+       CurMAFdata%BankWall%DACS = .TRUE.
+    ENDIF
+
+!! Check for bright objects in Limb FOV and mark as "D"iscards
+
+    MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV)
+    IF (MoonInLimbView) msg = 'Moon in Limb View'
+    VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV)
+    IF (VenusInLimbView) msg = 'Venus in Limb View' 
+    IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
+       n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg)//' at '//asciiUTC)
+       WRITE (L1BFileInfo%LogId, *) ''
+       WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+       DO i = 1, lenG
+          IF (CurMAFdata%LimbView%MoonInFOV(i) .OR. &
+               CurMAFdata%LimbView%VenusInFOV(i)) THEN
+             CurMAFdata%ChanType(i)%FB = discard
+             CurMAFdata%ChanType(i)%MB = discard
+             CurMAFdata%ChanType(i)%WF = discard
+             CurMAFdata%ChanType(i)%DACS = discard
+          ENDIF
+       ENDDO
+    ENDIF
+
 !! Initialize Wall MIFs to beginning of MAF
 
     CurMAFdata%WallMIF%FB = 0
@@ -312,6 +376,11 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
     IF (ANY (CurMAFdata%SciPkt(1:last_MIF)%BandSwitch(1) /= &
          CurMAFdata%SciPkt(0)%BandSwitch(1))) THEN
        CurMAFdata%BankWall%DACS(1) = .TRUE.
+       n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+       msg = 'DACS 1 switch change'
+       WRITE (L1BFileInfo%LogId, *) ''
+       WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+       WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
     ENDIF
 
 !! Check FBs for switch changes:
@@ -321,6 +390,11 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
        IF (ANY (CurMAFdata%SciPkt(1:last_MIF)%BandSwitch(i) /= &
             CurMAFdata%SciPkt(0)%BandSwitch(i))) THEN
           CurMAFdata%BankWall%FB(SwitchBank(i)) = .TRUE.
+          n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+          WRITE (msg, '("FB switch ", i1, " change")') i
+          WRITE (L1BFileInfo%LogId, *) ''
+          WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+          WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
 print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
           WHERE (CurMAFdata%SciPkt%BandSwitch(i) > 0)
              bandMask = .TRUE.  ! contains real band numbers
@@ -509,6 +583,7 @@ print *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
           ELSE
              CalWin%MAFdata(central)%BankCalInd%DACS(bank) = (/ 0, 0 /)
           ENDIF
+print *, 'DACS, wall: ', bank, CalWin%MAFdata%BankWall%DACS(bank)
        ELSE
           CalWin%MAFdata(central)%BankCalInd%DACS(bank) = cal_range
        ENDIF
@@ -546,6 +621,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.9  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
