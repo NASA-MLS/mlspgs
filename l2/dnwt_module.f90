@@ -202,9 +202,10 @@ module DNWT_MODULE
   character(len=*), parameter :: ME = 'DNWT'
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -478,6 +479,8 @@ contains
       spl = c0
       sq = c0
       axmax = aj%axmax
+      aj%dxdxl = 0.0 ! So it's not undefined, because the user isn't expected
+      ! to set it when starting.
    20 ifl = nf_evalf
       nflag = ifl
       return
@@ -974,6 +977,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.8  2001/05/17 20:15:28  vsnyder
+! Make sure aj%dxdxl has an initial value
+!
 ! Revision 2.7  2001/05/12 01:10:24  vsnyder
 ! Correct 'iter' calculation, add 'FlagName' subroutine
 !
