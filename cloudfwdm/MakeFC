@@ -110,13 +110,21 @@ PROG=libcloud.a
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs) $(libfwdmdl_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
@@ -177,6 +185,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.8  2001/09/07 22:23:52  pwagner
+# Triggers build on changes in lib
+#
 # Revision 1.7  2001/08/22 22:46:13  pwagner
 # Made reecho.sh a prerequisite where appropriate
 #

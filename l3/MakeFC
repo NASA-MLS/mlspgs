@@ -100,7 +100,9 @@ PROG=mlsl3d
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
@@ -115,7 +117,10 @@ $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 		;; \
 	esac 
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3d ghostbuster
@@ -177,6 +182,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.26  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 1.25  2001/08/15 21:01:04  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #

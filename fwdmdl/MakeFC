@@ -91,14 +91,20 @@ PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+
 #$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(CONFDIR)/$(MLSCFILE) \
+   $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-l2_test: libfwdmdl.a
+l2_test: $(PLATFORMS)/$(MLSCONFG)/$(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
@@ -160,6 +166,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.0  2001/09/17 20:26:26  livesey
+# New forward model
+#
 # Revision 1.23  2001/09/07 22:23:52  pwagner
 # Triggers build on changes in lib
 #

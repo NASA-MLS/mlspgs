@@ -107,7 +107,9 @@ PROG=mlsl3m
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	@case "$(FFTW_ROOT)" in \
 	"") \
 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
@@ -119,11 +121,17 @@ $(PROG): $(PROG_prereqs)
 		;; \
 	esac 
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) 
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmls_objs)/libmls.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_f90) $(libmls_objs)/libmls.a \
-               $(CONFDIR)/$(MLSCFILE)
+               $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
+	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	   rm -f $(libmlsl3_objs)/libmlsl3.a ; \
+	fi ; \
 	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3m ghostbuster
@@ -185,6 +193,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.5  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 1.4  2001/08/15 21:01:05  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #
