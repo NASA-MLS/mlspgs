@@ -24,6 +24,7 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLpack
      module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
+          & PVMIDLPACKLogical, &
           & PVMIDLpackIntarr1, PVMIDLpackIntarr2, PVMIDLpackIntarr3, &
           & PVMIDLpackRealarr1, PVMIDLpackRealarr2, PVMIDLpackRealarr3,&
           & PVMIDLpackLogArr1
@@ -31,20 +32,23 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLunpack
      module procedure PVMIDLunpackstring, PVMIDLunpackInteger, PVMIDLunpackReal, &
+          & PVMIDLPACKLogical, &
           & PVMIDLunpackIntarr1, PVMIDLunpackIntarr2, PVMIDLunpackIntarr3, &
           & PVMIDLunpackRealarr1, PVMIDLunpackRealarr2, PVMIDLunpackRealarr3, &
           & PVMIDLunpackLogarr1
   end interface
 
   interface PVMIDLSend
-     module procedure PVMIDLSendString, PVMIDLSendInteger, PVMIDLSendReal,&
+     module procedure PVMIDLSendString, PVMIDLSendInteger, PVMIDLSendReal, &
+          & PVMIDLSendLogical, &
           & PVMIDLSendIntarr1, PVMIDLSendIntarr2, PVMIDLSendIntarr3, &
           & PVMIDLSendRealarr1, PVMIDLSendRealarr2, PVMIDLSendRealarr3, &
           & PVMIDLSendLogarr1
   end interface
 
   interface PVMIDLReceive
-     module procedure PVMIDLReceiveString, PVMIDLReceiveInteger, PVMIDLReceiveReal,&
+     module procedure PVMIDLReceiveString, PVMIDLReceiveInteger, PVMIDLReceiveReal, &
+          & PVMIDLReceiveLogical, &
           & PVMIDLReceiveIntarr1, PVMIDLReceiveIntarr2, PVMIDLReceiveIntarr3, &
           & PVMIDLReceiveRealarr1, PVMIDLReceiveRealarr2, PVMIDLReceiveRealarr3, &
           & PVMIDLReceiveLogarr1
@@ -94,6 +98,20 @@ contains
     ! Now pack the data itself
     if (info==0) call pvmf90pack(value,info)
   end subroutine PVMIDLpackReal
+
+  subroutine PVMIDLpackLogical(value,info)
+    logical, intent(in) :: value
+    integer, intent(out) :: info
+
+    integer :: intValue
+    ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
+    call pvmf90pack( (/0,3/), info)
+
+    ! Now pack the data itself
+    intValue = 0
+    if ( value ) intValue=1
+    if (info==0) call pvmf90pack(intValue,info)
+  end subroutine PVMIDLpackLogical
 
   subroutine PVMIDLpackIntarr1(values,info)
     integer, intent(in), dimension(:) :: values
@@ -262,6 +280,24 @@ contains
     end if
   end subroutine PVMIDLunpackReal
      
+  subroutine PVMIDLunpackLogical(value,info)
+    logical, intent(out) :: value
+    integer, intent(out) :: info
+
+    integer, dimension(2) :: details
+    integer :: intValue
+    ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/=(/0,3/))) info= -200
+
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(intValue,info)
+    end if
+    value = intValue /= 0
+  end subroutine PVMIDLunpackLogical
+
   subroutine PVMIDLunpackIntarr1(values,info)
     integer, intent(out), dimension(:) :: values
     integer, intent(out) :: info
@@ -471,6 +507,22 @@ contains
     if (info==0) call PVMFSend(tid, myMsgTag,info)
   end subroutine PVMIDLSendReal
 
+  subroutine PVMIDLSendLogical(value,tid,info,msgTag)
+    logical, intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
+
+    integer :: bufferID, MYMSGTAG
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value, info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendLogical
+
   subroutine PVMIDLSendIntArr1(value,tid, info, msgTag)
     integer, dimension(:), intent(in) :: value
     integer, intent(in) :: tid
@@ -652,6 +704,28 @@ contains
     endif       
     call PVMIDLUnpack(value,info)
   end subroutine PVMIDLReceiveReal
+
+  subroutine PVMIDLReceiveLogical(value,tid,info, noBlock, msgTag)
+    logical, intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
+
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveLogical
 
   subroutine PVMIDLReceiveIntArr1(value,tid,info, noBlock, msgTag)
     integer, dimension(:), intent(out) :: value
