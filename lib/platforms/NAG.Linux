@@ -14,10 +14,15 @@ srclib = ../../srclib
 
 # Set paths for finding source files (different from .o and .mod)
 
+# include files %.fneeded by lib are in $(blaslib)
+blaslib = ../../blas
+
+# Set paths for finding source files (different from .o and .mod)
+
 vpath %.o ./
 vpath %.f90 ../ ../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
-vpath %.f $(PGSINC)
+vpath %.f $(PGSINC) $(blaslib)
 
 FC = f95
 
@@ -45,12 +50,15 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $<
 
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
 
 # Modules needed by test programs
 # They currently compile only under Lahey's LF95
@@ -59,6 +67,9 @@ MATRIX_OBJS =
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.7  2001/02/05 23:12:30  pwagner
+# DUSTY now based directly on FOPTS
+#
 # Revision 1.6  2001/01/13 00:24:42  pwagner
 # uses lib/machines/MLSCONFG/machine.f90
 #

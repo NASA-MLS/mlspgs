@@ -53,9 +53,15 @@ PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
 
 #--------------------- end of hardwired PVM_OBJS
 
+ifdef BLAS
+   blas_objs =
+else
+   blas_objs = sdot.o ddot.o
+endif
+
 ${OBJS}: machine.o
 
-libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS}
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
 	ar ru $@ $?
 	ar d $@ SDPToolkit.o $(TEST_ONLY)
 #libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
@@ -103,6 +109,9 @@ L1BData.o:
 #	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.14  2001/02/06 00:45:44  pwagner
+# DUSTY unnecessary for L2GPData
+#
 # Revision 1.13  2001/01/23 19:05:53  pwagner
 # With optional PVM support
 #
