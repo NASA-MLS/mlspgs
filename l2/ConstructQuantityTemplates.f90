@@ -35,6 +35,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TREE_TYPES, only: N_SET_ONE
   use VGrid, only: VGrid_T
   use init_tables_module, ONLY: LIT_INDICES
+  use dumper, only: dump
   implicit none
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
@@ -164,7 +165,7 @@ contains ! =====     Public Procedures     =============================
         quantityType = value
         type_field = son
       case ( f_logBasis )
-        logBasis = (value == l_true)
+        logBasis = (value == l_true)    ! But this seems to get hosed !???? VAN!!!!
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
       case ( f_radiometer )
@@ -271,7 +272,11 @@ contains ! =====     Public Procedures     =============================
     ! Now fill up the remaining items, e.g. name etc.
 
     qty%unit = family
-    qty%logBasis = logBasis
+    call output('In the ideal world I would be setting logBasis to: ')
+    call output(logBasis)
+    call output(' for ')
+    call display_string(name,advance='yes')
+    qty%logBasis = .false. ! logBasis
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
@@ -563,6 +568,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.13  2001/03/21 02:13:30  livesey
+! Bug with logBasis, put in a work around. Will need to fix later
+!
 ! Revision 2.12  2001/03/17 02:23:55  livesey
 ! Added logBasis (and set value for badData)
 !
