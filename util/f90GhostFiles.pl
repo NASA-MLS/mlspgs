@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # Usage: f90GhostFiles.pl 'b_dir' 's_dir1' 's_dir2' ..
 #
@@ -177,9 +177,8 @@ print STDERR "file: $file \n" unless !($debug);
       while (<FILE>) {
          if ($got_module ne "true") {
 #print STDERR "line: $_ \n" unless !($debug);
-#          if ($_ =~  /^\s*module\s+([^\s!]+)/) {
-          if ($_ =~  /^\s*[mM][oO][dD][uU][lL][eE]\s+([^\s!]+)/) {
-            /^\s*module\s+([^\s!]+)/i &&
+          if (/^\s*module\s+(\w+)/i) {
+            /^\s*module\s+(\w+)/i &&
             ($modulename = &toLower($1) . ".f90") =~ s/\.f90$/.mod/;
              $got_module = "true";
 #print STDERR "line where got module was: $_ \n" unless !($debug);
@@ -277,6 +276,9 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.2  2001/11/26 23:46:45  pwagner
+# Now works better with Absoft--test lower-case against module names
+#
 # Revision 1.1  2001/05/01 17:03:31  pwagner
 # First commit
 #

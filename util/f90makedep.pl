@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # Usage: f90makedep.pl
 #
@@ -444,10 +444,10 @@ sub MakeDependsf90 {
       while (<FILE>) {
          # This bit of filtering is to exclude statements that begin 
          # module procedure ...
-         if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {    
+         if ( /^\s*module\s+procedure/i ) {    
             $value = $key;                                                
          } else {                                                        
-           /^\s*module\s+([^\s!]+)/i &&
+           /^\s*module\s+(\w+)/i &&
             ($filename{&toLower($1)} = $file) =~ s/\.f90$/.o/;
          }
        }
@@ -496,10 +496,10 @@ sub MakeDependsf90 {
           while (<FILE>) {
              # This bit of filtering is to exclude statements that begin 
              # module procedure ...
-             if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {
+             if ( /^\s*module\s+procedure/i ) {
                 $value = $key;
              } else {
-               /^\s*module\s+([^\s!]+)/i &&
+               /^\s*module\s+(\w+)/i &&
                 ($key = &toLower($1));
     #            ($filename{&toLower($1)} = "$prependant" . "$file") =~ s/\.f90$/.o/;
              }
@@ -581,10 +581,19 @@ sub MakeDependsf90 {
    foreach $file (<*.f90>) {
       open(FILE, $file);
       while (<FILE>) {
+         #/^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
+         #/^\s*include\s+["\'](\w+)["\']/i && push(@incs, $1);
          /^\s*include\s+["\']([^"\']+)["\']/i && push(@incs, $1);
-         /^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
+         /^\s*use\s+(\w+)/i && push(@modules, &toLower($1));
          }
 
+      if ($DEBUG) {
+           print "modules used by $file\n";
+           foreach $module (@modules) {
+             print $module, " ";
+           }
+           print "\n";
+         }
       if (defined @incs || defined @modules || $var_1_mod) {
          ($objfile = $file) =~ s/\.f90$/.o/;
          undef @dependencies;
@@ -675,6 +684,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.10  2002/07/18 17:58:49  pwagner
+# .o now depends on file_name even if .mod mediated
+#
 # Revision 1.9  2002/07/01 20:51:22  pwagner
 # Rebuilds object file when deleted
 #
