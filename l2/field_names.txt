@@ -42,6 +42,7 @@ decay
 destination
 destroyJacobian
 diagonal
+do_baseline
 do_conv
 do_freq_avg
 dontMask
@@ -186,6 +187,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.7  2001/10/02 20:28:38  livesey
+# Added do_baseline
+#
 # Revision 2.6  2001/09/20 20:54:25  pwagner
 # Replaced ignoreMask with dontMask
 #
