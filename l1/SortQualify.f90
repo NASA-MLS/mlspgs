@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,12 +6,10 @@ MODULE SortQualify ! Sort and qualify the L0 data
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MAFinfo
+  USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs
   USE L0_sci_tbls, ONLY: SciMAF
-  USE EngUtils, ONLY: NextEngMAF
   USE EngTbls, ONLY: EngMAF
-  USE SciUtils, ONLY: NextSciMAF
-  USE Calibration, ONLY: CalWin, MAFdata_T, UpdateCalVectors
+  USE Calibration, ONLY: CalWin, MAFdata_T, UpdateCalVectors, WeightsFlags_T
 
   IMPLICIT NONE
 
@@ -34,16 +32,19 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
+    USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T
 
     LOGICAL, INTENT (OUT) :: more_data
     LOGICAL, INTENT (OUT) :: CalWinFull
 
-    INTEGER :: sci_MAFno, dif_MAFno, i
+    INTEGER :: sci_MAFno, dif_MAFno, i, ios, windx
     INTEGER, SAVE :: prev_MAFno
     TYPE (MAFdata_T) :: EmptyMAFdata
     REAL(r8), SAVE :: prev_secTAI
     REAL :: MAF_dur, MIF_dur
     INTEGER :: nom_MIFs
+    TYPE (WeightsFlags_T) :: WeightsFlags
+    TYPE (LOG_ARR1_PTR_T) :: Space_BO_Flag(3), Limb_BO_Flag(3)
 
     nom_MIFs = L1Config%Calib%MIFsPerMAF
 
@@ -58,37 +59,28 @@ CONTAINS
        EmptyMAFdata%ChanType(i)%DACS = "D"
     ENDDO
     EmptyMAFdata%EMAF%MIFsPerMAF = nom_MIFs
+    EmptyMAFdata%WeightsFlags%recomp_MAF = .TRUE.
 
-    CALL NextEngMAF (more_data)
+!! Get the next MAF's worth of data:
 
+    READ (unit=L1BFileInfo%MAF_data_unit, iostat=ios) WeightsFlags
+    more_data = (ios == 0)
     IF (.NOT. more_data) RETURN    !! Nothing more to do
 
-    CALL NextSciMAF (more_data)
+    READ (unit=L1BFileInfo%MAF_data_unit, iostat=ios) EngMAF
+    more_data = (ios == 0)
+    IF (.NOT. more_data) RETURN    !! Nothing more to do
 
+    READ (unit=L1BFileInfo%MAF_data_unit, iostat=ios) SciMAF
+    more_data = (ios == 0)
     IF (.NOT. more_data) RETURN    !! Nothing more to do
 
     sci_MAFno = SciMAF(0)%MAFno
-    IF (EngMAF%MAFno < sci_MAFno) THEN   ! Catch up to the Science
-       DO
-          CALL NextEngMAF (more_data)
-          IF (EngMAF%MAFno == sci_MAFno) EXIT
-          IF (.NOT. more_data) RETURN    !! Nothing more to do
-       ENDDO
-    ELSE IF (EngMAF%MAFno > sci_MAFno) THEN   ! Catch up to the Engineering
-       DO
-          CALL NextSciMAF (more_data)
-          sci_MAFno = SciMAF(0)%MAFno
-          IF (EngMAF%MAFno == sci_MAFno) EXIT
-          IF (.NOT. more_data) RETURN    !! Nothing more to do
-       ENDDO
-    ENDIF
+
 print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     MIF_dur = L1Config%Calib%MIF_duration
     MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
-
-!! Eventually, hope to have a unique MAF counter to use instead since this
-!! method is kind of kludgey
 
     IF (CalWin%current > 0) THEN
        dif_MAFno = sci_MAFno - prev_MAFno
@@ -120,11 +112,32 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CurMAFdata%last_MIF = EngMAF%MIFsPerMAF - 1
     CurMAFdata%BandSwitch =  &
      CurMAFdata%SciPkt(CurMAFdata%last_MIF)%BandSwitch
+    CalWin%MAFdata(1)%start_index = 0
+    CalWin%MAFdata(1)%end_index = CalWin%MAFdata(1)%last_MIF
+    DO windx = 2, CalWin%current
+       CalWin%MAFdata(windx)%start_index = CalWin%MAFdata(windx-1)%end_index + 1
+       CalWin%MAFdata(windx)%end_index = CalWin%MAFdata(windx)%start_index + &
+            CalWin%MAFdata(windx)%last_MIF
+    ENDDO
+    CurMAFdata%WeightsFlags = WeightsFlags
+
+!! Check for Bright Objects in FOVs
+
+    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%SunInFOV
+    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%MoonInFOV
+    Space_BO_flag(3)%ptr => CurMAFdata%SpaceView%VenusInFOV
+    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%SunInFOV
+    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%MoonInFOV
+    Limb_BO_flag(3)%ptr => CurMAFdata%LimbView%VenusInFOV
+
+    CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, Space_BO_flag, &
+         Limb_BO_flag)
 
 !! Update MAFinfo from central MAF
 
     MAFinfo%startTAI = CalWin%MAFdata(CalWin%central)%SciPkt(0)%secTAI
-    MAFinfo%MIFsPerMAF = nom_MIFS    ! TEST!!!
+    MAFinfo%MIFsPerMAF = Nom_MIFs  ! need a fixed size for L1BOA uses
+    MAFinfo%MIF_dur = MIF_dur
     MAFinfo%integTime = MIF_dur - L1Config%Calib%MIF_DeadTime
 
 !! Determine if CalWin is full
@@ -140,7 +153,9 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
   END SUBROUTINE UpdateCalWindow
 
+!=============================================================================
   SUBROUTINE QualifyCurrentMAF
+!=============================================================================
 
     USE MLSL1Config, ONLY: GHz_seq, GHz_seq_use, THz_seq, THz_seq_use
     USE MLSL1Common, ONLY: SwitchBank
@@ -156,6 +171,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CHARACTER(len=1), PARAMETER :: match = "M"
     CHARACTER(len=1), PARAMETER :: override = "O"
     CHARACTER(len=1), PARAMETER :: undefined = "U"
+    INTEGER, PARAMETER :: MaxMIFno = (MaxMIFs - 1)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
@@ -167,7 +183,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CurMAFdata%Nominal%DACS = .TRUE.
 print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
-    DO MIF = 0, (SIZE (CurMAFdata%SciPkt) - 1) !! Check each packet
+    DO MIF = 0, MaxMIFno !! Check each packet
 
 !! Initialize to "U"ndefined:
 
@@ -265,15 +281,6 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
           END WHERE
        ENDIF
 
-       !! THz Module:
-
-       !! Filterbanks 15 through 19
-
-!!$       WHERE (CurMAFdata%ChanType(MIF)%FB(:,15:19) == undefined)
-!!$          CurMAFdata%ChanType(MIF)%FB(:,15:19) = Thz_sw_pos
-!!$          !! NOTE: The THz module could be using FB 12!
-!!$       END WHERE
-
        CurMAFdata%SciPkt(MIF)%GHz_sw_pos = GHz_sw_pos
 
     ENDDO
@@ -335,7 +342,9 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
 
   END SUBROUTINE QualifyCurrentMAF
 
+!=============================================================================
   SUBROUTINE QualifyWindow
+!=============================================================================
 
   USE MLSL1Common, ONLY: MBnum, WFnum, DACSnum, GHzNum
 
@@ -343,20 +352,12 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
 
     INTEGER, PARAMETER :: MaxWin = 10
     INTEGER :: i, indx(MaxWin) = (/ (i, i=1, MaxWin) /), wallindx(MaxWin)
-    INTEGER :: bank, MIF, MIF_offset, minwall, maxwall, windx
+    INTEGER :: bank, MIF, minwall, maxwall
     INTEGER :: cal_range(2), central, current
 
 !! Update start/end indexes of each MAF in the calibration window
 
     current = CalWin%current
-    DO windx = 1, current
-       MIF_offset = SUM(CalWin%MAFdata(1:windx)%EMAF%MIFsPerMAF) - &
-            CalWin%MAFdata(1)%EMAF%MIFsPerMAF  ! MIF offset from beginning of
-                                               ! Calibration Window
-       CalWin%MAFdata(windx)%start_index = MIF_offset
-       CalWin%MAFdata(windx)%end_index = MIF_offset + &
-            CalWin%MAFdata(windx)%last_MIF
-    ENDDO
 
     cal_range(1) = CalWin%MAFdata(1)%start_index
     cal_range(2) = CalWin%MAFdata(current)%end_index
@@ -535,6 +536,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.6  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

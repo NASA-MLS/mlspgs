@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,8 +6,8 @@ MODULE Calibration ! Calibration data and routines
 !=============================================================================
 
   USE MLSL1Common, ONLY: Chan_R_T, Chan_R8_T, FBchans, FBnum, MBchans, MBnum, &
-       WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_gain, &
-       deflt_zero, R8, tau
+       WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_zero, R8, &
+       tau
   USE L0_sci_tbls, ONLY: Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE Interpolation, ONLY : QuadInterpW
@@ -16,9 +16,9 @@ MODULE Calibration ! Calibration data and routines
 
   PRIVATE
 
-  PUBLIC :: CalWin, CalWin_T, MAFdata_T, BankInt_T, BankLogical_T, Chan_type_T
-  PUBLIC :: limb_time, limb_counts, space_interp, target_interp, &
-       target_counts, space_err, target_err, space_weight, target_weight
+  PUBLIC :: CalWin, CalWin_T, MAFdata_T, BankInt_T, BankLogical_T, &
+       Chan_type_T, WeightsFlags_T, Cal_R8_T, BrightObjects_T
+  PUBLIC :: limb_cnts, space_interp, target_interp, space_err, target_err, Chi2
 
   PUBLIC :: Calibrate, InitCalibWindow, UpdateCalVectors
 
@@ -55,6 +55,21 @@ MODULE Calibration ! Calibration data and routines
      INTEGER :: DACS(DACSnum)      ! DACS filters
   END TYPE BankInt_T
 
+  !! Weights Flags type
+
+  TYPE WeightsFlags_T
+     INTEGER :: MAFno
+     LOGICAL :: recomp_MAF, recomp_S, recomp_T
+  END TYPE WeightsFlags_T
+
+  !! Bright Objects type
+
+  TYPE BrightObjects_T
+     LOGICAL :: SunInFOV(0:MaxMIFs-1)
+     LOGICAL :: MoonInFOV(0:MaxMIFs-1)
+     LOGICAL :: VenusInFOV(0:MaxMIFs-1)
+  END TYPE BrightObjects_T
+
   !! Science and Engineering data for 1 MAF:
 
   TYPE MAFdata_T
@@ -65,6 +80,8 @@ MODULE Calibration ! Calibration data and routines
      TYPE (BankLogical_T) :: Nominal   ! nominal switching flag
      TYPE (BankInt_T) :: BankCalInd(2) ! start & end indexes for calib
      TYPE (BankInt_T) :: WallMIF       ! MIF for start of wall
+     TYPE (BrightObjects_T) :: LimbView, SpaceView ! Bright Objects in FOV flags
+     TYPE (WeightsFlags_T) :: WeightsFlags
      INTEGER :: start_index, end_index  ! start & end indexes within cal vectors
      INTEGER :: last_MIF
      INTEGER :: BandSwitch(5)           ! band switch positions
@@ -72,11 +89,13 @@ MODULE Calibration ! Calibration data and routines
 
   !! Calibration window:
 
+  INTEGER, PARAMETER :: WinMAFs = 6     ! current window size in MAFs
+
   TYPE CalWin_T
      INTEGER :: size        ! size in MAFs
      INTEGER :: current     ! current index for new data
      INTEGER :: central     ! central index to calibrate
-     TYPE (MAFdata_T), ALLOCATABLE, DIMENSION (:) :: MAFdata
+     TYPE (MAFdata_T) :: MAFdata(WinMAFs)
   END TYPE CalWin_T
 
   TYPE (CalWin_T), TARGET :: CalWin
@@ -84,67 +103,49 @@ MODULE Calibration ! Calibration data and routines
 
   !! Space and Target calibration vectors:
 
-  INTEGER, PARAMETER :: max_cal_index = 2047
+  INTEGER, PARAMETER :: max_cal_index = WinMAFs * 150 - 1
 
-  TYPE (Chan_R8_T), TARGET :: space_time(0:max_cal_index)   ! Space times
-  TYPE (Chan_R8_T), TARGET :: space_counts(0:max_cal_index) ! Space counts
-  TYPE (Chan_R8_T), TARGET :: space_interp(0:MaxMIFS-1)     ! Space interpolate
-  TYPE (Chan_R8_T), TARGET :: space_err(0:MaxMIFS-1)        ! Space error
-  TYPE (Chan_R8_T), TARGET :: target_time(0:max_cal_index)  ! Target times
-  TYPE (Chan_R8_T), TARGET :: target_counts(0:max_cal_index)! Target counts
-  TYPE (Chan_R8_T), TARGET :: target_interp(0:MaxMIFS-1)    ! Target interpolate
-  TYPE (Chan_R8_T), TARGET :: target_err(0:MaxMIFS-1)       ! Target error
+  TYPE (Chan_R8_T) :: space_interp(0:MaxMIFS-1)     ! Space interpolate
+  TYPE (Chan_R8_T) :: space_err(0:MaxMIFS-1)        ! Space error
+  TYPE (Chan_R8_T) :: target_interp(0:MaxMIFS-1)    ! Target interpolate
+  TYPE (Chan_R8_T) :: target_err(0:MaxMIFS-1)       ! Target error
 
-  TYPE Chan_Int_T
-     INTEGER :: FB(FBchans,FBnum)          ! standard filter banks
-     INTEGER :: MB(MBchans,MBnum)          ! mid-band filter banks
-     INTEGER :: WF(WFchans,WFnum)          ! wide filters
-     INTEGER :: DACS(DACSchans,DACSnum)    ! DACS filters
-  END TYPE Chan_Int_T
+  !! Counts, times, weights:
 
-  !! Quality vectors:
+  TYPE Cal_R8_T
+     REAL(r8) :: FB(0:max_cal_index,FBchans,FBnum)
+     REAL(r8) :: MB(0:max_cal_index,MBchans,MBnum)
+     REAL(r8) :: WF(0:max_cal_index,WFchans,WFnum)
+     REAL(r8) :: DACS(0:max_cal_index,DACSchans,DACSnum)
+  END TYPE Cal_R8_T
+  TYPE (Cal_R8_T) :: space_cnts, target_cnts, limb_cnts
+  TYPE (Cal_R8_T) :: space_time, target_time, limb_time
+  TYPE (Cal_R8_T) :: space_weight, target_weight
 
-  TYPE (Chan_Int_T), TARGET :: space_qual(0:max_cal_index)
-  TYPE (Chan_Int_T), TARGET :: target_qual(0:max_cal_index)
+  TYPE Cal_Int_T
+     INTEGER :: FB(0:max_cal_index,FBchans,FBnum)
+     INTEGER :: MB(0:max_cal_index,MBchans,MBnum)
+     INTEGER :: WF(0:max_cal_index,WFchans,WFnum)
+     INTEGER :: DACS(0:max_cal_index,DACSchans,DACSnum)
+  END TYPE Cal_Int_T
+  TYPE (Cal_Int_T) :: space_qual, target_qual, dum_qual
 
-  !! Weighting vectors:
+  !! Chi square:
 
-  TYPE (Chan_R8_T) :: space_weight(0:max_cal_index)
-  TYPE (Chan_R8_T) :: target_weight(0:max_cal_index)
-
-  !! Limb time indexes:
-
-  TYPE (Chan_R8_T), TARGET :: limb_time(0:max_cal_index)    ! Limb times
-  TYPE (Chan_R8_T), TARGET :: limb_counts(0:max_cal_index)  ! Limb counts
-
-  TYPE (Chan_Int_T), TARGET :: dum_qual(0:max_cal_index)    ! Dummy quality
-
-  !! Default comVec vector:
-
-  TYPE ComVec_T
-     REAL(r8), DIMENSION(:), ALLOCATABLE :: Space
-     REAL(r8), DIMENSION(:), ALLOCATABLE :: Target
-  END TYPE ComVec_T
-
-  TYPE (ComVec_T), DIMENSION(:), ALLOCATABLE, TARGET, SAVE :: GHz_comVec
-
-  !! Default errmul vector:
-
-  TYPE ErrMul_T
-     REAL(r8) :: Space
-     REAL(r8) :: Target
-  END TYPE ErrMul_T
-
-  TYPE (ErrMul_T), DIMENSION(:), ALLOCATABLE, TARGET, SAVE :: GHz_errmul
-
-  !! chi square:
-
-  TYPE (Chan_R_T) :: chi2
+  TYPE (Chan_R_T) :: Chi2
 
   !! Important calibration private variables:
 
   INTEGER, SAVE :: window_MAFs, MIFsPerMAF, last_MIF
-  CHARACTER(len=1), DIMENSION(:,:), ALLOCATABLE, SAVE :: CalSwSeq, ComVecSwSeq
+  CHARACTER(len=1) :: CalSwSeq(0:max_cal_index) = " "
+  CHARACTER(len=1) :: ComVecSwSeq(0:max_cal_index) = "D"
+  INTEGER :: cal_qual(0:max_cal_index)
+  REAL(r8) :: cal_weight(0:max_cal_index), cal_time(0:max_cal_index)
+  REAL(r8) :: comVec(0:MaxMIFS-1,0:max_cal_index)
+  REAL(r8) :: GHz_comVec_S(0:MaxMIFS-1,0:max_cal_index)
+  REAL(r8) :: GHz_comVec_T(0:MaxMIFS-1,0:max_cal_index)
+  REAL(r8) :: errmul(0:MaxMIFS-1)
+  REAL(r8) :: GHz_errmul_S(0:MaxMIFS-1), GHz_errmul_T(0:MaxMIFS-1)
 
 CONTAINS
 
@@ -152,7 +153,7 @@ CONTAINS
  SUBROUTINE InitCalibWindow
 !=============================================================================
 
-    USE MLSL1Config, ONLY: L1Config, GHz_seq
+    USE MLSL1Config, ONLY: L1Config
 
     !! Initialize Calibration window data structures
 
@@ -161,11 +162,6 @@ CONTAINS
     window_MAFs = L1Config%Calib%CalWindow
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     last_MIF = MIFsPerMAF - 1
-
-    !! Allocate space for a calibration window's worth of science & eng data:
-
-    ALLOCATE (CalWin%MAFdata(window_MAFs))
-    ALLOCATE (CalSwSeq(0:last_MIF,window_MAFs))  ! Calibration Sw sequence
 
     !! Initialize indexes:
 
@@ -184,16 +180,14 @@ CONTAINS
 
     !! Initialize space and target weighting vectors:
 
-    DO i = 0, max_cal_index
-       space_weight(i)%FB = 1.0d0
-       space_weight(i)%MB = 1.0d0
-       space_weight(i)%WF = 1.0d0
-       space_weight(i)%DACS = 1.0d0
-       target_weight(i)%FB = 1.0d0
-       target_weight(i)%MB = 1.0d0
-       target_weight(i)%WF = 1.0d0
-       target_weight(i)%DACS = 1.0d0
-    ENDDO
+    space_weight%FB = 1.0d0
+    space_weight%MB = 1.0d0
+    space_weight%WF = 1.0d0
+    space_weight%DACS = 1.0d0
+    target_weight%FB = 1.0d0
+    target_weight%MB = 1.0d0
+    target_weight%WF = 1.0d0
+    target_weight%DACS = 1.0d0
 
   END SUBROUTINE InitCalibWindow
 
@@ -201,105 +195,85 @@ CONTAINS
   SUBROUTINE SetComVecs
 !=============================================================================
 
-    INTEGER :: i, last_cal_index, nVec, status
+    INTEGER :: i, last_cal_index
     REAL(r8) :: MIFno
-    REAL(r8), DIMENSION(:,:), ALLOCATABLE, SAVE :: cal_weight, cal_time
-    INTEGER, DIMENSION(:,:), ALLOCATABLE, SAVE :: cal_qual
-    REAL(r8), DIMENSION(:,:), ALLOCATABLE, SAVE :: comVec
-    REAL(r8), DIMENSION(:), ALLOCATABLE, SAVE :: errmul
-    LOGICAL :: done
+    LOGICAL, SAVE :: done = .FALSE.
 
-    !! Allocate default comVec and supporting vectors:
-
-    last_cal_index = MIFsPerMAF * window_MAFs - 1
-
-    IF (.NOT. ALLOCATED (GHz_comVec)) THEN
-       ALLOCATE (GHz_comVec(0:last_MIF))
-       DO i = 0, last_MIF
-          ALLOCATE (GHz_comVec(i)%Space(0:last_cal_index))
-          ALLOCATE (GHz_comVec(i)%Target(0:last_cal_index))
-       ENDDO
-       ALLOCATE (cal_weight(0:last_MIF,window_MAFs))
-       ALLOCATE (cal_qual(0:last_MIF,window_MAFs))
-       ALLOCATE (cal_time(0:last_MIF,window_MAFs))
-       ALLOCATE (comVec(0:last_MIF,0:last_cal_index))
-       ALLOCATE (errmul(0:last_MIF))
-       ALLOCATE (GHz_errmul(0:last_MIF))
-       ALLOCATE (ComVecSwSeq(0:last_MIF,window_MAFs))
-       ComVecSwSeq = "D"
-       done = .FALSE.
-    ELSE
-       done = ALL (CalSwSeq == ComVecSwSeq)  ! Check with current sequence
+    IF (ANY (calwin%mafdata%weightsflags%recomp_maf)) THEN
+       PRINT *, 'win flags: ', CalWin%MAFdata%WeightsFlags
     ENDIF
+    last_cal_index = CalWin%MAFdata(CalWin%current)%end_index
+
+    done = ALL (CalSwSeq == ComVecSwSeq)  ! Check with current sequence
 
     IF (done) RETURN   ! already done
 
+    PRINT *, 'doing comvecs...'
+
     ComVecSwSeq = CalSwSeq   ! Save for next call
 
-    MIFno = (CalWin%Central - 1) * MIFsPerMAF
+    MIFno = CalWin%MAFdata(CalWin%central)%start_index
 
     !! GHz vectors:
 
     !! Space:
 
-    cal_weight = RESHAPE (space_weight%FB(1,1), (/ MIFsPerMAF, window_MAFs /))
+    cal_weight = space_weight%FB(:,1,1)
 
     CALL CalcComVecs (cal_qual, cal_time, cal_weight, ComVecSwSeq, "S", &
-       last_cal_index, last_MIF, window_MAFs, MIFno, comVec, errmul)
+       MaxMIFs, last_cal_index, last_MIF, MIFno, comVec, errmul)
     DO i = 0, last_MIF
-       GHz_comVec(i)%Space = comVec(i,:)
-       GHz_errmul(i)%Space = errmul(i)
+       GHz_comVec_S(i,:) = comVec(i,:)
+       GHz_errmul_S(i) = errmul(i)
     ENDDO
 
     !! Target:
 
-    cal_weight = RESHAPE (target_weight%FB(1,1), (/ MIFsPerMAF, window_MAFs /))
+    cal_weight = target_weight%FB(:,1,1)
 
     CALL CalcComVecs (cal_qual, cal_time, cal_weight, ComVecSwSeq, "T", &
-       last_cal_index, last_MIF, window_MAFs, MIFno, comVec, errmul)
+       MaxMIFs, last_cal_index, last_MIF, MIFno, comVec, errmul)
     DO i = 0, last_MIF
-       GHz_comVec(i)%Target = comVec(i,:)
-       GHz_errmul(i)%Target = errmul(i)
+       GHz_comVec_T(i,:) = comVec(i,:)
+       GHz_errmul_T(i) = errmul(i)
     ENDDO
 
   END SUBROUTINE SetComVecs
 
 !=============================================================================
   SUBROUTINE CalcComVecs (cal_qual, cal_time, cal_weight, Seq, cal_type, &
-       last_cal_index, last_MIF, window_MAFs, MIFtime, comVec, errmul)
+       MaxMIFs, last_cal_index, last_MIF, MIFtime, comVec, errmul)
 !=============================================================================
 
-    INTEGER :: last_cal_index, last_MIF, window_MAFs
-    INTEGER :: cal_qual(0:last_MIF,window_MAFs)
-    REAL(r8) :: cal_time(0:last_MIF,window_MAFs)
-    REAL(r8) :: cal_weight(0:last_MIF,window_MAFs)
-    REAL(r8) :: comVec(0:last_MIF,0:last_cal_index)
-    REAL(r8) :: errmul(0:last_MIF)
-    CHARACTER(len=1) :: Seq(0:last_MIF,window_MAFs), cal_type
+    INTEGER :: last_cal_index, last_MIF, MaxMIFs
+    INTEGER :: cal_qual(0:)
+    REAL(r8) :: cal_time(0:)
+    REAL(r8) :: cal_weight(0:)
+    REAL(r8) :: comVec(0:(MaxMIFs-1),0:last_cal_index)
+    REAL(r8) :: errmul(0:)
+    CHARACTER(len=1) :: Seq(0:), cal_type
     REAL(r8) :: MIFtime
 
-    INTEGER :: i, nVec, status, w
+    INTEGER :: i, nVec, status
     REAL(r8) :: MIFno
 
     cal_time = -1
     cal_qual = 0
-    DO w = 1, window_MAFs
-       DO i = 0, last_MIF
-          IF (Seq(i,w) == cal_type) THEN
-             cal_time(i,w) = i + MIFsPerMAF * (w-1)
-             cal_qual(i,w) = 1
-          ENDIF
-       ENDDO
+    DO i = 0, last_cal_index
+       IF (Seq(i) == cal_type) THEN
+          cal_time(i) = i
+          cal_qual(i) = 1
+       ENDIF
     ENDDO
 
-    nVec = MIFsPerMAF * window_MAFs
+    nVec = last_cal_index + 1
+
     MIFno = MIFtime
 
     DO i = 0, last_MIF
 
-       CALL QuadInterpW (RESHAPE (cal_time, (/ nVec /)), &
-          RESHAPE (cal_weight, (/ nVec /)), RESHAPE (cal_qual, (/ nVec /)), &
-          MIFno, nVec, comVec(i,:), errmul(i), status)
+       CALL QuadInterpW (cal_time, cal_weight, cal_qual, MIFno, nVec, &
+            comVec(i,:), errmul(i), status)
 
        !! Next MIF in central MAF:
 
@@ -310,8 +284,8 @@ CONTAINS
   END SUBROUTINE CalcComVecs
 
 !=============================================================================
-  SUBROUTINE SetCalVectors (cal_type, last_MIF, MIF_offset, windx, &
-       time_index, cnts_index, qual_index)
+  SUBROUTINE SetCalVectors (cal_type, last_MIF, MIF_offset, cal_cnts, &
+       cal_qual, cal_time)
 !=============================================================================
 
 !! Set the calibration vectors for a particular data type
@@ -319,63 +293,54 @@ CONTAINS
     CHARACTER(LEN=1), INTENT (IN) :: cal_type 
     INTEGER, INTENT (IN) :: last_MIF
     INTEGER, INTENT (IN) :: MIF_offset
-    INTEGER, INTENT (IN) :: windx
-    TYPE (Chan_R8_T), DIMENSION(0:), INTENT(OUT) :: time_index
-    TYPE (Chan_R8_T), DIMENSION(0:), INTENT(OUT) :: cnts_index
-    TYPE (Chan_Int_T), DIMENSION(0:), INTENT (OUT) :: qual_index
+    TYPE (Cal_R8_T), INTENT (OUT) :: cal_cnts, cal_time
+    TYPE (Cal_Int_T), INTENT (OUT) :: cal_qual
 
     INTEGER :: MIF
 
-    CurMAFdata => CalWin%MAFdata(windx)  ! point to current data
+!! Initialize to not available:
+
+    cal_time%FB(MIF_offset:MIF_offset+last_MIF,:,:) = -1  ! not available
+    cal_cnts%FB(MIF_offset:MIF_offset+last_MIF,:,:) = 0
+    cal_qual%FB(MIF_offset:MIF_offset+last_MIF,:,:) = 0   ! don't use for interp
+    cal_time%MB(MIF_offset:MIF_offset+last_MIF,:,:) = -1  ! not available
+    cal_cnts%MB(MIF_offset:MIF_offset+last_MIF,:,:) = 0
+    cal_qual%MB(MIF_offset:MIF_offset+last_MIF,:,:) = 0   ! don't use for interp
+    cal_time%WF(MIF_offset:MIF_offset+last_MIF,:,:) = -1  ! not available
+    cal_cnts%WF(MIF_offset:MIF_offset+last_MIF,:,:) = 0
+    cal_qual%WF(MIF_offset:MIF_offset+last_MIF,:,:) = 0   ! don't use for interp
+    cal_time%DACS(MIF_offset:MIF_offset+last_MIF,:,:) = -1  ! not available
+    cal_cnts%DACS(MIF_offset:MIF_offset+last_MIF,:,:) = 0
+    cal_qual%DACS(MIF_offset:MIF_offset+last_MIF,:,:) = 0   ! don't use
 
     DO MIF = 0, last_MIF
 
        WHERE (CurMAFdata%ChanType(MIF)%FB == cal_type)
-          time_index(MIF_offset+MIF)%FB = &
+          cal_time%FB(MIF_offset+MIF,:,:) = &
                CurMAFdata%SciPkt(MIF)%MIFno + MIF_offset
-          cnts_index(MIF_offset+MIF)%FB = &
-               CurMAFdata%SciPkt(MIF)%FB
-          qual_index(MIF_offset+MIF)%FB = 1    ! use for interpolation
-       ELSEWHERE
-          time_index(MIF_offset+MIF)%FB = -1   ! not available
-          cnts_index(MIF_offset+MIF)%FB = 0    ! not available
-          qual_index(MIF_offset+MIF)%FB = 0    ! don't use for interpolation
+          cal_cnts%FB(MIF_offset+MIF,:,:) = CurMAFdata%SciPkt(MIF)%FB
+          cal_qual%FB(MIF_offset+MIF,:,:) = 1    ! use for interpolation
        END WHERE
 
        WHERE (CurMAFdata%ChanType(MIF)%MB == cal_type)
-          time_index(MIF_offset+MIF)%MB = &
+          cal_time%MB(MIF_offset+MIF,:,:) = &
                CurMAFdata%SciPkt(MIF)%MIFno + MIF_offset
-          cnts_index(MIF_offset+MIF)%MB = &
-               CurMAFdata%SciPkt(MIF)%MB
-          qual_index(MIF_offset+MIF)%MB = 1    ! use for interpolation
-       ELSEWHERE
-          time_index(MIF_offset+MIF)%MB = -1   ! not available
-          cnts_index(MIF_offset+MIF)%MB = 0    ! not available
-          qual_index(MIF_offset+MIF)%MB = 0    ! don't use for interpolation
+          cal_cnts%MB(MIF_offset+MIF,:,:) = CurMAFdata%SciPkt(MIF)%MB
+          cal_qual%MB(MIF_offset+MIF,:,:) = 1    ! use for interpolation
        END WHERE
 
        WHERE (CurMAFdata%ChanType(MIF)%WF == cal_type)
-          time_index(MIF_offset+MIF)%WF = &
+          cal_time%WF(MIF_offset+MIF,:,:) = &
                CurMAFdata%SciPkt(MIF)%MIFno + MIF_offset
-          cnts_index(MIF_offset+MIF)%WF = &
-               CurMAFdata%SciPkt(MIF)%WF
-          qual_index(MIF_offset+MIF)%WF = 1    ! use for interpolation
-       ELSEWHERE
-          time_index(MIF_offset+MIF)%WF = -1   ! not available
-          cnts_index(MIF_offset+MIF)%WF = 0    ! not available
-          qual_index(MIF_offset+MIF)%WF = 0    ! don't use for interpolation
+          cal_cnts%WF(MIF_offset+MIF,:,:) = CurMAFdata%SciPkt(MIF)%WF
+          cal_qual%WF(MIF_offset+MIF,:,:) = 1    ! use for interpolation
        END WHERE
 
        WHERE (CurMAFdata%ChanType(MIF)%DACS == cal_type)
-          time_index(MIF_offset+MIF)%DACS = &
+          cal_time%DACS(MIF_offset+MIF,:,:) = &
                CurMAFdata%SciPkt(MIF)%MIFno + MIF_offset
-          cnts_index(MIF_offset+MIF)%DACS = &
-               CurMAFdata%SciPkt(MIF)%DACS
-          qual_index(MIF_offset+MIF)%DACS = 1    ! use for interpolation
-       ELSEWHERE
-          time_index(MIF_offset+MIF)%DACS = -1   ! not available
-          cnts_index(MIF_offset+MIF)%DACS = 0    ! not available
-          qual_index(MIF_offset+MIF)%DACS = 0    ! don't use for interpolation
+          cal_cnts%DACS(MIF_offset+MIF,:,:) = CurMAFdata%SciPkt(MIF)%DACS
+          cal_qual%DACS(MIF_offset+MIF,:,:) = 1    ! use for interpolation
        END WHERE
 
     ENDDO
@@ -388,73 +353,54 @@ CONTAINS
 
 !! Update the Calibration Vectors used by the interpolator
 
-    INTEGER :: windx, MIF_offset, last_MIF, MIFno
-    TYPE (Chan_R8_T), DIMENSION(:), POINTER :: time_index
-    TYPE (Chan_R8_T), DIMENSION(:), POINTER :: cnts_index
-    TYPE (Chan_Int_T), DIMENSION(:), POINTER :: qual_index
+    INTEGER :: windx, MIF_offset, last_MIF, start_index, end_index
 
     DO windx = 1, CalWin%current
 
+       CurMAFdata => CalWin%MAFdata(windx)             ! point to current data
        last_MIF = CalWin%MAFdata(windx)%last_MIF
-       MIF_offset = SUM(CalWin%MAFdata(1:windx)%EMAF%MIFsPerMAF) - &
-            CalWin%MAFdata(1)%EMAF%MIFsPerMAF  ! MIF offset from beginning of
-                                               ! Calibration Window
-
+       MIF_offset = CalWin%MAFdata(windx)%start_index  ! MIF offset from
+                                                       ! beginning of
+                                                       ! Calibration Window
        !! Update Space vectors:
 
-       time_index => space_time
-       cnts_index => space_counts
-       qual_index => space_qual
-       CALL SetCalVectors ("S", last_MIF, MIF_offset, windx, &
-            time_index, cnts_index, qual_index)
+       CALL SetCalVectors ("S", last_MIF, MIF_offset, space_cnts, space_qual, &
+            space_time)
 
        !! Update Target vectors:
 
-       time_index => target_time
-       cnts_index => target_counts
-       qual_index => target_qual
-       CALL SetCalVectors ("T", last_MIF, MIF_offset, windx, &
-            time_index, cnts_index, qual_index)
+       CALL SetCalVectors ("T", last_MIF, MIF_offset, target_cnts, &
+            target_qual, target_time)
 
        !! Update Limb vectors:
 
-       time_index => limb_time
-       cnts_index => limb_counts
-       qual_index => dum_qual
-       CALL SetCalVectors ("L", last_MIF, MIF_offset, windx, &
-            time_index, cnts_index, qual_index)
+       CALL SetCalVectors ("L", last_MIF, MIF_offset, limb_cnts, dum_qual, &
+            limb_time)
 
        !! Update Switching Sequence:
 
-       DO MIFno = 0, last_MIF
-          CalSwSeq(MIFno,windx) = &
-               CalWin%MAFdata(windx)%SciPkt(MIFno)%GHz_Sw_pos
-       ENDDO
+       start_index = CalWin%MAFdata(windx)%start_index
+       end_index = CalWin%MAFdata(windx)%end_index
+       CalSwSeq(start_index:end_index) = &
+            CalWin%MAFdata(windx)%SciPkt(0:last_MIF)%GHz_Sw_pos
 
     ENDDO
-
-!    print *, "space cnts: ", INT(space_counts(124:133)%FB(1,12))
-
-!    print *, "target cnts: ", INT(target_counts(136:147)%FB(1,12))
 
   END SUBROUTINE UpdateCalVectors
 
 !=============================================================================
-  SUBROUTINE InterpCals (nVec, time, cal_time, cal_weight, cal_qual, &
-       cal_counts, cal_interp, cal_err, GHz_comVec, GHz_errmul, &
-       BankCalInd, cal_index)
+  SUBROUTINE InterpCals (nVec, time, cal_cnts, cal_interp, cal_err, &
+       GHz_comVec, GHz_errmul, BankCalInd, cal_index, cal_time, cal_weight, &
+       cal_qual)
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
 
     INTEGER :: nVec, cal_index(2)
     REAL(r8) :: time, GHz_errmul
-    TYPE (Chan_R8_T) :: cal_time(0:nVec-1)
-    TYPE (Chan_R8_T) :: cal_counts(0:nVec-1)
-    TYPE (Chan_R8_T) :: cal_weight(0:nVec-1)
-    TYPE (Chan_R8_T) :: cal_interp
-    TYPE (Chan_R8_T) :: cal_err
-    TYPE (Chan_Int_T) :: cal_qual(0:nVec-1)
+    TYPE (Cal_R8_T) :: cal_cnts, cal_time, cal_weight
+    TYPE (Cal_Int_T) :: cal_qual
+    TYPE (Chan_R8_T) :: cal_interp, cal_err
     REAL(r8) :: GHz_comVec(0:nVec-1)
     TYPE (BankInt_T) :: BankCalInd(2) ! start & end indexes for calib
 
@@ -475,6 +421,7 @@ CONTAINS
 comVecP(0:nVec-1) = GHz_comVec   !! TEST!!!
 errmulP = GHz_errmul   !! TEST!!!
 is_same = .true.       !! TEST!!!
+
 ! Interpolate calibration values
 
     DO j = 1, (FBnum-5)   ! Don't need to do THz here!!!
@@ -491,33 +438,27 @@ is_same = .true.       !! TEST!!!
        ELSE
           DO i = 1, FBchans
 
-             !! Check for same as previous inputs:
-
-             !! is_same = (time == timeP)
-             !!is_same = (i .ne. 1) .or. (j .ne. 1)
-!!$          IF (is_same) is_same = (ALL (cal_time%FB(i,j) == tVecP))
-!!$          IF (is_same) is_same = (ALL (cal_qual%FB(i,j) == qualVecP))
-
-             ! is_same = ALL (CalWin%MAFdata%nominal%FB(j))
              IF (is_same .AND. calen == nVec) THEN
                 comVec = comVecP
                 errmul = errmulP
                 Istat = statusP
              ELSE
-                CALL QuadInterpW (cal_time(cal1:cal2)%FB(i,j), &
-                     cal_weight (cal1:cal2)%FB(i,j), &
-                     cal_qual(cal1:cal2)%FB(i,j), time, calen, &
+
+                CALL QuadInterpW (cal_time%FB(cal1:cal2,i,j), &
+                     cal_weight%FB(cal1:cal2,i,j), &
+                     cal_qual%FB(cal1:cal2,i,j), time, calen, &
                      comVec(0:calen-1), errmul, Istat)
 
                 !! Save for next call:
 
-                tVecP = cal_time%FB(i,j)
-                qualVecP = cal_qual%FB(i,j)
+                tVecP = cal_time%FB(:,i,j)
+                qualVecP = cal_qual%FB(:,i,j)
                 timeP = time
                 statusP = Istat
              ENDIF
+
              cal_interp%FB(i,j) = &
-                  SUM (comVec(0:calen-1) * cal_counts(cal1:cal2)%FB(i,j))
+                  SUM (comVec(0:calen-1) * cal_cnts%FB(cal1:cal2,i,j))
              cal_err%FB(i,j) = errmul
           ENDDO
        ENDIF
@@ -529,32 +470,24 @@ is_same = .true.       !! TEST!!!
        calen = cal2 - cal1 + 1
        DO i = 1, MBchans
 
-          !! Check for same as previous inputs:
-          
-          !! is_same = (time == timeP)
-!! is_same = (i .ne. 1) .or. (j .ne. 1)
-!!$          IF (is_same) is_same = (ALL (cal_time%MB(i,j) == tVecP))
-!!$          IF (is_same) is_same = (ALL (cal_qual%MB(i,j) == qualVecP))
-
-          ! is_same = ALL (CalWin%MAFdata%nominal%MB(j))
           IF (is_same .AND. calen == nVec) THEN
              comVec = comVecP
              errmul = errmulP
              Istat = statusP
           ELSE
-             CALL QuadInterpW (cal_time(cal1:cal2)%MB(i,j), &
-                  cal_weight(cal1:cal2)%MB(i,j), cal_qual(cal1:cal2)%MB(i,j), &
+             CALL QuadInterpW (cal_time%MB(cal1:cal2,i,j), &
+                  cal_weight%MB(cal1:cal2,i,j), cal_qual%MB(cal1:cal2,i,j), &
                   time, calen, comVec(0:calen-1), errmul, Istat)
 
              !! Save for next call:
              
-             tVecP = cal_time%MB(i,j)
-             qualVecP = cal_qual%MB(i,j)
+             tVecP = cal_time%MB(:,i,j)
+             qualVecP = cal_qual%MB(:,i,j)
              timeP = time
              statusP = Istat
           ENDIF
           cal_interp%MB(i,j) = &
-               SUM (comVec(0:calen-1) * cal_counts(0:calen-1)%MB(i,j))
+               SUM (comVec(0:calen-1) * cal_cnts%MB(cal1:cal2,i,j))
           cal_err%MB(i,j) = errmul
        ENDDO
     ENDDO
@@ -565,36 +498,28 @@ is_same = .true.       !! TEST!!!
        calen = cal2 - cal1 + 1
        DO i = 1, WFchans
 
-          !! Check for same as previous inputs:
-          
-          !! is_same = (time == timeP)
-!! is_same = (i .ne. 1) .or. (j .ne. 1)
-!!$          IF (is_same) is_same = (ALL (cal_time%WF(i,j) == tVecP))
-!!$          IF (is_same) is_same = (ALL (cal_qual%WF(i,j) == qualVecP))
-
-          ! is_same = ALL (CalWin%MAFdata%nominal%WF(j))
           IF (is_same .AND. calen == nVec) THEN
              comVec = comVecP
              errmul = errmulP
              Istat = statusP
           ELSE
-             CALL QuadInterpW (cal_time(cal1:cal2)%WF(i,j), &
-                  cal_weight(cal1:cal2)%WF(i,j), cal_qual(cal1:cal2)%WF(i,j), &
+             CALL QuadInterpW (cal_time%WF(cal1:cal2,i,j), &
+                  cal_weight%WF(cal1:cal2,i,j), cal_qual%WF(cal1:cal2,i,j), &
                   time, calen, comVec(0:calen-1), errmul, Istat)
 
              !! Save for next call:
              
-             tVecP = cal_time%WF(i,j)
-             qualVecP = cal_qual%WF(i,j)
+             tVecP = cal_time%WF(:,i,j)
+             qualVecP = cal_qual%WF(:,i,j)
              timeP = time
              statusP = Istat
           ENDIF
           cal_interp%WF(i,j) = &
-               SUM (comVec(0:calen-1) * cal_counts(0:calen-1)%WF(i,j))
+               SUM (comVec(0:calen-1) * cal_cnts%WF(cal1:cal2,i,j))
           cal_err%WF(i,j) = errmul
        ENDDO
     ENDDO
-!!$
+
     IF (L1Config%Calib%CalibDACS) THEN
 
        DO j = 1, DACSnum
@@ -603,33 +528,25 @@ is_same = .true.       !! TEST!!!
           calen = cal2 - cal1 + 1
           DO i = 1, DACSchans
 
-             !! Check for same as previous inputs:
-
-             !! is_same = (time == timeP)
-             !! is_same = (i .ne. 1) .or. (j .ne. 1)
-!!$          IF (is_same) is_same = (ALL (cal_time%DACS(i,j) == tVecP))
-!!$          IF (is_same) is_same = (ALL (cal_qual%DACS(i,j) == qualVecP))
-
-             ! is_same = ALL (CalWin%MAFdata%nominal%DACS(j))
              IF (is_same .AND. calen == nVec) THEN
                 comVec = comVecP
                 errmul = errmulP
                 Istat = statusP
              ELSE
-                CALL QuadInterpW (cal_time(cal1:cal2)%DACS(i,j), &
-                     cal_weight(cal1:cal2)%DACS(i,j), &
-                     cal_qual(cal1:cal2)%DACS(i,j), time, calen, &
+                CALL QuadInterpW (cal_time%DACS(cal1:cal2,i,j), &
+                     cal_weight%DACS(cal1:cal2,i,j), &
+                     cal_qual%DACS(cal1:cal2,i,j), time, calen, &
                      comVec(0:calen-1), errmul, Istat)
 
                 !! Save for next call:
 
-                tVecP = cal_time%DACS(i,j)
-                qualVecP = cal_qual%DACS(i,j)
+                tVecP = cal_time%DACS(:,i,j)
+                qualVecP = cal_qual%DACS(:,i,j)
                 timeP = time
                 statusP = Istat
              ENDIF
              cal_interp%DACS(i,j) = &
-                  SUM (comVec(0:calen-1) * cal_counts(0:calen-1)%DACS(i,j))
+                  SUM (comVec(0:calen-1) * cal_cnts%DACS(cal1:cal2,i,j))
              cal_err%DACS(i,j) = errmul
           ENDDO
        ENDDO
@@ -639,28 +556,18 @@ is_same = .true.       !! TEST!!!
   END SUBROUTINE InterpCals
 
 !=============================================================================
-  SUBROUTINE ChiSquare (space_counts, space_interp, nlast)
+  SUBROUTINE ChiSquare (start_index, end_index, space_counts, space_interp, &
+       nlast)
 !=============================================================================
 
-    INTEGER :: nlast
-    TYPE (Chan_R8_T) :: space_counts(0:nlast), space_interp(0:nlast)
-    INTEGER :: i, j, nspace, astat
-    INTEGER, DIMENSION(:), ALLOCATABLE, SAVE :: nvec
-    REAL(r8), DIMENSION(:), ALLOCATABLE, SAVE :: difspace, difzero
+    INTEGER :: start_index, end_index, nlast
+    TYPE (Cal_R8_T) :: space_counts
+    TYPE (Chan_R8_T) :: space_interp(0:nlast)
+    INTEGER :: i, j, nspace
+    INTEGER :: nvec(0:nlast)
+    REAL(r8) :: difspace(0:nlast), difzero(0:nlast)
     REAL(r8) :: SumDifS2, SumDifZ2
-    INTEGER, SAVE :: lastv = 0
-    REAL :: space_tot
-    INTEGER :: minmafs = 6
-
-    IF (lastv /= nlast) THEN
-       DEALLOCATE (nvec, STAT=astat)
-       ALLOCATE (nvec(0:nlast))
-       DEALLOCATE (difspace, STAT=astat)
-       ALLOCATE (difspace(0:nlast))
-       DEALLOCATE (difzero, STAT=astat)
-       ALLOCATE (difzero(0:nlast))
-       lastv = nlast
-    ENDIF
+    INTEGER, PARAMETER :: minmafs = 6
 
     chi2%FB = 0.0      ! initial value
     DO j = 1, FBnum
@@ -668,10 +575,12 @@ is_same = .true.       !! TEST!!!
           nvec = 0
           difspace = 0.0
           difzero = 0.0
-          WHERE (space_counts%FB(i,j) /= 0.0)
+          WHERE (space_counts%FB(start_index:end_index,i,j) /= 0.0)
              nvec = 1
-             difspace = space_counts%FB(i,j) - space_interp%FB(i,j)
-             difzero = space_counts%FB(i,j) - deflt_zero%FB(i,j)
+             difspace = space_counts%FB(start_index:end_index,i,j) - &
+                  space_interp%FB(i,j)
+             difzero = space_counts%FB(start_index:end_index,i,j) - &
+                  deflt_zero%FB(i,j)
           END WHERE
           nspace = SUM (nvec)
           IF (nspace >= minmafs) THEN
@@ -693,10 +602,12 @@ is_same = .true.       !! TEST!!!
           nvec = 0
           difspace = 0.0
           difzero = 0.0
-          WHERE (space_counts%MB(i,j) /= 0.0)
+          WHERE (space_counts%MB(start_index:end_index,i,j) /= 0.0)
              nvec = 1
-             difspace = space_counts%MB(i,j) - space_interp%MB(i,j)
-             difzero = space_counts%MB(i,j) - deflt_zero%MB(i,j)
+             difspace = space_counts%MB(start_index:end_index,i,j) - &
+                  space_interp%MB(i,j)
+             difzero = space_counts%MB(start_index:end_index,i,j) - &
+                  deflt_zero%MB(i,j)
           END WHERE
           nspace = SUM (nvec)
           IF (nspace >= minmafs) THEN
@@ -718,10 +629,12 @@ is_same = .true.       !! TEST!!!
           nvec = 0
           difspace = 0.0
           difzero = 0.0
-          WHERE (space_counts%WF(i,j) /= 0.0)
+          WHERE (space_counts%WF(start_index:end_index,i,j) /= 0.0)
              nvec = 1
-             difspace = space_counts%WF(i,j) - space_interp%WF(i,j)
-             difzero = space_counts%WF(i,j) - deflt_zero%WF(i,j)
+             difspace = space_counts%WF(start_index:end_index,i,j) - &
+                  space_interp%WF(i,j)
+             difzero = space_counts%WF(start_index:end_index,i,j) - &
+                  deflt_zero%WF(i,j)
           END WHERE
           nspace = SUM (nvec)
           IF (nspace >= minmafs) THEN
@@ -743,15 +656,13 @@ is_same = .true.       !! TEST!!!
   SUBROUTINE Calibrate
 !=============================================================================
 
-    USE MLSL1Config, ONLY: L1Config
     USE MLSL1Rad, ONLY: UpdateRadSignals
 
 !! Calibrate the science data
 
     INTEGER :: time_index, start_index, end_index, windex
-    INTEGER :: nVec, cal_index(2)
-    INTEGER :: i, j, MIF_index
-    REAL(r8) :: errmul, time, secs, oldsecs
+    INTEGER :: nVec, cal_index(2), MIF_index
+    REAL(r8) :: time, secs, oldsecs
 
     CHARACTER(len=8) :: date
     CHARACTER (len=10) :: dtime
@@ -768,8 +679,8 @@ oldsecs = secs
     windex = CalWin%central
     start_index = CalWin%MAFdata(windex)%start_index  ! MIF 0
     end_index = CalWin%MAFdata(windex)%end_index      ! MIF max
-    cal_index(1) = start_index - L1Config%Calib%MIFsPerMAF
-    cal_index(2) = start_index + L1Config%Calib%MIFsPerMAF
+    cal_index(1) = start_index - CalWin%MAFdata(windex-1)%EMAF%MIFsPerMAF
+    cal_index(2) = start_index + CalWin%MAFdata(windex)%EMAF%MIFsPerMAF
 
     CALL UpdateRadSignals (CalWin%MAFdata(windex)%BandSwitch)
 
@@ -789,21 +700,21 @@ endif
 
        ! Space cals:
 
-       CALL InterpCals (nVec, time, space_time, space_weight, space_qual, &
-            space_counts, space_interp(MIF_index), space_err(MIF_index), &
-            GHz_comVec(MIF_index)%Space,  GHz_errmul(MIF_index)%Space, &
-            CalWin%MAFdata(windex)%BankCalInd, cal_index)
+       CALL InterpCals (nVec, time, space_cnts, space_interp(MIF_index), &
+            space_err(MIF_index), GHz_comVec_S(MIF_index,:), &
+            GHz_errmul_S(MIF_index), CalWin%MAFdata(windex)%BankCalInd, &
+            cal_index, space_time, space_weight, space_qual)
 
        ! Target cals:
 
-       CALL InterpCals (nVec, time, target_time, target_weight, target_qual, &
-            target_counts, target_interp(MIF_index), target_err(MIF_index), &
-            GHz_comVec(MIF_index)%Target, GHz_errmul(MIF_index)%Target, &
-            CalWin%MAFdata(windex)%BankCalInd, cal_index)
+       CALL InterpCals (nVec, time, target_cnts, target_interp(MIF_index), &
+            target_err(MIF_index), GHz_comVec_T(MIF_index,:), &
+            GHz_errmul_T(MIF_index), CalWin%MAFdata(windex)%BankCalInd, &
+            cal_index, target_time, target_weight, target_qual)
 
     ENDDO
 
-    CALL ChiSquare (space_counts(start_index:end_index), &
+    CALL ChiSquare (start_index, end_index, space_cnts, &
          space_interp(0:end_index-start_index), (end_index-start_index))
 
 PRINT *, 'end calibrating...'
@@ -815,6 +726,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.6  2003/01/31 18:13:33  perun
 ! Version 1.1 commit
 !

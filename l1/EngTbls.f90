@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -147,7 +147,8 @@ MODULE EngTbls   ! Level 1 engineering tables
      INTEGER :: MAFno
      INTEGER :: MIFsPerMAF
      INTEGER :: TotalMAF
-     CHARACTER(LEN=1) :: GSM_Side
+     CHARACTER(LEN=1) :: GSM_Side   ! GHz Switching Mirror
+     CHARACTER(LEN=1) :: ASE_Side   ! Antenna Scan Electronics
      TYPE (Eng_T) :: Eng(maxtlm)
   END TYPE Eng_MAF_T
 
@@ -162,6 +163,21 @@ MODULE EngTbls   ! Level 1 engineering tables
   END TYPE CalTgtIndx_T
 
   TYPE (CalTgtIndx_T) :: CalTgtIndx
+
+  ! Reflector temperature indexes
+
+  TYPE ReflecIndx_T
+     INTEGER :: Pri(9)
+     INTEGER :: Sec(5)
+     INTEGER :: Ter(3)
+  END TYPE ReflecIndx_T
+
+  TYPE (ReflecIndx_T) :: ReflecIndx
+
+  TYPE Reflec_T
+     REAL :: Pri, Sec, Ter
+  END TYPE Reflec_T
+  TYPE (Reflec_T) :: Reflec
 
 ! RIU table
 
@@ -245,6 +261,9 @@ CONTAINS
     INTEGER :: GHzAmbIndx = 0
     INTEGER :: GHzCntlIndx = 0
     INTEGER :: THzAmbIndx = 0
+    INTEGER :: PriReflecIndx = 0
+    INTEGER :: SecReflecIndx = 0
+    INTEGER :: TerReflecIndx = 0
     INTEGER :: riu_chan, riu_no, old_riu
 
     REAL :: scale
@@ -310,6 +329,19 @@ CONTAINS
              CalTgtIndx%THzAmb(THzAmbIndx) = i
           ENDIF
 
+          !! Save Reflector indexes:
+
+          IF (INDEX (mnem, "Pri_Reflec") /= 0) THEN
+             PriReflecIndx = PriReflecIndx + 1
+             ReflecIndx%Pri(PriReflecIndx) = i
+          ELSE IF (INDEX (mnem, "Sec_Reflec") /= 0) THEN
+             SecReflecIndx = SecReflecIndx + 1
+             ReflecIndx%Sec(SecReflecIndx) = i
+          ELSE IF (INDEX (mnem, "Ter_Reflec") /= 0) THEN
+             TerReflecIndx = TerReflecIndx + 1
+             ReflecIndx%Ter(TerReflecIndx) = i
+          ENDIF
+
        ENDIF
 
     ENDDO
@@ -325,6 +357,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.6  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

@@ -1,4 +1,3 @@
-
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -6,26 +5,25 @@
 MODULE Orbit
 !===============================================================================
 
-   USE MLSCommon
-   USE MLSMessageModule
-   USE OutputL1B_DataTypes, only: LENG, LENT
-   USE SDPToolkit
+  USE MLSCommon
+  USE MLSMessageModule
+  USE OutputL1B_DataTypes, ONLY: LENG, LENT
+  USE SDPToolkit
+  IMPLICIT NONE
+  PUBLIC
 
-   IMPLICIT NONE
-
-   PUBLIC
-
-   PRIVATE :: ID, ModuleName
+  PRIVATE :: ID, ModuleName
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &  
-   "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  CHARACTER(LEN=130) :: Id = & 
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
 
-   INTEGER :: numOrb, orbitNumber(max_orbits)
-   REAL :: scanRate(lenG), scanRateT(lenT)
-   REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits)
+  INTEGER :: numOrb, orbitNumber(max_orbits)
+  REAL :: scanRate(lenG), scanRateT(lenT)
+  REAL(r8) :: altG, altT, orbIncline, ascTAI(max_orbits), dscTAI(max_orbits), &
+       orbPeriod(max_orbits)
 
 ! Contents:
 
@@ -38,8 +36,8 @@ MODULE Orbit
 CONTAINS
 
 !----------------------------------------------------------------------
-   SUBROUTINE Orbit_met (startTime, times, ascTAI, descTAI, numOrbits, &
-                        orbitNumber)
+  SUBROUTINE Orbit_met (startTime, times, ascTAI, descTAI, numOrbits, &
+       orbitNumber)
 !----------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -48,89 +46,96 @@ CONTAINS
 
 ! Arguments
 
-      TYPE( TAI93_Range_T ), INTENT(IN) :: times
+    TYPE( TAI93_Range_T ), INTENT(IN) :: times
 
-      CHARACTER (LEN=27), INTENT(IN) :: startTime
+    CHARACTER (LEN=27), INTENT(IN) :: startTime
 
-      INTEGER, INTENT(OUT) :: numOrbits
-      INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+    INTEGER, INTENT(OUT) :: numOrbits
+    INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
 
-      REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), descTAI(max_orbits)
+    REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), descTAI(max_orbits)
 
 ! Parameters
 
 ! Functions
 
-      INTEGER :: Pgs_eph_getEphMet, Pgs_td_timeInterval, Pgs_td_utcToTAI
+    INTEGER :: Pgs_eph_getEphMet, Pgs_td_timeInterval, Pgs_td_utcToTAI
 
 ! Variables
 
-      CHARACTER (LEN=27) :: orbitAscendTime(max_orbits)
-      CHARACTER (LEN=27) :: orbitDescendTime(max_orbits)
-      CHARACTER (LEN=32) :: mnemonic
-      CHARACTER (LEN=480) :: msg, msr
+    CHARACTER (LEN=27) :: orbitAscendTime(max_orbits)
+    CHARACTER (LEN=27) :: orbitDescendTime(max_orbits)
+    CHARACTER (LEN=32) :: mnemonic
+    CHARACTER (LEN=480) :: msg, msr
 
-      INTEGER :: alloc_err, dealloc_err, i, num_points, returnStatus
+    INTEGER :: alloc_err, dealloc_err, i, num_points, returnStatus, msg_stat
 
-      REAL(r8) :: deltaTAI
-      REAL(r8) :: orbitDownLongitude(max_orbits)
-      REAL(r8), ALLOCATABLE :: offsets(:)
+    REAL(r8) :: deltaTAI
+    REAL(r8) :: orbitDownLongitude(max_orbits)
+    REAL(r8), ALLOCATABLE :: offsets(:)
 
 ! Find time interval covered by file
 
-      returnStatus = Pgs_td_timeInterval (times%startTime, times%endTime, &
-                                         deltaTAI)
+    returnStatus = Pgs_td_timeInterval (times%startTime, times%endTime, &
+         deltaTAI)
 
-      num_points = AINT(deltaTAI/60.0)
+    num_points = AINT(deltaTAI/60.0)
+    ALLOCATE (offsets(num_points), STAT = alloc_err)
+    IF (alloc_err /= 0) THEN
+       msr = MLSMSG_Allocate // '  offsets.'
+       CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+    ENDIF
 
-      ALLOCATE(offsets(num_points), STAT = alloc_err)
-      IF (alloc_err /= 0) THEN
-         msr = MLSMSG_Allocate // '  offsets.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+    DO i = 1, num_points
+       offsets(i) = i * 60.0
+    ENDDO
 
-      DO i = 1, num_points
-         offsets(i) = i * 60.0
-      ENDDO
+    orbitNumber = -1   ! mark as none yet
 
 ! Get orbit metadata
 
-      returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
-                            offsets, numOrbits, orbitNumber, orbitAscendTime, &
-                            orbitDescendTime, orbitDownLongitude)
-      IF (returnStatus /= PGS_S_SUCCESS) THEN
-        print*,'Time was:',startTime
-         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-         msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         numOrbits = 0
-      ENDIF
+    returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
+         offsets, numOrbits, orbitNumber, orbitAscendTime, &
+         orbitDescendTime, orbitDownLongitude)
 
-      IF (numOrbits <= 0) THEN
-         msr = 'Routine getEphMet' // ': ' // ' Numorbits <= 0'
-         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
-         DO i = 1, SIZE (orbitNumber)
-            orbitNumber(i) = i - 1
-            ascTAI(i) = 0.0
-            descTAI(i) = 0.0
-         ENDDO
-      ENDIF
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL Pgs_smf_getMsg (msg_stat, mnemonic, msg)
+       msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
+       IF (returnStatus == PGSEPH_W_CORRUPT_METADATA) THEN
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+       ELSE
+          numOrbits = 1
+          print *, 'Warning: setting numorbits to 1!'
+          msr = 'Routine getEphMet' // ': ' // ' Numorbits == 1'
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+          DO i = 1, SIZE (orbitNumber)
+             orbitNumber(i) = i - 1
+             ascTAI(i) = 0.0
+             descTAI(i) = 0.0
+          ENDDO
+          !CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
 
-      DEALLOCATE (offsets, STAT=dealloc_err)
-      IF (dealloc_err /= 0) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-                                           'Failed deallocation of offsets.')
+    DEALLOCATE (offsets, STAT=dealloc_err)
+    IF (dealloc_err /= 0) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+         'Failed deallocation of offsets.')
 
 ! Convert values to forms more useful to software
-      ascTAI = 0.0
-      dscTAI = 0.0
-      DO i = 1, numOrbits
-         orbitNumber(i) = i-1
-         returnStatus = Pgs_td_utcToTAI (orbitAscendTime(i), ascTAI(i))
-         returnStatus = Pgs_td_utcToTAI (orbitDescendTime(i), descTAI(i))
-      ENDDO
+    ascTAI = 0.0
+    dscTAI = 0.0
+    orbPeriod = 0.0
+    DO i = 1, numOrbits
+       returnStatus = Pgs_td_utcToTAI (orbitAscendTime(i), ascTAI(i))
+       returnStatus = Pgs_td_utcToTAI (orbitDescendTime(i), descTAI(i))
+       IF (i > 1) THEN
+          orbPeriod(i-1) = ascTAI(i) - ascTAI(i-1)
+          orbPeriod(i) = orbPeriod(i-1)  ! Keep last
+       ENDIF
+    ENDDO
 
 !--------------------------
-   END SUBROUTINE Orbit_met
+  END SUBROUTINE Orbit_met
 !--------------------------
 
 !-----------------------------------------------------------------------------
@@ -145,18 +150,18 @@ CONTAINS
 
 ! Arguments
 
-      TYPE ( TAI93_Range_T ), INTENT(IN) :: times
+     TYPE (TAI93_Range_T), INTENT(IN) :: times
 
-      CHARACTER (LEN=27), INTENT(IN) :: UTC_start
+     CHARACTER (LEN=27), INTENT(IN) :: UTC_start
 
-      INTEGER, INTENT(OUT) :: numOrb
-      INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
+     INTEGER, INTENT(OUT) :: numOrb
+     INTEGER, INTENT(OUT) :: orbitNumber(max_orbits)
 
-      REAL, INTENT(OUT) :: scanRate(lenG)
-      REAL, INTENT(OUT) :: scanRateT(lenT)
+     REAL, INTENT(OUT) :: scanRate(lenG)
+     REAL, INTENT(OUT) :: scanRateT(lenT)
 
-      REAL(r8), INTENT(OUT) :: altG, altT, orbIncline
-      REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), dscTAI(max_orbits)
+     REAL(r8), INTENT(OUT) :: altG, altT, orbIncline
+     REAL(r8), INTENT(OUT) :: ascTAI(max_orbits), dscTAI(max_orbits)
 
 ! Parameters
 
@@ -166,21 +171,21 @@ CONTAINS
 
 ! Input data
 
-      altG = 2500.0
-      altT = 15000.0
+     altG = 2500.0
+     altT = 15000.0
 
-      scanRate(1) = 0.0
-      scanRate(2:63) = 0.0279213
-      scanRate(64:120) = 0.0976263
- 
-      scanRateT(1:54) = 0.030344496
-      scanRateT(55:114) = 0.058600044
+     scanRate(1) = 0.0
+     scanRate(2:63) = 0.0279213
+     scanRate(64:120) = 0.0976263
 
-      orbIncline = 98.145
+     scanRateT(1:54) = 0.030344496
+     scanRateT(55:114) = 0.058600044
+
+     orbIncline = 98.145
 
 ! Get orbit metadata for entire day
 
-      CALL Orbit_met (UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
+     CALL Orbit_met (UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
 
 !---------------------------
    END SUBROUTINE Orbit_init
@@ -191,8 +196,8 @@ END MODULE Orbit
 !===============
 
 ! $Log$
-! Revision 2.6  2003/07/10 18:54:17  perun
-! Patch for PGS_Eph_getEphMet toolkit call.
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
 !
 ! Revision 2.5  2002/11/07 21:57:11  jdone
 ! Added Level 1 output datatypes.
