@@ -1507,7 +1507,7 @@ contains ! ================================ FullForwardModel routine ======
         ! Frequency averaging if needed --------------------------------------
 
         ! Here we either frequency average to get the unconvolved radiances, or
-        ! we just store what we have as we're using delta funciton channels
+        ! we just store what we have as we're using monochromatic channels
 
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call trace_begin ( 'ForwardModel.FrequencyAvg' )
@@ -1531,7 +1531,7 @@ contains ! ================================ FullForwardModel routine ======
               & Radiances(ptg_i,i) )
           end do
         else
-          Radiances(ptg_i,1:noUsedChannels) = RadV(1)
+          Radiances(ptg_i,1:noUsedChannels) = RadV
         end if
 
         ! Frequency averaging of derivatives if needed -----------------------
@@ -1569,7 +1569,7 @@ contains ! ================================ FullForwardModel routine ======
               sv_i = 1
               do instance = WindowStart, WindowFinish
                 do surface = 1, n_t_zeta
-                  k_temp(i,ptg_i,surface,instance) = k_temp_frq(1,sv_i)
+                  k_temp(i,ptg_i,surface,instance) = k_temp_frq(i,sv_i)
                   sv_i = sv_i + 1
                 end do
               end do
@@ -1621,7 +1621,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_f%no_z(k)
                       do jf = 1, Grids_f%no_f(k)
                         k_atmos(i,ptg_i,jf,surface,instance,k) = &
-                          k_atmos_frq(1,sv_i)
+                          k_atmos_frq(i,sv_i)
                         sv_i = sv_i + 1
                       end do
                     end do
@@ -1677,7 +1677,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dw%no_z(k)
                       do jf = 1, Grids_dw%no_f(k)
                         k_spect_dw(i,ptg_i,jf,surface,instance,k) = &
-                          k_spect_dw_frq(1,sv_i)
+                          k_spect_dw_frq(i,sv_i)
                         sv_i = sv_i + 1
                       end do
                     end do
@@ -1725,7 +1725,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dn%no_z(k)
                       do jf = 1, Grids_dn%no_f(k)
                         k_spect_dn(i,ptg_i,jf,surface,instance,k) = &
-                          k_spect_dn_frq(1,sv_i)
+                          k_spect_dn_frq(i,sv_i)
                         sv_i = sv_i + 1
                       end do
                     end do
@@ -1773,7 +1773,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dv%no_z(k)
                       do jf = 1, Grids_dv%no_f(k)
                         k_spect_dv(i,ptg_i,jf,surface,instance,k) = &
-                          k_spect_dv_frq(1,sv_i)
+                          k_spect_dv_frq(i,sv_i)
                         sv_i = sv_i + 1
                       end do
                     end do
@@ -2089,6 +2089,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.31  2002/02/13 20:35:47  livesey
+! Added some nullifies
+!
 ! Revision 2.30  2002/02/08 00:46:05  zvi
 ! Some cosmetic changes..
 !
