@@ -36,19 +36,20 @@ CONTAINS
 
        CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
             l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
-            orbitNumber, scanRate, scanRateT)
+            orbitNumber, scanRate, scanRateT, L1BFileInfo)
 
     ENDIF
 
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, L1Brad)
-
-    print *, "outputting l1b for MAF no ", MAFno
 
   END SUBROUTINE OutputL1Bdata
 
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.5  2002/11/07 21:55:23  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.4  2002/07/17 14:27:26  perun
 ! Added ProduceL1BOA flag
 !

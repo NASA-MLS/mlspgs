@@ -8,7 +8,7 @@ MODULE Orbit
 
    USE MLSCommon
    USE MLSMessageModule
-   USE OutputL1B, only: LENG, LENT
+   USE OutputL1B_DataTypes, only: LENG, LENT
    USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
@@ -178,6 +178,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.5  2002/11/07 21:57:11  jdone
+! Added Level 1 output datatypes.
+!
 ! Revision 2.4  2001/12/14 01:43:46  livesey
 ! Working version with ECR based master coordinate
 !
