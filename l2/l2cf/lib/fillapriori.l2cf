@@ -209,11 +209,21 @@ begin Fill
     explicitValues= !baselinePrecision
 ;  })
 
+  ;; Convert H2O precision to RHI precision
+  Fill, quantity=aprioriPrecision.rhi, h2oQuantity=aprioriPrecision.h2o, $
+    temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
+
+  ;; Put H2O precision in trop h2o
+  Fill, quantity=aprioriPrecision.tropH2O, sourceQuantity=aprioriPrecision.h2o, $
+    method=vector, /interpolate
+
   ;; Setup the low and high bounds for stuff that needs them.
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
   Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
 
   Fill, quantity=lowBound.tropH2O, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.tropH2O, method=explicit, explicitValues=0.01, /spread
+  Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
+  Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
 
 end Fill
