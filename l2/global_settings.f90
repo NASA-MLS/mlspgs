@@ -16,10 +16,9 @@ module GLOBAL_SETTINGS
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
-  use MLSL2Options, only: ECHO_GLOBAL_STNGS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
-  use MLSStrings, only: unquote
+  use MLSStrings, only: unquote, hhmmss_value
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use Output_m, only: Output
   use String_Table, only: Get_String
@@ -124,9 +123,13 @@ contains
 !          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
         case ( p_starttime )
           got(1) = .true.
-          call expr ( subtree(2,son), units, value )
+          call get_string ( sub_rosa_index, name_string, strip=.true. )
+          if ( index(name_string, ':') > 0 ) then
+            start_time_from_1stMAF = hhmmss_value(name_string, error)
+          else
+            call expr ( subtree(2,son), units, value )
             start_time_from_1stMAF = value(1)
- !        call get_string ( sub_rosa_index, name_string, strip=.true. )
+          endif
  !         print *, 'starttime'
  !         print *, trim(name_string)
  !         print *, trim(unquote(name_string))
@@ -135,8 +138,13 @@ contains
  !         &           processingrange%starttime
         case ( p_endtime )
           got(2) = .true.
-          call expr ( subtree(2,son), units, value )
+          call get_string ( sub_rosa_index, name_string, strip=.true. )
+          if ( index(name_string, ':') > 0 ) then
+            end_time_from_1stMAF = hhmmss_value(name_string, error)
+          else
+            call expr ( subtree(2,son), units, value )
             end_time_from_1stMAF = value(1)
+          endif
  !         call get_string ( sub_rosa_index, name_string, strip=.true. )
  !         print *, 'endtime'
  !         print *, trim(name_string)
@@ -168,12 +176,6 @@ contains
           & MAXNUML1BRADIDS, ILLEGALL1BRADID )
         case ( s_l1boa )
           call l1boaSetup ( son, l1bInfo, F_FILE )
-          call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
-          & l1bFlag)
-          if ( l1bFlag==-1) call announce_error(son, &
-          & 'unrecognized MAFStarttimeTAI in L1BOA file')
-           minTime = l1bField%dpField(1,1,1)
-           maxTime = l1bField%dpField(1,1,noMAFs)
 
         case ( s_time )
           if ( timing ) then
@@ -189,6 +191,19 @@ contains
     end do
 
    ! add maf offsets to start, end times
+   if(got(1) .or. got(2)) then
+    call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
+          & l1bFlag)
+      if ( l1bFlag==-1) then
+            call announce_error(son, &
+          & 'unrecognized MAFStarttimeTAI in L1BOA file')
+           minTime = 0.
+           maxTime = 0.
+      else
+           minTime = l1bField%dpField(1,1,1)
+           maxTime = l1bField%dpField(1,1,noMAFs)
+      endif
+   endif
    if(got(1)) then
       processingrange%starttime = minTime + start_time_from_1stMAF
    endif
@@ -197,7 +212,7 @@ contains
       processingrange%endtime = minTime + end_time_from_1stMAF
    endif
 
-   if( ECHO_GLOBAL_STNGS .or. levels(gen) > 0 .or. &
+   if( levels(gen) > 0 .or. &
    & index(switches, 'glo') /= 0 ) &
    & call dump_global_settings( l2pcf, processingRange, l1bInfo )
 
@@ -389,6 +404,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.29  2001/05/14 23:45:08  pwagner
+! Start, end times now added to MAF offsets from L1BOA
+!
 ! Revision 2.28  2001/05/11 23:44:43  pwagner
 ! Better dump; uses strip=TRUE
 !
