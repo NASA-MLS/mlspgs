@@ -11,7 +11,7 @@ program MLSL2
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
-  use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
@@ -113,6 +113,7 @@ program MLSL2
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
+  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
@@ -120,8 +121,8 @@ program MLSL2
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
+  logical :: showDefaults = .false. ! Just print default opts and quit
   integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
-  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
@@ -164,6 +165,7 @@ program MLSL2
   else
     ! SCF_VERSION
     switches='0sl'
+    NeverCrash = .false.
   endif
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
@@ -234,6 +236,10 @@ program MLSL2
         checkBlocks = switch
       else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
         countChunks = switch
+      else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
+        MLSMessageConfig%crashOnAnyError = switch
+      else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
+        showDefaults = switch
       else if ( line(3+n:7+n) == 'delay' ) then
         call AccumulateSlaveArguments ( line )
         if ( line(8+n:) /= ' ' ) then
@@ -249,6 +255,8 @@ program MLSL2
           call io_error ( "After --delay option", status, line )
           stop
         end if
+      else if ( lowercase(line(3+n:8+n)) == 'evercr' ) then
+        neverCrash = switch
       else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
         parallel%fwmParallel = .true.
       ! else if ( line(3+n:7+n) == 'gcch ' ) then
@@ -530,7 +538,7 @@ program MLSL2
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
-  if ( .not. toolkit ) then
+  if ( .not. toolkit .or. showDefaults ) then
      prunit = max(-1, prunit)   ! stdout or Fortran unit
   elseif (parallel%slave .or. parallel%master) then
      prunit = -2          ! output both logged and sent to stdout
@@ -608,7 +616,7 @@ program MLSL2
       call announce_success(L2CF_file, l2cf_unit)               
     end if
     inunit = l2cf_unit
-  else if ( TOOLKIT ) then
+  else if ( TOOLKIT .and. .not. showDefaults ) then
     call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
     if(status /= 0) then
       call output( 'Non-zero status returned from open_MLSCF: ', &
@@ -625,7 +633,7 @@ program MLSL2
   
   call time_now ( t1 )
 
-  if( index(switches, 'opt') /= 0 ) then
+  if( index(switches, 'opt') /= 0 .or. showDefaults ) then
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
@@ -637,6 +645,7 @@ program MLSL2
     endif
     call dump_settings
   end if
+  if ( showDefaults ) stop
 
   !---------------- Task (5) ------------------
   if (error == 0) then
@@ -789,7 +798,7 @@ contains
     call output(' l2cf file:', advance='no')  
     call blanks(4, advance='no')                                     
     call output(trim(L2CF_file), advance='yes')                            
-    if( index(switches, 'opt1') /= 0 ) then                                 
+    if( index(switches, 'opt1') /= 0 .or. showDefaults ) then                                 
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
       call output(' Use toolkit panoply:                            ', advance='no')
@@ -836,7 +845,7 @@ contains
       call output(' Is this the master task in pvm?:                ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%master, advance='yes')
-      if ( parallel%master ) then
+      if ( parallel%master .or. showDefaults ) then
       call output(' Master task number:                             ', advance='no') 
       call blanks(4, advance='no')                                                   
       call output(parallel%myTid, advance='yes')
@@ -900,6 +909,12 @@ contains
       call output(' Log file unit:                                  ', advance='no')
       call blanks(4, advance='no')
       call output(MLSMessageConfig%LogFileUnit, advance='yes')
+      call output(' Crash on any error:                             ', advance='no')
+      call blanks(4, advance='no')
+      call output(MLSMessageConfig%crashOnAnyError, advance='yes')
+      call output(' Ever crash:                                     ', advance='no')
+      call blanks(4, advance='no')
+      call output(.not. neverCrash, advance='yes')
       call output(' ----------------------------------------------------------', &
         & advance='yes')
     endif
@@ -923,6 +938,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.125  2004/08/19 00:20:21  pwagner
+! New crash-related, defaults options
+!
 ! Revision 2.124  2004/08/16 17:12:20  pwagner
 ! Fixed clearonallocate setting
 !
