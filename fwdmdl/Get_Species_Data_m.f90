@@ -85,7 +85,7 @@ contains
     end do ! b
 
     if ( dumpFWM > 0 ) then
-      call dump ( fwdModelConf, moduleName )
+      call dump ( fwdModelConf, moduleName(11:len_trim(moduleName)-8) )
       call dump ( fwdModelConf%catalog )
       if ( dumpFWM > 1 ) stop
     end if
@@ -99,6 +99,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.23  2005/02/16 23:16:49  vsnyder
+! Revise data structures for split-sideband PFA
+!
 ! Revision 2.22  2004/12/28 00:28:43  vsnyder
 ! Remove unused procedure and unreferenced use names
 !
