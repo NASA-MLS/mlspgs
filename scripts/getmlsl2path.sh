@@ -13,7 +13,9 @@ SUMS=0
 VERSION=v1.0.1
 SIMULATION=s5
 YEAR=1996
+DOY=''
 FWMVERSION=''
+L1BVERSION=''
 MYUSER=$USER
 
 # Now work out what we have been asked for.
@@ -31,8 +33,14 @@ while [ -n "$(echo $1)" ]; do
     if [ -z "${1##--year=*}" ]; then
 	YEAR=${1#--year=}
     fi
+    if [ -z "${1##--doy=*}" ]; then
+	DOY=${1#--doy=}
+    fi
     if [ -z "${1##--fwmVersion=*}" ]; then
 	FWMVERSION=${1#--fwmVersion=}
+    fi
+    if [ -z "${1##--l1bVersion=*}" ]; then
+	L1BVERSION=${1#--l1bVersion=}
     fi
     if [ $1 == "--dao" ] || [ $1 == "--gmao" ]; then
 	case $MACHINE in
@@ -97,7 +105,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
 	esac
     fi
     if [ $1 == "--l1brad" ]; then
@@ -107,7 +115,27 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION";;
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
+	esac
+    fi
+    if [ $1 == "--sidsoa" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
+	esac
+    fi
+    if [ $1 == "--sidsrad" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
 	esac
     fi
     if [ $1 == "--l1breal" ]; then
@@ -157,6 +185,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.37  2004/08/20 05:59:59  livesey
+# Updated l2pc path for soundbarrier
+#
 # Revision 1.36  2004/08/05 17:29:28  livesey
 # Added l1breal
 #
