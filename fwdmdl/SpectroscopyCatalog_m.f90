@@ -114,6 +114,7 @@ contains ! =====  Public Procedures  ===================================
 
     ! Local Variables
     integer :: Error                    ! /= 0 => An error occured
+    logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
     integer :: I, J, K, L               ! Loop inductors, Subscripts
     integer :: Key                      ! Index of spec_arg
     integer :: Name                     ! Index of name in string table
@@ -139,7 +140,8 @@ contains ! =====  Public Procedures  ===================================
     real :: T1, T2                      ! For S_Time
 
     ! Error message codes
-    integer, parameter :: NotInt = 1                   ! QN not an integer
+    integer, parameter :: No_Mass = 1   ! Lines field but no mass field
+    integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
     integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
                                         ! listed as emlsSignal
     integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
@@ -325,10 +327,12 @@ contains ! =====  Public Procedures  ===================================
         numCatalog = numCatalog + 1
         catalog(numCatalog)%species_Name = name
         catalog(numCatalog)%continuum = 0.0
+        gotLines = .false.; gotMass = .false.
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
           case ( f_lines )
+            gotLines = .true.
             call allocate_test ( catalog(numCatalog)%lines, nsons(son)-1, &
               & "catalog(numCatalog)%Lines", moduleName )
             do k = 2, nsons(son)
@@ -342,6 +346,7 @@ contains ! =====  Public Procedures  ===================================
                 & phyq_dimless )
             end do
           case ( f_mass )
+            gotMass = .true.
             if ( nsons(son) /= 2 ) call announce_error ( son, wrongSize, 1 )
             call expr_check ( subtree(2,son), catalog(numCatalog)%mass, &
               & phyq_dimless )
@@ -355,6 +360,7 @@ contains ! =====  Public Procedures  ===================================
             end do
           end select
         end do
+        if ( gotLines .and. .not. gotMass ) call announce_error ( key, no_mass )
         call decorate ( key, numCatalog )
       case ( s_time ) ! ...................................  TIME  .....
         if ( timing ) then
@@ -391,6 +397,10 @@ contains ! =====  Public Procedures  ===================================
       call print_source ( source_ref ( where ) )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
+      case ( no_mass )
+        call output ( &
+          & 'A "mass" field is required if the "lines" field is present.', &
+          & advance='yes' )
       case ( notInt )
         call output ( 'The field is too far from being an integer.',& 
           & advance='yes' )
@@ -680,6 +690,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.21  2004/04/02 01:00:01  vsnyder
+! Cosmetic change
+!
 ! Revision 2.20  2004/01/09 07:25:20  livesey
 ! Added the fictitious instrument mls1
 !
