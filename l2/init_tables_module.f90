@@ -524,6 +524,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_single, t+t_boolean, n+n_field_type, &
              begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
              begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
+             begin, f+f_date, t+t_string, n+n_field_type, &
              begin, f+f_spacing, t+t_numeric, n+n_field_type, &
              begin, f+f_origin, t+t_numeric, n+n_field_type, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
@@ -1185,6 +1186,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.362  2004/03/24 01:03:12  livesey
+! Added f_date to s_hgrid
+!
 ! Revision 2.361  2004/03/22 18:26:13  livesey
 ! Added allLinesInCatalog and combineChannels
 !
