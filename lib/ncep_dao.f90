@@ -4,7 +4,7 @@
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   use GriddedData, only: GriddedData_T, v_is_pressure, &
-    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
   use HDFEOS, only: HDFE_NENTDIM, &
     & gdopen, gdattach, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
@@ -259,6 +259,7 @@ contains
         
     ! Executable code
 
+    call nullifyGriddedData ( grid ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( grid, noHeights=noHeights, noLats=noLats, &
       & noLons=noLons, noLsts=1, noSzas=1, noDates=1 )
@@ -788,6 +789,10 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.21  2002/11/22 12:57:59  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.20  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
