@@ -311,9 +311,8 @@ o2: do j = mid+1, no_ele-1
            & call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
 
        H = v2
-       df = e
-       dndh = eps * df
-       N = 1.0_rp + df
+       N = 1.0_rp + e
+       dndh = eps * e
 
     end subroutine Solve_Hn
 
@@ -344,6 +343,9 @@ o2: do j = mid+1, no_ele-1
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.14  2003/09/13 02:02:00  vsnyder
+! Converges faster with derivatives instead of differences
+!
 ! Revision 2.13  2002/10/08 17:08:06  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
