@@ -88,7 +88,7 @@ module Fill                     ! Create vectors and fill them.
     & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
     & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T, M_Fill
-  use VGridsDatabase, only: VGRID_T
+  use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
 
   implicit none
   private
@@ -1699,12 +1699,15 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
 
     ! Local variables
+    integer :: HEIGHTUNIT               ! Unit for height
     integer :: NOPOINTS                 ! Number of points supplied
     integer :: I                        ! Loop counter
+    integer :: TESTUNIT                 ! Unit for value
     logical :: LOCALOUTHEIGHTS          ! Set if out heights is our own variable
     real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
     real (r8), dimension(:), pointer :: VALUES ! Values for the points
     real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
+    real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
     real (r8), dimension(2) :: EXPRVALUE ! Value of expression
     integer, dimension(2) :: EXPRUNIT   ! Unit for expression
 
@@ -1716,34 +1719,42 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'The quantity is not amenable to a profile fill' )
 
+    ! Check the units
+    testUnit = quantity%template%unit
+    if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
+
     ! Set some stuff up
     noPoints = nsons ( valuesNode ) - 1
-    nullify ( heights, values, outHeights )
+    nullify ( heights, values, outHeights, outValues )
     call Allocate_test ( heights, noPoints, 'heights', ModuleName )
     call Allocate_test ( values, noPoints, 'values', ModuleName )
+    call Allocate_test ( outValues, quantity%template%instanceLen, &
+      &'outValues', ModuleName )
 
     ! Loop over the values
     do i = 1, noPoints
       ! Get value from tree
       call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
       ! Check height unit OK
-      ! WRITE THIS!
+      heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
+      if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
+        & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
+        & call AnnounceError ( valuesNode, 0, 'Bad height units for profile fill' )
       ! Store height
-      if ( exprUnit(1) == PHYQ_Pressure .and. &
-        & quantity%template%verticalCoordinate == l_zeta ) then
+      if ( heightUnit == PHYQ_Zeta ) then
+        ! Assume zeta coordinates are expressed in mb
         heights(i) = -log10 ( exprValue(1) )
       else
         heights(i) = exprValue(1)
       end if
-
       ! Check value unit OK
-      ! WRITE THIS!
-
+      if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
+        & call AnnounceError ( valuesNode, 0, 'Bad units for profile fill' )
       ! Store value
       values ( i ) = exprValue(2)
     end do
 
-    ! Get the appropriate height coordinate for output
+    ! Get the appropriate height coordinate for output, for pressure take log.
     if ( quantity%template%verticalCoordinate == l_pressure ) then
       localOutHeights = .true.
       call Allocate_test ( outHeights, quantity%template%noSurfs, &
@@ -1756,16 +1767,24 @@ contains ! =====     Public Procedures     =============================
 
     ! Now do the interpolation for the first instance
     call InterpolateValues ( heights, values, outHeights, &
-      & quantity%values(:,1), 'Linear', extrapolate='Constant' )
-    ! Spread it into the other instances
-    quantity%values = spread ( &
-      & quantity%values(:,1), quantity%template%noInstances, 2 )
-
+      & outValues, 'Linear', extrapolate='Constant' )
+    ! Spread it into the other instances, worry about the mask
+    if ( .not. associated ( quantity%mask ) ) then
+      quantity%values = spread ( &
+        & outValues, quantity%template%noInstances, 2 )
+    else
+      do i = 1, quantity%template%noInstances
+        where ( iand ( ichar(quantity%mask(:,i)) , m_fill ) == 0 )
+          quantity%values(:,i) = outValues(:)
+        end where
+      end do
+    end if
     ! Finish off
     if ( localOutHeights ) call Deallocate_test ( outHeights, &
       & 'outHeights', ModuleName )
     call Deallocate_test ( heights, 'heights', ModuleName )
     call Deallocate_test ( values, 'values', ModuleName )
+    call Deallocate_test ( outValues, 'outValues', ModuleName )
   end subroutine FillVectorQtyFromProfile
 
   ! ------------------------------------------- FillLOSVelocity ---
@@ -3693,6 +3712,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.135  2002/08/20 19:19:41  livesey
+! Tidied up FillVectorQtyFromProfile
+!
 ! Revision 2.134  2002/08/16 16:08:58  livesey
 ! Bug fix in the Matrix fill (covariance with frequency variation).
 !
