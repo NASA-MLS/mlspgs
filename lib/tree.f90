@@ -158,7 +158,7 @@ contains
       call tree_error ( underflow, null_tree )
     end if
     if ( nsons == 0 ) then; source_ref = 0
-    else; source_ref = the_tree(tree_sp+1)%source; end if
+    else; source_ref = the_tree(tree_sp+nsons)%source; end if
     left_son = tree_point + 1
     call pop_to_tree ( nsons )
     ! Push new node onto the stack
@@ -570,6 +570,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.3  2001/02/23 00:33:11  vsnyder
+! Move source_ref to the beginning of the subtree (from the end)
+!
 ! Revision 2.2  2001/02/07 18:40:22  vsnyder
 ! Add a "decor" argument to "build_tree".
 !
