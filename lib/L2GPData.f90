@@ -1787,7 +1787,7 @@ contains ! =====     Public Procedures     =============================
     endif
     
     ! Create the swath within the file
-    !print*,"Creating swath called ",name
+    ! print*,"Creating swath called ",name
     swid = HE5_SWcreate(L2FileHandle, trim(name))
     !print*,"Swath ",name,"has SW id :",swid
     if ( swid == -1 ) then
@@ -1798,10 +1798,10 @@ contains ! =====     Public Procedures     =============================
     ! Define dimensions
 
     ! Defining special "unlimited dimension called UNLIM
-    print*,"Defined Unlim with size", HE5S_UNLIMITED_f
+    ! print*,"Defined Unlim with size", HE5S_UNLIMITED_f
     status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
 
-    print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
+    ! print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
     status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
     if ( status == -1 ) then
        msr = DIM_ERR // DIM_NAME1
@@ -1809,7 +1809,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nLevels > 0 ) then
-      print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
+      ! print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
        status = HE5_SWdefdim(swid, DIM_NAME2, l2gp%nLevels)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME2
@@ -1818,7 +1818,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
+       ! print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
        status = HE5_SWdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
@@ -1894,8 +1894,10 @@ contains ! =====     Public Procedures     =============================
     end if
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    ! status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
+    !     HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_INT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD8
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1951,15 +1953,15 @@ contains ! =====     Public Procedures     =============================
        chunk_rank=2
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       print*,"Set chunking with status=",status
-       print*,"chunking=",chunk_dims
-       print*,"About to define 2-D extendible field"
+       ! print*,"Set chunking with status=",status
+       ! print*,"chunking=",chunk_dims
+       ! print*,"About to define 2-D extendible field"
 
-       print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
-             DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
+       ! print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+       !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
             HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       print*,"Defined 2-D extendible field"
+       ! print*,"Defined 2-D extendible field"
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
@@ -2876,6 +2878,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.53  2003/02/08 00:33:32  pwagner
+! Writes he5 attributes w/o bombing
+!
 ! Revision 2.52  2003/02/07 01:05:12  pwagner
 ! rgp now public
 !
