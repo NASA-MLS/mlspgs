@@ -8,7 +8,7 @@ begin Construct
   ;; Define all the molecules we'll consider.  Note that this is only
   ;; non-isotopic species (at least for the moment).
   !define(allLinearMolecules,{!tidyList( $
-    BrO, CH3Cl, CH3CN, CO, ClO, H2CO, H2O2, H2S, $
+    BrO, CH3Cl, CH3CN, CH3COCH3, CH3OH, CO, ClO, H2CO, H2O2, H2S, $
     HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, O3, OCS, OH, SO2)})
   !define(allLogMolecules,{H2O})
   !define(allLinearHRMolecules,{O3})
@@ -283,10 +283,10 @@ begin Construct
   ;; ----------------------------------------- Statuses for products ---
   !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
   !define(constructQuality,{quality$1: Quantity, type=quality, hGrid=hGridStandard!nl})
-  !forall(constructStatus,!allStandardProducts)
-  !forall(constructQuality,!allStandardProducts)
-  !define(allStatuses,{!makelist({status},{},!allStandardProducts)})
-  !define(allQualities,{!makelist({quality},{},!allStandardProducts)})
+  !forall(constructStatus,!allStandardProducts,!allHiResProducts)
+  !forall(constructQuality,!allStandardProducts,!allHiResProducts)
+  !define(allStatuses,{!makelist({status},{},!allStandardProducts,!allHiResProducts)})
+  !define(allQualities,{!makelist({quality},{},!allStandardProducts,!allHiResProducts)})
 
   ;; ----------------------------------------- Scan residuals
 
