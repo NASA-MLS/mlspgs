@@ -361,7 +361,7 @@ CONTAINS
 
        CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, &
                            mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
-       IF (TRIM(match) == 'NONE') THEN
+       IF (mlspcf_mcf == -1) THEN
           msr = 'No match in the PCF for file ' // mcfName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
@@ -412,6 +412,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.4  2000/12/07 19:31:38  nakamura
+! Updated for file name return from SearchPCFNames.
+!
 ! Revision 1.3  2000/11/15 21:05:55  nakamura
 ! Moved parameter GridNameLen to module L3DMData; changed name of mlspcf_mcf start & end numbers.
 !
