@@ -285,7 +285,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
-    & ( ROOT, VGRIDS, GLOBAL ) result ( info )
+    & ( NAME, ROOT, VGRIDS, GLOBAL ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
@@ -319,6 +319,7 @@ contains ! =====     Public Procedures     =============================
     use Units, only: PHYQ_TEMPERATURE, PHYQ_PROFILES, PHYQ_ANGLE
     use VGridsDatabase, only: VGrid_T
 
+    integer, intent(in) :: NAME         ! The name of the config
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
     !                                     Indexes either a "named" or
     !                                     "spec_args" vertex. Local variables
@@ -333,8 +334,6 @@ contains ! =====     Public Procedures     =============================
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: MoleculeSign             ! in the info%molecules array.
     integer :: Mol                      ! Tree indices of f_molecules, ...Pol
-    integer :: Name                     ! sub_rosa of label of specification,
-    ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
@@ -359,13 +358,6 @@ contains ! =====     Public Procedures     =============================
     error = 0
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "ConstructForwardModelConfig", root )
-    if ( node_id(root) == n_named ) then
-      name = subtree(1, root)
-      key = subtree(2, root)
-    else
-      name = 0
-      key = root
-    end if
 
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
@@ -381,6 +373,7 @@ contains ! =====     Public Procedures     =============================
     info%incl_cld = .false.
     info%i_saturation = l_clear
     info%lockBins = .false.
+    info%name = name
     info%no_cloud_species = 2
     info%no_model_surfs = 640
     info%num_ab_terms = 50
@@ -397,13 +390,10 @@ contains ! =====     Public Procedures     =============================
     info%temp_der = .false.
     info%windowUnits = phyq_profiles
 
-    ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
-    ! parser users' guide" for pictures of the trees being analyzed.
-
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
-    do i = 2, nsons(key)
-      son = subtree(i,key)
+    do i = 2, nsons(root)
+      son = subtree(i,root)
       field = get_field_id(son)
       got(field) = .true.
       select case ( field )
@@ -459,12 +449,12 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_moleculeDerivatives )
         if ( .not. associated(info%molecules) ) then
-          call announceError( DefineMoleculesFirst, key)
+          call announceError( DefineMoleculesFirst, root)
         else
           do j = 1, nsons(son)-1
             thisMolecule = decoration( subtree( j+1, son ) )
             if ( .not. any(info%molecules == thisMolecule ) ) &
-              & call announceError( BadMolecule, key )
+              & call announceError( BadMolecule, root )
             where ( info%molecules == thisMolecule )
               info%moleculeDerivatives = .true.
             end where
@@ -498,7 +488,7 @@ contains ! =====     Public Procedures     =============================
         info%polarized = get_boolean(son)
       case ( f_signals )
         allocate ( info%signals (nsons(son)-1), stat = status )
-        if ( status /= 0 ) call announceError( AllocateError, key )
+        if ( status /= 0 ) call announceError( AllocateError, root )
         do j = 1, nsons(son)-1
           call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
             & strip=.true.)
@@ -550,14 +540,14 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, value, type )
         info%tolerance = value(1)
         if ( expr_units(1) /= phyq_temperature ) &
-          & call AnnounceError ( toleranceNotK, key )
+          & call AnnounceError ( toleranceNotK, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case default
         ! Shouldn't get here if the type checker worked
       end select
 
-    end do ! i = 2, nsons(key)
+    end do ! i = 2, nsons(root)
 
     ! Now some more error checking
     select case ( info%fwmType )
@@ -680,6 +670,7 @@ contains ! =====     Public Procedures     =============================
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Output_m, only: BLANKS, Output
+    use String_Table, only: DISPLAY_STRING
                                                                                 
     ! Dummy argument
     type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
@@ -697,6 +688,8 @@ contains ! =====     Public Procedures     =============================
     std_dev = sqrt(abs(meanTimes * (mean_sqDelta - (mean*mean)))) 
     call output ( "======= printForwardModelTiming =========", advance = 'yes')
     call output ( " ", advance = 'yes')
+    call output ( "Configuration: " )
+    call display_string ( fwModelConfig%name, strip=.true., advance='yes' )
     call output ( "Ntimes = ")
     call output ( FWModelConfig%Ntimes, advance = 'yes' )
     call output ( "mean = ")
@@ -797,6 +790,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.67  2003/07/15 18:17:50  livesey
+! Better handling of configuration name
+!
 ! Revision 2.66  2003/06/30 22:55:01  cvuu
 ! Find mean, std dev timing of fullForwardModel calls
 !
