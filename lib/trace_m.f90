@@ -22,17 +22,23 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
     character(len=*), intent(in) :: NAME
-    integer, intent(in) :: ROOT
+    integer, intent(in), optional :: ROOT
     integer :: I              ! Loop inductor
-    call output ( root, 4 ); call output ( ': ' )
-    do i = 1, depth
-      call output ( '.' )
-    end do
+    if ( present(root) ) then
+      call output ( root, 4 ); call output ( ': ' )
+      do i = 1, depth
+        call output ( '.' )
+      end do
+    end if
     call output ( 'Enter ' ); call output ( name );
-    call output ( ' with ' );
-    call dump_tree_node ( root, 0 )
-    call output ( ' at ' )
-    call print_source ( source_ref(root), advance='yes' )
+    if ( present(root) ) then
+      call output ( ' with ' );
+      call dump_tree_node ( root, 0 )
+      call output ( ' at ' )
+      call print_source ( source_ref(root), advance='yes' )
+    else
+      call output ( '', advance='yes' )
+    end if
     depth = depth + 1
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
@@ -50,6 +56,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.2  2001/03/16 21:01:17  vsnyder
+! Make ROOT optional in Trace_Begin
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
