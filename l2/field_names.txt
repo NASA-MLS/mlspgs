@@ -61,6 +61,7 @@ differentialScan
 do_baseline
 do_conv
 do_freq_avg
+do_1d
 dontMask
 
 earthRadius
@@ -277,6 +278,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.69  2003/01/16 00:56:09  jonathan
+# add do_1d
+#
 # Revision 2.68  2003/01/14 22:15:07  dwu
 # make FlagCloud depend on both channels and cloudChannels
 #
