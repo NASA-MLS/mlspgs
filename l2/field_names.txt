@@ -164,7 +164,7 @@ ratioQuantity
 refGPHquantity
 regOrders
 regQuants
-regWeight
+regWeights
 resetSeed
 rhiQuantity
 rowChannels
@@ -226,6 +226,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.34  2002/05/07 01:01:25  vsnyder
+# Change regWeight to regWeights
+#
 # Revision 2.33  2002/05/06 21:38:01  livesey
 # Added forbid overspill
 #
