@@ -45,15 +45,17 @@
         TRANS(I)=TRANS(I+1)+DELTAU(I)
       ENDDO
 
+      Trans = exp(- Trans)
+
 ! CONVERT DELTAU TO BETA
       DO I=1,NH-1
-         ZH(I)=-LOG10( (YP(I+1)+YP(I))/2. ) 
+         ZH(I)=-(LOG10(YP(I+1))+LOG10(YP(I)))/2.
          delTAU(I) = delTAU(I)/DDZ(I)
          delTAUc(I) = delTAUc(I)/DDZ(I)
       END DO
 
       DO I=1,NZ-1
-         ZA(I)=-LOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+         ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2.
       END DO
 
       DO J=1,NZ-1
