@@ -645,6 +645,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call allocate_test ( thisFraction, noFreqs, 'thisFraction', ModuleName )
 
     if ( sidebandStart /= sidebandStop ) then 
+      ! Change to this if statement later !????
+      ! if ( signal%sideband == 0 ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -1055,6 +1057,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.119  2003/05/29 16:38:03  livesey
+! Renamed sideband fraction
+!
 ! Revision 1.118  2003/05/16 23:53:56  livesey
 ! Removed reference to spectags
 !
