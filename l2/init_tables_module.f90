@@ -446,9 +446,9 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_binSelector, &
-             begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_binSelectorType, nr+n_field_type, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
+             begin, f+f_nameFragment, t+t_string, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cost, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
@@ -757,6 +757,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_allLinesForRadiometer, t+t_boolean, n+n_field_type, &
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_binSelectors, s+s_binSelector, n+n_field_spec, &
              begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
              begin, f+f_differentialScan, t+t_boolean, n+n_field_type, &
              begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
@@ -769,7 +770,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
-             begin, f+f_nameFragment, t+t_string, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
              begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
@@ -944,6 +944,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.278  2003/02/05 21:56:27  livesey
+! binSelectors don't contain signals, instead forward model configs
+! contain bin selectors.
+!
 ! Revision 2.277  2003/02/05 04:06:18  dwu
 ! add cloudheight
 !
