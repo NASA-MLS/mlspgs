@@ -8,17 +8,17 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
 
   implicit NONE
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private :: IdParm = &
-    & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (LEN=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
-
   private
 
   public :: GetQuantityForForwardModel
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (LEN=*), parameter :: ModuleName= &
+    & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 contains
 
@@ -267,6 +267,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.5  2002/10/02 22:51:07  vsnyder
+! OOPS, mispelled 'parameter' as 'private'
+!
 ! Revision 2.4  2002/10/02 22:49:13  vsnyder
 ! Cosmetic change to RCS stuff
 !
