@@ -88,6 +88,7 @@ module L2PC_m
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! Local saved variables - these keep track of the l2pc vector/quantity databases
@@ -1494,9 +1495,16 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine WriteVectorAsHDF5
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2PC_m
 
 ! $Log$
+! Revision 2.51  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.50  2002/10/05 00:42:31  livesey
 ! Modified to use new pack/unpack literals/strings
 !
