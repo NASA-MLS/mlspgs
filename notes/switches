@@ -24,7 +24,10 @@ Switches (set by -S option in mlsl2's command line):
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
   fvec =>   'F' vector during Newton iteration
-  fwmd =>   Forward model config whenever 'derived' part is computed
+  fwmd =>   Dump Forward model config whenever 'derived' part is computed
+  fwmD =>   Dump Forward model config when first 'derived' part is computed, then stop
+  fwmg =>   Dump Forward model config after Get_Species_Data finishes
+  fwmG =>   Dump Forward model config after Get_Species_Data finishes, then stop
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files [higher the n, more the info]
   gridd =>  Gridded data quantities
@@ -35,6 +38,9 @@ Switches (set by -S option in mlsl2's command line):
   l2aux =>  l2aux quantities (all) dumped
   l2gp =>   l2gp swaths (all) dumped
   l2pc =>   l2pc reading progress dumped
+  lblb =>   Dump line-by-line Betas
+  lblB =>   lblb + temperature and pressure grids
+  LBLB =>   lblB and then stop
   log =>    Log file messages
   mas =>    Activities of the PVM master task
   msk =>    Mask set up by subset command in Retrieve
@@ -49,6 +55,9 @@ Switches (set by -S option in mlsl2's command line):
   opt[n] => Print command line options [higher the n, more the info]
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
+  pfab =>   Dump PFA Betas
+  pfaB =>   pfab + temperature and pressure grids
+  PFAB =>   pfaB and then stop
   pguess => Iterations of the pressure guesser
   phase  => Announce phases (e.g., CorePlusR2) as they are begun
   point =>  Pointing grids
@@ -70,7 +79,7 @@ Switches (set by -S option in mlsl2's command line):
   slv =>    Show output of slaves using pvmfcatchout
   snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
-  spec =>   Spectroscopy caltalog
+  spec =>   Spectroscopy catalog
   sps =>    Species data in Get_Species_Data
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
@@ -113,6 +122,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.47  2004/08/05 22:46:04  pwagner
+ New --chunkRange option to run selected chunks in parallel mode
+
  Revision 1.46  2004/08/05 20:24:11  livesey
  Added ptg to dump ptg_angles
 
