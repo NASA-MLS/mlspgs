@@ -698,7 +698,7 @@ contains ! =====     Public Procedures     =============================
       ! Open/create the file of interest
       isnewdirect = .true.  ! Just so it has a value even for toolkitless runs
       call split_path_name(filename, path, file_base)
-      if ( TOOLKIT ) then
+      if ( distributingSources ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
         if ( DeeBUG ) then
@@ -1808,6 +1808,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.109  2004/04/17 07:00:54  livesey
+! Bug fix possibly?
+!
 ! Revision 2.108  2004/03/03 19:28:04  pwagner
 ! Should not add metadata if dgg/dgm to be unsplit
 !
