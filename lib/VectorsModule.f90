@@ -309,12 +309,11 @@ contains ! =====     Public Procedures     =============================
   ! absent, clear all of the bits of MASK.
     integer, intent(inout), dimension(0:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_CLEAR
-    integer :: I, W, P
+    integer :: I, W
     if ( present(to_clear) ) then
       do i = 1, size(to_clear)
-        w = to_clear(i) / b
-        p = mod(to_clear(i), b)
-        mask(w) = ibclr(mask(w),p)
+        w = to_clear(i) / b + 1
+        mask(w) = ibclr( mask(w), mod(to_clear(i), b) )
       end do
     else
       mask = 0
@@ -330,8 +329,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: Inst, Quant
     integer :: I1, I2    ! Bounds for instances
     integer :: II        ! Index/subscript for instances
-    integer :: MB        ! Mask bit index within word MW
-    integer :: MW        ! Mask word index
     integer :: Q1, Q2    ! Bounds for quantities
     integer :: QI        ! Index/subscript for quantities
     integer :: VI        ! Index/subscript for values
@@ -352,9 +349,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do ii = i1, i2
           do vi = 1, size(z%quantities(qi)%values,1)
-            mw = vi / b
-            mb = mod(vi, b)
-            if ( btest(z%quantities(qi)%mask(mw,ii), mb) ) &
+            if ( btest(z%quantities(qi)%mask(vi/b + 1,ii), mod(vi, b)) ) &
               z%quantities(qi)%values(vi,ii) = 0.0
           end do ! vi
         end do ! ii
@@ -1072,17 +1067,10 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: vectorQty
     integer, intent(in) ::              ROW
     integer, intent(in) ::              COLUMN
-    
-  ! Private
-    integer             ::              ROWW, ROWBIT
 
     isVectorQtyMasked = .false.
     if ( .not. associated(vectorQty%mask)) return
-    roww = row / b               ! will have to add mask starting index
-    rowbit = mod(row, b)
-    if ( ibits( vectorQty%mask(roww+1, column), rowbit, 1 ) /= 0 ) then
-      isVectorQtyMasked = .true.
-    endif
+    isVectorQtyMasked = btest( vectorQty%mask(row/b + 1, column), mod(row, b) )
 
   end function IsVectorQtyMasked
 
@@ -1175,12 +1163,11 @@ contains ! =====     Public Procedures     =============================
   ! set all of the bits of MASK.
     integer, intent(inout), dimension(0:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
-    integer :: I, W, P
+    integer :: I, W
     if ( present(to_set) ) then
       do i = 1, size(to_set)
-        w = to_set(i) / b
-        p = mod(to_set(i), b)
-        mask(w) = ibset(mask(w),p)
+        w = to_set(i) / b + 1
+        mask(w) = ibset(mask(w),mod(to_set(i), b))
       end do
     else
       mask = not(0)
@@ -1440,6 +1427,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.54  2001/09/21 17:38:46  pwagner
+! Added args to dump_vector(s)
+!
 ! Revision 2.53  2001/09/20 23:02:31  vsnyder
 ! Specified explicitly which entities are public (so as not to re-publish
 ! everything gotten by USE).  Added ClearUnderMask subroutine.
