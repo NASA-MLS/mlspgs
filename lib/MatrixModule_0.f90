@@ -890,7 +890,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: SUBTRACT
-    integer, optional, target, intent(in), dimension(0:) :: XMASK, YMASK
+    integer, optional, pointer, dimension(:) :: XMASK, YMASK ! intent(in)
     logical, intent(in), optional :: UPPER
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -950,7 +950,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z = columns of YB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           yi_1 = yb%r2(j-1)+1   ! index of 1st /=0 el. in this col of yb
           yi_n = yb%r2(j)       ! index of last /=0 el. in this col of yb
@@ -961,7 +961,7 @@ contains ! =====     Public Procedures     =============================
           do i = 1, mz  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             xi_1 = xb%r2(i-1)+1  ! index of 1st /=0 el. in this col of xb
             xi_n = xb%r2(i)      ! index of last /=0 el. in this col of xb
@@ -1007,13 +1007,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
@@ -1055,7 +1055,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do i = 1, xb%ncols    ! Rows of ZB
           if ( associated(xm) ) then
-            if ( btest(xm(i/b),mod(i,b)) ) cycle
+            if ( btest(xm(i/b+1),mod(i,b)) ) cycle
           end if
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
@@ -1064,7 +1064,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = i
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b),mod(j,b)) ) cycle
+              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1095,13 +1095,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1144,13 +1144,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1195,13 +1195,13 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
@@ -1233,7 +1233,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
@@ -1242,7 +1242,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1261,7 +1261,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b),mod(j,b)) ) cycle
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
@@ -1269,7 +1269,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b),mod(i,b)) ) cycle
+              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1285,13 +1285,13 @@ contains ! =====     Public Procedures     =============================
         if ( associated(xm) .or. associated(ym) ) then
           do j = 1, zb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b),mod(j,b)) ) cycle
+              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
             end if
             mz = zb%nrows
             if ( my_upper ) mz = j
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
-                if ( btest(xm(i/b),mod(i,b)) ) cycle
+                if ( btest(xm(i/b+1),mod(i,b)) ) cycle
               end if
               if ( .not. my_sub ) then
                 zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, &
@@ -2093,6 +2093,12 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.40  2001/06/27 01:15:10  vsnyder
+! XMASK and YMASK arguments of MultiplyMatrixBlocks need to be pointers
+! because they might not be associated in the caller.  Therefore they
+! cannot have specified lower bounds.  Therefore we need to use i/b+1
+! (j/b+1) for subscripts of xm (ym).
+!
 ! Revision 2.39  2001/06/26 23:56:04  vsnyder
 ! Make [XY]MASK 'target' instead of 'pointer' so they can have lower bound
 !
