@@ -1,9 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
+
+  USE SDPTOOLKIT, only: PGSd_PC_FILE_PATH_MAX
 
   IMPLICIT NONE
   PUBLIC
@@ -36,7 +38,9 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 
   INTEGER, PARAMETER :: NameLen=32
   INTEGER, PARAMETER :: LineLen=132
-  INTEGER, PARAMETER :: FileNameLen=132
+
+! Shouldn't this be PGSd_PC_FILE_PATH_MAX ?
+  INTEGER, PARAMETER :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
 
   ! --------------------------------------------------------------------------
   
@@ -100,6 +104,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.9  2002/01/09 23:51:27  pwagner
+! Connected FileNameLen with PGSd_PC_FILE_PATH_MAX
+!
 ! Revision 2.8  2001/11/14 18:03:32  livesey
 ! Changed FindFirst to return 0 not -1 if not found
 !
