@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MLSHDFEOS
@@ -1614,6 +1614,7 @@ contains ! ======================= Public Procedures =========================
     print*,'Scalar version'
     nswaths = 0
     mls_swath_in_file_sca = .false.
+    fieldlist = ''
     select case (HdfVersion)
     case (HDFVERSION_4)
       nswaths = swinqswath(trim(filename), fieldlist, listsize)
@@ -1621,6 +1622,12 @@ contains ! ======================= Public Procedures =========================
       nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
     end select
     if ( nswaths == 0 ) return
+    if ( listsize > MAXDLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in mls_swath_in_file_sca ' // trim(filename) )
+    elseif ( listsize < MAXDLISTLENGTH .and. listsize > 0 ) then
+      fieldlist = fieldlist(1:listsize) // ' '
+    endif
     mls_swath_in_file_sca = &
       & ( StringElementNum(fieldlist, trim(swath), .true.) > 0 )
   end function mls_swath_in_file_sca
@@ -1655,6 +1662,12 @@ contains ! ======================= Public Procedures =========================
     if (Deebug) print *, ' nswaths is ', nswaths
     if (Deebug) print *, ' listsize is ', listsize
     if (Deebug) print *, ' fieldlist is ', trim(fieldlist)
+    if ( listsize > MAXDLISTLENGTH ) then
+       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'list size too big in mls_swath_in_file_arr ' // trim(filename) )
+    elseif ( listsize < MAXDLISTLENGTH .and. listsize > 0 ) then
+      fieldlist = fieldlist(1:listsize) // ' '
+    endif
     do i=1, size(swaths)
       present(i) = &
       & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
@@ -1677,6 +1690,7 @@ contains ! ======================= Public Procedures =========================
     ! Begin execution
     nflds = 0
     is_datafield_in_swath = .false.
+    fieldlist = ''
     select case (HdfVersion)
     case (HDFVERSION_4)
       nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
@@ -1775,6 +1789,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.16  2004/01/23 01:12:28  pwagner
+! Some care taken in handling ...inq.. functions
+!
 ! Revision 2.15  2003/10/30 00:01:57  pwagner
 ! Added MLS_GDWRATTR
 !
