@@ -139,7 +139,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
+		echo "/testing/emls/l1rad/$SIMULATION/$FWMVERSION/";;
 	esac
     fi
     if [ $1 == "--l1bvsp" ]; then
@@ -189,6 +189,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.43  2005/01/17 20:20:57  livesey
+# Fixed confusion with sidsrad
+#
 # Revision 1.42  2004/11/11 00:32:20  livesey
 # Moved l2pcs on soundbarrier
 #
