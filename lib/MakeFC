@@ -111,7 +111,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
 	esac 
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
-	all libmls.a
+	all libmls.a ghostbuster
 
 tar:
 
@@ -131,7 +131,7 @@ depends:
 	$(MLSBIN)/makemakedep.sh $(omit_srcs)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
            $(blaslib) ./machines/$(MLSCONFG)
 
 mostlyclean:
@@ -182,6 +182,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.25  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
 # Revision 2.24  2001/05/14 23:58:43  pwagner
 # default .configure name now set by environment
 #
