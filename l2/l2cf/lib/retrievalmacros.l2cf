@@ -191,15 +191,14 @@ DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDi
 ;; Clear our macros
 !undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)})
 
-;; This macro is used to invoke direct writes to store forward model
-;; radiances.  The band is $1, and a suffix for the sd name is given
-;; in $2
+;; These macros are associated with the direct write code.  It writes a
+;; set of radiances $2... into the L2FWM-$1 file.
 !define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
 !define(oneFwmRadTerm,{source=fwm.band$1,})
 !define(directWriteFwmRad,{!ifdef(l2version,{!dnl
-!forall(labelOneFwmRad,!tidyList($*))!dnl
-  DirectWrite, !forall(oneFwmRadTerm,!tidyList($*)) type=l2aux, $
-  file='!outpathl2fwm/MLS-Aura_L2FWM-!moduleForRadiometer(!radiometerForBand($1))_!l2version_!day.h4', $
+!forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2aux, $
+  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h4', $
   hdfVersion=4})})
 
 
@@ -281,6 +280,9 @@ DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDi
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.57  2003/07/08 00:17:20  livesey
+; New approach to output with directWrite being used most places
+;
 ; Revision 1.56  2003/06/05 23:39:39  livesey
 ; IWC no longer a standard product
 ;
