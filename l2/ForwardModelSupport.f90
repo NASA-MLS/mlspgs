@@ -7,13 +7,7 @@ module ForwardModelSupport
   ! Set up the forward model stuff.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, READ_ANTENNA_PATTERNS_FILE,&
-    & CLOSE_ANTENNA_PATTERNS_FILE
   use Expr_M, only: EXPR
-  use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, READ_FILTER_SHAPES_FILE,&
-    & CLOSE_FILTER_SHAPES_FILE
-  use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
-    & ForwardModelConfig_T
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, &
     & L_TEMPERATURE, L_VMR
@@ -27,32 +21,14 @@ module ForwardModelSupport
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy
-  use L2ParInfo, only: PARALLEL
-  use Lexer_Core, only: PRINT_SOURCE
-  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, BINSELECTOR_T, &
-    & READCOMPLETEHDF5L2PCFILE
   use MLSCommon, only: R8
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
-  use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
-     & MLSMSG_Error
-  use MLSNumerics, only: HUNT
-  use MLSPCF2, only: mlspcf_antpats_start, mlspcf_filtshps_start, &
-     &          mlspcf_ptggrids_start
   use MoreTree, only: Get_Boolean, Get_Field_ID, GET_SPEC_ID
-  use Output_M, only: Output
   use Parse_Signal_m, only: PARSE_SIGNAL
-  use PointingGrid_m, only: Close_Pointing_Grid_File, &
-    & Open_Pointing_Grid_File, Read_Pointing_Grid_File
-  use String_Table, only: Display_String, Get_String
-  use Toggles, only: Emit, Gen, Levels, Switches, Toggle
+  use String_Table, only: Get_String
+  use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-  use Tree, only: Print_Subtree
-  use Tree_Types, only: N_Array, N_named
-  use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE, &
-    & PHYQ_PRESSURE, PHYQ_DIMENSIONLESS
-  use VGridsDatabase, only: VGrid_T
+  use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS
 
 
   implicit none
@@ -92,6 +68,20 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------  ForwardModelGlobalSetup  -----
   subroutine ForwardModelGlobalSetup ( Root, any_errors )
     ! Process the forwardModel specification to produce ForwardModelInfo.
+
+    use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, &
+      & READ_ANTENNA_PATTERNS_FILE, CLOSE_ANTENNA_PATTERNS_FILE
+    use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, &
+      & READ_FILTER_SHAPES_FILE, CLOSE_FILTER_SHAPES_FILE
+    use L2ParInfo, only: PARALLEL
+    use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
+      & READCOMPLETEHDF5L2PCFILE
+    use MLSFiles, only: GetPCFromRef
+    use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
+    use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
+      &          MLSPCF_ptggrids_start
+    use PointingGrid_m, only: Close_Pointing_Grid_File, &
+      & Open_Pointing_Grid_File, Read_Pointing_Grid_File
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -216,6 +206,9 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------- CreateBinSelectorFromMLSCFINFO --
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
+
+    use L2PC_m, only: BINSELECTOR_T
+
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
     integer :: SON                      ! Tree node
@@ -301,7 +294,13 @@ contains ! =====     Public Procedures     =============================
     & ( ROOT, VGRIDS ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
+
+    use ForwardModelConfig, only: ForwardModelConfig_T
     use MLSSignals_M, only: Signals
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSNumerics, only: HUNT
+    use Tree_Types, only: N_Array, N_named
+    use VGridsDatabase, only: VGrid_T
 
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
     !                                     Indexes either a "named" or
@@ -525,8 +524,8 @@ contains ! =====     Public Procedures     =============================
         & f_tangentGrid /) )) ) call AnnounceError ( IncompleteFullFwm, root )
 
       ! Now identify the Earth's surface in the tangent grid
-      call Hunt(info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
-        &  info%surfaceTangentIndex)
+      call Hunt ( info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
+        &  info%surfaceTangentIndex )
 
       ! Ensure that points in tangentGrid at and above the surface are a subset
       ! of integration grid
@@ -592,6 +591,10 @@ contains ! =====     Public Procedures     =============================
   ! =====     Private Procedures     =====================================
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
+
+    use Lexer_Core, only: PRINT_SOURCE
+    use Output_M, only: Output
+
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
     integer, intent(in), optional :: FieldIndex ! f_...
@@ -650,6 +653,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.35  2002/08/21 23:31:52  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.34  2002/08/04 16:02:23  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
