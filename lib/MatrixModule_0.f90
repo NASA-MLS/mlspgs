@@ -641,12 +641,15 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyBlock_0  -----
   subroutine DestroyBlock_0 ( B )
-  ! Deallocate the pointer components of the matrix block B
+    ! Deallocate the pointer components of the matrix block B
     type(MatrixElement_T), intent(inout) :: B
-    call deallocate_test ( b%r1, "b%r1", ModuleName )
-    call deallocate_test ( b%r2, "b%r2", ModuleName )
-    call deallocate_test ( b%values, "b%values", ModuleName )
-    b%kind = M_Absent
+    ! Don't destroy absent blocks, as they all point to the same place
+    if (b%kind /= M_Absent) then
+      call deallocate_test ( b%r1, "b%r1", ModuleName )
+      call deallocate_test ( b%r2, "b%r2", ModuleName )
+      call deallocate_test ( b%values, "b%values", ModuleName )
+      b%kind = M_Absent
+    endif
   end subroutine DestroyBlock_0
 
   ! ----------------------------------------------  GetDiagonal_0  -----
@@ -1823,6 +1826,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.15  2001/04/28 01:33:02  livesey
+! Now DestroyBlock doesn't destroy absent blocks as they all point to the same place.
+!
 ! Revision 2.14  2001/04/25 00:50:09  vsnyder
 ! Make MultiplyMatrixNoT generic
 !
