@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -16,7 +16,7 @@ MODULE L0Utils ! Utilities to read L0 data
 
   PRIVATE
 
-  PUBLIC :: ReadL0Sci, ReadL0Eng
+  PUBLIC :: ReadL0Sci, ReadL0Eng, CheckSum
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -138,21 +138,24 @@ CONTAINS
   END SUBROUTINE ReadL0Sci
 
 !=============================================================================
-  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, OK)
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, data_Ok, &
+       more_data)
 !=============================================================================
 
     USE MLSL1Utils, ONLY: BigEndianStr
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
     CHARACTER(LEN=*), DIMENSION(:) :: engpkt
     INTEGER :: MAFno, TotalMAF, MIFsPerMAF
     REAL(r8) :: MAFtime
-    LOGICAL :: OK
+    LOGICAL :: more_data, data_OK
 
     INTEGER :: i, n, returnStatus, MAF(6), version
     REAL(r8) :: TAI93, engtime
-    INTEGER :: ret_len
+    INTEGER :: IDN(128), ret_len
     LOGICAL :: EOD
-    CHARACTER(len=132) :: filename
+    CHARACTER(len=27) :: asciiUTC
+    CHARACTER(len=132) :: filename, msg
 
 ! For Version 3.0 and above:
 
@@ -160,6 +163,8 @@ CONTAINS
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
+    more_data = .TRUE.
+    data_OK = .TRUE.
     MAF = -1
     i = 1   ! start with eng packet #1
     DO
@@ -188,7 +193,7 @@ CONTAINS
              IF (returnStatus /= PGS_S_SUCCESS) THEN
                 CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                      & 'No next L0 Eng File')
-                OK = .FALSE.
+                more_data = .FALSE.
                 RETURN
              ENDIF
 
@@ -224,15 +229,50 @@ CONTAINS
     TotalMAF = BigEndianStr (EngPkt(6)(246:249))
     MAFno = MAF(1)
 
-    OK = .TRUE.
+! Test checksum value
+
+    DO i = 1, 6
+       DO n = 1, 256
+          IDN(n) = BigEndianStr (engpkt(i)((n*2-1):n*2))
+       ENDDO
+       IF (CheckSum (IDN, 127) /= IDN(128)) THEN
+          data_OK = .FALSE.
+          n = PGS_TD_TAItoUTC (engtime, asciiUTC)
+          WRITE (msg, &
+               '("Bad Checksum: Eng Pkt ", i1, ", UTC: ", A27)') i, asciiUTC
+          PRINT *, TRIM(msg)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, TRIM(msg))
+          RETURN   ! Can't do any more
+       ENDIF
+   ENDDO
 
   END SUBROUTINE ReadL0Eng
+
+!=============================================================================
+  FUNCTION CheckSum (DN, n) RESULT (csum)
+!=============================================================================
+
+    INTEGER :: n
+    INTEGER :: DN(n)   ! contains 16-bit integer data
+
+    INTEGER :: csum, i, seed
+    DATA seed /z'A300'/
+
+    csum = seed
+    DO i = 1, n
+       csum = IEOR (csum, DN(i))
+    ENDDO
+
+  END FUNCTION CheckSum
 
 !=============================================================================
 END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2004/11/10 15:33:11  perun
+! Test checksum eng value for correctness
+!
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
