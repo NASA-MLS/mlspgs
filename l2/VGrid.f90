@@ -151,12 +151,14 @@ contains ! =====     Public Procedures     =============================
       if ( got_field(f_values) ) &
         & prev_units = check_units ( value_field, f_values, vgrid%surfs(:,1) )
       if ( got_field(f_resolution) ) then
+        if ( all ( vGrid%verticalCoordinate /= (/ l_zeta, l_pressure /) ) ) &
+          & call announce_error ( root, resolutionZetaOnly )
         call expr ( subtree(2,resolution), units, values )
         if ( units(1) /= phyq_dimensionless ) &
           & call announce_error ( subtree(1,resolution), unitless )
-        if ( vGrid%verticalCoordinate /= l_zeta ) &
-          & call announce_error ( root, resolutionZetaOnly )
-        vGrid%surfs = nint ( vGrid%surfs * values(1) ) / values(1)
+        if ( prev_units /= phyq_pressure )  &
+          & call announce_error ( root, wrongunits )
+        vGrid%surfs = 10.0**( nint ( log10(vGrid%surfs) * values(1) ) / values(1) )
       end if
     case ( l_l2gp )
       if (.not. associated(l2gpDatabase) ) &
@@ -399,6 +401,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.18  2004/04/02 01:06:39  livesey
+! Fixed a bug in the resolution/explicit stuff
+!
 ! Revision 2.17  2004/03/24 18:26:16  livesey
 ! Bug fix for resolution argument, inappropriate error message.
 !
