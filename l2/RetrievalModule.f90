@@ -465,6 +465,7 @@ contains
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
+      type(vector_T) :: AprioriMinusX   ! Apriori - X
       real(r8) :: AprioriNorm           ! apriori .dot. apriori
       type(vector_T) :: ATb             ! A^T b -- the RHS of the normal eqns.
       type(vector_T) :: BestGradient    ! for NWT
@@ -479,8 +480,10 @@ contains
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
+      type(vector_T) :: F_rowScaled     ! Either a copy of f, or f row-scaled
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
       type(vector_T) :: Gradient        ! for NWT
+      integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T) :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumF, NumJ             ! Number of Function, Jacobian evaluations
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
@@ -493,7 +496,6 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       type(vector_T) :: Weight          ! Scaling vector for rows, 1/measurementSD
       type(vector_T) :: X               ! for NWT
-      type(vector_T) :: XminusApriori   ! X - Apriori
 
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
@@ -511,6 +513,7 @@ contains
       call cloneVector ( atb, state, vectorNameText='_ATb' )
       call cloneVector ( reg_X_x, state, vectorNameText='_reg_X_x' )
       call cloneVector ( f, measurements, vectorNameText='_f' )
+      call cloneVector ( f_rowScaled, f, vectorNameText='_f_rowScaled' )
       call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
       call cloneVector ( bestX, x, vectorNameText='_bestX' )
       call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
@@ -599,11 +602,13 @@ contains
 
           if ( got(f_apriori) ) then
             ! Destroy (i.e. clean up) the previous contents of
-            ! xMinusApriori (if any), so as not to have a memory
+            ! AprioriMinusX (if any), so as not to have a memory
             ! leak.  Then make it look like apriori.
-            call cloneVector ( xMinusApriori, apriori, &
-              & vectorNameText='_xMinusApriori' )
-            xMinusApriori = x - apriori
+            call cloneVector ( aprioriMinusX, apriori, &
+              & vectorNameText='_aprioriMinusX' )
+            aprioriMinusX = apriori - x
+            if ( got(f_aprioriScale) ) &
+              & call scaleVector ( aprioriMinusX, aprioriScale )
             !{Let the covariance of the apriori be $\mathbf{S_a}$, let
             ! $\mathbf{C = S_a^{-1}}$, and let $\mathbf{F^T F = C}$. In
             ! the least-squares problem we have extra rows of the form
@@ -615,17 +620,17 @@ contains
             if ( diagonal ) then
               call getDiagonal ( covariance%m, covarianceDiag )
               ! covarianceXApriori := covarianceDiag # apriori:
-              call multiply ( xMinusApriori, covarianceDiag, &
+              call multiply ( covarianceDiag, aprioriMinusX, &
                 & covarianceXApriori )
             else ! covarianceXApriori := covariance X apriori:
-              call multiply ( covariance, xMinusApriori, &
+              call multiply ( covariance, aprioriMinusX, &
                 & covarianceXApriori )
             end if
             !{The contribution to the norm of the residual of the
             ! right-hand side of the part of the least-squares problem
-            ! that is due to apriori is $( a - x_n )^T F^T F ( a - x_n )
-            ! = ( a - x_n )^T C ( a - x_n )$
-            aprioriNorm = xMinusApriori .dot. covarianceXapriori
+            ! that is due to apriori is $\mathbf{
+            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T C ( a - x_n )}$
+            aprioriNorm = aprioriMinusX .dot. covarianceXapriori
           else
             aprioriNorm = 0.0_r8
           end if
@@ -715,8 +720,8 @@ contains
         ! \end{array}
         ! \end{equation*}
         !%
-        ! Triangularize ${\bf J}$, and compute (negative of the) gradient =
-        ! $-{\bf J^T f}$.  This is the RHS of the normal equations
+        ! Triangularize ${\bf J}$, and compute the (negative of the) gradient
+        ! = $-{\bf J^T f}$.  This is the RHS of the normal equations
         ! ${\bf J^T J \delta \hat x} = -{\bf J^T f}$ where ${\bf \delta
         !  \hat x}$ is a "Candidate DX" that might not actually get used.
         ! Set \begin{description}
@@ -747,28 +752,25 @@ contains
             ! use the full apriori covariance (one hopes only for one
             ! more iteration). This improves sparsity during iteration.
               call clearMatrix ( normalEquations%m )
-              call getDiagonal ( covariance%m, covarianceDiag )
               call updateDiagonal ( normalEquations, covarianceDiag )
             else
               call copyMatrixValue ( normalEquations%m, covariance%m )
             end if
-            call copyVector ( atb, covarianceXApriori )
-            if ( got(f_aprioriScale) ) then
-              call scaleMatrix ( normalEquations%m, aprioriScale )
-              call scaleVector ( atb, aprioriScale )
-            end if
+            call copyVector ( atb, covarianceXApriori ) ! A^T b := C (a-x_n)
+            if ( got(f_aprioriScale) ) &
+              & call scaleMatrix ( normalEquations%m, aprioriScale )
           else
             call clearMatrix ( normalEquations%m ) ! start with zero
             call destroyVectorValue ( atb ) ! Clear the RHS vector
-            aprioriNorm = 0.0_r8
           end if
+          ! aprioriNorm was computed when nwt_flag was NF_EVALF
           aj%fnorm = aprioriNorm
 
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
             call regularize ( jacobian, regOrders, regQuants, regWeight )
-            call multiply ( jacobian, x, reg_X_x ) ! regularization * x
-            call scaleVector ( reg_X_x, -regWeight )
+            call multiply ( jacobian, x, reg_X_x ) ! regularization * x_n
+            call scaleVector ( reg_X_x, -regWeight )   ! -R x_n
             call formNormalEquations ( jacobian, normalEquations, &
               & reg_X_x, atb, update=update )
             call clearMatrix ( jacobian )        ! free the space
@@ -797,31 +799,36 @@ contains
             fmstat%rows = .false.
             do k = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(k)), &
-                & x, fwdModelExtra, f, fmw, fmStat, jacobian )
+                & x, fwdModelExtra, f_rowScaled, fmw, fmStat, jacobian )
             end do ! k
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
-                call subtractFromVector ( f, measurements, &
-                  & jacobian%row%quant(rowBlock), &
-                  & jacobian%row%inst(rowBlock) )
+                call subtractFromVector ( f_rowScaled, measurements, &
+                  & quant=jacobian%row%quant(rowBlock), &
+                  & inst=jacobian%row%inst(rowBlock) ) ! f - y
+                !{Let ${\bf J}$ be the Jacobian matrix and ${\bf f}$ be the
+                ! residual of the least-squares problem.  Let $\bf W$ be the
+                ! inverse of the measurement covariance (which in our case
+                ! is diagonal). Row scale the part of the least-squares
+                ! problem that arises from the measurements, i.e. the
+                ! least-squares problem becomes $\mathbf{W J = W f}$
+                ! (actually, we only row scale ${\bf f}$ here, and scale
+                ! ${\bf J}$ below).
+                if ( got(f_measurementSD) ) then
+                  call multiply ( f_rowScaled, weight, &
+                    & quant=jacobian%row%quant(rowBlock), &
+                    & inst=jacobian%row%inst(rowBlock) )
+                end if
               end if
             end do
-            call scaleVector ( f, -1.0_r8 )
-            !{Let ${\bf J}$ be the Jacobian matrix and ${\bf f}$ be the
-            ! residual of the least-squares problem.  Let $W$ be the
-            ! inverse of the measurement covariance (which in our case
-            ! is diagonal). Row scale the part of the least-squares
-            ! problem that arises from the measurements, i.e. the
-            ! least-squares problem becomes $\mathbf{W J = W f}$.
-            if ( got(f_measurementSD) ) then
-              call rowScale ( weight, jacobian )
-              call multiply ( f, weight )
-            end if
-            aj%fnorm = aj%fnorm + ( f .dot. f )
-            !{Form normal equations: $\mathbf{J^T W^T W J \delta \hat x =
-            ! J^T W^T f}$:
+            call scaleVector ( f_rowScaled, -1.0_r8 ) ! y - f
+
+            if ( got(f_measurementSD) ) call rowScale ( weight, jacobian )
+
+            !{Form normal equations:
+            ! $\mathbf{J^T W^T W J \delta \hat x = J^T W^T W f}$:
             call formNormalEquations ( jacobian, normalEquations, &
-              & f, atb, update=update )
+              & rhs_in=f_rowScaled, rhs_out=atb, update=update )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -829,14 +836,15 @@ contains
                 & call dump_struct ( jacobian, &
                   & 'Sparseness structure of Jacobian blocks:' )
             call clearMatrix ( jacobian )  ! free the space
-!           call destroyVectorValue ( f )  ! free the space
           end do ! mafs
+
+          aj%fnorm = aj%fnorm + ( f_rowScaled .dot. f_rowScaled )
 
           !{Column Scale $\mathbf{J}$ (row and column scale $\mathbf{J^T
           ! J}$).  Let $\mathbf{\Sigma}$ be a column-scaling matrix for the
           ! Jacobian. We cater for several choices.  After row and column
-          ! scaling, the problem is $\mathbf{J^T W^T W J \Sigma^{-1} \Sigma
-          ! \delta \hat x = J^T W^T f}$.
+          ! scaling, the problem is $\mathbf{J^T W^T W J \Sigma \Sigma^{-1}
+          ! \delta \hat x = -J^T W^T f}$.
           select case ( columnScaling )
           case ( l_apriori )
             call copyVector ( columnScaleVector, apriori )
@@ -845,20 +853,22 @@ contains
           case ( l_norm )
             call getDiagonal ( normalEquations%m, columnScaleVector )
           end select
-          if ( columnScaling /= l_none ) then
-            do j = 1, columnScaleVector%template%noQuantities
+          if ( columnScaling /= l_none ) then ! Compute $\Sigma$
+            forall (j = 1: columnScaleVector%template%noQuantities)
               where ( columnScaleVector%quantities(j)%values <= 0.0 )
                 columnScaleVector%quantities(j)%values = 1.0
               elsewhere
                 columnScaleVector%quantities(j)%values = 1.0 / &
                   & sqrt( columnScaleVector%quantities(j)%values )
               end where
-            end do
+            end forall
               if ( index(switches,'col') /= 0 ) &
                 & call dump ( columnScaleVector, name='Column scale vector' )
+            !{Scale: $\mathbf{\Sigma^T J^T J \Sigma = -\Sigma^T J^T f}$
             call columnScale ( normalEquations%m, columnScaleVector )
             call rowScale ( columnScaleVector, normalEquations%m )
             call multiply ( atb, columnScaleVector )
+  
           end if
           !{Compute the (negative of the) gradient $= -\mathbf{J^T f}$.
           ! This is the right-hand side of the normal equations
@@ -901,11 +911,13 @@ contains
           !       column in upper triangle after triangularization
           call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
-          ! AJ%FNMIN = L2 norm of residual, ||F + J * "Candidate DX"||
-          ! This can be gotten without saving J as F^T F - (U^{-T} F)^T
-          ! U^{-T} F.  The variable candidateDX is a temp here.
-          if ( columnScaling /= l_none ) &
-            & call multiply ( candidateDX, columnScaleVector )
+
+          !{AJ\%FNMIN = L2 norm of residual, $||\mathbf{J \delta x + f}||$
+          ! where $\mathbf{\delta x}$ is the "Candidate DX" that may not
+          ! get used. This can be gotten without saving $\bf J$ as
+          ! $\mathbf{f^T f - y^T y}$ where $\mathbf{y = U^{-T} \delta x}$
+          ! ($\mathbf{U}$ is the Cholesky factor of $\mathbf{J^T J}$).
+          ! The variable {\tt candidateDX} is a temp here = $\bf y$.
           aj%fnmin = sqrt(aj%fnorm - (candidateDX .dot. candidateDX) )
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
@@ -917,8 +929,8 @@ contains
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e. solve $\mathbf{(J^T W^T W J
-        ! \Sigma^{-1} + \lambda^2 I) \Sigma \delta \hat x = J^T W^T
-        ! f}$ for $\mathbf{\Sigma \delta \hat x}$.  Set
+        ! \Sigma + \lambda^2 I) \Sigma^{-1} \delta \hat x = J^T W^T
+        ! f}$ for $\mathbf{\Sigma^{-1} \delta \hat x}$.  Set
         ! \begin{description}
         !   \item[AJ\%FNMIN] as for NWT\_FLAG = NF\_EVALJ, but taking
         !     account of Levenberg-Marquardt stabilization.
@@ -978,16 +990,14 @@ contains
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-          if ( columnScaling /= l_none ) &
-            & call multiply ( candidateDX, columnScaleVector )
         case ( nf_newx ) ! ................................  NEWX  .....
         ! Set X = X + DX
         !     AJ%AXMAX = MAXVAL(ABS(X)),
         !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
           if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
-          !{Account for column scaling.  We solved for $\Sigma \delta x$
-          ! above, so multiply by $\Sigma^{-1}$ (which is our variable
-          ! {\tt columnScaleVector}):
+          !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
+          ! \delta x}$ above, so multiply by $\Sigma$ (which is our
+          ! variable {\tt columnScaleVector}):
           call copyVector ( dxUnScaled, dx )
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
@@ -1124,11 +1134,12 @@ contains
       if ( got(f_apriori) ) call destroyVectorInfo ( covarianceXApriori )
       call destroyVectorInfo ( dx )
       call destroyVectorInfo ( dxUnscaled )
+      call destroyVectorInfo ( f_rowScaled )
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyVectorInfo ( gradient )
       if ( got(f_measurementSD) ) call destroyVectorInfo ( weight )
       call destroyVectorInfo ( x )
-      call destroyVectorInfo ( xMinusApriori )
+      call destroyVectorInfo ( aprioriMinusX )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -1347,6 +1358,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.58  2001/07/19 22:00:41  vsnyder
+! orrect problems with row scaling.
+!
 ! Revision 2.57  2001/07/12 22:18:05  livesey
 ! Got rid of an old diagnostic
 !
