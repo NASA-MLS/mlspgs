@@ -82,9 +82,11 @@ contains
     integer :: HowManySignals(3*size(signals)) ! for each pattern
     integer :: HowManySignalLines(3*size(signals)) ! for each pattern
     integer :: I, J, K, L                    ! Loop inductors, subscripts
+    integer :: power2                   ! Power 2 size of antenna pattern
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
     real(r8) :: Q                            ! Factor used to scale derivatives
+    real(r8) :: Log2                    ! Log 2 of array size
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: SIDEBAND                      ! From parse_signal
     integer :: Status                        ! From read or allocate
@@ -142,12 +144,27 @@ outer1: do
       allocate  ( antennaPatterns(i)%signals(howManySignals(i)), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate // "antennaPatterns(?)%signals" )
-      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), &
+
+      log2 = log10( real(howManyPoints(i)) ) / log10(2.0)
+      if ( log2 - nint(log2) /= 0.0 ) then
+        power2 = int(log2)+1
+      else
+        power2 = nint(log2)
+      endif
+      power2 = 2**power2
+
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*power2, &
         & "AntennaPatterns(?)%Aaap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), &
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*power2, &
         & "AntennaPatterns(?)%D1aap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), &
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*power2, &
         & "AntennaPatterns(?)%D2aap", moduleName )
+
+      ! Fill with zeros, then we'll read the first part
+      antennaPatterns(i)%aaap = 0.0
+      antennaPatterns(i)%d1aap = 0.0
+      antennaPatterns(i)%d2aap = 0.0
+
       k = 1
       do j = 1, howManySignalLines(i)
         read ( lun, '(a)', err=99, iostat=status ) SigName
@@ -262,6 +279,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.16  2001/05/16 23:04:20  livesey
+! New version, now uses Signal_T, instead of a string
+!
 ! Revision 1.15  2001/05/04 00:48:48  livesey
 ! Let Destroy database quit if nothing to destroy
 !
