@@ -325,8 +325,8 @@ contains
           if ( got(f_outputCovariance) ) then
             k = decoration(ixCovariance)
             if ( k == 0 ) then
-              call createEmptyMatrix ( myCovariance%m, sub_rosa(k), &
-                &                      state, state )
+              call createEmptyMatrix ( myCovariance%m, &
+                & sub_rosa(subtree(1,ixCovariance)), state, state )
               k = addToMatrixDatabase( matrixDatabase, myCovariance )
               call decorate ( ixCovariance, k )
             end if
@@ -1331,6 +1331,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.53  2001/06/30 03:10:35  vsnyder
+! Don't access sub_rosa(0) when creating a covariance matrix
+!
 ! Revision 2.52  2001/06/30 03:07:43  vsnyder
 ! Remove some unused variables.  Move some more internal-subroutine-peculiar
 ! USEs into them.  Don't access sub_rosa(0) when creating a Jacobian.
