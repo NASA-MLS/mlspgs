@@ -33,6 +33,7 @@ module VGridsDatabase
 
   public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
   public :: Dump, Dump_VGrids, GetUnitForVerticalCoordinate
+  public :: NullifyVGrid
   public :: PVMPackVGrid, PVMUnpackVGrid
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -223,6 +224,15 @@ contains
     
   end subroutine PVMUnpackVgrid
 
+  ! ----------------------------------------NullifyVGrid -----
+  subroutine NullifyVGrid ( V )
+    ! Given a vGrid, nullify all the pointers associated with it
+    type ( VGrid_T ), intent(out) :: V
+
+    ! Executable code
+    nullify ( v%surfs )
+  end subroutine NullifyVGrid
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -230,6 +240,10 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.7  2002/11/22 12:55:12  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.6  2002/10/08 00:09:15  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
