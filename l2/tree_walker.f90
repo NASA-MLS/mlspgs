@@ -181,9 +181,9 @@ subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
-                call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                  & qtyTemplates, vectorTemplates, fGrids, vGrids, hGrids, &
-                  & l2gpDatabase, mifGeolocation )
+                call MLSL2Construct ( son, l1bInfo, processingRange, &
+                  & chunks(chunkNo), qtyTemplates, vectorTemplates, &
+                  & fGrids, vGrids, hGrids, l2gpDatabase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
                 call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
@@ -293,6 +293,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.73  2001/12/13 23:21:26  livesey
+! Added countChunks option
+!
 ! Revision 2.72  2001/12/10 20:22:09  livesey
 ! Added code for EmpiricalGeometry.
 !
