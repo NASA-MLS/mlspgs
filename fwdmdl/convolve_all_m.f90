@@ -20,6 +20,7 @@ module CONVOLVE_ALL_M
   use String_table, only: GET_STRING
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+  use Toggles, only: Switches
 
   implicit NONE
   private
@@ -122,11 +123,13 @@ contains
     Call get_pressures ( 'a', ptg_angles, tan_temp, tan_press, no_tan_hts, &
       &                   fft_angles, fft_press, Ntr, Ier )
 ! bills debug
-    WRITE(lu_debug,'(a)') 'fft_angles, fft_press, rad'
-    DO  is = 1 , ntr 
-      WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') fft_angles(is), &
-           fft_press(is), rad(is)
-    ENDDO
+    if ( index(switches,'billsdebug') /= 0 ) then
+      WRITE(lu_debug,'(a)') 'fft_angles, fft_press, rad'
+      DO  is = 1 , ntr 
+        WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') fft_angles(is), &
+             fft_press(is), rad(is)
+      ENDDO
+    endif
     if ( Ier /= 0) Return
 
     ! Make sure the fft_press array is MONOTONICALY increasing:
@@ -475,6 +478,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.8  2002/06/07 04:50:25  bill
+! fixes and improvements--wgr
+!
 ! Revision 2.7  2002/06/04 10:28:02  zvi
 ! Encorporate deriv. flag into convolution, fixing a bug with species ruuning index
 !
