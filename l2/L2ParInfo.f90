@@ -104,12 +104,12 @@ contains ! ==================================================================
     ! Executable code
     if ( parallel%master .or. parallel%slave ) then
       call PVMFMyTid ( parallel%myTid )
+      call output ( 'Task ID: ' )
+      call output ( trim(GetNiceTidString ( parallel%myTid ) ), advance='yes' )
     end if
     if ( parallel%slave ) then
       ! Register ourselves with the master
       ! Identify ourselves
-      call output ( 'Task ID: ' )
-      call output ( trim(GetNiceTidString ( parallel%myTid ) ), advance='yes' )
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( SIG_Register, info )
       if ( info /= 0 ) &
@@ -402,6 +402,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.27  2003/01/27 17:18:58  livesey
+! Made master task output it's tid as well as slaves.
+!
 ! Revision 2.26  2003/01/17 21:54:21  livesey
 ! Added the machineFixed stuff
 !
