@@ -4,6 +4,7 @@
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
+  use L2PARALLEL, only: PARALLEL
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
@@ -68,6 +69,11 @@ program MLSL2
     if ( line(1:2) == '--' ) then       ! "word" options
       if ( line(3:6) == 'pcf ' ) then
         pcf = .true.
+      else if ( line(3:9) == 'master ' ) then
+        parallel%master = .true.
+      else if ( line(3:7) == 'slave' ) then
+        parallel%slave = .true. 
+        read ( line(8:), * ) parallel%masterTid
       else if ( line(3:7) == 'npcf ' ) then
         pcf = .false.
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
@@ -131,6 +137,11 @@ program MLSL2
           print *, '  The above options can be concatenated after one hyphen,'
           print *, '  except that -S takes the rest of the option as its ', &
             &         '"string".'
+          print *, '  --master: This is the master task in a pvm setup'
+          print *, '  --slave<master-tid>: This is a slave, <master-tid>'
+          print *, '  is the id of the master, note there is no space between these.'
+          print *, '  This option is set by a master task and not recommneded'
+          print *, '  for manual invocations.'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
           if ( pcf ) then
@@ -243,6 +254,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.29  2001/05/02 23:22:48  livesey
+! Added parallel stuff
+!
 ! Revision 2.28  2001/05/01 17:51:47  vsnyder
 ! Ignore Lahey/Fujitsu run-time library's command-line arguments
 !
