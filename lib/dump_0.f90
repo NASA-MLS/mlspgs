@@ -59,14 +59,14 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       do j = 1, size(array), 5
         if (.not. myClean) then
           call output ( j, max(4,ilog10(size(array))+1) )
           call output ( afterSub )
-        endif
+        end if
         do k = j, min(j+4, size(array))
           call output ( array(k), '(1x,1pg13.6)' )
         end do
@@ -82,12 +82,14 @@ contains
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
 
-    logical :: myClean
     integer :: J, K
+    logical :: MyClean
+    integer :: NumZeroRows
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -107,23 +109,45 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       do j = 1, size(array), 10
         if (.not. myClean) then
-          call output ( j, places=max(4,ilog10(size(array))+1) )
-          call output ( afterSub )
-        endif
-        do k = j, min(j+9, size(array))
-          if ( present(format) ) then
-            call output ( array(k), format=format )
+          if ( any(array(j:min(j+9, size(array))) /= 0) ) then
+            if ( numZeroRows /= 0 ) then
+              call output ( j-1, places=max(4,ilog10(size(array))+1) )
+              call output ( afterSub )
+              call output ( ' ' )
+              call output ( numZeroRows )
+              call output ( ' rows of zeros not printed.', advance='yes' )
+              numZeroRows = 0
+            end if
+            call output ( j, places=max(4,ilog10(size(array))+1) )
+            call output ( afterSub )
           else
-            call output ( array(k), places=6 )
+            numZeroRows = numZeroRows + 1
           end if
-        end do
-        call output ( '', advance='yes' )
-      end do
+        end if
+        if ( myClean .or. any(array(j:min(j+9, size(array))) /= 0) ) then
+          do k = j, min(j+9, size(array))
+            if ( present(format) ) then
+              call output ( array(k), format=format )
+            else
+              call output ( array(k), places=6 )
+            end if
+          end do
+          call output ( '', advance='yes' )
+        end if
+      end do ! j
+      if ( numZeroRows /= 0 ) then
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of zeros not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
     end if
   end subroutine DUMP_1D_INTEGER
 
@@ -158,14 +182,14 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       do j = 1, size(array), 34
         if (.not. myClean) then
           call output ( j, max(4,ilog10(size(array))+1) )
           call output ( afterSub )
-        endif
+        end if
         do k = j, min(j+33, size(array))
           call output ( array(k) )
         end do
@@ -207,9 +231,9 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         call output ( '', advance='yes' )
         do i = 1, size(array,1)
@@ -249,12 +273,14 @@ contains
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
 
-    logical :: myClean
     integer :: I, J, K
+    logical :: MyClean
+    integer :: NumZeroRows
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -276,26 +302,50 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
-             call output ( i, places=max(4,ilog10(size(array,1))+1) )
-             call output ( j, places=max(4,ilog10(size(array,2))+1) )
-             call output ( afterSub )
-          end if
-          do k = j, min(j+9, size(array,2))
-            if ( present(format) ) then
-              call output ( array(i,k), format=format )
+            if ( any(array(i,j:min(j+9, size(array,2))) /= 0) ) then
+              if ( numZeroRows /= 0 ) then
+                call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                call output ( j-1, places=max(4,ilog10(size(array))+1) )
+                call output ( afterSub )
+                call output ( ' ' )
+                call output ( numZeroRows )
+                call output ( ' rows of zeros not printed.', advance='yes' )
+                numZeroRows = 0
+              end if
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
             else
-              call output ( array(i,k), places=6 )
+              numZeroRows = numZeroRows + 1
             end if
-          end do
-          call output ( '', advance='yes' )
-        end do
-      end do
+          end if
+          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= 0) ) then
+            do k = j, min(j+9, size(array,2))
+              if ( present(format) ) then
+                call output ( array(i,k), format=format )
+              else
+                call output ( array(i,k), places=6 )
+              end if
+            end do
+            call output ( '', advance='yes' )
+          end if
+        end do ! j
+      end do ! i
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of zeros not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
     end if
   end subroutine DUMP_2D_INTEGER
 
@@ -334,9 +384,9 @@ contains
         if ( myClean ) then 
           call output ( ' \ ' )
           call output ( size(array) )
-        endif
+        end if
         call output ( '', advance='yes' )
-      endif
+      end if
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
@@ -345,7 +395,7 @@ contains
               call output ( j, max(4,ilog10(size(array,2))+1) )
               call output ( k, max(4,ilog10(size(array,3))+1) )
               call output ( afterSub )
-            endif
+            end if
             do l = k, min(k+4, size(array,3))
               call output ( array(i,j,l), '(1x,1pg13.6)' )
             end do
@@ -364,6 +414,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.10  2001/09/28 22:43:20  vsnyder
+! Don't print rows of zeroes
+!
 ! Revision 2.9  2001/09/11 22:52:32  livesey
 ! Added printing of sizes
 !
