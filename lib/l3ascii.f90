@@ -8,10 +8,10 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
   & v_is_gph, v_is_theta
   USE MLSCommon, only: R8, LineLen, NameLen
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
-  & MLSMSG_Deallocate, MLSMSG_Warning
-  USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-  & Count_words, ReadCompleteLineWithoutComments, GetIntHashElement
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+  & MLSMSG_Warning
+  USE MLSStrings, only: Capitalize, &
+  & Count_words, ReadCompleteLineWithoutComments
 
   IMPLICIT NONE
   PUBLIC
@@ -851,6 +851,9 @@ END MODULE l3ascii
 
 !
 ! $Log$
+! Revision 2.2  2001/03/15 21:40:30  pwagner
+! Eliminated unused routines from USE statements
+!
 ! Revision 2.1  2001/03/15 21:27:26  pwagner
 ! Moved l3ascii methods from GriddedData here
 !
