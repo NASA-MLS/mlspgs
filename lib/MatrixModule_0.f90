@@ -16,7 +16,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor
+  public :: Add_Matrix_Blocks, CheckBlocks, Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: ColumnScale_0, Col_L1, CopyBlock, CreateBlock, CreateBlock_0
   public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
@@ -155,12 +155,13 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
   integer, parameter, private :: B = bit_size(0) ! can't use "bit_size(b)"
-  real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
+  real, parameter, private :: COL_SPARSITY = 0.0!0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
+  logical, save :: CHECKBLOCKS = .false.
 
   ! It is important to lie about the interface for the Y argument for *DOT.
   ! We pass an element of a rank-2 object to it, and assume the subsequent
@@ -193,6 +194,8 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J, K, L, N
     type(MatrixElement_T), pointer :: X, Y
     real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse
+    real(r8), dimension(:,:), pointer :: XD, YD ! For testing
+    logical :: OK                       ! For testing
     if ( xb%kind <= yb%kind ) then
       x => xb
       y => yb
@@ -316,6 +319,21 @@ contains ! =====     Public Procedures     =============================
         zb%values = x%values + y%values
       end select
     end select
+
+    if ( checkBlocks ) then
+      nullify ( xd, yd )
+      call Allocate_test ( xd, xb%nRows, xb%nCols, 'xd', ModuleName )
+      call Allocate_test ( yd, yb%nRows, yb%nCols, 'yd', ModuleName )
+      call Densify ( xd, xb )
+      call Densify ( yd, yb )
+      call TestBlock ( zb, xd+yd, ok, 'Add_Matrix_Blocks', xb%kind, yb%kind )
+      if ( .not. ok ) then
+        call dump ( xb, name='xb', details=2 )
+        call dump ( yb, name='yb', details=2 )
+      end if
+      call Deallocate_test ( xd, 'xd', ModuleName )
+      call Deallocate_test ( yd, 'yd', ModuleName )
+    endif
   end function Add_Matrix_Blocks
 
   ! ------------------------------------------------  AssignBlock  -----
@@ -336,12 +354,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine AssignBlock
 
   ! -------------------------------------------  CholeskyFactor_0  -----
-  subroutine CholeskyFactor_0 ( Z, XOPT )
+  subroutine CholeskyFactor_0 ( Z, XOPT, STATUS )
   ! If XOPT is present compute Z such that Z^T Z = XOPT and Z is upper-
   ! triangular. Otherwise, replace Z such that Z(output)^T Z(output) =
   ! Z(input) and Z(output) is upper-triangular.
     type(MatrixElement_T), target, intent(inout) :: Z
     type(MatrixElement_T), target, intent(in), optional :: XOPT
+    integer, intent(out), optional :: STATUS
 
     real(r8) :: D             ! Diagonal(I,I) element of Z
     real(r8) :: G             ! X(I,J) - dot_product(X(1:i-1,i),X(1:i-1,j))
@@ -358,6 +377,8 @@ contains ! =====     Public Procedures     =============================
     !                           XOPT is present or absent, respectively.
     real(r8), pointer, dimension(:,:) :: ZT   ! A local full result that is
     !                           sparsified at the end.
+    real(r8), pointer, dimension(:,:) :: TST1, TST2 ! When using checkblock
+    logical :: OK                       ! For testing
 
     if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
     nullify ( r1, xin, zt )
@@ -381,6 +402,10 @@ contains ! =====     Public Procedures     =============================
       do i = 1, nc
         ii = i - x%r1(i)      ! Offset in VALUES of (I,I) element
         if ( ii < 0 .or. ii > x%r2(i) - x%r2(i-1) ) then
+          if ( present(status) ) then
+            status = i
+            return
+          endif
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
@@ -390,6 +415,10 @@ contains ! =====     Public Procedures     =============================
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
         if ( g <= tol .and. i < nc ) then
+          if ( present(status) ) then
+            status = i
+            return
+          endif
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
@@ -428,15 +457,30 @@ contains ! =====     Public Procedures     =============================
       ! ??? If necessary, improve this in level 1.0 by working directly
       ! ??? with sparse input.
       call densify ( xin, x )
-      call denseCholesky ( zt, xin )
+      call denseCholesky ( zt, xin, status )
+      if ( status /= 0 ) return
       call sparsify ( zt, z, "ZT in CholeskyFactor", ModuleName ) ! Z := Zt
       call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Full )
       if ( .not. associated(x,z) ) then
         call createBlock ( z, nc, nc, M_Full )
       end if
-      call denseCholesky ( z%values, x%values )
+      call denseCholesky ( z%values, x%values, status )
     end select
+
+    if ( checkBlocks ) then
+      nullify ( tst1, tst2 )
+      call Allocate_test ( tst1, z%nRows, z%nCols, 'tst1', ModuleName )
+      call Allocate_test ( tst2, z%nRows, z%nCols, 'tst2', ModuleName )
+      call densify ( tst1, x )
+      call denseCholesky ( tst2, tst1 )
+      call testBlock ( z, tst2, ok, 'CholeskyFactor', z%kind )
+      if ( .not. ok ) then
+        call dump ( z, name='z', details=2 )
+      end if
+      call Deallocate_test ( tst1, 'tst1', ModuleName )
+      call Deallocate_test ( tst2, 'tst2', ModuleName )
+    endif
   end subroutine CholeskyFactor_0
 
   ! ------------------------------------------------  ClearRows_0  -----
@@ -686,9 +730,11 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(in) :: B   ! Input matrix block
     integer :: I                             ! Column index
 
-    if ( size(z,1) /= b%nRows .or. size(z,2) /= b%nCols ) &
+    if ( size(z,1) /= b%nRows .or. size(z,2) /= b%nCols ) then
+      print*,size(z,1),b%nRows, size(z,2), b%nCols
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Incompatible shapes in Densify" )
+    endif
     select case ( b%kind )
     case ( M_Absent )
       z = 0.0_r8
@@ -945,9 +991,15 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: XY                           ! Product of columns of X and Y
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
+    real(r8), pointer, dimension(:,:) :: XDNS, YDNS, ZDNS, ZDNS2 ! For checking
+
+    character(len=132) :: LINE          ! A message
+    logical :: OK                       ! For testing
+
     nullify ( xm, ym, z )
     my_upd = .false.
     if ( present(update) ) my_upd = update
+
     my_sub = .false.
     if ( present(subtract) ) my_sub = subtract
     s = 1.0_r8
@@ -956,10 +1008,12 @@ contains ! =====     Public Procedures     =============================
     if ( present(ymask) ) ym => ymask
     my_upper = .false.
     if ( present(upper) ) my_upper = upper
+
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
       if ( .not. my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
       return
     end if
+
     if ( xb%nrows /= yb%nrows ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in Multiply_Matrix_Blocks" )
@@ -976,6 +1030,22 @@ contains ! =====     Public Procedures     =============================
       zb%nrows = xb%ncols
       zb%ncols = yb%ncols
     end if
+
+    ! Now stuff for checkBlocks
+    if ( checkBlocks ) then
+      nullify ( zDns, zDns2 )
+      call Allocate_test ( zDns, xb%nCols, yb%nCols, 'zDns', ModuleName )
+      if ( my_upd ) then
+        call Densify ( zDns, zb )
+      else
+        zDns = 0.0_r8
+      end if
+      if ( my_upper ) then
+        call Allocate_test ( zDns2, xb%nCols, yb%nCols, 'zDns2', ModuleName )
+        zDns2=zDns            ! Save lower triangle
+      endif
+    endif
+
     select case ( xb%kind )
     case ( M_Banded )
       select case ( yb%kind )
@@ -1172,10 +1242,12 @@ contains ! =====     Public Procedures     =============================
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
+            if ( l > ubound(xb%r2,1) ) cycle
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
             n = yb%r1(j-1)+1  ! Position in YB%R2 of row subscript in YB
+            if ( n > ubound(yb%r2,1) ) cycle
             m = yb%r2(n)      ! Row subscript of nonzero in YB's column J
-            z(i,j) = 0.0_r8
+            ! z(i,j) = 0.0_r8
             do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
                 l = l + 1
@@ -1254,8 +1326,10 @@ contains ! =====     Public Procedures     =============================
             end if
             ! Inner product of column I of XB with column J of YB
 !           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1))
-            xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
-            zb%values(i,j) = zb%values(i,j) + s * xy
+            if ( l-k+1 > 0 ) then
+              xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
+              zb%values(i,j) = zb%values(i,j) + s * xy
+            endif
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
@@ -1310,6 +1384,55 @@ contains ! =====     Public Procedures     =============================
         end if
       end select
     end select
+
+    if ( checkBlocks ) then
+      nullify ( xDns, yDns )
+      line = 'MultiplyMatrixBlocks'
+      call Allocate_test ( xDns, xb%nRows, xb%nCols, 'xDns', ModuleName )
+      call Allocate_test ( yDns, yb%nRows, yb%nCols, 'yDns', ModuleName )
+      call Densify ( xDns, xb )
+      call Densify ( yDns, yb )
+      if ( my_upd ) then
+        line = trim(line) // ' Update'
+      endif
+      if ( associated(xm) ) then
+        line = trim(line) // ' xMasked'
+        do i = 1, xb%nCols
+          if ( btest(xm((i-1)/b+1),mod(i-1,b))) xDns(:,i)=0.0
+        enddo
+      endif
+      if ( associated(ym) ) then
+        line = trim(line) // ' yMasked'
+        do i = 1, yb%nCols
+          if ( btest(ym((i-1)/b+1),mod(i-1,b))) yDns(:,i)=0.0
+        enddo
+      endif
+      if ( my_sub ) then
+        zDns = zDns - matmul(transpose(xDns), yDns)
+        line = trim(line) // ' Subtract'
+      else
+        zDns = zDns + matmul(transpose(xDns), yDns)
+      endif
+      if ( my_upper ) then
+        line = trim(line) // ' Upper'
+        do j = 1, zb%nCols
+          do i = j+1, zb%nRows
+            zDns(i,j) = zDns2(i,j)
+          end do
+        end do
+      endif
+      call TestBlock ( zb, zDns, ok, line, xb%kind, yb%kind )
+      if ( .not. ok ) then
+        call dump ( xb, name='xb', details=2 )
+        call dump ( yb, name='yb', details=2 )
+      end if
+      call Deallocate_test ( xDns, 'xDns', ModuleName )
+      call Deallocate_test ( yDns, 'yDns', ModuleName )
+      call Deallocate_test ( zDns, 'zDns', ModuleName )
+      if ( my_upper ) then
+        call Deallocate_test ( zDns2, 'zDns2', ModuleName )
+      endif
+    endif
   end subroutine MultiplyMatrixBlocks
 
   ! -------------------------------------  MultiplyMatrixVector_0  -----
@@ -2140,9 +2263,53 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DUMP_MATRIX_BLOCK
 
+  ! -------------------------------------------------- TestBlock -----
+  subroutine TestBlock ( B, M, OK, NAME, KINDA, KINDB )
+    ! Given the block B, densify it and compare it to M
+    ! Any differences above a certain threshold are reported
+    ! This is typically used to report the results of tests
+    type(MatrixElement_T), intent(in) :: B ! Block
+    real(r8), dimension(:,:), intent(in) :: M ! Matrix to compare it to
+    logical, intent(out) :: OK          ! Set if they are OK
+    character (len=*), optional :: NAME ! Name of operation being tested
+    integer, intent(in), optional :: KINDA ! Kind for one part of expression
+    integer, intent(in), optional :: KINDB ! Kind for other part of expression
+    
+    ! Local parameters
+    character (len=*), parameter, dimension(0:3) :: KINDNAMES = &
+      & (/'Absent', 'Banded','Sparse','Full  '/)
+    ! Local variables
+    real(r8), dimension(:,:), pointer :: BM ! B dense
+    character(len=132) :: LINE          ! Error message
+
+    ! Executable code
+    ok = .true.
+    nullify ( bm )
+    call Allocate_test ( bm, b%nRows, b%nCols, 'bm', ModuleName )
+    call Densify ( bm, b )
+    
+    if (any( abs(bm-m) > 1e3*max(tiny(m(1,1)), epsilon(m(1,1))*(abs(bm+m))) )) then
+      ok = .false.
+      call output ( 'Matrix algebra failed', advance='yes' )
+      call dump ( bm, name='L2 Result')
+      call dump ( m, name='Slow result')
+      call output ( 'Matrix algebra failed' )
+      if (present(name)) call output ( ' for '//trim(name) )
+      if (present(kinda) .or. present(kindb)) then
+        call output ( 'case' )
+        if (present(kindA)) call output ( ' '//kindNames(kindA) )
+        if (present(kindB)) call output ( ' '//kindNames(kindB) )
+      endif
+      call output ( '', advance='yes' )
+    endif
+  end subroutine TestBlock
+
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.52  2001/10/04 23:49:57  livesey
+! Added checking code, and temporarily suppressed sparse
+!
 ! Revision 2.51  2001/10/03 17:33:11  dwu
 ! modified MatrixInversion
 !
