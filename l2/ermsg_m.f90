@@ -1,7 +1,12 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
 module ERMSG_M
-!     .  Copyright (C) 1989-1999, California Institute of Technology.
-!     .  U. S. Government sponsorship under
-!     .  NASA contract NAS7-918 is acknowledged.
+!=============================================================================
+
+  use OUTPUT_M, only: OUTPUT
+
   implicit NONE
   private
 
@@ -21,6 +26,8 @@ module ERMSG_M
   integer, save, private :: IALPHA  ! = IDELTA + LEVEL; used to determine
                                     ! whether to print
 
+  character(LEN=80), private :: output_line
+
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
@@ -34,7 +41,9 @@ contains
 !>> 1994-11-11 ERFIN  CLL     Typing all variables.
 !>> 1985-09-23 ERFIN  Lawson  Initial code.
  
-    write (*,"(1X,72('$')/' ')")
+!    write (*,"(1X,72('$')/' ')")
+    write (output_line,"(1X,72('$')/' ')")
+    call output(trim(output_line), advance='yes')
     if (ialpha >= 2) stop
     return
   end subroutine ERFIN
@@ -176,7 +185,8 @@ contains
     character(len=1), intent(in) :: FLAG
 
     if (ialpha >= -1) then
-      write (*,*) msg
+!      write (*,*) msg
+    call output(trim(msg), advance='yes')
       if (flag == '.') call erfin
     end if
     return
@@ -240,9 +250,13 @@ contains
     oldlev = level
     ialpha = level + idelta
     if (ialpha >= -1) then
-      write (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
-        subnam, indic
-      write (*,*) msg
+!      write (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
+!        subnam, indic
+!      write (*,*) msg
+      write (output_line,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ', &
+      & I4)") subnam, indic
+      call output(trim(output_line), advance='yes')
+      call output(trim(msg), advance='yes')
       if (flag == '.') call erfin
     endif
     return
@@ -267,7 +281,9 @@ contains
     character(len=1), intent(in) ::  FLAG
 
     if (ialpha >= -1) then
-      write (*,*) label, ' = ', value
+!      write (*,*) label, ' = ', value
+      write (output_line,*) label, ' = ', value
+      call output(trim(output_line), advance='yes')
       if (flag == '.') call erfin
     end if
     return
@@ -281,7 +297,9 @@ contains
     character(len=1), intent(in) ::  FLAG
 
     if (ialpha >= -1) then
-      write (*,*) label, ' = ', value
+!      write (*,*) label, ' = ', value
+      write (output_line,*) label, ' = ', value
+      call output(trim(output_line), advance='yes')
       if (flag == '.') call erfin
     end if
     return
@@ -295,7 +313,9 @@ contains
     character(len=1), intent(in) ::  FLAG
 
     if (ialpha >= -1) then
-      write (*,*) label, ' = ', value
+!      write (*,*) label, ' = ', value
+      write (output_line,*) label, ' = ', value
+      call output(trim(output_line), advance='yes')
       if (flag == '.') call erfin
     end if
     return
@@ -339,8 +359,9 @@ contains
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(*,"(4(2x,a,'=',i14))") &
+        write(output_line,"(4(2x,a,'=',i14))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
+        call output(trim(output_line), advance='yes')
       end do
       if (flag == '.') call erfin
     endif
@@ -367,8 +388,9 @@ contains
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(*,"(4(2x,a,'=',g14.7))") &
+        write(output_line,"(4(2x,a,'=',g14.7))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
+        call output(trim(output_line), advance='yes')
       end do
       if (flag == '.') call erfin
     endif
@@ -395,8 +417,9 @@ contains
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(*,"(4(2x,a,'=',g14.7))") &
+        write(output_line,"(4(2x,a,'=',g14.7))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
+        call output(trim(output_line), advance='yes')
       end do
       if (flag == '.') call erfin
     endif
@@ -405,6 +428,9 @@ contains
 end module ERMSG_M
 
 ! $Log$
+! Revision 2.2  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
 ! Revision 2.1  2001/02/06 23:21:28  vsnyder
 ! Initial conversion from Math77 to Fortran 90
 !
