@@ -20,6 +20,8 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   !---------------------------------------------------------------------------
 
+  INTEGER, PRIVATE :: i
+
   ! Level 1 program type(s)
 
   CHARACTER (LEN=*), PARAMETER :: GHzType = "G"
@@ -129,6 +131,35 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      REAL :: WF(WFchans,WFnum)         ! wide filter bands
   END TYPE ChanBand_R_T
 
+  ! Band info:
+
+  INTEGER, PARAMETER :: BandChans(NumBands) = (/ &
+       (FBchans,i=1,21), (DACSchans,i=1,5),  (MBchans,i=1,5), (WFchans,i=1,3) /)
+
+  !! Band Logical type
+
+  TYPE BandChanR_T
+     REAL :: Sign(NumBands,DACSchans) = 1.0  ! "Good" precision sign
+     INTEGER :: MaxChan(NumBands)    ! Maximum number of channels in band
+  END TYPE BandChanR_T
+  TYPE (BandChanR_T), SAVE :: BandChanBad = BandChanR_T (1.0, BandChans)
+
+  !! Band Chi2:
+
+  REAL :: BandChi2(NumBands,DACSchans) = -1.0
+
+!! Initial OA counter MAF and index to be used to line up output files:
+
+  INTEGER, DIMENSION(:), ALLOCATABLE :: OA_counterMAF
+  INTEGER :: OA_counterIndex = 0     ! Nothing yet
+
+!! Bright Objects type
+
+  TYPE BrightObjects_T
+     LOGICAL :: MoonInFOV(0:MaxMIFs-1) = .FALSE.
+     LOGICAL :: VenusInFOV(0:MaxMIFs-1) = .FALSE.
+  END TYPE BrightObjects_T
+
 !! Factor to convert 23 bit encoder angle data (shifted by 1 bit) into degrees:
 
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
@@ -170,7 +201,6 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
 !! Bandwidths for all channels
 
-  INTEGER, PRIVATE :: i
   REAL, PARAMETER, PRIVATE :: FB_BW(FBchans) = (/ &
        110.0, 110.0, 110.0, 74.0, 74.0, 74.0, 55.0, 37.0, 28.0, 18.4, 14.0, &
        9.2, 7.2, 9.2, 14.0, 18.4, 28.0, 37.0, 55.0, 74.0, 74.0, 74.0, 110.0, &
@@ -179,7 +209,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
        RESHAPE ( (/ (FB_BW, i=1,FBnum) /), (/ FBchans, FBnum /) ), &
        RESHAPE ( (/ (FB_BW(8:18), i=1,MBnum) /), (/ MBchans, MBnum /) ), & 
        RESHAPE ( (/ (500.0e06, i=1,WFchans*WFnum) /), (/ WFchans, WFnum /) ), &
-       RESHAPE ( (/ (0.15e06, i=1,DACSchans*DACSnum) /), &
+       RESHAPE ( (/ (0.097e06, i=1,DACSchans*DACSnum) /), &
        (/ DACSchans, DACSnum /) ) )
 
 !! DACS constants
@@ -220,6 +250,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.10  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
