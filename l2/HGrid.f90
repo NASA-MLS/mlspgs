@@ -9,9 +9,9 @@ module HGrid                    ! Horizontal grid information
   use EXPR_M, only: EXPR
   use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
-    & F_INTERPOLATIONFACTOR, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
-    & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
-    & PHYQ_DIMENSIONLESS, PHYQ_LENGTH
+    & F_INTERPOLATIONFACTOR, F_MIF, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
+    & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
+    & L_MIF, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPDATA_T
@@ -69,6 +69,7 @@ module HGrid                    ! Horizontal grid information
   integer, private, parameter :: NoHeight = NoFraction + 1
   integer, private, parameter :: UnitlessMessage = NoHeight + 1
   integer, private, parameter :: NoModule = UnitlessMessage + 1
+  integer, private, parameter :: NoMIF = NoModule + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -118,16 +119,17 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2) :: PROFRANGE  ! Profile range
     integer :: A,B                      ! Elements of profile range
 
-    integer :: FIELD              ! Subtree index of "field" node
-    integer :: FIELD_INDEX        ! F_..., see Init_Tables_Module
+    integer :: FIELD                    ! Subtree index of "field" node
+    integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: GOT_FIELD(field_first:field_last)
     integer :: L1BFLAG
-    integer :: L1BITEM            ! Loop counter
-    integer :: MAF                ! Loop counters
-    integer :: NOMAFS             ! Number of MAFs of L1B data read
+    integer :: L1BITEM                  ! Loop counter
+    integer :: MAF                      ! Loop counters
+    integer :: MIF                      ! For fixed hGrids
+    integer :: NOMAFS                   ! Number of MAFs of L1B data read
     integer :: PROF                     ! Loop counter
-    integer :: SON                ! Son of Root
-    integer :: STATUS             ! From Allocate, ReadL1B... etc.
+    integer :: SON                      ! Son of Root
+    integer :: STATUS                   ! From Allocate, ReadL1B... etc.
     integer :: VALUESNODE               ! Node of tree for explicit
 
     character (len=NameLen) :: InstrumentModuleName
@@ -157,6 +159,11 @@ contains ! =====     Public Procedures     =============================
         height = expr_value(1)
         if ( expr_units(1) /= PHYQ_Length) &
           & call announce_error ( field, lengthUnitMessage )
+      case ( f_mif )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        mif = expr_value(1)
+        if ( expr_units(1) /= PHYQ_Dimensionless) &
+          & call announce_error ( field, lengthUnitMessage )
       case ( f_fraction )
         call expr ( subtree(2,son), expr_units, expr_value )
         fraction = expr_value(1)
@@ -180,13 +187,13 @@ contains ! =====     Public Procedures     =============================
 
     select case (hGridType)
 
-    case ( l_height, l_fractional ) ! ----- Fractional or Height ------
+    case ( l_height, l_fractional, l_fixed ) ! ----- Fractional or Height ------
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
         call CreateCommonHGrids ( l1bInfo, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
-          & instrumentModuleName, hGrid )
+          & instrumentModuleName, mif, hGrid )
       end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
@@ -242,7 +249,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- CreateCommonHGrids -----------
   subroutine CreateCommonHGrids ( l1bInfo, hGridType, &
     & chunk, got_field, root, height, fraction, interpolationFactor,&
-    & instrumentModuleName, hGrid )
+    & instrumentModuleName, mif, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
     type (L1BInfo_T), intent(in)      :: L1BINFO
     integer, intent(in)               :: HGRIDTYPE
@@ -253,6 +260,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in)              :: HEIGHT
     real(r8), intent(in)              :: FRACTION
     character (len=*)                 :: INSTRUMENTMODULENAME
+    integer, intent(in)               :: MIF
     type (HGrid_T), intent(inout)     :: HGRID ! Needs inout as name set by caller
 
     ! Local variables / parameters
@@ -281,15 +289,19 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:,:,:), pointer :: TpGeodAlt, TpGeodAngle
 
     ! MIFs it would choose in the non over/undersampled case
-    real(r8), dimension(:), allocatable :: defaultField, interpolatedField
+    real(r8), dimension(:), pointer :: defaultField, interpolatedField
 
     type (L1BData_T) :: l1bField ! L1B data
-    integer, dimension(:), allocatable :: defaultMIFs
-    real(r8), dimension(:), allocatable :: defaultIndex
-    real(r8), dimension(:), allocatable :: interpolatedIndex
+    integer, dimension(:), pointer :: defaultMIFs
+    real(r8), dimension(:), pointer :: defaultIndex
+    real(r8), dimension(:), pointer :: interpolatedIndex
     character (len=NameLen) :: L1BItemName
 
     ! Executable code
+
+    nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
+      & defaultMIFs, defaultIndex, interpolatedIndex )
+
     l1bItemNames(l1b_mafstarttimetai ) = 'MAFStartTimeTAI'
     l1bItemNames(l1b_tpgeodlat       ) = 'tpGeodLat'
     l1bItemNames(l1b_tplon           ) = 'tpLon'
@@ -306,17 +318,23 @@ contains ! =====     Public Procedures     =============================
     case ( l_Height )
       if ( .not. got_field(f_height) ) call announce_error ( root, noHeight )
       l1bItemName = trim(instrumentModuleName)//"."//"tpGeodAlt"
+    case ( l_Fixed )
+      if ( .not. got_field(f_mif) ) call announce_error ( root, noMIF )
+    case ( l_mif )
+
     end select
 
-    call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-      & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
-    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_L1BRead//l1bItemName )
-    
+    if ( hGridType /= l_Fixed ) then
+      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
+      if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_L1BRead//l1bItemName )
+    else
+      noMAFs = chunk%lastMafIndex - chunk%firstMafIndex + 1
+    endif
+
     ! allocate default MIFs
-    allocate ( defaultMIFs(noMAFs), STAT=status )
-    if ( status/=0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_allocate//"defaultMIFs" )
+    call Allocate_test ( defaultMIFs, noMAFs, 'defaultMIFs', ModuleName )
     
     ! Work out which MIF should have the profile for each MAF.
     select case ( hGridType )
@@ -347,6 +365,8 @@ contains ! =====     Public Procedures     =============================
         
         call Hunt ( tpGeodAlt(1,:,maf), height, defaultMIFs(maf) )
       end do
+    case ( l_fixed )
+      defaultMIFs = mif
     end select
     
     ! Done with this piece of l1b data for the moment
@@ -364,12 +384,11 @@ contains ! =====     Public Procedures     =============================
     hGrid%noProfsUpperOverlap = 0
     
     ! Setup some arrays
-    allocate ( defaultField(noMAFs), interpolatedField(hGrid%noProfs), &
-	defaultIndex(noMAFs), interpolatedIndex(hGrid%noProfs), STAT=status )
+    call allocate_test ( defaultField, noMAFs, 'defaultField', ModuleName )
+    call allocate_test ( interpolatedField, hGrid%noProfs, 'defaultField', ModuleName )
+    call allocate_test ( defaultIndex, noMAFs, 'defaultField', ModuleName )
+    call allocate_test ( interpolatedIndex, hGrid%noProfs, 'defaultField', ModuleName )
 
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_allocate//"defaultField and/or interpolatedField" )
-    
     ! Now we go through all the important geolocation quantities, read them
     ! in, interpolate them if required and store the result in the hGrid
     
@@ -394,7 +413,9 @@ contains ! =====     Public Procedures     =============================
         do maf = 1, noMAFs
           defaultField(maf) = l1bField%dpField(1,defaultMIFs(maf),maf)
         end do
-      end IF
+      end if
+
+      call DeallocateL1BData(l1bField)
       
       if ( interpolationFactor == 1.0 ) then
         interpolatedField = defaultField
@@ -447,27 +468,17 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
     
-    deallocate ( defaultIndex, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "defaultIndex" )
-    deallocate ( defaultMIFs, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "defaultMIFs" )
-    deallocate ( defaultField, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "defaultField" )
-    deallocate ( interpolatedField, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "interpolatedField" )
-    deallocate ( interpolatedIndex, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "interpolatedIndex" )
+    call Deallocate_test ( defaultMIFs, 'defaultMIFs', ModuleName )
+    call Deallocate_test ( defaultField, 'defaultField', ModuleName )
+    call Deallocate_test ( defaultIndex, 'defaultIndex', ModuleName )
+    call Deallocate_test ( interpolatedField, 'interpolatedField', ModuleName )
+    call Deallocate_test ( interpolatedIndex, 'interpolatedIndex', ModuleName )
     
     ! ??? This calculation may need attention! ***
     hGrid%noProfsLowerOverlap = &
-      & NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
+      & nint(chunk%noMAFsLowerOverlap*interpolationFactor)
     hGrid%noProfsUpperOverlap = &
-      & NINT(chunk%noMAFsUpperOverlap*interpolationFactor)
+      & nint(chunk%noMAFsUpperOverlap*interpolationFactor)
     
   end subroutine CreateCommonHGrids
 
@@ -552,6 +563,8 @@ contains ! =====     Public Procedures     =============================
         & advance='yes' )
     case ( noHeight )
       call output ( "TYPE = HEIGHT but no height is specified", advance='yes' )
+    case ( noMIF )
+      call output ( "TYPE = FIXED but no MIF is specified", advance='yes' )
     case ( noModule )
       call output ( "Instrument module must be specified", advance='yes' )
     case ( unitlessMessage )
@@ -567,6 +580,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.19  2001/07/09 20:15:07  livesey
+! Fixed an embarassing memory leak I thought I caught before. Also
+! changed some allocatables to pointers to let us use Allocate_Deallocate
+!
 ! Revision 2.18  2001/07/06 21:33:23  dwu
 ! forgot to deallocate variables
 !
