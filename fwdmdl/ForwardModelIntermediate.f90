@@ -50,6 +50,7 @@ module ForwardModelIntermediate
     logical :: newHydros                ! Need to recompute hydrostatic
     integer :: maf                      ! The next maf to process
     logical :: finished                 ! Flag to calling code to indicate completion
+    logical, dimension(:), pointer :: rows ! Flag to indicate this row has non zeros
   end type ForwardModelStatus_T
 
   public :: DestroyForwardModelIntermediate
@@ -145,6 +146,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.4  2001/04/19 21:04:42  livesey
+! Bug fix, sized arrays wrongly
+!
 ! Revision 1.3  2001/04/19 20:29:46  livesey
 ! Added destroy routine
 !
