@@ -900,6 +900,8 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, M, MZ, N, P, R
+    integer :: XI_1, XI_N, XR_1, XR_N, YI_1, YI_N, YR_1, YR_N, CR_1, CR_N, C_N
+    integer :: XD, YD
     logical :: MY_SUB, MY_UPD, MY_UPPER
     integer, pointer, dimension(:) :: XM, YM
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
@@ -950,10 +952,10 @@ contains ! =====     Public Procedures     =============================
           if ( associated(ym) ) then
             if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
-          p = yb%r2(j-1)+1
-          k = yb%r1(j)        ! k,l = row indices of YB
-          l = k+yb%r2(j)-p
-          p = p-k
+          yi_1 = yb%r2(j-1)+1   ! index of 1st /=0 el. in this col of yb
+          yi_n = yb%r2(j)       ! index of last /=0 el. in this col of yb
+          yr_1 = yb%r1(j)       ! first row index of yb
+          yr_n = yr_1 + yi_n - yi_1 ! last row index of yb
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
@@ -961,20 +963,33 @@ contains ! =====     Public Procedures     =============================
             if ( associated(xm) ) then
               if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
-            m = xb%r1(i)
-            r = xb%r2(i-1)+1-m
-            m = max(k,m)      ! m,n = row indices of intersection of XB and YB
-            n = min(l,xb%r2(i)-r)
+            xi_1 = xb%r2(i-1)+1  ! index of 1st /=0 el. in this col of xb
+            xi_n = xb%r2(i)      ! index of last /=0 el. in this col of xb
+            xr_1 = xb%r1(i)      ! first row index of xb
+            xr_n = xr_1 + xi_n - yi_n   ! last row index of xb
+
+            ! Now work out what they have in common
+            cr_1 = max ( xr_1, yr_1 )
+            cr_n = min ( xr_n, yr_n )
+            c_n = cr_n - cr_1 + 1
+            if ( c_n <= 0 ) cycle
+
+            ! Now modify xi_1 and yi_1 to point to the start of the common part
+            xd = cr_1 - xr_1
+            yd = cr_1 - yr_1
+
             if ( .not. my_sub ) then
 !             z(i,j) = z(i,j) + &
-!                      & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+!                      & dot_product ( xb%values(xi_1+xd:xi_1+xd+c_n-1,1), &
+!                      &   yb%values(yi_1+yd:yi_1+yd+c_n-1,1) )
               z(i,j) = z(i,j) + &
-                       & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+                       & dot( c_n, xb%values(xi_1+xd,1), 1, yb%values(yi_1+yd,1), 1 )
             else
 !             z(i,j) = z(i,j) - &
-!                      & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+!                      & dot_product ( xb%values(xi_1:xi_1+c_n-1,1), &
+!                      &   yb%values(yi_1:yi_1+c_n-1,1) )
               z(i,j) = z(i,j) - &
-                       & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+                       & dot( c_n, xb%values(xi_1,1), 1, yb%values(yi_1,1), 1 )
             end if
           end do ! i
         end do ! j
@@ -1912,6 +1927,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                          ! Subscripts and loop inductors
     logical :: MyInvert
     integer :: N                             ! min(a%ncols,a%nrows)
+    integer :: M                             ! max(a%ncols,a%nrows) / n
     integer :: NCols, NRows                  ! Copies of a%...
     real(r8) :: S                            ! Sign to use for X, +1 or -1
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
@@ -1926,20 +1942,24 @@ contains ! =====     Public Procedures     =============================
     myInvert = .false.
     if ( present(invert) ) myInvert = invert
     n = min(a%ncols,a%nrows)
+    m = max(a%ncols,a%nrows) / n
     select case ( a%kind )
     case ( m_absent )
       ncols = a%ncols ! because the first argument of CreateBlock is intent(out)
       nrows = a%nrows
-      call createBlock ( a, nRows, nCols, m_banded, n )
-      do i = 1, n
-        a%r1(i) = i
-        a%r2(i) = i
+      call createBlock ( a, nRows, nCols, m_banded, m*n )
+      do i = 1, n                       ! Loop over shorter side
+        j = 1 + m*(i-1)                 ! Index into longer side
+        a%r1(i) = j
+        a%r2(i) = j + m - 1
         if ( myInvert ) then
           if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          a%values(i,1) = s / x(i)
+          ! Don't misinterpret the use of r1 and r2 here, it does make sense
+          ! see their assignment above.
+          a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
         else
-          a%values(i,1) = s * x(i)
+          a%values(a%r1(i):a%r2(i),1) = s * x(a%r1(i):a%r2(i))
         end if
       end do
     case ( m_banded )
@@ -2073,6 +2093,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.37  2001/06/04 22:41:37  livesey
+! Various bug fixes associated with m_banded.  Some still remain to be
+! solved though
+!
 ! Revision 2.36  2001/06/01 01:03:39  vsnyder
 ! Add 'sqrt' option to 'GetDiagonal_0'; add 'Multiply' generic
 !
