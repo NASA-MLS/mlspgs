@@ -28,16 +28,18 @@ module TREE_WALKER
   use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
   use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
   use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
+  use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MergeGridsModule, only: MergeGrids
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
+  use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
     & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
     & Signals, SpectrometerTypes, GetSignalIndex
-  use MLSL2Timings, only: add_to_section_timing
+  use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
   use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
-  use Output_m, only: Output
+  use Output_m, only: BLANKS, Output
   use OutputAndClose, only: Output_Close
   use PointingGrid_m, only: Destroy_Pointing_Grid_Database
   use QuantityTemplates, only: QuantityTemplate_T
@@ -101,7 +103,9 @@ contains ! ====     Public Procedures     ==============================
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     integer ::                                   signal_index
     integer ::                                   SON              ! Son of Root
-    real    ::                                   t1
+    real    ::                                   t1, t2
+    integer ::                                   totalNGC   ! Total num garbage colls.
+    logical ::                                   show_totalNGC = .true.
     type (Vector_T), dimension(:), pointer ::    Vectors
     type (VGrid_T), dimension(:), pointer ::     VGrids
 
@@ -115,6 +119,7 @@ contains ! ====     Public Procedures     ==============================
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
     depth = 0
+    totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
     call time_now ( t1 )
@@ -239,6 +244,9 @@ subtrees:   do while ( j <= howmany )
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
               call DestroyMatrixDatabase ( matrices )
+              if (garbage_collection_by_chunk) call mls_gc_now
+              if ( index(switches,'ngc') /= 0 ) &
+                & totalNGC = Say_num_gcs()
             end if
             call ForgetOptimumLon0
           end do ! on chunkNo
@@ -303,10 +311,42 @@ subtrees:   do while ( j <= howmany )
     call destroyFGridDatabase ( fGrids )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
+
+  contains
+    subroutine SayTime ( What )
+      character(len=*), intent(in) :: What
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
+      call output ( "Timing for " // what // " = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+    end subroutine SayTime
+
+    integer function Say_num_gcs ( )
+      Say_num_gcs = mls_howmany_gc()
+      if ( show_totalNGC ) then
+        call output ( "Total = " )
+        call output ( Say_num_gcs, advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
+      call output ( "garbage collections for chunk ")
+      call blanks ( 2, advance = 'no' )
+      call output ( chunkNo )
+      call output ( " = ")
+      call output ( Say_num_gcs - totalNGC, advance = 'yes' )
+    end function Say_num_gcs
+
   end subroutine WALK_TREE_TO_DO_MLS_L2
+
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.80  2002/01/24 00:58:28  livesey
+! Now calls MergeGrids at the appropriate time
+!
 ! Revision 2.79  2002/01/22 18:14:47  livesey
 ! Fixed typo
 !
