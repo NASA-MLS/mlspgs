@@ -9,7 +9,8 @@ MODULE L3DMData
    USE SDPToolkit
    USE MLSMessageModule
    USE MLSCommon
-   USE L2GPData
+   USE L2GPData, ONLY: L2GPNameLen, GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, &
+                       GEO_FIELD9, HDFE_NOMERGE
    USE Hdf
    USE MLSPCF
    IMPLICIT NONE
@@ -44,6 +45,7 @@ MODULE L3DMData
                                              &field '
    CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
                                                &TAI to UTC.'
+   CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
 
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
@@ -649,55 +651,48 @@ CONTAINS
 
 ! Parameters
 
-      CHARACTER (LEN=*), PARAMETER :: DE_ERR = 'Deallocation failed for l3dm &
-                                               &pointer:  '
-
 ! Functions
 
 ! Variables
 
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: dealloc_err
+      INTEGER :: err
 
 ! Horizontal geolocation fields
 
-      IF ( ASSOCIATED(l3dm%latitude) ) DEALLOCATE (l3dm%latitude, &
-                                                   STAT=dealloc_err)
-      IF ( dealloc_err /= 0 ) THEN
-         msr = DE_ERR // 'latitude'
+      IF ( ASSOCIATED(l3dm%latitude) ) DEALLOCATE (l3dm%latitude, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  l3dm latitude pointer'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      IF ( ASSOCIATED(l3dm%longitude) ) DEALLOCATE (l3dm%longitude, &
-                                                    STAT=dealloc_err)
-      IF ( dealloc_err /= 0 ) THEN
-         msr = DE_ERR // 'longitude'
+      IF ( ASSOCIATED(l3dm%longitude) ) DEALLOCATE (l3dm%longitude, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  l3dm longitude pointer'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Vertical geolocation field
 
-      IF ( ASSOCIATED(l3dm%pressure) ) DEALLOCATE (l3dm%pressure, &
-                                                   STAT=dealloc_err)
-      IF ( dealloc_err /= 0 ) THEN
-         msr = DE_ERR // 'pressure'
+      IF ( ASSOCIATED(l3dm%pressure) ) DEALLOCATE (l3dm%pressure, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  l3dm pressure pointer'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Data fields
 
-      IF ( ASSOCIATED(l3dm%l3dmValue) ) DEALLOCATE (l3dm%l3dmValue, &
-                                                    STAT=dealloc_err)
-      IF ( dealloc_err /= 0 ) THEN
-         msr = DE_ERR // 'l3dmValue'
+      IF ( ASSOCIATED(l3dm%l3dmValue) ) DEALLOCATE (l3dm%l3dmValue, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  l3dmValue pointer'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       IF ( ASSOCIATED(l3dm%l3dmPrecision) ) DEALLOCATE (l3dm%l3dmPrecision, &
-                                                        STAT=dealloc_err)
-      IF ( dealloc_err /= 0 ) THEN
-         msr = DE_ERR // 'l3dmPrecision'
+                                                        STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  l3dmPrecision'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -724,6 +719,8 @@ CONTAINS
 
 ! Variables
 
+      CHARACTER (LEN=480) :: msr
+
       INTEGER :: err, i
 
 ! Check the status of the input pointer
@@ -739,8 +736,10 @@ CONTAINS
 ! Deallocate the database itself
 
          DEALLOCATE (l3dmdb, STAT=err)
-         IF ( err /= 0 ) CALL MLSMessage ( MLSMSG_Error, ModuleName, 'Failed &
-                                                &to deallocate l3dm database.')
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dm database'
+            CALL MLSMessage ( MLSMSG_Error, ModuleName, msr)
+         ENDIF
 
       ENDIF
 
@@ -753,6 +752,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.4  2000/11/15 21:00:26  nakamura
+!# Added parameter GridNameLen.
+!#
 !# Revision 1.3  2000/10/24 19:21:08  nakamura
 !# Removed dependence on OutputL2GP.
 !#
@@ -761,4 +763,5 @@ END MODULE L3DMData
 !#
 !# Revision 1.1  2000/10/05 19:11:07  nakamura
 !# Module for the L3DM data type.
+!#
 !#
