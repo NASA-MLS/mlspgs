@@ -1,6 +1,6 @@
 #!/bin/sh
 #    README.tests        Instructions about building the mls software
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -16,6 +16,12 @@ software during development. Also a special subdirectory misc to allow you to
 build and run stand-alone software without reference to the mls software.
 
 SUMMARY
+The subdirectories under the one containing this README are used auotmatically
+by the Makefiles to carry out some normal functions. They may also be used by
+you during development to test changes before cvs committing them by running
+them in conjunction with a small testdriver program instead of the whole
+toolkit, pcf, and lcf panoply.
+
 To test the mls software first make sure that you have properly built each of
 the levels with the following set of names: {l1 l2 l3 l3m fwdmdl cloudfwdm lib}.
 These are the subdirectories in the parent directory to tests, which is the one
@@ -52,6 +58,7 @@ METHOD
 
 and run the resulting test program with suitable data.
 
+MISC
 If instead you simply wish to build and test stand-alone software, such as a
 small utility, or a program that doesn't USE any of the mls modules, copy the
 program's source(s) into tests/misc (after hiding or removing any sources
@@ -74,6 +81,16 @@ issuing this command you would still need to assign values to the remaining
 two variables, MLSCONFG and INSTALLDIR, via e.g.
    set MLSCONFG=NAG.Linux
    set INSTALLDIR=bin/NAG.Linux
+
+BUGS
+A general shortcoming of the automatic Makefiles emerges whenever two modules
+in different directories have the same name. For example, this will cause
+trouble if you wish to try an alternate test module to one in the main mlspgs/*
+levels by putting it in with a driver in the corresponding tests level. All the
+other modules up in the main levels that USEd the test module were compiled
+with interfaces and defined types as they were found in the main level, not in
+the tests level. This can and probably will create strange errors if the
+interfaces or user-defined types differ in any way between the two versions.
 
 WARNINGS
 Since the modules of level to be USE'd by test will not include _level_'s own
@@ -114,13 +131,16 @@ What about testing a new init_tables_module? Say you want to get the
 init_tables_module, not from init_m_dir but from tests/_level_ itself? I
 haven't tested this yet. In general, substituting a much-USEd module for the
 original in mlspgs/_level_ is unsafe because the modules that USE it are
-not being recompiled. Rather than a mere warning, this last point should
-perhaps be elevated to being a bug.
+not being recompiled. Rather than a mere warning, this last point is a special
+case of the remarks made above under BUGS..
 
--pw                           2001-Feb-01 to 2001-Aug-16
+-pw                           2001-Feb-01 to 2003-Feb-06
 EOF
 exit
 # $Log$
+# Revision 1.7  2002/02/21 21:58:52  pwagner
+# Small language corrections
+#
 # Revision 1.6  2001/08/16 17:19:50  pwagner
 # Mentions build_f90_in_misc.sh
 #
