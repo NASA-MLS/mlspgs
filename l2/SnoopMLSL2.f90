@@ -17,26 +17,26 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
 
-  use VectorsModule, only: Vector_T, VectorValue_T
-  use QuantityTemplates, only: QuantityTemplate_T
-  use MatrixModule_1, ONLY: Matrix_T
-
+  use init_tables_module, only: F_Comment
   use Intrinsic, only: LIT_INDICES
-  use MLSCommon, only: R4, R8, I4
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MatrixModule_1, ONLY: Matrix_T
+  use MLSCommon, only: FINDFIRST, R4, R8, I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
+  use MLSSignals_M, only: GETSIGNALNAME
+  use MoreTree, only: Get_Field_Id
   use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
     & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
-  use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
+  use QuantityTemplates, only: QuantityTemplate_T
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
-  use LEXER_CORE, only: PRINT_SOURCE
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
-  use MLSSignals_M, only: GETSIGNALNAME
-  use MLSCommon, only: FINDFIRST
+  use TREE, only:  DUMP_TREE_NODE, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+  use VectorsModule, only: Vector_T, VectorValue_T
 
   implicit none
   private
@@ -284,12 +284,15 @@ contains ! ========  Public Procedures =========================================
   ! within the code, and takes optional arguments which the user can supply
   ! to pass to and from the IDL end of the snooper.
 
-  subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase )
+  subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase, &
+    & AnotherComment )
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
     type (Vector_T), dimension(:), pointer, optional :: VectorDatabase
     type (Vector_T), dimension(:), pointer, optional :: AnotherVectorDatabase
+    character(len=*), intent(in), optional :: AnotherComment ! Replaces
+    ! comment field of "snoop" command if present.
     !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
     
     ! Local parameter
@@ -309,6 +312,7 @@ contains ! ========  Public Procedures =========================================
     integer :: BUFFERID, INFO           ! Flags and ids from PVM
     character (len=132) :: COMMENT      ! Comment field to snoop command
     integer :: CONTROLINGSNOOPER        ! This one is controling
+    integer :: I                        ! Loop inductor, subtree index
     integer :: INUM                     ! Index in group
     character (len=132) :: LINE         ! Line of text received
     character (len=132) :: NEXTLINE     ! Line of text received
@@ -316,6 +320,7 @@ contains ! ========  Public Procedures =========================================
     character (len=132) :: LOCATION     ! Line of text to send off
     integer :: SNOOPER                  ! Loop counter
     integer :: SNOOPERTID               ! Task ID for snooper
+    integer :: SON                      ! of Key
     integer :: STATUS                   ! Status from allocate/deallocate
     logical :: KEEPWAITING                ! First time snoop called
     logical :: GOTSOMETHING             ! Set if we got a message
@@ -323,14 +328,18 @@ contains ! ========  Public Procedures =========================================
     ! Executable code
     if ( .not. snoopingActive ) return
 
+    location = '????'
+    comment = 'Unknown'
     if ( present(key) ) then
       write ( location, * ) source_ref(key)/256
-      location=adjustl(trim(location))
-      call get_string ( sub_rosa(subtree(2,subtree(2,key))), comment, strip=.true. )
-    else
-      location = '????'
-      comment = 'Unknown'
-    endif
+      location = adjustl(trim(location))
+      do i = 2, nsons(key)
+        son = subtree(i,key)
+        if ( get_field_id(son) == f_comment ) &
+          & call get_string ( sub_rosa(subtree(2,son)), comment, strip=.true. )
+      end do
+    end if
+    if ( present(anotherComment) ) comment = anotherComment
 
     ! If this is the very first call enroll in PVM for the first time, allocate
     ! 0 snoopers to start with.
@@ -545,6 +554,11 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.21  2001/10/05 20:19:21  vsnyder
+! Process arguments by name instead of position.
+! Add 'AnotherComment' optional argument.
+! Cosmetic changes.
+!
 ! Revision 2.20  2001/10/05 17:32:35  vsnyder
 ! Add 'AnotherVectorDatabase' argument; cosmetic changes
 !
