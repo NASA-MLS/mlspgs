@@ -86,11 +86,13 @@ OMIT_SRCS := $(OMIT) xerbla.f
 
 ifdef BLAS
 #   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
-   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
 else
 ifeq ($(LIB_BLAS),f95)
 #   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
-   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90 sdot.f ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90 sdot.f ddot.f
+   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90
 else
 #   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
    OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
@@ -206,6 +208,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.4  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
 # Revision 1.3  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #
