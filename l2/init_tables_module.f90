@@ -492,10 +492,11 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_signals, t+t_string, n+n_field_type, &
-             np+n_spec_def, &
+             nadp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
-             begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
+             begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
+             begin, f+f_lengthScale, t+t_boolean, n+n_field_type, &
+             begin, f+f_fraction, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
@@ -596,7 +597,8 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
-             begin, f+f_decay, s+s_vector, n+n_field_spec, &
+             begin, f+f_lengthScale, s+s_vector, n+n_field_spec, &
+             begin, f+f_fraction, s+s_vector, n+n_field_spec, &
              begin, f+f_invert, t+t_boolean, n+n_field_type, &
              begin, f+f_superDiagonal, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
@@ -800,6 +802,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.171  2001/10/15 22:10:54  livesey
+! Added smoothing stuff to fillCovariance
+!
 ! Revision 2.170  2001/10/05 20:17:36  vsnyder
 ! Disallow positional arguments on Snoop; add DNWT_FLAG quantity
 !
