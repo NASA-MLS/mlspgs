@@ -1,4 +1,3 @@
-
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -22,7 +21,6 @@ MODULE L3MZData
         & MLSMSG_Info, MLSMSG_WARNING, MLSMSG_Allocate, MLSMSG_DeAllocate
    USE MLSPCF3, ONLY: MLSPCF_L2DG_START, MLSPCF_L2GP_START
    USE mon_Open, ONLY: PCFMData_T
-   USE PCFHdr, ONLY: WritePCF2Hdr
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate
    USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_NUM_OF_GROUPS, &
         & PGSD_MET_GROUP_NAME_L, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS
@@ -959,7 +957,7 @@ CONTAINS
 !----------------------------------------------------------
    SUBROUTINE WriteMetaL3MZ (fileName, mcfNum, pcf, anText, hdfVersion)
 !----------------------------------------------------------
-
+   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
 ! Brief description of subroutine
 ! This routine writes the metadata for an l3mz file, and annotates it with the
 ! PCF.
@@ -1227,22 +1225,24 @@ CONTAINS
 ! InputPointer
       
       attrName = 'InputPointer'
-      inpt = ''
-      IF (dg == 1) THEN
-         indx = mlspcf_l2dg_start
-      ELSE
-         indx = mlspcf_l2gp_start
-      ENDIF
-      DO i = 1, 31
-         version = 1
-         returnStatus = pgs_pc_getUniversalRef(indx, version, sval)
-         IF (returnStatus == PGS_S_SUCCESS) THEN
-            inpt(i) = sval
-            indx = indx + 1
-         ENDIF
-      ENDDO
+! >       inpt = ''
+! >       IF (dg == 1) THEN
+! >          indx = mlspcf_l2dg_start
+! >       ELSE
+! >          indx = mlspcf_l2gp_start
+! >       ENDIF
+! >       DO i = 1, 31
+! >          version = 1
+! >          returnStatus = pgs_pc_getUniversalRef(indx, version, sval)
+! >          IF (returnStatus == PGS_S_SUCCESS) THEN
+! >             inpt(i) = sval
+! >             indx = indx + 1
+! >          ENDIF
+! >       ENDDO
       
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, inpt)
+      ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, inpt)
+      result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
+        & fileType='hdfeos')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1594,6 +1594,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.8  2003/04/30 18:16:29  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.7  2003/04/06 02:25:50  jdone
 ! added HDFEOS5 capability
 !

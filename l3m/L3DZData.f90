@@ -1,4 +1,3 @@
-
 ! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -1475,7 +1474,7 @@ MODULE L3DZData
    USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
         & DFACC_RDWR
    USE MLSPCF3
-   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
    USE mon_Open, ONLY: PCFMData_T 
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
    USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
@@ -1750,17 +1749,19 @@ MODULE L3DZData
 ! InputPointer
          
          attrName = 'InputPointer'
-         sval = 'See the PCF annotation to this file.'
-         IF (dg == 1) THEN
-            DO j = mlspcf_l2dg_start, mlspcf_l2dg_end
-               version = 1
-               returnStatus = pgs_pc_getUniversalRef(j, version, sval)
-               IF (returnStatus /= PGS_S_SUCCESS) CYCLE
-               IF ( INDEX(sval,files%date(i)) /= 0 ) EXIT
-            ENDDO
-         ENDIF
+         ! sval = 'See the PCF annotation to this file.'
+! >          IF (dg == 1) THEN
+! >             DO j = mlspcf_l2dg_start, mlspcf_l2dg_end
+! >                version = 1
+! >                returnStatus = pgs_pc_getUniversalRef(j, version, sval)
+! >                IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+! >                IF ( INDEX(sval,files%date(i)) /= 0 ) EXIT
+! >             ENDDO
+! >          ENDIF
          
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
+           & fileType='hdfeos')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2162,6 +2163,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.8  2003/04/30 18:16:28  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.7  2003/04/06 02:25:34  jdone
 ! added HDFEOS5 capability
 !

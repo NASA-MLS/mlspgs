@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
@@ -1391,7 +1390,7 @@ CONTAINS
        & DFACC_WRITE
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE OpenInit, ONLY: PCFData_T
-  USE PCFHdr, ONLY: WritePCF2Hdr
+  USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
   USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
   USE SDPToolkit, ONLY: PGSd_MET_NUM_OF_GROUPS, PGSd_MET_GROUP_NAME_L, & 
      & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, WARNIFCANTPGSMETREMOVE
@@ -1658,8 +1657,10 @@ CONTAINS
          ! InputPointer
          
          attrName = 'InputPointer'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-              & 'See the PCF annotation to this file.')
+         ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+         !     & 'See the PCF annotation to this file.')
+         result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
+           & fileType='hdfeos')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2156,6 +2157,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.24  2003/04/30 18:15:48  pwagner
+!# Work-around for LF95 infinite compile-time bug
+!#
 !# Revision 1.23  2003/04/08 20:26:46  pwagner
 !# Snipped intraline continuation character to appease Lahey
 !#
