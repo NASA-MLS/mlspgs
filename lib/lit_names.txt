@@ -48,6 +48,7 @@ emls
 false
 frequency
 
+gauss
 geodAltitude
 geodAngle
 GHz
@@ -79,6 +80,8 @@ LSBFrequency
 m
 maf
 mafs
+magneticField
+magneticModel
 massMeanDiameterIce
 massMeanDiameterWater
 mb
@@ -145,6 +148,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.15  2003/01/07 23:43:37  livesey
+# Literals for magnetic field
+#
 # Revision 2.14  2002/08/20 19:19:08  livesey
 # Moved in angle and pressure from l2
 #
