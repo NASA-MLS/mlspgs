@@ -35,6 +35,7 @@ basisFraction
 bin
 binSelectors
 boundarypressure
+boxCarMethod
 
 climatology
 cloud_der
@@ -328,6 +329,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.115  2004/02/17 23:25:59  pwagner
+# Added boxcarMethod
+#
 # Revision 2.114  2004/02/11 00:26:51  pwagner
 # Added quality and status
 #
