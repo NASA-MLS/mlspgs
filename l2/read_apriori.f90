@@ -9,30 +9,27 @@ module ReadAPriori
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, &
-    & S_L2GP, LIT_INDICES
+    & S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
-    &                  ReadL2AUXData!, SetupNewL2AUXRecord
+    &                  ReadL2AUXData
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
+  use MLSCommon, only: FileNameLen
   use MLSFiles, only: SPLIT_PATH_NAME
-!  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-!    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
-!  use OBTAINCLIMATOLOGY, only: READ_CLIMATOLOGY
-!  use OBTAINDAO, only: READ_DAO
-!  use OBTAINNCEP, only: READ_NCEP
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    &                         MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: AddGridTemplateToDatabase, &
   & READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
-  use String_Table, only: GET_STRING, DISPLAY_STRING
+  use String_Table, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
-  use TREE_TYPES, only: N_NAMED!, N_DOT
+  use TREE_TYPES, only: N_NAMED
 
   implicit none
   private
@@ -80,7 +77,6 @@ contains ! =====     Public Procedures     =============================
     TYPE (GriddedData_T) :: GriddedData
     integer :: l2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
-    character (LEN=480) :: msr     ! Error message if can't find file
     integer :: pcf                 ! loop index of climatology pcf numbers
 
     integer :: sd_id
@@ -92,8 +88,6 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
-    character(len=FileNameLen) :: bareFilename
-    character(len=FileNameLen) :: path
     integer :: version
 	integer :: returnStatus
 
@@ -152,9 +146,6 @@ contains ! =====     Public Procedures     =============================
         
       select case( FileType )
       case ( s_l2gp )
-!        if ( .not. all(got((/f_swath, f_file/)))) &
-!          & call MLSMessage(MLSMSG_Error, ModuleName, &
-!          & 'Swath/filename name not specified in read a priori')
         if ( .not. all(got((/f_swath, f_file/)))) &
           & call announce_error ( son, &
             & 'Swath/filename name not specified in read a priori' )
@@ -164,8 +155,6 @@ contains ! =====     Public Procedures     =============================
         ! Open the l2gp file
         fileHandle = swopen(FileNameString, DFACC_READ)
         if ( fileHandle == -1 ) then
-!          msr = MLSMSG_Fileopen // FileNameString
-!          call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
           call announce_error ( son, &
             & 'Failed to open swath file ' // FileNameString )
         end if
@@ -176,8 +165,6 @@ contains ! =====     Public Procedures     =============================
         ! Close the file
         fileHandle = swclose(fileHandle)
         if ( fileHandle == -1 ) then
-!          msr = 'Failed to close file ' // FileNameString
-!          call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
           call announce_error ( son, &
             & 'Failed to close swath file ' // FileNameString )
         end if
@@ -188,9 +175,6 @@ contains ! =====     Public Procedures     =============================
         ! copy.
       case ( s_l2aux )
 
-!        if ( .not. all(got((/f_sdName, f_file/)))) &
-!          & call MLSMessage(MLSMSG_Error, ModuleName, &
-!          & 'file/sd name not specified in read a priori')
         if ( .not. all(got((/f_sdName, f_file/)))) &
           & call announce_error ( son, &
             & 'file/sd name not specified in read a priori' )
@@ -200,8 +184,6 @@ contains ! =====     Public Procedures     =============================
         ! create SD interface identifier for l2aux
         sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
-!          msr = MLSMSG_Fileopen // FileNameString
-!          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           call announce_error ( son, 'Failed to open l2aux ' // sdNameString )
         end if
         ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
@@ -228,9 +210,6 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_gridded )
 
-!        if ( .not. all(got((/f_origin, f_field, f_file/)))) &
-!          & call MLSMessage(MLSMSG_Error, ModuleName, &
-!          & 'Incomplete gridded data information')
         if ( .not. all(got((/f_origin, f_field/)))) &
           & call announce_error(son, &
           & 'Incomplete gridded data information')
@@ -304,6 +283,11 @@ contains ! =====     Public Procedures     =============================
       
     end do                              ! Lines in l2cf loop
     
+    if (ERROR/=0 ) then
+	 	call MLSMessage(MLSMSG_Error,ModuleName, &
+      & 'Problem with read_apriori section')
+	end if
+
     if ( toggle(gen) ) call trace_end("read_apriori")
   
   end subroutine read_apriori
@@ -325,7 +309,7 @@ contains ! =====     Public Procedures     =============================
     logical, parameter :: default_output_by_toolkit = .true.
  
     if ( present(use_toolkit) ) then
-      just_print_it = use_toolkit
+      just_print_it = .not. use_toolkit
     else if ( default_output_by_toolkit ) then
       just_print_it = .false.
     else
@@ -376,6 +360,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.17  2001/04/16 23:50:01  pwagner
+! Tiny change to announce_error
+!
 ! Revision 2.16  2001/04/12 22:19:33  vsnyder
 ! Improved an error message
 !
