@@ -317,7 +317,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(16) :: LS        ! Temporary array
+    logical, dimension(17) :: LS        ! Temporary array
     integer, dimension(10) :: IS         ! Temporary array
     real(r8), dimension(2) :: RS        ! Temporary array
     integer :: I                        ! Loop counter
@@ -353,7 +353,9 @@ contains
     config%sideBandStop          = is(i) ; i = i + 1
     config%surfaceTangentIndex   = is(i) ; i = i + 1
 
-    ! Now the logical scalars
+    ! Now the logical scalars. Array LS has to be long enough for this.
+    ! If you add any items here, don't forget to make LS longer at the top
+    ! of the program unit.
     call PVMIDLUnpack ( ls, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
     i = 1
@@ -593,6 +595,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.46  2004/03/22 18:23:20  livesey
+! Added AllLinesInCatalog flag
+!
 ! Revision 2.45  2003/10/28 23:43:47  livesey
 ! Added forceFoldedOutput
 !
