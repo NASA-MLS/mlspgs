@@ -303,6 +303,8 @@ program MLSL2
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
         snoopName = line
+      else if ( line(3+n:9+n) ==  'stgmem ' ) then
+        parallel%stageInMemory = .true.
       else if ( line(3+n:11+n) == 'subblock ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
@@ -719,6 +721,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.94  2003/05/13 04:48:20  livesey
+! Added stgmem option
+!
 ! Revision 2.93  2003/02/27 18:40:29  pwagner
 ! recl passed to let NAG open l2cf with long lines
 !
