@@ -91,7 +91,8 @@ PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
+#$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 l2_test: libfwdmdl.a
@@ -159,6 +160,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.22  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 1.21  2001/08/15 21:01:04  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #

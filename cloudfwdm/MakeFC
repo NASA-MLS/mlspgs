@@ -100,9 +100,11 @@ depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
 #Any sources to explicitly exclude from dependency list?
 #OMIT_SRCS := $(OMIT_SRCS)
 
-FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
+#FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
+FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a
 
-PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
+#PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
+PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(libfwdmdl_objs)/libfwdmdl.a
 
 PROG=libcloud.a
 
@@ -175,6 +177,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.7  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 1.6  2001/08/15 21:01:04  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #
