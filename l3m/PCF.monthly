@@ -535,7 +535,7 @@
 # Next line is the default location for PRODUCT OUTPUT FILES
 !  ~/runtime
 #
-100|MLS-Aura_L3LOG_Monthly_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+100|MLS-Aura_L3LOG_Monthly_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
 31100|MLS-Aura_L3DZ_Standard_V0-8-C01_1996-032.dat|/user2/nakamura/L1BOA||||1
 31101|MLS-Aura_L3DZ_Standard_V0-8-C01_1996-033.dat|/user2/nakamura/L1BOA||||1
 31102|MLS-Aura_L3DZ_Standard_V0-8-C01_1996-034.dat|/user2/nakamura/L1BOA||||1
@@ -594,10 +594,10 @@
 31155|MLS-Aura_L3DZ_Diagnostic_V0-8-C01_1996-058.dat|/user2/nakamura/L1BOA||||1
 31156|MLS-Aura_L3DZ_Diagnostic_V0-8-C01_1996-059.dat|/user2/nakamura/L1BOA||||1
 31157|MLS-Aura_L3DZ_Diagnostic_V0-8-C01_1996-060.dat|/user2/nakamura/L1BOA||||1
-31200|MLS-Aura_L3MM_Standard_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31201|MLS-Aura_L3MM_Diagnostic_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31300|MLS-Aura_L3MZ_Standard_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31301|MLS-Aura_L3MZ_Diagnostic_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31200|MLS-Aura_L3MM_Standard_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31201|MLS-Aura_L3MM_Diagnostic_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31300|MLS-Aura_L3MZ_Standard_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31301|MLS-Aura_L3MZ_Diagnostic_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -777,7 +777,7 @@
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
 10100|LogStatus|/user2/nakamura/L1BOA||||1
-10101|MLS-Aura_L3LOG_Monthly_V0-8-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+10101|MLS-Aura_L3LOG_Monthly_V0-8-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
 10102|LogUser|/user2/nakamura/L1BOA||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1

@@ -566,7 +566,7 @@
 # Next line is the default location for PRODUCT OUTPUT FILES
 !  ~/runtime
 #
-100|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+100|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042-1996-051.dat|/user2/nakamura/L1BOA||||1
 30000|MLS-Aura_L3DM_ClO_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
 30001|MLS-Aura_L3DM_ClO_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
 30002|MLS-Aura_L3DM_ClO_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
@@ -667,16 +667,16 @@
 30097|MLS-Aura_L3DM_Z_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
 30098|MLS-Aura_L3DM_Z_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
 30099|MLS-Aura_L3DM_Z_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
-31000|MLS-Aura_L3SP_ClO_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31001|MLS-Aura_L3SP_H2O_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31002|MLS-Aura_L3SP_HCl_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31003|MLS-Aura_L3SP_HCN_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31004|MLS-Aura_L3SP_HNO3_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31005|MLS-Aura_L3SP_N2O_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31006|MLS-Aura_L3SP_O3_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31007|MLS-Aura_L3SP_OH_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31008|MLS-Aura_L3SP_T_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31009|MLS-Aura_L3SP_Z_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31000|MLS-Aura_L3SP_ClO_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31001|MLS-Aura_L3SP_H2O_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31002|MLS-Aura_L3SP_HCl_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31003|MLS-Aura_L3SP_HCN_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31004|MLS-Aura_L3SP_HNO3_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31005|MLS-Aura_L3SP_N2O_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31006|MLS-Aura_L3SP_O3_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31007|MLS-Aura_L3SP_OH_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31008|MLS-Aura_L3SP_T_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
+31009|MLS-Aura_L3SP_Z_V0-7-C01_1996-032-1996-060.dat|/user2/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -856,7 +856,7 @@
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
 10100|LogStatus|/user2/nakamura/L1BOA||||1
-10101|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+10101|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042-1996-051.dat|/user2/nakamura/L1BOA||||1
 10102|LogUser|/user2/nakamura/L1BOA||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1
