@@ -60,6 +60,7 @@ module ForwardModelConfig
     integer :: yStar                  ! Index of specific vector to use for linearized model
     ! Now the logicals
     logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
+    logical :: AllLinesInCatalog      ! Use all the lines
     logical :: Atmos_der              ! Do atmospheric derivatives
     logical :: Default_spectroscopy   ! Using Bill's spectroscopy data
     logical :: DifferentialScan       ! Differential scan model
@@ -592,6 +593,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.45  2003/10/28 23:43:47  livesey
+! Added forceFoldedOutput
+!
 ! Revision 2.44  2003/10/18 01:15:58  livesey
 ! Various changes to the pack/unpack stuff.  This currently needs more
 ! attention.
