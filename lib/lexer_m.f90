@@ -20,6 +20,7 @@ module LEXER_M
 
   public :: Lexer, Lex_Signal
 
+  logical, public  :: CapIdentifiers = .true.     ! Capitalize identifiers?
   ! Parameters for character classes
   integer, parameter :: LETTER = 1
   integer, parameter :: DIGIT = 2
@@ -249,7 +250,8 @@ contains
       case ( id )
         select case ( class )
         case ( letter, digit, under )
-          call add_char ( cap(ch) )
+          if ( capIdentifiers ) ch = cap(ch)
+          call add_char ( ch )
           need = .true.
         case default
           string_index = add_terminal ( t_identifier )
@@ -600,6 +602,10 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.11  2001/03/14 18:59:54  vsnyder
+! Added public variable CapIdentifiers to control whether identifiers are
+! capitalized.
+!
 ! Revision 2.10  2001/03/14 02:06:31  vsnyder
 ! Added lex_signal
 !
