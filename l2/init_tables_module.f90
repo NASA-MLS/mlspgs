@@ -747,6 +747,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_cloudchannels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
@@ -938,8 +939,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.272  2003/01/14 22:14:54  dwu
+! make FlagCloud depend on both channels and cloudChannels
+!
 ! Revision 2.271  2003/01/13 17:17:18  jonathan
-! change cloud_width to i_saturation
+!  change cloud_width to i_saturation
 !
 ! Revision 2.270  2003/01/11 01:23:12  livesey
 ! Another bug fix in Dong's flagCloud
