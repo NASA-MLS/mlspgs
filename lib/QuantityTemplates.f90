@@ -100,6 +100,7 @@ module QuantityTemplates         ! Quantities within vectors
     logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
     integer :: hGridIndex               ! Index of any hGrid used
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
+    integer :: grandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
@@ -660,6 +661,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.33  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.32  2003/05/29 16:36:41  livesey
 ! Added the reflector item
 !
