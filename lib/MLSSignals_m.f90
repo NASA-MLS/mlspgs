@@ -29,7 +29,7 @@ module MLSSignals_M
   public :: AddBandToDatabase, AddModuleToDatabase, AddRadiometerToDatabase
   public :: AddSignalToDatabase, AddSpectrometerTypeToDatabase
   public :: DestroyBandDatabase, DestroyModuleDatabase
-  public :: DestroyRadiometerDatabase, DestroySignalDatabase
+  public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
@@ -1097,6 +1097,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.27  2001/04/20 22:41:25  vsnyder
+! Publish DestroySignal
+!
 ! Revision 2.26  2001/04/19 20:29:24  livesey
 ! Added sideband argument to MatchSignal and made MatchSignal look at it or
 ! probe%sideband
