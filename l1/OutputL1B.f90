@@ -17,7 +17,7 @@ MODULE OutputL1B
 
   PUBLIC :: OutputL1BOA_create, OutputL1B_index, OutputL1B_sc, OutputL1B_GHz, &
        OutputL1B_THz, OutputL1B_rad, OutputL1B_LatBinData, OutputL1B_diags, &
-       OutputL1B_DiagsT
+       OutputL1B_DiagsT, OutputL1B_Chi2
 
   !------------------- RCS Ident Info -----------------------
   CHARACTER(LEN=130) :: Id = &
@@ -172,6 +172,8 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id,dataset, tp%scAngle, lastIndex=noMAF)
     dataset%name      = 'GHz/scanAngle     '
     CALL Build_MLSAuxData (sd_id,dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/azimAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%azimAngle, lastIndex=noMAF)
     dataset%name      = 'GHz/scanRate      '
     dataset%data_type = 'real              '
     CALL Build_MLSAuxData (sd_id,dataset, tp%scanRate, lastIndex=noMAF)
@@ -253,6 +255,8 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset, tp%scAngle, lastIndex=noMAF)
     dataset%name      = 'THz/scanAngle     '
     CALL Build_MLSAuxData (sd_id, dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/azimAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%azimAngle, lastIndex=noMAF)
     dataset%name      = 'THz/scanRate      '
     dataset%data_type = 'real              '
     CALL Build_MLSAuxData (sd_id, dataset, tp%scanRate, lastIndex=noMAF)
@@ -301,6 +305,9 @@ CONTAINS
     CALL Build_MLSAuxData (sd_id, dataset,tp%tpECI, lastIndex=noMAF)
     dataset%name      = 'THz/ECR           '
     CALL Build_MLSAuxData (sd_id, dataset,tp%tpECR, lastIndex=noMAF)
+    dataset%name      = 'THz/ECRtoFOV      '
+    dataset%Dimensions(1) = '3x3                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
 
     CALL Deallocate_DataProducts (dataset)
 
@@ -311,25 +318,27 @@ CONTAINS
        rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
 
+    USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
     USE EngTbls, ONLY: Reflec_T
     USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
     USE MLSL1Rad, ONLY: Radiance_T, Rad_Name
     USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
+    USE SpectralBaseline, ONLY: Baseline, BaselineAC, BaselineDC
   
     ! Arguments
-    TYPE (L1BFileInfo_T) :: sdId
-    TYPE (Radiance_T) :: rad(:)
-    TYPE (Reflec_T) :: Reflec
+    TYPE (L1BFileInfo_T), INTENT(IN) :: sdId
+    TYPE (Radiance_T), INTENT(IN) :: rad(:)
+    TYPE (Reflec_T), INTENT(IN) :: Reflec
     INTEGER, INTENT(IN) :: counterMAF, noMAF
     REAL(r8), INTENT (IN) :: MAFStartTimeTAI
-    REAL(r8) :: MAFStartTimeGIRD
 
    ! Variables
-    TYPE( DataProducts_T ) :: dataset    
+    TYPE( DataProducts_T ) :: dataset, baselineDS  
     CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
-    INTEGER, DIMENSION(3) :: dims
+    INTEGER :: dims(3)
     INTEGER(HID_T) :: sd_id
-    INTEGER :: i, status
+    INTEGER :: i, status, bandno
+    REAL(r8) :: MAFStartTimeGIRD
 
 ! For use in determining filling missing radiance records
 
@@ -342,9 +351,10 @@ CONTAINS
     CHARACTER(len=10), SAVE :: rad_chan(max_rad_nos) = " "
     CHARACTER(len=10), SAVE :: rad_mif(max_rad_nos) = " "
 
-    REAL, PARAMETER :: RAD_FILL = -999.9, RAD_ERR_FILL = -1.0
+    REAL, PARAMETER :: RAD_FILL = DEFAULTUNDEFINEDVALUE, RAD_ERR_FILL = -1.0
     REAL, PARAMETER :: RAD_FILL_ARR(129,148) = RAD_FILL
     REAL, PARAMETER :: RAD_ERR_FILL_ARR(129,148) = RAD_ERR_FILL
+    INTEGER, PARAMETER :: INT_FILL = -1
 
     ! Convert TAI time to GIRD time
 
@@ -354,16 +364,20 @@ CONTAINS
 ! terminate access to the data set
 !------------------------------------------------------------------------------
     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (baselineDS)
 
     ALLOCATE (dataset%Dimensions(1), stat=status)
     dataset%name      = 'counterMAF        '
     dataset%data_type = 'integer           '
     dataset%Dimensions(1) = 'MAF'
     IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
     ELSE
-       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
+            fill_value=INT_FILL, lastIndex=noMAF)
     ENDIF
 
 !------------------------------------------------------------------------------
@@ -373,12 +387,12 @@ CONTAINS
     dataset%Dimensions(1) = 'MAF'
     IF (sdId%RADDID /= 0) THEN
        CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
-            lastIndex=noMAF)
+            fill_value=-1.0d0, lastIndex=noMAF)
        CALL Build_MLSAuxData (sdId%RADGID, dataset, MAFStartTimeGIRD, &
-            lastIndex=noMAF)
+            fill_value=-1.0d0, lastIndex=noMAF)
     ELSE
        CALL Build_MLSAuxData (sdId%RADTID, dataset, MAFStartTimeGIRD, &
-            lastIndex=noMAF)
+            fill_value=-1.0d0, lastIndex=noMAF)
     ENDIF
 
 ! Reflector temperatures:
@@ -386,18 +400,24 @@ CONTAINS
     dataset%data_type = 'real              '
     dataset%name      = 'Pri_Reflec        '
     IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Pri, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Sec_Reflec        '
     IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Sec, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
     dataset%name      = 'Ter_Reflec        '
     IF (sdId%RADDID /= 0) THEN
-       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, lastIndex=noMAF)
-       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADGID, dataset, Reflec%Ter, &
+            fill_value=RAD_ERR_FILL, lastIndex=noMAF)
     ENDIF
 
     DEALLOCATE (dataset%Dimensions, stat=status)
@@ -410,8 +430,14 @@ CONTAINS
     dataset%data_type = 'real'
     dataset%Dimensions(3) = 'MAF                 '
 
+    ALLOCATE (baselineDS%Dimensions(2), stat=status)
+    baselineDS%data_type = 'real'
+    baselineDS%Dimensions(2) = 'MAF                 '
+
 !------------------------------------------------------------------------------
     DO i = 1, SIZE (rad) ! Loop on number of SDs per MAF
+
+       bandno = rad(i)%bandno
 
        CALL GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
        prec = TRIM(name) // ' precision'
@@ -456,6 +482,7 @@ CONTAINS
              dim_mif = 'GHz.MIF              '
              dims(2) = MIFsGHz      !! lenG
           ENDIF
+
 !------------------------------------------------Create/Open the value datasets
           dataset%Dimensions(1) = dim_chan
           dataset%Dimensions(2) = dim_mif
@@ -469,6 +496,31 @@ CONTAINS
           CALL Build_MLSAuxData (sd_id, dataset, rad(i)%precision, &
                lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
 !-----------------------------------------------------------------------------
+
+! Output baselines
+
+          baselineDS%Dimensions(1) = dim_chan
+          baselineDS%name = TRIM(name) // ' Baseline'
+          CALL Build_MLSAuxData (sd_id, baselineDS, Baseline(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' Baseline precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               Baseline(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineAC'
+          CALL Build_MLSAuxData (sd_id, baselineDS, BaselineAC(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineAC precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               BaselineAC(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineDC'
+          CALL Build_MLSAuxData (sd_id, baselineDS, BaselineDC(bandno)%offset, &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(name) // ' BaselineDC precision'
+          CALL Build_MLSAuxData (sd_id, baselineDS, &
+               BaselineDC(bandno)%precision, lastIndex=noMAF, &
+               fill_value=RAD_ERR_FILL)
 
 ! Save matching table entries
 
@@ -500,10 +552,39 @@ CONTAINS
           dataset%name = TRIM(Rad_Name(i))// ' precision'
           CALL Build_MLSAuxData (rad_sdid(i), dataset, RAD_ERR_FILL_ARR, &
                lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
+
+! Fill Baselines:
+
+          baselineDS%Dimensions(1) = rad_chan(i)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' Baseline'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' Baseline precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineAC'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineAC precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineDC'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
+          baselineDS%name = TRIM(Rad_Name(i)) // ' BaselineDC precision'
+          CALL Build_MLSAuxData (rad_sdid(i), baselineDS, &
+               RAD_ERR_FILL_ARR(1:rad_dim1(i),1), &
+               lastIndex=noMAF, fill_value=RAD_FILL)
        ENDIF
     ENDDO
 
     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (baselineDS)
  
   END SUBROUTINE OutputL1B_rad
 
@@ -769,10 +850,36 @@ CONTAINS
   END SUBROUTINE OutputL1B_diagsT
 
 !=============================================================================
+  SUBROUTINE OutputL1B_Chi2 (sd_id)
+!=============================================================================
+
+    ! This subroutine writes the default chi2 data
+
+    USE MLSL1Common, ONLY: NumBands, BandChi2, BandChans
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
+
+    INTEGER, INTENT(IN) :: sd_id
+
+    CHARACTER(LEN=16) :: DimName(2)
+
+    CALL SaveAsHDF5DS (sd_id, 'BandChans', BandChans)
+    DimName(1) = 'BandNo'
+    CALL MakeHDF5Attribute (sd_id, 'BandChans', 'Dimensions', DimName(1:1))
+
+    CALL SaveAsHDF5DS (sd_id, 'BandChi2', BandChi2)
+    DimName(2) = 'ChanNo'
+    CALL MakeHDF5Attribute (sd_id, 'BandChi2', 'Dimensions', DimName)
+
+ END SUBROUTINE OutputL1B_Chi2
+
+!=============================================================================
 END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2004/11/10 15:34:41  perun
+! Add azimAngle fields; add baseline fields; add fills when needed
+!
 ! Revision 2.13  2004/08/12 13:51:50  perun
 ! Version 1.44 commit
 !
