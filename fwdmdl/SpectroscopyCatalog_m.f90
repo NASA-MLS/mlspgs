@@ -596,7 +596,7 @@ contains ! =====  Public Procedures  ===================================
     if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
     call output ( ': SIZE = ' )
     call output ( size(catalog), advance='yes' )
-    do i = first_molecule, last_molecule
+    do i = lbound(catalog,1), ubound(catalog,1)
       if ( catalog(i)%molecule == l_none ) cycle
       call output ( i, 4 )
       call output ( ': ' )
@@ -684,6 +684,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.29  2004/11/04 03:56:35  vsnyder
+! Correct a blunder
+!
 ! Revision 2.28  2004/11/04 03:40:42  vsnyder
 ! Index spectroscopy catalog by molecule instead of searching
 !
