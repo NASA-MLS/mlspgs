@@ -163,10 +163,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
   integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
   integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
-  integer, parameter :: P_MAXFAILURESPERMACHINE       = p_instrument + 1
-  integer, parameter :: P_MAXFAILURESPERCHUNK         = P_maxFailuresPerMachine + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_maxfailuresperchunk + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_instrument + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -263,8 +261,6 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
-    parm_indices(p_maxfailurespermachine) =add_ident ( 'maxFailuresPerMachine' )
-    parm_indices(p_maxfailuresperchunk) =  add_ident ( 'maxFailuresPerChunk' )
                                            
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
@@ -1053,8 +1049,6 @@ contains ! =====     Public procedures     =============================
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
-             begin, p+p_maxfailurespermachine, t+t_numeric, n+n_name_def, &
-             begin, p+p_maxfailuresperchunk, t+t_numeric, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
              s+s_l1boa, s+s_l2parsf, &
@@ -1107,6 +1101,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.342  2003/11/15 00:46:41  pwagner
+! maxfailurespermachine, maxfailuresperchunk no longer configuration settings (see comline opts)
+!
 ! Revision 2.341  2003/11/05 01:04:30  pwagner
 ! May dump either entire vector or single quantity in Fill
 !
