@@ -24,7 +24,7 @@ module AntennaPatterns_m
     character(len=MaxSigLen), pointer, dimension(:) :: Signals => NULL()
   end type AntennaPattern_T
 
-  ! The filter shape database:
+  ! The antanna pattern database:
   type(AntennaPattern_T), dimension(:), pointer, public :: AntennaPatterns => NULL()
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -40,7 +40,7 @@ contains
   ! ------------------------------------  Open_Antenna_Patterns_File  -----
   subroutine Open_Antenna_Patterns_File ( Filename, Lun )
 
-    character(len=*), intent(in) :: Filename ! Name of the filter shape file
+    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
     integer, intent(out) :: Lun              ! Logical unit number to read it
 
     logical :: Exist, Opened
@@ -55,7 +55,7 @@ contains
     open ( unit=lun, file=filename, status='old', form='formatted', &
       & access='sequential', iostat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open filter shapes file " // Filename )
+      & "Unable to open antenna pattern file " // Filename )
   end subroutine Open_Antenna_Patterns_File
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
@@ -175,7 +175,7 @@ outer1: do
 
     return
   98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
-  99 call io_error ( "While reading the filter shape file", status )
+  99 call io_error ( "While reading the antenna pattern file", status )
      call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
   end subroutine Read_Antenna_Patterns_File
 
@@ -208,7 +208,7 @@ outer1: do
   use Output_m, only: Blanks, Output
 
     integer :: I, J                ! Subscripts, loop inductors
-    call output ( 'Filter Shapes: SIZE = ' )
+    call output ( 'Antenna Patterns: SIZE = ' )
     call output ( size(AntennaPatterns), advance='yes' )
     do i = 1, size(AntennaPatterns)
       call output ( i, 4 )
@@ -229,6 +229,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.3  2001/03/30 23:19:06  vsnyder
+! Shorten overly-long (standard-violating) subroutine name
+!
 ! Revision 1.2  2001/03/30 20:35:23  zvi
 ! *** empty log message ***
 !
