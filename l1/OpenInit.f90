@@ -74,6 +74,13 @@ CONTAINS
 
     CALL GetL1Config
 
+!! Check output versions from CF and PCF
+
+    IF (L1Config%Globals%OutputVersionString /= L1PCF%OutputVersion) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "CF and PCF OutputVersions do not match!")
+    ENDIF
+
 !! TAI Processing range
 
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%startUTC, procRange%startTime)
@@ -515,6 +522,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2001/03/22 16:46:02  perun
+! Check CF and PCF outputVersions
+!
 ! Revision 2.3  2001/03/12 19:36:00  perun
 ! Read and save CF file as annotation
 !
