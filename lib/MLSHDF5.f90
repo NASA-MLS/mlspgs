@@ -386,12 +386,10 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     ! (Maybe) create the attribute
-    ! ???? Shouldn't the type be H5T_NATIVE_REAL ????
-    ! ???? It is for MakeHDF5Attribute_snglarr1 ????
-    if ( startMakeAttrib ( itemId, name, H5T_NATIVE_DOUBLE, dsID, attrID, &
+    if ( startMakeAttrib ( itemId, name, H5T_NATIVE_REAL, dsID, attrID, &
       & skip_if_already_there ) ) then
       ! Write
-      call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
+      call h5aWrite_f ( attrID, H5T_NATIVE_REAL, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
   end subroutine MakeHDF5Attribute_sngl
@@ -542,7 +540,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     my_skip = .false.
-    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     if ( my_skip ) then
       if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
     end if
@@ -1281,22 +1279,22 @@ contains ! ======================= Public Procedures =========================
     if ( present(maxDims)) maxDims = -1
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages off before getting dims ' // trim(name) )
+      & 'Unable to turn error messages off before getting dims of ' // trim(name) )
     call h5aOpen_name_f ( itemID, trim(name), attrID, status )
-    call h5dget_space_f(attrID,dspace_id,status)
-    call h5sget_simple_extent_ndims_f(dspace_id,rank,status)
+    call h5dget_space_f ( attrID, dspace_id, status )
+    call h5sget_simple_extent_ndims_f ( dspace_id, rank, status )
     my_rank = min(rank, size(dims))
-    allocate(maxdims_ptr(my_rank))
-    call h5sget_simple_extent_dims_f(dspace_id,dims(1:my_rank),&
-         maxdims_ptr(1:my_rank),status)
+    allocate ( maxdims_ptr(my_rank) )
+    call h5sget_simple_extent_dims_f ( dspace_id, dims(1:my_rank), &
+         maxdims_ptr, status )
     if ( status /= my_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dims for datset ' // trim(name) )
     call h5aClose_f ( attrID, status )
     if ( present(maxDims) ) maxdims = maxdims_ptr(1:my_rank)
-    deallocate(maxdims_ptr)
+    deallocate ( maxdims_ptr )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to turn error messages back on after getting dims ' // trim(name) )
+      & 'Unable to turn error messages back on after getting dims of ' // trim(name) )
   end subroutine GetHDF5AttrDims
 
   ! ----------------------------------------------  GetHDF5DSDims  -----
@@ -1324,14 +1322,14 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, dspace_id, status )
     call h5sget_simple_extent_ndims_f ( dspace_id, rank, status )
     my_rank = min(rank, size(dims))
-    allocate(maxdims_ptr(my_rank))
+    allocate ( maxdims_ptr(my_rank) )
     call h5sget_simple_extent_dims_f ( dspace_id, dims(1:my_rank), &
          maxdims_ptr, status )
     if ( status /= my_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dims for datset ' // trim(name) )
     call h5dClose_f ( setID, status )
     if ( present(maxDims) ) maxdims = maxdims_ptr
-    deallocate(maxdims_ptr)
+    deallocate ( maxdims_ptr )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims ' // trim(name) )
@@ -2603,7 +2601,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to get type for 1D char array ' // trim(name) )
     call h5tGet_size_f ( stringType, stringSize, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get size for 1D char array ' // trim(name) )
+      & 'Unable to get string size for 1D char array ' // trim(name) )
     if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Value too long to fit in space given for 1D char array ' // trim(name) )
     call h5dget_space_f ( setID, spaceID, status )
@@ -3713,10 +3711,10 @@ contains ! ======================= Public Procedures =========================
     call h5sClose_f ( dsID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute dataspace ' // trim(name) )
-    if ( present(stringTYpe) ) then
-      call h5tClose_f ( stringtype, status )
+    if ( present(stringType) ) then
+      call h5tClose_f ( stringType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close stringtype ' // trim(name) )
+        & 'Unable to close stringType ' // trim(name) )
     end if
   end subroutine FinishMakeAttrib
 
@@ -4117,6 +4115,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.52  2005/01/12 03:04:15  vsnyder
+! Use correct data type in MakeHDF5Attribute_sngl, some cannonball polishing
+!
 ! Revision 2.51  2005/01/07 01:57:53  vsnyder
 ! Don't try to get DS dims from an Attrib
 !
