@@ -96,6 +96,12 @@ MODULE QuantityTemplates         ! Quantities within vectors
 
      LOGICAL :: minorFrame      ! Is this a minor frame quantity.
 
+     ! This information describes how much of the data is in the overlap
+     ! regions if any.
+
+     INTEGER :: noSubVectorsLowerOverlap
+     INTEGER :: noSubVectorsUpperOverlap
+
      ! Now the vertical coordinate
 
      INTEGER :: verticalCoordinate ! The vertical coordinate used
@@ -446,6 +452,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.6  2000/01/12 20:55:49  livesey
+! Added minorFrame flag.
+!
 ! Revision 1.5  2000/01/07 23:53:35  livesey
 ! Nearly integrated, just a few tweaks.
 !
