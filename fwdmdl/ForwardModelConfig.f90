@@ -37,8 +37,11 @@ module ForwardModelConfig
     logical :: do_1d          ! Do 1D forward model calculation
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
+    integer, dimension(:), pointer :: moleculesPol=>NULL() ! Which molecules
+      !                       ! to consider that have Zeeman-split lines
+    logical, dimension(:), pointer :: moleculeDerivativesPol=>NULL() ! Want
+      !                       ! jacobians w.r.t. molecules_pol
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
-    logical :: Polarized      ! Do polarized radiative transfer
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: SkipOverlaps   ! Don't calculate for MAFs in overlap regions
@@ -177,13 +180,14 @@ contains
     integer :: I                        ! Loop counter
 
     ! Executable code
-    ! First pack the scalars
+    ! First pack the logical scalars
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, &
       & config%do_baseline, config%do_conv, config%do_freq_avg, &
       & config%do_1d, config%incl_cld, config%differentialScan, &
-      & config%lockBins, config%polarized, config%spect_der, &
+      & config%lockBins, config%spect_der, &
       & config%temp_der, config%skipOverlaps, config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
+    ! Pack the integer scalars
     call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_scattering_angles, config%num_azimuth_angles, &
@@ -212,6 +216,24 @@ contains
     else
       call PVMIDLPack ( 0, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
+    end if
+    ! Molecules with Zeeman splitting
+    if ( associated ( config%moleculesPol ) ) then
+      call PVMIDLPack ( size ( config%moleculesPol ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of moleculesPol" )
+      if ( size ( config%moleculesPol ) > 0 ) then
+        do i = 1, size(config%moleculesPol)
+          call PVMPackLitIndex ( abs ( config%moleculesPol(i) ), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a moleculePol" )
+          call PVMIDLPack ( (config%moleculesPol(i) .gt. 0.0), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing moleculePol sign" )
+        end do
+        call PVMIDLPack ( config%moleculeDerivativesPol, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule derivativesPol" )
+      end if
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 moleculesPol" )
     end if
     ! Specific quantities
     if ( associated ( config%specificQuantities ) ) then
@@ -272,7 +294,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(14) :: l14       ! Temporary array
+    logical, dimension(13) :: l13       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(12) :: i12       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
@@ -281,22 +303,21 @@ contains
 
     ! Executable code
     ! First the scalars
-    call PVMIDLUnpack ( l14, info )
+    call PVMIDLUnpack ( l13, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%globalConfig = l14(1)
-    config%atmos_der = l14(2)
-    config%do_baseline = l14(3)
-    config%do_conv = l14(4)
-    config%do_freq_avg = l14(5)
-    config%do_1d = l14(6)
-    config%incl_cld = l14(7)
-    config%differentialScan = l14(8)
-    config%lockBins = l14(9)
-    config%polarized = l14(10)
-    config%spect_der = l14(11)
-    config%temp_der = l14(12)
-    config%skipOverlaps = l14(13)
-    config%default_spectroscopy = l14(14)
+    config%globalConfig = l13(1)
+    config%atmos_der = l13(2)
+    config%do_baseline = l13(3)
+    config%do_conv = l13(4)
+    config%do_freq_avg = l13(5)
+    config%do_1d = l13(6)
+    config%incl_cld = l13(7)
+    config%differentialScan = l13(8)
+    config%lockBins = l13(9)
+    config%spect_der = l13(10)
+    config%temp_der = l13(11)
+    config%skipOverlaps = l13(12)
+    config%default_spectroscopy = l13(13)
     call PVMIDLUnpack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i12(1)
@@ -334,6 +355,23 @@ contains
       end do
       call PVMIDLUnpack ( config%moleculeDerivatives, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
+    end if
+    ! Molecules with Zeeman-split lines
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of moleculesPol" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%moleculesPol, n, 'config%moleculesPol', ModuleName )
+      call Allocate_test ( config%moleculeDerivativesPol, &
+        & n, 'config%moleculeDerivativesPol', ModuleName )
+      do i = 1, n
+        call PVMUnpackLitIndex ( config%moleculesPol(i), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a moleculePol" )
+        call PVMIDLUnpack ( flag, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a moleculePol sign flag" )
+        if ( .not. flag ) config%moleculesPol(i) = - config%moleculesPol(i)
+      end do
+      call PVMIDLUnpack ( config%moleculeDerivatives, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivativesPol" )
     end if
 
     ! Specific quantiites
@@ -489,8 +527,6 @@ contains
         call output ( database(i)%do_1d, advance='yes' )
         call output ( '  Incl_Cld:' )
         call output ( database(i)%incl_cld, advance='yes' )
-        call output ( '  Polarized:' )
-        call output ( database(i)%polarized, advance='yes' )
         call output ( '  SkipOverlaps:' )
         call output ( database(i)%skipOverlaps, advance='yes' )
         call output ( '  Spect_der:' )
@@ -526,6 +562,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.29  2003/02/06 20:16:23  livesey
+! Minor bug fix in the database deallocation
+!
 ! Revision 2.28  2003/02/05 21:57:27  livesey
 ! Tidy up and added binSelectors, removed nameFragment
 !

@@ -68,6 +68,7 @@ contains
                           & GetNameOfSignal, GetRadiometerFromSignal
     use Molecules, only: L_EXTINCTION, spec_tags
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
+    use Opacity_m, only: Opacity
     use Output_m, only: OUTPUT
     use Path_Contrib_M, only: Get_GL_Inds, Path_Contrib
     use PointingGrid_m, only: POINTINGGRIDS
@@ -207,21 +208,23 @@ contains
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
-    real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
-    real(rp) :: E_RFLTY                 ! Earth reflectivity at given tan. point
-    real(r8) :: FRQ                     ! Frequency
-    real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press.
-                                        ! below surface
-    real(rp) :: R,R1,R2                 ! real variables for various uses
-    real(rp) :: RAD                     ! Radiance
-    real(rp) :: REQ                     ! Equivalent Earth Radius
-    real(rp) :: THISRATIO               ! A sideband ratio
-    real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
+    real(rp) :: DEL_TEMP      ! Temp. step-size in evaluation of Temp. power dep.
+    real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
+    real(r8) :: FRQ           ! Frequency
+    real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
+                              ! below surface
+    real(rp) :: R,R1,R2       ! real variables for various uses
+    real(rp) :: RAD           ! Radiance
+    real(rp) :: REQ           ! Equivalent Earth Radius
+    real(rp) :: THISRATIO     ! A sideband ratio
+    real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid abs coeff.
     real(rp), dimension(:), pointer :: ALPHA_PATH_F ! fine grid abs coeff.
+    real(rp), dimension(:), pointer :: CT           ! Cos(Theta), where theta
+      ! is the angle between the line of sight and magnetic field vectors.
     real(rp), dimension(:), pointer :: DEL_S        ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
     real(rp), dimension(:), pointer :: DRAD_DF      ! dI/dVmr
@@ -253,6 +256,12 @@ contains
     real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
     real(rp), dimension(:), pointer :: SPS_BETA_DBETA_C ! SUM(sps*beta*dbeta)
     real(rp), dimension(:), pointer :: SPS_BETA_DBETA_F ! SUM(sps*beta*dbeta)
+    real(rp), dimension(:), pointer :: STCP         ! Sin(Theta) Cos(Phi) where
+      ! theta is as for CT and phi (for this purpose only) is the angle
+      ! between the plane defined by the line of sight and the magnetic
+      ! field vector, and the "instrument field of view plane polarized"
+      ! (IFOVPP) X axis.
+    real(rp), dimension(:), pointer :: STSP         ! Sin(Theta) Sin(Phi)
     real(rp), dimension(:), pointer :: TAN_HTS      ! Accumulation of ONE_TAN_HT
     real(rp), dimension(:), pointer :: TAN_TEMP     ! ***
     real(rp), dimension(:), pointer :: TAN_TEMPS    ! Accumulation of ONE_TAN_TEMP
@@ -317,7 +326,9 @@ contains
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
 
     complex(rp), dimension(:,:), pointer :: ALPHA_PATH_POLARIZED
+      ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED
+    complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_P
 
 ! Some declarations by bill
 
@@ -445,7 +456,7 @@ contains
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
       & eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, frequencies, &
       & gl_inds, grids, h_glgrid, h_path, h_path_c, h_path_f, &
-      & incoptdepth, indices_c, k_atmos, k_atmos_frq, &
+      & incoptdepth, incoptdepth_p, indices_c, k_atmos, k_atmos_frq, &
       & k_spect_dn, k_spect_dn_frq, &
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
       & k_temp_frq, lineFlag, n_path, path_dsdh, &
@@ -718,7 +729,6 @@ contains
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'mol_cat_index' )
 
-    mol_cat_index(:) = 0
     mol_cat_index = PACK((/(i,i=1,noSpecies)/),fwdModelConf%molecules > 0)
 
     allocate ( beta_group(no_mol), stat=ier )
@@ -734,11 +744,11 @@ contains
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'beta_group%ratio' )
       beta_group(i)%n_elements = 0
-      beta_group(i)%ratio(1:k) = 0.0
-      beta_group(i)%cat_index(1:k) = 0
+      beta_group(i)%ratio = 0.0
+      beta_group(i)%cat_index = 0
     end do
 
-    if ( all ( fwdModelConf%molecules > 0 ) ) then
+    if ( noSpecies == no_mol ) then ! No grouping
 
       sv_i = 0
       beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
@@ -754,6 +764,8 @@ contains
     else
 
       k = noSpecies
+      ! gl_inds is a convenient integer temporary array here.  Its use
+      ! here has nothing to do with GL.
       call allocate_test ( gl_inds, k+1, 'gl_inds', moduleName )
       gl_inds(1:k) = fwdModelConf%molecules(1:k)
       gl_inds(k+1) = k
@@ -854,7 +866,7 @@ contains
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'No relevant lines or continuum for '//trim(molName) )
         end if
-        call allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+        call allocate_test ( my_catalog(j)%lines, count(lineFlag), &
           & 'my_catalog(?)%lines', moduleName )
         my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
         call deallocate_test ( lineFlag, 'lineFlag', moduleName )
@@ -1432,13 +1444,32 @@ contains
 
     end if
 
-    if ( FwdModelConf%polarized ) then
-      allocate ( alpha_path_polarized(3,npc) ,stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( associated(FwdModelConf%moleculesPol) ) then
+      ! Allocate some necessary arrays
+      allocate ( alpha_path_polarized(-1:1,npc), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'alpha_path_polarized' )
-      allocate ( beta_path_polarized(3,npc,no_mol) ,stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      allocate ( beta_path_polarized(-1:1,npc,no_mol), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'beta_path_polarized' )
+      allocate ( incoptdepth_p(2,2,npc), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate//'incoptdepth_p' )
+      ! Dig up some necessary vectors
+      ! h =>
+      ! ct =>
+      ! stcp =>
+      ! stsp =>
+      !??? For now, allocate them and fill them with zeros.  MAKE SURE
+      !??? TO REMOVE THE DEALLOCATES WHEN THESE ARE REPLACED!
+      call allocate_test ( h, npc, 'h', moduleName )
+      call allocate_test ( ct, npc, 'ct', moduleName )
+      call allocate_test ( stcp, npc, 'stcp', moduleName )
+      call allocate_test ( stsp, npc, 'stsp', moduleName )
+      h = 0.0
+      ct = 0.0
+      stcp = 0.0
+      stsp = 0.0
     end if
 
     call allocate_test ( ptg_angles,no_tan_hts, 'ptg_angles',moduleName )
@@ -1842,15 +1873,27 @@ contains
             & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
             & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-          if ( FwdModelConf%polarized ) then
+          if ( associated(FwdModelConf%moleculesPol) ) then
             call get_beta_path ( frq, h, my_Catalog, beta_group, gl_slabs, &
               & indices_c(1:npc), beta_path_polarized )
-            alpha_path_polarized(1,1:npc) = SUM( sps_path(indices_c,:) * &
-              & beta_path_polarized(1,1:npc,:), DIM=2 )
-            alpha_path_polarized(2,1:npc) = SUM( sps_path(indices_c,:) * &
-              & beta_path_polarized(2,1:npc,:), DIM=2 )
-            alpha_path_polarized(3,1:npc) = SUM( sps_path(indices_c,:) * &
-              & beta_path_polarized(3,1:npc,:), DIM=2 )
+
+            alpha_path_polarized(-1,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized(-1,1:npc,:), DIM=2 )
+            alpha_path_polarized( 0,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized( 0,1:npc,:), DIM=2 )
+            alpha_path_polarized(+1,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized(+1,1:npc,:), DIM=2 )
+
+            call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
+              & alpha_path_polarized(:,1:npc), incoptdepth_p(:,:,1:npc) )
+            incoptdepth_p(1,1,1:npc) = incoptdepth_p(1,1,1:npc) * del_s(1:npc)
+            incoptdepth_p(2,1,1:npc) = incoptdepth_p(2,1,1:npc) * del_s(1:npc)
+            incoptdepth_p(1,2,1:npc) = incoptdepth_p(1,2,1:npc) * del_s(1:npc)
+            incoptdepth_p(2,2,1:npc) = incoptdepth_p(2,2,1:npc) * del_s(1:npc)
+
+            do_gl = .false.
+            call path_contrib ( incoptdepth_p(:,:,1:npc), e_rflty, &
+              & fwdModelConf%tolerance, do_gl(1:npc) )
           end if
 
           ! The derivatives that get_beta_path computes depend on which
@@ -2707,10 +2750,23 @@ contains
       call deallocate_test ( drad_dv, 'drad_dv', moduleName )
 
     end if
-    if ( FwdModelConf%polarized ) then
+
+    if ( associated(FwdModelConf%moleculesPol) ) then
+      deallocate ( alpha_path_polarized, stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//'alpha_path_polarized' )
       deallocate ( beta_path_polarized, stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'beta_path_polarized' )
+      deallocate ( incoptdepth_p, stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//'incoptdepth_p' )
+      !??? Make sure to delete these deallocates when the real H, CT,
+      !??? STCP and STSP are gotten from the state or extra vectors
+      call deallocate_test ( h, 'h', moduleName )
+      call deallocate_test ( ct, 'ct', moduleName )
+      call deallocate_test ( stcp, 'stcp', moduleName )
+      call deallocate_test ( stsp, 'stsp', moduleName )
     end if
 
     call deallocate_test ( ptg_angles, 'ptg_angles', moduleName )
@@ -2737,6 +2793,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.122  2003/02/06 19:15:47  jonathan
+!  fix a bug
+!
 ! Revision 2.121  2003/02/06 19:06:49  jonathan
 ! add eta_iwc, eta_iwc_zp, do_calc_iwc, do_cala_iwc_zp and also not passing through comp_eta_docalc and comp_sps_path_frq if fwdModelConf%Incl_Cld is false
 !
