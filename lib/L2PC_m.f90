@@ -232,12 +232,13 @@ contains ! ============= Public Procedures ==========================
   end subroutine Open_L2PC_File
 
   ! --------------------------------------------- OutputHDF5L2PC
-  subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed )
+  subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed, dontPack )
   use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
     integer, intent(in) :: QUANTITIESNODE
     logical, intent(in) :: PACKED
+    integer, dimension(:), pointer :: DONTPACK
 
     ! Local variables
     integer :: FILEID                   ! ID of file
@@ -254,7 +255,7 @@ contains ! ============= Public Procedures ==========================
     do field = 2, nsons(quantitiesNode)
       db_index = decoration(decoration(subtree(field, quantitiesNode )))
       call GetActualMatrixFromDatabase ( matrices(db_index), tmpMatrix )
-      call writeOneHDF5L2PC ( tmpMatrix, fileID, packed )
+      call writeOneHDF5L2PC ( tmpMatrix, fileID, packed, dontPack )
     end do ! in_field_no = 2, nsons(gson)
     call H5FClose_F ( fileID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -295,7 +296,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine Read_l2pc_file
 
   ! --------------------------------------- WriteOneHDF5L2PC -----------
-  subroutine WriteOneHDF5L2PC ( L2pc, fileID, packed )
+  subroutine WriteOneHDF5L2PC ( L2pc, fileID, packed, dontPack )
   use HDF5, only: H5GCLOSE_F, H5GCREATE_F
   use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
@@ -303,7 +304,8 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (matrix_T), intent(in), target :: L2PC
     integer, intent(in) :: fileID
-    logical, intent(in), optional :: PACKED
+    logical, intent(in) :: PACKED
+    integer, dimension(:), pointer :: DONTPACK
 
     ! Local variables
     integer :: BlockCol                 ! Index
@@ -321,7 +323,6 @@ contains ! ============= Public Procedures ==========================
     logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
     logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
     logical, dimension(:), pointer :: THISPACK
-    logical :: MYPACKED
 
     character ( len=32 ) :: NAME        ! A name for output
 
@@ -331,12 +332,9 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
 
-    myPacked = .false.
-    if ( present ( packed ) ) myPacked = packed
-
     ! Work out which quantities we can skip
-    if ( myPacked ) then
-      call MakeMatrixPackMap ( l2pc, rowPack, colPack, rowBlockMap, colBlockMap )
+    if ( packed ) then
+      call MakeMatrixPackMap ( l2pc, rowPack, colPack, rowBlockMap, colBlockMap, dontPack )
     else
       rowPack = .true.
       colPack = .true.
@@ -430,7 +428,7 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (matrix_T), intent(in), target :: L2pc
     integer, intent(in) :: Unit
-    logical, intent(in), optional :: PACKED
+    logical, intent(in) :: PACKED
 
     ! Local parameters
     character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
@@ -446,7 +444,6 @@ contains ! ============= Public Procedures ==========================
     logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
     logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
     logical, dimension(:), pointer :: THISPACK
-    logical :: MYPACKED
 
     character (len=132) :: Line, Word1, Word2 ! Line of text
 
@@ -456,11 +453,8 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
 
-    myPacked = .false.
-    if ( present ( packed ) ) myPacked = packed
-
     ! Work out which quantities we can skip
-    if ( myPacked ) then
+    if ( packed ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Cannot pack ASCII L2PC files any more (never worked anyway!)' ) 
       ! call MakeMatrixPackMap ( l2pc, rowPack, colPack )
@@ -619,7 +613,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine DestroyL2PCInfoDatabase
 
   ! ----------------------------------- MakeMatrixPackMap -----------
-  subroutine MakeMatrixPackMap ( m, rowPack, colPack, rowBlockMap, colBlockMap )
+  subroutine MakeMatrixPackMap ( m, rowPack, colPack, rowBlockMap, colBlockMap, dontpack )
     ! This subroutine fills the boolean arrays rowPack, colPack
     ! (each length row/col%noQuantities) with a flag set true
     ! if the quantity has any derivatives at all
@@ -630,6 +624,7 @@ contains ! ============= Public Procedures ==========================
     logical, intent(out), dimension(M%col%vec%template%noQuantities) :: COLPACK
     integer, intent(out), dimension(M%row%NB) :: ROWBLOCKMAP
     integer, intent(out), dimension(M%col%NB) :: COLBLOCKMAP
+    integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
 
     ! Local variables
     integer :: ROWQ                     ! Loop counter
@@ -663,6 +658,19 @@ contains ! ============= Public Procedures ==========================
         end do
       end do
     end do
+
+    ! Go back and set to true any we know we want to keep
+    if ( associated ( dontPack ) ) then
+      print*,'Doing the dont pack stuff'
+      do colQ = 1, m%col%vec%template%noQuantities
+        if ( any ( dontPack == m%col%vec%template%quantities(colQ) ) ) &
+          & colPack ( colQ ) = .true.
+      end do
+      do rowQ = 1, m%row%vec%template%noQuantities
+        if ( any ( dontPack == m%row%vec%template%quantities(rowQ) ) ) &
+          & rowPack ( rowQ ) = .true.
+      end do
+    end if
 
     ! Now work out the block mappings
     rowBlockFlag = rowPack ( m%row%quant )
@@ -1525,6 +1533,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.63  2003/08/08 23:04:45  livesey
+! Added the dontPack stuff for output.
+!
 ! Revision 2.62  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
