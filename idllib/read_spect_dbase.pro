@@ -158,68 +158,7 @@
       parf = [qv]
       conf = [contv]
       sps1 = ''
-      WHILE spsv NE sps1 DO BEGIN
-        READF,lu2,buff
-        WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
-        amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
-        sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
-      ENDWHILE
-      proc_tex_stra,lu2,buff,stra,strb,sps1
-      READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
-      freq = [freqv]
-      gse  = [gsev]
-      istr = [istrv]
-      wc   = [wcv]
-      nc   = [ncv]
-      ps   = [psv]
-      ns   = [nsv]
-      int1 = [int1v]
-      n1   = [n1v]
-      int2 = [int2v]
-      n2   = [n2v]
-      eos_band  = [stra]
-      uars_band = [strb]
-      no_linesv = 1
-      WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
-        proc_tex_stra,lu2,buff,stra,strb,sps1
-        IF sps1 EQ '' THEN BEGIN
-          READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
-          freq = [freq,freqv]
-          gse  = [gse,gsev]
-          istr = [istr,istrv]
-          wc   = [wc,wcv]
-          nc   = [nc,ncv]
-          ps   = [ps,psv]
-          ns   = [ns,nsv]
-          int1 = [int1,int1v]
-          n1   = [n1,n1v]
-          int2 = [int2,int2v]
-          n2   = [n2,n2v]
-          eos_band  = [eos_band,stra]
-          uars_band = [uars_band,strb]
-          no_linesv = no_linesv + 1
-        ENDIF
-      ENDWHILE
-      no_lines = [no_linesv]
-    ENDIF ELSE BEGIN
-      PRINT,'species ',species(0),' not found will try the next one'
-      no_sps = no_sps - 1
-    ENDELSE
-    FOR i = 1 , no_sps - 1 DO BEGIN
-      POINT_LUN,lu1,0
-      POINT_LUN,lu2,0
-      proc_tex_string,lu1,spsv,buff
-      WHILE NOT EOF(lu1) AND spsv NE species(i) DO $
-              proc_tex_string,lu1,spsv,buff
-      IF spsv EQ species(i) THEN BEGIN
-; species is found
-        READS,buff,abunv,massv,qv,contv
-        sps  = [sps,spsv]
-        abun = [abun,abunv]
-        mass = [mass,massv]
-        parf = [parf,qv]
-        conf = [conf,contv]
-        sps1 = ''
+      IF qv(0) GT 0.00001 THEN BEGIN
         WHILE spsv NE sps1 DO BEGIN
           READF,lu2,buff
           WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
@@ -228,19 +167,19 @@
         ENDWHILE
         proc_tex_stra,lu2,buff,stra,strb,sps1
         READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
-        freq = [freq,freqv]
-        gse  = [gse,gsev]
-        istr = [istr,istrv]
-        wc   = [wc,wcv]
-        nc   = [nc,ncv]
-        ps   = [ps,psv]
-        ns   = [ns,nsv]
-        int1 = [int1,int1v]
-        n1   = [n1,n1v]
-        int2 = [int2,int2v]
-        n2   = [n2,n2v]
-        eos_band  = [eos_band,stra]
-        uars_band = [uars_band,strb]
+        freq = [freqv]
+        gse  = [gsev]
+        istr = [istrv]
+        wc   = [wcv]
+        nc   = [ncv]
+        ps   = [psv]
+        ns   = [nsv]
+        int1 = [int1v]
+        n1   = [n1v]
+        int2 = [int2v]
+        n2   = [n2v]
+        eos_band  = [stra]
+        uars_band = [strb]
         no_linesv = 1
         WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
           proc_tex_stra,lu2,buff,stra,strb,sps1
@@ -262,7 +201,89 @@
             no_linesv = no_linesv + 1
           ENDIF
         ENDWHILE
-        no_lines = [no_lines,no_linesv]
+        no_lines = [no_linesv]
+      ENDIF ELSE no_lines = [0]
+    ENDIF ELSE BEGIN
+      PRINT,'species ',species(0),' not found will try the next one'
+      no_sps = no_sps - 1
+    ENDELSE
+    FOR i = 1 , no_sps - 1 DO BEGIN
+      POINT_LUN,lu1,0
+      POINT_LUN,lu2,0
+      proc_tex_string,lu1,spsv,buff
+      WHILE NOT EOF(lu1) AND spsv NE species(i) DO $
+              proc_tex_string,lu1,spsv,buff
+      IF spsv EQ species(i) THEN BEGIN
+; species is found
+        READS,buff,abunv,massv,qv,contv
+        sps  = [sps,spsv]
+        abun = [abun,abunv]
+        mass = [mass,massv]
+        parf = [parf,qv]
+        conf = [conf,contv]
+        sps1 = ''
+        IF qv(0) GT 0.00001 THEN BEGIN
+          WHILE spsv NE sps1 DO BEGIN
+            READF,lu2,buff
+            WHILE STRPOS(buff,'\dotfill') EQ -1 DO READF,lu2,buff
+            amp_pos = STRSPLIT(buff,'\\dotfill',LENGTH = len,/REGEX)
+            sps1 = STRTRIM(STRMID(buff,amp_pos(1),len(1)),2)
+          ENDWHILE
+          proc_tex_stra,lu2,buff,stra,strb,sps1
+          READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+          IF MAX(no_lines) GT 0 THEN BEGIN
+; This checks to see if freq, etc. have been initialized
+            freq = [freq,freqv]
+            gse  = [gse,gsev]
+            istr = [istr,istrv]
+            wc   = [wc,wcv]
+            nc   = [nc,ncv]
+            ps   = [ps,psv]
+            ns   = [ns,nsv]
+            int1 = [int1,int1v]
+            n1   = [n1,n1v]
+            int2 = [int2,int2v]
+            n2   = [n2,n2v]
+            eos_band  = [eos_band,stra]
+            uars_band = [uars_band,strb]
+          ENDIF ELSE BEGIN
+            freq = [freqv]
+            gse  = [gsev]
+            istr = [istrv]
+            wc   = [wcv]
+            nc   = [ncv]
+            ps   = [psv]
+            ns   = [nsv]
+            int1 = [int1v]
+            n1   = [n1v]
+            int2 = [int2v]
+            n2   = [n2v]
+            eos_band  = [stra]
+            uars_band = [strb]
+          ENDELSE
+          no_linesv = 1
+          WHILE NOT EOF(lu2) AND sps1 EQ '' DO BEGIN
+            proc_tex_stra,lu2,buff,stra,strb,sps1
+            IF sps1 EQ '' THEN BEGIN
+              READS,buff,freqv,gsev,istrv,wcv,ncv,psv,nsv,int1v,n1v,int2v,n2v
+              freq = [freq,freqv]
+              gse  = [gse,gsev]
+              istr = [istr,istrv]
+              wc   = [wc,wcv]
+              nc   = [nc,ncv]
+              ps   = [ps,psv]
+              ns   = [ns,nsv]
+              int1 = [int1,int1v]
+              n1   = [n1,n1v]
+              int2 = [int2,int2v]
+              n2   = [n2,n2v]
+              eos_band  = [eos_band,stra]
+              uars_band = [uars_band,strb]
+              no_linesv = no_linesv + 1
+            ENDIF
+          ENDWHILE
+          no_lines = [no_lines,no_linesv]
+        ENDIF ELSE no_lines = [no_lines,0]
       ENDIF ELSE BEGIN
         PRINT,'species ',species(i),' not found will try the next one'
         no_sps = no_sps - 1
@@ -273,7 +294,7 @@
   FREE_LUN,lu2
 ; package into a nice structure
   IF no_sps GT 0 THEN BEGIN
-    max_no_lines = MAX(no_lines)
+    max_no_lines = MAX([no_lines,1])
     data = {name:'',abun:0.0, mass:0.0, q:FLTARR(3), cont:FLTARR(6), $
             no_lines:0, frq:DBLARR(max_no_lines), $
             gse:FLTARR(max_no_lines), ist:FLTARR(max_no_lines), $
