@@ -1074,7 +1074,7 @@ contains ! =====     Public Procedures     =============================
   call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
   call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
     & trim(l2aux%VALUE_Units))
-  call MakeHDF5Attribute(L2FileHandle, name, 'Dimension Names', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'DimensionNames', &
     & trim(l2aux%DIM_Names))
   if ( l2aux%majorframe) then
     framing = 'major'
@@ -1084,11 +1084,11 @@ contains ! =====     Public Procedures     =============================
     framing = 'neither'
   endif
   call MakeHDF5Attribute(L2FileHandle, name, 'Framing', trim(framing))
-  call MakeHDF5Attribute(L2FileHandle, name, 'Instrument Module', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'InstrumentModule', &
     & l2aux%instrumentmodule)
-  call MakeHDF5Attribute(L2FileHandle, name, 'Quantity Type', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'QuantityType', &
     & l2aux%quantitytype)
-  call MakeHDF5Attribute(L2FileHandle, name, 'Missing Value', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'MissingValue', &
     & (/ real(UNDEFINED_VALUE, r8) /) )
   dim_name = ' '
   dim_unit = ' '
@@ -1100,9 +1100,6 @@ contains ! =====     Public Procedures     =============================
   do dim=1, ndims
     call GetStringElement (ottff, i_char, dim, .true.)
     dim_of_i = 'dim ' // trim(i_char)
-    ! print *, 'dim_of_i: ', dim_of_i
-    ! print *, 'dim_name: ', trim(dim_name(dim))
-    ! print *, 'trim(dim_of_i) ' // ' units: ', trim(dim_unit(dim))
     if ( trim(dim_unit(dim)) == ' ' ) dim_unit(dim) = 'none'
     call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i), &
       & trim(dim_name(dim)))
@@ -1328,7 +1325,7 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
     case ( l_elevOffset )  
       framing = 'neither'
-      units_name = 'degrees'
+      units_name = 'deg'
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
     case ( l_frequency )  
       framing = 'major'
@@ -1336,11 +1333,11 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_none, l_none, l_none /)                  
     case ( l_geodAngle )  
       framing = 'neither'
-      units_name = 'degrees'
+      units_name = 'deg'
       dim_names = (/ l_none, l_none, l_none /)                  
     case ( l_heightOffset )  
       framing = 'minor'
-      units_name = 'degrees'
+      units_name = 'deg'
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
     case ( l_iteration )  
       framing = 'major'
@@ -1384,11 +1381,11 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
     case ( l_orbitInclination )  
       framing = 'minor'
-      units_name = 'degrees'
+      units_name = 'deg'
       dim_names = (/ l_none, l_none, l_none /)                  
     case ( l_phiTan )  
       framing = 'minor'
-      units_name = 'degrees'
+      units_name = 'deg'
       dim_names = (/ l_none, l_MIF, l_MAF /)                  
     case ( l_ptan )  
       framing = 'minor'
@@ -1403,11 +1400,11 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
     case ( l_scanResidual )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_none, l_MIF, l_MAF /)                  
     case ( l_scECI )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_scVel )  
       framing = 'minor'
@@ -1423,7 +1420,7 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_scGeocAlt )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_sidebandRatio )  
       framing = 'neither'
@@ -1441,15 +1438,15 @@ contains ! =====     Public Procedures     =============================
       dim_names = (/ l_channel, l_none, l_none /)                  
     case ( l_tngtECI )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_tngtGeodAlt )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_tngtGeocAlt )  
       framing = 'minor'
-      units_name = 'meter'
+      units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
     case ( l_totalExtinction )  
       framing = 'neither'
@@ -1506,6 +1503,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.50  2003/03/07 00:42:13  pwagner
+! Abbreviated Units names; removed spaces from attribute names
+!
 ! Revision 2.49  2003/02/21 23:42:21  pwagner
 ! Also writes Fill Value attribute
 !
