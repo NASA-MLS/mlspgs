@@ -729,8 +729,12 @@ contains ! =====     Public Procedures     =============================
         & "Cannot CholeskyFactor a non-square block" )
     select case ( x%kind )
     case ( M_Absent )
+      if ( present(status) ) then
+        status = 1
+        return
+      end if
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Cannot CholeskyFactor an empty block" )
+        & "Cannot CholeskyFactor an empty block" )
     case ( M_Banded )
       call allocate_test ( zt, nc, nc, "ZT in CholeskyFactor", &
         & ModuleName )
@@ -3100,6 +3104,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.95  2003/06/30 20:21:40  livesey
+! Made it more reslient to being asked to Cholesky Factor an empty block.
+!
 ! Revision 2.94  2003/06/03 19:21:08  livesey
 ! Added status options to SolveCholesky, and invert option to GetDiagonal
 !
