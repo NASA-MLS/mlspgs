@@ -86,8 +86,6 @@ contains
     !                                          Should ultimately come from the
     !                                          signals database.
     real(r8) :: Height                       ! Zeta, actually, from the file
-    real(r8) :: z,q                          ! Local variables
-    integer :: J                             ! Local variable
     integer, pointer, dimension(:) :: HowManyGrids  ! per radiometer batch
     integer, pointer, dimension(:) :: HowManySignals ! per radiometer batch
     integer :: HowManyRadiometers            ! gotten by counting the file
@@ -204,9 +202,6 @@ outer2: do
         read ( line, *, iostat=status, err=99 ) height, numHeights
         if ( status < 0 ) exit outer2
         if ( status /= 0 ) goto 99
-        j = nint(48.0*abs(height))
-        z = (Real(j,r8)/48.0_r8) * Sign(1.0_r8,height)
-        if(abs(height-z) < 1.0e-6) height = z
         pointingGrids(howManyRadiometers)%oneGrid(n)%height = height
         call allocate_test ( &
           & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies, &
@@ -290,6 +285,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.13  2001/04/19 06:48:14  zvi
+! Fixing memory leaks..
+!
 ! Revision 1.12  2001/04/13 22:50:27  livesey
 ! Tidied up, added some nullifies etc.
 !
