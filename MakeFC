@@ -163,7 +163,7 @@ SHELL = /bin/sh
 #(the prerequisite lib will always be made if necessary, however)
 
 #comment out the following to make only l2
-LEVELS = l1 l2 l3
+LEVELS = l1 l2 l3 l3m
 
 #comment out the following to make l1, l2, and l3
 #LEVELS = l2
@@ -530,6 +530,8 @@ subdirs: $(SUBDIRS)
 
 l2: fwdmdl cloudfwdm
 
+l3m: l3
+
 # This requires rm-ing uniquely-named sub-subs before archiving
 #tar tar_subs tar_sips: clean_all
 
@@ -548,6 +550,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.37  2001/06/01 20:11:50  pwagner
+# Fixed configure_full
+#
 # Revision 1.36  2001/05/31 23:26:57  pwagner
 # Ended role of l2_NEEDS_fwdmdl; cloudfwdm prereq of l2
 #
