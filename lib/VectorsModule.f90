@@ -88,7 +88,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
-  public :: DumpMask, Dump_Vector, Dump_Vectors, Dump_Vector_Templates
+  public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
+  public :: Dump_Vectors, Dump_Vector_Templates
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
@@ -96,6 +97,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
+  ! Parameters
+  public :: M_LinAlg
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -105,6 +108,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface DUMP
     module procedure DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
+  end interface
+
+  interface DumpMask
+    module procedure DumpQuantityMask, DumpVectorMask
   end interface
 
   interface Multiply
@@ -162,14 +169,16 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
     ! Horizontal Instances (scan or profile or 1).  These are taken from
     ! (template%noChans * template%noSurfs, template%noInstances).
-    integer, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
+    character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
     ! control whether elements of vectors are of interest. If MASK is not
     ! associated, every element is of interest.  Otherwise,the dimensions of
-    ! MASK are (size(values,1)+bit_size(mask)-1)/bit_size(mask) and
-    ! size(values,2).  Bits of MASK are used to determine what is not
-    ! interesting.  Zero means the corresponding element of VALUES is
-    ! interesting, and one means it is not.
+    ! MASK are the same as VALUES.  Bits of MASK(i,j) are used to determine
+    ! what is not interesting.  Zero means something about VALUES(i,j) is
+    ! interesting, and one means it is not.  The low-order bit is used for
+    ! linear algebra.  Other bits can be used for other purposes.
   end type VectorValue_T
+
+  integer, parameter :: M_LinAlg = 1    ! Bit of MASK field of VectorValue_T
 
   ! This type describes a vector.
 
@@ -312,37 +321,43 @@ contains ! =====     Public Procedures     =============================
   end function AXPY
 
   !---------------------------------------------------  ClearMask  -----
-  subroutine ClearMask ( MASK, TO_CLEAR )
+  subroutine ClearMask ( MASK, TO_CLEAR, WHAT )
   ! Clear bits of MASK indexed by elements of TO_CLEAR.  Numbering of mask
   ! elements starts at one, not zero!  If TO_CLEAR is absent, clear all of
-  ! the bits of MASK.
-    integer, intent(inout), dimension(:) :: MASK
+  ! the bits of MASK.  If WHAT is absent, clear all bits.  If WHAT is
+  ! present, clear only bits of MASK that correspond to "one" bits of WHAT.
+    character, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_CLEAR
-    integer :: I, W
+    integer, intent(in), optional :: WHAT
+    integer :: MyWhat
+    MyWhat = 0
+    if ( present(what) ) myWhat = not(what)
     if ( present(to_clear) ) then
-      do i = 1, size(to_clear)
-        w = (to_clear(i)-1) / b + 1
-        if ( w > 0 .and. w <= size(mask) ) &
-          & mask(w) = ibclr( mask(w), mod(to_clear(i)-1, b) )
-      end do
+      mask(to_clear) = char(iand(ichar(mask(to_clear)),myWhat))
     else
-      mask = 0
+      mask = char(iand(ichar(mask),myWhat))
     end if
   end subroutine ClearMask
 
   !-----------------------------------------------  ClearUnderMask -----
-  subroutine ClearUnderMask ( Z, Inst, Quant )
-  ! Clear elements of Z that correspond to a nonzero bit in its mask.
+  subroutine ClearUnderMask ( Z, Inst, Quant, What )
+  ! Clear elements of Z that correspond to nonzero bits in its mask.
   ! If Inst is present, clear only elements of that instance.
   ! If Quant is present, clear only elements of that quantity.
+  ! If What is present, it specifies which bits of the mask indicate which
+  ! elements of Z to clear.  If What is absent, the M_LinAlg bit of the
+  ! mask is used.
     type(Vector_T),intent(inout) :: Z
-    integer, intent(in), optional :: Inst, Quant
+    integer, intent(in), optional :: Inst, Quant, What
     integer :: I1, I2    ! Bounds for instances
     integer :: II        ! Index/subscript for instances
+    integer :: MyWhat    ! In case What is absent
     integer :: Q1, Q2    ! Bounds for quantities
     integer :: QI        ! Index/subscript for quantities
     integer :: VI        ! Index/subscript for values
 
+    myWhat = m_LinAlg
+    if ( present(what) ) myWhat = what
     q1 = 1
     q2 = z%template%noQuantities
     if ( present(quant) ) then
@@ -359,8 +374,8 @@ contains ! =====     Public Procedures     =============================
         end if
         do ii = i1, i2
           do vi = 1, size(z%quantities(qi)%values,1)
-            if ( btest(z%quantities(qi)%mask((vi-1)/b + 1,ii), mod(vi-1, b)) ) &
-              z%quantities(qi)%values(vi,ii) = 0.0
+            if ( iand(ichar(z%quantities(qi)%mask(vi,ii)), myWhat) /= 0 ) &
+              & z%quantities(qi)%values(vi,ii) = 0.0
           end do ! vi
         end do ! ii
       end if
@@ -545,20 +560,18 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  CreateMaskArray  -----
   subroutine CreateMaskArray ( mask, values )
     ! Allocate the MASK array for a vector quantity.
-    integer, dimension(:,:), pointer :: MASK ! To create
+    character, dimension(:,:), pointer :: MASK ! To create
     real(r8), dimension(:,:), pointer :: VALUES ! Template values
-    call allocate_test ( mask, (size(values,1)+b-1)/b, &
+    call allocate_test ( mask, (size(values,1)), &
       & size(values,2), "MASK in CreateMaskArray", ModuleName )
-    mask = 0 ! All vector elements are interesting
+    mask = char(0) ! All vector elements are interesting
   end subroutine CreateMaskArray
 
   ! -------------------------------------------------  CreateMask  -----
   subroutine CreateMask ( VectorValue )
   ! Allocate the MASK array for a vector quantity.
     type(VectorValue_T), intent(inout) :: VectorValue
-    call allocate_test ( vectorValue%mask, (size(vectorValue%values,1)+b-1)/b, &
-      & size(vectorValue%values,2), "MASK in CreateMask", ModuleName )
-    vectorValue%mask = 0 ! All vector elements are interesting
+    call createMaskArray ( vectorValue%mask, vectorValue%values )
   end subroutine CreateMask
 
   ! -----------------------------------------------  CreateVector  -----
@@ -733,56 +746,69 @@ contains ! =====     Public Procedures     =============================
     end do
   end function DotVectors
 
-  ! -------------------------------------------------  DumpMask  -----
-  subroutine DumpMask ( VECTOR )
-    type (Vector_T), intent(in), target :: VECTOR
+  ! -----------------------------------------  DumpQuantityMask  -----
+  subroutine DumpQuantityMask ( VectorQuantity )
+    type (VectorValue_T), intent(in) :: VectorQuantity
 
     ! Local variables
-    integer :: i                        ! Instance index
-    integer :: q                        ! Quantity index
-    integer :: s                        ! Surface index
-    integer :: j                        ! Element index
     integer :: c                        ! Channel index
+    integer :: i                        ! Instance index
+    integer :: j                        ! Element index
+    integer :: s                        ! Surface index
+    integer :: w                        ! Line width used so far
+
+    call output ( 'Quantity ' )
+    call display_string ( vectorQuantity%template%name )
+
+    if ( .not. vectorQuantity%template%regular ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Unable to dump mask for irregular quantities' )
+
+    if ( .not. associated ( vectorQuantity%mask ) ) then
+      call output ( ' has no mask.', advance='yes' )
+    else
+      call output ( '', advance='yes' )
+      do i = 1, vectorQuantity%template%noInstances
+        call output ( 'Instance: ' )
+        call output ( i, advance='yes' )
+        j = 0
+        do s = 1, vectorQuantity%template%noSurfs
+          call output ( 'Surface ' )
+          call output ( s )
+          call output ( ': ' )
+          w = 13
+          do c = 1, vectorQuantity%template%noChans
+            if ( w > 74 ) then
+              call output ( '', advance='yes' )
+              call output ( '      ' )
+              w = 6
+            end if
+            call output ( ichar(vectorQuantity%mask(j,i)), &
+              & format='(z3.2)' )
+            w = w + 3
+            j = j + 1
+          end do
+          call output ( '', advance='yes' )
+        end do                        ! Surface loop
+      end do                          ! Instance loop
+    end if                            ! Has a mask
+  end subroutine DumpQuantityMask
+
+  ! ---------------------------------------------  DumpVectorMask  -----
+  subroutine DumpVectorMask ( VECTOR )
+    type (Vector_T), intent(in) :: VECTOR
+
+    ! Local variables
+    integer :: q                        ! Quantity index
 
     ! Executable code
     call output ( 'Dumping mask for vector ' )
     call display_string ( vector%name, advance='yes' )
 
     do q = 1, size(vector%quantities)
-      call output ( 'Quantity ' )
-      call display_string ( vector%quantities(q)%template%name )
-
-      if ( .not. vector%quantities(q)%template%regular ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to dump mask for irregular quantities' )
-
-      if ( .not. associated ( vector%quantities(q)%mask ) ) then
-        call output ( ' has no mask.', advance='yes' )
-      else
-        call output ( '', advance='yes' )
-        do i = 1, vector%quantities(q)%template%noInstances
-          call output ( 'Instance: ' )
-          call output ( i, advance='yes' )
-          j = 0
-          do s = 1, vector%quantities(q)%template%noSurfs
-            call output ( 'Surface ' )
-            call output ( s )
-            call output ( ': ' )
-            do c = 1, vector%quantities(q)%template%noChans
-              if ( btest(vector%quantities(q)%mask(j/b+1,i), &
-                & mod (j,b) ) ) then
-                call output ( '1' )
-              else
-                call output ( '0' )
-              end if
-              j = j + 1
-            end do
-            call output ( '', advance='yes' )
-          end do                        ! Surface loop
-        end do                          ! Instance loop
-      end if                            ! Has a mask
+      call dumpMask ( vector%quantities(q) )
     end do                              ! Loop over quantities
-  end subroutine DumpMask
+  end subroutine DumpVectorMask
 
   ! ------------------------------------------------  Dump_Vector  -----
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
@@ -908,7 +934,7 @@ contains ! =====     Public Procedures     =============================
         if ( myDetails > 0 ) then
           call dump ( vector%quantities(j)%values, '  Elements = ' )
           if ( associated(vector%quantities(j)%mask) ) then
-            call dump ( vector%quantities(j)%mask, format='(z8)' )
+            call dump ( ichar(vector%quantities(j)%mask), format='(z2.2)' )
           else
             call output ( '      Without mask', advance='yes' )
           end if
@@ -1251,39 +1277,49 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityIndexByType
 
   ! -------------------------------  IsVectorQtyMasked  -----
-  logical function IsVectorQtyMasked ( vectorQty, Row, Column )
+  logical function IsVectorQtyMasked ( vectorQty, Row, Column, What )
 
   ! Is the mask for VectorQty set for address (Row, Column) ?
-  ! If TRUE, don't use vectorQty%values(Row, Column)
-  ! Otherwise, go ahead
+  ! If What is present, look at the bits of the mask specified by the union
+  ! of the nonzero bits of What.  Otherwise, look at the M_LinAlg bit.
   
   ! Formal args
     type (VectorValue_T), intent(in) :: vectorQty
     integer, intent(in) ::              ROW
     integer, intent(in) ::              COLUMN
+    integer, intent(in), optional ::    WHAT
 
+    integer :: MyWhat
+
+    myWhat = m_LinAlg
+    if ( present(what) ) myWhat = what
     isVectorQtyMasked = .false.
     if ( .not. associated(vectorQty%mask)) return
-    isVectorQtyMasked = &
-      & btest( vectorQty%mask((row-1)/b + 1, column), mod(row-1, b) )
+    isVectorQtyMasked = iand(ichar(vectorQty%mask(row, column)), myWhat) /= 0
 
   end function IsVectorQtyMasked
 
   ! -------------------------------  MaskVectorQty  -----
-  subroutine MaskVectorQty ( vectorQty, Row, Column )
+  subroutine MaskVectorQty ( vectorQty, Row, Column, What )
 
-  ! Set the mask for VectorQty for address; meaning
+  ! Set bits of the mask for VectorQty(Row,Column); meaning
   ! If set, don't use vectorQty%values(Row, Column)
-  ! Otherwise, go ahead
+  ! Otherwise, go ahead.  If What is present, set the bits in
+  ! mask indicated by What.  Otherwise, set the M_LinAlg bit.
   
   ! Formal args
     type (VectorValue_T), intent(inout) :: vectorQty
     integer, intent(in) ::              ROW
     integer, intent(in) ::              COLUMN
+    integer, intent(in), optional ::    WHAT
 
+    integer :: MyWhat
+
+    myWhat = m_LinAlg
+    if ( present(what) ) myWhat = what
     if ( .not. associated(vectorQty%mask)) return
-    vectorQty%mask((row-1)/b + 1, column) = &
-      & ibset( vectorQty%mask((row-1)/b + 1, column), mod(row-1, b) )
+    vectorQty%mask(row, column) = &
+      & char(ior( ichar(vectorQty%mask(row, column)), myWhat ) )
 
   end subroutine MaskVectorQty
 
@@ -1375,38 +1411,32 @@ contains ! =====     Public Procedures     =============================
   end subroutine ScaleVector
 
   !-----------------------------------------------------  SetMask  -----
-  subroutine SetMask ( MASK, TO_SET, MAXBIT )
+  subroutine SetMask ( MASK, TO_SET, MAXBIT, WHAT )
   ! Set bits of MASK indexed by elements of TO_SET.  Numbering of mask
-  ! elements starts at one, not zero!  If TO_SET is absent, set all of the
-  ! bits of MASK.  If MaxBit is present, do not set any bits after MaxBit.
-    integer, intent(inout), dimension(:) :: MASK
+  ! elements starts at one, not zero!  If TO_SET is absent, set bits of MASK.
+  ! for all elements.  If MaxBit is present, do not set bits for any element
+  ! after MaxBit.  If WHAT is present, set the bits indicated by WHAT.
+  ! Otherwise, set the M_LinAlg bit.
+    character, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
-    integer, intent(in), optional :: MaxBit
-    integer :: I, MyMaxBit, W
-    ! Masks for last word, so as not to get the wrong answer for the number
-    ! of meaningful elements by subtracting the number of set bits from the
-    ! total number of elements.
-    integer, parameter :: Masks(1:bit_size(0)-1) = &
-      & (/ (ishft(not(0),i-bit_size(0)),i=1,bit_size(0)-1) /)
+    integer, intent(in), optional :: MaxBit, What
+    integer :: I, MyMaxBit, MyWhat
+
+    myWhat = m_LinAlg
+    if ( present(what) ) myWhat = what
     if ( present(to_set) ) then
       myMaxBit = huge(0)
       if ( present(maxBit) ) myMaxBit = maxBit
       do i = 1, size(to_set)
-        if ( to_set(i) <= myMaxBit ) then
-          w = (to_set(i)-1) / b + 1
-          if ( w > 0 .and. w <= size(mask) ) &
-            & mask(w) = ibset(mask(w),mod(to_set(i)-1, b))
+        if ( to_set(i) > 0 .and. to_set(i) <= min(myMaxBit,size(mask)) ) then
+          mask(to_set(i)) = char(ior(ichar(mask(to_set(i))),myWhat))
         end if
       end do
     else
-      mask = not(0)
       if ( present(maxBit) ) then
-        w = max(1, (maxBit + bit_size(0) - 1) / bit_size(0))
-        if ( w <= size(mask) ) then
-          i = mod(maxBit,bit_size(0))
-          if ( i /= 0 ) mask(w) = iand(mask(w),masks(i))
-          mask(w+1:) = 0
-        end if
+        mask(:maxbit) = char(ior(ichar(mask(:maxbit)),myWhat))
+      else
+        mask = char(ior(ichar(mask),myWhat))
       end if
     end if
   end subroutine SetMask
@@ -1664,6 +1694,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.73  2002/01/18 00:34:53  livesey
+! Bug fix, copyVector wasn't ensuring that mask in destination was
+! allocated.
+!
 ! Revision 2.72  2001/10/23 16:39:28  pwagner
 ! Added MaskVectorQty
 !
