@@ -11,7 +11,7 @@ module RAD_TRAN_M
 
   implicit NONE
   private
-  public :: PATH_CONTRIB, RAD_TRAN, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  public :: RAD_TRAN, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -22,69 +22,6 @@ module RAD_TRAN_M
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
-
-!--------------------------------------------------  Path_Contrib  -----
-! This routine computes the contributions (along the path) of each interval
-! of the (coarse) pre-selected integration grid
-
-  subroutine Path_Contrib ( alpha_path, del_s, e_rflty, tol, dtaudn, &
-                      &     incoptdepth, do_gl )
-
-  ! inputs
-
-    real(rp), intent(in) :: alpha_path(:) ! absorption coefficient along the
-  !                                         path
-    real(rp), intent(in) :: del_s(:)       ! path lengths
-    real(rp), intent(in) :: tol            ! accuracy target in K
-    real(rp), intent(in) :: e_rflty        ! earth reflectivity
-
-  ! outputs
-
-    real(rp), intent(out) :: dtaudn(:) ! path derivative of the transmission
-  !                                    function
-    real(rp), intent(out) :: incoptdepth(:) ! layer optical depth
-    logical(ip), intent(out) :: do_gl(:) ! set true for indicies to do
-  !                                         gl computation
-  ! Internal stuff
-
-    integer(ip) :: i, i_tan, n_path
-    real(rp), parameter :: temp = 250.0_rp
-
-  ! start code
-  ! compute the incoptdepth
-
-    n_path = size(alpha_path)
-    i_tan = n_path / 2
-
-    incoptdepth = alpha_path * del_s
-
-    dtaudn(1) = 0.0_rp
-    do i = 2 , i_tan
-      dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
-    end do
-
-    dtaudn(i_tan+1) = dtaudn(i_tan)
-
-    do i = i_tan+2, n_path
-      dtaudn(i) = dtaudn(i-1) - incoptdepth(i-1)
-    end do
-
-  ! compute the tau path derivative
-
-    dtaudn = 0.5_rp*(eoshift(dtaudn,1,dtaudn(n_path)) -             &
-                     eoshift(dtaudn,-1,dtaudn(1))) * exp(dtaudn)
-
-    dtaudn(i_tan+1:n_path) = dtaudn(i_tan+1:n_path) * e_rflty
-
-  ! find the indicies
-
-    do_gl = dtaudn < -tol/temp
-
-  ! The first and last index must be false
-
-    do_gl((/1,n_path/)) = .FALSE.
-
-  end subroutine Path_Contrib
 
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
@@ -889,6 +826,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.8  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.7  2002/10/02 20:09:48  vsnyder
 ! Use automatic arrays to move allocate/deallocate out of loops.  Numerous
 ! cosmetic changes.
