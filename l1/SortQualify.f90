@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,7 +6,7 @@ MODULE SortQualify ! Sort and qualify the L0 data
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MAFinfo_T
+  USE MLSL1Common, ONLY: MAFinfo
   USE L0_sci_tbls, ONLY: SciMAF
   USE EngUtils, ONLY: NextEngMAF
   USE EngTbls, ONLY: EngMAF
@@ -15,13 +15,16 @@ MODULE SortQualify ! Sort and qualify the L0 data
 
   IMPLICIT NONE
 
+  PRIVATE
+
+  PUBLIC :: SortAndQualify
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  TYPE (MAFinfo_T) :: MAFinfo  ! Needed for L1BOA output
   TYPE (MAFdata_T), POINTER :: CurMAFdata
 
 CONTAINS
@@ -65,7 +68,6 @@ CONTAINS
     IF (.NOT. more_data) RETURN    !! Nothing more to do
 
     sci_MAFno = SciMAF(0)%MAFno
-print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     IF (EngMAF%MAFno < sci_MAFno) THEN   ! Catch up to the Science
        DO
           CALL NextEngMAF (more_data)
@@ -80,6 +82,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
           IF (.NOT. more_data) RETURN    !! Nothing more to do
        ENDDO
     ENDIF
+print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     MIF_dur = L1Config%Calib%MIF_duration
     MAF_dur = MIF_dur * nom_MIFs   !Nominal duration of MAF
@@ -145,7 +148,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Qualify the Current MAF data in the cal window
 
-    CHARACTER(len=1) :: GHz_sw_pos, THz_sw_pos, temp_type
+    CHARACTER(len=1) :: GHz_sw_pos, THz_sw_pos
     INTEGER :: MIF, last_MIF, i, band(2), bank(2), n, bno, sw
     LOGICAL :: bandMask(150)   ! large enough for the maximum MIFs
     CHARACTER(len=1), PARAMETER :: TargetType = "T" !! Primary target type
@@ -162,6 +165,7 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     CurMAFdata%Nominal%MB = .TRUE.
     CurMAFdata%Nominal%WF = .TRUE.
     CurMAFdata%Nominal%DACS = .TRUE.
+print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
     DO MIF = 0, (SIZE (CurMAFdata%SciPkt) - 1) !! Check each packet
 
@@ -204,10 +208,6 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        GHz_sw_pos = CurMAFdata%SciPkt(MIF)%GHz_sw_pos
        THz_sw_pos = CurMAFdata%SciPkt(MIF)%THz_sw_pos
 
-temp_type = "S"   !! TEMP!!!
-GHz_sw_pos = temp_type
-THz_sw_pos = temp_type
-
        !! Possibly use sequence from configuration:
 
        IF (GHz_seq_use == match) THEN           ! Type Match
@@ -236,7 +236,7 @@ THz_sw_pos = temp_type
 
        WHERE (CurMAFdata%ChanType(MIF)%FB(:,1:14) == undefined)
           CurMAFdata%ChanType(MIF)%FB(:,1:14) = GHz_sw_pos
-          !! NOTE: The THz module could be using FB 8!
+          !! NOTE: The THz module could be using FB 12!
        END WHERE
        WHERE (CurMAFdata%ChanType(MIF)%MB == undefined)
           CurMAFdata%ChanType(MIF)%MB = GHz_sw_pos
@@ -269,17 +269,16 @@ THz_sw_pos = temp_type
 
        !! Filterbanks 15 through 19
 
-       WHERE (CurMAFdata%ChanType(MIF)%FB(:,15:19) == undefined)
-          CurMAFdata%ChanType(MIF)%FB(:,15:19) = Thz_sw_pos
-          !! NOTE: The THz module could be using FB 8!
-       END WHERE
+!!$       WHERE (CurMAFdata%ChanType(MIF)%FB(:,15:19) == undefined)
+!!$          CurMAFdata%ChanType(MIF)%FB(:,15:19) = Thz_sw_pos
+!!$          !! NOTE: The THz module could be using FB 12!
+!!$       END WHERE
+
+       CurMAFdata%SciPkt(MIF)%GHz_sw_pos = GHz_sw_pos
 
     ENDDO
 
-print *, CurMAFdata%ChanType(0:149)%FB(1,1)
-!!$print *, CurMAFdata%SciPkt(0:149)%FB(1,1)
-!!$print *, SciMAF(0)%MAFno, "Sw pos:", CurMAFdata%SciPkt%GHz_sw_pos
-!! print *, CurMAFdata%EMAF%Eng(100)%mnemonic, CurMAFdata%EMAF%Eng(100)%value
+print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
 !! Rule #6: Discard based on other qualifications such as commanded "W"alls
 
@@ -338,7 +337,7 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
 
   SUBROUTINE QualifyWindow
 
-  USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, DACSnum
+  USE MLSL1Common, ONLY: MBnum, WFnum, DACSnum, GHzNum
 
 !! Qualify the calibration window for spikes, walls, etc.
 
@@ -363,7 +362,7 @@ print *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
     cal_range(2) = CalWin%MAFdata(current)%end_index
     central = CalWin%central
 
-    DO bank = 1, FBnum
+    DO bank = 1, GHzNum
 
        wallindx = 0
 
@@ -536,6 +535,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.5  2002/04/04 20:39:15  perun
 ! Corrected wallindx test.
 !

@@ -1,22 +1,16 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE L1BOutUtils
 !=============================================================================
 
-  USE MLSL1Common, ONLY: L1BFileInfo
-  USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
-         orbitNumber, scanRate, scanRateT
-  USE TkL1B, ONLY: L1BOA_MAF
-  USE SortQualify, ONLY: MAFinfo
-  USE OutputL1B, ONLY: OutputL1B_rad
-  USE MLSL1Rad, ONLY: L1Brad
-  USE MLSL1Config, ONLY: L1Config
-
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: OutputL1Bdata, WriteHdrAnnots
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -25,11 +19,22 @@ MODULE L1BOutUtils
 
 CONTAINS
 
+!=============================================================================
   SUBROUTINE OutputL1Bdata
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+    USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT
+    USE TkL1B, ONLY: L1BOA_MAF
+    USE OutputL1B, ONLY: OutputL1B_rad
+    USE MLSL1Rad, ONLY: L1Brad
+    USE MLSL1Config, ONLY: L1Config
+    USE Calibration, ONLY: CalWin
 
     INTEGER, SAVE :: MAFno = 0, counterMAF
 
-    counterMAF = MAFno
+    counterMAF = CalWin%MAFdata(CalWin%central)%EMAF%TotalMAF
     MAFno = MAFno + 1
 
     IF (L1Config%Globals%ProduceL1BOA) THEN
@@ -40,15 +45,52 @@ CONTAINS
 
     ENDIF
 
-    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, L1Brad)
+    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, MAFinfo%startTAI, &
+         L1Brad)
+
+    PRINT *, "outputting l1b for MAF no ", MAFno
 
   END SUBROUTINE OutputL1Bdata
+
+!=============================================================================
+  SUBROUTINE WriteHdrAnnots (FileName, File_id, HDFversion)
+!=============================================================================
+
+    USE OpenInit, ONLY: antextPCF, antextCF
+    USE PCFHdr, ONLY: WritePCF2Hdr
+    USE MLSFiles, ONLY: HDFVERSION_4
+    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+    USE MLSAuxData, ONLY: Build_MLSAuxData, MaxCharFieldLen
+
+    CHARACTER(LEN=*), INTENT(IN) :: Filename
+    INTEGER, INTENT(IN) :: File_id, HDFversion
+    CHARACTER(len=MaxCharFieldLen) :: cbuf
+
+    TYPE (DataProducts_T) :: dataset
+
+    IF (HDFversion == HDFVERSION_4) THEN
+       CALL WritePCF2Hdr (FileName, anTextPCF)
+       CALL WritePCF2Hdr (FileName, anTextCF)
+    ELSE
+       CALL Deallocate_DataProducts (dataset)
+       dataset%name      = 'TextPCF'
+       dataset%data_type = 'character'
+       cbuf = TRANSFER (anTextPCF, cbuf)
+       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
+            char_length=SIZE(anTextPCF))
+       dataset%name      = 'TextCF'
+       cbuf = TRANSFER (anTextCF, cbuf)
+       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
+            char_length=SIZE(anTextCF))
+    ENDIF
+
+  END SUBROUTINE WriteHdrAnnots
 
 END MODULE L1BOutUtils
 
 ! $Log$
-! Revision 2.5  2002/11/07 21:55:23  jdone
-! Added HDF4/HDF5 switch.
+! Revision 2.6  2003/01/31 18:13:34  perun
+! Version 1.1 commit
 !
 ! Revision 2.4  2002/07/17 14:27:26  perun
 ! Added ProduceL1BOA flag
