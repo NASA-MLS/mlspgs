@@ -1,0 +1,169 @@
+#	Makefile
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
+#PROG=l2_test
+PROG=libfwdmdl.a
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+l2_test: libfwdmdl.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
+
+$(libmls_objs)/libmls.a: $(libmls_f90)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+
+.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+
+depends:
+	$(MLSBIN)/makemakedep.sh -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 \
+		   $(libmls_sources) $(srclib)
+
+mostlyclean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/l2_test ; \
+	fi
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../fwdmdl.tar
+	@echo "tar-ing fwdmdl"; \
+	$(TAR) hcvf ../fwdmdl.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f fwdmdl.tgz; gzip fwdmdl.tar; mv fwdmdl.tar.gz fwdmdl.tgz
+
+targ:
+	rm -f ../fwdmdl.tgz
+	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
+
+# $Log$
+# Revision 1.10  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
+# Revision 1.9  2001/03/13 19:07:59  pwagner
+# clean now removes executables, too
+#
+# Revision 1.8  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
+# Revision 1.7  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
+# Revision 1.6  2001/03/06 17:36:29  pwagner
+# libfwdmdl.a now the automatic target
+#
+# Revision 1.5  2001/02/01 00:47:02  pwagner
+# Making libfwdmdl.a and l2_test
+#
+# Revision 1.4  2001/01/31 23:58:24  pwagner
+# cConsistent with zvi's latest changes
+#
+# Revision 1.3  2001/01/10 23:45:33  pwagner
+# General housekeeping
+#
+# Revision 1.2  2000/11/22 23:40:57  pwagner
+# Fixed program name
+#
+# Revision 1.1  2000/11/22 23:34:06  pwagner
+# First commit
+#
+# Revision 1.1  2000/11/22 22:51:32  pwagner
+# First commit
+#
+#
+
+
