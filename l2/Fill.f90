@@ -1267,7 +1267,7 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
     real (r8), dimension(los%template%noChans) :: x_in, y_in
     real (r8), dimension(los%template%noSurfs) :: zt
-    real (r8), dimension(los%template%noSurfs*noFineGrid) :: betaFine, TransFine, SFine
+    real (r8), dimension(los%template%noChans*noFineGrid) :: betaFine, TransFine, SFine
     real (r8), dimension(los%template%noChans,los%template%noSurfs,los%template%noInstances) :: beta
     real (r8) :: ds, ColTrans
 
@@ -1294,12 +1294,11 @@ contains ! =====     Public Procedures     =============================
 ! the input losQty is the increment of cloud transmission function by default.
 ! it is converted to cloud extinction if extinction flag is on.
    if(extinction) then
-
-   Sfine(1) = sGrid%surfs(1)
-   ds = sGrid%surfs(2)-sGrid%surfs(1) ! both sGrid and sFineGrid are expected to be evenly spaced at present
+   ! both sGrid and sFineGrid are expected to be evenly spaced at present
+   ds = sGrid%surfs(2)-sGrid%surfs(1)  
    do i=1,noDepths
    do j=1,noFineGrid
-      Sfine(j+i*noFineGrid) = sGrid%surfs(i)+j*ds/noFineGrid
+      Sfine(j+(i-1)*noFineGrid) = sGrid%surfs(i)+(j-1._r8)*ds/noFineGrid
    end do
    end do
    
@@ -1311,16 +1310,17 @@ contains ! =====     Public Procedures     =============================
       call InterpolateValues(sGrid%surfs,y_in,sFine,TransFine,method='Linear')  
       ! calculate column transmission function by integrating the derivatives on fine grid
       do i=1,noFineGrid*noDepths
-      betaFine = 0._r8
+      betaFine(i) = 0._r8
         colTrans=0._r8
         do j=1,i
           colTrans=colTrans + transFine(j)*ds/noFineGrid
         end do
         colTrans = 1._r8 - colTrans
-      if(colTrans > 0.02) betaFine(i)= transFine(i)/colTrans
+      if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
       end do
       ! interpolate betaFine back to the coarser sGrid
       call InterpolateValues(sFine,betaFine,sGrid%surfs,beta(:,mif,maf),method='Linear')
+
    end do
    end do
    
@@ -1571,6 +1571,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.63  2001/07/20 20:03:30  dwu
+! fix problems in cloud extinction calculation
+!
 ! Revision 2.62  2001/07/20 19:25:03  dwu
 ! add cloud extinction calculation
 !
