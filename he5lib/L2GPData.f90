@@ -81,28 +81,29 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      INTEGER :: nFreqs          ! Number of frequencies in breakdown
 
      ! Now we store the geolocation fields, first the vertical one:
-     REAL (r8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (nLevels)
+     REAL (r8), POINTER, DIMENSION(:) :: pressures=>NULL() ! Vertical coords (nLevels)
 
      ! Now the horizontal geolocation information. Dimensioned (nTimes)
-     REAL (r8), POINTER, DIMENSION(:) :: latitude, longitude, solarTime, &
-          & solarZenith, losAngle, geodAngle
-     REAL (r8), POINTER, DIMENSION(:) :: time
-     INTEGER, POINTER, DIMENSION(:) :: chunkNumber !
+     REAL (r8), POINTER, DIMENSION(:) :: latitude=>NULL(), longitude=>NULL(),&
+          solarTime=>NULL(), &
+          & solarZenith=>NULL(), losAngle=>NULL(), geodAngle=>NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: time=>NULL()
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber=>NULL() !
 
      ! Now we store the `frequency' geolocation field
 
-     REAL (r8), POINTER, DIMENSION(:) :: frequency
+     REAL (r8), POINTER, DIMENSION(:) :: frequency=>NULL()
      !        dimensioned (nFreqs)
 
      ! Finally we store the data fields
 
-     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue
-     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue=>NULL()
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision=>NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
-     CHARACTER (len=1), POINTER, DIMENSION(:) :: status
+     CHARACTER (len=1), POINTER, DIMENSION(:) :: status=>NULL()
      !                (status is a reserved word in F90)
-     REAL (r8), POINTER, DIMENSION(:) :: quality
+     REAL (r8), POINTER, DIMENSION(:) :: quality=>NULL()
      ! Both the above dimensioned (nTimes)
 
   END TYPE L2GPData_T
@@ -1164,6 +1165,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.1  2000/12/22 15:55:53  pumphrey
+! Initial commit of HDF-EOS5 versions of L2GP interface.
+!
 ! Revision 2.8  2000/12/04 23:43:59  vsnyder
 ! Move more of addItemToDatabase into the include
 !
