@@ -165,20 +165,20 @@ program MLSL2
 
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
-  endif
+  end if
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
    if ( .not. toolkit ) then
       pcf = .false.
       prunit = max(-1, prunit)   ! stdout or Fortran unit
-   endif
+   end if
 
    if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
       MLSMessageConfig%LogFileUnit = -1
    else
       MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
-   endif
+   end if
 
    UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
 
@@ -234,7 +234,7 @@ program MLSL2
    if(error /= 0) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'error in check_tree: probably need to repair l2cf ' )
-   endif
+   end if
     if ( timing ) call sayTime ( 'Type checking the L2CF' )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
@@ -286,6 +286,7 @@ contains
     print *, '  sca => Scalars of interest to the Newton method'
     print *, '  spa => Sparsity structure of fac, jac, neq'
     print *, '  tps => Test_Parse_Signals'
+    stop
   end subroutine switch_usage
 
   subroutine Usage
@@ -351,6 +352,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.43  2001/05/18 01:14:21  vsnyder
+! Add a 'stop' in 'switch_usage', plus cosmetic changes
+!
 ! Revision 2.42  2001/05/17 22:34:55  pwagner
 ! output and MLSMessage modules cooperate better w/o toolkit; switch_usage
 !
