@@ -347,7 +347,7 @@ subtrees:   do while ( j <= howmany )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
-        if ( index(switches,'grid') /= 0 .and. .not. parallel%slave &
+        if ( index(switches,'gridd') /= 0 .and. .not. parallel%slave &
          & .and. associated(griddedDataBase) ) then
           call Dump(griddedDataBase)
         end if
@@ -429,6 +429,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.116  2003/09/03 15:56:18  cvuu
+! Move the do loop over the forwardModel inside subroutine PrintForwardModelTiming
+!
 ! Revision 2.115  2003/09/02 18:04:38  pwagner
 ! Can do a singleChunk even if master task
 !
