@@ -440,6 +440,7 @@ contains
               call decorate ( ixAverage, k )
             end if
             call getFromMatrixDatabase ( matrixDatabase(k), outputAverage )
+            call display_string ( outputAverage%name, advance='yes' )
             if ( .not. associated(outputAverage) ) then
               call announceError ( notGeneral, f_average )
             else
@@ -648,6 +649,7 @@ contains
                                         ! the action to take.
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
       real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
+      integer :: PreserveMatrixName    ! Temporary name store
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -1582,6 +1584,7 @@ contains
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
+        preserveMatrixName = outputCovariance%m%name
         call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m ) ! U^{-1} U^{-T}
           if ( index(switches,'cov') /= 0 ) then
             call output ( 'Computed U^{-1} U^{-T} at ' )
@@ -1601,13 +1604,20 @@ contains
               call output ( t3-t0, advance='yes' )
             end if
         end if
+        outputCovariance%m%name = preserveMatrixName
         if ( associated(outputSD) ) &
           & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
       end if
 
       ! Compute the averaging kernel
       if ( got(f_average) ) then
+        preserveMatrixName = outputAverage%name
+        if ( columnScaling /= l_none ) then
+          call columnScale ( kTk%m, v(columnScaleVector) )
+          call rowScale ( v(columnScaleVector), kTk%m )
+        end if
         outputAverage = outputCovariance%m .tx. kTk%m
+        outputAverage%name = preserveMatrixName
           if ( index(switches,'cov') /= 0 ) call output ( &
             & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
         call destroyMatrix ( kTk%m )
@@ -2934,6 +2944,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.158  2002/08/03 20:40:58  livesey
+! Added matrix name preseveration.  Changed averaging kernel calculation.  Still
+! not right though!
+!
 ! Revision 2.157  2002/08/03 01:16:17  vsnyder
 ! RegAfter switch controls Tikhonov before/after column scaling -- default before
 !
