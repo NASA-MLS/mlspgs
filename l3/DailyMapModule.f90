@@ -466,9 +466,7 @@ Contains
            End Do
          End Do
 
-	 do j = 1, nt
-	   fNum(j) = 0 
-	 end do
+	   fNum = 0 
 
 	 do j = 1, mtotal
 	   wIndex = int(wn(j))
@@ -597,9 +595,7 @@ Contains
            End Do
          End Do
 
-	 do j = 1, nt_a
-	   fNum(j) = 0 
-	 end do
+	   fNum = 0 
 
 	 do j = 1, mtotala
 	   wIndex = int(wna(j))
@@ -731,9 +727,7 @@ Contains
            End Do
          End Do
 
-	 do j = 1, nt_d
-	   fNum(j) = 0 
-	 end do
+	   fNum = 0 
 
 	 do j = 1, mtotald
 	   wIndex = int(wnd(j))
@@ -1111,6 +1105,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.6  2001/08/13 16:42:06  ybj
+! *** empty log message ***
+!
 ! Revision 1.5  2001/04/13 22:07:05  ybj
 ! reasonable values
 !
