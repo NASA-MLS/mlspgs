@@ -302,6 +302,7 @@ contains ! =====     Public Procedures     =============================
     integer :: modelVectorIndex
     integer :: noiseQtyIndex
     integer :: noiseVectorIndex
+    logical :: old_math77_ran_pack      ! To restore math77_ran_pack
 
     ! Executable code
     timing = section_times
@@ -309,6 +310,7 @@ contains ! =====     Public Procedures     =============================
     dontMask = .false.
     ignoreZero = .false.
     ignoreNegative = .false.
+    old_math77_ran_pack = math77_ran_pack
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
 
@@ -850,22 +852,44 @@ contains ! =====     Public Procedures     =============================
       ! End of fill operations
 
       case ( s_remove ) ! ===============================  Remove ==
-        if (DEEBUG) call output('Remove vector instruction', advance='yes')
+        if (DEEBUG) call output('Remove vector instruction', advance='no')
         ! Here we're to try to shrink the vector database by removing a vector
         ! Loop over the instructions
         ! (Shall we allow multiple rms on a single line? Maybe later)
         do j = 2, nsons(key)
-          gson = subtree(j,key)  ! The argument
-          fieldIndex = get_field_id(gson)
-          gson = subtree(2,gson) ! Now the value of said argument
+          son = subtree(j,key)  ! The argument
+          fieldIndex = get_field_id(son)
+          if ( nsons(son) > 1 ) then
+            fieldValue = decoration(subtree(2,son)) ! The field's value
+          else
+            fieldValue = son
+          end if
           select case ( fieldIndex )
           case ( f_source )
-            sourceVectorIndex = decoration(gson)
+            sourceVectorIndex = decoration(decoration(subtree(2,son)))
           case default ! Can't get here if type checker worked
           end select
         end do
+        if (DEEBUG) then
+          if ( vectors(sourceVectorIndex)%name /= 0 ) then
+            call output ( '   Vector Name = ' )
+            call display_string ( vectors(sourceVectorIndex)%name )
+          end if
+          if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
+            call output ( ' Template_Name = ' )
+            call display_string ( vectors(sourceVectorIndex)%template%name )
+            call output ( ' ', advance='yes' )
+          end if
+          call output ( ' -- vector database before removal --', advance='yes' )
+          call dump(vectors, details=-2)
+        endif
 
-        vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
+        call DestroyVectorInfo ( vectors(sourceVectorIndex) )
+!        vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
+        if (DEEBUG) then
+          call output ( ' -- vector database after removal --', advance='yes' )
+          call dump(vectors, details=-2)
+        endif
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -912,6 +936,7 @@ contains ! =====     Public Procedures     =============================
       end if
       call trace_end ( "MLSL2Fill" )
     end if
+    math77_ran_pack = old_math77_ran_pack
     if ( timing ) call sayTime
 
   contains
@@ -2609,6 +2634,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.90  2001/10/18 23:29:57  pwagner
+! Fixes in addNoise, remove
+!
 ! Revision 2.89  2001/10/18 23:07:40  livesey
 ! Removed debug dump statement
 !
