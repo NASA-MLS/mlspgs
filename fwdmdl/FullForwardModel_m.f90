@@ -107,6 +107,7 @@ contains
     integer :: BRKPT                    ! Index of midpoint of path
     integer :: CHANNEL                  ! A Loop counter
     integer :: EXT_IND                  ! Index of extinction inside f array
+    integer :: FRQ_I                    ! Loop counter for adding PFA
     integer :: F_LEN_DN                 ! Length of DN in vector
     integer :: F_LEN_DV                 ! Length of DV in vector
     integer :: F_LEN_DW                 ! Length of DW in vector
@@ -226,7 +227,8 @@ contains
     real(rp) :: R             ! real variable for various uses
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
-    real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z
+    real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z, 1 - Vel_z/c
+    real(rp) :: Vel_Rel       ! Vel_z / c
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
@@ -608,7 +610,8 @@ contains
 
     MAF = fmStat%maf
 
-    Vel_Cor = 1.0_rp - losvel%values(1,maf) / speedOfLight
+    Vel_Rel = losvel%values(1,maf) / speedOfLight ! Needed for PFA
+    Vel_Cor = 1.0_rp - Vel_Rel
 
 ! Sort out a remaining flag
     ptan_der = ptan_der .and. present ( jacobian )
@@ -1466,6 +1469,9 @@ contains
             & incoptdepth(:npc), p_path(:no_ele), pfaTrue, ref_corr(:npc),    &
             & sps_path(:no_ele,:), tau(:npc), t_path_c(:npc), t_script(:npc), &
             & tanh1_c(:npc), tt_path_c(:npc), w0_path_c(:npc) )
+            do frq_i = 1, noUsedChannels
+            ! radiances(ptg_i,frq_i) =
+            end do
           if ( FwdModelConf%do_freq_avg ) &
             & call deallocate_test ( channelCenters, 'channelCenters', moduleName )
         end if
@@ -2344,14 +2350,10 @@ contains
           & call Trace_Begin ( 'ForwardModel.Frequency ', index=frq_i )
 
         Frq = frequencies(frq_i)
-        frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k T
+
+        do_gl = .false.
 
         ! Set up path quantities --------------------------------------
-
-        tanh1_c = tanh( frqhk / t_path_c )
-        ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
-        if ( temp_der ) dTanh_dT_c(:npc) = &
-            & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
 
         ! Compute the sps_path for this Frequency
         call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
@@ -2360,18 +2362,21 @@ contains
         if ( pfa ) then
           call get_beta_path_PFA ( frq, p_path, c_inds, t_path,                  &
             & channels(frq_i)%PFAData(thisSideband,:), channels(frq_i)%PFAIndex, &
-            & vel_cor, beta_path_c, t_der_path_flags,                            &
+            & vel_rel, beta_path_c, t_der_path_flags,                            &
             & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
+          frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k T
+          tanh1_c = tanh( frqhk / t_path_c )
+          ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
+          if ( temp_der ) dTanh_dT_c(:npc) = &
+              & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
           call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                   &
             &  sps%beta_group(sps_1:sps_n), fwdModelConf%polarized, gl_slabs,    &
             &  c_inds, beta_path_c(:,sps_1:sps_n), t_der_path_flags, dTanh_dT_c, &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         end if
 
-        do_gl = .false.
-
-        if ( FwdModelConf%incl_cld ) then
+        if ( FwdModelConf%incl_cld .and. .not. pfa ) then
 !           if ( do_cld ) then !JJ
           ! Compute Scattering source function based on temp prof at all
           ! angles U for each temperature layer assuming a plane parallel
@@ -2628,7 +2633,7 @@ contains
         ! Compute SCALAR radiative transfer --------------------------------
 
           call rad_tran ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, del_zeta, &
-            & alpha_path_c, ref_corr,incoptdepth, alpha_path_f(1:ngl),       &
+            & alpha_path_c, ref_corr, incoptdepth, alpha_path_f(1:ngl),      &
             & dsdz_gw_path, t_script, tau, RadV(frq_i), i_stop )
 
         else ! Polarized model
@@ -3119,6 +3124,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.221  2004/09/01 01:48:27  vsnyder
+! Status flags, more work on PFA
+!
 ! Revision 2.220  2004/08/06 22:40:17  livesey
 ! Better patch for ptg_angles
 !

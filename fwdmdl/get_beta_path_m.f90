@@ -111,7 +111,7 @@ contains
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
   subroutine Get_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, PFAInds, &
-    & BetaInds, Vel_Cor, Beta_Path, T_Der_Path_Flags, &
+    & BetaInds, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
 
     use MLSCommon, only: RP, R8
@@ -124,7 +124,7 @@ contains
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     integer, intent(in) :: PFAInds(:)   ! indices in PFA database
     integer, intent(in) :: BetaInds(:)  ! indices in Beta_path, etc.
-    real(rp), intent(in) :: Vel_Cor     ! Velocity correction
+    real(rp), intent(in) :: Vel_Rel     ! LOS Vel / C
 
 ! Output
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
@@ -171,7 +171,7 @@ contains
 
       beta_path(:,sv_i) = 0.0_rp
 
-      call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_cor, &
+      call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_rel, &
         & PFAData(PFAInds(i)), beta_path(:,sv_i), t_der_path_flags, &
         & dBdT, dBdw, dBdn, dBdv )
 
@@ -685,7 +685,7 @@ contains
   end Subroutine Create_beta_path
 
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
-  subroutine Create_Beta_Path_PFA ( Frq, Path_Inds, P_Path, T_Path, Vel_Cor, &
+  subroutine Create_Beta_Path_PFA ( Frq, Path_Inds, P_Path, T_Path, Vel_Rel, &
     & PFAD, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
     use Dump_0, only: Dump
@@ -701,7 +701,7 @@ contains
     integer, intent(in) :: Path_inds(:) ! Which Pressures to use
     real(rp), intent(in) :: P_Path(:)   ! Pressure in hPa on the fine path grid
     real(rp), intent(in) :: T_Path(:)   ! Temperature in K along the path
-    real(rp), intent(in) :: Vel_Cor     ! Velocity correction, 1.0 - vel_los/c
+    real(rp), intent(in) :: Vel_Rel     ! LOS vel/c
     type(PFAData_t), intent(in) :: PFAD ! PFA datum from PFA Database
     
 ! Outputs
@@ -736,7 +736,7 @@ contains
     !{ Doppler correction = $\nu_0 \left[ \left( 1 - \frac{v}c \right) -
     !                                     \left( 1 - \frac{v_l}c \right) \right]$
 
-    doppler = frq * ( vel_cor - PFAD%vel_cor )
+    doppler = frq * ( PFAD%vel_rel - vel_rel )
 
     p_i1 = 0 ! Initialize for Hunt
     t_i1 = 0
@@ -1040,6 +1040,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.64  2004/09/02 18:14:29  vsnyder
+! Doppler correct temperature derivative in PFA
+!
 ! Revision 2.63  2004/09/01 01:48:13  vsnyder
 ! Closing in on PFA
 !
