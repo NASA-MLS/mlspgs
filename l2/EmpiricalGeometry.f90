@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module EmpiricalGeometry                ! For empirically obtaining orbit information
@@ -126,8 +126,11 @@ contains ! ========================= Public Procedures ====================
   subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
 
     use Allocate_Deallocate, only: Deallocate_test
-    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData
+    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
+      & AssembleL1BQtyName
     use MLSCommon, only: L1BInfo_T, MLSChunk_T
+    use MLSFiles, only: mls_hdf_version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
 
     type (L1BInfo_T), intent(in) :: L1BINFO ! Where to find L1 files
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
@@ -149,19 +152,26 @@ contains ! ========================= Public Procedures ====================
     real(r8), dimension(:), pointer :: GUESSLON ! Attempt at match
     real(r8) :: LOWLIMIT, HILIMIT       ! For new options
     real(r8) :: DELTA                   ! For new options
+    integer ::  hdfVersion
+    character(len=Name_Len) :: l1bItemName
 
     ! Executable code
 
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     ! Now we want to establish the value of lon0
     nullify ( testPhi, testLon, guessLon )
-    call ReadL1BData ( l1bInfo%l1boaID, "GHz.tpGeodAngle", tpGeodAngle, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
     call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
     testPhi = tpGeodAngle%DpField(1,1,:)
     call DeallocateL1BData ( tpGeodAngle )
 
-    call ReadL1BData ( l1bInfo%l1boaID, "GHz.tpLon", tpLon, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    l1bItemName = AssembleL1BQtyName ( "GHz.tpLon", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1boaID, trim(l1bItemName), tpLon, noMAFs, flag, &
+      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
     call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
     testLon = tpLon%DpField(1,1,:)
     call DeallocateL1BData ( tpLon )
@@ -201,6 +211,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.7  2002/11/13 01:05:28  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.6  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
