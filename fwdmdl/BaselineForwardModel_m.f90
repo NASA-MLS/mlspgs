@@ -29,7 +29,7 @@ contains ! ======================================== BaselineForwardModel ======
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
     use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY
     use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: RP, RM
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -91,8 +91,8 @@ contains ! ======================================== BaselineForwardModel ======
     real (rp), dimension(:), pointer :: SURFWT1 ! Weight for upper point
     real (rp), dimension(:), pointer :: SURFWT0PRIME ! d[SurfWt0]/d[ptan]
     real (rp), dimension(:), pointer :: SURFWT1PRIME ! d[SurfWt1]/d[ptan]
-    real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
     real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
+    real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
     type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
@@ -278,7 +278,12 @@ contains ! ======================================== BaselineForwardModel ======
           & instLow:instHi), stat=status ) ! Notice the explicit low bound
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'kBit' )
-        kBit = 0.0_rp
+        ! Now densify any existing blocks
+        do instance = lbound(kBit,3), ubound(kBit,3)
+          colBlock = FindBlock ( jacobian%col, baseline%index, instance )
+          kBit2 => kBit(:,:,instance)
+          call Densify ( kBit2, jacobian%block(rowBlock,colBlock) )
+        end do
 
         do mif = 1, noMIFs
           mm1 = mif - 1
@@ -287,6 +292,7 @@ contains ! ======================================== BaselineForwardModel ======
               if ( .not. signal%channels ( chan - lbound(signal%channels,1) + 1 ) ) cycle
             end if
             row = chan+noChans*mm1
+            kBit( row, :, : ) = 0.0
             kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) = &
               & kBit( row, chan0(chan)+noBslChans*surf0m(mif), inst0(mif) ) + &
               & chanWt0(chan) * surfWt0(mif) * instWt0(mif)
@@ -415,6 +421,10 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.14  2002/11/13 17:07:06  livesey
+! Bug fix, was stomping on pre-existing d[Radiance]/d[Basline] blocks in
+! K.
+!
 ! Revision 2.13  2002/11/07 15:07:25  livesey
 ! Bug fix, was doing all channels even if only asked for a few
 !
