@@ -57,6 +57,8 @@ contains
     logical :: TIMING    ! For S_Time
     real :: T1, T2       ! For S_Time
 
+    timing = .false.
+    
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
@@ -121,6 +123,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.17  2001/04/23 23:48:41  vsnyder
+! Finish adding 'time' command
+!
 ! Revision 2.16  2001/04/23 23:42:00  vsnyder
 ! Add 'time' command
 !
