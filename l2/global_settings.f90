@@ -111,7 +111,7 @@ contains
               do k = 2, nsons(gson)
                 call get_string ( sub_rosa(subtree(k,gson)), line ) ! Bill file
                 fmc%b = line(2:len_trim(line)-1)
-                call l2_load ( fmc, fmi(k), tfmi(k), ier=ier )
+                call l2_load ( fmc, fmi(k-1), tfmi(k-1), ier=ier )
               end do
             end if
           end do
@@ -127,6 +127,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.4  2001/03/08 03:23:09  vsnyder
+! More stuff to work with L2_Load
+!
 ! Revision 2.3  2001/03/07 22:46:05  vsnyder
 ! Add temporary stuff for Zvi's "l2_load", which will wither away.
 !
