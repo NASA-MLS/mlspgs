@@ -35,12 +35,12 @@ contains
 ! And now h = h1 + vl   Or: a = a1 + vl
     character, intent(in) :: HA         ! ha='h' if v_grid=h_grid
                                         ! ha='a' if v_grid=ptg_angles
-    real(r8), intent(in) :: V_GRID(*)   ! Input grid Angles or Heights
-    real(r8), intent(in) :: T_GRID(*)   ! Input grid temperatures
-    real(r8), intent(in) :: Z_GRID(*)   ! Input grid Log pressures
+    real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
+    real(r8), intent(in) :: T_GRID(:)   ! Input grid temperatures
+    real(r8), intent(in) :: Z_GRID(:)   ! Input grid Log pressures
     integer(i4), intent(in) :: N_I      ! Number of input points
-    real(r8), intent(in) :: P_OUT(*)    ! Output grid Log pressures
-    real(r8), intent(out) :: V_OUT(*)   ! Output grid Angles or Heights
+    real(r8), intent(in) :: P_OUT(:)    ! Output grid Log pressures
+    real(r8), intent(out) :: V_OUT(:)   ! Output grid Angles or Heights
     integer(i4), intent(in) :: N_O      ! Number of output points
     integer(i4), intent(out) :: IER     ! Error flag
 !
@@ -121,12 +121,12 @@ contains
 ! and get z=z1+delz which goes with the given a.
     character, intent(in) :: HA         ! ha='h' if v_grid=h_grid
                                         ! ha='a' if v_grid=ptg_angles
-    real(r8), intent(in) :: V_GRID(*)   ! Input grid Angles or Heights
-    real(r8), intent(in) :: T_GRID(*)   ! Input grid temperatures
-    real(r8), intent(in) :: Z_GRID(*)   ! Input grid Log pressures
+    real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
+    real(r8), intent(in) :: T_GRID(:)   ! Input grid temperatures
+    real(r8), intent(in) :: Z_GRID(:)   ! Input grid Log pressures
     integer(i4), intent(in) :: N_I      ! Number of input points
-    real(r8), intent(in) :: V_OUT(*)    ! Output grid Angles or Heights
-    real(r8), intent(out) :: P_OUT(*)   ! Output grid Log pressures
+    real(r8), intent(in) :: V_OUT(:)    ! Output grid Angles or Heights
+    real(r8), intent(out) :: P_OUT(:)   ! Output grid Log pressures
     integer(i4), intent(in) :: N_O      ! Number of output points
     integer(i4), intent(out) :: IER     ! Error flag
 !
@@ -188,9 +188,9 @@ contains
     character, intent(in) :: CH         ! ch='h' if v_grid=h_grid
                                         ! ch='a' if v_grid=ptg_angles
     integer(i4), intent(in) :: N_I      ! Number of input points
-    real(r8), intent(in) :: V_GRID(*)   ! Input grid Angles or Heights
-    real(r8), intent(in) :: T_GRID(*)   ! Input grid temperatures
-    real(r8), intent(in) :: Z_GRID(*)   ! Input grid Log pressures
+    real(r8), intent(in) :: V_GRID(:)   ! Input grid Angles or Heights
+    real(r8), intent(in) :: T_GRID(:)   ! Input grid temperatures
+    real(r8), intent(in) :: Z_GRID(:)   ! Input grid Log pressures
     real(r8), intent(out) :: COEFF(N_I)
     real(r8) :: DZ
     integer :: I
@@ -212,6 +212,9 @@ contains
   end subroutine COMPUTE_COEFF
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

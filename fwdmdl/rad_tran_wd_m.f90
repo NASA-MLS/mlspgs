@@ -32,12 +32,12 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
       &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
 !
     Logical, intent(in) :: temp_der,atmos_der,spect_der
-    Logical, intent(in) :: IS_F_LOG(*)
+    Logical, intent(in) :: IS_F_LOG(:)
 
     Integer(i4), intent(in) :: FRQ_I,N_LVLS,NO_PHI_T,NO_T, BAND, &
    &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI
 
-    Integer(i4), intent(in) :: NO_COEFFS_F(*), NO_PHI_F(*), SPECT_ATMOS(*)
+    Integer(i4), intent(in) :: NO_COEFFS_F(:), NO_PHI_F(:), SPECT_ATMOS(:)
 
     Integer(i4), intent(out) :: IER
 
@@ -45,16 +45,16 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 
     Real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
 
-    Real(r8), intent(in) :: TAU(*)
-    Real(r8), intent(in) :: T_SCRIPT(*)
-    Real(r8), intent(in) :: REF_CORR(*)
-    Real(r8), intent(in) :: F_BASIS(mxco,*)
-    Real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
-    Real(r8), intent(in) :: MR_F(mxco,mnp,*)
+    Real(r8), intent(in) :: TAU(:)
+    Real(r8), intent(in) :: T_SCRIPT(:)
+    Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: F_BASIS(:,:)
+    Real(r8), intent(in) :: PHI_BASIS_F(:,:)
+    Real(r8), intent(in) :: MR_F(:,:,:)
 
-    Type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
+    Type(atmos_comp), intent(in) :: ATMOSPHERIC(:)
 
-    Type(spectro_param), intent(in) :: SPECTROSCOPIC(*)
+    Type(spectro_param), intent(in) :: SPECTROSCOPIC(:)
 
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
@@ -183,6 +183,9 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.5  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.4  2001/03/08 00:11:16  zvi
 ! *** empty log message ***
 !

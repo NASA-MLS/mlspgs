@@ -24,9 +24,9 @@ contains
 !
     Integer(i4), intent(in) :: NLVL, N_SPS, N_LVLS, MID, BRKPT, NO_ELE
 
-    Real(r8), intent(in) :: REF_CORR(*)
+    Real(r8), intent(in) :: REF_CORR(:)
 
-    Real(r8), intent(inout) :: DELTA(2*Nlvl,*)     ! (N2lvl,Nsps)
+    Real(r8), intent(inout) :: DELTA(:,:)     ! (N2lvl,Nsps)
 
     Integer(i4), intent(out) :: IER
 
@@ -79,6 +79,9 @@ contains
 !
 end module FAST_DELTA_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/06/21 21:56:13  zvi
 ! First version D.P.
 !

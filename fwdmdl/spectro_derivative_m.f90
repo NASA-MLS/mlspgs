@@ -26,9 +26,9 @@ contains
 !
     Type(path_vector), intent(in) :: z_path, h_path, phi_path, dhdz_path
 
-    Real(r8), intent(in) :: REF_CORR(*), TAU(*)
-    Real(r8), intent(in) :: T_SCRIPT(*), ARY_ZERO(*), PFA_DBETA_S(*), &
-   &                        SPSFUNC_S(*)
+    Real(r8), intent(in) :: REF_CORR(:), TAU(:)
+    Real(r8), intent(in) :: T_SCRIPT(:), ARY_ZERO(:), PFA_DBETA_S(:), &
+   &                        SPSFUNC_S(:)
 !
     Type(spectro_param), intent(in) :: SPECTRO
 !
@@ -64,6 +64,9 @@ contains
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.5  2001/03/05 21:37:20  zvi
+! New filter format
+!
 ! Revision 1.1  2000/06/21 21:56:17  zvi
 ! First version D.P.
 !

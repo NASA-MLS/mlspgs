@@ -19,9 +19,9 @@ contains
     integer(i4), intent(in) :: Ngp1,brkpt,no_ele,N2lvl
     integer(i4), intent(in) :: N_SPS
 !
-    real(r8), intent(in) :: DELTA(N2lvl,*)
+    real(r8), intent(in) :: DELTA(:,:)
 !
-    real(r8), intent(out) :: del_opacity(*)
+    real(r8), intent(out) :: del_opacity(:)
 
     integer(i4) :: h_i,i,m,IndxR
 !
@@ -75,5 +75,8 @@ contains
 !
 end module FAST_ZOPACITY_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90

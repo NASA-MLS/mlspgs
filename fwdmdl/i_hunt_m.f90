@@ -17,7 +17,7 @@ contains
 !
     integer(i4), intent(in) :: N
 !
-    Integer(i4), intent(in) :: ELEMENT, ARRAY(*)
+    Integer(i4), intent(in) :: ELEMENT, ARRAY(:)
 !
     integer(i4), intent(in out) :: JLO, JHI
 
@@ -75,6 +75,9 @@ contains
   end subroutine I_HUNT
 end module I_HUNT_M
 ! $Log$
+! Revision 1.3  2001/03/09 00:40:32  zvi
+! Correcting an error in HUNT routine
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

@@ -773,7 +773,7 @@ SUBROUTINE get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: pfa_ch(*)
+Integer(i4), INTENT(IN) :: pfa_ch(:)
 Integer(i4), INTENT(IN) :: no_pfa_ch, no_filt_pts
 
 Integer(i4), INTENT(OUT) :: ier
@@ -868,6 +868,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.14  2001/03/26 21:14:54  livesey
+! Modified pfa stuff to not have old dimensions of 2
+!
 ! Revision 1.13  2001/03/24 00:41:48  zvi
 ! Get rid of the UARS Channel's center frequency in F_grid_Filter ..
 !

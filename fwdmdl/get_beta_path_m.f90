@@ -36,7 +36,7 @@ Integer(i4), INTENT(OUT) :: ier
 
 Type(path_vector), INTENT(IN) :: z_path, t_path
 
-Type (pfa_slab), INTENT(IN) :: pfs(*)
+Type (pfa_slab), INTENT(IN) :: pfs(:)
 
 Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
 
@@ -208,6 +208,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.12  2001/03/20 23:22:40  zvi
+! Change to new geoc_geod routine..
+!
 ! Revision 1.11  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !

@@ -31,13 +31,13 @@ contains
  &           dt_script_dtnp )
 
     real(r8), intent(in) :: FRQ
-    real(r8), intent(in) :: T_BASIS(*), PHI_BASIS(*)
+    real(r8), intent(in) :: T_BASIS(:), PHI_BASIS(:)
 
     integer(i4), intent(in) :: IN,IP,NO_T,NO_PHI,Ng,brkpt,no_ele
 
     Type(path_vector), intent(in) :: T_PATH, Z_PATH, PHI_PATH
 
-    real(r8), intent(out) :: DT_SCRIPT_DTNP(*)
+    real(r8), intent(out) :: DT_SCRIPT_DTNP(:)
 
     integer(i4) :: i, j, m, mid, Ngp1
     real(r8) :: hxf, s, t1, t2, dt_dnp(N2lvl)
@@ -114,5 +114,8 @@ contains
   End subroutine D_T_SCRIPT_DTNP
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

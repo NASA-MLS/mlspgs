@@ -16,7 +16,7 @@ contains
   Subroutine Freq_Avg(F_grid,F_grid_fltr,Fltr_func,Rad,n,nfp,Avg)
 !
     Real(r8), intent(in) :: Fltr_func(:)
-    Real(r8), intent(in) :: F_grid(*), Rad(*), F_grid_fltr(*)
+    Real(r8), intent(in) :: F_grid(:), Rad(:), F_grid_fltr(:)
 
     Integer(i4), intent(in) :: n, nfp
 !
@@ -35,6 +35,9 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 1.4  2001/03/24 01:17:36  livesey
+! Bug fix.
+!
 ! Revision 1.3  2001/02/19 22:20:40  zvi
 ! Latest modification: Conv/NoConv
 !

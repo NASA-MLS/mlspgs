@@ -46,7 +46,7 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  Calling sequence variables:
 !  ---------------------------
 Integer(i4), INTENT(IN) :: no_t, n_sps, n_lvls, gl_count, &
-             no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:)
+             no_mmaf, no_phi_t, no_coeffs_f(:), no_phi_f(:)
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
@@ -64,7 +64,7 @@ Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
 Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
            n_path(:,:),phi_path(:,:),dhdz_path(:,:), spsfunc_path(:,:,:)
 
-Logical, INTENT(IN) :: is_f_log(*)
+Logical, INTENT(IN) :: is_f_log(:)
 
 Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !
@@ -84,7 +84,7 @@ type (VectorValue_T), pointer :: f, h2o
 
 !  PFA variables:
 
-type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
+type (atmos_comp), intent(inout) :: ATMOSPHERIC(:)
 !
   ier = 0
 
@@ -207,6 +207,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.11  2001/03/26 21:06:31  zvi
+! *** empty log message ***
+!
 ! Revision 1.10  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !

@@ -27,14 +27,14 @@ contains
 !
     Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, DHDZ_PATH
 !
-    Real(r8), intent(in) :: REF_CORR(*)
-    Real(r8), intent(in) :: SPSFUNC_S(*)
-    Real(r8), intent(in) :: PFA_DBETA_S(*)
+    Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: SPSFUNC_S(:)
+    Real(r8), intent(in) :: PFA_DBETA_S(:)
 
     Real(r8), intent(in) :: Z_BASIS(:)
     Real(r8), intent(in) :: PHI_BASIS(:)
 
-    Real(r8), intent(out) :: DELTA_S(*)
+    Real(r8), intent(out) :: DELTA_S(:)
 
     Integer(i4), intent(out) :: IER
 !
@@ -77,6 +77,9 @@ contains
 !
 end module PFA_DB_DELTA_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/06/21 21:56:16  zvi
 ! First version D.P.
 !

@@ -33,9 +33,9 @@ contains
     Real(r8), intent(in) :: dh_dt_path(:,:,:)
 !
     Real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
-    Real(r8), intent(in) :: TAU(*), T_SCRIPT(*), REF_CORR(*)
+    Real(r8), intent(in) :: TAU(:), T_SCRIPT(:), REF_CORR(:)
 
-    Real(r8), intent(in) :: DT_SCRIPT_DC(N2lvl,mxco,*)
+    Real(r8), intent(in) :: DT_SCRIPT_DC(:,:,:)
 
     Type(path_derivative), INTENT(in out) :: k_temp
 !
@@ -70,6 +70,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.6  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.5  2001/03/05 21:37:20  zvi
 ! New filter format
 !

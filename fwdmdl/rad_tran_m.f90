@@ -34,7 +34,7 @@ contains
 
     Real(r8), intent(in) :: FRQ, H_TAN, EARTH_REF, S_TEMP
 
-    Real(r8), intent(in) :: REF_CORR(*)
+    Real(r8), intent(in) :: REF_CORR(:)
 
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
@@ -43,7 +43,7 @@ contains
    &                                 DHDZ_PATH
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
 
-    Real(r8), intent(out) :: T_SCRIPT(*), TAU(*)
+    Real(r8), intent(out) :: T_SCRIPT(:), TAU(:)
     Real(r8), intent(out) :: RAD
 !
     Integer(i4) :: Ngp1
@@ -99,5 +99,8 @@ contains
   End Subroutine RAD_TRAN
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.3  2001/02/26 09:01:16  zvi
+! New version - Using "Super-Structures"
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

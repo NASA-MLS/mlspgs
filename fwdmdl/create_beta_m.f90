@@ -30,10 +30,10 @@ contains
 
     Real(r8), intent(in) :: Pressure, Temp, Fgr
 
-    Real(r8), intent(in) :: x1(*),y(*),yi(*),slabs1(*),slabs1m(*), &
-   &          dx1_dv0(*),dy_dv0(*),dslabs1_dv0(*),v0sp(*),x1p(*),  &
-   &          v0s(*),yp(*),yip(*),slabs1p(*),v0sm(*),x1m(*),ym(*), &
-   &          yim(*)
+    Real(r8), intent(in) :: x1(:),y(:),yi(:),slabs1(:),slabs1m(:), &
+   &          dx1_dv0(:),dy_dv0(:),dslabs1_dv0(:),v0sp(:),x1p(:),  &
+   &          v0s(:),yp(:),yip(:),slabs1p(:),v0sm(:),x1m(:),ym(:), &
+   &          yim(:)
 !
     Type (pfa_slab), INTENT(IN) :: PFA_SPECTRUM
 
@@ -159,6 +159,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.5  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
 ! Revision 1.4  2001/02/19 22:14:21  zvi
 !
 ! Revision 1.1  2001/02/01 18:12:04  vsnyder

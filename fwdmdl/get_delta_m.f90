@@ -22,17 +22,17 @@ contains
  &           z_basis,ref_corr,mnp,no_phi_f,phi_basis,spsfunc_path,mr_f, &
  &           is_f_log,delta,Ier)
 
-    Logical,     intent(in) :: IS_F_LOG(*)
+    Logical,     intent(in) :: IS_F_LOG(:)
     Integer(i4), intent(in) :: NLVL, NC, N_SPS, N_LVLS, MNP
-    Integer(i4), intent(in) :: NCOEFFS(*), NO_PHI_F(*)
+    Integer(i4), intent(in) :: NCOEFFS(:), NO_PHI_F(:)
     Integer(i4), intent(in) :: mid, brkpt, no_ele
 
-    Real(r8), intent(in) :: REF_CORR(*)
-    Real(r8), intent(in) :: Z_BASIS(Nc,*)
-    Real(r8), intent(in) :: MR_F(Nc,mnp,*)
-    Real(r8), intent(in) :: PHI_BASIS(mnp,*)
+    Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: Z_BASIS(:,:)
+    Real(r8), intent(in) :: MR_F(:,:,:)
+    Real(r8), intent(in) :: PHI_BASIS(:,:)
 
-    Real(r8), intent(inout) :: DELTA(2*Nlvl,Nc,mnp,*)
+    Real(r8), intent(inout) :: DELTA(:,:,:,:)
 
     Integer(i4), intent(out) :: IER
 
@@ -111,6 +111,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/06/21 21:56:13  zvi
 ! First version D.P.
 !

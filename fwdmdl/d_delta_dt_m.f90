@@ -34,9 +34,9 @@ contains
    &                                 DHDZ_PATH
 
     real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:),DH_DT_PATH(:)
-    real(r8), intent(in) :: REF_CORR(*)
+    real(r8), intent(in) :: REF_CORR(:)
 
-    real(r8), intent(out) :: D_DELTA_DTNP(*)
+    real(r8), intent(out) :: D_DELTA_DTNP(:)
 !
 ! -----     Local variables     ----------------------------------------
 !
@@ -345,6 +345,9 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.5  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

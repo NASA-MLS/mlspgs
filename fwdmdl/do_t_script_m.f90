@@ -27,7 +27,7 @@ contains
     Type(path_vector), intent(in) :: T_PATH
 
     Integer(i4), intent(out) :: mid
-    Real(r8), intent(out) :: t_script(*)
+    Real(r8), intent(out) :: t_script(:)
 !
     Integer(i4) :: i, j, m
     real(r8)    :: Tb(N2lvl)
@@ -80,6 +80,9 @@ contains
   End Subroutine DO_T_SCRIPT
 end module DO_T_SCRIPT_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/08/30 18:12:04  vsnyder
 ! Initial conversion to Fortran 90
 !

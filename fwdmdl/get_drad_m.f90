@@ -18,7 +18,7 @@ contains
  &                     IHI, RDRAD)
 !
     Integer(i4), intent(in) :: mid, ILO, IHI
-    Real(r8), intent(in) :: DDER(*), T_SCRIPT(*), TAU(*), DT_SCRIPT_DX(*)
+    Real(r8), intent(in) :: DDER(:), T_SCRIPT(:), TAU(:), DT_SCRIPT_DX(:)
     Real(r8), intent(out) :: RDRAD
 
     Integer(i4) :: h_i, IndxL
@@ -58,6 +58,9 @@ contains
   End Subroutine GET_DRAD
 end module GET_DRAD_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 

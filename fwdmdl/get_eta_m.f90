@@ -13,9 +13,9 @@ contains
 ! This subroutine gets the eta function for temperature
 !
   Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, Nlvl, ETA )
-    Real(r8), intent(in) :: X(*), PEAKS(*)
+    Real(r8), intent(in) :: X(:), PEAKS(:)
     Integer(i4), intent(in) :: NO_X, NO_PEAKS, Nlvl
-    Real(r8), intent(out) :: ETA(Nlvl,*)
+    Real(r8), intent(out) :: ETA(:,:)
 !
     Integer(i4) :: I, J
     Real(r8) :: R
@@ -60,6 +60,9 @@ contains
   End Subroutine GET_ETA
 end module GET_ETA_M
 ! $Log$
+! Revision 1.5  2001/03/21 22:46:53  livesey
+! Some bugs found with range checking fixed
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

@@ -23,12 +23,13 @@ contains
     Integer(i4), Parameter :: mnp=max_no_phi
     Integer(i4), Parameter :: mxco=max_no_elmnts_per_sv_component
 
-    type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
+    type(atmos_comp), intent(in) :: ATMOSPHERIC(:)
 
     integer(i4), intent(in) :: N_SPS, BAND, mid, ILO, IHI, frq_i
-    integer(i4), intent(in) :: NO_COEFFS_F(*), NO_PHI_F(*)
+    integer(i4), intent(in) :: NO_COEFFS_F(:), NO_PHI_F(:)
 
-    real(r8), intent(in) :: DELTA(N2lvl,mxco,mnp,*), T_SCRIPT(*), TAU(*)
+    real(r8), intent(in) :: DELTA(:,:,:,:)
+    real(r8), intent(in) :: T_SCRIPT(:), TAU(:)
 
     integer(i4), intent(out) :: Ier
 

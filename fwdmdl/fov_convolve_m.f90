@@ -20,8 +20,8 @@ contains
 !
     Integer(i4), intent(in) :: ITYPE, NP, MBAND, M, IAS
 
-    Real(r8), intent(inout) :: EIL_ANGLE(*)
-    Real(r8), intent(inout) :: RADIANCE(*)
+    Real(r8), intent(inout) :: EIL_ANGLE(:)
+    Real(r8), intent(inout) :: RADIANCE(:)
     Real(r8), intent(in) :: DELTA0, XLAMDA
     Real(r8), intent(in) :: AAAP(2**M,3),D1AAP(2**M,3),D2AAP(2**M,3)
 
@@ -59,7 +59,7 @@ contains
 ! This subroutine applies the convolution theorem
 !
   Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IND, IERR )
-    real(r8), intent(inout) :: RADIANCE(*)
+    real(r8), intent(inout) :: RADIANCE(:)
     real(r8), intent(in) :: AAAP(*)
     integer(i4), intent(in) :: M, IAS, IND
     integer(i4), intent(out) :: IERR
@@ -122,8 +122,8 @@ contains
 !
   Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR, IERR )
 
-    Real(r8), intent(inout) :: EIL_ANGLE(*)
-    Real(r8), intent(inout) :: RADIANCE(*)
+    Real(r8), intent(inout) :: EIL_ANGLE(:)
+    Real(r8), intent(inout) :: RADIANCE(:)
     Real(r8), intent(in) :: DELTA0, XLAMDA
     Integer(i4), intent(in) :: NP, NTR
     Integer(i4), intent(out) :: IERR
@@ -225,7 +225,7 @@ contains
 !     -----------------------------------------------------------------
 !                Notes on COMMON, PARAMETER's, and local variables
 !
-!     SPI4 = SIN(PI/4) = .5 * SQRT(2)
+!     SPI4 = SIN(PI/4) = 0.5 * SQRT(2)
 !     PI4 = PI / 4
 !     THE DIMENSION OF KE MUST BE AS LARGE AS THE MAXIMUM VALUE
 !     PERMITTED FOR MM.
@@ -725,5 +725,8 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.5  2001/02/26 09:01:16  zvi
+! New version - Using "Super-Structures"
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

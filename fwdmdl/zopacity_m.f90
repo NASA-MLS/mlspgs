@@ -16,11 +16,11 @@ contains
  &           N2lvl, Nc, mnp, no_phi_f, brkpt, no_ele, delta, del_opacity)
 !
     integer(i4), intent(in) :: NC, MNP,Ngp1,brkpt,no_ele
-    real(r8), intent(in) :: MR_F(Nc,mnp,*)
-    integer(i4), intent(in) :: N_COEFFS(*), N_SPS
-    integer(i4), intent(in) :: N2lvl, NO_PHI_F(*)
-    real(r8), intent(in) :: DELTA(N2lvl,Nc,mnp,*)
-    real(r8), intent(out) :: del_opacity(*)
+    real(r8), intent(in) :: MR_F(:,:,:)
+    integer(i4), intent(in) :: N_COEFFS(:), N_SPS
+    integer(i4), intent(in) :: N2lvl, NO_PHI_F(:)
+    real(r8), intent(in) :: DELTA(:,:,:,:)
+    real(r8), intent(out) :: del_opacity(:)
 
     integer(i4) :: h_i,i,m,IndxR
 !
@@ -78,5 +78,8 @@ contains
   End subroutine ZOPACITY
 end module ZOPACITY_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90

@@ -22,10 +22,10 @@ contains
     integer(i4), intent(in) :: N_lvls
     integer(i4), intent(in) :: mid
 
-    real(r8), intent(in) :: T_SCRIPT(*)
-    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(*)
+    real(r8), intent(in) :: T_SCRIPT(:)
+    real(r8), intent(in) :: EARTH_REF, DEL_OPACITY(:)
 
-    real(r8), intent(out) :: TAU(*), RADIANCE
+    real(r8), intent(out) :: TAU(:), RADIANCE
     integer(i4), intent(out) :: ILO, IHI
 
     Real(r8), Parameter :: cut_off = -15.0
@@ -85,5 +85,8 @@ contains
   End Subroutine Scrt_Dn
 end module SCRT_DN_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
