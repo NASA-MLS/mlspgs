@@ -797,10 +797,11 @@ contains
     ! Linear interpolation is used to fill l2gp grids and unfilled grids are
     ! marked with the baddata flag (-999.)
 
-    use UNITS
-    use MLSNumerics, only: InterpolateValues
-    use VectorsModule, only: VectorValue_T
+    use Intrinsic, only: L_Pressure
     use ManipulateVectorQuantities, only: FindClosestInstances
+    use MLSNumerics, only: InterpolateValues
+    use UNITS, only: Rad2Deg
+    use VectorsModule, only: VectorValue_T
     
     ! Dummy arguments
     type (VectorValue_T), intent(in) :: LOS ! LOS quantity
@@ -882,7 +883,7 @@ contains
 
       ! get phi along path for each mif (phi is in degree)
       y_in = los%template%phi(mif,maf) &
-        & - atan(sLevel/(re%values(1,closestInstances(maf))*0.001_r8 + zt(mif)))*180._r8/Pi
+        & - atan(sLevel/(re%values(1,closestInstances(maf))*0.001_r8 + zt(mif)))*rad2deg
        ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
            & method='Linear')
@@ -932,6 +933,9 @@ contains
  end subroutine CloudRetrieval
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.7  2003/08/16 00:27:03  vsnyder
+! Get L_Pressure directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.6  2003/05/19 18:14:56  dwu
 ! modify cloud top constraint in lowCloud
 !
