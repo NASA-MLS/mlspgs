@@ -213,6 +213,8 @@ contains
             & '*** Leap Second File ' // trim(LeapSecFileName) // &
             & ' not found', &
             & just_a_warning = .false.)
+            call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+            & '(Please check file name and path)' )    
           elseif ( pcf ) then
             call announce_error(0, &
             & '*** Leap Second File supplied global settings despite pcf ***', &
@@ -707,6 +709,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.68  2003/05/12 20:57:21  pwagner
+! Added L2ParSF spec to allow changing staging file name in global settings
+!
 ! Revision 2.67  2003/05/10 22:20:50  livesey
 ! Tried to calm down -g1..
 !
