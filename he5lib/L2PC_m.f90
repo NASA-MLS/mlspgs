@@ -1068,6 +1068,7 @@ contains ! ============= Public Procedures ==========================
       stringIndex = enter_terminal ( trim(word), t_identifier ) 
       decl = get_decl ( stringIndex, type=enum_value )
       qt%verticalCoordinate = decl%units
+      call GetHDF5Attribute ( qId, 'logBasis', qt%logBasis )
       call GetHDF5Attribute ( qId, 'coherent', qt%coherent )
       call GetHDF5Attribute ( qId, 'stacked', qt%stacked )
 
@@ -1184,6 +1185,7 @@ contains ! ============= Public Procedures ==========================
         call MakeHDF5Attribute ( qID, 'noInstances', qt%noInstances )
         call get_string ( lit_indices(qt%verticalCoordinate), line )
         call MakeHDF5Attribute ( qID, 'verticalCoordinate', trim(line) )
+        call MakeHDF5Attribute ( qID, 'logBasis', qt%logBasis )
         call MakeHDF5Attribute ( qID, 'coherent', qt%coherent )
         call MakeHDF5Attribute ( qID, 'stacked', qt%stacked )
         ! Write out important coordinates
@@ -1209,6 +1211,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 1.2  2002/06/22 23:12:13  livesey
+! Added sparsity dump
+!
 ! Revision 1.1  2002/06/12 17:59:53  livesey
 ! Work on HDF5 stuff
 !
