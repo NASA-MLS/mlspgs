@@ -352,8 +352,7 @@ contains
   subroutine Convert_grid ( salb_path, cext_path, tt_path, path_inds, &
                           & beta_path_cloud, w0_path, tt_path_c )
 
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: R8, RP, IP
+    use MLSCommon, only: RP, IP
 
     real(rp), intent(in) :: Salb_path(:,:) ! single scattering albedo gl grids  
     real(rp), intent(in) :: Cext_path(:,:) ! cloud extinction on gl grids
@@ -392,6 +391,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.11  2004/03/31 20:35:33  jonathan
+! some minor changes
+!
 ! Revision 2.10  2004/03/20 01:15:47  jonathan
 ! w0 and cext now has extra dimention
 !
