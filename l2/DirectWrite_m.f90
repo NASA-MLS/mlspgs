@@ -165,7 +165,8 @@ contains ! ======================= Public Procedures =========================
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
     call AppendL2GPData(l2gp, l2gpFileHandle, &
-      & sdName, filename, offset, TotalProfs, hdfVersion, createSwath)
+      & sdName, filename, offset, lastprofile=lastInstance, &
+      & TotNumProfs=TotalProfs, hdfVersion=hdfVersion, createSwath=createSwath)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP
@@ -857,6 +858,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.19  2004/02/10 19:30:55  pwagner
+! Cures serial directWrites from writing more than one chunk at a time
+!
 ! Revision 2.18  2004/02/05 23:38:41  pwagner
 ! Writes attributes to directwrite l2aux file
 !
