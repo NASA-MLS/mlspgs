@@ -67,6 +67,7 @@ MODULE PCFHdr
     & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF'
   character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
     & '/PCF'
+  character(len=*), parameter, private :: DEFAULTPROCESSLEVEL = 'L2'
 
    ! May get some of these from MLSLibOptions? 
   type GlobalAttributes_T
@@ -212,16 +213,16 @@ CONTAINS
 !------------------------------------------------------------
 
       use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
-      ! use he5_gdapi, only: he5_GDwrattr    ! Not coded yet
+      use MLSHDFEOS, only: mls_GDwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 grid
 
 ! Arguments
 
       INTEGER, INTENT(IN) :: gridID
-      integer, external ::   he5_GDwrattr
 ! Internal variables
       integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
       !status = he5_GDwrattr(gridID, &
       ! & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
@@ -229,22 +230,23 @@ CONTAINS
       !status = he5_GDwrattr(gridID, &
       ! & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
       ! &  GlobalAttributes%OrbPeriod)
-      status = he5_GDwrattr(gridID, &
+      status = mls_GDwrattr(gridID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
-      status = he5_GDwrattr(gridID, &
+      ProcessLevel = ProcessLevelFun()
+      status = mls_GDwrattr(gridID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%ProcessLevel)
+       &  ProcessLevel)
 !     status = he5_GDwrattr(gridID, &
 !      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
 !      &  GlobalAttributes%InputVersion)
-      status = he5_GDwrattr(gridID, &
+      status = mls_GDwrattr(gridID, &
        & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%PGEVersion)
-      status = he5_GDwrattr(gridID, &
+      status = mls_GDwrattr(gridID, &
        & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%StartUTC)
-      status = he5_GDwrattr(gridID, &
+      status = mls_GDwrattr(gridID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
 ! >       status = he5_GDwrattr(gridID, &
@@ -282,6 +284,7 @@ CONTAINS
       integer :: status
       logical :: my_skip
       logical, parameter :: WRITE_ORBIT = .false.
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
       my_skip = .false.
@@ -299,8 +302,9 @@ CONTAINS
       end if
       call MakeHDF5Attribute(grp_id, &
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
+      ProcessLevel = ProcessLevelFun()
       call MakeHDF5Attribute(grp_id, &
-       & 'ProcessLevel', GlobalAttributes%ProcessLevel, .true.)
+       & 'ProcessLevel', ProcessLevel, .true.)
 !     call MakeHDF5Attribute(grp_id, &
 !      & 'InputVersion', GlobalAttributes%InputVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
@@ -342,6 +346,7 @@ CONTAINS
       INTEGER, INTENT(IN), optional :: dayNum
 ! Internal variables
       integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
       if (present(dayNum)) then
          status = he5_EHwrglatt(fileID, &
@@ -361,9 +366,10 @@ CONTAINS
       status = mls_EHwrglatt(fileID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
+      ProcessLevel = ProcessLevelFun()
       status = mls_EHwrglatt(fileID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%ProcessLevel)
+       &  ProcessLevel)
 !     status = he5_EHwrglatt(fileID, &
 !      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
 !      &  GlobalAttributes%InputVersion)
@@ -492,6 +498,7 @@ CONTAINS
 
       use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
       use HE5_SWAPI, only: he5_SWwrattr
+      use MLSHDFEOS, only: mls_SWwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 swath
 
@@ -501,6 +508,7 @@ CONTAINS
 !     integer, external ::   he5_SWwrattr
 ! Internal variables
       integer :: status
+      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
       status = he5_SWwrattr(swathID, &
        & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
@@ -511,19 +519,20 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
-      status = he5_SWwrattr(swathID, &
+      ProcessLevel = ProcessLevelFun()
+      status = mls_SWwrattr(swathID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%ProcessLevel)
+       &  ProcessLevel)
 !     status = he5_SWwrattr(swathID, &
 !      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
 !      &  GlobalAttributes%InputVersion)
-      status = he5_SWwrattr(swathID, &
+      status = mls_SWwrattr(swathID, &
        & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%PGEVersion)
-      status = he5_SWwrattr(swathID, &
+      status = mls_SWwrattr(swathID, &
        & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%StartUTC)
-      status = he5_SWwrattr(swathID, &
+      status = mls_SWwrattr(swathID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
       if ( GlobalAttributes%GranuleDay < 1 ) return
@@ -960,6 +969,21 @@ CONTAINS
     chars = adjustl(chars)
   end function int_to_char
 
+  function ProcessLevelFun () result (ProcessLevel)
+    ! Take '1', '2', '3' and return 'L1', 'L2', etc.
+    ! Leaves 'L*' unchanged
+    ! Arguments
+    character(len=GA_VALUE_LENGTH) :: ProcessLevel
+    ! Executable
+    if ( GlobalAttributes%ProcessLevel == ' ' ) then
+      ProcessLevel = DEFAULTPROCESSLEVEL   ! 'unknown'
+    elseif ( GlobalAttributes%ProcessLevel(1:1) /= 'L' ) then
+      ProcessLevel = 'L' // trim(GlobalAttributes%ProcessLevel)
+    else
+      ProcessLevel = GlobalAttributes%ProcessLevel
+    endif
+  end function ProcessLevelFun
+
 !================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -969,6 +993,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.28  2003/10/30 00:03:02  pwagner
+!# Prepends 'L' to GlobalAttributes%ProcessLevel if necessary
+!#
 !# Revision 2.27  2003/10/28 00:39:00  pwagner
 !# Fixed bug where character-vlaued attributes were only 1 char long
 !#
