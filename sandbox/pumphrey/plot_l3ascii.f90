@@ -2,7 +2,7 @@ program test_l3ascii
 
   use gridded_data_module
   use plplot_module
-  use kinds_module
+  use MLSCommon
   character(len=80)::filename
   integer::unit,counter
   type(GriddedData_T)::field
