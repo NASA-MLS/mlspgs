@@ -104,32 +104,38 @@ contains ! ===================================== Public Procedures =====
   subroutine ChunkDivide ( root, processingRange, l1bInfo, chunks )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use EXPR_M, only: EXPR
     use Dumper, only: DUMP
     use Dump_0, only: DUMP
-    use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, FINDFIRST
-    use MLSNumerics, only: Hunt
-    use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
-    use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
-    use Lexer_core, only: PRINT_SOURCE
-    use Tree_types, only: N_EQUAL, N_NAMED
+    use EXPR_M, only: EXPR
     use Init_Tables_Module, only: F_OVERLAP, F_MAXLENGTH, F_NOCHUNKS, &
-      & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, F_SCANLOWERLIMIT, &
-      & F_SCANUPPERLIMIT, F_NOSLAVES, FIELD_FIRST, FIELD_LAST, L_EVEN, &
+      & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, &
+      & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, &
+      & FIELD_FIRST, FIELD_LAST, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
-    use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
-    use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, PHYQ_ANGLE, &
-      & PHYQ_LENGTH, PHYQ_DIMENSIONLESS
+    use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
+    use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
+      & AssembleL1BQtyName
+    use Lexer_core, only: PRINT_SOURCE
+    use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, &
+      & FINDFIRST
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+      & mls_hdf_version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
+    use MLSNumerics, only: Hunt
     use MLSSignals_m, only: MODULES, ISMODULESPACECRAFT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use Output_M, only: BLANKS, OUTPUT
     use String_table, only: GET_STRING, DISPLAY_STRING
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
+    use Tree_types, only: N_EQUAL, N_NAMED
+    use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, &
+      & PHYQ_ANGLE, PHYQ_LENGTH, PHYQ_DIMENSIONLESS
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type( L1BInfo_T ), intent(in) :: L1BINFO
@@ -370,15 +376,26 @@ contains ! ===================================== Public Procedures =====
 
       real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
       real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
+      integer   ::                       l1b_hdf_version
+      character(len=NAME_LEN) ::         MAF_start, tp_angle
 
-      ! Exectuable code
+      ! Executable code
 
       ! Read in the data we're going to need
       call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(modNameStr)//'.tpGeodAngle', &
-        & tpGeodAngle, noMAFsRead, flag )
-      call ReadL1BData ( l1bInfo%l1bOAId, 'MAFStartTimeTAI', &
-        & taiTime, noMAFsRead, flag )
+      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
+        l1b_hdf_version = LEVEL1_HDFVERSION
+      else
+        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+      endif
+      MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
+        .false. )
+      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
+        .false. )
+      call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
+        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+      call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
+        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -500,14 +517,25 @@ contains ! ===================================== Public Procedures =====
       real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
       real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
 
-      ! Exectuable code
+      integer   ::                       l1b_hdf_version
+      character(len=NAME_LEN) ::         MAF_start, tp_angle
+      ! Executable code
 
       ! Read in the data we're going to need
       call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
-      call ReadL1BData ( l1bInfo%l1bOAId, trim(modNameStr)//'.tpGeodAngle', &
-        & tpGeodAngle, noMAFsRead, flag )
-      call ReadL1BData ( l1bInfo%l1bOAId, 'MAFStartTimeTAI', &
-        & taiTime, noMAFsRead, flag )
+      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
+        l1b_hdf_version = LEVEL1_HDFVERSION
+      else
+        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+      endif
+      MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
+        .false. )
+      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
+        .false. )
+      call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
+        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+      call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
+        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -1444,10 +1472,22 @@ contains ! ===================================== Public Procedures =====
       real(r8) :: SCANMAX                 ! Range of scan each maf
       real(r8) :: SCANMIN                 ! Range of scan each mif
 
+      integer   ::                       l1b_hdf_version
+      character(len=NAME_LEN) ::         MAF_start, tp_alt
       ! Executable code
 
+      if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
+        l1b_hdf_version = LEVEL1_HDFVERSION
+      else
+        l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+      endif
+      MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
+        .false. )
+      ! tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
+      !  .false. )
       ! Read time from the L1BOA file
-      call ReadL1BData ( l1bInfo%l1boaId, 'MAFStartTimeTAI', taiTime, noMAFsRead, flag )
+      call ReadL1BData ( l1bInfo%l1boaId, trim(MAF_start), taiTime, &
+        & noMAFsRead, flag, hdfVersion=l1b_hdf_version )
 
       ! Deduce the first and last MAFs to consider
       call Hunt ( taiTime%dpField(1,1,:), &
@@ -1477,12 +1517,14 @@ contains ! ===================================== Public Procedures =====
         endif
         do mod = 1, size(modules)
           call get_string ( modules(mod)%name, modNameStr, strip=.true. )
+          tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
+            & l1b_hdf_version, .false. )
           if ( .not. modules(mod)%spacecraft .and. &
             & any ( config%criticalModules == &
             &     (/ modules(mod)%name, l_either, l_both /) ) ) then
             ! Read the tangent point altitude
-            call ReadL1BData ( l1bInfo%l1boaID, trim(modNameStr)//'.tpGeodAlt', &
-              & tpGeodAlt, noMAFsRead, flag )
+            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_alt), &
+              & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
             ! Consider the scan range in each MAF in turn
             do maf = 1, noMAFs
               scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
@@ -1561,6 +1603,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.26  2002/11/13 01:03:11  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.25  2002/11/06 00:21:16  pwagner
 ! Fixed non-zero starttime prob; some extra checks, printing
 !
