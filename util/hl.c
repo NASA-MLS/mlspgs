@@ -61,7 +61,28 @@ main ( int argc, char* argv[] )
 
 /*
 $Log$
+Revision 1.4  2001/03/03 02:15:48  vsnyder
+Correct misunderstanding about usage of regex
+
 Revision 1.3  2001/03/03 02:04:24  vsnyder
 Committing working version
 
+*/
+
+/*
+#!/bin/bash
+# Display ANSI colours.
+#
+esc="\033["
+echo -n "FG/ BG: _40_ _ _ 41 _ _ _42_ _ _ 43"
+echo " _ _ 44 _ _ _45_ _ _ 46 _ _ _47_ _ _ 00_"
+for fore in 30 31 32 33 34 35 36 37 00; do
+  line1="$fore  "
+  line2="    "
+  for back in 40 41 42 43 44 45 46 47 00; do
+    line1="${line1}${esc}${back};${fore}m Normal ${esc}0m"
+    line2="${line2}${esc}${back};${fore};1m Bold   ${esc}0m"
+  done
+  echo -e "$line1\n$line2"
+done
 */
