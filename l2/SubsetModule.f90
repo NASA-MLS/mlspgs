@@ -753,3 +753,7 @@ contains ! ========= Public Procedures ============================
 
 end module SubsetModule
  
+! $Log$
+! Revision 2.2  2003/03/06 00:47:04  livesey
+! Added logging information
+!
