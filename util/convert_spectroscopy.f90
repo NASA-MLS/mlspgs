@@ -46,8 +46,21 @@ program Convert_Spectroscopy
   prunit = lun+1
   open ( prunit, file=File, action='write' )
 
+  call output ( &
+    & '; This file was automatically produced from the JPL catalogue',&
+    & advance='yes' )
+  call output ( &
+    & '; therefore, it is not really appropriate to edit it by hand.',&
+    & advance='yes' )
+  call output ('BEGIN Spectroscopy')
+
+  do i = 1, 4 
+    read ( lun, '(a)' ) line              ! Header line
+  end do
+
   do
     read ( lun, '(a)' ) line
+    print*,'Got: ',line
     line = adjustl(line)
     if ( line(:7) == 'END_CAT' ) exit
     if ( line(1:1) == '#' ) cycle
@@ -57,6 +70,10 @@ program Convert_Spectroscopy
       if ( name(i:i) >= 'A' .and. name(i:i) <= 'Z' ) &
         & name(i:i) = achar(iachar(name(i:i)) + iachar('a') - iachar('A'))
     end do
+    call output ( '', advance='yes')
+    call output ('; ------------------------------------------ ' // &
+      & trim(name), advance='yes' )
+    call output ( '', advance='yes')
     do i = 1, nl
       read ( lun, * ) v0, el, str, w, ps, n, delta, n1, gamma, n2
       call blanks ( 2 )
@@ -86,6 +103,7 @@ program Convert_Spectroscopy
       call output ( ', n2= ')
       call output ( n2, advance='yes' )
     end do
+    call output ( '', advance='yes')
     call output ( 'spectra, molecule=' )
     call output ( trim(name) )
     call output ( ', Qlog=[' )
@@ -118,10 +136,14 @@ program Convert_Spectroscopy
     if ( nl > 1 ) call output ( ']' )
     call output ( '', advance='yes' )
   end do
+  call output ( 'END Spectroscopy', advance='yes' )
 99 close ( lun )
 end program Convert_Spectroscopy
 
 ! $Log$
+! Revision 1.3  2001/04/06 20:38:24  vsnyder
+! Fold lines earlier
+!
 ! Revision 1.2  2001/04/04 02:06:15  vsnyder
 ! Repair CVS variables
 !
