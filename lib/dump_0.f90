@@ -994,12 +994,18 @@ contains
   end subroutine DUMP_3D_DOUBLE
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
-  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
+  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS, LBOUND )
     integer, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
 
     integer :: I, J, K, L
     logical :: myClean
@@ -1008,6 +1014,11 @@ contains
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
 
+    integer :: myFillValue
+    ! Executable
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue=FillValue
+    include 'dumpstats.f9h'
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
@@ -1034,14 +1045,14 @@ contains
         do j = 1, size(array,2)
           do k = 1, size(array,3), myWidth
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
+              if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= myFillValue) ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, 0, inc=3 )
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
+            if ( myClean .or. any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+myWidth-1, size(array,3))
                 if ( present(format) ) then
                   call output ( array(i,j,l), format=format )
@@ -1055,7 +1066,7 @@ contains
         end do
       end do
       call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-myWidth, size(array,3) /), numZeroRows, 0 )
+        & k-myWidth, size(array,3) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_3D_INTEGER
 
@@ -1452,6 +1463,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.42  2004/08/16 17:09:14  pwagner
+! 3d integer dumps interface redone like others
+!
 ! Revision 2.41  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
