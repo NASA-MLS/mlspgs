@@ -2507,7 +2507,7 @@ contains
         call output ( qty%template%noInstances, advance='no' )
         call output ( ' instanceLen = ' )
         call output ( qty%template%instanceLen, advance='yes' )
-        call dump ( qty%mask, format='(1x,z8.8)' )
+        call dumpMask ( qty )
         ! P. Wagner's inspection of masking array
         if ( got(f_height) ) then
           nrows = qty%template%noSurfs
@@ -2517,7 +2517,7 @@ contains
           nrows = qty%template%noChans
           call output ( '(Suppressing mif info, rows are channels) ', &
           & advance='no' )
-        endif
+        end if
         nrows = min(nrows, MAXCOLUMNS)
         call output ( 'column, row look at mask', advance='yes' )
         maskedMan=' '
@@ -2529,7 +2529,7 @@ contains
           call blanks(10-len(decades), advance='no')
           write(decades, '(i5.2)') mod(j, 100)
           call output(decades, advance='no')
-        enddo
+        end do
         call output(' ', advance='yes')
         heightMin=+1.d4
         heightMax=-1.d4
@@ -2540,7 +2540,7 @@ contains
               row = 1 + qty%template%noChans*(j-1)
             else
               row = j
-            endif
+            end if
             if ( IsVectorQtyMasked(qty, row, i) ) then
               maskedMan(j)='1'
               if ( got(f_height) .and. j <= size(theseheights)) then
@@ -2548,17 +2548,17 @@ contains
                 heightMax = max(heightMax, theseheights(j))
               endif
             endif
-          enddo
+          end do
           call output ( i, format='(i3)', advance='no' )
           call blanks(4, advance='no')
           call output ( MaskedMan(1:nrows), advance='yes' )
-        enddo
+        end do
         if ( got(f_height) ) then
           call output ( 'min, max heights masked out: ', advance='no' )
           call output ( exp(-log(10.)*heightMax), advance='no' )
           call blanks(4, advance='no')
           call output ( exp(-log(10.)*heightMin), advance='yes' )
-        endif
+        end if
       end if
     end subroutine SetupSubset
   end subroutine Retrieve
@@ -2566,6 +2566,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.129  2002/02/05 02:40:52  vsnyder
+! Use 'dumpMask' instead of 'dump' to dump the mask, cosmetic changes
+!
 ! Revision 2.128  2002/01/18 00:31:23  livesey
 ! Changed error message about fnmin being imaginary to warning and put
 ! in a work around.  I want to see what it's doing.
