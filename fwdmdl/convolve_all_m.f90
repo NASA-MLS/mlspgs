@@ -37,9 +37,9 @@ contains
   ! cubic spline interpolation to do the job.
 
   Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, channel, &
-    windowStart, windowFinish, mafTInstance, temp, ptan, radiance, &
-    tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, &
-    k_temp, k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern,Ier)
+    windowStart, windowFinish, mafTInstance, temp, ptan, radiance, tan_press,&
+    ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, k_temp,       &
+    k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern, mol_cat_indx, Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -49,6 +49,7 @@ contains
     integer, intent(in) :: WINDOWSTART
     integer, intent(in) :: WINDOWFINISH
     integer, intent(in) :: MAFTINSTANCE
+    integer, intent(IN) :: mol_cat_indx(:)
     type (VectorValue_T), intent(in) :: TEMP
     type (VectorValue_T), intent(in) :: PTAN
     type (VectorValue_T), intent(inout) :: RADIANCE
@@ -73,7 +74,7 @@ contains
     integer :: Ind, ht_ind(1)           ! Indecies
     integer :: Row, Col                 ! Matrix entries
     integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
-    integer :: No_tan_hts, Lk, Uk, n_sps, jf, jz
+    integer :: No_tan_hts, Lk, Uk, no_mol, jf, jz, l
 
     logical :: Want_Deriv
 
@@ -345,16 +346,18 @@ contains
 
       lk = lbound(k_atmos,4)   ! The lower Phi dimension
       uk = ubound(k_atmos,4)   ! The upper Phi dimension
-      n_sps = size(ForwardModelConfig%molecules)
+      no_mol = size(mol_cat_indx)
 
-      do is = 1, n_sps
+      do is = 1, no_mol
 
-        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+        jz = mol_cat_indx(is)
+        l = forwardModelConfig%molecules(jz)
+        if ( l == l_extinction ) then
           f => GetVectorQuantityByType(forwardModelIn,quantityType=l_extinction, &
             &  radiometer=radiance%template%radiometer, noError=.true. )
         else
           f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
-            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
+            &  molecule=l, noError=.true. )
         endif
 
         if ( associated(f)) then
@@ -427,6 +430,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.5  2002/02/15 22:52:16  livesey
+! Bug fix for case where no ptan derivative
+!
 ! Revision 2.4  2002/02/06 08:31:55  zvi
 ! Adding Temp. Deriv. correction
 !

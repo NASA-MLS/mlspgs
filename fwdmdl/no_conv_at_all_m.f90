@@ -36,8 +36,8 @@ contains
   ! cubic spline interpolation to do the job.
 
   Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, MAF, &
-    & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
-    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian, rowFlags )
+    & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, Tan_press, &
+    & I_raw, K_temp, K_atmos, SbRatio, Jacobian, rowFlags, mol_cat_indx )
 
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -45,6 +45,7 @@ contains
     integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINDOWSTART
     integer, intent(in) :: WINDOWFINISH
+    integer, intent(IN) :: mol_cat_indx(:)
     type (VectorValue_T), intent(in) :: TEMP
     type (VectorValue_T), intent(in) :: PTAN
     type (VectorValue_T), intent(inout) :: RADIANCE
@@ -62,7 +63,7 @@ contains
 
     integer:: No_t, No_tan_hts, No_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer :: Lk, Uk, jf, jz, n_sps
+    integer :: Lk, Uk, jf, jz, no_mol, l
     integer :: IS, J, K, NF, SV_I, Spectag
     integer :: Row, col                 ! Indices
     integer :: Ptg                      ! Index
@@ -171,16 +172,18 @@ contains
 
       lk = lbound(k_atmos,4)   ! The lower Phi dimension
       uk = ubound(k_atmos,4)   ! The upper Phi dimension
-      n_sps = size(ForwardModelConfig%molecules)
+      no_mol = size(mol_cat_indx)
 
-      do is = 1, n_sps
+      do is = 1, no_mol
 
-        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+        jz = mol_cat_indx(is)
+        l = forwardModelConfig%molecules(jz)
+        if ( l == l_extinction ) then
           f => GetVectorQuantityByType(forwardModelIn, quantityType=l_extinction, &
             &  radiometer=radiance%template%radiometer, noError=.true. )
         else
           f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
-            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
+            &  molecule=l, noError=.true. )
         endif
 
         if ( associated(f) ) then
@@ -243,6 +246,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.4  2002/02/16 06:50:01  zvi
+! Some cosmetic code changes
+!
 ! Revision 2.3  2002/02/15 22:51:58  livesey
 ! Bug fix for case where no ptan derivative wanted
 !

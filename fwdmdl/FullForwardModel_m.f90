@@ -40,7 +40,8 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use Molecules, only: L_EXTINCTION, spec_tags
-  use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET, DUMP
+  use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET, DUMP, &
+                        & GetNameOfSignal
   use String_table, only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
@@ -720,15 +721,14 @@ contains ! ================================ FullForwardModel routine ======
 !
     DO sps_i = 1 , no_mol
 !
-      IF(abs(fwdModelConf%molecules(mol_cat_index(sps_i))) == &
-          &  l_extinction ) THEN
+      l = fwdModelConf%molecules(mol_cat_index(sps_i))
+      IF( l == l_extinction ) THEN
         f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
           &  quantitytype = l_extinction, radiometer = &
           &  firstsignal%radiometer)
       ELSE
         f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
-          &  quantitytype = l_vmr, molecule = &
-          &  abs(fwdModelConf%molecules(sps_i)))
+          &  quantitytype = l_vmr, molecule = l)
       ENDIF
 !
 ! Concatenate vector
@@ -1036,7 +1036,6 @@ contains ! ================================ FullForwardModel routine ======
         end do
         if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "No matching pointing frequency grids." )
-
         maxSuperset = maxval ( superset )
         where ( superset < 0 )
           superset = maxSuperset + 1
@@ -1926,7 +1925,7 @@ contains ! ================================ FullForwardModel routine ======
             &  tan_temp(:,maf), dx_dt, d2x_dxdt, surfaceTangentIndex, &
             &  center_angle, Radiances(:,i), k_temp(i,:,:,:),         &
             &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows, &
-            &  antennaPatterns(whichPattern), ier )
+            &  antennaPatterns(whichPattern), mol_cat_index, ier )
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'convolve_all failed' )
@@ -1936,7 +1935,8 @@ contains ! ================================ FullForwardModel routine ======
           call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel,  &
             &     windowStart, windowFinish, temp, ptan, thisRadiance, &
             &     tan_press, Radiances(:,i), k_temp(i,:,:,:),          &
-            &     k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows )
+            &     k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows, &
+            &     mol_cat_index )
 
         end if
 
@@ -1978,6 +1978,16 @@ contains ! ================================ FullForwardModel routine ======
 !
 ! *** End of include
 
+    Call GetNameOfSignal(firstSignal, molName)
+    i = Index(molName,'.B')
+    do j = i+1,32
+      if(molName(j:j) == '.') then
+        molName(j:32)=' '
+        EXIT
+      endif
+    end do
+
+    Print *,'Signal: ',Trim(molName)
     if ( index(switches,'rad') /= 0 ) then
       ! *** DEBUG Print
       if ( FwdModelConf%do_conv ) then
@@ -2019,6 +2029,7 @@ contains ! ================================ FullForwardModel routine ======
 
 903   format (/, 'ch', i2.2, '_pfa_rad', a1, i3.3 )
 905   format ( 4(2x, 1pg15.8) )
+906   format ( 5(1x, f14.4))
 
       Deallocate(PrtRad, STAT=i)
 
@@ -2164,6 +2175,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.45  2002/05/17 22:13:20  livesey
+! Bug fix for case where channels start at zero.
+!
 ! Revision 2.44  2002/05/14 22:40:45  livesey
 ! Bug fix in change in line gathering.  Never got to run it mercifully!
 !
