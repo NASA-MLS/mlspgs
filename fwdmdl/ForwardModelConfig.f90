@@ -49,7 +49,7 @@ module ForwardModelConfig
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
-    integer :: phiWindow            ! Window size for examining stuff
+    real (r8) :: phiWindow            ! Window size for examining stuff
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
     logical :: Default_spectroscopy      !
@@ -182,6 +182,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.6  2002/03/07 17:17:49  livesey
+! Removed frqGap
+!
 ! Revision 2.5  2002/02/14 23:01:35  livesey
 ! Added justChannels in call to destroySignal
 !
