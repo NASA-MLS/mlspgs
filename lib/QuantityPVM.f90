@@ -410,4 +410,7 @@ contains ! ================================== Module procedures ============
 
 end module QuantityPVM
 
-
+! $Log$
+! Revision 2.7  2002/02/01 23:50:36  livesey
+! Added CVS log information
+!
