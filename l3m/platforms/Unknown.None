@@ -64,42 +64,5 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
 l_specials =
 
 # $Log$
-# Revision 1.12  2001/05/31 23:31:36  pwagner
-# Added clouddir to INC_PATHS
-#
-# Revision 1.11  2001/04/01 00:20:08  pwagner
-# Bug fixes plus allows untargeted make inside MLSCONFG
-#
-# Revision 1.10  2001/03/12 23:57:46  pwagner
-# New FAFTER, LAFTER flags to postprocess compile & link steps
-#
-# Revision 1.9  2001/03/08 00:53:21  pwagner
-# l2_NEEDS_fwdmdl now set by default
-#
-# Revision 1.8  2001/03/05 21:49:28  pwagner
-# fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
-#
-# Revision 1.7  2001/02/26 21:14:38  pwagner
-# Commented out FOPTS assignment; now part of .configure setting
-#
-# Revision 1.6  2001/02/05 23:12:30  pwagner
-# DUSTY now based directly on FOPTS
-#
-# Revision 1.5  2000/11/18 00:16:39  pwagner
-# Now links on sun (pencil)
-#
-# Revision 1.4  2000/11/16 22:55:21  pwagner
-# Looks for %.f9h in srclib
-#
-# Revision 1.3  2000/11/03 18:18:41  pwagner
-# Shares sources in srclib
-#
-# Revision 1.2  2000/11/02 23:27:38  pwagner
-# Dependencies may cross directories
-#
-# Revision 1.1  2000/10/21 00:22:12  pwagner
-# First commit
-#
-# Revision 1.1  2000/10/18 22:08:01  pwagner
-# First commit
-#
+# Revision 1.1  2001/07/19 23:59:48  pwagner
+# Fiest commit
