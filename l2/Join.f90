@@ -236,7 +236,8 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
-      & mlspcf_l2fwm_full_end
+      & mlspcf_l2fwm_full_end, &
+      & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MoreTree, only: GET_FIELD_ID
     use Output_m, only: OUTPUT, BLANKS
     use OutputAndClose, only: add_metadata
@@ -451,9 +452,14 @@ contains ! =====     Public Procedures     =============================
       call split_path_name(filename, path, file_base)
       if ( .not. TOOLKIT ) then
         handle = 0
-      elseif ( any ( outputType == (/ l_l2gp, l_l2dgg /) ) ) then
+      elseif ( any ( outputType == (/ l_l2gp /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Filename)
+      elseif ( any ( outputType == (/ l_l2dgg /) ) ) then
+        Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+          & mlspcf_l2dgg_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
       elseif ( any ( outputType == (/ l_l2fwm /) ) ) then
@@ -1351,6 +1357,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.92  2003/09/04 22:40:04  pwagner
+! Gets dgg file name from dgg PCFid when DirectWrite usingPCF
+!
 ! Revision 2.91  2003/09/03 23:05:49  livesey
 ! More problems with precision in DirectWrite, hope I've got them all now.
 !
