@@ -576,7 +576,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call output ( ' Qty_Template_ID = ' )
         call output ( vectors(i)%quantities(j)%template%id )
-        if ( details > 0 ) then
+        if ( myDetails > 0 ) then
           call dump ( vectors(i)%quantities(j)%values, ', Elements = ' )
         else
           call output ( ', with' )
@@ -1112,6 +1112,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.31  2001/04/28 01:48:52  vsnyder
+! Improve dump
+!
 ! Revision 2.30  2001/04/28 01:27:38  livesey
 ! Quite an important change here.  Contents of VectorTemplate_T, VectorValue_T
 ! are now copies of their original entries from databases, not pointers.
