@@ -154,6 +154,11 @@ machine.o: machine.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o machine.mod 
 
+ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod 
+ieee_arithmetic.mod: ieee_arithmetic.f90
+	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
+
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -299,11 +304,6 @@ machine.o: $(MACH_DIR)/machine.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
 	rm -f machine.f90
 
-ieee_arithmetic.o: ieee_arithmetic.mod ieee_arithmetic.f90 
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T ieee_arithmetic.o ieee_arithmetic.mod 
-ieee_arithmetic.mod: ieee_arithmetic.f90
-	$(UTILDIR)/newAifBdiff.sh -a ieee_arithmetic.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(MACH_DIR)/ieee_arithmetic.f90 $(FAFTER)
-
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -325,6 +325,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.12  2004/05/20 22:58:55  pwagner
+# Added build rules for ieee-arithmetic module for mod-variant depends
+#
 # Revision 1.11  2003/10/08 21:13:16  pwagner
 # Changed options to sort to tolerate duplicate entries
 #
