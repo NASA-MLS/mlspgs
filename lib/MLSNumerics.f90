@@ -14,8 +14,8 @@ module MLSNumerics              ! Some low level numerical stuff
   implicit none
 
   private
-  public :: Hunt, InterpolateArraySetup, InterpolateArrayTeardown
-  public :: InterpolateValues
+  public :: EssentiallyEqual, Hunt, InterpolateArraySetup
+  public :: InterpolateArrayTeardown, InterpolateValues
 
   type, public :: Coefficients_R4
     private
@@ -58,6 +58,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! EssentiallyEqual             Returns true if two real arguments 'close enough'
 ! Hunt                         Finds index of item(s) in list closest to prey
 ! HuntArray                    Hunts for multiple items
 ! HuntScalar                   Hunts for just one
@@ -65,6 +66,10 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArray             Interpolates for multiple values
 ! InterpolateScalar            Interpolates for just one
 
+  
+  interface EssentiallyEqual
+    module procedure EssentiallyEqual_r4, EssentiallyEqual_r8
+  end interface
 
   interface Hunt
     module procedure HuntArray_r8, HuntArray_r4
@@ -87,6 +92,24 @@ module MLSNumerics              ! Some low level numerical stuff
   end interface
 
 contains
+
+! ------------------------------------------------- EssentiallyEqual ---
+
+  ! This family of routines checks to see if two reals are essentially
+  ! the same.
+  elemental logical function EssentiallyEqual_r4 ( A, B )
+    real(r4), intent(in) :: A
+    real(r4) ,intent(in) :: B
+    EssentiallyEqual_r4 = &
+      & a >= nearest ( b, -1.0_r4 ) .and. a <= nearest ( b, 1.0_r4 )
+  end function EssentiallyEqual_r4
+
+  elemental logical function EssentiallyEqual_r8 ( A, B )
+    real(r8), intent(in) :: A
+    real(r8) ,intent(in) :: B
+    EssentiallyEqual_r8 = &
+      & a >= nearest ( b, -1.0_r8 ) .and. a <= nearest ( b, 1.0_r8 )
+  end function EssentiallyEqual_r8
 
 ! -------------------------------------------------  HuntArray_r4  -----
 
@@ -456,6 +479,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.28  2003/04/04 00:10:08  livesey
+! Added EssentiallyEqual
+!
 ! Revision 2.27  2002/11/25 18:51:19  vsnyder
 ! More interfaces
 !
