@@ -750,8 +750,8 @@ contains ! =====     Public procedures     =============================
     call make_tree( (/ &
       begin, s+s_label, &
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, nr+n_dot, &
-             begin, f+f_label, t+t_string, n+n_field_type, &
-             begin, f+f_prefixSignal, t+t_boolean, nr+n_field_type, &
+             begin, f+f_label, t+t_string, nr+n_field_type, &
+             begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
@@ -791,7 +791,8 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
-             begin, f+f_sdname, t+t_string, nr+n_field_type, &
+             begin, f+f_sdname, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1065,6 +1066,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.322  2003/06/24 23:30:50  livesey
+! Tidyups in directWrite and label
+!
 ! Revision 2.321  2003/06/23 18:06:34  pwagner
 ! Should allow us to write metadata after DirectWrite
 !
