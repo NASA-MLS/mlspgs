@@ -13,8 +13,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
     & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
     & GetDiagonal, GetMatrixElement, GetVectorFromColumn, M_Absent, &
-    & M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
-    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
+    & M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, Multiply, &
+    & MultiplyMatrixVectorNoT, &
     & operator(+), operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
@@ -409,7 +409,7 @@ contains ! =====     Public Procedures     =============================
       call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := z...
       do k = 1, i-1
         !{ $S = X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$
-        call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
+        call multiply ( z%m%block(k,i), z%m%block(k,i), s, &
           & update=.true., subtract=.true. )
       end do ! k = 1, i-1
       !{ $Z_{ii}^T Z_{ii} = S$
@@ -420,7 +420,7 @@ contains ! =====     Public Procedures     =============================
           call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
           do k = 1, i-1
             !{ $S = X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}$
-            call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,j), s, &
+            call multiply ( z%m%block(k,i), z%m%block(k,j), s, &
               & update=.true., subtract=.true. )
           end do ! k = 1, i-1
           !{ Solve $Z_{ii}^T Z_{ij} = S$ for $Z_{ij}$
@@ -1016,7 +1016,7 @@ contains ! =====     Public Procedures     =============================
             & u%m%block(i,k)%ncols, m_absent )
         end if
         do j = k, i-1
-          call multiplyMatrixBlocks ( b%block(i,k), u%m%block(j,i), &
+          call multiply ( b%block(i,k), u%m%block(j,i), &
             & b%block(j,k), update=.true., subtract=.true. )
         end do ! j = k, i-1
         call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
@@ -1113,10 +1113,10 @@ contains ! =====     Public Procedures     =============================
     call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
     do j = 1, y%col%nb
       do i = 1, x%col%nb
-        call multiplyMatrixBlocks ( x%block(1,i), y%block(1,j), z%block(i,j) )
+        call multiply ( x%block(1,i), y%block(1,j), z%block(i,j) )
         do k = 2, x%row%nb
-          call multiplyMatrixBlocks ( &
-            & x%block(k,i), y%block(k,j), z%block(i,j), update=.true. )
+          call multiply ( x%block(k,i), y%block(k,j), z%block(i,j), &
+            & update=.true. )
         end do ! k = 2, x%nr
       end do ! i = 1, x%nc
     end do ! j = 1, y%nc
@@ -1160,9 +1160,8 @@ contains ! =====     Public Procedures     =============================
       do i = 1, mb
         m = a%row%quant(i)
         n = a%row%inst(i)
-        call multiplyMatrixVector ( a%block(i,j), &
-          & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
-          & do_update )
+        call multiply ( a%block(i,j), v%quantities(m)%values(:,n), &
+          & z%quantities(k)%values(:,l), do_update )
         do_update = .true.
       end do ! i = 1, a%row%nb
     end do ! j = 1, a%col%nb
@@ -1225,7 +1224,7 @@ contains ! =====     Public Procedures     =============================
     integer :: K, L, M, N     ! Subscripts
     integer :: NB             ! Loop bound
 
-    call MultiplyMatrixVector ( a%m, v, z, update ) ! A^T V
+    call multiply ( a%m, v, z, update ) ! A^T V
     nb = a%m%col%nb
     if ( a%m%col%extra ) nb = nb - 1
     do j = 1, nb
@@ -1258,7 +1257,7 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T) :: Z
-    call multiplyMatrixVector ( a, v, z, .false. )
+    call multiply ( a, v, z, .false. )
   end function NewMultiplyMatrixVector
 
   ! --------------------------------------------  NormalEquations  -----
@@ -1308,16 +1307,15 @@ contains ! =====     Public Procedures     =============================
         end if
         do_update = my_update
         do k = 1, a%row%nb
-          call multiplyMatrixBlocks ( &
-            & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
-            & xmask=mi, ymask=mj, upper = i == j )
+          call multiply ( a%block(k,i), a%block(k,j), z%m%block(i,j), &
+            & update=do_update, xmask=mi, ymask=mj, upper = i == j )
           do_update = .true.
         end do ! k = 2, a%row%nb
       end do ! i = 1, a%col%nb
     end do ! j = 1, a%col%nb
 
     if ( present(rhs_in) .and. present(rhs_out) ) &
-      & call multiplyMatrixVector ( a, rhs_in, rhs_out, my_update )
+      & call multiply ( a, rhs_in, rhs_out, my_update )
   end subroutine NormalEquations
 
   ! -------------------------------------------------  RowScale_1  -----
@@ -1412,9 +1410,8 @@ contains ! =====     Public Procedures     =============================
           ir = z%m%row%inst(j)
           qr = z%m%row%quant(j)
           ! rhs := rhs - block^T * x
-          call multiplyMatrixVector ( z%m%block(j,i), &
-            & x%quantities(qr)%values(:,ir), my_rhs%quantities(qc)%values(:,ic), &
-            & update=.true., subtract=.true. )
+          call multiply ( z%m%block(j,i), x%quantities(qr)%values(:,ir), &
+            & my_rhs%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
@@ -1784,6 +1781,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.45  2001/06/28 01:06:42  vsnyder
+! Use generic 'multiply' more ubiquitously
+!
 ! Revision 2.44  2001/06/01 01:04:00  vsnyder
 ! Add 'sqrt' option to 'GetDiagonal_0'; add 'Multiply' generic
 !
