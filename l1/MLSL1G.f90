@@ -11,6 +11,7 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
   USE Radiances, ONLY: CalcLimbRads
   USE L1BOutUtils, ONLY: OutputL1Bdata
   USE SpectralBaseline, ONLY: UpdateBaselines
+  USE DACsUtils, ONLY: FinalizeDACSdata
   USE GHzBaseline, ONLY: LatBinRads, OutputBaselinedRads
   USE Close_Files, ONLY: CloseFiles
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
@@ -51,6 +52,8 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 
   ENDDO
 
+  CALL FinalizeDACSdata
+
   CALL UpdateBaselines
 
   CALL OutputBaselinedRads
@@ -67,6 +70,9 @@ END PROGRAM MLSL1G
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2004/12/01 17:10:30  perun
+! Add call to FinalizeDACSdata
+!
 ! Revision 2.3  2004/11/10 15:35:40  perun
 ! Add call to UpdateBaselines
 !
