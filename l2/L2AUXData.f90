@@ -127,6 +127,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! For Announce_Error
     integer :: ERROR
 
+  real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2AUXRANK=3     ! Dimensionality of L2AUXData_T%values
 
   ! This datatype describes a dimension for an L2AUX quantity
@@ -1087,6 +1088,8 @@ contains ! =====     Public Procedures     =============================
     & l2aux%instrumentmodule)
   call MakeHDF5Attribute(L2FileHandle, name, 'Quantity Type', &
     & l2aux%quantitytype)
+  call MakeHDF5Attribute(L2FileHandle, name, 'Missing Value', &
+    & (/ real(UNDEFINED_VALUE, r8) /) )
   dim_name = ' '
   dim_unit = ' '
   ndims = min( NumStringElements(trim(l2aux%DIM_Names), .true.), L2AUXRank )
@@ -1503,6 +1506,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.49  2003/02/21 23:42:21  pwagner
+! Also writes Fill Value attribute
+!
 ! Revision 2.48  2003/02/12 21:52:34  pwagner
 ! Renames blank dim units to none
 !
