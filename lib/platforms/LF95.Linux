@@ -86,45 +86,10 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
-# Custom builds for some modules needed to fool LF95 compiler
-# (for now anyway) so it won't take forever to finish
-# Use the obsolete directory to find hdf5-agnostic versions
-hdf4dir = $(CONFDIR)/lib/obsolete
-
-l2gpdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod l2gpdata.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod-hdf4 l2gpdata.mod
-L2GPData.o:
-#	$(MAKE) l2gpdata.mod 
-	mv l2gpdata.mod l2gpdata.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod-hdf4 l2gpdata.mod
-
-l2pc_m.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod l2pc_m.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod-hdf4 l2pc_m.mod
-L2PC_m.o:
-#	$(MAKE) l2gpdata.mod 
-	mv l2pc_m.mod l2pc_m.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod-hdf4 l2pc_m.mod
-
-mlsfiles.mod:
-	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod mlsfiles.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod-hdf4 mlsfiles.mod
-MLSFiles.o:
-#	$(MAKE) l2gpdata.mod 
-	mv mlsfiles.mod mlsfiles.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod-hdf4 mlsfiles.mod
-
 # $Log$
+# Revision 1.21  2002/07/15 17:39:28  pwagner
+# Custom builds for L2PC_m.f90 MLSFiles.f90 L2GPData.f90 so LF95 finishes in finite time
+#
 # Revision 1.20  2002/07/11 22:00:17  pwagner
 # Changes to support unprefxdpaths
 #
