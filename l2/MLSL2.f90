@@ -231,9 +231,9 @@ program MLSL2
             stop
           end if
         end if
-      else if ( line(3+n:7+n) == 'ckbk ' ) then
+      else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
         checkBlocks = switch
-      else if ( line(3+n:14+n) == 'countChunks ' ) then
+      else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
         countChunks = switch
       else if ( line(3+n:7+n) == 'delay' ) then
         call AccumulateSlaveArguments ( line )
@@ -250,7 +250,7 @@ program MLSL2
           call io_error ( "After --delay option", status, line )
           stop
         end if
-      else if ( line(3+n:14+n) == 'fwmParallel ' ) then
+      else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
         parallel%fwmParallel = .true.
       ! else if ( line(3+n:7+n) == 'gcch ' ) then
       !  garbage_collection_by_chunk = switch
@@ -263,7 +263,7 @@ program MLSL2
         command_line = trim(command_line) // ' ' // trim(line)
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
-      else if ( line(3+n:6+n) == 'l1b=' ) then
+      else if ( lowercase(line(3+n:6+n)) == 'l1b=' ) then
         arg_rhs = line(7+n:7+n)
         select case(arg_rhs)
         case('4')
@@ -273,7 +273,7 @@ program MLSL2
         case default
           LEVEL1_HDFVERSION = WILDCARDHDFVERSION
         end select
-      else if ( line(3+n:8+n) == 'l2gpr=' ) then
+      else if ( lowercase(line(3+n:8+n)) == 'l2gpr=' ) then
         arg_rhs = line(9+n:9+n)
         select case(arg_rhs)
         case('4')
@@ -283,7 +283,7 @@ program MLSL2
         case default
           DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
         end select
-      else if ( line(3+n:8+n) == 'l2gpw=' ) then
+      else if ( lowercase(line(3+n:8+n)) == 'l2gpw=' ) then
         arg_rhs = line(9+n:9+n)
         select case(arg_rhs)
         case('4')
@@ -304,7 +304,7 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
-      else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
+      else if ( lowercase(line(3+n:21+n)) == 'maxfailuresperchunk' ) then
         call AccumulateSlaveArguments ( line )
         if ( line(22+n:) /= ' ' ) then
           copyArg = .false.
@@ -319,7 +319,7 @@ program MLSL2
           call io_error ( "After --maxFailuresPerChunk option", status, line )
           stop
         end if
-      else if ( line(3+n:23+n) == 'maxfailurespermachine' ) then
+      else if ( lowercase(line(3+n:23+n)) == 'maxfailurespermachine' ) then
         call AccumulateSlaveArguments ( line )
         if ( line(24+n:) /= ' ' ) then
           copyArg = .false.
@@ -334,18 +334,18 @@ program MLSL2
           call io_error ( "After --maxFailuresPerMachine option", status, line )
           stop
         end if
-      else if ( line(3+n:18+n) == 'clearOnAllocate ' ) then
+      else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
         trackAllocates = switch
-      else if ( line(3+n:11+n) == 'memTrack ' ) then
+      else if ( lowercase(line(3+n:11+n)) == 'memtrack ' ) then
         trackAllocates = switch
       else if ( line(3+n:8+n) == 'patch ' ) then
         patch = switch
-      else if ( line(3+n:5+n) == 'pge ' ) then
+      else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
         i = i + 1
         call getarg ( i, line )
         parallel%pgeName = trim(line)
         command_line = trim(command_line) // ' ' // trim(adjustl(line))
-      else if ( line(3+n:6+n) == 'recl' ) then
+      else if ( lowercase(line(3+n:6+n)) == 'recl' ) then
         if ( line(7+n:) /= ' ' ) then
           line(:6+n) = ' '
         else
@@ -358,9 +358,9 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
-      else if ( line(3+n:10+n) == 'skipRetr' ) then
+      else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
         SKIPRETRIEVAL = switch
-      else if ( line(3+n:10+n) == 'slaveMAF' ) then
+      else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
         copyArg=.false.
         if ( line(11+n:) /= ' ' ) then
           line(:10+n) = ' '
@@ -391,15 +391,15 @@ program MLSL2
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
         snoopingActive = .true.
-      else if ( line(3+n:12+n) == 'snoopname' ) then
+      else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
         snoopName = line
-      else if ( line(3+n:9+n) ==  'stgmem ' ) then
+      else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
         parallel%stageInMemory = .true.
-      else if ( line(3+n:11+n) == 'subblock ' ) then
+      else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
         call getarg ( i, line )
@@ -415,7 +415,7 @@ program MLSL2
         call getarg ( i, line )
         command_line = trim(command_line) // ' ' // trim(line)
         parallel%submit = trim ( line )
-      else if ( line(3+n:5+n) == 'tk ' ) then
+      else if ( lowercase(line(3+n:5+n)) == 'tk ' ) then
         toolkit = switch
       else if ( line(3+n:10+n) == 'version ' ) then
         do j=1, size(current_version_id)
@@ -906,6 +906,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.118  2004/04/15 22:48:30  pwagner
+! Multiword options like maxFailuresPerChunk made case-insensitive
+!
 ! Revision 2.117  2004/04/06 23:50:09  livesey
 ! Added clearOnAllocate flag
 !
