@@ -8,7 +8,7 @@ module ReadAPriori
     & AddGriddedDataToDatabase, Dump
   use Expr_M, only: Expr
   use Hdf, only: DFACC_READ  !, SFSTART
-  use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_HDFVERSION, &
+  use INIT_TABLES_MODULE, only: F_DIMLIST, F_FIELD, F_FILE, F_HDFVERSION, &
     & F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, S_L2AUX, S_L2GP, F_QUANTITYTYPE
@@ -71,6 +71,8 @@ contains ! =====     Public Procedures     =============================
     integer :: COMMAPOS                 ! For parsing string
     logical, parameter :: DEBUG = .FALSE.
     integer :: Details             ! How much info about the files to dump
+    integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
+    character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
     integer :: FieldName        ! sub-rosa index of name in field='name'
@@ -163,27 +165,35 @@ contains ! =====     Public Procedures     =============================
         fieldIndex = decoration(subtree(1,field))
         got(fieldIndex) = .true.
         select case ( fieldIndex )
-        case ( f_file )
-          fileName = sub_rosa(subtree(2,field))
-        case ( f_swath )
-          swathName = sub_rosa(subtree(2,field))
-        case ( f_sdname )
-          sdname = sub_rosa(subtree(2,field))
+        case ( f_dimList )
+          dimList = sub_rosa(subtree(2,field))
         case ( f_field )
           fieldName = sub_rosa(subtree(2,field))
-        case ( f_origin )
-          griddedOrigin = decoration(subtree(2,subtree(j,key)))
-        case ( f_quantityType )
-          quantityType = decoration(subtree(2,subtree(j,key)))
+        case ( f_file )
+          fileName = sub_rosa(subtree(2,field))
         case ( f_hdfVersion )           
           call expr ( subtree(2,field), units, value, type )             
           if ( units(1) /= phyq_dimensionless ) &                        
             & call Announce_error ( field, &                               
               & 'No units allowed for hdfVersion: just integer 4 or 5')  
           hdfVersion = value(1)                                          
+        case ( f_origin )
+          griddedOrigin = decoration(subtree(2,subtree(j,key)))
+        case ( f_quantityType )
+          quantityType = decoration(subtree(2,subtree(j,key)))
+        case ( f_swath )
+          swathName = sub_rosa(subtree(2,field))
+        case ( f_sdname )
+          sdname = sub_rosa(subtree(2,field))
         end select
       end do
 
+      if ( got(f_dimList) ) then
+        call get_string ( dimList, dimListString, strip=.true. )
+      else
+        dimListString = ''
+      end if
+        
       if ( got(f_file) ) then
         call get_string ( FileName, fileNameString, strip=.true. )
       else
@@ -330,7 +340,7 @@ contains ! =====     Public Procedures     =============================
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
-            & 'XDim,YDim,Height,TIME', TRIM(fieldNameString) )
+            & dimListString, TRIM(fieldNameString) )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'ncep', &                    
              & fieldNameString, hdfVersion=hdfVersion)    
@@ -339,7 +349,7 @@ contains ! =====     Public Procedures     =============================
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
-            & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString) )
+            & GriddedDatabase(gridIndex), dimListString, TRIM(fieldNameString) )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'dao', &                    
              & fieldNameString, hdfVersion=hdfVersion)    
@@ -528,6 +538,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.41  2003/02/20 21:26:21  pwagner
+! Lets you read field dimList=x,y,.. w/ griddeddata
+!
 ! Revision 2.40  2003/02/19 19:16:21  pwagner
 ! More sensible output when proclaiming successful file inputs
 !
