@@ -63,7 +63,6 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
     use Intrinsic, only: L_Phitan
-    use ManipulateVectorQuantities, only: FindInstanceWindow
     use Molecules, only: Spec_tags, SP_Extinction, SP_H2O
     use VectorsModule, only: Vector_T, VectorValue_T
 
@@ -482,6 +481,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.50  2003/05/08 23:42:50  livesey
+! Bug fix for requesting derivatives etc.
+!
 ! Revision 2.49  2003/05/06 23:36:59  dwu
 ! fix a bug in modify_h2o
 !

@@ -25,10 +25,9 @@ contains
 !  This routine should be called for primary and image separately.
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: R8, RP, IP
+    use MLSCommon, only: RP, IP
     use Molecules, only: SP_Air_Cont, SP_Extinction, SP_Liq_H2O, SP_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
-    use Cloud_Extinction, only: get_beta_cloud
 
 ! Inputs:
     integer(ip), intent(in) :: SPECTAG ! molecule id tag
@@ -326,6 +325,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.21  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.20.2.2  2003/02/27 23:24:34  vsnyder
 ! Process only unpolarized lines if 'polarized' argument is present and true
 !

@@ -62,15 +62,15 @@ contains
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    ! This really belongs in make_tree, but "make depends" can't see it there
-    ! (because of the "include"):
-    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, NADP, P, S, T, &
+    use INTRINSIC, only: Add_Ident, Begin, F, L, N, NR, NDP, P, S, T, &
       & T_Numeric, Z, T_String
     use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
       & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
     use Molecules, only: T_Molecule
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-    use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only:
+    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -180,6 +180,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.7  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.6.2.2  2003/03/01 03:17:29  vsnyder
 ! Add the 'emlsSignalsPol' field to the 'line' spec
 !

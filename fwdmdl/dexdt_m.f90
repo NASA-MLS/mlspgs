@@ -27,7 +27,7 @@ contains
 
   subroutine dExDt ( A, dA, dEx )
 
-    use CS_GetEv_M, only: CS_GetEvSD, dEdt
+    use CS_GetEv_M, only: CS_GetEvSD
     use MLSCommon, only: RK => Rp
     use SINHZ_Z_M, only: D_SINHZ_Z3, SINHZ_Z
 
@@ -151,6 +151,9 @@ contains
 end module dExDt_M
 
 ! $Log$
+! Revision 2.1  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 1.1.2.2  2003/04/30 02:07:41  vsnyder
 ! Fix a bogus comment
 !
