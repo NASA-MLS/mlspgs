@@ -420,11 +420,14 @@ contains ! =====     Public Procedures     =============================
                                    ! structural information
     type(matrix_T), intent(inout) :: X
     integer :: I, J                ! Subscripts and row indices
-    do i = 1, x%row%nb
-      do j = 1, x%col%nb
-        if ( associated(x%block(i,j)) ) call destroyBlock ( x%block(i,j) )
-      end do ! j
-    end do ! i
+    if (associated(x%block)) then
+      do i = 1, x%row%nb
+        do j = 1, x%col%nb
+          ! if ( associated(x%block(i,j)) )
+          call destroyBlock ( x%block(i,j) )
+        end do ! j
+      end do ! i
+    end if
   end subroutine ClearMatrix
 
   ! ------------------------------------------------  ClearRows_1  -----
@@ -1677,6 +1680,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.35  2001/05/12 18:58:47  livesey
+! Fixed a bug, not sure it's what Van intended but it should compile
+!
 ! Revision 2.34  2001/05/12 01:07:19  vsnyder
 ! Some repairs in RowScale and ColumnScale
 !
