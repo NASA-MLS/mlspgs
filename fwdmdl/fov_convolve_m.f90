@@ -358,7 +358,7 @@ module Fov_Convolve_m
 
     subroutine DRFT1_T ( A, Mode )
     ! Call DRFT1 and test its status flag
-      real(r8) :: A(*)
+      real(r8) :: A(:)
       character :: Mode
       call drft1 ( a, mode, pwr, ms, s )
       if ( ms == -2 ) then
@@ -545,6 +545,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.14  2003/02/07 00:05:38  bill
+! fixed temperature derivative spike at high alitudes
+!
 ! Revision 2.13  2002/11/29 22:46:06  livesey
 ! Incorporated Van's bug fixes
 !
