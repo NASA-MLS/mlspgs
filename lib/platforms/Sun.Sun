@@ -35,8 +35,8 @@ libdir = ../../lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -M $(PGSINC) -M $(srclib) -M $S \
- -I $(PGSINC) -I $(srclib) -I $S 
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S \
+ -I$(PGSINC) -I$(srclib) -I$S 
 
 # Define some suffix rules
 
@@ -55,3 +55,6 @@ INC_PATHS = $(EXTRA_PATHS) -M $(PGSINC) -M $(srclib) -M $S \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.1  2001/09/05 20:50:32  pwagner
+# First commit
+#
