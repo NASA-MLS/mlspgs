@@ -50,8 +50,8 @@ contains ! =====     Public Procedures     =============================
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
-      & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
-      & F_EXPLICITVALUES, F_EXTINCTION, &
+      & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
+      & F_EXPLICITVALUES, F_EXTINCTION, F_FORCE, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
@@ -87,7 +87,8 @@ contains ! =====     Public Procedures     =============================
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
+      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_XYZ, L_ZETA
@@ -291,6 +292,7 @@ contains ! =====     Public Procedures     =============================
     integer :: BNDPRESSVCTRINDEX
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
+    integer :: CHANNEL                  ! For spreadChannels fill
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
@@ -305,6 +307,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
     integer :: FILLMETHOD               ! How will we fill this quantity
+    logical :: FORCE                    ! Bypass checks on some operations
     integer :: FRACTION                 ! Index of fraction vector in database
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
@@ -451,8 +454,10 @@ contains ! =====     Public Procedures     =============================
         vectorName = 0
       end if
       allowMissing = .false.
+      channel = 0
       dontMask = .false.
       extinction = .false.
+      force = .false.
       got= .false.
       ignoreZero = .false.
       ignoreNegative = .false.
@@ -625,6 +630,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_channel )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all ( unitAsArray /= (/PHYQ_Dimensionless, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, no_error_code, &
+              & 'Channel should be dimensionless' )
+            channel = valueAsArray(1)
           case ( f_earthRadius ) ! For losGrid fill
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -634,11 +645,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
           case ( f_extinction ) ! For cloud extinction fill
-            if ( node_id(gson) == n_set_one ) then
-              extinction=.TRUE.
-            else
-              extinction = decoration(subtree(2,gson)) == l_true
-            end if
+            extinction = get_boolean ( gson )
+          case ( f_force )
+            force = get_boolean ( gson )
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
             geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
             geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -667,11 +676,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_internalVGrid )
             internalVGridIndex=decoration(decoration(gson))
           case ( f_interpolate ) ! For l2gp etc. fill
-            if ( node_id(gson) == n_set_one ) then
-              interpolate=.TRUE.
-            else
-              interpolate = decoration(subtree(2,gson)) == l_true
-            end if
+            interpolate =get_boolean ( gson )
           case ( f_intrinsic )
             switch2intrinsic = get_boolean ( gson )
 !         case ( f_invert )
@@ -801,11 +806,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
-            if ( node_id(gson) == n_set_one ) then
-              spreadFlag = .true.
-            else
-              spreadFlag = decoration(subtree(2,gson)) == l_true
-            end if
+            spreadFlag = get_boolean ( gson )
           case ( f_systemTemperature )
             sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
             sysTempQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1384,6 +1385,11 @@ contains ! =====     Public Procedures     =============================
           call FillFromSplitSideband ( quantity, sourceQuantity, &
             & lsbFraction, usbFraction, key )
 
+        case ( l_spreadChannel )
+          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
+            & no_error_code, 'Must supply channel for spreadChannel fill' )
+          call SpreadChannelFill ( quantity, channel, dontMask, key )
+          
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
           ! before too long.
@@ -1402,7 +1408,7 @@ contains ! =====     Public Procedures     =============================
               call Announce_Error ( key, No_Error_Code, &
                 & 'Quantity and sourceQuantity do not have the same template' )
             else
-              call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, key )
+              call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, force, key )
             end if
           else
             ! Just a straight copy
@@ -4525,9 +4531,10 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityUsingMagneticModel
 
     ! ------------------------------------------- FillQtyFromInterpolatedQty
-    subroutine FillQtyFromInterpolatedQty ( qty, source, key )
+    subroutine FillQtyFromInterpolatedQty ( qty, source, force, key )
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
+      logical, intent(in) :: FORCE
       integer, intent(in) :: KEY
 
       ! Local variables
@@ -4536,7 +4543,7 @@ contains ! =====     Public Procedures     =============================
       logical :: mySurfs, myNewValues
 
       ! Executable code
-      if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
+      if ( .not. DoQtysDescribeSameThing ( qty, source ) .and. .not. force ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in quantities' )
         return
@@ -4552,70 +4559,88 @@ contains ! =====     Public Procedures     =============================
         return
       end if
 
-      ! These checks are for cases the code can't (yet) handle, 
-      ! may add this functionality later. 
-      if ( qty%template%noChans /= 1 ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Code cannot (yet?) interpolate multi channel quantities' )
-        return
-      end if
-      if ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Code cannot (yet?) interpolate incoherent quantities' )
-        return
-      end if
+      ! Two cases here, one where we have to interpolate verticall (has to be
+      ! single channel quantity).  The other where we don't.  Most of the latter
+      ! cases can be handled by the code that calls this routine.  The exception
+      ! is when we've used the force option to e.g. copy one band into another.
+      if ( .not. doVGridsMatch ( qty, source ) ) then
+        ! This quantity needs vertical interpolation
+        ! These checks are for cases the code can't (yet) handle, 
+        ! may add this functionality later. 
+        if ( qty%template%noChans /= 1 ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Code cannot (yet?) interpolate multi channel quantities' )
+          return
+        end if
+        if ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Code cannot (yet?) interpolate incoherent quantities' )
+          return
+        end if
 
-      ! Work out vertical coordinate issues
-      if ( qty%template%verticalCoordinate == l_pressure ) then
-        nullify ( oldSurfs, newSurfs )
-        call Allocate_test ( oldSurfs, source%template%noSurfs, 'oldSurfs', ModuleName )
-        call Allocate_test ( newSurfs, qty%template%noSurfs, 'newSurfs', ModuleName )
-        oldSurfs = -log10 ( source%template%surfs(:,1) )
-        newSurfs = -log10 ( qty%template%surfs(:,1) )
-        mySurfs = .true.
-      else
-        oldSurfs => source%template%surfs ( :, 1 )
-        newSurfs => qty%template%surfs ( :, 1 )
-        mySurfs = .false.
-      end if
-
-      ! Work out if we have to obey the mask
-      myNewValues = .false.
-      if ( associated ( qty%mask ) ) &
-        & myNewValues = any ( iand ( ichar(qty%mask(:,:)), m_fill ) /= 0 )
-      if ( myNewValues ) then
-        nullify ( newValues )
-        call Allocate_test ( newValues, qty%template%instanceLen, &
-          & qty%template%noInstances, 'myNewValues', ModuleName )
-      else
-        newValues => qty%values
-      end if
-      
-      ! OK, do the work
-      if ( qty%template%logBasis ) then
-        call InterpolateValues ( &
-          & oldSurfs, log ( max ( source%values, sqrt(tiny(0.0_r8)) ) ), &
-          & newSurfs, newValues, &
-          & method='Linear', extrapolate='Constant' )
-        newValues = exp ( newValues )
-      else
-        call InterpolateValues ( &
-          & oldSurfs, source%values, &
-          & newSurfs, newValues, &
-          & method='Linear', extrapolate='Constant' )
-      end if
-
-      if ( myNewValues ) then
-        where ( iand ( ichar(qty%mask(:,:)),m_fill) == 0 )
-          qty%values = newValues
-        end where
-        call Deallocate_test ( newValues, 'myNewValues', ModuleName )
-      endif
-
-      ! Tidy up
-      if ( mySurfs ) then
-        call Deallocate_test ( oldSurfs, 'oldSurfs', ModuleName )
-        call Deallocate_test ( newSurfs, 'newSurfs', ModuleName )
+        ! Work out vertical coordinate issues
+        if ( qty%template%verticalCoordinate == l_pressure ) then
+          nullify ( oldSurfs, newSurfs )
+          call Allocate_test ( oldSurfs, source%template%noSurfs, 'oldSurfs', ModuleName )
+          call Allocate_test ( newSurfs, qty%template%noSurfs, 'newSurfs', ModuleName )
+          oldSurfs = -log10 ( source%template%surfs(:,1) )
+          newSurfs = -log10 ( qty%template%surfs(:,1) )
+          mySurfs = .true.
+        else
+          oldSurfs => source%template%surfs ( :, 1 )
+          newSurfs => qty%template%surfs ( :, 1 )
+          mySurfs = .false.
+        end if
+        
+        ! Work out if we have to obey the mask
+        myNewValues = .false.
+        if ( associated ( qty%mask ) ) &
+          & myNewValues = any ( iand ( ichar(qty%mask(:,:)), m_fill ) /= 0 )
+        if ( myNewValues ) then
+          nullify ( newValues )
+          call Allocate_test ( newValues, qty%template%instanceLen, &
+            & qty%template%noInstances, 'myNewValues', ModuleName )
+        else
+          newValues => qty%values
+        end if
+        
+        ! OK, do the work
+        if ( qty%template%logBasis ) then
+          call InterpolateValues ( &
+            & oldSurfs, log ( max ( source%values, sqrt(tiny(0.0_r8)) ) ), &
+            & newSurfs, newValues, &
+            & method='Linear', extrapolate='Constant' )
+          newValues = exp ( newValues )
+        else
+          call InterpolateValues ( &
+            & oldSurfs, source%values, &
+            & newSurfs, newValues, &
+            & method='Linear', extrapolate='Constant' )
+        end if
+        
+        if ( myNewValues ) then
+          where ( iand ( ichar(qty%mask(:,:)),m_fill) == 0 )
+            qty%values = newValues
+          end where
+          call Deallocate_test ( newValues, 'myNewValues', ModuleName )
+        endif
+        
+        ! Tidy up
+        if ( mySurfs ) then
+          call Deallocate_test ( oldSurfs, 'oldSurfs', ModuleName )
+          call Deallocate_test ( newSurfs, 'newSurfs', ModuleName )
+        end if
+      else ! ------------------------
+        ! No interpolation needed, more like the 
+        ! case handled in the calling code, except we're more lenient
+        ! If we have a mask and we're going to obey it then do so
+        if ( associated(quantity%mask) .and. .not. dontMask ) then
+          where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+            quantity%values(:,:) = sourceQuantity%values(:,:)
+          end where
+        else ! Otherwise, just blindly copy
+          quantity%values = sourceQuantity%values
+        end if
       end if
 
     end subroutine FillQtyFromInterpolatedQty
@@ -5073,6 +5098,42 @@ contains ! =====     Public Procedures     =============================
       end do scaleUpperLoop
     end subroutine ScaleOverlaps
 
+    ! ----------------------------------------- SpreadChannelFill --------
+    subroutine SpreadChannelFill ( quantity, channel, dontMask, key )
+      type(VectorValue_T), intent(inout) :: QUANTITY
+      integer, intent(in) :: CHANNEL
+      logical, intent(in) :: DONTMASK
+      integer, intent(in) :: KEY
+      ! Local variables
+      integer :: I                      ! Instance loop counter
+      integer :: C                      ! Channel loop counter
+      integer :: S                      ! Surface loop counter
+      integer :: J                      ! Destination index
+      integer :: MYCHANNEL              ! Possibly offset channel
+      type (Signal_T) ::  signal        ! Signal for this quantity
+
+      ! Exectuable code
+      ! Deal with any channel numbering issues.
+      signal = GetSignal ( quantity%template%signal )
+      myChannel = channel - lbound ( signal%frequencies, 1 ) + 1
+      if ( myChannel < 1 .or. myChannel > quantity%template%noChans ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Invalid channel for spread channel' )
+      do i = 1, quantity%template%noInstances
+        do s = 1, quantity%template%noSurfs
+          do c = 1, quantity%template%noChans
+            if ( c == myChannel ) cycle
+            j = (s-1)*quantity%template%noChans + c
+            if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+              if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
+            end if
+            quantity%values ( j, i ) = &
+              & quantity%values ( (s-1)*quantity%template%noChans + myChannel, i )
+          end do
+        end do
+      end do
+    end subroutine SpreadChannelFill
+
     ! ---------------------------------------------- TransferVectors -----
     subroutine TransferVectors ( source, dest, skipMask )
       ! Copy common items in source to those in dest
@@ -5265,6 +5326,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.201  2003/04/11 23:15:09  livesey
+! Added force option to vector fill, and spreadChannel fill method.
+!
 ! Revision 2.200  2003/04/11 21:56:40  livesey
 ! Added wmo tropopause stuff
 !
