@@ -425,7 +425,7 @@ contains
         call output( 'form ' // form, advance='yes')
         call output( 'position ' // position, advance='yes')
         call output( 'status ' // status, advance='yes')
-        call output( 'file ' // myName, advance='yes')
+        call output( 'file ' // trim(myName), advance='yes')
       endif
 
       if(ErrType /= 0) then
@@ -581,6 +581,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.15  2001/04/25 20:32:29  livesey
+! Bug fix, trim filename on output
+!
 ! Revision 2.14  2001/04/17 23:44:54  pwagner
 ! Fixed bug with ExactName in getpc..
 !
