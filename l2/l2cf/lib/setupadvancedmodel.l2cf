@@ -1,0 +1,18 @@
+; $Id$
+
+;; This L2CF fragment is for use when we wish to setup an 'advanced'
+;; linear forward model (one that is linearised about a different state
+;; from the one in the l2pc files) from a previous run of core.
+begin Construct
+  r1aYTemplate: VectorTemplate, quantities=[band1, band32]
+end Construct
+
+begin Fill
+  r1aX: Vector, template=stateTemplate
+  r1aY: Vector, template=r1aYTemplate
+  Transfer, source=stateCore, destination=r1aX
+  Fill, quantity=r1aY.band1, method=l2aux, sourceL2AUX=b1CoreInput
+  Fill, quantity=r1aY.band32, method=l2aux, sourceL2AUX=b32CoreInput
+end Fill
+  
+  
