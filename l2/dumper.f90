@@ -6,6 +6,7 @@ module DUMPER
   use HGRID, only: HGRID_T
   use INIT_TABLES_MODULE, only: LIT_INDICES, PHYQ_INDICES
   use MLSCommon, only: MLSCHUNK_T
+  use MLSSignals_m, only: radiometers, signals, DUMP
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING
@@ -141,15 +142,19 @@ contains ! =====     Private Procedures     ============================
         call output ( quantity_templates(i)%frequencyCoordinate )
         call dump ( quantity_templates(i)%frequencies, ' Frequencies = ' )
       end if
-      if ( associated(quantity_templates(i)%signal) ) then
-        ! ??? Dump the signal
-      end if
       if ( quantity_templates(i)%radiometer + &
         &  quantity_templates(i)%molecule /= 0 ) &
         &  call output ( '     ' )
       if ( quantity_templates(i)%radiometer /= 0 ) then
         call output ( ' Radiometer = ' )
-        call display_string ( quantity_templates(i)%radiometer )
+        call display_string ( radiometers(quantity_templates(i)%radiometer)%prefix )
+      end if
+      if ( quantity_templates(i)%instrumentModule /= 0 ) then
+        call output ( ' Instrument Module = ' )
+        call display_string ( quantity_templates(i)%instrumentModule )
+      end if
+      if ( quantity_templates(i)%signal /= 0 ) then
+        call dump ( signals( (/ quantity_templates(i)%signal /) ) )
       end if
       if ( quantity_templates(i)%molecule /= 0 ) then
         call output ( ' Molecule = ' )
