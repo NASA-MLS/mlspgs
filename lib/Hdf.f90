@@ -12,7 +12,7 @@ module Hdf
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &        
-    "$Id$"
+    "$Id$"&
     & "$RCSfile$"
   !----------------------------------------------------------
 
@@ -664,6 +664,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.11  2002/10/01 20:26:54  bwknosp
+! Fixed problem
+!
 ! Revision 2.10  2002/10/01 20:09:10  bwknosp
 ! Added RCS info
 !
