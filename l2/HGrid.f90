@@ -538,6 +538,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables/parameters
     real(r8), parameter :: SECONDSINDAY = 24*60*60
+    ! Note this next one is ONLY NEEDED for the case where we have only
+    ! one MAF in the chunk
+    real(r8), parameter :: ORBITALPERIOD = 98.8418*60.0
 
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
@@ -650,15 +653,22 @@ contains ! =====     Public Procedures     =============================
     ! Now longitude
     call EmpiricalLongitude ( hGrid%phi, hGrid%lon )
 
-    ! Now time
+    ! Now time, because this is important to get right, I'm going to put in
+    ! special code for the case where the chunk is of length one.
     call ReadL1BData ( l1bInfo%l1bOAID, "MAFStartTimeTAI", &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-    call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
-      & hGrid%phi, hGrid%time, &
-      & method='spline', extrapolate='Allow' )
+    if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
+      call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
+        & hGrid%phi, hGrid%time, &
+        & method='spline', extrapolate='Allow' )
+    else
+      ! Case where only single MAF per chunk, treat it specially
+      hGrid%time = l1bField%dpField(1,1,1) + &
+        & ( OrbitalPeriod/360.0 ) * ( hGrid%phi - mif1GeodAngle(1) )
+    end if
     call DeallocateL1BData ( l1bField )
-
+      
     ! Solar time
     ! First get fractional day, note this neglects leap seconds.
     ! Perhaps fix this later !???????? NJL. We do have access to the
@@ -714,7 +724,9 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( index ( switches, 'hgrid' ) /= 0 ) then
-      call output ( 'Initial overlaps: ' )
+      call output ( 'Initial Hgrid size: ' )
+      call output ( hGrid%noProfs ) 
+      call output ( ', overlaps: ' )
       call output ( hGrid%noProfsLowerOverlap )
       call output ( ', ' )
       call output ( hGrid%noProfsUpperOverlap, advance='yes' )
@@ -722,21 +734,41 @@ contains ! =====     Public Procedures     =============================
 
     ! Now, we want to ensure we don't spill beyond the processing time range
     if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
+      if ( index ( switches, 'hgrid' ) /= 0 ) &
+        & call output ( 'Hgrid starts before start of dataset, ' )
       call Hunt ( hGrid%time, processingRange%startTime, &
         &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
-      if ( forbidOverspill ) call DeleteHGridOverlap ( hGrid, -1 )
+      if ( forbidOverspill ) then
+        call DeleteHGridOverlap ( hGrid, -1 )
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'deleting overspill.', advance='yes' )
+      else
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'extending overlap.', advance='yes' )
+      end if
     end if
 
     if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
       & processingRange%endTime ) then
+      if ( index ( switches, 'hgrid' ) /= 0 ) &
+        & call output ( 'Hgrid finishes after end of dataset, ' )
       call Hunt ( hGrid%time, processingRange%endTime, &
         & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
       hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
-      if ( forbidOverspill ) call DeleteHGridOverlap ( hGrid, 1 )
+      if ( forbidOverspill ) then
+        call DeleteHGridOverlap ( hGrid, 1 )
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'deleting overspill.', advance='yes' )
+      else
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'extending overlap.', advance='yes' )
+      end if
     end if
 
     if ( index ( switches, 'hgrid' ) /= 0 ) then
-      call output ( 'Final overlaps: ' )
+      call output ( 'Final Hgrid size: ' )
+      call output ( hGrid%noProfs )
+      call output ( ', overlaps: ' )
       call output ( hGrid%noProfsLowerOverlap )
       call output ( ', ' )
       call output ( hGrid%noProfsUpperOverlap, advance='yes' )
@@ -909,6 +941,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.27  2002/05/24 20:56:53  livesey
+! Some fixes for cases where the chunk is only 1 MAF long
+!
 ! Revision 2.26  2002/05/24 16:47:39  livesey
 ! Added some diagnostics
 !
