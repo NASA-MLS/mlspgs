@@ -31,7 +31,7 @@ use Dump_0, only: Dump
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
     & Matrix_SPD_T
   use MatrixTools, only: DumpBlock
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -67,7 +67,7 @@ use Dump_0, only: Dump
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, chunk )
 
   !{Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
@@ -79,6 +79,8 @@ contains
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
+
+    type(MLSChunk_T), intent(in) :: CHUNK
 
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
@@ -364,7 +366,7 @@ contains
       case ( s_sids )
         ! call add_to_retrieval_timing( 'sids', t1 )
         call cpu_time ( t1 )
-        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase)
+        call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -646,17 +648,13 @@ contains
 
           ! Compute f(x)
  
-          fmStat%newHydros = .true.
           fmStat%newScanHydros = .true.
           fmStat%maf = 0
-          fmStat%finished = .false.
 
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
           ! Loop over MAFs
-          do while (.not. fmStat%finished )
-            !??? What if one config set finished but others still had
-            !??? more to do? Ermmm, think of this next time.
+          do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
             do k = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(k)), &
@@ -801,12 +799,10 @@ contains
           end if
 
           fmStat%maf = 0
-          fmStat%finished = .false.
-          fmStat%newHydros = .true.
           fmStat%newScanHydros = .true.
 
           ! Loop over MAFs
-          do while ( .not. fmStat%finished )
+          do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call cpu_time ( t1 )
             ! What if one config set finished but others still had more
@@ -1415,6 +1411,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.76  2001/10/02 16:49:56  livesey
+! Removed fmStat%finished and change loop ordering in forward models
+!
 ! Revision 2.75  2001/10/01 23:30:50  pwagner
 ! Fixed bug in spelling cholesky_solver
 !
