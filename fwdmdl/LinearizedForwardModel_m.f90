@@ -970,15 +970,17 @@ contains ! =====     Public Procedures     =============================
       ! apply the rules they give.
       noSelectors = size ( fmConf%binSelectors )
       do bin = 1, noBins
+        if ( .not. any ( possible ( :, bin ) ) ) cycle
         binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
         do selector = 1, noSelectors
           sel => binSelectors ( fmConf%binSelectors(selector) )
           select case ( sel%selectorType )
           case ( l_nameFragment )
-            call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
-            call get_string ( sel%nameFragment, nameFragment, strip=.true. )
+            call get_string ( l2pcDatabase(bin)%name, binName, strip=.true., cap=.true. )
+            call get_string ( sel%nameFragment, nameFragment, strip=.true., cap=.true. )
             if ( len_trim(nameFragment) /= 0 ) then
-              possible ( :, bin ) = index ( trim(binName), trim(nameFragment) ) /= 0
+              possible ( :, bin ) = possible ( :, bin ) .and. &
+                & index ( trim(binName), trim(nameFragment) ) /= 0
             end if
           case ( l_latitude )
             ! When we say latitude, we really mean an empirical phi.
@@ -987,7 +989,8 @@ contains ! =====     Public Procedures     =============================
               &  NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1) ) / &
               & sel%cost
             if ( sel%exact ) then
-              possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+              possible ( :, bin ) = possible ( :, bin ) .and. &
+                & EssentiallyEqual ( thisCost, 0.0_r8 )
             else
               cost(bin) = cost(bin) + thisCost
             end if
@@ -997,7 +1000,8 @@ contains ! =====     Public Procedures     =============================
               &   binRad%solarZenith(1,1) )**2 ) / &
               & (mafN-maf1+1) ) / sel%cost
             if ( sel%exact ) then
-              possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+              possible ( :, bin ) = possible ( :, bin ) .and. &
+                & EssentiallyEqual ( thisCost, 0.0_r8 )
             else
               cost(bin) = cost(bin) + thisCost
             end if
@@ -1048,7 +1052,8 @@ contains ! =====     Public Procedures     =============================
                 ! If we require an exact match set the possible flag,
                 ! otherwise just report our cost.
                 if ( sel%exact ) then
-                  possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+                  possible ( :, bin ) = possible ( :, bin ) .and. &
+                    & EssentiallyEqual ( thisCost, 0.0_r8 )
                 else
                   cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
                     &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
@@ -1132,6 +1137,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.50  2003/10/29 00:44:53  livesey
+! Bug fix in forceSidebandFraction handling
+!
 ! Revision 2.49  2003/10/28 23:44:15  livesey
 ! Various changes involved in adding the forceFoldedOutput option to
 ! support the hybrid model.
