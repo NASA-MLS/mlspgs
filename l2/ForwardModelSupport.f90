@@ -42,6 +42,7 @@ module ForwardModelSupport
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Error codes
@@ -662,9 +663,16 @@ contains ! =====     Public Procedures     =============================
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
   end subroutine AnnounceError
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.37  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.36  2002/09/25 20:08:26  livesey
 ! Added globalConfig and specificQuantities
 !
