@@ -49,7 +49,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! If dumping gridded data, always give some details of any matching these
   character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
   ! and for these automatically dumped ones, this level of detail for multi-dim
-  integer, parameter :: AUTOMATICDETAILS = 1 ! 1 menas dump, 0 menas no
+  integer, parameter :: AUTOMATICDETAILS = 0 ! 1 means dump, 0 means no
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -305,7 +305,7 @@ contains
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
     ! Dummy arguments
-    type (GriddedData_T), intent(OUT) :: QTY ! Result
+    type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
     integer, optional, intent(in) :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
 
@@ -361,7 +361,7 @@ contains
   ! ----------------------------------------NullifyGriddedData -----
   subroutine NullifyGriddedData ( G )
     ! Given a GriddedData, nullify all the pointers associated with it
-    type ( GriddedData_T ), intent(out) :: G
+    type ( GriddedData_T ) :: G
 
     ! Executable code
     nullify ( g%fileComments )
@@ -383,6 +383,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.22  2003/02/27 18:38:13  pwagner
+! Removed some intent(out); Lahey takes perverse delight in resetting such to undefined
+!
 ! Revision 2.21  2003/02/21 20:59:53  pwagner
 ! Tweaked dump settings
 !
