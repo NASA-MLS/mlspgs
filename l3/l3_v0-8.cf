@@ -1,0 +1,295 @@
+
+; Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+;------------------- RCS Ident Info -----------------------
+;  CHARACTER(LEN=130) :: Id = &
+;  "$Id$"
+;----------------------------------------------------------
+
+; This is the Level 3 Configuration file for version 0.8 of the Level 3 software
+; for the EOS Microwave Limb Sounder (MLS).
+;
+; The task of the Level 3 software is to construct daily and monthly synoptic
+; maps from the Level 2 data using Fourier Transform Synoptic Mapping.
+;
+; For more details on the software see:
+;    EOS MLS Level 3 Algorithm Theoretical Basis
+;      JPL D-xxxxx
+;    EOS MLS Level 3 File Description with Data Dictionary
+;      JPL D-xxxxx
+;    EOS MLS Level 3 software users' guide
+;      JPL D-xxxxx
+;    EOS MLS Level 3 Software Design
+;      JPL D-xxxxx
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l3cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l3cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; The way the SDP toolkit works, the software cannot control
+    ;; filenames; it is given them through the PCF.  This means that
+    ;; all the software can do is ensure that it is being asked to
+    ;; produce an appropriately named file.
+    ;;
+    ;; So here we state what version information we expect to see embedded in
+    ;; the filenames.
+    ;;
+    OutputVersionString="V0-8"
+    ;;
+    ;; Latitude Grid for Maps -- starting & maximum values
+    ;;
+    latGridMap= -82.0:82.0
+    ;;
+    ;; increment between points of Latitude Grid
+    ;;
+    dLat=2.0
+    ;;
+    ;; L2 Nominal Latitude Grid -- Northern latitudes only (expanded from pole to
+    ;; pole, and given bin lower and upper bounds, by the software)
+    ;;
+    l2nomLats = [ 0.0,  1.5,  3.0,  4.5,  5.9,  7.4,  8.9, 10.4, 11.9, 13.4, 14.8, $
+                 16.3, 17.8, 19.3, 20.8, 22.3, 23.7, 25.2, 26.7, 28.2, 29.7, 31.1, $
+                 32.6, 34.1, 35.6, 37.1, 38.5, 40.0, 41.5, 42.9, 44.4, 45.9, 47.4, $
+                 48.8, 50.3, 51.7, 53.2, 54.7, 56.1, 57.6, 59.0, 60.4, 61.9, 63.3, $
+                 64.7, 66.1, 67.5, 68.9, 70.3, 71.6, 73.0, 74.2, 75.5, 76.7, 77.8, $
+                 78.9, 79.9, 80.7, 81.3, 81.7, 81.8 ]
+    ;;
+    ;; Template for the fixed, "collection" portion of the L2GP Diagnostics file
+    ;; name (without version, cycle, date, or ".dat")
+    ;;
+    L2dgType="MLS-Aura_L2GP_Diagnostics_"
+    ;;
+    ;; Template for the L3DZ Standard file
+    ;;
+    stdType="MLS-Aura_L3DZ_Standard_"
+    ;;
+    ;; Template for the L3DZ Diagnostic file
+    ;;
+    dgType="MLS-Aura_L3DZ_Diagnostic_"
+    ;;
+    ;; Minimum number of days of input needed for L3 processing to proceed.  If
+    ;; fewer than this are found/read in the input window, CORE processing is
+    ;; skipped for the product.
+    ;;
+    MinDays=15
+    ;;
+    ;; Max Size of Level 2 Data Gap Allowed --
+    ;; We can specify this in minutes, MAFs or orbits (the output of the parser
+    ;; will be in the time default of seconds).
+    ;;
+    MaxGap=3 minutes
+    ;;
+    ;; Number for "largest differences" diagnostics
+    ;;
+    N=10
+    ;;
+    ;; intpMethod -- method of interpolation:
+    ;;               lin = linear
+    ;;               csp = cubic spline
+    intpMethod=lin
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l3cf gives input parameters for maps and zonal means of
+; Standard products.
+;
+; NOTE: in assigning negative numbers, maintain a space between "=" or ":" and the
+;       "-" (the parser will see "=-" or ":-" as a type of "compound operator.")
+;
+BEGIN Standard
+    ;;
+    ;; l3prodName -- level 3 product name
+    ;; timeD -- synoptic time (HH:MM:SS)
+    ;; mode -- asc = ascending
+    ;;         des = descending
+    ;;         com = combined
+    ;;         all = ascending, descending, and combined
+    ;;         ado = ascending & descending only
+    ;; label -- mapping to a label of a specification in the Output section
+    ;; longGrid -- starting & max values of Longitude Grid for the output data
+    ;; dLon -- increment between points of Longitude Grid
+    ;; l3presLvl -- product pressure levels (min:max of L2 values to use),
+    ;;              combined mode
+    ;; ascPresLvl -- ascending pressure levels
+    ;; desPresLvl -- descending pressure levels
+    ;; rangFrequency -- starting:max values of Range of frequencies to be used
+    ;; rangWavenumber -- range of wavenumbers to be used (min:max of range)
+    ;;
+    std,l3prodName="ClO",timeD="12:00:00",mode=ado,label="CLOL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="GeopotentialHeight",timeD="12:00:00",mode=com,label="ZL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="H2O",timeD="12:00:00",mode=com,label="H2OL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="HCl",timeD="12:00:00",mode=com,label="HCLL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.1:100.0,ascPresLvl=0.1:100.0,desPresLvl=0.1:100.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="HCN",timeD="12:00:00",mode=com,label="HCNL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=22.0:215.0,ascPresLvl=22.0:215.0,desPresLvl=22.0:215.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="HNO3",timeD="12:00:00",mode=com,label="HNO3L3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="N2O",timeD="12:00:00",mode=com,label="N2OL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=1.0:215.0,ascPresLvl=1.0:215.0,desPresLvl=1.0:215.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="O3",timeD="12:00:00",mode=all,label="O3L3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.316:316.0,ascPresLvl=0.01:3.16,desPresLvl=0.01:3.16, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="OH",timeD="12:00:00",mode=ado,label="OHL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.1:10.0,ascPresLvl=0.1:10.0,desPresLvl=0.1:10.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    std,l3prodName="Temperature",timeD="12:00:00",mode=com,label="TL3DM", $
+        longGrid= -180.0:176.0,dLon=4.0, $
+        l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
+        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+    ;;
+END Standard
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l3cf gives input parameters for the diagnostic products, for
+; which only zonal means and monthly maps are calculated by Level 3.
+;
+BEGIN Diagnostic
+    ;;
+    ;; l3prodName -- diagnostic product name
+    ;; l3PresLvl -- pressure levels (min:max of L2 values to use)
+    ;; longGrid -- starting & max values of Longitude Grid for the output data
+    ;; dLon -- increment between points of Longitude Grid
+    ;;
+    dg,l3prodName="temp_118a",l3PresLvl=0.001:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="temp_118b",l3PresLvl=0.001:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="temp_240",l3PresLvl=1.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="h2o_118",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="h2o_190",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="h2o_240",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="h2o_640",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="o3_190",l3PresLvl=0.1:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="o3_240_4",l3PresLvl=0.001:464.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="o3_240_9",l3PresLvl=1.0:464.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="o3_640",l3PresLvl=0.1:464.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="clo_190",l3PresLvl=0.1:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="clo_640",l3PresLvl=0.1:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="n2o_190",l3PresLvl=1.0:464.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="n2o_640",l3PresLvl=1.0:464.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="oh_2514h",l3PresLvl=0.01:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="oh_2514v",l3PresLvl=0.01:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="oh_2510h",l3PresLvl=0.01:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="oh_2510v",l3PresLvl=0.01:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="ho2_650",l3PresLvl=0.1:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="ho2_660",l3PresLvl=0.1:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="bro_625",l3PresLvl=1.0:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="bro_650",l3PresLvl=1.0:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="so2_190",l3PresLvl=3.2:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="so2_640",l3PresLvl=3.2:100.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction1",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction2",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction3",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction4",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction5",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction6",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction7",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction8",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction9",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction10",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction11",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction12",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction13",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction14",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction15",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction16",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    dg,l3prodName="extinction17",l3PresLvl=46.0:1000.0, $
+       longGrid= -180.0:176.0,dLon=4.0
+    ;;
+END Diagnostic
+;
+; -----------------------------------------------------------------------------
+;
+; In this last section of the l3cf, we detail how the output data
+; created in the core module are sent to the various output files.
+;
+BEGIN Output
+    ;;
+    ;; Each output Level 3 product is described on a separate line, with the
+    ;; name of the corresponding MCF file, and an expandable file name template
+    ;; containing fields not related to granule-level identification.
+    ;;
+    CLOL3DM: out, mcf = "ML3DCLO.001.MCF", file="MLS-Aura_$level_ClO_"
+    ZL3DM: out, mcf = "ML3DZ.001.MCF", file="MLS-Aura_$level_Z_"
+    H2OL3DM: out, mcf = "ML3DH2O.001.MCF", file="MLS-Aura_$level_H2O_"
+    HCLL3DM: out, mcf = "ML3DHCL.001.MCF", file="MLS-Aura_$level_HCl_"
+    HCNL3DM: out, mcf = "ML3DHCN.001.MCF", file="MLS-Aura_$level_HCN_"
+    HNO3L3DM: out, mcf = "ML3DHNO3.001.MCF", file="MLS-Aura_$level_HNO3_"
+    N2OL3DM: out, mcf = "ML3DN2O.001.MCF", file="MLS-Aura_$level_N2O_"
+    O3L3DM: out, mcf = "ML3DO3.001.MCF", file="MLS-Aura_$level_O3_"
+    OHL3DM: out, mcf = "ML3DOH.001.MCF", file="MLS-Aura_$level_OH_"
+    TL3DM: out, mcf = "ML3DT.001.MCF", file="MLS-Aura_$level_T_"
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+;
+; $Log$
+;
