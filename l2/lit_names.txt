@@ -17,6 +17,8 @@ addnoise
 andMasks
 apriori
 
+binmax
+binmin
 both
 
 chisqchan
@@ -133,6 +135,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.33  2003/04/23 17:06:36  livesey
+# Added binmax binmin fills
+#
 # Revision 2.32  2003/04/22 00:18:04  dwu
 # move boundarypressure to lib
 #
