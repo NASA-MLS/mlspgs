@@ -1609,9 +1609,10 @@ contains
           ! Determine where to use Gauss-Legendre instead of a rectangle.
 
           do_gl = .false.
-          call path_contrib ( incoptdepth, e_rflty, fwdModelConf%tolerance, do_gl )
+          call path_contrib ( incoptdepth(1:npc), e_rflty, &
+            & fwdModelConf%tolerance, do_gl(1:npc) )
 
-          call get_GL_inds ( do_gl, gl_inds, gl_ndx )
+          call get_GL_inds ( do_gl(1:npc), gl_inds, gl_ndx )
 
           j = size(gl_inds)
 
@@ -2429,6 +2430,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.108  2003/01/18 03:36:09  vsnyder
+! Undo ill-advised cosmetic changes -- that weren't cosmetic
+!
 ! Revision 2.106  2003/01/16 23:13:03  livesey
 ! Added MaxRefraction stuff
 !
