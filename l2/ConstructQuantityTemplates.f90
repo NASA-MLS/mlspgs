@@ -36,13 +36,13 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use MLSSignals_m, only:  IsModuleSpacecraft, &
     & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
     & GetRadiometerFromSignal, GetSignal,&
-    & Signal_T
+    & Signal_T, SIGNALS, MODULES
   use OUTPUT_M, only: OUTPUT
   use Parse_Signal_m, only: PARSE_SIGNAL
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
     & QuantityTemplateCounter
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
@@ -56,6 +56,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 ! -----     Private declarations     -----------------------------------
 
   integer :: ERROR
+  logical, parameter :: DEEBUG = .FALSE.      ! Normally FALSE
 
 ! Error codes for "announce_error"
   integer, parameter :: No_Error_Code = 0
@@ -99,11 +100,13 @@ contains ! =====     Public Procedures     =============================
     integer :: FrequencyCoordinate
     integer :: HGridIndex
     integer :: I                        ! Loop counter
+    integer :: IERR                     ! So display_string doesn't crash and burn
     integer :: InstrumentModule         ! Database index
     integer :: Key            ! Field name, F_... from Init_Tables_Module
     character(len=127) :: SIGNALSTRING
     logical :: LOGBASIS                 ! To place in quantity
     integer :: Molecule
+    character(len=127) :: moleculeString
     integer :: Natural_Units(first_lit:last_lit)
     integer :: NoInstances
     integer :: NoSurfs
@@ -178,6 +181,8 @@ contains ! =====     Public Procedures     =============================
     signal = 0
     vGridIndex = 0
     sGridIndex = 0
+    signalString = ' '
+    moleculeString = ' '
 
     ! First we'll loop over the MLSCF keys.
 
@@ -197,7 +202,10 @@ contains ! =====     Public Procedures     =============================
         logBasis = (value == l_true)
       case ( f_module)
         instrumentModule = decoration(decoration(subtree(2,son)))
-      case ( f_molecule );          molecule = value
+!      case ( f_molecule );          molecule = value  ! I don't understand this
+      case ( f_molecule )
+        molecule = value
+        call get_string( sub_rosa(subtree(2,son)), moleculeString, strip=.true. )
       case ( f_radiometer )
         radiometer = decoration(decoration(subtree(2,son)))
         instrumentModule = GetModuleFromRadiometer(radiometer)
@@ -279,6 +287,13 @@ contains ! =====     Public Procedures     =============================
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+
+      ! Make absolutely certain template's dimensions are what we want
+      if ( quantityType == l_chiSqMMIF ) then
+        qty%noChans = 1
+        qty%instanceLen = qty%NoSurfs
+        qty%frequencyCoordinate = l_channel
+      endif
         
     elseif ( majorFrame ) then
 
@@ -311,6 +326,8 @@ contains ! =====     Public Procedures     =============================
       if ( quantityType == l_chiSqMMAF ) then
         qty%noChans = 1
         qty%instanceLen = 1
+      elseif ( quantityType == l_chiSqCHAN ) then
+        qty%instanceLen = qty%noChans
       endif
         
    ! for losTransFunc type of quantity 
@@ -405,6 +422,43 @@ contains ! =====     Public Procedures     =============================
     if ( majorFrame ) then
       qty%minorFrame = .false.
       qty%majorFrame = .true.
+    endif
+    if ( DEEBUG .or. index(switches,'qtmp') /= 0) then
+      call output( 'Template name: ', advance='no' )
+      call display_string ( qty%name, advance='no', ierr=ierr )
+      call output( '   quantityType: ', advance='no' )
+      call output( qty%quantityType, advance='no' )
+      call output( '   major frame? ', advance='no' )
+      call output( qty%majorFrame, advance='no' )
+      call output( '   minor frame? ', advance='no' )
+      call output( qty%minorFrame, advance='yes' )
+      call output( '   signal string: ', advance='no' )
+      call output( trim(signalString), advance='no' )
+      call output( '    signal: ', advance='no' )
+      if ( qty%signal < 1 ) then
+        call output( ' (none available) ', advance='yes' )
+      else
+        call display_string ( signals(qty%signal)%name, advance='yes', ierr=ierr )
+      endif
+      call output( '   Instrument module: ', advance='no' )
+      if ( qty%instrumentModule < 1 ) then
+        call output( ' (none available) ', advance='yes' )
+      else
+        call display_string ( modules(qty%instrumentModule)%name, advance='yes', &
+          & ierr=ierr )
+      endif
+!      call output( '    Molecule: ', advance='no' )
+!      call display_string ( qty%Molecule, advance='yes', ierr=ierr )
+      call output( '   molecule string: ', advance='no' )
+      call output( trim(moleculeString), advance='yes' )
+      call output ( '   noChans = ' )
+      call output ( qty%noChans, advance='no' )
+      call output ( ' noSurfs = ' )
+      call output ( qty%noSurfs, advance='no' )
+      call output ( ' noInstances = ' )
+      call output ( qty%noInstances, advance='no' )
+      call output ( ' instanceLen = ' )
+      call output ( qty%instanceLen, advance='yes' )
     endif
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
@@ -779,6 +833,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.57  2001/10/12 23:15:05  pwagner
+! Fixed biggest erros in diagnostic quantity templates
+!
 ! Revision 2.56  2001/10/02 23:12:50  pwagner
 ! More chi^2 fixes
 !
