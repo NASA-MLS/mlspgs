@@ -24,7 +24,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
     & PCFL2CFSAMECASE
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
     & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
@@ -218,15 +218,20 @@ contains ! =====     Public Procedures     =============================
               case ( f_quantities )
                 do in_field_no = 2, nsons(gson)
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  call writeL2GPData ( l2gpDatabase(db_index), swfid )
-                  numquantitiesperfile = numquantitiesperfile+1
-                  if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
-                    call announce_error ( son, &
-                      & 'Attempt to write too many l2gp quantities to a file', &
-                      & numquantitiesperfile )
-                    numquantitiesperfile = MAXQUANTITIESPERFILE
-                  endif
-                  quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+                  if ( db_index >= 1 ) then
+                    call writeL2GPData ( l2gpDatabase(db_index), swfid )
+                    numquantitiesperfile = numquantitiesperfile+1
+                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                      call announce_error ( son, &
+                        & 'Attempt to write too many l2gp quantities to a file', &
+                        & numquantitiesperfile )
+                      numquantitiesperfile = MAXQUANTITIESPERFILE
+                    endif
+                    quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+                  else
+                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                      & 'Unable to write quantity to l2gp file, perhaps no chunks processed' )
+                  end if
                 end do ! in_field_no = 2, nsons(gson)
               case ( f_overlaps )
                 ! ??? More work needed here
@@ -341,16 +346,10 @@ contains ! =====     Public Procedures     =============================
                   if ( DEBUG ) &
                     & call output ( "computing db index", advance='yes')
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  if ( DEBUG ) then
-                    call output ( "db index:  ", advance='no')
-                    call output ( db_index, advance='yes')
-                    call output ( "db size:  ", advance='no')
-                    call output ( size(l2auxDatabase), advance='yes')
-                  end if
-                  if ( db_index <= size(l2auxDatabase) ) then
+                  if ( db_index >= 1 ) then
                     call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, &
-                    & WriteCounterMAF=&
-                    & (COUNTERFEITCOUNTERMAF .and. numquantitiesperfile == 0) )
+                      & WriteCounterMAF=&
+                      & (COUNTERFEITCOUNTERMAF .and. numquantitiesperfile == 0) )
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
                       & "attempting to fill quantity name", advance='yes')
@@ -360,16 +359,12 @@ contains ! =====     Public Procedures     =============================
                         & numquantitiesperfile )
                       numquantitiesperfile = MAXQUANTITIESPERFILE
                     endif
-                       call get_string &
+                    call get_string &
                       & ( l2auxDatabase(db_index)%name, &
                       &     QuantityNames(numquantitiesperfile) )
                   else
-                    call announce_error ( root, &
-              	      &  "l2aux database smaller than db_index  ")
-                    call output ( "db size:  ", advance='no')
-                    call output ( size(l2auxDatabase), advance='yes')
-                    call output ( "db index:  ", advance='no')
-                    call output ( db_index, advance='yes')
+                    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                      & 'Unable to save l2aux quantity, perhaps no chunks processed' )
                   end if
                 end do ! in_field_no = 2, nsons(gson)
               case ( f_overlaps )
@@ -680,6 +675,10 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.43  2001/11/20 00:48:54  livesey
+! Alleviated one bug in zero chunks case, but there's another one to
+! fix later.  We need to decide how to handle this one.
+!
 ! Revision 2.42  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
