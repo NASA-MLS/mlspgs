@@ -154,7 +154,6 @@ contains ! =================================== Public procedures
     use MLSCommon, only: R8
     use Toggles, only: GEN, TOGGLE
     use Expr_m, only: EXPR
-    use Dump_0, only: DUMP
 
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -317,9 +316,6 @@ contains ! =================================== Public procedures
     z1 = zTrans - scale/2.0
     z2 = zTrans + scale/2.0
 
-    call dump ( operMapped ( :,:,1,1,1,1 ), 'Operational slice' )
-    call dump ( cliMapped ( :,:,1,1,1,1 ), 'Cli slice' )
-
     ! Now we're going to fill in the rest of the field
     do day = 1, newGrid%noDates
       do sza = 1, newGrid%noSzas
@@ -382,6 +378,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.12  2003/05/09 02:13:05  livesey
+! Removed a dump
+!
 ! Revision 2.11  2003/05/09 01:55:14  livesey
 ! Sped up Merge by using new SliceGriddedData routine.
 !
