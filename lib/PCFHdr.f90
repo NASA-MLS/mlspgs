@@ -31,18 +31,18 @@ MODULE PCFHdr
 
 CONTAINS
 
-!--------------------------------------------------------
+!------------------------------------------------------------
    SUBROUTINE CreatePCFAnnotation (mlspcfN_pcf_start, anText)
-!--------------------------------------------------------
+!------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine stores the PCF as an annotation for writing to file headers.
 
 ! Arguments
 
-      CHARACTER (LEN=1), POINTER :: anText(:)
+      INTEGER, INTENT(IN) :: mlspcfN_pcf_start
 
-      INTEGER :: mlspcfN_pcf_start
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
 ! Parameters
 
@@ -173,6 +173,9 @@ END MODULE PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.2  2001/03/09 21:32:45  nakamura
+!# Added INTENT(IN) for pcf number arg.
+!#
 !# Revision 2.1  2001/03/09 21:10:32  nakamura
 !# Routines for writing the PCF to an HDF file as an annotation.
 !#
