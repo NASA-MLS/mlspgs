@@ -58,19 +58,25 @@ begin Fill
 
   ;; --------------------------------------------- hiRes Fills
 
-  ;; This macro interpolates standard resolution quantities to the
-  ;; hiRes equivalents. 
-  !define(fillHiRes,{Fill, quantity=$1, sourceQuantity=!trimHR($1),!dnl
+  !define(fillWithClimatologyHR,{Fill, quantity=apriori.$1_HR, method=gridded, $
+    sourceGrid=grid$1!nl})
+  !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!trimHR($1),!dnl
      method=vector, /interpolate!nl})
 
-  !ifdef(skipHiRes,{},{
-    !fillHiRes(apriori.temperature_HR)
-    !forall(fillHiRes,!makelist(apriori.,{},!allHiResMolecules))
-    !fillHiRes(apriori.tropH2O_HR)
-    ;; Get RHI_HR from RHI.  Not sure if this should really be from
-    ;; H2O_HR and temperature_HR
-    !fillHiRes(apriori.RHI_HR)
-  }) ;; End if not skipHiRes
+  !ifdef(gotClimatology,{
+    !ifdef(skipHiRes,{},{
+      ;; Could write some fancy macros here to get the list as the
+      ;; intersection of allClimatologicalSpecies and allHiResMolecules,
+      ;; However, life is too short!
+      !fillWithClimatologyHR(Temperature)
+      !fillWithClimatologyHR(H2O)
+      !fillWithClimatologyHR(O3)
+      Fill, quantity=apriori.tropH2O_HR, method=gridded, sourceGrid=gridH2O
+      !interpolateToHiRes(apriori.tropH2O_HR)
+      ;; Get RHI_HR from RHI.  Not sure if this should really be from
+      ;; H2O_HR and temperature_HR
+      !interpolateToHiRes(apriori.RHI_HR)
+    })}) ;; End if not skipHiRes and got climatology
 end Fill
 
 ;; ----------------------------------- Lesser state
@@ -216,16 +222,21 @@ begin Fill
   Fill, quantity=aprioriPrecision.tropH2O, sourceQuantity=aprioriPrecision.h2o, $
     method=vector, /interpolate
 
+  ;; This macro interpolates standard resolution quantities to the
+  ;; hiRes equivalents. 
+  !define(interpolateToHiRes,{Fill, quantity=$1, sourceQuantity=!trimHR($1),!dnl
+     method=vector, /interpolate!nl})
+
   !ifdef(skipHiRes,{},{
-    !fillHiRes(aprioriPrecision.temperature_HR)
-    !forall(fillHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
-    !fillHiRes(aprioriPrecision.tropH2O_HR)
+    !interpolateToHiRes(aprioriPrecision.temperature_HR)
+    !forall(interpolateToHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
+    !interpolateToHiRes(aprioriPrecision.tropH2O_HR)
     ;; Get RHI_HR from RHI.  Not sure if this should really be from
     ;; H2O_HR and temperature_HR
-    !fillHiRes(aprioriPrecision.RHI_HR)
+    !interpolateToHiRes(aprioriPrecision.RHI_HR)
     ;; Get gph_HR from gph.  Not sure if this should really be from
     ;; temperature_HR
-    !fillHiRes(aprioriPrecision.gph_HR)
+    !interpolateToHiRes(aprioriPrecision.gph_HR)
   }) ;; End if not skipHiRes
 
   ;; Setup the low and high bounds for stuff that needs them.
@@ -238,12 +249,12 @@ begin Fill
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
 
   !ifdef(skipHiRes,{},{
-    !fillHiRes(lowBound.temperature_HR)
-    !fillHiRes(highBound.temperature_HR)
-    !fillHiRes(lowBound.tropH2O_HR)
-    !fillHiRes(highBound.tropH2O_HR)
-    !forall(fillHiRes,!makelist(lowBound.,{},!allHiResMolecules))
-    !forall(fillHiRes,!makelist(highBound.,{},!allHiResMolecules))
+    !interpolateToHiRes(lowBound.temperature_HR)
+    !interpolateToHiRes(highBound.temperature_HR)
+    !interpolateToHiRes(lowBound.tropH2O_HR)
+    !interpolateToHiRes(highBound.tropH2O_HR)
+    !forall(interpolateToHiRes,!makelist(lowBound.,{},!allHiResMolecules))
+    !forall(interpolateToHiRes,!makelist(highBound.,{},!allHiResMolecules))
   }) ;; End if not skipHiRes
 
   ;; Now set the smoothing weights - we'll use a profile fill, even if

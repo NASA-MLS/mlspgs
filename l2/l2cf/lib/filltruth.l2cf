@@ -37,12 +37,14 @@ begin Fill
 
   ;; --------------------------------------------- hiRes Fills
 
+  !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
   !ifdef(skipHiRes,{},{
-    !fillHiRes(truth.temperature_HR)
-    !forall(fillHiRes,!makelist(truth.,{},!allHiResMolecules))
-    ;; Get RHI_HR from RHI_HR.  Not sure if this should really be from
-    ;; H2O_HR and temperature_HR
-    !fillHiRes(truth.RHI_HR)
+    !fillWithL2GPHR(Temperature_HR)
+    !forall(fillWithL2GPHR,!allHiResMolecules)
+    ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+    ;; However, RHI is not an important input to e.g. sids.
+    !interpolateToHiRes(truth.RHI_HR)
   })
 
   ;; --------------------------------------------- trop H2O
