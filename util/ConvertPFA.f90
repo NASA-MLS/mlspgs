@@ -92,7 +92,7 @@ program ConvertPFA
   end if
 
   write ( *, '(a)' ) 'pfaData, file="' // outfile(:i-1) // '$' // &
-    & trim(outfile(i+len_trim(signal):)) // '": "unformatted", $' 
+    & trim(outfile(i+len_trim(signal):)) // '", $' 
 
   write ( *, '(a)' ) '  temperatures=pfaTgrid, vGrid=pfaVgrid, signal="' // &
     & trim(signal)
@@ -155,6 +155,9 @@ program ConvertPFA
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.3  2004/06/17 01:04:37  vsnyder
+! Added 'use Machine' in case it's needed for GETARG
+!
 ! Revision 1.2  2004/06/17 00:42:00  vsnyder
 ! Repaired a comment
 !
