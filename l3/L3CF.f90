@@ -6,14 +6,14 @@
 MODULE L3CF
 !===============================================================================
 
-   USE L3DMData
-   USE MLSCommon
    USE MLSCF
-   USE MLSStrings
+   USE MLSCommon
+   USE MLSL3Common
    USE MLSMessageModule
-   USE SDPToolkit
-   USE PCFModule
    USE MLSPCF
+   USE MLSStrings
+   USE PCFModule
+   USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
 
@@ -77,13 +77,6 @@ MODULE L3CF
      INTEGER :: mcf				! PCF number for the MCF
 
      CHARACTER (LEN=FileNameLen) :: fileTemplate	! file name from CF
-
-     INTEGER :: bpFlag				! bypass the PCF file name
-
-     INTEGER :: nGrids				! number of possible grids
-
-     CHARACTER (LEN=GridNameLen), DIMENSION(maxNumGrids) :: quantities
-	! names of possible grids, dimensioned (nGrids)
 
    END TYPE L3CFProd_T
 
@@ -162,7 +155,7 @@ CONTAINS
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
       CHARACTER (LEN=FileNameLen) :: match, mcfName
 
-      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j
+      INTEGER :: err, i, iGlob, iLab, iMap, iOut, iVer, indx, j
       INTEGER :: mlspcf_mcf, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
@@ -370,7 +363,7 @@ CONTAINS
 
        l3cf(i)%mcf = mlspcf_mcf
 
-! Find the file template, bypass flag from Output; save them in L3CFProd_T
+! Find the file template from Output; save it in L3CFProd_T
 
        indx = LinearSearchStringArray( &
                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
@@ -379,28 +372,6 @@ CONTAINS
        l3cf(i)%fileTemplate = &
                           cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
-       indx = LinearSearchStringArray( &
-                    cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'bypassPCF')
-       IF (indx /= 0) THEN
-         l3cf(i)%bpFlag = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%RealValue
-       ELSE
-         l3cf(i)%bpFlag = 0
-       ENDIF
-
-! Find/save the number of possible grids & their names
-
-       iq = LinearSearchStringArray( &
-                   cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'quantities')
-
-       DO j = 1, maxNumGrids
-          ig = iq + (j-1)
-          l3cf(i)%quantities(j) = &
-                            cf%Sections(iOut)%Entries(iLab)%Cells(ig)%CharValue
-          IF (cf%Sections(iOut)%Entries(iLab)%Cells(ig)%More == 0) EXIT
-       ENDDO
-
-       l3cf(i)%nGrids = j
-      
     ENDDO
 
 !-------------------------
@@ -412,6 +383,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.5  2000/12/07 21:21:50  nakamura
+! Changed negative return from SearchPCFNames to be a PCF number of -1.
+!
 ! Revision 1.4  2000/12/07 19:31:38  nakamura
 ! Updated for file name return from SearchPCFNames.
 !
