@@ -10,6 +10,8 @@ begin Fill
   apriori: Vector, template=stateTemplate
   aprioriPrecision: Vector, template=stateTemplate
   length: Vector, template=stateTemplate, /lengthScale
+  lowBound: Vector, template=stateTemplate, /lowBound
+  highBound: Vector, template=stateTemplate, /highBound
 end Fill
 
 ;; ----------------------------------- Fill with climatology
@@ -220,6 +222,11 @@ begin Fill
   Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
     explicitValues= !baselinePrecision
   })
+
+  ;; Setup the low and high bounds for stuff that needs them.
+  Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
+  Fill, quantity=lowBound.h2o, method=profile, $
+    profileValues=[ 1000mb : 0.1ppmv, 101mb : 0.1ppmv, 101mb : -1.0e6 ppmv ]
 
 end Fill
 
