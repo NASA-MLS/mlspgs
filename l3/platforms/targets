@@ -178,11 +178,14 @@ L2Interface.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
 L3DMData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-#L3DZData.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+L3DMDiag.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.17  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.16  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
