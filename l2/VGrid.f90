@@ -5,9 +5,10 @@
 module vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: DUMP
   use EXPR_M, only: EXPR
-  use INIT_TABLES_MODULE, only: F_COORDINATE, F_NUMBER, F_PER_DECADE, F_START, &
+  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, F_START, &
     & F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
     & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_LINEAR, L_LOGARITHMIC, &
     & L_NONE, L_PRESSURE, L_THETA, L_ZETA, LIT_INDICES, PHYQ_Angle, &
@@ -37,7 +38,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
                                    ! L_None if empty
     integer :: noSurfs             ! Number of surfaces
     real(r8), dimension(:), pointer :: surfs => NULL()  ! Array of surfaces
-                                   ! (actually dimensioned noSurfs)
+                                   ! (actually dimensioned 1:noSurfs)
   end type vGrid_T
 
   interface DUMP
@@ -57,8 +58,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 
 ! Error codes for "announce_error"
   integer, private, parameter :: ExtraIf = 1
-  integer, private, parameter :: InconsistentSizes = ExtraIf + 1
-  integer, private, parameter :: InconsistentUnits = InconsistentSizes + 1
+  integer, private, parameter :: InconsistentUnits = ExtraIf + 1
   integer, private, parameter :: NotPositive = InconsistentUnits + 1
   integer, private, parameter :: RequiredIf = NotPositive + 1
   integer, private, parameter :: RequireExplicit = RequiredIf + 1
@@ -89,14 +89,13 @@ contains ! =====     Public Procedures     =============================
     integer :: CoordType           ! One of t_vGridCoord's literals
     integer :: FIELD               ! First son of Son
     integer :: FIELD_INDEX         ! F_..., see Init_Tables_Module
+    integer :: FORMULA             ! Index in tree of formula field
     logical :: GOT_FIELD(field_first:field_last)
     integer :: I, J, K, L, N       ! Loop counter or limit
     integer :: NUMBER              ! Index in tree of Number field
-    integer :: PER_DECADE          ! Index in tree of Per_decade field
     integer :: PREV_UNITS          ! Units of previous element of Value field
     integer :: SON                 ! Son of Root
     integer :: START               ! Index in tree of start field
-    integer :: STATUS              ! From Allocate
     double precision :: STEP       ! Step for linear grid
     double precision :: STOP(2)    ! Value of Stop field
     integer :: STOP_UNITS(2)       ! Units of Stop field
@@ -126,10 +125,10 @@ contains ! =====     Public Procedures     =============================
       select case ( field_index )
       case ( f_coordinate )
         vGrid%verticalCoordinate = decoration(value)
+      case ( f_formula )
+        formula = son
       case ( f_number )
         number = son
-      case ( f_per_decade )
-        per_decade = son
       case ( f_start )
         start = son
       case ( f_stop )
@@ -148,26 +147,24 @@ contains ! =====     Public Procedures     =============================
     case ( l_explicit )
       call check_fields ( root, l_explicit, got_field, &
         & required=(/ f_values /), &
-        & extra=(/ f_number, f_per_decade, f_start, f_stop /) )
+        & extra=(/ f_formula, f_start, f_stop /) )
       vgrid%noSurfs = nsons(value_field)-1
-      allocate ( vgrid%surfs(vgrid%noSurfs), stat=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//"vGrid%surfs" )
+      call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+        & ModuleName )
       if ( got_field(f_values) ) &
         & prev_units = check_units ( value_field, f_values, vgrid%surfs )
     case ( l_linear )
       call check_fields ( root, l_linear, got_field, &
         & required=(/ f_number, f_start, f_stop /), &
-        & extra=(/ f_per_decade, f_values /) )
+        & extra=(/ f_formula, f_values /) )
       if ( got_field(f_number) ) then
         call expr ( subtree(2,number), units, values )
         if ( units(1) /= phyq_dimensionless ) &
           & call announce_error ( subtree(1,number), unitless )
         vgrid%noSurfs = nint(values(1))
         if ( vgrid%noSurfs < 2 ) call announce_error ( root, tooFew )
-        allocate ( vgrid%surfs(vgrid%noSurfs), stat=status )
-        if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//"vGrid%surfs" )
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+          & ModuleName )
       end if
       if ( got_field(f_start) ) then
         call expr ( subtree(2,start), units, values )
@@ -185,47 +182,34 @@ contains ! =====     Public Procedures     =============================
       end if
     case ( l_logarithmic )
       call check_fields ( root, l_logarithmic , got_field, &
-        & required=(/ f_number, f_per_decade, f_start /), &
+        & required=(/ f_formula, f_start /), &
         & extra=(/ f_stop, f_values /) )
       vgrid%noSurfs = 0
-      if ( got_field(f_number) ) then
-        j = nsons(number)
+      if ( got_field(f_formula) ) then
+        j = nsons(formula)
         do i = 2, j ! Compute total number of surfaces
-          call expr ( subtree(i,number), units, values )
-          if ( units(1) /= phyq_dimensionless ) &
-            call announce_error ( subtree(1,number), wrongUnits )
+          call expr ( subtree(i,formula), units, values )
+          if ( units(1) /= phyq_dimensionless .or. &
+            &  units(2) /= phyq_dimensionless ) &
+            call announce_error ( subtree(1,formula), wrongUnits )
           vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
         end do
         if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
-        if ( error == 0 ) then
-          if ( nsons(per_decade) /= j ) &
-            & call announce_error ( root, inconsistentSizes )
-        end if
       end if
       if ( error == 0 ) then
-        allocate ( vgrid%surfs(vgrid%noSurfs), stat=status )
-        if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & MLSMSG_Allocate//"vGrid%surfs" )
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+          & ModuleName )
         k = 1
         n = 1 ! One less surface the first time, since we have one at the start.
         call expr ( subtree(2,start), units, values )
         vgrid%surfs(1) = values(1)
         do i = 2, j
-          call expr ( subtree(i,per_decade), units, values )
-          if ( values(1) <= 0.0d0 ) then
-            call announce_error ( subtree(1,per_decade), notPositive )
+          call expr ( subtree(i,formula), units, values )
+          if ( values(2) <= 0.0d0 ) then
+            call announce_error ( subtree(1,formula), notPositive )
             exit
           end if
-          step = 10.0 ** (-1.0d0/values(1))
-          if ( units(1) /= phyq_dimensionless ) then
-            call announce_error ( subtree(1,per_decade), wrongUnits )
-            exit
-          end if
-          call expr ( subtree(i,number), units, values )
-          if ( units(1) /= phyq_dimensionless ) then
-            call announce_error ( subtree(1,number), wrongUnits )
-            exit
-          end if
+          step = 10.0 ** (-1.0d0/values(2))
           do l = 1, nint(values(1)) - n
             k = k + 1
             vgrid%surfs(k) = vgrid%surfs(k-1) * step
@@ -285,17 +269,12 @@ contains ! =====     Public Procedures     =============================
 
     type (vGrid_T), intent(inout) :: vGrid
 
-    ! Local Variables
-    integer :: Status    ! From deallocate
-
     ! Executable code
 
     vGrid%noSurfs = 0
     vGrid%verticalCoordinate = L_None
 
-    deallocate ( vGrid%surfs, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate // "vGrid%surfs" )
+    call deallocate_test ( vGrid%surfs, "vGrid%surfs", ModuleName )
 
   end subroutine DestroyVGridContents
 
@@ -375,11 +354,6 @@ contains ! =====     Public Procedures     =============================
       call output ( "' the '" )
       call display_string ( field_indices(field_index) )
       call output ( "' field is not permitted.", advance='yes' )
-    case ( inconsistentSizes )
-      call output ( &
-        & "The 'number' and 'per_decade' fields are", &
-        & advance='yes' )
-      call output ( "required to have the same sizes", advance='yes' )
     case ( inconsistentUnits )
       call output ( "Elements of the '" )
       call display_string ( field_indices(field_index) )
@@ -476,6 +450,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.7  2001/03/28 03:03:38  vsnyder
+! Remove use, only's that aren't used
+!
 ! Revision 2.6  2001/03/28 01:25:38  vsnyder
 ! Move DUMP_VGRIDS from dumper.f90 to VGrid.f90
 !
