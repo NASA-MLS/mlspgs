@@ -254,14 +254,6 @@ BEGIN Diagnostic
        longGrid= -180.0:176.0,dLon=4.0
     dg,l3prodName="extinction13",l3PresLvl=46.0:1000.0, $
        longGrid= -180.0:176.0,dLon=4.0
-    dg,l3prodName="extinction14",l3PresLvl=46.0:1000.0, $
-       longGrid= -180.0:176.0,dLon=4.0
-    dg,l3prodName="extinction15",l3PresLvl=46.0:1000.0, $
-       longGrid= -180.0:176.0,dLon=4.0
-    dg,l3prodName="extinction16",l3PresLvl=46.0:1000.0, $
-       longGrid= -180.0:176.0,dLon=4.0
-    dg,l3prodName="extinction17",l3PresLvl=46.0:1000.0, $
-       longGrid= -180.0:176.0,dLon=4.0
     ;;
 END Diagnostic
 ;
@@ -292,4 +284,7 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2001/09/26 20:24:47  nakamura
+; L3 Daily/Monthly CF, with Dg specifications.
+;
 ;
