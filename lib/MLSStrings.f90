@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 !=============================================================================
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
@@ -1320,6 +1323,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.12  2001/05/29 21:17:03  pwagner
 ! Removed Downcase; added table of contents
 !
