@@ -82,10 +82,10 @@ else
 	  $(libmls_objs)/libmls.a
 endif
 
-# Because LF95 can't handle write_meta.f90
-ifeq ($(MLSF95),LF95)
-   depends_where:=-d write_meta.f90 $(depends_where)
-endif
+# Because LF95 once couldn't handle write_meta.f90
+#ifeq ($(MLSF95),LF95)
+#   depends_where:=-d write_meta.f90 $(depends_where)
+#endif
 
 PROG=mlsl2
 
@@ -175,6 +175,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.20  2001/04/02 23:46:17  pwagner
+# Now even LF95 should use write_meta
+#
 # Revision 2.19  2001/04/02 17:42:08  pwagner
 # Builds mlsl2 only if PVM_ROOT defined
 #
