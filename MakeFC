@@ -67,10 +67,23 @@ tar: clean
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+		cd .. ; \
+	done
 
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
+	@echo "Configuring $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+		cd .. ; \
+	done
 
 depends:
 	@echo "Making dependencies for $(SUBDIRS)"; \
@@ -105,6 +118,9 @@ tar:
 	tar hcvzf srclib.tgz srclib
 
 # $Log$
+# Revision 1.6  2000/11/15 18:22:10  pwagner
+# Now can make all of l1 l2 l3
+#
 # Revision 1.5  2000/11/06 23:26:58  pwagner
 # Calculates srclib dependency
 #
