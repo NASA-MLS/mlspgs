@@ -503,11 +503,11 @@ contains
       & quantityType=l_scGeocAlt )
 
     cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
-      & quantityType=l_cloudIce )    
+      & quantityType=l_cloudIce, noError=.true. )    
     cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_cloudWater )
+      & quantityType=l_cloudWater, noError=.true. )
     sizeDistribution=>GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sizeDistribution )
+      & quantityType=l_sizeDistribution, noError=.true. )
 
           ICON = FwdModelConf%i_saturation
           NU  = fwdModelConf%NUM_SCATTERING_ANGLES
@@ -646,11 +646,17 @@ contains
     grids_tmp%phi_basis = temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
     grids_tmp%values = reshape(temp%values(:,windowStart:windowFinish),(/k/))
 
-    grids_iwc%frq_basis = 0.0
-    grids_iwc%zet_basis = CloudIce%template%surfs(1:n_t_zeta,1)
-    grids_iwc%phi_basis = temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
-    grids_iwc%values = reshape(CloudIce%values(:,windowStart:windowFinish),(/k/))
-
+    if ( associated ( cloudIce ) ) then
+      grids_iwc%frq_basis = 0.0
+      grids_iwc%zet_basis = CloudIce%template%surfs(1:n_t_zeta,1)
+      grids_iwc%phi_basis = CloudIce%template%phi(1,windowStart:windowFinish)*Deg2Rad
+      grids_iwc%values = reshape(CloudIce%values(:,windowStart:windowFinish),(/k/))
+    else
+      grids_iwc%frq_basis = 0.0
+      grids_iwc%zet_basis = 0.0
+      grids_iwc%phi_basis = 0.0
+      grids_iwc%values = 0.0
+    end if
 
 ! ** Initialize to ALL derivatives flags to TRUE :
     grids_tmp%deriv_flags(1:k) = .TRUE.
@@ -2691,6 +2697,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.119  2003/02/06 00:20:08  jonathan
+! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
+!
 ! Revision 2.118  2003/02/03 23:18:43  vsnyder
 ! Squash a bug in deallocating beta_path_polarized
 !
