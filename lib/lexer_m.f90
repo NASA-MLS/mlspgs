@@ -64,11 +64,12 @@ contains
     integer, parameter :: OP = 8
     integer, parameter :: PUN = 9 
     integer, parameter :: CONTIN = 10
-    integer, parameter :: SQ1 = 11   ! First string-started-by-quote state
-    integer, parameter :: SQ2 = 12   ! Second string-started-by-quote state
-    integer, parameter :: SA1 = 13   ! First string-started-by-apost state
-    integer, parameter :: SA2 = 14   ! Second string-started-by-apost state
-    integer, parameter :: TOG = 15
+    integer, parameter :: CONTIN2 = 11
+    integer, parameter :: SQ1 = 12   ! First string-started-by-quote state
+    integer, parameter :: SQ2 = 13   ! Second string-started-by-quote state
+    integer, parameter :: SA1 = 14   ! First string-started-by-apost state
+    integer, parameter :: SA2 = 15   ! Second string-started-by-apost state
+    integer, parameter :: TOG = 16
 
     character, save :: CH          ! Current character
     integer :: CLASS               ! Classification of current character
@@ -125,41 +126,43 @@ contains
 !     Classes, row labels are DFA states.  Table elements are DFA states or
 !     actions to be taken when a token is recognized.
 !
-!         letter digit opchar punct under  cmt eolin eofin space  cont  more
-!  start    id    num    op    pun   id    cmt    6    1   start  cont start
-!  id       id    id      2      2   id     2     2    2     2     2     2
-!  num       3    num     3      3   num    3     3    3     3     3     3
-!  num2   e=num3 num2     3      3  num2    3     3    3     3     3     3
+!         letter digit opchar punct  under  cmt eolin eofin space  cont
+!  start    id    num    op    pun    id    cmt    6    1   start  cont
+!  id       id    id      2      2    id     2     2    2     2     2
+!  num       3    num     3      3    num    3     3    3     3     3
+!  num2   e=num3 num2     3      3   num2    3     3    3     3     3
 !         else 3
-!  num3     10   num5  +-=num4  10   10    10    10   10    10    10    10
+!  num3     10   num5  +-=num4  10    10    10    10   10    10    10
 !                      else 10
-!  num4     10   num5    10     10   10    10    10   10    10    10    10
-!  num5      3   num5     3      3  num5    3     3    3     3     3     3
-!  op        4     4      4      4    4     4     4    4     4     4     4
-!  pun       5     5      5      5    5     5     5    5     5     5     5
-!  cmt      cmt   cmt    cmt    cmt  cmt   cmt  start  1    cmt   cmt   cmt
-!  cont      7     7      7      7    7    cmt  start  1   cont    7     7
-!  sq1      sq1   sq1    sq1    sq1  sq1   sq1    9    9    sq1   sq1   sq1
-!  sq2       8     8      8      8    8     8     8    8     8     8     8
-!  sa1      sa1   sa1    sa1    sa1  sa1   sa1    9    9    sa1   sa1   sa1
-!  sa2       8     8      8      8    8     8     8    8     8     8     8
+!  num4     10   num5    10     10    10    10    10   10    10    10
+!  num5      3   num5     3      3   num5    3     3    3     3     3
+!  op        4     4      4      4     4     4     4    4     4     4
+!  pun       5     5      5      5     5     5     5    5     5     5
+!  cmt      cmt   cmt    cmt    cmt   cmt   cmt  start  1    cmt   cmt
+!  cont      7     7      7      7     7    cmt  start  1   cont    7
+!  cont2   start start  start  start start cont2 cont2  1  cont2  cont2
+!  sq1      sq1   sq1    sq1    sq1   sq1   sq1    9    9    sq1   sq1
+!  sq2       8     8      8      8     8     8     8    8     8     8
+!  sa1      sa1   sa1    sa1    sa1   sa1   sa1    9    9    sa1   sa1
+!  sa2       8     8      8      8     8     8     8    8     8     8
 !
-!          quote apost  dot
-!  start    sq1   sa1    4
-!  id        2     2     2
-!  num       3     3   num2
-!  num2      3     3     3
-!  num3     10    10    10
-!  num4     10    10    10
-!  num5      3     3     3
-!  op        4     4     4
-!  pun       5     5     5
-!  cmt      cmt   cmt   cmt
-!  cont      7     7     7
-!  sq1      sq2   sq1   sq1
-!  sq2      sq1    8     8
-!  sa1       8    sa2    8
-!  sa2       8    sa1    8
+!           more quote apost  dot
+!  start   start  sq1   sa1    4
+!  id        2     2     2     2
+!  num       3     3     3   num2
+!  num2      3     3     3     3
+!  num3     10    10    10    10
+!  num4     10    10    10    10
+!  num5      3     3     3     3
+!  op        4     4     4     4
+!  pun       5     5     5     5
+!  cmt      cmt   cmt   cmt   cmt
+!  cont      7     7     7     7
+!  cont2   start start start start
+!  sq1      sq1   sq2   sq1   sq1
+!  sq2       8    sq1    8     8
+!  sa1      sa1    8    sa2    8
+!  sa2       8     8    sa1    8
 
 !     The actions are:
 !     1.   define EOF token.
@@ -196,9 +199,8 @@ contains
         case ( cmt )
           call new_line
           state = start
-          need = .true.
-!         need = .false.           ! This doesn't allow comments between
-!         ch = EOL                 ! continuation lines
+          need = .false.           ! This doesn't allow comments between
+          ch = EOL                 ! continuation lines
         case ( spaces );           need = .true.
         case ( cont );             state = contin; need = .true.
         case ( eof_in )
@@ -354,7 +356,7 @@ contains
           call new_line
           state = start
           need = .true.
-        case ( eol_in );           state = start; need = .true.
+        case ( eol_in );           state = contin2; need = .true.
         case ( spaces );           need = .true.
         case default ! skip to the end-of-line, then announce an error
           do
@@ -365,6 +367,15 @@ contains
           string_index = enter_terminal ( '<aft>', t_aft_cont )
           the_token = token( t_aft_cont, string_index, .false., source_start )
     exit ! main lexer loop
+        end select ! class
+      case ( contin2 )
+        select case ( class )
+        case ( cmt )
+          call new_line
+          state = start
+          need = .true.
+        case ( eol_in, spaces );   need = .true.
+        case default;              state = start
         end select ! class
       case ( sq1 )
         select case ( class )
@@ -490,6 +501,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.9  2001/03/06 03:02:25  vsnyder
+! Allow comments between continuations -- maybe got it right this time
+!
 ! Revision 2.8  2001/03/05 23:18:43  vsnyder
 ! Allow comments between continuations
 !
