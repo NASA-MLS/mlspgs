@@ -779,7 +779,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
-             begin, f+f_muMin, t+t_numeric, n+n_field_type, &
+             begin, f+f_muMin, t+t_numeric, n+n_field_type /) )
+    call make_tree ( (/ & ! Continuting for s_retrieve
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
@@ -793,7 +794,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vRegQuants, s+s_quantity, n+n_field_spec, &
              begin, f+f_vRegWeights, t+t_numeric, n+n_field_type, &
              begin, f+f_vRegWeightVec, s+s_vector, n+n_field_spec, &
-             ndp+n_spec_def /) )
+             ndp+n_spec_def /), &
+             continue = .true. )
     call make_tree ( (/ &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
@@ -893,6 +895,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.256  2002/10/23 04:11:25  livesey
+! Fixed up a 'too many continuation lines' problem.
+!
 ! Revision 2.255  2002/10/23 01:32:31  vsnyder
 ! Add CovSansReg switch to retrieve spec
 !
