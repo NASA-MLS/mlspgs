@@ -12,8 +12,8 @@ module RetrievalModule
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DNWT_Module, only: FlagName, NF_EVALF, NF_EVALJ, NF_SOLVE, NF_NEWX, &
-    & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
-    & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
+    & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_START, NF_TOLX, &
+    & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
   use Dump_0, only: Dump
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
@@ -113,6 +113,7 @@ contains
     integer :: Criteria                 ! Index in tree of "criteria" field
                                         ! of subset specification, or zero
     type(vector_T) :: DX                ! for NWT
+    type(vector_T) :: DXScaled          ! for NWT
     logical :: Diagonal                 ! "Iterate with the diagonal of the
                                         ! a priori covariance matrix until
                                         ! convergence, then put in the whole
@@ -455,7 +456,8 @@ contains
             call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
             call cloneVector ( bestX, x, vectorNameText='_bestX' )
             call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
-            call cloneVector ( DX, x, vectorNameText='_DX' )
+            call cloneVector ( dx, x, vectorNameText='_DX' )
+            call cloneVector ( dxScaled, x, vectorNameText='_DX Scaled' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
             if ( got(f_fuzz) ) then
               ! Add some fuzz to the measurement and state vectors
@@ -474,13 +476,17 @@ contains
                   & ( 1.0_r8 + fuzz * ( fuzzState%quantities(j)%values - 0.5 ) )
               end do
             end if
+            if ( index(switches,'xvec') /= 0 ) call dump ( x, name='Original X' )
             numF = 0
             numJ = 0
             aj%axmax = 0.0
             do k = 1, size(x%quantities)
               aj%axmax = max(aj%axmax, maxval(abs(x%quantities(k)%values)))
             end do
-            do
+
+            do ! Newtonian iteration
+              if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
+                & call nwtdb
               call nwta ( nwt_flag, aj )
               if ( index(switches,'nwt') /= 0 ) then
                 call FlagName ( nwt_flag, theFlagName )
@@ -542,7 +548,7 @@ contains
                 end do ! MAFs
                 call subtractFromVector ( f, measurements )
                 aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
-                if ( index(switches,'vec') /= 0 ) &
+                if ( index(switches,'fvec') /= 0 ) &
                   & call dump ( f, name='Residual' )
                 if ( index(switches,'sca') /= 0 ) then
                     call output ( ' | F | = ' )
@@ -614,6 +620,10 @@ contains
                   aprioriNorm = 0.0_r8
                 end if
 
+                ! Add some early stabilization
+                if ( got(f_lambda) ) &
+                  & call updateDiagonal ( normalEquations, initLambda )
+
                 fmStat%maf = 0
                 fmStat%finished = .false.
                 fmStat%newHydros = .true.
@@ -663,8 +673,6 @@ contains
                   call getDiagonal ( normalEquations, columnScaleVector )
                 end select
                 if ( columnScaling /= l_none ) then
-                  if ( index(switches,'col') /= 0 ) &
-                    & call dump ( columnScaleVector, name='Column scale vector' )
                   do j = 1, columnScaleVector%template%noQuantities
                     where ( columnScaleVector%quantities(j)%values <= 0.0 )
                       columnScaleVector%quantities(j)%values = 1.0
@@ -673,11 +681,13 @@ contains
                         & sqrt( columnScaleVector%quantities(j)%values )
                     end where
                   end do
+                  if ( index(switches,'col') /= 0 ) &
+                    & call dump ( columnScaleVector, name='Column scale vector' )
                   call columnScale ( normalEquations%m, columnScaleVector )
                   call rowScale ( columnScaleVector, normalEquations%m )
                 end if
                 call getVectorFromColumn ( normalEquations%m, n, gradient )
-                if ( index(switches,'vec') /= 0 ) &
+                if ( index(switches,'gvec') /= 0 ) &
                   & call dump ( gradient, name='gradient' )
                 ! Factor J^T J:
 !???            factored%m%block => normalEquations%m%block ! to save space
@@ -712,7 +722,6 @@ contains
                 !       smallest absolute value, after triangularization
                 aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
                 !       column in upper triangle after triangularization
-                k = factored%m%col%nb
                 ! AJ%FNMIN = L2 norm of residual, ||F + J * "Candidate DX"||
                 !       (which can be gotten without solving for
                 !       "Candidate DX": if -F is put as the last column of
@@ -720,11 +729,12 @@ contains
                 !       or by Cholesky factoring the normal equations,
                 !       this is J(N+1,N+1)).  The (extra row, extra column)
                 !       block is 1x1:
+                k = factored%m%col%nb
                 aj%fnmin = factored%m%block(k,k)%values(1,1)
                 aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
                 if ( index(switches,'sca') /= 0 ) then
                   call dump ( (/ aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
-                    & '   | FAC |       aj%diag      aj%fnmin         | G |', &
+                    & ' L1| FAC |       aj%diag      aj%fnmin         | G |', &
                     & clean=.true. )
                 end if
               case ( nf_solve ) ! ........................  SOLVE  .....
@@ -774,26 +784,38 @@ contains
                 aj%fnmin = factored%m%block(k,k)%values(1,1)
                 aj%dxn = sqrt(candidateDX .dot. candidateDX) ! L2Norm(dx)
                 aj%gdx = gradient .dot. candidateDX
-                if ( index(switches,'vec') /= 0 ) &
+                if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
+                if ( index(switches,'dvec') /= 0 ) &
                   & call dump ( candidateDX, name='CandidateDX' )
                 if ( index(switches,'sca') /= 0 ) then
-                  call dump ( (/ aj%dxn, aj%fnmin, aj%gdx, &
+                  call dump ( (/ aj%dxn, aj%fnmin, &
                     & aj%gdx/(aj%dxn*aj%gradn), aj%sq /), &
-                    & '    | DX |      aj%fnmin        G . DX    ' // &
+                    & '    | DX |      aj%fnmin    ' // &
                     & 'cos(G, DX)        lambda', clean=.true. )
+                  if ( .not. aj%starting ) then
+                    call output ( ' cos(DX, DXL) = ' )
+                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)', &
+                      & advance='yes' )
+                  ! call output ( ',  DX . DXL = ' )
+                  ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+                  end if
                 end if
               case ( nf_newx ) ! ..........................  NEWX  .....
               ! Set X = X + DX
               !     AJ%AXMAX = MAXVAL(ABS(X)),
               !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
+                if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
                 ! Account for column scaling
-                if ( columnScaling /= l_none ) & ! dx = dx # columnScaleVector:
-                  call multiplyVectors ( dx, columnScaleVector )
-                call addToVector ( x, dx ) ! x = x + dx
-                if ( index(switches,'vec') /= 0 ) then
-                  call dump ( dx, name='dX' )
-                  call dump ( x, name='New X' )
+                if ( columnScaling /= l_none ) then
+                  call copyVector ( dxScaled, dx )
+                  ! dxScaled = dxScaled # columnScaleVector:
+                  call multiplyVectors ( dxScaled, columnScaleVector )
                 end if
+                call addToVector ( x, dxScaled ) ! x = x + dxScaled
+                if ( index(switches,'dvec') /= 0 ) &
+                  & call dump ( dxScaled, name='dX Scaled' )
+                if ( index(switches,'xvec') /= 0 ) &
+                  & call dump ( x, name='New X' )
                 aj%axmax = 0.0
                 aj%big = .false.
                 do j = 1, size(x%quantities)
@@ -801,13 +823,14 @@ contains
                   aj%big = aj%big .or. any( abs(dx%quantities(j)%values) > &
                     & 10.0 * epsilon(aj%axmax) * abs(x%quantities(j)%values) )
                 end do
-                if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
                 if ( index(switches,'sca') /= 0 ) then
                   call output ( ' aj%axmax = ' )
                   call output ( aj%axmax, format='(1pe14.7)' )
                   if ( .not. aj%starting ) then
-                    call output ( ', aj%dxdxl = ' )
-                    call output ( aj%dxdxl, format='(1pe14.7)' )
+                    call output ( ' cos(DX, DXL) = ' )
+                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)' )
+                  ! call output ( ', DX . DXL = ' )
+                  ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
                   end if
                   call output ( ', aj%big = ' )
                   call output ( aj%big, advance='yes' )
@@ -818,7 +841,7 @@ contains
                 call copyVector ( x, bestX ) ! x = bestX
                 ! dx = aj%gfac * "Best Gradient":
                 call scaleVector ( bestGradient, aj%gfac, dx )
-                if ( index(switches,'vec') /= 0 ) &
+                if ( index(switches,'dvec') /= 0 ) &
                   & call dump ( dx, name='Back to bestX' )
                 if ( index(switches,'sca') /= 0 ) then
                   call output ( ' aj%gfac = ' )
@@ -836,18 +859,21 @@ contains
                 call subtractFromVector ( dx, candidateDX ) ! dx = dx - candidateDX
                 aj%dxdx = dx .dot. dx
                 if ( aj%dxdx > 0.0 ) aj%dxdxl = dx .dot. candidateDX
-                if ( index(switches,'vec') /= 0 ) &
+                if ( index(switches,'dvec') /= 0 ) &
                   & call dump ( dx, name='dx after Aitken' )
                 if ( index(switches,'sca') /= 0 ) then
                   call output ( ' aj%dxdx = ' )
-                  call output ( aj%dxdx, format='(1pe14.7)', advance='yes' )
+                  call output ( aj%dxdx, format='(1pe14.7)' )
+                  call output ( ', cos(DX, DXL) = ' )
+                  call output ( aj%dxdxl / (aj%dxn*aj%dxnl), &
+                    & format='(1pe14.7)', advance='yes' )
                 end if
               case ( nf_dx ) ! ..............................  DX  .....
                 call copyVector ( dx, candidateDX ) ! dx = candidateDX
               case ( nf_dx_aitken ) ! ................  DX_AITKEN  .....
                 ! dx = aj%cait * candidateDX:
                 call scaleVector ( candidateDX, aj%cait, dx )
-                if ( index(switches,'vec') /= 0 ) &
+                if ( index(switches,'dvec') /= 0 ) &
                   & call dump ( dx, name='dx after dx Aitken' )
                 if ( index(switches,'sca') /= 0 ) then
                   call output ( ' aj%cait = ' )
@@ -868,6 +894,7 @@ contains
                   exit
                 end if
                 diagonal = .not. diagonal
+                nwt_flag = nf_start
               case ( nf_fandj ) ! .........................  FANDJ .....
                 ! There is probably an error in the way F or J is computed.
                 ! A warning has been printed by the error processor.
@@ -893,7 +920,7 @@ contains
               end if
             end if
             call copyVector ( state, x )
-            if ( index(switches,'vec') /= 0 ) &
+            if ( index(switches,'svec') /= 0 ) &
               & call dump ( state, name='Final state' )
             ! Clean up the temporaries, so we don't have a memory leak
             call destroyVectorInfo ( bestGradient )
@@ -987,6 +1014,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.34  2001/05/24 23:28:45  vsnyder
+! Scale things back to user coordinates at the correct times; numerous output changes
+!
 ! Revision 2.33  2001/05/22 19:10:59  vsnyder
 ! Periodic commit; still isn't accepting a Newton step
 !
