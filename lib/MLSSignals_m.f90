@@ -772,13 +772,13 @@ contains
     end select
     
     call get_string ( bands(band)%prefix, string_text, cap=.true. )
+    string_text = string_text(1:LEN_TRIM(string_text)-1) // TRIM(sb_char) // &
+      & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
     if ( (.not. my_noSuffix) .and. &
       &  (len_trim(string_text) < len(string_text)) ) then
       string_text = TRIM(string_text) // ':'
       call get_string ( bands(band)%suffix,&
         & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
-      string_text = string_text(1:LEN_TRIM(string_text)-1) // TRIM(sb_char) // &
-        & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
     endif
 
   end subroutine GetBandName
@@ -889,7 +889,8 @@ contains
         &  (len_trim(string_text)<len(string_text)) ) &
         &  string_text = TRIM(string_text) // '.'
       call GetBandName ( sig%band, &
-        & string_text(LEN_TRIM(string_text)+1:), noSuffix=noSuffix )
+        & string_text(LEN_TRIM(string_text)+1:), sideband=sig%sideband, &
+        & noSuffix=noSuffix )
     end if
 
     if ( .not. my_noSwitch ) then
@@ -941,6 +942,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.8  2001/03/16 02:10:32  vsnyder
+! Put the sideband character in the correct place
+!
 ! Revision 2.7  2001/03/16 01:54:47  vsnyder
 ! Use enumerated type instead of numbers for sideband; add a field for it
 ! in the "signal" spec.
