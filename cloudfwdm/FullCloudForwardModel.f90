@@ -48,7 +48,7 @@ module FullCloudForwardModel
                      & L_SURFACETYPE,                                        &
                      & L_SIZEDISTRIBUTION,                                   &
                      & L_TNGTGEOCALT,                                        &
-                     & L_RADIUSOFEARTH,                                      &
+                     & L_EARTHRADIUS,                                      &
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER 
 
@@ -97,7 +97,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: PTAN                       ! Tgt pressure
     type (VectorValue_T), pointer :: RADIANCE                   ! Quantity
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION           ! Integer really
-    type (VectorValue_T), pointer :: RADIUSOFEARTH              ! Scalar 
+    type (VectorValue_T), pointer :: EARTHRADIUS              ! Scalar 
     type (VectorValue_T), pointer :: SURFACETYPE                ! Integer really
     type (VectorValue_T), pointer :: TEMP                       ! Temperature 
     type (VectorValue_T), pointer :: TOTALEXTINCTION            ! Profile
@@ -138,7 +138,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE,    &
              CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH,                &
              MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,               &
-             RADIANCE, SIZEDISTRIBUTION, RADIUSOFEARTH, SURFACETYPE,         &
+             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,         &
              TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,          &
              A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
@@ -230,8 +230,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         case (l_sizeDistribution)
           sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra,&
           & quantityType=l_sizeDistribution )
-        case (l_radiusofearth)
-          radiusofearth=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,&
+        case (l_earthradius)
+          earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,&
           & quantityType=l_tngtgeocalt ) 
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,                        &
@@ -358,7 +358,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & WC,                                                                  &
       & sizeDistribution%values(1,instance),                                 &
       & 10.0**(-ptan%values(:,maf)),                                         &
-      & radiusofearth%values(1,1),                                           &
+      & earthradius%values(1,1),                                           &
       & surfaceType%values(1, instance),                                     &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
