@@ -26,7 +26,7 @@ Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
 
 ;; Now output the joined DGG file.
 !ifdef(flagGotJoinedDGGs,{
-Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2gp, $
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
   hdfVersion=!hdfVersion, $
   file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 
