@@ -40,6 +40,7 @@ contains ! ============= Public Procedures ==========================
     use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
     use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
     use VectorsModule, only: VECTOR_T
+    use Time_M, only: Time_Now
 
     ! Dummy arguments
     type(ForwardModelConfig_T), intent(inout) :: TheForwardModelConfig
@@ -48,12 +49,23 @@ contains ! ============= Public Procedures ==========================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
+    
+    real :: time_start, time_end, deltaTime  
 
     ! Executable code
     select case (TheForwardModelConfig%fwmType)
     case ( l_full )
+      call time_now (time_start)
       call FullForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call time_now (time_end)
+      deltaTime = time_end - time_start
+      TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
+      TheForwardModelConfig%sum_DeltaTime = &
+	& TheForwardModelConfig%sum_DeltaTime + deltaTime
+      TheForwardModelConfig%sum_squareDeltaTime = &
+	& TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
+
       call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
@@ -97,6 +109,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.18  2003/06/30 22:55:01  cvuu
+! Find mean, std dev timing of fullForwardModel calls
+!
 ! Revision 2.17  2003/06/03 19:24:56  livesey
 ! Added the ability to call the switching mirror model in isolation
 !
