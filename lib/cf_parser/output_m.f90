@@ -16,8 +16,7 @@ module OUTPUT_M
     module procedure output_integer
   end interface
 
-! integer, save, public :: MLSMSG_Level = MLSMSG_Info
-  integer, save, public :: MLSMSG_Level = 2
+  integer, save, public :: MLSMSG_Level = MLSMSG_Info
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -216,6 +215,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.1  2000/10/04 18:07:04  vsnyder
+! Added capability to output through MLSMessage
+!
 ! Revision 2.0  2000/09/05 17:41:50  dcuddy
 ! Change revision to 2.0
 !
