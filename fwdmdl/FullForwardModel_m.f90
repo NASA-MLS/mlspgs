@@ -635,7 +635,7 @@ contains
 ! Create the Grids_tmp structure:
 
     !??? Should .true. be temp_der ???
-    call load_one_item_grid ( grids_tmp, temp, phitan, maf, fwdModelConf, .true. )
+    call load_one_item_grid ( grids_tmp, temp, phitan, maf, fwdModelConf, .true., .false. )
 
     windowStart = grids_tmp%windowStart(1)
     windowFinish = grids_tmp%windowFinish(1)
@@ -644,11 +644,11 @@ contains
     sv_t_len = grids_tmp%p_len ! zeta X phi
 
     if ( FwdModelConf%incl_cld ) & 
-      & call load_one_item_grid ( grids_iwc, cloudIce, phitan, maf, fwdModelConf, .false. )
+      & call load_one_item_grid ( grids_iwc, cloudIce, phitan, maf, fwdModelConf, .false., .false. )
 
     if ( FwdModelConf%polarized ) &
       & call load_one_item_grid ( grids_mag, magfield, phitan, maf, &
-        & fwdModelConf, .false. )
+        & fwdModelConf, .false., .false. )
 
 ! Work out which channels are used; also check we have radiances for them.
 
@@ -1634,7 +1634,10 @@ contains
 
             scat_src%template = temp%template
 
-            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
+            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false., .true. )
+
+            print*, grids_tscat%values
+            stop
 
             call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values),              &
                                & 'do_calc_tscat', moduleName )
@@ -1655,6 +1658,8 @@ contains
               & do_calc_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
               & do_calc_tscat(1:no_ele,:), eta_tscat(1:no_ele,:) )
 
+            
+
             call allocate_test ( tt_path, max_ele, 1, 'tt_path', moduleName )            
 
             ! project Tscat onto LOS
@@ -1665,8 +1670,8 @@ contains
             scat_alb%template = temp%template
             cld_ext%template = temp%template
 
-            call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
-            call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false. )
+            call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false., .false. )
+            call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false., .false. )
 
             call allocate_test (do_calc_salb,max_ele,size(grids_salb%values),'do_calc_salb',moduleName)
             call allocate_test (eta_salb, max_ele, size(grids_salb%values), 'eta_salb', moduleName)
@@ -2904,6 +2909,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.191  2003/12/08 21:38:33  jonathan
+! some minor changes
+!
 ! Revision 2.190  2003/12/08 17:52:02  jonathan
 ! update for 2d cldfwm
 !
