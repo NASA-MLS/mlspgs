@@ -109,8 +109,7 @@ module ForwardModelInterface
   integer, parameter :: BadMolecule          = AllocateError + 1
   integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
-  integer, parameter :: DuplicateField       = DefineMoleculesFirst + 1
-  integer, parameter :: IncompleteFullFwm    = DuplicateField + 1
+  integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
@@ -225,8 +224,6 @@ contains
     do i = 2, nsons(key)
       son = subtree(i,key)
       field = get_field_id(son)
-      if ( got(field) .and. (field /= f_channels) ) &
-        &  call AnnounceError( DuplicateField, key, field)
       got(field) = .true.
       select case ( field )
       case (f_type)
@@ -1385,9 +1382,6 @@ contains
       call output ( 'molecule must be defined before moleules derivatives.', advance='yes')
     case (DefineSignalsFirst)
       call output ( 'signals must be defined before channels.', advance='yes')
-    case (DuplicateField)
-      call output ( 'duplicate field specified:' )
-      call display_string(field_indices(FieldIndex), advance='yes')
     case (IncompleteFullFwm)
       call output ( 'incomplete full foward model specification' )
     case (IncompleteLinearFwm)
@@ -1501,6 +1495,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.66  2001/04/06 21:53:40  vsnyder
+! Move duplicate-field checking to init_tables
+!
 ! Revision 2.65  2001/04/05 23:02:31  zvi
 ! Implementing Anntena, FilterShape & Spectroscopy l2cf inputs instead of FMI
 !
