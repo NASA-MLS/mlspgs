@@ -16,7 +16,7 @@ module MLSAuxData
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
-       h5tequal_f
+       h5tequal_f, h5fis_hdf5_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -126,6 +126,8 @@ module MLSAuxData
     H5_ERROR_TYPE_COPY = 'HDF5 Error Copying Datatype '
   CHARACTER(len=*), PUBLIC, PARAMETER :: & 
     H5_ERROR_TYPE_SET  = 'HDF5 Error Setting Datatype '
+  CHARACTER(len=*), PUBLIC, PARAMETER :: & 
+    H5_ERROR_TYPE_EQUAL  = 'HDF5 Error Equating Datatype '
 
   CHARACTER(len=*), PUBLIC, PARAMETER :: & 
     H5_ERROR_DSPACE_OPEN   = 'HDF5 Error Opening Dataspace '
@@ -262,6 +264,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
          attr_id, atype_id, aspace_id
     integer :: i, rank, arank, h5error, status
+    logical :: is_hdf5
     logical, parameter ::  ATTRIBUTE = .FALSE.
 
 !-----------------------------------------------------------------------
@@ -771,8 +774,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace
     integer        :: rank, h5error, i, j, k, status
-    logical :: myRead_attributes, is_integer, is_real, is_double, is_character, &
-         is_int32, is_float32, is_float64
+    logical :: myRead_attributes, is_integer, is_real, is_double, & 
+         is_character, is_int32, is_float32, is_float64
     character(len=16) :: myQuantityType
 
     error = 0
@@ -837,6 +840,9 @@ contains ! ============================ MODULE PROCEDURES ====================
       call h5tequal_f(type_id, H5T_NATIVE_DOUBLE, is_double, h5error)
 
 ! Please add any new or compound datatypes here.
+
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+        H5_ERROR_TYPE_EQUAL // trim(MLSAuxData%name) )
 
       if ( is_integer .or. is_int32 ) then
         myQuantityType = 'integer'
@@ -1205,6 +1211,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.8  2002/10/04 22:35:31  jdone
+! Added exception handling for h5tequal_f call
+!
 ! Revision 2.7  2002/10/04 22:13:30  jdone
 ! Replace == for types with h5tequal_f
 !
