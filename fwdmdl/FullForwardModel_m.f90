@@ -2364,11 +2364,7 @@ contains
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=merge ( 0, fwdModelConf%signals(sigInd)%sideband, fwdModelConf%forceFoldedOutput ) )
         ! Get the sideband fraction if we need to
-        if ( fwdModelConf%sidebandStart /= fwdModelConf%sidebandStop &
-          & .or. fwdModelConf%forceSidebandFraction ) then   ! We're folding
-          ! Here it is Van - NJL !????
-          ! Change to this if statement at some later stage
-          ! if ( firstSignal%sideband == 0 .or. fwdModelConf%forceSidebandFraction ) then
+        if ( firstSignal%sideband == 0 .or. fwdModelConf%forceSidebandFraction ) then
           sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_limbSidebandFraction, &
             & signal=fwdModelConf%signals(sigInd)%index, &
@@ -3053,6 +3049,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.193  2004/02/03 02:48:35  vsnyder
+! Progress (hopefully) on polarized temperature derivatives.
+! Implement DACs frequency convolution.
+!
 ! Revision 2.192  2004/01/23 19:13:42  jonathan
 ! add an extra-flag for tscat in load_one_item
 !
