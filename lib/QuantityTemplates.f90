@@ -211,19 +211,25 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
-  subroutine DestroyQuantityTemplateDatabase ( database )
+  subroutine DestroyQuantityTemplateDatabase ( database, ingnoreMinorFrame )
 
   ! Destroy a quantity template database
 
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
+    logical, intent(in), optional :: ignoreMinorFrame
 
     ! Local variables
     integer :: qtyIndex, status
+    logical :: myIgnoreMinorFrame
+    
+    myIgnoreMinorFrame = .false.
+    if ( present ( ignoreMinorFrame ) ) myIgnoreMinorFrame = ignoreMinorFrame
 
     if ( associated(database) ) then
       do qtyIndex = 1, SIZE(database)
-        call DestroyQuantityTemplateContents ( database(qtyIndex) )
+        if ( .not. (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) &
+          &   call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       deallocate ( database, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -387,6 +393,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.11  2001/04/12 21:43:06  livesey
+! Added sideband field
+!
 ! Revision 2.10  2001/04/10 22:37:49  vsnyder
 ! Fix a type
 !
