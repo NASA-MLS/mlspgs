@@ -1675,7 +1675,7 @@ contains ! =====     Public Procedures     =============================
       real (rm), dimension(:,:), pointer :: M ! The matrix being filled
       real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
       real (r8) :: distance               ! Distance between two points
-      real (r8) :: meanLength             ! Geometric mean length scale
+      real (r8) :: thisLength             ! Geometric mean length scale
       real (r8) :: meanDiag               ! Geometric mean diagonal value
       real (r8) :: thisFraction           ! Geometric mean diagonal value
       logical, dimension(:), pointer :: condition ! Condition
@@ -1688,29 +1688,35 @@ contains ! =====     Public Procedures     =============================
         & vectorNameText='_Dmasked' )
       call ClearUnderMask ( Dmasked )
 
-      if ( lengthScale == 0 ) then
-        call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
+      if ( lengthScale == 0 .and. .not. invert ) then
+        call updateDiagonal ( covariance, vectors(diagonal), square=.true.,&
           & invert=invert )
-
-      else ! Do a more complex fill.
+      else
+        ! Do a more complex fill, either we're doing non-diagonal, or there might
+        ! be zeros to 'invert'
 
         ! Setup some stuff
-        call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
-          & vectorNameText='_Lmasked' ) 
-        call ClearUnderMask ( Lmasked )
-
+        if ( lengthScale /= 0 ) then
+          call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
+            & vectorNameText='_Lmasked' ) 
+          call ClearUnderMask ( Lmasked )
+        end if
+          
         ! Check the validity of the supplied vectors
         if ( covariance%m%row%vec%template%id /= &
           & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
-        if ( covariance%m%row%vec%template%id /= &
-          & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
-        if ( lMasked%globalUnit /= phyq_length ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "length vector does not have dimensions of length" )
-
-        if ( fraction /= 0 ) then
+        if ( lengthScale /= 0 ) then    ! Check length if supplied
+          if ( covariance%m%row%vec%template%id /= &
+            & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
+          if ( lMasked%globalUnit /= phyq_length ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "length vector does not have dimensions of length" )
+        else
+          thisLength = 0.0
+        end if
+        if ( fraction /= 0 ) then       ! Check fraction if supplied
           if ( covariance%m%row%vec%template%id /= &
             & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
             & ModuleName, "fraction and covariance not compatible in fillCovariance" )
@@ -1727,8 +1733,8 @@ contains ! =====     Public Procedures     =============================
           ! Setup pointers etc.
           d => dMasked%quantities(q)
           qt => d%template
-          l => lMasked%quantities(q)
-          if (fraction /=0) f => vectors(fraction)%quantities(q)
+          if ( lengthScale /= 0 ) l => lMasked%quantities(q)
+          if ( fraction /=0 ) f => vectors(fraction)%quantities(q)
           n = qt%instanceLen
           if ( qt%coherent ) surfs => qt%surfs(:,1)
           if ( .not. qt%regular ) &
@@ -1751,9 +1757,10 @@ contains ! =====     Public Procedures     =============================
               ! Loop over off diagonal terms
               do j = 1, n
                 do k = j+1, n
-                  meanLength = sqrt ( l%values(j,i) * l%values(k,i) )
                   meanDiag = sqrt ( m(j,j) * m(k,k) ) 
-                  if ( fraction /= 0) thisFraction = f%values(j,i)
+                  if ( lengthScale /= 0 ) &
+                    & thisLength = sqrt ( l%values(j,i) * l%values(k,i) )
+                  if ( fraction /= 0 ) thisFraction = f%values(j,i)
                   select case (qt%verticalCoordinate)
                   case ( l_height )
                     distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
@@ -1765,8 +1772,8 @@ contains ! =====     Public Procedures     =============================
                     distance = abs ( -log10 ( surfs( (j-1)/qt%noChans + 1) ) + &
                       &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
                   end select
-                  if ( meanLength > 0.0 ) &
-                    & m(j,k) = meanDiag*thisFraction*exp(-distance/meanLength)
+                  if ( thisLength > 0.0 ) &
+                    & m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
                 end do                    ! Loop over k (in M)
               end do                      ! Loop over j (in M)
             end if                        ! An appropriate vertical coordinate
@@ -4843,6 +4850,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.185  2003/02/27 00:38:52  livesey
+! Better handling of missing length scale in FillCovariance
+!
 ! Revision 2.184  2003/02/18 23:59:06  livesey
 ! Added phiWindow for hydrostatic fill.
 !
