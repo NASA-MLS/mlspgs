@@ -18,9 +18,9 @@ module AntennaPatterns_m
 
   type, public :: AntennaPattern_T
     real(r8) :: Lambda
-    real(r8), dimension(:), pointer :: Aaap => NULL()
-    real(r8), dimension(:), pointer :: D1aap => NULL()
-    real(r8), dimension(:), pointer :: D2aap => NULL()
+    real(r8), dimension(:,:), pointer :: Aaap => NULL()
+    real(r8), dimension(:,:), pointer :: D1aap => NULL()
+    real(r8), dimension(:,:), pointer :: D2aap => NULL()
     character(len=MaxSigLen), pointer, dimension(:) :: Signals => NULL()
   end type AntennaPattern_T
 
@@ -127,11 +127,11 @@ outer1: do
     do i = 1, dataBaseSize
       call Allocate_Test ( antennaPatterns(i)%signals, howManySignals(i), &
         & "AntennaPatterns(?)%Signals", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%aaap, 6*howManyPoints(i), &
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), 3, &
         & "AntennaPatterns(?)%Aaap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d1aap, 6*howManyPoints(i), &
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), 3, &
         & "AntennaPatterns(?)%D1aap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d2aap, 6*howManyPoints(i), &
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), 3, &
         & "AntennaPatterns(?)%D2aap", moduleName )
       do j = 1, howManySignals(i)
         read ( lun, '(a)', err=99, iostat=status ) antennaPatterns(i)%signals(j)
@@ -142,28 +142,26 @@ outer1: do
       do j = 1, howManyPoints(i)
         read ( lun, *, err=99, iostat=status ) v
         k = 2 * j - 1
-        l = 2 * howManyPoints(i) + k
-        n = 4 * howManyPoints(i) + k
-        antennaPatterns(i)%aaap(k:k+1) = v(1:2)
-        antennaPatterns(i)%aaap(l:l+1) = v(3:4)
-        antennaPatterns(i)%aaap(n:n+1) = v(5:6)
+        antennaPatterns(i)%aaap(k:k+1,1) = v(1:2)
+        antennaPatterns(i)%aaap(k:k+1,2) = v(3:4)
+        antennaPatterns(i)%aaap(k:k+1,2) = v(5:6)
 
         ! First derivative field:     i*Q * F(S), i = Sqrt(-1)
 
         q = (k-1) * lambdaX2Pi
-        antennaPatterns(i)%d1aap(k)    = -v(2) * q
-        antennaPatterns(i)%d1aap(k+1)  =  v(1) * q
-        antennaPatterns(i)%d1aap(l)    = -v(4) * q
-        antennaPatterns(i)%d1aap(l+1)  =  v(3) * q
-        antennaPatterns(i)%d1aap(n)    = -v(6) * q
-        antennaPatterns(i)%d1aap(n+1)  =  v(5) * q
+        antennaPatterns(i)%d1aap(k,1)    = -v(2) * q
+        antennaPatterns(i)%d1aap(k+1,1)  =  v(1) * q
+        antennaPatterns(i)%d1aap(k,2)    = -v(4) * q
+        antennaPatterns(i)%d1aap(k+1,2)  =  v(3) * q
+        antennaPatterns(i)%d1aap(k,3)    = -v(6) * q
+        antennaPatterns(i)%d1aap(k+1,3)  =  v(5) * q
 
         ! Second derivative field:    (i*Q)**2 * F(S), i = Sqrt(-1)
 
         q = -q * q
-        antennaPatterns(i)%d2aap(k:k+1)  =  v(1:2) * q
-        antennaPatterns(i)%d2aap(l:l+1)  =  v(3:4) * q
-        antennaPatterns(i)%d2aap(n:n+1)  =  v(5:6) * q
+        antennaPatterns(i)%d2aap(k:k+1,1)  =  v(1:2) * q
+        antennaPatterns(i)%d2aap(k:k+1,2)  =  v(3:4) * q
+        antennaPatterns(i)%d2aap(k:k+1,3)  =  v(5:6) * q
       end do ! j
     end do ! i
 
@@ -229,6 +227,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.4  2001/04/05 00:07:57  vsnyder
+! Correct spelling of 'Antenna Pattern'
+!
 ! Revision 1.3  2001/03/30 23:19:06  vsnyder
 ! Shorten overly-long (standard-violating) subroutine name
 !
