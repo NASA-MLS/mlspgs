@@ -782,6 +782,9 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
       foundInFirst = .false.
+      ! We're going to be fairly picky about this.  I don't want to get into the
+      ! habit of blindly accepting quantities that might not be appropriate.
+      ! Therefore, I have a list of 'acceptable' quantity types.
       select case ( l2pcQ%template%quantityType )
       case ( l_temperature )
         stateQ => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -816,9 +819,13 @@ contains ! =====     Public Procedures     =============================
           end do searchLoop
           foundInFirst = ( vec == 1 )
         end if
+      case ( l_fieldStrength, l_fieldAzimuth, l_fieldElevation )
+        ! This is for quantities that are 'easy to get'
+        stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
+          & quantityType = l2pcQ%template%quantityType, config=fmConf, &
+          & foundInFirst = foundInFirst, noError=.true. )
       case default
-        ! For the moment, just ignore things we don't understand.
-        stateQ => NULL()
+        nullify ( stateQ )
       end select
 
       ! Now check that these match.
@@ -1004,10 +1011,15 @@ contains ! =====     Public Procedures     =============================
             ! If we've got both of them make sure they match
             if ( associated(stateQ) .and. associated(l2pcQ) ) then
               ! OK, identify height range
-              s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                & log10(binSelectors(selector)%heightRange(1) ) ) )
-              s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                & log10(binSelectors(selector)%heightRange(2) ) ) )
+              if ( all ( binSelectors(selector)%heightRange > 0.0 ) ) then
+                s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                  & log10(binSelectors(selector)%heightRange(1) ) ) )
+                s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                  & log10(binSelectors(selector)%heightRange(2) ) ) )
+              else
+                s1 = 1
+                s2 = stateQ%template%noSurfs
+              end if
               ! Here we'll just compare the central profile in the
               ! l2pc with the state profile closest to each maf.
               l2pcInstance = l2pcQ%template%noInstances/2 + 1
@@ -1105,6 +1117,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.46  2003/09/11 23:10:32  livesey
+! Added option to linearize around pre-computed state/radiances instead of
+! those in the l2pc file.
+!
 ! Revision 2.45  2003/08/20 20:07:22  livesey
 ! Bug fix in ptan derivatives (not actually a problem yet but would have
 ! become one).  Also, more commented out if statements for the single
