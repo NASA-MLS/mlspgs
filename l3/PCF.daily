@@ -109,71 +109,6 @@
 30000|l3d_cf.v0-05|/user2/nakamura/mlspgs/l3||||1
 #
 # -----------------------------------------------------------------------
-# These are actual ancillary data set files - supplied by ECS or the
-# user.  The following are supplied for purposes of tests and as a useful
-# set of ancillary data.  These entries may be removed IF the AA tools
-# are not being used.
-# -----------------------------------------------------------------------
-10780|usatile12|AA_DATA_INSTALL_DIR|||10751|12
-10780|usatile11|AA_DATA_INSTALL_DIR|||10750|11
-10780|usatile10|AA_DATA_INSTALL_DIR|||10749|10
-10780|usatile9|AA_DATA_INSTALL_DIR|||10748|9
-10780|usatile8|AA_DATA_INSTALL_DIR|||10747|8
-10780|usatile7|AA_DATA_INSTALL_DIR|||10746|7
-10780|usatile6|AA_DATA_INSTALL_DIR|||10745|6
-10780|usatile5|AA_DATA_INSTALL_DIR|||10744|5
-10780|usatile4|AA_DATA_INSTALL_DIR|||10743|4
-10780|usatile3|AA_DATA_INSTALL_DIR|||10742|3
-10780|usatile2|AA_DATA_INSTALL_DIR|||10741|2
-10780|usatile1|AA_DATA_INSTALL_DIR|||10740|1
-10951|mowe13a.img|AA_DATA_INSTALL_DIR||||1
-10952|owe13a.img|AA_DATA_INSTALL_DIR||||1
-10953|owe14d.img|AA_DATA_INSTALL_DIR||||1
-10954|owe14dr.img|AA_DATA_INSTALL_DIR||||1
-10955|etop05.dat|AA_DATA_INSTALL_DIR||||1
-10956|fnocazm.img|AA_DATA_INSTALL_DIR||||1
-10957|fnococm.img|AA_DATA_INSTALL_DIR||||1
-10958|fnocpt.img|AA_DATA_INSTALL_DIR||||1
-10959|fnocrdg.img|AA_DATA_INSTALL_DIR||||1
-10960|fnocst.img|AA_DATA_INSTALL_DIR||||1
-10961|fnocurb.img|AA_DATA_INSTALL_DIR||||1
-10962|fnocwat.img|AA_DATA_INSTALL_DIR||||1
-10963|fnocmax.imgs|AA_DATA_INSTALL_DIR||||1
-10964|fnocmin.imgs|AA_DATA_INSTALL_DIR||||1
-10965|fnocmod.imgs|AA_DATA_INSTALL_DIR||||1
-10966|srzarea.img|AA_DATA_INSTALL_DIR||||1
-10967|srzcode.img|AA_DATA_INSTALL_DIR||||1
-10968|srzphas.img|AA_DATA_INSTALL_DIR||||1
-10969|srzslop.img|AA_DATA_INSTALL_DIR||||1
-10970|srzsoil.img|AA_DATA_INSTALL_DIR||||1
-10971|srztext.img|AA_DATA_INSTALL_DIR||||1
-10972|nmcRucPotPres.datrepack|AA_DATA_INSTALL_DIR||||1
-10973|tbase.bin|AA_DATA_INSTALL_DIR|||10915|1
-10974|tbase.br|AA_DATA_INSTALL_DIR|||10919|4
-10974|tbase.bl|AA_DATA_INSTALL_DIR|||10918|3
-10974|tbase.tr|AA_DATA_INSTALL_DIR|||10917|2
-10974|tbase.tl|AA_DATA_INSTALL_DIR|||10916|1
-10975|geoid.dat|AA_DATA_INSTALL_DIR||||1
-#
-# -----------------------------------------------------------------------
-# The following are for the PGS_GCT tool only.  The IDs are #defined in
-# the PGS_GCT.h file.  These entries are essential for the State Plane
-# Projection but can otherwise be deleted or commented out.
-# -----------------------------------------------------------------------
-10200|nad27sp|~/database/common/GCT||||1
-10201|nad83sp|~/database/common/GCT||||1
-# -----------------------------------------------------------------------
-# The following are for the PGS_AA_DCW tool only.
-# The IDs are #defined in the PGS_AA_DCW.h file.
-# These entries may be deleted or commented out IF the AA tools are not
-# being used.
-# -----------------------------------------------------------------------
-10990|eurnasia/|AA_DATA_INSTALL_DIR||||1
-10991|noamer/|AA_DATA_INSTALL_DIR||||1
-10992|soamafr/|AA_DATA_INSTALL_DIR||||1
-10993|sasaus/|AA_DATA_INSTALL_DIR||||1
-#
-# -----------------------------------------------------------------------
 # file for Constant & Unit Conversion (CUC) tools
 # IMPORTANT NOTE: THIS FILE WILL BE SUPPLIED AFTER TK4 DELIVERY!
 # -----------------------------------------------------------------------
@@ -248,10 +183,7 @@
 # Next line is the default location for PRODUCT OUTPUT FILES
 !  ~/runtime
 #
-#------------------
-# Test output files
-#------------------
-100|mls_l3_log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+100|mls_l3log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
 30100|mls_l3dm_clo_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
 30101|mls_l3dm_clo_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
 30102|mls_l3dm_clo_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
@@ -262,15 +194,96 @@
 30107|mls_l3dm_clo_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
 30108|mls_l3dm_clo_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
 30109|mls_l3dm_clo_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30110|mls_l3dm_h2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30111|mls_l3dm_hcl_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30112|mls_l3dm_hcn_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30113|mls_l3dm_hno3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30114|mls_l3dm_n2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30115|mls_l3dm_o3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30116|mls_l3dm_oh_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30117|mls_l3dm_t_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
-30118|mls_l3dm_z_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30110|mls_l3dm_h2o_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30111|mls_l3dm_h2o_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30112|mls_l3dm_h2o_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30113|mls_l3dm_h2o_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30114|mls_l3dm_h2o_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30115|mls_l3dm_h2o_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30116|mls_l3dm_h2o_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30117|mls_l3dm_h2o_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30118|mls_l3dm_h2o_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30119|mls_l3dm_h2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30120|mls_l3dm_hcl_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30121|mls_l3dm_hcl_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30122|mls_l3dm_hcl_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30123|mls_l3dm_hcl_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30124|mls_l3dm_hcl_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30125|mls_l3dm_hcl_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30126|mls_l3dm_hcl_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30127|mls_l3dm_hcl_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30128|mls_l3dm_hcl_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30129|mls_l3dm_hcl_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30130|mls_l3dm_hcn_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30131|mls_l3dm_hcn_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30132|mls_l3dm_hcn_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30133|mls_l3dm_hcn_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30134|mls_l3dm_hcn_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30135|mls_l3dm_hcn_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30136|mls_l3dm_hcn_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30137|mls_l3dm_hcn_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30138|mls_l3dm_hcn_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30139|mls_l3dm_hcn_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30140|mls_l3dm_hno3_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30141|mls_l3dm_hno3_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30142|mls_l3dm_hno3_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30143|mls_l3dm_hno3_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30144|mls_l3dm_hno3_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30145|mls_l3dm_hno3_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30146|mls_l3dm_hno3_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30147|mls_l3dm_hno3_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30148|mls_l3dm_hno3_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30149|mls_l3dm_hno3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30150|mls_l3dm_n2o_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30151|mls_l3dm_n2o_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30152|mls_l3dm_n2o_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30153|mls_l3dm_n2o_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30154|mls_l3dm_n2o_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30155|mls_l3dm_n2o_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30156|mls_l3dm_n2o_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30157|mls_l3dm_n2o_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30158|mls_l3dm_n2o_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30159|mls_l3dm_n2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30160|mls_l3dm_o3_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30161|mls_l3dm_o3_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30162|mls_l3dm_o3_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30163|mls_l3dm_o3_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30164|mls_l3dm_o3_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30165|mls_l3dm_o3_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30166|mls_l3dm_o3_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30167|mls_l3dm_o3_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30168|mls_l3dm_o3_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30169|mls_l3dm_o3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30170|mls_l3dm_oh_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30171|mls_l3dm_oh_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30172|mls_l3dm_oh_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30173|mls_l3dm_oh_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30174|mls_l3dm_oh_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30175|mls_l3dm_oh_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30176|mls_l3dm_oh_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30177|mls_l3dm_oh_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30178|mls_l3dm_oh_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30179|mls_l3dm_oh_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30180|mls_l3dm_t_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30181|mls_l3dm_t_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30182|mls_l3dm_t_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30183|mls_l3dm_t_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30184|mls_l3dm_t_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30185|mls_l3dm_t_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30186|mls_l3dm_t_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30187|mls_l3dm_t_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30188|mls_l3dm_t_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30189|mls_l3dm_t_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30190|mls_l3dm_z_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30191|mls_l3dm_z_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30192|mls_l3dm_z_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30193|mls_l3dm_z_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30194|mls_l3dm_z_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30195|mls_l3dm_z_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30196|mls_l3dm_z_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30197|mls_l3dm_z_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30198|mls_l3dm_z_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30199|mls_l3dm_z_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -452,7 +465,7 @@
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
 10100|LogStatus|/user2/nakamura/L1BOA||||1
-10101|mls_l3_log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+10101|mls_l3log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
 10102|LogUser|/user2/nakamura/L1BOA||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1
