@@ -545,6 +545,8 @@ contains ! =====     Public Procedures     =============================
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
     integer :: I                        ! Loop counter
+    integer :: FIRSTPROFINRUN           ! Index of first profile in processing time
+    integer :: LASTPROFINRUN            ! Index of last profile in processing time
 
     real(r8) :: MINANGLE                ! Smallest angle in chunk
     real(r8) :: MAXANGLE                ! Largest angle in chunk
@@ -630,12 +632,12 @@ contains ! =====     Public Procedures     =============================
       call output ( maxAngle, format='(F7.2)' )
       call output ( ' nextAngle: ' )
       call output ( nextAngle, format='(F7.2)', advance='yes' )
-      call output ( ' Spacing: ' )
+      call output ( 'Spacing: ' )
       call output ( spacing )
       call output ( ' first: ' )
-      call output ( first )
+      call output ( first, format='(F7.2)' )
       call output ( ' last: ' )
-      call output ( last, advance='yes' )
+      call output ( last, format='(F7.2)', advance='yes' )
     end if
 
     ! Now fill the other geolocation information, first latitude
@@ -661,7 +663,7 @@ contains ! =====     Public Procedures     =============================
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
         & hGrid%phi, hGrid%time, &
-        & method='spline', extrapolate='Allow' )
+        & method='Spline', extrapolate='Allow' )
     else
       ! Case where only single MAF per chunk, treat it specially
       hGrid%time = l1bField%dpField(1,1,1) + &
@@ -685,7 +687,7 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%solarZenith, &
-      & method='spline', extrapolate='Allow' )
+      & method='Spline', extrapolate='Allow' )
     call DeallocateL1BData ( l1bField )
 
     ! Line of sight angle
@@ -695,7 +697,7 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%losAngle, &
-      & method='spline', extrapolate='Allow' )
+      & method='Spline', extrapolate='Allow' )
     call DeallocateL1BData ( l1bField )
     hGrid%losAngle = modulo ( hGrid%losAngle, 360.0_r8 )
 
@@ -732,39 +734,55 @@ contains ! =====     Public Procedures     =============================
       call output ( hGrid%noProfsUpperOverlap, advance='yes' )
     end if
 
-    ! Now, we want to ensure we don't spill beyond the processing time range
+    ! Now, we want to ensure we don't spill beyond the processing time range.
+    ! First an optional 'hard' limit.  This guarantees that no part of the
+    ! chunk (even an overlap) spills beyond the processing range.  This is
+    ! important for runs using sids L2GP data which has hard limits (would
+    ! crash Fill otherwise).  However, it's not important for other runs, so is
+    ! optional.
+    if ( forbidOverspill ) then
+      call Hunt ( hGrid%time, processingRange%startTime, &
+        & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
+      if ( firstProfInRun > 0 .and. forbidOverspill ) then
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'hGrid starts before run trimming start.', &
+          & advance='yes' )
+        call DeleteHGridOverlap ( hGrid, -1, firstProfInRun )
+      end if
+      
+      call Hunt ( hGrid%time, processingRange%endTime, &
+        & lastProfInRun, allowTopValue=.true., allowBelowValue=.true. )
+      if ( lastProfInRun < hGrid%noProfs .and. forbidOverspill ) then
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( 'hGrid ends after run trimming end.',&
+          & advance='yes' )
+        call DeleteHGridOverlap ( hGrid, 1, hGrid%noProfs-lastProfInRun )
+      end if
+    end if
+
+    ! Now a 'softer' limit that applies to all cases, this just moves the
+    ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
       if ( index ( switches, 'hgrid' ) /= 0 ) &
-        & call output ( 'Hgrid starts before start of dataset, ' )
+        & call output ( &
+        & 'Non overlapped part of hGrid starts before run, extending overlap.', &
+        & advance='yes' )
       call Hunt ( hGrid%time, processingRange%startTime, &
         &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
-      if ( forbidOverspill ) then
-        call DeleteHGridOverlap ( hGrid, -1 )
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
-          & call output ( 'deleting overspill.', advance='yes' )
-      else
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
-          & call output ( 'extending overlap.', advance='yes' )
-      end if
     end if
 
     if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
       & processingRange%endTime ) then
       if ( index ( switches, 'hgrid' ) /= 0 ) &
-        & call output ( 'Hgrid finishes after end of dataset, ' )
+        & call output ( &
+        & 'Non overlapped part of hGrid end after run, extending overlap.', &
+        & advance='yes' )
       call Hunt ( hGrid%time, processingRange%endTime, &
         & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
       hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
-      if ( forbidOverspill ) then
-        call DeleteHGridOverlap ( hGrid, 1 )
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
-          & call output ( 'deleting overspill.', advance='yes' )
-      else
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
-          & call output ( 'extending overlap.', advance='yes' )
-      end if
     end if
 
+    ! Finally we're done.
     if ( index ( switches, 'hgrid' ) /= 0 ) then
       call output ( 'Final Hgrid size: ' )
       call output ( hGrid%noProfs )
@@ -796,30 +814,38 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateEmptyHGrid
 
   ! ---------------------------------------  DeleteHGridOverlap ---
-  subroutine DeleteHGridOverlap ( hGrid, side )
+  subroutine DeleteHGridOverlap ( hGrid, side, noProfs )
     type (HGrid_T), intent(inout) :: HGrid
     integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
+    integer, intent(in), optional :: NOPROFS ! How many to delete, default all
     ! Local variables
     integer :: newNoProfs
-    real, dimension(:), pointer :: temp
+    real(r8), dimension(:), pointer :: temp
     integer :: first, last
+    integer :: toDelete                 ! Number to delete
 
     ! Executable code
     select case ( side )
     case ( -1 )
-      newNoProfs = hGrid%noProfs - hGrid%noProfsLowerOverlap
-      first = hGrid%noProfsLowerOverlap + 1
+      toDelete = hGrid%noProfsLowerOverlap
+      if ( present ( noProfs ) ) toDelete = noProfs
+      newNoProfs = hGrid%noProfs - toDelete
+      first = toDelete + 1
       last = hGrid%noProfs
-      hGrid%noProfsLowerOverlap = 0
+      hGrid%noProfsLowerOverlap = max ( hGrid%noProfsLowerOverlap - toDelete, 0 )
     case ( 1 )
-      newNoProfs = hGrid%noProfs - hGrid%noProfsUpperOverlap
+      toDelete = hGrid%noProfsUpperOverlap
+      if ( present ( noProfs ) ) toDelete = noProfs
+      newNoProfs = hGrid%noProfs - toDelete
       first = 1
       last = newNoProfs
-      hGrid%noProfsUpperOverlap = 0
+      hGrid%noProfsUpperOverlap = max ( hGrid%noProfsUpperOverlap - toDelete, 0 )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Invalid side argument to DeleteOverlaps' )
     end select
+    if ( newNoProfs <= 0 ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
 
     nullify ( temp )
     call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
@@ -941,6 +967,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.28  2002/06/18 22:41:26  livesey
+! More fixes to do with nasty aspects of regular hGrids on day boundaries
+!
 ! Revision 2.27  2002/05/24 20:56:53  livesey
 ! Some fixes for cases where the chunk is only 1 MAF long
 !
