@@ -150,11 +150,11 @@ CONTAINS
 
     ! Store appropriate user input as global attributes
     GlobalAttributes%InputVersion = l3pcf%outputVersion
-    GlobalAttributes%StartUTC = l3pcf%l2StartDay // &
+    GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
       & 'T00:00:00.000000Z'
-    GlobalAttributes%EndUTC = l3pcf%l2EndDay // &
+    GlobalAttributes%EndUTC = l3pcf%l3EndDay // &
       & 'T23:59:59.999999Z'
-    GlobalAttributes%PGEVersion = 'v1.2'   ! l3pcf%PGEVersion
+    GlobalAttributes%PGEVersion = l3pcf%outputVersion   ! l3pcf%PGEVersion
     call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
@@ -500,6 +500,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.13  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
 ! Revision 1.12  2003/06/03 20:45:04  pwagner
 ! Fills global attributes
 !
