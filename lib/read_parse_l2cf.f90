@@ -177,7 +177,7 @@ END SUBROUTINE Strip_Blanks
 
 
 !===================================
-SUBROUTINE read_parse_l2cf (L2CFUnit, L2cf_data, returnStatus) 
+SUBROUTINE read_parse_l2cf (L2CFUnit, L2cf_data) 
 !===================================
 
 ! This subroutine reads and parses L2CF and does some preliminary checking on 
@@ -187,9 +187,9 @@ SUBROUTINE read_parse_l2cf (L2CFUnit, L2cf_data, returnStatus)
 
 INTEGER, INTENT (IN):: L2CFUnit 
 TYPE (l2cf), INTENT (OUT) :: L2cf_data
-INTEGER, INTENT (OUT) ::  returnStatus
 
-TYPE (l2cfKey), DIMENSION(MaxNoL2cfKeys) :: L2cfTable
+
+
 
 
 
@@ -202,10 +202,12 @@ CHARACTER (LEN=*), PARAMETER :: lineFmt = "(q,<nc>a1)"
 
 ! Functions
 
-INTEGER, EXTERNAL :: Pgs_io_gen_openF, Pgs_io_gen_closeF
 
 ! Variables
 
+INTEGER ::  returnStatus
+
+TYPE (l2cfKey), DIMENSION(MaxNoL2cfKeys) :: L2cfTable
 
 CHARACTER (LEN=256) :: line
 CHARACTER (LEN=256) :: msg
@@ -527,6 +529,9 @@ END MODULE ReadParseL2cf
 !=======================
 
 ! $Log$
+! Revision 1.6  2000/01/06 23:39:00  lungu
+! Finalized error handling.
+!
 ! Revision 1.5  2000/01/06 02:37:22  lungu
 ! Made a module out of read_parse_l2cf, strip_blanks and data structures.
 !
