@@ -143,8 +143,8 @@ contains
   ! find where the tau derivative is large.
 
     do i = 2, n_path - 1
-      if ( max(maxval(abs(real(dtaudn(:,i)))), &
-        &      maxval(abs(imag(dtaudn(:,i))))) > tol * tolscale ) &
+      if ( max(maxval(abs( real(dtaudn(:,i)))), &
+        &      maxval(abs(aimag(dtaudn(:,i))))) > tol * tolscale ) &
         & do_gl(i) = .true.
     end do
 
@@ -211,6 +211,10 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.2  2003/01/18 01:42:42  vsnyder
+! Added complex 3-quantity path_contrib subroutine.
+! Separated Get_GL_Inds into a separate subroutine.
+!
 ! Revision 2.1  2003/01/08 00:09:56  vsnyder
 ! Moved from rad_tran, where it didn't seem to belong
 !
