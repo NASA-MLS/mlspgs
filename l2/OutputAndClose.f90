@@ -14,15 +14,15 @@ module OutputAndClose ! outputs all data from the Join module to the
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
     & FIELD_FIRST, FIELD_LAST, L_L2AUX, L_L2GP, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
-  use L2GPData, only: L2GPData_T, WriteL2GPData
+  use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-!  use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
-!    & MLSPCF_L2GP_START
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-    & MLSPCF_L2GP_START
+    & MLSPCF_L2GP_START, &
+	 & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, mlspcf_mcf_l2log_start, &
+	 & mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
@@ -32,6 +32,8 @@ module OutputAndClose ! outputs all data from the Join module to the
   use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
+  use WriteMetadata, only: PCFData_T, populate_metadata_std, &
+  & populate_metadata_oth, WriteMetaLog
 
   implicit none
   private
@@ -52,12 +54,26 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase )
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf )
+
+	! Hard-wired assumptions:
+	
+	! ----------------------- metadata ------------------------
+	! The PCF numbers for the mcf corresponding to each
+	! of the l2gp files begin with mlspcf_mcf_l2gp_start
+	! and increase 1 by 1 with each succeeding species.
+	! Then, after the last single-species l2gp, the very next pcf number
+	! is for the one called 'other' ML2OTH.001.MCF
+	
+	!   for the l2aux the mcf is mlspcf_mcf_l2dgm_start
+	!   for the log file the mcf is mlspcf_mcf_l2log_start
+	!   for the dgg file the mcf is mlspcf_mcf_l2dgg_start
 
   ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
+	 type(PCFData_T) :: l2pcf
 
   ! - - - External Procedures
 
@@ -83,14 +99,17 @@ contains ! =====     Public Procedures     =============================
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     integer :: KEY                      ! Index of spec_args node
     integer :: l2auxFileHandle, l2aux_Version
+    integer :: l2gp_mcf, l2gp_oth_mcf, l2aux_mcf, l2dgg_mcf  ! mcf numbers for writing metadata
     character (len=132) :: l2auxPhysicalFilename
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
+    integer, parameter:: MAXQUANTITIESPERFILE=64        
     character (len=32) :: mnemonic
     character (len=256) :: msg
     integer :: NAME                     ! string index of label on output
+    integer:: numquantitiesperfile        
     integer :: OUTPUT_TYPE              ! L_L2AUX or L_L2GP
-    character(len=132) :: QuantityName  ! From "quantities" field
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: returnStatus
     integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
@@ -110,7 +129,10 @@ contains ! =====     Public Procedures     =============================
     l2gp_Version = 1
     l2aux_Version = 1
 
-    
+    l2gp_mcf = mlspcf_mcf_l2gp_start
+    l2aux_mcf = mlspcf_mcf_l2dgm_start
+    l2dgg_mcf = mlspcf_mcf_l2dgg_start
+	 l2gp_oth_mcf = l2gp_mcf+1	! We will always assume that 'OTH' comes last
 
     ! Loop over the lines in the l2cf
 
@@ -167,6 +189,7 @@ contains ! =====     Public Procedures     =============================
 
                 ! Loop over the segments of the l2cf line
                 
+					numquantitiesperfile = 0
                 do field_no = 2, nsons(key) ! Skip "output" name
                   gson = subtree(field_no,key)
                   select case ( decoration(subtree(1,gson)) )
@@ -174,6 +197,8 @@ contains ! =====     Public Procedures     =============================
                     do in_field_no = 2, nsons(gson)
                       db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                       CALL WriteL2GPData(l2gpDatabase(db_index),swfid)
+							 numquantitiesperfile=numquantitiesperfile+1
+							 QuantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
                     end do ! in_field_no = 2, nsons(gson)
                   case ( f_overlaps )
                     ! ??? More work needed here
@@ -186,6 +211,28 @@ contains ! =====     Public Procedures     =============================
                   call MLSMessage ( MLSMSG_Error, ModuleName, &
                     &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
                 end if
+
+					! Write the metadata file
+					if(numquantitiesperfile <= 0) then
+						call announce_error(son, &
+						& 'No quantities written for this l2gp file')
+					elseif(QuantityNames(numquantitiesperfile) &
+					& == QuantityNames(1) ) then
+
+					! Typical homogeneous l2gp file: e.g., BrO is ML2BRO.001.MCF
+						call populate_metadata_std &
+						& (swfid, l2gp_mcf, l2pcf, QuantityNames(1))
+						l2gp_mcf = l2gp_mcf + 1
+						 l2gp_oth_mcf = l2gp_mcf+1	! We will always assume that 'OTH' comes last
+
+					else
+
+					! Type l2gp file 'other'
+						call populate_metadata_oth &
+						& (swfid, l2gp_oth_mcf, l2pcf, &
+						& numquantitiesperfile, QuantityNames)
+
+					endif
 !              else                ! Found the right file
 !                l2gpFileHandle = l2gpFileHandle + 1
 !              end if
@@ -227,6 +274,7 @@ contains ! =====     Public Procedures     =============================
                 ! Create the HDF file and initialize the SD interface
                 sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
                 
+					numquantitiesperfile = 0
                 do field_no = 2, nsons(key) ! Skip "output" name
                   gson = subtree(field_no,key)
                   select case ( decoration(subtree(1,gson)) )
@@ -234,6 +282,8 @@ contains ! =====     Public Procedures     =============================
                     do in_field_no = 2, nsons(gson)
                       db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                       CALL WriteL2AUXData(l2auxDatabase(db_index),sdfid)
+							 numquantitiesperfile=numquantitiesperfile+1
+			            call get_string ( sub_rosa(subtree(2,gson)), QuantityNames(numquantitiesperfile) )
                     end do ! in_field_no = 2, nsons(gson)
                   case ( f_overlaps )
                     ! ??? More work needed here
@@ -247,6 +297,19 @@ contains ! =====     Public Procedures     =============================
                   call MLSMessage ( MLSMSG_Error, ModuleName, &
                     &  "Error closing l2aux file:  "//mnemonic//" "//msg )
                 end if
+
+				! Write the metadata file
+					if(numquantitiesperfile <= 0) then
+						call announce_error(son, &
+						& 'No quantities written for this l2aux file')
+					else
+
+					! We will need to think harder about this; until then reuse
+						call populate_metadata_oth &
+						& (swfid, l2aux_mcf, l2pcf, &
+						& numquantitiesperfile, QuantityNames)
+
+					endif
 !              else
 !                l2auxFileHandle =  l2auxFileHandle + 1
 !              end if
@@ -274,6 +337,11 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call sayTime
 
     if ( toggle(gen) ) call trace_end ( "Output_Close")
+
+! Write the log file metadata
+
+      CALL WriteMetaLog(l2pcf)
+
 
   contains
     subroutine SayTime
@@ -317,6 +385,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.14  2001/04/02 23:43:46  pwagner
+! Now makes metadata calls; it compiles, but does it bomb?
+!
 ! Revision 2.13  2001/03/28 00:23:20  pwagner
 ! Made tiny changes to use announce_error
 !
