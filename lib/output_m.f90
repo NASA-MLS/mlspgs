@@ -114,7 +114,7 @@ contains
       if ( prunit < -1 ) then
         write ( line, * ) value
         call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-          & advance=advance )
+          & advance=my_adv )
       end if
       if ( prunit >= 0 ) &
         & write ( prunit, format, advance=my_adv ) value
@@ -138,7 +138,7 @@ contains
         & write ( *, '(a)', advance=my_adv ) line(:k)
       if ( prunit < -1 ) &
         & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
-          & advance=advance )
+          & advance=my_adv )
       if ( prunit >= 0 ) &
         & write ( prunit, '(a)', advance=my_adv ) line(:k)
     end if
@@ -163,7 +163,7 @@ contains
       & write ( *, '(a)', advance=my_adv ) line(i:)
     if ( prunit < -1 ) &
         & call MLSMessage ( MLSMSG_Level, ModuleName, line(i:), &
-          & advance=advance )
+          & advance=my_adv )
     if ( prunit >= 0 ) &
       & write ( prunit, '(a)', advance=my_adv ) line(i:)
     return
@@ -186,7 +186,7 @@ contains
       if ( prunit < -1 ) then
         write ( line, * ) value
         call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-          & advance=advance )
+          & advance=my_adv )
       end if
       if ( prunit >= 0 ) &
         & write ( prunit, format, advance=my_adv ) value
@@ -210,7 +210,7 @@ contains
         & write ( *, '(a)', advance=my_adv ) line(:k)
       if ( prunit < -1 ) &
         & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
-          & advance=advance )
+          & advance=my_adv )
       if ( prunit >= 0 ) &
         & write ( prunit, '(a)', advance=my_adv ) line(:k)
     end if
@@ -218,6 +218,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.2  2001/02/22 23:27:16  vsnyder
+! Correct routing of output through MLSMessage
+!
 ! Revision 2.1  2000/10/11 18:33:24  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
