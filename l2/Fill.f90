@@ -2507,6 +2507,7 @@ contains ! =====     Public Procedures     =============================
         s1 = min ( s1 + 1, quantity%template%noSurfs )
         s2 = max ( s2 - 1, 1 )
       end select
+    else
       s1 = 1
       s2 = quantity%template%instanceLen
     end if
@@ -2984,6 +2985,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.107  2002/02/20 22:42:35  livesey
+! Embarassing bug fix
+!
 ! Revision 2.106  2002/02/20 02:08:14  livesey
 ! Added height restricted explicit fill (not yet tested.)
 !
