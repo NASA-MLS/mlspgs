@@ -9,7 +9,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
     & CreateQtyTemplateFromMLSCfInfo
   use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
-  use DUMPER, only: DUMP
+  use Dumper, only: Dump
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
-    type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
+    type (HGrid_T), dimension(:), pointer :: HGrids
 
     integer :: I                ! Loop counter
     integer :: InstrumentModuleIndex ! Loop counter
@@ -87,6 +87,8 @@ contains ! =====     Public Procedures     =============================
     ! quantities saving file IO and memory.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
+
+    nullify ( hGrids )
 
     allocate ( mifGeolocation(size(modules)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -175,6 +177,11 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.14  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.13  2001/04/07 01:50:48  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
