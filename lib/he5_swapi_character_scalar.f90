@@ -111,7 +111,7 @@ contains
     character(len=*), intent(out) :: BUFFER       ! Buffer for read
 
     integer, external :: HE5_SWRDATTR
-
+    buffer = ''
     HE5_SWRDATTR_CHARACTER_SCALAR = he5_swrdattr(swathid, &
          & attrname, buffer )
   end function HE5_SWRDATTR_CHARACTER_SCALAR
@@ -124,7 +124,7 @@ contains
     character(len=*), intent(out) :: BUFFER       ! Buffer for read
 
     integer, external :: HE5_SWRDLATTR
-
+    buffer = ''
     HE5_SWRDLATTR_CHARACTER_SCALAR = he5_swrdlattr(swathid, fieldname, &
          & attrname, buffer )
   end function HE5_SWRDLATTR_CHARACTER_SCALAR
@@ -136,6 +136,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.7  2004/02/26 21:57:25  pwagner
+! Takes care that attribute return values nulled out before being read
+!
 ! Revision 2.6  2004/02/13 00:16:02  pwagner
 ! New stuff for reading swath attributes
 !
