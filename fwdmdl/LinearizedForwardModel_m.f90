@@ -251,14 +251,6 @@ contains ! =====     Public Procedures     =============================
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
         if ( l2pcQ%template%quantityType == l_vmr ) then
-
-
-
-          cycle!????????????????????******************************** DEBUG!!!!!!!
-
-
-
-
           if ( .not. any &
             & (l2pcQ%template%molecule == forwardModelConfig%molecules)) cycle
         end if
@@ -447,13 +439,6 @@ contains ! =====     Public Procedures     =============================
           & xP%quantities(qtyInd)%values - &
           & l2pc%col%vec%quantities(qtyInd)%values
 
-        !!!!!!!!!!!!!!!! AVOID BUG !!!!!!!!!!!!!!!!!!!!11
-        if (deltaX%quantities(qtyInd)%template%quantityType == l_temperature) &
-          & deltaX%quantities(qtyInd)%values(:, &
-          & deltaX%quantities(qtyInd)%template%noInstances) = 0.0
-          !!!!!!!!!!!!!!!!!!! DEBUG
-
-
         ! NOTE FOR FUTURE ******************************************
         ! Now make sure that the deltaX's where mask is set are zero
         ! Write this bit later!!!!! !?????? ***********************
@@ -595,6 +580,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.14  2001/05/03 02:02:54  vsnyder
+! Use emit toggle.  Add names to cloned vectors
+!
 ! Revision 1.13  2001/05/02 20:26:17  vsnyder
 ! Give names to cloned vectors.  Use toggle(emit) and levels(emit) to
 ! control debugging output.
