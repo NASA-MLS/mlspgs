@@ -412,6 +412,61 @@ contains ! =====     Public Procedures     =============================
 
   end function CheckIntegrity_QuantityTemplate
 
+  ! ----------------------------  CopyQuantityTemplate  -----
+  subroutine CopyQuantityTemplate ( Z, A )
+    ! This routine does a 'deep' copy of a quantity template.
+    ! We don't need to do if often as typically only a shallow copy
+    ! is required.  Note that this also follows any 'links' to h/vGrids and expands
+    ! them too.
+    type (QuantityTemplate_T), intent(inout) :: Z
+    type (QuantityTemplate_T), intent(in) :: A
+
+    ! Executable code
+    ! Destroy result
+    call DestroyQuantityTemplateContents ( z )
+    ! Setup result
+    call SetupNewquantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
+      & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, a%majorFrame )
+    ! Copy each other component -- tedious, but can't do a shallow copy
+    ! as would lose newly allocated arrays
+    z%name = a%name
+    z%quantityType = a%quantityType
+    z%logBasis = a%logBasis
+    z%minValue = a%minValue
+    z%noInstancesLowerOverlap = a%noInstancesLowerOverlap
+    z%noInstancesUpperOverlap = a%noInstancesUpperOverlap
+    z%badValue = a%badValue
+    z%unit = a%unit
+    z%verticalCoordinate = a%verticalCoordinate
+    z%surfs = a%surfs
+    z%instanceOffset = a%instanceOffset
+    z%grandTotalInstances = a%grandTotalInstances
+    z%phi = a%phi
+    z%geodLat = a%geodLat
+    z%lon = a%lon
+    z%time = a%time
+    z%solarTime = a%solarTime
+    z%solarZenith = a%solarZenith
+    z%losAngle = a%losAngle
+    z%frequencyCoordinate = a%frequencyCoordinate
+    if ( associated ( a%frequencies ) ) then
+      call Allocate_test ( z%frequencies, size(a%frequencies), 'z%frequencies', ModuleName )
+      z%frequencies = a%frequencies
+    end if
+    z%lo = a%lo
+    z%signal = a%signal
+    z%sideband = a%sideband
+    z%instrumentModule = a%instrumentModule
+    z%radiometer = a%radiometer
+    z%reflector = a%reflector
+    z%molecule = a%molecule
+    if ( .not. z%regular ) then
+      z%surfIndex = a%surfIndex
+      z%chanIndex = a%chanIndex
+    end if
+   
+  end subroutine CopyQuantityTemplate
+
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
     ! Dummy argument
@@ -661,6 +716,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.34  2003/07/01 19:29:00  livesey
+! Added grandTotalInstances
+!
 ! Revision 2.33  2003/06/20 19:33:53  pwagner
 ! Quanities now share grids stored separately in databses
 !
