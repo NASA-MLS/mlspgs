@@ -191,18 +191,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
-     ! Unfortunately, currently we are neither reading nor writing this field
-     ! As explained in several places below, the cwrappers beneath have failed
-     ! to observe the right number of memory places required to represent
-     ! the fortran data.
-     ! paw has an idea of how to do it eventually:
-     ! it will require writing a separate module in which to read/write
-     ! character-valued swath data fields, named something like 
-     ! char_swdata_m.f90
-     ! In this new module, he5_swrdfld and he5_swwrfld will simply
-     ! be integer externals, preventing any type conversion
-     ! before it gives their start addresses to the c-wrappers beneath
-     ! Then just make sure that the right number of bytes get transferred
+     ! We always write this data field
+     ! However, because some l2gp files were created incorrectly,
+     ! It takes a special forcing option to read it
      character (len=1), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
@@ -459,7 +450,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- ReadL2GPData_fileID  -----------------------------
 
   subroutine ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion, HMOT)
+       firstProf, lastProf, hdfVersion, HMOT, ReadStatus)
     !------------------------------------------------------------------------
 
     ! Given a file handle,
@@ -477,6 +468,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
     character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local
     integer :: myhdfVersion
@@ -507,13 +499,13 @@ contains ! =====     Public Procedures     =============================
     !print*,"In readl2gpdata: first/last prof=",firstProf, lastProf
     if (myhdfVersion == HDFVERSION_4) then
       call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, my_hmot, &
-        & numProfs, firstProf, lastProf)
+        & numProfs, firstProf, lastProf, ReadStatus)
     elseif (myhdfVersion /= HDFVERSION_5) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to ReadL2GPData" )
     else
       call ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, my_hmot, &
-        & numProfs, firstProf, lastProf)
+        & numProfs, firstProf, lastProf, ReadStatus)
     endif
     !print*,"In readl2gpdata: first/last/read prof=",firstProf,&
     !  lastProf,numProfs
@@ -522,7 +514,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- ReadL2GPData_fileName  -----------------------------
 
   subroutine ReadL2GPData_fileName(fileName, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion, HMOT)
+       firstProf, lastProf, hdfVersion, HMOT, ReadStatus)
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -540,6 +532,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
     character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local
     integer :: L2FileHandle
@@ -573,7 +566,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- ReadL2GPData_hdf4  -----------------------------
 
   subroutine ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, HMOT, &
-    & numProfs, firstProf, lastProf)
+    & numProfs, firstProf, lastProf, ReadStatus)
   use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
 
@@ -581,6 +574,13 @@ contains ! =====     Public Procedures     =============================
     ! (i.e. hdf4) returning a filled data structure and the
     ! number of profiles read.
 
+    ! All the ReadStatus harrumphing is because
+    ! (1) An earlier version always core dumped
+    ! (2) Even this version dumps core while reading l2gp files which stored
+    !     the 'Status' field as 32-bit floats instead of chars
+    ! Therefore, unless you supply the optional arg ReadStatus=.true.,
+    ! it will skip reading the troublesome datafield
+    ! Naturally, you would do that only for correctly-formatted l2gp files
     ! Arguments
 
     character (len=*), intent(in) :: swathname ! Name of swath
@@ -589,6 +589,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(out) :: l2gp ! Result
     character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
     integer, intent(out), optional :: numProfs ! Number actually read
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local Parameters
     character (len=*), parameter :: SZ_ERR = 'Failed to get size of &
@@ -609,6 +610,7 @@ contains ! =====     Public Procedures     =============================
 
     real, allocatable :: realSurf(:), realProf(:), real3(:,:,:)
     logical :: dontfail
+    logical :: ReadingStatus
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -619,6 +621,8 @@ contains ! =====     Public Procedures     =============================
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
     dontfail = (HMOT /= 'M')
+    ReadingStatus = .false.
+    if ( present(ReadStatus) ) ReadingStatus = ReadStatus
 
     ! Attach to the swath for reading
 
@@ -831,33 +835,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Read the data fields that are 1-dimensional
 
-!??? There appears to be a problem with reading character data using
-!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
-!??? the type of object.  Burkhard Burow's cfortran macros need to be told
-!??? whether the argument is character, because compilers represent character
-!??? arguments in various ways, usually different from non-character arguments.
-!??? I.e., never the twain shall meet.
-!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!      l2gp%status)
-!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!      the_status_buffer)
-! These lines commented out as they make NAG core dump on the deallocate statement.
-! below.
-!    if ( status == -1 ) then
-!      msr = MLSMSG_L2GPRead // DATA_FIELD3
-!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-!    end if
-!    l2gp%status = the_status_buffer(:)(1:1)
-
-    ! (   see note above concerning char_swdata_m.f90   )
 
     l2gp%status = ' ' ! So it has a value.
-
-!   if(USEINTS4STRINGS) then
-!       status = mls_swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!         string_buffer, hdfVersion=HDFVERSION_4)
-!       call ints2Strings(string_buffer, l2gp%status)
-!    end if
+    if ( ReadingStatus) &
+      & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
+      & l2gp%status, hdfVersion=HDFVERSION_4, dontfail=.true. )
 
     status = mls_swrdfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
       &   realProf, hdfVersion=HDFVERSION_4, dontfail=dontfail)
@@ -889,7 +871,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------- ReadL2GPData_hdf5 ----------------
 
   subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, HMOT, &
-    & numProfs, firstProf, lastProf)
+    & numProfs, firstProf, lastProf, ReadStatus)
   use HDFEOS5, only: HE5_swattach, HE5_swdetach, HE5_SWINQDIMS
   use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
@@ -897,6 +879,13 @@ contains ! =====     Public Procedures     =============================
     ! This routine reads an L2GP file, returning a filled data structure and the !
     ! number of profiles read.
 
+    ! All the ReadStatus harrumphing is because
+    ! (1) An earlier version always core dumped
+    ! (2) Even this version dumps core while reading l2gp files which stored
+    !     the 'Status' field as 32-bit floats instead of chars
+    ! Therefore, unless you supply the optional arg ReadStatus=.true.,
+    ! it will skip reading the troublesome datafield
+    ! Naturally, you would do that only for correctly-formatted l2gp files
     ! Arguments
 
     character (LEN=*), intent(IN) :: swathname ! Name of swath
@@ -905,6 +894,7 @@ contains ! =====     Public Procedures     =============================
     type( L2GPData_T ), intent(OUT) :: l2gp ! Result
     character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
     integer, intent(OUT),optional :: numProfs ! Number actually read
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local Parameters
     character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
@@ -925,6 +915,7 @@ contains ! =====     Public Procedures     =============================
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
     logical :: dontfail
+    logical :: ReadingStatus
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux with HDF4. With HDF5 we may or may not need to
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -935,7 +926,8 @@ contains ! =====     Public Procedures     =============================
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
     dontfail = (HMOT /= 'M')
-
+    ReadingStatus = .false.
+    if ( present(ReadStatus) ) ReadingStatus = ReadStatus
     ! Attach to the swath for reading
     !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
@@ -1161,42 +1153,10 @@ contains ! =====     Public Procedures     =============================
     
     ! Read the data fields that are 1-dimensional
 
-!??? There appears to be a problem with reading character data using
-!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
-!??? the type of object.  Burkhard Burow's cfortran macros need to be told
-!??? whether the argument is character, because compilers represent character
-!??? arguments in various ways, usually different from non-character arguments.
-!??? I.e., never the twain shall meet.
-!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!      l2gp%status)
-!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!      the_status_buffer)
-! These lines commented out as they make NAG core dump on the deallocate statement.
-! below.
-!    if ( status == -1 ) then
-!      msr = MLSMSG_L2GPRead // DATA_FIELD3
-!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-!    end if
-!    l2gp%status = the_status_buffer(:)(1:1)
-    
-    !   The above note was copied direct from the HDF4 version. The HDF5
-    ! version has similar problems so these lines are commented too.
-    !         status = HE5_SWrdfld(swid, DATA_FIELD3,start(3:3),&
-    !    stride(3:3),edge(3:3), l2gp%status)
-    !
-    ! (   see note above concerning char_swdata_m.f90   )
-
     l2gp%status = ' ' ! So it has a value.
-
-   if(USEINTS4STRINGS) then
-!       status = mls_swrdfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!         string_buffer, hdfVersion=HDFVERSION_5)
-!       call ints2Strings(string_buffer, l2gp%status)
-    else
-      call MLSMessage(MLSMSG_Debug, ModuleName, &
-        "reading of status field disabled")
-      status=0
-    end if
+    if ( ReadingStatus) &
+      & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
+      & l2gp%status, hdfVersion=HDFVERSION_5, dontfail=.true. )
 
     status = mls_SWrdfld(swid, 'Quality', start(3:3), stride(3:3),&
       edge(3:3),realProf, hdfVersion=HDFVERSION_5, dontfail=dontfail)
@@ -1573,16 +1533,8 @@ contains ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-   if(USEINTS4STRINGS) then
-!      allocate(string_buffer(1,l2gp%nTimes))
-!      call strings2Ints(l2gp%status, string_buffer)
-!      status = mls_swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-!           string_buffer, hdfVersion=HDFVERSION_4)
-!      deallocate(string_buffer)
-   else
-!      status = mls_swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-!           l2gp%status, hdfVersion=HDFVERSION_4)
-   end if
+    status = mls_swwrfld(swid, 'Status', start(3:3), stride(3:3), edge(3:3), &
+       &   l2gp%status, hdfVersion=HDFVERSION_4, dontfail=.true.)
     !  l2gp%quality = 0 !??????? Why was this here !??? NJL
     status = mls_swwrfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality), hdfVersion=HDFVERSION_4)
@@ -1781,23 +1733,13 @@ contains ! =====     Public Procedures     =============================
 
     end if
 
-!    print*,"Defining data field ",DATA_FIELD3,"of dim.", DIM_NAME1
-!    print*,"... and of type ",HE5T_NATIVE_CHAR
-
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MAX_DIML1, &
-    & HE5T_NATIVE_CHAR, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+    & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=HDFVERSION_5)
-!    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML1,&
-!         HE5T_NATIVE_CHAR, HDFE_NOMERGE)
-!    IF ( status == -1 ) THEN
-!       msr = DAT_ERR // DATA_FIELD3
-!       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
-!    END IF
 
-!    print*,"Defined data field ",DATA_FIELD3,"of dim.", DIM_NAME1
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
@@ -2033,26 +1975,9 @@ contains ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-    !HDF-EOS5 won't write a dataset of chars from FORTRAN
+    status = mls_swwrfld(swid, 'Status', start(3:3), stride(3:3), edge(3:3), &
+       &   l2gp%status, hdfVersion=HDFVERSION_5, dontfail=.true.)
 
-   if(USEINTS4STRINGS) then
-!      allocate(string_buffer(1,l2gp%nTimes))
-!      call strings2Ints(l2gp%status, string_buffer)
-!      status = mls_swwrfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-!           string_buffer, hdfVersion=HDFVERSION_5)
-!      deallocate(string_buffer)
-    else
-      !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
-      !        edge(3:3), l2gp%status) ! 
-      status=0
-      call MLSMessage(MLSMSG_Debug, ModuleName, &
-        "writing of status field disabled")
-
-      if ( status == -1 ) then
-         msr = WR_ERR // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-    end if
     status = mls_SWwrfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality), hdfVersion=HDFVERSION_5)
 
@@ -2099,19 +2024,26 @@ contains ! =====     Public Procedures     =============================
     ! The following pair of string list encode the Units attribute
     ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
     character (len=*), parameter :: GeolocationTitles = &
-      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,' // &
+      & 'LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
     character (len=*), parameter :: GeolocationUnits = &
-      & 'deg,deg,s,h,deg,deg,deg,NoUnits,hPa,GHz'
+      & 'deg,deg,s,h,deg,' // &
+      & 'deg,deg,NoUnits,hPa,GHz'
     character (len=*), parameter :: GeoUniqueFieldDefinition = &
-      & 'HMT,HMT,AS,HMT,HMT,M,M,M,AS,M'   ! These are abbreviated values
+      & 'HMT,HMT,AS,HMT,HMT,' // &
+      & 'M,M,M,AS,M'   ! These are abbreviated values
     character (len=*), parameter :: UniqueFieldDefKeys = &
       & 'HM,HMT,MT,AS,M'
     character (len=*), parameter :: UniqueFieldDefValues = &
-      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,Aura-Shared,MLS-Specific'  ! Expanded values
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
+      & 'Aura-Shared,MLS-Specific'  ! Expanded values
+    ! The following associate UniqueFieldDefs with species names
     character (len=*), parameter :: Species = &
-      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
+      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
     character (len=*), parameter :: SpUniqueFieldDefinition = &
-      & 'HMT,M,M,MT,M,M,M,M,HMT,M,HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
+      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
 
     integer :: field
     logical :: isColumnAmt
@@ -2259,7 +2191,16 @@ contains ! =====     Public Procedures     =============================
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
 
-    ! ('Status' data field not yet written)
+    ! ('Status' data field newly written)
+    status = he5_swwrlattr(swid, 'Status', 'Title', &
+      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Status')
+    status = he5_swwrlattr(swid, 'Status', 'Units', &
+      & HE5T_NATIVE_SCHAR, 1, 'NoUnits')
+    status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
+      & HE5T_NATIVE_SCHAR, 1, ' ' )
+    status = he5_swwrlattr(swid, 'Status', &
+      & 'UniqueFieldDefinition', &
+      & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
     
     status = he5_swwrlattr(swid, 'Quality', 'Title', &
       & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Quality')
@@ -2585,11 +2526,15 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.63  2003/04/17 23:07:02  pwagner
+! Now uses MLSHDFEOS more thoroughly; can read HIRDLS L2GP files
+!
 ! Revision 2.62  2003/04/15 23:14:50  pwagner
 ! New chunking so hdfeos5 files dont balloon; some swsetfill tweaking
 !
 ! Revision 2.61  2003/04/11 23:35:10  pwagner
-! Added new UniqueFieldDefinition attribute; sets fill and MissingValue attributes for all fields
+! Added new UniqueFieldDefinition attribute; sets fill and MissingValue 
+! attributes for all fields
 !
 ! Revision 2.60  2003/04/03 22:58:40  pwagner
 ! Alias now set in lib/L2GPData instead of l2/write_meta
