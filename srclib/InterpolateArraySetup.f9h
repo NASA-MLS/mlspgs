@@ -1,0 +1,105 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! subroutine InterpolateArraySetup_r* ( OldX, NewX, Method, Coeffs, &
+!   & Extrapolate, Width, DyByDx, dNewByDOld )
+
+    ! Local variables
+    logical :: ComputeDNewByDOld
+    character :: ExtrapolateMethod
+    integer :: Ind, NewInd, NoNew, NoOld
+    integer, parameter :: RA = kind(coeffs%a)
+    real(rm), pointer :: TempDNewByDOld(:,:)
+
+    ! Size the problem, check sanity, set up arrays etc.
+
+    noNew = size(newX,1)
+    noOld = size(oldX,1)
+
+    extrapolateMethod = "A"
+    if ( present(extrapolate)) extrapolateMethod = Capitalize(extrapolate(1:1))
+
+    computeDNewByDOld = present(dNewByDOld)
+    if ( computeDNewByDOld .and. .not. present(width) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Cannot compute dNewByDOld without knowing Width" )
+
+    ! Components of coeffs spring into existence nullified, not undefined
+    call allocate_test ( coeffs%a, noNew, "Coeffs%A", ModuleName )
+    call allocate_test ( coeffs%b, noNew, "Coeffs%B", ModuleName )
+    call allocate_test ( coeffs%gap, noNew, "Coeffs%Gap", ModuleName )
+    call allocate_test ( coeffs%lowerInds, noNew, "Coeffs%LowerInds", ModuleName )
+    call allocate_test ( coeffs%upperInds, noNew, "Coeffs%UpperInds", ModuleName )
+
+    call Hunt ( oldX, newX, coeffs%lowerInds )
+    coeffs%upperInds = coeffs%lowerInds + 1
+    coeffs%gap = oldX(coeffs%upperInds) - oldX(coeffs%lowerInds)
+
+    coeffs%A = (oldX(coeffs%upperInds)-newX)/coeffs%gap
+
+    ! If extrapolate is "C"onstant, deal with that
+    if ( extrapolateMethod == "C" ) coeffs%A = max(min(coeffs%A,1.0_rA),0.0_rA)
+
+    coeffs%B = 1.0_rk - coeffs%A
+
+    ! If extrapolate mode is "B"ad, deal with that
+    if ( extrapolateMethod == "B" ) then
+      call Allocate_Test ( coeffs%badValue, noNew, "maskVector", ModuleName )
+      coeffs%badValue = (coeffs%A<0.0) .or. (coeffs%A>1.0)
+      where ( coeffs%badValue )
+        coeffs%A = 0.0
+        coeffs%B = 0.0
+      end where
+    end if
+
+    ! Spline stuff
+    if ( capitalize(method(1:1)) == 'S' ) then
+      if ( computeDNewByDOld ) call MLSMessage &
+        & ( MLSMSG_Error, ModuleName, "Cannot get dNewBydOld from spline")
+      call allocate_test ( coeffs%c, noNew, "Coeffs%C", ModuleName )
+      call allocate_test ( coeffs%d, noNew, "Coeffs%D", ModuleName )
+      call allocate_test ( coeffs%gap2, noNew, "Coeffs%Gap2", ModuleName )
+      call allocate_test ( coeffs%sig, noOld-1, "Coeffs%Sig", ModuleName, &
+        & lowBound=2 )
+      ! Note the extrapolate bad case is covered as A=B=0.0
+      coeffs%gap2 = coeffs%gap ** 2
+      coeffs%C = (coeffs%A**3-coeffs%A)*coeffs%gap2/6.0    
+      coeffs%D = (coeffs%B**3-coeffs%B)*coeffs%gap2/6.0
+      coeffs%sig = (oldX(2:noOld-1)-oldX(1:noOld-2)) / &
+        &          (oldX(3:noOld)-oldX(1:noOld-2))
+
+      ! Compute some more coefficients for splines if DyByDx is present
+      if ( present(dyByDx) ) then
+        call allocate_test ( coeffs%e, noNew, "Coeffs%C", ModuleName )
+        call allocate_test ( coeffs%f, noNew, "Coeffs%D", ModuleName )
+        coeffs%e = 3.0_rk*coeffs%a**2 - 1.0_rk
+        coeffs%f = 3.0_rk*coeffs%b**2 - 1.0_rk
+      end if
+    end if
+
+    ! Write the output derivative matrix if needed
+    if ( computeDNewByDOld ) then
+      call CreateBlock ( dNewByDOld, noNew*width, noOld*width, M_Absent )
+      ! While the matrix is ideally suited to row sparse, our storage method
+      ! is column sparse, so to be lazy we'll create it full and then sparsify
+      ! it.
+
+      call Allocate_Test ( tempDNewByDOld, noNew*width, noOld*width, &
+        & "tempDNewByDOld", ModuleName )
+      do newInd = 1, noNew
+        do ind = 1, width
+          tempDNewByDOld(newInd+ind*noNew,coeffs%lowerInds(newInd)+ind*noOld) = &
+            &  coeffs%A(newInd)
+          tempDNewByDOld(newInd+ind*noNew,coeffs%upperInds(newInd)+ind*noOld) = &
+            & coeffs%B(newInd)
+        end do
+      end do
+      call Sparsify ( tempDNewByDOld, dNewbyDOld, &
+        & "tempDNewByDOld", ModuleName ) ! dNewbyDOld := tempDNewByDOld
+    end if
+
+! end subroutine InterpolateArraySetup_r*
+
+! $Log$

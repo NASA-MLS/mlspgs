@@ -1,0 +1,28 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! subroutine InterpolateArrayTeardown_r* ( Coeffs )
+
+    ! Linear stuff
+    call deallocate_test ( coeffs%a, 'Coeffs%A', moduleName )
+    call deallocate_test ( coeffs%b, 'Coeffs%B', ModuleName )
+    call deallocate_test ( coeffs%gap, 'Coeffs%Gap', ModuleName )
+    call deallocate_test ( coeffs%lowerInds, 'Coeffs%LowerInds', ModuleName )
+    call deallocate_test ( coeffs%upperInds, 'Coeffs%UpperInds', ModuleName )
+
+    ! Spline -- no need to test if it's there because deallocate_test does.
+    call deallocate_test ( coeffs%c, 'Coeffs%C', ModuleName )
+    call deallocate_test ( coeffs%d, 'Coeffs%D', ModuleName )
+    call deallocate_test ( coeffs%e, 'Coeffs%E', ModuleName )
+    call deallocate_test ( coeffs%f, 'Coeffs%F', ModuleName )
+    call deallocate_test ( coeffs%gap2, 'Coeffs%Gap2', ModuleName )
+    call deallocate_test ( coeffs%sig, 'Coeffs%Sig', ModuleName )
+
+    ! Stuff for Extrapolate == "B"ad
+    call deallocate_test ( coeffs%badValue, 'Coeffs%BadValue', ModuleName )
+
+! end subroutine InterpolateArrayTeardown_r*
+
+! $Log$
