@@ -17,19 +17,19 @@
 #makemakedep.sh [opt1] [opt2] ..  [dir1 dir2 ..]
 #
 #    O p t i o n s
-# -nf90         don't include files with .f90 extensions
+# -[n]f90       [don't] include files with .f90 extensions
 #                (default is to include them)
-# -f77          include files with .f extensions, too
-#                (default is not to include them)
-# -c            include files with .c extensions, too
-#                (default is not to include them)
+# -[n]f77       [don't] include files with .f extensions, too
+#                (default is to include them)
+# -[n]c         [don't] include files with .c extensions, too
+#                (default is to include them)
 # -d file_name  exclude file_name
 # -h[elp]       print brief help message; exit
 # dir1          search directory named by dir1 as well as cwd for files
 #
 #
 #Note:
-#The option(s) marked with "-", -f77, if present,
+#The option(s) marked with "-", if present,
 #must precede the extra search directories on the command line
 #Result:
 #creates Makefile.dep in current working directory
@@ -207,8 +207,8 @@ fi
 # include *.f     no
 # include *.c     no
 include_f90="yes"
-include_f77="no"
-include_c="no"
+include_f77="yes"
+include_c="yes"
 me="$0"
 my_name=makemakedep.sh
 
@@ -222,12 +222,24 @@ while [ "$more_opts" = "yes" ] ; do
        include_f77="yes"
        shift
        ;;
+    -nf77 )
+       include_f77="no"
+       shift
+       ;;
+    -f90 )
+       include_f90="yes"
+       shift
+       ;;
     -nf90 )
        include_f90="no"
        shift
        ;;
     -c )
        include_c="yes"
+       shift
+       ;;
+    -nc )
+       include_c="no"
        shift
        ;;
 #                  Rename or hide excluded files so they !~= %.f90
@@ -412,6 +424,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.13  2001/08/10 23:48:27  pwagner
+# Cosmetic changes only
+#
 # Revision 1.12  2001/08/10 17:42:33  pwagner
 # Added -h(elp) option; general housekeeping
 #
