@@ -391,7 +391,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
-             l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
+             l+l_boxcar, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
@@ -789,7 +789,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_usbFraction, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, ndp+n_spec_def /), &
+                    n+n_dot, &
+             begin, f+f_width, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /), &
              continue = .true. ) ! WHEW! Finally done for s_fill
 
     call make_tree( (/ &
@@ -1166,6 +1168,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.354  2004/02/06 01:01:23  livesey
+! Added boxcar fill
+!
 ! Revision 2.353  2004/01/30 23:25:09  livesey
 ! Added columnScale and rowScale commands for algebra
 !
