@@ -126,9 +126,10 @@ contains ! ========================= Public Procedures ====================
   subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
 
     use Allocate_Deallocate, only: Deallocate_test
+    use Chunks_m, only: MLSChunk_T
     use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T
+    use MLSCommon, only: L1BInfo_T
     use MLSFiles, only: mls_hdf_version
     use MLSL2Options, only: LEVEL1_HDFVERSION
 
@@ -214,6 +215,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.10  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.9  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
