@@ -227,7 +227,7 @@ BEGIN Construct
     ;; ----------------------------------------- Other minor stuff
 
     earthReflectivity: quantity, type = earthRefl
-    orbitIncline: Quantity, type = orbitIncline
+    orbitInclination: Quantity, type = orbitInclination
     spaceRadiance: quantity, type = spaceRadiance
 
     scGeocAlt: Quantity, type = scGeocAlt, module= SC
@@ -243,7 +243,7 @@ BEGIN Construct
     losVelTHz: quantity, type=losVel, module=THz
 
     define(_LesserState, 
-    {earthReflectivity, orbitIncline, spaceRadiance, $
+    {earthReflectivity, orbitInclination, spaceRadiance, $
      scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
      scVel, losVelGHz, losVelTHz})
     

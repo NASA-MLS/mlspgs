@@ -2,7 +2,7 @@
 BEGIN ReadApriori
 
 define(_readGrid,{grid$1: gridded,field='$1', origin=climatology, $
-       file='{}_nas{}/bigdata/livesey/misc/emls_clim_v0-1.dat'})
+       file='/nas/bigdata/livesey/misc/emls_clim_v0-1.dat'})
 
 _readGrid(Temperature)
 _readGrid(H2O)
