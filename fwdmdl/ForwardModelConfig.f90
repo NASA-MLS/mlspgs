@@ -9,7 +9,7 @@ module ForwardModelConfig
 ! the command.
 
 
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RP
   use MLSSignals_M, only: Signal_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
 
@@ -21,13 +21,38 @@ module ForwardModelConfig
     module procedure Dump_ForwardModelConfig, Dump_ForwardModelConfigDatabase
   end interface Dump
 
-  public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump
+  public :: AddForwardModelConfigToDatabase, DeriveFromForwardModelConfig
+  public :: DestroyFWMConfigDatabase, DestroyForwardModelDerived, Dump
   public :: NullifyForwardModelConfig
   public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
  
   ! Public Types:
 
-  ! These arguments are sorted in the order they are to make the packing
+  ! Quantities derived from forward models, but not carted around by
+  ! PVMPackFWMConfig and PVMUnpackFWMConfig.  Rather, they are computed
+  ! by ForwardModelDerive when a ForwardModelConfig_T is created, or
+  ! when arrives by way of PVMUnpackFWMConfig
+
+  ! Channel information from the signals database
+  type, public :: Channels_T
+    integer :: Used       ! Which channel is this?
+    integer :: Origin     ! Index of first channel (zero or one)
+    integer :: Signal     ! Signal index for the channel
+    integer :: DACS       ! DACS index if any, else zero
+    integer, pointer :: PFAData(:)       ! Indices in PFADataBase%PFAData
+    integer, pointer :: PFAMolecules(:)  ! L_... from PFAData for this channel
+  end type Channels_T
+
+  ! Now all of the derived stuff
+  type, public :: ForwardModelDerived_T
+    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
+    integer, dimension(:), pointer :: USEDDACSSIGNALS ! Indices in
+                                         ! FwdModelConf_T%Signals
+                                         ! of signals for our dacs
+    type(channels_T), pointer, dimension(:) :: Channels => NULL()
+  end type ForwardModelDerived_T
+  
+  ! These components are sorted in the order they are to make the packing
   ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
@@ -89,10 +114,12 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: PFAMolecules=>NULL() ! Which molecules to PFA
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want jacobians
-    ! Finally the types
+    ! Now the types
     type (Signal_T), dimension(:), pointer :: Signals=>NULL()
     type (vGrid_T), pointer :: IntegrationGrid=>NULL() ! Zeta grid for integration
     type (vGrid_T), pointer :: TangentGrid=>NULL()     ! Zeta grid for integration
+    ! Finally stuff that PVMPackFWMConfig and PVMUnpackFWMConfig don't cart around
+    type (forwardModelDerived_T) :: ForwardModelDerived
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -127,43 +154,102 @@ contains
     AddForwardModelConfigToDatabase = newSize
   end function AddForwardModelConfigToDatabase
 
-  ! --------------------------  StripForwardModelConfigDatabase --------
-  subroutine StripForwardModelConfigDatabase ( database )
-    ! This routine removes the non-global forward model configs from the database
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_Deallocate, MLSMSG_Error
+  ! -------------------------------  DeriveFromForwardModelConfig  -----
+  subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
-    ! Dummy arguments
-    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
+    use Allocate_Deallocate, only: Allocate_Test
+    use FilterShapes_m, only: DACSFilterShapes
+    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
+    use MLSSets, only: FindFirst
+    use MLSSignals_M, only: MatchSignal
+    use PFADataBase_m, only: PFAData
 
-    ! Local variables
-    type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
-    integer :: CONFIG                   ! Loop counter
-    integer :: STATUS
+    type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
 
-    ! Executable code
-    ! Clear out dying configs
-    if ( .not. associated ( database ) ) return
-    do config = 1, size ( database )
-      if ( .not. database(config)%globalConfig ) &
-        & call DestroyOneForwardModelConfig ( database(config) )
+    integer :: Channel
+    integer :: I, Ier
+    integer :: LBoundDACs, UBoundDACs      ! How many channels in a DAC
+    integer :: NoUsedChannels, NoUsedDACS
+    integer :: SigInd
+    logical :: signalFlag(size(fwdModelConf%signals))
+
+
+    ! Shorthand pointers into fwdModelConf%forwardModelDerived
+    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
+    integer, pointer :: USEDDACSSIGNALS(:) ! Indices in FwdModelConf_T%Signals
+                                           ! of signals for our dacs
+    type(channels_T), pointer :: Channels(:)
+
+    ! Identify which of our signals are DACS and how many unique DACS are involved
+    ! Compute NoUsedDACs
+    ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
+
+    nullify ( DACsStaging, usedDACSSignals )
+    signalFlag = .false.
+    lBoundDACs = 0; uBoundDACs = 0
+    noUsedDACs = 0
+    do sigInd = 1, size(fwdModelConf%signals)
+      if ( fwdModelConf%signals(sigInd)%dacs .and. &
+        & .not. signalFlag(sigind) ) then
+        signalFlag(sigind) = .true.
+        noUsedDACs = noUsedDACs + 1
+        if ( noUsedDACs == 1 ) then
+          lBoundDACs = lbound(fwdModelConf%signals(sigInd)%frequencies,1 )
+          uBoundDACs = ubound(fwdModelConf%signals(sigInd)%frequencies,1 )
+        else
+          if ( lBoundDACs /= lbound ( fwdModelConf%signals(sigInd)%frequencies,1 ) .or. &
+            &  uBoundDACs /= ubound ( fwdModelConf%signals(sigInd)%frequencies,1 ) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Two DACS have different number of channels' )
+        end if
+      end if
+    end do
+    if ( noUsedDACs > 0 .and. .not. associated(DACsFilterShapes) ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'DACS in use but no filter shapes provided.' )
+    call allocate_test ( usedDACSSignals, noUsedDACs, 'usedDACSSignals', ModuleName )
+    usedDACSSignals = pack ( (/ (i, i=1, size(signalFlag)) /), signalFlag )
+    call allocate_test ( DACsStaging, uBoundDACs, noUsedDACs, &
+      & 'DACsStaging', moduleName, low1 = lBoundDACs )
+
+    ! Work out which channels are used.
+    noUsedChannels = 0
+    do sigInd = 1, size(fwdModelConf%signals)
+      noUsedChannels = noUsedChannels + &
+        & count( fwdModelConf%signals(sigInd)%channels )
+    end do
+    allocate ( channels(noUsedChannels), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'fwdModelConf%forwardModelDerived%channels' )
+
+    ! Collect channel information from signals database.
+    channel = 1
+    do sigInd = 1, size(fwdModelConf%signals)
+      do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
+        if ( fwdModelConf%signals(sigInd)%channels(i) ) then
+          channels(channel)%origin = &
+            & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
+          channels(channel)%used = i + channels(channel)%origin - 1
+          channels(channel)%signal = sigInd
+          channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
+          channel = channel + 1
+        end if
+      end do
     end do
 
-    ! Create new database in tmp space, pack old one into
-    allocate ( tmpDatabase ( count ( database%globalConfig ) ), STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // 'tmpDatabase' )
-    tmpDatabase = pack ( database, database%globalConfig )
+    ! Work out PFA abstracts for each channel
+    do i = 1, size(channels)
+    end do
 
-    ! Destroy old database, then point to new one
-    deallocate ( database, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate // 'database' )
-    database => tmpDatabase
-  end subroutine StripForwardModelConfigDatabase
+    ! Hook the shortcuts into the structure
+    fwdModelConf%forwardModelDerived%channels => channels
+    fwdModelConf%forwardModelDerived%DACsStaging => DACsStaging
+    fwdModelConf%forwardModelDerived%usedDACSSignals => usedDACSSignals
+
+  end subroutine DeriveFromForwardModelConfig
 
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
-  subroutine DestroyFWMConfigDatabase ( Database, deep )
+  subroutine DestroyFWMConfigDatabase ( Database, Deep )
 
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
 
@@ -185,6 +271,46 @@ contains
         & MLSMSG_Deallocate // "Database" )
     end if
   end subroutine DestroyFWMConfigDatabase
+
+  ! ---------------------------------  DestroyForwardModelDerived  -----
+  subroutine DestroyForwardModelDerived ( FwdModelConf )
+    ! Destroy FwdModelConf%ForwardModelDerived
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
+
+    integer :: Ier
+
+    if ( associated(fwdModelConf%forwardModelDerived%channels) ) then
+      deallocate ( fwdModelConf%forwardModelDerived%channels, stat = ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//'fwdModelConf%forwardModelDerived%channels' )
+    end if
+
+    call deallocate_test ( fwdModelConf%forwardModelDerived%DACSStaging, &
+      & 'fwdModelConf%forwardModelDerived%DACSStaging', moduleName )
+
+    call deallocate_test ( fwdModelConf%forwardModelDerived%usedDACSSignals, &
+      & 'fwdModelConf%forwardModelDerived%usedDACSSignals', moduleName )
+
+  end subroutine DestroyForwardModelDerived
+  ! ------------------------------------ NullifyForwardModelConfig -----
+  subroutine NullifyForwardModelConfig ( F )
+    ! Given a forward model config, nullify all the pointers associated with it
+    type ( ForwardModelConfig_T ), intent(out) :: F
+
+    ! Executable code
+    nullify ( f%molecules )
+    nullify ( f%moleculeDerivatives )
+    nullify ( f%pfaMolecules )
+    nullify ( f%signals )
+    nullify ( f%integrationGrid )
+    nullify ( f%tangentGrid )
+    nullify ( f%specificQuantities )
+    nullify ( f%binSelectors )
+  end subroutine NullifyForwardModelConfig
 
   ! ------------------------------------------- PVMPackFwmConfig --------
   subroutine PVMPackFWMConfig ( config )
@@ -480,26 +606,45 @@ contains
 
   end subroutine PVMUnpackFWMConfig
 
-  ! ------------------------------------ NullifyForwardModelConfig -----
-  subroutine NullifyForwardModelConfig ( F )
-    ! Given a forward model config, nullify all the pointers associated with it
-    type ( ForwardModelConfig_T ), intent(out) :: F
+  ! --------------------------  StripForwardModelConfigDatabase --------
+  subroutine StripForwardModelConfigDatabase ( database )
+    ! This routine removes the non-global forward model configs from the database
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_Deallocate, MLSMSG_Error
+
+    ! Dummy arguments
+    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
+    integer :: CONFIG                   ! Loop counter
+    integer :: STATUS
 
     ! Executable code
-    nullify ( f%molecules )
-    nullify ( f%moleculeDerivatives )
-    nullify ( f%pfaMolecules )
-    nullify ( f%signals )
-    nullify ( f%integrationGrid )
-    nullify ( f%tangentGrid )
-    nullify ( f%specificQuantities )
-    nullify ( f%binSelectors )
-  end subroutine NullifyForwardModelConfig
+    ! Clear out dying configs
+    if ( .not. associated ( database ) ) return
+    do config = 1, size ( database )
+      if ( .not. database(config)%globalConfig ) &
+        & call DestroyOneForwardModelConfig ( database(config) )
+    end do
+
+    ! Create new database in tmp space, pack old one into
+    allocate ( tmpDatabase ( count ( database%globalConfig ) ), STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // 'tmpDatabase' )
+    tmpDatabase = pack ( database, database%globalConfig )
+
+    ! Destroy old database, then point to new one
+    deallocate ( database, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate // 'database' )
+    database => tmpDatabase
+  end subroutine StripForwardModelConfigDatabase
 
   ! =====     Private Procedures     =====================================
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
-  subroutine DestroyOneForwardModelConfig ( config, deep )
+  subroutine DestroyOneForwardModelConfig ( Config, Deep )
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSSignals_M, only: DestroySignalDatabase
     use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
@@ -543,6 +688,7 @@ contains
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
+    call destroyForwardModelDerived ( config )
   end subroutine DestroyOneForwardModelConfig
 
   ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
@@ -642,6 +788,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.49  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
 ! Revision 2.48  2004/05/01 04:00:59  vsnyder
 ! Added pfaMolecules field
 !

@@ -68,9 +68,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID, L_VMR
-  use MLSCommon, only: R8, RV, FINDFIRST
+  use MLSCommon, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
+  use MLSSets, only: FINDFIRST
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -1489,7 +1490,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end function GetVectorQuantityByType
 
-  ! ------------------------------- GetVectorQtyByTemplateIndex --i
+  ! --------------------------------  GetVectorQtyByTemplateIndex  -----
   function GetVectorQtyByTemplateIndex ( vector, quantityIndex, indexInVector )
     ! Given a vector and an index into the quantity templates, find quantity
     ! with matching template within vector.
@@ -1513,7 +1514,7 @@ contains ! =====     Public Procedures     =============================
       msg = trim ( msg ) // " which has been destroyed" 
       call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
     end if
-    myIndexInVector = FindFirst ( vector%template%quantities == quantityIndex )
+    myIndexInVector = FindFirst ( vector%template%quantities, quantityIndex )
     if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
@@ -2225,6 +2226,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.109  2004/05/01 04:07:44  vsnyder
+! Rearranged some dumping stuff
+!
 ! Revision 2.108  2004/01/30 23:27:59  livesey
 ! Added ReciprocateVector, PowVector and an optional argument to
 ! ClearVector

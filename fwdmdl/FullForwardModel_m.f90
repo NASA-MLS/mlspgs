@@ -37,7 +37,8 @@ contains
     use Dump_0, only: Dump
     use Eval_Spect_Path_m, only: Eval_Spect_Path
     use FilterShapes_m, only: FilterShapes, DACSFilterShapes
-    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelConfig, only: Channels_T, DeriveFromForwardModelConfig, &
+      & DestroyForwardModelDerived, ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
                                     &   ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
@@ -65,7 +66,7 @@ contains
     use MatrixModule_1, only: MATRIX_T
     use Mcrt_m, only: Mcrt_der
     use Metrics_m, only: Metrics
-    use MLSCommon, only: R4, R8, RP, IP, FindFirst
+    use MLSCommon, only: R4, R8, RP, IP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
       & MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt, InterpolateValues
@@ -94,7 +95,8 @@ contains
     use Units, only: Deg2Rad
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
 
-    type(forwardModelConfig_T), intent(in) :: fwdModelConf
+    type(forwardModelConfig_T), intent(inout) :: FwdModelConf
+      ! Only the ForwardModelDerived component of FwdModelConf is changed here.
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
@@ -485,21 +487,14 @@ contains
 
     type (beta_group_T), dimension(:), pointer :: beta_group
 
-! scatering source function for each temperature surface
+! Channel information from the signals database as specified by fwdModelConf
+    type(channels_T), pointer, dimension(:) :: Channels 
+
+! Scattering source function for each temperature surface
     type (VectorValue_T) :: scat_src
     type (VectorValue_T) :: scat_alb
     type (VectorValue_T) :: cld_ext
 
-! Channel information from the signals database
-    type :: Channels_T
-      integer :: Used       ! Which channel is this?
-      integer :: Origin     ! Index of first channel (zero or one)
-      integer :: Signal     ! Signal index for the channel
-      integer :: DACS       ! DACS index if any, else zero
-    end type Channels_T
-
-    type(channels_T), allocatable, dimension(:) :: Channels 
-     
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
 !   Print *, '** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
@@ -666,11 +661,13 @@ contains
       & call load_one_item_grid ( grids_mag, magfield, phitan, maf, &
         & fwdModelConf, .false. )
 
-    ! Identify which of our signals are DACS and how many unique DACS are involved
-    call identifyDACS
-
-    ! Work out which channels are used; also check we have radiances for them.
-    noUsedChannels = 0
+    call deriveFromForwardModelConfig ( fwdModelConf )
+    channels => fwdModelConf%forwardModelDerived%channels
+    DACsStaging => fwdModelConf%forwardModelDerived%DACsStaging
+    usedDACSSignals => fwdModelConf%forwardModelDerived%usedDACSSignals
+    noUsedChannels = size(channels)
+    noUsedDacs = size(usedDACSSignals)
+    ! Check that we have radiances for the channels that are used
     do sigInd = 1, size(fwdModelConf%signals)
       ! This just emits an error message and stops if we don't have a radiance.
       ! We don't use the vector quantity -- at least not right away.  We get
@@ -678,26 +675,6 @@ contains
       thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
         & signal=fwdModelConf%signals(sigInd)%index, &
         & sideband=merge ( 0, firstSignal%sideband, fwdModelConf%forceFoldedOutput ) )
-      noUsedChannels = noUsedChannels + &
-        & count( fwdModelConf%signals(sigInd)%channels )
-    end do
-    allocate ( channels(noUsedChannels), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'channels' )
-
-    ! Collect channel information from signals database.
-    channel = 1
-    do sigInd = 1, size(fwdModelConf%signals)
-      do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
-        if ( fwdModelConf%signals(sigInd)%channels(i) ) then
-          channels(channel)%origin = &
-            & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
-          channels(channel)%used = i + channels(channel)%origin - 1
-          channels(channel)%signal = sigInd
-          channels(channel)%dacs = FindFirst ( sigind == usedDACSSignals )
-          channel = channel + 1
-        end if
-      end do
     end do
 
     maxNoFFreqs = 0
@@ -2605,11 +2582,7 @@ contains
     call Deallocate_Test ( Scat_ang, 'Scat_ang', moduleName )
     call Deallocate_Test ( IPSD, 'IPSD', moduleName )
 
-    deallocate ( channels, stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_DeAllocate//'dincoptdepth_pol_dt' )
-
-    call deallocate_test ( usedDACSSignals, 'usedDACSSignals', moduleName )
+    call destroyForwardModelDerived ( fwdModelConf )
 
     ! DESTROY THE SPS DATA STUFF
 
@@ -2694,8 +2667,6 @@ contains
     call deallocate_test ( tan_chi_out,      'tan_chi_out',      moduleName )
     call deallocate_test ( dx_dh_out,        'dx_dh_out',        moduleName )
     call deallocate_test ( dhdz_out,         'dhdz_out',         moduleName )
-
-    call deallocate_test ( DACsStaging,      'DACsStaging',      moduleName )
 
     if ( FwdModelConf%incl_cld ) &
       & call deallocate_test ( scat_src%values, 'scat_src%values', &
@@ -2926,41 +2897,6 @@ contains
       end if                      ! Frequency averaging or not
     end subroutine dI_dSomething
 
-    subroutine IdentifyDACS
-      ! Compute NoUsedDACs
-      ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
-      integer :: LBoundDACs, UBoundDACs    ! How many channels in a DAC
-      logical :: signalFlag(size(fwdModelConf%signals))
-
-      signalFlag = .false.
-      lBoundDACs = 0; uBoundDACs = 0
-      noUsedDACs = 0
-      do sigInd = 1, size(fwdModelConf%signals)
-        if ( fwdModelConf%signals(sigInd)%dacs .and. &
-          & .not. signalFlag(sigind) ) then
-          signalFlag(sigind) = .true.
-          noUsedDACs = noUsedDACs + 1
-          if ( noUsedDACs == 1 ) then
-            lBoundDACs = lbound(fwdModelConf%signals(sigInd)%frequencies,1 )
-            uBoundDACs = ubound(fwdModelConf%signals(sigInd)%frequencies,1 )
-          else
-            if ( lBoundDACs /= lbound ( fwdModelConf%signals(sigInd)%frequencies,1 ) .or. &
-              &  uBoundDACs /= ubound ( fwdModelConf%signals(sigInd)%frequencies,1 ) ) &
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Two DACS have different number of channels' )
-          end if
-        end if
-      end do
-      if ( noUsedDACs > 0 .and. .not. associated(DACsFilterShapes) ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'DACS in use but no filter shapes provided.' )
-      call allocate_test ( usedDACSSignals, noUsedDACs, 'usedDACSSignals', ModuleName )
-      usedDACSSignals = pack ( (/ (i, i=1, size(signalFlag)) /), signalFlag )
-      call allocate_test ( DACsStaging, uBoundDACs, noUsedDACs, &
-        & 'DACsStaging', moduleName, low1 = lBoundDACs )
-
-    end subroutine IdentifyDACS
-
   end subroutine FullForwardModel
 
 ! =====     Private procedures     =====================================
@@ -3059,6 +2995,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.210  2004/05/27 23:23:50  pwagner
+! named parameter clean= to dump procedures
+!
 ! Revision 2.209  2004/05/17 22:05:11  livesey
 ! A change to refraction and to k_atmos handling to avoid explosions.
 !

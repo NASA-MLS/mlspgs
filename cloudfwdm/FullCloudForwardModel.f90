@@ -41,9 +41,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use CloudySkyRadianceModel,     only: CloudForwardModel
     use ForwardModelIntermediate,   only: FORWARDMODELINTERMEDIATE_T, &
                                         & FORWARDMODELSTATUS_T
-    use MLSCommon,                  only: r8, rm, rp, FINDFIRST
+    use MLSCommon,                  only: r8, rm, rp
     use MLSMessageModule,           only: MLSMessage, MLSMSG_Error, &
                                         & MLSMSG_Warning, MLSMSG_Deallocate
+    use MLSSets,                    only: FINDFIRST
     use MLSSignals_m,               only: SIGNAL_T, ARESIGNALSSUPERSET
     use MatrixModule_0,             only: MATRIXELEMENT_T, &
                                         & M_FULL, CREATEBLOCK
@@ -480,7 +481,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         end if
       end if
 
-      thisCatalogEntry => Catalog ( FindFirst ( catalog%molecule == &
+      thisCatalogEntry => Catalog ( FindFirst ( catalog%molecule, &
         & forwardModelConfig%molecules(j) ) )
 
       if ( associated ( thisCatalogEntry%lines ) ) then
@@ -1113,6 +1114,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.127  2004/02/07 00:45:49  livesey
+! Minor typo
+!
 ! Revision 1.126  2004/02/05 23:30:20  livesey
 ! Finally turned on code to do correct handing of single sideband
 ! radiometers and their SB fractions.

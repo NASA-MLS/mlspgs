@@ -37,9 +37,10 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO
-    use MLSCommon, only: FINDFIRST, RP
+    use MLSCommon, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
+    use MLSSets, only: FINDFIRST
     use MLSSignals_m, only: GetRadiometerFromSignal
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
       & Line_t, Lines
@@ -172,7 +173,7 @@ contains
           end if
         end if
         l = abs(fwdModelConf%molecules(j))
-        thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
+        thisCatalogEntry => Catalog(FindFirst(catalog%molecule, l ) )
         My_Catalog(s,j) = thisCatalogEntry
         ! Don't deallocate them by mistake -- my_catalog is a shallow copy
         nullify ( my_catalog(s,j)%lines, my_catalog(s,j)%polarized )
@@ -359,6 +360,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.9  2004/03/22 18:23:56  livesey
+! Added handling of AllLinesInCatalog flag (precludes polarized)
+!
 ! Revision 2.8  2003/10/09 23:32:31  pwagner
 ! SIPS version should stop complaining about nolines
 !
