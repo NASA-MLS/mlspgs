@@ -15,9 +15,11 @@ module Functions
   public
 
   integer, parameter :: F_Cholesky        = 1
-  integer, parameter :: F_GetDiagonal     = F_Cholesky + 1
+  integer, parameter :: F_Exp             = F_Cholesky + 1
+  integer, parameter :: F_GetDiagonal     = F_Exp + 1
   integer, parameter :: F_Invert          = F_GetDiagonal + 1
-  integer, parameter :: F_SQRT            = F_Invert + 1
+  integer, parameter :: F_Log             = F_Invert + 1
+  integer, parameter :: F_SQRT            = F_Log + 1
   integer, parameter :: F_Transpose       = F_SQRT + 1
   integer, parameter :: F_XTX             = F_Transpose + 1
 
@@ -35,8 +37,10 @@ contains
   subroutine Init_Functions
 
     call declare_func ( 'cholesky',        f_cholesky )
+    call declare_func ( 'exp',             f_exp )
     call declare_func ( 'getDiagonal',     f_getDiagonal )
     call declare_func ( 'invert',          f_invert )
+    call declare_func ( 'log',             f_log )
     call declare_func ( 'sqrt',            f_sqrt )
     call declare_func ( 'transpose',       f_transpose )
     call declare_func ( 'xtx',             f_xtx )
@@ -61,6 +65,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.4  2004/05/28 00:56:54  vsnyder
+! Add log and exp
+!
 ! Revision 2.3  2004/04/29 01:26:09  livesey
 ! Added xtx
 !
