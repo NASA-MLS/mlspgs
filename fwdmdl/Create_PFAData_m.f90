@@ -20,7 +20,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  Create_PFAData  -----
   integer function Create_PFAData ( Molecules, Signals, Temperatures, &
-    & Pressures, LosVel, Where )
+    & Pressures, LosVel, WhichLines, Where )
 
     ! Create PFAData tables for the specified molecules, signals, temperatures
     ! and pressures.  Add them to PFADataBase%PFAData.  Sort PFAData.  Return
@@ -51,6 +51,9 @@ contains ! =====     Public Procedures     =============================
     type(vGrid_t), intent(in) :: Temperatures
     type(vGrid_t), intent(in) :: Pressures
     real(rp), intent(in) :: LosVel ! Line-of-sight velocity
+    integer, intent(in) :: WhichLines ! 0 => Lines for channel,
+                                      ! 1 => Lines for radiometer,
+                                      ! 2 => All lines in catalog
     integer, intent(in) :: Where   ! In the parse tree, for error messages
     
 
@@ -273,26 +276,34 @@ contains ! =====     Public Procedures     =============================
 
     ! ....................................  Work_Out_Spectroscopy  .....
     subroutine Work_Out_Spectroscopy
+      use MLSSignals_m, only: GetRadiometerFromSignal
       skipIt = .false. ! Assume there will be lines and/or continuum
       ! Don't deallocate lines by mistake -- myCatalog is a shallow copy
       nullify ( myCatalog%lines )
       if ( associated ( catalog(n)%lines ) ) then
         ! Subset the lines according to the signal
         lineFlag => MaxLineFlag(:size(catalog(n)%lines))
-        do l = 1, size ( catalog(n)%lines )
-          lineFlag(l) = .false.
-          thisLine => lines(catalog(n)%lines(l))
-          if ( associated(thisLine%signals) ) then
-            do i = 1, size(thisLine%signals)
-              if ( thisLine%signals(i) == signal%index .and. &
-                &  ( thisLine%sidebands(i) * signal%sideband == 0 .or. &
-                &    thisline%sidebands(i) == signal%sideband ) ) then
-                lineFlag(l) = .true.
-                exit
-              end if
-            end do ! i
-          end if ! associated(thisLine%signals)
-        end do ! l
+        if ( whichLines > 1 ) then
+          lineFlag = .true.
+        else
+          do l = 1, size ( catalog(n)%lines )
+            lineFlag(l) = .false.
+            thisLine => lines(catalog(n)%lines(l))
+            if ( associated(thisLine%signals) ) then
+              do i = 1, size(thisLine%signals)
+                if ( whichLines > 0 .and. &
+                    & getRadiometerFromSignal(thisLine%signals(i)) == &
+                    & signal%radiometer .or. &
+                  & thisLine%signals(i) == signal%index .and. &
+                  &  ( thisLine%sidebands(i) * signal%sideband == 0 .or. &
+                  &    thisline%sidebands(i) == signal%sideband ) ) then
+                  lineFlag(l) = .true.
+                  exit
+                end if
+              end do ! i
+            end if ! associated(thisLine%signals)
+          end do ! l
+        end if
         ! Check we have at least one line for specie.  Allocate lines if so.
         l = count(lineFlag)
         if ( l == 0 .and. all(myCatalog%continuum == 0) ) then
@@ -325,6 +336,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.5  2005/03/16 23:59:56  vsnyder
+! Add allLinesForRadiometer and allLinesInCatalog to makePFA
+!
 ! Revision 2.4  2005/01/27 21:20:08  vsnyder
 ! Remove nonscalar molecule
 !
