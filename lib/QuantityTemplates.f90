@@ -13,7 +13,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
   use Intrinsic, only: L_None
-   USE output_m, only: output
+  use Output_m, only: Output
 
   implicit none
   public
@@ -386,6 +386,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.9  2001/03/24 00:31:12  pwagner
+! USEs output in case we replace MLSMessage with output in additem..
+!
 ! Revision 2.8  2001/03/17 02:23:18  livesey
 ! Added log basis field
 !
