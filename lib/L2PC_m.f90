@@ -610,10 +610,9 @@ contains ! ============= Public Procedures ==========================
         ! We're the only one (left?) with this file, close it.
         call h5fClose_f ( l2pcInfo(i)%fileID, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to hdf5 preserved input l2pc file' )
-      else
-        l2pcInfo(i)%fileID = 0
+          & 'Unable to close hdf5 preserved input l2pc file' )
       end if
+      l2pcInfo(i)%fileID = 0
     end do
     deallocate ( l2pcInfo, stat=i )
     if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1448,6 +1447,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.42  2002/08/20 21:01:40  livesey
+! Bug fix in DestroyL2PCInfoDatabase
+!
 ! Revision 2.41  2002/08/07 00:05:14  livesey
 ! Moved H5Open/Close_F into tree walker.  Made some error messages more
 ! informative.
