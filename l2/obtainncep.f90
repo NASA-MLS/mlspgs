@@ -7,10 +7,11 @@ module ObtainNCEP !provides subroutines to access NCEP files
 
 ! use DATES_MODULE
   use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
-  use Hdf, only: DFACC_RDONLY
+  use Hdf, only: DFACC_RDONLY, FAIL, SUCCEED
+  use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD
 ! use MLSCommon
   use MLSPCF2, only: MLSPCF_L2NCEP_END, MLSPCF_L2NCEP_START
-! use MLSStrings
+  use MLSStrings, only: GetStringElement, NumStringElements
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
 ! use VerticalCoordinate
@@ -54,12 +55,12 @@ contains ! =====     Public Procedures     =============================
     character (len=132) :: NCEPphysicalFilename
     type (GriddedData_T):: QTY
     integer :: RETURNSTATUS
-    character (len=80) :: VNAME
+!    character (len=80) :: VNAME
 
 !   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
 
     NCEP_Version = 1
-    vname = "TMP_3" ! for now
+!    vname = "TMP_3" ! for now
 ! Get the NCEP file name from the PCF
 
     do NCEPFileHandle = mlspcf_l2ncep_start, mlspcf_l2ncep_end
@@ -71,7 +72,7 @@ contains ! =====     Public Procedures     =============================
 
 ! Open the HDF-EOS file and read gridded data
 
-        call read_ncep ( NCEPphysicalFilename, vname, data_array )
+        call read_ncep ( NCEPphysicalFilename, data_array )
 
 !       Create a GriddedDtata Template and copy data_array into it
 
@@ -95,9 +96,11 @@ contains ! =====     Public Procedures     =============================
         returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
       else
 
-        call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-        call MLSMessage (MLSMSG_Error, ModuleName, &
-                         "Error opening NCEP file:  "//mnemonic//" "//msg)
+! This isn't necessarily an error--we just don't need 30 different ncep files
+! reserved by the MLSPCF2 file
+!        call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!        call MLSMessage (MLSMSG_Error, ModuleName, &
+!                         "Error opening NCEP file:  "//mnemonic//" "//msg)
       end if
 
     end do ! NCEPFileHandle = mlspcf_l2_ncep_start, mlspcf_l2_ncep_end
@@ -108,7 +111,7 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! --------------------------------------------------  READ_NCEP  -----
-  SUBROUTINE READ_NCEP ( fname, vname, data_array )
+  SUBROUTINE READ_NCEP ( fname, data_array )
   ! --------------------------------------------------
   ! Brief description of program
   ! This subroutine reads a NCEP correlative file and returns
@@ -116,39 +119,70 @@ contains ! =====     Public Procedures     =============================
 
   ! Arguments
 
-  character*(*), intent(in) :: fname, vname
+  character*(*), intent(in) :: fname
   real ::  data_array(:,:,:)
 
   ! - - - local declarations - - -
   integer :: edges(4)
   integer :: file_id, gd_id
+  integer :: inq_success
   integer :: i
+  integer :: nentries, ngrids
+  integer :: strbufsize
   character (len=80) :: msg, mnemonic
   integer :: start(4)
   integer :: status
   integer :: stride(4)
 
+  integer, parameter :: GRIDORDER=1				! What order grid written to file
+  integer, parameter :: GRIDLISTLENGTH=80		! Max length list of grid names
+  character (len=GRIDLISTLENGTH) :: gridlist
+  integer, parameter :: GRIDNAMELENGTH=16		! Max length of grid name
+  character (len=GRIDNAMELENGTH) :: gridname
   ! External functions
   integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
+  integer, external :: gdinqgrid, gdnentries
  
   ! - - - begin - - -
 
   file_id = gdopen(fname, DFACC_RDONLY)
 
-  IF (file_id < 0) THEN
+  IF (file_id /= SUCCEED) THEN
     CALL Pgs_smf_getMsg(status, mnemonic, msg)
     CALL MLSMessage (MLSMSG_Error, ModuleName, &
               &"Could not open "// fname//" "//mnemonic//" "//msg)
- 
   END IF
 
-  gd_id = gdattach(file_id, vname)
-  IF (gd_id < 0) THEN
+! Find list of grid names on this file
+  inq_success = gdinqgrid(fname, gridlist, strbufsize)
+  IF (inq_success /= SUCCEED) THEN
+    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"Could not inquire gridlist "// fname//" "//mnemonic//" "//msg)
+  END IF
+
+! Find grid name corresponding to the GRIDORDER'th one
+	ngrids = NumStringElements(gridlist, .FALSE.)
+	
+	IF(ngrids <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"NumStringElements of gridlist = 0")
+	ELSEIF(ngrids < GRIDORDER) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"NumStringElements of gridlist < GRIDORDER")
+	ENDIF
+	
+	CALL GetStringElement(gridlist, gridname, GRIDORDER)
+
+  gd_id = gdattach(file_id, gridname)
+  IF (gd_id /= SUCCEED) THEN
     CALL Pgs_smf_getMsg(status, mnemonic, msg)
     CALL MLSMessage (MLSMSG_Error, ModuleName, &
                "Could not attach "//fname//" "//mnemonic//" "//msg)
-
   END IF
+
+! Now find dimsize(), dimname(), etc.
+	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
 
   start(1) = 0
   start(2) = 0
@@ -208,6 +242,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.4  2001/02/23 00:06:52  pwagner
+! Using some MLSStrings.f90 functions
+!
 ! Revision 2.3  2001/02/21 00:37:51  pwagner
 ! Uses more of GriddedData
 !
