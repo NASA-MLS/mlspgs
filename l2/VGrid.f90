@@ -154,7 +154,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,resolution), units, values )
         if ( units(1) /= phyq_dimensionless ) &
           & call announce_error ( subtree(1,resolution), unitless )
-        if ( coordType /= l_zeta ) &
+        if ( vGrid%verticalCoordinate /= l_zeta ) &
           & call announce_error ( root, resolutionZetaOnly )
         vGrid%surfs = nint ( vGrid%surfs * values(1) ) / values(1)
       end if
@@ -399,6 +399,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.17  2004/03/24 18:26:16  livesey
+! Bug fix for resolution argument, inappropriate error message.
+!
 ! Revision 2.16  2004/03/10 22:20:10  livesey
 ! Added resolution to the explicit type.
 !
