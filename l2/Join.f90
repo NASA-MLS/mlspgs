@@ -300,7 +300,7 @@ contains ! =====     Public Procedures     =============================
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
-      & DEFAULT_HDFVERSION_WRITE, PATCH, TOOLKIT
+      & DEFAULT_HDFVERSION_WRITE, PATCH, SKIPDIRECTWRITES, TOOLKIT
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
@@ -528,7 +528,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( .not. checkpaths ) then
+    ! if ( .not. checkpaths ) then
+    if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     ! Now go through and do some sanity checking
     do source = 1, noSources
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
@@ -758,8 +759,9 @@ contains ! =====     Public Procedures     =============================
           & 'ExpandDirectDB thinks we need a new directFile; ' // &
           & 'did you enter any in global settings?' )
       endif
-      ! Done what we wished to do if just checking paths
-      if ( checkPaths ) return
+      ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
+      ! if ( checkPaths ) return
+      if ( SKIPDIRECTWRITES .or. checkPaths ) return
       
       if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
@@ -1833,6 +1835,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.111  2004/04/27 23:56:17  pwagner
+! SKIPDIRECTWRITES acts much like checkpaaths
+!
 ! Revision 2.110  2004/04/24 00:21:33  pwagner
 ! Bombs less readily when not a slave
 !
