@@ -73,12 +73,6 @@ contains
 
 !      CALL HEADER(2)
 
-      if (.not. Bill_Spectra) print*, 'bill is not true'
-      if (Bill_Spectra) print*, 'bill is true'
-      stop
-
-!      Bill_Spectra = .false.
-
       CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
                   &      GAMMA,N2,MOL,NMOL,NCNT)
 
@@ -148,6 +142,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.12  2001/11/15 23:52:28  jonathan
+! add default_spectroscopy
+!
 ! Revision 1.11  2001/11/15 00:54:14  jonathan
 ! minor changes
 !
