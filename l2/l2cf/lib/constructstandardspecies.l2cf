@@ -40,6 +40,7 @@ begin Construct
   GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
   GPH_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=GPH
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  refIWC: Quantity, vGrid=vGridRefIWC, hGrid=hGridStandard, type=refGPH
   
   ;; ----------------------------------------- Volume mixing ratios
 
