@@ -1290,16 +1290,39 @@ contains
             enddo
           end do
         end if
-
+        print*,'Mask:'
+        call DumpMask ( qty%mask(:,instance), qty%template%instanceLen )
       end do
 
     end subroutine SetupSubset
 
+    subroutine DumpMask ( mask, n )
+      integer, intent(in), dimension(:) :: MASK
+      integer, intent(in) :: N
+   
+      ! Local variables
+      integer :: I
+      integer :: B
+
+      ! Executable code
+      b = bit_size (mask)
+      do i = 1, n
+        if ( btest(mask(i/b+1), mod (i,b) ) ) then
+          call output ( '1' )
+        else
+          call output ( '0' )
+        endif
+      end do
+      call output ( '', advance='yes' )
+    end subroutine DumpMask
   end subroutine Retrieve
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.49  2001/06/27 04:05:32  livesey
+! Interim version with known problems in subset
+!
 ! Revision 2.48  2001/06/26 20:11:32  livesey
 ! Bug fixes to subset (more to come I imagine)
 !
