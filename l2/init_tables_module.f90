@@ -358,7 +358,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, n+n_dt_def, &
-      begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
+      begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
@@ -843,6 +843,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.186  2001/11/14 01:50:10  livesey
+! Replaced neither with none for criticalModules
+!
 ! Revision 2.185  2001/11/09 00:04:39  livesey
 ! New ChunkDivide stuff
 !
