@@ -1,35 +1,35 @@
 ; This partial l2cf fills isotope quantities
 
 BEGIN Fill
-    Fill, quantity=_x.br_79_o,      ratioQuantity=_b.br_79_o_ratio, $
-      sourceQuantity=_x.bro, method=isotope
-    Fill, quantity=_x.br_81_o,      ratioQuantity=_b.br_81_o_ratio, $
-      sourceQuantity=_x.bro, method=isotope
-    Fill, quantity=_x.cl_35_o,      ratioQuantity=_b.cl_35_o_ratio, $
-      sourceQuantity=_x.clo, method=isotope
-    Fill, quantity=_x.cl_37_o,      ratioQuantity=_b.cl_37_o_ratio, $
-      sourceQuantity=_x.clo, method=isotope
-    Fill, quantity=_x.h2o_18,       ratioQuantity=_b.h2o_18_ratio, $
-      sourceQuantity=_x.h2o, method=isotope
-    Fill, quantity=_x.hocl_35,      ratioQuantity=_b.hocl_35_ratio, $
-      sourceQuantity=_x.hocl, method=isotope
-    Fill, quantity=_x.hocl_37,      ratioQuantity=_b.hocl_37_ratio, $
-      sourceQuantity=_x.hocl, method=isotope
-    Fill, quantity=_x.o2_v1,        ratioQuantity=_b.o2_v1_ratio, $
-      sourceQuantity=_x.o2, method=isotope
-    Fill, quantity=_x.o3_asym_o_18, ratioQuantity=_b.o3_asym_o_18_ratio, $
-      sourceQuantity=_x.o3, method=isotope
-    Fill, quantity=_x.o3_sym_o_18,  ratioQuantity=_b.o3_sym_o_18_ratio, $
-      sourceQuantity=_x.o3, method=isotope
-    Fill, quantity=_x.o3_v1_3,      ratioQuantity=_b.o3_v1_3_ratio, $
-      sourceQuantity=_x.o3, method=isotope
-    Fill, quantity=_x.o3_v2,        ratioQuantity=_b.o3_v2_ratio, $
-      sourceQuantity=_x.o3, method=isotope
-    Fill, quantity=_x.o_18_o,       ratioQuantity=_b.o_18_o_ratio, $
-      sourceQuantity=_x.o2, method=isotope
-    Fill, quantity=_x.hcl_35,      ratioQuantity=_b.hcl_35_ratio, $
-      sourceQuantity=_x.hcl, method=isotope
-    Fill, quantity=_x.hcl_37,      ratioQuantity=_b.hcl_37_ratio, $
-      sourceQuantity=_x.hcl, method=isotope
+    Fill, quantity=!x.br_79_o,      ratioQuantity=!b.br_79_o_ratio, $
+      sourceQuantity=!x.bro, method=isotope
+    Fill, quantity=!x.br_81_o,      ratioQuantity=!b.br_81_o_ratio, $
+      sourceQuantity=!x.bro, method=isotope
+    Fill, quantity=!x.cl_35_o,      ratioQuantity=!b.cl_35_o_ratio, $
+      sourceQuantity=!x.clo, method=isotope
+    Fill, quantity=!x.cl_37_o,      ratioQuantity=!b.cl_37_o_ratio, $
+      sourceQuantity=!x.clo, method=isotope
+    Fill, quantity=!x.h2o_18,       ratioQuantity=!b.h2o_18_ratio, $
+      sourceQuantity=!x.h2o, method=isotope
+    Fill, quantity=!x.hocl_35,      ratioQuantity=!b.hocl_35_ratio, $
+      sourceQuantity=!x.hocl, method=isotope
+    Fill, quantity=!x.hocl_37,      ratioQuantity=!b.hocl_37_ratio, $
+      sourceQuantity=!x.hocl, method=isotope
+    Fill, quantity=!x.o2_v1,        ratioQuantity=!b.o2_v1_ratio, $
+      sourceQuantity=!x.o2, method=isotope
+    Fill, quantity=!x.o3_asym_o_18, ratioQuantity=!b.o3_asym_o_18_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_sym_o_18,  ratioQuantity=!b.o3_sym_o_18_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_v1_3,      ratioQuantity=!b.o3_v1_3_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o3_v2,        ratioQuantity=!b.o3_v2_ratio, $
+      sourceQuantity=!x.o3, method=isotope
+    Fill, quantity=!x.o_18_o,       ratioQuantity=!b.o_18_o_ratio, $
+      sourceQuantity=!x.o2, method=isotope
+    Fill, quantity=!x.hcl_35,      ratioQuantity=!b.hcl_35_ratio, $
+      sourceQuantity=!x.hcl, method=isotope
+    Fill, quantity=!x.hcl_37,      ratioQuantity=!b.hcl_37_ratio, $
+      sourceQuantity=!x.hcl, method=isotope
 
 END Fill
