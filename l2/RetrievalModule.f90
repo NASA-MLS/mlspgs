@@ -36,7 +36,7 @@ contains
     use BitStuff, only: CountBits
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
+    use Init_Tables_Module, only: F_additional, F_apriori, F_aprioriScale, F_Average, &
       & F_channels, F_cloudChannels, F_cloudHeight, F_cloudRadiance, &
       & F_cloudRadianceCutOff, &
       & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
@@ -2993,7 +2993,6 @@ contains
       use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
       use VectorsModule, only: ClearMask, CreateMask, &
         & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T
-
       integer, intent(in) :: KEY        ! Tree node
       type (Vector_T), dimension(:) :: VECTORS
 
@@ -3042,17 +3041,20 @@ contains
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
       logical :: RESET                  ! Flag
+      logical :: ADDITIONAL             ! Flag
       logical :: DOTHISCHANNEL          ! Flag
       logical :: DOTHISHEIGHT           ! Flag
       integer, parameter ::                      MAXCOLUMNS = 127
       character(len=1), dimension(MAXCOLUMNS) :: maskedMan
       character(len=5) ::                        decades
+      character(len=1), dimension(:), pointer :: ORIGINALMASK
 
       ! Executable code
       nullify ( channels, qty, ptan, opticalDepth )
       got = .false.
       ignore = .false.
       reset = .false.
+      additional = .false.
       maskBit = m_linalg
       minUnit = 0
       maxUnit = 0
@@ -3115,6 +3117,8 @@ contains
           ignore = Get_Boolean ( son )
         case ( f_reset )
           reset = Get_Boolean ( son )
+        case ( f_additional )
+          additional = Get_Boolean ( son )
         case default
           ! Shouldn't get here if the type checker worked
         end select
@@ -3197,8 +3201,19 @@ contains
       ! Create the mask if it doesn't exist
       if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
 
+      ! Make a space to save the original values if doing an additional mask
+      if ( additional ) then
+        nullify ( originalMask )
+        call Allocate_test ( originalMask, qty%template%instanceLen, &
+          & 'originalMask', ModuleName )
+      end if
+
       ! Now we loop over the instances
       do instance = 1, qty%template%noInstances
+
+        ! Possibly save original mask
+        if ( additional ) originalMask = qty%mask ( :, instance )
+
         instanceOr1 = instance
         if ( qty%template%coherent ) then
           theseHeights => qty%template%surfs(:,1)
@@ -3389,10 +3404,18 @@ contains
             end do                      ! Channel loop
           end do                        ! Height entries in l2cf
         end if                          ! Got a height entry
-      end do                            ! Instance loop
 
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+      end do                            ! Instance loop
+      
       ! Tidy up
       call Deallocate_test ( channels, 'channels', ModuleName )
+      if ( additional ) call Deallocate_test ( originalMask, &
+        & 'originalMask', ModuleName )
       
       if ( index(switches,'msk') /= 0 ) then
         if ( qty%template%name /= 0 ) then
@@ -3738,6 +3761,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.232  2003/02/14 01:56:36  livesey
+! Added the 'additional' capability in subset
+!
 ! Revision 2.231  2003/02/12 02:11:13  livesey
 ! New code for extended averaging kernels
 !
