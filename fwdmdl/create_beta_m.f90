@@ -86,10 +86,12 @@ contains
       IF (PRESENT(t_power)) THEN
         bm = abs_cs_liq_h2o(Fgr,tm)
         bp = abs_cs_liq_h2o(Fgr,tp)
-        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
-        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
-        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
       ENDIF
 !
     else if (spectag == 28964) then
@@ -100,10 +102,12 @@ contains
       IF (PRESENT(t_power)) THEN
         bm = abs_cs_n2_cont(cont,tm,Pressure,Fgr)
         bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
-        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
-        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
-        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
       ENDIF
 !
     else if (spectag == 28965) then
@@ -119,10 +123,12 @@ contains
       IF (PRESENT(t_power)) THEN
         bm = abs_cs_o2_cont(cont,tm,Pressure,Fgr)
         bp = abs_cs_o2_cont(cont,tp,Pressure,Fgr)
-        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
-        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
-        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
       ENDIF
 
     else
@@ -131,10 +137,12 @@ contains
       IF (PRESENT(t_power)) THEN
         bm = abs_cs_cont(cont,tm,Pressure,Fgr)
         bp = abs_cs_cont(cont,tp,Pressure,Fgr)
-        ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
-        ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
-        t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        if(nl < 1) then
+          ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+          ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
+          t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
+        endif
       ENDIF
 
     end if
@@ -230,7 +238,6 @@ contains
       ds = Log(bp/bv)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
       ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
       dw = Log(bv/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
-!
       t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
 !
     ENDIF
@@ -238,6 +245,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.2  2001/10/17 18:19:10  zvi
+! Fixing bug in computing t_power
+!
 ! Revision 2.1  2001/10/16 15:07:08  zvi
 ! Continuum parameters are now part of Catalog
 !
