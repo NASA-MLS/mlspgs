@@ -104,7 +104,7 @@ contains ! ====     Public Procedures     ==============================
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
-          & l2gpDatabase )
+          & l2gpDatabase, l2pcf, processingRange, l1bInfo )
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) call test_parse_signals
@@ -199,6 +199,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.50  2001/05/03 20:34:08  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.49  2001/05/02 23:23:00  livesey
 ! Added some of the parallel stuff
 !
