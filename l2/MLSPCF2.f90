@@ -4,13 +4,15 @@
 !       perl script.  Do *NOT* attempt to modify this by hand.
 !
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &
-   "$Id$"
-    & "$RCSfile$"
-!----------------------------------------------------------
-
 MODULE MLSPCF2
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
+
    INTEGER, PARAMETER :: mlspcf_l2_param_InputVersion = 2000
    INTEGER, PARAMETER :: mlspcf_l2_param_PGEVersion = 2001
    INTEGER, PARAMETER :: mlspcf_l2_param_Cycle = 2002
@@ -80,6 +82,9 @@ MODULE MLSPCF2
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.10  2002/10/01 22:25:16  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.9  2002/10/01 20:19:06  bwknosp
 ! Added Id, RCS, and Log info
 !
