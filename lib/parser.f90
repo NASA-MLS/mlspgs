@@ -86,11 +86,24 @@ contains ! ====     Public Procedures     ==============================
   subroutine EXPR
     if ( toggle(par) ) call output ( 'Enter EXPR', advance='yes' )
     call limit
-    if ( next%class == t_colon ) then
+    select case ( next%class )
+    case ( t_colon )
       call get_token
       call limit
       call build_tree ( n_colon, 2 )
-    end if
+    case ( t_colon_less )
+      call get_token
+      call limit
+      call build_tree ( n_colon_less, 2 )
+    case ( t_less_colon )
+      call get_token
+      call limit
+      call build_tree ( n_less_colon, 2 )
+    case ( t_less_colon_less )
+      call get_token
+      call limit
+      call build_tree ( n_less_colon_less, 2 )
+    end select
     if ( toggle(par) ) call output ( 'Exit  EXPR', advance='yes' )
   end subroutine EXPR
 ! -------------------------------------------------------  FACTOR  -----
@@ -393,6 +406,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.7  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
 ! Revision 2.6  2001/07/20 20:18:05  vsnyder
 ! Improve error recovery in a few cases -- more work probably needed
 !
