@@ -74,6 +74,9 @@ module Inf_NaN_Detection
     integer, parameter :: SPSB = bit_size(sNaN) - 1
     integer, parameter :: DPSB = bit_size(dNaN) - 1
     
+    logical, parameter :: USELAHEYSOWNBUGGYTESTS = .false. ! Should tell 'em
+    logical, parameter :: USEIOSTRING = .false. ! Something of a hack
+
    interface isnan
       module procedure sisnan
       module procedure disnan
@@ -100,11 +103,69 @@ contains
   elemental function sisnan(x) result(res)
     real(kind(1.e0)), intent(in) :: x
     logical :: res
-    res = ieor(ibclr(transfer(x,sNan),SPSB), sNaN) == 0
+    if ( USELAHEYSOWNBUGGYTESTS ) then
+      res = sisnan_lahey(x)
+    elseif ( USEIOSTRING ) then
+      res = sisnan_io(x)
+    else
+      res = sisnan_jpl(x)
+    endif
   end function  
 
   ! Double precision test for NaN
   elemental function disnan(d) result(res)
+    real(kind(1.d0)), intent(in) :: d
+    logical :: res
+    if ( USELAHEYSOWNBUGGYTESTS ) then
+      res = disnan_lahey(d)
+    elseif ( USEIOSTRING ) then
+      res = disnan_io(d)
+    else
+      res = disnan_jpl(d)
+    endif
+  end function  
+  
+  ! Single precision test for NaN
+  elemental function sisnan_io(x) result(res)
+    real(kind(1.e0)), intent(in) :: x
+    logical :: res
+    character(len=80) :: reschar
+    write(reschar, *) x
+    res = ( index(reschar, 'NaN') > 0 )
+  end function  
+
+  ! Double precision test for NaN
+  elemental function disnan_io(d) result(res)
+    real(kind(1.d0)), intent(in) :: d
+    logical :: res
+    character(len=80) :: reschar
+    write(reschar, *) d
+    res = ( index(reschar, 'NaN') > 0 )
+  end function  
+  
+  ! Single precision test for NaN
+  elemental function sisnan_jpl(x) result(res)
+    real(kind(1.e0)), intent(in) :: x
+    logical :: res
+    res = ( x /= x )
+  end function  
+
+  ! Double precision test for NaN
+  elemental function disnan_jpl(d) result(res)
+    real(kind(1.d0)), intent(in) :: d
+    logical :: res
+    res = ( d /= d )
+  end function  
+  
+  ! Single precision test for NaN
+  elemental function sisnan_lahey(x) result(res)
+    real(kind(1.e0)), intent(in) :: x
+    logical :: res
+    res = ieor(ibclr(transfer(x,sNan),SPSB), sNaN) == 0
+  end function  
+
+  ! Double precision test for NaN
+  elemental function disnan_lahey(d) result(res)
     real(kind(1.d0)), intent(in) :: d
     logical :: res
     res = ieor(ibclr(transfer(d,dNaN),DPSB), dNaN) == 0
@@ -163,3 +224,6 @@ end module Inf_NaN_Detection
 
 !
 ! $Log$
+! Revision 1.1  2004/03/26 21:15:00  pwagner
+! FIrst commit
+!
