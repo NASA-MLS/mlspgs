@@ -60,7 +60,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
   integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
   integer, parameter :: F_CLOUD_DER           = f_autofill + 1
-  integer, parameter :: F_COLCHANNELS         = f_cloud_der + 1
+  integer, parameter :: F_CLOUD_WIDTH         = f_cloud_der + 1
+  integer, parameter :: F_COLCHANNELS         = f_cloud_width + 1
   integer, parameter :: F_COLINSTANCES        = f_colChannels + 1
   integer, parameter :: F_COLQUANTITY         = f_colInstances + 1
   integer, parameter :: F_COLSURFACES         = f_colQuantity + 1
@@ -410,6 +411,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_cloud_der) =           add_ident ( 'cloud_der' )
+    field_indices(f_cloud_width) =         add_ident ( 'cloud_width' )
     field_indices(f_colChannels) =         add_ident ( 'colChannels' )
     field_indices(f_colInstances) =        add_ident ( 'colInstances' )
     field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
@@ -885,6 +887,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
+             begin, f+f_cloud_width, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -1015,6 +1018,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.137  2001/07/17 21:23:36  jonathan
+! add cloud_width, jonathan
+!
 ! Revision 2.136  2001/07/17 19:21:59  jonathan
 ! add surface as in instrinsic, jonathan
 !
