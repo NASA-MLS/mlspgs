@@ -18,6 +18,7 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
   character (len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -263,9 +264,16 @@ contains
 
   end function GetQuantityForForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.7  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.6  2002/10/02 22:52:19  vsnyder
 ! Remove declaration for unused variable MATCHSC
 !
