@@ -1,0 +1,70 @@
+; $Id$
+
+; This l2cf is an attempt to retrieve ozone from r4.b14
+
+; First some m4 directives.
+include(m4defs.l2cf)
+
+; Define the paths for the input and output files
+!define(inpathl1boa,{/bigdata/livesey/l1boa})
+!define(outpathl2gp,{/bigdata/livesey})
+; Clarify the path definitions.
+!include(clarify-paths.l2cf)
+
+; Define the input and output version string
+; !define(version,{s5-t})
+
+; Define the day we're processing
+!ifdef(day,{},{!define(day,1996-029)})
+
+; Now include the valid signals database
+!include(validsignals-emls.l2cf)
+
+; -------------------------------------------- Global settings ----
+begin GlobalSettings
+
+  l1Boa, file='!inpathl1boa/MLS-Aura_L1BOA_Full_s5-t_!day.dat'
+  startTime = "!day{}T00:00:00.000"
+  endTime =   "!day{}T23:59:59.999"
+  leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+
+  empiricalGeometry, terms=[ $
+    -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, $
+    1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, $
+    0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, $
+    -0.0188811, 0.0138453, -0.00959350], $
+    iterations=10
+
+end GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+!include(chunkdivide8th.l2cf)
+
+; ------------------------------------------- Construct sections --
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz
+
+  qty: Quantity, hGrid=hGridStandard, type=temperature, vGrid=vGridStandard
+
+  stateTemplate: vectorTemplate, quantities=[qty]
+end Construct
+
+begin Fill
+  state: Vector, template=stateTemplate
+end Fill
+
+begin Join
+  l2gpOut: L2GP, source=state.qty
+
+end Join
+
+begin Output
+  output, quantities=l2gpOut, type=l2gp, $
+    file='!outpathl2gp/MLS-Aura_L2GP_Template_test_!day.dat'
+end Output
+
+; $Log$
