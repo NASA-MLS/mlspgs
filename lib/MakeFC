@@ -136,8 +136,13 @@ endif
 #These modules require custom builds, so omit build commands from dependencies
 CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
 # Custom builds for some modules needed to fool LF95 compiler
-# (for now anyway) so it won't take forever to finish
-ifeq ($(MLSF95),LF95)
+# in the bad old days so it wouldn't take forever to finish 
+# (~14 hours for tree-walker)
+# No, Lahey didn't fix their compiler
+# (they called the compile times "proper", adding for clarification
+# "We don't fix this problem,"
+# we worked around their bug by moving USE statements inside procedures
+ifeq ($(MLSF95),LF95nasty)
   CUSTOM_BUILDS := $(CUSTOM_BUILDS) L2PC_m.f90 MLSFiles.f90 L2GPData.f90
 endif
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
@@ -297,6 +302,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.45  2002/08/23 20:33:05  pwagner
+# Removed lib trickery L2GPData, MLSFiles, etc.
+#
 # Revision 2.44  2002/07/18 18:00:02  pwagner
 # NOHUNTING default when .mod-mediated dependency
 #
