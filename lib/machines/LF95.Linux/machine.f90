@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module MACHINE
   implicit none
 
@@ -9,13 +12,22 @@ module MACHINE
   private IO_ERROR_
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
 contains
+
+  subroutine EXIT_WITH_STATUS ( STATUS )
+  ! Exit and return STATUS to the invoking process
+    integer, intent(in) :: STATUS
+    external :: SETRCD
+    call setrcd ( status )
+    stop
+  end subroutine EXIT_WITH_STATUS
 
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
   ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
@@ -41,6 +53,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.1  2001/01/13 00:29:44  pwagner
+! moved to lib/machines/MLSCONFG/machine.f90
+!
 ! Revision 1.1  2000/10/19 17:41:17  pwagner
 ! first commit
 !
