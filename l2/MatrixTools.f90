@@ -388,8 +388,11 @@ contains ! ================ Public procedures ================================
                 & call deallocate_test ( val, 'val', ModuleName )
             end if
 
-            if ( mb%kind /= m_absent ) &
-              & call dump ( toDump, name='Number of elements dumped:', clean=.true. )
+            if ( mb%kind /= m_absent ) then
+              call dump ( toDump, name='Number of elements dumped:', clean=.true. )
+            else
+              call output ( '', advance='yes' )
+            end if
 
           end if
         end do
@@ -521,6 +524,10 @@ contains ! ================ Public procedures ================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.9  2003/05/21 19:19:06  vsnyder
+! Plug some memory leaks.  Use "name" argument of "dump" routines.  Dump
+! numbers of rows and columns.
+!
 ! Revision 1.8  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
