@@ -1,7 +1,11 @@
 ; This l2cf segment is useful for constructing `standard' species.
 ; It will make heavy use of m4 to (hopefully) simplify things.
 
-!include(constructcolumns.l2cf)
+; Define a suffix to allow e.g. ptan to use the correct tmeperature
+; and H2O.  Effectively a `specificQuantities' in l2cf.  Depends on
+; hiRes implying not skipHiRes.
+!ifelse(!resolution,{hiRes},!define(res,{_HR}),!define(res,{}))
+
 begin Construct
 
   ;; ----------------------------------------- Macros
@@ -74,6 +78,24 @@ begin Construct
   rhi_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
   
+;; ----------------------------------------- Columns
+
+   ;; pressure marking the tropopause
+  tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
+  !define(constructColumn,{column_$1: Quantity, type=columnAbundance, $
+    molecule=$1, hGrid=hGridStandard!nl})
+  !define(constructHiResColumn,{column_$1_HR: Quantity, type=columnAbundance, $
+    molecule=$1, hGrid=hGridStandard!nl})
+
+  !forall( {constructColumn}, !allLinearMolecules )
+  !forall( {constructColumn}, !allLogMolecules )
+  !forall( {constructHiResColumn}, !allLinearHRMolecules)
+  !forall( {constructHiResColumn}, !allLogHRMolecules)
+  !define(allColumns,
+    {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules)})
+  !define(allHiResColumns,
+    {!makelist({column_},{},!allHiResMolecules)})
+
   ;; ----------------------------------------- Baselines
   
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
@@ -241,7 +263,7 @@ begin Construct
     !allMolecules, tropH2O, $
     !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
     rhi, !ifdef(skipHiRes,{},{rhi_HR,}) $
-    !allColumns, $
+    !allColumns,  !ifdef(skipHiRes,{},{!allHiResColumns,}) $
     !allBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $
