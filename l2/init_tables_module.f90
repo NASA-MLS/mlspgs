@@ -546,6 +546,7 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_integrationTime, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_interpolate, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_intrinsic, t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_isPrecision, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_maxIterations, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_measurements, s+s_vector, f+f_template, &
@@ -556,6 +557,8 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_multiplier, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_noFineGrid, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_precision, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
@@ -806,6 +809,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.179  2001/10/23 16:37:30  pwagner
+! isPrecision, precision new fields in Fill command
+!
 ! Revision 2.178  2001/10/22 22:21:52  dwu
 ! add l_highcloud
 !
