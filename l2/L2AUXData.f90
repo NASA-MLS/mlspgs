@@ -5,8 +5,9 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
-  use Hdf, only: DFACC_READ, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT8, SFCREATE, SFDIMID, &
-    & SFSDSCALE, SFEND, &
+  use Hdf, only: DFACC_READ, &
+    & DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, DFNT_INT8, &
+    & SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
     & SFENDACC, SFSTART, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
   use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
@@ -756,7 +757,7 @@ contains ! =====     Public Procedures     =============================
 !          & "Error setting dimension name to SDS l2aux file:")
 	     endif
         ! Write dimension scale
-        status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT64,&
+        status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32,&
           & l2aux%dimensions(dimensionInData)%values)
         if ( status /= 0 ) then
 		  		call output("dimID: ")
@@ -802,7 +803,7 @@ contains ! =====     Public Procedures     =============================
     call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
     call allocate_test(dimSizes,1,'dimSizes',ModuleName)
     dimSizes(1) = myNoMAFS
-    sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT8, &
+    sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT32, &
       & 1, dimSizes)
     do MAF=0, myNoMAFS-1
       counterMAF(MAF+1) = MAF
@@ -864,6 +865,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.36  2002/12/02 19:11:13  pwagner
+! Corrected data types of counterMAF and dimensions
+!
 ! Revision 2.35  2002/11/29 22:46:28  livesey
 ! Various bug fixes / improvements.
 !
