@@ -162,7 +162,7 @@ CONTAINS
     integer :: WHICHPATTERN             ! Index of antenna pattern
 
     logical :: doThis                   ! Flag for lines
-    logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
+    logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
 
     character (len=32) :: molName       ! Name of a molecule
 
@@ -450,7 +450,8 @@ CONTAINS
     temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature )
     ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule )
+      & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule, &
+      & foundInFirst=ptan_der )
     phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule )
     elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -538,6 +539,9 @@ CONTAINS
     MAF = fmStat%maf
 
     Vel_Cor = 1.0_rp - losvel%values(1,maf)/299792458.3_rp
+
+! Sort out a remaining flag
+    ptan_der = ptan_der .and. present ( jacobian )
 
 ! Work out the `window' stuff for temperature. Create the Grids_tmp stracture:
 
@@ -1243,6 +1247,7 @@ CONTAINS
       Call Allocate_test ( dRad_df, f_len, 'dRad_df', ModuleName )
       Call allocate_test(k_atmos,noUsedChannels,no_tan_hts,f_len,'k_atmos',&
                        & modulename)
+      k_atmos = 0.0
     endif
 
     if(spect_der) then
@@ -2184,7 +2189,7 @@ CONTAINS
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
-               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1) )
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1), PTAN_DER=ptan_der )
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
@@ -2194,7 +2199,7 @@ CONTAINS
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
-               & DXDT_SURFACE=dxdt_surface)
+               & DXDT_SURFACE=dxdt_surface, PTAN_DER=ptan_der )
           ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
@@ -2202,7 +2207,7 @@ CONTAINS
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
-               & DI_DF=DBLE(k_atmos(i,:,:)) )
+               & DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !              & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
@@ -2214,7 +2219,7 @@ CONTAINS
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
                & DXDT_SURFACE=dxdt_surface,                                 &
-               & DI_DF=DBLE(k_atmos(i,:,:)) )
+               & DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !              & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ENDIF
 !
@@ -2226,21 +2231,23 @@ CONTAINS
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
-              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian)
+              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
+              &  PTAN_DER=ptan_der)
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
               &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
-              &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))) )
+              &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))), &
+              &  PTAN_DER=ptan_der )
           ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
             Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
               &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
-              &  DI_DF=DBLE(k_atmos(i,:,:)) )
+              &  DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
             Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
@@ -2249,7 +2256,7 @@ CONTAINS
               &  dhdz_out,dx_dh_out,Grids_f, &
               &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
-              &  DI_DF=DBLE(k_atmos(i,:,:)) )
+              &  DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ENDIF
 !
@@ -2495,6 +2502,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.73  2002/07/19 23:35:49  bill
+! fixed undefined surf angle
+!
 ! Revision 2.72  2002/07/11 20:51:20  bill
 ! fixed bug regarding req
 !
