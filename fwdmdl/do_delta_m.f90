@@ -61,7 +61,7 @@ contains
   end subroutine PATH_OPACITY
 !--------------------------------------------------  PATH_OPACITY  -----
 
-  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, DO_GL, SINGULARITY, &
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, &
                      &      FUNCT, DS_DH_GL, DH_DZ_GL, &
                      &      INTEGRAL )
     use GLNP, only: NG, GW
@@ -71,7 +71,7 @@ contains
 
     real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
 !                                         in -log(p) units
-    logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
+!   logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
     complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
     complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
 !                                         grid
@@ -92,14 +92,14 @@ contains
     a = 1
     b = ng
     do i = 1, size(singularity,2)
-      if ( do_gl(i) ) then
+!     if ( do_gl(i) ) then
         do j = -1, 1
           integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
                  &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
         end do 
         a = a + ng
         b = b + ng
-      end if
+!     end if
     end do
 
   end subroutine POLARIZED_PATH_OPACITY
@@ -164,6 +164,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.5  2003/05/15 03:25:20  vsnyder
+! Added some comments
+!
 ! Revision 2.4  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !

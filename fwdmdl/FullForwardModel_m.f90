@@ -48,7 +48,6 @@ contains
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
     use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_dT
-    use Get_GL_delta_m, only: Get_GL_Delta
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
     use GLnp, only: NG
@@ -78,7 +77,8 @@ contains
     use Path_Contrib_M, only: Get_GL_Inds, Path_Contrib
     use Physics, only: H_OVER_K
     use PointingGrid_m, only: POINTINGGRIDS
-    use RAD_TRAN_M, only: RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, DRAD_TRAN_DX
+    use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, &
+      & DRAD_TRAN_DX
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
     use ScatSourceFunc, only: T_SCAT             !JJ
     use SpectroscopyCatalog_m, only: CATALOG_T
@@ -151,6 +151,7 @@ contains
     integer :: NOUSEDCHANNELS           ! How many channels are we considering
     integer :: NPC                      ! Length of coarse path
     integer :: N_T_ZETA                 ! Number of zetas for temperature
+    integer :: P_Stop                   ! Where to stop in polarized case
     integer :: PTG_I                    ! Loop counter for the pointings
     integer :: SHAPEIND                 ! Index into filter shapes
     integer :: SIDEBANDSTART            ! Loop limit
@@ -210,12 +211,12 @@ contains
 ! Array of Flags indicating  which Temp. coefficient to process
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
+    real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     real(r8) :: FRQ           ! Frequency
     real(r8) :: FRQHK         ! 0.5 * Frq * H_Over_K
     real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
                               ! below surface
     real(rp) :: R,R1,R2       ! real variables for various uses
-    real(rp) :: RAD           ! Radiance
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
     real(rp) :: THISFRACTION     ! A sideband fraction
@@ -282,6 +283,9 @@ contains
     real(rp), dimension(:,:), pointer :: BETA_PATH_PHH_C   ! Scattering phase function !JJ 
     real(rp), dimension(:),   pointer :: BETA_PATH_W0_C    ! Single scattering albedo 
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
+    real(rp), dimension(:,:), pointer :: D_DELTA_DT ! Incremental opacity derivative
+                                           ! schlep from drad_tran_dt to
+                                           ! get_d_deltau_pol_dt.  Path x SVE.
     real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
                                            ! path x state-vector-components
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
@@ -439,6 +443,8 @@ contains
     ! ------------------------------------------------------------------------
 !   Print *, '** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 
+    if ( e_stop > 0.0_rp ) e_stop = log(epsilon(0.0_rp)) ! only once
+
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
@@ -454,7 +460,7 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & channelOrigins, d_rad_pol_dt, d_t_scr_dt, &
+      & channelOrigins, d_rad_pol_dt, d_delta_dt, d_t_scr_dt, &
       & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
@@ -956,36 +962,39 @@ contains
 !                         & no_sv_p_t, 'k_temp',moduleName )
       allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t) )
 
-      call allocate_test ( d_t_scr_dt, npc, sv_t_len, 'd_t_scr_dt', moduleName )
       call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
-      call allocate_test ( dbeta_dt_path_c,      npc, no_mol, 'dbeta_dt_path_c', &
-                         & moduleName )
-      call allocate_test ( dbeta_dt_path_f, no_ele, no_mol, 'dbeta_dt_path_f', &
-                         & moduleName )
-      call allocate_test ( dh_dt_path, no_ele, sv_t_len, 'dh_dt_path', &
-                         & moduleName )
-      call allocate_test ( dh_dt_path_c, no_ele, sv_t_len, 'dh_dt_path_c', &
-                         & moduleName )
-      call allocate_test ( dh_dt_path_f, no_ele, sv_t_len, 'dh_dt_path_f', &
-                         & moduleName )
-      call allocate_test ( do_calc_hyd, no_ele, sv_t_len, 'do_calc_hyd', &
-                         & moduleName )
-      call allocate_test ( do_calc_hyd_c, no_ele, sv_t_len, 'do_calc_hyd_c', &
-                         & moduleName )
-      call allocate_test ( do_calc_t, no_ele, sv_t_len, 'do_calc_t', &
-                         & moduleName )
-      call allocate_test ( do_calc_t_c, no_ele, sv_t_len, 'do_calc_t_c', &
-                         & moduleName )
-      call allocate_test ( do_calc_t_f, no_ele, sv_t_len, 'do_calc_t_f', &
-                         & moduleName )
-      call allocate_test ( eta_zxp_t, no_ele, sv_t_len, 'eta_zxp_t', &
-                         & moduleName )
-      call allocate_test ( eta_zxp_t_c, no_ele, sv_t_len, 'eta_zxp_t_c', &
-                         & moduleName )
-      call allocate_test ( eta_zxp_t_f, no_ele, sv_t_len, 'eta_zxp_t_f', &
-                         & moduleName )
-      call allocate_test ( tan_dh_dt,1,sv_t_len, 'tan_dh_dt', moduleName )
-      call allocate_test ( tan_d2h_dhdt,1,sv_t_len, 'tan_d2h_dhdt', moduleName )
+      call allocate_test ( d_t_scr_dt,         npc, sv_t_len, 'd_t_scr_dt', &
+                                                              & moduleName )
+      call allocate_test ( d_delta_dt,         npc, sv_t_len, 'd_delta_dt', &
+                                                              & moduleName )
+      call allocate_test ( dbeta_dt_path_c,    npc, no_mol,   'dbeta_dt_path_c', &
+                                                              & moduleName )
+      call allocate_test ( dbeta_dt_path_f, no_ele, no_mol,   'dbeta_dt_path_f', &
+                                                              & moduleName )
+      call allocate_test ( dh_dt_path,      no_ele, sv_t_len, 'dh_dt_path', &
+                                                              & moduleName )
+      call allocate_test ( dh_dt_path_c,       npc, sv_t_len, 'dh_dt_path_c', &
+                                                              & moduleName )
+      call allocate_test ( dh_dt_path_f,    no_ele, sv_t_len, 'dh_dt_path_f', &
+                                                              & moduleName )
+      call allocate_test ( do_calc_hyd,     no_ele, sv_t_len, 'do_calc_hyd', &
+                                                              & moduleName )
+      call allocate_test ( do_calc_hyd_c,      npc, sv_t_len, 'do_calc_hyd_c', &
+                                                              & moduleName )
+      call allocate_test ( do_calc_t,       no_ele, sv_t_len, 'do_calc_t', &
+                                                              & moduleName )
+      call allocate_test ( do_calc_t_c,        npc, sv_t_len, 'do_calc_t_c', &
+                                                              & moduleName )
+      call allocate_test ( do_calc_t_f,     no_ele, sv_t_len, 'do_calc_t_f', &
+                                                              & moduleName )
+      call allocate_test ( eta_zxp_t,       no_ele, sv_t_len, 'eta_zxp_t', &
+                                                              & moduleName )
+      call allocate_test ( eta_zxp_t_c,        npc, sv_t_len, 'eta_zxp_t_c', &
+                                                              & moduleName )
+      call allocate_test ( eta_zxp_t_f,     no_ele, sv_t_len, 'eta_zxp_t_f', &
+                                                              & moduleName )
+      call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
+      call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
 
     end if ! temp_der
 
@@ -1596,6 +1605,7 @@ contains
               alpha_path_polarized(+1,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
                 & beta_path_polarized(+1,1:npc,:), DIM=2 ) * tanh1_c(1:npc)
 
+              ! Turn sigma-, pi, sigma+ into 2X2 matrix
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
 
@@ -1642,6 +1652,10 @@ contains
           alpha_path_f(1:ngl) = SUM(sps_path(gl_inds(1:ngl),:) *  &
                                   & beta_path_f(1:ngl,:), DIM=2)
 
+          ! Needed by both rad_tran and rad_tran_pol
+          call two_d_t_script ( t_path_c(1:npc), spaceRadiance%values(1,1), &
+            & frq, t_script(1:npc) )
+
           if ( .not. FwdModelConf%polarized ) then
 
           ! Compute SCALAR radiative transfer ---------------------------------------
@@ -1656,16 +1670,16 @@ contains
 
           ! Compute radiative transfer ---------------------------------------
 
-            call rad_tran ( indices_c(1:npc), gl_inds(1:ngl), Frq,  &
-              & spaceRadiance%values(1,1), e_rflty, z_path_c, t_path_c(1:npc), &
-              & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc), &
-              & incoptdepth(1:npc), alpha_path_f(1:ngl),            &
-              & path_dsdh, dhdz_path, t_script(1:npc),              &
-              & tau(1:npc), Rad, i_stop )
+            call rad_tran ( gl_inds(1:ngl), e_rflty, z_path_c(1:npc), &
+              & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc),         &
+              & incoptdepth(1:npc), alpha_path_f(1:ngl),                    &
+              & path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc),          &
+              & RadV(frq_i), i_stop )
 
-            RadV(frq_i) = Rad
           else
-         !Polarized model
+          ! Polarized model
+
+            i_stop = npc
 
 !????DEBUG  This makes agreement to 0.2K with scalar model.  I don't know why.
 !we ought to need to add the scalar contribution 0.25 0.5 0.25 to the polarized
@@ -1687,39 +1701,19 @@ alpha_path_f = 0.0
               & beta_path_polarized_f(+1,1:ngl,:), DIM=2 ) * tanh1_f(1:ngl) + &
               & 0.25 * alpha_path_f(1:ngl)
 
-            ! polarized flavor of get_gl_delta
-            call get_gl_delta ( indices_c(1:npc), gl_inds(1:ngl), do_gl(1:npc), z_path, &
-              &  alpha_path_polarized(:, 1:npc), alpha_path_polarized_f(:,1:ngl), &
-              &  path_dsdh, dhdz_path, gl_delta_polarized )
+            call rad_tran_pol ( gl_inds(1:ngl), e_rflty, z_path_c(1:npc),     &
+              & alpha_path_polarized(:,1:npc), ref_corr(1:npc), do_gl(1:npc), &
+              & incoptdepth_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl),  &
+              & path_dsdh, dhdz_path, ct, stcp, stsp, t_script(1:npc),        &
+              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol, p_stop )
 
-            ! get gl corrections to incoptdepth_pol
-            call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
-              & gl_delta_polarized(:,1:npc), incoptdepth_pol_gl(:,:,1:npc) )
-
-            ! add GL corrections to incoptdepth_pol
-            incoptdepth_pol(:,:,1:npc) = incoptdepth_pol(:,:,1:npc) - &
-              &  incoptdepth_pol_gl(:,:,1:npc);
-
-            ! At this point, incoptdepth_pol(:,:,1:npc/2) should be nearly
-            ! identical to incoptdepth_pol(:,:,1:npc/2+1) (npc/2 is the
-            ! zero-thickness tangent layer).
-
-            do j = 1, npc
-              call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
-            end do
-
-            call two_d_t_script ( t_path(indices_c(1:npc)), spaceRadiance%values(1,1), frq, &
-              & t_script(1:npc) )
-            call mcrt ( t_script(1:npc), sqrt(e_rflty), deltau_pol(:,:,1:npc), &
-              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol )
-
-            !Assume antenna is only sensitive to the first linear polarization
-            if ( index(switches,'crosspol') /= 0 ) then
-               RadV(frq_i) = real(rad_pol(2,2))
+            ! Assume antenna is only sensitive to the first linear polarization
+            if ( index(switches,'crosspol') == 0 ) then
+              RadV(frq_i) = real(rad_pol(1,1))
             else
-               RadV(frq_i) = real(rad_pol(1,1))
+              RadV(frq_i) = real(rad_pol(2,2))
             end if
-  
+
           end if
 
           ! Compute derivatives if needed ----------------------------------
@@ -1752,6 +1746,8 @@ alpha_path_f = 0.0
             sps_beta_dbeta_f(:ngl) = SUM(sps_path(gl_inds(1:ngl),:) * &
               &                          beta_path_f(1:ngl,:) * &
               &                          dbeta_dt_path_f(1:ngl,:),DIM=2)
+            ! In the polarized case, drad_tran_dt calculates d_delta_dt for
+            ! use in the polarized case, but the final derivative is not used.
             call drad_tran_dt ( z_path_c(1:npc ),                              &
               & h_path_c(1:npc),                                               &
               & t_path_c(1:npc), dh_dt_path_c(1:npc,:),                        &
@@ -1766,30 +1762,42 @@ alpha_path_f = 0.0
               & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)),   &
               & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), d_t_scr_dt(1:npc,:), &
               & tau(1:npc), i_stop,        &
-              & drad_dt )
+              & d_delta_dt(1:npc,:), drad_dt )
 
-            k_temp_frq(frq_i,:) = drad_dt
+            if ( .not. FwdModelConf%polarized ) then
 
-            ! Temperature derivatives for polarized radiance if needed
-            if ( FwdModelConf%polarized ) then
+              k_temp_frq(frq_i,:) = drad_dt
+
+            else ! FwdModelConf%polarized
+
+              ! Temperature derivatives for polarized radiance
               ! Compute DE / DT from D Incoptdepth_Pol / DT and put
               ! into DE_DT.
-              call get_d_deltau_pol_dT ( frq, h, ct, stcp, stsp, my_catalog, &
-                & beta_group, gl_slabs_m, gl_slabs_p, &
-                & t_path_c(1:npc), t_path_m(1:no_ele), t_path_p(1:no_ele), &
-                & tanh1_c(1:npc), beta_path_polarized(:,1:npc,:), &
-                & sps_path, eta_zxp_t_c(1:npc,:), &
-                & del_s(1:npc), indices_c(1:npc), incoptdepth_pol(:,:,1:npc), &
-                & de_dt(:,:,1:npc,:) )
 
+              call get_d_deltau_pol_dT ( frq, npc/2, h, ct, stcp, stsp,       &
+                & my_catalog, beta_group, gl_slabs_m, gl_slabs_p,             &
+                & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
+                & beta_path_polarized(:,1:p_stop,:), sps_path,                &
+                & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
+                & del_s(1:npc), indices_c(1:p_stop),                          &
+                & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
+                & h_path_c(1:p_stop), dh_dt_path_c(1:p_stop,:),               &
+                & Req + one_tan_ht(1), dh_dt_path(brkpt,:),                   &
+                & do_calc_hyd_c(1:p_stop,:), d_delta_dt(1:npc,:),             &
+                & de_dt(:,:,1:p_stop,:) )
+         
               ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
               ! and DE / DT.
 
-              call mcrt_der ( t_script(1:npc), d_t_scr_dt(1:npc,:), &
-                & de_dt(:,:,1:npc,:), prod_pol(:,:,1:npc), &
-                & tau_pol(:,:,1:npc), do_calc_t_c(1:npc,:), d_rad_pol_dt )
+              call mcrt_der ( t_script(1:npc), d_t_scr_dt(1:npc,:),      &
+                & de_dt(:,:,1:npc,:), prod_pol(:,:,1:npc),               &
+                & tau_pol(:,:,1:npc), p_stop, d_rad_pol_dt )
 
-              k_temp_frq(frq_i,:) = drad_dt + real(d_rad_pol_dt(1,1,:))
+              if ( index(switches,'crosspol') == 0 ) then
+                k_temp_frq(frq_i,:) = real(d_rad_pol_dt(1,1,:))
+              else
+                k_temp_frq(frq_i,:) = real(d_rad_pol_dt(2,2,:))
+              end if
 
             end if
 
@@ -1797,50 +1805,52 @@ alpha_path_f = 0.0
 
           if ( spect_der ) then
 
-            ! Spectroscopic derivative  wrt: W
+            if ( .not. FwdModelConf%polarized ) then
+              ! Spectroscopic derivative  wrt: W
 
-            do_calc_dw_f(:ngl,:) = do_calc_dw(gl_inds(:ngl),:)
-            eta_zxp_dw_f(:ngl,:) = eta_zxp_dw(gl_inds(:ngl),:)
-            call drad_tran_dx ( z_path_c(1:npc), Grids_dw,                    &
-              &  dbeta_dw_path_c(1:npc,:), eta_zxp_dw_c(1:npc,:),             &
-              &  sps_path(indices_c(1:npc),:), do_calc_dw_c(1:npc,:),                  &
-              &  dbeta_dw_path_f(:ngl,:), eta_zxp_dw_f(:ngl,:),  &
-              &  sps_path(gl_inds(1:ngl),:), &
-              &  do_calc_dw_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-              &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
-              &  t_script(1:npc), tau(1:npc), i_stop, drad_dw )
+              do_calc_dw_f(:ngl,:) = do_calc_dw(gl_inds(:ngl),:)
+              eta_zxp_dw_f(:ngl,:) = eta_zxp_dw(gl_inds(:ngl),:)
+              call drad_tran_dx ( z_path_c(1:npc), Grids_dw,                    &
+                &  dbeta_dw_path_c(1:npc,:), eta_zxp_dw_c(1:npc,:),             &
+                &  sps_path(indices_c(1:npc),:), do_calc_dw_c(1:npc,:),                  &
+                &  dbeta_dw_path_f(:ngl,:), eta_zxp_dw_f(:ngl,:),  &
+                &  sps_path(gl_inds(1:ngl),:), &
+                &  do_calc_dw_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
+                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
+                &  t_script(1:npc), tau(1:npc), i_stop, drad_dw )
 
-            k_spect_dw_frq(frq_i,1:1:f_len_dw) = drad_dw(1:1:f_len_dw)
+              k_spect_dw_frq(frq_i,1:1:f_len_dw) = drad_dw(1:1:f_len_dw)
 
-            ! Spectroscopic derivative  wrt: N
+              ! Spectroscopic derivative  wrt: N
 
-            do_calc_dn_f(:ngl,:) = do_calc_dn(gl_inds(:ngl),:)
-            eta_zxp_dn_f(:ngl,:) = eta_zxp_dn(gl_inds(:ngl),:)
-            call drad_tran_dx ( z_path_c(1:npc), Grids_dn,                    &
-              &  dbeta_dn_path_c(1:npc,:), eta_zxp_dn_c(1:npc,:),             &
-              &  sps_path(indices_c(1:npc),:), do_calc_dn_c(1:npc,:),                  &
-              &  dbeta_dn_path_f(:ngl,:), eta_zxp_dn_f(:ngl,:), &
-              &  sps_path(gl_inds(1:ngl),:), &
-              &  do_calc_dn_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-              &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
-              &  t_script(1:npc), tau(1:npc), i_stop, drad_dn )
+              do_calc_dn_f(:ngl,:) = do_calc_dn(gl_inds(:ngl),:)
+              eta_zxp_dn_f(:ngl,:) = eta_zxp_dn(gl_inds(:ngl),:)
+              call drad_tran_dx ( z_path_c(1:npc), Grids_dn,                    &
+                &  dbeta_dn_path_c(1:npc,:), eta_zxp_dn_c(1:npc,:),             &
+                &  sps_path(indices_c(1:npc),:), do_calc_dn_c(1:npc,:),                  &
+                &  dbeta_dn_path_f(:ngl,:), eta_zxp_dn_f(:ngl,:), &
+                &  sps_path(gl_inds(1:ngl),:), &
+                &  do_calc_dn_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
+                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
+                &  t_script(1:npc), tau(1:npc), i_stop, drad_dn )
 
-            k_spect_dn_frq(frq_i,1:f_len_dn) = drad_dn(1:f_len_dn)
+              k_spect_dn_frq(frq_i,1:f_len_dn) = drad_dn(1:f_len_dn)
 
-            ! Spectroscopic derivative  wrt: Nu0
+              ! Spectroscopic derivative  wrt: Nu0
 
-            do_calc_dv_f(:ngl,:) = do_calc_dv(gl_inds(:ngl),:)
-            eta_zxp_dv_f(:ngl,:) = eta_zxp_dv(gl_inds(:ngl),:)
-            call drad_tran_dx ( z_path_c(1:npc), Grids_dv,                    &
-              &  dbeta_dv_path_c(1:npc,:), eta_zxp_dv_c(1:npc,:),             &
-              &  sps_path(indices_c(1:npc),:), do_calc_dv_c(1:npc,:),                  &
-              &  dbeta_dv_path_f(:ngl,:), eta_zxp_dv_f(:ngl,:), &
-              &  sps_path(gl_inds(1:ngl),:), &
-              &  do_calc_dv_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-              &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)),dhdz_path(gl_inds(1:ngl)),     &
-              &  t_script(1:npc), tau(1:npc), i_stop, drad_dv )
+              do_calc_dv_f(:ngl,:) = do_calc_dv(gl_inds(:ngl),:)
+              eta_zxp_dv_f(:ngl,:) = eta_zxp_dv(gl_inds(:ngl),:)
+              call drad_tran_dx ( z_path_c(1:npc), Grids_dv,                    &
+                &  dbeta_dv_path_c(1:npc,:), eta_zxp_dv_c(1:npc,:),             &
+                &  sps_path(indices_c(1:npc),:), do_calc_dv_c(1:npc,:),                  &
+                &  dbeta_dv_path_f(:ngl,:), eta_zxp_dv_f(:ngl,:), &
+                &  sps_path(gl_inds(1:ngl),:), &
+                &  do_calc_dv_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
+                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)),dhdz_path(gl_inds(1:ngl)),     &
+                &  t_script(1:npc), tau(1:npc), i_stop, drad_dv )
 
-            k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
+              k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
+            end if
 
           end if
           
@@ -2336,6 +2346,7 @@ alpha_path_f = 0.0
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
+      call deallocate_test ( d_delta_dt,      'd_delta_dt',      moduleName )
       call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
       call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
       call deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', moduleName )
@@ -2613,6 +2624,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.142  2003/06/09 17:38:47  livesey
+! Use GetQuantityForForwardModel in more places
+!
 ! Revision 2.141  2003/05/29 16:37:38  livesey
 ! Renamed sideband fraction
 !

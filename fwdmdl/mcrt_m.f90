@@ -21,7 +21,7 @@ module MCRT_m
 contains
 
 ! ---------------------------------------------------------  Mcrt  -----
-  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, Prod, Tau, Radiance )
+  subroutine Mcrt ( T_script, Sqrt_earth_ref, Del_tau, P_Stop, Prod, Tau, Radiance )
 
 !       Magnetic    Condensed    Radiative    Transfer
 
@@ -53,6 +53,7 @@ contains
     complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x path = exp(del_opcty).
                                                  ! Called P in some notes and
                                                  ! E in other notes.  It's E here.
+    integer, intent(in) :: P_Stop                ! Stop here
     complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x path.  Called P in some
                                                  ! notes.  Prod(:,:,I) is the
                                                  ! product of del_tau(:,:,:I).
@@ -72,10 +73,11 @@ contains
 ! Initialize segment 1 calculation
 
     prod(:,:,1) = ident
-    ! radiance = t_script(1) * ident
+    tau(:,:,1) = ident
+    ! radiance = t_script(1) * tau(1)
     radiance(1,1) = t_script(1)
-    radiance(1,2) = 0.0
-    radiance(2,1) = 0.0
+    radiance(1,2) = 0.0_rk
+    radiance(2,1) = 0.0_rk
     radiance(2,2) = t_script(1)
 
 ! Proceed with first segment integration
@@ -85,7 +87,7 @@ contains
 ! use the information for optimization.
 
     i_tan = n_path / 2
-    do i = 2, i_tan
+    do i = 2, min(i_tan,p_stop)
       prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
       call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )
     end do
@@ -93,6 +95,7 @@ contains
 ! Tangent point (or Earth intersecting) layer.  If it's not
 ! an Earth intersecting layer, sqrt_earth_ref will be 1.0.
 
+    if ( p_stop <= i_tan ) return
     prod(1:2,1:2,i_tan+1) = sqrt_earth_ref * prod(1:2,1:2,i_tan)
     call updaterad ( &
       & radiance, t_script(i_tan+1), prod(1:2,1:2,i_tan+1), tau(1:2,1:2,i_tan+1) )
@@ -100,7 +103,7 @@ contains
 ! Proceed with third segment integration, which includes the
 ! space radiance contribution.
 
-    do i = i_tan+2, n_path
+    do i = i_tan+2, min(n_path,p_stop)
       prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
       call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )  
     end do                                                       
@@ -148,7 +151,7 @@ contains
 !     tau(2,2) = (prod(2,1)*conjg(prod(2,1)) + prod(2,2)*conjg(prod(2,2)) )
       tau(2,2) = ( t21r * t21r + t21i * t21i + t22r * t22r + t22i * t22i )
 
-!     Specifying the rangees hopefully prevents accessing the dope vectors
+!     Specifying the ranges hopefully prevents accessing the dope vectors
       radiance(1:2,1:2) = radiance(1:2,1:2) + scalar * tau(1:2,1:2)
 
     end subroutine Updaterad
@@ -156,7 +159,7 @@ contains
   end subroutine Mcrt
 
 ! -----------------------------------------------------  Mcrt_Der  -----
-  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, Do_Calc, &
+  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, P_Stop, &
     & D_Radiance )
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
@@ -168,13 +171,13 @@ contains
   ! \begin{split}
   !  \frac{\partial \bf I}{\partial x} = &\sum_{i=1}^n
   !   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
-  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}
+  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x} \mathbf{1}
   !   \right ],\text{ where}
   !\\
   !  \frac{\partial {\bf \tau}_i}{\partial x} = &
   !   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x}
   !\\
-  !  = & \sum_{k=1}^{i-1} \left [ {\bf E}_i \dots E_{k-1}
+  !  = & \sum_{k=1}^{i-1} \left [ {\bf E}_1 \dots {\bf E}_{k-1}
   !       \frac{\partial {\bf E}_k}{\partial x} {\bf E}_{k+1} \dots
   !       {\bf E}_{i-1} {\bf P}_i^\dagger +
   !       {\bf P}_i {\bf E}_{i-1}^\dagger \dots {\bf E}_{k+1}
@@ -204,7 +207,6 @@ contains
   ! {\bf 1} is the identity matrix (we're using ${\bf I}$ for the radiance
   ! matrix).
 
-    use dExDt_M, only: dExDt               ! D (exp(2x2 matrix))
     use MLSCommon, only: Rk => Rp
 
     ! SVE == state_vector_elements
@@ -213,33 +215,29 @@ contains
     complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.  D (deltau) / dT
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
-    logical, intent(in) :: Do_Calc(:,:)     ! path x sve. Eta_Zxp /= 0.0
+    integer, intent(in) :: P_Stop           ! Where to stop on the path
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
 
-    logical :: Do_Tau(size(t_script))       ! Some Tau(:,:,*) /= 0.0
-    integer :: i_p, i_sv, k
+    integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
+    integer :: I_Tan                        ! Tangent point
     complex(rk) :: PDET                     ! Det(P_{k+1})
     complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
-    real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
+!   real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
       ! PTOL = sqrt(tiny(0.0_rk))
+    real(rk), parameter :: PTOL = epsilon(0.0_rk)
     complex(rk) :: Q(2,2)
     complex(rk) :: Q_Tau(2,2)               ! Q x Tau
-    integer :: NP                           ! How many terms do we need in W?
+    integer :: NP                           ! The first PINV not computed
     complex(rk) :: W(2,2)
 
-    ! Find where Tau is not zero, so we don't test eight numbers (at
-    ! most) at every path point for every state vector element.
-
-    do i_p = 1, size(t_script)
-      do_tau = any(tau(1:2,1:2,i_p) /= 0.0)
-    end do
+    i_tan = size(t_script) / 2
 
     ! Compute the P_{k+1}^{-1} matrices, but only up to where det(P_{k+1})
     ! becomes small.  We can get away with this for two reasons.  First, we
     ! use P_{k+1}^{-1} \tau_i to get \prod{j=k+1}^{i-1} E_j.  Second,
     ! because |P| <= 1.0, a product of P's is smaller than any of them.
 
-    do np = 2, size(t_script)
+    do np = 2, p_stop
       pdet = prod(1,1,np)*prod(2,2,np) - prod(1,2,np)*prod(2,1,np)
       if ( abs(pdet) <= ptol ) & ! getting too small
     exit
@@ -247,26 +245,31 @@ contains
                 &               -prod(1,2,np),  prod(1,1,np) /), (/2,2/) ) / &
                 &    pdet
     end do
+    ! NP-1 is the index of the last computed PINV
 
     d_radiance = 0.0_rk
     do i_sv = 1, size(d_radiance,3)      ! state vector elements
-      do i_p = 1, size(t_script)         ! path elements
-        if ( do_tau(i_p) ) then
-          w = 0.0_rk
-          do k = 1, min(np,i_p)-1
-            ! w = w + P_k DE_k P_{k+1}^{-1}
-            if ( do_calc(k,i_sv) ) &     ! non-zero derivative D_E
-              & w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
-                  &              pinv(:,:,k+1) )
-          end do ! k = 1, i_p-1
-          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
-          q(1,2) =                              t_script(i_p) * w(1,2)
-          q(2,1) =                              t_script(i_p) * w(2,2)
-          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
-          q_tau = matmul(q,tau(1:2,1:2,i_p))
-          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-                                   &   q_tau + conjg(transpose(q_tau))
+      d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
+      d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
+      w = 0.0_rk
+      i_pp = 2
+      do i_p = 2, np - 1                 ! path elements
+        ! w = w + P_k DE_k P_{k+1}^{-1}
+        if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
+          w = w + matmul ( matmul ( &
+          &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
+          &       pinv(:,:,i_p) )
+        else
+          i_pp = i_p - 1
         end if
+        q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+        q(1,2) =                              t_script(i_p) * w(1,2)
+        q(2,1) =                              t_script(i_p) * w(2,1)
+        q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+        q_tau = matmul(q,tau(1:2,1:2,i_p))
+        d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                 &   q_tau + conjg(transpose(q_tau))
+        i_pp = i_pp + 1
       end do ! i_p
     end do ! i_sv
 
@@ -279,6 +282,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.7  2003/05/28 01:25:02  vsnyder
+! Hopefully squashed some more bugs in polarized derivatives
+!
 ! Revision 2.6  2003/05/27 22:31:12  vsnyder
 ! More work on polarized derivatives
 !
