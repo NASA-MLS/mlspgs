@@ -1923,6 +1923,11 @@ contains ! =====     Public Procedures     =============================
           errorCode=cantInterpolate3D
           return
         end if
+      else
+        ! Given a specific profile, check it's legal
+        if ( profile == 0 .or. profile > l2gp%nTimes ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Illegal profile request in l2gp fill' )
       end if
 
       ! OK, now do the filling, it's easier if we don't have to interpolate
@@ -4823,6 +4828,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.183  2003/02/15 00:35:03  livesey
+! Added error checking for range of profile on L2GP fill.
+!
 ! Revision 2.182  2003/02/13 21:42:12  livesey
 ! Added specific profile stuff to fill from l2gp.
 !
