@@ -6,15 +6,6 @@
 
 
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
-
   subroutine DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
         &                BETA, Y, INCY )
     integer, parameter :: RKM = kind(0.0d0), RKV = kind(0.0d0)
@@ -28,6 +19,9 @@
   end subroutine DSGEMV
 
 ! $Log$
+! Revision 1.3  2002/10/01 20:59:17  bwknosp
+! Added Id and RCS info
+!
 ! Revision 1.2  2002/09/13 22:53:12  pwagner
 ! Exploits matmul flexibility in accepting mixed types
 !

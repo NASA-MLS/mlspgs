@@ -4,15 +4,6 @@
 ! Since this is NOT a module, we can link it or ATLAS or LAPACK
 ! without causing a cascade.
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
-
   subroutine SGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
         &                BETA, Y, INCY )
     integer, parameter :: RKM = kind(0.0e0), RKV = kind(0.0e0)
@@ -26,6 +17,9 @@
   end subroutine SDGEMV
 
 ! $Log$
+! Revision 1.3  2002/10/01 20:59:21  bwknosp
+! Added Id and RCS info
+!
 ! Revision 1.2  2002/09/13 22:53:12  pwagner
 ! Exploits matmul flexibility in accepting mixed types
 !

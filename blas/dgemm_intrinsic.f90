@@ -5,15 +5,6 @@
 ! without causing a cascade.
 
 
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
-
   subroutine DGEMM ( TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, &
     &                BETA, C, LDC )
     integer, parameter :: RK = kind(0.0d0)
@@ -21,6 +12,9 @@
   end subroutine DGEMM
 
 ! $Log$
+! Revision 1.3  2002/10/01 20:59:11  bwknosp
+! Added Id and RCS info
+!
 ! Revision 1.2  2001/11/13 21:16:02  vsnyder
 ! Get rid of dependence on MLSMessage
 !
