@@ -523,9 +523,9 @@ contains
 
       IF ( doChannel(IFR) ) then
                
-      if ( toggle(emit) .and. levels(emit) > 0 ) then
-         call Trace_Begin ( 'ClearSky' )
-      end if
+         if ( toggle(emit) .and. levels(emit) > 0 ) then
+            call Trace_Begin ( 'ClearSky' )
+         end if
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,                   &
               &         YZ,YP,YT,YQ,VMR,NS,                             &
@@ -562,6 +562,10 @@ contains
             W00      = 0._r8
             tau_clear = 0._r8
 
+            if ( toggle(emit) .and. levels(emit) > 0 ) then
+               call Trace_End ( 'ClearSky' )
+            end if
+
        IF (.not. isClear) then 
       
             select case (i_saturation)
@@ -582,10 +586,6 @@ contains
             RC_TOT =RC0                     ! initialized to clear-sky coeffs.
             RC_TMP =0._r8                   ! tmp for cloud coeffs
             cdepth = 0._r8
-
-            if ( toggle(emit) .and. levels(emit) > 0 ) then
-               call Trace_End ( 'ClearSky' )
-            end if
 
             DO ISPI=1,N
                CWC = RATIO*WC(ISPI,ILYR)
@@ -864,6 +864,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.63  2004/01/08 00:36:57  livesey
+! Fixed some of the tracing
+!
 ! Revision 1.62  2004/01/08 00:24:58  jonathan
 ! add tracing signals
 !
