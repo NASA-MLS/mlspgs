@@ -139,9 +139,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Create an empty PFA Datum
         pfaDatum%name = 0
-        nullify ( pfaDatum%molecules )
-        call allocate_test ( pfaDatum%molecules, 1, 'PFADatum%molecules', moduleName )
-        pfaDatum%molecules = n
+        pfaDatum%molecule = n
         call getNameOfSignal ( signal, pfaDatum%signal, channel=channel(c) )
         pfaDatum%signalIndex = signal%index
         pfaDatum%theSignal = signal
@@ -327,6 +325,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.4  2005/01/27 21:20:08  vsnyder
+! Remove nonscalar molecule
+!
 ! Revision 2.3  2005/01/12 03:17:26  vsnyder
 ! Set the channel correctly
 !
