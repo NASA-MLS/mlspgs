@@ -8,7 +8,7 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   USE Hdf, ONLY: DFACC_RDWR
   USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  USE PCFHdr, ONLY: WriteInputPointer
+  USE PCFHdr, ONLY: WriteInputPointer, h5_writeglobalattr
   USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
     & PGS_PC_GETREFERENCE, &
@@ -33,7 +33,7 @@ CONTAINS
   SUBROUTINE populate_metadata_l1 (HDF_FILE, MCF_FILE)
 
     USE InitPCFs, ONLY: L1PCF
-    USE MLSFiles, ONLY: mls_sfstart, mls_sfend
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend, HDFVERSION_5
     USE MLSL1Config, ONLY: L1Config
 
     !Arguments
@@ -423,6 +423,13 @@ CONTAINS
             "Calling pgs_met_remove() failed with value " // trim(errmsg) )
     ENDIF          
 
+    ! Write global attributes
+    if ( hdfVersion == HDFVERSION_5 ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
+      call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
+      returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
+    endif
+
   END SUBROUTINE populate_metadata_l1
 
   SUBROUTINE WriteMetaData (IsTHz)
@@ -449,6 +456,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.10  2003/06/03 20:44:42  pwagner
+! Writes global attributes
+!
 ! Revision 2.9  2003/05/30 23:48:34  pwagner
 ! Uses WriteInputPointer from lib/PCFHdr
 !
