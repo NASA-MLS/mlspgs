@@ -16,8 +16,8 @@ contains
 ! *****     Public Subroutine     **************************************
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
-         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power,     &
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,             &
+         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power, &
          &   dbeta_dw, dbeta_dn, dbeta_dv )
 
 !  For a given frequency and height, compute beta_value function.
@@ -27,6 +27,7 @@ contains
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: SP_Air_Cont, SP_Extinction, SP_Liq_H2O, SP_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
+    use Cloud_Extinction, only: get_beta_cloud
 
 ! Inputs:
     integer(ip), intent(in) :: SPECTAG ! molecule id tag
@@ -61,8 +62,11 @@ contains
     integer(ip) :: NL ! no of lines
 
     real(rp) :: ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
-
-    cld_beta =0._rp   
+    include 'constants.f9h'
+    REAL(rp) :: WC(N)
+    REAL(rp) :: W0(N)       ! SINGLE SCATTERING ALBEDO
+    REAL(rp) :: PHH(N,NU)   ! PHASE FUNCTION
+!----------------------------------------------------------------------------
 
     nl = size(pfaw)
 
@@ -71,6 +75,18 @@ contains
 
 !  Setup absorption coefficients function
 !  Now get the beta_value:
+
+    IF ( .not. Incl_Cld ) THEN
+
+       cld_beta =0._rp   
+  
+    ELSE
+       !  WC, IPSD, N, NU, NUA, NAB, NR needed to be inputed from l2cf
+       !  will input WC later      
+       call get_beta_cloud (Fgr, Temp, Pressure,               &
+                          &  WC, IPSD, N, NU, NUA, NAB, NR,    &
+                          &  cld_beta, W0, PHH                 )      
+    ENDIF
 
     if ( spectag == sp_liq_h2o ) then ! ..................  Liquid Water
 
@@ -294,6 +310,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.17  2003/01/31 17:16:28  jonathan
+! add Inc_Cld, and cld_ext
+!
 ! Revision 2.16  2002/12/13 02:06:50  vsnyder
 ! Use a SLABS structure for the slabs quantities
 !
