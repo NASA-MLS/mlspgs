@@ -281,6 +281,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%solarZenith = l2gp%solarZenith(a:b)
       hGrid%losAngle =    l2gp%losAngle(a:b)
 
+      call deallocateL1BData ( l1bField ) ! Avoid memory leaks
     end select
     
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
@@ -1090,6 +1091,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.31  2002/07/01 23:42:42  vsnyder
+! Plug a memory leak
+!
 ! Revision 2.30  2002/06/29 06:11:36  livesey
 ! Typo!
 !
