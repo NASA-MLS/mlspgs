@@ -25,7 +25,7 @@ while [ -n "$(echo $1)" ]; do
 	VERSION=${1#--version=}
     fi
     if [ -z "${1##--simulation=*}" ]; then
-	VERSION=${1#--simulation=}
+	SIMULATION=${1#--simulation=}
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
@@ -90,6 +90,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.9  2003/05/08 22:57:53  livesey
+# Tried to make it more generic
+#
 # Revision 1.8  2003/05/08 01:03:20  livesey
 # Changed to s5--t
 #
