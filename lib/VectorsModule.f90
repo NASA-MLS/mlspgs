@@ -382,7 +382,8 @@ contains ! =====     Public Procedures     =============================
     call output ( 'Checking integrity for vector '//trim(name), advance='yes' )
     CheckIntegrity_Vector = CheckIntegrity ( vector%template, .true. )
 
-    if ( .not. associated ( vector%quantities ) ) then
+    if ( .not. associated ( vector%quantities ) .and. &
+      & vector%template%noQuantities > 0 ) then
       call MLSMessage ( messageType, ModuleName, &
         & 'The vector '//trim(name)//' does not have quantities associated' )
       CheckIntegrity_Vector = .false.
@@ -816,7 +817,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
     & ( vectorName, vectorTemplate, quantities, VectorNameText, globalUnit, &
-    & highBound, lowBound ) &
+    & highBound, lowBound, noValues ) &
     & result ( vector )
 
   ! This routine creates an empty vector according to a given template
@@ -830,10 +831,12 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: globalUnit
     logical, intent(in), optional :: highBound
     logical, intent(in), optional :: lowBound
+    logical, intent(in), optional :: noValues ! Don't create values for it.
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
     integer :: STATUS                   ! From Allocate
+    logical :: MYNOVALUES               ! Copy of novalues
 
     ! Executable code
 
@@ -850,7 +853,10 @@ contains ! =====     Public Procedures     =============================
       vector%quantities(quantity)%template = &
         & quantities(vectorTemplate%quantities(quantity))
     end do
-    call createValues ( vector, highBound, lowBound )
+    myNoValues = .false.
+    if ( present ( noValues ) ) myNoValues = noValues
+    if ( .not. myNoValues) &
+      & call createValues ( vector, highBound, lowBound )
   end function CreateVector
 
   ! --------------------------------------  DestroyVectorDatabase  -----
@@ -2150,6 +2156,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.97  2003/05/12 02:05:27  livesey
+! Added InflateVectorTemplateDatabase and InflateVectorDatabase
+!
 ! Revision 2.96  2003/05/05 23:00:05  livesey
 ! Merged in feb03 newfwm branch
 !
