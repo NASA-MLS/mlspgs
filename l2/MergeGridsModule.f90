@@ -29,7 +29,7 @@ contains ! =================================== Public procedures
     use GriddedData, only: GRIDDEDDATA_T, RGR, SETUPNEWGRIDDEDDATA, &
       & ADDGRIDDEDDATATODATABASE, NULLIFYGRIDDEDDATA, &
       & WRAPGRIDDEDDATA, CONCATENATEGRIDDEDDATA, COPYGRID
-    use Init_tables_module, only: S_MERGE, S_CONCATENATE
+    use Init_tables_module, only: S_MERGE, S_CONCATENATE, S_DELETE
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use MoreTree, only: GET_SPEC_ID
@@ -55,9 +55,7 @@ contains ! =================================== Public procedures
         key = subtree ( 2, son )
         name = sub_rosa ( subtree(1,son) )
       else
-        ! Shouldn't get here if parser worked?
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Expecting only named specifiers in MergeGrids section' )
+        key = son
       end if
 
       select case ( get_spec_id(key) )
@@ -67,6 +65,8 @@ contains ! =================================== Public procedures
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
+      case ( s_delete )
+        call DeleteGriddedData ( key, griddedDatabase )
       case default
         ! Shouldn't get here is parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -136,6 +136,39 @@ contains ! =================================== Public procedures
 
     if ( toggle(gen) ) call trace_end ( "Concatenate" )
   end function Concatenate
+
+  ! ------------------------------------ DeleteGriddedData ---
+  subroutine DeleteGriddedData ( root, griddedDataBase )
+    use Tree, only: NSONS, SUBTREE, DECORATION
+    use GriddedData, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T
+    use Init_Tables_Module, only: F_GRID
+    ! This routine deletes the grid indicated by the l2cf
+    integer, intent(in) :: ROOT         ! Tree node
+    type (griddedData_T), dimension(:), pointer :: GRIDDEDDATABASE ! Database
+    ! Local variables
+    type (griddedData_T), pointer :: GRID
+    integer :: FIELD                    ! Tree node
+    integer :: FIELD_INDEX              ! Tree node type
+    integer :: I                        ! Counter
+    integer :: SON                      ! Tree node
+    integer :: VALUE                    ! Tree node
+
+    ! Get the information from the l2cf    
+    ! Note that init_tables_module has insisted that we have all
+    ! arguments so we don't need a 'got' type arrangement
+    ! In this case there is only one argument anyway
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      select case ( field_index )
+      case ( f_grid ) 
+        grid => griddedDataBase ( decoration ( decoration ( value ) ) )
+      end select
+    end do
+    call DestroyGriddedData ( grid )
+  end subroutine DeleteGriddedData
 
   ! ----------------------------------------- MergeOneGrid
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
@@ -378,6 +411,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.13  2003/06/06 01:06:59  livesey
+! Added DeleteGrids stuff
+!
 ! Revision 2.12  2003/05/09 02:13:05  livesey
 ! Removed a dump
 !
