@@ -5,14 +5,17 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, &
-    & F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
-    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
-    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
-    & L_L2AUX, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-    & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
+    & F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, &
+    & F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY,&
+    & F_SPREAD, F_TEMPERATUREQUANTITY, F_TNGTECI, FIELD_FIRST, FIELD_LAST,&
+    & L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
+    & L_L2AUX, L_LOSVEL, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, &
+    & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SPECIAL, L_TEMPERATURE, L_TNGTECI,&
+    & L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
     & L_ZETA, S_TIME, S_VECTOR, S_FILL, S_SNOOP
   ! will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
@@ -34,7 +37,7 @@ module Fill                     ! Create vectors and fill them.
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
     & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
-  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
+  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
   use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
     & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
   use SnoopMLSL2, only: SNOOP
@@ -91,6 +94,8 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: badREFGPHQuantity = badTemperatureQuantity+1
   integer, parameter :: nonConformingHydrostatic = badREFGPHQuantity+1
   integer, parameter :: badUnitsForMaxIterations = nonConformingHydrostatic+1
+  integer, parameter :: noSpecialFill = badUnitsForMaxIterations + 1
+  integer, parameter :: badlosVelFill = noSpecialFill + 1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
@@ -125,11 +130,16 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: chunkNo
 
     ! Local variables
-    type (VectorValue_T), POINTER :: QUANTITY ! Quantity to be filled
-    type (VectorValue_T), POINTER :: TEMPERATUREQUANTITY ! Source quantity
-    type (VectorValue_T), POINTER :: REFGPHQUANTITY ! Source quantity
-    type (VectorValue_T), POINTER :: H2OQUANTITY ! Source quantity
-    type (VectorValue_T), POINTER :: GEOCALTITUDEQUANTITY ! Source quantity
+    type (VectorValue_T), pointer :: QUANTITY ! Quantity to be filled
+
+    type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
+    type (VectorValue_T), pointer :: H2OQUANTITY
+    type (VectorValue_T), pointer :: REFGPHQUANTITY
+    type (VectorValue_T), pointer :: SCECIQUANTITY
+    type (VectorValue_T), pointer :: SCVELQUANTITY
+    type (VectorValue_T), pointer :: TEMPERATUREQUANTITY
+    type (VectorValue_T), pointer :: TNGTECIQUANTITY
+
     type (Vector_T) :: newVector ! A vector we've created
     character (LEN=LineLen) ::              msr
     real :: T1, T2              ! for timing
@@ -140,7 +150,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FILLMETHOD               ! How will we fill this quantity
     integer :: GSON                     ! Descendant of Son
-    integer :: H2OQUANTITYINDEX         ! In the source vector
+    integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: ind                      ! Temoprary index
@@ -151,14 +161,20 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXITERATIONS            ! For hydrostatic fill
     integer :: PREVDEFDQT               !
     integer :: QUANTITYINDEX            ! Within the vector
-    integer :: REFGPHQUANTITYINDEX      ! In the source vector
+    integer :: REFGPHQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHVECTORINDEX        ! In the vector database
+    integer :: SCECIVECTORINDEX         ! In the vector database
+    integer :: SCECIQUANTITYINDEX       ! In the quantities database
+    integer :: SCVELVECTORINDEX         ! In the vector database
+    integer :: SCVELQUANTITYINDEX       ! In the quantities database
     integer :: SON                      ! Of root, an n_spec_args or a n_named
-    integer :: SOURCEQUANTITYINDEX      ! In the source vector
+    integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
-    integer :: TEMPERATUREQUANTITYINDEX ! In the source vector
+    integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
+    integer :: TNGTECIVECTORINDEX       ! In the vector database
+    integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer, DIMENSION(2) :: UNITASARRAY ! From expr
     real(r8), DIMENSION(2) :: VALUEASARRAY ! From expr
     integer :: VALUESNODE               ! For the parser
@@ -233,12 +249,21 @@ contains ! =====     Public Procedures     =============================
             quantityIndex=decoration(decoration(decoration(subtree(2,gson))))
           case (f_method)   ! How are we going to fill it?
             fillMethod=decoration(gson)
-          case (f_sourceQuantity) ! When filling from a vector, what vector/quantity
+          case (f_sourceQuantity)       ! When filling from a vector, what vector/quantity
             sourceVectorIndex=decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_sourceL2AUX)  ! Which L2AUXDatabase entry to use
+          case (f_tngtECI)              ! For special fill of losVel
+            tngtECIVectorIndex=decoration(decoration(subtree(1,gson)))
+            tngtECIQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_scECI)                ! For special fill of losVel
+            scECIVectorIndex=decoration(decoration(subtree(1,gson)))
+            scECIQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_scVel)                ! For special fill of losVel
+            scVelVectorIndex=decoration(decoration(subtree(1,gson)))
+            scVelQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_sourceL2AUX)          ! Which L2AUXDatabase entry to use
             l2auxIndex=decoration(decoration(gson))
-          case (f_sourceL2GP)   ! Which L2GPDatabase entry to use
+          case (f_sourceL2GP)           ! Which L2GPDatabase entry to use
             l2gpIndex=decoration(decoration(gson))
           case (f_temperatureQuantity) ! For hydrostatic
             temperatureVectorIndex=decoration(decoration(subtree(1,gson)))
@@ -309,6 +334,24 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyHydrostatically(key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)          
 
+        case (l_special) ! ------------------ Special fills for some quantities --
+          select case (quantity%template%quantityType)
+          case (l_losVel)
+            if (.not. any(got( (/f_tngtECI, f_scECI, f_scVel/) ))) then
+              call Announce_error(key, badlosVelFill)
+            else
+              tngtECIQuantity=> GetVectorQtyByTemplateIndex( &
+                & vectors(tngtECIVectorIndex), tngtECIQuantityIndex)
+              scECIQuantity=> GetVectorQtyByTemplateIndex( &
+                & vectors(scECIVectorIndex), scECIQuantityIndex)
+              scVelQuantity=> GetVectorQtyByTemplateIndex( &
+                & vectors(scVelVectorIndex), scVelQuantityIndex)
+              call FillLOSVelocity(key, quantity, tngtECIQuantity, &
+                & scECIquantity, scVelQuantity)
+            endif
+          case default
+            call Announce_error(key, noSpecialFill)
+          end select
 
         case (l_l2gp) ! ---------------------- Fill from L2GP quantity ---
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
@@ -555,6 +598,76 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FillVectorQuantityFromL2GP
 
+  ! ------------------------------------------- FillLOSVelocity ---
+  subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
+    ! A special fill from geometry arguments
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) :: TNGTECI
+    type (VectorValue_T), intent(in) :: SCECI
+    type (VectorValue_T), intent(in) :: SCVEL
+
+
+    ! Local variables
+    integer :: MAF                      ! Loop counter
+    integer :: MIF                      ! Loop counter
+    integer :: noMAFs                   ! Number of major frames
+    integer :: noMIFs                   ! Number of minor frames for this module
+    integer :: x,y,z                    ! Indicies into the vectors
+
+    real (r8), dimension(3) :: tngtVel   ! Due to rotation of earth
+    real (r8), dimension(3) :: los       ! Normalised line of sight vector
+
+    ! Executable code
+    ! First check that things are OK.
+    if ( (qty%template%quantityType /= l_losVel) .or. &
+      &  (tngtECI%template%quantityType /= l_tngtECI) .or. &
+      &  (scECI%template%quantityType /= l_scECI) .or. &
+      &  (scVel%template%quantityType /= l_scVel)) then
+      call Announce_Error(key, badLOSVelFill)
+      return
+    endif
+
+    if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) then
+      call Announce_Error(key, badLOSVelFill)
+      return
+    endif
+
+    noMAFs=qty%template%noInstances
+
+    do mif = 1, noMIFs
+      do maf = 1, noMAFs
+
+        ! First compute the tangent point velocity in ECI coordinates due 
+        ! to the rotation of the earth.  This no doubt makes approximations
+        ! due to the slight non alignment between the earth's rotation axis and
+        ! the ECI z axis, but I'm going to ignore this.
+
+        ! Work out the indices in 3*mif,maf space
+        x=1 + 3*(mif-1)
+        y=x+1
+        z=x+2
+
+        tngtVel= omega* (/ -tngtECI%values(y,maf), &
+          &                 tngtECI%values(x,maf), 0.0_r8 /)
+
+        ! Now compute the line of sight direction normal
+        los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
+        los = los / sqrt(sum(los**2))
+
+        ! Now compute the net velocity in this direction.  For the moment I'll
+        ! assume +ve means the sc and tp are moving apart, and -ve that they're
+        ! getting closer.
+
+        qty%values(x:z,maf) = dot_product(tngtVel, los) - &
+          &                   dot_product(scVel%values(x:z,maf), los)
+
+        ! Note that even though x,y,z have been used up to now for a GHz/THz
+        ! minor frame quantity, they're OK with this sc one too.
+      end do
+    end do
+  end subroutine FillLOSVelocity
+
   ! ------------------------------------- FillVectorHydrostatically ----
   subroutine FillVectorQtyHydrostatically(key, quantity, &
     & temperatureQuantity, refGPHQuantity, h2oQuantity, &
@@ -611,8 +724,8 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
         &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
-        &  (decoration(quantity%template%instrumentModule) /= &
-        &   decoration(geocAltitudeQuantity%template%instrumentModule) ) ) then
+        &  (quantity%template%instrumentModule /= &
+        &   geocAltitudeQuantity%template%instrumentModule) )  then
         call Announce_Error (key, nonConformingHydrostatic )
         return
       end if
@@ -1217,6 +1330,10 @@ contains ! =====     Public Procedures     =============================
       call output ( " quantities needed for hydrostatic fill do not conform", advance='yes' )
     case ( badUnitsForMaxIterations )
       call output ( " maxIterations should be dimensionless", advance='yes' )
+    case ( noSpecialFill )
+      call output ( " invalid special fill", advance='yes' )
+    case ( badlosvelfill )
+      call output ( " incomplete/incorrect information for los velocity", advance='yes' )
     case default
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
@@ -1231,6 +1348,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.30  2001/03/15 21:12:11  livesey
+! Added special fill for losVel, and dealt with new MLSSignals_m
+!
 ! Revision 2.29  2001/03/15 18:40:38  livesey
 ! Added some more l1b fill options.
 !
