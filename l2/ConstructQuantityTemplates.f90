@@ -34,8 +34,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
   use VGridsDatabase, only: VGrid_T
-  use init_tables_module, ONLY: LIT_INDICES
-  use dumper, only: dump
+  use Init_tables_module, ONLY: LIT_INDICES
+
   implicit none
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
@@ -580,6 +580,11 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.17  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.16  2001/04/07 01:50:48  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
