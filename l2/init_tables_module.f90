@@ -448,7 +448,7 @@ contains ! =====     Public procedures     =============================
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numJ, l+l_opticalDepth, &
-             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_status, l+l_radiance, l+l_earthradius,&
+             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -1173,6 +1173,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.357  2004/02/11 23:12:23  livesey
+! Typo, forgot quality, had 2 statuses
+!
 ! Revision 2.356  2004/02/11 17:21:51  pwagner
 ! May DirectWrite l2gp status and quality quantities
 !
