@@ -18,7 +18,8 @@ MODULE PCFHdr
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
-   use MLSStrings, only: utc_to_yyyymmdd, lowerCase
+   use MLSStrings, only: lowerCase
+   use MLSStringLists, only: utc_to_yyyymmdd
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, &
@@ -169,7 +170,6 @@ CONTAINS
 !----------------------------------------
 
     use SDPTOOLKIT, only: mls_utctotai, pgs_td_utctotai
-    use MLSSTRINGS, only: utc_to_yyyymmdd
 !  Fill the TAI93 component of the global attribute based on the
 !  StartUTC component
 
@@ -1076,6 +1076,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.32  2004/08/04 23:19:01  pwagner
+!# Much moved from MLSStrings to MLSStringLists
+!#
 !# Revision 2.31  2004/03/24 23:53:02  pwagner
 !# Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
 !#
