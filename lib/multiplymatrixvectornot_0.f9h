@@ -40,7 +40,7 @@
         end if
       end do ! j
      case ( M_Column_Sparse )
-      do j = 1, size(p)            ! columns
+      do j = 1, size(v)            ! columns
         do n = b%r1(j-1)+1, b%r1(j)! rows
           i = b%r2(n)              ! row number
           if ( i/=j .or. my_diag ) &
@@ -71,6 +71,9 @@
     end select
 
 ! $Log$
+! Revision 2.2  2003/02/22 00:42:13  livesey
+! Bug fix in column sparse case
+!
 ! Revision 2.1  2003/01/08 21:29:27  livesey
 ! First version, extracted from MatrixModule_0
 !
