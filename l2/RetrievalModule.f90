@@ -1136,8 +1136,8 @@ contains
       prev_nwt_flag = huge(0)
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
-            if ( index(switches,'nin') /= 0 ) &
-              & call nwtop ( (/ 1, 1, 0 /) ) ! Turn on NWTA's internal output
+            if ( index(switches,'nin') /= 0 ) & ! Turn on NWTA's internal output
+              & call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
           call nwta ( nwt_flag, aj )
           if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
             prev_nwt_flag = nf_evalj
@@ -3644,6 +3644,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.220  2003/01/16 21:48:22  vsnyder
+! More stuff on getting NWTA internal output
+!
 ! Revision 2.219  2003/01/16 04:06:58  vsnyder
 ! Change some output in DNWT
 !
