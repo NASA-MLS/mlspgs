@@ -54,9 +54,13 @@ MLSBIN=util
 # "." means for l2 it is l2/NAG.Linux
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+MLSCFILE=.configure
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does not exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
 
 SHELL = /bin/sh
 
@@ -213,9 +217,9 @@ levels:
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
 	done
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
 	$(MAKE) -f $(MakeFName) internalmakefile makefilesintests
 
 # Targets that must be named explicitly
@@ -252,34 +256,34 @@ clean:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)"
 	@$(MAKE) -f $(MakeFName) update
 
 configure_pvm:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -pv
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc -pv
 	@$(MAKE) -f $(MakeFName) update
 
 configure_fopts:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc -fl
 	@$(MAKE) -f $(MakeFName) update
 
 configure_full:
 	echo $(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
 	@$(MAKE) -f $(MakeFName) update
 
 configure_help:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -help
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help
 
 configure_subdirs:
 	@echo "Configuring $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc; \
 		cd .. ; \
 	done
 
@@ -327,10 +331,10 @@ update:
 
 clean_config:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
-	 mv $(CONFDIR)/.configure $(CONFDIR)/temp.configure; \
-	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/.configure; \
+	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
+	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
 	 $(MAKE) -f $(MakeFName) mostlyclean; \
-	 mv $(CONFDIR)/temp.configure $(CONFDIR)/.configure
+	 mv $(CONFDIR)/temp.configure $(CONFDIR)/$(MLSCFILE)
 
 distclean:
 	@echo "Cleaning configurations $(EVERY_MLSCONFG)"; \
@@ -344,7 +348,7 @@ distclean:
 disttar:
 	@echo "tar-ing the mlspgs distribution"; \
         rm -f ../mlspgs.tar; \
-	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/.configure\
+	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/$(MLSCFILE)\
 	--exclude CVS\
 	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
 	--exclude mlsl[0-9]
@@ -356,7 +360,7 @@ disttarz: disttar ../mlspgs.tar
 disttarg:
 	@echo "tar-ing the mlspgs distribution with GNUtar -z option"; \
         rm -f ../mlspgs.tgz; \
-	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure \
+	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/$(MLSCFILE) \
 	--exclude CVS\
 	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
 	--exclude mlsl[0-9]
@@ -471,7 +475,7 @@ internalupdate: internalmakefile makefilesintests
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -nc -nd; \
+         -cf "$(MLSCFILE)" -nc -nd; \
 		cd .. ; \
 	done
 #	@$(MAKE) -f $(MakeFName) ghostbuster
@@ -535,6 +539,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.31  2001/05/01 18:31:07  pwagner
+# Automatically update after any configure
+#
 # Revision 1.30  2001/04/18 22:20:25  pwagner
 # Removed dependence of tar on clean_all
 #

@@ -30,7 +30,7 @@
 #     ((2) not done if ./platforms directory fails to exist)
 #
 #        O p t i o n s
-#  -h[elp]              (if present) Help (not yet fully implemented)
+#  -h[elp]              (if present) Help (a work in progress)
 #  -c compiler_name     Name of Fortran compiler (NAG or LF95)
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
@@ -39,6 +39,7 @@
 #  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
 #  -pv                  (if present) Change PVM and FFTW settings
 #  -fl                  (if present) Change default FOPTS and LDOPTS
+#  -cf file_name        (if present) Use file_name instead of .configure
 #
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -259,7 +260,7 @@ if [ $change_paths = "true" ] ; then
         PGSTK=$current_PGSTK
    else
 	echo "Warning: No toolkit path selected; none found"
-	echo "mls software may not link properly "
+	echo "mls software levels 1 and 3 may not link properly "
 	echo "unless you reconfigure; enter 'make configure'."
 	PGSTK="/"
    fi
@@ -546,7 +547,13 @@ MLS_default_LDOPTS=
 #FOPTS      options used in all .o build commands (except the custom ones)
 #LDOPTS     options used in all executable build commands
 
+#---------------------- Name given to .configure file
+
+#MLSCFILE     name of the .configure file; defaults to .configure
+
 #---------------------- 
+
+MLSCFILE=.configure
 
 conf_dir="./"
 plat_dir="./"
@@ -588,6 +595,7 @@ if [ "$debugging" = "on" ] ; then
 	echo "FFTW_ROOT=$FFTW_ROOT"
 	echo "FOPTS=$FOPTS"
 	echo "LDOPTS=$LDOPTS"
+	echo "MLSCFILE=$MLSCFILE"
 fi
 
 #
@@ -623,6 +631,11 @@ while [ "$1" != "" ] ; do
 
 	-pc )
 	    plat_dir=$2
+	    shift
+	;;
+
+	-cf )
+	    MLSCFILE=$2
 	    shift
 	;;
 
@@ -736,9 +749,9 @@ if [ $write_confg = "true" ] ; then
 	fi
 	
 #	Create .configure file
-	if [ -f $conf_dir/.configure ] ; then
-		chmod u+w $conf_dir/.configure
-		rm -f $conf_dir/.configure
+	if [ -f $conf_dir/$MLSCFILE ] ; then
+		chmod u+w $conf_dir/$MLSCFILE
+		rm -f $conf_dir/$MLSCFILE
 	fi
 
 #	Because MakeFC checks on whether MLSCONFG is empty, not whether it is "."
@@ -747,39 +760,39 @@ if [ $write_confg = "true" ] ; then
 		MLSCONFG=
 	fi
 	
-	echo "#	.configure for mls" > $conf_dir/.configure
-	echo "MLSF95=$compiler" >> $conf_dir/.configure
-	echo "MLSPLAT=$platform" >> $conf_dir/.configure
-	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/.configure
-	echo "PGSINC=$PGSINC" >> $conf_dir/.configure
-	echo "PGSTK=$PGSTK" >> $conf_dir/.configure
-	echo "HDFEOS=$HDFEOS" >> $conf_dir/.configure
-	echo "HDF=$HDF" >> $conf_dir/.configure
-	echo "GCTP=$GCTP" >> $conf_dir/.configure
-	echo "PGSLIB=$PGSTK" >> $conf_dir/.configure
-	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/.configure
-	echo "HDFLIB=$HDF" >> $conf_dir/.configure
-	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/.configure
-	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/.configure
-	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/.configure
-	echo "FOPTS=$FOPTS" >> $conf_dir/.configure
-	echo "LDOPTS=$LDOPTS" >> $conf_dir/.configure
-	echo "export MLSF95" >> $conf_dir/.configure
-	echo "export MLSPLAT" >> $conf_dir/.configure
-	echo "export MLSCONFG" >> $conf_dir/.configure
-	echo "export PGSINC" >> $conf_dir/.configure
-	echo "export PGSLIB" >> $conf_dir/.configure
-	echo "export HDFEOS_LIB" >> $conf_dir/.configure
-	echo "export HDFLIB" >> $conf_dir/.configure
-	echo "export PGSTK" >> $conf_dir/.configure
-	echo "export HDFEOS" >> $conf_dir/.configure
-	echo "export HDF" >> $conf_dir/.configure
-	echo "export GCTP" >> $conf_dir/.configure
-	echo "export PVM_ROOT" >> $conf_dir/.configure
-	echo "export PVM_ARCH" >> $conf_dir/.configure
-	echo "export FFTW_ROOT" >> $conf_dir/.configure
-	echo "export FOPTS" >> $conf_dir/.configure
-	echo "export LDOPTS" >> $conf_dir/.configure
+	echo "#	.configure for mls" > $conf_dir/$MLSCFILE
+	echo "MLSF95=$compiler" >> $conf_dir/$MLSCFILE
+	echo "MLSPLAT=$platform" >> $conf_dir/$MLSCFILE
+	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/$MLSCFILE
+	echo "PGSINC=$PGSINC" >> $conf_dir/$MLSCFILE
+	echo "PGSTK=$PGSTK" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS=$HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "HDF=$HDF" >> $conf_dir/$MLSCFILE
+	echo "GCTP=$GCTP" >> $conf_dir/$MLSCFILE
+	echo "PGSLIB=$PGSTK" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "HDFLIB=$HDF" >> $conf_dir/$MLSCFILE
+	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/$MLSCFILE
+	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/$MLSCFILE
+	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/$MLSCFILE
+	echo "FOPTS=$FOPTS" >> $conf_dir/$MLSCFILE
+	echo "LDOPTS=$LDOPTS" >> $conf_dir/$MLSCFILE
+	echo "export MLSF95" >> $conf_dir/$MLSCFILE
+	echo "export MLSPLAT" >> $conf_dir/$MLSCFILE
+	echo "export MLSCONFG" >> $conf_dir/$MLSCFILE
+	echo "export PGSINC" >> $conf_dir/$MLSCFILE
+	echo "export PGSLIB" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS_LIB" >> $conf_dir/$MLSCFILE
+	echo "export HDFLIB" >> $conf_dir/$MLSCFILE
+	echo "export PGSTK" >> $conf_dir/$MLSCFILE
+	echo "export HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "export HDF" >> $conf_dir/$MLSCFILE
+	echo "export GCTP" >> $conf_dir/$MLSCFILE
+	echo "export PVM_ROOT" >> $conf_dir/$MLSCFILE
+	echo "export PVM_ARCH" >> $conf_dir/$MLSCFILE
+	echo "export FFTW_ROOT" >> $conf_dir/$MLSCFILE
+	echo "export FOPTS" >> $conf_dir/$MLSCFILE
+	echo "export LDOPTS" >> $conf_dir/$MLSCFILE
 else
 #	just re-use current settings
 	compiler=$current_compiler
@@ -850,7 +863,7 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 	exit
 fi
 
-cat $conf_dir/.configure $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
 
 if [ "$made_new_dir" = "true" ] ; then
 	echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
@@ -864,6 +877,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.11  2001/03/23 00:40:42  pwagner
+# Better message if pvm, fftw not set
+#
 # Revision 1.10  2001/03/16 18:53:28  pwagner
 # Resets FOPTS, LDOPTS if chngd_config; also automatically full queries
 #

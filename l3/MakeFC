@@ -34,9 +34,13 @@ srclib=../srclib
 # where the platforms directory is
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+MLSCFILE=.configure
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -66,7 +70,7 @@ PROG=mlsl3
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	@case "$(FFTW_ROOT)" in \
 	"") \
 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
@@ -78,7 +82,7 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 		;; \
 	esac 
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3
@@ -87,15 +91,15 @@ tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 #The following explicitly excludes synoptic_prog from mlsl3
 #(otherwise makemakedep.sh assumes every .f90 needed)
@@ -143,6 +147,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.17  2001/05/01 18:32:13  pwagner
+# Added .configure to prereqs for lib
+#
 # Revision 1.16  2001/05/01 17:07:44  pwagner
 # Now runs ghostbuster when updating
 #
