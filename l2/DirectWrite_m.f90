@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=======================================================================================
@@ -17,7 +17,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
-  use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, L_L2GP, L_L2AUX
+  use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
+    & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCommon, only: FindFirst, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
@@ -30,7 +31,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   public :: DirectData_T, &
     & AddDirectToDatabase, &
     & DestroyDirectDatabase, DirectWrite_L2Aux, DirectWrite_L2GP, Dump, &
-    & ExpandDirectDB, ExpandSDNames, &
+    & ExpandDirectDB, ExpandSDNames, FileNameToID, &
     & SetupNewDirect
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -49,6 +50,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
 
   type DirectData_T
     integer :: type ! l_l2aux or l_l2gp  ! should be at least L2GPNameLen
+    integer :: fileIndex  ! Index into character tables nonsense
     integer :: Handle     ! Some bit of toolkit foolishness
     integer :: NSDNames
     character(len=80), dimension(:), pointer :: sdNames => null()
@@ -328,7 +330,7 @@ contains ! ======================= Public Procedures =========================
       call announce_error (0,&
         & "Error writing SDS data " // trim(sdName) // " to l2aux file:  " )
     end if
-    if ( DEEBUG ) then
+    if ( DEEBU4 ) then
       call output('noDims: ', advance='no')
       call output(noDims, advance='yes')
       call output('start: ', advance='no')
@@ -515,7 +517,9 @@ contains ! ======================= Public Procedures =========================
     myDetails = 1
     if ( present(details) ) myDetails = details
 
-    call output ( 'File Name (base): ')
+    call output ( 'File Name index: ')
+    call output ( directWrite%fileIndex )
+    call output ( '   File Name (base): ')
     call output ( trim(directWrite%fileNameBase), advance='yes' )
     call output ( 'Full File Name  : ')
     call output ( trim(directWrite%fileName), advance='yes' )
@@ -526,6 +530,10 @@ contains ! ======================= Public Procedures =========================
       call output ( '(l2aux)', advance='yes')
     elseif ( directWrite%type == l_l2gp ) then
       call output ( '(l2gp)', advance='yes')
+    elseif ( directWrite%type == l_l2dgg ) then
+      call output ( '(l2dgg)', advance='yes')
+    elseif ( directWrite%type == l_l2fwm ) then
+      call output ( '(l2fwm)', advance='yes')
     else
       call output ( '(unknown)', advance='yes')
     endif
@@ -569,6 +577,10 @@ contains ! ======================= Public Procedures =========================
       directData => directDB(dbID)
     else
       ! Check if the fileNameBase already there
+      ! print *, 'Checking if ', trim(fileNameBase), ' is in database'
+      do dbID = 1, size(directDB)
+        ! print *, dbID, trim(directDB(dbID)%fileNameBase)
+      enddo
       dbID = FindFirst(fileNameBase == directDB%fileNameBase)
       if ( dbID > 0 ) then
         directData => directDB(dbID)
@@ -621,6 +633,27 @@ contains ! ======================= Public Procedures =========================
     directData%sdNames => sdNames
     directData%sdNames(newSize) = sdName
   end subroutine ExpandSDNames
+
+  !------------------------------------------  FileNameToID  -----
+  function FileNameToID ( fileName, DataBase )  result(ID)
+
+    ! Given filename, returns index; if name not found in db, returns 0
+
+    ! Dummy arguments
+    type (DirectData_T), dimension(:), pointer :: DATABASE
+    character(len=*), intent(in) :: FileName
+    integer                      :: ID
+
+    ! Local variables
+    ! Executable
+    id = 0
+    if ( .not. associated(dataBase) .or. len_trim(filename) < 1 ) return
+    do id =1, size(database)
+      if ( fileName == dataBase(id)%fileName ) exit
+      if ( fileName == dataBase(id)%fileNameBase ) exit
+    enddo
+    if ( id > size(database) ) id = 0
+  end function FileNameToID
 
   !------------------------------------------  SetupNewDirect  -----
   subroutine SetupNewDirect ( directData, NsdNames )
@@ -806,6 +839,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.15  2004/01/22 00:56:35  pwagner
+! Fixed many bugs in auto-distribution of DirectWrites
+!
 ! Revision 2.14  2003/12/03 17:50:54  pwagner
 ! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
 !
