@@ -159,26 +159,27 @@ o:    do ib = 1, nb
           nv = 1
           do i = 1, ord
             a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv
+            a%block(1,ib)%r2(i) = nv+i-1
             a%block(1,ib)%values(nv:nv+i-1,1) = weight * c(ord-i+1:ord)
             nv = nv + i
           end do
           do i = ord+1, ncol-ord
             a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv
-            a%block(1,ib)%values(nv:nv+ord,1) = weight * c
+            a%block(1,ib)%r2(i) = nv+ord
+            a%block(1,ib)%values(nv:nv+ord,1) = weight * c(0:ord)
             nv = nv + ord + 1
             rows = rows + 1
           end do
           j = ord-1
           do i = ncol-ord+1, ncol
             a%block(1,ib)%r1(i) = a%block(1,ib)%r1(i-1)+1
-            a%block(1,ib)%r2(i) = nv
+            a%block(1,ib)%r2(i) = nv+j
             a%block(1,ib)%values(nv:nv+j,1) = weight * c(0:j)
             nv = nv + j + 1
+            j = j - 1
           end do
         end if
-        rows = rows + ncol - ord
+        rows = rows + ord
       end do o
     end if ! error == 0
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -220,6 +221,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.8  2001/10/09 20:36:04  vsnyder
+! Repair calculation of banded representation
+!
 ! Revision 2.7  2001/06/28 20:42:42  vsnyder
 ! Update comments
 !
