@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module CONVOLVE_ALL_M
   use AntennaPatterns_m, only: AntennaPattern_T
   use DCSPLINE_DER_M, only: CSPLINE_DER
@@ -365,6 +368,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.25  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
 ! Revision 1.24  2001/05/01 17:48:33  vsnyder
 ! Cosmetic changes -- put dummy arg declarations in same order as in header
 !
