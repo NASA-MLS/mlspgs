@@ -186,9 +186,9 @@ contains
 !		ICON=3 is for near-side cloud only
 !-----------------------------------------------------------------------------
 
-      INTEGER, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
-                                               ! 0 = OFF
-                                               ! 1 = ON
+      LOGICAL, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
+                                               ! False = OFF
+                                               ! True = ON
 
       REAL(r8), intent(in) :: FREQUENCY(NF)    ! FREQUENCIES (GHz)
       REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
@@ -463,7 +463,7 @@ contains
 
       ENDDO
 
-      IF (IFOV .EQ. 1) THEN         
+      IF (IFOV) THEN         
          CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
                 ZPT1, ZZT1, ZTT1, ZVT1, Multi )
 
@@ -556,6 +556,7 @@ contains
             
             if(icon .eq. 1) tau_clear = tau_fewCld
             if(icon .eq. 2) tau_clear = tau_wetCld
+            if(icon .eq. 3) tau_clear = tau_wetCld
 
          model_layer_loop: do ILYR=1, NZmodel-1
  
@@ -622,20 +623,49 @@ contains
          TT0 = min(TT, TT0)
          TT  = TT0	   ! so that dTcir=0
 
-       case default
+       case (1)
+         ! this is for the sids/retrieval calculations (saturation only inside clouds)
+         ! wc is supplied by model if it's the retrieval mode
+         ! wc is supplied from IWC file if it's the sids mode
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
               &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
+              &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
+              &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
+       case (2)
+         ! this is for the sids/retrieval calculations (saturation below cloud top)
+         ! wc is supplied by model if it's the retrieval mode
+         ! wc is supplied from IWC file if it's the sids mode
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
+              &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
+              &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
+              &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
+              &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
+              &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
+
+       case default
+         print*,'You should not be here'
+         stop
        end select
  
-         IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
 
-! ==========================================================================
+!========================================================================
+!    FOV case
+!========================================================================
+       IF (IFOV) THEN       ! **** BEGIN FOV AVERAGING ****
+
+!----------------------------------------------------------------------------
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
-! ==========================================================================
+!----------------------------------------------------------------------------
 
 !----------------------------------------------------------------------------
 !        Compute the effect of air refraction. The following method is based 
@@ -718,16 +748,11 @@ contains
          CALL INTERPOLATEVALUES(ZZT1,SRad(:)-SRad0(:),ZZT,DTcir(:,IFR), &
               &                 method='Linear')
 
-         END IF      ! do FOV  
+!========================================================================
+!    non-FOV case
+!========================================================================
 
-! **** END OF FOV AVERAGING ****
-
-
-!====================================
-!    >>>>>>> MODEL-OUTPUT <<<<<<<<<
-!====================================
-
-         IF (IFOV .EQ. 0) THEN       
+       ELSE      
 
 ! set the last zzt1 to 120km to protect interpolation
 !           zzt1(NZmodel/8-1)=120000._r8     !not necessary now
@@ -741,19 +766,11 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
-         ENDIF
-
-	IF (ICON .gt. 0) &
-          & CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &            tau,tauc,tau_wetCld,TAUeff(:,IFR),SS(:,IFR), &
-              &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
-              & Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
+       ENDIF
 
       END IF                                 ! END OF DO CHANNEL
-
       enddo frequency_loop
-
-      enddo iwc_loop
+      enddo iwc_loop                         ! 
 
 !      CALL HEADER(5)
 
@@ -771,6 +788,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.53  2003/02/03 19:26:11  dwu
+! fix a bug
+!
 ! Revision 1.52  2003/02/03 19:25:00  dwu
 ! fix a bug
 !

@@ -746,7 +746,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%i_saturation,                                     &
-      & forwardModelConfig%cloud_fov,                                        &
+      & forwardModelConfig%do_conv,                                          &
       & forwardModelConfig%default_spectroscopy,                             &
       & scGeocAlt%values(1,1),                                               &
       & elevOffset%values(1,1),                                              &
@@ -813,6 +813,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              &      + thisRatio(i)*a_cloudRADSensitivity(mif,i)
 
          enddo
+   print*,maf,thissideband,i,thisRatio(i),a_cloudRADSensitivity(1,i),a_clearSkyRadiance(1,i)
        endif
      enddo
 ! print*,maf,thissideband,a_clearSkyRadiance(:,25)
@@ -1062,6 +1063,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.108  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
 ! Revision 1.107  2003/01/17 07:19:33  dwu
 ! properly initialize vmrArray
 !
