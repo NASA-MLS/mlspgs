@@ -67,6 +67,10 @@ module DNWT_MODULE
 !                   or by Cholesky factoring the normal equations,
 !                   this is J(N+1,N+1)),
 !           AJ%GRADN = L2 norm of Gradient.
+!       CASE ( NF_LEV )
+!         Compute quantities necessary to determine the Levenberg-Marquardt
+!         stabilization parameter:
+! FRED: You need to tell me what to do here.
 !       CASE ( NF_SOLVE )
 !         Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
 !         and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
@@ -155,8 +159,11 @@ module DNWT_MODULE
   integer, parameter, public :: NF_EVALF = -1
   !      Evaluate J and do other things:
   integer, parameter, public :: NF_EVALJ = nf_evalf-1
+  !      Calculate quantities necessary to determine the Levenberg-Marquardt
+  !      stabilization parameter
+  integer, parameter, public :: NF_LEV = nf_evalj-1
   !      Solve for candidate DX:
-  integer, parameter, public :: NF_SOLVE = nf_evalj-1
+  integer, parameter, public :: NF_SOLVE = nf_lev-1
   !      Compute X = X + DX, set AJ%AXMAX = MAXVAL(ABS(X)),
   !      AJ%BIG = ANY ( ABS(DX) > 10.0 * epsilon(X) * ABS(X) );
   !      IF ( .not. AJ%STARTING ) set
@@ -483,8 +490,8 @@ contains
 
 ! Continuing after return for reverse communication:
       if ( nflag < 0 ) &
-!                nf_evalf nf_evalj nf_solve nf_newx nf_gmove nf_best
-        & go to (160,     260,     540,     850,    240,     740, &
+!                nf_evalf nf_evalj nf_lev nf_solve nf_newx nf_gmove nf_best
+        & go to (160,     260,     600,   540,     850,    240,     740, &
 !                nf_aitken nf_dx nf_dx_aitken
         &        750,      770,  770), -ifl
 
@@ -555,10 +562,10 @@ contains
           if ( dxnl <= dxnois ) go to 219
           if ( kb < 0 ) go to 224
           if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= huge(inc)) ) go to 222
+          inc = inc + 1
         end if
         sqmin = min(sqb, max(spl, spact)*ajn*c4)
         dxinc = max(dxnl*cp5, dxnois)
-        inc = inc + 1
       end if
 
   219 sql = tp
@@ -721,10 +728,14 @@ contains
         end if
       else
         cdxdxl = aj%dxdxl/(dxn*dxnl)
-        if ( fnxe > fnb**2 ) go to 222 ! Go do a gradient move
+        if ( fnxe > fnb**2 ) then
+          if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Give up' )
+          go to 222 ! Go do a gradient move
+        end if
         tp1 = min(cp5, dxi*((c1-cdxdxl)**2))
         if ( tp*tp1 > dxnl) tp = dxnl/tp1
         if ( dxn <= tp .or. sp >= 1.0e12_rk ) then
+          ifl = nf_dx
           if ( inc == 0 ) go to 200
           cait = cbig
           go to 755
@@ -740,6 +751,17 @@ contains
       spl = sqrt(sp**2+spl**2)
       aj%sqt = spl*ajn
       dxi = dxi*cp5
+
+! Calculate quantities necessary to determine Levenberg-Marquardt parameter
+
+      ifl = nf_lev
+      nflag = ifl
+      return
+
+! Determine the Levenberg-Marquardt parameter SQ.
+
+  600 continue
+! FRED: This is presumably where you finish off the More' and Sorensen.
       go to 530
 
 ! Store best X, the gradient, and other constants used if a
@@ -791,7 +813,7 @@ contains
 
 ! End of logic for Aitken acceleration
 
-! Store DX
+! Store Candidate DX as DX
 
   755 ifl = nf_dx
       nflag = ifl
@@ -980,11 +1002,13 @@ contains
 !   write ( *, '(a)' ) &
     call output( &
       & '       IFL        INC    ITER   ITKEN    K1IT      KB       NFL' )
-    if ( present(why) ) call output ( '  ' // why )
+    if ( present(why) ) call output ( '  WHY' )
     call output ( '', advance='yes' )
     write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
       & K1IT, KB, adjustr(nflName)
-    call output ( trim(output_line), advance='yes' )
+    call output ( trim(output_line) )
+    if ( present(why) ) call output ( '  ' // trim(why) )
+    call output ( '', advance='yes' )
 
     i = 1
     name_line = ''
@@ -1202,6 +1226,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.40  2003/01/18 01:39:57  vsnyder
+! More output, prepare for More and Sorensen
+!
 ! Revision 2.39  2003/01/16 21:48:37  vsnyder
 ! More work on internal output
 !
