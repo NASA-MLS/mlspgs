@@ -131,7 +131,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! Some families of quantities require special additional information.
     ! This is given here if needed.
 
-    integer :: instrumentModule ! Literal, L_GHz, L_THz or L_None
+    integer :: instrumentModule ! Index in the Modules database in MLSSignals_m
     integer :: radiometer       ! For ptan etc. e.g. L_R1A
     integer :: molecule ! What molecule does this refer to? (One of the l_...
                         ! lits of type t_molecule in Init_Tables_Module.)
@@ -380,6 +380,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.6  2001/03/02 01:34:03  livesey
+! New signals stuff
+!
 ! Revision 2.5  2001/02/23 17:47:01  livesey
 ! Nullified pointers.
 !
