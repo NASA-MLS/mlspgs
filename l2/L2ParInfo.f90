@@ -11,13 +11,14 @@ module L2ParInfo
   use PVMIDL, only: PVMIDLPACK
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
+  use MLSStrings, only: DOWNCASE
 
   implicit none
   private
 
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, ChunkTag, InfoTag, SlaveJoin
-  public :: SIG_AckFinish, NotifyTag
+  public :: SIG_AckFinish, NotifyTag, GetNiceTidString
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -130,4 +131,14 @@ contains ! ==================================================================
     
   end subroutine SlaveJoin
 
+  ! ----------------------------------------- GetNiceTidString -----
+  character(len=16) function GetNiceTidString ( tid )
+    integer, intent(in) :: tid
+
+    ! Executable code
+    write ( GetNiceTidString, '(z0)' ) tid
+    GetNiceTidString = '[t'//trim(downcase ( GetNiceTidString ))//']'
+  end function GetNiceTidString
+
 end module L2ParInfo
+
