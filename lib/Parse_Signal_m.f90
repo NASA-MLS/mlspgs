@@ -166,9 +166,9 @@ contains
     integer :: Spectrometer_n ! Number after "-", in e.g. FB25-3
     integer :: Status         ! From an internal READ
     integer :: Switch         ! Switch number, from the token text
-    character(len=5) :: TestText   ! From a "%suffix" field via sub_rosa
+    character(len=32) :: TestText   ! From a "%suffix" field via sub_rosa
     type(token) :: The_Token  ! that results from lexing the signal string
-    character(len=5) :: TokenText  ! Duh
+    character(len=32) :: TokenText  ! Duh
     integer :: Where     ! The current analysis point in the signal string
 
     ! States.  The pieces of the radiometer specification must be presented
@@ -539,6 +539,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.17  2004/03/24 22:45:59  livesey
+! Increased buffer sizes
+!
 ! Revision 2.16  2003/05/05 23:00:05  livesey
 ! Merged in feb03 newfwm branch
 !
