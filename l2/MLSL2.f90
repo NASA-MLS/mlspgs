@@ -299,26 +299,6 @@ contains
     print *, ' where each of the swk may be one of the following'
    ! === (start of automatic usage lines) ===
     print *, '  A => AntennaPatterns'
-    print *, '  C => SpectroscopyCatalog'
-    print *, '  F => FilterShapes'
-    print *, '  O => Open_init'
-    print *, '  P => PointingGrids'
-    print *, '  S => MLSSignals'
-    print *, '  V => VGrids (in globalSettings)'
-    print *, ' '
-    print *, '  fac => Factors of normal equations during retriever iterations'
-    print *, '  glo => Global settings'
-    print *, '  jac => Jacobian during retriever iterations'
-    print *, '  log => Log file messages'
-    print *, '  mas => Activities of the PVM master task'
-    print *, '  neq => Normal equations during retriever iterations'
-    print *, '  nwt => Action flag at each return from Newton solver'
-    print *, '  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta'
-    print *, '  rad => Radiances in ForwardModelInterface'
-    print *, '  sca => Scalars of interest to the Newton method'
-    print *, '  slv => Output from slave processes (using pvmfcatchout)'
-    print *, '  spa => Sparsity structure of fac, jac, neq'
-    print *, '  tps => Test_Parse_Signals'
    ! === (end of automatic usage lines) ===
     stop
   end subroutine switch_usage
@@ -327,67 +307,17 @@ contains
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
     print *, ' Options:'
+   ! === (start of automatic option lines) ===
     print *, '  -A: Dump the un-decorated abstract syntax tree.'
-    print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
-    print *, '  -c: Trace expression evaluation and tree decoration.'
-    print *, '  -d: Dump the declaration table after type checking'
-    print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
-      &                    'more output.'
-    print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
-      &                    'more output.'
-    print *, '  -h or -H or -?: This output.'
-    print *, '  -l: Trace lexical analysis.'
-    print *, '  -K: Capitalize identifiers.'
-    print *, "  -k: Don't capitalize identifiers."
-    print *, '  -M: Send output through MLSMessage.'
-    print *, "  -m: Don't send output through MLSMessage."
-    print *, '  -p: Trace parsing.'
-    print *, '  -Sstring: Set "switches" = "string".  Characters in'
-    print *, '            "string" may control individual outputs.  If -S is'
-    print *, '            specified several times, the strings are concatenated.'
-    print *, '     (For specific strings and their effects, use -S"?")'
-    print *, '  -T: Time parsing, type checking and processing separately.'
-    print *, '  -t: Trace declaration table construction.'
-    print *, '  -v: List the configuration file.'
-    print *, '  The above options can be concatenated after one hyphen,'
-    print *, '  except that -S takes the rest of the option as its ', &
-      &         '"string".'
-    print *, '  --[n]cfpcf: Open the L2CF [without] using the Toolkit ', &
-      &        'and the PCF.'
-    if ( pcf_for_input ) then
-      print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
-        &      'Default: --cfpcf'
-    else
-      print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
-        &      'Default: --ncfpcf'
-    end if
-    print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
-!    print *, '  --[n]echo: [Do not]Echo logged error messages to stdout'
-!    print *, '  --[n]global: [Do not]Show global settings in log'
-    print *, '  --[n]meta: [Do not] Create metadata files.'
-    print *, '  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.'
-    print *, '    (--npcf sets --nmeta and --ncfpcf.)'
-    print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
-    print *, '    (--ntk sets --npcf, --ncfpcf and --nmeta).'
-    print *, '  --master <filename>: This is the master task in a PVM setup'
-    print *, '    filename contains simply ascii list of slave host names'
-    print *, '    can list a machine more than once (e.g. for SMP slaves)'
-    print *, '  --slave[ ]<master-tid>: This is a slave; <master-tid>'
-    print *, '    is the id of the master.  This option is set by a master'
-    print *, '    task and is not recommneded for manual invocations.'
-    print *, '  Options a, c, f0, g0, l, p and t can be toggled in the ', &
-      &        'configuration file'
-    print *, '  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and ', &
-      &        '@P are processed'
-    print *, '  synchronously with the input.  The others are ', &
-      &         'examined later.'
-    print *, '  @T in the configuration file dumps the string table ', &
-      &         'at that instant.'
+   ! === (end of automatic option lines) ===
     stop
   end subroutine Usage
 end program MLSL2
 
 ! $Log$
+! Revision 2.47  2001/05/23 23:21:51  pwagner
+! Did the same for options, switches
+!
 ! Revision 2.46  2001/05/23 22:31:30  pwagner
 ! Automatically updates based on notes/switches
 !
