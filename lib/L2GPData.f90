@@ -238,6 +238,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
+  logical, parameter ::READINGSTATUSBYDEFAULT = .true.  ! Change if bombing
 
 contains ! =====     Public Procedures     =============================
 
@@ -680,7 +681,7 @@ contains ! =====     Public Procedures     =============================
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
     dontfail = (HMOT /= 'M')
-    ReadingStatus = .false.
+    ReadingStatus = READINGSTATUSBYDEFAULT ! was .false.
     if ( present(ReadStatus) ) ReadingStatus = ReadStatus
     ! Attach to the swath for reading
     ! print*," in ReadL2GPData_hdf: first/last=",firstprof,lastprof
@@ -2015,7 +2016,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID(file1, file2, swathList, &
-    & hdfVersion1, hdfVersion2, notUnlimited)
+    & hdfVersion1, hdfVersion2, notUnlimited, ReadStatus)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2029,6 +2030,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: hdfVersion1
     integer, intent(in) :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
@@ -2049,7 +2051,7 @@ contains ! =====     Public Procedures     =============================
       ! Allocate and fill l2gp
       if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
-           & hdfVersion=hdfVersion1 )
+           & hdfVersion=hdfVersion1, ReadStatus=ReadStatus )
       if ( DEEBUG ) then
         print *, 'Writing swath to file: ', trim(swath)
         print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
@@ -2069,7 +2071,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2GPData_fileName(file1, file2, &
     & create2, hdfVersion1,  hdfVersion2, swathList, &
-    & notUnlimited, andGlAttributes)
+    & notUnlimited, andGlAttributes, ReadStatus)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2087,6 +2089,7 @@ contains ! =====     Public Procedures     =============================
     integer, optional, intent(in) :: hdfVersion2
     character (len=*), optional, intent(in) :: swathList
     logical, optional, intent(in) :: notUnlimited
+    logical, optional, intent(in) :: ReadStatus
 
     ! Local
     integer :: File1Handle
@@ -2197,7 +2200,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, the_hdfVersion1, the_hdfVersion2, &
-      & notUnlimited=notUnlimited)
+      & notUnlimited=notUnlimited, ReadStatus=ReadStatus )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
       & hdfVersion=the_hdfVersion1, debugOption=.false.)
@@ -2626,6 +2629,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.100  2004/04/06 01:17:43  livesey
+! Changed some allocatables to pointers.
+!
 ! Revision 2.99  2004/03/29 18:51:18  pwagner
 ! Remembered to tell hdf5 status was int, not char
 !
