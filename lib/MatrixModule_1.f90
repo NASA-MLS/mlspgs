@@ -933,45 +933,10 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  InvertCholesky_1  -----
   subroutine InvertCholesky_1 ( U, B )
-! !{Compute $B = U^{-T} = L^{-1}$, where $U$ is the upper-triangular
-! ! Cholesky factor of some matrix, i.e. $A = U^T U$.  We do this by
-! ! solving $U^T B = I$.  In algorithmic form, we have $\left \{
-! ! \text{solve } u_{ii}^T b_{ik} = \left ( \delta_{ik} -
-! ! \sum_{j=k}^{i-1} u_{ji}^T b_{jk} \right ) \text{ for } b_{ik},~~ k =
-! ! 1 \dots i \right \},~~i = 1 \dots n$.
-
-    type(Matrix_Cholesky_T), intent(inout) :: U ! inout because invertCholesky's
-                                        ! U argument is inout to allow its UI
-                                        ! argument to be the same.  We don't
-                                        ! use that feature, so U isn't changed
-                                        ! here.
-    type(Matrix_T), intent(inout) :: B  ! Assume B has been created
-
-    integer :: I, J, K                  ! Subscripts and loop inductors
-
-!   do i = 1, u%m%row%nb
-!     do k = 1, i
-!       if ( i == k ) then ! start with identity, i.e. \delta_{ik}
-!         call createBlock ( b%block(i,i), u%m%block(i,i)%nrows, &
-!           & u%m%block(i,i)%nrows, m_banded, u%m%block(i,i)%nrows )
-!         do j = 1, u%m%block(i,i)%nrows
-!           b%block(i,k)%r1(j) = j
-!           b%block(i,k)%r2(j) = j
-!           b%block(i,k)%values(j,1) = 1.0_r8
-!         end do ! j = 1, u%m%block(i,i)%nrows
-!       else ! start with zero
-!         call createBlock ( b%block(i,k), u%m%block(i,k)%nrows, &
-!           & u%m%block(i,k)%ncols, m_absent )
-!       end if
-!       do j = k, i-1
-!         call multiply ( u%m%block(j,i), b%block(j,k), &
-!           & b%block(i,k), update=.true., subtract=.true. )
-!       end do ! j = k, i-1
-!       call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
-!     end do ! k = 1, i
-!   end do ! i = 1, u%m%row%nb
-
-  !{Let $u_{ij}$ be an element of $\bf U$ and $t_{ij}$ be an element of ${\bf
+  !{Compute $B = U^{-1}$, where $U$ is the upper-triangular Cholesky factor of
+  ! some matrix, i.e. $A = U^T U$.
+  !
+  ! Let $u_{ij}$ be an element of $\bf U$ and $t_{ij}$ be an element of ${\bf
   ! U}^{-1}$. To invert $\bf U$, solve $\sum_{l=i}^j t_{il} u_{lj} =
   ! \delta_{ij}$ for $t_{ij}$, where $\delta_{ij} = \bf I$ for $i = j$ and zero
   ! otherwise.  (The index of summation $l$ runs from $i$ to $j$ instead of
@@ -984,6 +949,15 @@ contains ! =====     Public Procedures     =============================
   ! \hspace*{0.5in}$t_{ii} := u_{ii}^{-1}~~ i = 1,~ \dots,~ n$\\
   ! \hspace*{0.5in}$\left \{ t_{ij} := -\left ( \sum_{l=i}^{j-1} t_{il} u_{lj}
   !   \right ) t_{jj}~~ j = i+1,~ \dots,~ n \right \}~~ i = 1,~ \dots,~ n-1$
+
+    type(Matrix_Cholesky_T), intent(inout) :: U ! inout because invertCholesky's
+                                        ! U argument is inout to allow its UI
+                                        ! argument to be the same.  We don't
+                                        ! use that feature, so U isn't changed
+                                        ! here.
+    type(Matrix_T), intent(inout) :: B  ! Assume B has been created
+
+    integer :: I, J, K                  ! Subscripts and loop inductors
 
     type(matrixElement_T) :: Temp       ! Because we can't do X := X * Y
     logical :: Update
@@ -1832,6 +1806,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.67  2002/05/21 20:22:19  vsnyder
+! Remove some commented-out obsolete code and its comments
+!
 ! Revision 2.66  2002/04/22 20:53:58  vsnyder
 ! Add a 'scale' argument to AddToMatrix
 !
