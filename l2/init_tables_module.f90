@@ -148,7 +148,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
   integer, parameter :: S_REFLECT            = s_quantity + 1
-  integer, parameter :: S_RESTRICTRANGE      = s_reflect + 1
+  integer, parameter :: S_REGULARIZATION     = s_reflect + 1
+  integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_ROWSCALE           = s_retrieve + 1
   integer, parameter :: S_SIDS               = s_rowScale + 1
@@ -346,6 +347,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
+    spec_indices(s_regularization) =       add_ident ( 'regularization' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
@@ -1093,6 +1095,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
              begin, f+f_rhsOut, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_regularization, & ! Must be AFTER s_matrix
+             begin, f+f_horizontal, t+t_boolean, n+n_field_type, &
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
+             begin, f+f_regQuants, s+s_quantity, n+n_field_spec, &
+             begin, f+f_regWeightVec, s+s_vector, n+n_field_spec, &
+             begin, f+f_regWeights, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_frequencyGrid, & ! Must be AFTER s_vector
              begin, f+f_atmos, s+s_vector, nr+n_field_spec, &
@@ -1183,7 +1194,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_normalEquations, &
-             s+s_reflect, s+s_rowScale, n+n_section+d*no_check_eq, &
+             s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1200,6 +1211,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.366  2004/04/29 01:26:39  livesey
+! More algebra stuff
+!
 ! Revision 2.365  2004/04/28 23:07:34  livesey
 ! More stuff for algebra
 !
