@@ -21,6 +21,7 @@ module Join                     ! Join together chunk based data.
 !---------------------------------------------------------------------------
 
   ! logical, parameter, private :: DEEBUG = .true.           ! Usually FALSE
+  logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
 
   ! Parameters for Announce_Error
 
@@ -85,8 +86,10 @@ contains ! =====     Public Procedures     =============================
     real :: T2                          ! Time we finished
 
     integer :: I
+    logical :: DEEBUG
     
     ! Executable code
+    DEEBUG = (index(switches, 'direct') /= 0)
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -151,20 +154,20 @@ contains ! =====     Public Procedures     =============================
             noDirectWrites = noDirectWrites + 1
             ! Unless we're not a slave in which case just get on with it.
             if ( .not. parallel%slave ) then
-              print*,'Calling DirectWrite, not slave'
+              if(DEEBUG)print*,'Calling DirectWrite, not slave'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks )
             end if
           else if ( pass == 2 ) then
             ! On the second pass, log all our direct write requests.
-            print*,'Calling direct write to do a setup'
+            if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
               & chunkNo, chunks, makeRequest=.true. )
           else
             ! On the later passes we do the actual direct write we've been
             ! given permission for.
             if ( son == directWriteNodeGranted ) then
-              print*,'Calling direct write to do the write'
+              if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks, create=createFile )
               noDirectWritesCompleted = noDirectWritesCompleted + 1
@@ -216,15 +219,16 @@ contains ! =====     Public Procedures     =============================
       & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, &
       & SetUpNewDirect
     use Expr_m, only: EXPR
-    use Hdf, only: DFACC_CREATE, DFACC_RDWR
+    use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
-    use MLSFiles, only: MLS_EXISTS, split_path_name, GetPCFromRef, &
-      & mls_io_gen_openF, mls_io_gen_closeF
+    use MLSFiles, only: HDFVERSION_5, &
+      & MLS_EXISTS, split_path_name, GetPCFromRef, &
+      & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
     use MLSL2Options, only: TOOLKIT, DEFAULT_HDFVERSION_WRITE
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -461,7 +465,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_l2gp )
         ! Before opening file, see which swaths are already there
         ! and which ones need to be created
-        print *, 'Allocating ', noSources
+        if ( DeeBUG ) print *, 'Allocating ', noSources
         nullify(logicalBuffer, nameBuffer)
         call Allocate_test ( logicalBuffer, noSources, 'logicalBuffer', &
           & ModuleName )
@@ -469,17 +473,17 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         if ( .not. createFileFlag ) then
           do source = 1, noSources
-            print*,'Source:', source
+            if(DEEBUG)print*,'Source:', source
             qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
               & sourceQuantities(source) )
             hdfNameIndex = qty%label
             call display_string ( hdfNameIndex, strip=.true., advance='yes' )
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
-            print*,'Done'
+            if(DEEBUG)print*,'Done'
           enddo
           ANOTHERLOG_VAR = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
             & logicalBuffer )
-          print*,'Got out of MLS_SWATH_IN_FILE'
+          if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
         else
           logicalBuffer = .false.
         end if
@@ -565,16 +569,29 @@ contains ! =====     Public Procedures     =============================
       ! Close the output file of interest (does this need to be split like this?)
       select case ( outputType )
       case ( l_l2gp )
-        print *, 'Deallocating ', noSources
+        if ( DeeBUG ) print *, 'Deallocating ', noSources
         call Deallocate_test ( logicalBuffer, 'logicalBuffer', ModuleName )
         call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
         ! Call the l2gp close routine
         errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
         ! errortype = he5_SWclose(Handle)
-        print *, 'Tried to close ', trim(FIleName)
-        print *, 'Handle ', Handle
-        print *, 'hdfVersion ', hdfVersion
-        print *, 'errortype ', errortype
+        if ( DeeBUG ) then
+          print *, 'Tried to close ', trim(FIleName)
+          print *, 'Handle ', Handle
+          print *, 'hdfVersion ', hdfVersion
+          print *, 'errortype ', errortype
+        endif
+        if ( hdfVersion == HDFVERSION_5 .and. FORCEDIRWRITEREOPEN ) then
+          print *, 'Now forcibly opening and closing the hdf5'
+          Handle =   mls_sfstart(trim(FileName), DFACC_RDONLY, hdfVersion, &
+           & addingmetadata=.false. )
+          if ( HANDLE == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to h5fopen ' // trim(filename) )
+          errortype =   mls_sfend(Handle, hdfVersion, &
+           & addingmetadata=.false. )
+          if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to h5fclose ' // trim(filename) )
+        endif
       case ( l_l2aux )
         ! Call the l2aux close routine
         errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
@@ -1316,6 +1333,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.84  2003/07/15 23:39:01  pwagner
+! Disabled most printing
+!
 ! Revision 2.83  2003/07/11 01:24:20  livesey
 ! More changes trying to get the direct write going.
 !
