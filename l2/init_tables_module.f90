@@ -721,6 +721,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
              begin, f+f_channel, t+t_numeric, n+n_field_type, &
+             begin, f+f_centerVertically, t+t_boolean, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1278,6 +1279,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.382  2004/09/10 23:53:36  livesey
+! Added centervertically option for bin mean/max/min fill.
+!
 ! Revision 2.381  2004/08/09 21:43:21  livesey
 ! Added maxOrbY argument to ChunkDivide
 !
