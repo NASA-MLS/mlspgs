@@ -53,6 +53,11 @@ begin Fill
   Fill, quantity=truth.tropH2O_HR, sourceQuantity=truth.h2o_HR, $
     method=vector, /interpolate
 
+  ;; --------------------------------------------- tpPressure
+  Fill, quantity=truth.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
+    internalVgrid=vGridWMO
+
   ;; --------------------------------------------- Ptan
 
   ;; Compute non refracted phitans for truth
