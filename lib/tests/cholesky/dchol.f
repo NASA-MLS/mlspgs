@@ -1,4 +1,5 @@
       SUBROUTINE DCHOL (A, NDA, N, B, S, TOL, IERR)
+c>> 2001-05-25 DCHOL Snyder & Krogh Compute inner products using DDOT
 c>> 1996-03-30 DCHOL Krogh  Added external statement.
 c>> 1994-10-20 DCHOL Krogh  Changes to use M77CON
 c>> 1991-06-26 DCHOL Krogh  Initial MATH77 version.
@@ -36,7 +37,7 @@ c value of R(I,I).  If R(I,I)**2 is .le. zero, then everything in the
 c I-th row of R is set to zero, as is the I-th component of the
 c solution, and IERR is replaced by -IERR to flag that this occured.
 
-c--D replaces "?": ?CHOL
+c--D replaces "?": ?CHOL ?DOT
 
 c ********************* Variable definitions ***************************
 
@@ -44,6 +45,7 @@ c A      Input matrix, only upper triangle is used.  Replace by factor.
 c B      Input right hand side, output solution.
 c D1MACH Library routine to get characteristics of floating point
 c  numbers.  D1MACH(4) = smallest number, x, such that 1.0 + x .ne. 1.0.
+c DDOT   Compute dot products.
 c G      Temporary for accumulating sums.
 c GMIN   Smallest value seen for G when working on a diagonal entry.
 c I      Index used to access matrix entries.
@@ -53,8 +55,6 @@ c K      Index used to access matrix entries.
 c N      Order of matrix.
 c NDA    Declared first dimension for A.
 c S      Formal argument, see above.
-c SM     Temporary variable used for accumulating a sum.
-c SM1    Temporary variable used for accumulating a sum.
 c TOL    Input value for the tolerance, see above.
 c TOLI   Internal value for the tolerance.
 c TOLM   Machine tolerance, lower limit for TOLI.
@@ -63,71 +63,52 @@ c ZERO   Parameter equal to zero.
 
 c ******************** Variable declarations ***************************
 
-      external         D1MACH
+      external         D1MACH, DDOT
       integer          NDA, N, IERR
       double precision A(NDA, N), B(N), S, TOL
       integer          I, J, K
-      double precision ZERO, SM, SM1, G, TSQ, GMIN, TOLI, TOLM, D1MACH
+      double precision ZERO, G, TSQ, GMIN, TOLI, TOLM
+      double precision D1MACH, DDOT
       parameter (ZERO = 0.D0)
       save TOLM
       data TOLM /ZERO/
 
 c ******************** Start of executable code ************************
-
       if (N .le. 0) return
-      if (TOLM .eq. ZERO) TOLM = D1MACH(4)
+      if (TOLM .le. ZERO) TOLM = D1MACH(4)
       TOLI = max(TOL, TOLM)
       TSQ = TOLI**2
-      SM1 = ZERO
       GMIN = A(1, 1)
       IERR = 0
-      DO 50 I = 1, N
-         DO 30 J = I, N
-            SM = ZERO
-            DO 10 K = 1, I - 1
-               SM = SM + A(K, I) * A(K, J)
-   10       continue
-            G = A(I, J) - SM
-            if ( J .ne. I) then
-               A(I, J) = G / A(I, I)
-            else
-               if ( G .lt. TSQ * abs(A(J, J)) ) then
-                  if (G .le. GMIN) then
-                     GMIN = G
-                     IERR = J
-                     if (G .le. ZERO) IERR = -J
-                  end if
-                  if (G .le. ZERO) then
-                     do 20 K = J, N
-                        A(I, K) = ZERO
-   20                continue
-                     B(I) = ZERO
-                     go to 50
-                  end if
-               end if
-               A(J, J) = sqrt(G)
+      do 50 I = 1, N
+         G = A(I, I) - DDOT( I-1, A(1, I), 1, A(1, I), 1 )
+         if ( G .lt. TSQ * abs(A(I, I)) ) then
+            if (G .le. GMIN) then
+               GMIN = G
+               IERR = I
+               if (G .le. ZERO) IERR = -I
             end if
+            if (G .le. ZERO) then
+               do 20 K = I, N
+                  A(I, K) = ZERO
+   20          continue
+               B(I) = ZERO
+               go to 50
+            end if
+         end if
+         A(I, I) = sqrt(G)
+         do 30 J = I + 1, N
+            A(I,J) = (A(I,J) - DDOT(I-1, A(1,I), 1, A(1,J), 1)) / A(I,I)
    30    continue
-
 c                        Solve next row of first lower triangular system
-         SM = ZERO
-         DO 40 K = 1, I - 1
-            SM = SM + A(K, I) * B(K)
-   40    continue
-         B(I) = (B(I) - SM) / A(I, I)
-         SM1 = SM1 + B(I) * B(I)
+         B(I) = (B(I) - DDOT( I-1, A(1, I), 1, B, 1 )) / A(I, I)
    50 continue
 c                        Get the solution norm
-      if ( s > zero ) s = sqrt( max(zero,s-sm1) )
-
+      if ( S .gt. ZERO ) S = sqrt( max(ZERO,S-DDOT(N,B,1,B,1)) )
 c                        Solve the second lower triangular system.
-      DO 80  I = N, 1, -1
-         if (A(I, I) .ne. ZERO) then
-            SM = ZERO
-            DO 70 J = I+1, N
-               SM = SM + A(I, J) * B(J)
-   70       continue
-            B(I) = (B(I) - SM) / A(I, I)
-         end if
+      do 80  I = N, 1, -1
+        if (A(I, I) .gt. ZERO) then
+          B(I) = (B(I) - DDOT(N-I, A(I,I+1), NDA, B(I+1), 1) ) / A(I, I)
+        end if
    80 continue
       end
