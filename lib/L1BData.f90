@@ -100,9 +100,10 @@ contains
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         if(.NOT. associated(l1bInfo%L1BRADIDs)) then
           allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
+          allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
           l1bInfo%L1BRADIDs = ILLEGALL1BRADID
           if ( status /= 0 ) &
-          & call announce_error ( son, 'Allocation failed for L1BRADIDs' )
+          & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
         sd_id = sfstart(Filename, DFACC_READ)
         if ( sd_id == -1 ) then
@@ -625,6 +626,9 @@ end module L1BData
 !=================
 
 ! $Log$
+! Revision 2.7  2001/05/06 20:53:47  pwagner
+! Allocates l1binfo%filenames along with ids
+!
 ! Revision 2.6  2001/05/04 22:51:06  pwagner
 ! Now sets L1B..FileName components in ..Setup
 !
