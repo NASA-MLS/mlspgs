@@ -1178,7 +1178,7 @@ CONTAINS
 ! OrbitCalculatedSpatialDomainContainer
 
       attrName = 'OrbitNumber' // '.1'
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 999)
+      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1216,7 +1216,8 @@ CONTAINS
       
       attrName = 'EquatorCrossingDate' // '.1'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, & 
-           & '1899-04-29')
+              & pcf%startDay )
+              ! & '1899-04-29')
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1594,6 +1595,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.9  2003/05/30 23:54:07  pwagner
+! Relies on lib/PCFHdr to WriteInputPointer
+!
 ! Revision 1.8  2003/04/30 18:16:29  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !
