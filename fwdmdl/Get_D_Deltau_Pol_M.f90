@@ -58,9 +58,9 @@ contains
 ! and the {\tt dExDt} routine.
 ! 
 
-  SUBROUTINE Get_D_Deltau_Pol_DT ( Frq, mid, H, CT, STCP, STSP, My_Catalog, &
+  SUBROUTINE Get_D_Deltau_Pol_DT ( Frq, Mid, H, CT, STCP, STSP, My_Catalog, &
                 & Beta_group, GL_slabs_M, GL_slabs_P, &
-                & T_Path_C, T_Path_M, T_Path_P, Beta_Path, tanh1, &
+                & T_Path_C, T_Path_M, T_Path_P, Beta_Path, &
                 & SPS_Path, Alpha_Path, Eta_zxp, Del_S, Path_inds, &
                 & Incoptdepth, Ref_cor, &
                 & H_path_c, dH_dt_path_c, H_tan, dH_dt_tan, Do_calc_hyd_c, &
@@ -79,7 +79,7 @@ use toggles, only: Switches
   ! Arguments
     ! SVE == # of state vector elements
     real(r8), intent(in) :: Frq             ! frequency in MHz
-    INTEGER, intent(in) :: mid      ! tangent index along the path
+    integer, intent(in) :: Mid              ! tangent index along the path
     real(rp), intent(in) :: H(:)            ! Magnetic field component in
                                             ! instrument polarization on the path
     real(rp), intent(in) :: CT(:)           ! Cos(Theta), where theta
@@ -96,8 +96,8 @@ use toggles, only: Switches
     real(rp), intent(in) :: T_Path_C(:)     ! path temperatures on coarse grid
     real(rp), intent(in) :: T_Path_M(:), T_Path_P(:) ! path temperatures -/+ del_temp
     !                                         on fine grid -- index with path_inds
-    complex(rp), intent(in) :: Beta_Path(-1:,:,:) ! -1:1 x path x sps
-    REAL(rp), INTENT(in) :: tanh1(:)  ! tanh(hnu/2kt)
+    complex(rp), intent(in) :: Beta_Path(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
+                                            ! coarse path.  -1:1 x path x sps
     real(rp), intent(in) :: SPS_Path(:,:)   ! species on path, path x sps
     complex(rp), intent(in) :: Alpha_Path(-1:,:) ! -1:1 x path
     real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
@@ -177,8 +177,7 @@ use toggles, only: Switches
 
       do j = 1, n_sps
         ! Solve for n
-        beta_0 = beta_path(:,p_i,j) * tanh1(p_i)
-! multiplication by tanh_path(p_i) done by caller, I DONT THINK SO
+        beta_0 = beta_path(:,p_i,j) ! * tanh1(p_i) done by caller
         beta_m = beta_path_m(:,p_i,j) * tanh_m
         beta_p = beta_path_p(:,p_i,j) * tanh_p
         where ( beta_m /= 0.0 .and. beta_p /= 0.0 )
@@ -338,6 +337,9 @@ end if
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.6  2003/06/13 00:00:09  vsnyder
+! Move multiplication of beta_path by tanh into FullForwardModel
+!
 ! Revision 2.5  2003/06/10 15:07:08  bill
 ! fixed polarized t-derivs
 !
