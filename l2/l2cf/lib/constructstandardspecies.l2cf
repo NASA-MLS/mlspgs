@@ -375,7 +375,7 @@ begin Construct
   !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
   !define(outputRetrievalDiagnostics,{!tidyList( $
     dnwt_chiSqNorm, dnwt_chiSqMinNorm, $
-    jacobian_rows, jacobian_cols, dnwt_flag)})
+    jacobian_rows, jacobian_cols, dnwt_flag, dnwt_sq, dnwt_sqt)})
 
   ;; ----------------------------------------- Other minor stuff
 
