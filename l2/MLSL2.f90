@@ -37,8 +37,10 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
   character(len=255) :: LINE       ! Into which is read the command args
+  integer :: N                     ! Offset for start of --'s text
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
+  logical :: SWITCH                ! "First letter after -- was not n"
   logical :: Timing = .false.      ! -T option is set
   real :: T1, T2                   ! For timing
 
@@ -67,32 +69,28 @@ program MLSL2
   cycle
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
-      if ( line(3:8) == 'cfpcf ' ) then
-        pcf_for_input = .true.
-      else if ( line(3:9) == 'ncfpcf ' ) then
-        pcf_for_input = .false.
-      else if ( line(3:6) == 'kit ' ) then
-        MLSMessageConfig%useToolkit = .true.
-      else if ( line(3:6) == 'nkit ' ) then
-        MLSMessageConfig%useToolkit = .false.
-      else if ( line(3:7) == 'meta ' ) then
-        createMetadata = .true.
-      else if ( line(3:8) == 'nmeta ' ) then
-        createMetadata = .false.
-      else if ( line(3:6) == 'pcf ' ) then
-        pcf = .true.
-      else if ( line(3:7) == 'npcf ' ) then
-        pcf = .false.
-      else if ( line(3:5) == 'tk ' ) then
-        toolkit = .true.
-      else if ( line(3:6) == 'ntk ' ) then
-        toolkit = .false.
-      else if ( line(3:9) == 'master ' ) then
+      n = 0
+      switch = .true.
+      if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
+        switch = .false.
+        n = 1
+      end if
+      if ( line(3+n:8+n) == 'cfpcf ' ) then
+        pcf_for_input = switch
+      else if ( line(3+n:6+n) == 'kit ' ) then
+        MLSMessageConfig%useToolkit = switch
+      else if ( line(3+n:7+n) == 'meta ' ) then
+        createMetadata = switch
+      else if ( line(3+n:6+n) == 'pcf ' ) then
+        pcf = switch
+      else if ( line(3+n:5+n) == 'tk ' ) then
+        toolkit = switch
+      else if ( line(3+n:9+n) == 'master ' ) then
         parallel%master = .true.
-      else if ( line(3:7) == 'slave' ) then
+      else if ( line(3+n:7+n) == 'slave' ) then
         parallel%slave = .true.
-        if ( line(8:) /= ' ' ) then
-          line(:7) = ' '
+        if ( line(8+n:) /= ' ' ) then
+          line(:7+n) = ' '
         else
           i = i + 1
           call getarg ( i, line )
@@ -108,6 +106,7 @@ program MLSL2
   exit
       else
         print *, 'unrecognized option ', trim(line), ' ignored.'
+        call usage
       end if
     else if ( line(1:1) == '-' ) then   ! "letter" options
       j = 1
@@ -139,57 +138,7 @@ program MLSL2
             end if
           end if
         case ( 'h', 'H', '?' )     ! Describe command line usage
-          call getarg ( 0+hp, line )
-          print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
-          print *, ' Options:'
-          print *, '  -A: Dump the un-decorated abstract syntax tree.'
-          print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
-          print *, '  -c: Trace expression evaluation and tree decoration.'
-          print *, '  -d: Dump the declaration table after type checking'
-          print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
-            &                    'more output.'
-          print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
-            &                    'more output.'
-          print *, '  -l: Trace lexical analysis.'
-          print *, '  -K: Capitalize identifiers.'
-          print *, "  -k: Don't capitalize identifiers."
-          print *, '  -M: Send output through MLSMessage.'
-          print *, '  -p: Trace parsing.'
-          print *, '  -Sstring: Set "switches" = "string".  Characters in'
-          print *, '            "string" may control individual outputs.'
-          print *, '  -T: Time parsing, type checking and processing separately.'
-          print *, '  -t: Trace declaration table construction.'
-          print *, '  -v: List the configuration file.'
-          print *, '  The above options can be concatenated after one hyphen,'
-          print *, '  except that -S takes the rest of the option as its ', &
-            &         '"string".'
-          print *, '  --[n]cfpcf: Open the L2CF [without] using the Toolkit ', &
-            &        'and the PCF.'
-          if ( pcf_for_input ) then
-            print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
-              &      'Default: --cfpcf'
-          else
-            print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
-              &      'Default: --ncfpcf'
-          end if
-          print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
-          print *, '  --[n]meta: [Do not] Create metadata files.'
-          print *, '  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.'
-          print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
-          print *, '    (--ntk automatically sets --npcf and --nmeta).'
-          print *, '  --master: This is the master task in a PVM setup'
-          print *, '  --slave[ ]<master-tid>: This is a slave; <master-tid>'
-          print *, '    is the id of the master.  This option is set by a master'
-          print *, '    task and is not recommneded for manual invocations.'
-          print *, '  Options a, c, f0, g0, l, p and t can be toggled in the ', &
-            &        'configuration file'
-          print *, '  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and ', &
-            &        '@P are processed'
-          print *, '  synchronously with the input.  The others are ', &
-            &         'examined later.'
-          print *, '  @T in the configuration file dumps the string table ', &
-            &         'at that instant.'
-          stop
+          call usage
         case ( 'K' ); capIdentifiers = .true.
         case ( 'k' ); capIdentifiers = .false.
         case ( 'l' ); toggle(lex) = .true.
@@ -203,6 +152,7 @@ program MLSL2
         case ( 'v' ); do_listing = .true.
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
+          call usage
         end select
       end do
     else    
@@ -297,9 +247,68 @@ contains
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
+
+  subroutine Usage
+    call getarg ( 0+hp, line )
+    print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
+    print *, ' Options:'
+    print *, '  -A: Dump the un-decorated abstract syntax tree.'
+    print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
+    print *, '  -c: Trace expression evaluation and tree decoration.'
+    print *, '  -d: Dump the declaration table after type checking'
+    print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
+      &                    'more output.'
+    print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
+      &                    'more output.'
+    print *, '  -h or -H or -?: This output.'
+    print *, '  -l: Trace lexical analysis.'
+    print *, '  -K: Capitalize identifiers.'
+    print *, "  -k: Don't capitalize identifiers."
+    print *, '  -M: Send output through MLSMessage.'
+    print *, '  -p: Trace parsing.'
+    print *, '  -Sstring: Set "switches" = "string".  Characters in'
+    print *, '            "string" may control individual outputs.'
+    print *, '  -T: Time parsing, type checking and processing separately.'
+    print *, '  -t: Trace declaration table construction.'
+    print *, '  -v: List the configuration file.'
+    print *, '  The above options can be concatenated after one hyphen,'
+    print *, '  except that -S takes the rest of the option as its ', &
+      &         '"string".'
+    print *, '  --[n]cfpcf: Open the L2CF [without] using the Toolkit ', &
+      &        'and the PCF.'
+    if ( pcf_for_input ) then
+      print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
+        &      'Default: --cfpcf'
+    else
+      print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
+        &      'Default: --ncfpcf'
+    end if
+    print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
+    print *, '  --[n]meta: [Do not] Create metadata files.'
+    print *, '  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.'
+    print *, '    (--npcf sets --nmeta and --ncfpcf.)'
+    print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
+    print *, '    (--ntk sets --npcf, --ncfpcf and --nmeta).'
+    print *, '  --master: This is the master task in a PVM setup'
+    print *, '  --slave[ ]<master-tid>: This is a slave; <master-tid>'
+    print *, '    is the id of the master.  This option is set by a master'
+    print *, '    task and is not recommneded for manual invocations.'
+    print *, '  Options a, c, f0, g0, l, p and t can be toggled in the ', &
+      &        'configuration file'
+    print *, '  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and ', &
+      &        '@P are processed'
+    print *, '  synchronously with the input.  The others are ', &
+      &         'examined later.'
+    print *, '  @T in the configuration file dumps the string table ', &
+      &         'at that instant.'
+    stop
+  end subroutine Usage
 end program MLSL2
 
 ! $Log$
+! Revision 2.35  2001/05/07 21:53:28  vsnyder
+! Improve built-in usage display
+!
 ! Revision 2.34  2001/05/07 21:05:03  vsnyder
 ! Separated '[n]pcf' and [n]cfpcf'
 !
