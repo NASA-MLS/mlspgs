@@ -674,7 +674,6 @@ contains
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
-      real(r8) :: AprioriNorm           ! apriori .dot. apriori
       real(r8) :: Cosine                ! Of an angle between two vectors
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
@@ -697,6 +696,7 @@ contains
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
       real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
       integer :: PreserveMatrixName     ! Temporary name store
+      integer :: Prev_NWT_Flag          ! Previous value of NWT_Flag
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -786,6 +786,7 @@ contains
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call time_now ( t1 )
       call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
+      prev_nwt_flag = huge(0)
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
           call nwta ( nwt_flag, aj )
@@ -804,129 +805,10 @@ contains
             call output ( t3-t0, advance='yes' )
           end if
         select case ( nwt_flag )
-        case ( nf_evalf ) ! ..............................  EVALF  .....
-        !{IF ( too many function values ) EXIT\\
-        ! Compute $\mathbf{f(x)}$\\
-        ! Compute the Jacobian matrix $J$ if you feel like it\\
-        ! Set  {\bf AJ\%FNORM} = L2 norm of $\mathbf{f(x)}$\\
-        ! IF ( AJ%FNORM is small enough ) EXIT
-          numF = numF + 1
-          if ( numF > maxFunctions ) then
-              if ( index(switches,'nwt') /= 0 ) then
-                call output ( &
-                  & 'Newton iteration terminated because function evaluations (' )
-                call output ( numF )
-                call output ( ') > maxFunctions (' )
-                call output ( maxFunctions )
-                call output ( ')', advance='yes' )
-              end if
-            ! Restore BestX, run the forward model again to get a new
-            ! Jacobian, and form normal equations -- the last two so that the
-            ! a posteriori covariance is consistent with BestX.
-            call copyVector ( v(x), v(bestX) ) ! x := bestX
-            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &  got(f_average) ) then
-              nwt_flag = nf_getJ
-              cycle
-            end if
-            exit
-          end if
-
-          if ( got(f_apriori) ) then
-            ! Destroy (i.e. clean up) the previous contents of
-            ! AprioriMinusX (if any), so as not to have a memory
-            ! leak.  Then make it look like apriori.
-            call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
-              & vectorNameText='_aprioriMinusX' )
-!           v(aprioriMinusX) = apriori - v(x)
-            call subtractFromVector ( v(aprioriMinusX), v(x) )
-            if ( got(f_regApriori) ) &
-              & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
-              & vectorNameText='_regRHS' )
-            if ( got(f_aprioriScale) ) &
-              & call scaleVector ( v(aprioriMinusX), aprioriScale )
-            !{Let the covariance of the apriori be $\mathbf{S_a}$, let
-            ! $\mathbf{C = S_a^{-1}}$, and let $\mathbf{F^T F = C}$. In
-            ! the least-squares problem we have extra rows of the form
-            ! $\mathbf{F \delta x = F ( a - x_n )}$ where $\mathbf{a}$
-            ! is the apriori state, and $\mathbf{x_n}$ is the state as
-            ! of the previous iteration.  The initial bit of the
-            ! right-hand side of the normal equations is $\mathbf{F^T F
-            ! ( a - x_n ) = C ( a - x_n )}$.
-            call cloneVector ( v(covarianceXApriori), apriori, &
-              & vectorNameText='_covarianceXApriori' )
-            if ( diagonal ) then
-              call cloneVector ( v(covarianceDiag), state, &
-               &  vectorNameText='_covarianceDiag' )
-              call getDiagonal ( covariance%m, v(covarianceDiag) )
-              ! covarianceXApriori := covarianceDiag # apriori:
-              call multiply ( v(covarianceDiag), v(aprioriMinusX), &
-                & v(covarianceXApriori) )
-            else ! covarianceXApriori := covariance X apriori:
-              call multiply ( covariance, v(aprioriMinusX), &
-                & v(covarianceXApriori) )
-            end if
-            !{The contribution to the norm of the residual of the
-            ! right-hand side of the part of the least-squares problem
-            ! that is due to apriori is $\mathbf{
-            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
-            ! C ( a - x_n ) \right ] }$
-            aprioriNorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
-          else
-            aprioriNorm = 0.0_r8
-          end if
-
-          ! Compute f(x)
- 
-          fmStat%newScanHydros = .true.
-          fmStat%maf = 0
-
-          call add_to_retrieval_timing( 'newton_solver', t1 )
-          call time_now ( t1 )
-          call clearVector ( v(f) )
-          call copyVectorMask ( v(f), measurements )
-          ! Loop over MAFs
-          do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
-            fmStat%maf = fmStat%maf + 1
-            do k = 1, size(configIndices)
-              call forwardModel ( configDatabase(configIndices(k)), &
-                & v(x), fwdModelExtra, v(f), fmw, fmStat )
-            end do ! k
-          end do ! MAFs
-          ! ForwardModel itself calls add_to_retrieval_timing
-          ! call add_to_retrieval_timing( 'forward_model', t1 )
-          call time_now ( t1 )
-          call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
-          call subtractFromVector ( v(f_rowScaled), measurements )
-          if ( got(f_measurementSD) ) call multiply ( v(f_rowScaled), v(weight) )
-          aj%fnorm = sqrt ( aprioriNorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) ) )
-            if ( index(switches,'fvec') /= 0 ) &
-              & call dump ( v(f_rowScaled), name='RowScaledResidual' )
-            if ( index(switches,'sca') /= 0 ) then
-                call output ( ' | F | = ' )
-                call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
-            end if
-          if ( aj%fnorm < toleranceF ) then
-              if ( index(switches,'nwt') /= 0 ) then
-                call output ( &
-                  & 'Newton iteration terminated because aj%fnorm (' )
-                call output ( aj%fnorm )
-                call output ( ') < ToleranceF (' )
-                call output ( toleranceF )
-                call output ( ')', advance='yes' )
-              end if
-            ! Restore BestX, run the forward model again to get a new
-            ! Jacobian, and form normal equations -- the last two so that the
-            ! a posteriori covariance is consistent with BestX.
-            call copyVector ( v(x), v(bestX) ) ! x := bestX
-            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &  got(f_average) ) then
-              nwt_flag = nf_getJ
-              cycle
-            end if
-            exit
-          end if
-        case ( nf_evalj, nf_getJ ) ! ...............  EVALJ, GETJ  .....
+        ! The EVALF case is now subsumed into the EVALJ case, so that FNORM
+        ! is consistent between the two.  Otherwise, we would need to do all
+        ! of the Tikhonov computations here, too.  WVS 2002/09/13.
+        case ( nf_evalf, nf_evalj, nf_getJ ) ! EVALF, EVALJ, GETJ  .....
         !{IF ( too many Jacobian values ) EXIT \\
         ! Compute the Jacobian matrix $\bf K$ if you didn't do it when NFLAG
         ! was NF\_EVALF:\\
@@ -988,6 +870,10 @@ contains
         !           $||{\bf f + J \delta \hat x}||_2$,
         !   \item[AJ\%GRADN] = L2 norm of Gradient = $|| {\bf J^T f}||_2$.
         !   \end{description}
+          if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
+            prev_nwt_flag = nf_evalj
+            cycle
+          end if
           numJ = numJ + 1
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( index(switches,'nwt') /= 0 ) then
@@ -1006,8 +892,49 @@ contains
               & got(f_average)) ) exit
             nwt_flag = nf_getJ
           end if
+
           update = got(f_apriori)
           if ( update ) then ! start normal equations with apriori
+            ! Destroy (i.e. clean up) the previous contents of
+            ! AprioriMinusX (if any), so as not to have a memory
+            ! leak.  Then make it look like apriori.
+            call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
+              & vectorNameText='_aprioriMinusX' )
+            v(aprioriMinusX) = apriori - v(x)
+            call subtractFromVector ( v(aprioriMinusX), v(x) )
+            if ( got(f_regApriori) ) &
+              & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
+              & vectorNameText='_regRHS' )
+            if ( got(f_aprioriScale) ) &
+              & call scaleVector ( v(aprioriMinusX), aprioriScale )
+            !{Let the covariance of the apriori be $\mathbf{S_a}$, let
+            ! $\mathbf{C = S_a^{-1}}$, and let $\mathbf{F^T F = C}$. In
+            ! the least-squares problem we have extra rows of the form
+            ! $\mathbf{F \delta x = F ( a - x_n )}$ where $\mathbf{a}$
+            ! is the apriori state, and $\mathbf{x_n}$ is the state as
+            ! of the previous iteration.  The initial bit of the
+            ! right-hand side of the normal equations is $\mathbf{F^T F
+            ! ( a - x_n ) = C ( a - x_n )}$.
+            call cloneVector ( v(covarianceXApriori), apriori, &
+              & vectorNameText='_covarianceXApriori' )
+            if ( diagonal ) then
+              call cloneVector ( v(covarianceDiag), state, &
+               &  vectorNameText='_covarianceDiag' )
+              call getDiagonal ( covariance%m, v(covarianceDiag) )
+              ! covarianceXApriori := covarianceDiag # apriori:
+              call multiply ( v(covarianceDiag), v(aprioriMinusX), &
+                & v(covarianceXApriori) )
+            else ! covarianceXApriori := covariance X apriori:
+              call multiply ( covariance, v(aprioriMinusX), &
+                & v(covarianceXApriori) )
+            end if
+            !{The contribution to the norm of the residual of the
+            ! right-hand side of the part of the least-squares problem
+            ! that is due to apriori is $\mathbf{
+            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
+            ! C ( a - x_n ) \right ] }$
+            aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
+
             !{ Using Apriori requires adding equations of the form ${\bf F
             !  x}_n \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky factor
             !  of $\bf C$, the inverse of the apriori covariance ${\bf S}_a$. 
@@ -1032,12 +959,10 @@ contains
               ! Don't need to scale aTb -- covarianceXApriori is scaled already
             end if
           else
+            aj%fnorm = 0.0_r8
             call clearMatrix ( normalEquations%m ) ! start with zero
             call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
-          ! aprioriNorm was computed when nwt_flag was NF_EVALF.  It is the
-          ! _square_ of the norm of (apriori - measurements).
-          aj%fnorm = aprioriNorm
 
           ! Add Tikhonov regularization if requested.
           if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. tikhonovBefore ) then
@@ -1431,19 +1356,22 @@ contains
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call time_now ( t1 )
           ! aj%fnorm is now the norm of f, not its square.
-!         aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
-!         if ( aj%fnmin < 0.0 ) then
-!           call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
-!           call output ( aj%fnmin, advance='yes' )
-!           call output ( 'aj%fnorm**2 = ' )
-!           call output ( aj%fnorm**2, advance='yes' )
-!           call output ( 'norm(candidateDX) = ' )
-!           call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
-!           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-!             & 'Norm of residual is imaginary!' )
-!           aj%fnmin = tiny ( aj%fnmin )
-!         end if
-!         aj%fnmin = sqrt(aj%fnmin)
+          ! The following calculation of fnmin was commented out, but on
+          ! 11 September 2002 FTK told me it's the right thing to do
+          ! after all.
+          aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
+          if ( aj%fnmin < 0.0 ) then
+            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
+            call output ( aj%fnmin, advance='yes' )
+            call output ( 'aj%fnorm**2 = ' )
+            call output ( aj%fnorm**2, advance='yes' )
+            call output ( 'norm(candidateDX) = ' )
+            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Norm of residual is imaginary!' )
+            aj%fnmin = tiny ( aj%fnmin )
+          end if
+          aj%fnmin = sqrt(aj%fnmin)
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -1619,6 +1547,7 @@ contains
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
+        prev_nwt_flag = nwt_flag
       end do ! Newton iteration
 
         if ( index(switches,'ndb') /= 0 ) then
@@ -3025,6 +2954,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.176  2002/09/13 20:05:06  vsnyder
+! Subsume EVALF into EVALJ
+!
 ! Revision 2.175  2002/09/13 18:10:10  pwagner
 ! May change matrix precision rm from r8
 !
