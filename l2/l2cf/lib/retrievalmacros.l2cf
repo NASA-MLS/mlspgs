@@ -4,10 +4,17 @@
 ; in doing phased retrievals
 
 ; Define some macros we need for various quantities
-!define(allRadiometers,{R1A, R1B, R2, R3, R4, R5H, R5V})
+!define(allRadiometers,{R1A,R1B,R2,R3,R4,R5H,R5V})
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!makelist({},{U},!allBands)})
+
+;; This macro is used in sids runs to get the band number part of a band
+;; specifier (i.e. strip off the sideband if it is present)
+!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
+;; Some other low level macros
+!define(systemp,{!systemp$1})
+!define(nbw,{!nbw$1})
 
 ;; This macro is called at the start of each phase to setup its
 ;; vectors and matrices.
@@ -66,7 +73,8 @@ begin Fill
   Transfer, source=sdOut$1, destination=outputPrecision
   !ifdef(completePhasetroph2o,{!dnl
     ;; In this case copy TropH2O into H2O as requested
-    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, method=vector, /interpolate
+    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, $
+      method=vector, /interpolate
     ;; And its precision
     Fill, quantity=outputPrecision.h2o!res, sourceQuantity=outputPrecision.tropH2O!res, $
       method=vector, /interpolate})
@@ -103,14 +111,17 @@ end Fill
   end Join})
 })
 
-;; This macro deals with the radiance subsetting in an easy manner.
-;; $1 is the phase name, $2 the band, $3 the height range and $4 the depth limit
-!define(subsetGHzRadiance,{!dnl
-Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanGHz, $
-  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
-!define(subsetTHzRadiance,{!dnl
-Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanTHz, $
-  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
+;; This macro initialises the _HR species with interpolations of their
+;; standard resolution equivalents
+!define(oneHiResTransfer,{Fill, quantity=state.$1, method=vector, $
+  sourceQuantity=state.!trimHR($1), /interpolate!nl})
+!define(initHiRes,{!ifdef(skipHiRes,{},{
+begin Fill
+  Fill, quantity=state.Temperature_HR, method=vector, $
+    sourceQuantity=state.Temperature, /interpolate
+  !forall(oneHiResTransfer,!allHiResMolecules)
+end Fill
+})})
 
 ;; These macros are used to accumulate quantities destined for the DGM
 ;; or DGG file.  $1 is the quantity within state, and $2 is the swath/sd
@@ -212,13 +223,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
-;; This macro is used in sids runs to get the band number part of a band
-;; specifier (i.e. strip off the sideband if it is present)
-!define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
-!define(systemp,{!systemp$1})
-!define(nbw,{!nbw$1})
-
 ; $Log$
+; Revision 1.40  2003/02/27 00:39:38  livesey
+; General tidy up and dead wood removal
+;
 ; Revision 1.39  2002/12/16 16:24:51  mjf
 ; HiRes and columns
 ;
