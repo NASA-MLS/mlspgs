@@ -115,7 +115,7 @@ module MLSSignals_M
   type, public :: Band_T
     real(r8) :: CenterFrequency         ! Zero if not present (wide filter)
     integer :: Prefix                   ! Sub_rosa index of declaration's label
-    integer :: Radiometer               ! Index in Radiometers database
+    integer :: Radiometer               ! Index in Radiometers database, or none if deferred
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Suffix                   ! Sub_rosa index
   end type Band_T
@@ -223,6 +223,8 @@ contains
     integer, parameter :: BadMix = deferredChannels + 1 ! Disallowed mixture of
     !                                     fields.
     integer, parameter :: WrongUnits = badMix + 1 ! Field has wrong units
+    integer, parameter :: UnneededRadiometer = WrongUnits + 1 ! Radiomter spec in wrong place
+    integer, parameter :: NoDeferredRadiometer = UnneededRadiometer + 1 ! Radiometer spec needed
 
     error = 0
     timing = .false.
@@ -319,6 +321,7 @@ contains
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
         signal%sideband = 0
+        signal%radiometer = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -332,6 +335,8 @@ contains
           case ( f_direction )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%direction = nint(value(1))
+          case ( f_radiometer )
+            signal%radiometer = decoration(decoration(gson))
           case ( f_spectrometer )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%spectrometer = value(1)
@@ -343,8 +348,15 @@ contains
           end select
         end do ! i = 2, nsons(key)
         signal%name = name
-        ! Set default values for remaining parameters
-        signal%radiometer = bands(signal%band)%radiometer
+        ! Did this band have a radiometer spec deferred to this point?
+        if ( bands(signal%band)%radiometer == 0 ) then
+          ! The radiometer was deferred in the band definition
+          if ( signal%radiometer == 0 ) call announceError ( noDeferredRadiometer )
+        else
+          ! Didn't need to supply radiometer then.
+          if ( got(f_radiometer) ) call announceError ( unneededRadiometer )
+          signal%radiometer = bands(signal%band)%radiometer
+        endif
         signal%lo = radiometers(signal%radiometer)%lo
         signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
         signal%spectrometerType = bands(signal%band)%spectrometerType
@@ -571,6 +583,10 @@ contains
         call output ( ' field have the wrong units -- ' )
         call display_string ( phyq_indices(moreFields(1)) )
         call output ( ' required.', advance='yes' )
+      case ( unneededRadiometer )
+        call output ( 'Radiometer field supplied when not necessary', advance='yes' )
+      case ( noDeferredRadiometer )
+        call output ( 'Radiometer field neeed for this signal as not specified in band', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -1529,6 +1545,11 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.62  2004/01/16 21:36:28  livesey
+! Added the ability to defer the connection between bands and radiometers
+! until you define the signal.  This is to support some SMLS related
+! research work.
+!
 ! Revision 2.61  2003/08/16 01:14:03  vsnyder
 ! Add optional 'polarization' field to 'radiometer' spec
 !
