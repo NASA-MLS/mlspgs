@@ -1480,6 +1480,20 @@ contains ! =====     Public Procedures     =============================
     noMAFs = qty%template%noInstances
     noMIFs = qty%template%noSurfs
 
+    if ( size(qty%values(:,1)) < noMIFs ) then
+      call Announce_Error ( key, No_Error_code, &
+       & 'noMIFs too large for los quantity' )
+      return
+    elseif ( size(qty%values(1,:)) < noMAFs ) then
+      call Announce_Error ( key, No_Error_code, &
+       & 'noMAFs too large for los quantity' )
+      return
+    elseif ( size(scVel%values(1,:)) < 3 ) then
+      call Announce_Error ( key, No_Error_code, &
+       & 'scVel has too few components' )
+      return
+    end if
+
     do maf = 1, noMAFs
       do mif = 1, noMIFs
 
@@ -2940,6 +2954,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.113  2002/03/19 00:52:40  pwagner
+! SOme new checks added to FillLOSVelocity
+!
 ! Revision 2.112  2002/03/14 17:29:59  pwagner
 ! Fixed check in FillLOSVelocity
 !
