@@ -90,10 +90,13 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 #RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
 
 #Special load libraries
-#l_specials = -lPGSTK.sv3
-l_specials =
+l_specials = -lPGSTK.sv3
+#l_specials =
 
 # $Log$
+# Revision 1.21  2002/07/01 17:32:21  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.20  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #
