@@ -20,7 +20,7 @@ MODULE fov_convolve_m
 !
   SUBROUTINE fov_convolve(AntennaPattern,chi_in,rad_in,chi_out,rad_out, &
            & req,rsc,earth_frac,surf_angle,di_dt,dx_dt,ddx_dxdt,dx_dt_out, &
-           & drad_dt_out,di_df,drad_df_out)
+           & drad_dt_out,di_df,drad_df_out,drad_dx_out)
 !
 ! inputs
 !
@@ -56,6 +56,8 @@ MODULE fov_convolve_m
 ! outputs
 !
   REAL(rp), INTENT(out) :: rad_out(:) ! outputted radiances
+  REAL(rp), OPTIONAL, INTENT(out) :: drad_dx_out(:) ! outputted derivative 
+!                                    of radiance wrt to Chi_out
   REAL(rp), OPTIONAL, INTENT(out) :: drad_dt_out(:,:) ! outputted radiance
 !                                    derivatives wrt temperature.
   REAL(rp), OPTIONAL, INTENT(out) :: drad_df_out(:,:) ! outputted radiance
@@ -155,8 +157,15 @@ MODULE fov_convolve_m
 !
 ! interpolate to output grid
 !
-  CALL interpolatevalues(angles(ffth:no_fft)-ang_step,rad_fft1(ffth:no_fft),&
-     & chi_out-init_angle,rad_out,METHOD='S',EXTRAPOLATE='C')
+  IF ( PRESENT(drad_dx_out) ) THEN
+    CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+       & rad_fft1(ffth:no_fft),chi_out-init_angle,rad_out,&
+       & METHOD='S',EXTRAPOLATE='C',dyByDx=drad_dx_out)
+  ELSE
+    CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+       & rad_fft1(ffth:no_fft),chi_out-init_angle,rad_out,&
+       & METHOD='S',EXTRAPOLATE='C')
+  ENDIF
 !
 ! determine if temperature derivatives are desired
 !
@@ -1047,6 +1056,9 @@ MODULE fov_convolve_m
 !
 END MODULE fov_convolve_m
 ! $Log$
+! Revision 2.3  2002/06/19 11:00:32  zvi
+! Some cosmetic corrections
+!
 ! Revision 2.2 2002/06/17 16:31:21 bill
 ! Add zvis modification, rename module
 !
