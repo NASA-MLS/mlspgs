@@ -6,23 +6,26 @@
 begin Fill
   ;; ------------------------------------ OH-2T5
   !define(flaggingBands,{15,17,18,19})
-  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=2000)
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------ O3-2T5
   !define(flaggingBands,{15,17,18,19})
-  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=2000)
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=1.0,minRads=2000)
 
   ;; ------------------------------------- Temperature-CorePlusR5
   !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR5
   !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.7  2004/07/06 21:54:05  livesey
+; Added cloud flags for Temperature and GPH
+;
 ; Revision 1.6  2004/04/28 23:06:57  livesey
 ; Changes to cloud flags.
 ;

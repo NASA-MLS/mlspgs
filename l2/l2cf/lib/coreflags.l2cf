@@ -6,15 +6,18 @@
 begin Fill
   ;; ------------------------------------ Temperature-Core
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R1,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------ GPH-Core
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -30K)
 
 end Fill
 
 ; $Log$
+; Revision 1.6  2004/09/13 21:43:51  livesey
+; Bug fix.
+;
 ; Revision 1.5  2004/09/13 21:32:08  dwu
 ; change cloud flag thresholds and channels corresponding to changes made in the control l2cf
 ;
