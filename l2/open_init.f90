@@ -11,8 +11,8 @@ module Open_Init
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FILE, F_SOURCE, S_L2AUX, S_L2GP
-  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, & !, ReadL2AUXData
-    &                  SetupNewL2AUXRecord
+  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, & 
+    &                  ReadL2AUXData, SetupNewL2AUXRecord
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, &
     &                  SetupNewL2GPRecord
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
@@ -24,7 +24,7 @@ module Open_Init
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
-  use String_Table, only: L2CFUnit => INUNIT
+  use String_Table, only: L2CFUnit => INUNIT, GET_STRING
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT
@@ -372,7 +372,7 @@ contains ! =====     Public Procedures     =============================
    call decorate ( key, l2Index )
 !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
 ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-           CALL ReadL2AUXData(sd_id, sourceNameString, L2GPDatabase(l2Index),&
+           CALL ReadL2AUXData(sd_id, sourceNameString, L2AUXDatabase(l2Index),&
            & numProfs)
 
       case default ! Can't get here if tree_checker worked correctly
@@ -389,6 +389,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.11  2001/01/03 00:47:21  pwagner
+! Calls READL2AUXData from L2AUXData module
+!
 ! Revision 2.10  2000/12/04 21:47:46  pwagner
 ! Uses parser better
 !
