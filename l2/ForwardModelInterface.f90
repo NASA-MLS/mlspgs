@@ -1030,11 +1030,13 @@ contains
           ! so it shouldn't matter
           call convolve_all(ptan%values(:,maf),TFMI%atmospheric,FMI%n_sps,   &
             &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,                   &
-            &     FMI%tan_press,ptg_angles(:,maf),tan_temp(:,maf), &
+            &     ForwardModelConfig%tangentGrid%surfs,&
+            &     ptg_angles(:,maf),tan_temp(:,maf), &
             &     dx_dt, d2x_dxdt,FMI%band,si,center_angle,FMI%fft_pts,   &
             &     Radiances(:,ch),k_temp((1),:,:,:),k_atmos((1),:,:,:,:), &
             &     k_spect_dw((1),:,:,:,:),k_spect_dn((1),:,:,:,:),    &
-            &     k_spect_dnu((1),:,:,:,:),FMI%spect_atmos,no_tan_hts,  &
+            &     k_spect_dnu((1),:,:,:,:),FMI%spect_atmos,&
+            &     ForwardModelConfig%tangentGrid%noSurfs,  &
             &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
             &     TFMI%no_phi_f,   &
@@ -1045,12 +1047,14 @@ contains
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call no_conv_at_all(ptan%values(:,maf),FMI%n_sps,FMI%tan_press, &
+          call no_conv_at_all(ptan%values(:,maf),FMI%n_sps, &
+            &     ForwardModelConfig%tangentGrid%surfs, &
             &     FMI%band,FMC%temp_der,FMC%atmos_der,FMC%spect_der,      &
             &     Radiances(:,ch),k_temp((1),:,:,:),                    &
             &     k_atmos((1),:,:,:,:),k_spect_dw((1),:,:,:,:),       &
             &     k_spect_dn((1),:,:,:,:),k_spect_dnu((1),:,:,:,:),   &
-            &     FMI%spect_atmos, no_tan_hts,k_info_count,               &
+            &     FMI%spect_atmos, ForwardModelConfig%tangentGrid%noSurfs,&
+            &     k_info_count,               &
             &     i_star_all(i,:), k_star_all((1),:,:,:,:),            &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances, &
             &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,    &
@@ -1321,6 +1325,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.51  2001/03/29 02:37:30  livesey
+! Modified convolution to use new grids
+!
 ! Revision 2.50  2001/03/29 01:21:25  zvi
 ! Interim version
 !
