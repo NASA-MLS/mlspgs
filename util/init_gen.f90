@@ -17,7 +17,7 @@ program INIT_GEN
   ! The command line controls everything else.  See the PRINT statements
   ! that explain the usage.
 
-  use MACHINE ! to get at least HP and IO_ERROR, and maybe GETARG
+  use MACHINE,only: GETARG, HP, IO_ERROR
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -270,6 +270,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.3  2001/07/25 18:49:08  vsnyder
+! Change default input to stdin, add an option to specify otherwise
+!
 ! Revision 1.2  2001/07/25 18:26:34  vsnyder
 ! Insert copyright notice
 !
