@@ -2,6 +2,9 @@ mlsl3m: MLSL3M.o
 
 include ../Makefile.dep
 
+# where which_fftw.sh is stored
+MLSBIN=../../util
+
 # "$Id$"
 
 # ========================================================================
@@ -94,11 +97,26 @@ else
    hdf5_message=Building mlsl3m without hdf5
 endif
 
+# ifdef FFTW_PREC
+# ifeq ($(FFTW_PREC),s)
+#    fftw_linker_line=-L${FFTW_ROOT} -lsrfftw -lsfftw
+#    fftw_message=Building mlsl3d with single-precision fftw
+# else
+#    fftw_linker_line=-L${FFTW_ROOT} -ldrfftw -ldfftw
+#    fftw_message=Building mlsl3d with double-precision fftw
+# endif
+# else
+#    fftw_linker_line=-L${FFTW_ROOT} -lrfftw -lfftw
+#    fftw_message=Building mlsl3d with default-precision fftw
+# endif
+fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 mlsl3m: $(mlsl3m_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
+#		@echo "$(fftw_message)"
+		@cat fftw_link_message
 		@echo "$(mlsl3_message)"
 		$(FC) $(LDOPTS) -o mlsl3m $(ALLOBJS) \
         $(mlsl3_linker_line) \
@@ -114,7 +132,7 @@ mlsl3m: $(mlsl3m_prereqs)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(hdf5_linker_line) \
-	-L${FFTW_ROOT} -lrfftw -lfftw \
+        $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
 # ========================================================================
@@ -140,3 +158,6 @@ L3MMData.o:
 # ========================================================================
 
 # $Log$
+# Revision 1.1  2001/07/19 23:59:48  pwagner
+# Fiest commit
+#
