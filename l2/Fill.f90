@@ -50,8 +50,8 @@ contains ! =====     Public Procedures     =============================
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
-      & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
-      & F_EXPLICITVALUES, F_EXTINCTION, F_FORCE, &
+      & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
+      & F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FORCE, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
@@ -76,11 +76,12 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
-      & L_HEIGHT, &
-      & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
+      & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
+      & L_IWCFROMEXTINCTION, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
@@ -1113,6 +1114,35 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
+
+        case ( l_IWCfromExtinction ) ! -------fill H2O from RHI quantity -------
+            if ( .not. any(got( &
+             & (/f_extinction, f_temperatureQuantity/) &
+             & )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill iwc from cloudextinction'  )
+            else
+              sourceQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(sourceVectorIndex), sourceQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              if ( .not. ValidateVectorQuantity(sourceQuantity, &
+                & quantityType=(/l_cloudextinction/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The extinctionQuantity is not an cloudextinction'  )
+              else if ( .not. ValidateVectorQuantity(Quantity, &
+                & quantityType=(/l_cloudice/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The filled Quantity is not a type of cloudice '  )
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+              else
+                call FillIWCFromExtinction ( key, quantity, &
+                  & sourceQuantity, temperatureQuantity) 
+              end if
+            end if
 
         case ( l_manipulate ) ! ---------------------------- Manipulate --
           if ( .not. got ( f_a ) ) &
@@ -3184,6 +3214,17 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillPhiTanWithRefraction
 
+      ! ------------------------------------- FillIWCFromExtinction ----
+    subroutine FillIWCFromExtinction ( key, quantity, &
+     & sourceQuantity, temperatureQuantity)
+      integer, intent(in) :: key          ! For messages
+      ! Actually, the meaning of the next two is reversed if invert is TRUE)
+      type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
+      type (VectorValue_T), intent(in) :: sourceQuantity ! extinction
+      type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+     
+    end subroutine FillIWCFromExtinction 
+    
       ! ------------------------------------- FillRHIFromH2O ----
     subroutine FillRHIFromH2O ( key, quantity, &
      & sourceQuantity, temperatureQuantity, &
@@ -5675,6 +5716,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.218  2003/05/20 20:20:01  dwu
+! add IWCfromExtinction
+!
 ! Revision 2.217  2003/05/15 19:09:17  dwu
 ! changes in splitsideband
 !
