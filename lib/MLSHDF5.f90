@@ -15,7 +15,7 @@ module MLSHDF5
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-  ! use H5LIB, ONLY: h5open_f, h5close_f
+  use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
     & H5P_DATASET_CREATE_F, &
@@ -3351,6 +3351,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.40  2004/06/08 18:59:59  pwagner
+! Another break with old toolkit; this time may be correct
+!
 ! Revision 2.39  2004/05/25 20:35:53  pwagner
 ! Reverted to older hdf5; temporarily we hope
 !
