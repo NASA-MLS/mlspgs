@@ -68,17 +68,17 @@ module MLSCommon                ! Common definitions for the MLS software
 
   integer, parameter :: NameLen=32
   integer, parameter :: LineLen=132
-
-! Shouldn't this be PGSd_PC_FILE_PATH_MAX ?
   integer, parameter :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
+  real, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
   ! --------------------------------------------------------------------------
   
   ! Moved here from MLSFiles module
   ! Information describing the files used by the mls software
-  ! Stop passing file handles back & forth bewteen routines
+  ! Stop passing file handles back & forth between routines
   ! -- pass one of these instead
+  ! (Not used yet; maybe someday)
   type MLSFile_T
     character (LEN=8) :: type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
     character (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
@@ -123,6 +123,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.21  2004/08/03 17:58:25  pwagner
+! Now holds DEFAULTUNDEFINEDVALUE to be used elsewhere
+!
 ! Revision 2.20  2004/06/10 01:00:50  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
