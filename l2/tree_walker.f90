@@ -17,7 +17,7 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
-  use L2PC_m, only: L2PC_T, DestroyL2PCDatabase
+  use L2PC_m, only: DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -72,7 +72,6 @@ contains ! ====     Public Procedures     ==============================
     type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
     type (Matrix_Database_T), dimension(:), pointer :: Matrices
 	 type(PCFData_T) :: l2pcf
-    type(L2PC_T), dimension(:), pointer :: l2pcDatabase
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors
@@ -87,7 +86,7 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
 
-    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, l2pcDatabase, &
+    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, &
       & matrices, vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
       & mifGeolocation, vectorTemplates )
 
@@ -103,7 +102,7 @@ contains ! ====     Public Procedures     ==============================
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
-          & l2gpDatabase, l2pcDatabase )
+          & l2gpDatabase )
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) call test_parse_signals
@@ -131,7 +130,7 @@ subtrees: do while ( j <= howmany )
                 & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
               call MLSL2Join ( son, vectors, matrices, l2gpDatabase, &
-                & l2auxDatabase, l2pcDatabase, size(chunks)==1, chunkNo, chunks )
+                & l2auxDatabase, size(chunks)==1, chunkNo, chunks )
             case ( z_retrieve )
               call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
             case default
@@ -150,7 +149,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcDatabase, l2pcf,&
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf,&
           & size(chunks)==1 )
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -169,7 +168,6 @@ subtrees: do while ( j <= howmany )
         call DestroyChunkDatabase (chunks )
         call DestroyL2GPDatabase ( l2gpDatabase )
         call DestroyL2AUXDatabase ( l2auxDatabase )
-        call DestroyL2PCDatabase ( l2pcDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
 
@@ -177,6 +175,7 @@ subtrees: do while ( j <= howmany )
       i = i + 1
     end do
     call destroy_ant_patterns_database
+    call DestroyL2PCDatabase
     call destroy_filter_shapes_database
     call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
     call destroy_line_database
@@ -194,6 +193,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.46  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.45  2001/04/26 00:08:02  livesey
 ! Stuff to support reading of l2pc files
 !
