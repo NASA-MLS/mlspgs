@@ -31,6 +31,12 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
+# where sources for the forward model are stored
+libfwdmdl_sources=../../fwdmdl
+
+# where forward model objects and libfwdmdl.a are stored
+libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -55,20 +61,38 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
+
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
+#Where else to look for USEd and INCLUDED files to add to dependency list
+ifdef l2_NEEDS_fwdmdl
+   depends_where=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+   PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
+	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
+else
+   depends_where=$(libmls_sources) $(srclib)
+   PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
+	  $(libmls_objs)/libmls.a
+endif
 
 PROG=test
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90)
+	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+
 .PHONY: configure depends clean tar clean_objs
 
-tar: clean
+tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -97,34 +121,47 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 #	esac 
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib) 
+	$(MLSBIN)/makemakedep.sh $(depends_where)
 
-clean:
+mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
+	rm -f Make.dep.*
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
 	fi
+	rm -f Make.dep.*
 
 tar:
+	rm -f ../$(PROG).tar
+	@echo "tar-ing l2"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
 	rm -f ../$(PROG).tgz
-	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.1  2001/02/01 23:11:12  pwagner
+# First commit
+#
 #
 
 

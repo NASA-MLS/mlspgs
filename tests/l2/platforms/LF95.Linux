@@ -30,6 +30,12 @@ itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -52,19 +58,28 @@ DUSTY = $(FOPTS)
 # Beginning of path to HDFEOS  libraries:
 #E = /van1/opt/TOOLKIT
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
+ifdef l2_NEEDS_fwdmdl
+	INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+	 -I $(itmdir) -I $(fwdmdldir)
+else
+	INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+	 -I $(itmdir)
+endif
 
 # Define some suffix rules
 
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 #These are the locations of the libraries
 #
@@ -89,6 +104,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
 l_specials = 
 
 # $Log$
+# Revision 1.2  2001/02/26 21:14:39  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
 # Revision 1.1  2001/02/01 23:12:32  pwagner
 # First commit
 #

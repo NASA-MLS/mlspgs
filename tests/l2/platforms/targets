@@ -58,14 +58,29 @@ else
    blas_message=Building mlsl2 test with internally-supplied BLAS
 endif
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
+ifdef l2_NEEDS_fwdmdl
+   fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
+   fwdmdl_message=Building mlsl2 test with forward model
+   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
+	 $(fwdmdldir)/libfwdmdl.a
+else
+   fwdmdl_linker_line=
+   fwdmdl_message=Building mlsl2 test without forward model
+   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a 
+endif
+
 # ========================================================================
 libl2.a: $(libl2_objs)
 	ar ru $@ $?
 	ar d $@ $(itmdir)/$(l2_driver)
 
-test: $(ALLOBJS) $(PVM_OBJS) libl2.a $(libdir)/libmls.a
+test: $(mlsl2_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(fwdmdl_message)"
 		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll2 \
                       -L${libdir} -lmls \
@@ -78,7 +93,8 @@ test: $(ALLOBJS) $(PVM_OBJS) libl2.a $(libdir)/libmls.a
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-        $(l_specials) \
+        $(fwdmdl_linker_line) \
+        $(l_specials) $(LAFTER) \
 
 # ========================================================================
 
@@ -91,6 +107,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2001/02/08 23:20:52  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.2  2001/02/05 19:40:17  pwagner
 # LDOPTS added to load statements
 #
