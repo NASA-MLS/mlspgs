@@ -2,11 +2,12 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-
 
 ! subroutine ?_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
 !
@@ -59,7 +60,7 @@
 !
     do m = 2, n
       dtau = tau(m) - tau(m-1)
-      if (abs(dtau) <= epsilon(tau)) then
+      if ( abs(dtau) <= epsilon(tau) ) then
         print *,'** Warning: division by zero in routine: ?_PCSPL'
         print *,'   Subroutine ?CSPLINE(_DER) bombed out !!'
         return
@@ -73,7 +74,7 @@
 !
     select case ( ibcbeg )
     case ( :0 )
-      if (n <= 2) then ! no condition at left end and n = 2.
+      if ( n <= 2 ) then ! no condition at left end and n = 2.
         c(4,1) = 1.0
         c(3,1) = 1.0
         c(2,1) = 2.0*c(4,2)
@@ -116,7 +117,7 @@
       else ! ibcend < 1      ! no condition at right end point
         if ( n <= 2 .and. ibcbeg < 1 ) then
           c(2,n) = c(4,n)
-          goto 44
+          go to 44
         end if
         if ( n <= 3 .and. ibcbeg < 1 .or. n <= 2 ) then
 !
@@ -166,3 +167,6 @@
 ! end subroutine ?_PCSPL
 
 ! $Log$
+! Revision 2.1  2002/10/02 15:50:09  bwknosp
+! Added Id and RCS info
+!
