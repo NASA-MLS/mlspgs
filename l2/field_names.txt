@@ -164,6 +164,7 @@ regOrders
 regQuants
 regWeight
 resetSeed
+rhiQuantity
 rowChannels
 rowInstances
 rowQuantity
@@ -223,6 +224,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.31  2002/04/18 18:40:17  pwagner
+# Can fill h2o from an rhiQuantity
+#
 # Revision 2.30  2002/04/04 16:32:42  livesey
 # Added negative error bar stuff
 #
