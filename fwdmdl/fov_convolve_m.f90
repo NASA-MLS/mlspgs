@@ -77,11 +77,11 @@ module Fov_Convolve_m
 !                                      derivatives for inputted di_df.
 ! Internal stuff
 
-    integer(i4) :: i, j, k, ffth, n_coeffs, zero_out
+    INTEGER(i4) :: i, j, k, ffth, n_coeffs, zero_out_s, zero_out_t
 
     real(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
 
-    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth+zero_out+1:no_fft)
+    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
     type(coefficients) :: Coeffs_2 ! for chi_in-init_angle -> angles(ffth:no_fft)
     type(coefficients) :: Coeffs_3 ! for angles(ffth:no_fft)-ang_step -> chi_out-init_angle
 
@@ -126,8 +126,11 @@ module Fov_Convolve_m
 
     if ( present(drad_dt_out) ) then
       ! find the surface dimension
-      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out )
-      call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
+      call hunt ( angles(ffth:no_fft), surf_angle-init_angle, zero_out_s )
+      call hunt ( angles(ffth:no_fft), chi_in(SIZE(chi_in))-init_angle, &
+    &             zero_out_t )
+      call interpolateArraySetup ( chi_in-init_angle, &
+        & angles(ffth+zero_out_s+1:no_fft), &
         & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
     end if
 
@@ -215,21 +218,28 @@ module Fov_Convolve_m
 
 ! do i*ddx_dxdt piece
 
-        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
-        &    ddx_dxdt(:,i), angles(ffth+zero_out+1:no_fft), &
-        &    rad_fft(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+        call interpolateValues ( coeffs_1, chi_in-init_angle, &
+        &    (rad_in-rad_in(k)) * ddx_dxdt(:,i), &
+        &    angles(ffth+zero_out_s+1:no_fft), &
+        &    rad_fft(ffth+zero_out_s+1:no_fft), METHOD='S',  &
+        &    EXTRAPOLATE='C' )
 
 ! zero out the subsurface stuff
 
-        rad_fft(ffth:ffth+zero_out) = 0.0_rp
+        rad_fft(ffth:ffth+zero_out_s) = 0.0_rp
+
 
 ! add in di_dt part
 
         call interpolateValues ( coeffs_2, chi_in-init_angle, di_dt(:, i), &
-           & angles(ffth:no_fft), rad_fft1(ffth:no_fft), METHOD='S', &
-           & EXTRAPOLATE='C' )
+           & angles(ffth:no_fft), rad_fft1(ffth:no_fft), &
+           & METHOD='S', EXTRAPOLATE='C' )
 
         rad_fft(ffth:no_fft) = rad_fft(ffth:no_fft) + rad_fft1(ffth:no_fft)
+
+! zero out this array above toa
+
+        rad_fft(ffth+zero_out_t + 1:no_fft) = 0.0_rp
 
 ! resymetrize
 
@@ -246,13 +256,13 @@ module Fov_Convolve_m
 
 ! do the rad_in * dx_dt term
 
-        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
-         &   dx_dt(:,i), angles(ffth+zero_out+1:no_fft), &
-         &   rad_fft1(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+        call interpolateValues ( coeffs_1, chi_in-init_angle, &
+         &   (rad_in-rad_in(k))*dx_dt(:,i),angles(ffth+zero_out_s+1:no_fft), &
+         &   rad_fft1(ffth+zero_out_s+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
 
 ! zero out array below surf_angle
 
-        rad_fft1(ffth:ffth+zero_out) = 0.0_rp
+        rad_fft1(ffth:ffth+zero_out_s) = 0.0_rp
 
 ! resymetrize
 
@@ -316,6 +326,7 @@ module Fov_Convolve_m
 ! take fft of radiance array
 
         call drft1_t ( rad_fft, 'a' )
+         
 
 ! apply convolution theorem
 
@@ -534,6 +545,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.13  2002/11/29 22:46:06  livesey
+! Incorporated Van's bug fixes
+!
 ! Revision 2.12  2002/11/23 02:49:07  vsnyder
 ! Use pre-computed interpolation coefficients
 !
