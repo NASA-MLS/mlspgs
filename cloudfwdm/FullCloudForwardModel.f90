@@ -889,7 +889,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Remove temporary quantities
     !------------------------------
     Deallocate (WC, a_trans, Slevl, Zt )
-     
+    Deallocate ( my_catalog, stat=ier )
+
     call deallocate_test ( superset, 'superset',          ModuleName )
     call Deallocate_test ( a_massMeanDiameter,'a_massMeanDiameter',ModuleName )
     call Deallocate_test ( a_cloudExtinction,'a_cloudExtinction',ModuleName )
@@ -923,6 +924,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.84  2001/11/09 18:05:24  jonathan
+! pass spectra catalog into CloudySkyRadianceModel
+!
 ! Revision 1.83  2001/11/08 21:36:13  jonathan
 ! add SpectroscopyCatalog
 !
