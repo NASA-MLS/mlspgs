@@ -270,6 +270,7 @@ contains
   character(len=*), parameter :: NUMCOMPLETEATTRIBUTENAME = 'NumCompletedChunks'
   character(len=*), parameter :: NUMFAILATTRIBUTENAME = 'NumFailedChunks'
   character(len=*), parameter :: FAILATTRIBUTENAME = 'FailedChunks'
+  character(len=*), parameter :: MACHATTRIBUTENAME = 'FailedMachines'
   ! Executable
   call h5gopen_f(fileId, '/', grp_id, returnStatus)
   call output(NUMCOMPLETEATTRIBUTENAME, advance='no')
@@ -295,6 +296,14 @@ contains
     call dump(trim(failedChunks), FAILATTRIBUTENAME)
   else
     call output(FAILATTRIBUTENAME, advance='no')
+    call output(' attribute not found', advance='yes')
+  endif
+
+  if ( IsHDF5AttributePresent(grp_id, MACHATTRIBUTENAME) ) then
+    call GetHDF5Attribute (grp_ID, MACHATTRIBUTENAME, failedChunks)
+    call dump(trim(failedChunks), MACHATTRIBUTENAME)
+  else
+    call output(MACHATTRIBUTENAME, advance='no')
     call output(' attribute not found', advance='yes')
   endif
 
@@ -387,6 +396,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.2  2004/09/16 00:20:56  pwagner
+! May show failed chunks
+!
 ! Revision 1.1  2004/09/14 18:52:37  pwagner
 ! First commit
 !
