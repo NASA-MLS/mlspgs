@@ -858,6 +858,7 @@ contains
                 & call dump ( columnScaleVector, name='Column scale vector' )
             call columnScale ( normalEquations%m, columnScaleVector )
             call rowScale ( columnScaleVector, normalEquations%m )
+            call multiply ( atb, columnScaleVector )
           end if
           !{Compute the (negative of the) gradient $= -\mathbf{J^T f}$.
           ! This is the right-hand side of the normal equations
@@ -903,6 +904,8 @@ contains
           ! AJ%FNMIN = L2 norm of residual, ||F + J * "Candidate DX"||
           ! This can be gotten without saving J as F^T F - (U^{-T} F)^T
           ! U^{-T} F.  The variable candidateDX is a temp here.
+          if ( columnScaling /= l_none ) &
+            & call multiply ( candidateDX, columnScaleVector )
           aj%fnmin = sqrt(aj%fnorm - (candidateDX .dot. candidateDX) )
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
@@ -975,6 +978,8 @@ contains
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
+          if ( columnScaling /= l_none ) &
+            & call multiply ( candidateDX, columnScaleVector )
         case ( nf_newx ) ! ................................  NEWX  .....
         ! Set X = X + DX
         !     AJ%AXMAX = MAXVAL(ABS(X)),
@@ -1344,6 +1349,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.56  2001/07/12 22:11:46  vsnyder
+! Maybe the column scaling is right now....
+!
 ! Revision 2.55  2001/07/11 22:06:31  vsnyder
 ! Interim commit -- still appears to be broken
 !
