@@ -25,7 +25,7 @@ module RetrievalModule
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
     & F_outputCovariance, F_quantity, F_state, F_test, F_toleranceA, &
-    & F_toleranceF, F_toleranceR, field_first, field_last, &
+    & F_toleranceF, F_toleranceR, Field_first, Field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
@@ -36,9 +36,8 @@ module RetrievalModule
     & DestroyMatrix, dump_Linf, dump_struct, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
     & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, InvertCholesky, &
-    & Matrix_T, &
-    & Matrix_Database_T, Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, MinDiag, &
-    & MultiplyMatrixVector, Negate, RowScale, ScaleMatrix, SolveCholesky, &
+    & Matrix_T, Matrix_Database_T, Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, &
+    & MinDiag, Multiply, Negate, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8
@@ -54,7 +53,7 @@ module RetrievalModule
   use Tree_Types, only: N_named
   use VectorsModule, only: AddToVector, CloneVector, CopyVector, CreateMask, &
     & DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, Dump, &
-    & GetVectorQuantityIndexByName, MultiplyVectors, operator(.DOT.), &
+    & GetVectorQuantityIndexByName, Multiply, operator(.DOT.), &
     & operator(-), ScaleVector, SetMask, SubtractFromVector, Vector_T
 
   implicit NONE
@@ -113,7 +112,7 @@ contains
     integer :: Criteria                 ! Index in tree of "criteria" field
                                         ! of subset specification, or zero
     type(vector_T) :: DX                ! for NWT
-    type(vector_T) :: DXScaled          ! for NWT
+    type(vector_T) :: DXUnScaled        ! for NWT
     logical :: Diagonal                 ! "Iterate with the diagonal of the
                                         ! a priori covariance matrix until
                                         ! convergence, then put in the whole
@@ -151,8 +150,8 @@ contains
     type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
     integer :: Method                   ! Method to use for inversion, currently
                                         ! only l_Newtonian.
-    type(matrix_SPD_T), target :: myCovariance    ! for OutputCovariance to point at
-    type(matrix_T), target :: myJacobian          ! for Jacobian to point at
+    type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
+    type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     integer :: N                        ! 1 + Number of columns in the Jacobian
     integer :: Name                     ! Either 0 or, if node_id(son) ==
                                         ! n_named, subtree(1,son)
@@ -457,26 +456,27 @@ contains
             call cloneVector ( bestX, x, vectorNameText='_bestX' )
             call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
             call cloneVector ( dx, x, vectorNameText='_DX' )
-            call cloneVector ( dxScaled, x, vectorNameText='_DX Scaled' )
+            call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
             if ( got(f_fuzz) ) then
-              ! Add some fuzz to the measurement and state vectors
-              call cloneVector ( fuzzMeasurements, measurements )
+              ! Add some fuzz to the measurement vector
+!             call cloneVector ( fuzzMeasurements, measurements )
+!             do j = 1, measurements%template%noQuantities
+!               call random_number(fuzzMeasurements%quantities(j)%values)
+!               measurements%quantities(j)%values = &
+!                 & measurements%quantities(j)%values * &
+!                   & ( 1.0_r8 + fuzz * &
+!                     & ( fuzzMeasurements%quantities(j)%values - 0.5 ) )
+!             end do
+              ! Add some fuzz to the state vector
               call cloneVector ( fuzzState, x )
-              do j = 1, measurements%template%noQuantities
-                call random_number(fuzzMeasurements%quantities(j)%values)
-                measurements%quantities(j)%values = &
-                  & measurements%quantities(j)%values * &
-                    & ( 1.0_r8 + fuzz * &
-                      & ( fuzzMeasurements%quantities(j)%values - 0.5 ) )
-              end do
               do j = 1, x%template%noQuantities
                 call random_number(fuzzState%quantities(j)%values)
                 x%quantities(j)%values = x%quantities(j)%values * &
                   & ( 1.0_r8 + fuzz * ( fuzzState%quantities(j)%values - 0.5 ) )
               end do
             end if
-            if ( index(switches,'xvec') /= 0 ) call dump ( x, name='Original X' )
+              if ( index(switches,'xvec') /= 0 ) call dump ( x, name='Original X' )
             numF = 0
             numJ = 0
             aj%axmax = 0.0
@@ -484,15 +484,32 @@ contains
               aj%axmax = max(aj%axmax, maxval(abs(x%quantities(k)%values)))
             end do
 
-            do ! Newtonian iteration
-              if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
-                & call nwtdb
-              call nwta ( nwt_flag, aj )
-              if ( index(switches,'nwt') /= 0 ) then
-                call FlagName ( nwt_flag, theFlagName )
-                call output ( 'Newton method flag = ' )
-                call output ( trim(theFlagName), advance='yes' )
+              if ( index(switches,'sca') /= 0 ) then
+                if ( got(f_apriori) ) then
+                  call output ( ' apriori scale = ' )
+                  call output ( aprioriScale )
+                end if
+                if ( got(f_fuzz) ) then
+                  call output ( ' fuzz = ' )
+                  call output ( fuzz )
+                end if
+                call output ( ' initLambda = ' )
+                call output ( initLambda, advance='yes' )
               end if
+
+            do ! Newtonian iteration
+                if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
+                  & call nwtdb
+              call nwta ( nwt_flag, aj )
+                if ( index(switches,'nwt') /= 0 ) then
+                  call FlagName ( nwt_flag, theFlagName )
+                  call output ( 'Newton method flag = ' )
+                  call output ( trim(theFlagName) )
+                  call output ( ', numF = ' )
+                  call output ( numF )
+                  call output ( ', numJ = ' )
+                  call output ( numJ, advance='yes' )
+                end if
               select case ( nwt_flag )
               case ( nf_evalf ) ! ........................  EVALF  .....
               ! IF ( too many function values ) EXIT
@@ -502,30 +519,52 @@ contains
               ! IF ( AJ%FNORM is small enough ) EXIT
                 numF = numF + 1
                 if ( numF > maxFunctions ) then
-                  if ( index(switches,'nwt') /= 0 ) then
-                    call output ( &
-                      & 'Newton iteration terminated because function evaluations (' )
-                    call output ( numF )
-                    call output ( ') > maxFunctions (' )
-                    call output ( maxFunctions )
-                    call output ( ')', advance='yes' )
-                  end if
+                    if ( index(switches,'nwt') /= 0 ) then
+                      call output ( &
+                        & 'Newton iteration terminated because function evaluations (' )
+                      call output ( numF )
+                      call output ( ') > maxFunctions (' )
+                      call output ( maxFunctions )
+                      call output ( ')', advance='yes' )
+                    end if
                   exit
                 end if
 
                 if ( got(f_apriori) ) then
                   ! Destroy (i.e. clean up) the previous contents of
-                  ! covarianceXApriori (if any), so as not to have a memory
+                  ! xMinusApriori (if any), so as not to have a memory
                   ! leak.  Then make it look like apriori.
                   call cloneVector ( xMinusApriori, apriori, &
                     & vectorNameText='_xMinusApriori' )
-                  ! It would be nice to write
-                  ! covarianceXApriori = covariance .tx. ( x - apriori )
-                  ! but that would cause a memory leak.
                   xMinusApriori = x - apriori
-                  call multiplyMatrixVector ( covariance, xMinusApriori, &
-                    & covarianceXApriori ) ! covarianceXApriori := covariance X apriori
+                  ! First, we need the square of the norm of the Cholesky
+                  ! factor of the inverse of the covariance times
+                  ! xMinusApriori.
+                  if ( diagonal ) then
+                    call getDiagonal ( covariance%m, covarianceDiag, &
+                      & squareRoot=.true. )
+                    ! covarianceXApriori := covarianceDiag # apriori:
+                    call multiply ( xMinusApriori, covarianceDiag, &
+                      & covarianceXApriori )
+                  else ! covarianceXApriori := factor(covariance) X apriori:
+                    call choleskyFactor ( factored, covariance, noExtra=.true. )
+                    call multiply ( factored%m, xMinusApriori, &
+                      & covarianceXApriori )
+                    call clearMatrix ( factored%m )  ! free the space
+                  end if
                   aprioriNorm = covarianceXapriori .dot. covarianceXapriori ! norm**2
+                  ! Now we need the inverse of the covariance times
+                  ! xMinusApriori, as the initial bit of the right-hand
+                  ! side of the normal equations.
+                  if ( diagonal ) then
+                    call getDiagonal ( covariance%m, covarianceDiag )
+                    ! covarianceXApriori := covarianceDiag # apriori:
+                    call multiply ( xMinusApriori, covarianceDiag, &
+                      & covarianceXApriori )
+                  else ! covarianceXApriori := covariance X apriori:
+                    call multiply ( covariance, xMinusApriori, &
+                      & covarianceXApriori )
+                  end if
                 else
                   aprioriNorm = 0.0_r8
                 end if
@@ -548,21 +587,21 @@ contains
                 end do ! MAFs
                 call subtractFromVector ( f, measurements )
                 aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
-                if ( index(switches,'fvec') /= 0 ) &
-                  & call dump ( f, name='Residual' )
-                if ( index(switches,'sca') /= 0 ) then
-                    call output ( ' | F | = ' )
-                    call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
+                  if ( index(switches,'fvec') /= 0 ) &
+                    & call dump ( f, name='Residual' )
+                  if ( index(switches,'sca') /= 0 ) then
+                      call output ( ' | F | = ' )
+                      call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
                   end if
                 if ( aj%fnorm < toleranceF ) then
-                  if ( index(switches,'nwt') /= 0 ) then
-                    call output ( &
-                      & 'Newton iteration terminated because aj%fnorm (' )
-                    call output ( aj%fnorm )
-                    call output ( ') < ToleranceF (' )
-                    call output ( toleranceF )
-                    call output ( ')', advance='yes' )
-                  end if
+                    if ( index(switches,'nwt') /= 0 ) then
+                      call output ( &
+                        & 'Newton iteration terminated because aj%fnorm (' )
+                      call output ( aj%fnorm )
+                      call output ( ') < ToleranceF (' )
+                      call output ( toleranceF )
+                      call output ( ')', advance='yes' )
+                    end if
                   exit
                 end if
               case ( nf_evalj ) ! ........................  EVALJ  .....
@@ -587,14 +626,14 @@ contains
               !   AJ%GRADN = L2 norm of Gradient.
                 numJ = numJ + 1
                 if ( numJ > maxJacobians ) then
-                  if ( index(switches,'nwt') /= 0 ) then
-                    call output ( &
-                      & 'Newton iteration terminated because Jacobian evaluations (' )
-                    call output ( numJ )
-                    call output ( ') > maxJacobians (' )
-                    call output ( maxJacobians )
-                    call output ( ')', advance='yes' )
-                  end if
+                    if ( index(switches,'nwt') /= 0 ) then
+                      call output ( &
+                        & 'Newton iteration terminated because Jacobian evaluations (' )
+                      call output ( numJ )
+                      call output ( ') > maxJacobians (' )
+                      call output ( maxJacobians )
+                      call output ( ')', advance='yes' )
+                    end if
                   exit
                 end if
                 update = got(f_apriori)
@@ -604,7 +643,7 @@ contains
                   ! full covariance (one hopes only for one more iteration).
                   ! This improves sparsity during iteration.
                     call clearMatrix ( normalEquations%m )
-                    call getDiagonal ( covariance, covarianceDiag )
+                    call getDiagonal ( covariance%m, covarianceDiag )
                     call updateDiagonal ( normalEquations, covarianceDiag )
                   else
                     call copyMatrixValue ( normalEquations%m, covariance%m )
@@ -621,8 +660,10 @@ contains
                 end if
 
                 ! Add some early stabilization
-                if ( got(f_lambda) ) &
-                  & call updateDiagonal ( normalEquations, initLambda )
+                if ( got(f_lambda) ) then
+                  call updateDiagonal ( normalEquations, initLambda )
+                  update = .true.
+                end if
 
                 fmStat%maf = 0
                 fmStat%finished = .false.
@@ -644,7 +685,7 @@ contains
                       call subtractFromVector ( f, measurements, &
                         & jacobian%row%quant(rowBlock), &
                         & jacobian%row%inst(rowBlock) )
-!                     call scaleVector ( f, -1.0_r8 )
+                      call scaleVector ( f, -1.0_r8 )
                       call fillExtraCol ( jacobian, f, rowBlock )
                     end if
                   end do
@@ -652,11 +693,11 @@ contains
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
-                  if ( index(switches,'jac') /= 0 ) &
-                    call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
-                  if ( index(switches,'spa') /= 0 ) &
-                    & call dump_struct ( jacobian, &
-                      & 'Sparseness structure of Jacobian blocks:' )
+                    if ( index(switches,'jac') /= 0 ) &
+                      call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
+                    if ( index(switches,'spa') /= 0 ) &
+                      & call dump_struct ( jacobian, &
+                        & 'Sparseness structure of Jacobian blocks:' )
                   call clearMatrix ( jacobian )  ! free the space
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
@@ -670,7 +711,7 @@ contains
                 case ( l_covariance )
                   !??? Can't get here until allowed by init_tables
                 case ( l_norm )
-                  call getDiagonal ( normalEquations, columnScaleVector )
+                  call getDiagonal ( normalEquations%m, columnScaleVector )
                 end select
                 if ( columnScaling /= l_none ) then
                   do j = 1, columnScaleVector%template%noQuantities
@@ -681,43 +722,50 @@ contains
                         & sqrt( columnScaleVector%quantities(j)%values )
                     end where
                   end do
-                  if ( index(switches,'col') /= 0 ) &
-                    & call dump ( columnScaleVector, name='Column scale vector' )
+                    if ( index(switches,'col') /= 0 ) &
+                      & call dump ( columnScaleVector, name='Column scale vector' )
                   call columnScale ( normalEquations%m, columnScaleVector )
                   call rowScale ( columnScaleVector, normalEquations%m )
                 end if
+                k = normalEquations%m%row%nb
+                aj%fnorm = sqrt(normalEquations%m%block(k,k)%values(1,1))
                 call getVectorFromColumn ( normalEquations%m, n, gradient )
-                if ( index(switches,'gvec') /= 0 ) &
-                  & call dump ( gradient, name='gradient' )
+                  if ( index(switches,'gvec') /= 0 ) &
+                    & call dump ( gradient, name='gradient' )
                 ! Factor J^T J:
 !???            factored%m%block => normalEquations%m%block ! to save space
 !???            Can't do this because we need to keep the normal equations
 !???            around, in order to subtract Levenberg-Marquardt and
 !???            apriori covariance, in order to compute a posteriori covariance
-                if ( index(switches,'neq') /= 0 ) &
-                  call dump_Linf ( normalEquations%m, &
-                    & 'L_infty norms of Normal Equations blocks after scaling:', &
-                    & upper=.true. )
-                if ( index(switches,'spa') /= 0 ) &
-                  & call dump_struct ( normalEquations%m, &
-                    & 'Sparseness structure of Normal equations blocks:', &
-                    & upper=.true. )
+                  if ( index(switches,'neq') /= 0 ) &
+                    call dump_Linf ( normalEquations%m, &
+                      & 'L_infty norms of Normal Equations blocks after scaling:', &
+                      & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( normalEquations%m, &
+                      & 'Sparseness structure of Normal equations blocks:', &
+                      & upper=.true. )
                 call choleskyFactor ( factored, normalEquations )
-                if ( index(switches,'fac') /= 0 ) &
-                  call dump_Linf ( factored%m, 'L_infty norms of blocks of factor:', &
-                    & upper=.true. )
-                if ( index(switches,'spa') /= 0 ) &
-                  & call dump_struct ( factored%m, &
-                    & 'Sparseness structure of blocks of factor:', upper=.true. )
-                if ( index(switches,'cho') /= 0 ) then
-                  call copyMatrix ( testCholesky%m, normalEquations%m )
-                  call negate ( testCholesky%m )
-                  call formNormalEquations ( factored%m, testCholesky, &
-                    & update=.true. )
-                  call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
-                    & upper=.true. )
-                  call destroyMatrix ( testCholesky%m )
-                end if
+                  if ( index(switches,'diag') /= 0 ) then
+                    call getDiagonal ( factored%m, dxUnscaled )
+                    call dump ( dxUnscaled, &
+                      & name='Diagonal of factored normal equations:' )
+                  end if
+                  if ( index(switches,'fac') /= 0 ) &
+                    call dump_Linf ( factored%m, 'L_infty norms of blocks of factor:', &
+                      & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( factored%m, &
+                      & 'Sparseness structure of blocks of factor:', upper=.true. )
+                  if ( index(switches,'cho') /= 0 ) then
+                    call copyMatrix ( testCholesky%m, normalEquations%m )
+                    call negate ( testCholesky%m )
+                    call formNormalEquations ( factored%m, testCholesky, &
+                      & update=.true. )
+                    call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
+                      & upper=.true. )
+                    call destroyMatrix ( testCholesky%m )
+                  end if
                 aj%diag = minDiag ( factored ) ! element on diagonal with
                 !       smallest absolute value, after triangularization
                 aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
@@ -732,11 +780,11 @@ contains
                 k = factored%m%col%nb
                 aj%fnmin = factored%m%block(k,k)%values(1,1)
                 aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
-                if ( index(switches,'sca') /= 0 ) then
-                  call dump ( (/ aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
-                    & ' L1| FAC |       aj%diag      aj%fnmin         | G |', &
-                    & clean=.true. )
-                end if
+                  if ( index(switches,'sca') /= 0 ) then
+                    call dump ( (/ aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
+                      & ' L1| FAC |       aj%diag      aj%fnmin         | G |', &
+                      & clean=.true. )
+                  end if
               case ( nf_solve ) ! ........................  SOLVE  .....
               ! Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
               ! and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
@@ -750,32 +798,32 @@ contains
 !???            Can't do this because we need to keep the normal equations
 !???            around, in order to subtract Levenberg-Marquardt and
 !???            apriori covariance, in order to compute a posteriori covariance
-                if ( index(switches,'neq') /= 0 ) &
-                  call dump_Linf ( normalEquations%m, &
-                    & 'L1 norms of Normal Equations blocks after Marquardt:', &
-                    & upper=.true. )
-                if ( index(switches,'spa') /= 0 ) &
-                  & call dump_struct ( normalEquations%m, &
-                    & 'Sparseness structure of Normal equations blocks:', &
-                    & upper=.true. )
+                  if ( index(switches,'neq') /= 0 ) &
+                    call dump_Linf ( normalEquations%m, &
+                      & 'L1 norms of Normal Equations blocks after Marquardt:', &
+                      & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( normalEquations%m, &
+                      & 'Sparseness structure of Normal equations blocks:', &
+                      & upper=.true. )
                 call choleskyFactor ( factored, normalEquations )
-                if ( index(switches,'fac') /= 0 ) &
-                  call dump_Linf ( factored%m, &
-                    & 'L1 norms of blocks of factor after Marquardt:', &
-                    & upper=.true. )
-                if ( index(switches,'spa') /= 0 ) &
-                  & call dump_struct ( factored%m, &
-                    & 'Sparseness structure of blocks of factor:', upper=.true. )
-                if ( index(switches,'cho') /= 0 ) then
-                  call copyMatrix ( testCholesky%m, normalEquations%m )
-                  call negate ( testCholesky%m )
-                  call formNormalEquations ( factored%m, testCholesky, &
-                    & update=.true. )
-                  call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
-                    & upper=.true. )
-                  call destroyMatrix ( testCholesky%m )
-                end if
-                ! Solve for "candidate DX" = -(Jacobian)**(-1) * F
+                  if ( index(switches,'fac') /= 0 ) &
+                    call dump_Linf ( factored%m, &
+                      & 'L1 norms of blocks of factor after Marquardt:', &
+                      & upper=.true. )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( factored%m, &
+                      & 'Sparseness structure of blocks of factor:', upper=.true. )
+                  if ( index(switches,'cho') /= 0 ) then
+                    call copyMatrix ( testCholesky%m, normalEquations%m )
+                    call negate ( testCholesky%m )
+                    call formNormalEquations ( factored%m, testCholesky, &
+                      & update=.true. )
+                    call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
+                      & upper=.true. )
+                    call destroyMatrix ( testCholesky%m )
+                  end if
+                ! Solve for "candidate DX" = -(J**T J)**(-1) J**T * F
                 call getVectorFromColumn ( factored%m, n, candidateDX )
                 call solveCholesky ( factored, candidateDX )
                 ! Set AJ%FNMIN as for NWT_FLAG = NF_EVALJ, but taking account
@@ -785,37 +833,37 @@ contains
                 aj%dxn = sqrt(candidateDX .dot. candidateDX) ! L2Norm(dx)
                 aj%gdx = gradient .dot. candidateDX
                 if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
-                if ( index(switches,'dvec') /= 0 ) &
-                  & call dump ( candidateDX, name='CandidateDX' )
-                if ( index(switches,'sca') /= 0 ) then
-                  call dump ( (/ aj%dxn, aj%fnmin, &
-                    & aj%gdx/(aj%dxn*aj%gradn), aj%sq /), &
-                    & '    | DX |      aj%fnmin    ' // &
-                    & 'cos(G, DX)        lambda', clean=.true. )
-                  if ( .not. aj%starting ) then
-                    call output ( ' cos(DX, DXL) = ' )
-                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)', &
-                      & advance='yes' )
-                  ! call output ( ',  DX . DXL = ' )
-                  ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+                  if ( index(switches,'dvec') /= 0 ) &
+                    & call dump ( candidateDX, name='CandidateDX' )
+                  if ( index(switches,'sca') /= 0 ) then
+                    call dump ( (/ aj%dxn, aj%fnmin, &
+                      & aj%gdx/(aj%dxn*aj%gradn), aj%sq /), &
+                      & '    | DX |      aj%fnmin    ' // &
+                      & 'cos(G, DX)        lambda', clean=.true. )
+                    if ( .not. aj%starting ) then
+                      call output ( ' cos(DX, DXL) = ' )
+                      call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)', &
+                        & advance='yes' )
+                    ! call output ( ',  DX . DXL = ' )
+                    ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+                    end if
                   end if
-                end if
               case ( nf_newx ) ! ..........................  NEWX  .....
               ! Set X = X + DX
               !     AJ%AXMAX = MAXVAL(ABS(X)),
               !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
                 if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
                 ! Account for column scaling
+                call copyVector ( dxUnScaled, dx )
                 if ( columnScaling /= l_none ) then
-                  call copyVector ( dxScaled, dx )
-                  ! dxScaled = dxScaled # columnScaleVector:
-                  call multiplyVectors ( dxScaled, columnScaleVector )
+                  ! dxUnScaled = dxUnScaled # columnScaleVector:
+                  call multiply ( dxUnScaled, columnScaleVector )
                 end if
-                call addToVector ( x, dxScaled ) ! x = x + dxScaled
-                if ( index(switches,'dvec') /= 0 ) &
-                  & call dump ( dxScaled, name='dX Scaled' )
-                if ( index(switches,'xvec') /= 0 ) &
-                  & call dump ( x, name='New X' )
+                call addToVector ( x, dxUnScaled ) ! x = x + dxUnScaled
+                  if ( index(switches,'dvec') /= 0 ) &
+                    & call dump ( dxUnScaled, name='dX Unscaled' )
+                  if ( index(switches,'xvec') /= 0 ) &
+                    & call dump ( x, name='New X' )
                 aj%axmax = 0.0
                 aj%big = .false.
                 do j = 1, size(x%quantities)
@@ -823,30 +871,30 @@ contains
                   aj%big = aj%big .or. any( abs(dx%quantities(j)%values) > &
                     & 10.0 * epsilon(aj%axmax) * abs(x%quantities(j)%values) )
                 end do
-                if ( index(switches,'sca') /= 0 ) then
-                  call output ( ' aj%axmax = ' )
-                  call output ( aj%axmax, format='(1pe14.7)' )
-                  if ( .not. aj%starting ) then
-                    call output ( ' cos(DX, DXL) = ' )
-                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)' )
-                  ! call output ( ', DX . DXL = ' )
-                  ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+                  if ( index(switches,'sca') /= 0 ) then
+                    call output ( ' aj%axmax = ' )
+                    call output ( aj%axmax, format='(1pe14.7)' )
+                    if ( .not. aj%starting ) then
+                      call output ( ' cos(DX, DXL) = ' )
+                      call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)' )
+                    ! call output ( ', DX . DXL = ' )
+                    ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+                    end if
+                    call output ( ', aj%big = ' )
+                    call output ( aj%big, advance='yes' )
                   end if
-                  call output ( ', aj%big = ' )
-                  call output ( aj%big, advance='yes' )
-                end if
               case ( nf_gmove ) ! ........................  GMOVE  .....
               ! Set X = "Best X"
               !     DX = AJ%GFAC * "Best Gradient"
                 call copyVector ( x, bestX ) ! x = bestX
                 ! dx = aj%gfac * "Best Gradient":
                 call scaleVector ( bestGradient, aj%gfac, dx )
-                if ( index(switches,'dvec') /= 0 ) &
-                  & call dump ( dx, name='Back to bestX' )
-                if ( index(switches,'sca') /= 0 ) then
-                  call output ( ' aj%gfac = ' )
-                  call output ( aj%gfac, format='(1pe14.7)', advance='yes' )
-                end if
+                  if ( index(switches,'dvec') /= 0 ) &
+                    & call dump ( dx, name='Gradient move from best X' )
+                  if ( index(switches,'sca') /= 0 ) then
+                    call output ( ' aj%gfac = ' )
+                    call output ( aj%gfac, format='(1pe14.7)', advance='yes' )
+                  end if
               case ( nf_best ) ! ..........................  BEST  .....
               ! Set "Best X" = X, "Best Gradient" = Gradient
                 call copyVector ( bestX, x ) ! bestX = x
@@ -859,26 +907,26 @@ contains
                 call subtractFromVector ( dx, candidateDX ) ! dx = dx - candidateDX
                 aj%dxdx = dx .dot. dx
                 if ( aj%dxdx > 0.0 ) aj%dxdxl = dx .dot. candidateDX
-                if ( index(switches,'dvec') /= 0 ) &
-                  & call dump ( dx, name='dx after Aitken' )
-                if ( index(switches,'sca') /= 0 ) then
-                  call output ( ' aj%dxdx = ' )
-                  call output ( aj%dxdx, format='(1pe14.7)' )
-                  call output ( ', cos(DX, DXL) = ' )
-                  call output ( aj%dxdxl / (aj%dxn*aj%dxnl), &
-                    & format='(1pe14.7)', advance='yes' )
-                end if
+                  if ( index(switches,'dvec') /= 0 ) &
+                    & call dump ( dx, name='dx after Aitken' )
+                  if ( index(switches,'sca') /= 0 ) then
+                    call output ( ' aj%dxdx = ' )
+                    call output ( aj%dxdx, format='(1pe14.7)' )
+                    call output ( ', cos(DX, DXL) = ' )
+                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), &
+                      & format='(1pe14.7)', advance='yes' )
+                  end if
               case ( nf_dx ) ! ..............................  DX  .....
                 call copyVector ( dx, candidateDX ) ! dx = candidateDX
               case ( nf_dx_aitken ) ! ................  DX_AITKEN  .....
                 ! dx = aj%cait * candidateDX:
                 call scaleVector ( candidateDX, aj%cait, dx )
-                if ( index(switches,'dvec') /= 0 ) &
-                  & call dump ( dx, name='dx after dx Aitken' )
-                if ( index(switches,'sca') /= 0 ) then
-                  call output ( ' aj%cait = ' )
-                  call output ( aj%cait, format='(1pe14.7)', advance='yes' )
-                end if
+                  if ( index(switches,'dvec') /= 0 ) &
+                    & call dump ( dx, name='dx after dx Aitken' )
+                  if ( index(switches,'sca') /= 0 ) then
+                    call output ( ' aj%cait = ' )
+                    call output ( aj%cait, format='(1pe14.7)', advance='yes' )
+                  end if
               case ( nf_tolx, nf_tolx_best, nf_tolf, nf_too_small ) ! ..
                 ! IF ( NWT_FLAG == NF_TOO_SMALL ) THEN
                 !   Take special action if requested accuracy is critical
@@ -887,10 +935,10 @@ contains
                 ! Convergence to desired solution.  Do whatever you want to
                 ! with the solution.
                 if ( .not. got(f_apriori) .or. .not. diagonal ) then
-                  if ( index(switches,'nwt') /= 0 )&
-                    & call output ( &
-                      & 'Newton iteration terminated because of convergence', &
-                      & advance='yes' )
+                    if ( index(switches,'nwt') /= 0 )&
+                      & call output ( &
+                        & 'Newton iteration terminated because of convergence', &
+                        & advance='yes' )
                   exit
                 end if
                 diagonal = .not. diagonal
@@ -920,8 +968,8 @@ contains
               end if
             end if
             call copyVector ( state, x )
-            if ( index(switches,'svec') /= 0 ) &
-              & call dump ( state, name='Final state' )
+              if ( index(switches,'svec') /= 0 ) &
+                & call dump ( state, name='Final state' )
             ! Clean up the temporaries, so we don't have a memory leak
             call destroyVectorInfo ( bestGradient )
             call destroyVectorInfo ( bestX )
@@ -1014,6 +1062,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.35  2001/06/01 01:02:32  vsnyder
+! Periodic commit.  Not working right yet.
+!
 ! Revision 2.34  2001/05/24 23:28:45  vsnyder
 ! Scale things back to user coordinates at the correct times; numerous output changes
 !
