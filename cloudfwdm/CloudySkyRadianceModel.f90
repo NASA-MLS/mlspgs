@@ -39,7 +39,7 @@ contains
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
              &   NZmodel,                                              &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
-             &   WCin, IPSDin, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
+             &   WCin, IPSDin, ZZT, RE, ISURF, ISWI, I_Saturation, IFOV,   &
              &   Bill_data,                                            &
              &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
@@ -97,9 +97,20 @@ contains
 !     ZT         (NT)     -> Tangent Pressure (hPa).                         C
 !     RE                  -> Radius of Earth (m).                            C
 !     ISURF               -> Surface Types (Default: 0).                     C
-!     ISWI                -> Switch for Sensitivity Calculation (Default:0). C
+!     ISWI                -> Switch for Sensitivity Calculation. C
 !     ( overridden if ALWAYSSKIPSENSITIVITY )
-!     ICON                -> Cloud Control Switch (Default: 2).              C
+!     ICON                -> Cloud Control Switch.              C
+!           ICON = 0                if WCin==0 and i_saturation > 0
+!           ICON = I_Saturation     otherwise
+!           
+! Different cases for clear and cloudy sky combinations:
+!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
+!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
+!		ICON=-3 is for clear-sky radiance lower limit from 110% and 0%RHi
+! 	   ICON=0 is Clear-Sky only 
+!		ICON=1 is default for 100%RH inside cloud ONLY
+!		ICON=2 is for 100%RH below the cloud top or below 100mb
+!		ICON=3 is for near-side cloud only
 !     -----------------------------------------------                        C
 !                                                                            C
 !     >>> OUTPUT PARAMETERS <<<                                              C
@@ -172,23 +183,14 @@ contains
                                                ! 2 = SEA 
   
       INTEGER, intent(in) :: ISWI              ! SENSITIVITY SWITCH
-                                               ! 0 = multi IWC samples
+                                               ! 0 = no sensitity calculation
+                                               ! 10 = multi IWC samples
                                                ! 1 = High Tngt-ht clouds
                                                ! 2 = Low Tngt-ht clouds
                                                ! 
 
-      INTEGER, intent(in) :: ICON              ! CONTROL SWITCH 
+      INTEGER, intent(in) :: I_Saturation              ! CONTROL SWITCH 
 
-!-----------------------------------------------------------------------------
-! Different clear and cloudy sky combinations:
-!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
-!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
-!		ICON=-3 is for clear-sky radiance lower limit from 110% and 0%RHi
-! 	   ICON=0 is Clear-Sky only 
-!		ICON=1 is default for 100%RH inside cloud ONLY
-!		ICON=2 is for 100%RH below the cloud top or below 100mb
-!		ICON=3 is for near-side cloud only
-!-----------------------------------------------------------------------------
 
       LOGICAL, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
                                                ! False = OFF
@@ -234,6 +236,7 @@ contains
 !     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 !-------------------------------
 
+      INTEGER :: ICON
       INTEGER :: MULTI
       integer, parameter :: Nsub=5             !Below surface tangent grids
       
@@ -412,7 +415,12 @@ contains
       RC_TMP=0.0_r8
       RC_tot=0.0_r8
       chk_cld = 0._r8
-         
+
+! Deside what clear-cloudy sky configuration is to use
+      ICON = I_Saturation
+      !Save time if there is no cloud in cloudy-sky requests
+      if(maxval(WCin) == 0 .and. I_Saturation > 0) ICON = 0
+!print*,maxval(WCin),icon
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
@@ -421,9 +429,8 @@ contains
 !=========================================================================
 
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
-           &           WCin,IPSDin,                                 &
-           &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD)
-!          &           ZT,ZZT,NT)
+           &           WCin,IPSDin,YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD)
+
  
 !     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
@@ -755,7 +762,7 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
-         IF(ICON .GT. 0) THEN
+         IF(ICON .GT. 0 .and. iswi .ne. 0) THEN
 
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
@@ -767,6 +774,7 @@ contains
                IF(DTcir(I,IFR) .LT. 0. .AND. DTcir(I,IFR) .GT. -3.) &
                & SS(I,IFR) = -50.
                ENDDO
+!print*,ifr,frequency(ifr),DTcir(1,IFR),ss(1,ifr)
          ENDIF
 
        ENDIF
@@ -791,6 +799,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.56  2003/04/03 22:37:15  dwu
+! fix a couple of bugs plus some cleanups
+!
 ! Revision 1.55  2003/04/02 21:47:33  dwu
 ! initialize RC_TMP inside layer loop
 !
