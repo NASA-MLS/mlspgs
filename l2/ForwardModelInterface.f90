@@ -990,7 +990,7 @@ contains
           call convolve_all(ptan%values(:,maf),TFMI%atmospheric,FMI%n_sps,   &
             &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,                   &
             &     FMI%tan_press,ptg_angles(:,maf),tan_temp(:,maf), &
-            &     dx_dt, d2x_dxdt,FMI%band,center_angle,FMI%fft_pts,          &
+            &     dx_dt, d2x_dxdt,FMI%band,si,center_angle,FMI%fft_pts,   &
             &     Radiances(:,ch),k_temp((1),:,:,:),k_atmos((1),:,:,:,:), &
             &     k_spect_dw((1),:,:,:,:),k_spect_dn((1),:,:,:,:),    &
             &     k_spect_dnu((1),:,:,:,:),FMI%spect_atmos,no_tan_hts,  &
@@ -1253,6 +1253,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.41  2001/03/28 00:39:15  zvi
+! Fixing up the convolution call
+!
 ! Revision 2.40  2001/03/27 00:21:18  livesey
 ! Got frequency averaging working.
 !
