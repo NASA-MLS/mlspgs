@@ -10,207 +10,207 @@
 ; -----------------------------------------------------  MLSSignals  -----
 BEGIN MLSSignals
 
-    ;; Modules
-    SC: Module,/spaceCraft
-    GHz: Module
-    THz: Module
+  ;; Modules
+  SC: Module,/spaceCraft
+  GHz: Module
+  THz: Module
 
-    ;; Radiometers, with their nominal local oscillator frequencies:
-    R1A: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
-    R1B: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
-    R2:  radiometer, suffix= "190", module= GHz, lo = 191.9e3 GHz
-    R3:  radiometer, suffix= "240", module= GHz, lo = 239.66e3 GHz
-    R4:  radiometer, suffix= "640", module= GHz, lo = 642.87e3 GHz
-    R5H: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
-    R5V: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
+  ;; Radiometers, with their nominal local oscillator frequencies:
+  R1A: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
+  R1B: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
+  R2:  radiometer, suffix= "190", module= GHz, lo = 191.9e3 GHz
+  R3:  radiometer, suffix= "240", module= GHz, lo = 239.66e3 GHz
+  R4:  radiometer, suffix= "640", module= GHz, lo = 642.87e3 GHz
+  R5H: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
+  R5V: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
 
-    ;; Spectrometer types
-    ;; 25 channel filterbanks
-    FB25: spectrometerType, first= 1,  $
-      frequencies= [ $
-                     -575.0,  -479.0,  -383.0,  -303.0, -239.0, -175.0, -119.0, $
-                     -79.0,   -51.0,   -31.0,   -17.0,  -7.0,   0.0,    7.0,    $
-                     17.0,    31.0,    51.0,    79.0,   119.0,  175.0,  239.0,  $
-                     303.0,   383.0,   479.0,    575.0], $
-      widths= [ $
-                96.0,   96.0,   96.0,   64.0,   64.0,   64.0,   48.0,  $
-                32.0,   24.0,   16.0,   12.0,   8.0,    6.0,    8.0,   $
-                12.0,   16.0,   24.0,   32.0,   48.0,   64.0,   64.0,  $
-                64.0,   96.0,   96.0,   96.0]
-    
-    ;; Digital autocorrelators:
-    DACS: spectrometerType, first= 0, start= 0.0, step= 0.2, width= 0.2, last= 128
+  ;; Spectrometer types
+  ;; 25 channel filterbanks
+  FB25: spectrometerType, first= 1,  $
+    frequencies= [ $
+                   -575.0,  -479.0,  -383.0,  -303.0, -239.0, -175.0, -119.0, $
+                   -79.0,   -51.0,   -31.0,   -17.0,  -7.0,   0.0,    7.0,    $
+                   17.0,    31.0,    51.0,    79.0,   119.0,  175.0,  239.0,  $
+                   303.0,   383.0,   479.0,    575.0], $
+    widths= [ $
+              96.0,   96.0,   96.0,   64.0,   64.0,   64.0,   48.0,  $
+              32.0,   24.0,   16.0,   12.0,   8.0,    6.0,    8.0,   $
+              12.0,   16.0,   24.0,   32.0,   48.0,   64.0,   64.0,  $
+              64.0,   96.0,   96.0,   96.0]
+  
+  ;; Digital autocorrelators:
+  DACS: spectrometerType, first= 0, start= 0.0, step= 0.2, width= 0.2, last= 128
 
-    ;; Mid-band:
-    MB11: spectrometerType, first= 1, $
-      frequencies= [ $
-                     -79.0, -51.0, -31.0, -17.0, -7.0, 0.0, 7.0, $
-                      17.0,  31.0,  51.0,  79.0], $
-      widths= [ 32.0, 24.0, 16.0, 12.0, 8.0, 6.0, 8.0, $
-                12.0, 16.0, 24.0, 32.0]
-    
-    ;; Wide filters are a special case, we defer the definition of their
-    ;; frequencies until the specific signals.
-    WF4: spectrometerType, deferred=true
+  ;; Mid-band:
+  MB11: spectrometerType, first= 1, $
+    frequencies= [ $
+                   -79.0, -51.0, -31.0, -17.0, -7.0, 0.0, 7.0, $
+                    17.0,  31.0,  51.0,  79.0], $
+    widths= [ 32.0, 24.0, 16.0, 12.0, 8.0, 6.0, 8.0, $
+              12.0, 16.0, 24.0, 32.0]
+  
+  ;; Wide filters are a special case, we defer the definition of their
+  ;; frequencies until the specific signals.
+  WF4: spectrometerType, deferred=true
 
-    ;; Bands
+  ;; Bands
 
-    ;; FB25s
-    B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
-      centerfrequency= 8.047e3
-    
-    B2F:  band, suffix= "H2O",  radiometer=R2 , spectrometerType= FB25,  $
-      centerfrequency= 8.5858e3
-    B3F:  band, suffix= "N2O",  radiometer=R2 , spectrometerType= FB25,  $
-      centerfrequency= 9.0798e3
-    B4F:  band, suffix= "HNO3", radiometer=R2 , spectrometerType= FB25,  $
-      centerfrequency= 10.3013e3
-    B5F:  band, suffix= "CLO",  radiometer=R2 , spectrometerType= FB25,  $
-      centerfrequency= 12.4566e3
-    B6F:  band, suffix= "O3",   radiometer=R2 , spectrometerType= FB25,  $
-      centerfrequency= 14.2367e3
+  ;; FB25s
+  B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
+    centerfrequency= 8.047e3
+  
+  B2F:  band, suffix= "H2O",  radiometer=R2 , spectrometerType= FB25,  $
+    centerfrequency= 8.5858e3
+  B3F:  band, suffix= "N2O",  radiometer=R2 , spectrometerType= FB25,  $
+    centerfrequency= 9.0798e3
+  B4F:  band, suffix= "HNO3", radiometer=R2 , spectrometerType= FB25,  $
+    centerfrequency= 10.3013e3
+  B5F:  band, suffix= "CLO",  radiometer=R2 , spectrometerType= FB25,  $
+    centerfrequency= 12.4566e3
+  B6F:  band, suffix= "O3",   radiometer=R2 , spectrometerType= FB25,  $
+    centerfrequency= 14.2367e3
 
-    B7F:  band, suffix= "O3",   radiometer=R3 , spectrometerType= FB25,  $
-      centerfrequency= 3.9449e3
-    B8F:  band, suffix= "PT",   radiometer=R3 , spectrometerType= FB25,  $
-      centerfrequency= 5.7085e3
-    B9F:  band, suffix= "CO",   radiometer=R3 , spectrometerType= FB25,  $
-      centerfrequency= 9.1168e3
+  B7F:  band, suffix= "O3",   radiometer=R3 , spectrometerType= FB25,  $
+    centerfrequency= 3.9449e3
+  B8F:  band, suffix= "PT",   radiometer=R3 , spectrometerType= FB25,  $
+    centerfrequency= 5.7085e3
+  B9F:  band, suffix= "CO",   radiometer=R3 , spectrometerType= FB25,  $
+    centerfrequency= 9.1168e3
 
-    B10F: band, suffix= "CLO",  radiometer=R4 , spectrometerType= FB25,  $
-      centerfrequency= 6.5959e3
-    B11F: band, suffix= "BRO",  radiometer=R4 , spectrometerType= FB25,  $
-      centerfrequency= 7.3237e3
-    B12F: band, suffix= "N2O",  radiometer=R4 , spectrometerType= FB25,  $
-      centerfrequency= 9.9785e3
-    B13F: band, suffix= "HCL",  radiometer=R4 , spectrometerType= FB25,  $
-      centerfrequency= 16.9373e3
-    B14F: band, suffix= "O3",   radiometer=R4 , spectrometerType= FB25,  $
-      centerfrequency= 17.4844e3
+  B10F: band, suffix= "CLO",  radiometer=R4 , spectrometerType= FB25,  $
+    centerfrequency= 6.5959e3
+  B11F: band, suffix= "BRO",  radiometer=R4 , spectrometerType= FB25,  $
+    centerfrequency= 7.3237e3
+  B12F: band, suffix= "N2O",  radiometer=R4 , spectrometerType= FB25,  $
+    centerfrequency= 9.9785e3
+  B13F: band, suffix= "HCL",  radiometer=R4 , spectrometerType= FB25,  $
+    centerfrequency= 16.9373e3
+  B14F: band, suffix= "O3",   radiometer=R4 , spectrometerType= FB25,  $
+    centerfrequency= 17.4844e3
 
-    B15F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-      centerfrequency= 8.4081e3
-    B16F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-      centerfrequency= 12.7759e3
-    B17F: band, suffix= "PT",   radiometer=R5H, spectrometerType= FB25,  $
-      centerfrequency= 20.4012e3
-    B18F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-      centerfrequency= 8.4081e3
-    B19F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-      centerfrequency= 12.7749e3
-    B20F: band, suffix= "PT",   radiometer=R5V, spectrometerType= FB25,  $
-      centerfrequency= 20.4012e3
+  B15F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
+    centerfrequency= 8.4081e3
+  B16F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
+    centerfrequency= 12.7759e3
+  B17F: band, suffix= "PT",   radiometer=R5H, spectrometerType= FB25,  $
+    centerfrequency= 20.4012e3
+  B18F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
+    centerfrequency= 8.4081e3
+  B19F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
+    centerfrequency= 12.7749e3
+  B20F: band, suffix= "PT",   radiometer=R5V, spectrometerType= FB25,  $
+    centerfrequency= 20.4012e3
 
-    B21F: band, suffix= "PT",   radiometer=R1B, spectrometerType= FB25,  $
-      centerfrequency= 8.047e3
+  B21F: band, suffix= "PT",   radiometer=R1B, spectrometerType= FB25,  $
+    centerfrequency= 8.047e3
 
-    ;; DACs
-    B22D: band, suffix= "PT",   radiometer=R1A, spectrometerType= DACS,  $
-      centerfrequency= 8.047e3
-    B23D: band, suffix= "H2O",  radiometer=R2 , spectrometerType= DACS,  $
-      centerfrequency= 8.5858e3
-    B24D: band, suffix= "O3",   radiometer=R3 , spectrometerType= DACS,  $
-      centerfrequency= 3.9449e3
-    B25D: band, suffix= "CO",   radiometer=R4 , spectrometerType= DACS,  $
-      centerfrequency= 9.1168e3
-    B26D: band, suffix= "PT",   radiometer=R1B, spectrometerType= DACS,  $
-      centerfrequency= 8.047e3
+  ;; DACs
+  B22D: band, suffix= "PT",   radiometer=R1A, spectrometerType= DACS,  $
+    centerfrequency= 8.047e3
+  B23D: band, suffix= "H2O",  radiometer=R2 , spectrometerType= DACS,  $
+    centerfrequency= 8.5858e3
+  B24D: band, suffix= "O3",   radiometer=R3 , spectrometerType= DACS,  $
+    centerfrequency= 3.9449e3
+  B25D: band, suffix= "CO",   radiometer=R4 , spectrometerType= DACS,  $
+    centerfrequency= 9.1168e3
+  B26D: band, suffix= "PT",   radiometer=R1B, spectrometerType= DACS,  $
+    centerfrequency= 8.047e3
 
-    ;; MB11s
-    B27M: band, suffix= "HCN",  radiometer=R2 , spectrometerType= MB11,  $
-      centerfrequency= 14.6348e3
-    B28M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-      centerfrequency= 6.8462e3
-    B29M: band, suffix= "HOCL", radiometer=R4 , spectrometerType= MB11,  $
-      centerfrequency= 6.9856e3
-    B30M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-      centerfrequency= 17.6306e3
-    B31M: band, suffix= "BRO",  radiometer=R4 , spectrometerType= MB11,  $
-      centerfrequency= 18.0879e3
+  ;; MB11s
+  B27M: band, suffix= "HCN",  radiometer=R2 , spectrometerType= MB11,  $
+    centerfrequency= 14.6348e3
+  B28M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
+    centerfrequency= 6.8462e3
+  B29M: band, suffix= "HOCL", radiometer=R4 , spectrometerType= MB11,  $
+    centerfrequency= 6.9856e3
+  B30M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
+    centerfrequency= 17.6306e3
+  B31M: band, suffix= "BRO",  radiometer=R4 , spectrometerType= MB11,  $
+    centerfrequency= 18.0879e3
 
-    ;; Wide filters
-    B32W: band, suffix= "PT", radiometer= R1A, spectrometerType=WF4
-    B33W: band, suffix= "O3", radiometer= R3,  spectrometerType=WF4
-    B34W: band, suffix= "PT", radiometer= R1B, spectrometerType=WF4
+  ;; Wide filters
+  B32W: band, suffix= "PT", radiometer= R1A, spectrometerType=WF4
+  B33W: band, suffix= "O3", radiometer= R3,  spectrometerType=WF4
+  B34W: band, suffix= "PT", radiometer= R1B, spectrometerType=WF4
 
-    ;; Now the list of the signals; first the nominal measurement set
-    ;; 25 channel filter bands, by radiometer
-    sig_band1: signal,  band=B1F, switch=0, spectrometer=1;;   PT
+  ;; Now the list of the signals; first the nominal measurement set
+  ;; 25 channel filter bands, by radiometer
+  sig_band1: signal,  band=B1F,  sideband=upper, switch=0, spectrometer=1;;  PT
 
-    sig_band2: signal,  band=B2F,  switch=0, spectrometer=2;;  H2O
-    sig_band3: signal,  band=B3F,  switch=2, spectrometer=3;;  N2O
-    sig_band4: signal,  band=B4F,  switch=0, spectrometer=4;;  HNO3
-    sig_band5: signal,  band=B5F,  switch=0, spectrometer=5;;  CLO
-    sig_band6: signal,  band=B6F,  switch=0, spectrometer=6;;  O3
-    
-    sig_band7: signal,  band=B7F,  switch=0, spectrometer=7;;  O3
-    sig_band8: signal,  band=B8F,  switch=0, spectrometer=8;;  PT
-    sig_band9: signal,  band=B9F,  switch=0, spectrometer=9;;  CO
-    
-    sig_band10: signal, band=B10F, switch=0, spectrometer=10;; CLO
-    sig_band11: signal, band=B11F, switch=0, spectrometer=11;; BRO
-    sig_band12: signal, band=B12F, switch=4, spectrometer=12;; N2O
-    sig_band13: signal, band=B13F, switch=0, spectrometer=13;; HCL
-    sig_band14: signal, band=B14F, switch=0, spectrometer=14;; O3
-    
-    sig_band15: signal, band=B15F, switch=5, spectrometer=15;; OH
-    sig_band16: signal, band=B16F, switch=0, spectrometer=16;; OH
-    sig_band17: signal, band=B17F, switch=0, spectrometer=17;; PT
-    sig_band18: signal, band=B18F, switch=0, spectrometer=18;; OH
-    sig_band19: signal, band=B19F, switch=0, spectrometer=19;; OH
+  sig_band2: signal,  band=B2F,  sideband=lower, switch=0, spectrometer=2;;  H2O
+  sig_band3: signal,  band=B3F,  sideband=upper, switch=2, spectrometer=3;;  N2O
+  sig_band4: signal,  band=B4F,  sideband=lower, switch=0, spectrometer=4;;  HNO3
+  sig_band5: signal,  band=B5F,  sideband=upper, switch=0, spectrometer=5;;  CLO
+  sig_band6: signal,  band=B6F,  sideband=upper, switch=0, spectrometer=6;;  O3
+  
+  sig_band7: signal,  band=B7F,  sideband=upper, switch=0, spectrometer=7;;  O3
+  sig_band8: signal,  band=B8F,  sideband=upper, switch=0, spectrometer=8;;  PT
+  sig_band9: signal,  band=B9F,  sideband=lower, switch=0, spectrometer=9;;  CO
+  
+  sig_band10: signal, band=B10F, sideband=upper, switch=0, spectrometer=10;; CLO
+  sig_band11: signal, band=B11F, sideband=upper, switch=0, spectrometer=11;; BRO
+  sig_band12: signal, band=B12F, sideband=upper, switch=4, spectrometer=12;; N2O
+  sig_band13: signal, band=B13F, sideband=lower, switch=0, spectrometer=13;; HCL
+  sig_band14: signal, band=B14F, sideband=upper, switch=0, spectrometer=14;; O3
+  
+  sig_band15: signal, band=B15F, sideband=lower, switch=5, spectrometer=15;; OH
+  sig_band16: signal, band=B16F, sideband=lower, switch=0, spectrometer=16;; OH
+  sig_band17: signal, band=B17F, sideband=lower, switch=0, spectrometer=17;; PT
+  sig_band18: signal, band=B18F, sideband=lower, switch=0, spectrometer=18;; OH
+  sig_band19: signal, band=B19F, sideband=lower, switch=0, spectrometer=19;; OH
 
-    ;; Digital autocorrelators (DACS), by radiometer
-    sig_band22: signal, band=B22D, switch=0, spectrometer=4;;  PT
-    sig_band23: signal, band=B23D, switch=0, spectrometer=2;;  H2O
-    sig_band24: signal, band=B24D, switch=0, spectrometer=3;;  O3
-    sig_band25: signal, band=B25D, switch=1, spectrometer=1;;  CO
+  ;; Digital autocorrelators (DACS), by radiometer
+  sig_band22: signal, band=B22D, sideband=upper, switch=0, spectrometer=4;;  PT
+  sig_band23: signal, band=B23D, sideband=lower, switch=0, spectrometer=2;;  H2O
+  sig_band24: signal, band=B24D, sideband=upper, switch=0, spectrometer=3;;  O3
+  sig_band25: signal, band=B25D, sideband=lower, switch=1, spectrometer=1;;  CO
 
-    ;; Mid band 11 spectrometer filter banks, by radiometer
-    sig_band27: signal, band=B27M, switch=0, spectrometer=1;;  HCN
-    sig_band28: signal, band=B28M, switch=0, spectrometer=2;;  HO2
-    sig_band29: signal, band=B29M, switch=0, spectrometer=3;;  HOCL
-    sig_band30: signal, band=B30M, switch=0, spectrometer=4;;  HO2
-    sig_band31: signal, band=B31M, switch=0, spectrometer=5;;  BRO
+  ;; Mid band 11 spectrometer filter banks, by radiometer
+  sig_band27: signal, band=B27M, sideband=lower, switch=0, spectrometer=1;;  HCN
+  sig_band28: signal, band=B28M, sideband=upper, switch=0, spectrometer=2;;  HO2
+  sig_band29: signal, band=B29M, sideband=lower, switch=0, spectrometer=3;;  HOCL
+  sig_band30: signal, band=B30M, sideband=upper, switch=0, spectrometer=4;;  HO2
+  sig_band31: signal, band=B31M, sideband=lower, switch=0, spectrometer=5;;  BRO
 
-    ;; Wide filters for the tropospheric measurements
-    sig_band32: signal, band=B32W, switch=0, spectrometer=1, $
-      frequencies= [4.8e3, 6.3e3, 9.8e3, 11.5e3] , $
-      widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3] ;;  PT
-    sig_band33: signal, band=B33W, switch=0,  spectrometer=2, $
-      frequencies= [3.0e3, 4.8e3, 7.2e3, 7.8e3] ,  $
-      widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3]
+  ;; Wide filters for the tropospheric measurements
+  sig_band32: signal, band=B32W, sideband=upper, switch=0, spectrometer=1, $
+    frequencies= [4.8e3, 6.3e3, 9.8e3, 11.5e3] , $
+    widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3] ;;  PT
+  sig_band33: signal, band=B33W, sideband=lower, switch=0,  spectrometer=2, $
+    frequencies= [3.0e3, 4.8e3, 7.2e3, 7.8e3] ,  $
+    widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3]
 
-    ;; Now the paths that are not nominally active
-    ;; 25 spectrometer filterbanks, by radiometer
-    sig_band1alt:  signal, band=B1F,  switch=3, spectrometer=8;;  PT
-    sig_band21:    signal, band=B21F, switch=4, spectrometer=12;; PT
-    sig_band21alt: signal, band=B21F, switch=3, spectrometer=8;;  PT
+  ;; Now the paths that are not nominally active
+  ;; 25 spectrometer filterbanks, by radiometer
+  sig_band1alt:  signal, band=B1F,  sideband=upper, switch=3, spectrometer=8;;  PT
+  sig_band21:    signal, band=B21F, sideband=upper, switch=4, spectrometer=12;; PT
+  sig_band21alt: signal, band=B21F, sideband=upper, switch=3, spectrometer=8;;  PT
 
-    sig_band2alt: signal,  band=B2F,  switch=2, spectrometer=3;;  H2O
-    sig_band4alt: signal,  band=B4F,  switch=2, spectrometer=3;;  HNO3
-    sig_band5alt: signal,  band=B5F,  switch=2, spectrometer=3;;  CLO
+  sig_band2alt: signal,  band=B2F,  sideband=lower, switch=2, spectrometer=3;;  H2O
+  sig_band4alt: signal,  band=B4F,  sideband=lower, switch=2, spectrometer=3;;  HNO3
+  sig_band5alt: signal,  band=B5F,  sideband=upper, switch=2, spectrometer=3;;  CLO
 
-    sig_band7alt: signal,  band=B7F,  switch=3, spectrometer=8;;  O3
-    sig_band8alt: signal,  band=B8F,  switch=2, spectrometer=8;;  PT
-    sig_band9alt: signal,  band=B9F,  switch=3, spectrometer=8;;  CO
-    
-    sig_band13alt: signal, band=B13F, switch=4, spectrometer=12;; HCL
-    sig_band14alt: signal, band=B14F, switch=4, spectrometer=12;; O3
+  sig_band7alt: signal,  band=B7F,  sideband=upper, switch=3, spectrometer=8;;  O3
+  sig_band8alt: signal,  band=B8F,  sideband=upper, switch=2, spectrometer=8;;  PT
+  sig_band9alt: signal,  band=B9F,  sideband=lower, switch=3, spectrometer=8;;  CO
+  
+  sig_band13alt: signal, band=B13F, sideband=lower, switch=4, spectrometer=12;; HCL
+  sig_band14alt: signal, band=B14F, sideband=upper, switch=4, spectrometer=12;; O3
 
-    sig_band16alt: signal, band=B16F, switch=5, spectrometer=15;; OH
-    sig_band17alt: signal, band=B17F, switch=5, spectrometer=15;; PT
-    sig_band18alt: signal, band=B18F, switch=5, spectrometer=15;; OH
-    sig_band19alt: signal, band=B19F, switch=5, spectrometer=15;; OH
-    sig_band20:    signal, band=B20F, switch=3, spectrometer=8;;  PT
-    sig_band20alt: signal, band=B20F, switch=5, spectrometer=15;; PT
+  sig_band16alt: signal, band=B16F, sideband=lower, switch=5, spectrometer=15;; OH
+  sig_band17alt: signal, band=B17F, sideband=lower, switch=5, spectrometer=15;; PT
+  sig_band18alt: signal, band=B18F, sideband=lower, switch=5, spectrometer=15;; OH
+  sig_band19alt: signal, band=B19F, sideband=lower, switch=5, spectrometer=15;; OH
+  sig_band20:    signal, band=B20F, sideband=lower, switch=3, spectrometer=8;;  PT
+  sig_band20alt: signal, band=B20F, sideband=lower, switch=5, spectrometer=15;; PT
 
-    ;; Digital autocorrelators (DACS)
-    sig_band26: signal, band=B26D, switch=1, spectrometer=1;;  PT
+  ;; Digital autocorrelators (DACS)
+  sig_band26: signal, band=B26D, sideband=lower, switch=1, spectrometer=1;;  PT
 
-    ;; Wide filters for the tropospheric measurements
-    sig_band34: signal, band=B34W, switch=0,  spectrometer=3, $
-      frequencies= [4.8e3, 6.3e3, 9.8e3, 11.5e3] , $
-      widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3] ;;  PT
+  ;; Wide filters for the tropospheric measurements
+  sig_band34: signal, band=B34W, sideband=upper, switch=0,  spectrometer=3, $
+    frequencies= [4.8e3, 6.3e3, 9.8e3, 11.5e3] , $
+    widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3] ;;  PT
 
 END MLSSignals
 
@@ -361,6 +361,7 @@ END Fill
 ; -------------------------------------------------------  Retrieve  -----
 BEGIN Retrieve
 
+  time
   sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance
 
 END Retrieve
@@ -393,6 +394,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.6  2001/03/16 02:23:03  vsnyder
+; Add 'sideband' field to 'switch' specs
+;
 ; Revision 2.5  2001/03/13 00:23:42  zvi
 ; Correction to no_tan_hts for hydrostatic_model repeating calls
 ;
