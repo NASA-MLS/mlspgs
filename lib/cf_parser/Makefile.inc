@@ -1,5 +1,9 @@
 # $Id$
 
+# Notice the conspicuous absence of init_tables_module.o in the following
+# list.  It is used by the test harness and in other applications of the
+# library, but is not part of the library.
+
 OBJLIB = declaration_table.o  error_handler.o expr_m.o        hash.o \
          io_stuff.o           lexer_core.o    lexer_m.o       machine.o \
          output_m.o           parser.o        string_table.o  symbol_table.o \
@@ -83,7 +87,7 @@ libCF.a: $(OBJLIB)
 	ar ru libCF.a $(OBJLIB)
 
 clean:
-	rm -f *.o *.a *.mod *.g90 $S/*.g90 test
+	rm -f *.o *.a *.mod *.g90 $S/*.g90 test out.test
 
 tar:
 	rm -f parser.tgz
@@ -118,6 +122,13 @@ out.test: test $S/in.test
 	./test -a <$S/in.test >out.test
 
 # $Log$
+# Revision 1.4  2000/07/28 18:30:18  vsnyder
+# Added a comment to make it clear that init_tables_module is not part
+# of the library.
+#
+# Revision 1.3  2000/07/12 17:51:27  vsnyder
+# Added some more stuff to 'clean:'
+#
 # Revision 1.2  2000/07/06 18:03:17  vsnyder
 # Clean up -- remove unused options and library searches
 #

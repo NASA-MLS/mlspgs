@@ -95,3 +95,6 @@ program TEST
 end program TEST
 
 ! $Log$
+! Revision 1.1  2000/07/06 01:43:12  vsnyder
+! Initial check-in
+!

@@ -111,6 +111,9 @@ VGrid.dbg.o: MLSCommon.dbg.o VerticalCoordinate.dbg.o MLSStrings.dbg.o \
 	 MLSCF.dbg.o
 
 # $Log$
+# Revision 2.0  2000/09/05 17:41:06  dcuddy
+# Change revision to 2.0
+#
 # Revision 1.1  2000/09/02 01:51:18  vsnyder
 # Initial entry
 #

@@ -104,3 +104,6 @@ contains
 end module SWAPI_INTEGER
 
 ! $Log$
+! Revision 1.1  2000/09/02 01:56:36  vsnyder
+! Initial code
+!

@@ -21,3 +21,6 @@ machine.o: machine.f90
 include ../Makefile.inc
 
 # $Log$
+# Revision 1.2  2000/07/06 18:04:05  vsnyder
+# Insert CVS "variables"
+#

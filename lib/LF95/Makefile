@@ -15,6 +15,9 @@ include ../Makefile.inc
 
 #
 # $Log$
+# Revision 1.1  2000/09/02 01:50:26  vsnyder
+# Initial installation
+#
 # Revision 1.9  2000/02/23 20:34:16  perun
 # Changed .o_debug to .dbg.o for SunOS
 #

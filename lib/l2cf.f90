@@ -105,16 +105,3 @@ END TYPE l2cf
 
 end module l2cf
 
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,4 +8,7 @@ mlslib_debug:
 	cd ${MLSPGS_LIB_PATH} ; ${MAKE} mlslib.a_debug
 #
 # $Log$
+# Revision 1.1  1999/12/04 00:27:07  livesey
+# First version
+#
 #
