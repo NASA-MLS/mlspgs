@@ -19,6 +19,7 @@ MODULE L3DMData
        & HDFE_NOMERGE, INVENTORYMETADATA
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, & 
        & MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN, MLSMSG_ALLOCATE, MLSMSG_WARNING
+  USE MLSStrings, only: utc_to_yyyymmdd
   IMPLICIT NONE
   private
   PUBLIC :: L3DMData_T, ConvertDeg2DMS, OutputGrids, &
@@ -1439,6 +1440,8 @@ CONTAINS
       
       CHARACTER (LEN=1), POINTER :: anText(:)
 
+      CHARACTER (LEN=8) :: rangeDate 
+
       INTEGER, INTENT(IN), OPTIONAL :: hdfVersion
       
       ! Parameters
@@ -1821,6 +1824,7 @@ CONTAINS
          ENDIF
          
          attrName = 'RangeEndingTime'
+         sval = '23:59:59.999999'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -1862,7 +1866,17 @@ CONTAINS
   
          CALL WritePCF2Hdr(files%name(i), anText, & 
               & hdfVersion=MyHDFVersion, fileType=fileType)
-                  
+        
+	! Set global attributes 
+        rangeDate = files%date(i)
+        GlobalAttributes%StartUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
+	  & // 'T00:00:00.000000Z'
+        GlobalAttributes%EndUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
+	  & // 'T23:59:59.999999Z'
+        call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+          & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+          & GlobalAttributes%GranuleDay)
+          
         ! Write global attributes
         if ( MyHDFVersion == HDFVERSION_5 ) then
           sdid = he5_gdopen (files%name(i), HE5F_ACC_RDWR)
@@ -2219,6 +2233,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.33  2004/01/07 21:43:18  cvuu
+!# version 1.4 commit
+!#
 !# Revision 1.32  2003/09/15 18:29:41  cvuu
 !# Add OrbitNumber and OrbitPeriod to global attribute
 !#
