@@ -1,0 +1,26 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! Include file for TIME_M.
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
+  real(rk), intent(out) :: T    ! Time, arbitrary units for CPU time,
+                                ! seconds since midnight for wall-clock time.
+
+  integer :: VALUES(8)          ! For DATE_AND_TIME
+
+  if ( use_wall_clock ) then
+    call date_and_time ( values=values )
+    t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+  else
+    call cpu_time ( t )
+  end if
+
+!$Log$
+!Revision 2.1  2001/11/09 22:45:30  vsnyder
+!Initial commit
+!
