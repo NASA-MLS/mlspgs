@@ -14,7 +14,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSignals_m, only: GETMODULENAME
+  use MLSSignals_m, only: GETMODULENAME, MODULES
   use MLSStrings, only: LINEARSEARCHSTRINGARRAY
   use Output_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
@@ -252,22 +252,30 @@ contains ! =====     Public Procedures     =============================
     do i = 1, size(l2aux)
       call output ( 'L2AUX Data: ')
       call display_string ( l2aux(i)%name )
-      call output ( 'INSTRUMENTMODULE: ')
-      call display_string ( l2aux(i)%name )
+      call output ( '    instrumentmodule: ')
+!      call display_string ( l2aux(i)%instrumentmodule )
+      call display_string ( modules(l2aux(i)%instrumentmodule)%name, advance='yes' ) 
+      call output ( '    (its index): ')
+      call output ( l2aux(i)%instrumentmodule, advance='no')
+      call output ( ' ', advance='yes')
       call output ( '  Minor Frame? (t/f): ')
-      call output ( l2aux(i)%minorframe, advance='yes')
+      call output ( l2aux(i)%minorframe, advance='no')
       call output ( '  Major Frame? (t/f): ')
       call output ( l2aux(i)%majorframe, advance='yes')
       do dim=1, l2auxrank
         call output ( '  dimension: ')
         call output ( dim )
         call output ( '           ')
-        call output ( '  nValues: ')
-        call output ( l2aux(i)%dimensions(dim)%novalues, 3, advance='no')
-        call output ( '           ')
-        call output ( '  dimension family: ')
-        call output ( l2aux(i)%dimensions(dim)%dimensionfamily, 3, advance='yes')
-        call dump ( l2aux(i)%dimensions(dim)%values, 'dim values:' )
+        if ( associated(l2aux(i)%dimensions(dim)%values) ) then
+          call output ( '  nValues: ')
+          call output ( l2aux(i)%dimensions(dim)%novalues, 3, advance='no')
+          call output ( '           ')
+          call output ( '  dimension family: ')
+          call output ( l2aux(i)%dimensions(dim)%dimensionfamily, 3, advance='yes')
+          call dump ( l2aux(i)%dimensions(dim)%values, 'dim values:' )
+         else
+        call output ( ' is not associated', advance='yes')
+         endif
       enddo
       call dump ( l2aux(i)%values, 'values:' )
  
@@ -538,6 +546,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.20  2001/10/08 23:41:27  pwagner
+! Improved dump routines
+!
 ! Revision 2.19  2001/10/05 23:32:27  pwagner
 ! Added majorframe to data type; trimmed unused stuff
 !
