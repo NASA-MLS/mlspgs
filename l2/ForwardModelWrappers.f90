@@ -46,11 +46,6 @@ contains ! ============= Public Procedures ==========================
     type(matrix_T), intent(inout), optional :: JACOBIAN
 
     ! Executable code
-    if ( (.not. present(jacobian)) .and. &
-      &  (any (ForwardModelConfig%fwmType == (/ l_linear, l_scan /)))) &
-      & call MLSMessage(MLSMSG_Error,ModuleName, &
-      &   'Must have a jacobian for these forward models' )
-
     select case (ForwardModelConfig%fwmType)
     case ( l_full )
       call FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
@@ -68,6 +63,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.3  2001/04/28 17:48:48  livesey
+! Removed some unnecessary checks
+!
 ! Revision 2.2  2001/04/26 23:54:26  livesey
 ! Now uses linear forward model
 !
