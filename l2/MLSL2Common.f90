@@ -34,24 +34,6 @@ MODULE MLSL2Common              ! Common data types for the MLSL2 program
 
 CONTAINS
 
-  ! -------------------------------------------- FindFirst --------------
-  integer function FindFirst ( condition )
-    ! Find the first logical in the array that is true
-    logical, dimension(:), intent(in) :: CONDITION
-
-    ! Local variables
-    integer :: I                        ! Loop counter
-
-    ! Executable code
-    FindFirst = -1
-    do i = 1, size(condition)
-      if ( condition(i) ) then
-        FindFirst = i
-        return
-      end if
-    end do
-  end function FindFirst
-
 !=============================================================================
 !=============================================================================
 END MODULE MLSL2Common
@@ -59,6 +41,12 @@ END MODULE MLSL2Common
 
 !
 ! $Log$
+! Revision 2.2  2001/09/09 02:48:37  livesey
+! Moved FindFirst into MLSCommon
+!
+! Revision 2.1.2.1  2001/09/09 01:36:02  livesey
+! Moved FindFirst into MLSCommon
+!
 ! Revision 2.1  2001/06/22 05:09:04  livesey
 ! Moved FindFirst in from L2Parallel
 !
