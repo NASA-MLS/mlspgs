@@ -413,7 +413,7 @@ datesloop: do idate = 1, maxNoDates
     real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
     !---- local vars: others--------!
     integer:: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
-    integer:: ialt1,ialt2,i0,i1,i2,i3,i4
+    integer:: ialt1,ialt2
     integer,dimension(1:6)::hcshape 
     real(kind=r8),pointer,dimension(:)::tmpalt,tmpdate
     real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::hcube
@@ -522,73 +522,44 @@ datesloop: do idate = 1, maxNoDates
     ! Now we interpolate along each of the axes where this is needed
     ! Reduce 6-d to 5-d
     if ( hcshape(6) == 2 ) then !Interpolate in date 
-      do i0 = 1, hcshape(1)
-        do i1 = 1, hcshape(2)
-          do i2 = 1, hcshape(3)
-            do i3 = 1, hcshape(4)
-              do i4 = 1,hcshape(5)
-                hcube(i0,i1,i2,i3,i4,1) = hcube(i0,i1,i2,i3,i4,1) + &
-                  &  (hcube(i0,i1,i2,i3,i4,2) - &
-                  &  hcube(i0,i1,i2,i3,i4,1)) * &
-                  &  (indate-tmpdate(idate1)) / &
-                  &  (tmpdate(idate2)-tmpdate(idate1))
-              end do
-            end do
-          end do
-        end do
-      end do
-    end if
+       hcube(:,:,:,:,:,1) = hcube(:,:,:,:,:,1) + &
+            &  (hcube(:,:,:,:,:,2) - hcube(:,:,:,:,:,1)) * &
+            &  (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1))
+    endif
     ! Reduce  5-d to 4d
     if ( hcshape(5) == 2 ) then !Interpolate in local Solar zenith ang  SZA
-      do i0 = 1, hcshape(1)
-        do i1 = 1, hcshape(2)
-          do i2 = 1, hcshape(3)
-            do i3 = 1, hcshape(4)
-              hcube(i0,i1,i2,i3,1,1) = hcube(i0,i1,i2,i3,1,1) + &
-                &  (hcube(i0,i1,i2,i3,2,1) - &
-                &  hcube(i0,i1,i2,i3,1,1)) * &
-                &  (insza-field%szas(isza1)) / &
-                &  (field%szas(isza2)-field%szas(isza1))
-            end do
-          end do
-        end do
-      end do
+      hcube(:,:,:,:,1,1) = hcube(:,:,:,:,1,1) + &
+           &  (hcube(:,:,:,:,2,1) - &
+           &  hcube(:,:,:,:,1,1)) * &
+           &  (insza-field%szas(isza1)) / &
+           &  (field%szas(isza2)-field%szas(isza1))
     end if
+
     ! Reduce  4-d to 3d
     if ( hcshape(4) == 2 ) then !Interpolate in local solar time
-      do i0 = 1, hcshape(1)
-        do i1 = 1, hcshape(2)
-          do i2 = 1, hcshape(3)
-            hcube(i0,i1,i2,1,1,1) = hcube(i0,i1,i2,1,1,1) + &
-              &  (hcube(i0,i1,i2,2,1,1) - &
-              &  hcube(i0,i1,i2,1,1,1)) * &
-              &  (inlst-field%lsts(ilst1)) / &
-              &  (field%lsts(ilst2)-field%lsts(ilst1))
-          end do
-        end do
-      end do
+       hcube(:,:,:,1,1,1) = hcube(:,:,:,1,1,1) + &
+            &  (hcube(:,:,:,2,1,1) - &
+            &  hcube(:,:,:,1,1,1)) * &
+            &  (inlst-field%lsts(ilst1)) / &
+            &  (field%lsts(ilst2)-field%lsts(ilst1))
     end if
+
     ! Reduce  3-d to 2d
     if ( hcshape(3) == 2 ) then !Interpolate in longitude
-      do i0 = 1, hcshape(1)
-        do i1 = 1, hcshape(2)
-          hcube(i0,i1,1,1,1,1) = hcube(i0,i1,1,1,1,1) + &
-            &  (hcube(i0,i1,2,1,1,1) - &
-            &  hcube(i0,i1,1,1,1,1)) * &
+          hcube(:,:,1,1,1,1) = hcube(:,:,1,1,1,1) + &
+            &  (hcube(:,:,2,1,1,1) - &
+            &  hcube(:,:,1,1,1,1)) * &
             &  (inlon-field%lons(ilon1)) / &
             &  (field%lons(ilon2)-field%lons(ilon1))
-        end do
-      end do
     end if
     ! Reduce  2-d to 1d
     if ( hcshape(2) == 2 ) then !Interpolate in latitude
-      do i0 = 1, hcshape(1)
-        hcube(i0,1,1,1,1,1) = hcube(i0,1,1,1,1,1) + &
-          &  (hcube(i0,2,1,1,1,1) - &
-          &  hcube(i0,1,1,1,1,1)) * &
-          &  (inlat-field%lats(ilat1)) / &
-          &  (field%lats(ilat2)-field%lats(ilat1))
-      end do
+       
+       hcube(:,1,1,1,1,1) = hcube(:,1,1,1,1,1) + &
+            &  (hcube(:,2,1,1,1,1) - &
+            &  hcube(:,1,1,1,1,1)) * &
+            &  (inlat-field%lats(ilat1)) / &
+            &  (field%lats(ilat2)-field%lats(ilat1))
     end if
 
     ! Reduce  1-d to 0d
@@ -1019,6 +990,10 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.9  2001/04/27 07:48:54  pumphrey
+! Many nested loops in l3ascii replaced with array ops. Small fixes
+! (e.g. spelling mistakes) in other modules.
+!
 ! Revision 2.8  2001/04/13 02:08:23  vsnyder
 ! Fix syntax error that Lahey let go by
 !
