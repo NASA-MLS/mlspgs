@@ -12,6 +12,9 @@ module TREE_WALKER
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE
   use JOIN, only: MLSL2Join
+  !??? The next USE statement is Temporary for l2load:
+  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
+    & TEMPORARY_FWD_MDL_INFO
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
   use MatrixModule_1, only: Matrix_Database_T
@@ -67,6 +70,12 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation => NULL()
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates => NULL()
 
+!??? Begin temporary stuff to start up the forward model
+  type(fwd_mdl_config) :: FMC
+  type(fwd_mdl_info), dimension(:), pointer :: FMI => NULL()
+  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI => NULL()
+!??? End of temporary stuff to start up the forward model
+
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
@@ -78,7 +87,8 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-        call set_global_settings ( son )
+!       call set_global_settings ( son ) !??? Restore when l2load isn't needed
+        call set_global_settings ( son, fmc, fmi, tfmi ) !??? for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son )
       case ( z_readapriori )
@@ -105,7 +115,8 @@ subtrees: do while ( j <= howmany )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
             case ( z_retrieve )
-              call retrieve ( son, vectors, matrices )
+!             call retrieve ( son, vectors, matrices ) !??? Restore when l2load isn't needed
+              call retrieve ( son, vectors, matrices, fmc, fmi, tfmi )
             case default
           exit subtrees
             end select
@@ -138,6 +149,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.11  2001/03/03 00:13:30  pwagner
+! Gets read_apriori from ReadAPriori module
+!
 ! Revision 2.10  2001/02/28 01:17:57  livesey
 ! Removed obtain_ncep etc. These will later be in lower down modules
 !
