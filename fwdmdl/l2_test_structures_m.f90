@@ -68,6 +68,7 @@ module L2_TEST_STRUCTURES_M
     Character(LEN=80) :: B
     Character(LEN=80) :: Indir
     Character(LEN=80) :: Aaap_file
+    Real(r8), DIMENSION(:), POINTER :: vel_z_mmaf => NULL()
     Real(r8), DIMENSION(:), POINTER :: Phi_tan_mmaf => NULL()
   end type FWD_MDL_CONFIG
 
@@ -105,6 +106,9 @@ module L2_TEST_STRUCTURES_M
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.4  2001/03/08 00:08:04  vsnyder
+! Modifications to work inside of MLSL2.
+!
 ! Revision 1.3  2001/03/07 23:45:15  zvi
 ! Adding logical flags fro Temp, Atmos & Spect. derivatives
 !

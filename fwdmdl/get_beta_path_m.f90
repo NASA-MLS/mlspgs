@@ -18,7 +18,7 @@ contains
 !----------------------------------------------------------------------
 
  SUBROUTINE get_beta_path(ptg_i,pfs,no_ele,no_ptg_frq,ptg_frq_grid, &
-                       &  z_path,t_path,beta_path,ier)
+                       &  z_path,t_path,beta_path,vel_z,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_beta_path
@@ -28,6 +28,7 @@ contains
 !  ---------------------------
 Integer(i4), INTENT(IN) :: ptg_i, no_ele
 Integer(i4), INTENT(IN) :: no_ptg_frq(*)
+Real(r8),    INTENT(IN) :: vel_z
 
 Integer(i4), INTENT(OUT) :: ier
 
@@ -42,9 +43,11 @@ Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
 !  Local variables:
 !  ----------------
 
+Real(r8), PARAMETER :: c = 299792.4583d0     ! Speed of Light Km./Sec.
+
 Integer(i4) :: nl, i, no_sps, mnf, spectag, h_i, frq_i
 
-Real(r8) :: Qlog(3), mass, z, p, t, Frq
+Real(r8) :: Qlog(3), mass, z, p, t, Frq, Vel_z_correction
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
 
 Real(r8) :: v0s(MAXLINES), x1(MAXLINES), y(MAXLINES), yi(MAXLINES), &
@@ -63,6 +66,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   no_sps = pfs(1)%no_sps
   mnf =  no_ptg_frq(ptg_i)
 !
+! Vel_z_correction = 1.0_r8 - vel_z / c
+  Vel_z_correction = 1.0_r8 + vel_z / c
+!
 ! Allocate all the needed space for beta..
 !
   if ( associated(beta_path) ) then
@@ -74,6 +80,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
       end do
     end do
   end if
+
   DEALLOCATE(beta_path,STAT=h_i)
   ALLOCATE(beta_path(no_sps,mnf),STAT=h_i)
 !
@@ -110,6 +117,12 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
       t = t_path%values(h_i)
 !
       Call Slabs_Prep_Arrays
+!
+! Apply velocity corrections:
+!
+      v0s(1:nl)  = v0s(1:nl)  * Vel_z_correction
+      v0sp(1:nl) = v0sp(1:nl) * Vel_z_correction
+      v0sm(1:nl) = v0sm(1:nl) * Vel_z_correction
 !
       do frq_i = 1, no_ptg_frq(ptg_i)
 !
@@ -192,6 +205,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.8  2001/03/09 02:26:11  vsnyder
+! More work on deallocation
+!
 ! Revision 1.7  2001/03/09 02:11:28  vsnyder
 ! Repair deallocating
 !

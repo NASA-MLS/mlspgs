@@ -104,16 +104,22 @@ Character (LEN=80) :: Fnd, Line
     FMC%no_mmaf = min(j,100)   ! Assuming mmaf chunk of no more than 100
     no_mmaf = FMC%no_mmaf
 
+    DEALLOCATE(FMC%phi_tan_mmaf,FMC%vel_z_mmaf,STAT=i)
+    ALLOCATE(FMC%phi_tan_mmaf(no_mmaf),FMC%vel_z_mmaf(no_mmaf),STAT=i)
+    if(i /= 0) goto 99
+
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
+
+    read(11,*,iostat=io) (FMC%vel_z_mmaf(i),i=1,no_mmaf)
+    if(io /= 0) goto 99
+
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
 
     dummy(1:no_mmaf) = 0.0
     read(11,*,iostat=io) (dummy(i),i=1,no_mmaf)
     if(io /= 0) goto 99
-
-    DEALLOCATE(FMC%phi_tan_mmaf,STAT=i)
-    ALLOCATE(FMC%phi_tan_mmaf(no_mmaf),STAT=i)
-    if(i /= 0) goto 99
 
     FMC%phi_tan_mmaf(1:no_mmaf) = dummy(1:no_mmaf) * deg2rad
 
@@ -979,6 +985,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.8  2001/03/13 01:46:46  vsnyder
+! Allocate and use the correct size for tan_press
+!
 ! Revision 1.7  2001/03/09 00:40:32  zvi
 ! Correcting an error in HUNT routine
 !
