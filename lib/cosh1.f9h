@@ -1,0 +1,36 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! function *cosh1 ( X ) result ( COSH1 )
+
+! Compute 2 * (cosh(x)-1) / x**2
+
+! For large X, just use the intrinsic.  For small X, use five terms of the
+! Taylor series.  For _really_ small X, use L'Hospital's rule.
+
+!{ $( \cosh(x) - 1 ) / x^2 = \sum_{i=1}^{\infty) \frac{x^{2 n - 2}}{2 n!}$
+
+! $Id$
+! $RCSfile$
+
+    real(rk), intent(in) :: X                              
+    real(rk) :: COSH1                                      
+
+    real(rk) :: XSQ     ! X**2                             
+
+    xsq = x ** 2                                           
+
+    if ( abs(x) > 0.2_rk ) then          ! Just do it
+      cosh1 = 2.0_rk * (cosh(x) - 1.0_rk) / xsq
+    else if ( abs(x) > 3.0e-4_rk ) then  ! Five terms of Taylor's series
+      cosh1 = ( 1.0_rk + xsq * ( 1.0_rk / 12.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 30.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 56.0_rk ) * &             
+        &     ( 1.0_rk + xsq * ( 1.0_rk / 90.0_rk ) ) ) ) )         
+    else                                 ! L'Hospital's rule
+      cosh1 = cosh(x)
+    end if
+
+! end function *cosh1
+
+!  !
