@@ -372,7 +372,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_masks, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
+      begin, t+t_masks, l+l_explicitFill, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
@@ -584,7 +584,6 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_extinction, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_height, t+t_numeric, t+t_numeric_range, n+n_field_type/))
      call acorn((/begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type/))
@@ -870,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.205  2002/03/08 08:07:00  livesey
+! Added explicit fill mask
+!
 ! Revision 2.204  2002/03/07 17:18:03  livesey
 ! Removed frqGap
 !
