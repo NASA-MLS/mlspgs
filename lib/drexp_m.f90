@@ -29,3 +29,8 @@ contains
   end function DREXP
 
 end module DREXP_M
+
+! $Log$
+! Revision 2.2  2002/10/10 20:36:50  vsnyder
+! Darn, I forgot the CVS log comment
+!
