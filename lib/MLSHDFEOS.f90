@@ -10,12 +10,13 @@ module MLSHDFEOS
     & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
   use HDFEOS, only: gdattach, gdcreate, &
     & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdetach, &
-    & swdiminfo, swinqdflds
+    & swdiminfo, swinqdflds, swinqswath
   use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
     & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
   use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
     & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_SWdetach, HE5_swdefdfld, &
-    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
+    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds, &
+    & HE5_swinqswath
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
   use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
@@ -43,7 +44,8 @@ module MLSHDFEOS
 
   public :: HE5_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
-    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, &
+    & mls_swath_in_file
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
   character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
@@ -80,6 +82,11 @@ module MLSHDFEOS
     HE5_EHWRGLATT_INTEGER, HE5_EHWRGLATT_REAL, HE5_EHWRGLATT_CHARACTER_ARRAY
   end interface
 
+  interface MLS_SWATH_IN_FILE
+    module procedure MLS_SWATH_IN_FILE_ARR, &
+      & MLS_SWATH_IN_FILE_SCA
+  end interface
+
   interface MLS_SWSETFILL
     module procedure MLS_SWSETFILL_DOUBLE, &
       & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
@@ -101,8 +108,8 @@ module MLSHDFEOS
       & MLS_SWWRFLD_REAL_1D, MLS_SWWRFLD_REAL_2D, MLS_SWWRFLD_REAL_3D
   end interface
 
-  integer, public, parameter :: MAXNODFIELDS = 80
-  integer, public, parameter :: MAXDLISTLENGTH = 1024
+  integer, public, parameter :: MAXNODFIELDS = 1000
+  integer, public, parameter :: MAXDLISTLENGTH = 4096
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .true.  
@@ -123,6 +130,7 @@ contains ! ======================= Public Procedures =========================
     logical :: alreadyThere
     integer :: myHdfVersion
     logical :: needsFileName
+    logical, parameter :: MUSTCREATE = .true.
     MLS_GDCREATE = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -140,7 +148,11 @@ contains ! ======================= Public Procedures =========================
     endif
     select case (myHdfVersion)
     case (HDFVERSION_4)
-      alreadyThere = (gdattach(FileID, trim(GRIDNAME)) >= 0)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      else
+        alreadyThere = (gdattach(FileID, trim(GRIDNAME)) >= 0)
+      endif
       if ( alreadyThere ) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
@@ -148,7 +160,11 @@ contains ! ======================= Public Procedures =========================
       MLS_GDCREATE = gdcreate(Fileid, trim(GRIDNAME), &
         & xdimsize, ydimsize, upleft, lowright)
     case (HDFVERSION_5)
-      alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      else
+        alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
+      endif
       if ( alreadyThere ) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
@@ -175,6 +191,7 @@ contains ! ======================= Public Procedures =========================
     logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
+    if (Deebug) print *, 'swattaching ', trim(SWATHNAME)
     MLS_SWATTACH = 0
     myDontFail = .false.
     if ( present(DontFail) ) myDontFail = DontFail
@@ -204,10 +221,16 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWATTACH = -1
     end select
-    if ( myDontFail .or. MLS_SWATTACH /= -1 ) return
-    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+    if (Deebug) print *, ' (swath id is ', MLS_SWATTACH, ')'
+    if ( MLS_SWATTACH /= -1 ) then
+      return
+    elseif ( myDontFail ) then
+      CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
-
+    else
+      CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname) )
+    endif
   end function MLS_SWATTACH
 
   integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
@@ -221,12 +244,17 @@ contains ! ======================= Public Procedures =========================
     integer :: myHdfVersion
     logical :: needsFileName
     integer :: status
+    logical, parameter :: ALWAYSTRYSWATTACH = .true.
+    logical, parameter :: MUSTCREATE = .true.
     MLS_SWCREATE = 0
     ! All necessary input supplied?
+    print *, 'Now in mls_swcreate'
+    print *, 'SWATHNAME: ', trim(SWATHNAME)
+    if ( present(filename) ) print *, 'filename: ', trim(filename)
     needsFileName = (.not. present(hdfVersion))
     if ( present(hdfVersion) ) &
       & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
-    if ( needsFileName .and. .not. present(FIleName)) then
+    if ( needsFileName .and. .not. present(FileName)) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Missing needed arg FILENAME from call to MLS_SWCREATE' )
       return
@@ -238,9 +266,16 @@ contains ! ======================= Public Procedures =========================
     endif
     select case (myHdfVersion)
     case (HDFVERSION_4)
-      if(DEEBUG) print *, 'About to call swattach with FileID: ', Fileid, ' swathname ', &
-        & trim(swathName)
-      alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( .not. present(filename) .or. ALWAYSTRYSWATTACH ) then
+        if(DEEBUG) print *, 'About to call swattach with FileID: ', Fileid, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(FileName, swathName, HDFVERSION_4)
+      endif
       if ( alreadyThere ) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
@@ -252,7 +287,16 @@ contains ! ======================= Public Procedures =========================
       call h5eSet_auto_f ( 0, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to turn error messages off in MLS_SWCREATE')
-      alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+      if ( MUSTCREATE ) then
+        alreadyThere = .false.
+      elseif ( .not. present(filename) .or. ALWAYSTRYSWATTACH  ) then
+        if(DEEBUG) print *, 'About to call he5_swattach with FileID: ', Fileid, ' swathname ', &
+          & trim(swathName)
+        alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+      else
+        if(DEEBUG) print *, 'About to call mls_swath_in_file'
+        alreadyThere = mls_swath_in_file(FileName, swathName, HDFVERSION_5)
+      endif
       call h5eSet_auto_f ( 1, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to turn error messages back on in MLS_SWCREATE')
@@ -325,6 +369,7 @@ contains ! ======================= Public Procedures =========================
     ! Internal variables
     integer :: myHdfVersion
     logical :: needsFileName
+    if (Deebug) print *, 'swattaching ', swathid
     MLS_SWDETACH = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -504,6 +549,17 @@ contains ! ======================= Public Procedures =========================
     else
       myHdfVersion = hdfVersion
     endif
+    print *, 'mls_gfldsetup'
+    print *, 'FIELDName: ', trim(FIELDName)
+    print *, 'myHdfVersion: ', myHdfVersion
+    print *, 'swathid: ', swathid
+    print *, 'Datatype: ', Datatype
+    print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
+    print *, 'chunk_rank: ', chunk_rank
+    print *, 'chunk_dims: ', chunk_dims
+    print *, 'DIMNAME: ', trim(DIMNAME)
+    print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
+    print *, 'MERGE: ', MERGE
     select case (myHdfVersion)
     case (HDFVERSION_4)
       mls_gfldsetup = swdefgfld(swathid, FIELDName, DIMNAME, Datatype, &
@@ -517,6 +573,7 @@ contains ! ======================= Public Procedures =========================
     case default
       mls_gfldsetup = -1
     end select
+    print *, 'mls_gfldsetup returns: ', mls_gfldsetup
     if ( myDontFail .or. mls_gfldsetup /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up geoloc field ' // trim(fieldname) )
@@ -1492,9 +1549,66 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWWRFLD_REAL_3d
 
+  logical function mls_swath_in_file_sca(filename, swath, HdfVersion)
+    ! Returns .true. if swath found in file, .false. otherwise
+    character(len=*), intent(in) :: filename
+    character(len=*), intent(in) :: swath
+    integer, intent(in) :: HdfVersion
+    ! Internal variables
+    integer                          :: listsize
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                          :: nswaths
+    ! Begin execution
+    nswaths = 0
+    mls_swath_in_file_sca = .false.
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nswaths = swinqswath(trim(filename), fieldlist, listsize)
+    case (HDFVERSION_5)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+    end select
+    if ( nswaths == 0 ) return
+    mls_swath_in_file_sca = &
+      & ( StringElementNum(fieldlist, trim(swath), .true.) > 0 )
+  end function mls_swath_in_file_sca
+
+  logical function mls_swath_in_file_arr(filename, swaths, HdfVersion, &
+    & present )
+    ! Array version of the above
+    character(len=*), intent(in) :: filename
+    character(len=*), dimension(:), intent(in) :: swaths
+    integer, intent(in) :: HdfVersion
+    logical, dimension(:), intent(out) :: present
+    ! Internal variables
+    integer                          :: listsize
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                          :: nswaths
+    integer                          :: i
+    ! Begin execution
+    nswaths = 0
+    mls_swath_in_file_arr = .false.
+    present = .false.
+    if ( size(swaths) > size(present) ) &
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'array to small to hold values in mls_swath_in_file_arr' )
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nswaths = swinqswath(trim(filename), fieldlist, listsize)
+    case (HDFVERSION_5)
+      nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
+    end select
+    if ( nswaths == 0 ) return
+    do i=1, size(swaths)
+      present(i) = &
+      & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
+    enddo
+    mls_swath_in_file_arr = any( present )
+  end function mls_swath_in_file_arr
+
 ! ======================= Private Procedures =========================  
 
   logical function is_datafield_in_swath(swathid, field, HdfVersion)
+    ! Returns .true. if datafield found in swath, .false. otherwise
     integer, intent(in) :: swathid
     character(len=*), intent(in) :: field
     integer, intent(in) :: HdfVersion
@@ -1597,6 +1711,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.10  2003/07/09 21:49:07  pwagner
+! Wont try swattaching just to see if swath already there
+!
 ! Revision 2.9  2003/07/02 00:54:25  pwagner
 ! Failed attempt to turn off hdfeos5 warnings by turning off hdf5 ones
 !
