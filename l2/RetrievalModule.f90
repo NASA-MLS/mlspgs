@@ -1067,8 +1067,9 @@ contains
             call output ( aj%fnorm, advance='yes' )
             call output ( 'norm(candidateDX) = ' )
             call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Norm of residual is imaginary!' )
+            aj%fnmin = sqrt ( tiny ( aj%fnmin ) )
           end if
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
@@ -2565,6 +2566,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.128  2002/01/18 00:31:23  livesey
+! Changed error message about fnmin being imaginary to warning and put
+! in a work around.  I want to see what it's doing.
+!
 ! Revision 2.127  2001/12/03 18:50:43  pwagner
 ! NAG compiler mad at '/ =' instead of '/='
 !
