@@ -691,7 +691,10 @@ contains ! =====     Public Procedures     =============================
          & exactName=PhysicalFilename)
        call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
      endif
-     if ( l2gp_mcf <= -999 ) then
+     if (returnStatus /= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
+     elseif ( l2gp_mcf <= -999 ) then
          call MLSMessage ( MLSMSG_Warning, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
          return
@@ -740,7 +743,10 @@ contains ! =====     Public Procedures     =============================
        & mlspcf_l2dgm_end, &
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
-     if ( DEBUG ) then
+     if (returnStatus /= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
+     elseif ( DEBUG ) then
        call output ( 'preparing to populate metadata_oth', advance='yes' )
        call output ( 'l2auxFileHandle: ', advance='no' )
        call output ( FileHandle , advance='no' )
@@ -842,6 +848,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.87  2003/10/28 21:42:36  pwagner
+! Exits with message if cant GetPCFFromRef
+!
 ! Revision 2.86  2003/10/20 23:59:20  pwagner
 ! Simplified code for writing metadata
 !
