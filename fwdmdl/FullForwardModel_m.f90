@@ -728,10 +728,10 @@ contains
 
 ! Check we have at least one line for this
 
-        if ( count(lineFlag) == 0 ) then
+        if ( count(lineFlag) == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
           call get_string ( lit_indices(l), molName )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No relevant lines for '//trim(molName) )
+            & 'No relevant lines or continuum for '//trim(molName) )
         end if
         call allocate_test ( my_catalog(j)%lines, count(lineFlag),&
           & 'my_catalog(?)%lines', moduleName )
@@ -2471,6 +2471,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.97  2002/10/25 01:12:43  livesey
+! Added an array to accumulate the stuff such as one_tan_ht etc.
+! Also put in but commented out some code to dump it.
+!
 ! Revision 2.96  2002/10/10 19:38:22  vsnyder
 ! Mostly cosmetic, some performance improvements
 !
