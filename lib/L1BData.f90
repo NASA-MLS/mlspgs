@@ -17,7 +17,8 @@ module L1BData
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
-  use MLSStrings, only: CompressString, NumStringElements
+  use MLSStrings, only: CompressString
+  use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
   use SDPToolkit, only: max_orbits
@@ -1487,6 +1488,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.46  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.45  2004/08/03 17:59:35  pwagner
 ! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
 !
