@@ -1106,7 +1106,7 @@ contains ! =====     Public Procedures     =============================
             & 'Need source quantity for combine channels fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
-          call FillWithCombinedChannels ( key, quantity, sourceQuantity, message )
+          call FillWithCombinedChannels ( quantity, sourceQuantity, message )
           if ( message /= '' ) call Announce_Error ( key, 0, trim(message) )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
@@ -6833,6 +6833,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.287  2004/09/25 00:16:31  livesey
+! Removed 'key' argument in CombineChannels call
+!
 ! Revision 2.286  2004/09/24 17:55:57  livesey
 ! Moved FillWithCombinedChannels into ManipulateVectorQuantitites
 !
