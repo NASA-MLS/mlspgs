@@ -29,6 +29,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set each of the following to TRUE before delivering level 2 to sips
+  logical            :: ECHO_GLOBAL_STNGS = .true. ! Show l2cf, pcf params in log?
+  logical            :: LOG_TO_STDOUT = .true. ! Send log msgs to stdout?
   logical            :: PUNISH_FOR_INVALID_PCF=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
@@ -70,6 +72,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.6  2001/05/09 23:34:13  pwagner
+! Added ECHO_GLOBAL_STNGS LOG_TO_STDOUT
+!
 ! Revision 2.5  2001/05/06 20:54:40  pwagner
 ! Default settings should work for most jpl users
 !
