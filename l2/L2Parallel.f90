@@ -16,20 +16,22 @@ module L2Parallel
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
-    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT
+    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
+    & GETMACHINENAMEFROMTID
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T, FINDFIRST
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
+  use Machine, only: SHELL_COMMAND
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
-    & GETNICETIDSTRING
+    & GETNICETIDSTRING, SLAVEARGUMENTS
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
   use Toggles, only: Gen, Switches, Toggle
@@ -167,95 +169,118 @@ contains ! ================================ Procedures ======================
     ! Local variables
     character(len=MachineNameLen) :: LINE ! A line from the file
     character(len=MachineNameLen) :: ORIGINAL ! A line from the file
+    character(len=MachineNameLen) :: ARCH ! A line from the file
     logical :: EXIST                    ! Flag from inquire
     logical :: GOTFIRSTLAST             ! Got a range
     logical :: OPENED                   ! Flag from inquire
 
-    integer :: FIRSTCOLONPOS          ! Position in string
-    integer :: SECONDCOLONPOS         ! Position in string
+    integer :: DTID                     ! From PVMFConfig
     integer :: FIRST                    ! First machine in file to use
+    integer :: FIRSTCOLONPOS            ! Position in string
     integer :: I                        ! Loop inductor
+    integer :: INFO                     ! From PVMFConfig
     integer :: LAST                     ! Last machine in file to use
     integer :: LUN                      ! Logical unit number
     integer :: MACHINE                  ! Counter
+    integer :: NARCH                    ! From PVMFConfig
     integer :: NOLINES                  ! Number of lines in file
     integer :: NOMACHINES               ! Array size
+    integer :: SECONDCOLONPOS           ! Position in string
+    integer :: SPEED                    ! From PVMFConfig
     integer :: STAT                     ! Status flag from read
 
     ! Executable code
     ! The slave filename may contain starting and ending line numbers
 
     original = parallel%slaveFilename
-    gotFirstLast = .false.
-    firstColonPos = index ( parallel%slaveFilename, ':' )
-    if ( firstColonPos /= 0 ) then
-      gotFirstLast = .true.
-      parallel%slaveFilename(firstColonPos:firstColonPos) = ' '
-      secondColonPos = index ( parallel%slaveFilename,':' )
-      if ( secondColonPos < firstColonPos ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Incorrect syntax for slave info:'//trim(original) )
-      parallel%slaveFilename(secondColonPos:secondColonPos) = ' '
-      read (parallel%slaveFilename(firstColonPos+1:),*,iostat=stat) first, last
-      if ( stat /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Incorrect syntax for slave info:'//trim(original) )
-    else
-      firstColonPos = len_trim(parallel%slaveFilename)+1
-    end if
 
-    ! Find a free logical unit number
-    do lun = 20, 99
-      inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
-    end do
-    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No logical unit numbers available" )
-    open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
-      & status='old', form='formatted', &
-      & access='sequential', iostat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open slave file " // parallel%slaveFilename(1:firstColonPos-1) )
-
-    ! Now read the file and count the lines
-    noMachines = 0
-    noLines = 0
-    firstTimeRound: do
-      read ( unit=lun, fmt=*, iostat=stat ) line
-      if ( stat < 0 ) exit firstTimeRound
-      noLines = noLines + 1
-      line = adjustl ( line )
-      if ( line(1:1) /= '#' ) noMachines = noMachines + 1
-    end do firstTimeRound
-
-    ! Now setup the result array
-    if ( .not. gotFirstLast ) then
-      first = 1
-      last = noMachines
-    else
-      first = min( max ( first, 1 ), noMachines )
-      last = max( 1, min ( last, noMachines ) )
-    end if
-    noMachines = last - first + 1
-
-    allocate ( machineNames(noMachines), stat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//' machineNames')
-
-    ! Now rewind the file and read the names
-    rewind ( lun )
-    machine = 1
-    do i = 1, noLines
-      read ( unit=lun, fmt=* ) line
-      line = adjustl ( line )
-      if ( line(1:1) /= '#' ) then
-        if ( (machine >= first) .and. (machine <= last) ) &
-          & machineNames(machine-first+1) = line
+    if ( trim(original) == 'pvm' ) then
+      ! If the user specifies 'pvm' then just get the names of the machines
+      ! in the pvm system
+      machine = 1
+      hostLoop: do
+        call PVMFConfig ( noMachines, narch, dtid, line, arch, speed, info )
+        if ( info < 0 ) call PVMErrorMessage ( info, &
+          & 'Calling PVMFConfig' )
+        if ( machine == 1 ) then
+          call Allocate_test ( machineNames, noMachines, 'machineNames', moduleName )
+        end if
+        machineNames(machine) = trim(line)
         machine = machine + 1
-      endif
-    end do
+        if ( machine == noMachines + 1 ) exit hostLoop
+      end do hostLoop
+    else
+      gotFirstLast = .false.
+      firstColonPos = index ( parallel%slaveFilename, ':' )
+      if ( firstColonPos /= 0 ) then
+        gotFirstLast = .true.
+        parallel%slaveFilename(firstColonPos:firstColonPos) = ' '
+        secondColonPos = index ( parallel%slaveFilename,':' )
+        if ( secondColonPos < firstColonPos ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Incorrect syntax for slave info:'//trim(original) )
+        parallel%slaveFilename(secondColonPos:secondColonPos) = ' '
+        read (parallel%slaveFilename(firstColonPos+1:),*,iostat=stat) first, last
+        if ( stat /= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Incorrect syntax for slave info:'//trim(original) )
+      else
+        firstColonPos = len_trim(parallel%slaveFilename)+1
+      end if
 
-    close ( unit=lun )
+      ! Find a free logical unit number
+      do lun = 20, 99
+        inquire ( unit=lun, exist=exist, opened=opened )
+        if ( exist .and. .not. opened ) exit
+      end do
+      if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "No logical unit numbers available" )
+      open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
+        & status='old', form='formatted', &
+        & access='sequential', iostat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open slave file " // parallel%slaveFilename(1:firstColonPos-1) )
+
+      ! Now read the file and count the lines
+      noMachines = 0
+      noLines = 0
+      firstTimeRound: do
+        read ( unit=lun, fmt=*, iostat=stat ) line
+        if ( stat < 0 ) exit firstTimeRound
+        noLines = noLines + 1
+        line = adjustl ( line )
+        if ( line(1:1) /= '#' ) noMachines = noMachines + 1
+      end do firstTimeRound
+
+      ! Now setup the result array
+      if ( .not. gotFirstLast ) then
+        first = 1
+        last = noMachines
+      else
+        first = min( max ( first, 1 ), noMachines )
+        last = max( 1, min ( last, noMachines ) )
+      end if
+      noMachines = last - first + 1
+
+      allocate ( machineNames(noMachines), stat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//' machineNames')
+
+      ! Now rewind the file and read the names
+      rewind ( lun )
+      machine = 1
+      do i = 1, noLines
+        read ( unit=lun, fmt=* ) line
+        line = adjustl ( line )
+        if ( line(1:1) /= '#' ) then
+          if ( (machine >= first) .and. (machine <= last) ) &
+            & machineNames(machine-first+1) = line
+          machine = machine + 1
+        endif
+      end do
+
+      close ( unit=lun )
+    end if
   end subroutine GetMachineNames
 
   ! --------------------------------------------- L2MasterTask ----------
@@ -274,7 +299,9 @@ contains ! ================================ Procedures ======================
     ! Local variables
     logical :: USINGSUBMIT              ! Set if using the submit mechanism
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
-    character(len=132) :: COMMANDLINE
+    character(len=MachineNameLen) :: THISNAME
+    character(len=8) :: CHUNKNOSTR
+    character(len=2048) :: COMMANDLINE
 
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
@@ -327,7 +354,7 @@ contains ! ================================ Procedures ======================
     ! so if it's not then quit.
     if ( finished ) return
 
-    usingSubmit = trim(parallel%submit) == ''
+    usingSubmit = trim(parallel%submit) /= ''
 
     ! Setup some stuff
     noChunks = size(chunks)
@@ -357,55 +384,67 @@ contains ! ================================ Procedures ======================
 
       ! In the first part, we look to see if there are any chunks still to be
       ! started done, and any vacant machines to do them.
+      ! --------------------------------------------------------- Start new jobs? --
       if ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
-        & any(machineFree .and. machineOK) ) then
+        & ( any(machineFree .and. machineOK) .or. usingSubmit ) ) then
         nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
         machine = FindFirst(machineFree .and. machineOK)
-        commandLine = 'mlsl2'
-
-        if ( index(switches,'slv') /= 0 ) then
-          call PVMFCatchOut ( 1, info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
-        end if
-        info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
-          & trim(machineNames(machine)), &
-          & 1, tidarr )
-
-        ! Did this launch work
-        if ( info == 1) then
-          machineFree(machine) = .false.
-          chunkMachines(nextChunk) = machine
-          chunkTids(nextChunk) = tidArr(1)
+        if ( usingSubmit ) then ! --------------------- Using a batch system
+          write ( chunkNoStr, '(i0)' ) nextChunk
+          commandLine = &
+            & trim(parallel%submit) // ' ' // &
+            & trim(parallel%executable) // ' ' // &
+            & ' --chunk ' // trim(chunkNoStr) // ' ' // &
+            & trim(slaveArguments)
+          call shell_command ( trim(commandLine) )
           chunksStarted(nextChunk) = .true.
+          ! We'll have to wait for it to come one line later
           if ( index(switches,'mas') /= 0 ) then
-            call output ( 'Launched chunk ' )
-            call output ( nextChunk )
-            call output ( ' on slave ' // trim(machineNames(machine)) // &
-              & ' ' // trim(GetNiceTidString(chunkTids(nextChunk))), &
-              & advance='yes' )
+            call output ( 'Submitted chunk ' )
+            call output ( nextChunk, advance='yes' )
           end if
-          call SendChunkInfoToSlave ( chunks, nextChunk, &
-            & chunkTids(nextChunk) )
-          ! Now ask to be notified when this task exits
-          call PVMFNotify ( PVMTaskExit, NotifyTag, 1, &
-            & (/ chunkTids(nextChunk) /), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
-        else
-          ! Couldn't start this job, mark this machine as unreliable
-          if ( index(switches,'mas') /= 0 ) then
-            call output ( 'Unable to start slave task on ' // &
-              & trim(machineNames(machine)) // ' info=' )
-            if ( info < 0 ) then
-              call output ( info, advance='yes' )
-            else
-              call output ( tidArr(1), advance='yes' )
+        else ! ----------------------------------------- Start job using pvmspawn
+          commandLine = 'mlsl2'
+          if ( index(switches,'slv') /= 0 ) then
+            call PVMFCatchOut ( 1, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
+          end if
+          info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
+            & trim(machineNames(machine)), &
+            & 1, tidarr )
+
+          ! Did this launch work
+          if ( info == 1 ) then
+            machineFree(machine) = .false.
+            chunkMachines(nextChunk) = machine
+            chunkTids(nextChunk) = tidArr(1)
+            chunksStarted(nextChunk) = .true.
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Launched chunk ' )
+              call output ( nextChunk )
+              call output ( ' on slave ' // trim(machineNames(machine)) // &
+                & ' ' // trim(GetNiceTidString(chunkTids(nextChunk))), &
+                & advance='yes' )
             end if
-            call output ( 'Marking this machine as not usable', advance='yes')
+            call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
+          else
+            ! Couldn't start this job, mark this machine as unreliable
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Unable to start slave task on ' // &
+                & trim(machineNames(machine)) // ' info=' )
+              if ( info < 0 ) then
+                call output ( info, advance='yes' )
+              else
+                call output ( tidArr(1), advance='yes' )
+              end if
+              call output ( 'Marking this machine as not usable', advance='yes')
+            end if
+            machineOK(machine) = .false.
           end if
-          machineOK(machine) = .false.
         end if
       end if
 
+      ! --------------------------------------------------- Messages from jobs?
       ! In this next part, we listen out for communication from the slaves and
       ! process it accordingly.
       receiveInfoLoop: do
@@ -418,15 +457,22 @@ contains ! ================================ Procedures ======================
           call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
-          chunk = FindFirst ( chunkTids == slaveTid )
-          if ( chunk == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Got a message from an unknown slave")
-          ! Unpack the first integer in the buffer
-          machine = chunkMachines(chunk)
           call PVMF90Unpack ( signal, info )
           if ( info /= 0 ) then
             call PVMErrorMessage ( info, "unpacking signal" )
           endif
+
+          ! Who did this come from
+          chunk = FindFirst ( chunkTids == slaveTid )
+          if ( chunk == 0 .and. &
+            &  (.not. usingSubmit .or. signal /= sig_register) ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "Got a message from an unknown slave")
+          else
+            ! Unpack the first integer in the buffer
+            machine = chunkMachines(chunk)
+          end if
+
           select case (signal) 
             
           case ( sig_register ) ! ----------------- Chunk registering ------
@@ -436,7 +482,23 @@ contains ! ================================ Procedures ======================
             endif
             if ( usingSubmit ) then
               ! We only really care about this message if we're using submit
-              
+              chunkTids(chunk) = slaveTid
+              call GetMachineNameFromTid ( slaveTid, thisName )
+              machine = FindFirst ( trim(thisName) == machineNames )
+              if ( machine == 0 ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & "An unknown machine sent a registration message!" )
+              chunkMachines(chunk) = machine
+              machineFree(machine) = .false.
+              call WelcomeSlave ( chunk, slaveTid )
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Welcomed task ' // &
+                  & trim(GetNiceTidString(slaveTid)) // &
+                  & ' running chunk ' )
+                call output ( chunk )
+                call output ( ' on machine ' // &
+                  & trim(machineNames(machine)), advance='yes' )
+              end if
             endif
             
           case ( sig_tojoin ) ! --------------- Got a join request ---------
@@ -542,9 +604,10 @@ contains ! ================================ Procedures ======================
             end if
             
             ! Does this machine have a habit of killing jobs.  If so
-            ! mark it as not OK
+            ! mark it as not OK.  We can't do much about it though if
+            ! we're using submit.
             if ( jobsMachineKilled(deadMachine) > &
-              & parallel%maxFailuresPerMachine ) then
+              & parallel%maxFailuresPerMachine .and. .not. usingSubmit) then
               if ( index(switches,'mas') /= 0 ) &
                 & call output ('The machine ' // &
                 & trim(machineNames(deadMachine)) // &
@@ -676,7 +739,24 @@ contains ! ================================ Procedures ======================
     call Deallocate_test ( machineOK, 'machineOK', ModuleName )
     call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
 
+  contains
+
+    subroutine WelcomeSlave ( chunk, tid )
+      ! This routine welcomes a slave into the fold and tells it stuff
+      integer, intent(in) :: CHUNK      ! Chunk we're asking it to do
+      integer, intent(in) :: TID        ! Task ID for slave
+
+      ! Local variables
+      integer :: info
+      
+      call SendChunkInfoToSlave ( chunks, chunk, tid )
+      ! Now ask to be notified when this task exits
+      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ tid /), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
+    end subroutine WelcomeSlave
+
   end subroutine L2MasterTask
+
 
   ! -------------------------------------------- AddStoredQuantityToDatabase ----
   integer function AddStoredResultToDatabase ( database, item )
@@ -865,6 +945,10 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.30  2002/04/24 20:20:53  livesey
+! Submit now working, also if pvm specified as host filename, takes
+! hostname list from pvm configuration
+!
 ! Revision 2.29  2002/04/24 16:53:38  livesey
 ! Reordered arrays, on the way to having submit working
 !
