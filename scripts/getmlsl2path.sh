@@ -26,7 +26,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.0.1"
+	    echo "/work3/livesey/"
 	else
 	    echo "/bigdata/livesey/v1.0.1"
 	fi
@@ -73,6 +73,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.3  2002/12/10 02:19:52  livesey
+# New soundbarrier configuration
+#
 # Revision 1.2  2002/11/27 18:26:48  livesey
 # Got rid of the distinction between sums and the rest of the scf.
 # Probably don't need to worry about the l2pcs as much any more.
