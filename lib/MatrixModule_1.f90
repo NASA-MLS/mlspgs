@@ -490,17 +490,22 @@ contains ! =====     Public Procedures     =============================
   end subroutine CopyMatrixValue
 
   ! ----------------------------------------------  CreateBlock_1  -----
-  subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros )
+  subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros, BandHeight )
   ! Create the matrix block Z%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
   ! See MatrixModule_0 for a list of the kinds.  If the Kind is
   ! M_Banded or M_ColumnSparse, the number of nonzeroes is needed.
+  ! If Kind == M_Banded and BandHeight is present, the band height is
+  !   assumed to be uniform, and the R1 and R2 components are filled to
+  !   reflect that assumption.
+    integer, intent(in), optional :: BandHeight
     type(matrix_T), intent(inout) :: Z       ! The matrix having the block
     integer, intent(in) :: RowNum, ColNum    ! Row and column of the block
     integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
     integer, intent(in), optional :: NumNonzeros  ! Number of nonzeros
     call createBlock ( z%block(rowNum,colNum), &
-      & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros )
+      & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros, &
+      & bandHeight=bandHeight )
   end subroutine CreateBlock_1
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
@@ -1532,6 +1537,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.31  2001/05/09 19:46:06  vsnyder
+! Add BandHeight argument to CreateBlock_1
+!
 ! Revision 2.30  2001/05/09 01:56:15  vsnyder
 ! periodic commit -- Work on block Cholesky
 !
