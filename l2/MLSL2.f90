@@ -10,7 +10,8 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSCOMMON, only: FILENAMELEN
-  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
+    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
@@ -26,7 +27,7 @@ program MLSL2
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
-  use SDPToolkit, only: UseSDPToolkit
+  use SDPToolkit, only: UseSDPToolkit, PGSD_IO_GEN_RSEQFRM
   use SnoopMLSL2, only: SNOOPINGACTIVE
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
@@ -106,7 +107,9 @@ program MLSL2
   integer :: J                     ! index within option
   character(len=2048) :: LINE           ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
+  integer :: NUMFILES
   integer :: RECL = 10000          ! Record length for l2cf
+  integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
@@ -126,6 +129,9 @@ program MLSL2
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+  type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+  type (MLSFile_T)                        ::     theFile
+  nullify (filedatabase)
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
@@ -425,11 +431,18 @@ program MLSL2
   if ( line /= ' ' ) then
     L2CF_file = line
     open ( l2cf_unit, file=line, status='old', &
-      & form='formatted', access='sequential', recl=recl, iostat=status )
+     & form='formatted', access='sequential', recl=recl, iostat=status )
+    ! inunit = mls_io_gen_openF('op', .true., status, &
+     ! & record_length, PGSd_IO_Gen_RSeqFrm, FileName=trim(line), &
+     ! & inp_rec_length=recl)
     if ( status /= 0 ) then
       L2CF_file = trim(line) // L2CFNAMEEXTENSION
-      open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
+       open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
         & form='formatted', access='sequential', recl=recl, iostat=status )
+    ! inunit = mls_io_gen_openF('op', .true., status, &
+     ! & record_length, PGSd_IO_Gen_RSeqFrm, &
+     ! & FileName=trim(line) // L2CFNAMEEXTENSION, &
+     ! & inp_rec_length=recl)
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
@@ -448,6 +461,8 @@ program MLSL2
     end if
   end if
   error = status
+  numfiles = AddFileToDataBase(filedatabase, theFile)
+  
   call time_now ( t1 )
 
   if( index(switches, 'opt') /= 0 ) then
@@ -513,7 +528,7 @@ program MLSL2
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & singleChunk )
+        & singleChunk, filedatabase )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -531,6 +546,7 @@ program MLSL2
   call deallocate_decl
   call deallocate_tree
   call FreePVMArgs
+  call Deallocate_filedatabase(filedatabase)
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
@@ -669,6 +685,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.87  2002/12/04 01:18:21  pwagner
+! First halting steps toward using filedatabase
+!
 ! Revision 2.86  2002/11/13 01:08:40  pwagner
 ! Prints more info when called asked to print opts
 !
