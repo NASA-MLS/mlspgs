@@ -115,9 +115,15 @@ contains
         &    bp,gl_slabs_p(k,i)%dslabs1_dv0)
         t  = t_path(k)
         bb = beta_path(j,i)
-        vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
-        v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-        vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
+        if ( bp > 0.0 .and. bb > 0.0 .and. bm > 0.0 ) then
+          vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
+          v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
+        else
+          vp = 0.0
+          v0 = 0.0
+          vm = 0.0
+        endif
         dbeta_dt_path(j,i) = (vp + 2.0 * v0 + vm) / 4.0  ! Weighted Average
       ENDDO
       DeAllocate(LineWidth)
@@ -129,6 +135,9 @@ contains
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.1  2001/10/16 15:07:18  zvi
+! Continuum parameters are now part of Catalog
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
