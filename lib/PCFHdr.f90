@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !===============================================================================
 MODULE PCFHdr
@@ -19,7 +19,7 @@ MODULE PCFHdr
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN,MLSMSG_Info
    use MLSStrings, only: lowerCase
-   use MLSStringLists, only: utc_to_yyyymmdd
+   use MLSStringLists, only: utc_to_date, utc_to_yyyymmdd
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, &
@@ -182,11 +182,11 @@ CONTAINS
     character(len=NameLen)     :: start_time_string
 !  Local variables
     integer             :: returnStatus
-    character(len=16)   :: year, month, day
+    character(len=16)   :: date
 !   Executable statements
     if ( GlobalAttributes%StartUTC /= ' ' ) then
-      call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
-        & year, month, day, utcAt0z=start_time_string)
+      call utc_to_date(GlobalAttributes%StartUTC, returnStatus, &
+        & date, utcAt0z=start_time_string)
       if ( present(LeapSecFileName) ) then
         returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
         & GlobalAttributes%TAI93At0zOfGranule )
@@ -1047,6 +1047,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.34  2005/02/03 19:06:01  pwagner
+!# utc_to_date used to find 0 crossing
+!#
 !# Revision 2.33  2004/08/16 17:05:38  pwagner
 !# First,LastMAFCtr now global attributes
 !#
