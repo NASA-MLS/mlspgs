@@ -4,7 +4,6 @@
 !===========================================================================
 module HDFEOS5               ! F90 interface to HDF-EOS.
 !===========================================================================
-
   implicit none
   public
 
@@ -17,6 +16,17 @@ module HDFEOS5               ! F90 interface to HDF-EOS.
   !----------------------------------------------------------
 
   ! Now define f90 interfaces for some HDF-EOS.
+  ! Warning: as you are calling C directly, make sure that your 
+  ! array args are like this.
+  !integer function HE5_SWGONKULATE(ARRAY)
+  !  integer,intent(in),dimension(*)::ARRAY
+  !end function HE5_SWGONKULATE!
+  ! NOT like this.
+  !integer function HE5_SWGONKULATE(ARRAY)
+  !  integer,intent(in),dimension(:)::ARRAY
+  !end function HE5_SWGONKULATE!  ^
+  !                               |
+  !                        OY! NO! NOT like this! No (:)s already!
 
   interface
     integer function HE5_SWATTACH ( SWFID, SWATHNAME )
@@ -27,10 +37,18 @@ module HDFEOS5               ! F90 interface to HDF-EOS.
     integer function HE5_SWCLOSE ( FILE_ID )
       integer, intent(in) :: FILE_ID
     end function HE5_SWCLOSE
+
     integer function HE5_SWCREATE ( SWFID, SWATHNAME )
       integer, intent(in) :: SWFID
       character (len=*), intent(in) :: SWATHNAME
     end function HE5_SWCREATE
+
+    integer function HE5_SWDEFCHUNK(SWATHID,CHUNKRANK,CHUNKDIMS)
+      ! use hdf5_params ! Note: all integers in HDF-EOS5 fortran interface are
+      ! C long. Hsize_t is not known about.
+      integer, intent(in) :: SWATHID,CHUNKRANK
+      integer, intent(in),dimension(*) :: CHUNKDIMS
+    end function HE5_SWDEFCHUNK
 
     integer function HE5_SWDEFDFLD ( SWATHID, FIELDNAME, DIMLIST, MAXDIMLIST,&
          NUMBERTYPE,MERGE )

@@ -3,22 +3,21 @@
 
 !=============================================================================
 MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
-  !=============================================================================
-
+!=============================================================================
   USE Allocate_Deallocate, ONLY: Allocate_test, Deallocate_test
+  USE DUMP_0, only: DUMP
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning
   USE MLSCommon, ONLY: R8
 
-  !This module is supplied with the HDF5 Fortran 90 interface.
-!  USE Hdf5, ONLY: H5T_NATIVE_CHARACTER,H5T_NATIVE_FLOAT,H5T_NATIVE_INTEGER, &
-!      H5T_NATIVE_DOUBLE
-
   use HDF5_params
-  
   USE HDFEOS5
+
   USE HE5_SWAPI 
-  
+
+  USE OUTPUT_M, only: OUTPUT ! Added as HDF4 version uses it
+  USE STRING_TABLE, only: DISPLAY_STRING
+
   IMPLICIT NONE
   !INTEGER:: HE5_SWRDFLD
   !EXTERNAL HE5_SWRDFLD !Should USE HE5_SWAPI
@@ -29,6 +28,10 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
        & "$RCSfile$"
   !---------------------------------------------------------------------------
 
+
+  interface DUMP !And this does WTF? 
+    module procedure DUMP_L2GP
+  end interface
 
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
@@ -58,9 +61,16 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
    CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nLevels,nTimes'
    CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
-   ! This is for the new max_dimlist parameter added to  SWdefgfld.
+   ! These are for the new max_dimlist parameter added to  SWdefgfld.
+   ! this one is for non-extendible dimensions
    CHARACTER (len=*), PARAMETER :: MAX_DIML = ' '
+   CHARACTER (len=*), PARAMETER :: UNLIM = 'Unlim'
+   ! This is for cases where the time dimension is extendible
+   CHARACTER (len=*), PARAMETER :: MAX_DIML1 = UNLIM
+   CHARACTER (len=*), PARAMETER :: MAX_DIML12 = 'nLevels,Unlim'
+   CHARACTER (len=*), PARAMETER :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
 
+   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
 
    INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0       ! don't merge
@@ -84,11 +94,15 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      REAL (r8), POINTER, DIMENSION(:) :: pressures=>NULL() ! Vertical coords (nLevels)
 
      ! Now the horizontal geolocation information. Dimensioned (nTimes)
-     REAL (r8), POINTER, DIMENSION(:) :: latitude=>NULL(), longitude=>NULL(),&
-          solarTime=>NULL(), &
-          & solarZenith=>NULL(), losAngle=>NULL(), geodAngle=>NULL()
-     REAL (r8), POINTER, DIMENSION(:) :: time=>NULL()
-     INTEGER, POINTER, DIMENSION(:) :: chunkNumber=>NULL() !
+     REAL (r8), POINTER, DIMENSION(:) :: latitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: longitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarTime => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarZenith => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: losAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: geodAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: time => NULL()
+
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber=>NULL()
 
      ! Now we store the `frequency' geolocation field
 
@@ -148,7 +162,8 @@ CONTAINS ! =====     Public Procedures     =============================
     l2gp%nFreqs = useNFreqs
 
     ! But allocate to at least one for times, freqs
- 
+
+    useNTimes=MAX(useNTimes,1)
     useNLevels=MAX(useNLevels,1)
     useNFreqs=MAX(useNFreqs,1)    
 
@@ -239,30 +254,36 @@ CONTAINS ! =====     Public Procedures     =============================
     tempL2gp = l2gp ! Copy the pointers to the old information
 
     ! Now recreate l2gp with the new size.
-
-    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, nTimes=newNTimes)
+    ! First, nullify all of the pointers in l2gp, so that a deallocate_test
+    ! won't delete them.  After all, we just went to the trouble to preserve
+    ! them in TempL2GP!
+    nullify ( l2gp%pressures, l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
+      & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
+      & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
+      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
+    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
+      & nTimes=newNTimes)
+    ! Don't forget the `global' stuff
+    l2gp%pressures=templ2gp%pressures
 
     ! Now go through the parameters one by one, and copy the previous contents
+    l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
+    l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude(1:templ2gp%nTimes)
+    l2gp%solarTime(1:templ2gp%nTimes) = templ2gp%solarTime(1:templ2gp%nTimes)
+    l2gp%solarZenith(1:templ2gp%nTimes) = templ2gp%solarZenith(1:templ2gp%nTimes)
+    l2gp%losAngle(1:templ2gp%nTimes) = templ2gp%losAngle(1:templ2gp%nTimes)
+    l2gp%geodAngle(1:templ2gp%nTimes) = templ2gp%geodAngle(1:templ2gp%nTimes)
+    l2gp%time(1:templ2gp%nTimes) = templ2gp%time(1:templ2gp%nTimes)
+    l2gp%chunkNumber(1:templ2gp%nTimes) = templ2gp%chunkNumber(1:templ2gp%nTimes)
 
-    l2gp%latitude(1:l2gp%nTimes) = templ2gp%latitude
-    l2gp%longitude(1:l2gp%nTimes) = templ2gp%longitude
-    l2gp%solarTime(1:l2gp%nTimes) = templ2gp%solarTime
-    l2gp%solarZenith(1:l2gp%nTimes) = templ2gp%solarZenith
-    l2gp%losAngle(1:l2gp%nTimes) = templ2gp%losAngle
-    l2gp%geodAngle(1:l2gp%nTimes) = templ2gp%geodAngle
-    l2gp%time(1:l2gp%nTimes) = templ2gp%time
-    l2gp%chunkNumber(1:l2gp%nTimes) = templ2gp%chunkNumber
-
-    l2gp%l2gpValue(:,:,1:l2gp%nTimes) = templ2gp%l2gpValue
-    l2gp%l2gpPrecision(:,:,1:l2gp%nTimes) = templ2gp%l2gpPrecision
-
-    l2gp%status(1:l2gp%nTimes) = templ2gp%status
-    l2gp%quality(1:l2gp%nTimes) = templ2gp%quality
-
-    l2gp%nTimes=newNTimes
+    l2gp%l2gpValue(:,:,1:templ2gp%nTimes) = templ2gp%l2gpValue(:,:,1:templ2gp%nTimes)
+    l2gp%l2gpPrecision(:,:,1:templ2gp%nTimes) = &
+         templ2gp%l2gpPrecision(:,:,1:templ2gp%nTimes)
+    
+    l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
+    l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
 
     ! Deallocate the old arrays
-
     CALL DestroyL2GPContents(templ2gp)
 
   END SUBROUTINE ExpandL2GPDataInPlace
@@ -324,7 +345,7 @@ CONTAINS ! =====     Public Procedures     =============================
     INTEGER, INTENT(IN) :: L2FileHandle ! Returned by swopen
     INTEGER, INTENT(IN), OPTIONAL :: firstProf, lastProf ! Defaults to first and last
     TYPE( L2GPData_T ), INTENT(OUT) :: l2gp ! Result
-    INTEGER, INTENT(OUT) :: numProfs ! Number actually read
+    INTEGER, INTENT(OUT),OPTIONAL :: numProfs ! Number actually read
 
     ! Parameters
 
@@ -333,19 +354,13 @@ CONTAINS ! =====     Public Procedures     =============================
     CHARACTER (LEN=*), PARAMETER :: MLSMSG_INPUT = 'Error in input argument '
     CHARACTER (LEN=*), PARAMETER :: MLSMSG_L2GPRead = 'Unable to read L2GP &
                                                      &field:'
-
-    ! Functions
-
-    !INTEGER, EXTERNAL :: swattach, HE5_SWdetach, HE5_SWdiminfo, HE5_SWinqdims, HE5_SWrdfld
-
-    ! Variables
-
+    ! Local Variables
     CHARACTER (LEN=80) :: list
     CHARACTER (LEN=480) :: msr
 
     INTEGER :: alloc_err, first, freq, lev, nDims, size, swid, status
     INTEGER :: start(3), stride(3), edge(3), dims(3)
-    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1
+    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
 
     LOGICAL :: firstCheck, lastCheck
 
@@ -428,28 +443,28 @@ CONTAINS ! =====     Public Procedures     =============================
        ENDIF
 
        IF (lastProf >= nTimes) THEN
-          numProfs = nTimes - first
+          myNumProfs = nTimes - first
        ELSE
-          numProfs = lastProf - first + 1
+          myNumProfs = lastProf - first + 1
        ENDIF
 
     ELSE
 
-       numProfs = nTimes - first
+       myNumProfs = nTimes - first
 
     ENDIF
 
     ! Allocate result
 
-    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=numProfs)
+    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=mynumProfs)
 
     ! Allocate temporary arrays
 
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
-    ALLOCATE(realProf(numProfs), realSurf(l2gp%nLevels), &
+    ALLOCATE(realProf(myNumProfs), realSurf(l2gp%nLevels), &
          realFreq(l2gp%nFreqs), &
-         real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
+         real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
 
     ! Read the horizontal geolocation fields
 
@@ -459,7 +474,7 @@ CONTAINS ! =====     Public Procedures     =============================
     stride = 1
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
-    edge(3) = numProfs
+    edge(3) = myNumProfs
     print*,char(15)
 !    print*,"Reading lats: start=",start
 !    print*,"Stride=",stride
@@ -647,6 +662,9 @@ CONTAINS ! =====     Public Procedures     =============================
     IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &detach from swath interface after reading.')
 
+    ! Set numProfs if wanted
+    IF (PRESENT(numProfs)) numProfs=myNumProfs
+
     !-----------------------------
   END SUBROUTINE ReadL2GPData
   !-----------------------------
@@ -675,8 +693,12 @@ CONTAINS ! =====     Public Procedures     =============================
     CHARACTER (len=480) :: MSR
     CHARACTER (len=132) :: NAME   ! From l2gp%name
 
-    INTEGER :: SWID, STATUS
+    ! THESE ARE HDF5 CHUNKS, _NOT_ MLS ALONG-TRACK PROCESSING CHUNKS 
+    INTEGER,DIMENSION(7)::CHUNK_DIMS
+    INTEGER::CHUNK_RANK
 
+    INTEGER :: SWID, STATUS
+    character(len=1)::poop
     IF (PRESENT(swathName)) THEN
        name=swathName
     ELSE
@@ -685,23 +707,30 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Create the swath within the file
     print*,"Creating swath called ",name
-    swid = HE5_SWcreate(L2FileHandle, name)
+    swid = HE5_SWcreate(L2FileHandle, TRIM(name))
     print*,"Swath ",name,"has SW id :",swid
     IF ( swid == -1 ) THEN
-       msr = 'Failed to create swath ' // name
+       msr = 'Failed to create swath ' // TRIM(name)
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
     ! Define dimensions
 
+    ! Defining special "unlimited dimension called UNLIM
+    print*,"Defined Unlim with size", H5S_UNLIMITED
+    status = HE5_SWdefdim(swid, UNLIM, H5S_UNLIMITED)
+
     print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
     status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
+
+
     IF ( status == -1 ) THEN
        msr = DIM_ERR // DIM_NAME1
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
     IF ( l2gp%nLevels > 0 ) THEN
+       
        print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
        status = HE5_SWdefdim(swid, DIM_NAME2, l2gp%nLevels)
        IF ( status == -1 ) THEN
@@ -720,11 +749,15 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
 
     ! Define horizontal geolocation fields using above dimensions
-    !Instant seggie occurs in next line. GEO_FIELD1='Latitude'
-    !DIM_NAME1='nTimes',
-    print*,"Defining geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
+
+    print*,"Defining geolocation field ",GEO_FIELD1," of dim. ", DIM_NAME1
     print*,"... and of type ",H5T_NATIVE_FLOAT
-    status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML,&
+    chunk_rank=1
+    chunk_dims=1
+    chunk_dims(1)=CHUNKTIMES
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    print*,"Set chunking -- status=",status
+    status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML1,&
          H5T_NATIVE_FLOAT , 0)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD1
@@ -732,49 +765,58 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
     print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
     print*,"... and of type ",H5T_NATIVE_FLOAT
-    status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML,&
+
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+
+    status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML1,&
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD2
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML, &
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML1, &
     H5T_NATIVE_DOUBLE, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML,&
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML1,&
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD4
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML, &
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML1, &
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD5
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML,&
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML1,&
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD6
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML,&
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML1,&
     H5T_NATIVE_FLOAT,   HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD7
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML,&
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD8
@@ -782,6 +824,7 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
 
     IF ( l2gp%nLevels > 0 ) THEN
+
        status = HE5_SWdefgfld(swid, GEO_FIELD9, DIM_NAME2,MAX_DIML,&
             H5T_NATIVE_FLOAT, HDFE_NOMERGE)
        IF ( status == -1 ) THEN
@@ -791,6 +834,7 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
 
     IF ( l2gp%nFreqs > 0 ) THEN
+
        status = HE5_SWdefgfld(swid, GEO_FIELD10, DIM_NAME3,MAX_DIML,&
             H5T_NATIVE_FLOAT, HDFE_NOMERGE)
        IF ( status == -1 ) THEN
@@ -802,8 +846,11 @@ CONTAINS ! =====     Public Procedures     =============================
     ! Define data fields using above dimensions
 
     IF ( (l2gp%nFreqs > 0) .AND. (l2gp%nLevels > 0) ) THEN
+       chunk_rank=3
+       chunk_dims(1:3)=(/ CHUNKFREQS,CHUNKLEVELS,CHUNKTIMES /)
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML,&
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML123,&
        H5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        IF ( status == -1 ) THEN
@@ -812,7 +859,8 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
 
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML,&
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
             H5T_NATIVE_FLOAT, HDFE_NOMERGE)
 
        IF ( status == -1 ) THEN
@@ -822,16 +870,30 @@ CONTAINS ! =====     Public Procedures     =============================
 
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
+       chunk_rank=2
+       chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+       print*,"Set chunking with status=",status
+       print*,"chunking=",chunk_dims
+       print*,"About to define 2-D extendible field"
+       !read(*,'(a1)')poop
+       !print*,poop
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML, &
+       print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+            DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
             H5T_NATIVE_FLOAT, HDFE_NOMERGE)
-
+       print*,"Defined 2-D extendible field"
+       !read(*,'(a1)')poop
+       !print*,poop
+    
        IF ( status == -1 ) THEN
           msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
        END IF
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML,&
+           status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+           status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
             H5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        IF ( status == -1 ) THEN
@@ -840,8 +902,11 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
 
     ELSE
-
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML,&
+       chunk_rank=1
+       chunk_dims(1)=CHUNKTIMES
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    
+       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML1,&
             H5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        IF ( status == -1 ) THEN
@@ -849,7 +914,7 @@ CONTAINS ! =====     Public Procedures     =============================
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
        END IF
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML,&
+       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
        H5T_NATIVE_FLOAT, HDFE_NOMERGE)
 
        IF ( status == -1 ) THEN
@@ -862,7 +927,7 @@ CONTAINS ! =====     Public Procedures     =============================
 !    print*,"Defining data field ",DATA_FIELD3,"of dim.", DIM_NAME1
 !    print*,"... and of type ",H5T_NATIVE_CHAR
 
-!    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML,&
+!    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML1,&
 !         H5T_NATIVE_CHAR, HDFE_NOMERGE)
 !    IF ( status == -1 ) THEN
 !       msr = DAT_ERR // DATA_FIELD3
@@ -870,8 +935,11 @@ CONTAINS ! =====     Public Procedures     =============================
 !    END IF
 
 !    print*,"Defined data field ",DATA_FIELD3,"of dim.", DIM_NAME1
+    chunk_rank=1
+    chunk_dims(1)=CHUNKTIMES
+    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
-    status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML,&
+    status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML1,&
          H5T_NATIVE_FLOAT, HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = DAT_ERR // DATA_FIELD4
@@ -880,7 +948,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
-    ! swath.
+    ! swath. (May be un-necessary for HDF5 -- someone check sometime.)
 
     status = HE5_SWdetach(swid)
     IF ( status == -1 ) THEN
@@ -893,7 +961,7 @@ CONTAINS ! =====     Public Procedures     =============================
   !--------------------------------------
 
   !-----------------------------------------  OutputL2GP_writeGeo  -----
-  SUBROUTINE OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+  SUBROUTINE OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,offset)
 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
@@ -902,8 +970,8 @@ CONTAINS ! =====     Public Procedures     =============================
 
     TYPE( L2GPData_T ), INTENT(inout) :: l2gp
     INTEGER, INTENT(in) :: l2FileHandle ! From swopen
-    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults to l2gp%name
-
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults->l2gp%name
+    INTEGER,INTENT(IN),OPTIONAL::offset
     ! Parameters
 
     CHARACTER (len=*), PARAMETER :: WR_ERR = &
@@ -914,8 +982,15 @@ CONTAINS ! =====     Public Procedures     =============================
     CHARACTER (len=480) :: msr
     CHARACTER (len=132) :: name ! Either swathName or l2gp%name
 
-    INTEGER :: status, swid
+    INTEGER :: status, swid,myOffset
     INTEGER :: start(2), stride(2), edge(2)
+
+    IF (PRESENT(offset)) THEN
+       myOffset=offset
+    ELSE
+       myOffset=0
+    ENDIF
+
 
     IF (PRESENT(swathName)) THEN
        name=swathName
@@ -927,12 +1002,13 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Write data to the fields
 
-    stride(1) = 1
-    start(1) = 0
+    stride = 1
+    start = myOffset
     edge(1) = l2gp%nTimes
-
+    print*,"About to write latitude"
     status = HE5_SWwrfld(swid, GEO_FIELD1, start, stride, edge, &
          REAL(l2gp%latitude))
+    print*,"wrote latitude, maybe"
     IF ( status == -1 ) THEN
        msr = WR_ERR // GEO_FIELD1
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -989,6 +1065,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     IF ( l2gp%nLevels > 0 ) THEN
        edge(1) = l2gp%nLevels
+       start(1)=0 ! needed because offset may have made this /=0
        status = HE5_SWwrfld(swid, GEO_FIELD9, start, stride, edge, &
             REAL(l2gp%pressures))
        IF ( status == -1 ) THEN
@@ -999,6 +1076,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     IF ( l2gp%nFreqs > 0 ) THEN
        edge(1) = l2gp%nFreqs
+       start(1)=0 ! needed because offset may have made this /=0
        l2gp%frequency = 0
        status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
             REAL(l2gp%frequency))
@@ -1022,17 +1100,18 @@ CONTAINS ! =====     Public Procedures     =============================
   !------------------------------------
 
   !----------------------------------------  OutputL2GP_writeData  -----
-  SUBROUTINE OutputL2GP_writeData(l2gp, l2FileHandle, swathName)
+  SUBROUTINE OutputL2GP_writeData(l2gp, l2FileHandle, swathName,offset)
 
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
-
+    ! For now, you have to write all of l2gp, but you can choose to write
+    ! it at some offset into the file
     ! Arguments
 
     TYPE( L2GPData_T ), INTENT(inout) :: l2gp
     INTEGER, INTENT(in) :: l2FileHandle ! From swopen
-    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults to l2gp%name
-
+    CHARACTER (len=*), INTENT(IN), OPTIONAL :: swathName ! Defaults->l2gp%name
+    INTEGER,INTENT(IN),OPTIONAL::offset
     ! Parameters
 
     CHARACTER (len=*), PARAMETER :: WR_ERR = 'Failed to write data field '
@@ -1042,20 +1121,28 @@ CONTAINS ! =====     Public Procedures     =============================
     CHARACTER (len=480) :: msr
     CHARACTER (len=132) :: name     ! Either swathName or l2gp%name
 
-    INTEGER :: status
+    INTEGER :: status,myOffset
     INTEGER :: start(3), stride(3), edge(3)
     INTEGER :: swid
+    
+    IF (PRESENT(offset)) THEN
+       myOffset=offset
+    ELSE
+       myOffset=0
+    ENDIF
 
     IF (PRESENT(swathName)) THEN
        name=swathName
     ELSE
        name=l2gp%name
     ENDIF
+
     !print*,"OutputL2GP_writeData -- name=",name
     ! Write data to the fields
 
     start = 0
     stride = 1
+    start(3)=myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -1148,15 +1235,14 @@ CONTAINS ! =====     Public Procedures     =============================
   ! --------------------------------------------------------------------------
 
   ! This subroutine is an amalgamation of the last three
-
+  ! Should be renamed CreateAndWriteL2GPData
   SUBROUTINE WriteL2GPData(l2gp,l2FileHandle,swathName)
 
     ! Arguments
 
     INTEGER, INTENT(IN) :: l2FileHandle ! From swopen
     TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: swathName ! (defaults to l2gp%swathName)
-
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) ::swathName!default->l2gp%swathName
     ! Exectuable code
 
     CALL OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
@@ -1164,6 +1250,89 @@ CONTAINS ! =====     Public Procedures     =============================
     CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
 
   END SUBROUTINE WriteL2GPData
+  !-------------------------------------------------------------
+
+
+  SUBROUTINE AppendL2GPData(l2gp,l2FileHandle,swathName,offset)
+    ! sticks l2gp into the swath swathName in the file pointed at by
+    ! l2FileHandle,starting at the profile number "offset" (First profile
+    ! in the file has offset==0). If this runs off the end ofthe swath, 
+    ! it is lengthend automagically. 
+    ! Arguments
+
+    INTEGER, INTENT(IN) :: l2FileHandle ! From swopen
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) ::swathName!default->l2gp%swathName
+    INTEGER,INTENT(IN),OPTIONAL::offset
+    !----Local variable
+    INTEGER::myOffset
+    ! ----Executable code---
+    IF (PRESENT(offset)) THEN
+       myOffset=offset
+    ELSE
+       myOffset=0
+    ENDIF
+    CALL OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,myOffset)
+    CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName,myOffset)
+
+  END SUBROUTINE AppendL2GPData
+
+
+
+  ! ------------------------------------------ DUMP_L2GP ------------
+
+  subroutine Dump_L2GP ( L2gp, Name )
+
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) :: L2GP(:)
+    character(len=*), optional :: Name
+
+    ! Local variables
+    integer :: i
+
+    if ( present(name) ) call output ( name, advance='yes' )
+    do i = 1, size(l2gp)
+      call output ( 'L2GP Data: ')
+      call display_string ( l2gp(i)%nameIndex, advance='yes' )
+      call output ( 'nTimes: ')
+      call output ( l2gp(i)%nTimes, 5)
+      call output ( '  nLevels: ')
+      call output ( l2gp(i)%nLevels, 3)
+      call output ( '  nFreqs: ')
+      call output ( l2gp(i)%nFreqs, 3, advance='yes')
+      
+      call dump ( l2gp(i)%pressures, 'Pressures:' )
+      
+      call dump ( l2gp(i)%latitude, 'Latitude:' )
+      
+      call dump ( l2gp(i)%longitude, 'Longitude:' )
+      
+      call dump ( l2gp(i)%solarTime, 'SolarTime:' )
+      
+      call dump ( l2gp(i)%solarZenith, 'SolarZenith:' )
+      
+      call dump ( l2gp(i)%losAngle, 'LOSAngle:' )
+      
+      call dump ( l2gp(i)%geodAngle, 'geodAngle:' )
+      
+      call dump ( l2gp(i)%time, 'Time:' )
+      
+      call dump ( l2gp(i)%chunkNumber, 'ChunkNumber:' )
+      
+      if ( associated(l2gp(i)%frequency) ) &
+        & call dump ( l2gp(i)%frequency, 'Frequencies:' )
+      
+      call dump ( l2gp(i)%l2gpValue, 'L2GPValue:' )
+      
+      call dump ( l2gp(i)%l2gpPrecision, 'L2GPPrecision:' )
+      
+      !    call dump ( l2gp(i)%status, 'Status:' )
+      
+      call dump ( l2gp(i)%quality, 'Quality:' )
+
+    end do
+  end subroutine Dump_L2GP
+
 
   !=============================================================================
 END MODULE L2GPData
@@ -1171,6 +1340,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.3  2001/03/20 14:00:30  pumphrey
+! fixing inconsistencies -- nothing important
+!
 ! Revision 1.2  2001/02/23 13:33:14  pumphrey
 ! Fixed type definition for L2GPData_T so all the pointers are => NULL()
 ! This error was detected by nagf95 on Solaris but not on Linux. Odd.
