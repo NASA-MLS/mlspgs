@@ -97,7 +97,7 @@ subtrees: do while ( j <= howmany )
                 & qtyTemplates, vectorTemplates, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, aprioriData, vectorTemplates, &
-                & vectors, qtyTemplates )
+                & vectors, qtyTemplates, l2gpDatabase )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, &
                 & qtyTemplates, chunks, chunkNo )
