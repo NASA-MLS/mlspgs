@@ -17,7 +17,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSSignals_m, only: GETMODULENAME
   use MLSStrings, only: LINEARSEARCHSTRINGARRAY
   use Output_M, only: OUTPUT
-  use STRING_TABLE, only: GET_STRING
+  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Tree, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -238,6 +238,41 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyL2AUXDatabase
 
+  ! ------------------------------------------ Dump_L2AUX ------------
+
+  subroutine Dump_L2AUX ( L2aux, Name )
+
+    ! Dummy arguments
+    type (l2auxData_T), intent(in) ::          L2AUX(:)
+    character(len=*), intent(in), optional :: Name
+
+    ! Local variables
+    integer :: i, dim
+    
+    if ( present(name) ) call output ( name, advance='yes' )
+    do i = 1, size(l2aux)
+      call output ( 'L2AUX Data: ')
+      call display_string ( l2aux(i)%name )
+      call output ( 'INSTRUMENTMODULE: ')
+      call display_string ( l2aux(i)%name )
+      call output ( '  Minor Frame? (t/f): ')
+      call output ( l2aux(i)%minorframe, advance='yes')
+      do dim=1, l2auxrank
+        call output ( '  dimension: ')
+        call output ( dim )
+        call output ( '           ')
+        call output ( '  nValues: ')
+        call output ( l2aux(i)%dimensions(dim)%novalues, 3, advance='no')
+        call output ( '           ')
+        call output ( '  dimension family: ')
+        call output ( l2aux(i)%dimensions(dim)%dimensionfamily, 3, advance='yes')
+        call dump ( l2aux(i)%dimensions(dim)%values, 'dim values:' )
+      enddo
+      call dump ( l2aux(i)%values, 'values:' )
+ 
+    end do
+  end subroutine Dump_L2AUX
+    
   !------------------------------------------------ ReadL2AUXData ------------
   subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf)
     
@@ -506,6 +541,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.18  2001/08/06 18:35:24  pwagner
+! Added dump_l2aux
+!
 ! Revision 2.17  2001/07/11 20:50:46  dwu
 ! fix problem in readl2auxdata
 !
