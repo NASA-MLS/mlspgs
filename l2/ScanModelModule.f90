@@ -42,7 +42,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  use Units, only: Deg2Rad, LN10, PHYQ_Length, PI, PHYQ_Profiles
+  USE Units, ONLY: Deg2Rad, LN10, PHYQ_Length, PI, PHYQ_Profiles
 
   implicit NONE
 
@@ -72,6 +72,7 @@ contains ! =============== Subroutines and functions ==========================
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
+    use Units, only: Boltz
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -83,10 +84,12 @@ contains ! =============== Subroutines and functions ==========================
   
     ! Some terms to do with the gas 'constant'
 
-    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
-    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
-    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
-    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
+!    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
+!    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
+!    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
+!    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
+    REAL(r8), parameter :: c_mass = 0.02_rp ! mass reduction coefficient
+    REAL(r8), parameter :: basiscutoff = 2.5_rp ! zeta where mass reduction begins
 
     ! Local variables, many automatic arrays
 
@@ -105,7 +108,7 @@ contains ! =============== Subroutines and functions ==========================
     integer :: INSTANCE                 ! Loop counter
     integer :: SURF                     ! Loop counter
     
-    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
+!    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
 
@@ -136,9 +139,10 @@ contains ! =============== Subroutines and functions ==========================
     ! To do this we get a gas constant for all the temperature basis points
     logP= temp%template%surfs(:,1)
 
-    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
+!    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
     modifiedBasis = max ( logP, basisCutoff ) ! Either logP or this threshold
-    myR = gasR0 / ( gasM0 + gasM1*modifiedBasis + gasM2*modifiedBasis**2 )
+!    myR = gasR0 / ( gasM0 + gasM1*modifiedBasis + gasM2*modifiedBasis**2 )
+    myR = boltz * (1.0_r8 + c_mass*(modifiedBasis - basiscutoff)**2)   
 
     ! Compute R*T for each point, avoid spread intrinsic to save memory
     ! and cpu time.
@@ -148,9 +152,11 @@ contains ! =============== Subroutines and functions ==========================
 
     gph(1,:) = 0.0
     do surf = 2, temp%template%noSurfs
-       deltaGeopot = (ln10/ (2*g0) ) * &
-         & ( myRT(surf,:) + myRT(surf-1,:) ) * &
-         & ( logP(surf) - logP(surf-1) )
+!       deltaGeopot = (ln10/ (2*g0) ) * &
+!         & ( myRT(surf,:) + myRT(surf-1,:) ) * &
+!         & ( logP(surf) - logP(surf-1) )
+       deltaGeopot = ( myRT(surf,:) + myRT(surf-1,:) ) * &
+         & ( logP(surf) - logP(surf-1) ) / (2.0_r8 * g0)
        gph(surf,:) = gph(surf-1,:) + deltaGeopot
     end do
 
@@ -168,7 +174,10 @@ contains ! =============== Subroutines and functions ==========================
     aboveRefWeight = max ( min ( aboveRefWeight, 1.0D0 ), 0.0D0 )
 
     ! Get geopotential at the reference surface from our intermediate result
-    currentRefGPH = gph(myBelowRef,:) + ((basisGap*ln10)/(2*g0))* &
+!    currentRefGPH = gph(myBelowRef,:) + ((basisGap*ln10)/(2*g0))* &
+!      & ( myRT(myBelowRef,:) * aboveRefWeight * (2-aboveRefWeight) + &
+!      &   myRT(myBelowRef+1,:) * (aboveRefWeight**2))
+    currentRefGPH = gph(myBelowRef,:) + ((basisGap)/(2.0_r8 * g0))* &
       & ( myRT(myBelowRef,:) * aboveRefWeight * (2-aboveRefWeight) + &
       &   myRT(myBelowRef+1,:) * (aboveRefWeight**2))
 
@@ -202,6 +211,7 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
+    use Units, only: Boltz
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -212,10 +222,12 @@ contains ! =============== Subroutines and functions ==========================
   
     ! Some terms to do with the gas 'constant'
 
-    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
-    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
-    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
-    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
+!    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
+!    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
+!    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
+!    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
+    REAL(r8), parameter :: c_mass = 0.02_rp ! mass reduction coefficient
+    REAL(r8), parameter :: basiscutoff = 2.5_rp ! zeta where mass reduction begins
 
     ! Local variables, many automatic arrays
 
@@ -254,7 +266,7 @@ contains ! =============== Subroutines and functions ==========================
     integer :: INSTANCE                 ! Loop counter
     integer :: SURF                     ! Loop counter
     
-    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
+!    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
 
@@ -279,9 +291,10 @@ contains ! =============== Subroutines and functions ==========================
     ! To do this we get a gas constant for all the temperature basis points
     logP= tempPrec%template%surfs(:,1)
 
-    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
+!    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
     modifiedBasis = max ( logP, basisCutoff ) ! Either logP or this threshold
-    myR = gasR0 / ( gasM0 + gasM1*modifiedBasis + gasM2*modifiedBasis**2 )
+!    myR = gasR0 / ( gasM0 + gasM1*modifiedBasis + gasM2*modifiedBasis**2 )
+    myR = boltz * (1.0_r8 + c_mass*(modifiedBasis - basiscutoff)**2)   
 
     ! Compute T derivative of R*T for each point.
     dmyRT_dT = 0.0
@@ -291,9 +304,11 @@ contains ! =============== Subroutines and functions ==========================
 
     dgph_dT = 0.0
     do surf = 2, tempPrec%template%noSurfs
-       ddeltaGeopot_dT = (ln10/ (2*g0) ) * &
-         & ( dmyRT_dT(surf,:,:) + dmyRT_dT(surf-1,:,:) ) * &
-         & ( logP(surf) - logP(surf-1) )
+!       ddeltaGeopot_dT = (ln10/ (2*g0) ) * &
+!         & ( dmyRT_dT(surf,:,:) + dmyRT_dT(surf-1,:,:) ) * &
+!         & ( logP(surf) - logP(surf-1) )
+       ddeltaGeopot_dT = ( dmyRT_dT(surf,:,:) + dmyRT_dT(surf-1,:,:) ) * &
+         & ( logP(surf) - logP(surf-1) ) / (2.0_r8 * g0)
        dgph_dT(surf,:,:) = dgph_dT(surf-1,:,:) + ddeltaGeopot_dT
     end do
 
@@ -312,7 +327,10 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Get derivative of the geopotential at the reference surface
     ! from our intermediate result
-    dcurrentRefGPH_dT = dgph_dT(myBelowRef,:,:) + ((basisGap*ln10)/(2*g0))* &
+!    dcurrentRefGPH_dT = dgph_dT(myBelowRef,:,:) + ((basisGap*ln10)/(2*g0))* &
+!      & ( dmyRT_dT(myBelowRef,:,:) * aboveRefWeight * (2-aboveRefWeight) + &
+!      &   dmyRT_dT(myBelowRef+1,:,:) * (aboveRefWeight**2))
+    dcurrentRefGPH_dT = dgph_dT(myBelowRef,:,:) + ((basisGap)/(2.0_r8*g0))* &
       & ( dmyRT_dT(myBelowRef,:,:) * aboveRefWeight * (2-aboveRefWeight) + &
       &   dmyRT_dT(myBelowRef+1,:,:) * (aboveRefWeight**2))
 
@@ -2019,6 +2037,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.57  2003/02/13 01:15:39  bill
+! made reference geopotential height calculation constants the same as those used in the hydrostatic calcs
+!
 ! Revision 2.56  2003/02/12 22:46:49  bill
 ! fixed mass correction integrations
 !
