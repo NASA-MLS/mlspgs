@@ -8,7 +8,7 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
-    & F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
+    & F_PRECISION, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
@@ -72,16 +72,14 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
     ! Local variables
-    logical :: CompareOverlaps
+    logical :: COMPAREOVERLAPS
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
-    logical :: GOT_FIELD(field_first:field_last)
     integer :: GSON                     ! Son of Key
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: MLSCFLine
     logical :: OutputOverlaps
-    type (VectorValue_T), pointer :: Quantity
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
     integer :: SDNAME                   ! Name index
     integer :: SON                      ! A son of ROOT
@@ -89,9 +87,17 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS                   ! Flag
     integer :: SWATHNAME                ! Name index
     integer :: VALUE                    ! Value of a field
-    integer :: VECTORINDEX, QUANTITYINDEX
-    real :: T1, T2     ! for timing
+    integer :: VECTORINDEX              ! Index for vector to join
+    integer :: QUANTITYINDEX            ! ind in qty tmpl database, not vector
+    integer :: PRECVECTORINDEX          ! Index for precision vector
+    integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
     logical :: TIMING
+
+    real :: T1, T2     ! for timing
+
+    logical :: GOT_FIELD(field_first:field_last)
+    type (VectorValue_T), pointer :: Quantity
+    type (VectorValue_T), pointer :: PrecisionQuantity
 
     ! Executable code
     timing = .false.
@@ -153,6 +159,10 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           vectorIndex = decoration(decoration(subtree(1,source)))
           quantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_precision )
+          source = subtree(2,gson) ! required to be an n_dot vertex
+          precVectorIndex = decoration(decoration(subtree(1,source)))
+          precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
         case ( f_compareoverlaps )
           compareOverlaps = value == l_true
         case ( f_outputoverlaps )
@@ -173,6 +183,15 @@ contains ! =====     Public Procedures     =============================
       select case ( get_spec_id(key) )
       case ( s_l2gp, s_l2aux ) ! ------------- L2GP and L2AUX Data     ------------
         quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+        if ( got_field ( f_precision ) ) then
+          precisionQuantity => &
+            & GetVectorQtyByTemplateIndex(vectors(precVectorIndex),precQtyIndex)
+          if ( quantity%template%id /= precisionQuantity%template%id ) &
+            & call MLSMessage(MLSMSG_Error,ModuleName, &
+            & 'Quantity and precision quantity do not match')
+        else
+          precisionQuantity => NULL()
+        endif
         
         ! Now, depending on the properties of the source we deal with the
         ! vector quantity appropriately.
@@ -182,7 +201,8 @@ contains ! =====     Public Procedures     =============================
           ! with no vertical coordinate system go in l2gp files.
           if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
             & ModuleName, 'This quantity should be joined as an l2gp')
-          call JoinL2GPQuantities ( key, swathName, quantity, l2gpDatabase, chunkNo )
+          call JoinL2GPQuantities ( key, swathName, quantity, precisionQuantity, &
+            & l2gpDatabase, chunkNo )
         else
           ! All others go in l2aux files.
           if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
@@ -236,13 +256,14 @@ contains ! =====     Public Procedures     =============================
   ! the instances that we wish to store in the l2gp quantity.  Otherwise, it
   ! defaults to the non overlapped region.
 
-  subroutine JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, &
+  subroutine JoinL2GPQuantities ( key, name, quantity, precision, l2gpDatabase, &
     & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to Decorate with the L2GP index
     integer, intent(in) :: NAME    ! Of the l2gp command
-    type (VectorValue_T), intent(in) :: QUANTITY
+    type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
+    type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
@@ -360,8 +381,12 @@ contains ! =====     Public Procedures     =============================
     ! come from matrices later in 0.5, and the diagnostics such as status
     ! and quality will come later too (probably 0.5, but maybe 1.0)
 
-    thisL2GP%l2gpValue(:,:,firstProfile:lastProfile)=&
+    thisL2GP%l2gpValue(:,:,firstProfile:lastProfile) = &
          RESHAPE(quantity%values(:,useFirstInstance:useLastInstance),&
+         (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+    if (associated(precision)) &
+      thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = &
+      RESHAPE(precision%values(:,useFirstInstance:useLastInstance),&
          (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
     thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0 ! Later put something here
     thisL2GP%status(firstProfile:lastProfile)='G'
@@ -586,6 +611,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.35  2001/05/08 23:25:32  livesey
+! Added the precision stuff for l2gp's
+!
 ! Revision 2.34  2001/05/08 21:51:02  livesey
 ! Removed some old xStar, yStar, kStar stuff.
 !
