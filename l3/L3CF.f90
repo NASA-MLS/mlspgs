@@ -41,27 +41,10 @@ MODULE L3CF
 
    TYPE L3CFDef_T
 
-     INTEGER :: nNom		! number of points in the L2 nominal latitude grid
-
-     REAL(r8), DIMENSION(maxGridPoints) :: l2nomLats		! dimensioned (nNom)
-
-     CHARACTER (LEN=FileNameLen) :: logType
-	! template for the log file name
-
-     CHARACTER (LEN=FileNameLen) :: stdType
-	! template for the l3dz file for Standard products
-
-     CHARACTER (LEN=FileNameLen) :: dgType
-	! template for the l3dz file for Diagnostic products
-
-     CHARACTER (LEN=FileNameLen) :: stdMCFname	! Standard MCF name
-     CHARACTER (LEN=FileNameLen) :: dgMCFname	! Diagnostic MCF name
-
-     INTEGER :: stdMCFnum			! Standard MCF number
-     INTEGER :: dgMCFnum			! Diagnostic MCF number
-
      INTEGER :: minDays
 	! # of days of input data needed to process an l3 product
+
+     CHARACTER (LEN=3) :: intpMethod		! method of interpolation (lin/csp)
 
    END TYPE L3CFDef_T
 
@@ -69,7 +52,7 @@ MODULE L3CF
 
    TYPE L3CFProd_T
 
-     ! DailyMap section
+     ! Standard section
 
      CHARACTER (LEN=GridNameLen) :: l3prodNameD
 	! name of product processed at l3
@@ -83,11 +66,11 @@ MODULE L3CF
 
      INTEGER :: nLats 			! number of points in latitude grid
 
-     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap	! dimensioned (nLats)
+     REAL(r8), DIMENSION(maxGridPoints) :: latGridMap      ! dimensioned (nLats)
 
      INTEGER :: nLons			! number of points in longitude grid
 
-     REAL(r8), DIMENSION(maxGridPoints) :: longGrid	! dimensioned (nLons)
+     REAL(r8), DIMENSION(maxGridPoints) :: longGrid        ! dimensioned (nLons)
 
      REAL(r8), DIMENSION(2) :: l3presLvl       ! min, max combined pressure levels
 
@@ -99,15 +82,7 @@ MODULE L3CF
 
      INTEGER, DIMENSION(2) :: rangWavenumber	! min, max of wave # range
 
-     CHARACTER (LEN=3) :: intpMethod	! method of interpolation (lin/csp)
-
-     ! Daily Zonal Mean specifications
-
-     CHARACTER (LEN=2) :: calMethod			! calculation method (l2/l3)
-
      ! Output section
-
-     CHARACTER (LEN=FileNameLen) :: mcfName	! MCF name
 
      INTEGER :: mcfNum				! PCF number for the MCF
 
@@ -161,6 +136,7 @@ CONTAINS
 !-------------------------------------------------------------------
    SUBROUTINE FillL3CF (cf, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
 !-------------------------------------------------------------------
+
 ! Brief description of subroutine
 ! This subroutine checks the parser output and fills L3CFProd_T.
 
@@ -190,19 +166,19 @@ CONTAINS
       CHARACTER (LEN=10) :: l3Ver, label
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
-      CHARACTER (LEN=FileNameLen) :: match
+      CHARACTER (LEN=FileNameLen) :: match, mcfName
 
       INTEGER :: err, i, iGlob, iLab, iMap, iOut, indx, j
-      INTEGER :: mlspcf_mcf, nNon, numProds, returnStatus
+      INTEGER :: mlspcf_mcf, nLat, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
-      REAL(r8) :: non(maxGridPoints)
+      REAL(r8) :: latGrid(maxGridPoints)
 
 ! Find the section indices in the CF
 
       iGlob = LinearSearchStringArray(cf%Sections%MlscfSectionName, &
                                       'GlobalSettings')
-      iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'DailyMap')
+      iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Standard')
       iOut = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Output')
 
 ! Check that the version number given in the CF will match the PCF file names
@@ -215,119 +191,38 @@ CONTAINS
       IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                                   'Output versions in the CF and PCF differ.')
 
-! Find the non-negative values for the L2 nominal latitude grid in the
-! GlobalSettings section of the cf; add the negative values, and save all in
-! L3CFDef_T
-
-      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
-                                     'l2nomLats')
-      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
-                                     &the CF for l2nomLats.')
-
-      DO i = 1, maxGridPoints
-         non(i) = cf%Sections(iGlob)%Cells(indx)%RealValue
-         IF (cf%Sections(iGlob)%Cells(indx)%More == 0) EXIT
-         indx = indx + 1
-      ENDDO
-      nNon = i
-      cfDef%nNom = 2*nNon - 1
-      cfDef%l2nomLats(nNon:cfDef%nNom) = non(:nNon)
-
-      DO i = 1, nNon-1
-         cfDef%l2nomLats(i) = -non( nNon-(i-1) )
-      ENDDO
- 
-! Find/save the log type from the GlobalSettings section of the cf
-
-      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
-      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
-                                    &the CF for LogType.')
-      cfDef%logType = cf%Sections(iGlob)%Cells(indx)%CharValue
-
 ! Find/save minDays from GlobalSettings
 
       indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'MinDays')
-      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
-                                    &the CF for MinDays.')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for MinDays.')
       cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
 
-! Find the L3DZS label
+! Find/save the interpolation method
 
-       label = 'L3DZS'
-       iLab = LinearSearchStringArray( &
-                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
-       IF (iLab == 0) THEN
-          msr = 'Missing l3cf Output specification for ' // label
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'intpMethod')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for intpMethod.')
+      cfDef%intpMethod = cf%Sections(iGlob)%Cells(indx)%CharValue
 
-! Find the Standard MCF file name; save it in L3CFDef_T
+! Find the boundaries of the latitude grid
 
-       indx = LinearSearchStringArray( &
-                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                              &keyword MCF in the Output section of the l3cf.')
-       cfDef%stdMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'latGridMap')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                     &for latGridMap.')
+      start = cf%Sections(iGlob)%Cells(indx)%RealValue
+      end = cf%Sections(iGlob)%Cells(indx)%RangeUpperBound
 
-! Search for a match in the PCF
+! Find the increment of the latitude grid
 
-       CALL SearchPCFNames(cfDef%stdMCFName, mlspcf_mcf_l3dz_start, &
-                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
-       IF (mlspcf_mcf == -1) THEN
-          msr = 'No match in the PCF for file ' // cfDef%stdMCFName
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, 'dLat')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in the CF &
+                                     &for dLat.')
+      delta = cf%Sections(iGlob)%Cells(indx)%RealValue
 
-! Save the PCF number in L3CFProd_T
+! Calculate the array containing the latitude grid
 
-       cfDef%stdMCFNum = mlspcf_mcf
-
-! Find the file template from Output; save it in L3CFDef_T
-
-       indx = LinearSearchStringArray( &
-                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                             &keyword FILE in the Output section of the l3cf.')
-       cfDef%stdType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
-
-! Find the L3DZD label
-
-       label = 'L3DZD'
-       iLab = LinearSearchStringArray( &
-                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
-       IF (iLab == 0) THEN
-          msr = 'Missing l3cf Output specification for ' // label
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-
-! Find the Diagnostic MCF file name; save it in L3CFDef_T
-
-       indx = LinearSearchStringArray( &
-                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                              &keyword MCF in the Output section of the l3cf.')
-       cfDef%dgMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
-
-! Search for a match in the PCF
-
-       CALL SearchPCFNames(cfDef%dgMCFName, mlspcf_mcf_l3dz_start, &
-                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
-       IF (mlspcf_mcf == -1) THEN
-          msr = 'No match in the PCF for file ' // cfDef%dgMCFName
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-
-! Save the PCF number in L3CFProd_T
-
-       cfDef%dgMCFNum = mlspcf_mcf
-
-! Find the file template from Output; save it in L3CFDef_T
-
-       indx = LinearSearchStringArray( &
-                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                             &keyword FILE in the Output section of the l3cf.')
-       cfDef%dgType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+      CALL CalculateArray(start, end, delta, latGrid, nLat)
 
 ! Find the number of products for which L3 processing was requested
 
@@ -339,16 +234,18 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Fill L3CFProd_T from the DailyMap & Output sections of the cf
+! Fill L3CFProd_T from the Standard & Output sections of the cf
 
       DO i = 1, numProds
+
+       mcfName = ''
 
 ! Find/save the product name
 
        indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodNameD')
+                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodName')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                    &keyword L3PRODNAMED in the DailyMap section of the l3cf.')
+                    &keyword L3PRODNAMED in the Standard section of the l3cf.')
        l3cf(i)%l3prodNameD = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
 
 ! Find the input synoptic time
@@ -356,8 +253,10 @@ CONTAINS
        indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'timeD')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                          &keyword TIMED in the DailyMap section of the l3cf.')
+                          &keyword TIMED in the Standard section of the l3cf.')
        hhmmss = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
+
+! Save nDays from input
 
        l3cf(i)%nDays = l3Window
 
@@ -375,37 +274,20 @@ CONTAINS
        indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'mode')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                           &keyword MODE in the DailyMap section of the l3cf.')
+                           &keyword MODE in the Standard section of the l3cf.')
        l3cf(i)%mode = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
 
-! Find the boundaries of the latitude grid
+! Save the latitude grid quantities
 
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'latGridMap')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                     &keyword LATGRIDMAP in the DailyMap section of the l3cf.')
-       start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-       end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
-
-! Find the increment of the latitude grid
-
-       indx = LinearSearchStringArray( &
-                           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dLat')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                           &keyword DLAT in the DailyMap section of the l3cf.')
-       delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-
-! Calculate the array containing the latitude grid
-
-       CALL CalculateArray(start, end, delta, l3cf(i)%latGridMap, &
-                           l3cf(i)%nLats)
+       l3cf(i)%latGridMap = latGrid
+       l3cf(i)%nLats = nLat
 
 ! Find the boundaries of the longitude grid
 
        indx = LinearSearchStringArray( &
                      cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'longGrid')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                       &keyword LONGGRID in the DailyMap section of the l3cf.')
+                       &keyword LONGGRID in the Standard section of the l3cf.')
        start = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
        end = cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
@@ -414,7 +296,7 @@ CONTAINS
        indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'dLon')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                           &keyword DLON in the DailyMap section of the l3cf.')
+                           &keyword DLON in the Standard section of the l3cf.')
        delta = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
 
 ! Calculate the array containing the longitude grid
@@ -427,7 +309,7 @@ CONTAINS
           indx = LinearSearchStringArray( &
                         cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
           IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                         &keyword L3PRESLVL in the DailyMap section of the l3cf.')
+                         &keyword L3PRESLVL in the Standard section of the l3cf.')
           l3cf(i)%l3presLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
           l3cf(i)%l3presLvl(2) = &
                          cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
@@ -435,12 +317,12 @@ CONTAINS
           l3cf(i)%l3presLvl = 0.0
        ENDIF
 
-       IF ( (l3cf(i)%mode == 'asc') .OR. (l3cf(i)%mode == 'all') ) THEN
+       IF ( INDEX(l3cf(i)%mode,'a') /= 0) THEN
 
           indx = LinearSearchStringArray( &
                         cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'ascPresLvl')
           IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                         &keyword ASCPRESLVL in the DailyMap section of the l3cf.')
+                         &keyword ASCPRESLVL in the Standard section of the l3cf.')
           l3cf(i)%ascPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
           l3cf(i)%ascPresLvl(2) = &
                          cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
@@ -448,12 +330,12 @@ CONTAINS
           l3cf(i)%ascPresLvl = 0.0
        ENDIF
 
-      IF ( (l3cf(i)%mode == 'des') .OR. (l3cf(i)%mode == 'all') ) THEN
+      IF ( (INDEX(l3cf(i)%mode,'d') /= 0) .OR. (l3cf(i)%mode == 'all') ) THEN
 
           indx = LinearSearchStringArray( &
                         cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'desPresLvl')
           IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                         &keyword DESPRESLVL in the DailyMap section of the l3cf.')
+                         &keyword DESPRESLVL in the Standard section of the l3cf.')
           l3cf(i)%desPresLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
           l3cf(i)%desPresLvl(2) = &
                          cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
@@ -467,7 +349,7 @@ CONTAINS
        indx = LinearSearchStringArray( &
                    cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangFrequency')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                  &keyword RANGFREQUENCY in the DailyMap section of the l3cf.')
+                  &keyword RANGFREQUENCY in the Standard section of the l3cf.')
        l3cf(i)%rangFrequency(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
        l3cf(i)%rangFrequency(2) = &
                             cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
@@ -475,26 +357,18 @@ CONTAINS
        indx = LinearSearchStringArray( &
                cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangWavenumber')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                 &keyword RANGWAVENUMBER in the DailyMap section of the l3cf.')
+                 &keyword RANGWAVENUMBER in the Standard section of the l3cf.')
        l3cf(i)%rangWavenumber(1) = &
                              cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
        l3cf(i)%rangWavenumber(2) = &
                        cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
-! Find/save the interpolation method
-
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'intpMethod')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                     &keyword INTPMETHOD in the DailyMap section of the l3cf.')
-       l3cf(i)%intpMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
-
-! Find the label in the DailyMap section
+! Find the label in the Standard section
 
        indx = LinearSearchStringArray( &
                            cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'label')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                          &keyword LABEL in the DailyMap section of the l3cf.')
+                          &keyword LABEL in the Standard section of the l3cf.')
        label = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
 
 ! Match it to one in the Output section
@@ -512,14 +386,14 @@ CONTAINS
                           cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                               &keyword MCF in the Output section of the l3cf.')
-       l3cf(i)%mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+       mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
 ! Search for a match in the PCF
 
-       CALL SearchPCFNames(l3cf(i)%mcfName, mlspcf_mcf_l3dm_start, &
-                           mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
+       CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end, &
+                           mlspcf_mcf, match)
        IF (mlspcf_mcf == -1) THEN
-          msr = 'No match in the PCF for file ' // l3cf(i)%mcfName
+          msr = 'No match in the PCF for file ' // mcfName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
 
@@ -536,14 +410,6 @@ CONTAINS
        l3cf(i)%fileTemplate = &
                           cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
-! Find/save the calculation method for Daily Zonal Means
-
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'calMethod')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                     &keyword CALMETHOD in the DailyMap section of the l3cf.')
-       l3cf(i)%calMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
-
     ENDDO
 
 !-------------------------
@@ -555,6 +421,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.13  2001/05/10 13:39:37  nakamura
+! Removed separate pressure specifications for DZ.
+!
 ! Revision 1.12  2001/05/09 16:17:35  nakamura
 ! Added calculation of the negative part of the l2 nominal lat grid.
 !
