@@ -48,8 +48,6 @@ Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
 
 Real(r8) :: dummy(N2lvl), thbs(10), Qlog(3)
 
-real(r8) :: freqs(Nch)
-
 Real(r8) :: z0, zn, q, r, v
 
 !
@@ -629,15 +627,8 @@ Character (LEN=80) :: Fnd, Line
   ALLOCATE(FMI%F_grid_filter(k,j),FMI%Filter_func(k,j),STAT=i)
   if(i /= 0) goto 99
 
-  freqs(1:Nch) = 0.0D0
-  DO i = FMC%Channels_Range(1), FMC%Channels_Range(2)
-    CALL radiometry(i,q,r,v,kk)
-    IF(FMC%Sideband < 0) freqs(i) = q
-    IF(FMC%Sideband > 0) freqs(i) = r
-  END DO
-
   Call get_filters(no_pfa_ch,FMI%no_filt_pts,pfa_ch, &
- &                 FMI%F_grid_filter,freqs,FMI%Filter_func,  &
+ &                 FMI%F_grid_filter,FMI%Filter_func,  &
  &                 FMC%InDir,ier)
   if(ier /= 0) goto 99
 !
@@ -654,83 +645,6 @@ Character (LEN=80) :: Fnd, Line
   END SUBROUTINE L2_LOAD
 
 ! *****     Private procedures     *************************************
-! ------------------------------------------------ Radiometry   -----
-
-SUBROUTINE radiometry(ch, f_p, f_i, db_fi, lmt)
-
-! This subroutine calculates the center frequency of the primary and image
-! sideband by channel. It also Returns the bandwidth limits of integration
-! and the gain of the primary sideband relative to the image in db units.
-
-INTEGER(i4), INTENT(IN) :: ch
-INTEGER(i4), INTENT(OUT) :: lmt
-
-REAL(r8), INTENT(OUT) :: f_p
-REAL(r8), INTENT(OUT) :: f_i
-REAL(r8), INTENT(OUT) :: db_fi
-
-LOGICAL, SAVE :: sgn_fp(6) = (/                                    &
-                 .false., .true., .false., .true., .true., .false./)
-
-INTEGER(i4) :: band, sub_ch, j
-
-Real(r4), SAVE :: db_fi_data(90) =(/                   &
-     &    -0.5218,  0.0000,  0.5218,  0.8264,  0.9654, &
-     &     1.0332,  1.0668,  1.0890,  1.1111,  1.1440, &
-     &     1.2091,  1.3365,  1.5807,  0.3476, -3.6798, &
-     &    -1.7854, -1.6204, -1.5519, -1.5142, -1.4966, &
-     &    -1.4884, -1.4840, -1.4811, -1.4783, -1.4741, &
-     &    -1.4659, -1.4486, -1.4167, -1.3607, -1.2602, &
-     &    -1.0409, -1.1206, -1.1641, -1.1874, -1.1995, &
-     &    -1.2052, -1.2084, -1.2104, -1.2124, -1.2157, &
-     &    -1.2216, -1.2347, -1.2607, -1.3128, -1.4233, &
-     &    -1.0921, -1.2329, -1.2863, -1.3121, -1.3234, &
-     &    -1.3284, -1.3309, -1.3327, -1.3343, -1.3367, &
-     &    -1.3416, -1.3507, -1.3667, -1.3884, -1.4035, &
-     &     0.6661,  0.6480,  0.7759,  0.8029,  0.8741, &
-     &     0.8307,  0.9736,  0.9273,  0.5800,  0.8906, &
-     &     0.9772,  0.9596,  0.9426,  0.8669,  0.7433, &
-     &     0.3108,  1.0632,  0.7029,  0.4426,  0.2910, &
-     &     0.2261,  0.2396,  0.2244,  0.2237,  0.1811, &
-     &     0.1795,  0.1534,  0.1418,  0.3651,  0.5647 /)
-!
-
-REAL(r8), SAVE :: f_prime(6) = (/                          &
-    63568.418D0, 204352.161D0, 204574.627D0, 206132.067D0, &
-    183310.062D0, 184377.788D0/)
-
-REAL(r8), SAVE :: f_image(6) = (/                          &
-    62997.812D0, 202181.555D0, 201959.089D0, 200401.648D0, &
-    186245.513D0, 185177.788D0/)
-
-REAL(r8) :: ch_offset
-
-  band = (ch - 1) / 15 + 1
-  sub_ch = ch - 15 * (band - 1)
-!
-  IF(sub_ch == 8) THEN
-    j = 0
-    lmt = 1
-  ELSE                      ! Above and below the spectral center
-    lmt = 2**(ABS(sub_ch - 8) - 1)
-    j = SIGN(3*lmt - 1, sub_ch - 8)
-  END IF
-
-  ch_offset = float(j)
-  db_fi = db_fi_data(ch)
-
-  IF(sgn_fp(band)) THEN
-    f_p = f_prime(band) + ch_offset
-    f_i = f_image(band) - ch_offset
-  ELSE
-    f_p = f_prime(band) - ch_offset
-    f_i = f_image(band) + ch_offset
-  END IF
-
-  Return
-
-END SUBROUTINE radiometry
-
 ! ------------------------------------------------     ANTENNA     -----
 ! This subroutine reads an external antenna aperture autocorrelation
 ! file
@@ -848,7 +762,7 @@ END SUBROUTINE radiometry
 ! This subroutine loads the filter shapes into memory
 !
 SUBROUTINE get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
-               &       freqs,filter_func,InDir,ier)
+               &       filter_func,InDir,ier)
 
   use MLSCommon, only: I4, R8
 ! use units, only: filter_unit
@@ -864,8 +778,6 @@ Integer(i4), INTENT(IN) :: no_pfa_ch, no_filt_pts
 
 Integer(i4), INTENT(OUT) :: ier
 
-Real(r8), INTENT(IN) :: freqs(*)
-
 Real(r8), INTENT(OUT) :: filter_func(:,:), f_grid_filter(:,:)
 
 Character (LEN=*), INTENT(IN) :: InDir
@@ -874,7 +786,7 @@ Character (LEN=*), INTENT(IN) :: InDir
 !  Local variables:
 !  ----------------
 
-Real(r8) :: df, frq, q
+Real(r8) :: df, q
 Character (LEN=80) :: Fn
 Integer(i4) :: j, ch_i, ld, mch, pch
 
@@ -900,12 +812,6 @@ NAMELIST/IN/Channel,Nfp,Xlhs,Xrhs,N_Filter
   DO ch_i = 1, no_pfa_ch
 
     mch = pfa_ch(ch_i)
-    frq = freqs(mch)
-    IF(frq < 1.0D0) THEN
-      ier = 1
-      WRITE(6,900) mch
-      GOTO 99
-    END IF
 
 ! Read in filter's response function
 
@@ -936,7 +842,7 @@ NAMELIST/IN/Channel,Nfp,Xlhs,Xrhs,N_Filter
     df = (xrhs-xlhs)/(nfp-1)
     DO j = 1, nfp
       q = xlhs + (j - 1) * df
-      f_grid_filter(j,ch_i) = frq + q
+      f_grid_filter(j,ch_i) = q
     END DO
 
     filter_func(1:nfp,ch_i) = N_Filter(1:nfp)
@@ -946,10 +852,6 @@ NAMELIST/IN/Channel,Nfp,Xlhs,Xrhs,N_Filter
  99 Close(filter_unit,iostat=j)
 
     IF(ier /= 0) CALL errmsg(Fn,ier)
-
- 900 FORMAT(' ** Error in get_filters subroutine **',/, &
-            '    Inconsistant User Input.',/, &
-            '    PFA Channel:',i3,' not among the non-PFA channels !')
 
  905 FORMAT(' ** Error in get_filters subroutine **',/, &
             '    Channel:',i3,' not found in file: ',A)
@@ -966,6 +868,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.12  2001/03/20 23:22:40  zvi
+! Change to new geoc_geod routine..
+!
 ! Revision 1.11  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !
