@@ -1,6 +1,8 @@
 
       SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,
-     >                       YP,YZ,YT,YQ,VMR1,NH,ZT,ZZT,NT)
+     >                       N, WCin,
+     >                       YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,
+     >                       ZT,ZZT,NT)
 
 C========================================================================C
 C     DESCRIPTION                                                        C
@@ -23,6 +25,8 @@ C----------------------------------------------
       REAL TEMPERATURE(NZ)                     ! ATMOSPHERIC TEMPERATURE
       REAL VMR(NS,NZ)                          ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3
+
+      REAL WCin(N,NZ)                         
       INTEGER NT                               ! NO. OF TANGENT PRESSURE LEVSLS
       REAL ZT(NT)                              ! TANGENT PRESSURE
       
@@ -38,14 +42,16 @@ C----------------------------------------------
       REAL YP(NH)                              ! PRESSURE (hPa)
       REAL YT(NH)                              ! TEMPERATURE PROFILE
       REAL YQ(NH)                              ! RELATIVE HUMIDITY (%)
-      REAL VMR1(2,NH)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL VMR1(NS,NH)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL WC(N,NH)
+      REAL CHK_CLD(NH)  ! CLOUD CHECKER      
 
       REAL ZZT(NT)                             ! TANGENT HEIGHT
 
 C----------------------------------------------------
 C     WORK SPACE
 C----------------------------------------------------
-      REAL PTOP,PBOTTOM,DP,ZH(NH0),ZA(NH0),ZZ(NH0),WK
+      REAL PTOP,PBOTTOM,DP,ZH(NH),ZA(NH),ZZ(NH),WK
       INTEGER I,JM,J
 C--------------------------------------------------------------------------
 
@@ -80,11 +86,19 @@ C==========================================
             YT(J)=((ZA(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-ZA(JM))*
      >            TEMPERATURE(JM+1))/(ZA(JM+1)-ZA(JM))
 
+            WC(1,J)=((ZA(JM+1)-ZH(J))*WCin(1,JM)+(ZH(J)-ZA(JM))*
+     >            WCin(1,JM+1))/(ZA(JM+1)-ZA(JM))
+
+            WC(2,J)=((ZA(JM+1)-ZH(J))*WCin(2,JM)+(ZH(J)-ZA(JM))*
+     >            WCin(2,JM+1))/(ZA(JM+1)-ZA(JM))
+            
             YQ(J)=((ZA(JM+1)-ZH(J))*VMR(1,JM)+(ZH(J)-ZA(JM))*
      >            VMR(1,JM+1))/(ZA(JM+1)-ZA(JM))
 
             VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*
      >                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
+         
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
 
          ENDDO
 
@@ -94,8 +108,11 @@ C==========================================
             YP(J)     = PRESSURE(J)    
             YZ(J)     = HEIGHT(J)      
             YT(J)     = TEMPERATURE(J)
+            WC(1,J)   = WCin(1,J)
+            WC(2,J)   = WCin(2,J)
             YQ(J)     = VMR(1,J)     
             VMR1(1,J) = VMR(2,J)    
+            CHK_CLD(J) = WC(1,J) + WC(2,J)
          ENDDO
 
       ENDIF

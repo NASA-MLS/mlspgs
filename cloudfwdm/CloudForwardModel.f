@@ -1,10 +1,10 @@
 
-      SUBROUTINE CloudForwardModel (NF,NZ,NT,NS,N,
+      SUBROUTINE CloudForwardModel (NF, NZ, NT, NS, N, NZmodel,
      1           FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,
-     2           WC, IPSD, 
+     2           WCin, IPSD, 
      3           ZT, RE, ISURF, ISWI, ICON,
      4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS, 
-     5           NU,NUA,NAB,NR)
+     5           NU, NUA, NAB, NR)
 
 C============================================================================C
 C   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -120,6 +120,7 @@ C---------------------------------------
       INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
       INTEGER NS                               ! NUMBER OF CHEMICAL SPECIES
       INTEGER N                                ! NUMBER OF CLOUD SPECIES
+      INTEGER NZmodel                          ! NUMBER OF INTERNAL MODEL LEVELS
 
 
       INTEGER IPSD(NZ)                         ! SIZE-DISTRIBUTION FLAG
@@ -156,7 +157,7 @@ C---------------------------------------
       REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL WC(N,NZ)                            ! CLOUD WATER CONTENT
+      REAL WCin(N,NZ)                            ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
       REAL ZT(NT)                              ! TANGENT PRESSURE
       REAL*8 RE                                ! EARTH RADIUS
@@ -227,12 +228,16 @@ C-------------------------------
       REAL TT0(NT+1,NZ)                        ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
-C------------------------------------
-C     ATMOSPHERIC PROFILE PARAMETERS
-C------------------------------------
+C---------------------------------------------
+C     INTERNAL ATMOSPHERIC PROFILE PARAMETERS
+C---------------------------------------------
 
-      REAL YQ(NZ)                              ! H2O VOLUME MIXING RATIO
-      REAL VMR(NS,NZ)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL WC (N,NZmodel)
+      REAL YP (NZmodel)
+      REAL YZ (NZmodel)
+      REAL YT (NZmodel)
+      REAL YQ (NZmodel)                             ! H2O VOLUME MIXING RATIO
+      REAL VMR(NS,NZmodel)                          ! 1=O3 VOLUME MIXING RATIO
                                
 C----------------------------
 C     CLOUD MODEL PARAMETERS
@@ -255,7 +260,7 @@ C---------------------------
       REAL HT,DMA,RATIO
       REAL PH0(N,NU,NZ-1),W00(N,NZ-1)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
-      REAL CHK_CLD(NZ)                        
+      REAL CHK_CLD(NZmodel)                        
       REAL ZZT(NT)
       REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
       REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
@@ -279,9 +284,15 @@ C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID;
 C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
 C=========================================================================
 
-      CALL SET_PARAM(PRESSURE,HEIGHT,TEMPERATURE,VMRin,WC,
-     >                  NZ,NS,N,YQ,VMR,ZT,ZZT,NT,CHK_CLD) 
-                                                       
+      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,WCin,  
+     >                  YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,ZT,ZZT,NT) 
+
+      DO I=1,NZmodel
+         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I)
+      ENDDO
+
+         WRITE(21,*)(ZZT(I),I=1,NT)
+
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 C-----------------------------------------------
@@ -325,7 +336,7 @@ C=========================================================================
        DO 2000 IFR=1, NF
 
          CALL CLEAR_SKY(NZ-1,NU,TS,S,LORS,SWIND,
-     >                  HEIGHT,PRESSURE,TEMPERATURE,YQ,VMR,
+     >                  YZ,YP,YT,YQ,VMR,
      >                  FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
          CALL HEADER(3)
@@ -337,7 +348,7 @@ C-----------------------------------------------------
          DO IL=1, NZ-1                   ! 100% SATURATION INSIDE CLOUD 
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL
-               IF(HEIGHT(IL) .LT. 20.)THEN
+               IF(YZ(IL) .LT. 20.)THEN
                   TAU0(IL)=TAU100(IL)
                ENDIF
             ENDIF
@@ -432,6 +443,10 @@ C=================================================
                BETAc(ILYR,IFR)=0.
             ENDIF
 
+            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
+
+c           WRITE(21,*) BETAc(ILYR,IFR),BETA(ILYR,IFR),W0(1,ILYR)  
+
  1000    CONTINUE                         ! END OF MODEL LAYER LOOP
 
 C==================================================
@@ -441,13 +456,13 @@ C==================================================
          CALL HEADER(4)
 
          CALL RADXFER(NZ-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,
-     >              FREQUENCY(IFR),HEIGHT,TEMP,N,THETA,THETAI,PHI,
+     >              FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,
      >              UI,UA,TT0,NT,ICON,RE)                          !CLEAR-SKY
 
          IF(ICON .GT. 1) THEN                                          
 
            CALL RADXFER(NZ-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,
-     >             FREQUENCY(IFR),HEIGHT,TEMP,N,THETA,THETAI,PHI,
+     >             FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,
      >             UI,UA,TT,NT,ICON,RE)                            !CLOUDY-SKY
 
          ENDIF
@@ -461,7 +476,7 @@ C====================================
             DTcir(I,IFR)=TT(I,NZ)-TT0(I,NZ)      ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-         CALL SENSITIVITY (DTcir,ZZT,NT,PRESSURE,HEIGHT,NZ,PRESSURE,NZ,
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZ,NZ,
      >                     delTAU,delTAUc,TAUeff,SS,
      >                     N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
