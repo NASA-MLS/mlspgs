@@ -5,9 +5,10 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
-  use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
+  use Hdf, only: DFACC_READ, DFNT_FLOAT64, DFNT_INT8, SFCREATE, SFDIMID, &
+    & SFSDSCALE, SFEND, &
     & SFENDACC, SFSTART, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
-    & SFGDINFO, SFSDMNAME, SFWDATA
+    & SFGDINFO, SFSDMNAME, SFWDATA_F90
   use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
@@ -21,6 +22,24 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use Tree, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! L2AUX_Dimension_T               Dimension for an L2AUX quantity
+! L2AUXData_T                     An L2AUX quantity
+! L2AUXRANK                       Rank (num of dims) of L2AUXData_T%values
+
+!     (subroutines and functions)
+! AddL2AUXToDatabase              Adds an l2aux data type to a database of that type
+! DestroyL2AUXContents            Deallocates all the arrays for one l2aux
+! DestroyL2AUXDatabase            Deallocates all the arrays for entire database
+! Dump                            Prints info on one quantity or entire database
+! ExpandL2AUXDataInPlace          Expands an l2aux quantity to take more profiles
+! ReadL2AUXData                   Reads an l2aux quantity from a file
+! SetupNewL2AUXRecord             Allocates the arrays for an l2aux quantity
+! WriteL2AUXData                  Writes an l2aux quantity to a file
 
   private
   public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
@@ -228,7 +247,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------  DestroyL2AUXDatabase  -----
   subroutine DestroyL2AUXDatabase ( DATABASE )
 
-  ! This subroutine destroys a quantity template database
+  ! This subroutine destroys the l2aux database
 
     ! Dummy argument
     type (L2AUXData_T), dimension(:), pointer :: DATABASE
@@ -462,10 +481,17 @@ contains ! =====     Public Procedures     =============================
 
   !----------------------------------------------------- WriteL2AUXData ------
 
-  subroutine WriteL2AUXData(l2aux, l2FileHandle, sdName)
+  subroutine WriteL2AUXData(l2aux, l2FileHandle, sdName, &
+    & NoMAFS, WriteCounterMAF)
+  ! Write l2aux to the file with l2FileHandle
+  ! Optionally, write a bogus CounterMAF sd so the
+  ! resulting file can masquerade as an l1BRad
+  ! (Note that this bogus sd should only be written once for each file)
     type (L2AUXData_T), intent(in) :: L2AUX
     integer, intent(in) :: L2FILEHANDLE
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
+    integer, intent(in), optional :: NoMAFS
+    logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
 
     ! Local variables
     integer :: NODIMENSIONSUSED         ! No. real dimensions
@@ -480,9 +506,17 @@ contains ! =====     Public Procedures     =============================
     integer :: status                   ! Flag
     integer, parameter, dimension(L2AUXRank) :: stride = (/ 1, 1, 1/)
     integer, parameter, dimension(L2AUXRank) :: start = (/ 0, 0, 0/)
-
+    logical :: myWriteCounterMAF
+    integer :: myNoMAFS, MAF
+    integer, dimension(:), pointer :: CounterMAF ! bogus array
 
     ! Executable code
+    myWriteCounterMAF = .false.
+    if ( present(WriteCounterMAF) ) myWriteCounterMAF = WriteCounterMAF
+    myNoMAFS = 1
+    if ( any(l2aux%dimensions%dimensionFamily == L_MAF) ) &
+     & myNoMAFS = l2aux%dimensions(3)%noValues
+    if ( present(NoMAFS) ) myNoMAFS = NoMAFS
     nullify ( dimSizes )
     error = 0
 
@@ -527,7 +561,7 @@ contains ! =====     Public Procedures     =============================
           & "Error setting dimension name to SDS l2aux file:")
 !		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error setting dimension name to SDS l2aux file:")
-	endif
+	     endif
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT64,&
           & l2aux%dimensions(dimensionInData)%values)
@@ -538,25 +572,51 @@ contains ! =====     Public Procedures     =============================
           & "Error writing dimension scale in l2auxFile:" )
 !		      call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error writing dimension scale in l2auxFile:" )
-	endif
+	     endif
         dimensionInFile=dimensionInFile+1
       endif
     end do
 
     ! Now write the data
-    status= SFWData(sdId, start(1:noDimensionsUsed), &
+    status= SFWDATA_F90(sdId, start(1:noDimensionsUsed), &
       & stride(1:noDimensionsUsed), dimSizes, l2aux%values)
     if ( status /= 0 ) then
 	   call announce_error (0,&
       & "Error writing SDS data to  l2aux file:  " )
-!	   call MLSMessage ( MLSMSG_Error, ModuleName,&
-!      & "Error writing SDS data to  l2aux file:  " )
     endif
 
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     
     ! Terminate access to sd
     status = sfendacc(sdId)
+    if ( .not. myWriteCounterMAF ) return
+    
+    ! Now create and write bogus counterMAF array
+    if ( myNoMAFS < 1 ) then
+      call announce_error(0, &
+      & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
+      return
+    endif
+    call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
+    call allocate_test(dimSizes,1,'dimSizes',ModuleName)
+    dimSizes(1) = myNoMAFS
+    sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT8, &
+      & 1, dimSizes)
+    do MAF=0, myNoMAFS-1
+      counterMAF(MAF+1) = MAF
+    enddo
+    status= SFWDATA_F90(sdId, (/ 0 /), &
+      & (/ 1 /) , dimSizes, CounterMAF)
+    if ( status /= 0 ) then
+	   call announce_error (0,&
+      & "Error writing counterMAF data to  l2aux file:  " )
+    endif
+    call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
+    call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
+    
+    ! Terminate access to sd
+    status = sfendacc(sdId)
+    
 
   end subroutine WriteL2AUXData
 
@@ -593,6 +653,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.22  2001/11/01 21:03:59  pwagner
+! Uses new sfwdata_f90 generic; added toc
+!
 ! Revision 2.21  2001/10/26 23:13:18  pwagner
 ! Provides a single dump module interface and details
 !
