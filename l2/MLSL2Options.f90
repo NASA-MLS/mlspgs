@@ -7,6 +7,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
   USE MLSMessageModule, only: MLSMSG_Error
+  use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
 
   IMPLICIT NONE
 
@@ -27,6 +28,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! See also MLSL2Common and MLSL2PCF
 
   ! --------------------------------------------------------------------------
+  ! The following should be adjusted before delivery to sips
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
@@ -56,7 +58,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips                                     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v0.8 swdev team                                           ', &       
+    & 'v1.0 swdev team                                           ', &       
     & 'Copyright (c) 2002, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -84,6 +86,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! and without error                                                       
   integer, parameter :: NORMAL_EXIT_STATUS = 2                              
 
+  ! ---------------------------------------------------------------
+  ! None of the following need to be changed before delivery to sips
+  
   ! Assume hdf files w/o explicit hdfVersion field are this                 
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
   integer, parameter :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
@@ -91,8 +96,15 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! on input                                                                
   integer, parameter :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
 
-  ! Whether to manually collect garbage at end of each chunk                
+  integer, parameter :: LEVEL1_HDFVERSION = HDFVERSION_4
+
+  integer, public, parameter :: ILLEGALL1BRADID=-1   ! something sfstart should catch
+  integer, public, parameter :: MAXNUML1BRADIDS=&
+  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
+
+  ! Whether to explicitly collect garbage at end of each chunk                
   logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.                
+  ! --------------------------------------------------------------------------
 
 !=============================================================================
 END MODULE MLSL2Options
@@ -100,6 +112,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.17  2002/08/28 22:25:42  pwagner
+! Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS here from global_settings
+!
 ! Revision 2.16  2002/03/14 23:38:28  pwagner
 ! Gets HDFVERSION_4 and 5 from MLSFiles module
 !
