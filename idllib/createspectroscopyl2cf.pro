@@ -2,19 +2,59 @@
 
 pro CreateSpectroscopyL2CF, $
   molName=molName, $
-  lineName=lineName, uars=uars
+  lineName=lineName, $
+  crossRefName=crosRefName, $
+  uars=uars
 
 outName = 'spectroscopy.l2cf'
 
 if n_elements(molName) eq 0 then $
-  molName = getenv('HOME')+'/mlspgs/tables/mol_data_table.tex'
+  molName = getenv('HOME') + '/mlspgs/tables/mol_data_table.tex'
 if n_elements(lineName) eq 0 then $
-  lineName = getenv('HOME')+'/mlspgs/tables/line_data_table.tex'
+  lineName = getenv('HOME') + '/mlspgs/tables/line_data_table.tex'
+if n_elements(crossRefName) eq 0 then $
+  crossRefName = getenv('HOME') + '/mlspgs/tables/sps_cross_ref_table.txt'
 
 ; Call Bills code to read the files
 Read_Spect_Dbase, molName, lineName, '', data,  $
   molID=molID, lineID=lineID, readID=readID
 myID='$Id$'
+
+; Read the cross reference information
+openr, unit, crossRefName, /get_lun
+line = ''
+firstLine = 1
+repeat begin
+  readf, unit, line, format='(a)'
+  if firstLine then crossRefID = line
+  firstLine = 0
+endrep until strmid(line,0,4) eq '----'
+while not eof ( unit ) do begin
+  readf, unit, line, format='(a)'
+  words = strsplit ( line, ' ', /extract )
+  if n_elements(words) gt 1 then begin
+    if n_elements(texNames) eq 0 then begin
+      texNames = words(0)
+      l2Names = words(1)
+      noChildren = fix ( words(3) )
+    endif else begin
+      texNames = [ texNames, words(0) ]
+      l2Names = [ l2Names, words(1) ]
+      noChildren = [ noChildren, fix ( words(3) ) ]
+    endelse
+  endif
+endwhile
+free_lun, unit
+; Now work out the parents
+noCrossRefs = n_elements(texNames)
+parents = intarr ( noCrossRefs ) - 1
+for index = 0, noCrossRefs - 1 do begin
+  if noChildren(index) ne 0 then begin
+    if noChildren(index) < 0 then i0 = index else i0 = index + 1
+    i1 = index + abs(noChildren(index))
+    parents(i0:i1) = index
+  endif
+endfor  
 
 ; Sort out nitrogen
 change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
@@ -32,6 +72,7 @@ printf, unit, ''
 printf, unit, '; Source file information:'
 printf, unit, '; '+strmid(molID,7,strlen(molID)-9)
 printf, unit, '; '+strmid(lineID,7,strlen(lineID)-9)
+printf, unit, '; '+strmid(crossRefID,5,strlen(crossRefID)-7)
 printf, unit, '; '+strmid(readID,5,strlen(readID)-7)
 printf, unit, '; '+strmid(myID,5,strlen(myID)-7)
 printf, unit, ''
@@ -53,63 +94,30 @@ for mol = 0, noMols - 1 do begin
   ;; First try to un TeXify the molecule names
   ;; Also, after a space, add the name of the parent
   ;; Did it after the space to avoid the case statement getting overly large
-  thisMolName = data(mol).name
-  case thisMolName of
-    '$^{81}$BrO'      : thisMolName = 'Br_81_O BrO'
-    '$^{79}$BrO'      : thisMolName = 'Br_79_O BrO'
-    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
-    'CH$_{3}^{35}$Cl' : thisMolName = 'CH3Cl_35 CH3CL'
-    'CH$_{3}^{37}$Cl' : thisMolName = 'CH3Cl_37 CH3CL'
-    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
-    'CH$_{3}$CN'      : thisMolName = 'CH3CN'
-    '$^{35}$ClO'      : thisMolName = 'Cl_35_O ClO'
-    'H$^{35}$Cl'      : thisMolName = 'HCl_35 HCl'
-    'H$^{37}$Cl'      : thisMolName = 'HCl_37 HCl'
-    'H$_{2}$O'        : thisMolName = 'H2O'
-    'H$_{2}$O-r1a'    : thisMolName = 'H2O_R1A H2O'
-    'H$_{2}$O-r1b'    : thisMolName = 'H2O_R1B H2O'
-    'H$_{2}$O-r2'     : thisMolName = 'H2O_R2 H2O'
-    'H$_{2}$O-r3'     : thisMolName = 'H2O_R3 H2O'
-    'H$_{2}$O-r4'     : thisMolName = 'H2O_R4 H2O'
-    'H$_{2}$O-r5h'    : thisMolName = 'H2O_R5H H2O'
-    'H$_{2}$O-r5v'    : thisMolName = 'H2O_R5V H2O'
-    'H$_{2}^{18}$O'   : thisMolName = 'H2O_18 H2O'
-    'H$_{2}$O$_{2}$'  : thisMolName = 'H2O2'
-    'HNO$_{3}$'       : thisMolName = 'HNO3'
-    'HNO$_{3}$-v5'    : thisMolName = 'HNO3_v5 HNO3'
-    'HNO$_{3}$-v6'    : thisMolName = 'HNO3_v6 HNO3'
-    'HNO$_{3}$-v7'    : thisMolName = 'HNO3_v7 HNO3'
-    'HNO$_{3}$-v8'    : thisMolName = 'HNO3_v8 HNO3'
-    'HNO$_{3}$-v9'    : thisMolName = 'HNO3_v9 HNO3'
-    'HO$^{35}$Cl'     : thisMolName = 'HOCl_35 HOCl'
-    'HO$^{37}$Cl'     : thisMolName = 'HOCl_37 HOCl'
-    'HO$_{2}$'        : thisMolName = 'HO2'
-    'N$_{2}$'         : thisMolName = 'N2'
-    'N$_{2}$O'        : thisMolName = 'N2O'
-    'O$_{2}$'         : thisMolName = 'O2'
-    'O$_{2}$-v1'      : thisMolName = 'O2_v1 O2'
-    'O$^{18}$O'       : thisMolName = 'O_18_O O2'
-    'O$_{3}$'         : thisMolName = 'O3'
-    'O$_{3}$-v1,3'    : thisMolName = 'O3_v1_3 O3'
-    'O$_{3}$-v2'      : thisMolName = 'O3_v2 O3'
-    'O$_{2}^{18}$O'   : thisMolName = 'O3_ASYM_O_18 O3'
-    'O$^{18}$OO'      : thisMolName = 'O3_SYM_O_18 O3'
-    '$^{32}$SO$_{2}$' : thisMolName = 'S_32_O2 SO2'
-    else: begin
-      print,'Uncertain about: ',thisMolName
-      thisMolName = thisMolName
-    end
-  endcase
-  if ( strpos ( thisMolName, ' ' ) eq -1 ) then begin
-    parentName = thisMolName
+  index = ( where ( data(mol).name eq texNames ) ) ( 0 )
+  if index eq -1 then begin
+    if strmid ( data(mol).name, 0, 10 ) eq 'H$_{2}$O-r' then begin
+      niceNames(mol) = 'H2O_R' + strupcase ( strmid ( data(mol).name, 10, 2 ) )
+      parentNames(mol) = 'H2O'
+    endif else begin
+      MyMessage, /error, "Unrecognized molecule: " + data(mol).name
+    endelse
   endif else begin
-    words = strsplit ( thisMolName,/extract )
-    thisMolName = words(0)
-    parentName = words(1)
+    niceNames(mol) = l2Names(index)
+    if parents(index) eq -1 then begin
+      parentNames(mol) = niceNames ( mol )
+    endif else begin
+      parentNames(mol) = l2Names ( parents (index) )
+    endelse
   endelse
+  thisMolName = niceNames(mol)
 
-  niceNames(mol) = thisMolName
-  parentNames(mol) = parentName
+  if ( min(data(mol).q) le 0.0 and data(mol).cont(0) eq 0.0 ) then begin
+    print, 'Skipping ' + thisMolName
+    niceNames ( mol ) = ''
+    continue
+  endif
+
   if n_elements(allNames) eq 0 then allNames = thisMolName $
   else allNames = allNames + ', ' + thisMolName
   
@@ -143,8 +151,18 @@ for mol = 0, noMols - 1 do begin
     AddWordToLine,text,unit,4, $
       'gamma= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
     AddWordToLine,text,unit,4, $
-      'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2)
+      'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2) + ', '
 
+    ;; Do the quantum numbers
+    noQNs = data(mol).qnfmt(line) mod 10
+    qns = data(mol).qnfmt(line)
+    for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnu(line), q*2, 2 ) ) ]
+    for q = 0, noQNs - 1 do qns = [ qns, fix ( strmid ( data(mol).qnl(line), q*2, 2 ) ) ]
+    AddWordToLine,text,unit,4, 'qn=[ '
+    for q = 0, n_elements(qns)-2 do $
+      AddWordToLine,text,unit,4, string(qns(q),format='(i0)')+', '
+    AddWordToLine,text,unit,3, string(qns(2*noQNS),format='(i0)') + ' ]'
+   
     for i=0,1 do begin
       case i of
         0 : begin 
@@ -158,7 +176,7 @@ for mol = 0, noMols - 1 do begin
       endcase
       bands = strtrim(strsplit(bands,',',/extract),2)
       if bands(0) ne '' then begin
-        AddWordToLine,text,unit,4,', '
+        text = text + ', '
         AddWordToLine,text,unit,4,prefix
         for j = 0, n_elements(bands)-1 do begin
           thisBand = strupcase ( bands(j) )
@@ -187,6 +205,14 @@ for mol = 0, noMols - 1 do begin
         endfor
       endif                             ; Any bands
     endfor                              ; Loop over instruments
+
+    ;; Special case for O2 polarized 118 line
+    if thisMolName eq 'O2' and n_elements(qns) eq 5 and $
+      min ( qns eq [ 102, 1, 1, 1, 0 ] ) then begin
+      text = text + ', '
+      AddWordToLine, text, unit, 4, "emlsSignalsPol=[ 'B22LD', " 
+      AddWordToLine, text, unit, 4, "'B26LD' ]"
+    endif
     
     if strtrim(text,2) ne '' then printf,unit,text
   endfor                                ; Loop over lines
@@ -195,7 +221,6 @@ for mol = 0, noMols - 1 do begin
   printf, unit, ''
   text = '  spectra, molecule= '+thisMolName+', Qlog=[ '
 
-  ;; Qlog information
   for i = 0, 2 do begin
     text = text + strtrim(string(alog10(data(mol).q(i)), $
       format='(f10.4)'),2)
@@ -216,6 +241,11 @@ for mol = 0, noMols - 1 do begin
   endif else begin
     text = text + ' ]'
   endelse
+
+  ;; Mass
+  text = text + ', '
+  AddWordToLine, text, unit, 4, $
+    'mass= ' + strtrim ( string ( data(mol).mass, format='(f9.5)' ), 2 )
   
   ;; Continuum
   noNonZero = max(where(data(mol).cont ne 0.0))+1
@@ -254,6 +284,7 @@ printf, unit, ''
 ;; Make H2O, N2 and extinction used everywhere.
 array(*,*,where(niceNames eq 'H2O')) = 1
 array(*,*,where(niceNames eq 'N2')) = 1
+array(*,*,where(niceNames eq 'O2')) = 1
 array(*,*,where(niceNames eq 'EXTINCTION')) = 1
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
@@ -348,7 +379,8 @@ printf,unit,'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
 printf,unit,'!define(molecules2X,{!molecules2XFor$1})'
 printf,unit,'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
 
-isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' ) )
+isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' and $
+  nicenames ne '' ) )
 
 printf,unit,'!define(isotopicMolecules,{' + strjoin(isotopicMolecules,',')+'})'
 
