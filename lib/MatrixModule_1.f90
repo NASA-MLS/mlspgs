@@ -508,7 +508,9 @@ contains ! =====     Public Procedures     =============================
   !                                or NEWX.
     type (Matrix_T), intent(inout), target :: X
     type (Vector_T), intent(in) :: V
-    type (Matrix_T), intent(out), target, optional :: NEWX 
+    type (Matrix_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyMatrix in createEmptyMatrix
+      !                            gets a chance to clean up surds
 
     integer :: I, J      ! Subscripts for [XZ]%Block
 
@@ -594,11 +596,12 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
     &,                           Row_Quan_First, Col_Quan_First )
-    type(Matrix_T), intent(out) :: Z    ! The matrix to create
+    type(Matrix_T), intent(inout) :: Z  ! The matrix to create -- inout so
+      !                                   destroyMatrix makes sense
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
-    type(Vector_T), intent(in) :: Row       ! Vector used to define the row
+    type(Vector_T), intent(in) :: Row   ! Vector used to define the row
       !                                   space of the matrix.
-    type(Vector_T), intent(in) :: Col       ! Vector used to define the column
+    type(Vector_T), intent(in) :: Col   ! Vector used to define the column
       !                                   space of the matrix.
     logical, intent(in), optional :: Row_Quan_First    ! True (default false)
       ! means the quantity is the major order of the rows of blocks and the
@@ -610,6 +613,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
 
+    call destroyMatrix ( z )  ! Avoid a memory leak if it isn't freshly minted
     z%name = name
     call defineInfo ( z%row, row, row_Quan_First )
     call defineInfo ( z%col, col, col_Quan_First )
@@ -1357,7 +1361,9 @@ contains ! =====     Public Procedures     =============================
 
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(inout), target :: X
-    type (Matrix_T), intent(out), target, optional :: NEWX 
+    type (Matrix_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyMatrix in createEmptyMatrix
+      !                            gets a chance to clean up surds
     integer, intent(in), optional :: RowBlock
 
     integer :: I, J      ! Subscripts for [XZ]%Block
@@ -1858,6 +1864,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.70  2002/07/01 23:50:03  vsnyder
+! Plug memory leaks
+!
 ! Revision 2.69  2002/06/22 06:50:25  livesey
 ! Added print of matrix size in -Sspa
 !
