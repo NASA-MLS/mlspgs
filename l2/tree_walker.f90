@@ -9,9 +9,9 @@ module TREE_WALKER
   use ForwardModelInterface, only: ForwardModelInfo_T
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: DestroyGridTemplateDatabase, GriddedData_T
-  use INIT_TABLES_MODULE, only: Z_CHUNKDIVIDE, Z_CONSTRUCT, Z_FILL, &
-    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
-    & Z_READAPRIORI, Z_RETRIEVE
+  use INIT_TABLES_MODULE, only: Field_Indices, Spec_Indices, Z_CHUNKDIVIDE, &
+    & Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI,& 
+    & Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE
   use JOIN, only: MLSL2Join
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -93,7 +93,7 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son, fwdModelInfo, &
           & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
-        call MLSSignals ( son )
+        call MLSSignals ( son, field_indices, spec_indices )
       case ( z_readapriori )
         ! Read apriori here
       	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, aprioriData)
@@ -153,6 +153,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.15  2001/03/09 19:57:48  vsnyder
+! Add 'z_retrieve' to a case branch
+!
 ! Revision 2.14  2001/03/08 18:21:11  vsnyder
 ! Even more stuff for L2_Load
 !
