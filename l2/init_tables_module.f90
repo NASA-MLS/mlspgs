@@ -605,6 +605,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_intrinsic, t+t_boolean, n+n_field_type, &
              begin, f+f_isPrecision, t+t_boolean, n+n_field_type, &
+             begin, f+f_logSpace, t+t_boolean, n+n_field_type, &
              begin, f+f_losQty, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_lsb, s+s_vector, f+f_template, &
@@ -973,6 +974,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.293  2003/03/27 20:45:34  livesey
+! Added logSpace to fill
+!
 ! Revision 2.292  2003/03/26 21:23:39  livesey
 ! Added scaleOvelaps to fill
 !
