@@ -2,29 +2,40 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module D_SOLVE_QUAD_M
+
   implicit NONE
+
   private
   public :: D_SOLVE_QUAD, SOLVE_QUAD
+
   interface SOLVE_QUAD; module procedure D_SOLVE_QUAD; end interface
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-  private :: not_used_here 
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-  integer, parameter :: RK = kind(0.0d0)
+
 contains
 ! Solve for the roots of a quadratic equation: a*x*x+b*x+c=0
-!
+
   subroutine D_SOLVE_QUAD ( A, B, C, X1, X2 )
+    integer, parameter :: RK = kind(0.0d0)
     include 'solve_quad.f9h'
   end subroutine D_SOLVE_QUAD
-  logical function not_used_here()
+
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module D_SOLVE_QUAD_M
+
 ! $Log$
+! Revision 2.1  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
