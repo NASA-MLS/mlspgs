@@ -237,7 +237,8 @@ contains ! =====     Public Procedures     =============================
     if ( minorFrame ) then
 
       ! This is a minor frame type quantity.
-      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 ) ) then
+      if ( ((hGridIndex /= 0) .OR. (vGridIndex /= 0 )) &
+         &  .AND. quantityType /= l_losTransFunc ) then
         call announce_error ( root, unnecessaryGrid )
       end if
       if ( instrumentModule == 0 ) then 
@@ -255,6 +256,12 @@ contains ! =====     Public Procedures     =============================
       if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
         noChans = 3
         frequencyCoordinate = l_xyz
+      end if
+
+      ! For quantity type l_losTransFunc
+      if ( quantityType == l_losTransFunc ) then
+        noChans = vGrids(vGridIndex)%noSurfs
+        frequencyCoordinate = l_losTransFunc
       end if
 
       ! Construct an empty quantity
@@ -689,6 +696,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.43  2001/07/16 18:24:45  dwu
+! add feature for losTransFunc type of quantities
+!
 ! Revision 2.42  2001/07/13 18:41:59  dwu
 ! fix problem after adding losTransFunc
 !
