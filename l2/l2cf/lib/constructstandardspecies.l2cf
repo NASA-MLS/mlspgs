@@ -118,6 +118,9 @@ begin Construct
   !forall(constructSENS,!allBandUSBs)
 
   !define(allDTs,{!makelist({DTBand},{},!allBands)})
+  !define(allDTLSBs,{!makelist({DTBand},{},!allBandLSBs)})
+  !define(allDTUSBs,{!makelist({DTBand},{},!allBandUSBs)})
+  !define(allSplitDTs,{!allDTLSBs,!allDTUSBs})
   !define(allSens,{!makelist({sensBand},{},!allLSBands)})
   !define(allSens,{!makelist({sensBand},{},!allUSBands)})
   
@@ -445,8 +448,13 @@ begin Construct
     !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
     !lesserState ]
 
+  !ifdef(flagUnfolded,{
+  measurementTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allUnfoldedRadiances, scanResidualGHz, scanResidualTHz ]
+  },{
   measurementTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, scanResidualGHz, scanResidualTHz ]
+  })
   correctionsTemplate: VectorTemplate, quantities = [ !allL1BMAFBaselines ]
 
   depthTemplate: VectorTemplate, quantities = [ !allFoldedDepths ]
@@ -463,7 +471,12 @@ begin Construct
     !allChisqProfile, !allNoRadsProfile, !allStatuses, !allQualities, $
     !allCloudSummaries ]
 
+  !ifdef(flagUnfolded,{
+  cloudOutputTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allUnfoldedRadiances, !allDTs, !allSplitDTs, !allCloudMinMax, !allRadDTs ]
+  },{
   cloudOutputTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, !allDTs, !allCloudMinMax, !allRadDTs ]
+  })
     
 end Construct
