@@ -769,7 +769,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_moleculeDerivativesPol, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_moleculesPol, t+t_molecule, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
              begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
@@ -777,7 +779,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
@@ -944,6 +945,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.280  2003/02/06 22:04:48  vsnyder
+! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+!
 ! Revision 2.279  2003/02/06 00:45:20  livesey
 ! Added sza and nameFragment to binSelectors type
 !
