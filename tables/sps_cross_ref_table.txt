@@ -1,3 +1,4 @@
+$Id$
 This table has the various names that we reference molecules by and their
 group designations
 mlspgs_name, l2cf_species, l2gp_species, group flag
