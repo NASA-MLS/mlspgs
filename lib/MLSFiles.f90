@@ -655,8 +655,10 @@ contains
         return
       elseif(myhdfVersion == HDFVERSION_5) then
       
-        call h5fopen_f(trim(myName), &
-          & hdf2hdf5_fileaccess(FileAccessType), theFileHandle, ErrType)
+        ! call h5fopen_f(trim(myName), &
+        !  & hdf2hdf5_fileaccess(FileAccessType), theFileHandle, ErrType)
+        theFileHandle = mls_sfstart(trim(myName), FileAccessType, &
+          & HDFVERSION_5)
       elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = sfstart(trim(myName), FileAccessType)
       else
@@ -946,8 +948,10 @@ contains
 
     case('hdf')
       if(MLSFile%HDFVersion == HDFVERSION_5) then
-        call h5fopen_f(trim(MLSFile%Name), &
-          & hdf2hdf5_fileaccess(FileAccessType), MLSFile%File_Id, ErrType)
+        ! call h5fopen_f(trim(MLSFile%Name), &
+        ! & hdf2hdf5_fileaccess(FileAccessType), MLSFile%File_Id, ErrType)
+        MLSFile%File_Id = mls_sfstart(trim(MLSFile%Name), &
+          & FileAccessType, HDFVERSION_5)
       elseif(MLSFile%HDFVersion == HDFVERSION_4) then
         MLSFile%File_Id = sfstart(trim(MLSFile%Name), FileAccessType)
       else
@@ -1836,6 +1840,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.46  2002/12/09 17:55:03  pwagner
+! Reuses mls_sfstart in mls_io_gen_openf and open_mls routines
+!
 ! Revision 2.45  2002/12/06 23:38:57  pwagner
 ! mls_sfstart improved with addingMetaData optional arg
 !
