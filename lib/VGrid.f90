@@ -122,7 +122,7 @@ CONTAINS
 
   ! This routine destroys the array information created with the vGrid
 
-  SUBROUTINE DestroyVGridInformation(vGrid)
+  SUBROUTINE DestroyVGridContents(vGrid)
 
     ! Dummy arguments
 
@@ -195,6 +195,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.3  1999/12/15 22:57:45  livesey
+! First version that seems to compile
+!
 ! Revision 1.2  1999/12/14 22:56:02  livesey
 ! Regular commit
 !
