@@ -21,7 +21,7 @@ contains
          &   dbeta_dw, dbeta_dn, dbeta_dv )
 
 !  For a given frequency and height, compute beta_value function.
-!  This routine should be called for primary and image seperately.
+!  This routine should be called for primary and image separately.
 
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: L_Air_Cont, L_Extinction, L_Liq_H2O, L_O2, Spec_tags
@@ -78,9 +78,7 @@ contains
 !  Setup absorption coefficients function
 !  Now get the beta_value:
 
-    if ( spectag == spec_tags(l_liq_h2o) ) then
-
-!  Liquid water
+    if ( spectag == spec_tags(l_liq_h2o) ) then ! ........  Liquid Water
 
       bv = abs_cs_liq_h2o(Fgr,Temp)
       if ( present(t_power) ) then
@@ -88,9 +86,7 @@ contains
         bp = abs_cs_liq_h2o(Fgr,tp)
       end if
 
-    else if ( spectag == spec_tags(l_air_cont) ) then
-
-!  Dry air contribution (N2)
+    else if ( spectag == spec_tags(l_air_cont) ) then ! .......  Dry Air
 
       bv = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -98,15 +94,13 @@ contains
         bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
       end if
 
-    else if ( spectag == spec_tags(l_extinction) ) then
-
-!  EXTINCTN molecule
+    else if ( spectag == spec_tags(l_extinction) ) then ! ..  Extinction
 
       beta_value = 1.0_rp
       if ( present(t_power)) t_power = 0.0_rp
       return
 
-    else if ( spectag == spec_tags(l_o2) ) then ! O2
+    else if ( spectag == spec_tags(l_o2) ) then ! ..................  O2
 
       bv = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -114,7 +108,7 @@ contains
         bp = abs_cs_o2_cont(cont,tp,Pressure,Fgr)
       end if
 
-    else
+    else ! ......................................................  Other
 
       bv = abs_cs_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -185,7 +179,7 @@ contains
 
     if ( present(t_power) ) then
 
-!  Find the temperatue power dependency now:
+!  Find the temperature power dependency now:
 
       if ( maxval(abs(yi)) < 1.0e-06_rp ) then
         do ln_i = 1, nl
@@ -301,6 +295,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.13  2002/09/24 00:49:19  vsnyder
+! Move Abs_CS_... to be internal procedures, some cosmetic changes
+!
 ! Revision 2.12  2002/09/12 23:00:04  vsnyder
 ! Cosmetic changes, move USEs from module scope to procedure scope
 !
