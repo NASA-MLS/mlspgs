@@ -8,13 +8,6 @@ module DNWT_MODULE
 
 ! ***** THIS PACKAGE IS STILL UNDER DEVELOPMENT ******
 
-!---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-       "$RCSfile$"
-!---------------------------------------------------------------------------
-
 !****************** Program description ********************************
 
 ! These subroutines solve f(x)=0 (or find the least square solution)
@@ -202,6 +195,13 @@ module DNWT_MODULE
   real(rk) :: TOLXA, TOLXR      ! WVS added 2000-04-05
 
   character(len=*), parameter :: ME = 'DNWT'
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains
 ! ***************************************************     DNWT     *****
@@ -926,6 +926,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.2  2001/02/06 23:33:54  vsnyder
+! Initially botched putting in the CVS variables; got it right this time.
+!
 ! Revision 2.1  2001/02/06 23:23:53  vsnyder
 ! Initial commit
 !
