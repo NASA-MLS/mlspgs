@@ -39,7 +39,7 @@ module ForwardModelInterface
   use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
     & Dump_Pointing_Grid_Database, Get_Grids_Near_Tan_Pressures, &
-    & Open_Pointing_Grid_File, Read_Pointing_Grid_File
+    & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -72,7 +72,7 @@ module ForwardModelInterface
 
   type ForwardModelSignalInfo_T
     integer :: signal                   ! The signal we're considering
-    logical, dimension(:), pointer :: channelIncluded ! Which channels to use
+    logical, dimension(:), pointer :: channelIncluded=>null() ! Which channels to use
   end type ForwardModelSignalInfo_T
 
   type ForwardModelConfig_T
@@ -125,7 +125,7 @@ contains
 
     ! The only field so far is the PointingGrids field, and it is required.
     son = subtree(2,root)
-    call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile )
+    call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile, strip=.true. )
 
     ! The ExtraHeights and PointingGrids fields are required, so we don't
     ! need to verify that they were provided.
@@ -147,7 +147,7 @@ contains
     ! Local variables
 
     type (Signal_T) :: thisSignal ! A signal
-    type (ForwardModelSignalInfo_T), pointer :: thisFWMSignal ! A signal
+    type (ForwardModelSignalInfo_T), pointer :: thisFWMSignal=>NULL() ! A signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -276,29 +276,31 @@ contains
         ! Shouldn't get here if the type checker worked
       end select
 
-
-      ! Now some more error checking
-      select case (info%fwmType)
-      case (l_full)
-        if (.not. all(got( (/f_molecules, f_signals/) ))) &
-          & call AnnounceError (IncompleteFullFwm, root)
-        ! Check parameters needed only for linear/scan are not included
-        !????
-      case (l_scan)
-        ! Add 1d/2d method later probably !??? NJL
-        if (any(got( (/f_atmos_der, f_channels, f_do_conv, &
-          & f_do_freq_avg, f_frequency, f_molecules, f_moleculeDerivatives, &
-          & f_signals, f_spect_der, f_temp_der /) ))) &
-          & call AnnounceError (IrrelevantFwmParameter, root)
-      case (l_linear)
-        if (.not. all(got( (/f_molecules, f_signals/) ))) & ! Maybe others later
-          & call AnnounceError (IncompleteLinearFwm, root)
-        if (any(got( (/f_atmos_der, f_do_conv, f_do_freq_avg, f_frequency /) ))) &
-          & call AnnounceError (IrrelevantFwmParameter, root)
-      end select
-      if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, 'An error occured')
     end do ! i = 2, nsons(key)
+
+    ! Now some more error checking
+    select case (info%fwmType)
+    case (l_full)
+      if (.not. all(got( (/f_molecules, f_signals/) ))) &
+        & call AnnounceError (IncompleteFullFwm, root)
+      ! Check parameters needed only for linear/scan are not included
+      !????
+    case (l_scan)
+      ! Add 1d/2d method later probably !??? NJL
+      if (any(got( (/f_atmos_der, f_channels, f_do_conv, &
+        & f_do_freq_avg, f_frequency, f_molecules, f_moleculeDerivatives, &
+        & f_signals, f_spect_der, f_temp_der /) ))) &
+        & call AnnounceError (IrrelevantFwmParameter, root)
+    case (l_linear)
+      if (.not. all(got( (/f_molecules, f_signals/) ))) & ! Maybe others later
+        & call AnnounceError (IncompleteLinearFwm, root)
+      if (any(got( (/f_atmos_der, f_do_conv, f_do_freq_avg, f_frequency /) ))) &
+        & call AnnounceError (IrrelevantFwmParameter, root)
+    end select
+
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, 'An error occured')
     if ( toggle(gen) ) call trace_end ( "ConstructForwardModelConfig" )
+
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
@@ -358,16 +360,16 @@ contains
 
     ! This is the `legit stuff' we hope will stay they are all pointers to
     ! VectorValue_T's containing vector quantities
-    type (VectorValue_T), pointer :: radiance ! Radiance quantity to be filled
-    type (VectorValue_T), pointer :: temp ! Temperature quantity
-    type (VectorValue_T), pointer :: ptan ! PTAN quantity
-    type (VectorValue_T), pointer :: elevOffset ! Elevation offset quantity
-    type (VectorValue_T), pointer :: orbIncline ! Orbital inclination (beta)
-    type (VectorValue_T), pointer :: spaceRadiance ! Space radiance
-    type (VectorValue_T), pointer :: earthRefl ! Earth reflectivity
-    type (VectorValue_T), pointer :: refGPH ! Reference GPH, (zRef and hRef)
-    type (VectorValue_T), pointer :: losVel ! Line of sight velocity
-    type (VectorValue_T), pointer :: scGeocAlt ! Geocentric spacecraft altitude
+    type (VectorValue_T), pointer :: radiance=>NULL() ! Radiance quantity to be filled
+    type (VectorValue_T), pointer :: temp=>NULL() ! Temperature quantity
+    type (VectorValue_T), pointer :: ptan=>NULL() ! PTAN quantity
+    type (VectorValue_T), pointer :: elevOffset=>NULL() ! Elevation offset quantity
+    type (VectorValue_T), pointer :: orbIncline=>NULL() ! Orbital inclination (beta)
+    type (VectorValue_T), pointer :: spaceRadiance=>NULL() ! Space radiance
+    type (VectorValue_T), pointer :: earthRefl=>NULL() ! Earth reflectivity
+    type (VectorValue_T), pointer :: refGPH=>NULL() ! Reference GPH, (zRef and hRef)
+    type (VectorValue_T), pointer :: losVel=>NULL() ! Line of sight velocity
+    type (VectorValue_T), pointer :: scGeocAlt=>NULL() ! Geocentric spacecraft altitude
 
     Integer(i4), parameter :: ngt = (Ng+1) * N2lvl
 
@@ -435,15 +437,18 @@ contains
     Character (LEN=80) :: Line
     Character (LEN=40) :: Ax, Dtm1, Dtm2
 
-    Real(r8), dimension(:), allocatable :: RadV, F_grid
+    Real(r8), dimension(:), allocatable :: RadV
+    real(r8), dimension(:), pointer :: frequencies=>NULL()
 
     real(r8), parameter :: TOL = 0.001            ! How close to a tan_press
     !                                               must a frq grid be in order
     !                                               to correspond?
-    integer, pointer, dimension(:) :: Grids       ! Frq grid for each tan_press
+    integer, pointer, dimension(:) :: Grids=>NULL()       ! Frq grid for each tan_press
     type(signal_t) :: Signal
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
+    print*,'Entering forwardModel'
 
     ! First we identify the vector quantities we're going to need.  The key is to
     ! identify the signal we'll be working with first
@@ -454,7 +459,7 @@ contains
     signal = GetSignal(forwardModelConfig%sigInfo(1)%signal)
 
     ! Now from that we identify the radiance quantity we'll be outputting
-    radiance = GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+    radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
       & signal= forwardModelConfig%sigInfo(1)%signal )
 
     ! Identify the appropriate state vector components, save vmrs for later
@@ -499,6 +504,8 @@ contains
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
 
+
+    print*,'Got part of the way through'
 
     fmc%atmos_der = forwardModelConfig%atmos_der
     fmc%do_conv = forwardModelConfig%do_conv
@@ -571,14 +578,15 @@ contains
          TFMI%t_phi_basis,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,  &
          FMC%phi_tan_mmaf,Ier)
     IF(ier /= 0) goto 99
+
 !
 ! **********************  MAIN Mmaf Loop *******************
 !
     l = mmaf
 !   DO l = 1, FMC%no_mmaf
-!   DO l = mmaf, mmaf                 ! ** DEBUG, only one mmaf
+!   DO l = 1, radiance%template%noInstances   ! ** DEBUG, only one mmaf
 !
-      phi_tan = FMC%phi_tan_mmaf(l)
+      phi_tan = fmc%phi_tan_mmaf(l)
 !
       TFMI%t_phi_basis(1:TFMI%no_phi_t) = &
                       TFMI%T_PHI_BASIS_COPY(1:TFMI%no_phi_t) + phi_tan
@@ -614,8 +622,6 @@ contains
 ! **********************  MAIN Pointing Loop *******************
 !
       DO ptg_i = 1, no_tan_hts-1
-        if ( grids(ptg_i) == 0 ) cycle ! Skip tangent heights that don't have
-        !                                a nearby pointing grid
 
 !??? Zvi: This is as far as I got in my new scheme for frequency pointing
 !??? grids.  Below, you'll need to use PointingGrids(grids(ptg_i)).  See
@@ -623,17 +629,19 @@ contains
 
         k = ptg_i
         h_tan = tan_hts(k,l)
-        kk = FMI%no_ptg_frq(k)
+        kk = SIZE(PointingGrids(whichPointingGrid)%OneGrid(grids(ptg_i))%Frequencies)
+        FMI%no_ptg_frq(k)=kk !??? Remove this later...
+!        kk = FMI%no_ptg_frq(k)
 !
         if(kk /= prev_npf) then
 !
           prev_npf = kk
           DEALLOCATE(k_temp_frq%values,STAT=i)
 !
-          DEALLOCATE(RadV,F_grid,STAT=i)
-          ALLOCATE(RadV(kk),F_grid(kk),STAT=ier)
+          DEALLOCATE(RadV,STAT=i)
+          ALLOCATE(RadV(kk),STAT=ier)
           IF(ier /= 0) then
-            Print *,'** ALLOCATE Error: RadV or F_grid arrays, STAT =',ier
+            Print *,'** ALLOCATE Error: RadV array, STAT =',ier
             goto 99
           endif
 !
@@ -699,9 +707,18 @@ contains
 ! Compute the beta's along the path, for this tanget hight and this mmaf:
 !
         no_ele = ndx_path(ptg_i,l)%total_number_of_elements
-        Call get_beta_path(ptg_i,FMI%pfa_spectrum,no_ele,FMI%no_ptg_frq, &
-       &     FMI%ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path, &
-       &     FMC%vel_z_mmaf(l),ier)
+
+        if (FMC%do_frqavg) then
+          frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
+        else
+          call allocate_test(frequencies,1,"frequencies",ModuleName)
+          frequencies(1)=FMC%zfrq
+        endif
+        kk = size(frequencies)
+
+        Call get_beta_path(frequencies,&
+          & FMI%pfa_spectrum,no_ele, z_path(ptg_i,l),t_path(ptg_i,l), &
+          & beta_path, FMC%vel_z_mmaf(l),ier)
         IF(ier /= 0) goto 99
 !
         k_temp_frq%values = 0.0
@@ -712,13 +729,18 @@ contains
           k_spect_dnu_frq(j)%values = 0.0
         end do
 !
-        RadV(1:kk) = 0.0
-        F_grid(1:kk) = FMI%ptg_frq_grid(k)%values(1:kk)
-!
+          
         do frq_i = 1, kk
 !
-          Frq = F_grid(frq_i)
+          Frq = frequencies(frq_i)
 !
+!           call output("For pointing: ")
+!           call output(ptg_i)
+!           call output(" and frequency ")
+!           call output(frq_i,advance='yes')
+!           call output("beta_bath",advance='yes')
+!           call dump(beta_path(1,frq_i)%values)
+          
           Call Rad_Tran(Frq, FMC%N_lvls, h_tan, FMI%n_sps, ndx_path(k,l),  &
          &    z_path(k,l), h_path(k,l), t_path(k,l), phi_path(k,l),&
          &    dHdz_path(k,l), TFMI%earth_ref, beta_path(1:,frq_i),      &
@@ -751,7 +773,8 @@ contains
         do i = 1, no_pfa_ch
           ch = pfa_ch(i)
           if(FMC%do_frqavg) then
-            Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i),  &
+            print*,'Doing frequency averaging'
+            Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i),  &
            &     FMI%Filter_func(1:,i),RadV,kk,FMI%no_filt_pts, &
            &     Radiances(ptg_i,ch))
           else
@@ -772,7 +795,7 @@ contains
               do k = 1, TFMI%no_t
                 if(FMC%do_frqavg) then
                   RadV(1:kk) = k_temp_frq%values(1:kk,k,j)
-                  Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
+                  Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
                  &              FMI%Filter_func(1:,i),          &
                  &              RadV,kk,FMI%no_filt_pts,r)
                 else
@@ -800,7 +823,7 @@ contains
                   do n = 1, TFMI%no_coeffs_f(j)
                     if(FMC%do_frqavg) then
                       RadV(1:kk) = k_atmos_frq(j)%values(1:kk,n,k)
-                      Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
+                      Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
                      &              FMI%Filter_func(1:,i),          &
                      &              RadV,kk,FMI%no_filt_pts,r)
                     else
@@ -842,7 +865,7 @@ contains
                         RadV(1:kk) = k_spect_dnu_frq(m)%values(1:kk,n,k)
                     end select
                     if(FMC%do_frqavg) then
-                        Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
+                        Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
                      &              FMI%Filter_func(1:,i),&
                      &              RadV,kk,FMI%no_filt_pts,r)
                     else
@@ -974,6 +997,7 @@ contains
       Print *,'Frequency Averaging: ON'
     endif
     Print *
+    if (.not. FMC%do_frqavg) deallocate(frequencies)
 !
     tau(1:Nptg) = 0.0
     kk = TFMI%ptg_press%no_lin_values
@@ -1166,6 +1190,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.26  2001/03/20 02:28:58  livesey
+! Interim version, gets same numbers as Zvi
+!
 ! Revision 2.25  2001/03/19 17:10:35  livesey
 ! Added more checks etc.
 !
