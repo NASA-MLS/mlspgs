@@ -492,7 +492,7 @@ Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
 Fill, quantity=diag!MFradiometer.chisqTmp, method=manipulate, manipulation='a>b', $
   a=diag!MFradiometer.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
 !define(addInOneNoRads,{!dnl
-Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a>b', $
+Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b', $
   a=diag!MFradiometer.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
 
 !define(makeFlagsForOneProduct,{!dnl
@@ -540,6 +540,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.86  2004/04/02 01:08:41  livesey
+; Bug fixes and added cloudmin option to the flagging macro
+;
 ; Revision 1.85  2004/03/27 00:16:34  livesey
 ; Added high level macros for status/quality filling.
 ;
