@@ -22,7 +22,8 @@ use Dump_0, only: Dump
     & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
     & F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
-    & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
+    & L_apriori, L_covariance, L_newtonian, L_lowcloud, &
+    & L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
   use Intrinsic, only: PHYQ_Dimensionless
@@ -341,6 +342,9 @@ contains
           select case ( method )
           case ( l_newtonian )
             call newtonianSolver
+          case ( l_lowcloud )
+          ! call LowCloudRetrieval
+            print*,'to be added'
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -1364,6 +1368,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.70  2001/09/28 18:25:37  dwu
+! prepare for adding lowcloud retrieval method
+!
 ! Revision 2.69  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
