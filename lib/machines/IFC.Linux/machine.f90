@@ -59,15 +59,6 @@ contains
     return
   end subroutine IO_ERROR_
 
-  subroutine GETARG ( ARGNUM, ARGVAL )
-    integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
-    character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
-    integer :: STATUS
-!    call nag_getarg ( argnum, argval, errno = status )
-    print*,"getarg not done for IFC"
-    if ( status /= 0 ) argval = ' '
-  end subroutine GETARG
-
   subroutine SHELL_COMMAND ( Command, Status, Error )
   ! Submit a character variable to the system as a shell command.
 
@@ -129,6 +120,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2002/05/02 09:49:55  hcp
+! Just syncing up
+!
 ! Revision 1.1  2001/09/17 10:45:18  pumphrey
 ! Added machine.f90 file for Intel ifc fortran
 !
