@@ -22,7 +22,7 @@ module RetrievalModule
     & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
     & F_opticalDepthCutoff, &
     & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
-    & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
+    & F_quantity, F_regOrders, F_regQuants, F_regWeights, F_state, &
     & F_toleranceA, F_toleranceF, F_toleranceR, Field_first, Field_last, &
     & L_apriori, L_covariance, &
     & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
@@ -149,7 +149,7 @@ contains
     character(len=127) :: PhaseName     ! To pass to snoopers
     integer :: RegOrders                ! Regularization orders
     integer :: RegQuants                ! Regularization quantities
-    real(r8) :: RegWeight               ! Weight of regularization conditions
+    integer :: RegWeights               ! Weight of regularization conditions
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -322,6 +322,8 @@ contains
             regOrders = son
           case ( f_regQuants )
             regQuants = son
+          case ( f_regWeights )
+            regWeights = son
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -329,7 +331,7 @@ contains
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
-            &    f_regWeight, f_toleranceA, f_toleranceF, f_toleranceR )
+            &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
               & call announceError ( wrongUnits, field, string='no' )
@@ -344,8 +346,6 @@ contains
               maxFunctions = value(1)
             case ( f_maxJ )
               maxJacobians = value(1)
-            case ( f_regWeight )
-              regWeight = value(1)
             case ( f_toleranceA )
               toleranceA = value(1)
             case ( f_toleranceF )
@@ -360,8 +360,8 @@ contains
 
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
-        if ( got(f_regOrders) .neqv. got(f_regWeight) ) &
-          & call announceError ( bothOrNeither, f_regOrders, f_regWeight )
+        if ( got(f_regOrders) .neqv. got(f_regWeights) ) &
+          & call announceError ( bothOrNeither, f_regOrders, f_regWeights )
         if ( got(f_regQuants) .and. .not. got(f_regOrders) ) &
           & call announceError ( ifAThenB, f_regQuants, f_regOrders )
         if ( error == 0 ) then
@@ -706,10 +706,6 @@ contains
       end do
 
         if ( index(switches,'sca') /= 0 ) then
-          if ( got(f_regWeight) ) then
-            call output ( ' regWeight = ' )
-            call output ( regWeight )
-          end if
           if ( got(f_apriori) ) then
             call output ( ' apriori scale = ' )
             call output ( aprioriScale )
@@ -979,10 +975,13 @@ contains
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
             !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
 
-            ! The "jacobian" matrix is used for scratch here.
-            call regularize ( jacobian, regOrders, regQuants, regWeight )
+            ! We need a matrix with the same column space as the "jacobian".
+            ! The "jacobian" matrix is handily unused, so we used it here.
+            call regularize ( jacobian, regOrders, regQuants, regWeights )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
-            call scaleVector ( v(reg_X_x), -regWeight )   ! -R x_n
+            call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+              if ( index(switches,'reg') /= 0 ) &
+                & call dump ( jacobian, name='Tikhonov', details=2 )
             call formNormalEquations ( jacobian, normalEquations, &
               & v(reg_X_x), v(aTb), update=update, useMask=.false. )
             update = .true.
@@ -2791,6 +2790,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.141  2002/05/07 01:02:24  vsnyder
+! Change regWeight to regWeights -- which is now a tree note instead of
+! a real scalar.  Add dump for regularization matrix.
+!
 ! Revision 2.140  2002/04/22 23:00:58  vsnyder
 ! Add SquareRoot=.true. to getDiagonal for standard deviation
 !
