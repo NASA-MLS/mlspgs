@@ -1246,15 +1246,13 @@ contains ! ================================ FullForwardModel routine ======
 
         if ( FwdModelConf%do_freq_avg ) then
 ! ** BILLs DEBUG
-        nofreqs = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
-          &            grids(ptg_i))%frequencies)
-        call allocate_test ( frequencies,nofreqs, "frequencies", &
-          &   ModuleName )
+          nofreqs = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
+                       & grids(ptg_i))%frequencies)
+          call allocate_test ( frequencies,nofreqs, "frequencies", ModuleName )
 ! VELOCITY shift correction to frequency grid
           frequencies =  &
          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-          frequencies = frequencies * (1.0_r8 - losvel%values(1,maf) &
-         &  / 2.9979d08)
+          frequencies = frequencies * (1.0_r8-losvel%values(1,maf)/2.9979d08)
 !          frequencies =>  &
 !         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
 !          noFreqs = size(frequencies)
@@ -2110,6 +2108,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.35  2002/02/16 06:49:59  zvi
+! Retain deriv flag code ..
+!
 ! Revision 2.32  2002/02/14 19:05:01  bill
 ! Fixed no spectral avg bug--wgr
 !
