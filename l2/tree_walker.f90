@@ -18,6 +18,7 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
+  use L2PC_m, only: L2PCBin_T
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -71,6 +72,7 @@ contains ! ====     Public Procedures     ==============================
     type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
     type (Matrix_Database_T), dimension(:), pointer :: Matrices
 	 type(PCFData_T) :: l2pcf
+    type(L2PCBin_T), dimension(:), pointer :: l2pcDatabase
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors
@@ -127,7 +129,8 @@ subtrees: do while ( j <= howmany )
                 & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
                 & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
-              call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
+              call MLSL2Join ( son, vectors, matrices, l2gpDatabase, &
+                & l2auxDatabase, l2pcDatabase, chunkNo, chunks )
             case ( z_retrieve )
               call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
             case default
@@ -175,6 +178,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.37  2001/04/21 01:41:35  vsnyder
+! Fix memory leaks
+!
 ! Revision 2.36  2001/04/21 01:26:37  livesey
 ! Now passes l2gpDatabase to more people
 !
