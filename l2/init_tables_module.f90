@@ -764,12 +764,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
+             begin, f+f_highBound, s+s_vector, n+n_field_spec, &
              begin, f+f_hRegOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_hRegQuants, s+s_quantity, n+n_field_spec, &
              begin, f+f_hRegWeights, t+t_numeric, n+n_field_type, &
              begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_lambda, t+t_numeric, n+n_field_type, &
+             begin, f+f_lowBound, s+s_vector, n+n_field_spec, &
              begin, f+f_maxJ, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
@@ -886,6 +888,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.250  2002/10/17 00:16:40  vsnyder
+! Add lowBound and highBound fields for the Retrieve spec
+!
 ! Revision 2.249  2002/10/16 20:18:21  mjf
 ! Added GPH precision.
 !
