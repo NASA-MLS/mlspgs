@@ -15,7 +15,7 @@ module ForwardModelWrappers
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   use ForwardModelInterface, only: FULLFORWARDMODEL
-!  use LinearForwardModel, only: LINEARFORWARDMODEL
+  use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
 !  use ScanModelModule, only: SCANFORWARDMODEL
 
   implicit none
@@ -56,8 +56,8 @@ contains ! ============= Public Procedures ==========================
       call FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_linear )
-      !call LinearForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
-      !  FwdModelOut, Ifm, fmStat, Jacobian )
+      call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_scan )
       !call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
       !  FwdModelOut, Ifm, fmStat, Jacobian )
@@ -68,6 +68,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.2  2001/04/26 23:54:26  livesey
+! Now uses linear forward model
+!
 ! Revision 2.1  2001/04/26 19:47:41  livesey
 ! First version
 !
