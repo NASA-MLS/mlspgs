@@ -74,10 +74,10 @@ CONTAINS
 
 ! Extract the species name from the file template
 
-      indx = INDEX(template, 'l3dm')
-      cmpString = template(indx+4:)
+      indx = INDEX(template, 'level')
+      cmpString = template(indx+5:)
       indx = INDEX(cmpString(2:), '_')
-      capString = Capitalize(cmpString(:indx))
+      capString = Capitalize(cmpString(:indx+1))
 
       numFiles = 0
 
@@ -383,10 +383,8 @@ CONTAINS
 ! and must be done before writing or reading data to or from the swath.
 
       status = swdetach(swid)
-      IF (status == -1) THEN
-         CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to detach from &
-                                         &swath interface after definition.')
-      ENDIF
+      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+                    &detach from swath interface after L3Residual definition.')
 
 !-------------------------------
    END SUBROUTINE ResidualCreate
@@ -406,8 +404,6 @@ CONTAINS
       INTEGER, INTENT(IN) :: swid
 
 ! Parameters
-
-      CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
 
 ! Functions
 
@@ -563,18 +559,22 @@ CONTAINS
    END SUBROUTINE ResidualWrite
 !------------------------------
 
-!---------------------------------------------------
-   SUBROUTINE ResidualOutput (l3File, gridName, l3r)
-!---------------------------------------------------
+!----------------------------------------------------------------
+   SUBROUTINE ResidualOutput (l3File, numGrids, iGrid, l3dm, l3r)
+!----------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This program creates & writes the L3Residual swaths in an l3 map file.
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: gridName, l3File
+      CHARACTER (LEN=*), INTENT(IN) :: l3File
 
-      TYPE( L2GPData_T ), INTENT(INOUT) :: l3r(:)
+      INTEGER, INTENT(IN) :: numGrids, iGrid(:)
+
+      TYPE( L3DMData_T ), INTENT(IN) :: l3dm(:)
+
+      TYPE( L2GPData_T ), INTENT(IN) :: l3r(:)
 
 ! Parameters
 
@@ -584,28 +584,36 @@ CONTAINS
 
 ! Variables
 
+      CHARACTER (LEN=GridNameLen) :: swathName
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: allSwaths, i, l3id, numSwaths, status, swid
-      INTEGER :: indx(4)
+      INTEGER :: i, indx, l3id, numSwaths, status, swid
+      INTEGER :: iSwath(4)
 
 ! Find the elements of the l3r database for swaths in this output file
 
       numSwaths = 0
-      indx = 0
+      iSwath = 0
 
-      allSwaths = SIZE(l3r)
+      DO i = 1, numGrids
 
-      DO i = 1, allSwaths
-         IF ( INDEX(l3r(i)%name, TRIM(gridName)) == 1 ) THEN
+         swathName = TRIM(l3dm(iGrid(i))%name) // 'Residuals'
+         indx = LinearSearchStringArray( l3r%name, TRIM(swathName) )
+         IF (indx == 0) THEN
+            msr = 'No residual swath found in database for:  ' // &
+                   l3dm(iGrid(i))%name
+            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         ELSE
             numSwaths = numSwaths + 1
-            indx(numSwaths) = i
+            iSwath(numSwaths) = indx
          ENDIF
+
       ENDDO
 
       IF (numSwaths == 0) THEN
-         msr = 'No grids found in the l3r database matching ' // gridName
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         msr = 'No l3r data found for file ' // l3File
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         RETURN
       ENDIF
 
 ! Re-open the l3dm grid file for the creation of swaths
@@ -622,27 +630,27 @@ CONTAINS
 
 ! Create L3Residual swath
 
-         CALL ResidualCreate( l3id, l3r(indx(i)) )
+         CALL ResidualCreate( l3id, l3r(iSwath(i)) )
 
 ! Re-attach to the swath for writing
 
-         swid = swattach(l3id, l3r(indx(i))%name)
+         swid = swattach(l3id, l3r(iSwath(i))%name)
          IF (status == -1) THEN
             msr = 'Failed to re-attach to swath interface for writing to ' // &
-                   l3r(indx(i))%name
+                   l3r(iSwath(i))%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
 ! Write to the geolocation & data fields
 
-         CALL ResidualWrite(l3r(indx(i)), swid)
+         CALL ResidualWrite(l3r(iSwath(i)), swid)
 
 ! After writing, detach from swath interface
 
-        status = swdetach(swid)
+         status = swdetach(swid)
          IF (status == -1) THEN
             msr = 'Failed to detach from swath interface after writing to ' &
-                  // l3r(indx(i))%name
+                  // l3r(iSwath(i))%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -665,7 +673,6 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
-!# Revision 1.1  2000/11/15 20:52:47  nakamura
-!# Initial revision
-!#
+!# Revision 1.1  2000/11/15 20:56:51  nakamura
+!# Module containing subroutines related to L2GP data.
 !#
