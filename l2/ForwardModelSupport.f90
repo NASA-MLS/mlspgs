@@ -16,7 +16,7 @@ module ForwardModelSupport
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
     & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
-    & S_CLOUDFORWARDMODEL, S_FORWARDMODEL, &
+    & S_FORWARDMODEL, &
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS,&
     & F_NSCATTERINGANGLES, F_NSIZEBINS
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
@@ -187,7 +187,6 @@ contains ! =====     Public Procedures     =============================
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
-    logical :: Cloudy                   ! If flavor is CloudForwardModel
     integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
     integer :: fwdmdlFlvr               ! Which flavor of forward model are we
@@ -219,7 +218,6 @@ contains ! =====     Public Procedures     =============================
 
     error = 0
     fwdmdlFlvr = get_spec_id(ROOT)
-    Cloudy = (fwdmdlFlvr == s_cloudforwardModel)
     if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
     if ( node_id(root) == n_named ) then
       name = subtree(1, root)
@@ -455,6 +453,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.9  2001/07/12 23:27:48  livesey
+! Got rid of the s_cloudForwardModel stuff
+!
 ! Revision 2.8  2001/07/09 22:51:37  pwagner
 ! Picks up cloud-related config components
 !
