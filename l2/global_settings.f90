@@ -8,21 +8,24 @@ module GLOBAL_SETTINGS
     & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
-    & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE!, &
-!    & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
-!    & S_L1BRAD, S_L1BOA
+    & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
+    & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
+    & S_L1BRAD, S_L1BOA
   use L1BData, only: l1bradSetup, l1boaSetup
   use L2GPData, only: L2GPDATA_T
+  use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
   use MLSL2Options, only: ECHO_GLOBAL_STNGS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
+  use MLSStrings, only: unquote
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use Output_m, only: Output
   use String_Table, only: Get_String
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
+  & DUMP_TREE_NODE, SOURCE_REF
   use TREE_TYPES, only: N_EQUAL, N_NAMED
   use VGrid, only: CreateVGridFromMLSCFInfo
   use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
@@ -51,6 +54,8 @@ module GLOBAL_SETTINGS
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+  integer, private :: ERROR
+
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
@@ -68,45 +73,62 @@ contains
     integer :: I         ! Index of son of root
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
     integer :: SON       ! Son of root
+    integer :: sub_rosa_index
     logical :: TIMING    ! For S_Time
     real :: T1, T2       ! For S_Time
     character(LEN=NameLen) :: name_string
+    character(LEN=*), parameter :: time_conversion='(F32.0)'
 ! Just until init_tables_module is updated
-   integer, parameter :: P_CYCLE=-99, P_CCSDSSTARTTIME=-98, &
-   & P_CCSDSENDTIME=-97, &
-   & P_STARTTIME=-96, P_ENDTIME=-95, &
-    & S_L1BRAD=-94, S_L1BOA=-93
+!   integer, parameter :: P_CYCLE=-99, P_CCSDSSTARTTIME=-98, &
+!   & P_CCSDSENDTIME=-97, &
+!   & P_STARTTIME=-96, P_ENDTIME=-95, &
+!    & S_L1BRAD=-94, S_L1BOA=-93
 
     timing = .false.
     
+   error = 0
+
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
+      sub_rosa_index = sub_rosa(subtree(2,son))
       if ( node_id(son) == n_equal ) then
         select case ( decoration(subtree(1,son)) )
         case ( p_allow_climatology_overloads )
           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
         case ( p_input_version_string )
-          input_version_string = sub_rosa(subtree(2,son))
+          input_version_string = sub_rosa_index
           call get_string ( input_version_string, l2pcf%inputVersion )
         case ( p_output_version_string )
-          output_version_string = sub_rosa(subtree(2,son))
+          output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion )
         case ( p_version_comment )
-          version_comment = sub_rosa(subtree(2,son))
+          version_comment = sub_rosa_index
         case ( p_cycle )
-          call get_string ( sub_rosa(subtree(2,son)), l2pcf%cycle )
+          call get_string ( sub_rosa_index, l2pcf%cycle )
         case ( p_ccsdsstarttime )
-          call get_string ( sub_rosa(subtree(2,son)), l2pcf%startutc )
+          call get_string ( sub_rosa_index, l2pcf%startutc )
         case ( p_ccsdsendtime )
-          call get_string ( sub_rosa(subtree(2,son)), l2pcf%endutc )
+          call get_string ( sub_rosa_index, l2pcf%endutc )
         case ( p_starttime )
-          call get_string ( sub_rosa(subtree(2,son)), name_string )
-          read(name_string, '(A32)') processingrange%starttime
+          call get_string ( sub_rosa_index, name_string )
+          print *, 'starttime'
+          print *, trim(name_string)
+          print *, trim(unquote(name_string))
+          name_string = unquote(name_string)
+          read(name_string, time_conversion) &
+          &           processingrange%starttime
         case ( p_endtime )
-          call get_string ( sub_rosa(subtree(2,son)), name_string )
-          read(name_string, '(A32)') processingrange%endtime
+          call get_string ( sub_rosa_index, name_string )
+          print *, 'endtime'
+          print *, trim(name_string)
+          print *, trim(unquote(name_string))
+          name_string = unquote(name_string)
+          read(name_string, time_conversion) &
+          &           processingrange%endtime
+        case default
+         call announce_error(son, 'unrecognized global settings parameter')
         end select
       else
         if ( node_id(son) == n_named ) then
@@ -137,12 +159,18 @@ contains
             call cpu_time ( t1 )
             timing = .true.
           end if
+        case default
+         call announce_error(son, 'unrecognized global settings spec')
         end select
       end if
     end do
 
    if( ECHO_GLOBAL_STNGS ) &
    & call dump_global_settings( l2pcf, processingRange, l1bInfo )
+
+    if ( error /= 0 ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & 'Problem with global settings section')
 
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
@@ -268,9 +296,69 @@ contains
 
   end subroutine dump_global_settings
 
+  ! ---------------------------------------------  Announce_Error  -----
+  subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
+    & Error_number )
+  
+    ! Arguments
+
+    integer, intent(in) :: Lcf_where
+    character(LEN=*), intent(in) :: Full_message
+    logical, intent(in), optional :: Use_toolkit
+    integer, intent(in), optional :: Error_number
+
+    ! Local
+    logical :: Just_print_it
+    logical, parameter :: Default_output_by_toolkit = .true.
+
+    just_print_it = .not. default_output_by_toolkit
+    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
+
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      call output ( '***** At ' )
+
+      if ( lcf_where > 0 ) then
+        call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
+
+      call output ( ": The " );
+      if ( lcf_where > 0 ) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
+
+      call output ( " Caused the following error:", advance='yes', &
+       & from_where=ModuleName)
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName)
+      if ( present(error_number) ) then
+        call output ( 'Error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
+
+!===========================
+  end subroutine Announce_Error
+!===========================
+
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.25  2001/05/10 18:26:22  pwagner
+! Improved dump_global_settings
+!
 ! Revision 2.24  2001/05/09 23:35:04  pwagner
 ! Added dump_global_settings
 !
