@@ -453,8 +453,6 @@ contains
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
-!??? Should we copy the relevant bits of F into FwdModelOut if
-!??? FwdModelOut exists?  Or is this only useful in the SIDS case?
                   call forwardModel ( configDatabase(configIndices(k)), &
                     & fwdModelIn, fwdModelExtra, f, fmw, fmStat )
                   end do ! k
@@ -501,8 +499,6 @@ contains
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
-!??? Should we copy the relevant bits of F into FwdModelOut if
-!??? FwdModelOut exists?  Or is this only useful in the SIDS case?
                   call forwardModel ( configDatabase(configIndices(k)), &
                     & fwdModelIn, fwdModelExtra, f, fmw, fmStat, &
                     & jacobian )
@@ -663,6 +659,7 @@ contains
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         end if
+        if ( got(f_fwdModelOut) ) call copyVector ( f, fwdModelOut )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         ! Clear the masks of every vector
         do j = 1, size(vectorDatabase)
@@ -735,6 +732,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.19  2001/04/26 01:04:21  vsnyder
+! Copy model's final radiance to fwdModelOut
+!
 ! Revision 2.18  2001/04/26 01:00:01  vsnyder
 ! Get the Jacobian's row block from fmStat%rows, cosmetic changes
 !
