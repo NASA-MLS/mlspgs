@@ -86,7 +86,7 @@ program MLSL2
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
 
-  character(len=255) :: command_line ! All the opts
+  character(len=2048) :: command_line ! All the opts
   logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
@@ -97,7 +97,7 @@ program MLSL2
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
-  character(len=255) :: LINE       ! Into which is read the command args
+  character(len=2048) :: LINE           ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk
@@ -106,7 +106,7 @@ program MLSL2
   real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
-  character(len=255) :: WORD       ! Some text
+  character(len=2048) :: WORD       ! Some text
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -570,6 +570,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.71  2002/04/24 20:21:13  livesey
+! Upped some string sizes.
+!
 ! Revision 2.70  2002/04/24 16:54:02  livesey
 ! Changes for submit option
 !
