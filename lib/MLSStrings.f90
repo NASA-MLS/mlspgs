@@ -5,19 +5,22 @@
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
 
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-   & MLSMSG_Allocate, MLSMSG_DeAllocate
-  USE MLSCommon, only: i4, r8, NameLen, BareFNLen, findFirst
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+    & MLSMSG_Allocate, MLSMSG_DeAllocate
+  use MLSCommon, only: i4, r8, NameLen, BareFNLen
+  use MLSSets, only: FindFirst
 
-  IMPLICIT NONE
-  PRIVATE
+  implicit NONE
+  private
 
-!------------------------------- RCS Ident Info ------------------------------
-CHARACTER(LEN=130) :: id = & 
-   "$Id$"
-CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here 
-!-----------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 !
 ! This module contains some low level string handling stuff for mls
@@ -2994,6 +2997,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.41  2004/06/10 00:57:47  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.40  2004/06/09 00:02:35  pwagner
 ! GetUniqueList now accepts optional arg str2 returning str not in str2
 !
