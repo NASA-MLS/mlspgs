@@ -13,7 +13,8 @@ module L2PC_m
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
   use Intrinsic, only: Lit_Indices, L_ZETA, L_NONE, L_VMR, L_RADIANCE, L_PTAN
   use MLSCommon, only: R8
-  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
+  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
+    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
@@ -401,18 +402,31 @@ contains ! ============= Public Procedures ==========================
     integer :: Dummy
     logical :: Eof
 
+    type (VectorTemplate_T), pointer :: tmpX, tmpY
+
     ! Executable code
     if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
     eof = .false.
     do while (.not. eof )
       call ReadOneL2PC ( l2pc, lun, eof )
       if (.not. eof) then
+        tmpX => l2pc%xStar%template
+        tmpY => l2pc%yStar%template
+        print*,'Testing after read:',&
+          & associated(l2pc%xStar%template, l2pc%kStar%col%vec%template), &
+          & associated(l2pc%yStar%template, l2pc%kStar%row%vec%template)
         dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
       end if
     end do
-    print*,'Testing after add:',&
+    print*,'Testing after add:',size(l2pcDatabase), &
       & associated(l2pcDatabase(1)%xStar%template, l2pcDatabase(1)%kStar%col%vec%template), &
       & associated(l2pcDatabase(1)%yStar%template, l2pcDatabase(1)%kStar%row%vec%template)
+    print*,'Also:', &
+      & associated(l2pcDatabase(1)%xStar%template, tmpX), &
+      & associated(l2pcDatabase(1)%yStar%template, tmpY)
+    print*,'And further more:', &
+      & associated(l2pcDatabase(1)%kStar%col%vec%template), &
+      & associated(l2pcDatabase(1)%kStar%row%vec%template)
 
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
   end subroutine Read_l2pc_file
@@ -491,6 +505,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.13  2001/04/27 07:24:50  livesey
+! Interim version.  Still loosing parts of kStar on add to database.
+! Might this be a compiler bug?
+!
 ! Revision 2.12  2001/04/27 07:05:28  livesey
 ! Not sure what happened, needed to restore the use statements.
 !
