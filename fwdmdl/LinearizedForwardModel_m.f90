@@ -256,7 +256,7 @@ contains ! =====     Public Procedures     =============================
       ! Set a dimension
       radInl2pc => GetVectorQuantityByType ( &
         & l2pc%row%vec, quantityType=l_radiance, &
-        & signal=signal%index, sideband=sideband, noError=.true. )
+        & signal=signal%index, sideband=sideband )
       noPointings = radInL2PC%template%noSurfs
       if ( radInL2PC%template%noChans /= noChans ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -850,6 +850,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.21  2002/07/17 06:02:01  livesey
+! Got HDF5 l2pcs working
+!
 ! Revision 2.20  2002/07/09 17:37:45  livesey
 ! Removed ptan extrapolation
 !
