@@ -17,6 +17,7 @@ module MergeGridsModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains ! =================================== Public procedures
@@ -248,9 +249,16 @@ contains ! =================================== Public procedures
     end function MergeOneGrid
   end subroutine MergeGrids
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.5  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/08/22 20:26:09  vsnyder
 ! Move another USE from module scope to procedure scope
 !
