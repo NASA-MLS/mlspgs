@@ -1,7 +1,7 @@
 ! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-module PFAData_m
+module PFADataBase_m
 
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
 
@@ -174,9 +174,12 @@ contains ! =====     Public Procedures     =============================
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-end module PFAData_m
+end module PFADataBase_m
 
 ! $Log$
+! Revision 2.2  2004/06/09 17:53:13  vsnyder
+! OOPS -- got the module name wrong in the new file
+!
 ! Revision 2.1  2004/06/09 17:46:43  vsnyder
 ! Initial commit after splitting from PFAData.f90
 !
