@@ -36,7 +36,7 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
-  use String_table, only: GET_STRING
+  use String_table, only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
@@ -90,6 +90,7 @@ contains ! ================================ FullForwardModel routine ======
     ! alphabetically
 
     integer :: BRKPT                    ! Index of midpoint of path
+    integer :: CATINDEX                 ! Index for molecule
     integer :: CHANNEL                  ! A Loop counter
     integer :: FRQ_I                    ! Frequency loop index
     integer :: F_LEN                    ! Total number of f's
@@ -470,16 +471,27 @@ contains ! ================================ FullForwardModel routine ======
 
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
-      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+      catIndex = FindFirst(catalog%spec_tag == spectag)
+
+      if ( catIndex < 1 ) then
+        call output ( 'No catalog entry for molecule ' )
+        call display_string ( lit_indices ( fwdModelConf%molecules(j) ), advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Possible problem with spectroscopy catalog" )
+      endif
+
+      thisCatalogEntry => Catalog(catIndex)
       if ( associated ( thisCatalogEntry%lines ) ) then
         ! Now subset the lines according to the signal we're using
-        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+          & 'lineFlag', ModuleName )
         lineFlag = .false.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
           do sigInd = 1, size(fwdModelConf%signals)
             if ( associated(thisLine%signals) ) then
-              doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
+              doThis = any ( thisLine%signals == &
+                & fwdModelConf%signals(sigInd)%index )
               ! If we're only doing one sideband, maybe we can remove some more lines
               if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
@@ -1817,6 +1829,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.7  2001/11/02 10:47:57  zvi
+! Implementing frequecy grid
+!
 ! Revision 2.6  2001/10/12 20:40:25  livesey
 ! Moved sideband ratio check
 !
