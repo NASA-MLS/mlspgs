@@ -6,42 +6,17 @@ module Join                     ! Join together chunk based data.
 !=============================================================================
 
   ! This module performs the 'join' task in the MLS level 2 software.
-
-  use Expr_m, only: EXPR
-  use INIT_TABLES_MODULE, only: &
-    & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
-    & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
-    & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_PRESSURE, &
-    & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME
   use intrinsic, only: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY, &
     & PHYQ_DIMENSIONLESS
-  use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
-    & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
-  use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
-    & L2GPData_T, SetupNewL2GPRecord
-  use L2ParInfo, only: PARALLEL, SLAVEJOIN
-  use LEXER_CORE, only: PRINT_SOURCE
-  use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-  use MLSCommon, only: MLSChunk_T,R8
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+  use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSignals_M, only: GETSIGNALNAME
-  use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use OutputAndClose, only: DIRECTWRITE
   use String_Table, only: DISPLAY_STRING, GET_STRING
-  use Symbol_Table, only: ENTER_TERMINAL
-  use Symbol_Types, only: T_STRING
-  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
     & SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use VectorsModule, only: GetVectorQtyByTemplateIndex, &
-    & ValidateVectorQuantity, Vector_T, VectorValue_T
 
   implicit none
   private
@@ -74,6 +49,27 @@ contains ! =====     Public Procedures     =============================
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
+
+    use Expr_m, only: EXPR
+    use INIT_TABLES_MODULE, only: &
+      & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
+      & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
+      & FIELD_LAST
+    use INIT_TABLES_MODULE, only: L_PRESSURE, &
+      & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME
+    use L2AUXData, only: L2AUXData_T
+    use L2GPData, only: L2GPData_T
+    use L2ParInfo, only: PARALLEL, SLAVEJOIN
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSSignals_M, only: GetSignalName
+    use MoreTree, only: Get_Spec_ID
+    use OutputAndClose, only: DIRECTWRITE
+    use Symbol_Table, only: ENTER_TERMINAL
+    use Symbol_Types, only: T_STRING
+    use Time_M, only: Time_Now
+    use TREE_TYPES, only: N_NAMED, N_SET_ONE
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+      & ValidateVectorQuantity, Vector_T, VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
@@ -229,7 +225,7 @@ contains ! =====     Public Procedures     =============================
             & 'Quantity and precision quantity do not match')
         else
           precisionQuantity => NULL()
-        endif
+        end if
 
         ! Establish a swath/sd name for this quantity.
         hdfName = ''
@@ -293,7 +289,7 @@ contains ! =====     Public Procedures     =============================
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for MLSL2Join =" )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -301,35 +297,6 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine MLSL2Join
 
-! =====     Private Procedures     =====================================
-
-  ! ---------------------------------------------  Announce_Error  -----
-  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX )
-    integer, intent(in) :: where   ! Tree node where error was noticed
-    integer, intent(in) :: CODE    ! Code for error message
-    integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
-    character (LEN=*), intent(in), optional :: ExtraMessage
-
-    error = max(error,1)
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
-    call output ( ': ' )
-    select case ( code )
-      case ( NotAllowed )
-        call output('Field ')
-        call display_string(field_indices(fieldIndex))
-        call output(' is not allowed in this context',advance='yes')
-      case default
-        call output ( " command caused an unrecognized programming error", advance='yes' )
-    end select
-    if ( present(ExtraMessage) ) then
-      call output(ExtraMessage, advance='yes')
-    end if
-  end subroutine ANNOUNCE_ERROR
   ! -----------------------------------------  JoinL2GPQuantities  -----
 
   ! This routine joins an l2gp line quantity to a database of such quantities.
@@ -342,6 +309,11 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2GPQuantities ( key, name, quantity, &
     & precision, l2gpDatabase, chunkNo, &
     & firstInstance, lastInstance, nameString )
+
+    use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
+    use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
+      & L2GPData_T, SetupNewL2GPRecord
+    use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
@@ -408,7 +380,7 @@ contains ! =====     Public Procedures     =============================
          noFreqsInL2GP=0
       else
          noFreqsInL2GP=quantity%template%noChans
-      endif
+      end if
 
       call SetupNewL2GPRecord ( newL2GP, noFreqsInL2GP, noSurfsInL2GP )
       ! Setup the standard stuff, only pressure as it turns out.
@@ -447,7 +419,7 @@ contains ! =====     Public Procedures     =============================
       thisL2GP%name = nameString
     else
       call Get_String( name, thisL2GP%name, strip=.true.)
-    endif
+    end if
     lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
@@ -498,6 +470,10 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
     & chunkNo, chunks, firstInstance, lastInstance )
 
+    use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
+      & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
+    use VectorsModule, only: VectorValue_T
+
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
     integer, intent(in) :: NAME    ! for the sd
@@ -542,8 +518,8 @@ contains ! =====     Public Procedures     =============================
       else
         call get_string(quantity%template%name, quantityNameStr, strip=.true., noerror=.true.)
         call output(trim(quantityNameStr), advance='yes')
-      endif
-    endif
+      end if
+    end if
 
     ! If this is the first chunk, we have to setup the l2aux quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -575,7 +551,7 @@ contains ! =====     Public Procedures     =============================
       call output('Joining L2Aux quantity with ', advance='no')
       call output(noOutputInstances, advance='no')
       call output(' instances ', advance='no')
-    endif
+    end if
     ! Now if this is a new l2aux quantity, we need to setup an l2aux data type
     ! for it.
 
@@ -709,7 +685,7 @@ contains ! =====     Public Procedures     =============================
         & quantity%template%noInstancesUpperOverlap)
     else
       lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
-    endif
+    end if
     firstProfile = lastProfile-noOutputInstances+1
     
     if ( DEEBUG ) then
@@ -723,10 +699,10 @@ contains ! =====     Public Procedures     =============================
         call output(size(thisL2AUX%dimensions(L2AUXRank)%values), advance='no')
       else
         call output(' (dimensions unassociated)', advance='no')
-      endif
+      end if
       call output('   values 3rd coord ', advance='no')
       call output(size(thisL2AUX%values(1,1,:)), advance='yes')
-    endif
+    end if
 
     select case (thisL2AUX%dimensions(L2AUXRank)%dimensionFamily)
     case ( L_GeodAngle )
@@ -748,10 +724,46 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine JoinL2AUXQuantities
 
+! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  Announce_Error  -----
+  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+
+    integer, intent(in) :: where   ! Tree node where error was noticed
+    integer, intent(in) :: CODE    ! Code for error message
+    integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
+    character (LEN=*), intent(in), optional :: ExtraMessage
+
+    error = max(error,1)
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
+    call output ( ': ' )
+    select case ( code )
+      case ( NotAllowed )
+        call output('Field ')
+        call display_string(field_indices(fieldIndex))
+        call output(' is not allowed in this context',advance='yes')
+      case default
+        call output ( " command caused an unrecognized programming error", advance='yes' )
+    end select
+    if ( present(ExtraMessage) ) then
+      call output(ExtraMessage, advance='yes')
+    end if
+  end subroutine ANNOUNCE_ERROR
+
 end module Join
 
 !
 ! $Log$
+! Revision 2.62  2002/08/20 22:10:50  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.61  2002/08/20 20:10:30  livesey
 ! Dealt with frequency in l2gps
 !
