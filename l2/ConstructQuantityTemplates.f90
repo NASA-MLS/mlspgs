@@ -25,11 +25,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
-    L_SPACERADIANCE, &
+    L_SPACERADIANCE, L_SYSTEMTEMPERATURE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
-    PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
+    PHYQ_FREQUENCY, PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
     PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
     PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
@@ -163,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_losTransFunc) =            PHYQ_Dimensionless
     natural_units(l_losVel) =                  PHYQ_Velocity
     natural_units(l_orbitInclination) =        PHYQ_Angle
+    natural_units(l_noiseBandwidth) =          PHYQ_Frequency
     natural_units(l_ptan) =                    PHYQ_Zeta
     natural_units(l_radiance) =                PHYQ_Temperature
     natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
@@ -177,6 +178,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_scVelECR) =                PHYQ_Velocity   
     natural_units(l_scanResidual ) =           PHYQ_Length
     natural_units(l_spaceRadiance) =           PHYQ_Temperature
+    natural_units(l_systemTemperature) =       PHYQ_Temperature
     natural_units(l_temperature) =             PHYQ_Temperature
     natural_units(l_tngtGeocAlt) =             PHYQ_Length
     natural_units(l_tngtGeodAlt) =             PHYQ_Length
@@ -382,7 +384,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Some special cases for certain quantities
       select case (quantityType)
-      case ( l_SidebandRatio, l_NoiseBandwidth )
+      case ( l_SidebandRatio, l_NoiseBandwidth, l_SystemTemperature )
         frequencyCoordinate = l_channel
         signalInfo = GetSignal(signal)
         noChans = size ( signalInfo%frequencies ) 
@@ -863,6 +865,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.64  2002/05/14 00:27:42  livesey
+! New code for system temperatures and noise bandwidths
+!
 ! Revision 2.63  2002/05/07 20:02:54  livesey
 ! Added noise bandwidth
 !
