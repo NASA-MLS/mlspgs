@@ -7,6 +7,10 @@ begin Fill
   cleanMeasurement: Vector, template=measurementTemplate
   fwm: Vector, template=measurementTemplate
 
+  corrections: Vector, template=correctionsTemplate
+  correctionNoise: Vector, template=correctionsTemplate
+
+  ;; ------------------------------------------ Read radiances -----
   ;; Define a macro to read one bands worth of radiances
   !define(readRadiances,{!dnl
   Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
@@ -14,6 +18,33 @@ begin Fill
   ;; Read all the relevant bands
   !forall( {readRadiances}, !relevantBands)
 
+  ;; ------------------------------------------ Read L1B Baselines -----
+  ;; Now do the same for the baseline information in the L1B files.
+  !ifdef(L1BMAFBaselineSource,{},{!define(L1BMAFBaselineSource,{Baseline})})
+
+  ;; ================ Next section can be ommited by defining flagSkipL1BMAFBaseline
+  !ifdef(flagSkipL1BMAFBaseline,{},{
+
+  !define(readL1BMAFBaseline,{!dnl
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource'
+  Fill, quantity=corrections.band$1L1BMAFBaseline, method=l1b, suffix=' !L1BMAFBaselineSource precision'!nl})
+  ;; Read this for all the relevant bands
+  !forall( {readL1BMAFBaseline}, !relevantBands)
+
+  ;; ------------------------------------------ Apply L1B Baselines -----
+  ;; Now apply the baseline correction to all the radiances
+  !define(applyL1BMAFBaseline,{!dnl
+  Fill, quantity=measurement.band$1, method=applyBaseline, $
+    baselineQuantity=corrections.band$1L1BMAFBaseline
+  Fill, quantity=measurementNoise.band$1, method=applyBaseline, $
+    baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
+  ;; Apply to all relevant bands
+  !forall( {applyL1BMAFBaseline}, !relevantBands)
+
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Miscellaneous stuff --
   ;; Setup the radianceDiagnostics vector
   minorFrameDiagnostics: Vector, template=minorFrameDiagnosticsTemplate
   mappedChisqMax: Vector, template=mappedChisqTemplate
@@ -36,6 +67,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.7  2004/07/06 22:07:20  livesey
+; Bug fix, case problem in cleanNoisy.
+;
 ; Revision 1.6  2004/06/24 21:57:59  livesey
 ; Fix bug to have it add noise on scan residual for noisy and noisy-cld.
 ;
