@@ -1,5 +1,8 @@
-#!/usr/local/GNU/bin/bash
 #!/bin/sh
+#!/usr/local/GNU/bin/bash 
+
+
+# swap above two lines if bash is in /usr/local/GNU/bin/bash 
 # Copyright (c) The University of Edinburgh
 # This is a utility to generate make files 
 # for Fortran 90. A basic makefile entry for bork.f90 would be
@@ -132,13 +135,13 @@ modfilelist=
 objfilelist=
 for module in ${modulelist} 
 do
-  echo \# searching for module ${module}
+  #echo \# searching for module ${module}
   found=false
   for directory in ${SPATHLIST}
   do
     for modfile in `ls ${revlist} ${directory}/*.${SFTAG}` 
     do
-      echo \# checking modfile ${modfile}
+      #echo \# checking modfile ${modfile}
       if ${GREP} -i -q -w "^ *module *${module}" ${modfile} 
       then
          echo \# module ${module} is in file ${modfile}
@@ -175,7 +178,6 @@ do
   foo=`echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" `
 #  echo \# foo is ${foo}
   objlist="${objlist} ${foo}"
-  objlist="${objlist} `echo ${i} | sed -e"s/\.${SFTAG}/.o/g" -e"s|.*/||" ` "
 done
 #echo \# objlist is ${objlist}
 echo >> fmkmf_tmp_makefile
