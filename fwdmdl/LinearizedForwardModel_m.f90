@@ -327,6 +327,12 @@ contains ! =====     Public Procedures     =============================
       ! -------- Main loop over xStar quantities -------------------------------
       do qtyInd = 1, size ( l2pc%col%vec%quantities )
 
+        if ( toggle(emit) .and. levels(emit) > 1 ) then
+          call output ( 'Dealing with xStar Quantity named ' )
+          call display_string ( l2pc%col%vec%quantities(qtyInd)%template%name, &
+            & advance='yes' )
+        end if
+
         ! Identify this quantity in xStar
         l2pcQ => l2pc%col%vec%quantities(qtyInd)
 
@@ -377,12 +383,12 @@ contains ! =====     Public Procedures     =============================
         ! Now check that surfaces are the same
         if (stateQ%template%noSurfs /= l2pcQ%template%noSurfs) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "State vector surfaces not same as l2pc" )
+          & "Number of state vector surfaces not same as l2pc" )
         ! The l2pc writer insisted that things were on zeta coords or none
         ! at all, so check surfaces OK.
         if ( any (abs (stateQ%template%surfs-l2pcQ%template%surfs) > 0.01)) &
           & call MLSMessage(MLSMSG_Error,ModuleName,&
-          & 'State vector surfaces not same as l2pc')
+          & 'State vector surface values not same as l2pc')
 
         ! Check that no. chans. is the same (will it ever /=1!!?)
         if (stateQ%template%noChans /= l2pcQ%template%noChans) &
@@ -827,6 +833,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.15  2002/05/14 22:32:53  livesey
+! Added single sideband stuff
+!
 ! Revision 2.14  2002/05/03 23:29:31  livesey
 ! Added split sideband ratio stuff
 !
