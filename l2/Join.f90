@@ -258,7 +258,8 @@ contains ! =====     Public Procedures     =============================
           ! Now, depending on the properties of the source we deal with the
           ! vector quantity appropriately.
           if (ValidateVectorQuantity(quantity,coherent=.true.,stacked=.true.,regular=.true.,&
-            & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
+            & verticalCoordinate=(/L_Pressure,L_Zeta/),&
+            & minorFrame=.false.,majorFrame=.false.)) then
             ! Coherent, stacked, regular quantities on pressure surfaces, or
             ! with no vertical coordinate system go in l2gp files.
             if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
@@ -769,6 +770,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.65  2002/11/26 23:38:01  livesey
+! Better joining of major frame quantities
+!
 ! Revision 2.64  2002/10/29 21:54:21  livesey
 ! Made join less verbose.
 !
