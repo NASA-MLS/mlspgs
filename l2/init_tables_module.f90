@@ -376,7 +376,7 @@ contains ! =====     Public procedures     =============================
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
-             l+l_cloudFull, l+l_switchingMirror, n+n_dt_def, &
+             l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
@@ -874,8 +874,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
+             begin, f+f_forceSidebandFraction, t+t_boolean, n+n_field_type, &
              begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_linearSideband, t+t_numeric, n+n_field_type, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
@@ -1066,6 +1068,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.324  2003/07/15 22:11:37  livesey
+! Added stuff for hybrid model
+!
 ! Revision 2.323  2003/07/08 00:14:37  livesey
 ! New version of directWrite command
 !
