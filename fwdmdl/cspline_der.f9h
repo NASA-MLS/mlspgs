@@ -23,17 +23,17 @@
 
     real(rk), intent(out) :: YOUT(nout), DYOUT(nout)
 
-    integer :: JIN, I, J, KLO, KHI, KPL
+    integer :: JIN, I, KLO, KHI, KPL
     real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
-    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, DP, H
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, DYDX, H
 
-    jin = abs(nin)
-
-    if ( all(yin == 0.0) ) then
-      yout = 0.0
+    if ( all(yin(2:) == yin(1)) ) then
+      yout = yin(1)
       dyout = 0.0
       return
     end if
+
+    jin = abs(nin)
 
     if ( xin(jin) > xin(1) ) then
       x_in = xin
@@ -66,24 +66,16 @@
       h = x - xl
       ylin = yl + dydx * h
 
-      y = 0.0
-      dy = 0.0
-      do j = 4, 1, -1
-        y = (y/j)*h + coeff(j,klo)
-        if ( j < 4 ) then
-          dy = (dy/j)*h + coeff(j+1,klo)
-        end if
-      end do
+      y = yl + h * (coeff(2,klo) + h * (coeff(3,klo) + h * coeff(4,klo) ) )
+      dy = coeff(2,klo) + h * ( 2.0 * coeff(3,klo) + h * 3.0 * coeff(4,klo) )
 
 ! Decide whether to revert back to linear interpolation:
 
-      dp = 100.0 * abs(y-ylin) / (abs(ylin) + epsilon(ylin))
-
-      if ( dp > 25.0 ) then
+      if ( abs(y-ylin) > 0.25 * abs(ylin) ) then
         y = ylin
         dy = dydx
       else if ( present(ymin) .and. present(ymax) ) then
-        if ( y < ymin  .or. y > ymax ) then
+        if ( y < ymin .or. y > ymax ) then
           y = ylin
           dy = dydx
         end if
@@ -97,6 +89,9 @@
 ! end subroutine ?CSPLINE_DER
 
 ! $Log$
+! Revision 2.5  2003/09/16 00:05:41  vsnyder
+! Remove unused local variable
+!
 ! Revision 2.4  2002/10/04 23:26:25  vsnyder
 ! Fix a bug in the x-descending case
 !
