@@ -2,69 +2,12 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
+module ConstructQuantityTemplates ! Construct templates from user supplied info
 !=============================================================================
 
   ! This module has various functionality for constructing quantity templates.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use EXPR_M, only: EXPR
-  use FGrid, only: fGrid_T
-  use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, &
-    & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
-    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR, &
-    & F_SOLARTIME, F_SOLARZENITH
-  use INIT_TABLES_MODULE, only: &
-    FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
-    L_CLOUDEXTINCTION, L_CLOUDWATER, &
-    L_TOTALEXTINCTION, L_MASSMEANDIAMETERICE, &
-    L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
-    L_COLUMNABUNDANCE, L_DNWT_AJN, L_DNWT_AXMAX, &
-    L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
-    L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
-    L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
-    L_DNWT_SQ, L_DNWT_SQT, &
-    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, &
-    L_ELEVOFFSET, L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHTOFFSET, L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-    L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
-    L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
-    L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
-    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SIZEDISTRIBUTION, &
-    L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
-    L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
-    L_TRUE,&
-    L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
-    PHYQ_FREQUENCY, PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
-    PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
-    PHYQ_ZETA, PHYQ_GAUSS, PHYQ_TIME
-  use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
-    & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
-  use MLSFiles, only: mls_hdf_version
-  use MLSL2Options, only: LEVEL1_HDFVERSION
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
-  use MLSSignals_m, only:  IsModuleSpacecraft, &
-    & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
-    & GetRadiometerFromSignal, GetSignal,&
-    & GetSignalName, Signal_T, SIGNALS, MODULES
-  use OUTPUT_M, only: OUTPUT
-  use Parse_Signal_m, only: PARSE_SIGNAL
-  use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
-    & QuantityTemplateCounter, NullifyQuantityTemplate
-  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_SET_ONE
-  use VGridsDatabase, only: VGrid_T
-
-  implicit none
+  implicit NONE
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
@@ -102,6 +45,44 @@ contains ! =====     Public Procedures     =============================
     & returnStatus ) &
     result ( QTY )
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use EXPR_M, only: EXPR
+    use FGrid, only: fGrid_T
+    use HGrid, only: hGrid_T
+    use INIT_TABLES_MODULE, only:  F_FGRID, F_GEODANGLE, F_HGRID, F_IRREGULAR, &
+      & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
+      & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
+    use INIT_TABLES_MODULE, only: FIRST_LIT, LAST_LIT, L_BASELINE, &
+      & L_BOUNDARYPRESSURE, L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, &
+      & L_CHISQMMIF, L_CLOUDEXTINCTION, L_CLOUDICE, L_CLOUDINDUCEDRADIANCE, &
+      & L_CLOUDRADSENSITIVITY, L_COLUMNABUNDANCE, L_EARTHRADIUS, &
+      & L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_EXTINCTION, &
+      & L_GEODALTITUDE, L_GPH, L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
+      & L_MAGNETICFIELD, L_MASSMEANDIAMETERICE, L_NOISEBANDWIDTH, L_NONE, &
+      & L_OPTICALDEPTH, L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, &
+      & L_REFGPH, L_RHI, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+      & L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SPACERADIANCE, &
+      & L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, &
+      & L_TNGTGEODALT, L_TOTALEXTINCTION, L_TRUE, L_VMR, L_XYZ, &
+      & PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS, PHYQ_EXTINCTION, &
+      & PHYQ_FREQUENCY, PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
+      & PHYQ_PCTRHI, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
+      & PHYQ_VMR, PHYQ_ZETA
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
+      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES
+    use OUTPUT_M, only: OUTPUT
+    use Parse_Signal_m, only: PARSE_SIGNAL
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
+      & NullifyQuantityTemplate
+    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+    use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_SET_ONE
+    use VGridsDatabase, only: VGrid_T
+
   ! This routine constructs a vector quantity template based on instructions
   ! passed in an mlscf line.
 
@@ -119,7 +100,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer, dimension(2) :: EXPR_UNITS
-    real(r8), dimension(2) :: EXPR_VALUE
+    real(rk), dimension(2) :: EXPR_VALUE
     integer :: Family
     integer :: FGridIndex
     logical, save :: First = .true.
@@ -136,14 +117,14 @@ contains ! =====     Public Procedures     =============================
     integer, save :: Natural_Units(first_lit:last_lit)
     integer :: NoInstances
     integer :: NoSurfs
-    real(r8) :: MinValue                ! Minimumvalue
+    real(rk) :: MinValue                ! Minimumvalue
     logical :: MinorFrame               ! Is a minor frame quantity
     logical :: MajorFrame               ! Is a major frame quantity
     integer :: NoChans
     integer :: QuantityType
     integer :: Radiometer               ! Database index
     logical :: Regular                  ! Flag
-    real(r8) :: ScaleFactor
+    real(rk) :: ScaleFactor
     integer :: Sideband
     integer :: Signal                   ! Database index
     integer :: s_index
@@ -170,7 +151,7 @@ contains ! =====     Public Procedures     =============================
     instrumentModule = 0
     logBasis = .false.
     regular = .true.
-    minValue = -huge ( 0.0_r8 )
+    minValue = -huge ( 0.0_rk )
     molecule = 0
 
     if ( first ) then
@@ -287,14 +268,14 @@ contains ! =====     Public Procedures     =============================
               & l1bInfo, Chunk) ) exit
           enddo
           if ( s_index > size(signalInds) ) then
-            if (BE_WHINY_ABOUT_IT ) call announce_error (root, No_Error_Code, &
+            if ( BE_WHINY_ABOUT_IT ) call announce_error (root, No_Error_Code, &
               & 'Warning: no good signal data found for ' &
               & // trim(signalString), HOWSEVEREISNOGOODSIGNAL)
             signal = signalInds(1)
           else
             signal = signalInds(s_index)
-          endif
-        endif
+          end if
+        end if
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
@@ -321,7 +302,7 @@ contains ! =====     Public Procedures     =============================
     else
       frequencyCoordinate = L_None
       noChans = 1
-    endif
+    end if
 
     ! Now, depending on the type, check out stuff and see if it's ok to
     ! first order.
@@ -342,7 +323,7 @@ contains ! =====     Public Procedures     =============================
     if ( minorFrame ) then
 
       ! This is a minor frame type quantity.
-      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 )) then
+      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 ) ) then
         call announce_error ( root, unnecessaryGrid )
       end if
       if ( instrumentModule == 0 ) then 
@@ -359,7 +340,7 @@ contains ! =====     Public Procedures     =============================
       ! For some cases we know the quantity is an xyz vector
       if ( any(quantityType == &
        & (/ l_tngtECI, l_scECI, l_scVel, l_scVelECI, l_scVelECR /)) &
-       &  ) then
+       & ) then
         noChans = 3
         frequencyCoordinate = l_xyz
       end if
@@ -373,21 +354,21 @@ contains ! =====     Public Procedures     =============================
         qty%noChans = 1
         qty%instanceLen = qty%NoSurfs
         qty%frequencyCoordinate = l_none
-      endif
+      end if
         
-    elseif ( majorFrame ) then
+    else if ( majorFrame ) then
 
       ! This is a major frame type quantity.
       if ( vGridIndex/=0 ) then
         call announce_error ( root, No_Error_Code, &
         &  'No vGrid should be specified for a major frame quantity' )
-      endif
+      end if
 
       ! Work out the channel information
       if ( signal == 0 ) then
         call announce_error ( root, No_Error_Code, &
         &  'A signal is required for every major frame quantity' )
-      elseif ( instrumentModule == 0 ) then 
+      else if ( instrumentModule == 0 ) then 
         call announce_error ( root, noModule )
       else
         signalInfo = GetSignal(signal)
@@ -407,7 +388,7 @@ contains ! =====     Public Procedures     =============================
       qty%frequencyCoordinate = frequencyCoordinate
         
    ! for losTransFunc type of quantity 
-   elseif (quantityType == l_losTransFunc) then
+    else if ( quantityType == l_losTransFunc ) then
       ! replace noChans with no of grid along path which is specified from sGrid
         noChans = VGrids(sGridIndex)%noSurfs
         frequencyCoordinate = l_losTransFunc
@@ -419,7 +400,7 @@ contains ! =====     Public Procedures     =============================
        
        qty%frequencies = VGrids(sGridIndex)%surfs
         
-   else
+    else
 
       ! This is not a minor frame quantity, set it up from FGrids, VGrids and HGrids
 
@@ -467,15 +448,15 @@ contains ! =====     Public Procedures     =============================
 
       if ( quantityType == l_columnAbundance &
       & .or. &
-      &   quantityType == l_boundaryPressure) then
+      &   quantityType == l_boundaryPressure ) then
         if ( vGridIndex/=0 ) then
           call announce_error( root, no_error_code, &
           & 'No vGrid should be specified for column abundance ' &
           & // 'boundary pressure')
-        endif
+        end if
         frequencyCoordinate = L_None
         qty%verticalCoordinate = L_None
-      elseif ( vGridIndex /= 0 ) then
+      else if ( vGridIndex /= 0 ) then
         call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
       else
         qty%surfs = 0.0
@@ -509,8 +490,8 @@ contains ! =====     Public Procedures     =============================
     if ( majorFrame ) then
       qty%minorFrame = .false.
       qty%majorFrame = .true.
-    endif
-    if ( DEEBUG .or. index(switches,'qtmp') /= 0) then
+    end if
+    if ( DEEBUG .or. index(switches,'qtmp') /= 0 ) then
       call output( 'Template name: ', advance='no' )
       call display_string ( qty%name, advance='no', ierr=ierr )
       call output( '   quantityType: ', advance='no' )
@@ -526,14 +507,14 @@ contains ! =====     Public Procedures     =============================
         call output( ' (none available) ', advance='yes' )
       else
         call display_string ( signals(qty%signal)%name, advance='yes', ierr=ierr )
-      endif
+      end if
       call output( '   Instrument module: ', advance='no' )
       if ( qty%instrumentModule < 1 ) then
         call output( ' (none available) ', advance='yes' )
       else
         call display_string ( modules(qty%instrumentModule)%name, advance='yes', &
           & ierr=ierr )
-      endif
+      end if
 !      call output( '    Molecule: ', advance='no' )
 !      call display_string ( qty%Molecule, advance='yes', ierr=ierr )
       call output( '   molecule string: ', advance='no' )
@@ -546,7 +527,7 @@ contains ! =====     Public Procedures     =============================
       call output ( qty%noInstances, advance='no' )
       call output ( ' instanceLen = ' )
       call output ( qty%instanceLen, advance='yes' )
-    endif
+    end if
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
     returnStatus = error
@@ -557,16 +538,21 @@ contains ! =====     Public Procedures     =============================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage, severity )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     character (LEN=*), intent(in), optional :: ExtraMessage
     integer, intent(in), optional :: severity
 
-    if (present(severity)) then
+    if ( present(severity) ) then
       error = max(error,severity)
     else
       error = max(error,1)
-    endif
+    end if
     call output ( '***** At ' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
@@ -603,6 +589,16 @@ contains ! =====     Public Procedures     =============================
   ! if no precision data in file, return FALSE
   ! otherwise return true
   ! Arguments
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use L1BData, only: L1BData_T, READL1BDATA, &
+      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSFiles, only: MLS_HDF_Version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: GetSignalName
+
     integer, intent(in) :: signal
     integer, intent(in) :: sideband
     logical             :: answer
@@ -611,7 +607,7 @@ contains ! =====     Public Procedures     =============================
   ! Private
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
-    type (l1bData_T) :: L1BDATA
+    type (l1bData_T) :: MY_L1BDATA
     integer :: hdfVersion
 
   ! Executable
@@ -627,24 +623,28 @@ contains ! =====     Public Procedures     =============================
     if ( fileID <= 0 ) then
       answer = .false.
       return
-    endif
+    end if
     ! print *, 'About to read ', trim(nameString)
     ! print *, 'From Fileid ', fileID
-      call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
-        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .true., hdfVersion=hdfVersion )
-      if (flag == 0) then
-        answer = .not. all (l1bData%DpField < 0._r8)
-        call deallocate_test(l1bData%DpField, trim(nameString), ModuleName)
-      else
-        answer = .false.
-      endif
+    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & NeverFail= .true., hdfVersion=hdfVersion )
+    if ( flag == 0 ) then
+      answer = .not. all (my_l1bData%DpField < 0._rk)
+      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
+    else
+      answer = .false.
+    end if
   end function ANY_GOOD_SIGNALDATA
 
   ! --------------------------------  ConstructMajorFrameQuantity  -----
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
     & mifGeolocation )
     ! Dummy arguments
+    use INIT_TABLES_MODULE, only: L_NONE
+    use MLSCommon, only: MLSChunk_T, RK => R8
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+
     type (MLSChunk_T), intent(in) :: CHUNK
     integer, intent(in) :: INSTRUMENTMODULE
     type (QuantityTemplate_T), intent(out) :: QTY
@@ -680,6 +680,17 @@ contains ! =====     Public Procedures     =============================
   subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
+    use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
+    use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
+      & AssembleL1BQtyName
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8
+    use MLSFiles, only: MLS_HDF_Version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
+    use MLSSignals_m, only:  IsModuleSpacecraft, GetModuleName
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
+      & QuantityTemplateCounter
+
   ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
@@ -694,7 +705,7 @@ contains ! =====     Public Procedures     =============================
          & mifGeolocation
 
     ! Local parameters
-    real(r8), parameter :: SIXTH = 1.0_r8 / 6.0_r8
+    real(rk), parameter :: SIXTH = 1.0_rk / 6.0_rk
     ! Note the similarity to CreateHGridFromMLSCFInfo:
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! IF MODIFYING THIS SECTION PLEASE TAKE CARE, SEE BELOW!
@@ -755,7 +766,7 @@ contains ! =====     Public Procedures     =============================
       else
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
-      endif
+      end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
 
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -772,7 +783,7 @@ contains ! =====     Public Procedures     =============================
       !  print *, 'noChans ', noChans
       !else
       !  print *, 'noChans not present'
-      !endif
+      !end if
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
         & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.false., &
         & stacked=.false., regular=regular, instanceLen=instanceLen, &
@@ -900,7 +911,17 @@ contains ! =====     Public Procedures     =============================
     ! This routine is used when we're in the mode of creating l2pc files
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
-    
+
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_FGRID, F_GEODANGLE, F_MODULE, F_NOMIFS, &
+      & F_SOLARTIME, F_SOLARZENITH
+    use INIT_TABLES_MODULE, only: L_NONE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+      & PHYQ_TIME
+    use MLSCommon, only: MLSChunk_T, RK => R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
+    use TREE, only: DECORATION, NSONS, SUBTREE
+
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
@@ -921,9 +942,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Tree vertex
     integer :: UNITS                    ! Units for node
 
-    real(r8), dimension(:,:), pointer :: VALUES ! An array to fill
+    real(rk), dimension(:,:), pointer :: VALUES ! An array to fill
     integer, dimension(2) :: EXPR_UNITS ! From tree
-    real(r8), dimension(2) :: EXPR_VALUE ! From tree
+    real(rk), dimension(2) :: EXPR_VALUE ! From tree
 
     ! Executable code
     solarTimeNode = 0
@@ -1027,31 +1048,35 @@ contains ! =====     Public Procedures     =============================
   end subroutine ForgeMinorFrames
 
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
-  subroutine CopyHGridInfoIntoQuantity ( hGrid, qty )
+  subroutine CopyHGridInfoIntoQuantity ( My_hGrid, qty )
 
   ! This routine copies HGrid information into an already defined quantity
 
+    use HGrid, only: hGrid_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use QuantityTemplates, only: QuantityTemplate_T
+
     ! Dummy arguments
-    type (hGrid_T), intent(in) :: hGrid
+    type (hGrid_T), intent(in) :: My_hGrid
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     ! Executable code
 
-    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
+    if ( qty%noInstances/=my_hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
       & ModuleName, "Size of HGrid not compatible with size of quantity" )
 
     if ( .NOT. qty%stacked ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Cannot copy hGrids into unstacked quantities")
 
-    qty%phi(1,:) = hGrid%phi
-    qty%geodLat(1,:) = hGrid%geodLat
-    qty%lon(1,:) = hGrid%lon
-    qty%time(1,:) = hGrid%time
-    qty%solarTime(1,:) = hGrid%solarTime
-    qty%solarZenith(1,:) = hGrid%solarZenith
-    qty%losAngle(1,:) = hGrid%losAngle
-    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
-    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
+    qty%phi(1,:) = my_hGrid%phi
+    qty%geodLat(1,:) = my_hGrid%geodLat
+    qty%lon(1,:) = my_hGrid%lon
+    qty%time(1,:) = my_hGrid%time
+    qty%solarTime(1,:) = my_hGrid%solarTime
+    qty%solarZenith(1,:) = my_hGrid%solarZenith
+    qty%losAngle(1,:) = my_hGrid%losAngle
+    qty%noInstancesLowerOverlap = my_hGrid%noProfsLowerOverlap
+    qty%noInstancesUpperOverlap = my_hGrid%noProfsUpperOverlap
 
   end subroutine CopyHGridInfoIntoQuantity
 
@@ -1060,6 +1085,10 @@ contains ! =====     Public Procedures     =============================
 
   ! This similar routine copies VGrid information into an already 
   ! defined quantity
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use QuantityTemplates, only: QuantityTemplate_T
+    use VGridsDatabase, only: VGrid_T
 
     ! Dummy arguments
     type (VGrid_T), intent(in) :: vGrid
@@ -1089,6 +1118,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.88  2003/02/13 19:05:39  vsnyder
+! Move USEs from module to procedure scope, cosmetic changes
+!
 ! Revision 2.87  2003/02/12 21:53:48  pwagner
 ! Fix to errant ANY_GOOD_SIGNALDATA in case of hdf5 files
 !
