@@ -67,7 +67,7 @@ contains
     use Molecules, only: L_EXTINCTION, spec_tags
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Output_m, only: OUTPUT
-    use Path_Contrib_M, only: Path_Contrib, Get_GL_Inds
+    use Path_Contrib_M, only: Get_GL_Inds, Path_Contrib
     use PointingGrid_m, only: POINTINGGRIDS
     use RAD_TRAN_M, only: RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, DRAD_TRAN_DX
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
@@ -948,7 +948,7 @@ contains
       ! Half length of integration grid intervals:
       & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
       ! Gauss points (with -1 at front):
-      & spread((/-1.0_rp,Gx/),2,NLm1), (/maxVert-1/))
+      & spread((/-1.0_rp,Gx(1:Ng)/),2,NLm1), (/maxVert-1/))
     z_glgrid(maxVert) = z_psig(Nlvl)
     p_glgrid = 10.0_rp**(-z_glgrid)
 
@@ -1128,7 +1128,7 @@ contains
 
     no_ele = 2*maxVert     ! maximum possible
 
-    allocate ( gl_slabs ( no_ele, noSpecies ), stat=ier )
+    allocate ( gl_slabs(no_ele, noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"gl_slabs" )
 
@@ -1141,8 +1141,8 @@ contains
     end do
 
     if ( temp_der ) then
-      allocate ( gl_slabs_p ( no_ele, noSpecies ), &
-        &        gl_slabs_m ( no_ele, noSpecies ), STAT=ier )
+      allocate ( gl_slabs_p(no_ele, noSpecies), &
+        &        gl_slabs_m(no_ele, noSpecies), STAT=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//"gl_slabs_[pm]" )
 
@@ -1385,13 +1385,14 @@ contains
         ! This is not pretty but we need some coarse grid extraction indices
         k = Ngp1
         j = (npc+1)/2
-        indices_c = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
+        indices_c(1:npc) = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
+        indices_c(npc+1:) = 0
 
         ! Compute z_path & p_path
-        z_path = (/(z_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-                 & (z_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
-        p_path = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-                 & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+        z_path(1:no_ele) = (/(z_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
+                           & (z_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+        p_path(1:no_ele) = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
+                           & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
 
         ! Compute the h_path, t_path, dhdz_path, phi_path, dhdt_path
 
@@ -1408,23 +1409,23 @@ contains
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
-              &  h_path, phi_path,                                           &
-              &  t_path, dhdz_path, Req,                                     &
+              &  h_path(1:no_ele), phi_path(1:no_ele),                       &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID=one_tan_ht, TAN_PHI_T_GRID=one_tan_temp,     &
               &  NEG_H_TAN = (/neg_tan_ht/), DHTDTL0 = tan_dh_dt,            &
               &  DDHIDHIDTL0 = ddhidhidtl0, DDHTDHTDTL0 = tan_d2h_dhdt,      &
               &  DHIDTLM = dh_dt_glgrid,                                     &
-              &  DHITDTLM = dh_dt_path,                                      &
+              &  DHITDTLM = dh_dt_path(1:no_ele,:),                          &
               &  Z_BASIS = Grids_tmp%zet_basis,                              &
-              &  ETA_ZXP=eta_zxp_t,                                          &
-              &  DO_CALC_T = do_calc_t,                                      &
-              &  DO_CALC_HYD = do_calc_hyd )
+              &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
+              &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
+              &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad,                           &
-              &  dummy, h_path, phi_path,                                    &
-              &  t_path, dhdz_path, Req,                                     &
+              &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  NEG_H_TAN = (/neg_tan_ht/) )
           end if
@@ -1438,22 +1439,22 @@ contains
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
-              &  h_path, phi_path,                                           &
-              &  t_path, dhdz_path, Req,                                     &
+              &  h_path(1:no_ele), phi_path(1:no_ele),                       &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
-              &  DHITDTLM = dh_dt_path,                                      &
+              &  DHITDTLM = dh_dt_path(1:no_ele,:),                          &
               &  Z_BASIS = Grids_tmp%zet_basis,                              &
-              &  ETA_ZXP = eta_zxp_t,                                        &
-              &  DO_CALC_T = do_calc_t,                                      &
-              &  DO_CALC_HYD = do_calc_hyd )
+              &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
+              &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
+              &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad,                           &
-              &  dummy, h_path, phi_path,                                    &
-              &  t_path, dhdz_path, Req,                                     &
+              &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
         end if
@@ -1464,18 +1465,21 @@ contains
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
         if ( spect_der ) then
           call eval_spect_path ( Grids_dw, firstSignal%lo, thisSideband, &
-            & z_path, phi_path, do_calc_dw, eta_zxp_dw )
+            & z_path(1:no_ele), phi_path(1:no_ele), &
+            & do_calc_dw(1:no_ele,:), eta_zxp_dw(1:no_ele,:) )
           call eval_spect_path ( Grids_dn, firstSignal%lo, thisSideband, &
-            & z_path, phi_path, do_calc_dn, eta_zxp_dn )
+            & z_path(1:no_ele), phi_path(1:no_ele), &
+            & do_calc_dn(1:no_ele,:), eta_zxp_dn(1:no_ele,:) )
           call eval_spect_path ( Grids_dv, firstSignal%lo, thisSideband, &
-            & z_path, phi_path, do_calc_dv, eta_zxp_dv )
+            & z_path(1:no_ele), phi_path(1:no_ele), &
+            & do_calc_dv(1:no_ele,:), eta_zxp_dv(1:no_ele,:) )
         end if
 
         tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
-        call comp_eta_docalc_no_frq ( Grids_f, z_path, &
-          &  phi_path, do_calc_zp, eta_zp )
+        call comp_eta_docalc_no_frq ( Grids_f,z_path(1:no_ele), &
+          &  phi_path(1:no_ele), do_calc_zp(1:no_ele,:), eta_zp(1:no_ele,:) )
 
        ! Now compute sps_path with a FAKE frequency, mainly to get the
        ! WATER (H2O) contribution for refraction calculations, but also
@@ -1483,15 +1487,17 @@ contains
 
         Frq = 0.0
         call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-          & Frq, eta_zp, do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
+          & Frq,eta_zp(1:no_ele,:), &
+          & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
+          & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
         if ( h2o_ind > 0 ) then
-          call refractive_index ( p_path(indices_c), &
-            &  t_path(indices_c), n_path,            &
-            &  h2o_path=sps_path((indices_c), h2o_ind) )
+          call refractive_index ( p_path(indices_c(1:npc)), &
+            &  t_path(indices_c(1:npc)), n_path(1:npc),     &
+            &  h2o_path=sps_path((indices_c(1:npc)), h2o_ind) )
         else
-          call refractive_index ( p_path(indices_c), &
-            &  t_path(indices_c), n_path )
+          call refractive_index ( p_path(indices_c(1:npc)), &
+            &  t_path(indices_c(1:npc)), n_path(1:npc) )
         end if
 
         if ( temp_der ) then
@@ -1505,9 +1511,10 @@ contains
              & ptg_angles(ptg_i), r, 1.0_rp )
         end if
 
-        n_path = min ( n_path, MaxRefraction )
-        call comp_refcor ( Req+h_path(indices_c), 1.0_rp+n_path,          &
-                      &  Req+one_tan_ht(1), del_s, ref_corr )
+        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
+
+        call comp_refcor ( Req+h_path(indices_c(1:npc)), 1.0_rp+n_path(1:npc), &
+                      &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
 
 ! This only needs to be computed on the gl (not coarse) grid thus there is
 ! some duplication here.
@@ -1520,17 +1527,17 @@ contains
         ! pointing & mmaf:
 
         del_temp = 0.0_rp
-        call get_gl_slabs_arrays ( my_Catalog, p_path,           &
-          &  t_path, 0.001*losVel%values(1,maf), gl_slabs,       &
+        call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+          &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
           &  no_ele, del_temp, fwdModelConf%Do_1D )
 
         if ( temp_der ) then
           del_temp = 10.0_rp
-          call get_gl_slabs_arrays ( my_Catalog, p_path,           &
-            &  t_path, 0.001*losVel%values(1,maf), gl_slabs_p,     &
+          call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+            &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
             &  no_ele, del_temp, fwdModelConf%Do_1D )
-          call get_gl_slabs_arrays ( my_Catalog, p_path,           &
-            &  t_path, 0.001*losVel%values(1,maf), gl_slabs_m,     &
+          call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
+            &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
             &  no_ele, -del_temp, fwdModelConf%Do_1D )
         end if
 
@@ -1554,6 +1561,7 @@ contains
                       & oneGrid(grids(ptg_i))%frequencies(j:m)
 
           ! VELOCITY shift correction to frequency grid
+
           frequencies =  Vel_Cor * frequencies
 
         end if
@@ -1575,7 +1583,9 @@ contains
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-            & Frq, eta_zp, do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
+            & Frq,eta_zp(1:no_ele,:), &
+            & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
+            & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated.  This avoids having four
@@ -1583,18 +1593,18 @@ contains
 
           ICON = FwdModelConf%i_saturation
 
-          call get_beta_path ( Frq, p_path, t_path,            &            
-            &  my_Catalog, beta_group, gl_slabs, indices_c,    &            
-            &  beta_path_c,                                    &            
-            &  gl_slabs_m, t_path-del_temp,                    &         
-            &  gl_slabs_p, t_path+del_temp,                    &         
-            &  dbeta_dt_path_c, dbeta_dw_path_c,               &            
+          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &   
+            &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),      &   
+            &  beta_path_c(1:npc,:),                                    &   
+            &  gl_slabs_m, t_path(1:no_ele)-del_temp,                   &   
+            &  gl_slabs_p, t_path(1:no_ele)+del_temp,                   &   
+            &  dbeta_dt_path_c, dbeta_dw_path_c,                        &   
             &  dbeta_dn_path_c, dbeta_dv_path_c, ICON )                    
 
-          alpha_path_c = SUM(sps_path(indices_c,:) *  &
-                           & beta_path_c,DIM=2)
+          alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
+                                  & beta_path_c(1:npc,:),DIM=2)
 
-          incoptdepth = alpha_path_c * del_s
+          incoptdepth(1:npc) = alpha_path_c(1:npc) * del_s(1:npc)
 
           ! Determine where to use Gauss-Legendre instead of a rectangle.
 
@@ -1605,7 +1615,7 @@ contains
 
           j = size(gl_inds)
 
-          ! Allocate GL grid beta and GL derivative grids
+          ! ALLOCATE GL grid beta and GL derivative grids
 
           call allocate_test ( beta_path_f, j, no_mol, 'beta_path_f', &
                              & moduleName )
@@ -1629,21 +1639,21 @@ contains
 
           ICON = FwdModelConf%i_saturation
 
-          call get_beta_path ( Frq, p_path, t_path,                     &
+          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &
             & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,   &
-            & gl_slabs_m, t_path-del_temp,                              &
-            & gl_slabs_p, t_path+del_temp,                              &
+            & gl_slabs_m, t_path(1:no_ele)-del_temp,                    &
+            & gl_slabs_p, t_path(1:no_ele)+del_temp,                    &
             & dbeta_dt_path_f, dbeta_dw_path_f,                         &
             & dbeta_dn_path_f, dbeta_dv_path_f, ICON )
 
           ! Compute radiative transfer ---------------------------------------
 
-          call rad_tran ( Frq, spaceRadiance%values(1,1), e_rflty,      &     
-            & z_path(indices_c), t_path(indices_c),                     &     
-            & alpha_path_c, ref_corr, do_gl,                            & 
-            & incoptdepth, SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),  & 
-            & path_dsdh(gl_inds), dhdz_path(gl_inds), t_script,         &     
-            & tau, Rad, i_stop )
+          call rad_tran ( Frq, spaceRadiance%values(1,1), e_rflty,           &
+            & z_path(indices_c(1:npc)), t_path(indices_c(1:npc)),            &
+            & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc),            &
+            & incoptdepth(1:npc), SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),&
+            & path_dsdh(gl_inds), dhdz_path(gl_inds), t_script(1:npc),       &
+            & tau(1:npc),Rad,i_stop )
 
           RadV(frq_i) = Rad
 
@@ -1651,33 +1661,33 @@ contains
 
           if ( atmos_der ) then
 
-            call drad_tran_df ( z_path(indices_c), Grids_f,               &
-              &  beta_path_c, eta_fzp(indices_c,:),                       &
-              &  sps_path(indices_c,:), do_calc_fzp(indices_c,:),         &
+            call drad_tran_df ( z_path(indices_c(1:npc)), Grids_f,             &
+              &  beta_path_c(1:npc,:), eta_fzp(indices_c(1:npc),:),            &
+              &  sps_path(indices_c(1:npc),:), do_calc_fzp(indices_c(1:npc),:),&
               &  beta_path_f, eta_fzp(gl_inds,:), sps_path(gl_inds,:),    &
-              &  do_calc_fzp(gl_inds,:), do_gl, del_s,                    &
-              &  ref_corr, path_dsdh(gl_inds), dhdz_path(gl_inds),        &
-              &  t_script, tau, i_stop, drad_df, ptg_i, frq_i )
+              &  do_calc_fzp(gl_inds,:), do_gl(1:npc), del_s(1:npc),      &
+              &  ref_corr(1:npc), path_dsdh(gl_inds), dhdz_path(gl_inds), &
+              &  t_script(1:npc), tau(1:npc), i_stop, drad_df, ptg_i, frq_i )
 
-            k_atmos_frq(frq_i,:) = drad_df
+            k_atmos_frq(frq_i,1:f_len) = drad_df(1:f_len)
 
           end if
 
           if ( temp_der ) then
 
-            call drad_tran_dt ( z_path(indices_c),                             &
-              & Req+h_path(indices_c),                                         &
-              & t_path(indices_c), dh_dt_path(indices_c,:),                    &
-              & alpha_path_c,                                                  &
-              & SUM(sps_path(indices_c,:) * dbeta_dt_path_c * beta_path_c, DIM=2),                          &
-              & eta_zxp_t(indices_c,:), do_calc_t(indices_c,:),                &
-              & do_calc_hyd(indices_c,:), del_s, ref_corr,                     &
-              & Req + one_tan_ht(1), dh_dt_path(brkpt,:), frq, do_gl,          &
+            call drad_tran_dt ( z_path(indices_c(1:npc)),                      &
+              & Req+h_path(indices_c(1:npc)),                                  &
+              & t_path(indices_c(1:npc)), dh_dt_path(indices_c(1:npc),:),      &
+              & alpha_path_c(1:npc), SUM(sps_path(indices_c(1:npc),:) *        &
+              & dbeta_dt_path_c(1:npc,:) * beta_path_c(1:npc,:),DIM=2),        &
+              & eta_zxp_t(indices_c(1:npc),:), do_calc_t(indices_c(1:npc),:),  &
+              & do_calc_hyd(indices_c(1:npc),:), del_s(1:npc), ref_corr(1:npc),&
+              & Req + one_tan_ht(1), dh_dt_path(brkpt,:), frq, do_gl(1:npc),   &
               & req + h_path(gl_inds), t_path(gl_inds), dh_dt_path(gl_inds,:), &
               & SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),                    &
               & SUM(sps_path(gl_inds,:)*beta_path_f*dbeta_dt_path_f,DIM=2),    &
               & eta_zxp_t(gl_inds,:), do_calc_t(gl_inds,:), path_dsdh(gl_inds),&
-              & dhdz_path(gl_inds), t_script, tau, i_stop,              &
+              & dhdz_path(gl_inds), t_script(1:npc), tau(1:npc), i_stop,       &
               & drad_dt, ptg_i, frq_i )
 
             k_temp_frq(frq_i,:) = drad_dt
@@ -1688,37 +1698,37 @@ contains
 
             ! Spectroscopic derivative  wrt: W
 
-            call drad_tran_dx ( z_path(indices_c), Grids_dw,                  &
-              &  dbeta_dw_path_c, eta_zxp_dw(indices_c,:),                    &
-              &  sps_path(indices_c,:), do_calc_dw(indices_c,:),              &
+            call drad_tran_dx ( z_path(indices_c(1:npc)), Grids_dw,           &
+              &  dbeta_dw_path_c(1:npc,:), eta_zxp_dw(indices_c(1:npc),:),    &
+              &  sps_path(indices_c(1:npc),:), do_calc_dw(indices_c(1:npc),:),&
               &  dbeta_dw_path_f, eta_zxp_dw(gl_inds,:), sps_path(gl_inds,:), &
-              &  do_calc_dw(gl_inds,:), do_gl, del_s,                         &
-              &  ref_corr, path_dsdh(gl_inds), dhdz_path(gl_inds),            &
-              &  t_script, tau, i_stop, drad_dw, ptg_i, frq_i )
+              &  do_calc_dw(gl_inds,:), do_gl(1:npc), del_s(1:npc),           &
+              &  ref_corr(1:npc), path_dsdh(gl_inds), dhdz_path(gl_inds),     &
+              &  t_script(1:npc), tau(1:npc), i_stop, drad_dw, ptg_i, frq_i )
 
             k_spect_dw_frq(frq_i,1:1:f_len_dw) = drad_dw(1:1:f_len_dw)
 
             ! Spectroscopic derivative  wrt: N
 
-            call drad_tran_dx ( z_path(indices_c), Grids_dn,                  &
-              &  dbeta_dn_path_c, eta_zxp_dn(indices_c,:),                    &
-              &  sps_path(indices_c,:), do_calc_dn(indices_c,:),              &
+            call drad_tran_dx ( z_path(indices_c(1:npc)), Grids_dn,           &
+              &  dbeta_dn_path_c(1:npc,:), eta_zxp_dn(indices_c(1:npc),:),    &
+              &  sps_path(indices_c(1:npc),:), do_calc_dn(indices_c(1:npc),:),&
               &  dbeta_dn_path_f, eta_zxp_dn(gl_inds,:), sps_path(gl_inds,:), &
-              &  do_calc_dn(gl_inds,:), do_gl, del_s,                         &
-              &  ref_corr, path_dsdh(gl_inds), dhdz_path(gl_inds),            &
-              &  t_script, tau, i_stop, drad_dn, ptg_i, frq_i )
+              &  do_calc_dn(gl_inds,:), do_gl(1:npc), del_s(1:npc),           &
+              &  ref_corr(1:npc), path_dsdh(gl_inds), dhdz_path(gl_inds),     &
+              &  t_script(1:npc), tau(1:npc), i_stop, drad_dn, ptg_i, frq_i )
 
             k_spect_dn_frq(frq_i,1:f_len_dn) = drad_dn(1:f_len_dn)
 
             ! Spectroscopic derivative  wrt: Nu0
 
-            call drad_tran_dx ( z_path(indices_c), Grids_dv,                  &
-              &  dbeta_dv_path_c, eta_zxp_dv(indices_c,:),                    &
-              &  sps_path(indices_c,:), do_calc_dv(indices_c,:),              &
+            call drad_tran_dx ( z_path(indices_c(1:npc)), Grids_dv,           &
+              &  dbeta_dv_path_c(1:npc,:), eta_zxp_dv(indices_c(1:npc),:),    &
+              &  sps_path(indices_c(1:npc),:), do_calc_dv(indices_c(1:npc),:),&
               &  dbeta_dv_path_f, eta_zxp_dv(gl_inds,:), sps_path(gl_inds,:), &
-              &  do_calc_dv(gl_inds,:), do_gl, del_s,                         &
-              &  ref_corr, path_dsdh(gl_inds), dhdz_path(gl_inds),            &
-              &  t_script, tau, i_stop, drad_dv, ptg_i, frq_i )
+              &  do_calc_dv(gl_inds,:), do_gl(1:npc), del_s(1:npc),           &
+              &  ref_corr(1:npc), path_dsdh(gl_inds), dhdz_path(gl_inds),     &
+              &  t_script(1:npc), tau(1:npc), i_stop, drad_dv, ptg_i, frq_i )
 
             k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
 
@@ -1775,7 +1785,7 @@ contains
               &   RadV, noFreqs, k, Radiances(ptg_i,i) )
           end do
         else
-          Radiances(ptg_i,1:noUsedChannels) = RadV
+          Radiances(ptg_i,1:noUsedChannels) = RadV(1:)
         end if
 
         ! Frequency averaging of derivatives if needed -----------------------
@@ -2419,6 +2429,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.106  2003/01/16 23:13:03  livesey
+! Added MaxRefraction stuff
+!
+! Revision 2.105  2003/01/16 18:04:01  jonathan
+! add Do_1D option to get_gl_slabs_arrays
+!
 ! Revision 2.104  2003/01/14 21:48:58  jonathan
 ! add i_saturation
 !
