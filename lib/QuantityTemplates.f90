@@ -31,6 +31,8 @@ module QuantityTemplates         ! Quantities within vectors
 
   ! Define some global parameters and data types.
 
+  real(r8), parameter :: EPOCH = 1993.0 ! Starting point for time references
+
   type QuantityTemplate_T
 
     ! Some administrative stuff
@@ -116,7 +118,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     real(r8), dimension(:,:), pointer :: geodLat => NULL()
     real(r8), dimension(:,:), pointer :: lon => NULL()
-    real(r8), dimension(:,:), pointer :: time => NULL()
+    real(r8), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
     real(r8), dimension(:,:), pointer :: solarTime => NULL()
     real(r8), dimension(:,:), pointer :: solarZenith => NULL()
     real(r8), dimension(:,:), pointer :: losAngle => NULL()
@@ -771,6 +773,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.30  2003/01/08 21:39:55  livesey
+! Minor change in irregular quantity handling
+!
 ! Revision 2.29  2002/11/27 01:06:26  livesey
 ! Better handling of major frame quantities
 !
