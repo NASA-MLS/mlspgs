@@ -9,8 +9,9 @@ module NO_CONV_AT_ALL_M
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Intrinsic, only: L_VMR
   use String_Table, only: GET_STRING
-  use MatrixModule_0, only: M_BANDED, M_FULL, DUMP
+  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   implicit NONE
   private
   public :: NO_CONV_AT_ALL
@@ -28,7 +29,7 @@ contains
 !
   Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, channel, &
     & windowStart, windowFinish, temp, ptan, radiance, &
-    & tan_press,i_raw,k_temp,k_atmos, i_star_all, Jacobian )
+    & tan_press,i_raw,k_temp,k_atmos, sbRatio, Jacobian )
 !
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -38,18 +39,15 @@ contains
     integer, intent(in) :: WINDOWFINISH
     type (VectorValue_T), intent(in) :: TEMP
     type (VectorValue_T), intent(in) :: PTAN
-    type (VectorValue_T), intent(in) :: RADIANCE
+    type (VectorValue_T), intent(inout) :: RADIANCE
 
     real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:)
+    real(r8), intent(IN) :: SBRATIO
 
     Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
     Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
 
     type (Matrix_T), intent(inout), optional :: Jacobian
-!
-! -----     Output Variables   ----------------------------------------
-!
-    real(r8), intent(OUT) :: I_STAR_ALL(:)
 !
 ! -----     Local Variables     ----------------------------------------
 !
@@ -60,12 +58,14 @@ contains
     integer :: phiWindow
     integer :: row, col                 ! Indices
     integer :: ptg                      ! Index
+    integer :: ind                      ! Index
 !
     real(r8) :: RAD(ptan%template%noSurfs), SRad(ptan%template%noSurfs)
     real(r8) :: der_all(ptan%template%noSurfs)
+    real(r8) :: i_star_all(ptan%template%noSurfs)
 !
     Character(LEN=01) :: CA
-!
+
 ! -----  Begin the code  -----------------------------------------
 !
     no_t = temp%template%noSurfs
@@ -80,22 +80,38 @@ contains
     j = ptan%template%noSurfs
     if (present(Jacobian)) then
       Call Cspline_der(tan_press,Ptan%values(:,maf),i_raw,i_star_all,der_all,k,j)
+
       row = FindBlock ( Jacobian%row, radiance%index, maf )
       col = FindBlock ( Jacobian%col, ptan%index, maf )
-      call CreateBlock ( Jacobian, row, col, m_banded, &
-        & radiance%template%noSurfs*radiance%template%noChans )
-      jacobian%block(row,col)%values = 0.0_r8
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          &    radiance%template%noSurfs*radiance%template%noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+        do ptg = 1, j
+          jacobian%block(row,col)%r1(ptg) = &
+            & 1 + radiance%template%noChans*(ptg-1)
+          jacobian%block(row,col)%r2(ptg) = &
+            & radiance%template%noChans*ptg
+        end do
+      case (m_banded)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative')
+      end select
       do ptg = 1, j
-        jacobian%block(row,col)%values( channel + &
-          & radiance%template%noChans*(ptg-1),1 ) = der_all(ptg)
-        jacobian%block(row,col)%r1(ptg) = &
-          & 1 + radiance%template%noChans*(ptg-1)
-        jacobian%block(row,col)%r2(ptg) = &
-          & radiance%template%noChans*ptg
+        ind = channel + radiance%template%noChans*(ptg-1)
+        jacobian%block(row,col)%values(ind ,1 ) = &
+          &   jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
       end do
     else
       Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
     endif
+    do ptg = 1, j
+      ind = channel + radiance%template%noChans*(ptg-1)
+      radiance%values( ind, maf ) = &
+        & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg)
+    end do
       
 !
     if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
@@ -118,14 +134,23 @@ contains
       phiWindow = windowFinish-windowStart+1
       do nf = 1, phiWindow
         col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
-        call CreateBlock ( Jacobian, row, col, m_full )
+        select case ( Jacobian%block(row,col)%kind ) 
+        case ( m_absent )
+          call CreateBlock ( Jacobian, row, col, m_full )
+          jacobian%block(row,col)%values = 0.0_r8
+        case ( m_full )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong type for temperature derivative matrix' )
+        end select
 
         do sv_i = 1, no_t
           Rad(1:k) = k_temp(1:k,sv_i,nf)
           Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
           do ptg = 1,j
-            jacobian%block(row,col)%values( channel+&
-              & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+            ind = channel+ radiance%template%noChans*(ptg-1)
+            jacobian%block(row,col)%values( ind, sv_i) = &
+              & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
           end do
         end do
 
@@ -152,14 +177,23 @@ contains
 
           do nf = 1, f%template%noInstances
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
-            call CreateBlock ( Jacobian, row, col, m_full )
+            select case ( Jacobian%block(row,col)%kind ) 
+            case ( m_absent )
+              call CreateBlock ( Jacobian, row, col, m_full )
+              jacobian%block(row,col)%values = 0.0_r8
+            case ( m_full )
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Wrong type for vmr derivative matrix' )
+            end select
 
             do sv_i = 1, f%template%noSurfs
               Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
               Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
               do ptg = 1,j
-                jacobian%block(row,col)%values( channel+&
-                  & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+                ind = channel+ radiance%template%noChans*(ptg-1)
+                jacobian%block(row,col)%values( ind, sv_i) = &
+                  & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
               end do
             end do
 
@@ -237,6 +271,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.11  2001/04/20 02:57:00  livesey
+! Writes derivatives in matrix_t
+!
 ! Revision 1.10  2001/04/19 23:56:52  livesey
 ! New parameters
 !
