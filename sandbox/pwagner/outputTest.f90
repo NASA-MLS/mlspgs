@@ -28,7 +28,8 @@ PROGRAM outputtest ! tests subroutine
 integer :: i
 real(r4) :: t1, t2
 real(r8) :: d1, d2
-character(len=*), parameter :: fmt = '(g8.2)'
+character(len=*), parameter :: fmt = '(7x, 1pg8.2)'
+! character(len=*), parameter :: fmt = '(g8.2)'
 ! character(len=*), parameter :: fmt = '(1pe9.2)'
 
 do i=1, 99
@@ -56,3 +57,6 @@ END PROGRAM outputtest
 !==================
 
 ! $Log$
+! Revision 1.1  2003/09/06 01:03:20  pwagner
+! First commit
+!
