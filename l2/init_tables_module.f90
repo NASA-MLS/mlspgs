@@ -96,10 +96,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
   integer, parameter :: T_MATRIX         = t_hgridtype+1
-  integer, parameter :: T_MERGEMETHOD    = t_matrix+1
-  integer, parameter :: T_METHOD         = t_mergemethod+1
-  integer, parameter :: T_MERGESOURCE    = t_method+1
-  integer, parameter :: T_MODULE         = t_mergesource+1
+  integer, parameter :: T_METHOD         = t_matrix+1
+  integer, parameter :: T_MODULE         = t_method+1
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
   integer, parameter :: T_SCALE          = t_quantitytype+1
@@ -124,7 +122,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: Z_FILL           = 8
   integer, parameter :: Z_GLOBALSETTINGS = 3
   integer, parameter :: Z_JOIN           = 10
-  integer, parameter :: Z_MERGEAPRIORI   = 5
+  integer, parameter :: Z_MERGEGRIDS     = 5
   integer, parameter :: Z_MLSSIGNALS     = 1
   integer, parameter :: Z_OUTPUT         = 11
   integer, parameter :: Z_READAPRIORI    = 4
@@ -200,14 +198,14 @@ module INIT_TABLES_MODULE
                      section_first-1:section_last) = reshape( &
 ! To: |             globalSettings    chunkDivide       retrieve             |
 !     | mlsSignals        readApriori       construct          join          |
-!     |       spectroscopy      mergeApriori       fill             output   |
+!     |       spectroscopy      mergeGrids         fill             output   |
 ! ====|======================================================================|== From: ==
         (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! Start
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mlsSignals
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! spectroscopy
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! globalSettings
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! readApriori
-          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
+          OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mergeGrids
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! chunkDivide
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Construct
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Fill
@@ -244,9 +242,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
-    data_type_indices(t_mergemethod) =     add_ident ( 'mergeMethod' )
     data_type_indices(t_method) =          add_ident ( 'method' )
-    data_type_indices(t_mergesource) =     add_ident ( 'mergeSource' )
     data_type_indices(t_module) =          add_ident ( 'module' )
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
@@ -293,7 +289,7 @@ contains ! =====     Public procedures     =============================
     section_indices(z_fill) =              add_ident ( 'fill' )
     section_indices(z_globalSettings) =    add_ident ( 'globalSettings' )
     section_indices(z_join) =              add_ident ( 'join' )
-    section_indices(z_mergeApriori) =      add_ident ( 'mergeApriori' )
+    section_indices(z_mergeGrids) =        add_ident ( 'mergeGrids' )
     section_indices(z_mlsSignals) =        add_ident ( 'mlsSignals' )
     section_indices(z_output) =            add_ident ( 'output' )
     section_indices(z_readApriori) =       add_ident ( 'readApriori' )
@@ -376,8 +372,6 @@ contains ! =====     Public procedures     =============================
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
-      begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
-      begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
@@ -476,12 +470,9 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
-             begin, f+f_apriori, s+s_gridded, n+n_field_spec, &
-             begin, f+f_source, t+t_mergeSource, n+n_field_type, &
-             begin, f+f_species, t+t_species, n+n_field_type, &
-             begin, f+f_range, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_operational, s+s_gridded, n+n_field_spec, &
+             begin, f+f_climatology, s+s_gridded, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
-             begin, f+f_method, t+t_mergeMethod, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
              np+n_spec_def /) )
     call make_tree ( (/ &
@@ -809,7 +800,7 @@ contains ! =====     Public procedures     =============================
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section /) )
+      begin, z+z_mergegrids, s+s_time, s+s_merge, n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
@@ -870,6 +861,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.196  2002/01/24 00:58:16  livesey
+! Got the mergeGrids stuff set up properly
+!
 ! Revision 2.195  2002/01/23 22:35:20  livesey
 ! Added Gloria format gridded data
 !
