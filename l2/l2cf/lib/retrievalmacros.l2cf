@@ -40,23 +40,23 @@
 
 ;; These macros define our standard output filenames
 !define(l2gpFileName, !dnl
-{!ifdef(usingPCF,{$1},!dnl
+{!ifdef(flagUsingPCF,{$1},!dnl
 {!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})})
 !define(DGGFileName, !dnl
-{!ifdef(usingPCF,{DGG},!dnl
+{!ifdef(flagUsingPCF,{DGG},!dnl
 {!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion})})
 !define(DGMFileName, !dnl
-{!ifdef(usingPCF,{L2AUX-DGM},!dnl
+{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion})})
 ;;;!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 ;;;!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 !define(CloudFilename, !dnl
-{!ifdef(usingPCF,{L2AUX-DGM},!dnl
+{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
 
 ;; Filename for forward model radiance output
 !define(l2fwmFileName, !dnl
-{!ifdef(usingPCF,{$1},!dnl
+{!ifdef(flagUsingPCF,{$1},!dnl
 {!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
 
 ; -------------------------------------------------------- Phase related macros
@@ -214,6 +214,11 @@ end Fill})
 !define(directWriteDGG,{!dnl
 Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGG({source=state.$1,precision=outputPrecision.$1,status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1})})
+;; This macro is similar except that it skips status and quality
+!define(directWriteDGGNoDiag,{!dnl
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+
 ;; This macro is similar to the above except for the case where
 ;; the vector name should be included in $1
 !define(directWriteDGGNotState,{!dnl
@@ -435,6 +440,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ; $Log$
+; Revision 1.79  2004/02/11 21:41:58  livesey
+; Added output of status and quality and tidied up
+;
 ; Revision 1.78  2004/02/03 21:43:56  livesey
 ; Updated handling of chisqBinned stuff
 ;
