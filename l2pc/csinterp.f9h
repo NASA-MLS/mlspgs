@@ -11,14 +11,7 @@
 ! function ?_CSINTERP ( x_in, x_out, y_in, y_out,        &
 !&                      len_in, len_out, max_len_in, max_len_out, &
 !&                      a, b, c, d) result (RESULT)
-    real(rk), intent(inout) :: X_IN(max_len_in) ! independent coordinate of
-                                                ! input function
-    real(rk), intent(inout) :: X_OUT(max_len_out) ! independent coordinates that
-                                                ! to which user wants function
-                                                ! interpolated
-    real(rk), intent(in) :: Y_IN(max_len_in)    ! dependent coordinate of input
-                                                ! function
-    real(rk), intent(out) :: Y_OUT(max_len_out) ! interpolated function
+
     integer(i4), intent(in) :: LEN_IN           ! number of input function
                                                 ! points
     integer(i4), intent(in) :: LEN_OUT          ! number of output function
@@ -29,6 +22,15 @@
     integer(i4), intent(in) :: MAX_LEN_OUT      ! available storage in parent
                                                 ! routine for arrays X_out,
                                                 ! Y_out, (C, D)
+    real(rk), intent(inout) :: X_IN(max_len_in) ! independent coordinate of
+                                                ! input function
+    real(rk), intent(inout) :: X_OUT(max_len_out) ! independent coordinates that
+                                                ! to which user wants function
+                                                ! interpolated
+    real(rk), intent(in) :: Y_IN(max_len_in)    ! dependent coordinate of input
+                                                ! function
+    real(rk), intent(out) :: Y_OUT(max_len_out) ! interpolated function
+
     real(rk), intent(out),dimension(max(max_len_in,max_len_out)) :: &
    &                         A, &               ! second derivative at X_in
    &                         B, &               ! first derivative at X_in
