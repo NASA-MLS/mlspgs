@@ -479,7 +479,7 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_time%FB(i,j) == tVecP))
 !!$          IF (is_same) is_same = (ALL (cal_qual%FB(i,j) == qualVecP))
 
-             is_same = ALL (CalWin%MAFdata%nominal%FB(j))
+             ! is_same = ALL (CalWin%MAFdata%nominal%FB(j))
              IF (is_same .AND. calen == nVec) THEN
                 comVec = comVecP
                 errmul = errmulP
@@ -518,7 +518,7 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_time%MB(i,j) == tVecP))
 !!$          IF (is_same) is_same = (ALL (cal_qual%MB(i,j) == qualVecP))
 
-          is_same = ALL (CalWin%MAFdata%nominal%MB(j))
+          ! is_same = ALL (CalWin%MAFdata%nominal%MB(j))
           IF (is_same .AND. calen == nVec) THEN
              comVec = comVecP
              errmul = errmulP
@@ -554,7 +554,7 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_time%WF(i,j) == tVecP))
 !!$          IF (is_same) is_same = (ALL (cal_qual%WF(i,j) == qualVecP))
 
-          is_same = ALL (CalWin%MAFdata%nominal%WF(j))
+          ! is_same = ALL (CalWin%MAFdata%nominal%WF(j))
           IF (is_same .AND. calen == nVec) THEN
              comVec = comVecP
              errmul = errmulP
@@ -592,7 +592,7 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_time%DACS(i,j) == tVecP))
 !!$          IF (is_same) is_same = (ALL (cal_qual%DACS(i,j) == qualVecP))
 
-             is_same = ALL (CalWin%MAFdata%nominal%DACS(j))
+             ! is_same = ALL (CalWin%MAFdata%nominal%DACS(j))
              IF (is_same .AND. calen == nVec) THEN
                 comVec = comVecP
                 errmul = errmulP
@@ -793,6 +793,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2002/08/06 20:43:45  perun
+! Set all calibration to precomputed until further notice.
+!
 ! Revision 2.3  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
