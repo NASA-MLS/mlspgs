@@ -225,7 +225,12 @@ versionRange
 vGrid
 vmrQuantity
 
+writeCounterMAF
+
 # $Log$
+# Revision 2.35  2002/05/07 20:26:27  livesey
+# Added WriteCounterMAF
+#
 # Revision 2.34  2002/05/07 01:01:25  vsnyder
 # Change regWeight to regWeights
 #
