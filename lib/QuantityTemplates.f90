@@ -153,7 +153,7 @@ module QuantityTemplates         ! Quantities within vectors
 
   ! Incrementing counter used to set the id field of a quantity template:
 
-  integer, save, private :: quantityTemplateCounter = 0
+  integer, save, public :: quantityTemplateCounter = 0
 
 contains ! =====     Public Procedures     =============================
 
@@ -393,6 +393,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.15  2001/07/02 17:25:30  livesey
+! Some changes to comments, following walk through
+!
 ! Revision 2.14  2001/05/23 20:38:35  livesey
 ! Updated a comment
 !
