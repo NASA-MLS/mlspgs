@@ -269,7 +269,7 @@ MODULE VectorQuantities         ! Quantities within vectors
 
   SUBROUTINE DestroyQuantityTemplateContents(qty)
 
-    ! Parameters
+    ! Dummy argument
     TYPE (QuantityTemplate_T) :: qty
 
     ! Executable code
@@ -291,12 +291,68 @@ MODULE VectorQuantities         ! Quantities within vectors
 
   END SUBROUTINE DestroyQuantityTemplateContents
 
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine adds a quantity template to a database, or creates the
+  ! database if it doesn't yet exist
+
+  SUBROUTINE AddQuantityTemplateToDatabase(database,qty)
+
+    ! Dummy arguments
+    TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: database
+    TYPE (QuantityTemplate_T) :: qty
+
+    ! Local variables
+    TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: tempDatabase
+    INTEGER :: newSize,status
+
+    ! Executable code
+
+    IF (ASSOCIATED(database)) THEN
+       newSize=SIZE(database)+1
+    ELSE
+       newSize=1
+    ENDIF
+
+    ALLOCATE(tempDatabase(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage("Allocation failed for tempDatabase", &
+         & error=.TRUE.)
+
+    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    tempDatabase(newSize)=qty
+    DEALLOCATE(database)
+    database=>tempDatabase
+  END SUBROUTINE AddQuantityTemplateToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a quantity template database
+
+  SUBROUTINE DestroyQuantityTemplateDatabase(database)
+
+    ! Dummy argument
+    TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: database
+
+    ! Local variables
+    INTEGER :: qtyIndex
+
+    IF (ASSOCIATED(database)) THEN
+       DO qtyIndex=1,SIZE(database)
+          CALL DestroyQuantityTemplateContents(database(qtyIndex))
+       ENDDO
+       DEALLOCATE(database)
+    ENDIF
+  END SUBROUTINE DestroyQuantityTemplateDatabase
+
 !=============================================================================
 END MODULE VectorQuantities
 !=============================================================================
 
 !
 ! $Log$
+! Revision 1.2  1999/11/30 04:03:51  livesey
+! Bug fix
+!
 ! Revision 1.1  1999/11/24 23:06:33  livesey
 ! First simple version.
 !

@@ -7,7 +7,7 @@ include make.inc
 OBJS=	mlsstrings.o mlssignalnomenclature.o verticalcoordinates.o \
 	vectorquantities.o mlsnumerics.o
 OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug \
-	verticalcoordiantes.o_debug vectorquantities.o_debug \
+	verticalcoordinates.o_debug vectorquantities.o_debug \
 	mlsnumerics.o_debug
 MODULEPATH=.
 
@@ -31,6 +31,9 @@ vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug
 
 #
 # $Log$
+# Revision 1.9  1999/12/01 05:03:55  livesey
+# Nightly checkin
+#
 # Revision 1.8  1999/11/30 04:04:17  livesey
 # Nightly checkin
 #
