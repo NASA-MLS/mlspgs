@@ -1,11 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
  
 module BaselineForwardModel_m
 
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
-  use MLSCommon, only: RP
+  use MLSCommon, only: RP, RM
   use MLSSignals_m, only: SIGNALS, SIGNAL_T
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
     & VALIDATEVECTORQUANTITY
@@ -347,7 +347,7 @@ contains ! ======================================== BaselineForwardModel ======
           case (m_absent)
             call CreateBlock ( Jacobian, rowBlock, colBlock, m_banded, &
               & noMIFs*noChans, bandHeight=noChans )
-            jBlock%values = 0.0_rp
+            jBlock%values = 0.0_rm
           case (m_banded)
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -403,6 +403,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.10  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.9  2002/06/04 23:45:55  livesey
 ! Added optional 1D nature for it.
 !
