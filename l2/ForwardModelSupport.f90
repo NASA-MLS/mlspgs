@@ -19,7 +19,7 @@ module ForwardModelSupport
     & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
     & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
-    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
+    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_I_SATURATION, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Field_ID
@@ -374,7 +374,8 @@ contains ! =====     Public Procedures     =============================
     info%NUM_AB_TERMS=50
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
-    info%cloud_width = 2
+    info%i_saturation = 2
+!    info%cloud_width = 2
     info%cloud_fov = 1
 
     noChannelsSpecs=0
@@ -518,9 +519,11 @@ contains ! =====     Public Procedures     =============================
       case ( f_cloud_der )
         call expr ( subtree(2,son), units, value, type )
         info%cloud_der = nint( value(1) )
-      case ( f_cloud_width )
+!      case ( f_cloud_width )
+      case ( f_i_saturation )
         call expr ( subtree(2,son), units, value, type )
-        info%cloud_width = nint( value(1) )
+!        info%cloud_width = nint( value(1) )
+        info%i_saturation = nint( value(1) )
       case ( f_cloud_fov )
         call expr ( subtree(2,son), units, value, type )
         info%cloud_fov = nint( value(1) )
@@ -671,6 +674,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.43  2003/01/13 17:17:04  jonathan
+! change cloud_width to i_saturation
+!
 ! Revision 2.42  2003/01/03 21:03:02  pwagner
 ! l2pc filenames now inputtable via PCF
 !
