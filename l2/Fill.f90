@@ -2102,7 +2102,7 @@ contains ! =====     Public Procedures     =============================
             if ( any( qt%verticalCoordinate == (/ l_height, l_pressure, l_zeta /) ) ) then
               ! Loop over off diagonal terms
               do j = 1, n
-                do k = j+1, n
+                do k = 1, j -1
                   meanDiag = sqrt ( m(j,j) * m(k,k) ) 
                   if ( lengthScale /= 0 ) &
                     & thisLength = sqrt ( l%values(j,i) * l%values(k,i) )
@@ -2120,6 +2120,7 @@ contains ! =====     Public Procedures     =============================
                   end select
                   if ( thisLength > 0.0 .and. thisFraction > 0.0 ) then
                     m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
+                    m(k,j) = meanDiag*thisFraction*exp(-distance/thisLength)
                     anyOffDiag = .true.
                   end if
                 end do                    ! Loop over k (in M)
@@ -6163,6 +6164,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.252  2004/01/29 03:32:42  livesey
+! Made FillCovariance (temporarily?) fill both sides of the digaonal (in
+! any case was wrongly doing upper).
+!
 ! Revision 2.251  2004/01/23 19:07:35  livesey
 ! Finished off the adoption stuff
 !
