@@ -13,7 +13,7 @@ MODULE L3SPData
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE PCFModule
 
    IMPLICIT NONE
@@ -607,6 +607,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.5  2001/02/09 20:29:35  nakamura
+! Added third dimension to waveNumber & frequency.
+!
 ! Revision 1.4  2001/02/09 19:17:05  nakamura
 ! Changed dimensions on waveNumber & frequency.
 !
