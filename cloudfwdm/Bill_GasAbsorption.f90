@@ -31,7 +31,7 @@ contains
       & L_O2, L_O3
     use Physics, only: H_OVER_K
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
-    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+    use SpectroscopyCatalog_m, only: CATALOG_T
     use WaterVapor, only: RHtoEV
 
     !-----------------
@@ -156,6 +156,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.27  2004/03/27 03:35:52  vsnyder
+! Use revised Create_Beta
+!
 ! Revision 1.26  2004/03/19 00:46:49  vsnyder
 ! Use line center instead of pressure-shifted line center in a few places
 !

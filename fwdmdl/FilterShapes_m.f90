@@ -467,7 +467,6 @@ contains
 
   ! ----------------------------------  Dump_DACS_Filter_Database  -----
   subroutine Dump_DACS_Filter_Database
-    use Dump_0, only: Dump
     use Output_m, only: Output
 
     integer :: I                   ! Subscripts, loop inductors
@@ -508,6 +507,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.14  2004/02/14 00:23:48  vsnyder
+! New DACS convolution algorithm
+!
 ! Revision 2.13  2004/02/09 20:20:32  vsnyder
 ! Make an error message more precise and informative
 !
