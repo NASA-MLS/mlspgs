@@ -13,16 +13,20 @@ module ForwardModelInterface
   use Expr_M, only: EXPR
   use Init_Tables_Module, only: field_first, field_last
   use Init_Tables_Module, only: F_ATMOS_DER, F_DO_CONV, F_DO_FREQ_AVG, &
-    & F_FREQUENCY, F_SPECT_DER, F_TEMP_DER
+    & F_EXTRAHEIGHTS, F_FREQUENCY, F_POINTINGGRIDS, F_SPECT_DER, F_TEMP_DER, &
+    & SPEC_INDICES
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
-  use String_Table, only: Display_String
+  use PointingGrid_m, only: Close_Pointing_Grid_File, &
+    & Dump_Pointing_Grid_Database, ExtraHeights, Open_Pointing_Grid_File, &
+    & Read_Pointing_Grid_File
+  use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Node_ID, Nsons, Source_Ref, Subtree
+  use Tree, only: Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: Vector_T
 
@@ -68,8 +72,10 @@ contains
     integer :: Field                    ! Field index -- f_something
     integer :: I                        ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
+    integer :: Lun                      ! Unit number for pointing grid file
     integer :: Name                     ! sub_rosa of label of specification,
                                         ! if any, else zero.
+    character(len=80) :: PointingGridsFile   ! Duh
     integer :: Son                      ! Some subtree of root.
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
@@ -89,6 +95,7 @@ contains
 
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
+    ! Collect data from the fields.
 
     do i = 2, nsons(key)
       son = subtree(i,key)
@@ -100,9 +107,15 @@ contains
         forwardModelInfo%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         forwardModelInfo%do_freq_avg = get_boolean(son)
+      case ( f_extraHeights )
+        call expr ( subtree(2,son), units, value, type )
+        extraHeights = value(1)
       case ( f_frequency )
         call expr ( subtree(2,son), units, value, type )
         forwardModelInfo%the_freq = value(1)
+      case ( f_pointingGrids )
+        call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile, &
+          & strip=.true. )
       case ( f_spect_der )
         forwardModelInfo%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -111,6 +124,13 @@ contains
         ! Shouldn't get here if the type checker worked
       end select
     end do ! i = 2, nsons(key)
+
+    ! The ExtraHeights and PointingGrids fields are required, so we don't
+    ! need to verify that they were provided.
+    call open_pointing_grid_file ( pointingGridsFile, lun )
+    call read_pointing_grid_file ( lun, spec_indices )
+    call close_pointing_grid_file ( lun )
+
     if ( toggle(gen) ) call trace_end ( "ForwardModelGlobalSetup" )
   end subroutine ForwardModelGlobalSetup
 
@@ -806,6 +826,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.18  2001/03/16 21:05:22  vsnyder
+! Move dumping of pointing grid database to PointingGrid_m
+!
 ! Revision 2.17  2001/03/15 12:18:37  zvi
 ! Adding the velocity effect on line center frequency
 !
