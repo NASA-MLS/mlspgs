@@ -42,7 +42,6 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! For Announce_Error
     integer :: ERROR
-    integer, parameter :: DUPLICATE_FIELD = 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -120,19 +119,15 @@ contains ! =====     Public Procedures     =============================
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
           field_index = decoration(subtree(1,gson))
-          if ( got(field_index) ) then
-            call announce_error ( gson, duplicate_field )
-          else
-            got(field_index) = .true.
-            select case ( field_index )   ! Field name
-            case ( f_file )
-              call get_string ( sub_rosa(subtree(2,gson)), file_base )
-              file_base=file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
-            case ( f_type )
-              output_type = decoration(subtree(2,gson))
-            case default                  ! Everything else processed later
-            end select
-          end if
+          got(field_index) = .true.
+          select case ( field_index )   ! Field name
+          case ( f_file )
+            call get_string ( sub_rosa(subtree(2,gson)), file_base )
+            file_base=file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
+          case ( f_type )
+            output_type = decoration(subtree(2,gson))
+          case default                  ! Everything else processed later
+          end select
         end do
 
         select case ( output_type )
@@ -314,18 +309,17 @@ contains ! =====     Public Procedures     =============================
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
-    call output ( ': ' )
+    call output ( ' OutputAndClose complained: ' )
     select case ( code )
-    case ( duplicate_field )
-      call output ( "The " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field appears more than once.", advance='yes' )
     end select
     end subroutine ANNOUNCE_ERROR
 
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.7  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
 ! Revision 2.6  2001/02/09 00:38:22  livesey
 ! Various updates
 !
