@@ -22,9 +22,10 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_0, ONLY: MatrixElement_T
   use MatrixModule_1, ONLY: Matrix_T, RC_Info
-  use MLSCommon, only: FINDFIRST, R4, R8, I4, RM
+  use MLSCommon, only: R4, R8, I4, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
+  use MLSSets, only: FINDFIRST
   use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Field_Id
   use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
@@ -1003,6 +1004,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.37  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.36  2004/01/08 01:11:20  livesey
 ! Bug fix.
 !
