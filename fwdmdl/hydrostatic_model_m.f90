@@ -63,6 +63,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   no_t = Size(t_z_basis)
   no_tan_hts = Size(tan_press) - si + 1 
 !
+  j = -1
   do i = 1, no_tan_hts
     z1 = tan_press(i+si-1)
     Call Hunt(z1,z_grid,n_lvls,j,k)
@@ -380,6 +381,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.12  2001/03/29 23:58:48  livesey
+! Turned phi_tan etc. into an array
+!
 ! Revision 1.11  2001/03/29 02:27:04  zvi
 ! *** empty log message ***
 !
