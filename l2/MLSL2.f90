@@ -10,11 +10,13 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSCOMMON, only: FILENAMELEN
+  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
     & GARBAGE_COLLECTION_BY_CHUNK, &
-    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
+    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
+    & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -37,7 +39,12 @@ program MLSL2
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
   use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
 
+  ! === (start of toc) ===
+  !     c o n t e n t s
+  !     - - - - - - - -
+
   ! Main program for level 2 processing
+  ! === (end of toc) ===
   ! (It is assumed that mlsl1 has already been run successfully)
   ! Usage:
   ! mlsl2 [options] [<] [l2cf]
@@ -108,6 +115,7 @@ program MLSL2
   logical :: Timing = .false.      ! -T option is set
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
   character(len=2048) :: WORD       ! Some text
+  character(len=1) :: arg_rhs       ! 'n' part of 'arg=n'
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -192,6 +200,36 @@ program MLSL2
         garbage_collection_by_dt = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
+      else if ( line(3+n:6+n) == 'l1b=' ) then
+        arg_rhs = line(7+n:7+n)
+        select case(arg_rhs)
+        case('4')
+          LEVEL1_HDFVERSION = HDFVERSION_4
+        case('5')
+          LEVEL1_HDFVERSION = HDFVERSION_5
+        case default
+          LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+        end select
+      else if ( line(3+n:8+n) == 'l2gpr=' ) then
+        arg_rhs = line(9+n:9+n)
+        select case(arg_rhs)
+        case('4')
+          DEFAULT_HDFVERSION_READ = HDFVERSION_4
+        case('5')
+          DEFAULT_HDFVERSION_READ = HDFVERSION_5
+        case default
+          DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
+        end select
+      else if ( line(3+n:8+n) == 'l2gpw=' ) then
+        arg_rhs = line(9+n:9+n)
+        select case(arg_rhs)
+        case('4')
+          DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+        case('5')
+          DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+        case default
+          DEFAULT_HDFVERSION_WRITE = WILDCARDHDFVERSION
+        end select
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -607,6 +645,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.82  2002/10/03 23:00:03  pwagner
+! You can set l1b, l2gp hdfversions on command line
+!
 ! Revision 2.81  2002/09/24 18:17:20  pwagner
 ! Consistent with add_to_section_timing now calling time_now at its end
 !
