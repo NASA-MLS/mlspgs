@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -34,7 +34,7 @@ MODULE L1LogUtils
   INTEGER :: EngGaps, SciGaps
 
   CHARACTER(LEN=27) :: asciiUTC(2)
-  INTEGER :: unit  ! for writing log file
+  INTEGER :: unit ! for writing log file
   INTEGER :: eng_warns, eng_errs, sci_warns, sci_errs
   INTEGER :: MAF_dif, PGS_stat
   REAL(R8) :: last_TAI
@@ -97,12 +97,12 @@ CONTAINS
           EngGaps = EngGaps + 1
           Eng_Warns = Eng_Warns + 1
           WRITE (unit, *) '##### WARNING! Data Gap:'
-          WRITE (unit, *) ''
           WRITE (unit, *) 'MAFs missing: ', (MAF_dif-1)
           WRITE (unit, *) 'MAFno gap: ', BeginEnd%EngMAFno(2), EngMAF%MAFno
           PGS_stat = PGS_TD_TAItoUTC (last_TAI, asciiUTC(1))
           PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(2))
           WRITE (unit, *) 'UTC gap: ', asciiUTC(1)//' to '//asciiUTC(2)
+          WRITE (unit, *) ''
        ENDIF
        last_TAI = EngMAF%secTAI
 
@@ -129,10 +129,14 @@ CONTAINS
 
     USE L0_sci_tbls, ONLY: SciMAF
     USE SciUtils, ONLY: NextSciMAF
+    USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, DACSnum, MaxMIFs
 
+    INTEGER :: i, mindx
     LOGICAL :: first = .TRUE.
     LOGICAL :: more_data = .TRUE.
     LOGICAL :: doneAttens = .FALSE.
+    LOGICAL :: MIFmask(MaxMIFs)
+    INTEGER, PARAMETER :: MIFindx(MaxMIFs) = (/ (i, i=1, MaxMIFs) /)
 
     PRINT *, 'Examining sci data...'
     WRITE (unit, *) ''
@@ -169,12 +173,12 @@ CONTAINS
           SciGaps = SciGaps + 1
           Sci_Warns = Sci_Warns + 1
           WRITE (unit, *) '##### WARNING! Data Gap:'
-          WRITE (unit, *) ''
           WRITE (unit, *) 'MAFs missing: ', (MAF_dif-1)
           WRITE (unit, *) 'MAFno gap: ', BeginEnd%SciMAFno(2), SciMAF(0)%MAFno
           PGS_stat = PGS_TD_TAItoUTC (last_TAI, asciiUTC(1))
           PGS_stat = PGS_TD_TAItoUTC (SciMAF(0)%secTAI, asciiUTC(2))
           WRITE (unit, *) 'UTC gap: ', asciiUTC(1)//' to '//asciiUTC(2)
+          WRITE (unit, *) ''
        ENDIF
        last_TAI = SciMAF(0)%secTAI
 
@@ -186,6 +190,76 @@ CONTAINS
           CALL StoreMinAttenCnts (SciMAF)
           doneAttens = .TRUE.
        ENDIF
+
+! Check for Attenuation changes:
+
+       DO i = 1, FBNUM
+          IF (ANY (SciMAF%DeltaAtten%FB(i))) THEN
+             MIFmask = .FALSE.
+             WHERE (SciMAF%DeltaAtten%FB(i))
+                MIFmask = .TRUE.
+             ENDWHERE
+             mindx = MINVAL (MIFindx, MIFmask)
+             Sci_Warns = Sci_Warns + 1
+             WRITE (unit, *) '##### WARNING! Attenuation Change:'
+             WRITE (unit, *) 'FBno: ', i
+             WRITE (unit, *) 'MAFno, MIFno: ', SciMAF(0)%MAFno, (mindx-1)
+             PGS_stat = PGS_TD_TAItoUTC (SciMAF(mindx-1)%secTAI, asciiUTC(1))
+             WRITE (unit, *) 'UTC: ', asciiUTC(1)
+             WRITE (unit, *) ''
+          ENDIF
+       ENDDO
+
+       DO i = 1, MBNUM
+          IF (ANY (SciMAF%DeltaAtten%MB(i))) THEN
+             MIFmask = .FALSE.
+             WHERE (SciMAF%DeltaAtten%MB(i))
+                MIFmask = .TRUE.
+             ENDWHERE
+             mindx = MINVAL (MIFindx, MIFmask)
+             Sci_Warns = Sci_Warns + 1
+             WRITE (unit, *) '##### WARNING! Attenuation Change:'
+             WRITE (unit, *) 'MBno: ', i
+             WRITE (unit, *) 'MAFno, MIFno: ', SciMAF(0)%MAFno, (mindx-1)
+             PGS_stat = PGS_TD_TAItoUTC (SciMAF(mindx-1)%secTAI, asciiUTC(1))
+             WRITE (unit, *) 'UTC: ', asciiUTC(1)
+             WRITE (unit, *) ''
+          ENDIF
+       ENDDO
+
+       DO i = 1, WFNUM
+          IF (ANY (SciMAF%DeltaAtten%WF(i))) THEN
+             MIFmask = .FALSE.
+             WHERE (SciMAF%DeltaAtten%WF(i))
+                MIFmask = .TRUE.
+             ENDWHERE
+             mindx = MINVAL (MIFindx, MIFmask)
+             Sci_Warns = Sci_Warns + 1
+             WRITE (unit, *) '##### WARNING! Attenuation Change:'
+             WRITE (unit, *) 'WFno: ', i
+             WRITE (unit, *) 'MAFno, MIFno: ', SciMAF(0)%MAFno, (mindx-1)
+             PGS_stat = PGS_TD_TAItoUTC (SciMAF(mindx-1)%secTAI, asciiUTC(1))
+             WRITE (unit, *) 'UTC: ', asciiUTC(1)
+             WRITE (unit, *) ''
+          ENDIF
+       ENDDO
+
+       DO i = 1, DACSNUM
+          IF (ANY (SciMAF%DeltaAtten%DACS(i))) THEN
+             MIFmask = .FALSE.
+             WHERE (SciMAF%DeltaAtten%DACS(i))
+                MIFmask = .TRUE.
+             ENDWHERE
+             mindx = MINVAL (MIFindx, MIFmask)
+             Sci_Warns = Sci_Warns + 1
+             WRITE (unit, *) '##### WARNING! Attenuation Change:'
+             WRITE (unit, *) 'DACSno: ', i
+             WRITE (unit, *) 'MAFno, MIFno: ', SciMAF(0)%MAFno, (mindx-1)
+             PGS_stat = PGS_TD_TAItoUTC (SciMAF(mindx-1)%secTAI, asciiUTC(1))
+             WRITE (unit, *) 'UTC: ', asciiUTC(1)
+             WRITE (unit, *) ''
+          ENDIF
+       ENDDO
 
     ENDDO
 
@@ -446,6 +520,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.5  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !

@@ -387,6 +387,11 @@ CONTAINS
     rho = 0.0
     rho(1) = 1.0
 
+    IF (D(1) == 0 .AND. D(4) == 0) THEN
+       DACS_dat = 0.0
+       RETURN
+    ENDIF
+
     Dtot = SUM (D)
     IF (Dtot > 0.0) THEN
        P_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * D(1) / Dtot)
@@ -426,6 +431,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.6  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.5  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
