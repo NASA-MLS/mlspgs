@@ -365,6 +365,7 @@ contains ! =====     Public Procedures     =============================
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+    character (LEN=8), allocatable :: the_status_buffer(:)
 
     ! Attach to the swath for reading
 
@@ -463,6 +464,7 @@ contains ! =====     Public Procedures     =============================
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
     allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
+      &   the_status_buffer(myNumProfs), &
       &   realFreq(l2gp%nFreqs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -632,12 +634,15 @@ contains ! =====     Public Procedures     =============================
 
 !    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
 !      l2gp%status)
+    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+      the_status_buffer)
 ! These lines commented out as they make NAG core dump on the deallocate statement.
 ! below.
     if ( status == -1 ) then
       msr = MLSMSG_L2GPRead // DATA_FIELD3
       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
+    l2gp%status = the_status_buffer(:)(1:1)
 
     status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
       &   realProf)
@@ -653,6 +658,10 @@ contains ! =====     Public Procedures     =============================
     deallocate ( realFreq, realSurf, realProf, real3, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.' )
+
+    deallocate ( the_status_buffer, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of status buffer.' )
 
     !  After reading, detach from swath interface
 
@@ -1221,6 +1230,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.29  2001/05/03 23:59:56  vsnyder
+! Trying to find out why realProf is undefined
+!
 ! Revision 2.28  2001/04/24 16:28:41  livesey
 ! Cosmetic changes only, except comment out dubious l2gp%quality = 0 statement.
 !
