@@ -83,6 +83,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
     ! These are just two quantity templates containing geolocation
@@ -201,6 +202,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.27  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.26  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
