@@ -75,25 +75,25 @@ contains ! --------------- Subroutines and functions --------------------------
   ! This function takes a state vector, containing one and only one temperature
   ! and reference geopotential height quantity, and returns
 
-  subroutine GetBasisGPH(temp,refGPH,gph,R,RT)
+  subroutine GetBasisGPH ( Temp, RefGPH, Gph, R, RT )
 
     ! Dummy arguments
-    type (VectorValue_T), intent(IN) :: temp
-    type (VectorValue_T), intent(IN) :: refGPH
-    real (r8), dimension(:,:), intent(OUT) :: gph ! Result (temp%noSurfs,temp%noInstances)
+    type (VectorValue_T), intent(in) :: Temp
+    type (VectorValue_T), intent(in) :: RefGPH
+    real (r8), dimension(:,:), intent(out) :: Gph ! Result (temp%noSurfs,temp%noInstances)
     real (r8), dimension(:), pointer, optional :: R ! Gas constant, noSurfs
     real (r8), dimension(:,:), pointer, optional :: RT ! R*T (noSurfs,noInstances)
 
     ! Local variables
 
-    real (r8), dimension(:), allocatable :: logP ! -log10 pressure, noSurfs
-    real (r8), dimension(:), allocatable :: modifiedBasis ! noSurfs
-    real (r8), dimension(:), pointer :: myR      ! Gas constant, noSurfs
-    real (r8), dimension(:,:), pointer :: myRT   ! R*T (noSurfs,noInstances)
-    real (r8), dimension(:), allocatable :: currentRefGPH ! (noInstances)
-    real (r8), dimension(:), allocatable :: correction ! (noInstances)
+    real (r8), dimension(:), allocatable :: LogP ! -log10 pressure, noSurfs
+    real (r8), dimension(:), allocatable :: ModifiedBasis ! noSurfs
+    real (r8), dimension(:), pointer :: MyR      ! Gas constant, noSurfs
+    real (r8), dimension(:,:), pointer :: MyRT   ! R*T (noSurfs,noInstances)
+    real (r8), dimension(:), allocatable :: CurrentRefGPH ! (noInstances)
+    real (r8), dimension(:), allocatable :: Correction ! (noInstances)
 
-    real (r8), dimension(:), allocatable :: deltaGeopot ! noInstances
+    real (r8), dimension(:), allocatable :: DeltaGeopot ! noInstances
 
     integer :: belowRef
     real (r8) :: aboveRefWeight ! a weight for an interpolation
@@ -221,59 +221,59 @@ contains ! --------------- Subroutines and functions --------------------------
   ! a hydrostatic calculation.  The tangent point pressure is adjusted over
   ! several iterations until a good match is achieved.
 
-  subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt,&
-       maxIterations )
+  subroutine GetHydrostaticTangentPressure ( Ptan, Temp, RefGPH, H2o, GeocAlt, &
+    & MaxIterations )
 
     ! Dummy arguments
-    type (VectorValue_T), intent(INOUT) :: PTAN
-    type (VectorValue_T), intent(IN) :: TEMP
-    type (VectorValue_T), intent(IN) :: REFGPH
-    type (VectorValue_T), intent(IN) :: H2O
-    type (VectorValue_T), intent(IN) :: GEOCALT
-    integer, intent(IN) :: maxIterations ! Number of iterations to use
+    type (VectorValue_T), intent(inout) :: PTAN
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: REFGPH
+    type (VectorValue_T), intent(in) :: H2O
+    type (VectorValue_T), intent(in) :: GEOCALT
+    integer, intent(in) :: maxIterations ! Number of iterations to use
 
     ! Local variables
 
-    real (r8), dimension(:,:), pointer :: rt           ! rt=R*T
-    real (r8), dimension(:,:), pointer :: basisGPH     ! temp(noSurfs,noInstances)
-    real (r8), dimension(:,:), pointer :: earthRadius
-    real (r8), dimension(:,:), pointer :: geocLat
+    real (r8), dimension(:,:), pointer :: BasisGPH     ! temp(noSurfs,noInstances)
+    real (r8), dimension(:,:), pointer :: EarthRadius
+    real (r8), dimension(:,:), pointer :: GeocLat
+    real (r8), dimension(:,:), pointer :: Rt           ! rt=R*T
 
-    real (r8), dimension(:), pointer :: aCoeff         ! Quadratic term
-    real (r8), dimension(:), pointer :: rtLower
-    real (r8), dimension(:), pointer :: rtUpper
-    real (r8), dimension(:), pointer :: basisLower     ! For temperature
-    real (r8), dimension(:), pointer :: basisUpper     ! For temperature
-    real (r8), dimension(:), pointer :: basisSpacing   ! For temperature
-    real (r8), dimension(:), pointer :: bCoeff         ! Quadratic term
-    real (r8), dimension(:), pointer :: cCoeff         ! Quadratic term
-    real (r8), dimension(:), pointer :: deltaRT 
-    real (r8), dimension(:), pointer :: geometricGPH
-    real (r8), dimension(:), pointer :: n              ! Refractive index
-    real (r8), dimension(:), pointer :: pointingH2O    ! t.p. h2o
-    real (r8), dimension(:), pointer :: pointingTemp   ! t.p. temp.
-    real (r8), dimension(:), pointer :: ratio2         ! minor frame
-    real (r8), dimension(:), pointer :: ratio4         ! minor frame
-    real (r8), dimension(:), pointer :: refractedGeocAlt ! minor frame
+    real (r8), dimension(:), pointer :: ACoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: BCoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: BasisLower     ! For temperature
+    real (r8), dimension(:), pointer :: BasisSpacing   ! For temperature
+    real (r8), dimension(:), pointer :: BasisUpper     ! For temperature
+    real (r8), dimension(:), pointer :: CCoeff         ! Quadratic term
+    real (r8), dimension(:), pointer :: DeltaRT
+    real (r8), dimension(:), pointer :: GeometricGPH
+    real (r8), dimension(:), pointer :: N              ! Refractive index
+    real (r8), dimension(:), pointer :: PointingH2O    ! t.p. h2o
+    real (r8), dimension(:), pointer :: PointingTemp   ! t.p. temp.
+    real (r8), dimension(:), pointer :: Ratio2         ! minor frame
+    real (r8), dimension(:), pointer :: Ratio4         ! minor frame
+    real (r8), dimension(:), pointer :: RefractedGeocAlt ! minor frame
+    real (r8), dimension(:), pointer :: RtLower
+    real (r8), dimension(:), pointer :: RtUpper
 
-    integer, dimension(:), pointer :: closestTempProfiles
-    integer, dimension(:), pointer :: closestH2OProfiles
-    integer, dimension(:), pointer :: lower ! index into temperature profile
-    integer, dimension(:), pointer :: upper ! index into temperature profile
+    integer, dimension(:), pointer :: ClosestH2OProfiles
+    integer, dimension(:), pointer :: ClosestTempProfiles
+    integer, dimension(:), pointer :: Lower ! index into temperature profile
+    integer, dimension(:), pointer :: Upper ! index into temperature profile
 
-    real (r8) :: s2, s4, p2, p4 ! Polynomial terms
+    real (r8) :: S2, S4, P2, P4 ! Polynomial terms
 
-    real (r8) :: geocLat1               ! Geocentric latitude
-    integer :: iteration                ! Loop stuff
-    integer :: maf                      ! Loop counter
+    real (r8) :: GeocLat1               ! Geocentric latitude
+    integer :: Iteration                ! Loop stuff
+    integer :: Maf                      ! Loop counter
 
     ! Executable code
 
-    nullify ( rt, basisGPH, earthRadius, geocLat, aCoeff, rtLower, rtUpper, &
-      & basisLower, basisUpper, basisSpacing, bCoeff, cCoeff, deltaRT, &
-      & geometricGPH, n, pointingH2O, pointingTemp, ratio2, ratio4, &
-      & refractedGeocAlt, closestTempProfiles, closestH2OProfiles, lower, &
-      & upper )
+    nullify ( aCoeff, basisGPH, basisLower, basisSpacing, basisUpper, &
+      & bCoeff, cCoeff, closestH2OProfiles, closestTempProfiles, deltaRT, &
+      & earthRadius, geocLat, geometricGPH, lower, n, &
+      & pointingH2O, pointingTemp, ratio2, ratio4, refractedGeocAlt, rt, &
+      & rtLower, rtUpper, upper )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
       &            coherent=.true., &
@@ -454,6 +454,9 @@ contains ! --------------- Subroutines and functions --------------------------
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.12  2001/05/03 20:34:08  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.11  2001/04/21 00:52:24  livesey
 ! Fixed memory leak.
 !
