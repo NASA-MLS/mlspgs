@@ -12,6 +12,7 @@ MODULE OpenInit
    USE MLSL3Common
    USE MLSMessageModule
    USE MLSPCF
+   USE PCFModule
    USE SDPToolkit
    USE dates_module
    use GETCF_M, only: GetCF, InitGetCF
@@ -250,9 +251,9 @@ CONTAINS
    END SUBROUTINE SetProcessingWindow
 !------------------------------------
 
-!--------------------------------------------------------
-   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, avgPer)
-!--------------------------------------------------------
+!-------------------------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, logType, anText, avgPer)
+!-------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
@@ -264,6 +265,10 @@ CONTAINS
       TYPE( Mlscf_T ), INTENT(OUT) :: cf
 
       TYPE( L3CFProd_T ), POINTER :: l3cf(:)
+
+      CHARACTER (LEN=*), INTENT(OUT) :: logType
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
       REAL(r8), POINTER :: avgPer(:)
 
@@ -277,6 +282,10 @@ CONTAINS
       CHARACTER (LEN=8) :: dates(maxWindow)
 
       INTEGER :: error, numDays, pcfId, returnStatus
+
+! Read the PCF into an annotation for file headers
+
+      CALL CreatePCFAnnotation(anText)
 
 ! Retrieve values set in PCF & assign them to variables.
 
@@ -315,7 +324,7 @@ CONTAINS
 ! Check the parser output; fill L3CFProd_T
 
       CALL FillL3CF(cf, l3pcf%inputVersion, l3pcf%outputVersion, dates, &
-                    numDays, l3cf)
+                    numDays, l3cf, logType)
 
 !----------------------------------
    END Subroutine OpenAndInitialize
@@ -435,6 +444,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.4  2000/12/29 21:42:27  nakamura
+! Added subroutine AvgOrbPeriod.
+!
 ! Revision 1.3  2000/11/15 21:28:05  nakamura
 ! Changed MLSPCF parameter names to mlspcf_l3_param_*.
 !
