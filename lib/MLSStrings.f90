@@ -44,6 +44,29 @@ CONTAINS
 
   END FUNCTION Capitalize
 
+  ! -------------------------------------------------  CAPITALIZE  -----
+  FUNCTION Downcase (str) RESULT (outstr)
+    ! takes a-z and replaces with A-Z 
+    ! leaving other chars alone
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+
+    !----------Local vars----------!
+    INTEGER :: i, icode, offset
+    !----------Executable part----------!
+    outstr=str
+    offset=ICHAR("A")-ICHAR("a")
+
+    DO i=1, LEN(str)
+       icode=ICHAR(outstr(i:i))
+       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
+          outstr(i:i)=char(icode-offset)
+       END IF
+    END DO
+
+  END FUNCTION Downcase
+
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
 
@@ -1292,6 +1315,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2001/05/26 00:21:59  livesey
+! Added downcase
+!
 ! Revision 2.10  2001/05/24 23:36:17  pwagner
 ! Fixed problem with hhmmss_value
 !
