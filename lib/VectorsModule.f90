@@ -848,6 +848,7 @@ contains ! =====     Public Procedures     =============================
         & vector%quantities(qty)%template%noSurfs, &
         & vector%quantities(qty)%template%noInstances, &
         & "Vector%quantities(qty)%values", ModuleName )
+      vector%quantities(qty)%values=0.0
     end do
   end subroutine
 !=======================================================================
@@ -856,6 +857,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.12  2001/02/09 00:38:56  livesey
+! Various changes
+!
 ! Revision 2.11  2001/02/08 00:36:29  vsnyder
 ! Don't destroy in DestroyVectorValues if vector%quantities is disassociated
 !
