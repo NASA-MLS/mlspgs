@@ -938,7 +938,8 @@ CONTAINS
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
 
     Call two_d_hydrostatic(temp%template%surfs(:,1),  &
-      &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,temp%values,&
+      &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
+      &  temp%values(:,windowStart:windowFinish), &
       &  SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t),&
       &  0.001*refGPH%values(1,windowStart:windowFinish),z_glgrid, &
       &  orbIncline%values(1,maf)*Deg2Rad,t_glgrid,h_glgrid, &
@@ -2368,6 +2369,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.60  2002/06/17 16:30:52  bill
+! inc zvis changes--wgr
+!
 ! Revision 2.58  2002/06/13 22:40:38  bill
 ! some variable name changes--wgr
 !
