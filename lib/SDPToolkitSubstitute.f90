@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -82,6 +82,20 @@
         mnemonic = ' '
         msg = ' '
       end subroutine Pgs_smf_getMsg
+
+      INTEGER FUNCTION pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        character(len = *), INTENT(IN) :: asciiutc_a  ! Should be <= 27 chars
+        character(len = *), INTENT(out) :: asciiutc_b ! Should be <= 25 chars
+        asciiutc_b="Use the Real PGSTK"
+        pgs_td_asciitime_atob=-99
+      END FUNCTION pgs_td_asciitime_atob
+
+      INTEGER FUNCTION pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+        character(len = *), INTENT(IN) :: asciiutc_b  ! Should be <= 25 chars
+        character(len = *), INTENT(out) :: asciiutc_a ! Should be <= 27 chars
+        asciiutc_a="Use the Real PGSTK"
+        pgs_td_asciitime_btoa=-99
+      END FUNCTION pgs_td_asciitime_btoa
 
       INTEGER FUNCTION PGS_TD_TAItoUTC(sectai93,asciiutc)
         DOUBLE PRECISION, INTENT(IN) :: sectai93
@@ -183,6 +197,9 @@
 
 !
 ! $Log$
+! Revision 2.11  2003/03/06 19:48:08  pwagner
+! Added pgs_td_asciitime_ functions
+!
 ! Revision 2.10  2003/02/25 10:01:16  hcp
 ! Function Pgs_pc_getUniversalRef assigned a value. Now compiles with IFC
 !
