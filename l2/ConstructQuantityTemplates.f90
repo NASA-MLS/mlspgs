@@ -65,23 +65,22 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
     use HGridsDatabase, only: hGrid_T
-    use INIT_TABLES_MODULE, only:  F_FGRID, F_GEODANGLE, F_HGRID, F_IRREGULAR, &
+    use INIT_TABLES_MODULE, only:  F_FGRID, F_HGRID, F_IRREGULAR, &
       & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
-      & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
+      & F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: L1BInfo_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES, IsModuleSpacecraft
+      & GetRadiometerFromSignal, GetSignal, Signal_T, MODULES, IsModuleSpacecraft
     use OUTPUT_M, only: OUTPUT
     use Parse_Signal_m, only: PARSE_SIGNAL
     use QuantityTemplates, only: QuantityTemplate_T, &
       & DUMP, SetupNewQuantityTemplate, &
       & NullifyQuantityTemplate
     use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-    use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SET_ONE
     use VGridsDatabase, only: VGrid_T
@@ -677,7 +676,7 @@ contains ! ============= Public procedures ===================================
 
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_FGRID, F_GEODANGLE, F_MODULE, F_NOMIFS, &
+    use INIT_TABLES_MODULE, only: F_GEODANGLE, F_MODULE, F_NOMIFS, &
       & F_SOLARTIME, F_SOLARZENITH, F_GEODALT
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_TIME
@@ -963,8 +962,6 @@ contains ! ============= Public procedures ===================================
     & mifGeolocation )
     ! Dummy arguments
     use Chunks_m, only: MLSChunk_T
-    use INIT_TABLES_MODULE, only: L_NONE
-    use MLSCommon, only: RK => R8
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
 
     type (MLSChunk_T), intent(in) :: CHUNK
@@ -1029,10 +1026,10 @@ contains ! ============= Public procedures ===================================
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, &
       L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
-      L_TOTALEXTINCTION, L_VMR
+      L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
-      & PHYQ_PCTRHI, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
+      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
       & PHYQ_VMR, PHYQ_ZETA, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use Intrinsic, only: LIT_INDICES
@@ -1266,6 +1263,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.119  2005/01/07 01:03:19  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.118  2004/10/16 17:25:55  livesey
 ! Added signalOptional property and more flexible handling of baseline
 !
