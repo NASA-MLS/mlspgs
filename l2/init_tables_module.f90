@@ -73,7 +73,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_ROWSORCOLUMNS  = t_reflector+1
   integer, parameter :: T_SCALE          = t_rowsOrColumns+1
   integer, parameter :: T_SPECIES        = t_scale+1
-  integer, parameter :: T_UNITS          = t_species+1
+  integer, parameter :: T_TGRIDCOORD     = t_species+1
+  integer, parameter :: T_TGRIDTYPE      = t_tgridcoord+1
+  integer, parameter :: T_UNITS          = t_tgridtype+1
   integer, parameter :: T_VGRIDCOORD     = t_units+1
   integer, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
   integer, parameter :: T_LAST           = t_vgridtype
@@ -158,7 +160,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
-  integer, parameter :: S_TRANSFER           = s_template + 1
+  integer, parameter :: S_TGRID              = s_template + 1
+  integer, parameter :: S_TRANSFER           = s_tgrid + 1
   integer, parameter :: S_UPDATEMASK         = s_transfer + 1
   integer, parameter :: S_VECTOR             = s_updateMask + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
@@ -253,6 +256,8 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_rowsOrColumns) =   add_ident ( 'rowsOrColumns' )
     data_type_indices(t_scale) =           add_ident ( 'scale' )
     data_type_indices(t_species) =         add_ident ( 'species' )
+    data_type_indices(t_tgridcoord) =      add_ident ( 'tGridCoord' )
+    data_type_indices(t_tgridtype) =       add_ident ( 'tGridType' )
     data_type_indices(t_units) =           add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
@@ -355,11 +360,12 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
+    spec_indices(s_tgrid ) =               add_ident ( 'tGrid' )
     spec_indices(s_transfer) =             add_ident ( 'transfer' )
     spec_indices(s_updateMask) =           add_ident ( 'updateMask' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
-    spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
+    spec_indices(s_vgrid) =                add_ident ( 'vGrid' )
     spec_indices(s_sids) =                 add_ident ( 'sids' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
@@ -470,6 +476,8 @@ contains ! =====     Public procedures     =============================
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
              l+l_temperature_prec, n+n_dt_def, &
+      begin, t+t_tgridcoord, l+l_theta, n+n_dt_def, &
+      begin, t+t_tgridtype, l+l_logarithmic, n+n_dt_def, &
       begin, t+t_units, l+l_c, l+l_days, l+l_deg, l+l_degrees, &
              l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
@@ -591,6 +599,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def, &
+      begin, s+s_tGrid, &
+             begin, f+f_number, t+t_numeric, nr+n_field_type, &
+             begin, f+f_start, t+t_numeric, nr+n_field_type, &
+             begin, f+f_step, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
@@ -611,16 +624,17 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_vGrid
       begin, s+s_pfaData, &
-             begin, f+f_absorption, t+t_numeric, nr+n_field_type, &
-             begin, f+f_dAbsDnc, t+t_numeric, nr+n_field_type, &
-             begin, f+f_dAbsDnu, t+t_numeric, nr+n_field_type, &
-             begin, f+f_dAbsDwc, t+t_numeric, nr+n_field_type, &
+             begin, f+f_absorption, t+t_numeric, n+n_field_type, &
+             begin, f+f_dAbsDnc, t+t_numeric, n+n_field_type, &
+             begin, f+f_dAbsDnu, t+t_numeric, n+n_field_type, &
+             begin, f+f_dAbsDwc, t+t_numeric, n+n_field_type, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
-             begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
-             begin, f+f_temperatures, t+t_numeric, nr+n_field_type, &
+             begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
              begin, f+f_velLin, t+t_numeric, nr+n_field_type, &
-             nadp+n_spec_def /) )
+             begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
              begin, f+f_comment, t+t_string, n+n_field_type, &
@@ -1039,6 +1053,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
+             begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def/) )
@@ -1204,7 +1219,7 @@ contains ! =====     Public procedures     =============================
              s+s_binSelector, s+s_directWriteFile, s+s_dump, &
              s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, s+s_l2parsf, &
-             s+s_pfaData, s+s_time, s+s_vgrid, n+n_section, &
+             s+s_pfaData, s+s_tGrid, s+s_time, s+s_vGrid, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1256,6 +1271,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.373  2004/06/08 19:26:20  vsnyder
+! Add tGrid
+!
 ! Revision 2.372  2004/05/29 02:47:02  vsnyder
 ! Rearrange function definition stuff
 !
