@@ -4,8 +4,7 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 also acknowledged.
 
 module gridded_data_module
-  use params_module
-  use kinds_module
+  use MLSCommon
   use MLSStrings 
   use MLSMessageModule
   implicit none
@@ -19,7 +18,9 @@ module gridded_data_module
   private :: make_linear_axis
   private::read_explicit_axis,ilocate
 
-  character(len=*),parameter::ModuleName=&
+  character(len=256),parameter,private :: Id = &
+       "$Id$"
+  character(len=*),parameter,private::ModuleName=&
        "$RCSfile$"
 
   ! This type contains the entire contents of *one* field from an 
@@ -53,61 +54,61 @@ contains
   subroutine l3ascii_open(filename,unit)
     ! opens a l3ascii file, reads, prints and discards the annoying
     ! header line and returns the unit it chose. No special close routine.
-    ! just do close(unit)
+    ! just do close(unit=unit)
     !--------- argument ----------!
     character(len=*),intent(in)::filename
     integer,intent(out)::unit
     !-------locals------!
-    logical::tiedup,found
-    integer::j
-    character(len=LineLen)::headerline
+    logical:: tiedup, found
+    integer:: j
+    !character(len=LineLen)::headerline
     !----executables----!
     !----- Find first unattached unit -----!
-    found=.false.
-    do j=1,30
-       inquire(unit=j,opened=tiedup)
-       if (.not. tiedup) then
-          found=.true.
-          unit=j
-          open(unit=unit,file=filename,status="old",action="read")
-          exit
-       endif
-    enddo
+    found = .false.
+    do j = 1, 30
+      inquire ( unit=j, opened=tiedup )
+      if (.not. tiedup) then
+        found = .true.
+        unit = j
+        open ( unit=unit, file=filename, status="old", action="read" )
+        exit
+      end if
+    end do
     if ( .not. found ) then
-       unit=-1
-       call MLSMessage( MLSMSG_Error,ModuleName,&
-            "in subroutine l3ascii_open: No units left")
-    endif
+      unit = -1
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+           "in subroutine l3ascii_open: No units left" )
+    end if
 
     !First line is not prefaced with ; nor is it of any use. 
     ! we read it to move the file position past it
-    read(unit=unit,fmt="(a)")headerline
+    !read(unit=unit,fmt="(a)")headerline
     !    print*,headerline
   end subroutine l3ascii_open
 
   subroutine l3ascii_read_field(unit,field)
     use dates_module    ! Shoud use SDP Toolkit eventually. 
     ! ----Arguments ----!
-    integer,intent(in)::unit
-    type(GriddedData_T),intent(out)::field
+    integer, intent(in) :: unit
+    type(GriddedData_T), intent(inout) :: field
     !-------Local Variables --------!
-    character(len=*),parameter::dummyyear="1993"
-    logical::opened
-    character(len=LineLen)::inline
-    character(len=30)::linetype,axistype,sdstring,edstring
-    character(len=80)::filename,unitstring
-    real(kind=r8),pointer,dimension(:)::tmpaxis,dateStarts,dateEnds
-    integer::tmpaxis_len,idate
-    integer,parameter::maxNoDates=30
-    real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::tmpfield
-    logical::end_of_file
+    character(len=*),parameter :: dummyyear="1993"
+    logical :: opened
+    character(len=LineLen) :: inline
+    character(len=30) :: linetype, axistype, sdstring, edstring
+    character(len=80) :: filename, unitstring
+    real(kind=r8), pointer, dimension(:) :: tmpaxis, dateStarts, dateEnds
+    integer :: tmpaxis_len, idate, word_count
+    integer,parameter :: maxNoDates = 30
+    real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
+    logical :: end_of_file
     !---- Executable statements ----! 
     nullify(tmpaxis)
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
     inquire(unit=unit,opened=opened)
     if (.not. opened) then
-       call MLSMessage(MLSMSG_Error,ModuleName,&
+        call MLSMessage(MLSMSG_Error,ModuleName,&
        " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
        "is not connected to a file. Do call l3ascii_open(filename,unit) first")
        return
@@ -163,6 +164,8 @@ contains
 !    call get_next_noncomment_line(unit,inline)
     end_of_file=.false.
     call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
+!    print*,"Read line"
+!    print*,inline
    if(Capitalize(inline(1:5)) /= "FIELD" ) then
       call MLSMessage(MLSMSG_Error,ModuleName,&
            "in subroutine l3ascii_read_field, File "//trim(filename)// &
@@ -182,6 +185,7 @@ contains
     axesloop:do
 
         call ReadCompleteLineWithoutComments(unit,inline)
+        !print*,inline
         read(unit=inline,fmt=*)linetype,axistype
         linetype=Capitalize(linetype)
         axistype=Capitalize(axistype)
@@ -193,9 +197,9 @@ contains
            call make_linear_axis(inline,tmpaxis,tmpaxis_len)
 !           print*,"Done linear axis"
         else if (axistype(1:3) =="LOG") then
-!           print*,"Doing log axis"
+           !print*,"Doing log axis"
            call make_log_axis(inline,tmpaxis,tmpaxis_len)
-!           print*,"Done log axis"
+           !print*,"Done log axis"
         else if (axistype(1:8) =="EXPLICIT") then
 !           print*,"Doing explicit axis"
            backspace(unit=unit)
@@ -270,10 +274,23 @@ contains
     ! Loop to read in the data for the current date and check to see if 
     ! there is another date
     datesloop: do idate=1,maxNoDates
-        !print*,"Datesloop: idate=",idate
-        read(unit=inline,fmt=*)linetype,axistype,sdstring,edstring
-        sdstring=adjustl(sdstring)
-        edstring=adjustl(edstring)
+       !print*,"Datesloop: idate=",idate
+       word_count=count_words(inline)
+       if (word_count == 3) then
+          read(unit=inline,fmt=*)linetype,axistype,sdstring
+          sdstring=adjustl(sdstring)
+          edstring=sdstring
+       else if(word_count >= 4 ) then
+          read(unit=inline,fmt=*)linetype,axistype,sdstring,edstring
+          sdstring=adjustl(sdstring)
+          edstring=adjustl(edstring)
+       else
+          call MLSMessage(MLSMSG_Error,ModuleName,&
+               "in subroutine l3ascii_read_field: File"//trim(filename)//&
+               "on unit"//trim(unitstring)//" contains a line beginning"//&
+               trim(linetype)//"Date with too few words ")
+       endif
+       
         ! Date strings can begin with - indicating the year is 
         ! missing and that the file belongs to no year in particular.
         ! To convert dates to SDP toolkit (TAI) times (Seconds since start of 
@@ -430,12 +447,12 @@ contains
     else
        hcshape(3)=2
     endif
-    if (isza1==isza2) then
+    if (ilst1==ilst2) then
        hcshape(4)=1
     else
        hcshape(4)=2
     endif
-    if (ilst1==ilst2) then
+    if (isza1==isza2) then
        hcshape(5)=1
     else
        hcshape(5)=2
@@ -453,7 +470,7 @@ contains
          1:hcshape(4),1:hcshape(5),1:hcshape(6)))
     ! Copy data into hypercube
     hcube=field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
-         isza1:isza2,ilst1:ilst2, idate1:idate2)
+         ilst1:ilst2,isza1:isza2, idate1:idate2)
 
     ! Now we interpolate along eahc of the axes where this is needed
     ! Reduce 6-d to 5-d
@@ -475,7 +492,7 @@ contains
        enddo
     endif
     ! Reduce  5-d to 4d
-    if (hcshape(5) == 2 )then !Interpolate in local Solar time LST
+    if (hcshape(5) == 2 )then !Interpolate in local Solar zenith ang  SZA
        do i0=1,hcshape(1)
           do i1=1,hcshape(2)
              do i2=1,hcshape(3)
@@ -483,23 +500,23 @@ contains
                    hcube(i0,i1,i2,i3,1,1)=hcube(i0,i1,i2,i3,1,1)+ &
                         (hcube(i0,i1,i2,i3,2,1)- &
                         hcube(i0,i1,i2,i3,1,1))* &
-                        (inlst-field%lsts(ilst1))/ &
-                        (field%lsts(ilst2)-field%lsts(ilst1))
+                        (insza-field%szas(isza1))/ &
+                        (field%szas(isza2)-field%szas(isza1))
                 enddo
              enddo
           enddo
        enddo
     endif
     ! Reduce  4-d to 3d
-    if (hcshape(4) == 2 )then !Interpolate in solar zenith angle
+    if (hcshape(4) == 2 )then !Interpolate in local solar time
        do i0=1,hcshape(1)
           do i1=1,hcshape(2)
              do i2=1,hcshape(3)
                 hcube(i0,i1,i2,1,1,1)=hcube(i0,i1,i2,1,1,1)+ &
                      (hcube(i0,i1,i2,2,1,1)- &
                      hcube(i0,i1,i2,1,1,1))* &
-                     (insza-field%szas(isza1))/ &
-                     (field%szas(isza2)-field%szas(isza1))
+                     (inlst-field%lsts(ilst1))/ &
+                     (field%lsts(ilst2)-field%lsts(ilst1))
              enddo
           enddo
        enddo
@@ -735,6 +752,7 @@ contains
     character(len=1)::rdchar
     real(kind=r8),dimension(1:200)::tmpaxis
     integer::i,iotest
+    logical::foundcb
     !Executables
     ! Warning: axis must be nullified or associated!
     if (associated(axis)) then 
@@ -754,13 +772,16 @@ contains
     !    print*,"Got open paren"
     ! now read items and add them to the axis until we get to the )
     axis_len=0
+    foundcb=.false.
     itemsloop:do
        i=1
        charsloop:do
           read(unit=unit,fmt="(a)",advance="no",iostat=iotest)rdchar
           !write(unit=*,fmt="(a)",advance="no")rdchar 
           if(rdchar==")") then
-             exit itemsloop
+             !print*,"Found ) at end of explicit axis"
+             foundcb=.true.
+             exit charsloop
           endif
           if (rdchar==" ") then
              exit charsloop
@@ -768,13 +789,19 @@ contains
           readitem(i:i)=rdchar
           i=i+1
        enddo charsloop
-       if (i<=1 .or. (i==2 .and. readitem(1:1)==" ")) then
+       if ((i<=1 .and. .not.foundcb) .or. (i==2 .and. readitem(1:1)==" ")) then
           cycle itemsloop
        endif
-
+       if ( i <= 1 .and. foundcb) then
+          exit itemsloop
+       endif
+       !print*,"Axis item is",readitem(1:i-1)
        axis_len=axis_len+1
        read(unit=readitem(1:i-1),fmt=*)tmpaxis(axis_len)
-       !print*,"Element",axis_len," is ",tmpaxis(axis_len)
+        !print*,"Element",axis_len," is ",tmpaxis(axis_len)
+        if (foundcb) then
+           exit itemsloop
+        endif
     end do itemsloop
     allocate(axis(1:axis_len))
     axis=tmpaxis(1:axis_len)
@@ -788,14 +815,19 @@ contains
     ! parsing the "units" string in the file. If that is wrong, the function
     ! won't be right either.
     !------Argument)------!
-    type(GriddedData_T),intent(in)::field
+    type(GriddedData_T), intent(in) :: field
     !---Function result-----!
-    real(kind=r8)::multiplier
+    real(kind=r8) :: multiplier
     !---other vars-------!
-    character(len=NameLen)::ucunits
-    integer::ix
+    character(len=NameLen) :: ucunits
+    integer :: ix
     !----Executable functions---!
-    ucunits=Capitalize(field%units)
+    ucunits = Capitalize(field%units)
+    ix = index(ucunits,"VMR ")
+    if (ix > 0) then
+       multiplier=1.0_r8
+       return
+    endif
     ix=index(ucunits,"PPM")
     if (ix > 0) then
        multiplier=1.0e6_r8
@@ -820,7 +852,10 @@ contains
          "in function l3ascii_get_multiplier: Units "//&
          trim(field%units)//" for field "//trim(field%quantityName)//&
          "not known. Guessing multiplier=1.0")
-    multiplier=1.0_r8
+    !print*,"in function l3ascii_get_multiplier: Units "//&
+    !     trim(field%units)//" for field "//trim(field%quantityName)//&
+    !     "not known. Guessing multiplier=1.0"
+   multiplier=1.0_r8
   end function l3ascii_get_multiplier
 
 end module gridded_data_module
