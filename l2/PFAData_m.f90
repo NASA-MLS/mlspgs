@@ -54,7 +54,8 @@ contains ! =====     Public Procedures     =============================
     ! Error codes
     integer, parameter :: CannotOpen = 1
     integer, parameter :: CannotRead = cannotOpen + 1
-    integer, parameter :: NotMolecule = cannotRead + 1
+    integer, parameter :: DSBSignal = cannotRead + 1
+    integer, parameter :: NotMolecule = DSBSignal + 1
     integer, parameter :: NotZeta = notMolecule + 1
     integer, parameter :: ShowSize = notZeta + 1
     integer, parameter :: SignalParse = showSize + 1
@@ -245,6 +246,7 @@ contains ! =====     Public Procedures     =============================
       if ( got(f_file) ) call write_PFADatum ( pfaDatum, fileName, fileType )
     end if
     PFADatum%vel_rel = velLin / c ! Doppler correction factor
+    if ( PFADatum%sideband == 0 ) call announce_error ( fileIndex, DSBSignal )
 
     if ( error == 0 ) then
       call decorate ( root, addPFADatumToDatabase ( pfaData, pfaDatum ) )
@@ -259,7 +261,8 @@ contains ! =====     Public Procedures     =============================
     subroutine Announce_Error ( Where, What, String, More, Stop )
       use Machine, only: IO_Error
       use MoreTree, only: StartErrorMessage
-      use OUTPUT_M, only: OUTPUT
+      use Output_m, only: Output
+      use PFADataBase_m, only: Dump
       integer, intent(in) :: Where             ! Tree node index
       integer, intent(in) :: What              ! Error index
       character(len=*), intent(in), optional :: String  ! For more info
@@ -278,6 +281,9 @@ contains ! =====     Public Procedures     =============================
         call output ( trim(string) )
         call output ( more, before='.  IOSTAT = ', after='.', advance='yes' )
         call io_error ( 'Cannot read file ', more, trim(string) )
+      case ( DSBSignal )
+        call output ( 'DSB signals not allowed for PFA', advance='yes' ) )
+        call dump ( pfaDatum )
       case ( notMolecule )
         call output ( 'Symbol ' )
         call output ( trim(string) )
@@ -371,6 +377,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.9  2004/09/24 23:44:05  vsnyder
+! Don't allow DSB signal
+!
 ! Revision 2.8  2004/09/05 21:14:10  pwagner
 ! component of PFAData type renamed vel_rel
 !
