@@ -893,7 +893,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    print*, 'Successful done with full cloud forward wapper !'
 !    stop
 
-    if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
     print*, 'Successful done with full cloud forward wapper !'
 
   end subroutine FullCloudForwardModelWrapper
@@ -936,6 +935,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.34  2001/10/01 23:40:26  jonathan
+! construct codes for double sideband
+!
 ! Revision 1.33  2001/09/28 21:45:50  dwu
 ! modify low cloud Jacobian output format
 !
