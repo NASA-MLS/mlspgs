@@ -18,7 +18,9 @@ module OutputAndClose ! outputs all data from the Join module to the
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
+!  use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
+!    & MLSPCF_L2GP_START
+  use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
@@ -187,9 +189,10 @@ contains ! =====     Public Procedures     =============================
 
           ! Get the l2aux file name from the PCF
 
-          l2auxFileHandle = mlspcf_l2aux_start
+          l2auxFileHandle = mlspcf_l2dgm_start
           found = .FALSE.
-          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2aux_end))
+!          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2aux_end))
+          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
              l2aux_Version=1
             returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
               & l2auxPhysicalFilename)
@@ -317,6 +320,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.8  2001/02/13 22:59:36  pwagner
+! l2 modules can only use MLSPCF2
+!
 ! Revision 2.7  2001/02/09 19:30:16  vsnyder
 ! Move checking for required and duplicate fields to init_tables_module
 !
