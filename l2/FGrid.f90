@@ -6,7 +6,8 @@ module FGrid                    ! Frequency grid information
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use EXPR_M, only: EXPR
   use Intrinsic, only: L_Frequency, L_IntermediateFrequency, &
-    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY
+    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+    & L_CHANNEL
   use Init_tables_module, only: F_Coordinate, F_Values
   use MLSCommon, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
@@ -100,6 +101,9 @@ contains ! ===================================== Public procedures =====
         end do
       end select
     end do
+    if ( fGrid%frequencyCoordinate == l_channel ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Cannot actually use channel as fGrid coordinate' )
+
     ! Because the parser does such a great job, that's all we need to do here!
   end function CreateFGridFromMLSCFInfo
 
@@ -151,6 +155,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.6  2004/01/23 05:38:06  livesey
+! Tidied up handling of l_channel
+!
 ! Revision 2.5  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !

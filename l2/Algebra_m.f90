@@ -46,10 +46,10 @@ contains
     use String_Table, only: Display_String
     use Toggles, only: Gen, Switches, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
-    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, PRINT_SUBTREE
     use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
     use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
-      & DestroyVectorInfo, Dump, ScaleVector, Vector_T
+      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T
 
     integer, intent(in) :: ROOT
     type(vector_T), dimension(:), pointer :: VectorDatabase
@@ -147,7 +147,7 @@ contains
             end if
           case ( w_vector )
             if ( decl%type == label ) then
-              spec = get_spec(lhs)
+              spec = get_spec(decl%tree)
               if ( spec /= s_vector ) then
                 call announce_error ( son, incompatible )
                 what = w_nothing
@@ -161,7 +161,7 @@ contains
             call copyVector ( vectorDatabase(decl%units), vector, clone=.true. )
           case ( w_matrix, w_matrix_c, w_matrix_k, w_matrix_s )
             if ( decl%type == label ) then
-              spec = get_spec(lhs)
+              spec = get_spec(decl%tree)
               if ( spec /= s_matrix ) then
                 call announce_error ( son, incompatible )
                 what = w_nothing
@@ -303,6 +303,8 @@ contains
       data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
       data whats(k_spd) / w_matrix_s /
 
+      call print_subtree ( root, 0, dump_decor=.true. )
+
       if ( toggle(gen) ) call trace_begin ( 'Algebra.Expr', root )
       dvalue = 0.0_r8
       me = node_id(root)
@@ -312,7 +314,8 @@ contains
         ! Look up the identifier
         decl = get_my_decl(root)
         if ( decl%type == label ) then
-          spec = get_spec(root)
+          spec = get_spec(decl%tree)
+          call print_subtree ( decl%tree, 0, dump_decor=.true. )
           if ( spec == s_matrix ) then
             decl%type = exprn_m
           else if ( spec == s_vector ) then
@@ -325,14 +328,14 @@ contains
           call announce_error ( root, undefined )
           what = w_nothing
         else
-          value = decl%units
+          value = decoration ( decl%tree )
           dvalue = decl%value
           select case ( decl%type )
           case ( exprn, num_value )
             what = w_number
           case ( exprn_v )
             what = w_vector
-            call copyVector ( vector, vectorDatabase(decl%units), clone=.true. )
+            call copyVector ( vector, vectorDatabase(value), clone=.true. )
           case ( exprn_m )
             what = whats(getKindFromMatrixDatabase(matrixDatabase(value)))
             select case ( what )
@@ -494,6 +497,7 @@ contains
             case ( w_number ) ! ........................ Matrix * Number
               call scaleMatrix ( matrix, dValue2 )
             case ( w_vector ) ! ........................ Matrix * Vector
+              call CloneVector ( vector, matrix%row%vec )
               call multiplyMatrixVectorNoT ( matrix, vector2, vector )
             case ( w_matrix ) ! ........................ Matrix * Matrix
               call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
@@ -701,25 +705,23 @@ contains
         decl = get_decl(string,try(i))
         if ( decl%type /= empty ) then
           if ( get_my_decl%type /= empty ) call announce_error ( root, ambiguous )
-          get_my_decl%type = decl%type
+          get_my_decl = decl
         end if
       end do
-      get_my_decl = decl
     end function Get_My_Decl
 
     ! .................................................  Get_Spec  .....
-    integer function Get_Spec ( Root )
+    integer function Get_Spec ( DEF )
     ! "Root" is the index of a spec_args node for which we have the label.
     ! Get the index of the specification, e.g. S_Matrix or S_Vector.
       use Declaration_Table, only: SPEC
-      integer, intent(in) :: Root
+      integer, intent(in) :: DEF        ! Tree node of definition of declaration
       type(decls) :: DECL               ! Declaration 
-      decl = get_decl(sub_rosa(root),spec)
-      if ( decl%type == spec ) then
-        get_spec = decl%units
-      else
-        get_spec = empty
-      end if
+      get_spec = 0
+      if ( nsons ( def ) == 0 ) return
+      get_spec = decoration ( subtree ( 1,def ) )
+      if ( nsons ( get_spec ) == 0 ) return
+      get_spec = decoration ( subtree ( 1, get_spec ) )
     end function Get_Spec
 
   end subroutine Algebra
@@ -731,6 +733,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.6  2004/01/23 05:38:22  livesey
+! Various bug fixes
+!
 ! Revision 2.5  2004/01/21 00:30:25  vsnyder
 ! Move some stuff to more logical places, fix get_my_decl, cosmetics
 !
