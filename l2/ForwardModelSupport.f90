@@ -312,7 +312,7 @@ contains ! =====     Public Procedures     =============================
       & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
-    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE
+    use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
@@ -606,6 +606,7 @@ contains ! =====     Public Procedures     =============================
         & call AnnounceError ( IrrelevantFwmParameter, root )
       ! Make sure we get a default bin selector
       if ( .not. associated ( info%binSelectors ) ) then
+        if ( .not. associated ( binSelectors ) ) call CreateDefaultBinSelectors
         call Allocate_test ( info%binSelectors, 1, 'info%binSelectors', ModuleName )
         info%binSelectors = DefaultSelector_Latitude
       end if
@@ -833,6 +834,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.81  2003/08/19 05:51:31  livesey
+! Extra call to CreateDefaultBinSelectors
+!
 ! Revision 2.80  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
