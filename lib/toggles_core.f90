@@ -26,6 +26,9 @@ module TOGGLES
   ! In case you want to have levels of output (not used in the parser):
   integer :: LEVELS(con:tab) = 0
 
+  ! Some switches that anybody can look at (not used in the parser):
+  character(len=80) :: Switches = ' '
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
        "$Id$"
@@ -37,11 +40,15 @@ contains
 
   subroutine INIT_TOGGLE
     toggle = .false.
+    switches = ' '
   end subroutine INIT_TOGGLE
 
 end module TOGGLES
 
 ! $Log$
+! Revision 2.2  2001/03/16 21:25:39  vsnyder
+! Add character switches
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
