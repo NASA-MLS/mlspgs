@@ -79,7 +79,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "/science/l2cal";;
 	    desktop )
-		echo "/testing/workspace/$MYUSER/$L2PCNAME";;
+		echo "/data/emls/l2cal/$L2PCNAME";;
 	esac
     fi
     if [ $1 == "--truthl2gp" ]; then
@@ -189,6 +189,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.40  2004/09/27 16:28:56  livesey
+# Changed l1breal to l1bvsp for Vince's data.
+#
 # Revision 1.39  2004/09/21 00:37:32  livesey
 # Moved the l2pcs and other tidy ups.
 #
