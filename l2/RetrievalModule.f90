@@ -1431,7 +1431,7 @@ contains
           ! Loop over MAFs
         do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
           fmStat%maf = fmStat%maf + 1
-print*,'begin cloud retrieval maf= ',fmstat%maf
+print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFIndex-chunk%firstMAFIndex
                         
           A = 0._r8
           C = 0._r8
@@ -1507,9 +1507,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
                      
                      ! find more accurate sensitivity. we first borrow 
                      ! x, x0 arrays to establish the Tcir-teff relation:
-                     ! x-> Tcir; x0->teff; 
-                     do j=1,nSgrid 
-                     x0(j) = 1._r8/nSgrid*(j-1)
+                     ! x-> Tcir; x0->teff;
+                     do j=1,nSgrid
+                     x0(j) = 1._r8/nSgrid*(j-1._r8)
                      x(j) = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
                         & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
                      end do
@@ -1530,6 +1530,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
                      sensitivity = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
 
+                     if(mif==1) print*,mif,ich,k,sensitivity
+                     if(abs(sensitivity) < 10._r8) print*,mif,ich,k,slope%values(1:nFreqs,fmStat%maf)
                      teff = y(ich,mif)/sensitivity
                      if(teff > 1._r8) teff = 1._r8
                            
@@ -1555,7 +1557,6 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
                end do      ! end of frequency k
 
             end do         ! end of band signals
-         call clearMatrix ( jacobian )  ! free the space
          end do         ! end of imodel
 
          ! check if Jacobian rows are consistent with Signal rows
@@ -1633,23 +1634,23 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
                
             end if
             end do  ! mif
-
+      call clearMatrix ( jacobian )           ! free the space
       end do ! end of mafs
       
       ! deallocate arrays and free memory
             deallocate(A,C,y,sy,dx,x,x0,sx0,xext,sx)
 
       xExtPtr%values = 0._r8
-   	call FillQuantityFromLosGrid (xExtPtr,xLosPtr,Ptan,Re,p_lowcut,method='Average')
+   	call BinFromLOS2Grid(xExtPtr,xLosPtr,Ptan,Re,p_lowcut,method='Average')
       
       if(associated(xLosVar) .and. associated(xExtVar) &
          & .and. associated(outLosSD) .and. associated(outExtSD)) then
       ! get variances after re-sampling
-   	   call FillQuantityFromLosGrid (xExtVar,xLosVar,Ptan,Re,p_lowcut,method='Variance')
+   	   call BinFromLOS2Grid(xExtVar,xLosVar,Ptan,Re,p_lowcut,method='Variance')
       ! get output variances after re-sampling, outLosSD is SD at present
          outLosSD%values = 1._r8/outLosSD%values**2 ! converted to 1/variance
          outExtSD%values = xExtVar%values      ! initialized to inversed a priori variance
-         call FillQuantityFromLosGrid (outExtSD,outLosSD,Ptan,Re,p_lowcut,method='Variance')
+         call BinFromLOS2Grid(outExtSD,outLosSD,Ptan,Re,p_lowcut,method='Variance')
       ! output SD of the retrieved extinction
          outLosSD%values = sqrt(1._r8/outLosSD%values) ! converted back to SD
          outExtSD%values = sqrt(1._r8/outExtSD%values) ! converted back to SD
@@ -1665,8 +1666,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
       
     end subroutine LowCloudRetrieval
 
-  !=============================== FillQuantityFromLosGrid ====
-  subroutine FillQuantityFromLosGrid ( Qty, LOS,Ptan, Re, Pcut, method)
+  !=============================== BinFromLOS2L2GP ====
+  subroutine BinFromLOS2Grid( Qty, LOS,Ptan, Re, Pcut, method)
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
     ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
@@ -1780,8 +1781,7 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
     if(Capitalize(method(1:1))=="A") where (cnt > 0) qty%values = out/cnt
     if(Capitalize(method(1:1))=="V") where (cnt > 0) qty%values = out
 
-  end subroutine FillQuantityFromLosGrid
-
+  end subroutine BinFromLOS2Grid
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
@@ -2073,6 +2073,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.98  2001/10/18 23:25:13  dwu
+! rename FillQuantityFromLos to BinFromLOS2Grid
+!
 ! Revision 2.97  2001/10/17 23:37:29  pwagner
 ! Improved dump of mask
 !
