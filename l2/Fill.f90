@@ -10,8 +10,8 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
-    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, F_ERROR, &
-    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS,F_ERROR, F_EXPLICITVALUES, &
+    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, F_NOISE, &
+    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MATRIX, F_MAXITERATIONS, &
     & F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
@@ -22,7 +22,7 @@ module Fill                     ! Create vectors and fill them.
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, &
     & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
-  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_CHISQCHAN, &
+  use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
@@ -199,7 +199,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: vmrQty
     type (vectorValue_T), pointer :: measQty
     type (vectorValue_T), pointer :: modelQty
-    type (vectorValue_T), pointer :: errorQty
+    type (vectorValue_T), pointer :: noiseQty
 
     integer :: bndPressQtyIndex
     integer :: bndPressVctrIndex
@@ -287,8 +287,8 @@ contains ! =====     Public Procedures     =============================
     integer :: measVectorIndex
     integer :: modelQtyIndex
     integer :: modelVectorIndex
-    integer :: errorQtyIndex
-    integer :: errorVectorIndex
+    integer :: noiseQtyIndex
+    integer :: noiseVectorIndex
 
     ! Executable code
     timing = .false.
@@ -397,10 +397,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_earthRadius ) ! For losGrid fill
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_error )   ! Only used for diagnostic special fills
-            fillMethod = l_special
-            errorVectorIndex = decoration(decoration(subtree(1,gson)))
-            errorQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_noise )   ! Only used for chi^2 special fills or addnoise
+            noiseVectorIndex = decoration(decoration(subtree(1,gson)))
+            noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
           case ( f_extinction ) ! For cloud extinction fill
@@ -508,6 +507,19 @@ contains ! =====     Public Procedures     =============================
         quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
 
         select case ( fillMethod )
+        case ( l_addNoise ) ! ----- Add random noise to source Quantity -------
+          if (.not. all(got( (/f_Quantity, f_sourceQuantity, f_noise/) ) ) ) &
+            call Announce_error ( key, No_Error_code, &
+             'Missing a required field to add noise'  )
+          Quantity => GetVectorQtyByTemplateIndex( &
+            & vectors(VectorIndex), QuantityIndex )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          noiseQty => GetVectorQtyByTemplateIndex( &
+            & vectors(noiseVectorIndex), noiseQtyIndex)
+          call addGaussianNoise ( key, quantity, sourceQuantity, &
+            & noiseQty )
+
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
           if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
@@ -594,7 +606,7 @@ contains ! =====     Public Procedures     =============================
                 & bndPressQty, vmrQty )
             endif
           case ( l_chiSQChan )
-            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+            if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill chi^2 on channels'  )
             else
@@ -602,13 +614,13 @@ contains ! =====     Public Procedures     =============================
                 & vectors(measVectorIndex), measQtyIndex)
               modelQty => GetVectorQtyByTemplateIndex( &
                 & vectors(modelVectorIndex), modelQtyIndex)
-              errorQty => GetVectorQtyByTemplateIndex( &
-                & vectors(errorVectorIndex), errorQtyIndex)
+              noiseQty => GetVectorQtyByTemplateIndex( &
+                & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqChan ( key, quantity, &
-                & measQty, modelQty, errorQty )
+                & measQty, modelQty, noiseQty )
             endif
           case ( l_chiSQMMaf )
-            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+            if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill chi^2 on MAFs'  )
             else
@@ -616,13 +628,13 @@ contains ! =====     Public Procedures     =============================
                 & vectors(measVectorIndex), measQtyIndex)
               modelQty => GetVectorQtyByTemplateIndex( &
                 & vectors(modelVectorIndex), modelQtyIndex)
-              errorQty => GetVectorQtyByTemplateIndex( &
-                & vectors(errorVectorIndex), errorQtyIndex)
+              noiseQty => GetVectorQtyByTemplateIndex( &
+                & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMaf ( key, quantity, &
-                & measQty, modelQty, errorQty )
+                & measQty, modelQty, noiseQty )
             endif
           case ( l_chiSQMMif )
-            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+            if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill chi^2 on MIFs'  )
             else
@@ -630,10 +642,10 @@ contains ! =====     Public Procedures     =============================
                 & vectors(measVectorIndex), measQtyIndex)
               modelQty => GetVectorQtyByTemplateIndex( &
                 & vectors(modelVectorIndex), modelQtyIndex)
-              errorQty => GetVectorQtyByTemplateIndex( &
-                & vectors(errorVectorIndex), errorQtyIndex)
+              noiseQty => GetVectorQtyByTemplateIndex( &
+                & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMif ( key, quantity, &
-                & measQty, modelQty, errorQty )
+                & measQty, modelQty, noiseQty )
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -787,6 +799,28 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Fill
 
   ! =====     Private Procedures     =====================================
+
+
+  ! ------------------------------------------- addGaussianNoise ---
+  subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
+            & noiseQty )
+    ! A special fill of chi squared 
+    ! broken out according to channels
+    ! Formal arguments
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(out) :: quantity
+    type (VectorValue_T), intent(in) ::    sourceQuantity
+    type (VectorValue_T), intent(in) ::    noiseQty
+    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    ! is to be stored in qty
+
+    ! Local variables
+    real(r8), dimension(:), pointer  ::    VALUES => NULL()
+
+    ! Executable code
+    ! First check that things are OK.
+
+  end subroutine addGaussianNoise
 
 
   !=============================== FillVectorQuantityFromGrid ============
@@ -1007,12 +1041,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillLOSVelocity
 
   ! ------------------------------------------- FillableChiSq ---
-  function FillableChiSq ( qty, measQty, modelQty, errorQty ) result ( aok )
+  function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
     ! Check whether we may proceed with special fill of chi squared 
-    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    errorQty
+    type (VectorValue_T), intent(in) ::    noiseQty
     LOGICAL ::                             AOK
     
     ! What we will check is that:
@@ -1029,7 +1063,7 @@ contains ! =====     Public Procedures     =============================
       & .and. &
       & (qty%template%molecule == modelQty%template%molecule) &
       & .and. &
-      & (qty%template%molecule == errorQty%template%molecule)
+      & (qty%template%molecule == noiseQty%template%molecule)
 
     ! (2)
     aok = aok .and. &
@@ -1037,7 +1071,7 @@ contains ! =====     Public Procedures     =============================
       & .and. &
       & (qty%template%signal == modelQty%template%signal) &
       & .and. &
-      & (qty%template%signal == errorQty%template%signal)
+      & (qty%template%signal == noiseQty%template%signal)
 
     ! (3)
     aok = aok .and. &
@@ -1045,19 +1079,19 @@ contains ! =====     Public Procedures     =============================
     & .and. &
     & DoHgridsMatch( qty, modelQty ) &
     & .and. &
-    & DoHgridsMatch( qty, errorQty )
+    & DoHgridsMatch( qty, noiseQty )
 
     ! (4)
     aok = aok .and. &
     & DoVgridsMatch( measqty, modelQty ) &
     & .and. &
-    & DoVgridsMatch( measqty, errorQty )
+    & DoVgridsMatch( measqty, noiseQty )
     
     return
   end function FillableChiSq
 
   ! ------------------------------------------- FillChiSqChan ---
-  subroutine FillChiSqChan ( key, qty, measQty, modelQty, errorQty, &
+  subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to channels
@@ -1066,7 +1100,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    errorQty
+    type (VectorValue_T), intent(in) ::    noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in qty
@@ -1088,11 +1122,11 @@ contains ! =====     Public Procedures     =============================
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
       return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
       return
-    elseif (any ( errorQty%values == 0.0) ) then
+    elseif (any ( noiseQty%values == 0.0) ) then
       call Announce_error ( key, No_Error_code, &
       & 'A vanishing error filling chi^2 channelwise'  )
       return
@@ -1125,7 +1159,7 @@ contains ! =====     Public Procedures     =============================
           values(s) = ( &
           & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
           & / &
-          & errorQty%values(qIndex, i) &
+          & noiseQty%values(qIndex, i) &
           &  ) ** 2
         enddo
         qty%values(c, i) = sum(values) / measQty%template%noSurfs
@@ -1136,7 +1170,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillChiSqChan
 
   ! ------------------------------------------- FillChiSqMMaf ---
-  subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, errorQty, &
+  subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to major frames
@@ -1145,7 +1179,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    errorQty
+    type (VectorValue_T), intent(in) ::    noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
@@ -1166,13 +1200,13 @@ contains ! =====     Public Procedures     =============================
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
       return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
       return
-    elseif (any ( errorQty%values == 0.0) ) then
+    elseif (any ( noiseQty%values == 0.0) ) then
       call Announce_error ( key, No_Error_code, &
-      & 'A vanishing error filling chi^2 MMAFwise'  )
+      & 'A vanishing noise filling chi^2 MMAFwise'  )
       return
     endif
 
@@ -1200,7 +1234,7 @@ contains ! =====     Public Procedures     =============================
           values = ( &
           & (measQty%values(:, i) - modelQty%values(:, i)) &
           & / &
-          & errorQty%values(:, i) &
+          & noiseQty%values(:, i) &
           &  ) ** 2
         qty%values(1, i) = sum(values) / instanceLen
     enddo
@@ -1209,7 +1243,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillChiSqMMaf
 
   ! ------------------------------------------- FillChiSqMMif ---
-  subroutine FillChiSqMMif ( key, qty, measQty, modelQty, errorQty, &
+  subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to Mifs
@@ -1218,7 +1252,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    errorQty
+    type (VectorValue_T), intent(in) ::    noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
@@ -1240,13 +1274,13 @@ contains ! =====     Public Procedures     =============================
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
       return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
       return
-    elseif (any ( errorQty%values == 0.0) ) then
+    elseif (any ( noiseQty%values == 0.0) ) then
       call Announce_error ( key, No_Error_code, &
-      & 'A vanishing error filling chi^2 MMIFwise'  )
+      & 'A vanishing noise filling chi^2 MMIFwise'  )
       return
     endif
 
@@ -1277,7 +1311,7 @@ contains ! =====     Public Procedures     =============================
           values(c) = ( &
           & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
           & / &
-          & errorQty%values(qIndex, i) &
+          & noiseQty%values(qIndex, i) &
           &  ) ** 2
         enddo
         qty%values(s, i) = sum(values) / measQty%template%noChans
@@ -2111,6 +2145,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.73  2001/09/18 23:53:08  pwagner
+! Replaced error field name with noise; began addNoise Fill method
+!
 ! Revision 2.72  2001/09/17 23:12:21  pwagner
 ! Fleshed out FillChi.. some more
 !
