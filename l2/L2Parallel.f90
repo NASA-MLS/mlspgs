@@ -11,25 +11,37 @@ module L2Parallel
   ! awaits their results in the Join section.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Dump_0, only: DUMP
+  use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT
-  use PVMIDL, only: PVMIDLPACK
+  use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
+    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
+    & CREATEVECTOR
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+    & MLSMSG_Deallocate
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
-  use QuantityTemplates, only: QuantityTemplate_T
+  use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
+    & SIG_TOJOIN, SIG_FINISHED
+  use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE
   use MLSCommon, only: MLSCHUNK_T
-
+  use Toggles, only: Gen, Switches, Toggle
+  use Output_m, only: Output
+  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Types, only: T_STRING
+  use Init_Tables_Module, only: S_L2GP, S_L2AUX
+  use MoreTree, only: Get_Spec_ID
 
   implicit none
   private
 
-  public :: L2ParallelInfo_T, parallel, InitParallel, L2MasterTask
-  public :: SlaveJoin, GetChunkFromMaster, CloseParallel
+  public :: L2MasterTask
+  public :: GetChunkFromMaster
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -39,68 +51,23 @@ module L2Parallel
     "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  ! This datatype defines configuration for the parallel code
-  type L2ParallelInfo_T
-    logical :: master = .false.         ! Set if this is a master task
-    logical :: slave = .false.          ! Set if this is a slace task
-    integer :: myTid                    ! My task ID in pvm
-    integer :: masterTid                ! task ID in pvm
-    character(len=132) :: slaveFilename ! Filename with list of slaves
-  end type L2ParallelInfo_T
-
-  ! Shared variables
-
-  type (L2ParallelInfo_T), save :: parallel
-
-  ! Private parameters
-
-  integer, parameter :: CHUNKTAG   = 10
-  integer, parameter :: INFOTAG    = ChunkTag + 1
-
-  integer, parameter :: SIG_TOJOIN = 1
-  integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
-
   ! Parameters
-  integer, parameter :: MACHINENAMELEN = 64 ! Name of machine
+  integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
+  integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
+
+  integer :: counterStart
+  parameter ( counterStart = 2 * (huge (0) / 4 ) )
 
   ! Private types
   type StoredResult_T
+    integer :: key                      ! Tree node for this join
     logical :: gotPrecision             ! If set have precision as well as value
-    integer, dimension(:), pointer :: valInds ! Array vec. dtbs. inds (noChunks)
-    integer, dimension(:), pointer :: precInds ! Array vec. dtbs. inds (noChunks)
+    integer, dimension(:), pointer :: valInds=>NULL() ! Array vec. dtbs. inds (noChunks)
+    integer, dimension(:), pointer :: precInds=>NULL() ! Array vec. dtbs. inds (noChunks)
+    character(len=HDFNameLen) :: hdfName ! Name of swath/sd
   end type StoredResult_T
 
 contains ! ================================ Procedures ======================
-
-  ! ---------------------------------------------- InitParallel -------------
-  subroutine InitParallel
-    ! This routine initialises the parallel code
-    ! Executable code
-    if ( parallel%master .or. parallel%slave ) then
-      call PVMFMyTid ( parallel%myTid )
-    end if
-  end subroutine InitParallel
-
-  ! --------------------------------------------- CloseParallel -------------
-  subroutine CloseParallel
-    ! This routine closes down any parallel stuff
-    ! Local variables
-    integer :: BUFFERID                 ! From PVM
-    integer :: INFO                     ! From PVM
-
-    ! Exeuctable code
-    if ( parallel%slave ) then
-      call PVMFInitSend ( PvmDataDefault, bufferID )
-      call PVMF90Pack ( (/ SIG_Finished /), info )
-      if ( info /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to pack finished signal' )
-      call PVMFSend ( parallel%masterTid, InfoTag, info )
-      if ( info /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to send finish packet' )
-    end if
-  end subroutine CloseParallel
 
   ! --------------------------------------------- SendChunkToSlave ----------
   subroutine SendChunkToSlave ( chunk, chunkNo, slaveTid )
@@ -172,39 +139,6 @@ contains ! ================================ Procedures ======================
       & values(2), values(3), values(4), values(5), values(6) )
 
   end subroutine GetChunkFromMaster
-
-  ! ------------------------------------------- SlaveJoin ---------------
-  subroutine SlaveJoin ( quantity, precisionQuantity, hdfName, key )
-    ! This simply sends a vector quantity (or two) down a pvm spigot.
-    type (VectorValue_T), pointer :: QUANTITY    ! Quantity to join
-    type (VectorValue_T), pointer :: PRECISIONQUANTITY ! Its precision
-    character(len=*), intent(in) :: HDFNAME ! Swath / sd name
-    integer, intent(in) :: KEY          ! Tree node
-
-    ! Local variables
-    integer :: BUFFERID                 ! From PVM
-    integer :: GOTPRECISION             ! really boolean
-    integer :: INFO                     ! Flag from PVM
-
-    ! Executable code
-    gotPrecision = 0
-    if ( associated ( precisionQuantity) ) gotPrecision = 1
-
-    call PVMFInitSend ( PvmDataDefault, bufferID )
-    call PVMF90Pack ( (/ SIG_ToJoin, key, gotPrecision /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing kind" )
-    call PVMIDLPack ( hdfName, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing hdfName" )
-    call PVMFSend ( parallel%masterTid, InfoTag, info )
-    if ( info /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to send join packet' )
-
-    call PVMSendQuantity ( quantity, parallel%masterTid )
-    if ( associated ( precisionQuantity ) ) &
-      call PVMSendQuantity ( precisionQuantity, parallel%masterTid )
-    
-  end subroutine SlaveJoin
 
   ! ---------------------------------------- GetMachineNames ------------
   subroutine GetMachineNames ( machineNames )
@@ -294,6 +228,8 @@ contains ! ================================ Procedures ======================
 
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
+    integer :: CHUNK                    ! Loop counter
+    integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
     integer :: LUN                      ! File handle
     integer :: MACHINE                  ! Index
@@ -301,6 +237,7 @@ contains ! ================================ Procedures ======================
     integer :: NEXTCHUNK                ! Which chunk is next to be done
     integer :: NOCHUNKS                 ! Number of chunks
     integer :: NOMACHINES               ! Number of slaves
+    integer :: RESIND                   ! Loop counter
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
     integer :: TIDARR(1)                ! One tid
@@ -319,6 +256,10 @@ contains ! ================================ Procedures ======================
     ! Local vector template database
     type (Vector_T), dimension(:), pointer :: joinedVectors
     ! Local vector database
+    type (StoredResult_T), dimension(:), pointer :: storedResults
+    ! Map into the above arrays
+    type (VectorValue_T), pointer :: QTY
+    type (VectorValue_T), pointer :: PRECQTY
     
     ! Executable code --------------------------------
 
@@ -329,7 +270,7 @@ contains ! ================================ Procedures ======================
     ! Setup some stuff
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machineNames, slaveTids, slaveChunks, machineFree )
+      & machineNames, slaveTids, slaveChunks, machineFree, storedResults )
 
     ! Work out the information on our virtual machine
     call GetMachineNames ( machineNames )
@@ -347,14 +288,20 @@ contains ! ================================ Procedures ======================
 
       ! In the first part, we look to see if there are any chunks still to be
       ! done, and any vacant machines to do them.
-      if ( nextChunk < noChunks .and. any(machineFree) ) then 
+      if ( nextChunk <= noChunks .and. any(machineFree) ) then 
         machine = FindFirst(machineFree)
         commandLine = 'mlsl2'
 
-        print*,'Calling catchout'
-        call PVMFCatchOut ( 1, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
-        print*,'Launching '//trim(commandLine)//' on '//trim(machineNames(machine))
+        if ( index(switches,'slv') /= 0 ) then
+          call PVMFCatchOut ( 1, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
+        end if
+        if ( index(switches,'mas') /= 0 ) then
+          call output ( 'Launching chunk ' )
+          call output ( nextChunk )
+          call output ( ' on slave '//trim(machineNames(machine)), &
+            & advance='yes' )
+        endif
         info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
           & trim(machineNames(machine)), &
           & 1, tidarr )
@@ -389,10 +336,33 @@ contains ! ================================ Procedures ======================
             call PVMErrorMessage ( info, "unpacking signal" )
           else
             select case (signal) 
-            case ( sig_tojoin )
-            case ( sig_finished )
+
+            case ( sig_tojoin ) ! --------------- Got a join request ---------
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Got a vector join from ' // &
+                  & trim(machineNames(machine)) )
+                call output ( ' processing chunk ' )
+                call output ( slaveChunks(machine), advance='yes')
+              endif
+              call StoreSlaveQuantity( joinedQuantities, &
+                & joinedVectorTemplates, joinedVectors, &
+                & storedResults, slaveChunks(machine), noChunks, slaveTid )
+
+            case ( sig_finished ) ! -------------- Got a finish message ----
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Got a finished message from ' // &
+                  & trim(machineNames(machine)) )
+                call output ( ' processing chunk ' )
+                call output ( slaveChunks(machine), advance='yes')
+              endif
               completed(slaveChunks(machine)) = .true.
               machineFree(machine) = .true.
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Master status:', advance='yes' )
+                call dump ( completed, name='Chunks completed')
+                call dump ( machineFree, name='Machines free' )
+              endif
+
             case default
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Unkown signal from slave' )
@@ -411,13 +381,170 @@ contains ! ================================ Procedures ======================
     end do masterLoop
 
     ! Now we join up all our results into l2gp and l2aux quantities
+    do resInd = 1, size ( storedResults )
+      hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
+      do chunk = 1, noChunks
 
+        ! Setup for this quantity
+        qty => joinedVectors(storedResults(resInd)%valInds(chunk))%quantities(1)
+        if ( storedResults(resInd)%gotPrecision ) then
+          precQty => joinedVectors(storedResults(resInd)%precInds(chunk))%quantities(1)
+        else
+          nullify ( precQty )
+        endif
+
+        select case ( get_spec_id ( storedResults(resInd)%key ) )
+        case ( s_l2gp )
+          call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
+            & qty, precQty, l2gpDatabase, chunk )
+        case ( s_l2aux )
+          call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
+            & qty, l2auxDatabase, chunk, chunks )
+        end select
+      end do
+    end do
+    
+    ! Now clean up and quit
+    call DestroyStoredResultsDatabase ( storedResults )
     finished = .true.
 
   end subroutine L2MasterTask
 
+  ! -------------------------------------------- AddStoredQuantityToDatabase ----
+  integer function AddStoredResultToDatabase ( database, item )
+    ! Add a storedQuantity to a database, or create the database if it
+    ! doesn't yet exist
+
+    ! Dummy arguments
+    type (StoredResult_T), dimension(:), pointer :: database
+    type (StoredResult_T), intent(in) :: item
+
+    ! Local variables
+    type (StoredResult_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddStoredResultToDatabase = newSize
+  end function AddStoredResultToDatabase
+
+  ! ----------------------------------------- DestroyStoredQuantitiesDatabase ---
+  subroutine DestroyStoredResultsDatabase ( database )
+    type (StoredResult_T), dimension(:), pointer :: database
+
+    ! Local variabels
+    integer :: i, status
+
+    ! Executable code
+    do i = 1, size(database)
+      call deallocate_test ( database(i)%valInds, 'database(?)%valInds', ModuleName)
+      if ( associated ( database(i)%precInds ) ) &
+        & call deallocate_test ( database(i)%precInds,&
+        & 'database(?)%precInds', ModuleName)
+    end do
+    deallocate ( database, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'stored quantities database' )
+  end subroutine DestroyStoredResultsDatabase
+
+  ! -------------------------------------- StoreSlaveQuantity -------------------
+  subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
+    & joinedVectors, storedResults, chunk, noChunks, tid )
+    ! This routine reads a vector from a slave and stores it in
+    ! an appropriate place.
+
+    type (QuantityTemplate_T), dimension(:), pointer :: JOINEDQUANTITIES
+    type (VectorTemplate_T), dimension(:), pointer :: JOINEDVECTORTEMPLATES
+    type (Vector_T), dimension(:), pointer :: JOINEDVECTORS
+    type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
+    integer, intent(in) :: CHUNK        ! Index of chunk
+    integer, intent(in) :: NOCHUNKS     ! Number of chunks
+    integer, intent(in) :: TID          ! Slave tid
+
+    ! Local saved variables
+    integer, save :: JOINEDQTCOUNTER = CounterStart ! To place in qt%id
+    integer, save :: JOINEDVTCOUNTER = CounterStart ! To place in vt%id
+
+    ! Local variables
+    integer, dimension(2) :: I2         ! Array to unpack
+    integer :: INFO                     ! Flag from pvm
+    character(len=132) :: HDFNAME       ! HDF name for quantity
+    integer :: KEY                      ! Tree node
+    integer :: GOTPRECISION             ! Flag
+    integer :: QTIND                    ! Index for quantity template
+    integer :: VTIND                    ! Index for vector template
+    integer :: VIND                     ! Index for vector
+    integer :: PVIND                    ! Index for precision vector
+    integer :: I                        ! Loop inductor
+    integer :: NOSTOREDRESULTS          ! Array size
+    logical :: CONDITION                ! Flag
+    real (r8), dimension(:,:), pointer :: VALUES ! Values for this vector quantity
+    type (QuantityTemplate_T) :: qt     ! A quantity template
+    type (VectorTemplate_T) :: vt       ! A vector template
+    type (Vector_T) :: v                ! A vector
+    type (StoredResult_T), pointer :: THISRESULT ! Pointer to a storedResult
+    type (StoredResult_T) :: ONERESULT  ! A new single storedResult_T
+
+    ! Executable code
+
+    ! First we unpack the rest of the information in the packet we were sent
+    call PVMF90Unpack ( i2, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "unpacking integers from join packet" )
+    call PVMIDLUnpack ( hdfName, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "unpacking hdf name from" )
+    key = i2(1)
+    gotPrecision = i2(2)
+    
+    ! Now get the quantity itself, possibly also the precision
+    do i = 1, gotPrecision+1
+      call PVMReceiveQuantity ( qt, values, tid )
+
+      ! Now add its template to our template database
+      qt%id = joinedQTCounter
+      joinedQTCounter = joinedQTCounter + 1
+      qtInd = AddQuantityTemplateToDatabase ( joinedQuantities, qt )
+      
+      ! Now make a vector template up for this
+      call ConstructVectorTemplate ( 0, joinedQuantities, (/ qtInd /), vt )
+      vt%id = joinedVTCounter
+      joinedVTCounter = joinedVTCounter + 1
+      vtInd = AddVectorTemplateToDatabase ( joinedVectorTemplates, vt )
+      
+      ! Now make a vector up for this
+      v = CreateVector ( 0, joinedVectorTemplates(vtInd), &
+        & joinedQuantities, vectorNameText='joined' )
+      v%quantities(1)%values => values
+      if ( i == 1 ) then
+        vInd = AddVectorToDatabase ( joinedVectors, v )
+      else
+        pvInd = AddVectorToDatabase ( joinedVectors, v )
+      end if
+    end do
+
+    ! Now update our stored result stuff
+
+    condition = .not. associated ( storedResults )
+    if (.not. condition ) condition = .not. any (storedResults%key == key )
+    if ( condition ) then
+      ! We haven't seen this one before
+      oneResult%key = key
+      oneResult%gotPrecision = ( gotPrecision == 1 )
+      oneResult%hdfName = hdfName
+      call allocate_test ( oneResult%valInds, noChunks, &
+        & 'valInds', ModuleName )
+      if ( oneResult%gotPrecision ) &
+        & call allocate_test ( oneResult%precInds, noChunks, &
+        & 'precInds', ModuleName )
+      noStoredResults = AddStoredResultToDatabase ( storedResults, oneResult )
+      thisResult => storedResults ( noStoredResults )
+    else
+      thisResult => storedResults ( FindFirst ( storedResults%key == key ) )
+    end if
+
+    thisResult%valInds(chunk) = vInd
+    if ( thisResult%gotPrecision ) thisResult%precInds(chunk) = pvInd
+
+  end subroutine StoreSlaveQuantity
+
 end module L2Parallel
-
-
-
-
