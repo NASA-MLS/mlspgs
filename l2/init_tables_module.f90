@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module INIT_TABLES_MODULE
@@ -874,6 +874,10 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_quality, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_file, t+t_string, ndr+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
@@ -1169,6 +1173,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.356  2004/02/11 17:21:51  pwagner
+! May DirectWrite l2gp status and quality quantities
+!
 ! Revision 2.355  2004/02/10 21:16:58  livesey
 ! Added status and quality as valid quantity types
 !
