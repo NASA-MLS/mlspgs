@@ -457,10 +457,16 @@ contains ! =====     Public procedures     =============================
       begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
              l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
-             l+l_cloudWater, l+l_columnabundance, l+l_degreesOfFreedom, &
+             l+l_cloudWater, l+l_columnabundance, &
+             l+l_dnwt_ajn,  l+l_dnwt_axmax,  l+l_dnwt_cait, &
+             l+l_dnwt_diag,  l+l_dnwt_dxdx,  l+l_dnwt_dxdxl, &
+             l+l_dnwt_dxn,  l+l_dnwt_dxnl,  l+l_dnwt_fnmin, &
+             l+l_dnwt_fnorm,  l+l_dnwt_gdx,  l+l_dnwt_gfac, &
+             l+l_dnwt_gradn,  l+l_dnwt_sq,  l+l_dnwt_sq,  l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
-             l+l_losTransFunc,l+l_losVel, &
+             l+l_jacobian_cols, l+l_jacobian_rows, &
+             l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_sizedistribution, &
@@ -881,6 +887,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.167  2001/10/03 17:57:21  vsnyder
+! Delete l_DegreesOfFreedom, add l-DNWT_...
+!
 ! Revision 2.166  2001/10/02 23:40:37  vsnyder
 ! Add F_Diagnostics
 !
