@@ -21,7 +21,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
   & MLSMSG_Deallocate, MLSMSG_Warning
   USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-  & GetIntHashElement
+  & GetIntHashElement, LowerCase
   use OUTPUT_M, only: OUTPUT
   USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
   & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
@@ -44,6 +44,8 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::ReadGriddedData
   private::announce_error
+  private::DEFAULTFIELDNAME, GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, GEO_FIELD4
+  private::lit_dao, lit_ncep, lit_clim
   integer, private :: ERROR
 
   ! First we'll define some global parameters and data types.
@@ -53,6 +55,10 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
    CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Height'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'Time'
+
+   CHARACTER (len=*), PARAMETER :: lit_dao = 'dao'
+   CHARACTER (len=*), PARAMETER :: lit_ncep = 'ncep'
+   CHARACTER (len=*), PARAMETER :: lit_clim = 'clim'
 
 ! This datatype stores a single gridded atmospheric quantity.  For example
 ! temperature, if an uncertainty field is also required, this is stored in a
@@ -339,9 +345,30 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 !  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
   INTEGER, EXTERNAL :: GDRDFLD
   logical, parameter :: COUNTEMPTY=.TRUE.
+  logical            :: descrpt_is_legal
+  logical            :: descrpt_is_misplcd
 
   ! - - - begin - - -
 
+! Check if description is legal
+	descrpt_is_legal = (lowercase(description(:len(lit_dao))) == lit_dao) &
+	& .or. &
+	& (lowercase(description(:len(lit_ncep))) == lit_ncep) &
+	& .or. &
+	& (lowercase(description(:len(lit_clim))) == lit_clim)
+
+	descrpt_is_misplcd = lowercase(description(:len(lit_clim))) == lit_clim
+	
+	if(descrpt_is_misplcd) THEN
+		call announce_error(lcf_where, 'READGriddedData called with climatology' &
+		& // ' description')
+		return
+	elseif(.NOT. descrpt_is_legal) then
+		call announce_error(lcf_where, 'READGriddedData called with unknown' &
+		& // ' description: ' // description)
+		return
+	endif
+	
     error = 0
   file_id = gdopen(FileName, DFACC_RDONLY)
 
@@ -510,12 +537,12 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 	 
 	 ! Local
     type (GriddedData_T)        :: gddata 
-	 INTEGER :: thePC, ErrType
+	 INTEGER :: ErrType
 	 INTEGER, PARAMETER :: version=1
 	 LOGICAL :: end_of_file=.FALSE.
     integer:: processCli, CliUnit
 	 
-	 thePC = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
+	 CliUnit = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
   & .TRUE., ErrType, version)
   
   IF(ErrType /= 0) THEN
@@ -710,6 +737,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.3  2001/03/20 00:42:11  pwagner
+! Improved Read_Climatology
+!
 ! Revision 2.2  2001/03/15 21:40:30  pwagner
 ! Eliminated unused routines from USE statements
 !
