@@ -21,7 +21,6 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
   character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-
   interface PVMIDLpack
      module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
           & PVMIDLPACKLogical, PVMIDLpackChararr1, PVMIDLpackChararr2, &
@@ -962,6 +961,3 @@ contains
   end subroutine PVMIDLReceiveLogArr1
 
 end module PVMIDL
-
-
-
