@@ -171,11 +171,11 @@ contains
      do kk = 1, no_coeff
        Call get_one_eta(v,basis,no_coeff,kk,q)
        if(q /= 0.0) then
-         khi = kk + 1
+         khi = kk
          if(klo == 0) klo = kk
        endif
      end do
-     values(i,1) = max(1,klo)
+     values(i,1) = max(1,klo-1)
      values(i,2) = min(no_coeff,khi+1)
    end do
    i = i - 1
@@ -190,11 +190,11 @@ contains
      do kk = 1, no_coeff
        Call get_one_eta(v,basis,no_coeff,kk,q)
        if(q /= 0.0) then
-         khi = kk + 1
+         khi = kk
          if(klo == 0) klo = kk
        endif
      end do
-     values(i,1) = max(1,klo)
+     values(i,1) = max(1,klo-1)
      values(i,2) = min(no_coeff,khi+1)
    end do
 !
@@ -206,6 +206,9 @@ contains
 
 end module GET_PATH_SPSFUNC_NGRID_M
 ! $Log$
+! Revision 1.6  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.5  2001/05/03 22:23:29  vsnyder
 ! Insert copyright notice, some cosmetic changes
 !
