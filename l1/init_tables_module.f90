@@ -32,7 +32,7 @@ module INIT_TABLES_MODULE
 
 ! Enumeration types:
 
-  integer, public, parameter :: T_USE            = t_last_intrinsic+1
+  integer, public, parameter :: T_USE            = t_last_signal+1
   integer, public, parameter :: T_UNITS          = t_use+1
   integer, public, parameter :: T_LAST           = t_units
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
@@ -46,7 +46,7 @@ module INIT_TABLES_MODULE
 
 ! Enumeration literals:
 
-  integer, public, parameter :: L_EXPECTED   = last_intrinsic_lit + 1
+  integer, public, parameter :: L_EXPECTED   = last_signal_lit + 1
   integer, public, parameter :: L_MASK = l_expected + 1
   integer, public, parameter :: L_OVERRIDE = l_mask + 1
   integer, public, parameter :: LAST_LIT = l_override
@@ -105,7 +105,9 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
-    call init_MLSSignals ( field_indices, spec_indices, data_type_indices )
+
+    call init_MLSSignals (data_type_indices, field_indices, lit_indices, &
+      & spec_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
 
@@ -224,6 +226,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE    
 
 ! $Log$
+! Revision 2.8  2001/03/16 15:13:47  perun
+! Another change in call to Init_MLSSignals
+!
 ! Revision 2.7  2001/03/14 15:59:27  perun
 ! Use Van's latest with Init_MLSSignals_m module
 !
