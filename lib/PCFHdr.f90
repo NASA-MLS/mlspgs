@@ -192,11 +192,11 @@ CONTAINS
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr (fileID)
+   SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
 !------------------------------------------------------------
 
       use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: MakeHDF5Attribute
+      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf5-formatted file
 ! It does so at the root '/' group level
@@ -204,10 +204,19 @@ CONTAINS
 ! Arguments
 
       INTEGER, INTENT(IN) :: fileID
+      logical, intent(in), optional :: skip_if_already_there
 ! Local variables
       integer :: grp_id
       integer :: status
-! Executable
+      logical :: my_skip
+
+      ! Executable code
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+      if ( my_skip ) then
+        if ( IsHDF5AttributePresent('/', fileID, 'InstrumentName') ) &
+          & return
+      endif
       call h5gopen_f(fileID, '/', grp_id, status)
       call MakeHDF5Attribute(grp_id, &
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
@@ -673,6 +682,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.13  2003/02/12 21:47:05  pwagner
+!# Optional skip_if_already_there arg to h5_writeglobalattr
+!#
 !# Revision 2.12  2003/02/10 22:07:23  pwagner
 !# Granule Month, Day, Year now ints; he5 global attributes leave file pure hdfeos5
 !#
