@@ -51,6 +51,9 @@ module OutputAndClose ! outputs all data from the Join module to the
   ! For Announce_Error
     integer :: ERROR
 
+  ! Must files named in PCF have same case as short names used in l2cf?
+    logical, parameter :: PCFL2FCSAMECASE = .FALSE.
+
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
@@ -66,6 +69,7 @@ contains ! =====     Public Procedures     =============================
 
 	! The correspondence between MCF and l2gp files is determined by
 	! the value of        MCFFORL2GPOPTION
+   ! (see write_metadata module for fuller explanation)
 
   ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -101,7 +105,7 @@ contains ! =====     Public Procedures     =============================
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
     integer, parameter:: MAXQUANTITIESPERFILE=64        
-!    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
+!    integer, parameter :: MCFFORL2GPOPTION=1		! 1, 2 or 3
     integer :: metadata_error
     character (len=32) :: mnemonic
     character (len=256) :: msg
@@ -126,7 +130,9 @@ contains ! =====     Public Procedures     =============================
     error = 0
     got = .false.
 
-    l2gp_mcf = mlspcf_mcf_l2gp_start
+    ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
+    l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
+
     l2aux_mcf = mlspcf_mcf_l2dgm_start
     l2dgg_mcf = mlspcf_mcf_l2dgg_start
 
@@ -180,7 +186,8 @@ contains ! =====     Public Procedures     =============================
  
   				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
 				& mlspcf_l2gp_end, &
-  & .TRUE., returnStatus, l2gp_Version, .true., exactName=l2gpPhysicalFilename)
+            & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2gpPhysicalFilename)
  
             if ( returnStatus == 0 ) then
 					if(DEBUG) call output('file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
@@ -216,19 +223,26 @@ contains ! =====     Public Procedures     =============================
                 end if
 
 					! Write the metadata file
-					if(MCFFORL2GPOPTION == 2) then
-						l2gp_mcf = get_l2gp_mcf(swfid)
-					endif
+
+               call get_l2gp_mcf(file_base, l2gp_mcf, l2pcf)
+
 					if(l2gp_mcf <= 0) then
+
+               ! Error in finding mcf number
 						call announce_error(son, &
 						& 'No mcf numbers correspond to this l2gp file', l2gp_mcf)
+
 					elseif(numquantitiesperfile <= 0) then
+
+               ! Error in number of quantities
 						call announce_error(son, &
 						& 'No quantities written for this l2gp file')
+
 					elseif(QuantityNames(numquantitiesperfile) &
 					& == QuantityNames(1) ) then
 
-					! Typical homogeneous l2gp file: e.g., BrO is ML2BRO.001.MCF
+					! Typical homogeneous l2gp file: 
+               ! e.g., associated with BrO is ML2BRO.001.MCF
 					if(DEBUG) then
 						call output('preparing to populate metadata_std', advance='yes')
 						call output('l2gpFileHandle: ', advance='no')
@@ -238,6 +252,7 @@ contains ! =====     Public Procedures     =============================
 						call output('   swfid: ', advance='no')
 						call output(swfid , advance='yes')
 					endif
+
 						call populate_metadata_std &
 						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText, &
                   & metadata_error)
@@ -256,6 +271,7 @@ contains ! =====     Public Procedures     =============================
 						call output('   swfid: ', advance='no')
 						call output(swfid , advance='yes')
 					endif
+
 						call populate_metadata_oth &
 						& (l2gpFileHandle, l2gp_mcf, l2pcf, &
 						& numquantitiesperfile, QuantityNames, anText, metadata_error)
@@ -295,8 +311,9 @@ contains ! =====     Public Procedures     =============================
 !                found = .TRUE.
                 
   				l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-				& mlspcf_l2dgm_end, &
-  & .TRUE., returnStatus, l2aux_Version, .true., exactName=l2auxPhysicalFilename)
+            & mlspcf_l2dgm_end, &
+             & PCFL2FCSAMECASE, returnStatus, l2aux_Version, DEBUG, &
+             & exactName=l2auxPhysicalFilename)
  
             if ( returnStatus == 0 ) then
 				
@@ -356,7 +373,8 @@ contains ! =====     Public Procedures     =============================
 						& 'No quantities written for this l2aux file')
 					else
 
-					! We will need to think harder about this; until then reuse
+					! We may need to think more about this; until then reuse
+               ! populate_metadata_oth, but with l2aux_mcf
 					if(DEBUG) then
 						call output('preparing to populate metadata_oth', advance='yes')
 						call output('l2auxFileHandle: ', advance='no')
@@ -474,8 +492,8 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
-! Revision 2.20  2001/04/12 22:19:33  vsnyder
-! Improved an error message
+! Revision 2.21  2001/04/13 00:26:23  pwagner
+! Whether files named in PCF agree in case with l2cf controlled
 !
 ! Revision 2.19  2001/04/10 23:01:57  pwagner
 ! Now works better; tacks if no metadata
