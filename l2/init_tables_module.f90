@@ -32,7 +32,7 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, parameter :: T_CRITICALMODULE = t_last_intrinsic+1
+  integer, parameter :: T_CRITICALMODULE = t_last_signal+1
   integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_fillmethod+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
@@ -138,7 +138,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
-  integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
+  integer, parameter :: L_ANGLE         = last_signal_lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
   integer, parameter :: L_BOTH 	        = l_apriori + 1
   integer, parameter :: L_CHOLESKY      = l_both + 1
@@ -271,7 +271,8 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
-    call init_MLSSignals ( field_indices, spec_indices, data_type_indices )
+    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, &
+      & spec_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
@@ -770,6 +771,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.50  2001/03/16 00:59:43  vsnyder
+! Add support for defining types and literals in Init_MLSSignals_m
+!
 ! Revision 2.49  2001/03/15 23:25:07  vsnyder
 ! Remove t_radiometer and its lits.
 !
