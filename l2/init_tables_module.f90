@@ -771,6 +771,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
                              s+s_signal, s+s_spectrometerType, &
              n+n_section, &
+      begin, z+z_spectroscopy, s+s_line, s+s_spectra, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
@@ -815,6 +816,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.65  2001/04/04 02:13:23  vsnyder
+! Added spectroscopy section
+!
 ! Revision 2.64  2001/04/03 19:42:27  vsnyder
 ! Add call to Init_Spectroscopy
 !
