@@ -6,7 +6,7 @@
 
 !   subroutine Dump_Print_Code
       use Molecules, only:  L_Extinction
-      use String_table, only: GET_STRING
+      use String_table, only: DISPLAY_STRING
       real :: Frq, R
       integer :: J, K, L, Specie
       print *
@@ -54,21 +54,16 @@
 
       do specie = 1, size(fwdModelConf%molecules)
         l = fwdModelConf%molecules(specie)
-        if(l < 1) CYCLE
         if ( l /= l_extinction ) then
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
              & quantityType=l_vmr, molecule=l )
           print *, 'Species'
-          call get_string (f%template%name, sigName )
-          print *, trim(sigName)
-          print *, 'no_phi_f:'
+          call display_string (f%template%name, advance='yes' )
           j = f%template%noInstances
-          print *, j
-          print *, 'no_coeff_f:'
+          print *, 'no_phi_f:', j
           k = f%template%noSurfs
-          print *, k
-          print *, 'is_log_f:'
-          print *, grids_f%lin_log(specie) ! ??? Was lin_log(specie) ???
+          print *, 'no_coeff_f:', k
+          print *, 'is_log_f:', grids_f%lin_log(specie) ! ??? Was lin_log(specie) ???
           print *, 'VMR_Inputs'
           print '(5(3x,f9.5))', f%template%surfs(1:k,1)
           print '(5(3x,f8.3))', f%template%phi(1,1:j)
@@ -78,8 +73,7 @@
 
       print *
       k = no_tan_hts
-      print *, 'no_tan_hts'
-      print *, k
+      print *, 'no_tan_hts:', k
       j = surfaceTangentIndex
       print *, 'Number of sub-surfaces:', j-1
       print "('tan_press\', i3.3)", k
@@ -113,6 +107,9 @@
 !   end subroutine Dump_Print_Code
 !
 ! $Log$
+! Revision 2.7  2004/10/30 00:28:52  vsnyder
+! Simplified some stuff
+!
 ! Revision 2.6  2004/07/08 21:00:23  vsnyder
 ! Inching toward PFA
 !
