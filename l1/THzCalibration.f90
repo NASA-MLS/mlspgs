@@ -17,7 +17,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   PRIVATE
 
   PUBLIC :: CalibrateTHz, Chan_type_T, MAFdata_T, CalBuf_T, CalBuf, Cnts, &
-       SpaceTemp
+       VarCnts, SpaceTemp
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -58,9 +58,11 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   INTEGER, DIMENSION(:), ALLOCATABLE :: BoundsX
   REAL(r8), DIMENSION(:), ALLOCATABLE :: Bias
   REAL(r8), DIMENSION(:), ALLOCATABLE :: CalTemp
-  REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: Cnts, dCnts
+  REAL(r8), DIMENSION(:,:), ALLOCATABLE :: VarGain
+  REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: Cnts, dCnts, VarCnts
   LOGICAL, DIMENSION(:), ALLOCATABLE :: BiasGood
   REAL :: SpaceTemp
+  REAL(r8) :: yTsys(THzChans,THzNum)
 
 CONTAINS
 
@@ -122,7 +124,12 @@ CONTAINS
     ALLOCATE (Cnts(THzChans,THzNum,0:numMIFs-1))
     DEALLOCATE (dCnts, stat=status)
     ALLOCATE (dCnts(THzChans,THzNum,0:numMIFs-1))
+    DEALLOCATE (VarCnts, stat=status)
+    ALLOCATE (VarCnts(THzChans,THzNum,0:numMIFs-1))
+    DEALLOCATE (VarGain, stat=status)
+    ALLOCATE (VarGain(THzChans,THzNum))
     Cnts = 0.0
+    VarCnts = 1.0
 
 ! Fill the vectors:
 
@@ -229,7 +236,6 @@ CONTAINS
     REAL(r8) :: bb, det, tb, tt, yb(THzChans,THzNum), yt(THzChans,THzNum)
 
     REAL(r8) :: dCal(THzChans,THzNum), dLlo(THzChans,THzNum)
-    REAL(r8) :: yTsys(THzChans,THzNum)
 
     ntot = COUNT (CalFlag == 1)
     IF (ntot == 0) RETURN
@@ -282,6 +288,7 @@ CONTAINS
     tt = tt / det
     tb = tb / det
     bb = bb / det
+    VarGain = bb
     dCal = yt * bb - yb * tb  ! counts per K for T - S
     dLlo = yb * tt - yt * tb  ! counts per V for LLO bias
 
@@ -293,6 +300,7 @@ CONTAINS
           WHERE (BiasGood)
              Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) - dLlo(nChan,nBank) * &
                   Bias
+             VarCnts(nChan,nBank,:) = Bias * Bias * tt + 1.0
           ENDWHERE
           Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) / &
                MAX (dCal(nChan,nBank), 0.01d0)
@@ -313,11 +321,11 @@ CONTAINS
     INTEGER :: i, ibgn, iend, iBound, kbgn, maxPt, mbgn, mend, mif0, status
     INTEGER :: nordr, ntotx, wbgn, wend, win
     INTEGER, DIMENSION(:), POINTER :: cFlag
-    REAL(r8) :: t, tmid
+    REAL(r8) :: t, tmid, val
     REAL(r8), DIMENSION(:), ALLOCATABLE, SAVE :: tsq, tval
     REAL(r8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: yval
     REAL(r8) :: av(THzChans,THzNum), bv(THzChans,THzNum), cv(THzChans,THzNum)
-    REAL(r8) :: det, mfit2, mfit3, mfit4, tsqavg
+    REAL(r8) :: det, mfit0, mfit1, mfit2, mfit3, mfit4, tsqavg
     REAL(r8) :: yfit1(THzChans,THzNum), yfit2(THzChans,THzNum)
 
     INTEGER, PARAMETER :: MIFsPerMAF = 148   ! use for now
@@ -390,22 +398,24 @@ CONTAINS
           tmid = SUM (MIFx(ibgn:iend)*cFlag) / REAL(ntotx,r8)
           tval = (MIFx(ibgn:iend) - tmid) * cFlag
           tsq = tval * tval
+          mfit0 = 1.0 / ntotx
           DO nBank = 1, THzNum
              DO nChan = 1, THzChans
                 yval(nChan,nBank,:) = dCnts(nChan,nBank,ibgn:iend) * cFlag
-                av(nChan,nBank) = SUM (yval(nChan,nBank,:)) / ntotx
+                av(nChan,nBank) = SUM (yval(nChan,nBank,:)) * mfit0
              ENDDO
           ENDDO
           bv = 0.0
           cv = 0.0
-
+          mfit1 = 0.0; mfit2 = 0.0; mfit3 = 0.0; mfit4 = 0.0
           IF (nordr > 0) THEN
              mfit2 = SUM (tsq)
+             IF (nordr == 1) mfit2 = 1.0 / mfit2
              DO nBank = 1, THzNum
                 DO nChan = 1, THzChans
                    yfit1(nChan,nBank) = &
                         DOT_PRODUCT (yval(nChan,nBank,:), tval)
-                   IF (nordr == 1) bv(nChan,nBank) = yfit1(nChan,nBank) / mfit2
+                   IF (nordr == 1) bv(nChan,nBank) = yfit1(nChan,nBank) * mfit2
                 ENDDO
              ENDDO
           ENDIF
@@ -429,6 +439,10 @@ CONTAINS
              bv = mfit2 * yfit1 + mfit3 * yfit2
              cv = mfit3 * yfit1 + mfit4 * yfit2
              av = av - cv * tsqavg
+             tsqavg = -2.0 * tsqavg
+             mfit1 = tsqavg * mfit3
+             mfit2 = mfit2 + tsqavg * mfit4
+             mfit3 = 2.0 * mfit3
              last_fit = .TRUE.
           ENDIF
 
@@ -454,6 +468,9 @@ CONTAINS
           DO i = kbgn, mif0
              t = i - tmid
              Cnts(:,:,i) = Cnts(:,:,i) - av - t * (bv + cv * t)
+             val = mfit0 + t * (mfit1 + t * (mfit2 + t * (mfit3 + t * mfit4)))
+             VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain * Cnts(:,:,i) * &
+                  Cnts(:,:,i)
           ENDDO
           kbgn = mif0 + 1
        ENDIF
@@ -464,6 +481,59 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE THzCal
+
+!=============================================================================
+  SUBROUTINE THzStat
+!=============================================================================
+
+    INTEGER :: i, nBank, nChan, ntot
+    REAL(r8) :: aerr(THzChans,THzNum), Chisq(THzChans,THzNum)
+    REAL(r8) :: xavg(THzChans,THzNum), yavg(THzChans,THzNum)
+    REAL(r8) :: xval(THzChans,THzNum), yval(THzChans,THzNum)
+    REAL(r8) :: vnorm
+    REAL :: filter(THzChans)
+    REAL, PARAMETER :: ChanBw(25) = (/ 110.0, 110.0, 110.0, 74.0, 74.0, 74.0, &
+         55.0, 37.0, 28.0, 18.4, 14.0, 9.2, 7.2, 9.2, 14.0, 18.4, 28.0, 37.0, &
+         55.0, 74.0, 74.0, 74.0, 110.0, 110.0, 110.0 /)
+
+    ntot = COUNT (CalFlag == 1)
+    IF (ntot == 0) RETURN
+
+    filter = 1000.0 * SQRT (ChanBw / 6.0)
+    vnorm = 1.0d0 / ntot
+    xavg = 0.0
+    yavg = 0.0
+
+    DO i = 1, SIZE (CalFlag)
+       IF (CalFlag(i) == 1) THEN
+          xval = vnorm / VarCnts(:,:,i)
+          xavg = xavg + xval
+          yval = Cnts(:,:,i) - CalTemp(i)
+          yavg = yavg + xval * yval * yval
+       ENDIF
+    ENDDO
+
+    DO nBank = 1, THzNum
+       DO nChan = 1, THzChans
+          VarCnts(nChan,nBank,:) = SQRT (yavg(nChan,nBank) * &
+               VarCnts(nChan,nBank,:))
+       ENDDO
+    ENDDO
+
+    WHERE (xavg > 0.0)
+       aerr = SQRT (yavg / xavg)
+    END WHERE
+
+    Chisq = 0.0
+    DO nBank = 1, THzNum
+       aerr(:,nBank) = aerr(:,nBank) * filter
+       WHERE (ytsys(:,nBank) > 0.0)
+          Chisq(:,nBank) = aerr (:,nBank) / ytsys(:,nBank)
+       END WHERE
+       Chisq(:,nBank) = Chisq(:,nBank) * Chisq(:,nBank)
+    ENDDO
+
+  END SUBROUTINE THzStat
 
 !=============================================================================
   SUBROUTINE CalibrateTHz (more_data)
@@ -479,6 +549,8 @@ PRINT *, 'start calibrating...'
 
     CALL THzCal
 
+    CALL THzStat
+
     more_data = Cal_start <= CalBuf%MAFs
 
 PRINT *, 'end calibrating...'
@@ -490,6 +562,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/02/05 21:31:55  perun
+! Calculate variance and chi square
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

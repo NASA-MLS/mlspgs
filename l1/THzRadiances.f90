@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -28,7 +28,7 @@ CONTAINS
 
   SUBROUTINE CalcLimbRads (nMAF, ibgn)
 
-    USE THzCalibration, ONLY : Kelvins => Cnts  ! Already in Kelvins
+    USE THzCalibration, ONLY : Kelvins => Cnts, VarK => VarCnts !Already Kelvins
     USE MLSL1Config, ONLY: MIFsTHz
 
     INTEGER, INTENT (IN) :: nMAF
@@ -53,7 +53,7 @@ CONTAINS
                 T = Kelvins(nChan,nBank,i) + SpaceTemp  ! relative to Space
                 IF (ABS(T) > 1.0) THEN
                    THzRad(nBank)%value(nChan,i-ibgn+1) = RadPwr (LO1R5, T)
-                   THzRad(nBank)%precision(nChan,i-ibgn+1) = 0.0 !???
+                   THzRad(nBank)%precision(nChan,i-ibgn+1) = VarK(nChan,nBank,i)
                 ENDIF
             ENDDO
           ENDDO
@@ -95,6 +95,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/02/05 21:32:41  perun
+! Use variances for precisions
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
