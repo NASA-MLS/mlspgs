@@ -179,7 +179,7 @@ contains ! =====     Public Procedures     =============================
         &  .OR. (quantity%verticalCoordinate == l_None) ) ) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
-        call JoinL2GPQuantities ( key, name, vectors(vectorIndex), quantity, &
+        call JoinL2GPQuantities ( key, name, vectors(vectorIndex), quantityIndex, &
           & l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
@@ -233,14 +233,14 @@ contains ! =====     Public Procedures     =============================
   ! the instances that we wish to store in the l2gp quantity.  Otherwise, it
   ! defaults to the non overlapped region.
 
-  subroutine JoinL2GPQuantities ( key, name, vector, quantity, l2gpDatabase, &
+  subroutine JoinL2GPQuantities ( key, name, vector, quantityNo, l2gpDatabase, &
     & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to Decorate with the L2GP index
     integer, intent(in) :: NAME    ! Of the l2gp command
     type (Vector_T), intent(in) :: VECTOR
-    type (QuantityTemplate_T), intent(in) :: quantity
+    integer, intent(in) :: QUANTITYNO ! Index into the vector
     type (L2GPData_T), dimension(:), pointer :: L2gpDatabase
     integer, intent(in) :: chunkNo
     integer, intent(in), optional :: firstInstance, lastInstance
@@ -258,9 +258,13 @@ contains ! =====     Public Procedures     =============================
     integer :: useFirstInstance,useLastInstance,noOutputInstances
     logical :: l2gpDataIsNew
     real(r8), dimension(:,:), pointer :: values
+    
+    type (QuantityTemplate_T), pointer :: quantity
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
+
+    quantity=>vector%quantities(quantityNo)%template
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -360,18 +364,12 @@ contains ! =====     Public Procedures     =============================
     ! come from matrices later in 0.5, and the diagnostics such as status
     ! and quality will come later too (probably 0.5, but maybe 1.0)
 
-    do profNo = firstProfile, lastProfile
-!     CALL GetVectorQuantity ( vector, values, quantityNo, &
-!       & profNo-firstProfile+useFirstInstance, &
-!       & firstIndexChannel=.TRUE. )
-      thisL2GP%l2gpValue(:,:,profNo) = 0.0 
-      thisL2GP%l2gpPrecision(:,:,profNo) = 0.0
-! to avoid for 0.1 floating overflow in converting double precision to real
-
-      thisL2GP%l2gpValue(:,:,profNo) = 0.0
-!     call deallocate_test ( values, "values", ModuleName )
-    end do
-    thisL2GP%quality = 0.0
+    thisL2GP%l2gpValue(:,:,firstProfile:lastProfile)=&
+         RESHAPE(vector%quantities(quantityNo)%values(:,useFirstInstance:useLastInstance),&
+         (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+    thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
+    thisL2GP%status(firstProfile:lastProfile)='G'
+    thisL2GP%quality(firstProfile:lastProfile)=0.0
 
     if ( toggle(gen) ) call trace_end ( "JoinL2GPQuantities" )
   end subroutine JoinL2GPQuantities
@@ -691,6 +689,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.8  2001/02/09 18:01:46  livesey
+! Various further updates, set default values for status and quality
+!
 ! Revision 2.7  2001/02/09 00:38:22  livesey
 ! Various updates
 !
