@@ -9,7 +9,7 @@ module DUMP_0
 ! Actual output device determined by output_m module
 
   use MLSSets, only: FindAll
-  use MLSStrings, only: GetStringElement, NumStringElements
+  use MLSStringLists, only: GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit NONE
@@ -1452,6 +1452,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.41  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.40  2004/07/23 19:47:20  vsnyder
 ! Add LBOUND to dump_1d_[double,integer,real]
 !
