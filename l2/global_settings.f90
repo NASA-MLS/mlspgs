@@ -110,13 +110,25 @@ contains
         case ( p_input_version_string )
           input_version_string = sub_rosa_index
           call get_string ( input_version_string, l2pcf%inputVersion, strip=.true. )
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for input version ***', &
+            & just_a_warning = .true.)
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for PGE version ***', &
+            & just_a_warning = .true.)
         case ( p_version_comment )
           version_comment = sub_rosa_index
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for cycle number ***', &
+            & just_a_warning = .true.)
 !        case ( p_ccsdsstarttime )
 !          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
 !        case ( p_ccsdsendtime )
@@ -130,6 +142,10 @@ contains
             call expr ( subtree(2,son), units, value )
             start_time_from_1stMAF = value(1)
           endif
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for start time ***', &
+            & just_a_warning = .true.)
  !         print *, 'starttime'
  !         print *, trim(name_string)
  !         print *, trim(unquote(name_string))
@@ -145,6 +161,10 @@ contains
             call expr ( subtree(2,son), units, value )
             end_time_from_1stMAF = value(1)
           endif
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for end time ***', &
+            & just_a_warning = .true.)
  !         call get_string ( sub_rosa_index, name_string, strip=.true. )
  !         print *, 'endtime'
  !         print *, trim(name_string)
@@ -174,8 +194,16 @@ contains
         case ( s_l1brad )
           call l1bradSetup ( son, l1bInfo, F_FILE, &
           & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
+            & just_a_warning = .true.)
         case ( s_l1boa )
           call l1boaSetup ( son, l1bInfo, F_FILE )
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for L1BOA file ***', &
+            & just_a_warning = .true.)
 
         case ( s_time )
           if ( timing ) then
@@ -197,7 +225,8 @@ contains
    
    ! 1st--check that have L1BOA
      if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
-       call announce_error(son, 'L1BOA required but not set')
+       call announce_error(son, &
+       & 'L1BOA file required by global data--but not set')
      endif
      quantity = 'MAFStartTimeTAI'
      call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
@@ -361,7 +390,7 @@ contains
 
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
-    & Error_number )
+    & Error_number, just_a_warning )
   
     ! Arguments
 
@@ -369,15 +398,22 @@ contains
     character(LEN=*), intent(in) :: Full_message
     logical, intent(in), optional :: Use_toolkit
     integer, intent(in), optional :: Error_number
+    logical, intent(in), optional :: just_a_warning
 
     ! Local
-    logical :: Just_print_it
+    logical :: Just_print_it, my_warning
     logical, parameter :: Default_output_by_toolkit = .true.
 
     just_print_it = .not. default_output_by_toolkit
     if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
+    if ( present(just_a_warning) ) then
+      my_warning = just_a_warning
+    else
+      my_warning = .false.
+    endif
 
     if ( .not. just_print_it ) then
+     if ( .not. my_warning ) then
       error = max(error,1)
       call output ( '***** At ' )
 
@@ -396,18 +432,35 @@ contains
 
       call output ( " Caused the following error:", advance='yes', &
        & from_where=ModuleName)
+
+      endif
+      
       call output ( trim(full_message), advance='yes', &
         & from_where=ModuleName)
+
       if ( present(error_number) ) then
+       if (my_warning) then
+        call output ( 'Warning number ', advance='no' )
+      else
         call output ( 'Error number ', advance='no' )
+      endif
+
         call output ( error_number, places=9, advance='yes' )
       end if
     else
+
+      if ( .not. my_warning) then
       call output ( '***Error in module ' )
       call output ( ModuleName, advance='yes' )
+      endif
+      
       call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
+       if(my_warning) then
+        call output ( 'Warning number ' )
+      else
         call output ( 'Error number ' )
+       endif
         call output ( error_number, advance='yes' )
       end if
     end if
@@ -419,6 +472,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.31  2001/05/17 00:29:03  pwagner
+! Works without toolkit, PCF at last
+!
 ! Revision 2.30  2001/05/15 23:46:32  pwagner
 ! Now optionally uses hhmmss_value
 !
