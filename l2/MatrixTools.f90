@@ -67,7 +67,6 @@ contains ! =====  Public procedures  ===================================
     integer :: COLINSTANCE              ! Loop counter
     integer :: COLINSTANCESNODE         ! Tree node
     integer :: COLQI                    ! Index of column quantity within vector
-    integer :: ColQ1, ColQN             ! First and last column quantity index
     integer :: COLQuantityIx            ! Index in ColQIs array
     integer :: COLQuantityNode          ! Tree node
     integer :: COLSURFACESNODE          ! Tree node
@@ -83,7 +82,6 @@ contains ! =====  Public procedures  ===================================
     integer :: ROWINSTANCE              ! Loop counter
     integer :: ROWINSTANCESNODE         ! Tree node
     integer :: ROWQI                    ! Index of row quantity within vector
-    integer :: RowQ1, RowQN             ! First and last row quantity index
     integer :: ROWQuantityIx            ! Index in RowQIs array
     integer :: ROWQuantityNode          ! Tree node
     integer :: ROWSURFACESNODE          ! Tree node
@@ -228,8 +226,6 @@ contains ! =====  Public procedures  ===================================
       ! Local variables
       integer :: CC                       ! Loop counter
       integer :: CS                       ! Loop counter
-      integer :: I                        ! Loop counter
-      integer :: MAXIND                   ! Maximum dimension
       integer :: NOCOLCHANNELS            ! Number selected
       integer :: NOCOLSURFACES            ! Number selected
       integer :: NOROWCHANNELS            ! Number selected
@@ -250,13 +246,13 @@ contains ! =====  Public procedures  ===================================
       nullify ( toDump )
 
       ! Set up the index arrays
-      call getSurfOrChanInds ( rowQ, rowQ%template%noChans, rowChannelsNode, &
+      call getSurfOrChanInds ( rowQ%template%noChans, rowChannelsNode, &
         & rowChanInds, 'Row Channels: ' )
-      call getSurfOrChanInds ( rowQ, rowQ%template%noSurfs, rowSurfacesNode, &
+      call getSurfOrChanInds ( rowQ%template%noSurfs, rowSurfacesNode, &
         & rowSurfInds, 'Row Surfaces: ' )
-      call getSurfOrChanInds ( colQ, colQ%template%noChans, colChannelsNode, &
+      call getSurfOrChanInds ( colQ%template%noChans, colChannelsNode, &
         & colChanInds, 'Column Channels: ' )
-      call getSurfOrChanInds ( colQ, colQ%template%noSurfs, colSurfacesNode, &
+      call getSurfOrChanInds ( colQ%template%noSurfs, colSurfacesNode, &
         & colSurfInds, 'Column Surfaces: ' )
 
       noRowChannels = size(rowChanInds)
@@ -440,14 +436,11 @@ contains ! =====  Public procedures  ===================================
     end subroutine GetQuantities
 
     ! ........................................  GetSurfOrChanInds  .....
-    subroutine GetSurfOrChanInds ( Vec, Num, Node, Inds, Text )
-      type (VectorValue_T), intent(in) :: Vec ! Row or column vector quantity    
+    subroutine GetSurfOrChanInds ( Num, Node, Inds, Text )
       integer, intent(in) :: Num              ! vec%template%no[Chans,Surfs]     
       integer, intent(in) :: Node             ! Tree node                        
       integer, pointer :: Inds(:)             ! Indices                          
       character(len=*), intent(in) :: Text    ! For the dump                     
-
-      integer :: I
 
       call fillIndicesArray ( node, num, inds )
 
@@ -577,6 +570,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.13  2003/10/10 23:28:33  vsnyder
+! Substantial reorganization
+!
 ! Revision 1.12  2003/10/09 21:03:16  vsnyder
 ! Don't do anything if the 'nodb' switch is set
 !
