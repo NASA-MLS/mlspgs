@@ -17,7 +17,8 @@ module SpectroscopyCatalog_m
   private
   ! Public procedures:
   public :: Spectroscopy
-  public :: Destroy_SpectCat_Database, Dump_SpectCat_Database
+  public :: Destroy_Line_Database, Destroy_SpectCat_Database
+  public :: Dump_Lines_Database, Dump_SpectCat_Database
 
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
@@ -254,18 +255,16 @@ contains ! =====  Public Procedures  ===================================
     AddSpeciesToCatalog = newSize
   end function AddSpeciesToCatalog
 
-  ! ----------------------------------------  DestroyLineDatabase  -----
-  subroutine DestroyLineDatabase ( Database )
-    type(line_t), pointer, dimension(:) :: Database
+  ! --------------------------------------  Destroy_Line_Database  -----
+  subroutine Destroy_Line_Database
     integer :: Status                   ! From deallocate
-    deallocate ( database, stat=status )
+    deallocate ( lines, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_DeAllocate // "Lines" )
-  end subroutine DestroyLineDatabase
+  end subroutine Destroy_Line_Database
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
-  subroutine Destroy_SpectCat_Database ( Catalog )
-    type(catalog_t), pointer, dimension(:) :: Catalog
+  subroutine Destroy_SpectCat_Database
     integer :: I, Status
     do i = 1, size(catalog)
       call deallocate_test ( catalog(i)%lines, moduleName, "Catalog(i)%lines" )
@@ -369,6 +368,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.3  2001/04/04 23:56:46  zvi
+! Correfting Typo error in SpectCat  names
+!
 ! Revision 1.2  2001/04/04 23:21:46  vsnyder
 ! Add comments for fields of Lines_T and Catalog_T
 !
