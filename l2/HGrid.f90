@@ -356,13 +356,13 @@ contains ! =====     Public Procedures     =============================
   ! This routine destroys the information associated with an hGrid
 
     ! Dummy arguments
-    type (HGrid_T), intent(out) :: hGrid
+    type (HGrid_T), intent(inout) :: hGrid
 
     ! Local Variables
     integer :: STATUS    ! From Deallocate
 
     ! Executable code
-
+    
     deallocate ( hGrid%phi, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "hGrid%phi" )
@@ -398,7 +398,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: hGridIndex, status
-
     if ( associated(database) ) then
       do hGridIndex=1,SIZE(database)
         call DestroyHGridContents ( database(hGridIndex) )
@@ -449,6 +448,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.3  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.2  2001/02/08 01:50:11  vsnyder
 ! Move duplicate field checking to tree_checker, set by init_tables
 !

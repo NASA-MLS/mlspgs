@@ -33,19 +33,6 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   INTEGER, PARAMETER :: LineLen=132
   INTEGER, PARAMETER :: FileNameLen=132
 
-  ! This enumerated type defines the `modules' in the MLS instrument
-
-  INTEGER, PARAMETER :: MLSInstrumentModule_Invalid=0
-  INTEGER, PARAMETER :: MLSInstrumentModule_GHz=1
-  INTEGER, PARAMETER :: MLSInstrumentModule_THz=2
-  INTEGER, PARAMETER :: MLSInstrumentNoModules=2
-  CHARACTER(LEN=3), PARAMETER, DIMENSION(MLSInstrumentNoModules) :: &
-       & MLSInstrumentModuleNames = (/ &
-       & "GHz", &
-       & "THz" /)
-  CHARACTER (LEN=3), PARAMETER, DIMENSION(MLSInstrumentNoModules) :: &
-       & MLSInstrumentModuleNamesUC=(/"GHZ","THZ"/)
-
   ! --------------------------------------------------------------------------
   
   ! The next datatype describes the information on the L1B data files in use
@@ -85,6 +72,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.3  2001/02/09 00:38:55  livesey
+! Various changes
+!
 ! Revision 2.2  2001/01/26 23:46:35  pwagner
 ! Restored L1BInfo from l1/MLSL1Common back to lib/MLSCommon
 !
