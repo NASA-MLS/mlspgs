@@ -74,7 +74,7 @@ begin GlobalSettings
   ;; Load our forward model databases
   ForwardModelGlobal, $
     antennaPatterns='!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt', $
-    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-0_0000d000.txt', $
+    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-1_0000d000.txt', $
     pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-1_0000d000.txt'
 
   ;; Setup the particular forward model we're going to want
