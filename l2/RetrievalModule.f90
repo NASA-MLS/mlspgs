@@ -22,8 +22,9 @@ module RetrievalModule
     & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
     & F_opticalDepthCutoff, &
     & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
-    & F_quantity, F_regOrders, F_regQuants, F_regWeights, F_state, &
-    & F_toleranceA, F_toleranceF, F_toleranceR, Field_first, Field_last, &
+    & F_quantity, F_regAfter, F_regOrders, F_regQuants, F_regWeights, &
+    & F_state, F_toleranceA, F_toleranceF, F_toleranceR, Field_first, &
+    & Field_last, &
     & L_apriori, L_covariance, &
     & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
     & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
@@ -157,6 +158,7 @@ contains
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
     real :: T0, T1, T2, T3              ! for timing
+    logical :: TikhonovBefore           ! "Do Tikhonov before column scaling"
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
                                         ! norm of move
@@ -214,6 +216,7 @@ contains
     snoopComment = ' '           ! Ditto
     snoopKey = 0
     snoopLevel = 1               ! Ditto
+    tikhonovBefore = .true.
     timing = section_times
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
@@ -318,6 +321,8 @@ contains
             measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
             method = decoration(subtree(2,son))
+          case ( f_regAfter )
+            tikhonovBefore = .not. get_Boolean(son)
           case ( f_regOrders )
             regOrders = son
           case ( f_regQuants )
@@ -971,7 +976,7 @@ contains
             call copyVector ( v(aTb), v(covarianceXApriori) ) ! A^T b := C (a-x_n)
             if ( got(f_aprioriScale) ) then
               call scaleMatrix ( normalEquations%m, aprioriScale )
-              call scaleVector ( v(aTb), aprioriScale )
+              ! Don't need to scale aTb -- covarianceXApriori is scaled already
             end if
           else
             call clearMatrix ( normalEquations%m ) ! start with zero
@@ -981,10 +986,11 @@ contains
           ! _square_ of the norm of (apriori - measurements).
           aj%fnorm = aprioriNorm
 
-          ! Add Tikhonov regularization if requested
-          if ( got(f_regOrders) ) then
+          ! Add Tikhonov regularization if requested.
+          if ( got(f_regOrders) .and. tikhonovBefore ) then
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call time_now ( t1 )
+
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
             !  0}$. So that all of the parts of the problem are solving for
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
@@ -1094,6 +1100,68 @@ contains
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
 
+          ! Add Tikhonov regularization if requested.  We do it here instead
+          ! of before adding the Jacobian so that we can scale it up by the
+          ! column scaling before scaling the normal equations back down
+          ! by the column scaling.  The effect is that regularization takes
+          ! place (roughly) on the column-scaled problem, and if scaling by
+          ! the column norm is requested, it's still makes the column norms
+          ! all 1.0.
+          if ( got(f_regOrders) .and. .not. tikhonovBefore ) then
+            call add_to_retrieval_timing( 'newton_solver', t1 )
+            call time_now ( t1 )
+
+            ! Get the column scale vector.
+            select case ( columnScaling )
+            case ( l_apriori ) ! v(columnScaleVector) := apriori
+              call copyVector ( v(columnScaleVector), apriori )
+            case ( l_covariance )
+              !??? Can't get here until allowed by init_tables
+            case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
+                            !                         equations = column norms^2
+              call getDiagonal ( normalEquations%m, v(columnScaleVector) )
+            end select
+            !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
+            !  0}$. So that all of the parts of the problem are solving for
+            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
+            !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
+
+            ! We need a matrix with the same column space as the "jacobian".
+            ! The "jacobian" matrix is handily unused, so we used it here.
+            call regularize ( jacobian, regOrders, regQuants, regWeights, &
+              & tikhonovRows )
+            call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
+            call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+
+            if ( columnScaling /= l_none ) then ! Compute $\Sigma$
+              forall (j = 1: v(columnScaleVector)%template%noQuantities)
+                where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
+                  v(columnScaleVector)%quantities(j)%values = 0.0
+                elsewhere
+                  v(columnScaleVector)%quantities(j)%values = &
+                    & sqrt( v(columnScaleVector)%quantities(j)%values )
+                end where
+              end forall
+              call columnScale ( jacobian, v(columnScaleVector) )
+            end if
+
+              if ( index(switches,'reg') /= 0 ) &
+                & call dump ( jacobian, name='Tikhonov', details=2 )
+            call formNormalEquations ( jacobian, normalEquations, &
+              & v(reg_X_x), v(aTb), update=update, useMask=.false. )
+            update = .true.
+            call clearMatrix ( jacobian )           ! free the space
+            ! aj%fnorm is still the square of the norm of f
+            aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+            ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
+            ! Don't destroy reg_X_x unless we move the 'clone' for it
+            ! inside the loop.  Also, if we destroy it, we can't snoop it.
+            call add_to_retrieval_timing( 'tikh_reg', t1 )
+            call time_now ( t1 )
+          else
+            tikhonovRows = 0
+          end if
+
           !{Column Scale $\bf J$ (row and column scale ${\bf J}^T {\bf J}$)
           ! using the matrix $\bf\Sigma$. We cater for several choices of
           ! $\bf\Sigma$.  After row scaling with $\bf W$ and column scaling
@@ -1107,7 +1175,7 @@ contains
           case ( l_covariance )
             !??? Can't get here until allowed by init_tables
           case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
-                          !                         equations = column norms
+                          !                         equations = column norms^2
             call getDiagonal ( normalEquations%m, v(columnScaleVector) )
           end select
           if ( columnScaling /= l_none ) then ! Compute $\Sigma$
@@ -2866,6 +2934,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.157  2002/08/03 01:16:17  vsnyder
+! RegAfter switch controls Tikhonov before/after column scaling -- default before
+!
 ! Revision 2.156  2002/07/31 22:43:30  vsnyder
 ! Add some timers in the Newtonian iteration
 !
