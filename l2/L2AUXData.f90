@@ -11,20 +11,20 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
   use INIT_TABLES_MODULE, only: &
-    L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
+    L_BASELINE, &
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, &
     L_CLOUDEXTINCTION, L_CLOUDWATER, &
     L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
-    L_COLUMNABUNDANCE, L_DNWT_AJN, L_DNWT_AXMAX, &
+    L_DNWT_AJN, L_DNWT_AXMAX, &
     L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
     L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
     L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
     L_DNWT_SQ, L_DNWT_SQT, &
-    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, &
-    L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GEODANGLE, &
+    L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, &
+    L_FREQUENCY, L_GEODANGLE, &
     L_HEIGHT, L_HEIGHTOFFSET, L_INTERMEDIATEFREQUENCY, &
     L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-    L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAGNETICFIELD, &
+    L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, &
     L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFLSPILL, L_REFLTEMP, &
@@ -169,17 +169,16 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
 contains ! =====     Public Procedures     =============================
 
-  ! ---------------------- cpL2AUXData  ---------------------------
+  ! ------------------------------------------------- cpL2AUXData  -----
 
   subroutine cpL2AUXData(file1, file2, create2, hdfVersion, sdList)
-    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
-      & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
       & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
     use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
       & IsHDF5AttributePresent
-    !------------------------------------------------------------------------
+    !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
     ! This routine copies all the l2auxdata from 1 to 2
@@ -203,7 +202,6 @@ contains ! =====     Public Procedures     =============================
     integer :: the_hdfVersion
     logical :: file_exists
     integer :: file_access
-    integer :: listsize
     integer :: noSds
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     logical, parameter            :: countEmpty = .true.
@@ -219,14 +217,14 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'File 1 not found; make sure the name and path are correct' &
         & // trim(file1) )
-    endif
+    end if
     if ( the_hdfVersion == WILDCARDHDFVERSION ) then
       the_hdfVersion = mls_hdf_version(File1, hdfVersion)
       if ( the_hdfVersion == FILENOTFOUND ) &
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'File 1 not found; make sure the name and path are correct' &
           & // trim(file1) )
-    endif
+    end if
     if ( present(sdList) ) then
       mysdList = sdList
       call dump(mysdList, 'DS names')
@@ -240,18 +238,18 @@ contains ! =====     Public Procedures     =============================
         return
       else
         call dump(mysdList, 'DS names')
-      endif
-    endif
+      end if
+    end if
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
     if ( file_exists ) then
       file_access = DFACC_RDWR
     else
       file_access = DFACC_CREATE
-    endif
+    end if
     if ( present(create2) ) then
       if ( create2 ) file_access = DFACC_CREATE
-    endif
+    end if
     sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
     if (sdfid1 == -1 ) then
       call announce_error ( 0, 'Failed to open l2aux ' // &
@@ -261,7 +259,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to open group to read attribute in l2aux file' )
-    endif
+    end if
     sdfId2 = mls_sfstart(trim(file2), file_access, &
               & hdfVersion=hdfVersion)
     if (sdfid2 == -1 ) then
@@ -272,7 +270,7 @@ contains ! =====     Public Procedures     =============================
     if ( noSds < 1 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
-    endif
+    end if
     ! Loop over sdNames in file 1
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
@@ -281,25 +279,25 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to open sd to read attribute in l2aux file' )
-      endif
+      end if
       ! Get QuantityType attribute--unfortunately they're all 0; what gives?
       if ( .not. IsHDF5AttributePresent(sd_id, 'QuantityType') .or. .true.) then
         QuantityType = GetQuantityTypeFromName(trim(sdName)) ! l_radiance
       else
         call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
-      endif
+      end if
 	   call h5dClose_f (sd_ID, status)
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to close sd to read attribute in l2aux file' )
-      endif
+      end if
       if ( QuantityType < 1 ) then
         call output('Quantity type: ', advance='no')
         call output(QuantityType, advance='yes')
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unrecognized quantity type for sd:' // trim(sdName) )
         cycle
-      endif
+      end if
       ! print *, 'About to read ', trim(sdName)
       call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
@@ -309,12 +307,12 @@ contains ! =====     Public Procedures     =============================
         & hdfVersion=hdfVersion)
       ! Deallocate memory used by the l2aux
       call DestroyL2AUXContents ( l2aux )
-    enddo
+    end do
 	 call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
        & 'Unable to close group in l2aux file: ' // trim(File1) // ' after cping' )
-    endif
+    end if
 	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -375,7 +373,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(quantityTemplate) ) then
       option_number = 1
       quantityType = quantityTemplate%quantityType
-    elseif ( present(inputQuantityType) ) then
+    else if ( present(inputQuantityType) ) then
       option_number = 1
       quantityType = inputQuantityType
       dimSizes = inputDimSizes
@@ -383,14 +381,14 @@ contains ! =====     Public Procedures     =============================
     else
       call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'args to SetupL2AUXData incompatible with options 1 or 2')
-    endif
+    end if
     ! Fill the dimensions data structure
     ! l2aux%dimensions%dimensionFamily = dimensionFamilies
     ! if ( present(quantityType) ) then
     call GetQuantityAttributes( quantityType, &
        & framing, l2aux%VALUE_Units, dim_names )
     l2aux%dimensions%dimensionFamily = dim_names
-    ! endif
+    ! end if
     l2aux%minorFrame = (framing == 'minor')
     l2aux%majorFrame = (framing == 'major')
     ! Name the dimensions (e.g. 'frequency')
@@ -400,18 +398,18 @@ contains ! =====     Public Procedures     =============================
       if ( present (firstMAF) ) then
         call GetDimStart( l2aux%dimensions(dimIndex)%dimensionFamily, &
         & quantityTemplate, firstMAF, dimStarts(dimIndex) )
-      endif
+      end if
       if ( present (noMAFs) ) then
         call GetDimSize( l2aux%dimensions(dimIndex)%dimensionFamily, &
         & quantityTemplate, noMAFs, dimSizes(dimIndex) )
-      endif
-    enddo
+      end if
+    end do
     call Array2List(extra_name, l2aux%DIM_Names)
     ! Name the dimensions' units (e.g. 'K')
     do dimIndex=1, L2AUXRank
       call GetQuantityAttributes( l2aux%dimensions(dimIndex)%dimensionFamily, &
        & framing, extra_name(dimIndex), dim_names )
-    enddo
+    end do
     call Array2List(extra_name, l2aux%DIM_Units)
     l2aux%dimensions%noValues = dimSizes
 
@@ -429,7 +427,7 @@ contains ! =====     Public Procedures     =============================
         if ( present (quantityTemplate) ) then
           call GetDimValues( l2aux%dimensions(dimIndex)%dimensionFamily, &
           & quantityTemplate, l2aux%dimensions(dimIndex)%values )
-        endif
+        end if
       else
         l2aux%dimensions(dimIndex)%noValues=1
       end if
@@ -445,11 +443,11 @@ contains ! =====     Public Procedures     =============================
       print *, 'status: ', status
       print *, 'dimStarts: ', dimStarts
       print *, 'dimEnds: ', dimEnds
-    endif
+    end if
     if ( status/=0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate// "l2aux values" )
-    endif
+    end if
   end subroutine SetupNewL2AUXRecord
     
   !----------------------------------------  DestroyL2AUXContents  -----
@@ -569,7 +567,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyL2AUXDatabase
 
-  ! ------------------------------------------ Dump_L2AUX_DataBase ------------
+  ! ----------------------------------------  Dump_L2AUX_DataBase  -----
 
   subroutine Dump_L2AUX_DataBase ( L2aux, Name, Details )
 
@@ -586,18 +584,18 @@ contains ! =====     Public Procedures     =============================
     if ( present(name) ) then
       call output ( 'L2AUX Database name: ', advance='no' )
       call output ( name, advance='yes' )
-    endif
+    end if
     if ( size(l2aux) < 1 ) then
       call output ( '**** L2AUX Database empty ****', advance='yes' )
       return
-    endif
+    end if
     do i = 1, size(l2aux)
       call dump(l2aux(i), Details)
     end do
       
   end subroutine Dump_L2AUX_DATABASE
 
-  ! ------------------------------------------ Dump_L2AUX ------------
+  ! -------------------------------------------------  Dump_L2AUX  -----
 
   subroutine Dump_L2AUX ( L2aux, Details )
 
@@ -624,13 +622,14 @@ contains ! =====     Public Procedures     =============================
       if ( associated(modules) ) then
         call output ( '    instrumentmodule: ')
         call display_string ( modules(l2aux%instrumentmodule)%name, &
-          & advance='yes', ierr=ierr ) 
-        if ( ierr /= 0 ) call output ( '(not found in string table)', &
-          & advance='yes')
-        call output ( '    (its index): ')
-        call output ( l2aux%instrumentmodule, advance='no')
-      endif
-      call output ( ' ', advance='yes')
+          & advance='no', ierr=ierr ) 
+        if ( ierr /= 0 ) then
+          call output ( ' (not found in string table)', advance='no')
+        else
+          call output ( l2aux%instrumentmodule, before=' = ', advance='no')
+        end if
+      end if
+      call output ( '', advance='yes')
       call output ( '  Minor Frame? (t/f): ')
       call output ( l2aux%minorframe, advance='no')
       call output ( '  Major Frame? (t/f): ')
@@ -649,14 +648,14 @@ contains ! =====     Public Procedures     =============================
           call dump ( l2aux%dimensions(dim)%values, 'dim values:' )
          else
           call output ( ' is not associated', advance='yes')
-         endif
-      enddo
+         end if
+      end do
       if ( myDetails < 1 ) return
       call dump ( l2aux%values, 'values:' )
  
   end subroutine Dump_L2AUX
     
-  !------------------------------------------------ ReadL2AUXData ------------
+  !-----------------------------------------------  ReadL2AUXData  -----
   subroutine ReadL2AUXData(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames, hdfVersion)
 
@@ -691,7 +690,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ReadL2AUXData
 
-  !------------------------------------------------ ReadL2AUXData_hdf4 ------------
+  ! -----------------------------------------  ReadL2AUXData_hdf4  -----
   subroutine ReadL2AUXData_hdf4(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames )
 
@@ -757,10 +756,10 @@ contains ! =====     Public Procedures     =============================
 
     if (status == -1) then
       call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to get sf info.')
-    elseif (sds_name /= quantityname) then
+    else if (sds_name /= quantityname) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'quantityname  fails to match sf info.')
-    endif
+    end if
 
     ! Check optional input arguments
 
@@ -805,11 +804,11 @@ contains ! =====     Public Procedures     =============================
             else
               dim_families(dim) = l_channel
               data_dim_sizes(dim) = dim_size1
-            endif
+            end if
           end select
-        endif
-      endif
-    enddo
+        end if
+      end if
+    end do
 
     ! Allocate result
 !   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
@@ -852,7 +851,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReadL2AUXData_hdf4
 
 
-  !------------------------------------------------ ReadL2AUXData_hdf5 ------------
+  ! -----------------------------------------  ReadL2AUXData_hdf5  -----
   subroutine ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
     use MLSFiles, only: HDFVERSION_5
@@ -905,7 +904,7 @@ contains ! =====     Public Procedures     =============================
       & // trim(QuantityName) )
   end subroutine ReadL2AUXData_hdf5
 
-  !----------------------------------------------------- WriteL2AUXData ------
+  ! ---------------------------------------------  WriteL2AUXData  -----
 
   subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
@@ -944,7 +943,7 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine WriteL2AUXData
 
-  !----------------------------------------------------- WriteL2AUXData_hdf5 ------
+  ! ----------------------------------------  WriteL2AUXData_hdf5  -----
 
   subroutine WriteL2AUXData_hdf5(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
@@ -1001,12 +1000,12 @@ contains ! =====     Public Procedures     =============================
         dataProduct%name = sdName
       else
         call get_string ( l2aux%name, dataProduct%name, strip=.true. )
-      endif
+      end if
       if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
         dataProduct%data_type = 'real'    ! same type as l1bradiances
       else
         dataProduct%data_type = 'double'  ! type of L2AUXData_T%values
-      endif
+      end if
       dims(1) = size(l2aux%values, 1)
       dims(2) = size(l2aux%values, 2)
       dims(3) = size(l2aux%values, 3)
@@ -1019,7 +1018,7 @@ contains ! =====     Public Procedures     =============================
       else
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
-      endif
+      end if
       call h5_writeglobalattr(l2FileHandle, skip_if_already_there=.false.)
       ! Write phase and section names as file-level attributes?
       if ( PHASENAMEATTRIBUTES ) then
@@ -1033,7 +1032,7 @@ contains ! =====     Public Procedures     =============================
           & call MakeHDF5Attribute(grp_id, &
           & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
         call h5gclose_f(grp_id, returnstatus)
-      endif
+      end if
       if ( .not. myWriteCounterMAF ) return
     
       ! Now create and write bogus counterMAF array
@@ -1041,7 +1040,7 @@ contains ! =====     Public Procedures     =============================
         call announce_error(0, &
         & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
         return
-      endif
+      end if
       nullify (CounterMAF)
       call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
       dims(1) = myNoMAFS
@@ -1051,16 +1050,16 @@ contains ! =====     Public Procedures     =============================
       !  & 1, dimSizes)
       do MAF=0, myNoMAFS-1
         counterMAF(MAF+1) = MAF
-      enddo
+      end do
       ! status= SFWDATA_F90(sdId, (/ 0 /), &
       !  & (/ 1 /) , dimSizes, CounterMAF)
       call Build_MLSAuxData(l2FileHandle, dataProduct, counterMAF, &
       & myNoMAFS )
       call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
-    endif
+    end if
   end subroutine WriteL2AUXData_hdf5
 
-  !----------------------------------------------------- WriteL2AUXData_hdf4 ------
+  ! ----------------------------------------  WriteL2AUXData_hdf4  -----
 
   subroutine WriteL2AUXData_hdf4(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
@@ -1118,7 +1117,7 @@ contains ! =====     Public Procedures     =============================
       nameString=sdName
     else
       call get_string ( l2aux%name, nameString, strip=.true. )
-    endif
+    end if
 
     goodDim=l2aux%dimensions%dimensionFamily /= L_None
     noDimensionsUsed = min(COUNT(goodDim), myL2AUXRank)
@@ -1129,7 +1128,7 @@ contains ! =====     Public Procedures     =============================
     else
       dimSizes = PACK(l2aux%dimensions%noValues, &
         & goodDim)
-    endif
+    end if
 
     ! Create the sd within the file
     sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT32, &
@@ -1147,7 +1146,7 @@ contains ! =====     Public Procedures     =============================
         if ( present(DimNames) ) then
           call GetStringElement(trim(DimNames), dimName, dimensionInData, &
             & countEmpty=.TRUE.)
-        elseif ( (dimensionInData > 1) .and. (l2aux%minorFrame) ) then
+        else if ( (dimensionInData > 1) .and. (l2aux%minorFrame) ) then
           call GetModuleName( l2aux%instrumentModule, dimName)
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
           call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
@@ -1157,7 +1156,7 @@ contains ! =====     Public Procedures     =============================
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
           call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
             & dimName(LEN_TRIM(dimName)+1:))
-        endif
+        end if
         ! Write dimension name
         status=SFSDMName(dimID,TRIM(dimName))
         if ( status /= 0 ) then
@@ -1167,7 +1166,7 @@ contains ! =====     Public Procedures     =============================
           & "Error setting dimension name to SDS l2aux file:")
 !		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error setting dimension name to SDS l2aux file:")
-	     endif
+	     end if
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT32, &
           & l2aux%dimensions(dimensionInData)%values)
@@ -1180,11 +1179,11 @@ contains ! =====     Public Procedures     =============================
           & "Error writing dimension scale in l2auxFile:" )
 !		      call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error writing dimension scale in l2auxFile:" )
-	     endif
+	     end if
         dimensionInFile=dimensionInFile+1
-      endif
+      end if
     end do
-    endif
+    end if
 
     ! Now write the data
     ! Make sure the data can be placed in a real
@@ -1194,7 +1193,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) then
 	   call announce_error (0, &
       & "Error writing SDS data to  l2aux file:  " )
-    endif
+    end if
 
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     
@@ -1203,7 +1202,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) then
 	   call announce_error (0,&
       & "Error ending access to the sd  " )
-    endif
+    end if
     returnStatus = error
     if ( .not. myWriteCounterMAF ) return
     
@@ -1212,7 +1211,7 @@ contains ! =====     Public Procedures     =============================
       call announce_error(0, &
       & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
       return
-    endif
+    end if
     nullify (CounterMAF, dimSizes)
     call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
     call allocate_test(dimSizes,1,'dimSizes',ModuleName)
@@ -1221,13 +1220,13 @@ contains ! =====     Public Procedures     =============================
       & 1, dimSizes)
     do MAF=0, myNoMAFS-1
       counterMAF(MAF+1) = MAF
-    enddo
+    end do
     status= SFWDATA_F90(sdId, (/ 0 /), &
       & (/ 1 /) , dimSizes, CounterMAF)
     if ( status /= 0 ) then
 	   call announce_error (0,&
       & "Error writing counterMAF data to  l2aux file:  " )
-    endif
+    end if
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
     
@@ -1236,13 +1235,13 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) then
 	   call announce_error (0,&
       & "Error ending access to the sd  " )
-    endif
+    end if
     returnStatus = error
     ! call Dump_L2AUX(l2AUX)
 
   end subroutine WriteL2AUXData_hdf4
 
-  ! ----------------------------------  WriteL2AUXAttributes  -----
+  ! ---------------------------------------  WriteL2AUXAttributes  -----
   subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
   use MLSHDF5, only: MakeHDF5Attribute
   ! Writes the pertinent attributes for an l2aux
@@ -1263,7 +1262,7 @@ contains ! =====     Public Procedures     =============================
   if ( DEEBUG ) then
     call output('Writing attributes to: ', advance='no')
     call output(trim(Name), advance='yes')
-  endif
+  end if
   call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
   call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
     & trim(l2aux%VALUE_Units))
@@ -1271,11 +1270,11 @@ contains ! =====     Public Procedures     =============================
     & trim(l2aux%DIM_Names))
   if ( l2aux%majorframe) then
     framing = 'major'
-  elseif ( l2aux%minorframe) then
+  else if ( l2aux%minorframe) then
     framing = 'minor'
   else
     framing = 'neither'
-  endif
+  end if
   call MakeHDF5Attribute(L2FileHandle, name, 'Framing', trim(framing))
   call MakeHDF5Attribute(L2FileHandle, name, 'InstrumentModule', &
     & l2aux%instrumentmodule)
@@ -1302,12 +1301,12 @@ contains ! =====     Public Procedures     =============================
       if ( AreDimValuesNonTrivial(l2aux%dimensions(dim)%DimensionFamily) ) then
         call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i)// ' values', &
         & real(l2aux%dimensions(dim)%values))
-      endif
-    endif
-  enddo
+      end if
+    end if
+  end do
   end subroutine WriteL2AUXAttributes
 
-  ! ----------------------------------  GetDimSize  -----
+  ! -------------------------------------------------  GetDimSize  -----
   subroutine GetDimSize ( nameType, quantityTemplate, noMAFs, dim_size)
 
   ! Given a dim name type, e.g. l_MIF,
@@ -1343,7 +1342,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetDimSize
 
-  ! ----------------------------------  GetDimStart  -----
+  ! ------------------------------------------------  GetDimStart  -----
   subroutine GetDimStart ( nameType, quantityTemplate, firstMaf, dim_start)
 
   ! Given a dim name type, e.g. l_MAF,
@@ -1365,7 +1364,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetDimStart
 
-  ! ----------------------------------  GetDimString  -----
+  ! -----------------------------------------------  GetDimString  -----
   subroutine GetDimString ( nameType, dim_string)
 
   ! Given a dim name type, e.g. l_vmr,
@@ -1403,7 +1402,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetDimString
 
-  ! ----------------------------------  AreDimValuesNonTrivial  -----
+  ! -------------------------------------  AreDimValuesNonTrivial  -----
   function AreDimValuesNonTrivial ( nameType )
 
   ! Given a dim name type, e.g. l_channel,
@@ -1420,7 +1419,7 @@ contains ! =====     Public Procedures     =============================
       & )
   end function AreDimValuesNonTrivial
 
-  ! ----------------------------------  GetDimValues  -----
+  ! -----------------------------------------------  GetDimValues  -----
   subroutine GetDimValues ( nameType, quantityTemplate, dim_values )
 
   ! Given a dim name type, e.g. l_channel,
@@ -1440,7 +1439,7 @@ contains ! =====     Public Procedures     =============================
     case ( l_channel, l_MAF, l_MIF, l_xyz )  
       do i=1, SIZE(dim_values)
        dim_values(i) = i
-      enddo
+      end do
     case ( l_frequency, &
          & L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )  
       dim_values = quantityTemplate%frequencies
@@ -1453,7 +1452,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetDimValues
 
-  ! ----------------------------------  GetQuantityAttributes  -----
+  ! --------------------------------------  GetQuantityAttributes  -----
   subroutine GetQuantityAttributes ( quantityType, &
    & framing, units_name, dim_names)
 
@@ -1676,7 +1675,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetQuantityAttributes
 
-  ! ----------------------------------  GetQuantityTypeFromName  -----
+  ! ------------------------------------  GetQuantityTypeFromName  -----
   function GetQuantityTypeFromName (name)  result(quantityType)
 
   ! Given quantity name, e.g. '/R4:640.B29M:HOCL.S0.MB11-3 chisqMMIF CorePlusR4'
@@ -1694,26 +1693,26 @@ contains ! =====     Public Procedures     =============================
     if ( index(trim(myName), 'chisq') > 0 ) then
       if ( index(trim(myName), 'mmaf') > 0 ) then
         quantityType = l_chisqmmaf
-      elseif ( index(trim(myName), 'mmif') > 0 ) then
+      else if ( index(trim(myName), 'mmif') > 0 ) then
         quantityType = l_chisqmmif
-      elseif ( index(trim(myName), 'chan') > 0 ) then
+      else if ( index(trim(myName), 'chan') > 0 ) then
         quantityType = l_chisqchan
       else
         ! This is binned chi^2
         ! unlike the others, it is neither major nor minor frame
         ! we'll say it is most like dnwt_chisqnorm
         quantityType = l_dnwt_chiSqNorm
-      endif
-    elseif ( index(trim(myName), 'noradspermif') > 0 ) then
+      end if
+    else if ( index(trim(myName), 'noradspermif') > 0 ) then
       ! Just like chisqmmif
       quantityType = l_chisqmmif
-    elseif ( index(trim(myName), 'pcf') > 0 ) then
+    else if ( index(trim(myName), 'pcf') > 0 ) then
       quantityType = -999
-    elseif ( index(trim(myName), 'coremetadata') > 0 ) then
+    else if ( index(trim(myName), 'coremetadata') > 0 ) then
       quantityType = -999
     else
       quantityType = l_radiance
-    endif                      
+    end if                      
                       
   end function GetQuantityTypeFromName
 
@@ -1754,6 +1753,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.68  2005/03/03 02:10:51  vsnyder
+! Remove unused symbols, spiff up some dumps
+!
 ! Revision 2.67  2004/08/19 00:19:28  pwagner
 ! Tells ReadL1BData to skip warnings about missing counterMAFs
 !
