@@ -37,13 +37,15 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
     (--npcf sets --nmeta and --ncfpcf.)
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit
-    (--ntk sets --npcf, --ncfpcf and --nmeta).
+    (--ntk sets --npcf, --ncfpcf and --nmeta)
   --master <filename>: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
     can list a machine more than once (e.g. for SMP slaves)
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
     task and is not recommneded for manual invocations.
+  --snoop: Activate the snooping capability (interaction with
+    an IDL diagnostics process)
     
   Options a, c, f0, g0, l, p and t can be toggled in the 
         configuration file
@@ -67,4 +69,7 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.1  2001/05/23 23:05:40  pwagner
+ First commit
+
 
