@@ -60,14 +60,16 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
   Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
 !
   INTEGER(ip) :: p_coeffs, z_coeffs
-  REAL(rp) :: ht, tp
+
+  REAL(rp) :: ht, tp, hs, x
   REAL(rp), ALLOCATABLE :: Eta(:,:)
 !
 ! Start code:
 !
   ht = req + tan_ht
-  ptg_angle = elev_offset + ASIN((1.0_rp + tan_index_refr)*ht &
-            / (sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))))
+  hs = sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))
+  x = (1.0_rp + tan_index_refr) * ht / hs
+  ptg_angle = elev_offset + ASIN(x * min(ht,req)/req)
 !
 ! do temperature stuff if user requests it
 !
@@ -96,6 +98,9 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.10.2.3  2001/09/13 11:18:21  zvi
 ! use the correct eta
 !
