@@ -6,11 +6,11 @@ program sids_l1boa ! End-to-end check on subroutines
     & ORBIT_MET, NUMORB
   use read, only: READ_SCAN, READ_UIF
   use Sd, only: DFACC_WRITE, SD_CREATE, SFEND, SFSTART
-  use Time, only: TAI93_RANGE_T, TIME_DAY, TIME_MAF, TIME_POST, TIME_PRE
+  use Time, only: TIME_DAY, TIME_MAF, TIME_POST, TIME_PRE
   use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_FILEOPEN, &
     & MLSMESSAGE
   use OutputL1B, only: L1BOAINDEX_T
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, TAI93_RANGE_T
   use SDPToolkit, only: PGS_PC_GETREFERENCE
 
   implicit none
@@ -218,6 +218,9 @@ program sids_l1boa ! End-to-end check on subroutines
 end program sids_l1boa
 
 ! $Log$
+! Revision 1.4  2001/10/11 22:07:59  livesey
+! Just tidied up a bit
+!
 ! Revision 1.3  2001/10/10 23:20:12  pwagner
 ! Now compiles with latest l1/Orbit
 !
