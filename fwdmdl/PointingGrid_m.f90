@@ -8,8 +8,8 @@ module PointingGrid_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Info
-  use MLSSignals_m, only: Bands, Dump_Bands, Dump_Signals, GetSignalName, &
-    & MaxSigLen, Signals
+  use MLSSignals_m, only: Bands, DestroySignalDatabase, GetNameOfSignal, &
+    & MaxSigLen, Signals, Signal_T
   use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
 
   ! More USEs below in each procedure, if they're only used therein.
@@ -28,7 +28,7 @@ module PointingGrid_m
   end type OneGrid_T
 
   type, public :: PointingGrid_T
-    integer, pointer, dimension(:) :: Signals => NULL() ! Database indices
+    type(signal_T), pointer, dimension(:) :: Signals => NULL()
     real(r8) :: CenterFrequency         ! Should be gotten from Bands database
     !??? Maybe not.  The one in the pointing grid file appears to have been
     !??? Doppler shifted.
@@ -80,16 +80,20 @@ contains
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
+    logical, pointer, dimension(:) :: Channels ! Specified in a signal
     real(r8) :: Frequency                    ! Center frequency for the grid.
     !                                          Read from the input file.
     !                                          Should ultimately come from the
     !                                          signals database.
     real(r8) :: Height                       ! Zeta, actually, from the file
-    integer, dimension(size(signals)) :: HowManyGrids  ! per radiometer
+    integer, pointer, dimension(:) :: HowManyGrids  ! per radiometer batch
+    integer, pointer, dimension(:) :: HowManySignals ! per radiometer batch
     integer :: HowManyRadiometers            ! gotten by counting the file
     integer :: I, N                          ! Loop inductor, subscript, temp
     character(len=MaxSigLen) :: Line         ! From the input file
     integer :: NumHeights                    ! Read from the input
+    integer :: Sideband                      ! Specified in a signal
+    integer :: SignalCount                   ! From Parse_Signal
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
 
@@ -97,15 +101,43 @@ contains
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
+    call allocate_test ( howManyGrids, size(signals), 'HowManyGrids', &
+      & moduleName )
+    call allocate_test ( howManySignals, size(signals), 'HowManySignals', &
+      & moduleName )
+
     ! First, read through the file and count how much stuff is there.
-    read ( lun, '(a)', end=98, err=99, iostat=status ) line  ! Skip the first radiometer spec
+    read ( lun, '(a)', end=98, err=99, iostat=status ) line
     howManyRadiometers = 0
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
-      if ( howManyRadiometers > size(howManyGrids) ) &
-        & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "More radiometers in the file than signals in the database" )
-      read ( lun, *, err=99 ) Frequency
+      if ( howManyRadiometers > size(howManyGrids) ) then ! Double table sizes
+        signal_indices => howManyGrids
+        nullify ( howManyGrids )
+        call allocate_test ( howManyGrids, 2*size(signal_indices), &
+          & 'HowManyGrids', moduleName )
+        howManyGrids(:size(signal_indices)) = signal_indices
+        call deallocate_test ( signal_indices, 'Old HowManyGrids', moduleName )
+        signal_indices => howManySignals
+        nullify ( howManySignals )
+        call allocate_test ( howManySignals, 2*size(signal_indices), &
+          & 'HowManySignals', moduleName )
+        howManySignals(:size(signal_indices)) = signal_indices
+        call deallocate_test ( signal_indices, 'Old HowManySignals', moduleName )
+      end if
+      howManySignals(howManyRadiometers) = 0
+      do
+        line = adjustl(line)
+        call parse_signal ( line, signal_indices, spec_indices, &
+          & onlyCountEm = signalCount )
+        if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, &
+          & moduleName, "Improper signal specification: " // trim(line) )
+        howManySignals(howManyRadiometers) = &
+          & howManySignals(howManyRadiometers) + signalCount
+        read ( lun, '(a)', end=98, err=99, iostat=status ) line
+        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) exit ! a number
+      end do
+      read ( line, *, err=99 ) Frequency
       howManyGrids(howManyRadiometers) = 0
       do
         read ( lun, '(a)', err=99, iostat=status ) line
@@ -128,40 +160,31 @@ outer1: do
     howManyRadiometers = 0
 outer2: do
       howManyRadiometers = howManyRadiometers + 1
+      allocate ( pointingGrids(howManyRadiometers)%signals( &
+        & howManySignals(howManyRadiometers) ), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // "PointingGrids(?)%signals" )
+      n = 0 ! Counter in pointingGrids(howManyRadiometers)%signals
       nullify ( signal_indices )
-      call parse_signal ( line, signal_indices, spec_indices )
-      if ( .not. associated(signal_indices) ) call MLSMessage ( MLSMSG_Error, &
-        & moduleName, "Improper signal specification" )
-      ! Check that pointing grids have not already been specified for any
-      ! bands implied by the present signal string.
-      do i = 1, size(signal_indices)
-        if ( signals(signal_indices(i))%pointingGrid /= 0 ) then
-          prunit = -2 ! To do output via MLSMessage
-          MLSMSG_Level = MLSMSG_Info
-          call dump_signals ( (/ signals(signal_indices(i)) /) )
-          MLSMSG_Level = MLSMSG_Error
-          call output ( "More than one pointing grid specified for signal " )
-          call display_string ( signals(signal_indices(i))%name, advance='yes' )
-        end if
-        if ( bands(signals(signal_indices(i))%band)%pointingGrid /= 0 ) then
-          prunit = -2 ! To do output via MLSMessage
-          MLSMSG_Level = MLSMSG_Info
-          call dump_bands ( (/ bands(signals(signal_indices(i))%band) /) )
-          MLSMSG_Level = MLSMSG_Error
-          call output ( "More than one pointing grid specified for band " )
-          call display_string ( bands(signals(signal_indices(i))%band)%prefix, &
-            & advance='yes' )
-        end if
+      do
+        call parse_signal ( line, signal_indices, spec_indices, &
+          & sideband=sideband, channels=channels )
+        ! Errors were checked during the "counting" phase above
+        do i = 1, size(signal_indices)
+          n = n + 1
+          pointingGrids(howManyRadiometers)%signals(n) = &
+            & signals(signal_indices(i))
+          pointingGrids(howManyRadiometers)%signals(n)%sideband = sideband
+          pointingGrids(howManyRadiometers)%signals(n)%channels => channels
+        end do
+        call deallocate_test ( signal_indices, 'Signal_Indices', moduleName )
+        read ( lun, '(a)', err=99, iostat=status ) line
+        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) exit ! a number
       end do
-      ! But allow the present signal string to specify the grid for a band
-      ! several times.
-      signals(signal_indices)%pointingGrid = howManyRadiometers
-      bands(signals(signal_indices)%band)%pointingGrid = howManyRadiometers
-      pointingGrids(howManyRadiometers)%signals => signal_indices
-      ! The next thing should be gotten from the signals database.
+      !??? Should the centerFrequency be gotten from the signals database?
       !??? Maybe not.  The one in the pointing grid file appears to have been
       !??? Doppler shifted.
-      read ( lun, *, err=99, iostat=status ) &
+      read ( line, *, err=99, iostat=status ) &
         & pointingGrids(howManyRadiometers)%centerFrequency
       allocate ( pointingGrids(howManyRadiometers)% &
         & oneGrid(howManyGrids(howManyRadiometers)), stat=status )
@@ -188,6 +211,9 @@ outer2: do
       end do
     end do outer2
 
+    call deallocate_test ( howManySignals, 'HowManySignals', moduleName )
+    call deallocate_test ( howManyGrids, 'HowManyGrids', moduleName )
+
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'P') /= 0 ) &
         & call dump_pointing_grid_database
@@ -209,8 +235,7 @@ outer2: do
   subroutine Destroy_Pointing_Grid_Database
     integer :: I, J, Status
     do i = 1, size(pointingGrids)
-      call deallocate_test ( pointingGrids(i)%signals, &
-        & "PointingGrids(?)%signals", moduleName )
+      call destroySignalDatabase ( pointingGrids(i)%signals )
       do j = 1, size(pointingGrids(i)%oneGrid)
         call deallocate_test ( pointingGrids(i)%oneGrid(j)%frequencies, &
           & "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
@@ -237,7 +262,7 @@ outer2: do
       call output ( ':    Signals =', advance='yes' )
       do j = 1, size(pointingGrids(i)%signals)
         call blanks ( 6 )
-        call getSignalName ( pointingGrids(i)%signals(j), sigName )
+        call getNameOfSignal ( pointingGrids(i)%signals(j), sigName )
         call output ( trim(sigName), advance='yes' )
       end do ! j = 1, size(pointingGrids(i)%signals)
       call output ( ' Center Frequency = ' )
@@ -255,6 +280,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.10  2001/03/30 01:34:33  vsnyder
+! More work on I/O status handling
+!
 ! Revision 1.9  2001/03/30 01:28:13  vsnyder
 ! Repair handling of I/O status values
 !
