@@ -24,7 +24,7 @@ module ForwardModelConfig
   end interface Dump
 
   public :: AddForwardModelConfigToDatabase, DeriveFromForwardModelConfig
-  public :: Destroy_Beta_Group, DestroyFWMConfigDatabase, DestroyForwardModelDerived
+  public :: DestroyFWMConfigDatabase, DestroyForwardModelDerived
   public :: Dump, NullifyForwardModelConfig
   public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
  
@@ -46,11 +46,15 @@ module ForwardModelConfig
   ! to m1,...mn (but not m).  The Cat_Index, Qty and Ratio components are
   ! filled in Get_Species_Data.
   type, public :: Beta_Group_T
+    ! For the group as a whole:
+    logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
+    logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
+    integer :: Molecule               ! Group name, i.e., "m".
+    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
+    ! For LBL molecules in the group:
     integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
                                       ! for config%catalog and gl_slabs.
                                       ! Allocated and filled in Get_Species_Data.
-    logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
-    logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
     integer, pointer :: LBL_Molecules(:) => NULL() ! LBL molecules in the group
                                       ! if a group, i.e., "m1...mn", else "m" if
                                       ! "m" is LBL, else zero size.
@@ -58,11 +62,11 @@ module ForwardModelConfig
                                       ! ratio.  Allocated in ForwardModelSupport
                                       ! with value 1.0, but could be filled in
                                       ! Get_Species_Data.
-    integer :: Molecule               ! Group name, i.e., "m".
-    integer, pointer :: PFA_Indices(:,:,:) => NULL() ! Sidebands x size(Channels)
+    ! For PFA molecules in the group:
+    integer, pointer :: PFA_Indices(:,:,:) => NULL() ! Sidebands x Channels
                                       ! x 1:size(PFA_Molecules).  Indices in
-                                      ! PFADataBase%PFAData.  Allocated and filled
-                                      ! in Get_Species_Data.
+                                      ! PFADataBase%PFAData.  Allocated and
+                                      ! filled in Get_Species_Data.
     integer, pointer :: PFA_Molecules(:) => NULL() ! PFA molecules in the group
                                       ! if a group, i.e., "m1...mn", else "m" if
                                       ! "m" is PFA, else zero size.
@@ -70,7 +74,6 @@ module ForwardModelConfig
                                       ! ratio.  Allocated in ForwardModelSupport
                                       ! with value 1.0, but could be filled in
                                       ! Get_Species_Data.
-    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
   end type Beta_Group_T
 
   ! Channel information from the signals database
@@ -87,16 +90,6 @@ module ForwardModelConfig
                           ! later in Get_Species_Data; BetaIndex(i) is second
                           ! subscript for beta_path for PFAMolecules(i).
   end type Channels_T
-
-  ! Now all of the derived stuff
-  type, public :: ForwardModelDerived_T
-    real(rp), dimension(:,:), pointer :: DACsStaging => NULL() ! Temporary
-                                         ! space for DACS radiances
-    integer, dimension(:), pointer :: USEDDACSSIGNALS => NULL() ! Indices in
-                                         ! FwdModelConf_T%Signals
-                                         ! of signals for our dacs
-    type(channels_T), pointer, dimension(:) :: Channels => NULL()
-  end type ForwardModelDerived_T
 
   ! The scalar components are sorted in the order they are to make the packing
   ! and unpacking for PVM as easy as possible to maintain
@@ -177,7 +170,11 @@ module ForwardModelConfig
       ! element of the beta group.  We do this indirectly so that the whole
       ! catalog can be turned into gl_slabs data at once, and then the gl_slabs
       ! can be indexed by Beta_Group%Cat_Index as well.
-    type (forwardModelDerived_T) :: ForwardModelDerived
+    real(rp), dimension(:,:), pointer :: DACsStaging => NULL() ! Temporary
+      ! space for DACS radiances
+    integer, dimension(:), pointer :: USEDDACSSIGNALS => NULL() ! Indices in
+      ! FwdModelConf_T%Signals of signals for our dacs
+    type(channels_T), pointer, dimension(:) :: Channels => NULL()
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -222,7 +219,8 @@ contains
     use MLSSets, only: FindFirst, Intersection, Union
     use MLSSignals_m, only: DisplaySignalName, MatchSignal
     use Output_m, only: Output
-    use PFADataBase_m, only: Dump, PFAData, SortPFAData, Sort_PFADataBase
+    use PFADataBase_m, only: Dump, PFAData, PFA_By_Molecule, SortPFAData, &
+      & Sort_PFADataBase
     use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
@@ -241,19 +239,19 @@ contains
     integer :: NoUsedChannels, NoUsedDACS
     integer :: NumPFA                      ! Like HowManyPFA, but for one channel
     integer :: P                           ! Index for PFA molecules in a beta group
-    integer, pointer :: PFAWork(:,:)       ! PFA Indices for a channel.
-                                           ! Sideband X Molecules.
+!   integer, pointer :: PFAWork(:,:)       ! PFA Indices for a channel.
+!                                          ! Sideband X Molecules.
     integer :: SB                          ! Sideband index
     integer :: SigInd
     logical :: SignalFlag(size(fwdModelConf%signals))
     integer :: S1, S2                      ! SidebandStart, SidebandStop
     integer, pointer :: T1(:), T2(:)       ! Temps for set operations
-    integer, pointer :: WhichMolecule(:)   ! To which element of config%molecules
-                                           ! does WhichPfa(i) correspond?
-    integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
-                                           ! molecules in fwdModelConf%Molecules?
+!   integer, pointer :: WhichMolecule(:)   ! To which element of config%molecules
+!                                          ! does WhichPfa(i) correspond?
+!   integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
+!                                          ! molecules in fwdModelConf%Molecules?
 
-    ! Shorthand pointers into fwdModelConf%forwardModelDerived
+    ! Shorthand pointers into fwdModelConf
     real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
     integer, pointer :: USEDDACSSIGNALS(:) ! Indices in FwdModelConf_T%Signals
                                            ! of signals for our dacs
@@ -276,7 +274,7 @@ contains
     ! Compute NoUsedDACs
     ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
 
-    nullify ( DACsStaging, usedDACSSignals, whichPFA )
+    nullify ( DACsStaging, usedDACSSignals )!, whichPFA )
     signalFlag = .false.
     lBoundDACs = 0; uBoundDACs = 0
     noUsedDACs = 0
@@ -312,28 +310,59 @@ contains
     end do
     allocate ( channels(noUsedChannels), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'fwdModelConf%forwardModelDerived%channels' )
+      & MLSMSG_Allocate//'fwdModelConf%channels' )
 
     ! Collect channel information from signals database.
-    channel = 1
+    channel = 0
     do sigInd = 1, size(fwdModelConf%signals)
       do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
         if ( fwdModelConf%signals(sigInd)%channels(i) ) then
+          channel = channel + 1
           channels(channel)%origin = &
             & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
           channels(channel)%used = i + channels(channel)%origin - 1
           channels(channel)%signal = sigInd
           channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
-          channel = channel + 1
         end if
       end do
     end do
 
+    ! Hook the shortcuts into the structure
+    fwdModelConf%channels => channels
+    fwdModelConf%DACsStaging => DACsStaging
+    fwdModelConf%usedDACSSignals => usedDACSSignals
+
     if ( associated(pfaData) ) then
       do b = 1, size(fwdModelConf%beta_group)
+        call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
+          & fwdModelConf%sidebandStop, &
+          & size(fwdModelConf%channels), &
+          & size(fwdModelConf%beta_group(b)%pfa_molecules), &
+          & 'Beta_group(b)%PFA_indices', moduleName, &
+          & lowBound_1=fwdModelConf%sidebandStart )
+        fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
         do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
+          do i = PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p)-1)+1, &
+            &    PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p))
+            do sb = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+              do channel = 1, size(channels)
+                if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
+                  &  fwdModelConf%signals(channels(channel)%signal), sideband=sb, &
+                  &  channel=channels(channel)%used ) > 0 ) &
+                    & fwdModelConf%beta_group(b)%pfa_indices(sb,channel,p) = &
+                      & sortPFAdata(i)
+              end do ! channel
+            end do ! sb
+          end do ! i (molecules)
         end do ! p
       end do ! b
+    else
+      do b = 1, size(fwdModelConf%beta_group)
+        nullify ( fwdModelConf%beta_group(b)%pfa_indices ) ! Why is this needed?
+      end do
+    end if ! associated(pfaData)
+
+!    if ( associated(pfaData) ) then
 !
 !      call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
 !        & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
@@ -455,12 +484,7 @@ contains
 !      call deallocate_test ( PFAWork, 'PFAWork', moduleName )
 !      call deallocate_test ( whichPFA, 'whichPFA', moduleName )
 !      call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
-    end if ! associated(pfaData)
-
-    ! Hook the shortcuts into the structure
-    fwdModelConf%forwardModelDerived%channels => channels
-    fwdModelConf%forwardModelDerived%DACsStaging => DACsStaging
-    fwdModelConf%forwardModelDerived%usedDACSSignals => usedDACSSignals
+!   end if ! associated(pfaData)
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
@@ -472,41 +496,6 @@ contains
         & 'Unrecoverable errors in forward model configuration' )
 
   end subroutine DeriveFromForwardModelConfig
-
-  ! -----------------------------------------  Destroy_Beta_Group  -----
-  subroutine Destroy_Beta_Group ( Beta_Group )
-
-  ! Destroy the catalog extract prepared by Get_Species_Data
-
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
-
-    type(beta_group_t), pointer :: Beta_Group(:)
-
-    integer :: I
-
-    if ( .not. associated(beta_group) ) return
-
-    do i = 1, size(beta_group)
-      call deallocate_test ( beta_group(i)%cat_index, 'beta_group(i)%cat_index', &
-        & moduleName )
-      call deallocate_test ( beta_group(i)%lbl_molecules, 'beta_group(i)%LBL_molecules', &
-        & moduleName )
-      call deallocate_test ( beta_group(i)%lbl_ratio, 'beta_group(i)%LBL_ratio', &
-        & moduleName )
-      call deallocate_test ( beta_group(i)%PFA_indices, 'beta_group(i)%PFA_indices', &
-        & moduleName )
-      call deallocate_test ( beta_group(i)%pfa_molecules, 'beta_group(i)%PFA_molecules', &
-        & moduleName )
-      call deallocate_test ( beta_group(i)%pfa_ratio, 'beta_group(i)%PFA_ratio', &
-        & moduleName )
-    end do
-
-    deallocate ( beta_group, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'beta_group' )
-
-  end subroutine Destroy_Beta_Group
 
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database, Deep )
@@ -534,37 +523,42 @@ contains
 
   ! ---------------------------------  DestroyForwardModelDerived  -----
   subroutine DestroyForwardModelDerived ( FwdModelConf )
-    ! Destroy FwdModelConf%ForwardModelDerived
+    ! Destroy stuff in FwdModelConf derived for one forward model run
 
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
-    integer :: I, Ier
+    integer :: B, I, Ier
 
-    if ( associated(fwdModelConf%forwardModelDerived%channels) ) then
-      do i = 1, size(fwdModelConf%forwardModelDerived%channels)
+    if ( associated(fwdModelConf%channels) ) then
+      do i = 1, size(fwdModelConf%channels)
         call deallocate_test ( &
-          & fwdModelConf%forwardModelDerived%channels(i)%PFAIndex, &
-          & 'fwdModelConf%forwardModelDerived%channels(i)%PFAIndex', moduleName )
+          & fwdModelConf%channels(i)%PFAIndex, &
+          & 'fwdModelConf%channels(i)%PFAIndex', moduleName )
         call deallocate_test ( &
-          & fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules, &
-          & 'fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules', moduleName )
+          & fwdModelConf%channels(i)%PFAMolecules, &
+          & 'fwdModelConf%channels(i)%PFAMolecules', moduleName )
         call deallocate_test ( &
-          & fwdModelConf%forwardModelDerived%channels(i)%betaIndex, &
-          & 'fwdModelConf%forwardModelDerived%channels(i)%BetaIndex', moduleName )
+          & fwdModelConf%channels(i)%betaIndex, &
+          & 'fwdModelConf%channels(i)%BetaIndex', moduleName )
       end do
-      deallocate ( fwdModelConf%forwardModelDerived%channels, stat = ier )
+      deallocate ( fwdModelConf%channels, stat = ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'fwdModelConf%forwardModelDerived%channels' )
+        & MLSMSG_DeAllocate//'fwdModelConf%channels' )
     end if
 
-    call deallocate_test ( fwdModelConf%forwardModelDerived%DACSStaging, &
-      & 'fwdModelConf%forwardModelDerived%DACSStaging', moduleName )
+    do b = 1, size(fwdModelConf%beta_group)
+      call deallocate_test ( fwdModelConf%beta_group(b)%PFA_indices, &
+        'Beta_group(b)%PFA_indices', moduleName )
+    end do ! b
 
-    call deallocate_test ( fwdModelConf%forwardModelDerived%usedDACSSignals, &
-      & 'fwdModelConf%forwardModelDerived%usedDACSSignals', moduleName )
+    call deallocate_test ( fwdModelConf%DACSStaging, &
+      & 'fwdModelConf%DACSStaging', moduleName )
+
+    call deallocate_test ( fwdModelConf%usedDACSSignals, &
+      & 'fwdModelConf%usedDACSSignals', moduleName )
 
   end subroutine DestroyForwardModelDerived
 
@@ -856,12 +850,26 @@ contains
     logical, optional, intent(in) :: DEEP ! Do a really deep destroy
 
     ! Local variables
+    integer :: B                        ! Subscript for Beta_Group
     integer :: STATUS                   ! Flag from allocate etc.
     logical :: MYDEEP                   ! Copy of deep
 
     ! Executable code
     myDeep = .false.
     if ( present ( deep ) ) myDeep = deep
+    call destroyForwardModelDerived ( config )
+    ! Destroy the beta groups
+    do b = 1, size(config%beta_group)
+      call deallocate_test ( config%beta_group(b)%cat_index, 'Cat_Index', moduleName )
+      call deallocate_test ( config%beta_group(b)%lbl_molecules, 'LBL_Molecules', moduleName )
+      call deallocate_test ( config%beta_group(b)%lbl_ratio, 'LBL_Ratio', moduleName )
+      call deallocate_test ( config%beta_group(b)%pfa_molecules, 'PFA_Molecules', moduleName )
+      call deallocate_test ( config%beta_group(b)%pfa_ratio, 'PFA_Ratio', moduleName )
+      ! PFA_Indices are created and destroyed on each call to FullForwardModel.
+    end do
+    deallocate ( config%beta_group, stat=b )
+    if ( b /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'Config%Beta_group' )
     if ( associated(config%signals) ) &
       & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
     if ( myDeep ) then
@@ -885,7 +893,6 @@ contains
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
-    call destroyForwardModelDerived ( config )
   end subroutine DestroyOneForwardModelConfig
 
   ! --------------------------------------------  Dump_Beta_Group  -----
@@ -914,19 +921,19 @@ contains
           & lit_indices(beta_group(i)%pfa_molecules), before=', PFA:' )
       call newLine
       if ( size(beta_group(i)%lbl_molecules) > 0 ) then
-        if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
         call dump ( beta_group(i)%lbl_ratio, name='   LBL Ratio' )
-        if ( associated ( beta_group(i)%cat_index ) ) &
-          & call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
+        call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
       end if
+      if ( size(beta_group(i)%pfa_molecules) > 0 ) &
+        & call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
       if ( associated(beta_group(i)%PFA_indices) ) then
-        call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
         do j = lbound(beta_group(i)%PFA_indices,1), &
                ubound(beta_group(i)%PFA_indices,1), 2
           call output ( j, before='   PFA Indices for sideband ', advance='yes' )
           call dump ( beta_group(i)%PFA_indices(j,:,:) )
         end do
       end if
+      if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
     end do
   end subroutine Dump_Beta_Group
 
@@ -1026,31 +1033,30 @@ contains
     end do
     ! Dump ForwardModelDerived
     call output ( '  ForwardModelDerived:', advance='yes' )
-    if ( associated(Config%forwardModelDerived%usedDACSSignals) ) &
-      call dump  ( Config%forwardModelDerived%usedDACSSignals, &
-        & name='   Used DACS Signals' )
-    if ( associated(Config%forwardModelDerived%channels) ) then
+    if ( associated(Config%usedDACSSignals) ) &
+      call dump  ( Config%usedDACSSignals, name='   Used DACS Signals' )
+    if ( associated(Config%channels) ) then
       call output ( '   Channel info:', advance='yes' )
-      do j = 1, size(Config%forwardModelDerived%channels)
-        call output ( Config%forwardModelDerived%channels(j)%used, before='    Used: ' )
-        call output ( Config%forwardModelDerived%channels(j)%origin, before='    Origin: ' )
-        call output ( Config%forwardModelDerived%channels(j)%signal, before='    Signal: ' )
-        call output ( Config%forwardModelDerived%channels(j)%DACS, before='    DACS: ', &
+      do j = 1, size(Config%channels)
+        call output ( Config%channels(j)%used, before='    Used: ' )
+        call output ( Config%channels(j)%origin, before='    Origin: ' )
+        call output ( Config%channels(j)%signal, before='    Signal: ' )
+        call output ( Config%channels(j)%DACS, before='    DACS: ', &
           & advance='yes' )
-        if ( associated(Config%forwardModelDerived%channels(j)%PFAIndex) ) &
-          & call dump ( Config%forwardModelDerived%channels(j)%PFAIndex(-1:1:2,:), &
+        if ( associated(Config%channels(j)%PFAIndex) ) &
+          & call dump ( Config%channels(j)%PFAIndex(-1:1:2,:), &
             & name='    PFAData' )
-        if ( associated(Config%forwardModelDerived%channels(j)%PFAMolecules) ) then
+        if ( associated(Config%channels(j)%PFAMolecules) ) then
           call output ( '    PFA Molecules:', advance='no' )
-          if ( size(Config%forwardModelDerived%channels(j)%PFAMolecules) == 0 ) &
+          if ( size(Config%channels(j)%PFAMolecules) == 0 ) &
             call output ( ' Empty' )
-          do i = 1, size(Config%forwardModelDerived%channels(j)%PFAMolecules)
+          do i = 1, size(Config%channels(j)%PFAMolecules)
             call output ( ' ', advance='no' )
             call display_string ( &
-              & lit_indices(Config%forwardModelDerived%channels(j)%PFAMolecules(i)), &
+              & lit_indices(Config%channels(j)%PFAMolecules(i)), &
               & advance='no' )
-            if ( Config%forwardModelDerived%channels(j)%betaIndex(i) /= 0 ) &
-              & call output ( Config%forwardModelDerived%channels(j)%betaIndex(i), &
+            if ( Config%channels(j)%betaIndex(i) /= 0 ) &
+              & call output ( Config%channels(j)%betaIndex(i), &
                 & before=':' )
           end do
           call newLine
@@ -1077,6 +1083,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.62  2004/11/04 03:42:08  vsnyder
+! Provide for both LBL_Ratio and PFA_Ratio in beta_group
+!
 ! Revision 2.61  2004/11/03 01:25:30  vsnyder
 ! Don't deallocate config%molecules -- it's a pointer into beta_group
 !
