@@ -1013,7 +1013,7 @@ contains
 
     real(rp), parameter :: c = speedOfLight/1000.0_rp ! Speed of Light Km./Sec.
 
-    integer :: nl,i,j,n_sps,spectag
+    integer :: nl,i,j,n_sps,spectag, k
 
     real(rp) :: mass, vel_z_correction, Qlog(3)
 
@@ -1051,27 +1051,31 @@ contains
 
       ELSE
 
-        ! NEED MORE WORK HERE -JHJ
-        PRINT*, NO_ELE 
-        ! compute first element along the LOS path
-        call Slabs_Prep_Arrays ( Spectag, nl, t_path(1)+dt, p_path(1), mass, Qlog, &
-          &  Catalog(i), gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1, gl_slabs(1,i)%y, &
-          &  gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1, gl_slabs(1,i)%dslabs1_dv0 )
+        ! compute each element along the LOS path before tangent point
 
-        gl_slabs(1,i)%v0s = gl_slabs(1,i)%v0s * Vel_z_correction
+        do j = 1, no_ele/2
+
+          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j)+dt, p_path(j), mass, Qlog, &
+            &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
+            &  gl_slabs(j,i)%yi, gl_slabs(j,i)%slabs1, gl_slabs(j,i)%dslabs1_dv0 )
+
+          gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
+
+        enddo
         
-        ! fill other grid points with value of the first grid point
-        do j = 2, no_ele
-
-          gl_slabs(j,i)%v0s         = gl_slabs(1,i)%v0s
-          gl_slabs(j,i)%x1          = gl_slabs(1,i)%x1
-          gl_slabs(j,i)%y           = gl_slabs(1,i)%y
-          gl_slabs(j,i)%yi          = gl_slabs(1,i)%yi 
-          gl_slabs(j,i)%slabs1      = gl_slabs(1,i)%slabs1 
-          gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(1,i)%dslabs1_dv0
+        ! fill in grid points on other side with above value
+        
+        do j = no_ele, no_ele/2+1, -1
+          
+          k=no_ele -j + 1
+          gl_slabs(j,i)%v0s         = gl_slabs(k,i)%v0s
+          gl_slabs(j,i)%x1          = gl_slabs(k,i)%x1
+          gl_slabs(j,i)%y           = gl_slabs(k,i)%y
+          gl_slabs(j,i)%yi          = gl_slabs(k,i)%yi 
+          gl_slabs(j,i)%slabs1      = gl_slabs(k,i)%slabs1 
+          gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(k,i)%dslabs1_dv0
         
         enddo
-
         
       ENDIF
 
@@ -1088,6 +1092,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.14  2003/01/16 19:08:43  jonathan
+! testing
+!
 ! Revision 2.13  2003/01/16 18:50:20  jonathan
 ! For 1D FWM compute first element along the LOS path then fill other grid points with value of the first grid point
 !
