@@ -7,8 +7,8 @@ module ReadAPriori
   use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_READ  !, SFSTART
-  use INIT_TABLES_MODULE, only: F_DIMLIST, F_FIELD, F_FILE, &
+  use Hdf, only: DFACC_READ
+  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
     & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, S_L2AUX, S_L2GP, F_QUANTITYTYPE
@@ -69,6 +69,7 @@ contains ! =====     Public Procedures     =============================
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
 
     ! Local Variables
+    integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
     integer :: COMMAPOS                 ! For parsing string
     logical, parameter :: DEBUG = .FALSE.
     integer :: Details             ! How much info about the files to dump
@@ -90,6 +91,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GridIndex           ! In the griddeddata database
     logical :: GotAlready               ! Do we need to reread this file?
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    character :: HMOT              ! 'H', 'M', 'O', or 'T'
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: L2apriori_version
@@ -146,6 +148,7 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
+      HMOT = ' '
       L2apriori_version = 1
       got = .false.
       son = subtree(i,root)
@@ -169,6 +172,8 @@ contains ! =====     Public Procedures     =============================
         fieldIndex = decoration(subtree(1,field))
         got(fieldIndex) = .true.
         select case ( fieldIndex )
+        case ( f_AuraInstrument )
+          AuraInst = sub_rosa(subtree(2,field))
         case ( f_dimList )
           dimList = sub_rosa(subtree(2,field))
         case ( f_field )
@@ -201,6 +206,10 @@ contains ! =====     Public Procedures     =============================
         dimListString = ''
       end if
         
+      if ( got(f_AuraInstrument) ) then
+        call get_string ( AuraInst, HMOT, strip=.true. )
+      endif
+
       if ( got(f_file) ) then
         call get_string ( FileName, fileNameString, strip=.true. )
       else
@@ -274,8 +283,13 @@ contains ! =====     Public Procedures     =============================
         ! Read the swath
         ! call ReadL2GPData ( fileHandle, swathNameString, l2gp, &
         ! & hdfVersion=hdfVersion )
-        call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
-         & hdfVersion=hdfVersion )
+        if ( HMOT /= ' ' ) then
+          call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
+           & hdfVersion=hdfVersion, HMOT=HMOT )
+        else
+          call ReadL2GPData ( trim(FileNameString), swathNameString, l2gp, &
+           & hdfVersion=hdfVersion )
+        endif
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( l2gp, details=details )
@@ -588,6 +602,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.47  2003/04/17 23:08:29  pwagner
+! Added optional AuraInstrument field to l2gp apriori reads
+!
 ! Revision 2.46  2003/04/04 18:35:11  pwagner
 ! Warns if dao, ncep FILENOTFOUND
 !
