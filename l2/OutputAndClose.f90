@@ -58,7 +58,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf, anText )
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf )
 
 	! Hard-wired assumptions:
 	
@@ -77,7 +77,6 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
 	 type(PCFData_T) :: l2pcf
-      CHARACTER (LEN=1), POINTER :: anText(:)
 
   ! - - - Local declarations - - -
 
@@ -232,7 +231,7 @@ contains ! =====     Public Procedures     =============================
 					endif
 
 						call populate_metadata_std &
-						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText, &
+						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
                   & metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
@@ -251,7 +250,7 @@ contains ! =====     Public Procedures     =============================
 
 						call populate_metadata_oth &
 						& (l2gpFileHandle, l2gp_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames, anText, metadata_error)
+						& numquantitiesperfile, QuantityNames, metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
 
@@ -348,7 +347,7 @@ contains ! =====     Public Procedures     =============================
 					endif
 						call populate_metadata_oth &
 						& (l2auxFileHandle, l2aux_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames, anText, metadata_error)
+						& numquantitiesperfile, QuantityNames, metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
 
@@ -384,7 +383,7 @@ contains ! =====     Public Procedures     =============================
 			call output('About to deallocate text of PCF file' , advance='yes')
 		endif
 
-      DEALLOCATE(anText, STAT=returnStatus)
+      DEALLOCATE(l2pcf%anText, STAT=returnStatus)
 		if(returnStatus /= 0) then
 			call announce_error(0, &
 			& 'Failed to deallocate anText of PCF file')
@@ -445,6 +444,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.24  2001/04/19 23:51:40  pwagner
+! Moved anText to become component of PCFData_T
+!
 ! Revision 2.23  2001/04/16 23:51:08  pwagner
 ! Gets penalty from MLSL2Options
 !
