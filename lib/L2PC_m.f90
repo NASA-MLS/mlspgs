@@ -293,6 +293,11 @@ contains ! ============= Public Procedures ==========================
       do quantity = 1, size(v%quantities)
         if ( thisPack(quantity) ) then
           qt => v%quantities(quantity)%template
+
+          ! Write quantity name - will be ignored on the read (at least by
+          ! fortran, IDL pays attention
+          call get_string ( qt%name, line )
+          write (unit,*) trim(line)
           
           ! Write quantity type
           call get_string ( lit_indices(qt%quantityType), line )
@@ -549,6 +554,10 @@ contains ! ============= Public Procedures ==========================
       
       ! Nullify stuff so we don't clobber arrays now in databases
       nullify ( qt%surfs, qt%phi )
+
+      ! Read and ignore the name, we're going on the type, at least for the
+      ! moment.
+      read (unit,*, IOSTAT=status) line
       
       ! Read quantity type
       read (unit,*, IOSTAT=status) line
@@ -704,6 +713,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.32  2002/05/21 01:13:24  livesey
+! New file format includes name for reading into IDL
+!
 ! Revision 2.31  2002/03/15 21:22:42  livesey
 ! Slight modification to binSelectors stuff
 !

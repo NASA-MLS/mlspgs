@@ -388,7 +388,6 @@ contains ! ================================ Procedures ======================
       if ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
         & ( any(machineFree .and. machineOK) .or. usingSubmit ) ) then
         nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
-        machine = FindFirst(machineFree .and. machineOK)
         if ( usingSubmit ) then ! --------------------- Using a batch system
           write ( chunkNoStr, '(i0)' ) nextChunk
           commandLine = &
@@ -404,6 +403,7 @@ contains ! ================================ Procedures ======================
             call output ( nextChunk, advance='yes' )
           end if
         else ! ----------------------------------------- Start job using pvmspawn
+          machine = FindFirst(machineFree .and. machineOK)
           commandLine = 'mlsl2'
           if ( index(switches,'slv') /= 0 ) then
             call PVMFCatchOut ( 1, info )
@@ -489,7 +489,6 @@ contains ! ================================ Procedures ======================
                 & call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & "An unknown machine sent a registration message!" )
               chunkMachines(chunk) = machine
-              machineFree(machine) = .false.
               call WelcomeSlave ( chunk, slaveTid )
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Welcomed task ' // &
@@ -528,7 +527,7 @@ contains ! ================================ Procedures ======================
             
             ! Now update our information
             chunksCompleted(chunk) = .true.
-            machineFree(machine) = .true.
+            if ( .not. usingSubmit ) machineFree(machine) = .true.
             chunkTids(chunk) = 0
             chunkMachines(chunk) = 0
             if ( index(switches,'mas') /= 0 ) then
@@ -544,14 +543,15 @@ contains ! ================================ Procedures ======================
               call output ( count(.not. &
                 & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
               call output ( ' left. ', advance='yes' )
-              
-              call output ( count ( .not. machineFree ) )
-              call output ( ' of ' )
-              call output ( noMachines )
-              call output ( ' machines busy, with ' )
-              call output ( count ( .not. machineOK ) )
-              call output ( ' being avoided.', advance='yes' )
-            endif
+              if ( .not. usingSubmit ) then
+                call output ( count ( .not. machineFree ) )
+                call output ( ' of ' )
+                call output ( noMachines )
+                call output ( ' machines busy, with ' )
+                call output ( count ( .not. machineOK ) )
+                call output ( ' being avoided.', advance='yes' )
+              end if
+            end if
             
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -575,7 +575,7 @@ contains ! ================================ Procedures ======================
           ! if, as far as we're concerned, the task was finished anyway.
           if ( deadChunk /= 0 ) then
             deadMachine = chunkMachines(deadChunk)
-            machineFree(deadMachine) = .true.
+            if ( .not. usingSubmit ) machineFree(deadMachine) = .true.
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'The run of chunk ' )
               call output ( deadChunk )
@@ -687,6 +687,8 @@ contains ! ================================ Procedures ======================
           if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
             call output ( 'Joining ' )
             call display_string ( qty%template%name, advance='yes' )
+            call output ( 'Minor frame:' )
+            call output ( qty%template%minorFrame, advance='yes' )
           endif
           
           select case ( get_spec_id ( storedResults(resInd)%key ) )
@@ -945,6 +947,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.32  2002/05/21 01:12:05  livesey
+! Got rid of machine stuff not relevant in submit case
+!
 ! Revision 2.31  2002/05/08 16:19:29  livesey
 ! Bug fix.
 !
