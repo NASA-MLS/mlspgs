@@ -61,7 +61,8 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: l_swath, l_grid, l_hdf, &
       & PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
-    use L2GPData, only: L2GPData_T, cpL2GPData, WriteL2GPData, L2GPNameLen
+    use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
+      & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
     use MLSCommon, only: I4, findFirst, findNext
@@ -76,6 +77,7 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
       & Mlspcf_mcf_l2dgg_start
+    use MLSStrings, only: Array2List
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
     use Time_M, only: Time_Now
@@ -132,6 +134,7 @@ contains ! =====     Public Procedures     =============================
     integer :: record_length
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
+    character (len=MAXSWATHNAMESBUFSIZE) :: sdList
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
     integer :: SWFID
@@ -594,6 +597,7 @@ contains ! =====     Public Procedures     =============================
     ! Catenate any split Direct Writes
     ! We assume hdfVersion is 5
     if ( CATENATESPLITS .and. associated(DirectDatabase) ) then
+    !! if ( .true. .and. associated(DirectDatabase) ) then
       ! Any dgg eligible for being catenated
       DB_index = findFirst( DirectDatabase%autoType == l_l2dgg )
       if ( findNext(DirectDatabase%autoType == l_l2dgg, DB_index) > 0 ) then
@@ -608,11 +612,22 @@ contains ! =====     Public Procedures     =============================
           l2gpPhysicalFilename = unSplitName(file_base)
           returnStatus = 0
         endif
+        if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            &  "Must not unsplit dgg dw to " // trim(l2gpPhysicalFilename) )
+        endif
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
-          call cpL2GPData(trim(l2gpPhysicalFilename), &
-            & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
-            & hdfVersion=HDFVERSION_5)
+          if ( DEBUG ) then
+            call output ( 'preparing to cp split dgg', advance='yes' )
+            call output ( 'from: ', advance='no' )
+            call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
+            call output ( '   to: ', advance='no' )
+            call output ( trim(l2gpPhysicalFilename) , advance='yes' )
+          endif
+          call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
+            & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
+            & hdfVersion=HDFVERSION_5, notUnlimited=avoidUnlimitedDims)
         enddo
         if ( TOOLKIT ) then
           call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
@@ -635,12 +650,26 @@ contains ! =====     Public Procedures     =============================
           l2auxPhysicalFilename = unSplitName(file_base)
           returnStatus = 0
         endif
+        if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            &  "Must not unsplit dgg dw to " // trim(l2auxPhysicalFilename) )
+        endif
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
+          call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
           ! Not implemented yet
-          call cpL2AUXData(trim(l2auxPhysicalFilename), &
-            & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
-            & hdfVersion=HDFVERSION_5)
+          if ( DEBUG ) then
+            call output ( 'preparing to cp split dgm', advance='yes' )
+            call output ( 'from: ', advance='no' )
+            call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
+            call output ( '   to: ', advance='no' )
+            call output ( trim(l2auxPhysicalFilename) , advance='yes' )
+            call output ( '   sdList: ', advance='no' )
+            call output ( trim(sdList) , advance='yes' )
+          endif
+          call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
+            & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
+            & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
         enddo
         if ( TOOLKIT ) then
         endif
@@ -717,7 +746,7 @@ contains ! =====     Public Procedures     =============================
   integer, intent(out) :: metadata_error
   
   ! Internal variables
-  logical, parameter :: DEBUG = .true.
+  logical, parameter :: DEBUG = .false.
   integer :: field_no
   character (len=132) :: FILE_BASE
   integer :: fileHandle
@@ -912,6 +941,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.92  2004/02/05 23:35:21  pwagner
+! Fixed some bugs in catenating split dgg/dgm directwrites
+!
 ! Revision 2.91  2004/01/27 21:37:26  pwagner
 ! Can catenate split l2aux files
 !
