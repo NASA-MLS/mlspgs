@@ -16,8 +16,8 @@ module ForwardModelSupport
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
     & F_MOLECULEDERIVATIVES, &
-    & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
-    & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
+    & F_PHIWINDOW, F_POINTINGGRIDS, F_POLARIZED, F_SIGNALS, F_SPECT_DER, &
+    & F_TANGENTGRID, F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_I_SATURATION, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES
@@ -363,6 +363,7 @@ contains ! =====     Public Procedures     =============================
     info%do_1d = .false.
     info%DEFAULT_spectroscopy = .false.
     info%lockBins = .false.
+    info%polarized = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
@@ -412,6 +413,8 @@ contains ! =====     Public Procedures     =============================
         info%do_1d = get_boolean(son)
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
+      case ( f_polarized )
+        info%polarized = get_boolean(son)
       case ( f_nameFragment )
         info%nameFragment = sub_rosa ( subtree(2,son) )
       case ( f_DEFAULT_spectroscopy )
@@ -686,6 +689,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.47  2003/01/29 01:48:29  vsnyder
+! Add 'polarized' field to forwardModel
+!
 ! Revision 2.46  2003/01/27 16:51:08  livesey
 ! Added initialisation for windowUnits
 !
