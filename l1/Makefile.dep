@@ -1,28 +1,23 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-Calibration.o  		L0_sci_tbls.o    OpenInit.o  	  WriteMetaL1.o  \
-Close_Files.o  		L1BOutUtils.o    Orbit.o  	  calib.o  \
-EngTbls.o  		MLSL1.o  	 OutputL1B.o  	  close_files.o  \
-EngUtils.o  		MLSL1Common.o    Radiances.o  	  open_init.o  \
-InitPCFs.o  		MLSL1Config.o    Scan.o  	  outrad.o  \
-Init_tables_module.o  	MLSL1Rad.o  	 SciUtils.o  	  sort_qualify.o  \
-Interpolation.o  	MLSL1Utils.o  	 SortQualify.o  \
-L0Utils.o  		MLSPCF1.o  	 TkL1B.o  \
+Calibration.o      L0_sci_tbls.o    MLSPCF1.o      SortQualify.o  \
+Close_Files.o      L1BOutUtils.o    OpenInit.o     TkL1B.o  \
+EngTbls.o  	   MLSL1.o  	    Orbit.o  	   WriteMetaL1.o  \
+EngUtils.o  	   MLSL1Common.o    OutputL1B.o    init_tables_module.o  \
+InitPCFs.o  	   MLSL1Config.o    Radiances.o  \
+Interpolation.o    MLSL1Rad.o       Scan.o  \
+L0Utils.o  	   MLSL1Utils.o     SciUtils.o  \
  
 # using f90makedep.pl to calculate dependencies 
-calib.o: calib.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o MLSL1Common.o \
-	MLSL1Rad.o
 Calibration.o: Calibration.f90 EngTbls.o Interpolation.o L0_sci_tbls.o \
 	MLSL1Common.o
 Close_Files.o: Close_Files.f90 $(dir1)Hdf.o $(dir1)MLSMessageModule.o \
 	MLSL1Common.o WriteMetaL1.o
-close_files.o: close_files.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSL1Common.o
 EngTbls.o: EngTbls.f90 $(dir1)MLSStrings.o
 EngUtils.o: EngUtils.f90 $(dir1)MLSCommon.o EngTbls.o L0Utils.o MLSL1Utils.o \
 	OpenInit.o
-Init_tables_module.o: Init_tables_module.f90 $(dir1)intrinsic.o \
+init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
 	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
 	$(dir1)tree_types.o
 InitPCFs.o: InitPCFs.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o
@@ -33,21 +28,17 @@ L0Utils.o: L0Utils.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	OpenInit.o
 L1BOutUtils.o: L1BOutUtils.f90 MLSL1Common.o MLSL1Rad.o Orbit.o OutputL1B.o \
 	SortQualify.o TkL1B.o
-MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o L1BOutUtils.o \
-	OpenInit.o Radiances.o SortQualify.o close_files.o
+MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o Calibration.o Close_Files.o \
+	L1BOutUtils.o OpenInit.o Radiances.o SortQualify.o
 MLSL1Common.o: MLSL1Common.f90 $(dir1)MLSCommon.o
 MLSL1Config.o: MLSL1Config.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)SDPToolkit.o $(dir1)declaration_table.o $(dir1)lexer_core.o \
 	$(dir1)output_m.o $(dir1)parser.o $(dir1)string_table.o $(dir1)tree.o \
-	$(dir1)units.o $(dir2)tree_checker.o Init_tables_module.o MLSPCF1.o
+	$(dir1)units.o $(dir2)tree_checker.o MLSPCF1.o init_tables_module.o
 MLSL1Rad.o: MLSL1Rad.f90 $(dir1)MLSMessageModule.o \
 	$(dir1)MLSSignalNomenclature.o $(dir1)MLSStrings.o MLSL1Common.o \
 	MLSL1Config.o
 MLSL1Utils.o: MLSL1Utils.f90
-open_init.o: open_init.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
-	$(dir1)MLSSignalNomenclature.o $(dir1)SDPToolkit.o MLSL1Common.o \
-	MLSL1Rad.o OutputL1B.o
 OpenInit.o: OpenInit.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
 	$(dir1)MLSMessageModule.o $(dir1)MLSSignalNomenclature.o \
 	$(dir1)SDPToolkit.o Calibration.o EngTbls.o InitPCFs.o L0_sci_tbls.o \
@@ -61,8 +52,6 @@ Radiances.o: Radiances.f90 $(dir1)MLSCommon.o Calibration.o EngTbls.o \
 Scan.o: Scan.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)SDPToolkit.o
 SciUtils.o: SciUtils.f90 L0Utils.o L0_sci_tbls.o MLSL1Common.o MLSL1Utils.o
-sort_qualify.o: sort_qualify.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	MLSL1Common.o OpenInit.o
 SortQualify.o: SortQualify.f90 $(dir1)MLSCommon.o Calibration.o EngTbls.o \
 	EngUtils.o L0_sci_tbls.o MLSL1Common.o SciUtils.o
 TkL1B.o: TkL1B.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
