@@ -91,7 +91,7 @@ begin MLSSignals
     centerfrequency= 9.9785 GHz
   B13F: band, suffix= "HCL",  radiometer=R4 , spectrometerType= FB25,  $
     centerfrequency= 16.9373 GHz
-  B14F: band, suffix= "OH",   radiometer=R4 , spectrometerType= FB25,  $
+  B14F: band, suffix= "O3",   radiometer=R4 , spectrometerType= FB25,  $
     centerfrequency= 17.4844 GHz
 
   B15F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
@@ -227,6 +227,9 @@ begin MLSSignals
 end MLSSignals
 
 ; $Log$
+; Revision 2.5  2002/03/05 00:54:12  livesey
+; Whoops!
+;
 ; Revision 2.4  2002/03/05 00:53:50  livesey
 ; Wrong name for B15
 ;
