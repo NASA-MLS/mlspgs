@@ -55,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_B, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
+      & F_APRIORIPRECISION, F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
@@ -320,6 +320,7 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     integer :: AVECINDEX                ! Index of a vector
+    real(r8) :: BADRANGE(2)             ! Range for 'missing' data value
     integer :: BASELINEQTYINDEX
     integer :: BASELINEVCTRINDEX
     integer :: BINNAME                  ! Name of an l2pc bin
@@ -742,6 +743,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_b )
             bVecIndex = decoration(decoration(subtree(1,gson)))
             bQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_badRange )
+            call expr ( gson , unitAsArray, valueAsArray )
+            badRange = valueAsArray
           case ( f_baselineQuantity )
             baselineVctrIndex = decoration(decoration(subtree(1,gson)))
             baselineQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1090,7 +1094,11 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got ( f_file ) ) &
             & call Announce_Error ( key, 0, &
             & 'Need filename for asciiFile fill' )
-          call FillQuantityFromASCIIFile ( key, quantity, filename )
+          if ( got ( f_badRange ) ) then
+            call FillQuantityFromASCIIFile ( key, quantity, filename, badRange )
+          else
+            call FillQuantityFromASCIIFile ( key, quantity, filename )
+          end if
 
         case ( l_binMax, l_binMean, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -5203,12 +5211,13 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillVectorQtyFromIsotope
 
     ! ----------------------------------- FillQuantityFromASCIIFile --------
-    subroutine FillQuantityFromAsciiFile ( key, quantity, filename )
+    subroutine FillQuantityFromAsciiFile ( key, quantity, filename, badRange )
       use IO_stuff, only: GET_LUN
       use Machine, only: IO_Error
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
+      real(r8), dimension(2), optional, intent(in) :: BADRANGE ! Range for missing data
       ! Local variables
       integer :: LUN                    ! Unit number
       integer :: STATUS                 ! Flag from open/close/read etc.
@@ -5233,6 +5242,13 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) then 
         call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
         call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file' )
+      end if
+      if ( present ( badRange ) ) then 
+        if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
+        where ( quantity%values >= badRange(1) .and. &
+          & quantity%values <= badRange(2) ) 
+          quantity%mask = char(ior(ichar(quantity%mask),m_linAlg))
+        end where
       end if
     end subroutine FillQuantityFromAsciiFile
 
@@ -6961,6 +6977,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.293  2004/11/08 21:57:00  livesey
+! Added handling of 'badRange' in ASCII fill
+!
 ! Revision 2.292  2004/10/21 19:32:55  livesey
 ! Got the Fill from ASCII file working.
 !
