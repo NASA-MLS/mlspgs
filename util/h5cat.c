@@ -164,30 +164,58 @@ herr_t operator(hid_t group_id, const char *member_name, void
     int *aidx;
     void *aopdata;
     hid_t *new_dsetp;
-
+    int isthere_already;
     opdat_t newsubgroup;
     size_t size_hint;
+    hbool_t followlink;
+    /* Next items needed to turn off error messages */
+    herr_t (*old_func)(void*);
+    void *old_client_data;
+
+    followlink=0;
     if(verbose) printf("It's a group: Looking into it\n");
     /*oldsubgroup_id=H5Gopen(group_id,member_name );*/
     size_hint=40;
-    newsubgroup.newloc_id=H5Gcreate(newloc_id, member_name, size_hint );
-    newsubgroup.getall=newopdat.getall;
-    idx=NULL;
-    error=H5Giterate(group_id, member_name, idx, 
-		     operator, (void *) &newsubgroup ) ;
+    /* Now, if the old file is not the first in the list, then the
+       group may already exist in the new file. That isn't an error
+       like it would be with a dataset.
+    */
+    /* turn off error handling so we can check if the group is there silently*/
+    H5Eget_auto(&old_func, &old_client_data);
+    H5Eset_auto(NULL,NULL);
 
+    if(verbose) printf("Calling H5Gget_objinfo\n");
+    isthere_already=H5Gget_objinfo(newloc_id, member_name,followlink,NULL);
+    if(verbose) printf("Result is %d\n",isthere_already);
 
-    
+    /* Turn error messages back on */
+    H5Eset_auto(old_func, old_client_data);
+
+    if(isthere_already >= 0) {
+      if(verbose) printf("Group %s exists: opening it\n",member_name);
+      newsubgroup.newloc_id=H5Gopen(newloc_id, member_name);
+    }
+    else{
+      if(verbose) printf("Group %s seen for first time: creating it\n",
+			 member_name);
+      newsubgroup.newloc_id=H5Gcreate(newloc_id, member_name, size_hint );
+    }
+    newsubgroup.getall=newopdat.getall; idx=NULL;
+    error=H5Giterate(group_id, member_name, idx, operator, (void *)
+		     &newsubgroup ) ;
 
     /* Process all attributes of this group.  */
-    oldsubgroup_id=H5Gopen(group_id,member_name);
-    aidx=NULL; /* Making this NULL ensures all attributes are processed */
-    new_dsetp=&(newsubgroup.newloc_id);
-    aopdata=(void *) new_dsetp;
-    global_attrcnt=0;
-    if(global_nattrs > 0)
-      error=H5Aiterate(oldsubgroup_id, aidx, attr_op, aopdata );
-    error=H5Gclose(oldsubgroup_id);
+    if(isthere_already < 0) {
+      oldsubgroup_id=H5Gopen(group_id,member_name);
+      aidx=NULL; /* Making this NULL ensures all attributes are processed */
+      new_dsetp=&(newsubgroup.newloc_id);
+      aopdata=(void *) new_dsetp;
+      global_attrcnt=0;
+      if(global_nattrs > 0)
+	error=H5Aiterate(oldsubgroup_id, aidx, attr_op, aopdata );
+      error=H5Gclose(oldsubgroup_id);
+    }
+
 
 
     /*error=H5Gclose(oldsubgroup_id); */
@@ -267,8 +295,8 @@ herr_t attr_op(hid_t loc_id, const char *attr_name, void *operator_data){
   new_dset_idp=(hid_t *) operator_data;
   new_dset_id= *new_dset_idp;
 
-
-  printf("Processing attribute %s\n",attr_name);
+  if(verbose)
+    printf("Processing attribute %s\n",attr_name);
   
   attr_id=H5Aopen_name(loc_id, attr_name ) ;
   type_id=H5Aget_type(attr_id);
