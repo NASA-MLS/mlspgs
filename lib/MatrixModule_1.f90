@@ -9,20 +9,23 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! quantities in MLS Level 2 software, and related programs.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use MatrixModule_0, only: Assignment(=), CholeskyFactor, ColumnScale, &
-    & CreateBlock, DestroyBlock, M_Absent, MatrixElement_T, &
-    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
-    & operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
+  use DUMP_0, only: DUMP
+  use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
+    & ColumnScale, CreateBlock, DestroyBlock, Dump, M_Absent, MatrixElement_T, &
+    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
+    & operator(+), operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
+    & MLSMSG_DeAllocate, MLSMSG_Error
+  use OUTPUT_M, only: OUTPUT
+  use String_Table, only: Display_String
   use VectorsModule, only: CloneVector, Vector_T
 
   implicit NONE
   private
-  public :: AddMatrices, AddToMatrix, Assignment(=), CopyMatrix
-  public :: CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1, ColumnScale
-  public :: ColumnScale_1, Dump, FindBlock
+  public :: AddMatrices, AddToMatrix, Assignment(=), ClearRows, ClearRows_1
+  public :: CopyMatrix, CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1
+  public :: ColumnScale, ColumnScale_1, Dump, FindBlock
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Kronecker_T, Matrix_SPD_T
   public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
@@ -40,6 +43,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface CholeskyFactor
     module procedure CholeskyFactor_1
+  end interface
+
+  interface ClearRows
+    module procedure ClearRows_1
   end interface
 
   interface ColumnScale
@@ -191,7 +198,6 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K                  ! Subscripts and loop inductors
     integer :: N, N0                    ! Columns(blocks), Columns(0-level)
-    type(MatrixElement_T) :: P          ! Product of two blocks
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
 
     ! Check that the matrices are compatible.  We don't need to check
@@ -207,23 +213,39 @@ contains ! =====     Public Procedures     =============================
       n0 = x%m%col%nelts(i)
       call createBlock ( s, n0, n0, M_Absent )
       do k = 1, i-1
-        p = z%m%block(k,i) .tx. z%m%block(k,i)
-        s = s + p
-        call destroyBlock( p )     ! Avoid a memory leak
+        call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
+          & update=.true. )
       end do ! k = 1, i-1
       call choleskyFactor ( z%m%block(i,i), s ) ! Factor block on diagonal
       do j = i+1, n
         call destroyBlock ( s )    ! Avoid a memory leak
         do k = 1, i-1
-          p = z%m%block(k,i) .tx. z%m%block(k,j)
-          s = s + p
-          call destroyBlock( p )   ! Avoid a memory leak
+          call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,j), s, &
+            & update=.true. )
         end do ! k = 1, i-1
         call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, transpose=.true. )
       end do ! j = 1, n
       call destroyBlock( s )       ! Avoid a memory leak
     end do ! i = 1, n
   end subroutine CholeskyFactor_1
+
+  ! ------------------------------------------------  ClearRows_1  -----
+  subroutine ClearRows_1 ( X )
+  ! Clear the rows of X for which the mask in X's row-defining vector
+  ! has nonzero bits.
+    type(Matrix_T), intent(inout) :: X
+    integer :: I, J                ! Subscripts and row indices
+    integer :: NI, NQ              ! Instance and quantity indices
+    do i = 1, x%row%nb
+      ni = x%row%inst(i)
+      nq = x%row%quant(i)
+      if ( associated(x%row%vec%quantities(nq)%mask) ) then
+        do j = 1, x%col%nb
+          call clearRows ( x%block(i,j), x%row%vec%quantities(nq)%mask(:,ni) )
+        end do ! j = 1, x%col%nb
+      end if
+    end do ! i = 1, x%row%nb
+  end subroutine ClearRows_1
 
   ! ----------------------------------------------  ColumnScale_1  -----
   subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
@@ -424,8 +446,6 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K             ! Subscripts for [XYZ]%Block
-    type(MatrixElement_T) :: T     ! So that we can clean up after a
-    !                                low-level multiply
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
@@ -436,12 +456,10 @@ contains ! =====     Public Procedures     =============================
     call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
     do j = 1, y%col%nb
       do i = 1, x%col%nb
-        z%block(i,j) = x%block(1,i) .tx. y%block(1,j)
+        call multiplyMatrixBlocks ( x%block(1,i), y%block(1,j), z%block(i,j) )
         do k = 2, x%row%nb
-          t = x%block(k,i) .tx. y%block(k,j) ! ??? It may be desirable to
-          z%block(i,j) = z%block(i,j) + t    ! ??? improve this by having a
-                                             ! ??? low-level multiply-add.
-          call destroyBlock ( t )       ! Avoid a memory leak
+          call multiplyMatrixBlocks ( &
+            & x%block(k,i), y%block(k,j), z%block(i,j), update=.true. )
         end do ! k = 2, x%nr
       end do ! i = 1, x%nc
     end do ! j = 1, y%nc
@@ -541,10 +559,10 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignMatrix.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
+    logical :: DO_UPDATE
     integer :: I, J, K             ! Subscripts for [AZ]%Block
+    integer, dimension(:), pointer :: MI, MJ ! Masks for columns I, J if any
     logical :: MY_UPDATE
-    type(MatrixElement_T) :: T     ! So that we can clean up after a
-    !                                low-level multiply
 
     ! Compute Z = A^T A or Z = Z + A^T A
     my_update = .false.
@@ -552,13 +570,36 @@ contains ! =====     Public Procedures     =============================
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
     do j = 1, a%col%nb
+      nullify ( mj )
+      if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
+        mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
       do i = 1, j
-        z%m%block(i,j) = a%block(1,i) .tx. a%block(1,j)
-        do k = 2, a%row%nb
-          t = a%block(k,i) .tx. a%block(k,j) ! ??? It may be desirable to
-          z%m%block(i,j) = z%m%block(i,j) + t    ! ??? improve this by having a
-                                             ! ??? low-level multiply-add.
-          call destroyBlock ( t )   ! Avoid a memory leak
+        nullify ( mi )
+        if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
+          mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%col%inst(i))
+        do_update = my_update
+        do k = 1, a%row%nb
+          if ( associated(mi) ) then
+            if ( associated(mj) ) then
+              call multiplyMatrixBlocks ( &
+                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
+                & xmask=mi, ymask=mj )
+            else
+              call multiplyMatrixBlocks ( &
+                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
+                & xmask=mi )
+            end if
+          else
+            if ( associated(mj) ) then
+              call multiplyMatrixBlocks ( &
+                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
+                & ymask=mj )
+            else
+              call multiplyMatrixBlocks ( &
+                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update )
+            end if
+          end if
+          do_update = .true.
         end do ! k = 2, a%row%nb
       end do ! i = 1, a%col%nb
     end do ! j = 1, a%col%nb
@@ -708,12 +749,73 @@ contains ! =====     Public Procedures     =============================
   subroutine Dump_Matrix ( Matrix, Name, Details )
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
-    logical, intent(in), optional :: Details
+    integer, intent(in), optional :: Details   ! Print details, default 1
+    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  >One => Details of the blocks, too.
+
+    integer :: I, J                ! Subscripts, loop inductors
+    integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
+
+    my_details = 1
+    if ( present(details) ) my_details = details
+    if ( present(name) ) call output ( name, advance='yes' )
+    call dump_rc ( matrix%row, 'row', my_details>0 )
+    call dump_rc ( matrix%col, 'column', my_details>0 )
+    do j = 1, matrix%col%nb
+      do i = 1, matrix%row%nb
+        call output ( 'Block at row ' )
+        call output ( i )
+        call output ( ' and column ' )
+        call output ( j, advance='yes' )
+        call dump ( matrix%block(i,j), details=my_details>1 )
+      end do
+    end do
   end subroutine Dump_Matrix
 
+  subroutine Dump_RC ( RC, R_or_C, Details )
+    type(rc_info), intent(in) :: RC
+    character(len=*), intent(in) :: R_or_C
+    logical, intent(in) :: Details
+    call output ( 'Number of ' )
+    call output ( r_or_c )
+    call output ( ' blocks = ' )
+    call output ( rc%nb )
+    call output ( 'Vector that defines ' )
+    call output ( r_or_c )
+    call output ( 's' )
+    if ( rc%vec%name == 0 ) then
+      call output ( ' has no name', advance='yes' )
+    else
+      call output ( ': ' )
+      call display_string ( rc%vec%name, advance='yes' )
+    end if
+    call output ( 'Order of blocks is ' )
+    if ( rc%instFirst ) then
+      call output ( 'instance, then quantity', advance='yes' )
+    else
+      call output ( 'quantity, then instance', advance='yes' )
+    end if
+    if ( details ) then
+      call output ( 'Numbers of ' )
+      call output ( r_or_c )
+      call output ( 's in each block: ', advance='yes' )
+      call dump ( rc%nelts )
+      call output ( 'Instance indices for blocks in the' )
+      call output ( r_or_c )
+      call output ( 's:', advance='yes' )
+      call dump ( rc%inst )
+      call output ( 'Quantity indices for blocks in the' )
+      call output ( r_or_c )
+      call output ( 's:', advance='yes' )
+      call dump ( rc%quant )
+    end if
+  end subroutine Dump_RC
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.4  2000/11/23 01:09:46  vsnyder
+! Add provision to ignore columns during matrix-matrix multiply, finish DUMP.
+!
 ! Revision 2.3  2000/11/15 00:18:26  vsnyder
 ! Added assignment(=) interface, row scale, column scale
 !
