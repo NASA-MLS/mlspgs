@@ -22,12 +22,12 @@ M = $(HOME)/mlspgs/lib/NAG
 #SDP = 
 SDP = Substitute
 
-machine.o: machine.f90
-	$(FC) -c $(FOPTS) machine.f90
-
 include ../Makefile.inc
 
 # $Log$
+# Revision 2.3  2000/10/09 23:27:54  vsnyder
+# Move machine.f90 to lib
+#
 # Revision 2.2  2000/10/09 23:25:07  vsnyder
 # Repair SDP variable
 #
