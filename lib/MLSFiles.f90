@@ -1394,13 +1394,13 @@ contains
     call output ( MLSFile%StillOpen, advance='yes')                                  
   end subroutine Dump_MLSFile
 
-  ! ---------------------------------------------  split_path_name  -----
+  ! --------------------------------------------  split_path_name  -----
 
   ! This routine splits the input full_file_name
   ! into its components path and name
   ! where path may include one or more "/" or slash elements
   ! (but one must be the terminating one; e.g., 'System/')
-  ! while name must have none
+  ! while name must have none (actually "/" comes from Machine%filsep).
   ! special cases by example: full_file_name -> (path, name)
   ! look.ma.no.slash -> (' ', 'look.ma.no.slash')
   ! Luke/I/am/your/father/ -> ('Luke/I/am/your/father/', ' ')
@@ -1408,9 +1408,11 @@ contains
   ! optionally you may supply the slash divider
   ! which must be a single character
 
-  subroutine split_path_name(full_file_name, path, name, slash)
+  subroutine split_path_name ( full_file_name, path, name, slash )
 
     ! Arguments
+
+    use Machine, only: Filsep ! / or :\
 
     character (len=*), intent(in) :: full_file_name
     character (len=*), intent(out) :: path
@@ -1420,38 +1422,37 @@ contains
     ! Local
 
     character (len=1) :: mySlash
-    character (len=MAXFILENAMELENGTH) :: mirrored_ffn
-    integer :: loc
+    integer :: loc, n
 !   logical, parameter :: DEBUG = .false.
 
     ! Begin
 
-    if(present(slash)) then
-      mySlash = slash
-    else
-      mySlash = '/'
-    endif
+    n = len_trim(full_file_name)
 
-    if(len(full_file_name) <= 0) then
+    if ( n <= 0 ) then
       path = ' '
       name = ' '
       return
-    endif
+    end if
 
-    mirrored_ffn = Reverse(full_file_name)
-    loc = index(mirrored_ffn, mySlash)
-    
+    if ( present(slash) ) then
+      mySlash = slash
+    else
+      mySlash = filsep
+    end if
 
-    if(loc <= 0) then
+    loc = scan(full_file_name(:n), mySlash, back=.true.)
+
+    if ( loc <= 0 ) then
       path = ' '
       name = adjustl(full_file_name)
-    elseif(loc == 1) then
+    else if ( loc == n ) then
       path = adjustl(full_file_name)
       name = ' '
     else
-      path = adjustl(Reverse(mirrored_ffn(loc:)))
-      name = adjustl(Reverse(mirrored_ffn(:loc-1)))
-    endif
+      path = adjustl(full_file_name(:loc))
+      name = adjustl(full_file_name(loc+1:))
+    end if
 
   end subroutine split_path_name
 
@@ -2045,6 +2046,10 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.60  2004/10/09 02:46:09  vsnyder
+! Simplify split_file_name.  It doesn't work anyway if len(full_file_name) >
+! MAXFILENAMELENGTH.
+!
 ! Revision 2.59  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
