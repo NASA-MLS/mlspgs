@@ -1349,9 +1349,16 @@ contains ! =====     Public Procedures     =============================
     ! Nelts or Nb, because these are deduced from Vec.
     if ( (x%row%vec%template%name /= y%row%vec%template%name)  .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Incompatible arrays in MultiplyMatrix_XTY_1" )
+    if ( myUpdate ) then
+    else
+      if ( (z%row%vec%template%name /= x%col%vec%template%name) .or. &
+        &  (x%row%instFirst .neqv. x%col%instFirst) .or.&
+        &  (z%col%vec%template%name /= y%col%vec%template%name) .or. &
+        &  (x%col%instFirst .neqv. y%col%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Incompatible arrays in MultiplyMatrix_XTY_1" )
-    if ( .not. myUpdate ) then
+        & "Incompatible destination for MultiplyMatrix_XTY_1" )
       call nullifyMatrix ( z ) ! for Sun's still useless compiler
       call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
     end if
@@ -2325,6 +2332,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.97  2004/01/24 03:22:20  livesey
+! More checking in multiply
+!
 ! Revision 2.96  2004/01/24 01:02:28  livesey
 ! Added TransposeMatrix_1
 !
