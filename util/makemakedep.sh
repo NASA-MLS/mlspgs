@@ -27,9 +27,15 @@
 #                (default is to include them)
 # -[n]c         [don't] include files with .c extensions, too
 #                (default is to include them)
-# -d file_name  exclude file_name
+# -d file_name  exclude file_name from both targets and prereqs
+# -db file_name  
+#               no build commands below target file_name if .mod style
+# -p file_name  
+#               name dependency file file_name instead of Makefile.dep
 # -s pattern    match source file suffixes against "%.pattern"
 # -o pattern    match object file suffixes against "%.pattern"
+# -mod case     .mod-style of dependencies where case is one of {lower, UPPER}
+#               with build commands below each target
 # -h[elp]       print brief help message; exit
 # -nodep        skip tracing dependencies; stop after list of objects
 # dir1          search directory named by dir1 as well as cwd for files
@@ -60,8 +66,25 @@
 #source3.o: source3.f90
 # 
 ##End of Makefile.dep
+#
+# .mod style differs from the above in the following way: instead of
+#      source1.o: ...
+# we will have
+# source1.mod source1.o: source1.f90 source2.mod source3.mod
+#     $(UTILDIR)/newAifBdiff.sh -a source1.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source1.f90
+# source2.mod source2.o: source2.f90 source3.mod
+#     $(UTILDIR)/newAifBdiff.sh -a source2.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source2.f90
+# source3.mod source3.o: source3.f90
+#     $(UTILDIR)/newAifBdiff.sh -a source3.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/source3.f90
 # 
 # --------------- End makemakedep.sh help
+# Bugs and limitations
+#(1) No one will ever use the DEPMAKER=1; so why not drop it?
+#(2) Not tested with Sun's own f95 compiler
+#(3) Still too specialized--works well only with NAG-like compilers
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -221,10 +244,12 @@ include_c="yes"
 orthodox="yes"
 s_pattern="f90"
 o_pattern="o"
+dep_file="Makefile.dep"
 me="$0"
 my_name=makemakedep.sh
 
 wrong_list=""
+dont_build_list=""
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -267,6 +292,16 @@ while [ "$more_opts" = "yes" ] ; do
                             wrong_list="$wrong_list $2"
 	       fi
        fi
+       shift
+	    shift
+       ;;
+    -db )
+       dont_build_list="$1 $2 $dont_build_list"
+       shift
+	    shift
+       ;;
+    -p )
+       dep_file=Makefile.dep
        shift
 	    shift
        ;;
@@ -318,19 +353,19 @@ then
 fi                                                      
 
 #                Create Makefile.dep; write 1st line
-echo "#Makefile.dep -- a file to be included by a Makefile" > Makefile.dep
+echo "#Makefile.dep -- a file to be included by a Makefile" > $dep_file
 if [ "$orthodox" = "yes" ]
 then
-   echo "#to compile a Fortran 9x program or library" >> Makefile.dep
+   echo "#to compile a Fortran 9x program or library" >> $dep_file
 else
-   echo "#to hold automatically calculated dependencies" >> Makefile.dep
+   echo "#to hold automatically calculated dependencies" >> $dep_file
 fi
 #
 #Warn of files wrongly added to dependency lists
 if [ "$wrong_list" != "" ]
 then
-	echo "#Delete the following files from the dependency lists:" >> Makefile.dep
-        echo "#$wrong_list" >> Makefile.dep
+	echo "#Delete the following files from the dependency lists:" >> $dep_file
+        echo "#$wrong_list" >> $dep_file
 fi
 #The following may be useful in rare circumstances to include special macros
 #but violates assertion that Makefile.dep includes only dependency info
@@ -343,37 +378,37 @@ then
 	then
 		echo "Including special macro definitions from Makefile.mac"
 	fi
-	echo "include ../Makefile.mac"  >> Makefile.dep
+	echo "include ../Makefile.mac"  >> $dep_file
 fi
 #
-echo "OBJS = \\"  >> Makefile.dep
+echo "OBJS = \\"  >> $dep_file
 
 if [ "$include_f90" = "yes" ] ; then
    extant_files *.f90
-   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$include_f77" = "yes" ] ; then
    extant_files *.f
-   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$include_c" = "yes" ] ; then
    extant_files *.c
-   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
+   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$orthodox" != "yes" ] ; then
    extant_files *.$s_pattern
-   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> Makefile.dep
+   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
 fi
 
-echo " "  >> Makefile.dep
+echo " "  >> $dep_file
 #
 if [ $DEPMAKER = "0" ]
 then
-  echo "#(Not tracing dependencies)" >> Makefile.dep
-  echo "#End of simplified Makefile.dep" >> Makefile.dep
+  echo "#(Not tracing dependencies)" >> $dep_file
+  echo "#End of simplified Makefile.dep" >> $dep_file
 elif [ $DEPMAKER = "1" ]
 then
 	#
@@ -383,12 +418,12 @@ then
 	then
 		echo " using makedepf90 to calculate dependencies "
 	fi
-	echo "# using makedepf90 to calculate dependencies "  >> Makefile.dep
+	echo "# using makedepf90 to calculate dependencies "  >> $dep_file
 	#
-	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+	#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> $dep_file
 	#
 	#Pipe through sed to overcome an apparent bug in makedepf90
-	makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> Makefile.dep
+	makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> $dep_file
 else
 	#
 	# use f90makedep.pl to calculate dependencies
@@ -396,7 +431,7 @@ else
 	then
 		echo " using f90makedep.pl to calculate dependencies "
 	fi
-	echo "# using f90makedep.pl to calculate dependencies "  >> Makefile.dep
+	echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
 	#
 	# Prefix f90makedep.pl with the path to util
         # this assumes f90makedep.pl is in same dir as this script
@@ -464,25 +499,29 @@ else
          fi
        fi
 #	f90makedep.pl >> Makefile.dep
+#  tack on the dont_build_list if non-empty
+   if [ "$dont_build_list" != "" ] ; then
+     the_DEPMAKER="$the_DEPMAKER $dont_build_list"
+   fi
    if [ "$orthodox" = "yes" ]
    then
 	   if [ $PRINT_TOO_MUCH = "1" ]
 	   then
          $the_DEPMAKER "$@"
       fi
-      $the_DEPMAKER "$@" >> Makefile.dep
+      $the_DEPMAKER "$@" >> $dep_file
    else
       echo $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
 	   if [ $PRINT_TOO_MUCH = "1" ]
 	   then
          $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
       fi
-      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> Makefile.dep
+      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
    fi
 fi
-echo " "  >> Makefile.dep
-echo "#End of Makefile.dep" >> Makefile.dep
-echo " "  >> Makefile.dep
+echo " "  >> $dep_file
+echo "#End of Makefile.dep" >> $dep_file
+echo " "  >> $dep_file
 
 #         clean up
 # renamed or hidden files
@@ -499,6 +538,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.17  2002/05/02 16:10:38  pwagner
+# -nodep option disables tracing dependencies
+#
 # Revision 1.16  2002/04/09 19:38:00  pwagner
 # Changes allow it to compute m4 dependencies to make l2cf
 #

@@ -38,6 +38,19 @@
 # To run this, it will be necessary to modify the first line of this script
 # to point to the actual location of Perl on your system.
 #
+# 	Variant (1)-mod: f90makedep.pl -mod case [arg1 arg2 ..]
+#   where case is one of {U[PPER], l[ower]}
+# Output:
+# (printed to stdout)
+# source1.mod Source1.o: Source1.f90 source2.mod .. $(d1)s1.mod \
+#             $(d1)s2.mod .. $(d2)t1.mod ..
+#     $(UTILDIR)/newAifBdiff.sh -a source1.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Source1.f90
+#   where we have shown the lower case. Note that the stem name preceding
+# the .mod suffix is the module name, which may differ from the file name
+# Also note the build command which comes below each target in this variant
+# The build command is built out of parts $BUILD_PART(1 2)
+#
 # -----------------------------------------------------------------------
 # Alternate Usages:
 # 	(2) f90makedep.pl -s pattern1 -o pattern2
@@ -69,9 +82,13 @@
 # -d char           delimiter between words of text
 # -t char           line termination at split
 # -f file_name      file containing text to be split
+# -db file_name     don't add build commands below target file_name
+#                    if "(1)-mod" variant
 # -c char           comment character
+# -mod case         use variant "(1)-mod" of dependency lines
+#                    with module names all in case (UPPER, lower)
 #
-# P.A. Wagner (March 27 2002)
+# P.A. Wagner (May 15 2002)
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 # however ..
@@ -79,16 +96,29 @@
 #
 # Based on Michael Wester <wester@math.unm.edu> February 16, 1995
 # Cotopaxi (Consulting), Albuquerque, New Mexico
+# Bugs and limitations
+#(1) Does too much--should be split up into dependency maker and
+#     separate swiss army knife
+#(2) Still too specialized--works well only with NAG-like compilers
+#(3) Build commands used with (1)-mod variant are grotesque
+#    shouldn't they be configurable at least?
 #
 # "$Id$"
 
 #         Settings which affect how the script operates
 #         * * * * * * * * * * * * * * * * * * * * * * * 
+# if TRUE, debug by printing extra stuff
+$DEBUG = 0;
+
 # if TRUE, don't split long lines containing a quote mark "'"
 $DONT_SPLIT_QUOTES = TRUE;
 
 # if TRUE, include source file in list of dependencies
 $SELF_DEPENDS = TRUE;
+
+# if variant (1)-mod, what case to use in module names
+$var_1_mod = 0;
+$mod_case = "lower";
 
 # if TRUE, include source files in directories named in arg list
 # in list of dependencies (if arguments not empty)
@@ -110,7 +140,11 @@ $delimiter = ' ';
 $term_char = "\\";
 $comment_char = "#";
 while ($more_opts) {
-   if ($ARGV[0] =~ /^-s/) {
+   if ($ARGV[0] =~ /^-db/) {
+      $dont_build{$ARGV[1]} = 1;
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-s/) {
       $source_ext = $ARGV[1];
       shift;
       shift;
@@ -136,6 +170,11 @@ while ($more_opts) {
       shift;
    } elsif ($ARGV[0] =~ /^-t/) {
       $term_char = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-mod/) {
+      $var_1_mod = TRUE;
+      $mod_case = $ARGV[1];
       shift;
       shift;
    } else {
@@ -257,6 +296,15 @@ sub toLower {
    }
 
 #
+# &toUpper(string); --- convert string into upper case
+#
+sub toUpper {
+   local($string) = @_[0];
+   $string =~ tr/a-z/A-Z/;
+   $string;
+   }
+
+#
 # &uniq(sorted word list); --- remove adjacent duplicate words
 #
 sub uniq {
@@ -371,22 +419,45 @@ sub SplitAndPrint {
 sub MakeDependsf90 {
    local($compiler) = &toLower(@_[0]);
    local(@dependencies);
+#  To store object file name keyed by module name
    local(%filename);
+#  To module file name keyed by object name
+   local(%modulename_by_file);
+#  To module file name keyed by module name
+   local(%modulename_by_module);
    local(@incs);
    local(@modules);
    local($objfile);
    local($arg_number);
    local($prependant);
+   local($key);
+   local($value);
+   local($BUILD_PART1) = '$(UTILDIR)/newAifBdiff.sh -a ';
+   local($BUILD_PART2) = '$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/';
    #
    # Associate each module with the name of the file that contains it
    #
    foreach $file (<*.f90>) {
       open(FILE, $file) || warn "Cannot open $file: $!\n";
       while (<FILE>) {
-         /^\s*module\s+([^\s!]+)/i &&
+         # This bit of filtering is to exclude statements that begin 
+         # module procedure ...
+         if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {    
+            value = $key;                                                
+         } else {                                                        
+           /^\s*module\s+([^\s!]+)/i &&
             ($filename{&toLower($1)} = $file) =~ s/\.f90$/.o/;
          }
-      }
+       }
+   }
+   if ($DEBUG) {
+      print "object file name keyed by module name (in home directory)\n";
+      while (($key,$value) = each %filename) {     
+                   print "$key=$value\n";          
+           }                                       
+      print "\n";
+   }
+
    #
    # Do the same in every directory named in arg list
    #
@@ -418,14 +489,89 @@ sub MakeDependsf90 {
        }
        foreach $file (<*.f90>) {
           open(FILE, $file) || warn "Cannot open $file: $!\n";
-           while (<FILE>) {
-             /^\s*module\s+([^\s!]+)/i &&
-                ($filename{&toLower($1)} = "$prependant" . "$file") =~ s/\.f90$/.o/;
+          ($objfile = "$prependant" . "$file") =~ s/\.f90$/.o/;
+          $key = '';
+          while (<FILE>) {
+             # This bit of filtering is to exclude statements that begin 
+             # module procedure ...
+             if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {
+                value = $key;
+             } else {
+               /^\s*module\s+([^\s!]+)/i &&
+                ($key = &toLower($1));
+    #            ($filename{&toLower($1)} = "$prependant" . "$file") =~ s/\.f90$/.o/;
              }
+           }
+          # Now add to our hash, but only if this is a new key  
+          # W a r n i n g   W a r n i n g
+          # This assumes the following behavior
+          # if %hash defined for $key, then $hash{$key} != '' 
+          # otherwise $hash{$key} = '' 
+          # if instead $hash{$key} = '' for a defined $key
+          # or else $hash{$key} dumps core for an undefined $key
+          # then we will need to revisit and revise this
+          $value = "$filename{$key}.suffix";
+          # print "file ($file), key ($key), value ($value) \n";
+          if ($value =~ /^\.suf/) {
+            $filename{$key} = $objfile;
           }
+       }
        chdir $cwd;
       }
     }
+
+   # Find module name given object file name
+   # We can't simply use the following:
+   # %modulename_by_file = reverse %filename;
+   # for two reasons
+   # (1) filenames from outside directories come with "$(dirn)" prepended
+   # (2) Depending on $mod_case we may want modulename lower or UPPER
+   # So the 1st thing we do is acquire key, value pair from filename
+   while (($key, $value) = each %filename) {
+         # Next, value  => $(prependant)file
+         if ( $value =~ /\(dir/) {
+           $_ = $value;
+            /\((.*?)\)(.*)/ && ($prependant=$1) && ($file=$2);
+           if ($mod_case =~ /^U/) {
+               $modulename_by_file{$file} = &toUpper($key);
+               $modulename_by_module{$key} = &toUpper($key);
+           } else {
+               $modulename_by_file{$file} = &toLower($key);
+               $modulename_by_module{$key} = &toLower($key);
+           }
+           # Finally, modulename_by_file  = $(prependant)module
+           $prependant = '$(' . $prependant . ')';
+           $modulename_by_file{$file} = $prependant .  $modulename_by_file{$file};
+           $modulename_by_module{$key} = $prependant .  $modulename_by_module{$key};
+         } else {
+           if ($mod_case =~ /^U/) {
+               $modulename_by_file{$value} = &toUpper($key);
+               $modulename_by_module{$key} = &toUpper($key);
+           } else {
+               $modulename_by_file{$value} = &toLower($key);
+               $modulename_by_module{$key} = &toLower($key);
+           }
+         }
+       }  
+
+   if ($DEBUG) {
+      print "object file name keyed by module name \n";
+      while (($key,$value) = each %filename) {     
+                   print "$key=$value\n";          
+           }                                       
+      print "\n";
+      print "module file name keyed by object name \n";
+      while (($key,$value) = each %modulename_by_file) {   
+                   print "$key=$value\n";          
+           }                                       
+      print "\n";
+      print "module file name keyed by module name \n";
+      while (($key,$value) = each %modulename_by_module) {  
+                   print "$key=$value\n";          
+           }                                       
+      print "\n";
+   }
+
    #
    # Print the dependencies of each file that has one or more include's or
    # references one or more modules
@@ -438,13 +584,28 @@ sub MakeDependsf90 {
          }
       if (defined @incs || defined @modules) {
          ($objfile = $file) =~ s/\.f90$/.o/;
-         print MAKEFILE "$objfile: ";
          undef @dependencies;
-         foreach $module (@modules) {
-            push(@dependencies, $filename{$module});
-            }
+         if ( $var_1_mod ) {
+#           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
+           print MAKEFILE "$objfile: ";
+           if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
+              print MAKEFILE "$modulename_by_file{$objfile}.mod ";
+           }
+           foreach $module (@modules) {
+              $value = "$modulename_by_module{$module}.mod";
+              if ($value !~ /^\./) {
+                push(@dependencies, $value);
+              }
+           }
+         } else {
+           print MAKEFILE "$objfile: ";
+           foreach $module (@modules) {
+              push(@dependencies, $filename{$module});
+           }
+         }
          @dependencies = &uniq(sort(@dependencies));
          if ($SELF_DEPENDS) {
+#         if ($SELF_DEPENDS && ($var_1_mod != TRUE)) {
 #		     @dependencies = reverse(push(reverse(@dependencies), $file));
 		     @dependencies = reverse(@dependencies);
                     push(@dependencies, $file);
@@ -453,12 +614,34 @@ sub MakeDependsf90 {
          &PrintWords(length($objfile) + 2, 0,
                      @dependencies, &uniq(sort(@incs)));
          print MAKEFILE "\n";
+         if ( $var_1_mod && ("$modulename_by_file{$objfile}.mod" !~ /^\./)) {
+           print MAKEFILE "$modulename_by_file{$objfile}.mod: \n";
+#           print MAKEFILE "$modulename_by_file{$objfile}.mod: $file\n";
+           if ($dont_build{$file} != 1) {
+             print MAKEFILE "\t";
+             print MAKEFILE $BUILD_PART1;
+             print MAKEFILE "$modulename_by_file{$objfile}.mod ";
+             print MAKEFILE $BUILD_PART2;
+             print MAKEFILE $file;
+             print MAKEFILE "\n";
+             print MAKEFILE "$objfile: \n";
+             print MAKEFILE "\t";
+             print MAKEFILE $BUILD_PART1;
+             print MAKEFILE "$modulename_by_file{$objfile}.mod ";
+             print MAKEFILE $BUILD_PART2;
+             print MAKEFILE $file;
+             print MAKEFILE "\n";
+           }
+         }
          undef @incs;
          undef @modules;
          }
       }
    }
 # $Log$
+# Revision 1.3  2002/04/09 19:39:36  pwagner
+# Alternate usages 2-4 (depending on options) added
+#
 # Revision 1.2  2000/11/02 23:22:38  pwagner
 # Dependencies may cross directories
 #
