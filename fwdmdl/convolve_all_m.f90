@@ -162,26 +162,30 @@ contains
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .true.
     col = FindBlock ( Jacobian%col, ptan%index, maf )
-    select case (jacobian%block(Row,col)%kind)
-    case (m_absent)
-      call CreateBlock ( Jacobian, row, col, m_banded, &
-        & radiance%template%noSurfs*radiance%template%noChans, &
-        & bandHeight=radiance%template%noChans )
-      jacobian%block(row,col)%values = 0.0_r8
-    case (m_banded)
-    case default
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Wrong matrix type for ptan derivative')
-    end select
-    do ptg_i = 1, j
-      ind = channel + radiance%template%noChans*(ptg_i-1)
-      jacobian%block(row,col)%values( ind, 1 ) = &
-        & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
-      jacobian%block(row,col)%r1(ptg_i) = &
-        & 1 + radiance%template%noChans*(ptg_i-1)
-      jacobian%block(row,col)%r2(ptg_i) = &
-        & radiance%template%noChans*ptg_i
-    end do
+
+    ! Of course, we might not care about ptan
+    if ( col > 0 ) then
+      select case (jacobian%block(Row,col)%kind)
+      case (m_absent)
+        call CreateBlock ( Jacobian, row, col, m_banded, &
+          & radiance%template%noSurfs*radiance%template%noChans, &
+          & bandHeight=radiance%template%noChans )
+        jacobian%block(row,col)%values = 0.0_r8
+      case (m_banded)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Wrong matrix type for ptan derivative')
+      end select
+      do ptg_i = 1, j
+        ind = channel + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%values( ind, 1 ) = &
+          & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
+        jacobian%block(row,col)%r1(ptg_i) = &
+          & 1 + radiance%template%noChans*(ptg_i-1)
+        jacobian%block(row,col)%r2(ptg_i) = &
+          & radiance%template%noChans*ptg_i
+      end do
+    end if
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
     ! values
@@ -423,6 +427,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.4  2002/02/06 08:31:55  zvi
+! Adding Temp. Deriv. correction
+!
 ! Revision 2.3  2002/02/02 11:20:17  zvi
 ! Code to overwrite the l2cf integration & tanget grids
 !
