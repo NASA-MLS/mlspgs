@@ -5,6 +5,8 @@
 !---------------------------- RCS Ident Info -------------------------------
       character (len=*), parameter :: IdParm = &
         "$Id$"
+      character(len=*), parameter, private :: ModuleName= &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
 
       integer M, N
@@ -121,6 +123,9 @@
       return
 
 ! $Log$
+! Revision 2.2  2002/10/02 15:36:23  bwknosp
+! Added RCS info
+!
 ! Revision 2.1  2002/01/30 19:36:34  vsnyder
 ! Initial commit
 !
