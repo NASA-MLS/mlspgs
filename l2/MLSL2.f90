@@ -17,7 +17,7 @@ program MLSL2
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, NORMAL_EXIT_STATUS, &
     & GARBAGE_COLLECTION_BY_CHUNK, &
-    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
+    & DEFAULT_HDFVERSION_READ, &
     & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION, &
     & SKIPRETRIEVAL
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
@@ -152,6 +152,7 @@ program MLSL2
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
     switches=''
+    DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
   else
     ! SCF_VERSION
     switches='0sl'
@@ -252,7 +253,7 @@ program MLSL2
         case('5')
           DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
         case default
-          DEFAULT_HDFVERSION_WRITE = WILDCARDHDFVERSION
+          DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
         end select
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
@@ -739,12 +740,17 @@ contains
       call output(' Using wall clock instead of cpu time?:          ', advance='no')
       call blanks(4, advance='no')
       call output(use_wall_clock, advance='yes')
-      call output(' Standard output unit:                           ', advance='no')
-      call blanks(4, advance='no')
-      call output(PrUnit, advance='yes')
       call output(' Number of switches set:                         ', advance='no')
       call blanks(4, advance='no')
       call output(numSwitches, advance='yes')
+      if ( switches /= ' ' ) then
+        call output(' (All switches)', advance='no')
+        call blanks(4, advance='no')
+        call output(trim(switches), advance='yes')
+      endif
+      call output(' Standard output unit:                           ', advance='no')
+      call blanks(4, advance='no')
+      call output(PrUnit, advance='yes')
       call output(' Log file unit:                                  ', advance='no')
       call blanks(4, advance='no')
       call output(MLSMessageConfig%LogFileUnit, advance='yes')
@@ -771,6 +777,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.101  2003/10/09 23:57:35  pwagner
+! A few more SIPS-related tweaks
+!
 ! Revision 2.100  2003/10/09 23:35:21  pwagner
 ! Treats SIPS version special; switches ,-separated
 !
