@@ -3,35 +3,41 @@ module TREE_WALKER
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
 
-  use Test_Parse_Signals_m, only: Test_Parse_Signals ! Uncomment to test Parse_Signals
+  use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
-  use DUMPER, only: DUMP
-  use FILL, only: MLSL2Fill
+  use Dumper, only: Dump
+  use Fill, only: MLSL2Fill
+  use FilterShapes_m, only: Destroy_Filter_Shapes_Database
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
-  use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
+  use Global_Settings, only: Set_Global_Settings
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: Field_Indices, Lit_Indices, &
+  use Init_Tables_Module, only: Field_Indices, Lit_Indices, &
     & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
     & Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
     & Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
-  use MatrixModule_1, only: Matrix_Database_T
+  use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
-  use MLSSignals_M, only: MLSSignals
-  use ncep_dao, only: DestroyGridTemplateDatabase
-  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize
-  use ReadAPriori, only: read_apriori
+  use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
+    & DestroyRadiometerDatabase, DestroySignalDatabase, &
+    & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
+    & Signals, SpectrometerTypes
+  use NCEP_DAO, only: DestroyGridTemplateDatabase
+  use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
   use OutputAndClose, only: Output_Close
+  use PointingGrid_m, only: Destroy_Pointing_Grid_Database
   use QuantityTemplates, only: QuantityTemplate_T
+  use ReadAPriori, only: read_apriori
   use RetrievalModule, only: Retrieve
   use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
-  use SpectroscopyCatalog_m, only: Spectroscopy
-  use TOGGLES, only: EMIT, GEN, LEVELS, TOGGLE
-  use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, NSONS, SUBTREE
-  use TREE_TYPES ! Everything, especially everything beginning with N_
+  use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
+    & Destroy_SpectCat_Database, Spectroscopy
+  use Test_Parse_Signals_m, only: Test_Parse_Signals
+  use Toggles, only: EMIT, GEN, LEVELS, TOGGLE
+  use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
+  use Tree, only: DECORATION, NSONS, SUBTREE
   use VectorsModule, only: DestroyVectorDatabase, Vector_T, VectorTemplate_T
   use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
   use WriteMetadata, only: PCFData_T
@@ -132,6 +138,7 @@ subtrees: do while ( j <= howmany )
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation )
           call DestroyVectorDatabase ( vectors )
+          call DestroyMatrixDatabase ( matrices )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
@@ -144,13 +151,23 @@ subtrees: do while ( j <= howmany )
         call DestroyChunkDatabase (chunks )
         call DestroyL2GPDatabase ( l2gpDatabase )
         call DestroyL2AUXDatabase ( l2auxDatabase )
-        call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
 
       end select
       i = i + 1
     end do
+    call destroy_ant_patterns_database
+    call destroy_filter_shapes_database
+    call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
+    call destroy_line_database
+    call destroy_pointing_grid_database
+    call destroy_spectcat_database
+    call DestroyBandDatabase ( Bands )
+    call DestroyModuleDatabase ( Modules )
+    call DestroyRadiometerDatabase ( Radiometers )
+    call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
+    call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
@@ -158,6 +175,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.36  2001/04/21 01:26:37  livesey
+! Now passes l2gpDatabase to more people
+!
 ! Revision 2.35  2001/04/20 17:12:38  livesey
 ! Add vGrids argument to fill to support fill from vGrid
 !
