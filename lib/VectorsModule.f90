@@ -671,6 +671,8 @@ contains ! =====     Public Procedures     =============================
     myNoError = .false.
     if (present(noError)) myNoError = noError
 
+    GetVectorQuantityByType => NULL()
+
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
       & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
@@ -679,16 +681,13 @@ contains ! =====     Public Procedures     =============================
       if ( present (foundInFirst) ) foundInFirst = .true.
       GetVectorQuantityByType => vector%quantities(index)
     else
-      ! Can only get here if not found in first vector and 
-      ! otherVector is present
-      index = GetVectorQuantityIndexByType ( otherVector, &
-        &  quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
-        &  noError=myNoError )
-      if ( present (foundInFirst) ) foundInFirst = .false.
-      if ( index /= 0 ) then
-        GetVectorQuantityByType => otherVector%quantities( index )
-      else ! can only get here when myNoError=T
-        GetVectorQuantityByType => NULL()
+      ! Can only get here if not found in first vector and noError or other vector
+      if ( present (otherVector) ) then
+        index = GetVectorQuantityIndexByType ( otherVector, &
+          &  quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
+          &  noError=myNoError )
+        if ( present (foundInFirst) ) foundInFirst = .false.
+        if ( index /= 0 ) GetVectorQuantityByType => otherVector%quantities( index )
       end if
     end if
   end function GetVectorQuantityByType
@@ -1112,6 +1111,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.33  2001/04/28 20:54:48  livesey
+! Minor bug fix in GetVectorQuantityByType
+!
 ! Revision 2.32  2001/04/28 07:04:32  livesey
 ! Minor bug fix
 !
