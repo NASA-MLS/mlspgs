@@ -56,7 +56,8 @@ module INTRINSIC
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = 1
   integer, parameter :: L_BASELINE      = first_lit
-  integer, parameter :: L_CHANNEL       = l_baseline + 1
+  integer, parameter :: L_C             = l_baseline + 1
+  integer, parameter :: L_CHANNEL       = l_c + 1
   integer, parameter :: L_DAYS          = l_channel + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
@@ -167,6 +168,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     ! Put intrinsic enumeration literals into the symbol table:
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
+    lit_indices(l_c) =                     add_ident ( 'C' )
     lit_indices(l_channel) =               add_ident ( 'channel' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
@@ -186,7 +188,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
     lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
-    lit_indices(l_k) =                     add_ident ( 'k' )
+    lit_indices(l_k) =                     add_ident ( 'K' )
     lit_indices(l_khz) =                   add_ident ( 'KHz' )
     lit_indices(l_km) =                    add_ident ( 'km' )
     lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
@@ -296,6 +298,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.20  2001/04/09 20:59:35  vsnyder
+! Add C (for Celsius) unit and l_c name for it
+!
 ! Revision 2.19  2001/04/09 14:56:04  perun
 ! Corrected enumeration literal definition for l_temperature
 !
