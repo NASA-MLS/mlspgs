@@ -16,6 +16,7 @@ module BaselineForwardModel_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use MLSNumerics, only: HUNT
+  use Dump_0, only: DUMP
 
   ! This module contains a special forward model for baseline related effects.
 
@@ -45,7 +46,7 @@ contains ! ======================================== BaselineForwardModel ======
     type(matrix_T), intent(inout), optional :: Jacobian
 
     ! Local parameters
-    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+    character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
 
     ! Local variables
 
@@ -58,6 +59,7 @@ contains ! ======================================== BaselineForwardModel ======
     integer :: NOMIFS                   ! Number of minor frames
     integer :: NOCHANS                  ! Number of channels in radiance
     integer :: NOBSLCHANS               ! Number of channels in baseline
+    integer :: ROW                      ! Element of jacobian
     integer :: ROWBLOCK                 ! Location in jacobian
     integer :: COLBLOCK                 ! Location in jacobian
     integer :: MIF                      ! Loop counter
@@ -94,7 +96,6 @@ contains ! ======================================== BaselineForwardModel ======
     ! Executable code -------------------------------------------------------
     
     if (.not. fwdModelConf%do_Baseline ) return
-
     nullify ( chan0, chan1, inst0, inst1, surf0, surf1 )
     nullify ( chanWt0, chanWt1, instWt0, instWt1, surfWt0, surfWt1 )
     nullify ( kBit )
@@ -121,12 +122,13 @@ contains ! ======================================== BaselineForwardModel ======
       ! if that fails, raise an error
       if ( .not. associated(baseline) ) &
         & baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_baseline, radiometer=signal%radiometer )
+        & quantityType=l_baseline, radiometer=signal%radiometer, foundInFirst=bslInFirst )
 
       noBslChans = baseline%template%noChans
       doDerivatives = present(jacobian) .and. bslInFirst
       if (doDerivatives) then
         rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
+        fmStat%rows(rowBlock) = .true.
       endif
 
       ! Get ptans, we'll need these for interpolation
@@ -221,21 +223,21 @@ contains ! ======================================== BaselineForwardModel ======
           ! Do all eight corners of the cube
           ! Note that SURF0/1 *ALREADY* contiains a minus 1!!
           rad = rad + chanWt0(chan) * surfWt0(mif) * instWt0(mif) * &
-            & baseline%values(chan0(mif)+noBslChans*surf0(mif),inst0(mif))
+            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst0(mif))
           rad = rad + chanWt0(chan) * surfWt0(mif) * instWt1(mif) * &         
-            & baseline%values(chan0(mif)+noBslChans*surf0(mif),inst1(mif))
+            & baseline%values(chan0(chan)+noBslChans*surf0(mif),inst1(mif))
           rad = rad + chanWt0(chan) * surfWt1(mif) * instWt0(mif) * &         
-            & baseline%values(chan0(mif)+noBslChans*surf1(mif),inst0(mif))
+            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst0(mif))
           rad = rad + chanWt0(chan) * surfWt1(mif) * instWt1(mif) * &         
-            & baseline%values(chan0(mif)+noBslChans*surf1(mif),inst1(mif))
+            & baseline%values(chan0(chan)+noBslChans*surf1(mif),inst1(mif))
           rad = rad + chanWt1(chan) * surfWt0(mif) * instWt0(mif) * &         
-            & baseline%values(chan1(mif)+noBslChans*surf0(mif),inst0(mif))
+            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst0(mif))
           rad = rad + chanWt1(chan) * surfWt0(mif) * instWt1(mif) * &         
-            & baseline%values(chan1(mif)+noBslChans*surf0(mif),inst1(mif))
+            & baseline%values(chan1(chan)+noBslChans*surf0(mif),inst1(mif))
           rad = rad + chanWt1(chan) * surfWt1(mif) * instWt0(mif) * &         
-            & baseline%values(chan1(mif)+noBslChans*surf1(mif),inst0(mif))
+            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst0(mif))
           rad = rad + chanWt1(chan) * surfWt1(mif) * instWt1(mif) * &         
-            & baseline%values(chan1(mif)+noBslChans*surf1(mif),inst1(mif))
+            & baseline%values(chan1(chan)+noBslChans*surf1(mif),inst1(mif))
           radiance%values ( chan + noChans*(mif-1), maf ) = rad
         end do
       end do
@@ -247,27 +249,37 @@ contains ! ======================================== BaselineForwardModel ======
         allocate ( kBit(radiance%template%instanceLen, &
           & baseline%template%instanceLen, &
           & instLow:instHi), stat=status )
+        kBit = 0.0_rp
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'kBit' )
 
         do mif = 1, noMIFs
           mm1 = mif - 1
           do chan = 1, noChans
-            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf0(mif), inst0(mif) ) = &
+            row = chan+noChans*mm1
+            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
               & chanWt0(chan) * surfWt0(mif) * instWt0(mif)
-            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf0(mif), inst1(mif) ) = &
+            kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
               & chanWt0(chan) * surfWt0(mif) * instWt1(mif)
-            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf1(mif), inst0(mif) ) = &
+            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
               & chanWt0(chan) * surfWt1(mif) * instWt0(mif)
-            kBit( chan+noChans*mm1, chan0(mif)+noBslChans*surf1(mif), inst1(mif) ) = &
+            kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
+              & kBit( row, chan0(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
               & chanWt0(chan) * surfWt1(mif) * instWt1(mif)
-            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf0(mif), inst0(mif) ) = &
+            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst0(mif) ) + &
               & chanWt1(chan) * surfWt0(mif) * instWt0(mif)
-            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf0(mif), inst1(mif) ) = &
+            kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf0(mif), inst1(mif) ) + &
               & chanWt1(chan) * surfWt0(mif) * instWt1(mif)
-            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf1(mif), inst0(mif) ) = &
+            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst0(mif) ) + &
               & chanWt1(chan) * surfWt1(mif) * instWt0(mif)
-            kBit( chan+noChans*mm1, chan1(mif)+noBslChans*surf1(mif), inst1(mif) ) = &
+            kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) = &
+              & kBit( row, chan1(chan)+noBslChans*surf1(mif), inst1(mif) ) + &
               & chanWt1(chan) * surfWt1(mif) * instWt1(mif)
           end do
         end do
@@ -275,7 +287,6 @@ contains ! ======================================== BaselineForwardModel ======
         ! Now sparsify and store the blocks
         do instance = lbound(kBit,3), ubound(kBit,3)
           colBlock = FindBlock ( jacobian%col, baseline%index, instance )
-          ! Don't have it deallocate kBit
           kBit2 => kBit(:,:,instance)
           call Sparsify ( kBit2, jacobian%block(rowBlock,colBlock) )
         end do
@@ -304,6 +315,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.5  2001/10/02 22:22:53  livesey
+! Working version
+!
 ! Revision 2.4  2001/10/02 20:37:19  livesey
 ! Pays attention to do_baseline
 !
