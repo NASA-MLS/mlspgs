@@ -54,7 +54,7 @@ MODULE L3MMData
 
    TYPE L3MMData_T
 
-     CHARACTER (LEN=DATE_LEN), DIMENSION(maxWindow) :: misDays
+     INTEGER :: misDays(maxWindow)
 	! Missing days, dimensioned (nDays)
 
      CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
@@ -94,7 +94,7 @@ CONTAINS
 
 !-----------------------------------------------------------------
   SUBROUTINE OutputMMGrids (physicalFilename, l3mm, creationFlag, &
-       & hdfVersion, prodCount)
+       & hdfVersion)
 !-----------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -108,12 +108,12 @@ CONTAINS
 
     LOGICAL, INTENT(INOUT) :: creationFlag
    
-    INTEGER, INTENT(IN) :: hdfVersion, prodCount
+    INTEGER, INTENT(IN) :: hdfVersion
 
     IF (hdfVersion==HDFVERSION_4) THEN 
        CALL OutputMMGrids_HE2 (physicalFilename, l3mm, creationFlag)
     ELSE IF (hdfVersion==HDFVERSION_5) THEN 
-       CALL OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag, prodCount)
+       CALL OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
     ENDIF
 
   END SUBROUTINE OutputMMGrids
@@ -435,10 +435,10 @@ CONTAINS
 !------------------------------
 
 !-----------------------------------------------------------------
-   SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag, prodCount)
+   SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
 !-----------------------------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_CHARSTRING
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the grid portion of l3mm files.
@@ -448,7 +448,6 @@ CONTAINS
       CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
       TYPE (L3MMData_T), INTENT(IN) :: l3mm
       LOGICAL, INTENT(INOUT) :: creationFlag
-      INTEGER, INTENT(IN) :: prodCount
       
 ! Parameters
 
@@ -479,7 +478,7 @@ CONTAINS
 ! Open the output file. If first time, create the file. Otherwise just open and 
 ! write other species to the files
 
-      IF (prodCount == 1) THEN
+      IF (.not. creationFlag) THEN
          gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_TRUNC)
       ELSE 
          gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
@@ -599,23 +598,6 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Detach from and close the grid interface.  This step is necessary to store
-! properly the grid information within the file and must be done before writing
-! or reading data to or from the grid.
-
-      status = he5_gddetach(gdId)
-      IF (status /= 0) THEN
-          msr = GD_ERR // TRIM( l3mm%name ) // ' after definition.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      status = he5_gdclose(gdfID)
-      IF (status /= 0) THEN
-          msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-                & ' after definition.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
 ! Delay reopening for a discreet and discrete time
 ! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
 !      call time_now(t1)
@@ -624,22 +606,6 @@ CONTAINS
 !        call time_now(t2)
 !        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
 !      enddo
-
-! Re-open the file for writing
-
-      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
-      IF (gdfID == -1) THEN
-          msr = MLSMSG_Fileopen // TRIM(physicalFilename) // ' for writing.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Re-attach to the grid for writing
-
-      gdId = he5_gdattach(gdfID, trim(l3mm%name) )
-      IF (gdId == -1) THEN
-          msr = 'Failed to attach to grid ' // trim(l3mm%name)
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
 
 ! Write to fields
 
@@ -659,8 +625,6 @@ CONTAINS
 
 ! Start Time
 
-!      status = gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
-!                       l3mm%startTime)
       status = he5_gdwrfld(gdId, GEO_FIELD3, start(1), stride(1), stride(1), &
            & times)
       IF (status /= 0) THEN
@@ -678,8 +642,6 @@ CONTAINS
       times(1:l3mm%nLevels) = l3mm%endTime
       status = he5_gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
            & times)
-!      status = gdwrfld(gdId, GEO_FIELD3, stride(1), stride(1), stride(1), &
-!                       l3mm%endTime)
       IF (status /= 0) THEN
           msr = 'Failed to write field ' //  GEO_FIELD3 // ' to grid ' & 
                & // trim(l3mm%name)
@@ -1008,7 +970,7 @@ CONTAINS
    SUBROUTINE OutputMMDiags_HE5(physicalFilename, mm)
 !------------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_CHARSTRING
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the diagnostic portion of l3mm files.
@@ -1075,7 +1037,8 @@ CONTAINS
          lsize = DATE_LEN
       ENDIF
 
-      status = he5_swdefdim(swId, DIMD_NAME, lsize)
+      !status = he5_swdefdim(swId, DIMD_NAME, lsize)
+      status = he5_swdefdim(swId, DIMD_NAME, nsize)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMD_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1118,35 +1081,12 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swdefdfld(swId, MIS_FIELD, DIMDM_NAME, "", & 
-           & HE5T_NATIVE_CHAR, HDFE_NOMERGE)
+      !status = he5_swdefdfld(swId, MIS_FIELD, DIMD_NAME, "", & 
+      !     & HE5T_CHARSTRING, HDFE_NOMERGE)
+      status = he5_swdefdfld(swId, MIS_FIELD, DIMD_NAME, "", & 
+           & HE5T_NATIVE_INT, HDFE_NOMERGE)
       IF (status /= 0) THEN
           msr = DAT_ERR // MIS_FIELD
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Detach from the swath interface after definition.
-
-      status = he5_swdetach(swId)
-      IF (status /= 0) THEN
-          msr = SW_ERR // TRIM(dgName) // ' after L3MM dg definition.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Delay reopening for a discreet and discrete time
-! the smaller of WAIT_TO_REOPEN (in sec) or NUMBER_BEATS (in passes)
-!      call time_now(t1)
-!      t2 = t1
-!      do beat = 1, NUMBER_BEATS
-!        call time_now(t2)
-!        if ( (t2 - t1) > WAIT_TO_REOPEN ) exit
-!      enddo
-
-! Re-attach to the swath for writing
-
-      swId = he5_swattach(swfID, trim(dgName) )
-      IF (swId == -1) THEN
-          msr = 'Failed to re-attach to swath '// TRIM(dgName)//' for writing.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -1188,9 +1128,9 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      edge(1) = lsize
-      edge(2) = nsize
-      status = he5_swwrfld(swId, MIS_FIELD, start, stride, edge, mm%misDays)
+      edge(1) = nsize
+ 
+      status = he5_swwrfld(swId, MIS_FIELD, start(1), stride(1), edge(1), mm%misDays)
       IF (status /= 0) THEN
           print *, 'swID ', swID
           print *, 'start ', start
@@ -1695,12 +1635,17 @@ CONTAINS
       IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
            & 'Error closing HDF file after writing metadata.')
 
-        ! Write global attributes
+      result = pgs_met_remove()
+!      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+!        write(msr, *) result
+!        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+!             & "Calling pgs_met_remove() failed with value " // trim(msr) )
+!      endif          
+
+! Write global attributes
+   
       if ( HDFVersion == HDFVERSION_5 ) then                        
-	!print *, 'write global attributes in L3MM'
         sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
-        !print *, 'daysNum in write Global'
-        !print *, daysNum
         call he5_writeglobalattr(sdid,daysNum) 
         result = he5_gdclose (sdid)                                   
       endif
@@ -1708,12 +1653,6 @@ CONTAINS
       ! Annotate the file with the PCF
       CALL WritePCF2Hdr(file, anText, hdfVersion=hdfVersion, fileType=fileType)
 
-      result = pgs_met_remove()
-      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-        write(msr, *) result
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-             & "Calling pgs_met_remove() failed with value " // trim(msr) )
-      endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaL3MM
@@ -1885,6 +1824,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.15  2004/01/08 21:21:36  cvuu
+!# version 1.4 commit
+!#
 !# Revision 1.14  2003/09/16 16:35:11  cvuu
 !# Add new parameter nFiles to the subroutine WriteMetaL3MM
 !#

@@ -104,7 +104,7 @@ MODULE L3MZData
 CONTAINS
 
 !----------------------------------------------
-   SUBROUTINE OutputL3MZ (file, mz, createFlag, hdfVersion, prodCount)
+   SUBROUTINE OutputL3MZ (file, mz, createFlag, hdfVersion)
 !----------------------------------------------
 
 ! Brief description of subroutine
@@ -118,12 +118,12 @@ CONTAINS
 
       LOGICAL, INTENT(INOUT) :: createFlag
 
-      INTEGER, INTENT(IN) :: hdfVersion, prodCount
+      INTEGER, INTENT(IN) :: hdfVersion
 
       IF (hdfVersion == HDFVERSION_4) THEN 
          CALL OutputL3MZ_HE2 (file, mz, createFlag)
       ELSE IF (hdfVersion == HDFVERSION_5) THEN 
-         CALL OutputL3MZ_HE5 (file, mz, createFlag, prodCount)
+         CALL OutputL3MZ_HE5 (file, mz, createFlag)
       ENDIF
 
 !----------------------------------------------
@@ -360,7 +360,7 @@ CONTAINS
 !---------------------------
 
 !----------------------------------------------
-   SUBROUTINE OutputL3MZ_HE5 (file, mz, createFlag, prodCount)
+   SUBROUTINE OutputL3MZ_HE5 (file, mz, creationFlag)
 !----------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
@@ -375,10 +375,8 @@ CONTAINS
 
       TYPE( L3MZData_T ), INTENT(IN) :: mz
 
-      LOGICAL, INTENT(INOUT) :: createFlag
+      LOGICAL, INTENT(INOUT) :: creationFlag
  
-      INTEGER, INTENT(IN) :: prodCount
-
 ! Parameters
 
 ! Functions
@@ -396,7 +394,7 @@ CONTAINS
 
 ! Open the file for appending a zonal
 
-      IF (prodCount == 1) THEN
+      IF (.not. creationFlag) THEN
          swfID = he5_zaopen(trim(file), HE5F_ACC_TRUNC)
       ELSE
          swfID = he5_zaopen(trim(file), HE5F_ACC_RDWR)
@@ -478,20 +476,6 @@ CONTAINS
       status = he5_zadefine(swID, DATA_FIELDP, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
       IF (status == -1) THEN
          msr = DAT_ERR // DATA_FIELDP
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Detach from the zonal interface after definition
-
-      status = he5_zadetach(swID)
-      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-           & 'Failed to detach from zonal interface after L3DZ definition.')
-
-! Re-attach to the zonal for writing
-
-      swID = he5_zaattach(swfID, mz%name)
-      IF (swID == -1) THEN
-         msr = 'Failed to re-attach to zonal '//TRIM(mz%name)// ' for writing.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -586,7 +570,7 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      createFlag = .TRUE.
+      creationFlag = .TRUE.
 
 !---------------------------
    END SUBROUTINE OutputL3MZ_HE5
@@ -866,22 +850,6 @@ CONTAINS
       status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
       IF (status == -1) THEN
          msr = DAT_ERR // DG_FIELD2
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Detach from the zonal interface after definition
-
-      status = he5_zadetach(swID)
-      IF (status /= 0) THEN
-          msr = SW_ERR // TRIM(dgName) // ' after L3MZ dg definition.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Re-attach to the zonal for writing
-
-      swID = he5_zaattach(swfID, trim(dgName) )
-      IF (swID == -1) THEN
-         msr = 'Failed to re-attach to zonal '// TRIM(dgName) //' for writing.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -1653,6 +1621,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.15  2004/01/08 21:21:36  cvuu
+! version 1.4 commit
+!
 ! Revision 1.14  2003/09/16 16:35:21  cvuu
 ! Add new parameter nFiles to the subroutine WriteMetaL3MZ
 !

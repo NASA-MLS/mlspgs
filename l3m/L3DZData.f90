@@ -93,7 +93,7 @@ MODULE L3DZData
  CONTAINS
 
    !------------------------------------------
-   SUBROUTINE OutputL3DZ(type, dzm, zFiles, hdfVersion, prodCount)
+   SUBROUTINE OutputL3DZ(type, dzm, zFiles, creationFlag, hdfVersion)
    !------------------------------------------
 
      ! Brief description of subroutine
@@ -107,12 +107,14 @@ MODULE L3DZData
 
      TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
-     INTEGER, INTENT(IN) :: hdfVersion, prodCount
+     INTEGER, INTENT(IN) :: hdfVersion
+
+     LOGICAL, INTENT(INOUT) :: creationFlag
 
      IF (hdfVersion == HDFVERSION_4) THEN 
         CALL  OutputL3DZ_HE2(type, dzm, zFiles)
      ELSE IF (hdfVersion == HDFVERSION_5) THEN
-        CALL  OutputL3DZ_HE5(type, dzm, zFiles, prodCount)
+        CALL  OutputL3DZ_HE5(type, dzm, zFiles, creationFlag)
      ENDIF
 
     !---------------------------
@@ -382,7 +384,7 @@ MODULE L3DZData
     !---------------------------
 
    !------------------------------------------
-   SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles, prodCount)
+   SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles, creationFlag)
    !------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
@@ -400,7 +402,8 @@ MODULE L3DZData
 
      TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
-     INTEGER, INTENT(IN) :: prodCount
+     LOGICAL, INTENT(INOUT) :: creationFlag
+
      ! Parameters
 
 ! Functions
@@ -413,9 +416,11 @@ MODULE L3DZData
 
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: file
+      CHARACTER (LEN=7) :: dateChar
+      
 
       INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: i, match, numDays, status, swfID, swID
+      INTEGER :: i, match, numDays, status, swfID, swID, dateInt
 
 ! For each day in the output window,
 
@@ -443,7 +448,7 @@ MODULE L3DZData
 
          ! Open the file for appending a zonal
 
-         IF (prodCount == 1) THEN
+         IF (.not. creationFlag) THEN
             swfID = he5_zaopen(trim(file), HE5F_ACC_TRUNC)
          ELSE
             swfID = he5_zaopen(trim(file), HE5F_ACC_RDWR)
@@ -470,7 +475,7 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_zadefdim(swID, DIMT_NAME, DATE_LEN)
+         status = he5_zadefdim(swID, DIMT_NAME, 1)
          IF (status == -1) THEN
             msr = DIM_ERR // DIMT_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -490,7 +495,7 @@ MODULE L3DZData
 
          ! Define the zonal geolocation fields using the above dimensions
 
-         status = he5_zadefine(swID, GEO_FIELD11, DIMT_NAME, "", HE5T_NATIVE_CHAR)
+         status = he5_zadefine(swID, GEO_FIELD11, DIMT_NAME, " ", HE5T_NATIVE_INT)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD11
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -534,38 +539,29 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Detach from the zonal interface after definition
-
-         status = he5_zadetach(swID)
-         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-              & 'Failed to detach from zonal interface after L3DZ definition.')
-         
-         ! Re-attach to the swath for writing
-
-         swID = he5_zaattach(swfID, dzm(i)%name)
-         IF (swID == -1) THEN
-            msr = 'Failed to re-attach to zonal ' // TRIM(dzm(i)%name) &
-                 & // ' for writing.'
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
          ! Write the data
 
          start = 0
          stride = 1
-         edge(1) = DATE_LEN
-         edge(2) = dzm(i)%nLats
-         
+         edge(1) = 1
+         edge(2) = 1
+       
+         ! Convert the date from char to int.  There is problem using char string from 
+	 ! toolkit from version 5.2.10 
+
+	 dateChar = dzm(i)%date(1:4) // dzm(i)%date(6:8)
+	 read (dateChar, '(i7)') dateInt
+
          ! Geolocation fields
 
-         status = he5_zawrite(swID, GEO_FIELD11, start(1), stride(1), edge(1),&
-              & dzm(i)%date)
+         status = he5_zawrite(swID, GEO_FIELD11, start(1), stride(1), edge(1), dateInt)
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD11
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
          
          edge(1) = dzm(i)%nLevels
+         edge(2) = dzm(i)%nLats
          status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1),&
               & REAL(dzm(i)%pressure) )
          IF (status == -1) THEN
@@ -624,10 +620,6 @@ MODULE L3DZData
               & ' successfully written to file ' // trim(file)
          CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
-         ! Define & write the diagnostic zonal
-
-         CALL OutputDZDiag_HE5( file, swfID, dzm(i) )
-
          ! Close the file
 
          status = he5_zaclose(swfID)
@@ -636,7 +628,13 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         ! Define & write the diagnostic zonal
+
+         CALL OutputDZDiag_HE5( file, dzm(i) )
+
       ENDDO
+
+      creationFlag = .TRUE.
 
     !---------------------------
     END SUBROUTINE OutputL3DZ_HE5
@@ -816,7 +814,7 @@ MODULE L3DZData
 !-----------------------------
 
     !-------------------------------------------
-    SUBROUTINE OutputDZDiag_HE5(file, swfID, dz)
+    SUBROUTINE OutputDZDiag_HE5(file, dz)
     !-------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
@@ -829,8 +827,6 @@ MODULE L3DZData
 
       CHARACTER (LEN=FileNameLen), INTENT(IN) :: file
 
-      INTEGER, INTENT(IN) :: swfID
-
       TYPE( L3DZData_T ), INTENT(IN) :: dz
 
       ! Parameters
@@ -838,21 +834,31 @@ MODULE L3DZData
       ! Functions
 
       INTEGER, EXTERNAL :: he5_zaattach, he5_zacreate, he5_zadefine, &
-           & he5_zadefdim, he5_zadetach, he5_zawrite
+           & he5_zadefdim, he5_zadetach, he5_zawrite, &
+	   & he5_zaopen, he5_zaclose
 
       ! Variables
 
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=GridNameLen) :: dgName
+      CHARACTER (LEN=7) :: dateChar
 
       INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: status, swID
+      INTEGER :: i, status, swID, zafID, dateInt
+
+      ! open the file
+      zafID = he5_zaopen(trim(file), HE5F_ACC_RDWR)
+                                                                                
+      IF (zafID == -1) THEN
+            msr = MLSMSG_Fileopen // trim(file)
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
 
       ! Create a zonal of the appropriate name
 
       dgName = TRIM(dz%name) // 'Diagnostics'
 
-      swID = he5_zacreate(swfID, trim(dgName))
+      swID = he5_zacreate(zafID, trim(dgName))
       IF (swID == -1) THEN
          msr = 'Failed to create zonal ' // trim(dgName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -860,7 +866,7 @@ MODULE L3DZData
 
       ! Define the zonal dimensions
 
-      status = he5_zadefdim(swID, DIMT_NAME, DATE_LEN)
+      status = he5_zadefdim(swID, DIMT_NAME, 1)
       IF (status == -1) THEN
          msr = DIM_ERR // DIMT_NAME
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -880,7 +886,7 @@ MODULE L3DZData
 
 ! Define the zonal geolocation fields using the above dimensions
 
-      status = he5_zadefine(swID,GEO_FIELD11, DIMT_NAME, "", HE5T_NATIVE_CHAR)
+      status = he5_zadefine(swID,GEO_FIELD11, DIMT_NAME, " ", HE5T_NATIVE_INT)
       IF (status == -1) THEN
          msr = GEO_ERR // GEO_FIELD11
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -912,39 +918,29 @@ MODULE L3DZData
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Detach from the zonal interface after definition
-
-      status = he5_zadetach(swID)
-      IF (status /= 0) THEN
-         msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-! Re-attach to the zonal for writing
-
-      swID = he5_zaattach(swfID, trim(dgName) )
-      IF (swID == -1) THEN
-         msr = 'Failed to re-attach to swath ' // TRIM(dgName)//' for writing.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
 ! Write the data
 
       start = 0
       stride = 1
-      edge(1) = DATE_LEN
-      edge(2) = dz%nLats
+      edge(1) = 1
+      edge(2) = 1 
 
+! Convert the date from char to int.  There is problem using char string from
+! toolkit from version 5.2.10
+                                                                                           
+      dateChar = dz%date(1:4) // dz%date(6:8)
+      read (dateChar, '(i7)') dateInt
+                                                                                           
 ! Geolocation fields
 
-      status = he5_zawrite(swID,GEO_FIELD11, start(1), stride(1), edge(1), & 
-           & dz%date)
+      status = he5_zawrite(swID, GEO_FIELD11, start(1), stride(1), edge(1), dateInt)
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD11
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       edge(1) = dz%nLevels
+      edge(2) = dz%nLats
 !      status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
 !           & REAL(dz%pressure) )
 !      IF (status == -1) THEN
@@ -983,6 +979,12 @@ MODULE L3DZData
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      status = he5_zaclose(zafID)
+      IF (status /= 0) THEN
+         msr = 'Failed to close file ' // trim(file) // ' after writing.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+                                                                                
       msr = 'Zonal '// TRIM(dgName) // ' successfully written to file '// & 
            & trim(file)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
@@ -1921,7 +1923,7 @@ MODULE L3DZData
          IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Error closing HDF file after writing metadata.')
 
-        ! Set global attributes
+        ! Set global attributes of Granule (year,month,day) for each day 
         rangeDate = files%date(i)
         GlobalAttributes%StartUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
           & // 'T00:00:00.000000Z'
@@ -1946,11 +1948,11 @@ MODULE L3DZData
 
       result = pgs_met_remove()
       
-      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-        write(msr, *) result
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-             & "Calling pgs_met_remove() failed with value " // trim(msr) )
-      endif          
+!      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+!        write(msr, *) result
+!        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+!             & "Calling pgs_met_remove() failed with value " // trim(msr) )
+!      endif          
 
 !------------------------------
     END SUBROUTINE WriteMetaL3DZ
@@ -2199,6 +2201,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.14  2004/01/08 21:21:36  cvuu
+! version 1.4 commit
+!
 ! Revision 1.13  2003/09/15 18:27:23  cvuu
 ! Output OrbitNumber and OrbitPeriod in the global attribute
 !

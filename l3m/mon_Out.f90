@@ -56,6 +56,9 @@ MODULE mon_Out
      LOGICAL :: createZS, createZD
         ! monthly zonal mean files, standard & diagnostic
 
+     LOGICAL :: createDZS, createDZD
+        ! Daily zonal mean files, standard & diagnostic
+
    END TYPE CreateFlags_T
 
 CONTAINS
@@ -142,11 +145,11 @@ CONTAINS
       ENDIF
 
       result = pgs_met_remove()
-      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-        write(msr, *) result
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(msr) )
-      endif          
+      !if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+      !  write(msr, *) result
+      !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+      !        "Calling pgs_met_remove() failed with value " // trim(msr) )
+      !endif          
 
 !------------------------------
    END SUBROUTINE WriteMetaLogM
@@ -154,7 +157,7 @@ CONTAINS
 
 !---------------------------------------------------------------------------
    SUBROUTINE OutputStd(pcf, type, mode, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
-        & sFiles, flag, hdfVersion, prodCount)
+        & sFiles, flag, hdfVersion)
 !---------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -178,7 +181,7 @@ CONTAINS
 
       TYPE( CreateFlags_T ), INTENT(OUT) :: flag
 
-      INTEGER, INTENT(IN) :: hdfVersion, prodCount
+      INTEGER, INTENT(IN) :: hdfVersion
 
 ! Parameters
 
@@ -188,24 +191,24 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dzA, sFiles, hdfVersion, prodCount)
+      CALL OutputL3DZ(type, dzA, sFiles, flag%createDZS, hdfVersion)
       CALL DestroyL3DZDatabase(dzA)
 
-      CALL OutputL3DZ(type, dzD, sFiles, hdfVersion, prodCount+1)
+      CALL OutputL3DZ(type, dzD, sFiles, flag%createDZS, hdfVersion)
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
 
-      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS, hdfVersion, prodCount)
+      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS, hdfVersion)
       CALL DeallocateL3MZ(mzA)
 
-      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS, hdfVersion, prodCount+1)
+      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS, hdfVersion)
       CALL DeallocateL3MZ(mzD)
 
 ! If required for this mode, output the monthly map
 
       IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
-         CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion, prodCount)
+         CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion)
          CALL OutputMMDiags(pcf%msName, mm, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mm)
@@ -213,7 +216,7 @@ CONTAINS
 ! Ascending
 
       IF ( INDEX(mode,'a') /= 0) THEN
-         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion, prodCount)
+         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion)
          CALL OutputMMDiags(pcf%msName, mmA, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmA)
@@ -221,7 +224,7 @@ CONTAINS
 ! Descending
 
       IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
-         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion, prodCount)
+         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion)
          CALL OutputMMDiags(pcf%msName, mmD, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmD)
@@ -232,7 +235,7 @@ CONTAINS
 
 !------------------------------------------------------------------------------
    SUBROUTINE OutputDg(pcf, type, dzA, dzD, mzA, mzD, mm,mmA,mmD,dFiles,flag,&
-        & hdfVersion, prodCount)
+        & hdfVersion)
 !------------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -255,7 +258,7 @@ CONTAINS
 
       TYPE( CreateFlags_T ), INTENT(OUT) :: flag
 
-      INTEGER, INTENT(IN) :: hdfVersion, prodCount
+      INTEGER, INTENT(IN) :: hdfVersion
 
 ! Parameters
 
@@ -270,23 +273,23 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dzA, dFiles, hdfVersion, prodCount)
+      CALL OutputL3DZ(type, dzA, dFiles, flag%createDZD, hdfVersion)
       CALL DestroyL3DZDatabase(dzA)
 
-      CALL OutputL3DZ(type, dzD, dFiles, hdfVersion, prodCount+1)
+      CALL OutputL3DZ(type, dzD, dFiles, flag%createDZD, hdfVersion)
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
 
-      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD, hdfVersion, prodCount)
+      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD, hdfVersion)
       CALL DeallocateL3MZ(mzA)
 
-      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD, hdfVersion, prodCount+1)
+      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD, hdfVersion)
       CALL DeallocateL3MZ(mzD)
 
 ! Output the monthly map (combined mode)
 
-      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion, prodCount)
+      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion)
       CALL OutputMMDiags(pcf%mdName, mm, hdfVersion)
       CALL DeallocateL3MM(mm)
 
@@ -438,6 +441,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.10  2004/01/08 21:21:37  cvuu
+!version 1.4 commit
+!
 !Revision 1.9  2003/09/16 16:37:14  cvuu
 !Add parameter nFiles to the call WriteMetaL3MM and WriteMetaL3MZ
 !
