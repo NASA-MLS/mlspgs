@@ -303,44 +303,52 @@ contains ! ============================ MODULE PROCEDURES ====================
        if (associated(MLSAuxData%RealField)) then 
        rank = size(shape(MLSAuxData%RealField))
        type_id = H5T_IEEE_F32LE
-       do i=1,rank
+       do i=1,rank-1
           dims(i) = size(MLSAuxData%RealField, i)
           chunk_dims(i) = dims(i)
           maxdims(i) = chunk_dims(i)
        end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
           maxdims(rank) = H5S_UNLIMITED_F
        end if
     case ('double')
        if (associated(MLSAuxData%DpField)) then 
        rank = size(shape(MLSAuxData%DpField))
        type_id = H5T_NATIVE_DOUBLE
-       do i=1,rank
+       do i=1,rank-1
           dims(i) = size(MLSAuxData%DpField, i)
           chunk_dims(i) = dims(i)
           maxdims(i) = chunk_dims(i)
        end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
           maxdims(rank) = H5S_UNLIMITED_F
        endif
     case ('integer')
        if (associated(MLSAuxData%IntField)) then 
        rank = size(shape(MLSAuxData%IntField))
        type_id = H5T_NATIVE_INTEGER
-       do i=1,rank
+       do i=1,rank-1
           dims(i) = size(MLSAuxData%IntField, i)
           chunk_dims(i) = dims(i)
           maxdims(i) = chunk_dims(i)
        end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
           maxdims(rank) = H5S_UNLIMITED_F
        endif
     case ('character')
        if (associated(MLSAuxData%CharField)) then 
        rank = size(shape(MLSAuxData%CharField))
        type_id = H5T_NATIVE_CHARACTER
-       do i=1, rank
+       do i=1,rank-1
           dims(i) = size(MLSAuxData%CharField, i)
           chunk_dims(i) = dims(i)
           maxdims(i) = chunk_dims(i)
        end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
           maxdims(rank) = H5S_UNLIMITED_F
        endif
     end select test_type
@@ -1492,6 +1500,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.11  2002/10/05 01:03:08  jdone
+! Create_MLSAuxData updated to reduce memory.
+!
 ! Revision 2.10  2002/10/05 00:52:50  jdone
 ! CreateGroup_MLSAuxData added.
 !
