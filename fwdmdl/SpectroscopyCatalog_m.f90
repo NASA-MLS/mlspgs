@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module SpectroscopyCatalog_m
 
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
@@ -48,10 +51,10 @@ module SpectroscopyCatalog_m
 
   ! Public Variables:
   ! The lines database:
-  type(line_T), public, pointer, dimension(:) :: Lines => NULL()
+  type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
 
   ! The spectroscopy database:
-  type(catalog_T), public, pointer, dimension(:) :: Catalog => NULL()
+  type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -385,6 +388,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.6  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.5  2001/04/23 23:16:16  vsnyder
 ! Add 'time' command
 !
