@@ -171,6 +171,7 @@ range
 ratioQuantity
 refGPHquantity
 refract
+regAfter
 regOrders
 regQuants
 regWeights
@@ -239,6 +240,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.42  2002/08/03 01:14:41  vsnyder
+# Add regAfter to control Tikhonov before/after column scaling -- default false
+#
 # Revision 2.41  2002/07/17 06:02:36  livesey
 # New HDF5 l2pc stuff
 #
