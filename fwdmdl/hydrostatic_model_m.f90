@@ -161,7 +161,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
     if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
     if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
     CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
-   &                  tan_hts(:,l),si-1,ier)
+   &                  tan_hts(1:si-1,l),si-1,ier)
     IF(ier /= 0) RETURN
   end do
 
@@ -381,6 +381,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.13  2001/04/06 20:54:21  zvi
+! Fix a small bug concerning initialization of JLO in HUNT
+!
 ! Revision 1.12  2001/03/29 23:58:48  livesey
 ! Turned phi_tan etc. into an array
 !
