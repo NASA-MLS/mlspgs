@@ -4,11 +4,16 @@
 #
 include make.inc
 
-OBJS=	mlsstrings.o mlssignalnomenclature.o verticalcoordinates.o \
-	vectorquantities.o mlsnumerics.o mlsmessagemodule.o
-OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug \
-	verticalcoordinates.o_debug vectorquantities.o_debug \
-	mlsnumerics.o_debug mlsmessagemodule.o_debug
+OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
+	VectorQuantities.o MLSNumerics.o MLSMessageModule.o
+
+OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
+		VerticalCoordinate.o_debug VectorQuantities.o_debug \
+		MLSNumerics.o_debug MLSMessageModule.o_debug
+
+TKS_OBJS= SDPToolkitSubstitute.o
+TKS_OBJS_DEBUG= SDPToolkitSubstitute.o_debug
+
 MODULEPATH=.
 
 both: all debug
@@ -16,10 +21,10 @@ all: mlslib.a SDPToolkitSubstitute.a
 debug: mlslib.a_debug SDPToolkitSubstitute.a_debug
 
 mlslib.a: ${OBJS}
-	ar ru mlslib.a $?
+	ar ru $@ $?
 
 mlslib.a_debug: ${OBJS_DEBUG}
-	ar ru mlslib.a_debug $?
+	ar ru $@ $?
 
 SDPToolkitSubstitute.a: ${TKS_OBJS}
 	ar ru SDPToolkitSubstitute.a $?
@@ -29,19 +34,23 @@ SDPToolkitSubstitute.a_debug: ${TKS_OBJS}
 clean:
 	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
 
-mlsstrings.o: mlsmessagemodule.o
-mlssignalnomenclature.o: mlsstrings.o mlsmessagemodule.o
-vectorquantities.o: mlssignalnomenclature.o mlsstrings.o mlsmessagemodule.o
-mlsnumerics.o: mlsmessagemodule.o
+MLSStrings.o: MLSMessageModule.o
+MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o
+VectorQuantities.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
+MLSNumerics.o: MLSMessageModule.o
 
-mlsstrings.o_debug: mlsmessagemodule.o_debug
-mlssignalnomenclature.o_debug: mlsstrings.o_debug mlsmessagemodule.o
-vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug \
-	mlsmessagemodule.o_debug
-mlsnumerics.o_debug: mlsmessagemodule.o_debug
+MLSStrings.o_debug: MLSMessageModule.o_debug
+MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug
+VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
+		MLSMessageModule.o_debug
+MLSNumerics.o_debug: MLSMessageModule.o_debug
+
 
 #
 # $Log$
+# Revision 1.11  1999/12/01 23:14:06  livesey
+# Renamed files to upper/lower case
+#
 # Revision 1.10  1999/12/01 23:01:39  livesey
 # Before renaming things to upper/lower case
 #
