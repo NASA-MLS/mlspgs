@@ -6,10 +6,10 @@ module HGrid                    ! Horizontal grid information
 !=============================================================================
 
   use EXPR_M, only: EXPR
-  use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INTERPOLATIONFACTOR, &
-                                F_MODULE, F_TYPE, FIELD_FIRST, FIELD_LAST, &
-                                L_FRACTIONAL, L_HEIGHT, LIT_INDICES, &
-                                PHYQ_DIMENSIONLESS, PHYQ_LENGTH
+  use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
+    & F_INTERPOLATIONFACTOR, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
+    & FIELD_LAST, L_EXPLICIT, L_FRACTIONAL, L_HEIGHT, LIT_INDICES, &
+    & PHYQ_DIMENSIONLESS, PHYQ_LENGTH
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -22,6 +22,7 @@ module HGrid                    ! Horizontal grid information
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
+  use UNITS, only: DEG2RAD
 
   implicit none
 
@@ -124,6 +125,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:,:,:), pointer :: tpGeodAngle, tpGeodAlt
 
     real(r8) :: minAngle, maxAngle
+    real(r8) :: incline                 ! Orbital inclination / degrees
 
     integer, dimension(:), allocatable :: defaultMIFs
     integer :: FIELD              ! Subtree index of "field" node
@@ -134,14 +136,19 @@ contains ! =====     Public Procedures     =============================
     integer :: L1BITEM            ! Loop counter
     character (len=NameLen) :: L1BItemName
     integer :: MAF                ! Loop counters
-    integer :: noMAFs             ! Number of MAFs of L1B data read
+    integer :: NOMAFS             ! Number of MAFs of L1B data read
+    integer :: PROF                     ! Loop counter
     integer :: SON                ! Son of Root
     integer :: STATUS             ! From Allocate, ReadL1B... etc.
+    integer :: VALUESNODE               ! Node of tree for explicit
 
     ! MIFs it would choose in the non over/undersampled case
     real(r8), dimension(:), allocatable :: defaultField, interpolatedField
 
     ! Executable code
+
+    hGrid%name = name
+
     l1bItemNames(l1b_mafstarttimetai ) = 'MAFStartTimeTAI'
     l1bItemNames(l1b_tpgeodlat       ) = 'tpGeodLat'
     l1bItemNames(l1b_tplon           ) = 'tpLon'
@@ -182,6 +189,11 @@ contains ! =====     Public Procedures     =============================
         interpolationFactor = expr_value(1)
         if ( expr_units(1) /= PHYQ_Dimensionless) &
           & call announce_error ( field, unitlessMessage )
+      case ( f_values )
+        valuesNode = son
+      case ( f_inclination )
+        call expr (subtree ( 2, son), expr_units, expr_value )
+        incline = expr_value(1)
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -201,152 +213,172 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = trim(instrumentModuleName)//"."//"tpGeodAlt"
     end select
 
-    ! Read the data
-
-    call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-       & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
-    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & MLSMSG_L1BRead//l1bItemName )
-
-    ! allocate default MIFs
-
-    allocate ( defaultMIFs(noMAFs), STAT=status )
-    if ( status/=0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & MLSMSG_allocate//"defaultMIFs" )
-   
-    ! Work out which MIF should have the profile for each MAF.
-
-    if ( hGridType==l_Fractional ) then
-      ! A fractional hGrid, we need to read the tangent point phi
-      tpGeodAngle => l1bField%dpField
-
-      ! Loop over the MAFs
-      do maf = 1, noMAFs
-        ! ??? Think about missing data here! ***
-        ! Probably need to do a pack on tpGeodAngle and then unpack on
-        ! defaultMIFs
-
-        minAngle=minval(tpGeodAngle(1,:,maf))
-        maxAngle=maxval(tpGeodAngle(1,:,maf))
-
-        call Hunt ( tpGeodAngle(1,:,maf), &
-          & minAngle+fraction*(maxAngle-minAngle) , defaultMIFs(maf) )
-      end do
-    else
-      tpGeodAlt => l1bField%dpField
-
-      ! Loop over the MAFs
-      do maf = 1, noMAFs
-        ! ??? Think about missing data here! ***
-        ! Probably need to do a pack on tpGeodAngle and then unpack on
-        ! defaultMIFs
-
-        call Hunt ( tpGeodAlt(1,:,maf), height, defaultMIFs(maf) )
-      end do
-    end if
-
-    ! Done with this piece of l1b data for the moment
-    call DeallocateL1BData ( l1bField, l1bFlag )
-
-    ! Now we have a default MIFs array; this is a list of the `standard'
-    ! MIFs we would choose in the interpolationFactor=1 case.
-    ! Work out how many profiles this is going to be.
-
-    ! Create an empty hGrid
-    hGrid%name = name
-    hGrid%noProfs = NINT(noMAFs*interpolationFactor)
-    allocate ( hGrid%phi(hGrid%noProfs), hGrid%geodLat(hGrid%noProfs), &
-      & hGrid%lon(hGrid%noProfs), hGrid%time(hGrid%noProfs), &
-      & hGrid%solarTime(hGrid%noProfs), hGrid%solarZenith(hGrid%noProfs), &
-      & hGrid%losAngle(hGrid%noProfs), STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "hGrid information" )
-
-    hGrid%noProfsLowerOverlap = 0
-    hGrid%noProfsUpperOverlap = 0
-
-    ! Setup some arrays
-    allocate ( defaultField(noMAFs), interpolatedField(hGrid%noProfs), &
-      & STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_allocate//"defaultField and/or interpolatedField" )
-
-    ! Now we go through all the important geolocation quantities, read them
-    ! in, interpolate them if required and store the result in the hGrid
-
-    do l1bItem = 1, NoL1BItemsToRead
-      ! Get the name of the item to read
-      l1bItemName = l1bItemNames(l1bItem)
-      if ( l1bItem >= firstModularItem ) l1bItemName = &
-        & trim(instrumentModuleName)//"."//l1bItemName
-
-      ! Read it from the l1boa file
-      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
+    ! For height and fractional grids get stuff from L1BOA file
+    if ( any ( hGridType == (/ l_Fractional, l_Height /) ) ) then
+      ! Read the data
+      
+      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
-      if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
+      
+      ! allocate default MIFs
+      allocate ( defaultMIFs(noMAFs), STAT=status )
+      if ( status/=0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_allocate//"defaultMIFs" )
+      
+      ! Work out which MIF should have the profile for each MAF.
+      if ( hGridType==l_Fractional ) then
+        ! A fractional hGrid, we need to read the tangent point phi
+        tpGeodAngle => l1bField%dpField
+        
+        ! Loop over the MAFs
+        do maf = 1, noMAFs
+          ! ??? Think about missing data here! ***
+          ! Probably need to do a pack on tpGeodAngle and then unpack on
+          ! defaultMIFs
+          
+          minAngle=minval(tpGeodAngle(1,:,maf))
+          maxAngle=maxval(tpGeodAngle(1,:,maf))
 
-      if ( l1bItem==1 ) then       ! do something special for time
-        do maf = 1, noMAFs
-          defaultField(maf) = l1bField%dpField(1,1,maf) + &
-            & (defaultMIFs(maf)-1)*sixth
-         end do
-      else                         ! Otherwise this is fairly easy.
-        do maf = 1, noMAFs
-          defaultField(maf) = l1bField%dpField(1,defaultMIFs(maf),maf)
+          call Hunt ( tpGeodAngle(1,:,maf), &
+            & minAngle+fraction*(maxAngle-minAngle) , defaultMIFs(maf) )
         end do
-      end IF
-
-      if ( interpolationFactor==1.0 ) then
-        interpolatedField = defaultField
       else
-        ! ??? Some interpolation is wanted.  I'm going to hold off writing
-        ! this because we certaintly don't need it for 0.1 and probably
-        ! won't till 1.0.  For the sake of getting things down I'll state
-        ! here what I think would be implemented.  One would simply
-        ! interpolate from the defaultField to the interpolatedField, using
-        ! linear or spline I imagine.  However, there are issues with roll
-        ! overs for quantities such as longitude and solarTime.  This is
-        ! why I have chosen to defer this piece of code. NJL - 16 December
-        ! 1999
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-             & "Sorry -- interpolation of hGrids is not yet supported" )
+        tpGeodAlt => l1bField%dpField
+
+        ! Loop over the MAFs
+        do maf = 1, noMAFs
+          ! ??? Think about missing data here! ***
+          ! Probably need to do a pack on tpGeodAngle and then unpack on
+          ! defaultMIFs
+          
+          call Hunt ( tpGeodAlt(1,:,maf), height, defaultMIFs(maf) )
+        end do
       end if
+      
+      ! Done with this piece of l1b data for the moment
+      call DeallocateL1BData ( l1bField, l1bFlag )
+      
+      ! Now we have a default MIFs array; this is a list of the `standard'
+      ! MIFs we would choose in the interpolationFactor=1 case.
+      ! Work out how many profiles this is going to be.
+      
+      ! Create an empty hGrid
+      hGrid%name = name
+      hGrid%noProfs = NINT(noMAFs*interpolationFactor)
+      allocate ( hGrid%phi(hGrid%noProfs), hGrid%geodLat(hGrid%noProfs), &
+        & hGrid%lon(hGrid%noProfs), hGrid%time(hGrid%noProfs), &
+        & hGrid%solarTime(hGrid%noProfs), hGrid%solarZenith(hGrid%noProfs), &
+        & hGrid%losAngle(hGrid%noProfs), STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "hGrid information" )
+      
+      hGrid%noProfsLowerOverlap = 0
+      hGrid%noProfsUpperOverlap = 0
+      
+      ! Setup some arrays
+      allocate ( defaultField(noMAFs), interpolatedField(hGrid%noProfs), &
+        & STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_allocate//"defaultField and/or interpolatedField" )
+      
+      ! Now we go through all the important geolocation quantities, read them
+      ! in, interpolate them if required and store the result in the hGrid
+      
+      do l1bItem = 1, NoL1BItemsToRead
+        ! Get the name of the item to read
+        l1bItemName = l1bItemNames(l1bItem)
+        if ( l1bItem >= firstModularItem ) l1bItemName = &
+          & trim(instrumentModuleName)//"."//l1bItemName
+        
+        ! Read it from the l1boa file
+        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
+          & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
+        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        
+        if ( l1bItem==1 ) then       ! do something special for time
+          do maf = 1, noMAFs
+            defaultField(maf) = l1bField%dpField(1,1,maf) + &
+              & (defaultMIFs(maf)-1)*sixth
+          end do
+        else                         ! Otherwise this is fairly easy.
+          do maf = 1, noMAFs
+            defaultField(maf) = l1bField%dpField(1,defaultMIFs(maf),maf)
+          end do
+        end IF
+        
+        if ( interpolationFactor==1.0 ) then
+          interpolatedField = defaultField
+        else
+          ! ??? Some interpolation is wanted.  I'm going to hold off writing
+          ! this because we certaintly don't need it for 0.1 and probably
+          ! won't till 1.0.  For the sake of getting things down I'll state
+          ! here what I think would be implemented.  One would simply
+          ! interpolate from the defaultField to the interpolatedField, using
+          ! linear or spline I imagine.  However, there are issues with roll
+          ! overs for quantities such as longitude and solarTime.  This is
+          ! why I have chosen to defer this piece of code. NJL - 16 December
+          ! 1999
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Sorry -- interpolation of hGrids is not yet supported" )
+        end if
+        
+        select case ( l1bItem )
+        case ( l1b_MAFStartTimeTAI )
+          hGrid%time = interpolatedField
+        case ( l1b_tpGeodLat )
+          hGrid%geodLat = interpolatedField
+        case ( l1b_tpLon )
+          hGrid%lon = interpolatedField
+        case ( l1b_tpGeodAngle )
+          hGrid%phi = interpolatedField
+        case ( l1b_tpSolarZenith )
+          hGrid%solarZenith = interpolatedField
+        case ( l1b_tpSolarTime )
+          hGrid%solarTime = interpolatedField
+        case ( l1b_tpLosAngle )
+          hGrid%losAngle = interpolatedField
+        end select
+      end do
+      
+      deallocate ( defaultMIFs, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "defaultMIFs" )
+      deallocate ( defaultField, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "defaultField" )
+      deallocate ( interpolatedField, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "interpolatedField" )
+      
+      ! ??? This calculation may need attention! ***
+      hGrid%noProfsLowerOverlap = &
+        & NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
+      hGrid%noProfsUpperOverlap = &
+        & NINT(chunk%noMAFsUpperOverlap*interpolationFactor)
+    endif
 
-      select case ( l1bItem )
-      case ( l1b_MAFStartTimeTAI )
-        hGrid%time = interpolatedField
-      case ( l1b_tpGeodLat )
-        hGrid%geodLat = interpolatedField
-      case ( l1b_tpLon )
-        hGrid%lon = interpolatedField
-      case ( l1b_tpGeodAngle )
-        hGrid%phi = interpolatedField
-      case ( l1b_tpSolarZenith )
-        hGrid%solarZenith = interpolatedField
-      case ( l1b_tpSolarTime )
-        hGrid%solarTime = interpolatedField
-      case ( l1b_tpLosAngle )
-        hGrid%losAngle = interpolatedField
-      end select
-    end do
+    if ( hGridType == l_explicit) then
+      ! For explicit hGrids, do things differently
+      hGrid%noProfs = nsons(valuesNode)-1
+      hGrid%noProfsLowerOverlap = 0
+      hGrid%noProfsUpperOverlap = 0
+      hGrid%lon = 0.0_r8
+      hGrid%time = 0.0_r8
+      hGrid%solarTime = 0.0_r8
+      hGrid%losAngle = 0.0_r8
+      hGrid%solarZenith = 0.0_r8
 
-    deallocate ( defaultMIFs, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "defaultMIFs" )
-    deallocate ( defaultField, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "defaultField" )
-    deallocate ( interpolatedField, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "interpolatedField" )
-
-    ! ??? This calculation may need attention! ***
-    hGrid%noProfsLowerOverlap = &
-      & NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
-    hGrid%noProfsUpperOverlap = &
-      & NINT(chunk%noMAFsUpperOverlap*interpolationFactor)
-
+      do prof = 1, hGrid%noProfs
+        call expr ( subtree ( prof+1, valuesNode), expr_units, expr_value )
+        hGrid%phi(prof) = expr_value(1)
+        hGrid%geodLat(prof) = asin( sin(deg2rad*hGrid%phi(prof)) * &
+          &                         sin(deg2rad*incline) )/deg2rad
+      end do
+    endif
+      
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
     
   end function CreateHGridFromMLSCFInfo
@@ -444,6 +476,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.9  2001/04/20 23:11:48  livesey
+! Added explicit functionality
+!
 ! Revision 2.8  2001/03/02 01:27:06  livesey
 ! For new MLSSignals
 !
