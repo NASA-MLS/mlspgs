@@ -6,7 +6,7 @@
 ! $Id$
 ! $RCSfile$
 
-!  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
+!  Given arrays XIN & YIN of length NIN containing a tabulated function,
 !  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
 !  this subroutine Returns the array: YOUT which is the cubic-spline
 !  interpolation of (XIN,YIN) computed for each: XOUT
@@ -76,6 +76,9 @@
 ! end subroutine ?_CSPLINE
 
 ! $Log$
+! Revision 2.5  2002/10/14 20:49:52  vsnyder
+! Add copyright notice, replace ID block with comments, cosmetic changes
+!
 ! Revision 2.4  2002/10/02 15:49:38  bwknosp
 ! Added Id and RCS info
 !
