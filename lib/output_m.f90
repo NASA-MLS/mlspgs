@@ -154,11 +154,15 @@ contains
     end if
   end subroutine OUTPUT_DOUBLE
 
-  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE )
+  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
+  ! If 'fill' is present and true, fill leading blanks with zeroes (only
+  ! makes sense if 'places' is specified).
     integer, intent(in) :: INT
     integer, intent(in), optional :: PLACES
     character(len=*), intent(in), optional :: ADVANCE
+    logical, intent(in), optional :: FILL
+    logical :: My_Fill
     integer :: I
     character(len=6) :: LINE
     character(len=3) :: MY_ADV
@@ -167,8 +171,11 @@ contains
     if ( present(places) ) then; my_places = places; end if
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_fill = .false.
+    if ( present(places) .and. present(fill) ) my_fill = fill
     write ( line, '(i6)' ) int
     i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
+    if ( my_fill ) write ( line, '(i6.6)' ) int
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) line(i:)
     if ( prunit < -1 ) &
@@ -274,6 +281,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.8  2001/04/25 00:08:01  vsnyder
+! Add 'fill' argument to 'output_integer'
+!
 ! Revision 2.7  2001/04/18 23:28:10  pwagner
 ! Added output_integer_array
 !
