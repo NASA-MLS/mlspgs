@@ -40,7 +40,7 @@ module RetrievalModule
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SidsModule, only: SIDS
@@ -2563,6 +2563,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.125  2001/11/28 23:16:39  livesey
+! Added use of MLSMSG_Warning, whoops!
+!
 ! Revision 2.124  2001/11/28 20:39:35  livesey
 ! Fixed bug with subset, changed some of Dong's prints to MLSMessage's
 !
