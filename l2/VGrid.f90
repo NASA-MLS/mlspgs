@@ -25,8 +25,10 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 ! Error codes for "announce_error"
   integer, private, parameter :: ExtraIf = 1
   integer, private, parameter :: InconsistentUnits = ExtraIf + 1
-  integer, private, parameter :: NoL2GP = InconsistentUnits + 1
-  integer, private, parameter :: NotPositive = NoL2GP + 1
+  integer, private, parameter :: NeedBoth = InconsistentUnits + 1
+  integer, private, parameter :: NoL2GP = NeedBoth + 1
+  integer, private, parameter :: NoStep = NoL2GP + 1
+  integer, private, parameter :: NotPositive = NoStep + 1
   integer, private, parameter :: RedundantCoordinates = NotPositive + 1
   integer, private, parameter :: RequireExplicit = RedundantCoordinates + 1
   integer, private, parameter :: RequiredIf = RequireExplicit + 1
@@ -209,40 +211,7 @@ contains ! =====     Public Procedures     =============================
         call check_fields ( root, l_logarithmic , got_field, &
           & required=(/ f_formula, f_start /), &
           & extra=(/ f_stop, f_values /) )
-        vgrid%noSurfs = 0
-        if ( got_field(f_formula) ) then
-          j = nsons(formula)
-          do i = 2, j ! Compute total number of surfaces
-            call expr ( subtree(i,formula), units, values )
-            if ( units(1) /= phyq_dimensionless .or. &
-              &  units(2) /= phyq_dimensionless ) &
-              call announce_error ( subtree(1,formula), wrongUnits, f_formula, &
-                & phyq_dimensionless )
-            vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
-          end do
-          if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
-        end if
-        if ( error == 0 ) then
-          call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
-            & ModuleName )
-          k = 1
-          n = 1 ! One less surface the first time, since we have one at the start.
-          call expr ( subtree(2,start), units, values )
-          vgrid%surfs(1,1) = values(1)
-          do i = 2, j
-            call expr ( subtree(i,formula), units, values )
-            if ( values(2) <= 0.0d0 ) then
-              call announce_error ( subtree(1,formula), notPositive, f_formula )
-              exit
-            end if
-            step = 10.0 ** (-1.0d0/values(2))
-            do l = 1, nint(values(1)) - n
-              k = k + 1
-              vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
-            end do
-            n = 0 ! Do all of the surfaces after the first time.
-          end do
-        end if
+        call logarithmicFormula ( -1.0d0 )
       end select
 
       ! Check that the given surfaces are in an appropriate unit
@@ -287,24 +256,77 @@ contains ! =====     Public Procedures     =============================
       vGrid%verticalCoordinate = l_theta
       if ( check_units ( start, f_start, values ) /= PHYQ_Temperature) &
         & call announce_error ( start, unitsTemperature )
-      vGrid%noSurfs = number
-      call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
-        & ModuleName )
-      vGrid%surfs(1,1) = log(values(1))
-      if ( check_units ( stepIndex, f_step, values ) /= PHYQ_Dimensionless ) &
-        & call announce_error ( subtree(1,stepIndex), unitless, f_step )
-      if ( values(1) <= 0.0d0 ) &
-        & call announce_error ( subtree(1,stepIndex), notPositive, f_step )
-      if ( error == 0 ) then
-        do i = 2, number
-          vGrid%surfs(i,1) = vGrid%surfs(i-1,1) + values(1)
-        end do
+      if ( got_field(f_formula) ) then
+        if ( got_field(f_number) .or. got_field(f_step) ) then
+          call announce_error ( formula, noStep )
+        else
+          call logarithmicFormula ( 1.0d0 )
+          vGrid%surfs = log(vGrid%surfs)
+        end if
+      else
+        if ( .not. (got_field(f_number) .and. got_field(f_step) ) ) then
+          call announce_error ( start, NeedBoth )
+        else
+          vGrid%noSurfs = number
+          call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+            & ModuleName )
+          vGrid%surfs(1,1) = log(values(1))
+          if ( check_units ( stepIndex, f_step, values ) /= PHYQ_Dimensionless ) &
+            & call announce_error ( subtree(1,stepIndex), unitless, f_step )
+          if ( values(1) <= 0.0d0 ) &
+            & call announce_error ( subtree(1,stepIndex), notPositive, f_step )
+          if ( error == 0 ) then
+            do i = 2, number
+              vGrid%surfs(i,1) = vGrid%surfs(i-1,1) + values(1)
+            end do
+          end if
+        end if
       end if
     end if
 
     if ( toggle(gen) ) call trace_end ( "CreateVGridFromMLSCFInfo" )
 
     status = error
+
+  contains
+    subroutine LogarithmicFormula ( StepSign )
+    ! Allocate and fill vGrid%surfs from the Formula field
+      double precision, intent(in) :: StepSign ! +/- 1.0d0
+      vgrid%noSurfs = 0
+      if ( got_field(f_formula) ) then
+        j = nsons(formula)
+        do i = 2, j ! Compute total number of surfaces
+          call expr ( subtree(i,formula), units, values )
+          if ( units(1) /= phyq_dimensionless .or. &
+            &  units(2) /= phyq_dimensionless ) &
+            call announce_error ( subtree(1,formula), wrongUnits, f_formula, &
+              & phyq_dimensionless )
+          vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
+        end do
+        if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
+      end if
+      if ( error == 0 ) then
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+          & ModuleName )
+        k = 1
+        n = 1 ! One less surface the first time, since we have one at the start.
+        call expr ( subtree(2,start), units, values )
+        vgrid%surfs(1,1) = values(1)
+        do i = 2, j
+          call expr ( subtree(i,formula), units, values )
+          if ( values(2) <= 0.0d0 ) then
+            call announce_error ( subtree(1,formula), notPositive, f_formula )
+            exit
+          end if
+          step = 10.0 ** (StepSign/values(2))
+          do l = 1, nint(values(1)) - n
+            k = k + 1
+            vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
+          end do
+          n = 0 ! Do all of the surfaces after the first time.
+        end do
+      end if
+    end subroutine LogarithmicFormula
 
   end function CreateVGridFromMLSCFInfo
 
@@ -333,8 +355,12 @@ contains ! =====     Public Procedures     =============================
       call output ( "Elements of the '" )
       call display_string ( field_indices(field_index) )
       call output ( "' field have inconsistent units", advance='yes' )
+    case ( NeedBoth )
+      call output ( 'If "formula" does not appear, both "number" and "step" shall appear' )
     case ( NoL2GP )
       call output ( 'No L2GP database defined yet.', advance='yes' )
+    case ( NoStep )
+      call output ( 'If "formula" appears, neither "number" nor "step" shall appear' )
     case ( notPositive )
       call output ( "The value of the '" )
       call display_string ( field_indices(field_index) )
@@ -448,6 +474,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.21  2004/06/12 00:41:13  vsnyder
+! Handle formula field in tGrid
+!
 ! Revision 2.20  2004/06/08 19:27:30  vsnyder
 ! Add tGrid, improve error detection and reporting
 !
