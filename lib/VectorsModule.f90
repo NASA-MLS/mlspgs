@@ -83,11 +83,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
-  public :: DumpMask
-  public :: Dump_Vector, Dump_Vectors, Dump_Vector_Templates, GetVectorQuantity
-  public :: GetVectorQuantityByType, GetVectorQtyByTemplateIndex
-  public :: GetVectorQuantityIndexByName, GetVectorQuantityIndexByType
-  public :: IsVectorQtyMasked, MultiplyVectors
+  public :: DumpMask, Dump_Vector, Dump_Vectors, Dump_Vector_Templates
+  public :: GetVectorQuantity, GetVectorQuantityByType
+  public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
+  public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
   public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity
   ! Types
@@ -307,8 +306,9 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  ClearMask  -----
   subroutine ClearMask ( MASK, TO_CLEAR )
-  ! Clear bits of MASK indexed by elements of TO_CLEAR.  If TO_CLEAR is
-  ! absent, clear all of the bits of MASK.
+  ! Clear bits of MASK indexed by elements of TO_CLEAR.  Numbering of mask
+  ! elements starts at one, not zero!  If TO_CLEAR is absent, clear all of
+  ! the bits of MASK.
     integer, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_CLEAR
     integer :: I, W
@@ -709,7 +709,6 @@ contains ! =====     Public Procedures     =============================
     integer :: q                        ! Quantity index
     integer :: s                        ! Surface index
     integer :: j                        ! Element index
-    integer :: b                        ! Bit size
     integer :: c                        ! Channel index
 
     ! Executable code
@@ -731,8 +730,7 @@ contains ! =====     Public Procedures     =============================
         do i = 1, vector%quantities(q)%template%noInstances
           call output ( 'Instance: ' )
           call output ( i, advance='yes' )
-          b = bit_size (vector%quantities(q)%mask)
-          j = 1
+          j = 0
           do s = 1, vector%quantities(q)%template%noSurfs
             call output ( 'Surface ' )
             call output ( s )
@@ -1135,7 +1133,8 @@ contains ! =====     Public Procedures     =============================
 
     isVectorQtyMasked = .false.
     if ( .not. associated(vectorQty%mask)) return
-    isVectorQtyMasked = btest( vectorQty%mask(row/b + 1, column), mod(row, b) )
+    isVectorQtyMasked = &
+      & btest( vectorQty%mask((row-1)/b + 1, column), mod(row-1, b) )
 
   end function IsVectorQtyMasked
 
@@ -1224,8 +1223,9 @@ contains ! =====     Public Procedures     =============================
 
   !-----------------------------------------------------  SetMask  -----
   subroutine SetMask ( MASK, TO_SET )
-  ! Set bits of MASK indexed by elements of TO_SET.  If TO_SET is absent,
-  ! set all of the bits of MASK.
+  ! Set bits of MASK indexed by elements of TO_SET.  Numbering of mask
+  ! elements starts at one, not zero!  If TO_SET is absent, set all of the
+  ! bits of MASK.
     integer, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
     integer :: I, W
@@ -1492,6 +1492,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.59  2001/09/29 00:25:51  vsnyder
+! Correct word indexing for mask operations
+!
 ! Revision 2.58  2001/09/25 19:41:07  livesey
 ! Added DumpMask
 !
