@@ -55,6 +55,10 @@ contains ! ======================================== BaselineForwardModel ======
     ! Local variables
 
     logical :: BSLINFIRST               ! Set if baseline in FwdModelIn
+    logical :: BANDBSLINFIRST           ! Set if band based baseline in FwdModelIn
+    logical :: RADBSLINFIRST            ! Set if radiometer based baseline in FwdModelIn
+    logical :: BANDBSLWASSPECIFIC       ! Set if band based baseline in FwdModelIn
+    logical :: RADBSLWASSPECIFIC        ! Set if radiometer based baseline in FwdModelIn
     logical :: PTANINFIRST              ! Set if ptan in FwdModelIn
     logical :: MINORFRAMEBASIS          ! Set if baseline has a minor frame basis
 
@@ -98,6 +102,8 @@ contains ! ======================================== BaselineForwardModel ======
     real (rm), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
+    type (VectorValue_T), pointer :: BANDCANDIDATE ! A possible baseline quantity
+    type (VectorValue_T), pointer :: RADCANDIDATE ! A possible baseline quantity
     type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
     type (VectorValue_T), pointer :: PTAN ! The tangent pressure quantity
 
@@ -126,16 +132,56 @@ contains ! ======================================== BaselineForwardModel ======
       noMIFs = radiance%template%noSurfs
 
       ! Now work out which baseline quantity we want
-      ! First look for one for this band
-      baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      ! Look for a band based baseline
+      bandCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, signal=signal%index, sideband=signal%sideband,&
-        & noError=.true., config=fwdModelConf, foundInFirst=bslInFirst )
-      ! If we can't find one, look for one for this radiometer instead,
-      ! if that fails, raise an error
-      if ( .not. associated(baseline) ) &
-        & baseline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=bandBslInFirst, wasSpecific=bandBslWasSpecific )
+      ! Look for a radiometer based baseline
+      radCandidate => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, radiometer=signal%radiometer, &
-        & config=fwdModelConf, foundInFirst=bslInFirst )
+        & noError=.true., config=fwdModelConf, &
+        & foundInFirst=bslInFirst, wasSpecific=radBslWasSpecific )
+      ! Now the complicated bit of working out which to pick
+      ! First go by those listed in the 'specific quantities' field
+      if ( bandBslWasSpecific .or. radBslWasSpecific ) then
+        if ( bandBslWasSpecific .and. radBslWasSpecific ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of two baselines in specificQuantities' )
+        else if ( bandBslWasSpecific ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        end if
+      ! Now go for the one found in first if either were
+      else if ( bandBslInFirst .or. radBslInFirst ) then
+        if ( bandBslInFirst .and. radBslInFirst ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of two baselines in first state vector' )
+        else if ( bandBslInFirst ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        end if
+      ! Otherwise go for whatever there is
+      else
+        if ( associated ( bandCandidate ) .and. associated ( radCandidate ) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Ambiguous listing of two baselines in second state vector' )
+        else if ( associated ( bandCandidate ) ) then
+          baseline => bandCandidate
+          bslInFirst = bandBslInFirst
+        else if ( associated ( radCandidate ) ) then
+          baseline => radCandidate
+          bslInFirst = radBslInFirst
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, 'No matching baseline found' )
+        end if
+      end if
 
       noBslChans = baseline%template%noChans
 
@@ -445,6 +491,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.22  2004/10/16 17:28:42  livesey
+! Better handling of band dependent baselines
+!
 ! Revision 2.21  2004/09/13 17:39:49  livesey
 ! Changed to use GetQuantityForForwardModel
 !
