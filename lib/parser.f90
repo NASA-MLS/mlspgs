@@ -82,28 +82,56 @@ contains ! ====     Public Procedures     ==============================
     end do
     return
   end subroutine ANNOUNCE_ERROR
-! -------------------------------------------------------    EXPR  -----
-  subroutine EXPR
+
+! --------------------------------------------------------  ARRAY  -----
+  recursive subroutine ARRAY ( HOW_MANY )
+    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
+    call get_token     ! Consume the left bracket
+    do
+      call expr
+      how_many = how_many + 1
+      if ( next%class == t_right_bracket ) then
+        call get_token ! Consume the right bracket
+  return
+      end if
+      if ( next%class /= t_comma ) then
+        call announce_error ( (/ t_right_bracket, t_comma /) )
+        if ( next%class == t_end_of_input .or. &
+             next%class == t_end_of_stmt ) exit
+      end if
+      call get_token   ! Consume the comma
+    end do
+  end subroutine ARRAY
+
+! ---------------------------------------------------------  EXPR  -----
+  recursive subroutine EXPR
+    integer :: NSONS
     if ( toggle(par) ) call output ( 'Enter EXPR', advance='yes' )
-    call limit
-    select case ( next%class )
-    case ( t_colon )
-      call get_token
+    if ( next%class == t_left_bracket ) then
+      nsons = 0
+      call array ( nsons )
+      call build_tree ( n_array, nsons )
+    else
       call limit
-      call build_tree ( n_colon, 2 )
-    case ( t_colon_less )
-      call get_token
-      call limit
-      call build_tree ( n_colon_less, 2 )
-    case ( t_less_colon )
-      call get_token
-      call limit
-      call build_tree ( n_less_colon, 2 )
-    case ( t_less_colon_less )
-      call get_token
-      call limit
-      call build_tree ( n_less_colon_less, 2 )
-    end select
+      select case ( next%class )
+      case ( t_colon )
+        call get_token
+        call limit
+        call build_tree ( n_colon, 2 )
+      case ( t_colon_less )
+        call get_token
+        call limit
+        call build_tree ( n_colon_less, 2 )
+      case ( t_less_colon )
+        call get_token
+        call limit
+        call build_tree ( n_less_colon, 2 )
+      case ( t_less_colon_less )
+        call get_token
+        call limit
+        call build_tree ( n_less_colon_less, 2 )
+      end select
+    end if
     if ( toggle(par) ) call output ( 'Exit  EXPR', advance='yes' )
   end subroutine EXPR
 ! -------------------------------------------------------  FACTOR  -----
@@ -383,21 +411,7 @@ o:  do
   subroutine VALUE ( HOW_MANY )
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
     if ( next%class == t_left_bracket ) then
-      call get_token     ! Consume the left bracket
-      do
-        call expr
-        how_many = how_many + 1
-        if ( next%class == t_right_bracket ) then
-          call get_token ! Consume the right bracket
-          exit
-        end if
-        if ( next%class /= t_comma ) then
-          call announce_error ( (/ t_right_bracket, t_comma /) )
-          if ( next%class == t_end_of_input .or. &
-               next%class == t_end_of_stmt ) exit
-        end if
-        call get_token   ! Consume the comma
-      end do
+      call array ( how_many )
     else
       call expr
       how_many = how_many + 1
@@ -406,6 +420,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.8  2001/11/28 03:05:54  vsnyder
+! Implement arrays of arrays
+!
 ! Revision 2.7  2001/11/27 00:54:37  vsnyder
 ! Implement (partially) open ranges
 !
