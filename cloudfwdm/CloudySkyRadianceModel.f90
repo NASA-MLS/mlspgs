@@ -13,7 +13,7 @@ module CloudySkyRadianceModel
       use DCSPLINE_DER_M,          only: CSPLINE_DER
       use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD, FOV_CONVOLVE
       use HYDROSTATIC_INTRP,       only: GET_PRESSURES
-      use MLSCommon,               only: r8
+      use MLSCommon,               only: r8, rp
       use MLSNumerics,             only: INTERPOLATEVALUES
       use ModelInput,              only: MODEL_ATMOS
       use ModelOutput,             only: SENSITIVITY
@@ -23,6 +23,7 @@ module CloudySkyRadianceModel
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
       use Units,                   only: DEG2RAD
+      use Geometry,                only: EarthRadA, EarthRadB
 
       IMPLICIT NONE
       private
@@ -46,7 +47,7 @@ contains
              &   Bill_data,                                            &
              &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
-             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
+             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel, beta_orb )
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -364,10 +365,11 @@ contains
 
       REAL(r8) :: RT
 
-      REAL(r8) :: h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
+      REAL(r8) :: h_obs, Rs_eq, elev_offset, pp, ti, rr,freq, Req
 
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
+      real(r8), intent(in) :: beta_orb       !orbital incline angle (Radians)
 
       Logical :: Bill_data 
 
@@ -515,7 +517,7 @@ contains
 
 !-----------------------------------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
-! 	 N.B.	ICON=0 is Clear-Sky only 
+! 	 N.B.	ICON0 is Clear-Sky only 
 !		ICON=1 is for 100%RH inside and below Cloud
 !		ICON=2 is default for 100%RH inside cloud ONLY
 !		ICON=3 is for near-side cloud only 
@@ -649,14 +651,14 @@ contains
 
          K=0
          DO I=1, Multi
-            IF (ZZT1(I) .LT. 0._r8) K=I
+            IF (ZZT1(I) .LE. 0._r8) K=I
          END DO
 
          DO I=1, Multi                      
-            IF (ZZT1(I) .LT. 0._r8) THEN
+            IF (ZZT1(I) .LE. 0._r8) THEN
                znt1(I) = const1 * zpt1(K+1)/ztt1(K+1)
                znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(K+1)/ztt1(K+1)) 
-            ELSE IF (ZZT1(I) .GE. 0._r8) THEN
+            ELSE IF (ZZT1(I) .GT. 0._r8) THEN
                znt1(I) = const1 * zpt1(I)/ztt1(I)
                znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(I)/ztt1(I))                
             END IF
@@ -676,7 +678,8 @@ contains
   	 DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
-               RT= MIN( (ZZT1(I)+RE), RE)
+!               RT= MIN( (ZZT1(I)+RE), RE)
+               RT= ( ZZT1(I) + RE )
                schi = (1+znt1(I)) * ( RT/RE ) * (ZZT1(I) + RE) / Rs_eq    
             else if (ZZT1(I) .GE. 0._r8) then
                schi = (1+znt1(I)) * (ZZT1(I) + RE) / Rs_eq 
@@ -767,6 +770,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.41  2002/12/09 17:34:04  jonathan
+! *** empty log message ***
+!
 ! Revision 1.40  2002/11/06 18:19:37  jonathan
 ! some minor changes
 !
