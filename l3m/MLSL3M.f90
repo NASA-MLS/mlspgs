@@ -19,6 +19,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    USE mon_L3CF
    USE mon_Open
    USE mon_Out
+!  USE MonthlyProcessModule
 
    IMPLICIT NONE
 
@@ -39,23 +40,21 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
    TYPE( CreateFlags_T ) :: flag
    TYPE( L3CFMDef_T ) :: cfDef
-   TYPE( L3MMData_T ) :: mm
-   TYPE( L3MZData_T ) :: mz
+   TYPE( L3MMData_T ) :: mm, mmA, mmD
+   TYPE( L3MZData_T ) :: mz, mzA, mzD
    TYPE( Mlscf_T ) :: cf
    TYPE( PCFMData_T ) :: pcf
    TYPE( L2GPData_T ), POINTER :: l2gp(:)
    TYPE( L3CFDg_T ), POINTER :: cfDg(:)
    TYPE( L3CFMProd_T ), POINTER :: cfProd(:)
-   TYPE( L3DZData_T ), POINTER :: dz(:)
+   TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
    TYPE( OutputFiles_T ) :: dFiles, sFiles
 
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=FileNameLen) :: pcfNames(maxWindow)
    CHARACTER (LEN=1), POINTER :: anText(:)
 
-   INTEGER :: first, i, l2Days, last, nlev, numFiles
-
-   LOGICAL :: writel3dz
+   INTEGER :: i, l2Days, numFiles
 
 ! Initializations
 
@@ -66,7 +65,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    sFiles%date = ''
    dFiles%date = ''
 
-   writel3dz = .FALSE.
    flag%createMS = .FALSE.
    flag%createMD = .FALSE.
    flag%createZS = .FALSE.
@@ -101,100 +99,29 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
          CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
       ENDIF
 
-! For combined mode, sort the L2GP data according to the desired pressure levels.
+! Core processing for Standard products
 
-!     CALL Sort (cfProd(i)%l3presLvl(1), cfProd(i)%l3presLvl(2), l2gp(1), first, &
-!                last, nlev)
+!     CALL MonthlyCoreProcessing(pcf, cfDef, cfProd(i), l2gp, mz, mzA, mzD, dz, dzA, &
+!                                dzD, mm, mmA, mmD)
 
-! Process & output the daily zonal means
+! Output and Close for the product
 
-!     CALL DailyZonalMean(pcf, cfDef, cfProd(i)%l3prodName, 'com', l2gp(1), first, &
-!                         last, nlev, dz, writel3dz)
-      IF (writel3dz) THEN
-         CALL OutputL3DZ(cfDef%stdType, dz, sFiles)
-      ELSE
-         msr = TRIM(cfProd(i)%l3prodName) // ' DZ combined' // NOOUT_ERR
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      ENDIF
-      CALL DestroyL3DZDatabase(dz)
-      writel3dz = .FALSE.
+      CALL OutputStd(pcf, cfDef%stdType, cfProd(i)%mode, dz, dzA, dzD, mz, mzA, mzD, &
+                     mm, mmA, mmD, sFiles, flag)
 
-! Process & output the monthly zonal means
+! Deallocate the databases passed between CORE & the I/O shell
 
-!     CALL MonthlyZonalMean(cfProd(i)%l3prodName, cfDef, l2gp, 'com', first, last, &
-!                           nlev, mz)
-      CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
+      CALL DeallocateL3MM(mm)
+      CALL DeallocateL3MM(mmA)
+      CALL DeallocateL3MM(mmD)
+
       CALL DeallocateL3MZ(mz)
+      CALL DeallocateL3MZ(mzA)
+      CALL DeallocateL3MZ(mzD)
 
-! If required for this mode, process & output the monthly map
-
-      IF ( (cfProd(i)%mode == 'com') .OR. (cfProd(i)%mode == 'all') ) THEN
-!        CALL MonthlyMap (cfProd(i)%l3prodName, cfProd(i)%latGridMap, &
-!                         cfProd(i)%nLats, cfProd(i)%longGrid, cfProd(i)%nLons, &
-!                         l2gp, 'com', first, last, nlev, mm)
-         CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
-         CALL DeallocateL3MM(mm)
-      ENDIF
-
-! Ascending -- sort, dz, mz, mm
-
-!     CALL Sort (cfProd(i)%ascPresLvl(1), cfProd(i)%ascPresLvl(2), l2gp(1), first, &
-!                last, nlev)
-
-!     CALL DailyZonalMean(pcf, cfDef, cfProd(i)%l3prodName, 'asc', l2gp(1), first, &
-!                         last, nlev, dz, writel3dz)
-      IF (writel3dz) THEN
-         CALL OutputL3DZ(cfDef%stdType, dz, sFiles)
-      ELSE
-         msr = TRIM(cfProd(i)%l3prodName) // ' DZ asc' // NOOUT_ERR
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      ENDIF
       CALL DestroyL3DZDatabase(dz)
-      writel3dz = .FALSE.
-
-!     CALL MonthlyZonalMean(cfProd(i)%l3prodName, cfDef, l2gp, 'asc', first, last, &
-!                           nlev, mz)
-      CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
-      CALL DeallocateL3MZ(mz)
-
-      IF ( INDEX(cfProd(i)%mode,'a') /= 0) THEN
-!        CALL MonthlyMap (cfProd(i)%l3prodName, cfProd(i)%latGridMap, &
-!                         cfProd(i)%nLats, cfProd(i)%longGrid, cfProd(i)%nLons, &
-!                         l2gp, 'asc', first, last, nlev, mm)
-         CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
-         CALL DeallocateL3MM(mm)
-      ENDIF
-
-! Descending
-
-!     CALL Sort (cfProd(i)%desPresLvl(1), cfProd(i)%desPresLvl(2), l2gp(1), first, &
-!                last, nlev)
-
-!     CALL DailyZonalMean(pcf, cfDef, cfProd(i)%l3prodName, 'des', l2gp(1), first, &
-!                         last, nlev, dz, writel3dz)
-      IF (writel3dz) THEN
-         CALL OutputL3DZ(cfDef%stdType, dz, sFiles)
-      ELSE
-         msr = TRIM(cfProd(i)%l3prodName) // ' DZ des' // NOOUT_ERR
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      ENDIF
-      CALL DestroyL3DZDatabase(dz)
-      writel3dz = .FALSE.
-
-!     CALL MonthlyZonalMean(cfProd(i)%l3prodName, cfDef, l2gp, 'des', first, last, &
-!                           nlev, mz)
-      CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
-      CALL DeallocateL3MZ(mz)
-
-      IF ( (INDEX(cfProd(i)%mode,'d') /= 0) .OR. (cfProd(i)%mode == 'all') )THEN
-!        CALL MonthlyMap (cfProd(i)%l3prodName, cfProd(i)%latGridMap, &
-!                         cfProd(i)%nLats, cfProd(i)%longGrid, cfProd(i)%nLons, &
-!                         l2gp, 'des', first, last, nlev, mm)
-         CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
-         CALL DeallocateL3MM(mm)
-      ENDIF
-
-! Deallocate the l2gp database for the product
+      CALL DestroyL3DZDatabase(dzA)
+      CALL DestroyL3DZDatabase(dzD)
 
       CALL DestroyL2GPDatabase(l2gp)
 
@@ -219,8 +146,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
    ELSE
 
-      writel3dz = .FALSE.
-
 ! For each product in the Diagnostic section of the cf,
 
       DO i = 1, SIZE(cfDg)
@@ -242,88 +167,29 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
             CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
          ENDIF
 
-! Sort the data into desired pressure levels for the product
+! Monthly Core processing
 
-!        CALL Sort(cfDg(i)%minPresLvl, cfDg(i)%maxPresLvl, l2gp(1), first, last, &
-!                  nlev)
+!        CALL MonthlyDgProcessing(pcf, cfDef, cfDg(i), latGrid, lonGrid, l2gp, mz, &
+!                                 mzA, mzD, dz, dzA, dzD, mm, mmA, mmD)
 
-! Combined mode processing -- DZ
+! Output and Close for the product
 
-!        CALL DailyZonalMean(pcf, cfDef, cfDg(i)%prodName, 'com', l2gp(1), first, &
-!                            last, nlev, dz, writel3dz)
+!        CALL OutputDg(pcf, cfDef, cfDg(i), dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+!                      dFiles, flag)
 
-! If data are flagged for output, write them to L3DZ Diagnostic files; keep track of
-! which files have been created for later metadata annotation
+! Deallocate the databases passed between CORE & the I/O shell
 
-         IF (writel3dz) THEN
-             CALL OutputL3DZ(cfDef%dgType, dz, dFiles)
-         ELSE
-             msr = TRIM(cfDg(i)%prodName) // ' DZ ' // NOOUT_ERR
-             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         ENDIF
-
-! Re-initialize for next mode
-
-         CALL DestroyL3DZDatabase(dz)
-         writel3dz = .FALSE.
-
-! Monthly ZM
-
-!        CALL MonthlyZonalMean(cfDg(i)%prodName, cfDef, l2gp, 'com', first, last, &
-!                              nlev, mz)
-         CALL OutputL3MZ(pcf%zdName, mz, flag%createZD)
-         CALL DeallocateL3MZ(mz)
-
-! MM
-
-!        CALL MonthlyMap (cfDg(i)%prodName, cfProd(1)%latGridMap, cfProd(1)%nLats, &
-!              cfDg(i)%lonGrid, cfDg(i)%nLon, l2gp, 'com', first, last, nlev, mm)
-         CALL OutputMMGrids(pcf%mdName, mm, flag%createMD)
          CALL DeallocateL3MM(mm)
+         CALL DeallocateL3MM(mmA)
+         CALL DeallocateL3MM(mmD)
 
-! Ascending processing -- DZ
-
-!        CALL DailyZonalMean(pcf, cfDef, cfDg(i)%prodName, 'asc', l2gp(1), first, &
-!                            last, nlev, dz, writel3dz)
-
-         IF (writel3dz) THEN
-            CALL OutputL3DZ(cfDef%dgType, dz, dFiles)
-         ELSE
-            msr = TRIM(cfDg(i)%prodName) // 'Ascending DZ' // NOOUT_ERR
-            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         ENDIF
+         CALL DeallocateL3MZ(mz)
+         CALL DeallocateL3MZ(mzA)
+         CALL DeallocateL3MZ(mzD)
 
          CALL DestroyL3DZDatabase(dz)
-         writel3dz = .FALSE.
-
-! Monthly ZM
-
-!        CALL MonthlyZonalMean(cfDg(i)%prodName, cfDef, l2gp, 'asc', first, last, &
-!                              nlev, mz)
-         CALL OutputL3MZ(pcf%zdName, mz, flag%createZD)
-         CALL DeallocateL3MZ(mz)
-
-! Descending
-
-!        CALL DailyZonalMean(pcf, cfDef, cfDg(i)%prodName, 'des', l2gp(1), first, &
-!                            last, nlev, dz, writel3dz)
-
-         IF (writel3dz) THEN
-            CALL OutputL3DZ(cfDef%dgType, dz, dFiles)
-         ELSE
-            msr = TRIM(cfDg(i)%prodName) // 'Descending DZ' // NOOUT_ERR
-            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         ENDIF
-
-         CALL DestroyL3DZDatabase(dz)
-         writel3dz = .FALSE.
-
-!        CALL MonthlyZonalMean(cfDg(i)%prodName, cfDef, l2gp, 'des', first, last, &
-!                              nlev, mz)
-         CALL OutputL3MZ(pcf%zdName, mz, flag%createZD)
-         CALL DeallocateL3MZ(mz)
-
-! Deallocate the L2GP database for this product
+         CALL DestroyL3DZDatabase(dzA)
+         CALL DestroyL3DZDatabase(dzD)
 
          CALL DestroyL2GPDatabase(l2gp)
 
@@ -349,6 +215,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.2  2001/07/20 19:30:29  nakamura
+! Commented out sample CALLs to Core routines.
+!
 ! Revision 1.1  2001/07/18 15:42:48  nakamura
 ! MLS Level 3 Monthly program.
 !
