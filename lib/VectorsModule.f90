@@ -863,70 +863,88 @@ contains ! =====     Public Procedures     =============================
     allocate ( newQuantities(size(vector%quantities)), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'newQuantities')
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newQuantities')
     ! Go through quantity by quantity
     do qtyInd = 1, size(vector%quantities)
       q => vector%quantities(qtyInd)
       nq => newQuantities(qtyInd)
-      
+      allocate( nq%template, STAT=status)
+      if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'nq%template')
       call Allocate_test ( nq%values, &
-        & nq%template%instanceLen, nq%template%noInstances,&
+        & q%template%instanceLen, q%template%noInstances,&
         & 'nq%values', ModuleName)
       nq%values = q%values
-
+      nullify(nq%mask)
       if (associated(q%mask)) then
         call Allocate_test ( nq%mask, &
-          & nq%template%instanceLen, nq%template%noInstances,&
+          & q%template%instanceLen, q%template%noInstances,&
           & 'nq%mask', ModuleName)
         nq%mask = q%mask
       end if
-
       qt => q%template
       nqt => nq%template
+      nqt = qt
 
       if ( qt%coherent ) then 
         noInstancesToAllocate = 1
       else
         noInstancesToAllocate = qt%noInstances
       end if
-      
       if ( qt%stacked ) then
         noSurfsToAllocate = 1
       else
         noSurfsToAllocate = qt%noSurfs
       end if
-
+      nullify(nqt%surfs)                ! Avoid clobbering parent
       call allocate_test ( nqt%surfs, nqt%noSurfs, noInstancesToAllocate, &
         & "nqt%surfs", ModuleName )
       nqt%surfs = qt%surfs
 
+      nullify ( nqt%phi )               ! Avoid clobbering parent
       ! Now the horizontal coordinates
       call allocate_test ( nqt%phi, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%phi", ModuleName )
       nqt%phi = qt%phi
+
+      nullify ( nqt%geodLat )           ! Avoid clobbering parent
       call allocate_test ( nqt%geodLat, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%geodLat", ModuleName )
       nqt%geodLat= qt%geodLat
+
+      nullify ( nqt%lon)                ! Avoid clobbering parent
       call allocate_test ( nqt%lon, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%lon", ModuleName )
       nqt%lon = qt%lon
+
+      nullify ( nqt%time )           ! Avoid clobbering parent
       call allocate_test ( nqt%time, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%time", ModuleName )
       nqt%time = qt%time
+
+      nullify ( nqt%solarTime )           ! Avoid clobbering parent
       call allocate_test ( nqt%solarTime, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%solarTime", ModuleName )
       nqt%solarTime = qt%solarTime
+
+      nullify ( nqt%solarZenith )           ! Avoid clobbering parent
       call allocate_test ( nqt%solarZenith, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%solarZenith", ModuleName )
       nqt%solarZenith = qt%solarZenith
+
+      nullify ( nqt%losAngle )           ! Avoid clobbering parent
       call allocate_test ( nqt%losAngle, noSurfsToAllocate, nqt%noInstances, &
         & "nqt%losAngle", ModuleName )
       nqt%losAngle = qt%losAngle
       
       ! Now some other stuff to allocate
       if ( nqt%minorFrame ) then
+        nullify ( nqt%MAFIndex )           ! Avoid clobbering parent
         call allocate_test ( nqt%MAFIndex, nqt%noInstances, &
           & "nqt%MAFIndex", ModuleName )
         nqt%MAFIndex = qt%mafIndex
+        nullify ( nqt%MAFCounter )           ! Avoid clobbering parent
         call allocate_test ( nqt%MAFCounter, nqt%noInstances, &
           & "nqt%MAFCounter", ModuleName )
         nqt%MAFCounter = qt%MAFCounter
@@ -1241,6 +1259,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.27  2001/04/25 01:35:01  vsnyder
+! Assignment should have been pointer assignment in CloneVector
+!
 ! Revision 2.26  2001/04/25 01:24:54  vsnyder
 ! Give initial values to 'name' fields
 !
