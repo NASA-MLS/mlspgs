@@ -177,6 +177,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+     mv Makefile.dep Makefile.nodep
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
 
 ghostbuster:
@@ -220,6 +222,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.32  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
 # Revision 1.31  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #

@@ -183,6 +183,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
+	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) $(depends_where) ; \
+     mv Makefile.dep Makefile.nodep
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
 
 ghostbuster:
@@ -225,6 +227,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.14  2002/01/31 00:34:33  pwagner
+# Tries to get .mod files from he5lib
+#
 # Revision 1.13  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #
