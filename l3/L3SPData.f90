@@ -14,6 +14,7 @@ MODULE L3SPData
    USE MLSL3Common
    USE MLSMessageModule
    USE MLSPCF3
+   USE PCFHdr
    USE PCFModule
 
    IMPLICIT NONE
@@ -493,62 +494,74 @@ CONTAINS
 
 ! Vertical geolocation field
 
-      IF ( ASSOCIATED(l3sp%pressure) ) DEALLOCATE (l3sp%pressure, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3sp pressure pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3sp%pressure) ) THEN
+         DEALLOCATE (l3sp%pressure, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3sp pressure pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Horizontal geolocation field
 
-      IF ( ASSOCIATED(l3sp%latitude) ) DEALLOCATE (l3sp%latitude, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3sp latitude pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3sp%latitude) ) THEN
+         DEALLOCATE (l3sp%latitude, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3sp latitude pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Wavenumber & frequency fields
 
-      IF ( ASSOCIATED(l3sp%waveNumber) ) DEALLOCATE (l3sp%waveNumber, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3sp waveNumber pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3sp%waveNumber) ) THEN
+         DEALLOCATE (l3sp%waveNumber, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3sp waveNumber pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3sp%frequency) ) DEALLOCATE (l3sp%frequency, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3sp frequency pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3sp%frequency) ) THEN
+         DEALLOCATE (l3sp%frequency, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3sp frequency pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Spectra fields
 
-      IF ( ASSOCIATED(l3sp%l3spRelValue) ) &
+      IF ( ASSOCIATED(l3sp%l3spRelValue) ) THEN
          DEALLOCATE (l3sp%l3spRelValue,  STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3spRelValue pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3spRelValue pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3sp%l3spRelPrecision) ) &
+      IF ( ASSOCIATED(l3sp%l3spRelPrecision) ) THEN
          DEALLOCATE (l3sp%l3spRelPrecision, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3spRelPrecision'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3spRelPrecision'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3sp%l3spImgValue) ) &
+      IF ( ASSOCIATED(l3sp%l3spImgValue) ) THEN
          DEALLOCATE (l3sp%l3spImgValue, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3spImgValue pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3spImgValue pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3sp%l3spImgPrecision) ) &
+      IF ( ASSOCIATED(l3sp%l3spImgPrecision) ) THEN
          DEALLOCATE (l3sp%l3spImgPrecision, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3spImgPrecision'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3spImgPrecision'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 !-------------------------------
@@ -607,6 +620,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.6  2001/02/21 20:49:29  nakamura
+! Changed MLSPCF to MLSPCF3.
+!
 ! Revision 1.5  2001/02/09 20:29:35  nakamura
 ! Added third dimension to waveNumber & frequency.
 !
