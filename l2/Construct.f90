@@ -138,8 +138,8 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 ) then
         call dump ( hgrids )
-        call dump ( quantityTemplates )
-        call dump ( vectorTemplates )
+        call dump ( quantityTemplates, details=levels(gen)-1 )
+        call dump ( vectorTemplates, details=levels(gen)-1 )
       end if
       call trace_end ( "MLSL2Construct" )
     end if
@@ -177,6 +177,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.15  2001/04/10 23:44:44  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.14  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
