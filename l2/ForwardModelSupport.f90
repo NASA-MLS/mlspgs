@@ -54,7 +54,8 @@ module ForwardModelSupport
 
   implicit none
   private
-  public :: ConstructForwardModelConfig, ForwardModelGlobalSetup
+  public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
+    & CreateBinSelectorFromMLSCFInfo
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -217,7 +218,7 @@ contains ! =====     Public Procedures     =============================
     integer :: UNITS(2)                 ! Units from expr
     real(r8) :: VALUE(2)                ! Value from expr
     character ( len=132 ) :: signalString ! Value of signal
-    integer, dimension(:), pointer :: THESESIGNALS ! From one parseSignal
+    integer, dimension(:), pointer :: THESESIGNALS => NULL()! From one parseSignal
     integer :: THISSIDEBAND
     integer :: SIGNALCOUNT              ! Number of signals
     integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
@@ -240,6 +241,7 @@ contains ! =====     Public Procedures     =============================
         if ( any ( units /= phyq_pressure .and. units /= phyq_dimensionless ) .or. &
           & all ( units /= phyq_pressure ) ) &
           & call AnnounceError ( BadHeightUnit, son, f_height )
+        binSelector%heightRange = value
       case ( f_cost )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son, &
           & f_cost )
@@ -251,7 +253,7 @@ contains ! =====     Public Procedures     =============================
         signalCount = 0
         do j = 2, nsons(son)
           gson = subtree ( j, son )
-          call Get_string ( decoration(gson), signalString )
+          call Get_string ( sub_rosa(gson), signalString, strip=.true. )
           call Parse_Signal ( signalString, theseSignals, onlyCountEm=thisSignalCount, &
             & tree_index = son )
           signalCount = signalCount + thisSignalCount
@@ -265,7 +267,7 @@ contains ! =====     Public Procedures     =============================
         signalCount = 1
         do j = 2, nsons(son)
           gson = subtree ( j, son )
-          call Get_string ( decoration(gson), signalString )
+          call Get_string ( sub_rosa(gson), signalString, strip=.true. )
           call Parse_Signal ( signalString, theseSignals, &
             & sideband=thisSideband, tree_index = son )
           binSelector%signals ( signalCount : signalCount+size(theseSignals)-1 ) = &
@@ -644,6 +646,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.23  2002/02/08 22:52:21  livesey
+! Hooked up bin selectors
+!
 ! Revision 2.22  2002/02/04 23:24:49  livesey
 ! Removed dumps
 !
