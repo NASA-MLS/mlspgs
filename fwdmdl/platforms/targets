@@ -4,17 +4,27 @@ include ../Makefile.dep
 
 # ========================================================================
 #       The objects for the shared source files (in lib)
-LIB_OBJS = machine.o MLSCommon.o
-LIB_SRCS_DIR = $(libdir)/..
+#LIB_OBJS = machine.o MLSCommon.o
+#LIB_SRCS_DIR = $(libdir)/..
 
 # Add them to L2PCOBJS
-ALLOBJS = $(OBJS) $(LIB_OBJS) units.o
+#ALLOBJS = $(OBJS) $(LIB_OBJS) units.o
+ALLOBJS = $(OBJS)
 
-${OBJS}: $(LIB_OBJS) units.o
+#${OBJS}: $(LIB_OBJS) units.o
+
+l2_test.o: ${OBJS} 
+
+libfwdmdl.a: ${OBJS} 
+	ar ru $@ $?
 
 # ========================================================================
-l2_test: $(ALLOBJS) $(libdir)/libmls.a
-	$(FC) -o l2_test $(ALLOBJS) \
+#l2_test: $(ALLOBJS) $(libdir)/libmls.a
+#	$(FC) -o l2_test $(ALLOBJS) \
+
+l2_test: libfwdmdl.a l2_test.o $(libdir)/libmls.a
+	$(FC) -o l2_test l2_test.o \
+                      -L./ -lfwdmdl \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -48,10 +58,10 @@ pfa_db_delta_m.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90
 d_delta_dt_m.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/d_delta_dt_m.f90
-fwd_mdl_set_up_m.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90
-MLSCommon.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90
+#fwd_mdl_set_up_m.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90
+#MLSCommon.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90
 #machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
 #	rm -f machine.f90
 #	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
@@ -59,6 +69,9 @@ MLSCommon.o:
 #	$(FC) -c $(DUSTY) machine.f90
 # ========================================================================
 # $Log$
+# Revision 1.3  2001/01/13 00:25:41  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
 # Revision 1.2  2000/11/22 23:40:57  pwagner
 # Fixed program name
 #
