@@ -144,6 +144,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
         &           beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
        end do
      end do
+     DEALLOCATE(beta_path, STAT=h_i)
 
   Return
 
@@ -191,6 +192,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.7  2001/03/09 02:11:28  vsnyder
+! Repair deallocating
+!
 ! Revision 1.6  2001/03/05 21:37:20  zvi
 ! New filter format
 !
