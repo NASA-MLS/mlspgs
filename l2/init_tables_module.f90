@@ -372,7 +372,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_masks, l+l_explicitFill, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
+      begin, t+t_masks, l+l_fill, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
@@ -869,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.206  2002/03/13 22:02:31  livesey
+! Changed from explicitFill to fill
+!
 ! Revision 2.205  2002/03/08 08:07:00  livesey
 ! Added explicit fill mask
 !
