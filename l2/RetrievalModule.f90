@@ -441,8 +441,12 @@ contains
                 if ( iter > maxIterations ) exit
                 ! Compute f(x)
                 aj%fnorm = 0.0
-                !                             newHydros maf finished
-                fmStat = ForwardModelStatus_T(.true.,   0,  .false.)
+                
+                fmStat%newHydros = .true.
+                fmStat%maf = 0
+                fmStat%finished = .false.
+                nullify ( fmStat%rows )
+
                 ! Loop over mafs
                 do while (.not. fmStat%finished )
                   ! What if one config set finished but others still had more
@@ -485,8 +489,12 @@ contains
                 else
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
-                !                             newHydros maf finished
-                fmStat = ForwardModelStatus_T(.true.,   0,  .false.)
+
+                fmStat%newHydros = .true.
+                fmStat%maf = 0
+                fmStat%finished = .false.
+                nullify ( fmStat%rows )
+
                 ! Loop over mafs
                 do while (.not. fmStat%finished )
                   ! What if one config set finished but others still had more
@@ -723,6 +731,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.16  2001/04/19 23:56:23  livesey
+! New fmStat
+!
 ! Revision 2.15  2001/04/13 21:40:58  vsnyder
 ! Periodic commit -- stuff about looping over configs
 !
