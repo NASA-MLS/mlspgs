@@ -216,12 +216,42 @@ contains
     MLSMessageConfig%logFileUnit=-1
   end subroutine MLSMessageClose
 
+  ! --------------------------------------------  MLSMessageExit  -----
+
+  ! This routine logs farewell, advances
+  ! (hopefully) gracefully ends logging, and exits 
+  ! (optionally with status)
+
+  subroutine MLSMessageExit(status)
+  integer, optional, intent(in) :: STATUS
+  CHARACTER(LEN=32) :: mesg
+
+    ! Executable code
+    if(present(status)) then
+      write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
+      status, ')'
+      call MLSMessage(MLSMSG_Info, ModuleName, &
+      & mesg, advance='y')
+      call MLSMessageClose
+      call exit_with_status ( status )
+    else
+      mesg='Exiting with status normal (0)'
+      call MLSMessage(MLSMSG_Info, ModuleName, &
+      & mesg, advance='y')
+      call MLSMessageClose
+      stop
+    endif
+  end subroutine MLSMessageExit
+
 !=======================================================================
 end module MLSMessageModule
 !=======================================================================
 
 !
 ! $Log$
+! Revision 2.12  2001/07/16 23:44:10  pwagner
+! Added MLSMessageQuit
+!
 ! Revision 2.11  2001/05/15 20:32:35  pwagner
 ! Fix wrong unit nums in write and close; reset default
 !
