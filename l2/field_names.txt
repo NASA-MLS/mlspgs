@@ -19,6 +19,7 @@ aprioriPrecision
 aprioriScale
 atmos_der
 autofill
+average
 
 boundarypressure
 
@@ -224,6 +225,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.32  2002/04/22 20:55:00  vsnyder
+# Compute and output the averaging kernel
+#
 # Revision 2.31  2002/04/18 18:40:17  pwagner
 # Can fill h2o from an rhiQuantity
 #
