@@ -815,6 +815,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_covSansReg, t+t_boolean, n+n_field_type, &
              begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
+             begin, f+f_extendedAverage, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
@@ -948,6 +949,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.282  2003/02/12 02:11:22  livesey
+! Added extendedAverage
+!
 ! Revision 2.281  2003/02/06 23:30:36  livesey
 ! New approach for Forge and explicit hGrids
 !
