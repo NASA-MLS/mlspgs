@@ -25,30 +25,28 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !     - - - - - - - -
 
 !     (subroutines and functions)
-! AllApprovedChars   Does str1 contain only chars from str2?
-! AnyForbiddenChars  Does str1 contain any chars from str2?
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CompressString     Removes all leading and embedded blanks
-! count_words        Counts the number of space-separated words in a string
-! depunctuate        Replaces punctuation with blanks
-! ints2Strings       Converts an array of integers to strings using "char" ftn
+! Count_words        Counts the number of space-separated words in a string
+! Depunctuate        Replaces punctuation with blanks
+! Hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
+!                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+! Ints2Strings       Converts an array of integers to strings using "char" ftn
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
-! readIntsFromChars  Converts an array of strings to ints using Fortran read
+! ReadIntsFromChars  Converts an array of strings to ints using Fortran read
 ! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
-! strings2Ints       Converts an array of strings to ints using "ichar" ftn
-! writeIntsToChars   Converts an array of ints to strings using Fortran write
+! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
+! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! log AllApprovedChars (char* str1, char* str2)
-! log AnyForbiddenChars (char* str1, char* str2)
 ! char* Capitalize (char* str)
 ! char* CompressString (char* str)
 ! int count_words (char* str)
@@ -80,9 +78,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! to avoid operating on undefined array elements
 ! === (end of api) ===
 
-  public :: AllApprovedChars, AnyForbiddenChars, &
-   & Capitalize, CompressString, count_words, &
-   & depunctuate, &
+  public :: Capitalize, CompressString, count_words, &
+   & depunctuate, hhmmss_value, &
    & ints2Strings, LinearSearchStringArray, &
    & LowerCase, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
@@ -90,6 +87,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & SplitWords, strings2Ints, &
    & writeIntsToChars
 
+  ! hhmmss_value
+  integer, public, parameter :: INVALIDHHMMSSSTRING = 1
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
   
@@ -107,48 +106,6 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
     & 'November ', 'December '/)
 contains
-
-  ! -------------------------------------------------  AllApprovedChars  -----
-  elemental logical function AllApprovedChars (STR1, STR2)
-    ! Check that every char in str1 is "approved" by also being in str2
-    !--------Argument--------!
-    character (len=*), intent(in) :: STR1, STR2
-
-    !----------Local vars----------!
-    integer :: I
-    !----------Executable part----------!
-    AllApprovedChars = .false.
-    if ( len_trim(str2) < 1 ) return
-    AllApprovedChars = .true.
-
-    do i=1, len_trim(str1)
-       if ( index(trim(str2), str1(i:i)) < 1 ) then
-          AllApprovedChars = .false.
-          return
-       end if
-    end do
-
-  end function AllApprovedChars
-
-  ! -------------------------------------------------  AllApprovedChars  -----
-  elemental logical function AnyForbiddenChars (STR1, STR2)
-    ! Check if any char in str2 (the "forbiddens") is in str1
-    !--------Argument--------!
-    character (len=*), intent(in) :: STR1, STR2
-
-    !----------Local vars----------!
-    integer :: I
-    !----------Executable part----------!
-    AnyForbiddenChars = .false.
-    if ( len_trim(str1) < 1 ) return
-    AnyForbiddenChars = .true.
-
-    do i=1, len_trim(str2)
-       if ( index(trim(str1), str2(i:i)) > 0 ) return
-    end do
-    AnyForbiddenChars = .false.
-
-  end function AnyForbiddenChars
 
   ! -------------------------------------------------  CAPITALIZE  -----
   elemental function Capitalize (STR) result (OUTSTR)
@@ -227,7 +184,7 @@ contains
   ! of same name) (Except that HCP can spell capitalise, that is. Fnord.)
 
   ! ------------------------------------------------  DEPUNCTUATE  -----
-  Function depunctuate(str) result (outstr)
+  Function Depunctuate ( str ) result ( outstr )
     ! Function that removes punctuation and replaces with blanks
     ! Added by HCP. This depends on the native character set being 
     ! ASCII. 
@@ -248,10 +205,118 @@ contains
         end if
     end do
 
-  end Function depunctuate
+  end Function Depunctuate
 
-  ! --------------------------------------------------  int2Strings  -----
-  SUBROUTINE ints2Strings (ints, strs)
+  ! ------------------------------------------------  HHMMSS_value  -----
+  real(r8) function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
+    use MLSCommon, only: R8
+    ! Function that returns the value in seconds of a string 'hh:mm:ss'
+    ! where the field separator ':' divides the string into two
+    ! integer-like strings 'hh' and 'mm', as well as one float-like
+    ! string 'ss' which may have a decimal point plus fractional part
+    ! E.g., ss=59.9999
+
+    ! Requires 0 <= hh <= 24
+    ! Requires 0 <= mm < 60
+    ! Requires 0. <= ss < 60.
+
+    ! Returns ErrTyp == 0 unless an error occurs
+
+    ! Lenient wrt utc and non-compliant formats:
+    ! ignores chars in front of 'hh' and a terminal,
+    ! non-numerical char: e.g., '2000-01-01T00:00:00.000000Z'
+    ! will be treated the same as '00:00:00.0000000'
+
+    ! If given optional arg strict and it's true, not lenient
+    ! i.e., non-compliant str always returns non-zero ErrTyp
+
+    ! If not strict, some of the fields can be null, e.g. 12:00 and 12:00:
+    ! and 12::0 and ::12 are allowed.
+
+    ! If given optional arg separator, uses separator as field separator
+
+    ! Useful to allow an added way to input time
+
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+    !--------Arguments--------!
+    character(len=*), intent(in) :: Str
+    integer, intent(out) :: ErrTyp
+    character(len=1), intent(in), optional :: Separator
+    logical, intent(in), optional :: Strict
+    !----------Locals----------!
+    character(len=1), parameter :: Colon=':'
+    character(len=1) :: MyColon
+    character(len=*), parameter :: Digits='0123456789.'
+    integer :: HValue, MValue
+    character(len=len_trim(str)+1) :: MyStr
+    logical :: MyStrict
+    integer :: H1, Sep1, Sep2, S2  ! Indices in STR
+    !----------Executable part----------!
+
+    myColon = colon
+    if ( present(separator) ) myColon = separator
+
+    myStrict = .false.
+    if ( present(strict) ) myStrict = strict
+
+    s2 = len_trim(str)
+    value = 0.0_r8
+    errTyp = INVALIDHHMMSSSTRING
+    if ( s2 == 0 ) then
+      if ( .not. myStrict ) errTyp = 0
+      return
+    end if
+    myStr = str(:s2)
+    if ( verify(myStr(s2:s2),digits) /= 0 ) then ! Junk at the end
+      if ( myStrict ) return
+    else
+      s2 = s2 + 1
+    end if
+    myStr(s2:s2) = '/' ! list-directed I/O terminator, might replace junk at end
+
+    sep1 = index(myStr,myColon)
+    if ( sep1 == 0 ) then
+      if ( myStrict ) return
+      sep1 = s2
+    else
+      myStr(sep1:sep1) = ',' ! list-directed I/O separator
+    end if
+
+    h1 = verify(myStr(:sep1-1),digits(1:10),back=.true.) ! '.' not allowed
+    if ( h1 /= 0 .and. myStrict ) return ! Junk before hours
+    if ( verify(myStr(h1+1:sep1-1),digits(1:10)) /= 0 ) return ! catch blank/comma
+
+    sep2 = index(myStr(sep1+1:),myColon) + sep1
+    if ( sep2 == sep1 ) then
+      if ( myStrict ) return
+      sep2 = s2
+    else
+      myStr(sep2:sep2) = ',' ! list-directed I/O separator
+    end if
+    if ( verify(myStr(sep1+1:sep2-1),digits(1:10)) /= 0 ) return ! catch blank/comma
+    if ( verify(myStr(sep2+1:s2-1),digits) /= 0 ) return ! catch blank/comma
+
+    if ( myStrict .and. & ! check for null fields
+      & ( h1+1 == sep1 .or. sep1+1 == sep2 ) ) return
+
+    ! myStr(h1+1:sep1-1) is hours, myStr(sep1+1:sep2-1) is minutes,
+    ! myStr(sep2+1:s2) is seconds
+    hvalue=0; mvalue=0 ! Fortran doesn't update null fields
+    read ( myStr(h1+1:s2), *, iostat=errTyp ) hvalue, mvalue, value
+    if ( errTyp /= 0 ) return
+
+    errTyp = INVALIDHHMMSSSTRING
+    if ( hvalue < 0 .or. hvalue >= 24 .or. &
+      &  mvalue < 0 .or. mvalue >= 60 .or. &
+      &  value < 0 .or. value >= 60 ) return
+
+    errTyp = 0
+    value = value + 60 * (mvalue + 60 * hvalue )
+
+  end function HHMMSS_value
+
+  ! --------------------------------------------------  Int2Strings  -----
+  subroutine Ints2Strings ( ints, strs )
     ! takes an array of integers and returns string array
     ! using "char"
 	 ! Useful due to bug in toolbox swrfld
@@ -260,24 +325,24 @@ contains
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
     integer, intent(in), dimension(:,:) ::          ints
-    CHARACTER (LEN=*), INTENT(OUT), dimension(:) :: strs
+    character (len=*), intent(out), dimension(:) :: strs
 
     !----------Local vars----------!
-    INTEGER :: i, substr, strLen, arrSize
+    integer :: i, substr, strLen, arrSize
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
    strLen = MIN(len(strs(1)), size(ints, dim=1))
    arrSize = MIN(size(strs), size(ints, dim=2))
    strs = ' '
-   if(strLen <= 0 .or. arrSize <= 0) return
+   if ( strLen <= 0 .or. arrSize <= 0 ) return
    do i=1, arrSize
       do substr=1, strLen
          strs(i)(substr:substr) = achar(ints(substr, i))
-      enddo
-   enddo
+      end do
+   end do
 
-  END SUBROUTINE ints2Strings
+  end subroutine Ints2Strings
 
   ! ------------------------------------  LinearSearchStringArray  -----
 
@@ -1029,18 +1094,17 @@ contains
      write(yyyymmdd,'(I4.4, 2i2.2)') year, m, day
   end subroutine yeardoy_to_yyyymmdd_ints
 
+  ! ---------------------------------------------------  Leapyear  -----
   logical function leapyear(year)
     integer,intent(in) :: year
-     ! This is to capture rule that centuries are leap only
+     ! This is to capture the rule that centuries are leap only
      ! if divisible by 400
      ! Otherwise, as perhaps you knew, leapyears are those years divisible by 4
-     if ( 100 * (year/100) >= year ) then
-       leapyear = ( 400 * (year/400) >= year )
-     else
-       leapyear = ( 4 * (year/4) >= year )
-     endif
+     leapyear = mod(year,4) == 0 .and. & ! Processor might short-circuit this
+       & ( (mod(year,100) /= 0) .or. (mod(year,400) == 0) )
   end function leapyear
 
+  ! ------------------------------------------  monthNameToNumber  -----
   function monthNameToNumber(name) result(number)
     ! Convert month name to corresponding number
     ! E.g., given 'March', returns 3
@@ -1065,6 +1129,11 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.49  2004/10/13 00:52:20  vsnyder
+! Move HHMMSS_value here from MLSStringLists and simplify it.
+! Remove AnyForbiddenChars and AllAllowedChars because intrinsic Scan and
+! Verify can do them, and they weren't used anyway.
+!
 ! Revision 2.48  2004/10/05 23:08:04  pwagner
 ! Added AnyForbiddenChars and AllApprovedChars; improved reFormatDate
 !
