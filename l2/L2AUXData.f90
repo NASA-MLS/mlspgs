@@ -17,7 +17,6 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSSignals_m, only: GETMODULENAME
   use MLSStrings, only: LINEARSEARCHSTRINGARRAY
   use Output_M, only: OUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
   use Tree, only: DUMP_TREE_NODE, SOURCE_REF
 
@@ -498,6 +497,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.13  2001/05/02 22:24:20  pwagner
+! Removed SDPToolkit use
+!
 ! Revision 2.12  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
