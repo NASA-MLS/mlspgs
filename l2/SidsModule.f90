@@ -25,7 +25,6 @@ contains
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
-    use Dump_0, only: dump
     use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelWrappers, only: ForwardModel
@@ -39,16 +38,15 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
       & MatrixElement_T
-    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
-      & FindBlock
+    use MatrixModule_1, only: CreateBlock, DestroyBlock, FindBlock, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
     use MLSL2Timings, only: add_to_retrieval_timing
     use MoreTree, only: Get_Field_Id, Get_Boolean
     use Output_M, only: Output
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+    use Tree, only: Decoration, Nsons, Source_Ref, Subtree
     use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
 
     ! Dummy arguments:
@@ -359,6 +357,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.48  2004/12/27 23:06:15  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.47  2004/06/21 22:50:55  livesey
 ! Some trapping of silly values of singleMAF in sids command
 !
