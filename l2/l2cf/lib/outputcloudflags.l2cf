@@ -1,0 +1,25 @@
+;; $Id$
+
+;; This l2cf fragment is used to output the summarized cloud flags
+
+begin Join
+
+  !define(writeOneCloudRadBin,{!ifdef(flagAvoidDirectWrite,{!dnl
+  joined_cloudRadMin$1: l2gp, source=cloudOutput.cloudRadMin$1, $
+     swath='!TrimFirstLastChar(!signal($1)).C$2 cloudMin'
+   joined_cloudRadMax$1: l2gp, source=cloudOutput.cloudRadMax$1, $
+     swath='!TrimFirstLastChar(!signal($1)).C$2 cloudMax'
+  !storeJoinedDGG(joined_cloudRadMin$1)!storeJoinedDGG(joined_cloudRadMax$1)},{!dnl
+  label, quantity=cloudOutput.cloudRadMin$1, $
+    label='!TrimFirstLastChar(!signal($1)).C$2 cloudMin'
+  label, quantity=cloudOutput.cloudRadMax$1, $
+    label='!TrimFirstLastChar(!signal($1)).C$2 cloudMax'
+  !noteDirectDGG({source=cloudOutput.cloudRadMin$1, source=cloudOutput.cloudRadMax$1})})})
+  !writeOneCloudRadBin(5,1)
+  !writeOneCloudRadBin(10,1)
+  !writeOneCloudRadBin(33,3)
+  !writeOneCloudRadBin(15,25)
+
+  !flushDGGDGMFiles
+end Join
+

@@ -1,0 +1,50 @@
+;; $Id$
+
+;; This L2CF fragment is used to take the dtBand? fields and convert
+;; them into appropriate cloud rad max/min flags.
+
+begin Fill
+
+  ;; First define a macro to generate the cloudRadMin/Max quantities
+  ;;   band=$1, channel=$2
+  !define(fillOneCloudRadBin,{!dnl
+    Fill, quantity=cloudOutput.cloudRadMin$1, method=binMin, $
+      ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2
+    Fill, quantity=cloudOutput.cloudRadMax$1, method=binMax, $
+      ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2!nl})
+
+  ;; Now invoke it for our significant channels.
+  !fillOneCloudRadBin(5,1)
+  !fillOneCloudRadBin(10,1)
+  !fillOneCloudRadBin(33,3)
+  !fillOneCloudRadBin(15,25)
+
+  ;; Now define a macro to do the same for the cloudSummary data
+  ;;   band=$1, channel=$2
+  !define(fillOneCloudSummary,{!dnl
+    ;; First generate the flags
+    Fill, quantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), method=binMin, $
+      ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2
+    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=binMin, $
+      ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2
+    ;; Now boxcar them by five profiles
+    Fill, quantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), method=boxCar, boxCarMethod=min, $
+      sourceQuantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), width=5
+    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=boxCar, boxCarMethod=min, $
+      sourceQuantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), width=5!nl})
+
+  ;; Now invoke it for our significant channels.
+  !fillOneCloudSummary(5,1)
+  !fillOneCloudSummary(10,1)
+  !fillOneCloudSummary(33,3)
+  !fillOneCloudSummary(15,25)
+
+end Fill
+
+
+
+
+
+
+
+
