@@ -10,13 +10,13 @@ begin Output
   {[joined_$1, $3_column]}), type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
 
-!ifelse(!resolution,hiRes,{
-!standardProduct(temperature!res,Temperature!swathRes,)
-!standardProduct(gph!res,GPH!swathRes,)
-!standardProduct(h2o!res,H2O!swathRes,h2o!res)
-!standardProduct(o3!res,O3!swathRes,o3!res)
-!standardProduct(rhi!res,RHI!swathRes,)
-},{
+; !ifelse(!resolution,hiRes,{
+; !standardProduct(temperature!res,Temperature!swathRes,)
+; !standardProduct(gph!res,GPH!swathRes,)
+; !standardProduct(h2o!res,H2O!swathRes,h2o!res)
+; !standardProduct(o3!res,O3!swathRes,o3!res)
+; !standardProduct(rhi!res,RHI!swathRes,)
+; },{
 !standardProduct(temperature,Temperature,)
 !standardProduct(refgph,refGPH,)
 !standardProduct(gph,GPH,)
@@ -35,7 +35,7 @@ begin Output
 !standardProduct(oh,OH,oh)
 !standardProduct(so2,SO2,so2)
 !standardProduct(rhi,RHI,)
-}) ; end !ifelse(!resolution,hiRes
+; }) ; end !ifelse(!resolution,hiRes
 ;; Now output the DGG file
 !ifdef(gotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
