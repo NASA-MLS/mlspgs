@@ -8,7 +8,7 @@ module L2_LOAD_M
                                  LIMB_PRESS
   use L2PCdim, only: N2lvl, Nptg, NCH, MNP => max_no_phi
   use PATH_ENTITIES_M, only: PATH_VECTOR
-  use D_HUNT_M, only: HUNT          ! ** DEBUG
+  use D_HUNT_M, only: HUNT
   implicit NONE
 
   integer, public, parameter :: AAAP_UNIT = 51
@@ -252,7 +252,7 @@ Character (LEN=80) :: Fnd, Line
 
   j = k + si - 1
   DEALLOCATE(FMI%z_grid,FMI%tan_press,STAT=i)
-  ALLOCATE(FMI%z_grid(j),FMI%tan_press(j),STAT=i)
+  ALLOCATE(FMI%z_grid(k),FMI%tan_press(j),STAT=i)
   if(i /= 0) goto 99
 !
   FMI%z_grid(j) = 0.0
@@ -260,7 +260,6 @@ Character (LEN=80) :: Fnd, Line
     j = FMC%p_indx(i)
     FMI%z_grid(i) = z0 + (j - 1) * r
   END DO
-  FMI%z_grid(k+1) = FMI%z_grid(k)
 !
 ! Define tan_press as a TRUE subset of z_grid:
 !
@@ -868,6 +867,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.15  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.14  2001/03/26 21:14:54  livesey
 ! Modified pfa stuff to not have old dimensions of 2
 !

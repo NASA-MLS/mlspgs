@@ -100,7 +100,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !  Get 'Ntr' pressures associated with the fft_angles:
 !
     Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
-                       fft_angles,fft_press,Ntr,Ier)
+   &                   fft_angles,fft_press,Ntr,Ier)
     if (Ier /= 0) Return
 !
 ! Make sure the fft_press array is MONOTONICALY increasing:
@@ -407,6 +407,9 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.9  2001/03/28 01:32:12  livesey
+! Working version
+!
 ! Revision 1.8  2001/03/28 00:40:01  zvi
 ! Fixing up convolution code, some minor changes in geoc_geod
 !
