@@ -151,15 +151,19 @@ SHELL = /bin/sh
 # ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
 #                   also deletes haunted library files
 # help           -- prints some orientation on available help
-# help--brief    -- prints some info on how to build the mls software
+# help--brief    -- prints some brief info on how to build the mls software
 # help--depends  -- prints some info on the makemakedep.sh script
+# help--fopts    -- prints how to set compiler and linker options
 # help--ghostbuster
 #                -- prints some info on the ghostbuster.sh script
 # help--Makefile -- prints some info on this Makefile
 # help--mlsconfigure
 #                -- prints some info on the mlsconfigure script
+# help--platform -- prints how to configure make for your platform
+# help--pvm      -- prints how to set paths for some optional libraries
 # help--reecho   -- prints some info on the reecho.sh script
-# help--util     -- prints some info on the scripts in the util directory
+# help--scripts  -- prints some info on the scripts used by this Makefile
+# help--toolkit  -- prints how to set paths for the mandatory libraries
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
 # makefile       -- allows you to summon this custom Makefile with shorter
@@ -429,11 +433,27 @@ help--brief:
 help--depends:
 	@$(MLSBIN)/makemakedep.sh.sh -help
 
+help--fopts:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--fopts
+
 help--ghostbuster:
 	@$(MLSBIN)/ghostbuster.sh -help
 
+help--platform:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--platform
+
+help--pvm:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--pvm
+
 help--reecho:
 	@$(MLSBIN)/reecho.sh -help
+
+help--toolkit:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--toolkit
 
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
 install:
@@ -760,6 +780,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.58  2001/11/15 00:15:56  pwagner
+# Now builds blas/libmlspack.a explicitly
+#
 # Revision 1.57  2001/11/09 23:56:53  pwagner
 # Fixed problem with help--Makefile
 #
