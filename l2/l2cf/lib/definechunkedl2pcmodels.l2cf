@@ -36,6 +36,18 @@ l2pcRetFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
   /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcRetFwmRad2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcRetFwmRad2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1)]})
 
 ;; Do all the 'standard' bands only this time.
