@@ -46,9 +46,21 @@ DUSTY = $(FOPTS)
 # Beginning of path to HDFEOS  libraries:
 #E = /van1/opt/TOOLKIT
 
+# Use the fwdmdl directory, libdir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = ../../fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+
+ifdef l2_NEEDS_fwdmdl
+l2: fwdmdl
+     INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(fwdmdldir)
+else
+     INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+endif
 
 # Define some suffix rules
 
@@ -90,6 +102,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 l_specials = 
 
 # $Log$
+# Revision 1.10  2001/02/26 21:14:38  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
 # Revision 1.9  2001/02/12 17:45:11  pwagner
 # Retrieval_OBJS no longer needed
 #
