@@ -12,7 +12,7 @@ module NO_CONV_AT_ALL_M
   use String_Table, only: GET_STRING
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
-  use Molecules, only: L_EXTINCTION
+  use Molecules, only: spec_tags, L_EXTINCTION
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   USE Load_sps_data_m, only: Grids_T
 
@@ -77,7 +77,7 @@ CONTAINS
     Type (VectorValue_T), pointer :: F  ! VMR quantity
 
     Integer :: jf, jz, no_mol, l
-    Integer :: is, j, k, nf, sv_f, sv_t_len
+    Integer :: is, k, nf, sv_f, sv_t_len
     Integer :: Row, col                     ! Matrix row & column indices
     Integer :: ptg_i,noPtan,noChans,Ind     ! Indices
 
@@ -97,8 +97,13 @@ CONTAINS
 ! Ptan derivative
 
     col = 0
-    if ( PRESENT (Jacobian) ) &
-      & col = FindBlock ( Jacobian%col, ptan%index, maf )
+    if ( PRESENT (Jacobian) ) then
+      row = FindBlock ( Jacobian%row, radiance%index, maf )
+      rowFlags(row) = .TRUE.
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+    endif
+
+! Of course, we might not care about ptan
 
     if ( col > 0 ) then
 
@@ -110,14 +115,11 @@ CONTAINS
       SRad(1:noPtan) = di_dx(1:noPtan) * dx_dh_out(1:noPtan)
       SRad(1:noPtan) = SRad(1:noPtan) * dhdz_out(1:noPtan)
 
-      row = FindBlock ( Jacobian%row, radiance%index, maf )
-      rowFlags(row) = .TRUE.
-
-      select case ( jacobian%block(Row,col)%kind )
+      select case ( Jacobian%block(Row,col)%kind )
         case ( m_absent )
-          call CreateBlock ( Jacobian, row, col, m_banded, &
-            & radiance%template%noSurfs*noChans,bandHeight=noChans )
-          jacobian%block(row,col)%values = 0.0_r8
+          call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
+                           & bandHeight=noChans )
+          Jacobian%block(row,col)%values = 0.0_r8
         case ( m_banded )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -126,10 +128,10 @@ CONTAINS
 
       do ptg_i = 1, noPtan
         ind = channel + noChans*(ptg_i-1)
-        jacobian%block(row,col)%values(ind,1) = &
-           & jacobian%block(row,col)%values(ind,1) + sbRatio * SRad(ptg_i)
-        jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
-        jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+        q = Jacobian%block(row,col)%values(ind,1)
+        Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
+        Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+        Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
       end do
 
     else
@@ -141,7 +143,7 @@ CONTAINS
     do ptg_i = 1, noPtan
       ind = channel + noChans*(ptg_i-1)
       radiance%values( ind, maf ) = &
-             & radiance%values ( ind, maf ) + sbRatio * i_star_all(ptg_i)
+             & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
     end do
 
     if ( .not. PRESENT(Jacobian) ) Return
@@ -172,7 +174,7 @@ CONTAINS
         select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
-          jacobian%block(row,col)%values = 0.0_r8
+          Jacobian%block(row,col)%values = 0.0_r8
         case ( m_full )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -190,8 +192,8 @@ CONTAINS
           Call InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S')
           do ptg_i = 1, noPtan
             ind = channel + noChans*(ptg_i-1)
-            q = jacobian%block(row,col)%values(ind,jz)
-            jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
+            q = Jacobian%block(row,col)%values(ind,jz)
+            Jacobian%block(row,col)%values(ind,jz) = q + sbRatio*Srad(ptg_i)
           end do
         end do
 
@@ -213,10 +215,10 @@ CONTAINS
         if ( l == l_extinction ) then
           f => GetVectorQuantityByType(forwardModelIn, &
                 & quantityType=l_extinction,radiometer = &
-                & radiance%template%radiometer, noError=.true. )
+                & radiance%template%radiometer, noError=.TRUE. )
         else
           f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr,&
-                & molecule=l, noError=.true. )
+                & molecule=l, noError=.TRUE. )
         endif
 
         if(.not. associated(f) ) then
@@ -232,11 +234,11 @@ CONTAINS
           select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
-              jacobian%block(row,col)%values = 0.0_r8
+              Jacobian%block(row,col)%values = 0.0_r8
             case ( m_full )
             case default
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Wrong type for temperature derivative matrix' )
+              & 'Wrong type for atmospheric derivative matrix' )
           end select
 
           DO k = 1, Grids_f%no_f(is) * Grids_f%no_z(is)
@@ -244,14 +246,14 @@ CONTAINS
 ! Check if derivatives are needed for this (zeta & phi) :
 
             sv_f = sv_f + 1
-            if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
+            if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
 
             Rad(1:no_tan_hts) = di_df(1:no_tan_hts,sv_f)
             Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
             do ptg_i = 1, noPtan
               ind = channel + noChans*(ptg_i-1)
-              q = jacobian%block(row,col)%values(ind,sv_f)
-              jacobian%block(row,col)%values(ind,sv_f) = &
+              q = Jacobian%block(row,col)%values(ind,k)
+              Jacobian%block(row,col)%values(ind,k) = &
                                                &  q + sbRatio*Srad(ptg_i)
             end do
 
@@ -269,6 +271,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.7  2002/06/28 11:06:49  zvi
+! compute dI/dPtan using chain rule
+!
 ! Revision 2.6  2002/06/19 11:00:36  zvi
 ! changing from Cspline to InterpolateValues routine
 !
