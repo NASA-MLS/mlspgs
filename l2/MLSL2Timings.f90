@@ -5,6 +5,7 @@
 MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
+  use L2PARINFO, only: PARALLEL
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
   USE MLSStrings, only: GetStringElement, LowerCase, StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
@@ -148,6 +149,15 @@ contains ! =====     Public Procedures     =============================
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Level 2 section timings : ', advance='yes' )
+    if ( parallel%master ) then
+      call blanks ( 8, advance='no' )
+      call output ( '(Master Task) ', advance='yes' )
+    elseif ( parallel%slave .and. .not. parallel%fwmParallel ) then
+      call blanks ( 8, advance='no' )
+      call output ( '(Slave: chunk ', advance='no' )
+      call output ( parallel%ChunkNo, advance='no' )
+      call output ( ' ) ', advance='yes' )
+    endif
     call output ( '==========================================', advance='yes' )
     call output ( 'section name ', advance='no' )
     call blanks ( 8, advance='no' )
@@ -276,6 +286,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.15  2003/08/11 23:24:48  pwagner
+! Chunk no. printed if slave task
+!
 ! Revision 2.14  2003/06/09 22:51:36  pwagner
 ! Renamed scan_divide to chunk_divide in timings table
 !
