@@ -133,39 +133,42 @@ begin Construct
 
   ;; Here we define the key band/channels for cloud flagging for each
   ;; radiometer.
-  !define(cloudBandForR1,32) !define(cloudChannelForR1,1)
-  !define(cloudBandForR2,5)  !define(cloudChannelForR2,1)
-  !define(cloudBandForR3,33) !define(cloudChannelForR3,3)
-  !define(cloudBandForR4,10) !define(cloudChannelForR4,3)
-  !define(cloudBandForR5,15) !define(cloudChannelForR5,25)
+  !define(cloudBandForR1A,32) !define(cloudChannelForR1A,1)
+  !define(cloudBandForR1B,34) !define(cloudChannelForR1B,1)
+  !define(cloudBandForR2,5)   !define(cloudChannelForR2,1)
+  !define(cloudBandForR3,33)  !define(cloudChannelForR3,3)
+  !define(cloudBandForR4,10)  !define(cloudChannelForR4,3)
+  !define(cloudBandForR5H,15) !define(cloudChannelForR5H,25)
+  !define(cloudBandForR5V,18) !define(cloudChannelForR5V,25)
   ;; Some macros to invoke them
-  !define(cloudBandForRadNo,{!cloudBandForR$1})
-  !define(cloudChannelForRadNo,{!cloudChannelForR$1})
+  !define(cloudBandForRad,{!cloudBandFor$1})
+  !define(cloudChannelForRad,{!cloudChannelFor$1})
 
-  !define(makeOneRadDT,{dtR$1: Quantity, type=singleChannelRadiance, signal=!signal(!cloudBandForR$1)!nl})
-  !define(oneToFive,{1,2,3,4,5})
-  !forall(makeOneRadDT,!oneToFive)
-  !define(allRadDTs,{!makelist({dtR},{},!oneToFive)})
+  !define(makeOneRadDT,{dt$1: Quantity, type=singleChannelRadiance, signal=!signal(!cloudBandFor$1)!nl})
+  !forall(makeOneRadDT,!allRadiometers)
+  !define(allRadDTs,{!makelist({dt},{},!allRadiometers)})
 
   ;; cloudMax quantities in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
-  cloudRadMinR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+  cloudRadMin$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
     vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
-  cloudRadMaxR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+  cloudRadMax$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
     vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
-  !forall(constructCloudMinMax,!oneToFive)
-  !define(allCloudMinMax,{!makelist({cloudRadMinR},{},!oneToFive), $
-    !makelist({cloudRadMaxR},{},!oneToFive)})
+  !forall(constructCloudMinMax,!allRadiometers)
+  !define(allCloudMinMax,{!dnl
+    !makelist({cloudRadMin},{},!allRadiometers), $
+    !makelist({cloudRadMax},{},!allRadiometers)})
 
   ;; More quality flag precursors
   !define(constructOneCloudSummary,{!dnl
-  lowCloudSummaryR$1:  Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
-    vGrid=vGridLowCloudR$1, hGrid=hGridStandard
-  highCloudSummaryR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
-    vGrid=vGridHighCloudR$1, hGrid=hGridStandard!nl})
-  !forall(constructOneCloudSummary,!oneToFive)
-  !define(allCloudSummaries,{!makelist({lowCloudSummaryR},{},!oneToFive), $
-    !makelist({highCloudSummaryR},{},!oneToFive)})
+  lowCloudSummary$1:  Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridLowCloud$1, hGrid=hGridStandard
+  highCloudSummary$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridHighCloud$1, hGrid=hGridStandard!nl})
+  !forall(constructOneCloudSummary,!allRadiometers)
+  !define(allCloudSummaries,{!dnl
+    !makelist({lowCloudSummary},{},!allRadiometers), $
+    !makelist({highCloudSummary},{},!allRadiometers)})
 
   ;; ----------------------------------------- Baselines
   !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
@@ -187,6 +190,12 @@ begin Construct
 
   !forall(constructMIFBaseline, !allRadiometers )
   !define(allMIFBaselines, {!makelist({baselineMIF},{},!allRadiometers)})
+
+  ;; Need 'grouped' baselines for the R4 bands.
+  !define(constructR4GroupedBaseline,{baselineR4Group$1: Quantity, type=baseline, $
+    radiometer=R4, fGrid=fGridBaselineR4!nl})
+  !forall(constructR4GroupedBaseline,1,2,3)
+  !define(allGroupedBaselines,{!makelist({baselineR4Group},{},1,2,3)})
 
   ;; ----------------------------------------- Extinctions
 
@@ -428,6 +437,7 @@ begin Construct
     !allBaselines, $
     !allBaselinesFine, $
     !allMIFBaselines, $
+    !allGroupedBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
