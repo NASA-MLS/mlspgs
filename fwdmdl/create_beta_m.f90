@@ -119,7 +119,7 @@ contains
 !
     do ln_i = 1, nl
 !
-      w = pfa_spectrum%SPS_W(ln_i)
+      w = pfa_spectrum%W(ln_i)
 !
 ! Prepare the temperature weighted coefficients:
 !
@@ -159,6 +159,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/02/19 22:20:40  zvi
 ! Latest modification: Conv/NoConv
 !

@@ -51,26 +51,26 @@ Integer(i4) :: nl, i, no_sps, mnf, spectag, h_i, frq_i
 Real(r8) :: Qlog(3), mass, z, p, t, Frq, Vel_z_correction
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
 !
-Real(r8) :: y(size(pfs(1)%SPS_V0)), ym(size(pfs(1)%SPS_V0)), &
-            yp(size(pfs(1)%SPS_V0))
+Real(r8) :: y(size(pfs(1)%V0)), ym(size(pfs(1)%V0)), &
+            yp(size(pfs(1)%V0))
 !
-Real(r8) :: x1(size(pfs(1)%SPS_V0)), x1m(size(pfs(1)%SPS_V0)), &
-            x1p(size(pfs(1)%SPS_V0))
+Real(r8) :: x1(size(pfs(1)%V0)), x1m(size(pfs(1)%V0)), &
+            x1p(size(pfs(1)%V0))
 !
-Real(r8) :: y1(size(pfs(1)%SPS_V0)), y1m(size(pfs(1)%SPS_V0)), &
-            y1p(size(pfs(1)%SPS_V0))
+Real(r8) :: y1(size(pfs(1)%V0)), y1m(size(pfs(1)%V0)), &
+            y1p(size(pfs(1)%V0))
 !
-Real(r8) :: yi(size(pfs(1)%SPS_V0)), yim(size(pfs(1)%SPS_V0)),&
-            yip(size(pfs(1)%SPS_V0))
+Real(r8) :: yi(size(pfs(1)%V0)), yim(size(pfs(1)%V0)),&
+            yip(size(pfs(1)%V0))
 !
-Real(r8) :: v0s(size(pfs(1)%SPS_V0)), v0sm(size(pfs(1)%SPS_V0)), &
-            v0sp(size(pfs(1)%SPS_V0))
+Real(r8) :: v0s(size(pfs(1)%V0)), v0sm(size(pfs(1)%V0)), &
+            v0sp(size(pfs(1)%V0))
 !
-Real(r8) :: slabs1(size(pfs(1)%SPS_V0)), slabs1m(size(pfs(1)%SPS_V0)), &
-            slabs1p(size(pfs(1)%SPS_V0))
+Real(r8) :: slabs1(size(pfs(1)%V0)), slabs1m(size(pfs(1)%V0)), &
+            slabs1p(size(pfs(1)%V0))
 !
-Real(r8) :: dy_dv0(size(pfs(1)%SPS_V0)), dx1_dv0(size(pfs(1)%SPS_V0)), &
-            dslabs1_dv0(size(pfs(1)%SPS_V0))
+Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
+            dslabs1_dv0(size(pfs(1)%V0))
 !
 ! Begin code:
 
@@ -116,11 +116,11 @@ Real(r8) :: dy_dv0(size(pfs(1)%SPS_V0)), dx1_dv0(size(pfs(1)%SPS_V0)), &
 !
   DO i = 1, no_sps
 !
-    Spectag = pfs(i)%sps_spectag
+    Spectag = pfs(i)%spectag
     mass = Real(Spectag) / 1000.0
 !
     nl = pfs(i)%NO_LINES
-    Qlog(1:3) = pfs(i)%SPS_QLOG(1:3)
+    Qlog(1:3) = pfs(i)%QLOG(1:3)
 
     do h_i = 1, no_ele
 !
@@ -192,24 +192,24 @@ Real(r8) :: dy_dv0(size(pfs(1)%SPS_V0)), dx1_dv0(size(pfs(1)%SPS_V0)), &
 !
 ! Prepare the temperature weighted coefficients:
 !
-    Call Slabs_prep_wder(t,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j),&
-   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),      &
-   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
-   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0s(j),x1(j),y(j),yi(j),&
+    Call Slabs_prep_wder(t,mass,pfs(i)%V0(j),pfs(i)%EL(j),&
+   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),      &
+   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
+   &     pfs(i)%N1(j),pfs(i)%N2(j),v0s(j),x1(j),y(j),yi(j),&
    &     slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
 !
     tp = t + 10.0
-    Call slabs_prep(tp,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j), &
-   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),   &
-   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
-   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0sp(j),x1p(j),yp(j),&
+    Call slabs_prep(tp,mass,pfs(i)%V0(j),pfs(i)%EL(j), &
+   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),   &
+   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
+   &     pfs(i)%N1(j),pfs(i)%N2(j),v0sp(j),x1p(j),yp(j),&
    &     yip(j),slabs1p(j),dslabs1)
 !
     tm = t - 10.0
-    Call slabs_prep(tm,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j), &
-   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),   &
-   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
-   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0sm(j),x1m(j),ym(j),&
+    Call slabs_prep(tm,mass,pfs(i)%V0(j),pfs(i)%EL(j), &
+   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),   &
+   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
+   &     pfs(i)%N1(j),pfs(i)%N2(j),v0sm(j),x1m(j),ym(j),&
    &     yim(j),slabs1m(j),dslabs1)
 !
   end do
@@ -219,6 +219,9 @@ Real(r8) :: dy_dv0(size(pfs(1)%SPS_V0)), dx1_dv0(size(pfs(1)%SPS_V0)), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.14  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.13  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

@@ -103,23 +103,26 @@ module L2PC_PFA_STRUCTURES
   type :: PFA_SLAB
     Integer(i4) :: NO_SPS
     Integer(i4) :: NO_LINES
-    Integer(i4) :: SPS_SPECTAG
-    Character(len=8) :: SPS_NAME
-    Real(r8) :: SPS_QLOG(3)
-    Real(r8) :: SPS_V0(maxlines)
-    Real(r8) :: SPS_EL(maxlines)
-    Real(r8) :: SPS_STR(maxlines)
-    Real(r8) :: SPS_W(maxlines)
-    Real(r8) :: SPS_PS(maxlines)
-    Real(r8) :: SPS_N(maxlines)
-    Real(r8) :: SPS_N1(maxlines)
-    Real(r8) :: SPS_N2(maxlines)
-    Real(r8) :: SPS_GAMMA(maxlines)
-    Real(r8) :: SPS_DELTA(maxlines)
+    Integer(i4) :: SPECTAG
+    Character(len=8) :: NAME
+    Real(r8) :: QLOG(3)
+    Real(r8) :: V0(maxlines)
+    Real(r8) :: EL(maxlines)
+    Real(r8) :: STR(maxlines)
+    Real(r8) :: W(maxlines)
+    Real(r8) :: PS(maxlines)
+    Real(r8) :: N(maxlines)
+    Real(r8) :: N1(maxlines)
+    Real(r8) :: N2(maxlines)
+    Real(r8) :: GAMMA(maxlines)
+    Real(r8) :: DELTA(maxlines)
   end type PFA_SLAB
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.7  2001/02/19 22:20:40  zvi
 ! Latest modification: Conv/NoConv
 !

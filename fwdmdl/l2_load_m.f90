@@ -336,24 +336,24 @@ Character (LEN=80) :: Fnd, Line
       end do
     else
       m = m + 1
-      FMI%Pfa_spectrum(j)%SPS_NAME = Name
+      FMI%Pfa_spectrum(j)%NAME = Name
       FMI%Pfa_spectrum(j)%NO_SPS = n_sps
       FMI%Pfa_spectrum(j)%NO_LINES = nl
-      FMI%Pfa_spectrum(j)%SPS_SPECTAG = Spectag
-      FMI%Pfa_spectrum(j)%SPS_QLOG(1:3) = Qlog(1:3)
+      FMI%Pfa_spectrum(j)%SPECTAG = Spectag
+      FMI%Pfa_spectrum(j)%QLOG(1:3) = Qlog(1:3)
       do i = 1, nl
         read(11,*,iostat=io) (thbs(k),k=1,10)
         if(io /= 0) goto 99
-        FMI%Pfa_spectrum(j)%SPS_V0(i) = thbs(1)
-        FMI%Pfa_spectrum(j)%SPS_EL(i) = thbs(2)
-        FMI%Pfa_spectrum(j)%SPS_STR(i) = thbs(3)
-        FMI%Pfa_spectrum(j)%SPS_W(i) = thbs(4)
-        FMI%Pfa_spectrum(j)%SPS_PS(i) = 0.0   !  thbs(5) *** DEBUG
-        FMI%Pfa_spectrum(j)%SPS_N(i) = thbs(6)
-        FMI%Pfa_spectrum(j)%SPS_DELTA(i) = thbs(7)
-        FMI%Pfa_spectrum(j)%SPS_N1(i) = thbs(8)
-        FMI%Pfa_spectrum(j)%SPS_GAMMA(i) = thbs(9)
-        FMI%Pfa_spectrum(j)%SPS_N2(i) = thbs(10)
+        FMI%Pfa_spectrum(j)%V0(i) = thbs(1)
+        FMI%Pfa_spectrum(j)%EL(i) = thbs(2)
+        FMI%Pfa_spectrum(j)%STR(i) = thbs(3)
+        FMI%Pfa_spectrum(j)%W(i) = thbs(4)
+        FMI%Pfa_spectrum(j)%PS(i) = 0.0   !  thbs(5) *** DEBUG
+        FMI%Pfa_spectrum(j)%N(i) = thbs(6)
+        FMI%Pfa_spectrum(j)%DELTA(i) = thbs(7)
+        FMI%Pfa_spectrum(j)%N1(i) = thbs(8)
+        FMI%Pfa_spectrum(j)%GAMMA(i) = thbs(9)
+        FMI%Pfa_spectrum(j)%N2(i) = thbs(10)
       end do
     endif
 !
@@ -867,6 +867,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.18  2001/04/02 17:33:32  pwagner
+! Resurrected--still needed by l2
+!
 ! Revision 1.16  2001/03/29 12:08:17  zvi
 ! Fixing bugs
 !
