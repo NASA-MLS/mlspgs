@@ -269,181 +269,65 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Get the quantities we need from the vectors
     ! --------------------------------------------
 
-   !-------------------------------------------------------------
-    if(dee_bug) then                    ! use jonathan's version
-   !-------------------------------------------------------------
     ! --------
     ! Outputs:
     ! --------
-
-    do quantity_type = 1, fwdModelOut%template%noQuantities
-      l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
-
-      select case (l_quantity_type)
-        case (l_radiance) 
-          radiance => GetVectorQuantityByType ( fwdModelOut,                 &
+        radiance => GetVectorQuantityByType ( fwdModelOut,                 &
           & quantityType=l_radiance,                                         &
           & signal=signal%index, sideband=signal%sideband )
-          qgot(1) = .true.
-        case (l_cloudInducedRadiance)
-          cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
+        cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
           & quantityType=l_cloudInducedRadiance,                             &
           & signal=signal%index, sideband=signal%sideband )
-          qgot(2) = .true.
-        case (l_cloudExtinction)
           cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
             & quantityType=l_cloudExtinction )
-          qgot(3) = .true.
-        case (l_cloudRADSensitivity)
-          cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
+        cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
           & quantityType=l_cloudRADSensitivity,                              &
           & signal=signal%index, sideband=signal%sideband )
-          qgot(4) = .true.
-        case (l_totalExtinction)
-          totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
+        totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
           & quantityType=l_totalExtinction )
-          qgot(5) = .true.
-        case (l_effectiveOpticalDepth)
-          effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
+        effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
           & quantityType=l_effectiveOpticalDepth,                            &
           & signal=signal%index, sideband=signal%sideband )
-          qgot(6) = .true.
-        case (l_massMeanDiameterIce)
-          massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
+        massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
           & quantityType=l_massMeanDiameterIce )
-          qgot(7) = .true.
-        case (l_massMeanDiameterWater)
-          massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
+        massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
           & quantityType=l_massMeanDiameterWater )
-          qgot(8) = .true.
-        case default
-          print*, 'l_radiance: ', l_radiance
-          print*, 'l_cloudInducedRadiance: ', l_cloudInducedRadiance
-          print*, 'l_cloudextinction: ', l_cloudextinction
-          print*, 'l_massmeandiameterice: ', l_massmeandiameterice
-          print*, 'l_cloudRADSensitivity: ', l_cloudRADSensitivity
-          print*, 'l_totalExtinction: ', l_totalExtinction
-          print*, 'l_effectiveOpticalDepth: ', l_effectiveOpticalDepth
-          print*, 'l_massMeanDiameterWater: ', l_massMeanDiameterWater
-          print*, 'l_quantity_type: ', l_quantity_type
 
-          call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand output l_quantity_types')
-      end select
-    enddo
     ! -------
     ! Inputs:
     ! -------
-    
-    NQ2 = fwdModelExtra%template%noQuantities
-
-    do quantity_type = 1, NQ2
-      l_quantity_type = fwdModelExtra%quantities(quantity_type)%template%quantityType
-
-      select case (l_quantity_type)
-        case (l_ptan)
-          ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
+        ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
           & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-        case (l_temperature)
-          temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
+        temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
           & quantityType=l_temperature )
-        case (l_gph)
-          gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,       &
+        gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,       &
           & quantityType=l_gph )
-        case (l_cloudIce)
-          cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,   &
+        cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,   &
           & quantityType=l_cloudIce )
-        case (l_cloudWater)
-          cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_cloudWater )
-        case (l_surfaceType)
-          surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
+        surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
           & quantityType=l_surfaceType )
-        case (l_sizeDistribution)
-          sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
+        sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
           & quantityType=l_sizeDistribution )
-        case (l_earthradius)
-          earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_earthradius ) 
-	case (l_scGeocAlt)
-	  scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+	     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_scGeocAlt )
-	case (l_elevOffset)
-          elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
-        case (l_vmr)
-          ! need to do nothing, will be treated below.
-        case default
+
+    !-----------------------------------------
+    ! Make sure the quantities we need are got and with correct format
+    !-----------------------------------------
+
+        if(.not. (associated(ptan) .and. associated(temp) .and. associated(gph) &
+           & .and. associated(cloudIce) .and. associated(cloudWater) &
+           & .and. associated(surfaceType) .and. associated(sizeDistribution) &
+           & .and. associated(earthradius) .and. associated(scGeocAlt) &
+           & .and. associated(elevOffset) ) ) &
           call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand Input l_quantity_types')
-      end select
-    enddo
-
-    ! check Qgot for all outputs
-    if ( any( .not. qgot ) ) then
-      print*, 'have only some outputs',qgot
-      print*, 'Tb, DTcir, Beta, SS, BetaC, TAUeff, Dmi, Dmw'
-    endif
-   !----------------------------
-   ! End of jonathan's version
-   !----------------------------
-
-   !-----------------------------------------------------------------
-    else                               ! use N. Livesey's version
-   !-----------------------------------------------------------------
-    ! --------
-    ! Outputs:
-    ! --------
-    radiance => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_radiance, &
-      & signal=signal%index, sideband=signal%sideband )
-    cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_radiance, &
-      & signal=signal%index, sideband=signal%sideband )
-    cloudExtinction => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_cloudExtinction )
-    cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_radiance, &
-      & signal=signal%index, sideband=signal%sideband )
-    totalExtinction => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_totalExtinction )
-    effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_radiance, &
-      & signal=signal%index, sideband=signal%sideband )
-    massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_massMeanDiameterIce )
-    massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut, &
-      & quantityType=l_massMeanDiameterWater )
-    ! -------
-    ! Inputs:
-    ! -------
-    ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-    temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra, &
-      & quantityType=l_temperature )
-    gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra, &
-      & quantityType=l_gph )
-    cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_cloudIce )
-    cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_cloudWater )
-    surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
-      & quantityType=l_surfaceType )
-    sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
-      & quantityType=l_sizeDistribution )
-    earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_earthradius ) 
-    scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_scGeocAlt )
-
-    endif
-   !-------------------------------
-   ! End of N. Livesey's version
-   !------------------------------
-
-    !-----------------------------------------
-    ! Make sure the quantities we have are OK
-    !-----------------------------------------
+                            'Cloud Model inputs are not sufficient')
 
     if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,   &
@@ -1046,6 +930,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.40  2001/10/05 20:26:12  dwu
+! make sure the model output fields are associated
+!
 ! Revision 1.39  2001/10/04 23:34:19  dwu
 ! *** empty log message ***
 !
