@@ -200,27 +200,27 @@ contains ! ========  Public Procedures =========================================
 
       if ( present ( r1a ) ) call PVMIDLPack ( 'R1A:'//r1aName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r1b ) ) call PVMIDLPack ( 'R1B:'//r1aName, info )
+      if ( present ( r1b ) ) call PVMIDLPack ( 'R1B:'//r1bName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r1c ) ) call PVMIDLPack ( 'R1C:'//r1aName, info )
+      if ( present ( r1c ) ) call PVMIDLPack ( 'R1C:'//r1cName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r1d ) ) call PVMIDLPack ( 'R1D:'//r1aName, info )
+      if ( present ( r1d ) ) call PVMIDLPack ( 'R1D:'//r1dName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r2a ) ) call PVMIDLPack ( 'R2A:'//r1aName, info )
+      if ( present ( r2a ) ) call PVMIDLPack ( 'R2A:'//r2aName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r2b ) ) call PVMIDLPack ( 'R2B:'//r1aName, info )
+      if ( present ( r2b ) ) call PVMIDLPack ( 'R2B:'//r2bName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r2c ) ) call PVMIDLPack ( 'R2C:'//r1aName, info )
+      if ( present ( r2c ) ) call PVMIDLPack ( 'R2C:'//r2cName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r2d ) ) call PVMIDLPack ( 'R2D:'//r1aName, info )
+      if ( present ( r2d ) ) call PVMIDLPack ( 'R2D:'//r2dName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r3a ) ) call PVMIDLPack ( 'R3A:'//r1aName, info )
+      if ( present ( r3a ) ) call PVMIDLPack ( 'R3A:'//r3aName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r3b ) ) call PVMIDLPack ( 'R3B:'//r1aName, info )
+      if ( present ( r3b ) ) call PVMIDLPack ( 'R3B:'//r3bName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r3c ) ) call PVMIDLPack ( 'R3C:'//r1aName, info )
+      if ( present ( r3c ) ) call PVMIDLPack ( 'R3C:'//r3cName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
-      if ( present ( r3d ) ) call PVMIDLPack ( 'R3D:'//r1aName, info )
+      if ( present ( r3d ) ) call PVMIDLPack ( 'R3D:'//r3dName, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing an array name" )
 
       ! Now send this buffer
@@ -1003,6 +1003,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.36  2004/01/08 01:11:20  livesey
+! Bug fix.
+!
 ! Revision 2.35  2004/01/07 23:49:49  livesey
 ! Added the ability to snoop simple arrays
 !
