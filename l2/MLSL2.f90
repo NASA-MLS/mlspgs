@@ -26,7 +26,7 @@ program MLSL2
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
-    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
+    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use MLSStrings, only: lowerCase
   use MLSStringLists, only: catLists, GetUniqueList, &
@@ -98,7 +98,21 @@ program MLSL2
   ! to slave processes which may be running. Master and slaves, all,
   ! will be running mlsl2
   ! The interprocess communication is handled by pvm
-
+  !
+  ! Three alternatives are avialable to manage these tasks
+  ! (1) "submit", where you specify --submit "command" as
+  !       a command-line option, and the master uses "command"
+  !       with a generic, non-mlsl2-aware batch queue system; 
+  !       (this has been successfully tested via --submit mlssubmit)
+  ! (2) l2q, where you specify --submit l2q as the command-line option;
+  !      l2q is a special-purpose mlsl2-aware executable
+  !      (Different from (1), but option line looks like (1))
+  ! (3) Direct control, where the master has sole responsibilty for
+  !      inquiring from pvm as to available hosts, and using them
+  !
+  ! Note that (1) and (2) may permit more than one master task to run
+  ! simultaneously. They require a queue manager to be running already.
+  ! In contrast, (3) requires only the pvm demon.
   implicit NONE
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
@@ -260,10 +274,6 @@ program MLSL2
         neverCrash = switch
       else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
         parallel%fwmParallel = .true.
-      ! else if ( line(3+n:7+n) == 'gcch ' ) then
-      !  garbage_collection_by_chunk = switch
-      ! else if ( line(3+n:7+n) == 'gcdt ' ) then
-      !  garbage_collection_by_dt = switch
       else if ( line(3+n:9+n) == 'idents ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
@@ -572,6 +582,12 @@ program MLSL2
     parallel%slave = .false.
     singleChunk = 1
     lastChunk = 0
+    ! Issue warning about l2pc files
+    ! Maybe we should do away with checkPaths option altogether?
+    ! or fix it somehow?
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    & 'checkPaths will fail if l2pc files are on local disks but master runs' &
+    & // ' on front end' )
   endif
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails 
@@ -732,19 +748,19 @@ program MLSL2
   call time_now ( t0 )
   t1 = t0
   !---------------- Task (8) ------------------
-  print *, 'destroy_char_table'
+  ! print *, 'destroy_char_table'
   call destroy_char_table
-  print *, 'destroy_hash_table'
+  ! print *, 'destroy_hash_table'
   call destroy_hash_table
-  print *, 'destroy_string_table'
+  ! print *, 'destroy_string_table'
   call destroy_string_table
-  print *, 'destroy_symbol_table'
+  ! print *, 'destroy_symbol_table'
   call destroy_symbol_table
-  print *, 'deallocate_decl'
+  ! print *, 'deallocate_decl'
   call deallocate_decl
-  print *, 'deallocate_tree'
+  ! print *, 'deallocate_tree'
   call deallocate_tree
-  print *, 'freepvmargs'
+  ! print *, 'freepvmargs'
   call FreePVMArgs
   if ( parallel%slave .and. &
     & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL) ) then
@@ -759,9 +775,9 @@ program MLSL2
     endif    
   endif    
   if ( timing ) call sayTime ( 'Closing and deallocating' )
-  print *, 'add_to_section_timing'
+  ! print *, 'add_to_section_timing'
   call add_to_section_timing( 'main', t0 )
-  print *, 'dump_section_timings'
+  ! print *, 'dump_section_timings'
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
@@ -985,6 +1001,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.129  2004/12/27 23:05:27  pwagner
+! Commented out useless prints; warns on checkPaths option
+!
 ! Revision 2.128  2004/12/14 21:55:37  pwagner
 ! May skip sections, stop early
 !
