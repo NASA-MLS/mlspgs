@@ -6,7 +6,7 @@
 begin Fill
   ;; ------------------------------------ Temperature-Core
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R1,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R1A,chisqScale=1.0,minRads=1500,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------ GPH-Core
   !define(flaggingBands,{1,22,32})
@@ -15,6 +15,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.7  2004/09/21 23:02:59  livesey
+; Changed chiSqWeights to 1.0 for everything.
+;
 ; Revision 1.6  2004/09/13 21:43:51  livesey
 ; Bug fix.
 ;
