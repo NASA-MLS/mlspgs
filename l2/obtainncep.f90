@@ -142,6 +142,7 @@ contains ! =====     Public Procedures     =============================
   ! External functions
   integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
   integer, external :: gdinqgrid, gdnentries
+  logical, parameter :: KOUNTEMPTY=.TRUE.
  
   ! - - - begin - - -
 
@@ -172,7 +173,7 @@ contains ! =====     Public Procedures     =============================
               &"NumStringElements of gridlist < GRIDORDER")
 	ENDIF
 	
-	CALL GetStringElement(gridlist, gridname, GRIDORDER)
+	CALL GetStringElement(gridlist, gridname, GRIDORDER, KOUNTEMPTY)
 
   gd_id = gdattach(file_id, gridname)
   IF (gd_id /= SUCCEED) THEN
@@ -242,6 +243,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.5  2001/02/23 17:44:50  pwagner
+! Corrected num of args to GetStringElement
+!
 ! Revision 2.4  2001/02/23 00:06:52  pwagner
 ! Using some MLSStrings.f90 functions
 !
