@@ -53,6 +53,14 @@ begin Fill
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
 end Fill})
 
+;; This macro deals with the state subsetting for quantity $1
+!define(subsetSpecies,{!dnl
+!ifdef($1Range,{Subset, quantity=state.$1, height=!$1Range
+Subset, quantity=length.$1, height=!$1Range})!nl})
+!define(subsetState,{!dnl
+!forall( {subsetSpecies}, !allMolecules )
+!subsetSpecies(Temperature)!nl})
+
 ;; This macro deals with the radiance subsetting in an easy manner.
 ;; $1 is the phase name, $2 the band, $3 the height range and $4 the depth limit
 !define(subsetGHzRadiance,{!dnl
@@ -111,6 +119,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.10  2002/07/18 06:30:55  livesey
+; Added the radianceSubset stuff
+;
 ; Revision 1.9  2002/07/17 19:30:10  livesey
 ; Fill GPH
 ;
