@@ -5,6 +5,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
+  USE MLSFiles, only: WILDCARDHDFVERSION
   USE MLSMessageModule, only: MLSMSG_Error
 
   IMPLICIT NONE
@@ -33,18 +34,19 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
   logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
   logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
-  logical            :: PCF_FOR_INPUT =          SIPS_VERSION ! Open L2CF using PCF ?
-  logical            :: PCF =                    SIPS_VERSION ! Use PCF ?
-  logical            :: CREATEMETADATA =         SIPS_VERSION ! Create .met files ?
-  logical            :: TOOLKIT =                SIPS_VERSION ! Use PGS_... routines?
+  logical            :: PCF_FOR_INPUT =          SIPS_VERSION 
+  logical            :: PCF =                    SIPS_VERSION 
+  logical            :: CREATEMETADATA =         SIPS_VERSION 
+  logical            :: TOOLKIT =                SIPS_VERSION 
   ! PCF controls whether the input and output file names are obtained
   ! from the PCF or the l2cf; if .false., the l2cf must supply every
   ! file name (L1B..) plus all the global settings (start, end times, ..)
   ! Note the following cascade of automatic negations:
-  ! TOOLKIT=.false. =>  PCF=.false.
-  ! PCF=.false.     =>  PCF_FOR_INPUT=.false.
+  ! TOOLKIT=.false. means                       don't use PGS_... routines
+  ! TOOLKIT=.false. =>  PCF=.false.           ! Don't use PCF
+  ! PCF=.false.     =>  PCF_FOR_INPUT=.false. ! Don't open L2CF using PCF
   ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
-  ! PCF=.false.     =>  CREATEMETADATA=.false.
+  ! PCF=.false.     =>  CREATEMETADATA=.false.! Don't create .met files 
   ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
 
   ! Must files named in PCF have same case as short names used in l2cf?
@@ -77,7 +79,10 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: DEFAULT_HDFVERSION = 4
+   integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4
+   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files
+   ! on input
+   integer, parameter :: DEFAULT_HDFVERSION_READ = 4
 
 !=============================================================================
 END MODULE MLSL2Options
@@ -85,6 +90,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.13  2002/01/29 23:49:38  pwagner
+! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
+!
 ! Revision 2.12  2002/01/23 21:48:16  pwagner
 ! Added DEFAULT_HDFVERSION
 !
