@@ -101,7 +101,7 @@ begin Construct
 
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridBaseline, hGrid=hGridStandard, type=cloudExtinction
-  cextFine:    Quantity, vGrid= vGridIWC, hGrid=hGridFine, type=cloudExtinction
+  cextFine:    Quantity, vGrid= vGridBaseline, hGrid=hGridFine, type=cloudExtinction
 
   ;; Folded radiance-like quantities for cloud models
   !define(constructDT,{DTband$1: Quantity, $
