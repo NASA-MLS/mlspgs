@@ -55,7 +55,8 @@ contains
   end subroutine PATH_OPACITY
 !--------------------------------------------------  PATH_OPACITY  -----
 
-  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, DO_GL, SINGULARITY, &
+                     &      FUNCT, DS_DH_GL, DH_DZ_GL, &
                      &      INTEGRAL )
     use GLNP, only: NG, GW
     use MLSCommon, only: IP, RP
@@ -64,8 +65,9 @@ contains
 
     real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
 !                                         in -log(p) units
-    complex(rp), intent(in) :: singularity(:,:) ! value of function at lower
-    complex(rp), intent(in) :: funct(:,:)    ! function evaluated on gl integration
+    logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
+    complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
+    complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
 !                                         grid
     real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
 !                                         gl grid
@@ -73,7 +75,7 @@ contains
 
 ! Output
 
-    complex(rp), intent(out) :: integral(:,:) ! result from integration
+    complex(rp), intent(out) :: integral(-1:,:) ! result from integration
 
 ! Internals
 
@@ -83,13 +85,15 @@ contains
 
     a = 1
     b = ng
-    do i = 1, size(singularity)
-      do j=1, 3
-        integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
-               &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
-      end do 
-      a = a + ng
-      b = b + ng
+    do i = 1, size(singularity,2)
+      if ( do_gl(i) ) then
+        do j = -1, 1
+          integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
+                 &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+        end do 
+        a = a + ng
+        b = b + ng
+      end if
     end do
 
   end subroutine POLARIZED_PATH_OPACITY
@@ -154,6 +158,15 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.3.2.2  2003/03/06 21:52:39  vsnyder
+! Use the correct size
+!
+! Revision 2.3.2.1  2003/03/05 03:40:35  vsnyder
+! More polarized work
+!
+! Revision 2.3  2003/02/07 00:39:58  michael
+! add polarized_path_opacity
+!
 ! Revision 2.2  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -46,6 +46,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! dump                         Interface for next three
 ! dump_vector                  Display how a single vector is made up
 ! dump_vectors                 Display how vector database is made up
+! Dump_Vector_Quantity         Display a vector quantity
 ! dump_vector_templates        Display how vector template database is made up
 ! GetVectorQuantity            Returns pointer to quantity by name in vector
 ! GetVectorQuantityByType      Returns pointer to quantity by type in vector
@@ -94,7 +95,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
   public :: DotVectorsMasked
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
-  public :: Dump_Vectors, Dump_Vector_Templates
+  public :: Dump_Vectors, Dump_Vector_Templates, Dump_Vector_Quantity
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
@@ -118,7 +119,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end interface
 
   interface DUMP
-    module procedure DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
+    module procedure DUMP_VECTOR, DUMP_VECTORS, Dump_Vector_Quantity
+    module procedure DUMP_VECTOR_TEMPLATES
   end interface
 
   interface DumpMask
@@ -761,6 +763,7 @@ contains ! =====     Public Procedures     =============================
       end if
     else
       do i = 1, size(x%quantities)
+        z%quantities(i)%index = i
         if ( doValues ) z%quantities(i)%values = x%quantities(i)%values
         if ( doMask .and. associated (x%quantities(i)%mask ) ) then
           call CreateMask ( z%quantities(i) )
@@ -1133,7 +1136,7 @@ contains ! =====     Public Procedures     =============================
       myditchafterdump = thenditchafterdump
     else
       myditchafterdump = .false.
-    endif
+    end if
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( present(name) ) then
@@ -1171,69 +1174,7 @@ contains ! =====     Public Procedures     =============================
       if ( dumpThisQty ) then
         call output ( j, 4 )
         call output ( "~" )
-        if ( vector%quantities(j)%template%name /= 0 ) then
-          call output ( ' Qty_Template_Name = ' )
-          call display_string ( vector%quantities(j)%template%name )
-        end if
-        if ( myDetails < 0 ) then
-          call output(' ', advance='yes')
-          cycle
-        endif
-        call output ( ' noChans = ' )
-        call output ( vector%quantities(j)%template%noChans, advance='no' )
-        call output ( ' noSurfs = ' )
-        call output ( vector%quantities(j)%template%noSurfs, advance='no' )
-        call output ( ' noInstances = ' )
-        call output ( vector%quantities(j)%template%noInstances, advance='no' )
-        call output ( ' instanceLen = ' )
-        call output ( vector%quantities(j)%template%instanceLen, advance='yes' )
-        call output ( ' Qty_Template_ID = ' )
-        call output ( vector%quantities(j)%template%id, advance='yes' )
-        call output ( '    signal: ')
-        if ( vector%quantities(j)%template%signal < 1 ) then
-          call output ( '    (no database entry for this quantity) ', advance='yes')
-        elseif ( signals(vector%quantities(j)%template%signal)%name < 1 ) then
-          call output ( '    (no name in the database for this quantity) ', advance='yes')
-        else
-          call display_string ( signals(vector%quantities(j)%template%signal)%name, advance='yes' )
-        endif
-        call output ( '    instrumentmodule: ')
-        if ( vector%quantities(j)%template%instrumentModule < 1 ) then
-          call output ( '    (no database entry for this quantity) ', advance='yes')
-        elseif ( vector%quantities(j)%template%instrumentModule < 1 ) then
-          call output ( '    (no name in the database for this quantity) ', advance='yes')
-        else
-          call display_string ( modules(vector%quantities(j)%template%instrumentModule)%name, advance='yes' )
-        endif
-        call output ( '    (its index): ')
-        call output ( vector%quantities(j)%template%instrumentmodule, advance='no')
-        call output ( ' ', advance='yes')
-        call output ( '  Minor Frame? (t/f): ')
-        call output ( vector%quantities(j)%template%minorframe, advance='no')
-        call output ( '  Major Frame? (t/f): ')
-        call output ( vector%quantities(j)%template%majorframe, advance='yes')
-        call output ( '  values array size is ')
-        call output ( size(vector%quantities(j)%values(:,1)), advance='no')
-        call output ( 'x')
-        call output ( size(vector%quantities(j)%values(1,:)), advance='yes')
-        if ( myDetails > 0 ) then
-          call dump ( vector%quantities(j)%values, '  Elements = ' )
-          if ( associated(vector%quantities(j)%mask) ) then
-            call dump ( ichar(vector%quantities(j)%mask), name='Mask=', &
-              & format='(z3.2)', width = 20 )
-!           call dumpQuantityMask ( vector%quantities(j) )
-          else
-            call output ( '      Without mask', advance='yes' )
-          end if
-        else
-          call output ( ', with' )
-          if ( .not. associated(vector%quantities(j)%values) ) &
-            & call output ( 'out' )
-          call output ( ' values, with' )
-          if ( .not. associated(vector%quantities(j)%mask ) ) &
-            & call output ( 'out' )
-          call output ( ' mask', advance='yes' )
-        end if
+        call dump ( vector%quantities(j), details )
         if ( myditchafterdump ) return
       end if
     end do ! j
@@ -1277,7 +1218,7 @@ contains ! =====     Public Procedures     =============================
       myditchafterdump = thenditchafterdump
     else
       myditchafterdump = .false.
-    endif
+    end if
     if ( size(vectors) > 1 ) then
       call output ( 'VECTORS: SIZE = ' )
       call output ( size(vectors), advance='yes' )
@@ -1292,7 +1233,7 @@ contains ! =====     Public Procedures     =============================
         call output ( '  in the vector database had been destroyed)  ', &
         & advance='yes' )
         cycle
-      endif
+      end if
       do j=1, size(vectors(i)%quantities)
         ! Presume need to dump quantity; hence preset to TRUE --
         ! becomes FALSE if fails to match a requirement
@@ -1315,7 +1256,7 @@ contains ! =====     Public Procedures     =============================
         if ( present (majorFrame) ) dumpThisQty = dumpThisQty .and. &
           & (vectors(i)%quantities(j)%template%majorFrame .eqv. majorFrame)
         dumpThisVector = dumpThisVector .or. dumpThisQty
-      enddo
+      end do
       if ( dumpThisVector ) then
         call output ( i, 4 )
         call output ( ': ' )
@@ -1324,9 +1265,94 @@ contains ! =====     Public Procedures     =============================
         & coherent, stacked, regular, minorframe, majorframe, &
         & thenditchafterdump )
         if ( myditchafterdump ) return
-      endif
+      end if
     end do ! i
   end subroutine Dump_Vectors
+
+  ! ---------------------------------------  Dump_Vector_Quantity  -----
+  subroutine Dump_Vector_Quantity ( Qty, Details, Name, Clean )
+
+    type (VectorValue_T), intent(in) :: QTY
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
+    !                                        ! -1 Skip quantity details beyond names
+    !                                        ! -2 Skip all quantity details
+    !                                        ! >0 Do dump quantity values
+    !                                        ! Default 1
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
+
+    integer :: myDetails
+
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+
+    if ( present(name) ) then
+      call output ( name ); call output ( ', ' )
+    end if
+    if ( qty%template%name /= 0 ) then
+      call output ( ' Qty_Template_Name = ' )
+      call display_string ( qty%template%name )
+    end if
+    if ( myDetails < 0 ) then
+      call output(' ', advance='yes')
+      return
+    end if
+    call output ( ' noChans = ' )
+    call output ( qty%template%noChans, advance='no' )
+    call output ( ' noSurfs = ' )
+    call output ( qty%template%noSurfs, advance='no' )
+    call output ( ' noInstances = ' )
+    call output ( qty%template%noInstances, advance='no' )
+    call output ( ' instanceLen = ' )
+    call output ( qty%template%instanceLen, advance='yes' )
+    call output ( ' Qty_Template_ID = ' )
+    call output ( qty%template%id, advance='yes' )
+    call output ( '    signal: ')
+    if ( qty%template%signal < 1 ) then
+      call output ( '    (no database entry for this quantity) ', advance='yes')
+    elseif ( signals(qty%template%signal)%name < 1 ) then
+      call output ( '    (no name in the database for this quantity) ', advance='yes')
+    else
+      call display_string ( signals(qty%template%signal)%name, advance='yes' )
+    end if
+    call output ( '    instrumentmodule: ')
+    if ( qty%template%instrumentModule < 1 ) then
+      call output ( '    (no database entry for this quantity) ', advance='yes')
+    elseif ( qty%template%instrumentModule < 1 ) then
+      call output ( '    (no name in the database for this quantity) ', advance='yes')
+    else
+      call display_string ( modules(qty%template%instrumentModule)%name, advance='yes' )
+    end if
+    call output ( '    (its index): ')
+    call output ( qty%template%instrumentmodule, advance='no')
+    call output ( ' ', advance='yes')
+    call output ( '  Minor Frame? (t/f): ')
+    call output ( qty%template%minorframe, advance='no')
+    call output ( '  Major Frame? (t/f): ')
+    call output ( qty%template%majorframe, advance='yes')
+    call output ( '  values array size is ')
+    call output ( size(qty%values(:,1)), advance='no')
+    call output ( 'x')
+    call output ( size(qty%values(1,:)), advance='yes')
+    if ( myDetails > 0 ) then
+      call dump ( qty%values, '  Elements = ', clean=clean )
+      if ( associated(qty%mask) ) then
+        call dump ( ichar(qty%mask), name='Mask=', &
+          & format='(z3.2)', width = 20 )
+!           call dumpQuantityMask ( qty )
+      else
+        call output ( '      Without mask', advance='yes' )
+      end if
+    else
+      call output ( ', with' )
+      if ( .not. associated(qty%values) ) &
+        & call output ( 'out' )
+      call output ( ' values, with' )
+      if ( .not. associated(qty%mask ) ) &
+        & call output ( 'out' )
+      call output ( ' mask', advance='yes' )
+    end if
+  end subroutine Dump_Vector_Quantity
 
   ! --------------------------------------  Dump_Vector_Templates  -----
   subroutine Dump_Vector_Templates ( VECTOR_TEMPLATES, DETAILS )
@@ -1409,7 +1435,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myNoError
 
     myNoError = .false.
-    if (present(noError)) myNoError = noError
+    if ( present(noError)) myNoError = noError
 
     GetVectorQuantityByType => NULL()
 
@@ -1453,7 +1479,7 @@ contains ! =====     Public Procedures     =============================
     myIndexInVector=0
     GetVectorQtyByTemplateIndex => NULL()
     do i=1,vector%template%noQuantities
-      if ( vector%template%quantities(i) == quantityIndex) then
+      if ( vector%template%quantities(i) == quantityIndex ) then
         myIndexInVector=i
       end if
     end do
@@ -1518,7 +1544,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MYNOERROR
 
     myNoError = .false.
-    if (present(noError)) myNoError = noError
+    if ( present(noError)) myNoError = noError
 
     ! Executable code
     do search = 1, size(vector%quantities)
@@ -1552,7 +1578,7 @@ contains ! =====     Public Procedures     =============================
     end do
 
     ! Not found, perhaps generate an error
-    if (myNoError) then
+    if ( myNoError ) then
       GetVectorQuantityIndexByType = 0
     else
       msg = 'There is no quantity in vector '
@@ -1880,14 +1906,14 @@ contains ! =====     Public Procedures     =============================
     logical :: mySayWhyNot
 
     mySayWhyNot = .false.
-    if (present(sayWhyNot)) mySayWhyNot = sayWhyNot
+    if ( present(sayWhyNot)) mySayWhyNot = sayWhyNot
 
     ValidateVectorQuantity = .true.
 
-    if (present(coherent)) then
-      if (quantity%template%coherent .neqv. coherent) then
+    if ( present(coherent) ) then
+      if ( quantity%template%coherent .neqv. coherent ) then
         ValidateVectorQuantity=.FALSE.
-        if (mySayWhyNot) then
+        if ( mySayWhyNot ) then
           call output('Coherent quantity checked with incoherent', advance='yes')
           call output('quantity coherent? ', advance='no')
           call output(quantity%template%coherent, advance='yes')
@@ -1898,10 +1924,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    if (present(stacked)) then
-      if (quantity%template%stacked .neqv. stacked) then
+    if ( present(stacked) ) then
+      if ( quantity%template%stacked .neqv. stacked ) then
         ValidateVectorQuantity=.FALSE.
-        if (mySayWhyNot) then
+        if ( mySayWhyNot ) then
           call output('stacked quantity checked with unstacked', advance='yes')
           call output('quantity stacked? ', advance='no')
           call output(quantity%template%stacked, advance='yes')
@@ -1912,10 +1938,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    if (present(regular)) then
-      if (quantity%template%regular .neqv. regular) then
+    if ( present(regular) ) then
+      if ( quantity%template%regular .neqv. regular ) then
         ValidateVectorQuantity=.FALSE.
-        if (mySayWhyNot) then
+        if ( mySayWhyNot ) then
           call output('Regular quantity checked with irregular', advance='yes')
           call output('quantity regular? ', advance='no')
           call output(quantity%template%regular, advance='yes')
@@ -1926,10 +1952,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    if (present(minorFrame)) then
-      if (quantity%template%minorFrame .neqv. minorFrame) then
+    if ( present(minorFrame) ) then
+      if ( quantity%template%minorFrame .neqv. minorFrame ) then
         ValidateVectorQuantity=.FALSE.
-        if (mySayWhyNot) then
+        if ( mySayWhyNot ) then
           call output('Minor frame quantity checked with not', advance='yes')
           call output('quantity minor frame? ', advance='no')
           call output(quantity%template%minorFrame, advance='yes')
@@ -1940,10 +1966,10 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    if (present(majorFrame)) then
-      if (quantity%template%majorFrame .neqv. majorFrame) then
+    if ( present(majorFrame) ) then
+      if ( quantity%template%majorFrame .neqv. majorFrame ) then
         ValidateVectorQuantity=.FALSE.
-        if (mySayWhyNot) then
+        if ( mySayWhyNot ) then
           call output('Major frame quantity checked with not', advance='yes')
           call output('quantity major frame? ', advance='no')
           call output(quantity%template%majorFrame, advance='yes')
@@ -1954,101 +1980,101 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
-    if (present(sideband)) then
+    if ( present(sideband) ) then
       ValidateVectorQuantity = any(quantity%template%sideband == sideband)
-      if (mySayWhyNot .and. .not. ValidateVectorQuantity) then
+      if ( mySayWhyNot .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with different sideband', advance='yes')
         call output('quantity sideband ', advance='no')
         call output(quantity%template%sideband, advance='yes')
         call output('check sideband ', advance='no')
         call output(sideband, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(signal)) then
+    if ( present(signal) ) then
       ValidateVectorQuantity = any(quantity%template%signal == signal)
-      if (mySayWhyNot .and. .not. ValidateVectorQuantity) then
+      if ( mySayWhyNot .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with different signal', advance='yes')
         call output('quantity signal ', advance='no')
         call output(quantity%template%signal, advance='yes')
         call output('check signal ', advance='no')
         call output(signal, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(verticalCoordinate)) then
+    if ( present(verticalCoordinate) ) then
       ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with dif vert coord', advance='yes')
         call output('quantity vert coord ', advance='no')
         call output(quantity%template%verticalCoordinate, advance='yes')
         call output('check vert coord ', advance='no')
         call output(verticalCoordinate, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(frequencyCoordinate)) then
+    if ( present(frequencyCoordinate) ) then
       ValidateVectorQuantity=any(quantity%template%frequencyCoordinate == &
         & frequencyCoordinate)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with dif freq coord', advance='yes')
         call output('quantity freq coord ', advance='no')
         call output(quantity%template%frequencyCoordinate, advance='yes')
         call output('check freq coord ', advance='no')
         call output(frequencyCoordinate, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(noInstances)) then
+    if ( present(noInstances) ) then
       ValidateVectorQuantity=any(quantity%template%noInstances == noInstances)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with dif num insts', advance='yes')
         call output('quantity num insts ', advance='no')
         call output(quantity%template%noInstances, advance='yes')
         call output('check noInstances ', advance='no')
         call output(noInstances, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(noSurfs)) then
+    if ( present(noSurfs) ) then
       ValidateVectorQuantity=any(quantity%template%noSurfs == noSurfs)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with dif num surfs', advance='yes')
         call output('quantity num surfs ', advance='no')
         call output(quantity%template%noInstances, advance='yes')
         call output('check noSurfs ', advance='no')
         call output(noSurfs, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(quantityType)) then
+    if ( present(quantityType) ) then
       ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with wrong type', advance='yes')
         call output('quantity type ', advance='no')
         call output(quantity%template%quantityType, advance='yes')
         call output('check quantityType ', advance='no')
         call output(quantityType, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
-    if (present(molecule)) then
+    if ( present(molecule) ) then
       ValidateVectorQuantity=any(quantity%template%molecule == molecule)
-      if((mySayWhyNot) .and. .not. ValidateVectorQuantity) then
+      if ( (mySayWhyNot) .and. .not. ValidateVectorQuantity ) then
         call output('quantity checked with wrong molecule', advance='yes')
         call output('quantity molecule ', advance='no')
         call output(quantity%template%molecule, advance='yes')
         call output('check molecule ', advance='no')
         call output(molecule, advance='yes')
       end if
-      if (.not. ValidateVectorQuantity) return
+      if ( .not. ValidateVectorQuantity) return
     end if
 
   end function ValidateVectorQuantity
@@ -2091,6 +2117,18 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.95  2003/04/04 22:54:58  livesey
+! New mask bits
+!
+! Revision 2.94.2.3  2003/04/15 23:13:38  vsnyder
+! Pass 'clean' option through dump_vector_quantity
+!
+! Revision 2.94.2.2  2003/03/07 23:51:17  vsnyder
+! Copy the quantity index in CopyVector
+!
+! Revision 2.94.2.1  2003/03/06 23:25:16  vsnyder
+! Add Dump_Vector_Quantity
+!
 ! Revision 2.94  2002/11/22 12:57:09  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.

@@ -25,6 +25,12 @@ contains
 
 end module PHYSICS
 ! $Log$
+! Revision 1.1.2.1  2003/04/16 20:11:30  vsnyder
+! Moved from ../fwdmdl
+!
+! Revision 2.1  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

@@ -66,7 +66,7 @@ contains
 
   ! Internals
 
-    integer(ip) :: i, j, k, p_i, n_path
+    integer(ip) :: i, p_i, n_path
     real(rp) :: gl_delta(size(gl_inds)/ng), del_zeta(size(gl_inds)/ng)
     integer(ip) ::  more_inds(size(gl_inds)/ng)
 
@@ -74,13 +74,11 @@ contains
 
     call two_d_t_script ( t_path(indicies_c), s_temp, frq, t_script )
 
-    n_path = size(indicies_c)
-    if ( count(do_gl) > 0 ) then
-
   ! see if anything needs to be gl-d
 
+    if ( any(do_gl) ) then
+      n_path = size(indicies_c)
       i = 1
-      j = 1
       do p_i = 1, n_path
         if ( do_gl(p_i) ) then
           more_inds(i) = p_i
@@ -90,7 +88,6 @@ contains
             del_zeta(i) = z_path(indicies_c(p_i-1)) - z_path(indicies_c(p_i))
           end if
           i = i + 1
-          j = j + Ng
         end if
       end do
 
@@ -98,6 +95,7 @@ contains
                 &  alpha_path_c(more_inds), &
                 &  alpha_path_gl, ds_dh_gl(gl_inds),  &
                 &  dh_dz_gl(gl_inds), gl_delta )
+
       incoptdepth(more_inds) = incoptdepth(more_inds) + gl_delta
 
     end if
@@ -157,8 +155,8 @@ contains
 !                                            element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, no_mol
-    integer(ip) :: n_path, p_i, no_to_gl, mid, n_tot
+    integer(ip) :: sv_i, sps_i, n_inds, i, j, k, l, i_start, no_mol
+    integer(ip) :: n_path, p_i, no_to_gl, mid
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part_of_all_inds_B
@@ -175,20 +173,15 @@ contains
 
 ! Begin code
 
-    no_mol = size(Grids_f%no_z)
+    no_mol = ubound(Grids_f%l_z,1)
     n_path = size(tau)
     mid = n_path / 2
 
-    sv_i = 0
     drad_df(:) = 0.0_rp
 
     do sps_i = 1, no_mol
 
-      n_tot = Grids_f%no_f(sps_i)*Grids_f%no_z(sps_i)*Grids_f%no_p(sps_i)
-
-      do sv_j = 1, n_tot
-
-        sv_i = sv_i + 1
+      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
 ! Skip the masked derivatives, according to the l2cf inputs
 
@@ -411,7 +404,7 @@ contains
 
 ! Begin code
 
-    no_mol = size(grids_f%no_z)
+    no_mol = ubound(grids_f%l_z,1)
     n_path = size(tau)
     mid = n_path / 2
 
@@ -420,7 +413,8 @@ contains
 
     do sps_i = 1 , no_mol
 
-      do sv_j = 1 , Grids_f%no_z(sps_i) * Grids_f%no_p(sps_i)
+      do sv_j = 1 , (Grids_f%l_z(sps_i) - Grids_f%l_z(sps_i-1)) * &
+        &           (Grids_f%l_p(sps_i) - Grids_f%l_p(sps_i-1))
 
         sv_i = sv_i + 1
         d_delta_dx = 0.0_rp
@@ -831,6 +825,15 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.12.2.2  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.12.2.1  2003/03/05 03:31:13  vsnyder
+! Get rid of unused variables, use 'any' instead of 'count'
+!
+! Revision 2.12  2003/02/07 02:35:48  vsnyder
+! OOPS, forgot to move one down
+!
 ! Revision 2.11  2003/02/07 02:12:00  vsnyder
 ! Move some USE statements down
 !

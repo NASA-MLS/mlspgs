@@ -5,10 +5,17 @@ module L2PC_PFA_STRUCTURES
   use MLSCommon, only: I4, R4, R8
   use L2PC_File_Parameters, only: MAX_NO_POINTINGS
   implicit none
+  public
+
+  interface DUMP
+    module procedure Dump_Slabs_Struct, Dump_Slabs_Struct_2D
+  end interface
+
 !  This has the standard structure constructions used for
 !    computing the data for the l2pc_xx.dat file.
 !  Originally written by W. G. Read on 8/13/1990.
 !  Modified, Mar/10/2000, Z. Shippony, to fit for EOS concept
+
 !---------------------------- RCS Ident Info -------------------------------
   private :: Id, ModuleName
   character (LEN=256) :: Id = &
@@ -17,6 +24,7 @@ module L2PC_PFA_STRUCTURES
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
 !_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ! Parameter declarations
   integer(i4), parameter :: MAXSPS = 20
@@ -147,6 +155,7 @@ contains
     call Allocate_test ( slabs%dx1_dv0, myl,     'dx1_dv0',     ModuleName )
     call Allocate_test ( slabs%dy_dv0, myl,      'dy_dv0',      ModuleName )
     call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
+    slabs%no_lines = nl
     if ( nl == 0 ) then
       slabs%v0s = 0.0_r8
       slabs%x1 = 0.0_r8
@@ -196,13 +205,82 @@ contains
     if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'slabs' )
   end subroutine DestroyCompleteSlabs
-  
+
+  ! ------------------------------------------  Dump_Slabs_Struct  -----
+  subroutine Dump_Slabs_Struct ( The_Slabs_Struct, Name )
+
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct
+    character(len=*), intent(in), optional :: Name
+
+    integer :: NL
+
+    call output ( 'Slabs_Struct ' )
+    if ( present(name) ) call output ( trim(name) )
+    nl = the_slabs_struct%no_lines
+    if ( nl == 0 ) then
+      call output ( ' is empty', advance='yes' )
+    else
+      call output ( '', advance='yes' )
+      call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
+      call dump ( the_slabs_struct%x1(:nl), name='x1' )
+      call dump ( the_slabs_struct%y(:nl), name='y' )
+      call dump ( the_slabs_struct%yi(:nl), name='yi' )
+      call dump ( the_slabs_struct%slabs1(:nl), name='slabs1' )
+      call dump ( the_slabs_struct%dx1_dv0(:nl), name='dx1_dv0' )
+      call dump ( the_slabs_struct%dy_dv0(:nl), name='dy_dv0' )
+      call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
+    end if
+
+  end subroutine Dump_Slabs_Struct
+
+
+  ! ---------------------------------------  Dump_Slabs_Struct_2D  -----
+  subroutine Dump_Slabs_Struct_2D ( The_Slabs_Struct, Name )
+
+    use Output_m, only: Output
+
+    type(slabs_struct), intent(in) :: The_Slabs_Struct(:,:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+
+    call output ( 'Slabs Struct' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( ', SIZE = ' )
+    call output ( size(the_slabs_struct,1) )
+    call output ( ' X ' )
+    call output ( size(the_slabs_struct,2), advance='yes' )
+    do j = 1, size(the_slabs_struct,2)
+      do i = 1, size(the_slabs_struct,1)
+        call output ( 'Item ' )
+        call output ( i )
+        call output ( ', ' )
+        call output ( j, advance='yes' )
+        call dump ( the_slabs_struct(i,j) )
+      end do
+    end do
+
+  end subroutine Dump_Slabs_Struct_2D
+
+  ! ----------------------------------------------  not_used_here  -----
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.4.2.2  2003/03/13 00:26:50  vsnyder
+! Don't dump an empty SLABS structure
+!
+! Revision 2.4.2.1  2003/03/12 21:49:39  vsnyder
+! Add dumpers for scalar and 2-d Slabs_Struct
+!
+! Revision 2.4  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2002/10/03 22:16:50  vsnyder
 ! Move a USE from module scope to procedure scope
 !

@@ -113,13 +113,7 @@ contains ! =====     Private Procedures     ============================
       call output ( '      losAngle', advance='yes' )
       do j = 1, hgrids(i)%noProfs
         call output ( j, 4 )
-        call output ( hgrids(i)%phi(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%geodLat(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%lon(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%time(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%solarTime(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%solarZenith(j), '(1x,1pg13.6)' )
-        call output ( hgrids(i)%losAngle(j), '(1x,1pg13.6)', advance='yes' )
+        call dump ( hgrids(i) )
       end do
     end do
   end subroutine DUMP_HGRIDS
@@ -245,6 +239,12 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.15.2.1  2003/03/27 23:17:10  vsnyder
+! Use DUMP_a_HGRID in Dump_Hgrids instead of duplicating it
+!
+! Revision 2.15  2002/11/06 00:19:49  pwagner
+! New chunk size info
+!
 ! Revision 2.14  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -16,10 +16,10 @@ contains
 ! *****     Public Subroutine     **************************************
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,         &
-         &   slabs_0, beta_value,                                            &
-         &   slabs_p, slabs_m, t_power,                                      &
-         &   dbeta_dw, dbeta_dn, dbeta_dv  )
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
+         &   slabs_0, tanh1, beta_value, polarized,                  &
+         &   slabs_p, tanh1_p, slabs_m, tanh1_m,                     &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
 
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image separately.
@@ -32,21 +32,27 @@ contains
 
 ! Inputs:
     integer(ip), intent(in) :: SPECTAG ! molecule id tag
-    real(rp), intent(in) :: cont(:) ! continuum parameters
-    real(rp), intent(in) :: pressure ! pressure in hPa
-    real(rp), intent(in) :: temp ! temperature in K
-    real(rp), intent(in) :: fgr ! frequency in MHz
-    real(rp), intent(in) :: pfaw(:) ! line widths
+    real(rp), intent(in) :: cont(:)    ! continuum parameters
+    real(rp), intent(in) :: pressure   ! pressure in hPa
+    real(rp), intent(in) :: temp       ! temperature in K
+    real(rp), intent(in) :: fgr        ! frequency in MHz
+    real(rp), intent(in) :: pfaw(:)    ! line widths
+    real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
     type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
 
 !    v0s(:)         ! pressure shifted line centers
 !    x1(:)          ! Doppler width
 !    y(:)           ! ratio Pressure to Doppler widths
 !    yi(:)          ! Interference coefficients
+!    expa(:)        ! exponential argument / frequency (not used)
 !    slabs1(:)      ! strengths
 !    dslabs1_dv0(:) ! strength derivative wrt line position
+
+    logical, intent(in), optional :: Polarized(:)! "Don't do this line" -- same size as pfaw
+
 ! optional inputs for temperature derivatives
     type(slabs_struct), intent(in), optional :: slabs_p, slabs_m
+    real(rp), intent(in), optional :: tanh1_p, tanh1_m ! tanh(frq*expa/2)
 ! outputs
     real(rp), intent(out) :: beta_value
 ! optional outputs
@@ -57,6 +63,7 @@ contains
 
 ! -----     Local variables     ----------------------------------------
 
+    logical :: MyPolarized
     integer(ip) :: LN_I
     integer(ip) :: NL ! no of lines
 
@@ -130,16 +137,23 @@ contains
 
       do ln_i = 1, nl
 
+        myPolarized = .false.
+        if ( present(polarized) ) myPolarized = polarized(ln_i)
+        if ( myPolarized ) cycle
+
         dNu = Fgr - slabs_0%v0s(ln_i)
 
-        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) > 100.0_rp ) then
+        if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
+        & > 100.0_rp ) then
           call Voigt_Lorentz ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
             &  slabs_0%yi(ln_i), slabs_0%y(ln_i), pfaw(ln_i), Temp, &
-            &  slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), dw, dn, ds )
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
         else
           call DVoigt_Spectral ( dNu, slabs_0%v0s(ln_i), slabs_0%x1(ln_i), &
             &  slabs_0%yi(ln_i), slabs_0%y(ln_i), pfaw(ln_i), Temp, &
-            &  slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), dw, dn, ds )
+            &  tanh1, slabs_0%slabs1(ln_i), bv, slabs_0%dslabs1_dv0(ln_i), &
+            &  dw, dn, ds )
         end if
 
         beta_value = beta_value + bv
@@ -157,15 +171,23 @@ contains
 
       if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
         do ln_i = 1, nl
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
           beta_value = beta_value + &
             &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &        slabs_0%x1(ln_i), slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
+            &        slabs_0%x1(ln_i), tanh1, &
+            &        slabs_0%slabs1(ln_i), slabs_0%y(ln_i))
         end do
       else
         do ln_i = 1, nl
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
           beta_value = beta_value + &
             &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
-            &            slabs_0%x1(ln_i), slabs_0%slabs1(ln_i), &
+            &            slabs_0%x1(ln_i), tanh1, &
+            &            slabs_0%slabs1(ln_i), &
             &            slabs_0%y(ln_i), slabs_0%yi(ln_i))
         end do
       end if
@@ -178,19 +200,29 @@ contains
 
       if ( maxval(abs(slabs_0%yi)) < 1.0e-6_rp ) then
         do ln_i = 1, nl
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
           bp = bp + Slabs(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
-            &             slabs_p%x1(ln_i), slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
+            &             slabs_p%x1(ln_i), tanh1_p, &
+            &             slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
           bm = bm + Slabs(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
-            &             slabs_m%x1(ln_i), slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
+            &             slabs_m%x1(ln_i), tanh1_m, &
+            &             slabs_m%slabs1(ln_i),slabs_m%y(ln_i))
         end do
       else
         do ln_i = 1, nl
+          myPolarized = .false.
+          if ( present(polarized) ) myPolarized = polarized(ln_i)
+          if ( myPolarized ) cycle
           bp = bp + Slabswint(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
-            &                 slabs_p%x1(ln_i), slabs_p%slabs1(ln_i), &
-            &                 slabs_p%y(ln_i), slabs_p%yi(ln_i))
+            &                 slabs_p%x1(ln_i), tanh1_p, &
+            &                 slabs_p%slabs1(ln_i), slabs_p%y(ln_i), &
+            &                 slabs_p%yi(ln_i))
           bm = bm + Slabswint(Fgr - slabs_m%v0s(ln_i), slabs_m%v0s(ln_i), &
-            &                 slabs_m%x1(ln_i), slabs_m%slabs1(ln_i), &
-            &                 slabs_m%y(ln_i), slabs_m%yi(ln_i))
+            &                 slabs_m%x1(ln_i), tanh1_m, &
+            &                 slabs_m%slabs1(ln_i), slabs_m%y(ln_i), &
+            &                 slabs_m%yi(ln_i))
         end do
       end if
 
@@ -294,6 +326,15 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.20.2.2  2003/02/27 23:24:34  vsnyder
+! Process only unpolarized lines if 'polarized' argument is present and true
+!
+! Revision 2.20.2.1  2003/02/13 17:34:12  bill
+! uses new slabs_sw
+!
+! Revision 2.20  2003/02/11 00:48:18  jonathan
+! changes made after adding get_beta_path_cloud
+!
 ! Revision 2.19  2003/02/06 00:20:22  jonathan
 ! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
 !

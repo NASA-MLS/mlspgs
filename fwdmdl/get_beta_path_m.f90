@@ -7,18 +7,12 @@ module GET_BETA_PATH_M
 
   implicit NONE
   private
-  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized, Get_Beta_Path_Cloud
+  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
+  public :: Get_Beta_Path_Cloud
 
   interface Get_Beta_Path
     module procedure Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
   end interface
-
-! *** Beta group type declaration:
-  type, public :: beta_group_T
-    integer :: n_elements
-    integer, pointer  :: cat_index(:)
-    real(rp), pointer :: ratio(:)
-  end type beta_group_T
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -30,32 +24,32 @@ module GET_BETA_PATH_M
 !---------------------------------------------------------------------------
 contains
 
-  ! ---------------------------------------  Get_Beta_Path_Scalar  -----
-  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, z_path_c, &
-        & Catalog, beta_group, gl_slabs, path_inds, beta_path,     &
-        & gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,              &
-        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, &
-        & Incl_Cld )
+! ---------------------------------------  Get_Beta_Path_Scalar  -----
+  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, &
+        & Catalog, beta_group, polarized, gl_slabs, path_inds,     &
+        & beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,   &
+        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path)
 
-    use MLSCommon, only: R8, RP, IP
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
     use CREATE_BETA_M, only: CREATE_BETA
+    use Get_Species_Data_m, only: Beta_Group_T
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: R8, RP, IP
     use Molecules, only: SP_H2O
+    use Physics, only: H_OVER_K
+    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
 
 ! Inputs:
 
     real(r8), intent(in) :: Frq         ! frequency in MHz
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
-    real(rp), intent(in) :: z_path_c(:) ! =-log(p_path)
     type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    logical, intent(in) :: Incl_Cld
+    logical, intent(in) :: Polarized    ! "Don't work on Zeeman-split lines"
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -70,7 +64,7 @@ contains
 
 ! outputs
 
-    real(rp), intent(out) :: beta_path(:,:) ! path beta for each species
+    real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -83,13 +77,12 @@ contains
 
 ! Local variables..
 
-    integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
-              &    no_mol, n_path
-    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext, RHI
+    integer(ip) :: I, J, K, N, IB, Spectag, No_of_lines, &
+              &    No_mol, N_path
+    real(rp) :: Ratio, BB, VP, V0, VM, T, TM, TP, BP, BM
     real(rp), allocatable, dimension(:) :: LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
-
-    real(rp) :: P, Vapor_P
+    real(rp), dimension(size(path_inds)) :: tanh1, tanh1_p, tanh1_m
 
 ! begin the code
 
@@ -97,6 +90,10 @@ contains
     n_path = size(path_inds)
 
     beta_path = 0.0
+! Note that expa only depends on temperature.
+! compute path hyperbolic tangent
+    tanh1 = tanh(0.5_rp * h_over_k * frq / t_path(path_inds))
+
     if ( associated(dbeta_dw_path) ) dbeta_dw_path(1:n_path,:) = 0.0
     if ( associated(dbeta_dn_path) ) dbeta_dn_path(1:n_path,:) = 0.0
     if ( associated(dbeta_dv_path) ) dbeta_dv_path(1:n_path,:) = 0.0
@@ -110,11 +107,12 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
-            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb, DBETA_DW=v0,   &
-            &  DBETA_DN=vp, DBETA_DV=vm )
+          call create_beta ( spectag, catalog(ib)%continuum, p_path(k),   &
+            & t_path(k), Frq, lines(catalog(ib)%lines)%w, gl_slabs(k,ib), &
+            & tanh1(j), bb, polarized .and. catalog(ib)%polarized,        &
+            & DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
 
-             beta_path(j,i) = beta_path(j,i) + ratio * bb 
+          beta_path(j,i) = beta_path(j,i) + ratio * bb 
 
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
@@ -129,6 +127,8 @@ contains
     if ( associated(dbeta_dt_path) ) then
 
       dbeta_dt_path(1:n_path,:) = 0.0
+      tanh1_p = tanh(0.5_rp * h_over_k * frq / t_path_p(path_inds))
+      tanh1_m = tanh(0.5_rp * h_over_k * frq / t_path_m(path_inds))
 
       do i = 1, no_mol
         betam = 0.0
@@ -145,12 +145,14 @@ contains
           do j = 1 , n_path
             k = path_inds(j)
             tm = t_path_m(k)
-            call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tm, Frq, &
-            &    LineWidth, gl_slabs_m(k,ib), vm )
+            call create_beta ( spectag, catalog(ib)%continuum, p_path(k), &
+            &  tm, frq, linewidth, gl_slabs_m(k,ib),                      &
+            &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
-            call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tp, Frq, &
-            &    LineWidth, gl_slabs_p(k,ib), vp )
+            call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), &
+            &  tp, Frq, LineWidth, gl_slabs_p(k,ib),                      &
+            &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
             betap(j) = betap(j) + ratio * vp
           end do
           DeAllocate ( LineWidth )
@@ -193,8 +195,9 @@ contains
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
   subroutine Get_Beta_Path_Polarized ( Frq, H, &
-        & Catalog, beta_group, gl_slabs, path_inds, beta_path )
+        & Catalog, Beta_group, GL_slabs, Path_inds, Beta_path )
 
+    use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS
@@ -208,7 +211,6 @@ contains
     type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
-
     type (beta_group_T), dimension(:) :: beta_group
 
 ! outputs
@@ -233,12 +235,12 @@ contains
       do n = 1, beta_group(i)%n_elements
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
-         
+
         do j = 1, n_path
           k = path_inds(j)
 
-          call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%v0s) ) /), &
-            & h(k), gl_slabs(k,ib), &
+          call o2_abs_cs ( frq, (/ ( -1, m=1,size(catalog(ib)%polarized) ) /), &
+            & h(k), gl_slabs(k,ib), catalog(ib)%polarized,        &
             & catalog(ib)%continuum(1), catalog(ib)%continuum(3), &
             & sigma_p, pi, sigma_m )
           beta_path(-1,j,i) = beta_path(-1,j,i) + ratio * sigma_m
@@ -249,44 +251,38 @@ contains
     end do ! i
   end subroutine Get_Beta_Path_Polarized
 
-!------------------------------------------------------------------
-  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path, z_path_c, &
-        & Catalog, beta_group, gl_slabs, path_inds, beta_path_cloud,    &
-        & RHi, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
-
+  ! ----------------------------------------  Get_Beta_Path_Cloud  -----
+  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,                 &
+        & beta_group, path_inds, beta_path_cloud,                       &
+        & beta_path_w0,  beta_path_phh,                                 & 
+        & IPSD, WC, fwdModelConf  )
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use Cloud_extinction, only: get_beta_cloud
+    use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
-    use CREATE_BETA_M, only: CREATE_BETA
-    use SpectroscopyCatalog_m, only: CATALOG_T,LINES
-    use cloud_extinction, only: get_beta_cloud
 
 ! Inputs:
 
     real(r8), intent(in) :: Frq ! frequency in MHz
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
-    real(rp), intent(in) :: z_path_c(:) ! =-log(p_path)
-    type(catalog_t), intent(in) :: Catalog(:)
-    type (slabs_struct), dimension(:,:) :: Gl_slabs
+    
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
     type (beta_group_T), dimension(:) :: beta_group
+    type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
 
-    real(rp), intent(in)  :: RHi
-    logical, intent(in) :: Incl_Cld
-    INTEGER :: NC, NU, NUA, NAB, NR
     INTEGER, intent(in) :: IPSD(:)
     REAL(rp), intent(in)  :: WC(:,:)
-    REAL(rp) :: W0(NC)       ! SINGLE SCATTERING ALBEDO
-    REAL(rp) :: PHH(NC,NU)   ! PHASE FUNCTION
-
-    type(slabs_struct), pointer :: gl_slabs_m(:,:) ! reduced
-
-    type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
+    REAL(rp) :: W0       ! SINGLE SCATTERING ALBEDO
+    REAL(rp) :: PHH(fwdModelConf%num_scattering_angles)   ! PHASE FUNCTION
 
 ! outputs
 
-    real(rp), intent(out) :: beta_path_cloud(:) ! path beta for each species
+    real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction
+    real(rp), intent(out) :: beta_path_w0(:)    ! single scattering albedo
+    real(rp), intent(out) :: beta_path_phh(:,:)   ! phase function
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -294,30 +290,42 @@ contains
 
 ! Local variables..
 
-    integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
-              &    no_mol, n_path
-    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext
+    INTEGER :: NC, NU, NUA, NAB, NR, N
+    logical :: Incl_Cld
+    integer(ip) :: i, j, k, n_path
+    real(rp) :: cld_ext, RHI
 
 ! begin the code
+
+          Incl_Cld  = fwdModelConf%Incl_Cld
+          NU  = fwdModelConf%NUM_SCATTERING_ANGLES
+          NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
+          NAB = fwdModelConf%NUM_AB_TERMS
+          NR  = fwdModelConf%NUM_SIZE_BINS
+          N   = fwdModelConf%no_cloud_species
 
     n_path = size(path_inds)
 
     beta_path_cloud = 0.0
+    beta_path_w0    = 0.0
+    beta_path_phh   = 0.0
 
         do j = 1, n_path
           k = path_inds(j)
 
-          call get_beta_cloud (Frq, t_path(k), p_path(k),         &
-                          &  WC(:,k), IPSD(k), N, NU, NUA, NAB, NR,       &
+          call get_beta_cloud (Frq, t_path(k),                       &
+                          &  WC(:,k), IPSD(k), NC, NU, NUA, NAB, NR, &
                           &  cld_ext, W0, PHH                )      
 
             beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
-
+            beta_path_w0(j) = beta_path_w0(j) + W0 
+            beta_path_phh(j,:) = beta_path_phh(j,:) + PHH(:) 
+            
          end do
 
   end subroutine Get_Beta_Path_Cloud
 
-!----------------------------------------------------------------------
+!-----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -325,11 +333,30 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
-! Revision 2.27  2003/04/22 00:16:16  dwu
-! change icon to RHi
+! Revision 2.25.2.9  2003/03/24 21:50:44  jonathan
+! remove unused 'pressure' in call to cloud_extinction
 !
-! Revision 2.26  2003/02/13 23:06:01  jonathan
+! Revision 2.25.2.8  2003/03/22 04:03:04  vsnyder
+! Move Beta_Group_T and Dump_Beta_Group from get_beta_path to Get_Species_Data
+!
+! Revision 2.25.2.7  2003/03/12 21:35:44  vsnyder
+! Add Dump_Beta_Group and generic Dump for it
+!
+! Revision 2.25.2.6  2003/03/01 03:16:15  vsnyder
+! Use 'polarized' to specify size of quantum numbers array
+!
+! Revision 2.25.2.5  2003/02/27 23:19:23  vsnyder
+! Add polarized stuff.  Remove unused z_path_c argument of get_beta_path.
+! Remove unused p_path argument to get_beta_cloud.  Cosmetics.
+!
+! Revision 2.25.2.3  2003/02/14 00:21:42  jonathan
+! add singl. scat. albedo W0, ph funct PHH
+!
+! Revision 2.25.2.2  2003/02/13 22:26:30  jonathan
 ! changes dimension for beta_path_cloud
+!
+! Revision 2.25.2.1  2003/02/13 17:34:27  bill
+! uses new slabs_sw
 !
 ! Revision 2.25  2003/02/11 00:48:18  jonathan
 ! changes made after adding get_beta_path_cloud

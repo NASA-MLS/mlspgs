@@ -20,7 +20,7 @@ module Convolve_All_m
 ! This subprogram adds the effects of antenna smearing to the radiance.
 
   subroutine Convolve_All ( FwdMdlConfig, FwdMdlIn, FwdMdlExtra, maf, channel, &
-           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, update, chi_in, &
+           & winStart, winFinish, Qtys, temp, ptan, radiance, update, chi_in,  &
            & rad_in, chi_out, dhdz_out, dx_dh_out, sbRatio, AntennaPattern,    &
            & t_deriv_flag, Grids_f, Jacobian, rowFlags, req, rsc, earth_frac,  &
            & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
@@ -29,7 +29,7 @@ module Convolve_All_m
     use Allocate_Deallocate, only: allocate_test, deallocate_test
     use AntennaPatterns_m, only: AntennaPattern_T
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use ForwardModelVectorTools, only: QtyStuff_T
     use Fov_Convolve_m, only: Fov_Convolve
     use Intrinsic, only: L_VMR
     use Load_sps_data_m, only: Grids_T
@@ -48,7 +48,7 @@ module Convolve_All_m
     integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINSTART
     integer, intent(in) :: WINFINISH
-    integer, intent(in) :: Mol_Cat_Index(:)
+    type(QtyStuff_T), intent(in) :: Qtys(:)
 
     type (vectorvalue_t), intent(in) :: TEMP
     type (vectorvalue_t), intent(in) :: PTAN
@@ -107,11 +107,9 @@ module Convolve_All_m
 
 ! Internal stuff
 
-    type (VectorValue_T), pointer :: F   ! An arbitrary species
+    integer(i4) :: k, Row, Col, ind, sps_i, ptg_i, noPtan, noChans, jf, nfz
 
-    integer(i4) :: k, Row, Col, ind, jz, sps_i, ptg_i, noPtan, noChans, jf
-
-    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
+    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len
 
     real(r8) :: R
 
@@ -131,7 +129,6 @@ module Convolve_All_m
     no_sv_p_t = winFinish - winStart + 1
     sv_t_len = n_t_zeta * no_sv_p_t
 
-    no_mol = size(mol_cat_index)
     noChans = Radiance%template%noChans
     noPtan = ptan%template%nosurfs
 
@@ -299,24 +296,17 @@ module Convolve_All_m
     row = FindBlock( Jacobian%row, Radiance%index, maf )
     rowFlags(row) = .TRUE.
 
-    sv_f = 0
-    do sps_i = 1, no_mol
+    do sps_i = 1, size(qtys)
 
-      jz = mol_cat_index(sps_i)
-      f => GetQuantityForForwardModel ( FwdMdlIn, FwdMdlExtra, quantityType=l_vmr,&
-        & molIndex=jz, radiometer=fwdMdlConfig%signals(1)%radiometer, &
-        & noError=.true., config=fwdMdlConfig, foundInFirst=foundInFirst )
-      
-      if ( .not. associated(f) .or. .not. foundInFirst ) then
-        jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
-        k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
-        sv_f = sv_f + jf * k
-        cycle
-      end if
+      if ( .not. qtys(sps_i)%foundInFirst ) cycle
+
+      sv_f = grids_f%l_v(sps_i-1)
+      nfz = (Grids_f%l_f(sps_i) - Grids_f%l_f(sps_i-1)) * &
+          & (Grids_f%l_z(sps_i) - Grids_f%l_z(sps_i-1))
 
       do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
 
-        col = FindBlock ( Jacobian%col, f%index, jf)
+        col = FindBlock ( Jacobian%col, qtys(sps_i)%qty%index, jf)
         select case ( Jacobian%block(row,col)%kind )
           case ( m_absent )
             call CreateBlock ( Jacobian, row, col, m_full )
@@ -327,8 +317,7 @@ module Convolve_All_m
             & 'Wrong type block for atmospheric derivative matrix' )
         end select
 
-        do k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
-
+        do k = 1, nfz
 ! Check if derivatives are needed for this (zeta & phi) :
 
           sv_f = sv_f + 1
@@ -367,6 +356,15 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.28.2.2  2003/03/21 02:47:03  vsnyder
+! Use an array of pointers to quantities instead of GetQuantityForForwardModel
+!
+! Revision 2.28.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.28  2002/11/13 17:07:17  livesey
+! Bug fix, now takes FwdMdlExtra
+!
 ! Revision 2.27  2002/10/10 19:36:22  vsnyder
 ! Add di_dt_flag
 !

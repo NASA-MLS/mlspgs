@@ -27,49 +27,51 @@ module ForwardModelConfig
 
   ! Public Types:
 
+  ! These arguments are sorted in the order they are to make the packing
+  ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
-    logical :: globalConfig   ! If set is shared between all chunks
+    ! First the lit_indices
+    integer :: cloud_der    ! Compute cloud sensitivity in cloud models.
     integer :: fwmType        ! l_linear, l_full or l_scan
+    integer :: i_saturation        ! Flag to determine saturation status
+    integer :: instrumentModule         ! Module for scan model
+    integer :: windowUnits              ! Either degrees or profiles
+    ! Now the other integers
+    integer :: no_cloud_species         ! No of Cloud Species '2'
+    integer :: no_model_surfs           ! No of Model surfaces '640'
+    integer :: num_ab_terms             ! No of AB terms '50'
+    integer :: num_azimuth_angles       ! No of azmuth angles '8'
+    integer :: num_scattering_angles    ! No of scattering angles '16'
+    integer :: num_size_bins            ! No of size bins '40'
+    integer :: surfaceTangentIndex ! Index in Tangentgrid of Earth's surface
+    ! Now the logicals
+    logical :: allLinesForRadiometer ! As opposed to just using lines designated for band.
     logical :: atmos_der      ! Do atmospheric derivatives
+    logical :: default_spectroscopy     ! Using Bill's spectroscopy data
+    logical :: differentialScan         ! Differential scan model
+    logical :: do_1d          ! Do 1D forward model calculation
     logical :: do_baseline    ! Do a baseline computation
     logical :: do_conv        ! Do convolution
     logical :: do_freq_avg    ! Do Frequency averaging
-    logical :: do_1d          ! Do 1D forward model calculation
-    integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
-    logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
-    integer, dimension(:), pointer :: moleculesPol=>NULL() ! Which molecules
-      !                       ! to consider that have Zeeman-split lines
-    logical, dimension(:), pointer :: moleculeDerivativesPol=>NULL() ! Want
-      !                       ! jacobians w.r.t. molecules_pol
-    type (Signal_T), dimension(:), pointer :: signals=>NULL()
-    logical :: Spect_Der      ! Do spectroscopy derivatives
-    logical :: Temp_Der       ! Do temperature derivatives
-    logical :: SkipOverlaps   ! Don't calculate for MAFs in overlap regions
-    logical :: AllLinesForRadiometer ! As opposed to just using lines designated for band.
-    type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
-    type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
-    integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
-    integer :: surfaceTangentIndex ! Index in Tangentgrid of Earth's surface
-    real (r8) :: phiWindow             ! Window size for examining stuff
-    integer :: windowUnits              ! Either degrees or profiles
-    real (r8) :: tolerance ! Accuracy desired when choosing approximations
-    ! Specifics for CloudForwardModel
-    logical :: Default_spectroscopy     ! Using Bill's spectroscopy data
+    logical :: globalConfig   ! If set is shared between all chunks
     logical :: incl_cld ! Include cloud extinction calculation in Bill's forward model
-    integer :: no_cloud_species         ! No of Cloud Species '2'
-    integer :: no_model_surfs           ! No of Model surfaces '640'
-    integer :: num_scattering_angles    ! No of scattering angles '16'
-    integer :: num_azimuth_angles       ! No of azmuth angles '8'
-    integer :: num_ab_terms             ! No of AB terms '50'
-    integer :: num_size_bins            ! No of size bins '40'
-    integer :: cloud_der    ! Compute cloud sensitivity in cloud models.
-    integer :: i_saturation        ! Flag to determine saturation status
-    ! Specifics for linearised forward model
-    logical :: LockBins              ! Use same l2pc bin for whole chunk
+    logical :: lockBins              ! Use same l2pc bin for whole chunk
+    logical :: polarized      ! Use polarized model for Zeeman-split lines
+    logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
+    logical :: spect_Der      ! Do spectroscopy derivatives
+    logical :: temp_Der       ! Do temperature derivatives
+    ! Now the reals
+    real (r8) :: phiWindow             ! Window size for examining stuff
+    real (r8) :: tolerance ! Accuracy desired when choosing approximations
+    ! Now the arrays
     integer, dimension(:), pointer :: binSelectors=>NULL() ! List of relevant bin selectors
-    ! Specifics for scan forward model
-    integer :: instrumentModule         ! Module for scan model
-    logical :: differentialScan         ! Differential scan model
+    integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
+    integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
+    logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
+    ! Finally the types
+    type (Signal_T), dimension(:), pointer :: signals=>NULL()
+    type (vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
+    type (vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -178,26 +180,53 @@ contains
     integer :: I                        ! Loop counter
 
     ! Executable code
-    ! First pack the logical scalars
-    call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, &
-      & config%do_baseline, config%do_conv, config%do_freq_avg, &
-      & config%do_1d, config%incl_cld, config%differentialScan, &
-      & config%lockBins, config%spect_der, &
-      & config%temp_der, config%skipOverlaps, config%default_spectroscopy /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
-    ! Pack the integer scalars
-    call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
+    ! First pack the lit indices
+    call PVMPackLitIndex ( config%cloud_der, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig cloud_der" )
+    call PVMPackLitIndex ( config%fwmType, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig fwmType" )
+    call PVMPackLitIndex ( config%i_saturation, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig i_saturation" )
+    call PVMPackLitIndex ( config%instrumentModule, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig instrumentModule" )
+    call PVMPackLitIndex ( config%windowUnits, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig windowUnits" )
+
+    ! Now pack the integer scalars
+    call PVMIDLPack ( (/ &
       & config%no_cloud_species, config%no_model_surfs, &
-      & config%num_scattering_angles, config%num_azimuth_angles, &
-      & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
-      & config%i_saturation, config%windowUnits /), info )
+      & config%num_ab_terms, config%num_azimuth_angles, &
+      & config%num_scattering_angles, config%num_size_bins, &
+      & config%surfaceTangentIndex /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
+
+    ! Now the logical scalars
+    call PVMIDLPack ( (/ &
+      & config%allLinesForRadiometer, config%atmos_der, &
+      & config%default_spectroscopy, config%differentialScan,&
+      & config%do_1d, config%do_baseline, config%do_conv, &
+      & config%do_freq_avg, config%globalConfig, config%incl_cld, &
+      & config%lockBins, config%polarized, config%skipOverlaps, &
+      & config%spect_Der, config%temp_Der /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
+
+    ! Now pack the reals
     call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
-    call PVMPackLitIndex ( config%fwmType, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig%fwmType" )
 
-    ! Now pack the arrays - molecules
+    ! ------------- The rest are arrays and/or types
+    ! Bin selectors
+    if ( associated ( config%binSelectors ) ) then
+      call PVMIDLPack ( size ( config%binSelectors ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of binSelectors" )
+      call PVMIDLPack ( config%binSelectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing binSelectors" )
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 binSelectors" )
+    end if
+
+    ! Molecules / derivatives
     if ( associated ( config%molecules ) ) then
       call PVMIDLPack ( size ( config%molecules ), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of molecules" )
@@ -215,24 +244,7 @@ contains
       call PVMIDLPack ( 0, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
     end if
-    ! Molecules with Zeeman splitting
-    if ( associated ( config%moleculesPol ) ) then
-      call PVMIDLPack ( size ( config%moleculesPol ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of moleculesPol" )
-      if ( size ( config%moleculesPol ) > 0 ) then
-        do i = 1, size(config%moleculesPol)
-          call PVMPackLitIndex ( abs ( config%moleculesPol(i) ), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a moleculePol" )
-          call PVMIDLPack ( (config%moleculesPol(i) .gt. 0.0), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing moleculePol sign" )
-        end do
-        call PVMIDLPack ( config%moleculeDerivativesPol, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule derivativesPol" )
-      end if
-    else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 moleculesPol" )
-    end if
+
     ! Specific quantities
     if ( associated ( config%specificQuantities ) ) then
       call PVMIDLPack ( size ( config%specificQuantities ), info )
@@ -242,16 +254,6 @@ contains
     else
       call PVMIDLPack ( 0, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 specificQuantities" )
-    end if
-    ! Bin selectors
-    if ( associated ( config%binSelectors ) ) then
-      call PVMIDLPack ( size ( config%binSelectors ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of binSelectors" )
-      call PVMIDLPack ( config%binSelectors, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing binSelectors" )
-    else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 binSelectors" )
     end if
 
     ! Pack the other structures - signals
@@ -292,51 +294,73 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(13) :: l13       ! Temporary array
-    logical, dimension(2) :: l2         ! Temporary array
-    integer, dimension(11) :: i11       ! Temporary array
-    real(r8), dimension(2) :: r2        ! Temporary array
+    logical, dimension(15) :: LS        ! Temporary array
+    integer, dimension(7) :: IS         ! Temporary array
+    real(r8), dimension(2) :: RS        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
 
     ! Executable code
-    ! First the scalars
-    call PVMIDLUnpack ( l13, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%globalConfig = l13(1)
-    config%atmos_der = l13(2)
-    config%do_baseline = l13(3)
-    config%do_conv = l13(4)
-    config%do_freq_avg = l13(5)
-    config%do_1d = l13(6)
-    config%incl_cld = l13(7)
-    config%differentialScan = l13(8)
-    config%lockBins = l13(9)
-    config%spect_der = l13(10)
-    config%temp_der = l13(11)
-    config%skipOverlaps = l13(12)
-    config%default_spectroscopy = l13(13)
-    call PVMIDLUnpack ( i11, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
-    config%instrumentModule = i11(1)
-    config%surfaceTangentIndex = i11(2)
-    config%no_cloud_species = i11(3)
-    config%no_model_surfs = i11(4)
-    config%num_scattering_angles = i11(5)
-    config%num_azimuth_angles = i11(6)
-    config%num_ab_terms = i11(7)
-    config%num_size_bins = i11(8)
-    config%cloud_der = i11(9)
-    config%i_saturation = i11(10)
-    config%windowUnits = i11(11)
-    call PVMIDLUnpack ( r2, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
-    config%phiWindow = r2(1)
-    config%tolerance = r2(2)
+    ! First unpack the lit indices
+    call PVMUnpackLitIndex ( config%cloud_der, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig cloud_der" )
     call PVMUnpackLitIndex ( config%fwmType, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmType" )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig fwmType" )
+    call PVMUnpackLitIndex ( config%i_saturation, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig i_saturation" )
+    call PVMUnpackLitIndex ( config%instrumentModule, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig instrumentModule" )
+    call PVMUnpackLitIndex ( config%windowUnits, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig windowUnits" )
 
-    ! Now the arrays - molecules
+    ! Now the integer scalars
+    call PVMIDLUnpack ( is, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
+    config%no_cloud_species = is(1)
+    config%no_model_surfs = is(2)
+    config%num_ab_terms = is(3)
+    config%num_azimuth_angles = is(4)
+    config%num_scattering_angles = is(5)
+    config%num_size_bins = is(6)
+    config%surfaceTangentIndex = is(7)
+
+    ! Now the logical scalars
+    call PVMIDLUnpack ( ls, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
+    config%allLinesForRadiometer = ls(1)
+    config%atmos_der = ls(2)
+    config%default_spectroscopy = ls(3)
+    config%differentialScan = ls(4)
+    config%do_1d = ls(5)
+    config%do_baseline = ls(6)
+    config%do_conv = ls(7)
+    config%do_freq_avg = ls(8)
+    config%globalConfig = ls(9)
+    config%incl_cld = ls(10)
+    config%lockBins = ls(11)
+    config%polarized = ls(12)
+    config%skipOverlaps = ls(13)
+    config%spect_der = ls(14)
+    config%temp_der = ls(15)
+
+    ! Now the real scalars
+    call PVMIDLUnpack ( rs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
+    config%phiWindow = rs(1)
+    config%tolerance = rs(2)
+
+    ! ------- The rest are arrays and/or types
+    ! Bin selectors
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%binSelectors, n, &
+        & 'config%binSelectors', ModuleName )
+      call PVMIDLUnpack ( config%binSelectors, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking binSelectors" )
+    end if
+
+    ! Molecules / derivatives
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of molecules" )
     if ( n > 0 ) then
@@ -353,23 +377,6 @@ contains
       call PVMIDLUnpack ( config%moleculeDerivatives, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
-    ! Molecules with Zeeman-split lines
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of moleculesPol" )
-    if ( n > 0 ) then
-      call Allocate_test ( config%moleculesPol, n, 'config%moleculesPol', ModuleName )
-      call Allocate_test ( config%moleculeDerivativesPol, &
-        & n, 'config%moleculeDerivativesPol', ModuleName )
-      do i = 1, n
-        call PVMUnpackLitIndex ( config%moleculesPol(i), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a moleculePol" )
-        call PVMIDLUnpack ( flag, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a moleculePol sign flag" )
-        if ( .not. flag ) config%moleculesPol(i) = - config%moleculesPol(i)
-      end do
-      call PVMIDLUnpack ( config%moleculeDerivatives, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivativesPol" )
-    end if
 
     ! Specific quantiites
     call PVMIDLUnpack ( n, info )
@@ -379,16 +386,6 @@ contains
         & 'config%specificQuantities', ModuleName )
       call PVMIDLUnpack ( config%specificQuantities, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specific quantities" )
-    end if
-
-    ! Specific quantiites
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
-    if ( n > 0 ) then
-      call Allocate_test ( config%binSelectors, n, &
-        & 'config%binSelectors', ModuleName )
-      call PVMIDLUnpack ( config%binSelectors, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking binSelectors" )
     end if
 
     ! Unpack other structures - signals
@@ -402,16 +399,17 @@ contains
         call PVMUnpackSignal ( config%signals(i) )
       end do
     end if
+
     ! Vgrids
-    call PVMIDLUnpack ( l2, info )
+    call PVMIDLUnpack ( ls(1:2), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking vGrid flags" )
-    if ( l2(1) ) then
+    if ( ls(1) ) then
       allocate ( config%integrationGrid, STAT=info )
       if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'config%integrationGrid' )
       call PVMUnpackVGrid ( config%integrationGrid )
     end if
-    if ( l2(2) ) then
+    if ( ls(2) ) then
       allocate ( config%tangentGrid, STAT=info )
       if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'config%tangentGrid' )
@@ -552,11 +550,20 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.33  2003/04/04 00:26:44  jonathan
+! change dimension(12) :: i11 TO dimension(11) :: i11
+!
 ! Revision 2.32  2003/04/02 21:46:51  jonathan
 ! remove cloud_fov, changed i12 to i11
 !
 ! Revision 2.31  2003/03/07 03:16:00  livesey
 ! Changed use of DestroySignal
+!
+! Revision 2.30.2.2  2003/04/08 23:40:11  jonathan
+! remove cloud_fov
+!
+! Revision 2.30.2.1  2003/02/22 00:48:08  vsnyder
+! Delete moleculesPol, moleculeDerivativesPol, add Polarized to ForwardModelConfig
 !
 ! Revision 2.30  2003/02/06 22:04:25  vsnyder
 ! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized

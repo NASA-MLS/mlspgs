@@ -23,24 +23,23 @@ contains
 
   Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, update, &
-           & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
-           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
-           & ptan_Der )
+           & t_deriv_flag, ptg_angles, chi_out, dhdz_out, dx_dh_out, Grids_f,  &
+           & I_raw, sbRatio, qtys, rowFlags, Jacobian, di_dt, di_df, ptan_Der )
 
-    use MLSCommon, only: I4, R4, R8, RM
-    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-    use MLSNumerics, ONLY: INTERPOLATEVALUES
     use dump_0,only:dump
-    use VectorsModule, only: Vector_T, VectorValue_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: QtyStuff_T
     use Intrinsic, only: L_VMR
-    use String_Table, only: GET_STRING
+    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+    use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
-    use Molecules, only: spec_tags, L_EXTINCTION
+    use MLSCommon, only: I4, R4, R8, RM
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
-    use Load_sps_data_m, only: Grids_T
+    use MLSNumerics, ONLY: INTERPOLATEVALUES
+    use Molecules, only: spec_tags, L_EXTINCTION
+    use String_Table, only: GET_STRING
+    use VectorsModule, only: Vector_T, VectorValue_T
 
     type (ForwardModelConfig_T) :: FWMCONF
     type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -50,7 +49,7 @@ contains
     integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINDOWSTART
     integer, intent(in) :: WINDOWFINISH
-    integer, intent(in) :: mol_cat_indx(:)
+    type(qtyStuff_T), intent(in) :: qtys(:)
 
     type (VectorValue_T), intent(in) :: TEMP
     type (VectorValue_T), intent(in) :: PTAN
@@ -80,9 +79,7 @@ contains
 
     integer:: No_t, No_tan_hts
 
-    type (VectorValue_T), pointer :: F  ! VMR quantity
-
-    integer :: jf, jz, no_mol
+    integer :: jf, jz, nfz
     integer :: is, k, nf, sv_f, sv_t_len
     integer :: Row, col                     ! Matrix row & column indices
     integer :: ptg_i,noPtan,noChans,Ind     ! Indices
@@ -238,27 +235,19 @@ contains
 
       ! ****************** atmospheric derivatives ******************
 
-      sv_f = 0
-      no_mol = size(mol_cat_indx)
-
-      do is = 1, no_mol
-
-        jz = mol_cat_indx(is)
-        f => GetQuantityForForwardModel(forwardModelIn, forwardModelExtra, &
-          & quantityType=l_vmr, molIndex=jz, &
-          & radiometer = radiance%template%radiometer, &
-          & noError=.true., config=fwmConf, foundInFirst=foundInFirst )
+      do is = 1, size(qtys)
         
-        if ( .not. associated(f) .or. .not. foundInFirst ) then
-          jf = Grids_f%windowfinish(is)-Grids_f%windowStart(is)+1
-          k = Grids_f%no_f(is) * Grids_f%no_z(is)
-          sv_f = sv_f + jf * k
-          cycle
-        end if
-!
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+        if ( .not. qtys(is)%foundInFirst ) cycle
+
+        sv_f = grids_f%l_v(is-1)
+        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
+            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
+
         do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
-!
-          col = FindBlock ( Jacobian%col, f%index, jf)
+
+          col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
           select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
@@ -269,7 +258,7 @@ contains
               & 'Wrong type for atmospheric derivative matrix' )
           end select
 
-          do k = 1, Grids_f%no_f(is) * Grids_f%no_z(is)
+          do k = 1, nfz
 
 ! Check if derivatives are needed for this (zeta & phi) :
 
@@ -293,9 +282,9 @@ contains
             end if
 
           end do
-!
+
         end do
-!
+
       end do
 
     end if
@@ -308,6 +297,15 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.19.2.2  2003/03/21 02:47:03  vsnyder
+! Use an array of pointers to quantities instead of GetQuantityForForwardModel
+!
+! Revision 2.19.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.19  2002/11/13 17:07:28  livesey
+! Bug fix, now takes forwardModelExtra
+!
 ! Revision 2.18  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

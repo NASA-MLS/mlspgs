@@ -25,7 +25,6 @@ module Two_D_Hydrostatic_m
 ! Compute the 2 dimensional hydrostatic stuff
 
   use Geometry, only: earthRadA, earthRadB
-  use Get_eta_m, only: get_eta
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
   use MLSCommon, only: RP, IP
@@ -62,8 +61,8 @@ module Two_D_Hydrostatic_m
 
 ! Begin execution
 
-  z_coeffs = Grids_tmp%no_z(1)
-  p_coeffs = Grids_tmp%no_p(1)
+  z_coeffs = Grids_tmp%l_z(1) ! - Grids_tmp%l_z(0), which is always zero
+  p_coeffs = Grids_tmp%l_p(1) ! - Grids_tmp%l_p(0), which is always zero
 
 !{ Compute the orbit-plane projected minor axis $c$, where
 !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
@@ -98,14 +97,14 @@ module Two_D_Hydrostatic_m
     lat = asin(csq * sinPhi * sinBeta &
       & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
 
-    j1 = j2 + 1
-    j2 = j1 + z_coeffs - 1
+    j1 = j2
+    j2 = j1 + z_coeffs
     if ( present(ddhdhdtl0) ) then
-      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
          & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
          & dhidtlm(:,:,i), dhidzij(:,i), ddhdhdtl0(:,:,i) )
     else
-      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
          & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
          & dhidtlm(:,:,i), dhidzij(:,i) )
     end if
@@ -120,6 +119,12 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.10.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.10  2002/10/10 19:52:45  vsnyder
+! Get rid of several array temps.  Cosmetic changes.
+!
 ! Revision 2.9  2002/10/08 17:08:06  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -53,14 +53,15 @@ contains
     real(rp) :: Frq      ! ** ZEBUG ** this will have to change later 
                          ! for the actuall frequecies array coming in as input
 
-!   real(rp) :: Eta_f(nfrq,maxval(grids_x%no_f))
-    real(rp) :: Eta_f(1,maxval(grids_x%no_f)) ! ** ZEBUG, use only one freq.
-    real(rp) :: Eta_p(size(path_zeta),maxval(grids_x%no_p))
-    real(rp) :: Eta_z(size(path_zeta),maxval(grids_x%no_z))
-!   logical :: Not_zero_f(nfrq,maxval(grids_x%no_f))
-    logical :: Not_zero_f(1,maxval(grids_x%no_f)) ! ** ZEBUG, use only one freq.
-    logical :: Not_zero_p(size(path_zeta),maxval(grids_x%no_p))
-    logical :: Not_zero_z(size(path_zeta),maxval(grids_x%no_z))
+!   Actually, all we need is the largest of any grids_x%l_X(i)-grids_x%l_X(i-1)
+!   real(rp) :: Eta_f(nfrq,grids_x%l_f(ubound(grids_x%l_f,1)))
+    real(rp) :: Eta_f(1,grids_x%l_f(ubound(grids_x%l_f,1))) ! ** ZEBUG, use only one freq.
+    real(rp) :: Eta_p(size(path_zeta),grids_x%l_p(ubound(grids_x%l_p,1)))
+    real(rp) :: Eta_z(size(path_zeta),grids_x%l_z(ubound(grids_x%l_z,1)))
+!   logical :: Not_zero_f(nfrq,grids_x%l_f(ubound(grids_x%l_f,1)))
+    logical :: Not_zero_f(1,grids_x%l_f(ubound(grids_x%l_f,1))) ! ** ZEBUG, use only one freq.
+    logical :: Not_zero_p(size(path_zeta),grids_x%l_p(ubound(grids_x%l_p,1)))
+    logical :: Not_zero_z(size(path_zeta),grids_x%l_z(ubound(grids_x%l_z,1)))
 
 ! Begin executable code:
 
@@ -68,39 +69,39 @@ contains
     eta_fzp = 0.0
     do_calc = .false.
 
-    f_inda = 1
-    p_inda = 1
-    z_inda = 1
-    v_inda = 1
+    f_inda = 0
+    p_inda = 0
+    z_inda = 0
+    v_inda = 0
 
-    do sps_i = 1, size(grids_x%no_z)
+    do sps_i = 1, ubound(grids_x%l_z,1)
 
-      n_f = grids_x%no_f(sps_i)
-      n_z = grids_x%no_z(sps_i)
-      n_p = grids_x%no_p(sps_i)
-      nfzp = n_z * n_p * n_f
+      v_indb = grids_x%l_v(sps_i)
+      nfzp = v_indb - v_inda
       if ( nfzp == 0 ) cycle
 
-      f_indb = f_inda + n_f
-      z_indb = z_inda + n_z
-      p_indb = p_inda + n_p
+      f_indb = grids_x%l_f(sps_i)
+      p_indb = grids_x%l_p(sps_i)
+      z_indb = grids_x%l_z(sps_i)
 
-      v_indb = v_inda + nfzp
+      n_f = f_indb - f_inda
+      n_p = p_indb - p_inda
+      n_z = z_indb - z_inda
 
 ! There are two ways to do this (slow and easy vs quick but difficult)
 ! For ease lets do the slow and easy (and certainly more reliable)
 
 ! Compute etas
 
-      call get_eta_sparse ( lo+sideband*grids_x%frq_basis(f_inda:f_indb-1), &
+      call get_eta_sparse ( lo+sideband*grids_x%frq_basis(f_inda+1:f_indb), &
                          &  (/frq/), eta_f, not_zero_f )
-      call get_eta_sparse ( grids_x%zet_basis(z_inda:z_indb-1),  &
+      call get_eta_sparse ( grids_x%zet_basis(z_inda+1:z_indb),  &
                          &  path_zeta, eta_z, not_zero_z )
-      call get_eta_sparse ( grids_x%phi_basis(p_inda:p_indb-1),  &
+      call get_eta_sparse ( grids_x%phi_basis(p_inda+1:p_indb),  &
                          &  path_phi, eta_p, not_zero_p )
 
       do sv_i = 1, nfzp
-        sv_j = v_inda + sv_i - 1
+        sv_j = v_inda + sv_i
         call brkmod ( sv_i, n_f, n_z, n_p, sv_f, sv_z, sv_p )
         if ( not_zero_f(1,sv_f) ) then
           where ( not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p) )
@@ -145,6 +146,12 @@ contains
 end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.6.2.1  2003/03/20 01:42:26  vsnyder
+! Revise Grids_T structure
+!
+! Revision 2.6  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/09/07 02:17:52  vsnyder
 ! Move USEs from module scope to procedure scope.
 ! Convert some allocatable arrays to automatics.  Cosmetic changes.
