@@ -78,7 +78,7 @@ contains
     got = .false.
     do i = 2, nsons(key)
       son = subtree(i,key)
-      field = decoration(subtree(1,decoration(subtree(1,son))))
+      field = decoration(subtree(1,son))
       if ( got(field) ) call announceError ( twice, field )
       got(field) = .true.
       select case ( field )
@@ -127,6 +127,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.2  2001/02/08 00:56:11  vsnyder
+! Periodic commit.  Still needs a lot of work.
+!
 ! Revision 2.1  2001/02/07 00:52:27  vsnyder
 ! Initial commit
 !
