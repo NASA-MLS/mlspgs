@@ -158,6 +158,10 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
     module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
   end interface
 
+  interface yyyymmdd_to_dai
+    module procedure yyyymmdd_to_dai_str, yyyymmdd_to_dai_ints
+  end interface
+
   ! Error return values from:
   ! GetIntHashElement
 !  public :: KEYNOTFOUND, KEYBEYONDHASHSIZE
@@ -173,6 +177,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   ! A limitation among string list operations
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
+  integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
   ! The following arrys contains the maximum permissible day for each month
   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
   integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
@@ -2505,7 +2510,6 @@ CONTAINS
     logical :: mystrict
     logical :: mynodash
     character(len=1) :: utc_format        ! 'a' or 'b'
-    integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
     ! The following arrys contains the maximum permissible day for each month
     ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
     integer, dimension(-1:12), parameter :: DAYMAX = (/ &
@@ -2686,8 +2690,54 @@ CONTAINS
    
   end subroutine utc_to_yyyymmdd_strs
 
-  ! ---------------------------------------------  yyyymmdd_to_dai  -----
-  subroutine yyyymmdd_to_dai(str, dai, startingDate)
+  ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
+  subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
+    ! Routine that returns the number of days after a starting date
+    ! from 3 ints: the form yyyymmdd
+    !--------Argument--------!
+    integer ,intent(in) :: yyyy
+    integer ,intent(in) :: mm
+    integer ,intent(in) :: dd
+    integer,intent(out) :: dai
+    character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    character(len=8) :: mystartingDate
+    integer :: yyyy1, mm1, dd1, doy1
+    integer :: yyyy2, doy2
+    integer :: ErrTyp
+    logical :: daiNegative
+    integer :: y
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate='20010101'
+   endif
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
+   yyyy2 = yyyy
+   daiNegative = yyyy1 > yyyy2
+   if ( daiNegative ) then
+     call switch(yyyy1, yyyy2)
+     call switch(doy1, doy2)
+   elseif ( yyyy1 == yyyy2 ) then
+     dai = doy2 - doy1
+     return
+   endif
+   dai = doy2 - doy1
+   do y = yyyy1, yyyy2 - 1
+     if ( leapyear(y) ) then
+       dai = dai + DAYMAXLY(-1)
+     else
+       dai = dai + DAYMAXNY(-1)
+     endif
+   enddo
+   if ( daiNegative ) dai = -dai
+  end subroutine yyyymmdd_to_dai_ints
+
+  ! ---------------------------------------------  yyyymmdd_to_dai_str  -----
+  subroutine yyyymmdd_to_dai_str(str, dai, startingDate)
     ! Routine that returns the number of days after a starting date
     ! from a string of the form yyyymmdd
     !--------Argument--------!
@@ -2709,8 +2759,8 @@ CONTAINS
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
    call utc_to_yyyymmdd_ints(str, ErrTyp, yyyy2, mm2, dd2, nodash=.true.)
-   call yyymmdd_to_doy(mystartingDate, doy1)
-   call yyymmdd_to_doy(str, doy2)
+   call yyyymmdd_to_doy_str(mystartingDate, doy1)
+   call yyyymmdd_to_doy_str(str, doy2)
    daiNegative = yyyy1 > yyyy2
    if ( daiNegative ) then
      call switch(yyyy1, yyyy2)
@@ -2728,7 +2778,7 @@ CONTAINS
      endif
    enddo
    if ( daiNegative ) dai = -dai
-  end subroutine yyyymmdd_to_dai
+  end subroutine yyyymmdd_to_dai_str
 
 !=============================================================================
   ! ---------------------------------------------  switch_ints  -----
@@ -2744,21 +2794,18 @@ CONTAINS
     x2 = x
   end subroutine switch_ints
 
-  ! ---------------------------------------------  yyymmdd_to_doy  -----
-  subroutine yyymmdd_to_doy(str, doy)
+  ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
+  subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
     ! Routine that returns the number of days after the year's start
-    ! for a string of the form yyyymmdd
+    ! for year, month, day
     !--------Argument--------!
-    character(len=*),intent(in) :: str
-    integer,intent(out) :: doy
+    integer, intent(in) :: year, month, day
+    integer, intent(out) :: doy
     !----------Local vars----------!
-    integer :: year, month, day
     integer :: ErrTyp
     integer :: m
-    integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
     integer, dimension(-1:12) :: DAYMAX
     !----------Executable part----------!
-     call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
      if ( year < 0 .or. year > YEARMAX ) then
        doy = -1
      endif
@@ -2775,7 +2822,24 @@ CONTAINS
        doy = doy + DAYMAX(m)
      enddo
      
-  end subroutine yyymmdd_to_doy
+  end subroutine yyyymmdd_to_doy_ints
+
+  ! ---------------------------------------------  yyyymmdd_to_doy_str  -----
+  subroutine yyyymmdd_to_doy_str(str, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: doy
+    !----------Local vars----------!
+    integer :: year, month, day
+    integer :: ErrTyp
+    integer :: m
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
+     call yyyymmdd_to_doy_ints(year, month, day, doy)
+  end subroutine yyyymmdd_to_doy_str
 
   logical function leapyear(year)
     integer,intent(in) :: year
@@ -2797,6 +2861,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.38  2003/12/11 23:02:35  pwagner
+! yyyymmdd_to_dai may take 3 ints or str
+!
 ! Revision 2.37  2003/12/07 23:10:42  pwagner
 ! Added RemoveElemFromList; bug fixes in ReplaceSubString
 !
