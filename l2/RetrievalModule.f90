@@ -91,7 +91,7 @@ contains
       & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
       & M_Tikhonov, Vector_T, VectorValue_T
-    use CloudRetrievalModule, only: HighCloudRetrieval, LowCloudRetrieval
+    use CloudRetrievalModule, only: CloudRetrieval
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
@@ -574,25 +574,23 @@ contains
           jacobian_Rows = 0
           if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
           if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
-          select case ( method )
-          case ( l_newtonian )
+          
+	  select case (method)
+          case( l_lowcloud, l_highcloud) 
+            ! use this for testing
+            if(.not. got(f_maxJ)) maxJacobians = 5
+            if(.not. got(f_lambda)) initlambda = 10.
+            call CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
+               & measurements,MeasurementSD, state, OutputSD, Covariance, &
+               & jacobian, chunk,maxJacobians,initlambda)
+            call add_to_retrieval_timing( 'cloud_retrieval', t1 )
+          case ( l_newtonian ) 
             call newtonianSolver
-          case ( l_lowcloud )
-                ! use this for testing
-               if(.not. got(f_maxJ)) maxJacobians = 5
-               if(.not. got(f_lambda)) initlambda = 10.
-            call LowCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
-               & measurements,MeasurementSD, state, OutputSD, Covariance, &
-               & jacobian, chunk,maxJacobians,initlambda)
-              call add_to_retrieval_timing( 'low_cloud', t1 )
-          case ( l_highcloud )
-               if(.not. got(f_maxJ)) maxJacobians = 5
-               if(.not. got(f_lambda)) initlambda = 10.
-            call HighCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
-               & measurements,MeasurementSD, state, OutputSD, Covariance, &
-               & jacobian, chunk,maxJacobians,initlambda)
-              call add_to_retrieval_timing( 'high_cloud', t1 )
-          end select ! method
+          case default
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "this retrieval method has not yet been implemented" )
+          end select
+
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
           !??? database at the end of each chunk?
@@ -2177,6 +2175,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.244  2003/05/14 03:55:10  dwu
+! tidy up
+!
 ! Revision 2.243  2003/05/13 22:25:39  dwu
 ! changes in lowcloudretrieval
 !
