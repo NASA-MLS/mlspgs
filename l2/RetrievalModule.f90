@@ -20,6 +20,7 @@ module RetrievalModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -2974,9 +2975,16 @@ contains
     end subroutine SetupSubset
   end subroutine Retrieve
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.188  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.187  2002/10/06 02:04:57  livesey
 ! Put in fwmParallel functionality
 !
