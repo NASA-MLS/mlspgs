@@ -5,9 +5,9 @@
 module RetrievalModule
 !=============================================================================
 
-! This module inverts the radiative transfer equation, to solve for
+!{This module inverts the radiative transfer equation, to solve for
 ! atmospheric parameters, given radiance measurements.
-
+!
 ! This module and ones it calls consume most of the cycles.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -80,7 +80,7 @@ contains
   ! ---------------------------------------------------  Retrieve  -----
   subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase )
 
-  ! Process the "Retrieve" section of the L2 Configuration File.
+  !{Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
 
@@ -459,16 +459,7 @@ contains
             call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
             if ( got(f_fuzz) ) then
-              ! Add some fuzz to the measurement vector
-!             call cloneVector ( fuzzMeasurements, measurements )
-!             do j = 1, measurements%template%noQuantities
-!               call random_number(fuzzMeasurements%quantities(j)%values)
-!               measurements%quantities(j)%values = &
-!                 & measurements%quantities(j)%values * &
-!                   & ( 1.0_r8 + fuzz * &
-!                     & ( fuzzMeasurements%quantities(j)%values - 0.5 ) )
-!             end do
-              ! Add some fuzz to the state vector
+              ! Add some fuzz to the state vector (for testing purposes):
               call cloneVector ( fuzzState, x )
               do j = 1, x%template%noQuantities
                 call random_number(fuzzState%quantities(j)%values)
@@ -537,25 +528,13 @@ contains
                   call cloneVector ( xMinusApriori, apriori, &
                     & vectorNameText='_xMinusApriori' )
                   xMinusApriori = x - apriori
-                  ! First, we need the square of the norm of the Cholesky
-                  ! factor of the inverse of the covariance times
-                  ! xMinusApriori.
-                  if ( diagonal ) then
-                    call getDiagonal ( covariance%m, covarianceDiag, &
-                      & squareRoot=.true. )
-                    ! covarianceXApriori := covarianceDiag # apriori:
-                    call multiply ( xMinusApriori, covarianceDiag, &
-                      & covarianceXApriori )
-                  else ! covarianceXApriori := factor(covariance) X apriori:
-                    call choleskyFactor ( factored, covariance, noExtra=.true. )
-                    call multiply ( factored%m, xMinusApriori, &
-                      & covarianceXApriori )
-                    call clearMatrix ( factored%m )  ! free the space
-                  end if
-                  aprioriNorm = covarianceXapriori .dot. covarianceXapriori ! norm**2
-                  ! Now we need the inverse of the covariance times
-                  ! xMinusApriori, as the initial bit of the right-hand
-                  ! side of the normal equations.
+                  !{Let the covariance of the apriori be $S_a$, let $C =
+                  ! S_a^{-1}$, and let $F^T F = C$.  In the least-squares
+                  ! problem we have extra rows of the form $F \delta x = F
+                  ! ( a - x_n )$ where $a$ is the apriori state, and $x_n$
+                  ! is the state as of the previous iteration.  The
+                  ! initial bit of the right-hand side of the normal
+                  ! equations is $F^T F ( a - x_n ) = C ( a - x_n )$.
                   if ( diagonal ) then
                     call getDiagonal ( covariance%m, covarianceDiag )
                     ! covarianceXApriori := covarianceDiag # apriori:
@@ -565,6 +544,11 @@ contains
                     call multiply ( covariance, xMinusApriori, &
                       & covarianceXApriori )
                   end if
+                  !{The contribution to the norm of the residual of the
+                  ! right-hand side of the part of the least-squares problem
+                  ! that is due to apriori is $( a - x_n )^T F^T F ( a - x_n )
+                  ! = ( a - x_n )^T C ( a - x_n )$
+                  aprioriNorm = xMinusApriori .dot. covarianceXapriori
                 else
                   aprioriNorm = 0.0_r8
                 end if
@@ -639,16 +623,16 @@ contains
                 update = got(f_apriori)
                 if ( update ) then ! start normal equations with apriori
                   if ( diagonal ) then
-                  ! Iterate with the diagonal of the covariance, then use the
-                  ! full covariance (one hopes only for one more iteration).
-                  ! This improves sparsity during iteration.
+                  ! Iterate with the diagonal of the apriori covariance, then
+                  ! use the full apriori covariance (one hopes only for one
+                  ! more iteration). This improves sparsity during iteration.
                     call clearMatrix ( normalEquations%m )
                     call getDiagonal ( covariance%m, covarianceDiag )
                     call updateDiagonal ( normalEquations, covarianceDiag )
                   else
                     call copyMatrixValue ( normalEquations%m, covariance%m )
                   end if
-!                 call scaleVector ( covarianceXApriori, -1.0_r8 )
+                  call scaleVector ( covarianceXApriori, -1.0_r8 )
                   call fillExtraCol ( normalEquations%m, covarianceXApriori )
                   k = normalEquations%m%row%nb
                   normalEquations%m%block(k,k)%values(1,1) = aprioriNorm
@@ -689,7 +673,15 @@ contains
                       call fillExtraCol ( jacobian, f, rowBlock )
                     end if
                   end do
+                  !{Let $J$ be the Jacobian matrix and $f$ be the residual
+                  ! of the least-squares problem.  Let $W$ be the inverse
+                  ! of the measurement covariance (which in our case is
+                  ! diagonal). Row scale the part of the least-squares
+                  ! problem that arises from the measurements, i.e. the
+                  ! least-squares problem becomes $W J = W f$.
                   if ( got(f_measurementSD) ) call rowScale ( weight, jacobian )
+                  !{Form normal equations: $J^T W^T W J \delta \hat x =
+                  ! J^T W^T f$:
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
@@ -701,10 +693,12 @@ contains
                   call clearMatrix ( jacobian )  ! free the space
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
-                ! Compute (negative of the) gradient = -(Jacobian)**T * F.
-                ! This is the RHS of the normal equations 
-                ! J**T * J * "Candidate DX" = -J**T * F:
-                ! Column Scale J (row and column scale J^T J):
+
+                !{Column Scale $J$ (row and column scale $J^T J$).  Let
+                ! $\Sigma$ be a column-scaling matrix for the Jacobian. We
+                ! cater for several choices.  After row and column
+                ! scaling, the problem is $J^T W^T W J \Sigma^{-1} \Sigma
+                ! \delta \hat x = J^T W^T f$.
                 select case ( columnScaling )
                 case ( l_apriori )
                   call copyVector ( columnScaleVector, apriori )
@@ -729,14 +723,19 @@ contains
                 end if
                 k = normalEquations%m%row%nb
                 aj%fnorm = sqrt(normalEquations%m%block(k,k)%values(1,1))
+                !{Compute the (negative of the) gradient $= -J^T f$.
+                ! This is the right-hand side of the normal equations
+                ! $J^T J \delta \hat x = -J^T f$ where $\delta \hat x$ is
+                ! the "Candidate $\delta x$" that may or may not get used.
                 call getVectorFromColumn ( normalEquations%m, n, gradient )
                   if ( index(switches,'gvec') /= 0 ) &
                     & call dump ( gradient, name='gradient' )
+
                 ! Factor J^T J:
-!???            factored%m%block => normalEquations%m%block ! to save space
-!???            Can't do this because we need to keep the normal equations
-!???            around, in order to subtract Levenberg-Marquardt and
-!???            apriori covariance, in order to compute a posteriori covariance
+!               factored%m%block => normalEquations%m%block ! to save space
+!               Can't do the above because we need to keep the normal
+!               equations around, in order to subtract Levenberg-Marquardt and
+!               apriori covariance, in order to compute a posteriori covariance
                   if ( index(switches,'neq') /= 0 ) &
                     call dump_Linf ( normalEquations%m, &
                       & 'L_infty norms of Normal Equations blocks after scaling:', &
@@ -745,6 +744,7 @@ contains
                     & call dump_struct ( normalEquations%m, &
                       & 'Sparseness structure of Normal equations blocks:', &
                       & upper=.true. )
+                ! Factor the normal equations
                 call choleskyFactor ( factored, normalEquations )
                   if ( index(switches,'diag') /= 0 ) then
                     call getDiagonal ( factored%m, dxUnscaled )
@@ -786,18 +786,20 @@ contains
                       & clean=.true. )
                   end if
               case ( nf_solve ) ! ........................  SOLVE  .....
-              ! Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
-              ! and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
+              !{Apply Levenberg-Marquardt stabilization with parameter
+              ! $\lambda =$ AJ\%SQ.  I.e. solve $(J^T W^T W J \Sigma^{-1}
+              ! + \lambda^2 I) \Sigma \delta \hat x = J^T W^T f$ for
+              ! $\Sigma \delta \hat x$.
+
               ! Set AJ%FNMIN as for NWT_FLAG = NF_EVALJ, but taking account
-              ! of Levenberg-Marquardt stabilization.
-              ! Set
+              ! of Levenberg-Marquardt stabilization. Set
               !   AJ%DXN = L2 norm of "candidate DX",
               !   AJ%GDX = (Gradient) .dot. ("candidate DX")
                 call updateDiagonal ( normalEquations, aj%sq**2 )
-!???            factored%m%block => normalEquations%m%block ! to save space
-!???            Can't do this because we need to keep the normal equations
-!???            around, in order to subtract Levenberg-Marquardt and
-!???            apriori covariance, in order to compute a posteriori covariance
+!               factored%m%block => normalEquations%m%block ! to save space
+!               Can't do the above because we need to keep the normal equations
+!               around, in order to subtract Levenberg-Marquardt and apriori
+!               covariance, in order to compute a posteriori covariance
                   if ( index(switches,'neq') /= 0 ) &
                     call dump_Linf ( normalEquations%m, &
                       & 'L1 norms of Normal Equations blocks after Marquardt:', &
@@ -853,7 +855,9 @@ contains
               !     AJ%AXMAX = MAXVAL(ABS(X)),
               !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
                 if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
-                ! Account for column scaling
+                !{Account for column scaling.  We solved for $\Sigma \delta x$
+                ! above, so multiply by $\Sigma^{-1}$ (which is our variable
+                ! {\tt columnScaleVector}):
                 call copyVector ( dxUnScaled, dx )
                 if ( columnScaling /= l_none ) then
                   ! dxUnScaled = dxUnScaled # columnScaleVector:
@@ -975,7 +979,6 @@ contains
             call destroyVectorInfo ( bestX )
             call destroyVectorInfo ( candidateDX )
             call destroyVectorInfo ( dx )
-            call destroyVectorInfo ( f )
             call destroyVectorInfo ( gradient )
             call destroyVectorInfo ( x )
             call destroyMatrix ( normalEquations%m )
@@ -989,7 +992,8 @@ contains
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         end if
-        if ( got(f_fwdModelOut) ) call copyVector ( f, fwdModelOut )
+        if ( got(f_fwdModelOut) ) call copyVector ( fwdModelOut, f )
+        call destroyVectorInfo ( f )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         ! Clear the masks of every vector
         do j = 1, size(vectorDatabase)
@@ -1062,6 +1066,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.36  2001/06/01 20:36:34  vsnyder
+! Seems to work.  Added LaTeX comments.
+!
 ! Revision 2.35  2001/06/01 01:02:32  vsnyder
 ! Periodic commit.  Not working right yet.
 !
