@@ -38,10 +38,10 @@ program F90TEX
   character(len=*), parameter :: WIDTHP = '6in'   ! of TeX parbox inside fbox
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm = &
+  character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName= &
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -277,6 +277,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.2  2001/06/01 21:49:23  vsnyder
+! Fix up CVS log variable
+!
 ! Revision 1.1  2001/06/01 21:47:22 vsnyder
 ! Initial commit
 !
