@@ -1,0 +1,43 @@
+; $Id$
+
+; This l2cf fragment does all the quality flagging for the Core+R4
+; products.
+
+begin Fill
+  diagR4: Vector, template=diagTmp
+
+  ;; ------------------------------------ ClO-640
+  !define(flaggingBands,{10})
+  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=7.0,minRads=1200,cloudMax=8K)
+
+  ;; ------------------------------------ BrO-640
+  !define(flaggingBands,{11,31})
+  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=10.0,minRads=1800,cloudMax=8K)
+
+  ;; ------------------------------------ HOCl-640
+  !define(flaggingBands,{10,11,28,29})
+  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=10.0,minRads=3500,cloudMax=8K)
+
+  ;; ------------------------------------ N2O-640
+  !define(flaggingBands,{12})
+  !makeFlagsForOneProduct(product=N2O,radiometer=R4,chisqScale=7.0,minRads=1500,cloudMax=8K)
+
+  ;; ------------------------------------ HCl-640
+  !define(flaggingBands,{13,14})
+  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=5.0,minRads=2500,cloudMax=8K)
+
+  ;; ------------------------------------ O3-640
+  !define(flaggingBands,{13,14,30,31})
+  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=7.0,minRads=4000,cloudMax=8K)
+
+  ;; ------------------------------------ HO2-640
+  !define(flaggingBands,{31})
+  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=10.0,minRads=600,cloudMax=8K)
+
+  ;; ------------------------------------- Temperature-CorePlusR4
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R4,chisqScale=10.0,minRads=2200,cloudMax=10K)
+
+end Fill
+
+; $Log$
