@@ -98,6 +98,7 @@ endif
 endif
 
 include ../../customblds/$(MLSF95).$(MLSPLAT)
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -172,7 +173,13 @@ ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
 endif
 ifeq ($(MLSF95),IFC)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
@@ -248,6 +255,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.45  2003/09/29 23:32:49  pwagner
+# Fixes to enable linking with IFC
+#
 # Revision 1.44  2002/10/03 23:07:44  pwagner
 # l_specials for Lahey depend on gcc_version
 #
