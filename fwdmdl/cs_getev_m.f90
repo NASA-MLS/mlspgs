@@ -17,7 +17,7 @@ module CS_GetEv_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     &  "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -95,45 +95,49 @@ contains
 
 !----------------------------------------------------  CS_GetEvSD  -----
   pure subroutine CS_GetEvSD ( A, Ev, dA, dEv )
-!  Compute the sum and difference of the eigenvalues of a complex 2x2 matrix
-!  A.  Optionally compute their derivatives.
+!  Compute the half the sum and the square of half the difference of the
+!  eigenvalues of a complex 2x2 matrix A.  Optionally compute the
+!  derivatives of those quantities.
 
     use CS_ZeroFix_M, only: CS_ZeroFix
     use MLSCOmmon, only: RK => Rp
 
     complex(rk), intent(in) :: A(2,2)
-    complex(rk), intent(out) :: Ev(2)   ! 1/2 ( sum of eigenvalues ),
-                                        ! [ 1/2 ( difference of eigenvalues ) ]**2
+    complex(rk), intent(out) :: Ev(2)   ! s = 1/2 ( sum of eigenvalues ),
+                                        ! h = [ 1/2 ( difference of eigenvalues ) ]**2
     complex(rk), intent(in), optional :: dA(2,2) ! Derivative of A
-    complex(rk), intent(out), optional :: dEv(2) ! Derivative of Ev
+    complex(rk), intent(out), optional :: dEv(2) ! Derivative of Ev = (s', h')
     complex(rk)  S, DU, Q
 
 !  Compute the sum and the square of the difference of the eigenvalues of the
 !  input matrix.  1/2 the sum of the eigenvalues is 1/2 the trace of the matrix.
 
-!   s = Tr(a) =
+!   s = 0.5_rk * Tr(a) =
     s = 0.5_rk * ( A(1,1) + A(2,2) )
 
 !  The quadratic equation is:  z*z - 2 s*z + Det(A)
-!  The square of 1/2 (difference of the eigenvalues) is s**2 - Det(A) =
+!  The square of 1/2 (difference of the eigenvalues) == h = s**2 - Det(A) =
 
     q = s * s - ( A(2,2) * A(1,1) - A(1,2) * A(2,1) )
 
-    ev(1) = CS_ZeroFix ( s ) ! 1/2 (sum of eigenvalues)
+    ev(1) = CS_ZeroFix ( s ) ! s = 1/2 (sum of eigenvalues)
 
-    ev(2) = CS_ZeroFix ( q ) ! square of 1/2 (difference of eigenvalues)
+    ev(2) = CS_ZeroFix ( q ) ! h = [1/2 (difference of eigenvalues)] ** 2
 
     if ( present(dA) .and. present(dEv) ) then
       ! Compute the derivatives of ev(1) and ev(2)
 
-      dEv(1) = dA(1,1) + dA(2,2)                 ! d tr(A)                    
+      dEv(1) = dA(1,1) + dA(2,2)                 ! d tr(A) = tr(A') = 2 s'
 
-      du = dA(1,1) * A(2,2) + dA(2,2) * A(1,1) & ! d det(A)                   
+      du = dA(1,1) * A(2,2) + dA(2,2) * A(1,1) & ! d det(A)
        & - dA(1,2) * A(2,1) - dA(2,1) * A(1,2)
 
-      dEv(2) = Ev(1) * dEv(1) - du               ! d (tr(A)/4)**2 - d det(A)  
+      dEv(2) = Ev(1) * dEv(1) - du               ! h' =
+                                                 ! d (tr(A)/2)**2 - d det(A) =
+                                                 ! d ( s**2 ) - d det(A) =
+                                                 ! 2 s s' - d det(A)
 
-      dEv(1) = 0.5_rk * dEv(1)                   ! 1/2 d tr(A)                
+      dEv(1) = 0.5_rk * dEv(1)                   ! s' = 1/2 d tr(A)
     end if
 
   end subroutine CS_GetEvSD
@@ -213,14 +217,14 @@ contains
 
     ! Compute the derivatives of ev(1) and ev(2)
 
-    dEv(1) = dA(1,1) + dA(2,2)                 ! d tr(A)                    
+    dEv(1) = dA(1,1) + dA(2,2)                 ! d tr(A)
 
-    du = dA(1,1) * A(2,2) + dA(2,2) * A(1,1) & ! d det(A)                   
+    du = dA(1,1) * A(2,2) + dA(2,2) * A(1,1) & ! d det(A)
      & - dA(1,2) * A(2,1) - dA(2,1) * A(1,2)
 
-    dEv(2) = Ev(1) * dEv(1) - du               ! d (tr(A)/4)**2 - d det(A)  
+    dEv(2) = Ev(1) * dEv(1) - du               ! d (tr(A)/4)**2 - d det(A)
 
-    dEv(1) = 0.5_rk * dEv(1)                   ! 1/2 d tr(A)                
+    dEv(1) = 0.5_rk * dEv(1)                   ! 1/2 d tr(A)
 
   end subroutine dEdtSD
 
@@ -231,6 +235,9 @@ contains
 end module CS_GetEv_M
 
 ! $Log$
+! Revision 2.6  2004/02/20 04:49:07  vsnyder
+! Polish up some comments to make them consistent with the code
+!
 ! Revision 2.5  2003/12/19 20:46:18  vsnyder
 ! Beautify a comment
 !
