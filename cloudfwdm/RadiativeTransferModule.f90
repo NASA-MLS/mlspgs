@@ -76,9 +76,8 @@ contains
 
       INTEGER :: ICON                     ! CONTROL SWITCH
                                           ! 0 = CLEAR-SKY
-                                          ! 1 = CLEAR-SKY, 100% R.H. 
-                                          !     BELOW 100hPa
-                                          ! 2 = DEFAULT
+                                          ! 1 = Cloudy sky
+                                          ! 2 = Cloudy sky
                                           ! 3 = NEAR SIDE CLOUD ONLY
 
       REAL(r8) :: UAVE(L+1,L+1)           ! INCIDENT ANGLES FOR EACH TANGENT HT
@@ -212,8 +211,6 @@ contains
                      TSCAT(ISPI,IP,K)=TSCAT(ISPI,IP,K)+               &
      &                                2._r8*PHH(ISPI,IH,K)*TAVG*DU(IH)
                   ENDDO
-               ELSE
-                 TSCAT(ISPI,IP,K)=0._r8         !CLEAR SKY
                ENDIF
  1008       CONTINUE
  1009    CONTINUE
@@ -389,6 +386,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.11  2003/02/03 19:24:46  dwu
+! make it more efficient
+!
 ! Revision 1.10  2002/12/06 16:31:06  dwu
 ! Add a correction term to account for integration in the presence of temperature gradient
 !

@@ -13,6 +13,7 @@ module ClearSkyModule
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
       use SpectroscopyCatalog_m, only: CATALOG_T
+      USE Intrinsic,    only: l_clear
 
       IMPLICIT NONE
       Private
@@ -31,7 +32,7 @@ contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
                  &         F,RS,U,T,Z,TAU,tau_wet, tau_dry, Catalog, &
-                 &         Bill_Spectra,LosVel, ICON )
+                 &         Bill_Spectra,LosVel, i_saturation )
 
 !======================================================
 !     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
@@ -67,7 +68,7 @@ contains
       REAL(r8), intent(out) :: TAU(L)
       REAL(r8), intent(out) :: T(L)
       REAL(r8), intent(out) :: Z(L)
-      INTEGER, intent(in) :: ICON              ! CONTROL SWITCH
+      Integer, intent(in) :: i_saturation           ! clear-sky flag
 
 !-----------------------------------------------------
 ! Spectra Catalog 
@@ -159,7 +160,7 @@ contains
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
-           IF (ICON .ne. 0) then             ! save time for clear sky
+           IF (i_saturation /= l_clear ) then       ! save time for clear sky
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
 !               &        MOL,NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
@@ -181,7 +182,7 @@ contains
             & NS, DR, Catalog, LosVel)           
            TAU(I)=DR*Z(I)
            
-           IF (ICON .ne. 0) then            ! save time for clear sky
+           IF (i_saturation /= l_clear) then    ! save time for clear sky
            call get_beta_bill (T(I), P, F, 110._r8, VMR1, &
             & NS, DR, Catalog, LosVel)
            tau_wet(I)=DR*Z(I)
@@ -203,6 +204,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.22  2003/02/01 06:43:06  dwu
+! some fixes
+!
 ! Revision 1.21  2003/01/30 23:48:02  dwu
 ! add icon=-4 for min Tb and some clearups
 !
