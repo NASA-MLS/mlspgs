@@ -20,7 +20,8 @@ c	myshape = 4.*ff*v0*twth0/pi/((voffm*voffp)**2+4*(ff*twthm)**2)
 c	return
 
 c... Van Vleck-Weisskopf
- 	myshape = twthm/(voffm**2 + twth0**2) + twthp/(voffp**2 + twth0**2)
+ 	myshape=twthm / (voffm**2 + twth0**2) + 
+     +   twthp/(voffp**2 + twth0**2)
  	myshape = myshape * (ff/v0) /pi
 c...
 	return
