@@ -81,9 +81,9 @@ contains
       & Subtree
     use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
       & N_less_colon_less, N_named
-    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearUnderMask, &
-      & ClearVector, CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
-      & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
+    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearMask, ClearUnderMask, &
+      & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
+      & DestroyVectorInfo, DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
       & M_Tikhonov, Vector_T, VectorValue_T
 
@@ -824,21 +824,81 @@ contains
       end if
     end subroutine BoundMove
 
-    ! ----------------------------------------------  FillDiagVec  -----
-    subroutine FillDiagVec ( QuantityIndex, Value )
+    ! ----------------------------------------------  FillDiagQty  -----
+    subroutine FillDiagQty ( Diagnostics, QuantityIndex, Value )
       ! Put Value into the first element of the values field of the
       ! quantity of the Diagnostics vector given by QuantityIndex.
       ! We assume the Diagnostics vector is associated, so you better
       ! check before you call!
+      type (Vector_T), intent(inout) :: DIAGNOSTICS
       integer, intent(in) :: QuantityIndex
       real(r8), intent(in) :: Value
+      integer :: Latest
       type(vectorValue_T), pointer :: Diag_Qty    ! A quantity in the
                                         ! Diagnostics vector
       diag_qty => GetVectorQuantityByType ( diagnostics, &
         & quantityType=QuantityIndex, noError=.true. )
-      if ( associated(diag_qty) ) diag_qty%values(1,1) = value
-    end subroutine FillDiagVec
+      if ( associated(diag_qty) ) then
+        if ( diag_qty%template%noSurfs == 1 ) then
+          ! Just one 'surface', or no mask information
+          ! write this value out
+          diag_qty%values(1,1) = value
+        else
+          if ( .not. associated ( diag_qty%mask ) ) then
+            call CreateMask ( diag_qty )
+            diag_qty%mask = char (m_linalg )
+          end if
+          ! Multiple surfaces here, find the 'latest'
+          latest = count ( iand(ichar(diag_qty%mask(:,1)),m_linalg) == 0 )
+          if ( latest == diag_qty%template%noSurfs ) then
+            diag_qty%values ( :, 1 ) = &
+              & (/ diag_qty%values ( 2:latest, 1 ), value /)
+          else
+            diag_qty%values ( latest+1, 1 ) = value
+            call ClearMask ( diag_qty%mask(:,1), (/ latest /), m_linalg )
+          end if
+        end if
+      end if
+    end subroutine FillDiagQty
 
+    ! ----------------------------------------------  FillDiagVec ------
+    subroutine FillDiagVec ( diagnostics, aj, numJ, nwt_flag, &
+      & jacobian_rows, jacobian_cols )
+      use DNWT_Module, only: NWT_T
+      type(Vector_T), intent(inout) :: DIAGNOSTICS
+      type(Nwt_T), intent(in) :: AJ
+      integer, intent(in), optional :: NUMJ
+      integer, intent(in), optional :: NWT_FLAG
+      integer, intent(in), optional :: JACOBIAN_ROWS
+      integer, intent(in), optional :: JACOBIAN_COLS
+
+      call fillDiagQty ( diagnostics,  l_dnwt_ajn, aj%ajn )
+      call fillDiagQty ( diagnostics,  l_dnwt_axmax, aj%axmax )
+      call fillDiagQty ( diagnostics,  l_dnwt_cait, aj%cait )
+      call fillDiagQty ( diagnostics,  l_dnwt_chiSqMinNorm, aj%chiSqMinNorm )
+      call fillDiagQty ( diagnostics,  l_dnwt_chiSqNorm, aj%chiSqNorm )
+      call fillDiagQty ( diagnostics,  l_dnwt_diag, aj%diag )
+      call fillDiagQty ( diagnostics,  l_dnwt_dxdx, aj%dxdx )
+      call fillDiagQty ( diagnostics,  l_dnwt_dxdxl, aj%dxdxl )
+      call fillDiagQty ( diagnostics,  l_dnwt_dxn, aj%dxn )
+      call fillDiagQty ( diagnostics,  l_dnwt_dxnl, aj%dxnl )
+      call fillDiagQty ( diagnostics,  l_dnwt_fnmin, aj%fnmin )
+      call fillDiagQty ( diagnostics,  l_dnwt_fnorm, aj%fnorm )
+      call fillDiagQty ( diagnostics,  l_dnwt_gdx, aj%gdx )
+      call fillDiagQty ( diagnostics,  l_dnwt_gfac, aj%gfac )
+      call fillDiagQty ( diagnostics,  l_dnwt_gradn, aj%gradn )
+      call fillDiagQty ( diagnostics,  l_dnwt_sq, aj%sq )
+      call fillDiagQty ( diagnostics,  l_dnwt_sqt, aj%sqt )
+      if ( present ( numJ ) ) &
+        & call fillDiagQty ( diagnostics,  l_numJ, real(numJ, r8) )
+      if ( present ( nwt_flag ) ) &
+        & call fillDiagQty ( diagnostics,  l_dnwt_flag, real(nwt_flag,r8) )
+      if ( present ( jacobian_rows ) ) &
+        & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,r8) )
+      if ( present ( jacobian_cols ) ) &
+        & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,r8) )
+    end subroutine FillDiagVec
+    
     ! ----------------------------------------------  GetInBounds  -----
     subroutine GetInBounds ( X, Bound, Which )
       ! Put X above/below Bound.  Which specifies low or high bound.
@@ -1545,7 +1605,7 @@ contains
               & call dump_struct ( factored%m, &
               & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows, 1 )
+              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
               aj%fnorm = sqrt(aj%fnorm)
                 if ( index(switches,'sca') /= 0 ) &
                   & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
@@ -1588,19 +1648,22 @@ contains
           ! columns into diagnostic vector.
           jacobian_cols = sum(jacobian%col%nelts)
           jacobian_rows = sum(jacobian%row%nelts)
-          do j = 1, normalEquations%m%col%vec%template%noQuantities
-            if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
+          do j = 1, measurements%template%noQuantities
+            if ( associated(measurements%quantities(j)%mask) ) &
               & jacobian_rows = jacobian_rows - &
-              & countBits(normalEquations%m%col%vec%quantities(j)%mask, &
-                & what=m_linAlg)
+              &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
           end do
+          ! Correct for apriori information, note that there is an approximation here
+          ! we don't take any account of whether the a priori is used on an element
+          ! by element basis.
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
-          if ( got(f_hRegOrders) ) &
+          ! Correct for Tikhonov information.
+          if ( any ( got( (/f_hRegOrders, f_vRegOrders /) ) ) ) &
             & jacobian_rows = jacobian_rows + tikhonovRows
           ! Compute the normalised chiSquared statistics etc.
-          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows, 1 )
-          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows, 1 )
+          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
+          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
@@ -1729,6 +1792,9 @@ contains
           !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
           ! \delta x}$ above, so multiply by $\Sigma$ (which is our
           ! variable {\tt columnScaleVector}):
+          if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+            & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
+            & jacobian_cols=jacobian_cols )
           call copyVector ( v(dxUnScaled), v(dx) ) ! dxUnscaled = dx
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
@@ -1845,27 +1911,9 @@ contains
           ! STOP
         end select
       ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
-        if ( got(f_diagnostics) ) then
-          call fillDiagVec ( l_dnwt_ajn, aj%ajn )
-          call fillDiagVec ( l_dnwt_axmax, aj%axmax )
-          call fillDiagVec ( l_dnwt_cait, aj%cait )
-          call fillDiagVec ( l_dnwt_chiSqMinNorm, aj%chiSqMinNorm )
-          call fillDiagVec ( l_dnwt_chiSqNorm, aj%chiSqNorm )
-          call fillDiagVec ( l_dnwt_diag, aj%diag )
-          call fillDiagVec ( l_dnwt_dxdx, aj%dxdx )
-          call fillDiagVec ( l_dnwt_dxdxl, aj%dxdxl )
-          call fillDiagVec ( l_dnwt_dxn, aj%dxn )
-          call fillDiagVec ( l_dnwt_dxnl, aj%dxnl )
-          call fillDiagVec ( l_dnwt_flag, real(nwt_flag,r8) )
-          call fillDiagVec ( l_dnwt_fnmin, aj%fnmin )
-          call fillDiagVec ( l_dnwt_fnorm, aj%fnorm )
-          call fillDiagVec ( l_dnwt_gdx, aj%gdx )
-          call fillDiagVec ( l_dnwt_gfac, aj%gfac )
-          call fillDiagVec ( l_dnwt_gradn, aj%gradn )
-          call fillDiagVec ( l_dnwt_sq, aj%sq )
-          call fillDiagVec ( l_dnwt_sqt, aj%sqt )
-          call fillDiagVec ( l_numJ, real(numJ, r8))
-        end if
+        if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+          & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
+          & jacobian_cols=jacobian_cols )
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
           call snoop ( key=snoopKey, vectorDatabase=vectorDatabase, &
@@ -1900,32 +1948,26 @@ contains
             call output ( 'Begin covariance calculation at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
+            call output ( 'Counted ' )
+            call output ( jacobian_rows )
+            call output ( ' rows and ' )
+            call output ( jacobian_cols )
+            call output ( ' in the Jacobian matrix at ' )
+            call time_now ( t3 )
+            call output ( t3-t0, advance='yes' )
           end if
-        if ( got(f_diagnostics) ) then
-          call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
-          call fillDiagVec ( l_jacobian_rows, real(jacobian_rows,r8) )
-            if ( index(switches,'cov') /= 0 ) then
-              call output ( 'Counted ' )
-              call output ( jacobian_rows )
-              call output ( ' rows and ' )
-              call output ( jacobian_cols )
-              call output ( ' in the Jacobian matrix at ' )
-              call time_now ( t3 )
-              call output ( t3-t0, advance='yes' )
-            end if
-        end if
           call time_now ( t1 )
-        call createEmptyMatrix ( temp, 0, state, state )
-        call invertCholesky ( factored, temp ) ! U^{-1}
+          call createEmptyMatrix ( temp, 0, state, state )
+          call invertCholesky ( factored, temp ) ! U^{-1}
           if ( index(switches,'cov') /= 0 ) then
             call output ( &
               & 'Inverted the Cholesky factor of the normal equations at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
-        preserveMatrixName = outputCovariance%m%name
-        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
-          & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
+          preserveMatrixName = outputCovariance%m%name
+          call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
+            & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
           if ( index(switches,'cov') /= 0 ) then
             call output ( 'Computed ' )
             if ( .not. any ( got ( (/ f_outputCovariance, f_average /) ) ) ) &
@@ -1934,22 +1976,22 @@ contains
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
-        call destroyMatrix ( temp )
+          call destroyMatrix ( temp )
           call add_to_retrieval_timing( 'cholesky_invert', t1 )
-        ! Scale the covariance
-        if ( columnScaling /= l_none ) then
-          call columnScale ( outputCovariance%m, v(columnScaleVector) )
-          call rowScale ( v(columnScaleVector), outputCovariance%m )
+          ! Scale the covariance
+          if ( columnScaling /= l_none ) then
+            call columnScale ( outputCovariance%m, v(columnScaleVector) )
+            call rowScale ( v(columnScaleVector), outputCovariance%m )
             if ( index(switches,'cov') /= 0 ) then
               call output ( 'Scaled the Covariance matrix at ' )
               call time_now ( t3 )
               call output ( t3-t0, advance='yes' )
             end if
+          end if
+          outputCovariance%m%name = preserveMatrixName
+          if ( associated(outputSD) ) &
+            & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
         end if
-        outputCovariance%m%name = preserveMatrixName
-        if ( associated(outputSD) ) &
-          & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
-      end if
 
       ! Compute the averaging kernel
       if ( got(f_average) ) then
@@ -3271,6 +3313,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.200  2002/10/25 22:24:42  livesey
+! Changed the diagnostic vector handling.
+!
 ! Revision 2.199  2002/10/25 01:13:46  livesey
 ! Jacobian rows/cols etc. now actually describe the jacobian.
 !
