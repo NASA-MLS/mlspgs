@@ -92,12 +92,15 @@ else
    $(blaslib_f)
 endif
 
+#Any sources to explicitly exclude from dependency list?
+#OMIT_SRCS := $(OMIT_SRCS) -d synoptic_prog.f90
+
 PROG=mlsl3d
 
 #----------------------- Build instructions
 
 $(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 	@case "$(FFTW_ROOT)" in \
@@ -130,15 +133,11 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
-#The following explicitly excludes synoptic_prog from mlsl3
-#(otherwise makemakedep.sh assumes every .f90 needed)
 depends:
-	$(MLSBIN)/makemakedep.sh \
-        -d synoptic_prog.f90 \
-	$(depends_where) 
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(depends_where) 
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -177,6 +176,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.24  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 1.23  2001/07/19 22:48:52  pwagner
 # Builds libmlsl3.a; renamed prog to mlsl3d
 #

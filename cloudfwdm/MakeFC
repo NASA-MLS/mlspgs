@@ -96,6 +96,9 @@ endif
 #Where else to look for USEd and INCLUDED files to add to dependency list
 depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
 
+#Any sources to explicitly exclude from dependency list?
+#OMIT_SRCS := $(OMIT_SRCS)
+
 FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
 
 PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
@@ -130,8 +133,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh \
-	$(depends_where) 
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(depends_where) 
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
@@ -172,6 +174,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.5  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 1.4  2001/08/07 23:38:50  pwagner
 # Did away with -f77 option to dependency calculation
 #

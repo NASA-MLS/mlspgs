@@ -82,6 +82,9 @@ else
    $(blaslib_f)
 endif
 
+#Any sources to explicitly exclude from dependency list?
+#OMIT_SRCS := $(OMIT_SRCS) -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 
+
 #PROG=l2_test
 PROG=libfwdmdl.a
 
@@ -114,8 +117,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 \
-		   $(libmls_sources) $(srclib)
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(libmls_sources) $(srclib)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
@@ -156,6 +158,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.20  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 1.19  2001/07/25 23:19:58  pwagner
 # Removed unnecessary lib...a from target prereqs
 #
