@@ -251,7 +251,7 @@ contains
 
 !------------------------------------------------------------------
   subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path, z_path_c, &
-        & Catalog, beta_group, gl_slabs, path_inds, beta_path,    &
+        & Catalog, beta_group, gl_slabs, path_inds, beta_path_cloud,    &
         & ICON, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -286,7 +286,7 @@ contains
 
 ! outputs
 
-    real(rp), intent(out) :: beta_path(:,:) ! path beta for each species
+    real(rp), intent(out) :: beta_path_cloud(:) ! path beta for each species
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -300,13 +300,10 @@ contains
 
 ! begin the code
 
-    no_mol = size(beta_group)
     n_path = size(path_inds)
 
-    beta_path = 0.0
+    beta_path_cloud = 0.0
 
-    do i = 1, no_mol
-      do n = 1, beta_group(i)%n_elements         
         do j = 1, n_path
           k = path_inds(j)
 
@@ -314,11 +311,9 @@ contains
                           &  WC(:,k), IPSD(k), N, NU, NUA, NAB, NR,       &
                           &  cld_ext, W0, PHH                )      
 
-            beta_path(j,i) = beta_path(j,i) + cld_ext 
+            beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
 
          end do
-      end do
-    end do
 
   end subroutine Get_Beta_Path_Cloud
 
@@ -330,6 +325,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.25  2003/02/11 00:48:18  jonathan
+! changes made after adding get_beta_path_cloud
+!
 ! Revision 2.24  2003/02/07 01:57:19  vsnyder
 ! Delete USE RHIFromH2O because it's not used
 !
