@@ -22,7 +22,7 @@ MakeFName = MakeFC
 
 # ------------------- Automatic internalcleanup
 # We use COPY_NUMBER to keep track of the number of times
-# the targets update or depends are built
+# the functional targets update or depends are "built", i.e. performed
 # every tenth time an internalcleanup is automatically performed
 
 # This is how big COPY_NUMBER may grow before being reset
@@ -96,13 +96,14 @@ SHELL = /bin/sh
 #                  within mlspgs sub-directories with customized Makefiles
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
+# ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
 # help           -- prints some info on how to build the mls software
 # disthelp       -- prints README.MakeFC--a long file
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than "make -f $(MakeFName)"
 # update         -- replaces customized Makefiles with latest versions
-#                    also recalculates dependenencies
+#                    also recalculates dependenencies, removes orphaned .o, .mod
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -120,7 +121,7 @@ SHELL = /bin/sh
 # tar            -- creates archive of mlspgs suitable for SIPS
 #                  (see EVERYTHING variable)
 # substar        -- creates separate archives of subdirs; then tar them
-#                   (also util and srclib are tarred up in this case)
+#                   (also util, notes and srclib are tarred up in this case)
 
 # --------------- SETTING definitions
 # FOPTS              Override default compiler option; note that you must
@@ -184,7 +185,7 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 # so it will be bundled up by tar
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
-EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables\
+EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables notes\
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -193,6 +194,7 @@ EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables\
 TAR=tar
 
 # These are all the configurations that will be removed by clean_all
+# If it becomes more widely used, I could add Abs.Linux
 EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 
 tests_sub_dirs := $(shell echo tests/*)
@@ -203,7 +205,8 @@ tests_sub_dirs := $(shell echo tests/*)
 SUBDIRS_UPDATE = depends ghostbuster
 
 # This determines the command by which MakeFC looks like Makefile
-# Choose either "link" or "copy"; warning--link once caused cvs probs
+# Choose either "link" or "copy"; warning--link has caused cvs probs
+# so recommend leaving it copy
 LOOKS_LIKE_MakeFC = copy
 
 ifeq ($(LOOKS_LIKE_MakeFC),copy)
@@ -396,6 +399,9 @@ substars:
 	echo "tar-ing util"; \
         rm -f util.tar; \
 	$(TAR) hcvf util.tar util --exclude CVS ; \
+	echo "tar-ing notes"; \
+        rm -f notes.tar; \
+	$(TAR) hcvf notes.tar notes --exclude CVS ; \
 	echo "tar-ing *.tar"; \
 	rm -f mlspgs_subs.tar
 
@@ -543,6 +549,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.33  2001/05/14 23:58:42  pwagner
+# default .configure name now set by environment
+#
 # Revision 1.32  2001/05/14 17:37:14  pwagner
 # .configure now a variable file name
 #
