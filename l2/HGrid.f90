@@ -17,7 +17,7 @@ module HGrid                    ! Horizontal grid information
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPDATA_T
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8, TAI93_RANGE_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, InterpolateValues
@@ -94,7 +94,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, l1bInfo, l2gpDatabase, chunk ) result ( hGrid )
+    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
   ! This routine creates an hGrid based on the user requests.
 
@@ -103,6 +103,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT               ! Root of hGrid subtree
     type (L1BInfo_T), intent(in) :: L1BINFO   ! File handles for l1b data
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
+    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK    ! This chunk
 
     ! Local variables
@@ -235,7 +236,7 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
       else
-        call CreateRegularHGrid ( l1bInfo, chunk, spacing, origin, &
+        call CreateRegularHGrid ( l1bInfo, processingRange, chunk, spacing, origin, &
           & trim(instrumentModuleName), hGrid )
       end if
 
@@ -508,9 +509,10 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! ----------------------------------- CreateRegularHGrid ------------
-  subroutine CreateRegularHGrid ( l1bInfo, chunk, &
+  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, hGrid )
     type (L1BInfo_T), intent(in) :: L1BINFO
+    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in) :: CHUNK
     real(r8), intent(in) :: SPACING
     real(r8), intent(in) :: ORIGIN
@@ -526,10 +528,13 @@ contains ! =====     Public Procedures     =============================
 
     real(r8) :: MINANGLE                ! Smallest angle in chunk
     real(r8) :: MAXANGLE                ! Largest angle in chunk
-    real(r8) :: FIRST                   ! Origin of hGrid
+    real(r8) :: FIRST                   ! First point in of hGrid
+    real(r8) :: LAST                    ! Last point in hGrid
     real(r8), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
     real(r8) :: DAYSTART                ! Start of day
     real(r8) :: INCLINE                 ! Mean orbital inclination
+    real(r8) :: DELTA                   ! A change in angle
+    real(r8) :: NEXTANGLE               ! First non ovl. MAF for next chunk
 
     type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
 
@@ -540,20 +545,56 @@ contains ! =====     Public Procedures     =============================
     call ChooseOptimumLon0 ( l1bInfo, chunk )
 
     ! First we're going to work out the geodetic angle range
+    ! Read an extra MAF if possible, as we may use it later
+    ! when computing the overlaps.
     call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
       & l1bField, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, &
+      & lastMAF=chunk%lastMAFIndex+1 )
+    noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngle = maxval ( l1bField%dpField(1,:,noMAFs) )
     nullify ( mif1GeodAngle )
     call Allocate_test ( mif1GeodAngle, noMAFs, 'mif1Geodangle', ModuleName )
-    mif1GeodAngle = l1bField%dpField(1,1,:)
+    mif1GeodAngle = l1bField%dpField(1,1,1:noMAFs)
+
+    ! Get or guess the start of the next chunk.
+    i = noMAFs - chunk%noMAFsUpperOverlap + 1
+    if ( i < noMAFs + 1 ) then
+      nextAngle = l1bField%dpField(1,1,i)
+    else
+      nextAngle = maxAngle + spacing
+    endif
+
     call DeallocateL1BData ( l1bField )
 
     ! Now choose the geodetic angles for the hGrid
-    first = spacing * int ( (origin+minAngle)/spacing )
-    if ( minAngle < 0 ) first = first - spacing
-    hGrid%noProfs = int((maxAngle-first)/spacing)
+    ! First identify the first point - the one closest to the start of the first MAF
+    first = origin + spacing * int ( (minAngle-origin)/spacing )
+    delta = first - minAngle            ! So +ve means first could be smaller
+    if ( delta > spacing/2 ) then
+      first = first - spacing
+    else if ( delta < -spacing/2 ) then
+      first = first + spacing
+    end if
+
+    ! Now work out the last point in a similar manner
+    last = origin + spacing * int ( (maxAngle-origin)/spacing )
+    delta = last - maxAngle            ! So +ve means last could be smaller
+    if ( delta > spacing/2 ) then
+      last = last - spacing
+    else if ( delta < -spacing/2 ) then
+      last = last + spacing
+    end if
+
+    ! Now, for the moment at least I'm going to 'outset' these.
+    ! This is to ensure that even if one's asked for overlaps=0 in
+    ! chunkDivide, that we'll not get any funny gaps
+    first = first - spacing
+    last = last + spacing
+
+    ! Now work out how many profiles that is and lay them down
+    hGrid%noProfs = nint( (last-first) / spacing ) + 1
     call CreateEmptyHGrid ( hGrid )
     do i = 1, hGrid%noProfs
       hGrid%phi(i) = first + (i-1)*spacing
@@ -584,7 +625,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Solar time
     ! First get fractional day, note this neglects leap seconds.
-    ! Perhaps fix this later !???????? NJL
+    ! Perhaps fix this later !???????? NJL. We do have access to the
+    ! UTC ascii time field, perhaps we could use that?
     hGrid%solarTime = modulo ( hGrid%time, secondsInDay ) / secondsInDay
     ! Now correct for longitude and convert to hours
     hGrid%solarTime = 24.0 * ( hGrid%solarTime + hGrid%lon/360.0 )
@@ -616,9 +658,24 @@ contains ! =====     Public Procedures     =============================
     ! is above the first non overlapped MAF
     call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
       & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
-    call Hunt ( hGrid%phi, mif1GeodAngle(noMAFs-chunk%noMAFsUpperOverlap), &
-      & hGrid%noProfsUpperOverlap, allowTopValue=.true. )
+    ! So the hunt returns the index of the last overlapped, which is
+    ! the number we want to be in the overlap.
+    call Hunt ( hGrid%phi, nextAngle, &
+      & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    ! Here the hunt returns the index of the last non overlapped profile
+    ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+
+    ! Now, we want to ensure we don't spill beyond the processing time range
+    if ( hGrid%time(hGrid%noProfsLowerOverlap) < processingRange%startTime ) &
+      & call Hunt ( hGrid%time, processingRange%startTime, &
+      &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
+      & processingRange%endTime ) then
+      call Hunt ( hGrid%time, processingRange%endTime, &
+        & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+      hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+    end if
 
     ! That's it
     call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
@@ -731,6 +788,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.21  2001/12/14 01:43:02  livesey
+! Various bug fixes
+!
 ! Revision 2.20  2001/12/10 20:21:36  livesey
 ! Added code for regular HGrids
 !
