@@ -40,9 +40,9 @@
       DO I=1,NH-1
         TRANS(I)=0._r8
       ENDDO
-        TRANS(NH-1) = DELTAU(NH-1)
+        TRANS(NH-1) = DELTAU(NH-1)-DELTAUc(NH-1)
       DO I=NH-2,1,-1
-        TRANS(I)=TRANS(I+1)+DELTAU(I)
+        TRANS(I)=TRANS(I+1)+DELTAU(I)-DELTAUc(I)   ! only clear sky absorption
       ENDDO
 
       Trans = exp(- Trans)
