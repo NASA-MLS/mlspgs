@@ -53,7 +53,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, chunk, &
-       & quantityTemplates, vectorTemplates, VGrids, l2gpDatabase, mifGeolocation )
+       & quantityTemplates, vectorTemplates, VGrids, HGrids, &
+       & l2gpDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
 
@@ -64,11 +65,11 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (VGrid_T), dimension(:), pointer :: vGrids
+    type (HGrid_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
-    type (HGrid_T), dimension(:), pointer :: HGrids
 
     integer :: I                ! Loop counter
     integer :: InstrumentModuleIndex ! Loop counter
@@ -89,8 +90,6 @@ contains ! =====     Public Procedures     =============================
     ! quantities saving file IO and memory.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
-
-    nullify ( hGrids )
 
     allocate ( mifGeolocation(size(modules)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -155,7 +154,6 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( "MLSL2Construct" )
     end if
 
-    call destroyHGridDatabase ( hGrids )
     if ( timing ) call sayTIme
 
   contains
@@ -169,17 +167,19 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
   subroutine MLSL2DeConstruct ( quantityTemplates, vectorTemplates, &
-    &                           mifGeolocation )
+    &                           mifGeolocation, hGrids )
 
   ! DeConstruct the Quantity and Vector template databases.
 
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    type (HGrid_T), dimension(:), pointer :: hGrids
 
     call destroyVectorTemplateDatabase ( vectorTemplates )
     call destroyQuantityTemplateDatabase ( quantityTemplates, ignoreMinorFrame=.true. )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
+    call destroyHGridDatabase ( hGrids )
   end subroutine MLSL2DeConstruct
 
 !=============================================================================
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.23  2001/05/10 00:43:12  livesey
+! Moved ownership of hGrids into tree walker to allow multiple calls
+!
 ! Revision 2.22  2001/04/28 01:43:10  vsnyder
 ! Improved the timing message
 !
