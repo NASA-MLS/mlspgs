@@ -13,7 +13,7 @@ module L1BData
     & DFNT_FLOAT32
   use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
-  use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData
+  use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
@@ -673,7 +673,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: SDS_INDEX
     integer :: STATUS
 
-    integer, dimension(:), pointer :: COUNTERMAF_PTR
+    ! integer, dimension(:), pointer :: COUNTERMAF_PTR
     integer(kind=hSize_t), dimension(:), pointer :: DIMS
     integer(kind=hSize_t), dimension(:), pointer :: MAXDIMS
 
@@ -685,31 +685,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
-
-    ! Find data sets for counterMAF & quantity by name
-
-    if ( .not. IsHDF5DSPresent(L1FileHandle, 'CounterMAF') ) then
-      if ( .not. JUSTLIKEL2AUX ) then
-        flag = NOCOUNTERMAFINDX
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find index of counterMAF data set.')
-      else
-        sds1_id = SD_NO_COUNTERMAF
-      endif
-    else
-
-      l1bData%L1BName = quantityName
-      allocate(countermaf_ptr(MAX_NOMAFS))
-      countermaf_ptr = 0
-      call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', countermaf_ptr)
-      if ( sds1_id == -1) then
-        flag = NOCOUNTERMAFID
-        if ( MyNeverFail ) return
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Failed to find identifier of counterMAF data set.')
-      endif
-    endif
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
       flag = NOQUANTITYINDEX
@@ -724,6 +699,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     allocate(dims(rank), maxDims(rank))
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
+    nullify(MLSAuxData%RealField, MLSAuxData%DpField, &
+      & MLSAuxData%IntField, MLSAuxData%CharField)
     select case (trim(Qtype))
     case ('real')
       allocate( MLSAuxData%RealField(dims(1),dims(2),dims(3)),stat=status)
@@ -738,8 +715,90 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( MLSAuxData%CharField(dims(1),dims(2),dims(3)),stat=status)
       MLSAuxData%CharField = '(undefined)'
     end select
+
+    ! Check input arguments, set noMAFs
+
+    numMAFs = dim_sizes(rank)
+
+    if ( present ( firstMAF ) ) then
+      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
+        flag = FIRSTMAFNOTFOUND
+        if ( MyNeverFail ) return
+        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & input_err // 'firstMAF (bad chunkNo?)' )
+      endif
+      l1bData%firstMAF = firstMAF
+    else
+      l1bData%firstMAF = 0
+    end if
+
+    if ( present (lastMAF) ) then
+      if ( lastMAF < l1bData%firstMAF ) then
+        flag = LASTMAFNOTFOUND
+        if ( MyNeverFail ) return
+        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & input_err // 'last' )
+      endif
+      if ( lastMAF >= numMAFs ) then
+        l1bData%noMAFs = numMAFs - l1bData%firstMAF
+      else
+        l1bData%noMAFs = lastMAF - l1bData%firstMAF + 1
+      end if
+    else
+      l1bData%noMAFs = numMAFs - l1bData%firstMAF
+    end if
+
+    l1bData%L1BName = quantityName
+
+    call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
+      & 'counterMAF', ModuleName )
+    ! Find data sets for counterMAF & quantity by name
+
+    if ( .not. IsHDF5DSPresent(L1FileHandle, 'CounterMAF') ) then
+      if ( .not. JUSTLIKEL2AUX ) then
+        flag = NOCOUNTERMAFINDX
+        if ( MyNeverFail ) return
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to find index of counterMAF data set.')
+      else
+        sds1_id = SD_NO_COUNTERMAF
+        ! Since we aren't reading these, just make them internally consistent
+        do i = 1, l1bData%noMAFs
+          l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
+        enddo
+      endif
+    else
+
+      ! allocate(countermaf_ptr(MAX_NOMAFS))
+      ! countermaf_ptr = 0
+      call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf)
+      if ( sds1_id == -1) then
+        flag = NOCOUNTERMAFID
+        if ( MyNeverFail ) return
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to find identifier of counterMAF data set.')
+      endif
+    endif
+
     call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
       & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
+    select case (trim(Qtype))
+    case ('real')
+      allocate( l1bData%DpField(dims(1),dims(2),dims(3)),stat=status)
+      l1bData%DpField = MLSAuxData%RealField
+    case ('double')    
+      allocate( l1bData%DpField(dims(1),dims(2),dims(3)),stat=status)
+      l1bData%DpField = MLSAuxData%DpField
+    case ('integer')  
+      allocate( l1bdata%IntField(dims(1),dims(2),dims(3)),stat=status)
+      l1bdata%IntField = MLSAuxData%IntField
+    case ('character') 
+      allocate ( l1bData%charField(dims(1),dims(2),dims(3)), STAT=alloc_err )
+      l1bData%charField = MLSAuxData%CharField
+    end select
+    
+    ! Avoid memory leaks
+    call Deallocate_MLSAuxData(MLSAuxData)
   end subroutine ReadL1BData_hdf5
 
   ! ---------------------------------------------  announce_error  -----
@@ -806,6 +865,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.23  2002/10/05 00:09:16  pwagner
+! Finished hdf5 version of readl1bdata; untested however ..
+!
 ! Revision 2.22  2002/10/03 23:04:11  pwagner
 ! hdfVersion now inout instead of intent(in)
 !
