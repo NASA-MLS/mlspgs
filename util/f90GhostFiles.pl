@@ -254,7 +254,9 @@ print STDERR "modules: @modules \n \n" unless !($debug);
     $arg_number = 0;
     $is_ghost = "true";
       while ($is_ghost ne "false" && $arg_number < $num_sources) {
-         if ($file ne $modules[$arg_number]) {
+#       We have decided to store only lower-case module names in modules, so ..
+#         if ($file ne $modules[$arg_number]) {
+         if (&toLower($file) ne $modules[$arg_number]) {
          } else {
           $is_ghost = "false";
             }
@@ -275,4 +277,7 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.1  2001/05/01 17:03:31  pwagner
+# First commit
+#
 #
