@@ -23,11 +23,12 @@ module Two_D_Hydrostatic_m
 
 ! Compute the 2 dimensional hydrostatic stuff
 
-  use Geometry, only: earthRadA, earthRadB, PI
+  use Geometry, only: earthRadA, earthRadB
   use Get_eta_m, only: get_eta
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
   use MLSCommon, only: RP, IP
+  use Units, only: PI
 
 ! inputs:
 
@@ -122,6 +123,10 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.7  2002/09/25 22:55:12  vsnyder
+! Move USE statements from module scope to procedure scope.  Convert
+! allocatable arrays to automatic arrays.  Cosmetic changes.
+!
 ! Revision 2.6  2002/07/05 07:52:53  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !

@@ -35,9 +35,10 @@ contains
 
     use Allocate_deallocate, only: Allocate_test, Deallocate_test
     use Dump_0, only: dump
-    use Geometry, only: EarthRadA, EarthRadB, Pi
+    use Geometry, only: EarthRadA, EarthRadB
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSCommon, only: RP, IP
+    use Units, only: PI
 
     ! inputs:
 
@@ -565,6 +566,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.11  2002/09/25 23:35:13  vsnyder
+! Simplify equivalent earth radius, insert copyright notice
+!
 ! Revision 2.10  2002/09/06 18:16:41  vsnyder
 ! Cosmetic changes, move USEs from module scope to procedure scope
 !
