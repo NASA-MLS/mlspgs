@@ -116,8 +116,8 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 # so it will be bundled up by tar_sips
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
-EVERYTHING = CVS $(SUBDIRS) util blas srclib pcf idllib sids tables\
-   $(MakeFName) README.$(MakeFName) PCF.v0-01
+EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables\
+   $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -317,6 +317,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.21  2001/03/08 20:59:53  pwagner
+# Added TAR=... option
+#
 # Revision 1.20  2001/03/08 00:53:21  pwagner
 # l2_NEEDS_fwdmdl now set by default
 #
