@@ -52,7 +52,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_A, F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
-      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
+      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -79,8 +79,8 @@ contains ! =====     Public Procedures     =============================
       & L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
-      & L_L2AUX, L_LOSVEL, L_MANIPULATE, L_NEGATIVEPRECISION, &
-      & L_NOISEBANDWIDTH, L_NONE, &
+      & L_L2AUX, L_LOSVEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
+      & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
       & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
@@ -240,6 +240,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: BQUANTITY
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
+    type (vectorValue_T), pointer :: GPHQUANTITY
     type (vectorValue_T), pointer :: H2OPRECISIONQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
     type (vectorValue_T), pointer :: LOSQTY
@@ -297,6 +298,8 @@ contains ! =====     Public Procedures     =============================
     integer :: FRACTION                 ! Index of fraction vector in database
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
+    integer :: GPHQUANTITYINDEX         ! In the source vector
+    integer :: GPHVECTORINDEX           ! In the vector database
     logical, dimension(field_first:field_last) :: GOT
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
@@ -589,6 +592,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
             geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
             geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_gphQuantity ) ! For magnetic field fill
+            gphVectorIndex = decoration(decoration(subtree(1,gson)))
+            gphQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_h2oQuantity ) ! For hydrostatic or rhi
             h2oVectorIndex = decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -927,6 +933,13 @@ contains ! =====     Public Procedures     =============================
           end if
           call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
             & manipulation, key )
+
+        case ( l_magneticModel ) ! --------------------- Magnetic Model --
+          if ( .not. got ( f_gphQuantity ) ) &
+            & call Announce_error ( key, 0, 'gphQuantity not supplied' )
+          gphQuantity => GetVectorQtyByTemplateIndex ( vectors(gphVectorIndex), &
+            & gphQuantityIndex )
+          call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )          
           
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
@@ -4154,6 +4167,72 @@ contains ! =====     Public Procedures     =============================
         & (/ qty%template%instanceLen, qty%template%noInstances /) )
     end subroutine FillVectorQuantityFromL2AUX
 
+    ! --------------------------------------- FillQuantityUsingMagneticModel --
+    subroutine FillQuantityUsingMagneticModel ( qty, gph, key )
+!      use MichaelsF77Code, only: MyMagneticModel
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) :: GPH
+      integer, intent(in) :: KEY
+      ! Local variables
+      integer :: INSTANCE               ! Loop counter
+      integer :: SURF                   ! Loop counter
+      integer :: SURFOR1                ! Index
+
+      ! Executable code
+      if ( .not. DoVGridsMatch ( qty, gph ) ) then
+        call Announce_Error ( key, 0, &
+          & 'Quantity and GPH quantity not on same vertical grid' )
+        return
+      end if
+      if ( .not. DoHGridsMatch ( qty, gph ) ) then
+        call Announce_Error ( key, 0, &
+          & 'Quantity and GPH quantity not on same horizontal grid' )
+        return
+      end if
+      if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
+        & frequencyCoordinate=(/ l_xyz /) ) ) then
+        call Announce_Error ( key, 0, &
+          & 'Quantity does not describe magnetic field' )
+        return
+      end if
+      if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_gph/) ) ) then
+        call Announce_Error ( key, 0, &
+          & 'GPH quantity does not describe GPH field' )
+        return
+      end if
+
+      ! Extent:
+      ! qty%template%noInstances, qty%template%noSurfs
+
+      ! Latitude, longitude, time (s since 1Jan93) etc:
+      ! qty%template%geodLat(1,<profile>)
+
+      ! Values for GPH:
+      ! gph%values(<surface>,<profile>)
+
+      ! Values for mag field
+      ! qty%values(3*<surface>, <profile>)
+
+      ! Remember, arrays start from 1, so
+      ! qty%values ( surf*3-2, prof ) = xCalculation
+      ! qty%values ( surf*3-1, prof ) = yCalculation
+      ! qty%values ( surf*3, prof ) = zCalculation
+
+      do instance = 1, qty%template%noInstances
+        do surf = 1, qty%template%noSurfs
+          if ( qty%template%stacked ) then
+            surfOr1 = 1
+          else
+            surfOr1 = surf
+          end if
+!           qty%values ( surf*3-2 : surf*3 ) = &
+!             & MyMagenticModel ( qty%template%geodLat(surfOr1,instance), &
+!             & qty%template%lon(surfOr1,instance), gph%values(surf,instance) )
+        end do
+      end do
+
+    end subroutine FillQuantityUsingMagneticModel
+
     ! ------------------------------------------- FillQtyFromInterpolatedQty
     subroutine FillQtyFromInterpolatedQty ( qty, source, key )
       type (VectorValue_T), intent(inout) :: QTY
@@ -4686,6 +4765,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.169  2003/01/07 23:46:38  livesey
+! Added magentic model
+!
 ! Revision 2.168  2002/11/29 22:46:15  livesey
 ! Tidyup on l2aux fill
 !
