@@ -36,6 +36,7 @@ module Open_Init
   use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
     &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
     &    PGSTD_E_NO_LEAP_SECS
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
@@ -154,7 +155,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
@@ -404,7 +405,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -593,6 +594,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.58  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.57  2001/11/01 21:06:17  pwagner
 ! Fixed if block; added toc
 !
