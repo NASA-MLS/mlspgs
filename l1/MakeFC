@@ -59,7 +59,8 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+#wildcard seems to no longer work right (maybe some change to our suns?)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
 
 PROG=mlsl1
 
@@ -127,6 +128,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.11  2001/04/12 22:03:08  pwagner
+# Changes to lib or fwdmdl trigger rebuilds even on suns
+#
 # Revision 2.10  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #
