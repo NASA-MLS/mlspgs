@@ -29,7 +29,8 @@ program ConvertPFA
 
   ! The output file format is
 
-  ! nTemps, nPress, nMol, velLin, len_trim(signal), trim(signal)
+  ! nTemps, nPress, nMol, velLin, len_trim(signal), trim(signal),
+  !   vStart, vStep, tStart, tStep
 
   ! absorption(:nTemps,:nPress), dAbsDwc(:nTemps,:nPress),
   ! dAbsDnc(:nTemps,:nPress), dAbsDnu(:nTemps,:nPress)
@@ -204,6 +205,11 @@ contains
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.6  2004/10/05 23:03:24  vsnyder
+! Convert -Inf in absorption to -Huge; Convert NaN in derivatives to zero.
+! Write temperature and pressure grid start and step into output file.
+! Add options to specify temperature and pressure grid names.
+!
 ! Revision 1.5  2004/07/16 20:15:00  vsnyder
 ! Add a quotation mark at end of Signals field
 !
