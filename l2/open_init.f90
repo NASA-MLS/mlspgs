@@ -17,13 +17,11 @@ module Open_Init
     &                mlspcf_pcf_start, PENALTY_FOR_NO_METADATA
   use Output_m, only: Output
   use PCFHdr, only: CreatePCFAnnotation
-  use SDPToolkit, only: &
-    &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
+  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSTD_E_NO_LEAP_SECS
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use TREE, only: &
-    &             SUBTREE, DUMP_TREE_NODE, SOURCE_REF
+  use TREE, only: SUBTREE, DUMP_TREE_NODE, SOURCE_REF
   use WriteMetadata, only: PCFData_T
 
   implicit none
@@ -49,8 +47,8 @@ contains ! =====     Public Procedures     =============================
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
     error = 0
-    if (associated(l1bInfo%L1BRADIDs)) then
-       deallocate( l1bInfo%L1BRADIDs, stat=status )
+    if ( associated(l1bInfo%L1BRADIDs) ) then
+       deallocate ( l1bInfo%L1BRADIDs, stat=status )
        if ( status /= 0 ) then
        ! call MLSMessage ( MLSMSG_Error, ModuleName, &
        !     & MLSMSG_DeAllocate // "l1bInfo" )
@@ -80,27 +78,27 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: CCSDSEndId = 10412
     integer, parameter :: CCSDSStartId = 10411
 
-    character(len=*), parameter :: DEFAULTANTEXT= &
+    character(len=*), parameter :: DEFAULTANTEXT = &
 	 & 'PCF file number missing from PCF--add this line'
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
-    integer :: ifl1
+    integer :: Ifl1
     integer :: L1FileHandle, L1_Version
     character (LEN=FileNameLen) :: L1physicalFilename
-    integer :: returnStatus
-    integer :: sd_id
-    integer :: STATUS, size ! From allocate
+    integer :: ReturnStatus
+    integer :: SD_id
+    integer :: STATUS, Size ! From allocate
 
-    character (len=FileNameLen) :: name
+    character (len=FileNameLen) :: Name
 
-    integer ::  indx, mlspcf_log, version
+    integer ::  Indx, Mlspcf_log, Version
 
-    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
+    integer :: PGS_td_utctotai, PGS_pc_getconfigdata
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
 
-    if(DEBUG) call announce_error(0, &
+    if ( DEBUG ) call announce_error(0, &
       & 'Read the PCF into an annotation for file headers')
 
 ! Read the PCF into an annotation for file headers
@@ -111,7 +109,7 @@ contains ! =====     Public Procedures     =============================
       call createPCFAnnotation(mlspcf_pcf_start, anText)
     else
       call announce_error ( 0, DEFAULTANTEXT )
-      size = LEN(DEFAULTANTEXT) + 1
+      size = len(DEFAULTANTEXT) + 1
       allocate ( anText(size), STAT=Status )
       anText(1:size-1) = DEFAULTANTEXT(1:size-1)
       error=PENALTY_FOR_NO_METADATA
@@ -119,7 +117,7 @@ contains ! =====     Public Procedures     =============================
 
     ifl1 = 0
 
-    if(DEBUG) call announce_error(0, 'Opening L1 RAD files')
+    if ( DEBUG ) call announce_error(0, 'Opening L1 RAD files')
 
     ! Open L1 RAD files
     do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -130,13 +128,13 @@ contains ! =====     Public Procedures     =============================
       returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
         & L1physicalFilename)
 
-      if (returnStatus == PGS_S_SUCCESS) then
+      if ( returnStatus == PGS_S_SUCCESS ) then
 
         ! Open the HDF file and initialize the SD interface
 
         ! Allocate L1BRADIDs
 
-        allocate( l1bInfo%L1BRADIDs(10), stat=status )
+        allocate ( l1bInfo%L1BRADIDs(10), stat=status )
         if ( status /= 0 ) then
 !		  	call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & MLSMSG_Allocate // "l1bInfo" )
@@ -144,11 +142,11 @@ contains ! =====     Public Procedures     =============================
 			endif
 
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
-        if (sd_id == -1) then
+        if ( sd_id == -1 ) then
 !          call MLSMessage ( MLSMSG_Error, ModuleName, &
 !            & "Error opening L1RAD file "//L1physicalFilename )
-				call announce_error(0, &
-				& 'Error opening L1RAD file: ' //L1physicalFilename)
+	  call announce_error(0, &
+	  & 'Error opening L1RAD file: ' //L1physicalFilename)
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
@@ -156,7 +154,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
-    !if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !if ( ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & "Could not find any L1BRAD files" )
 
     if ( DEBUG ) call announce_error(0, 'Opening LOA file')
@@ -166,16 +164,16 @@ contains ! =====     Public Procedures     =============================
     returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
       & L1physicalFilename)
 
-    if (returnStatus == PGS_S_SUCCESS) then
+    if ( returnStatus == PGS_S_SUCCESS ) then
 
       ! Open the HDF file and initialize the SD interface
 
       sd_id = sfstart(L1physicalFilename, DFACC_READ)
-      if (sd_id == -1) then
+      if ( sd_id == -1 ) then
 
 !        call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error opening L1OA file "//L1physicalFilename )
-			call announce_error(0, "Error opening L1OA file "//L1physicalFilename )
+        call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
       end if
@@ -183,7 +181,7 @@ contains ! =====     Public Procedures     =============================
     else
 
 !      call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
-			call announce_error(0, "Could not find L1BOA file" )
+      call announce_error(0, "Could not find L1BOA file" )
 
     end if
 
@@ -215,7 +213,7 @@ contains ! =====     Public Procedures     =============================
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
-      & returnstatus /= PGSTD_E_NO_LEAP_SECS) then
+      & returnstatus /= PGSTD_E_NO_LEAP_SECS ) then
     !	call MLSMessage ( MLSMSG_Error, &
     !   & ModuleName, "Could not convert UTC Start time to TAI" )
       call announce_error ( 0, "Could not convert UTC End time to TAI" )
@@ -244,8 +242,8 @@ contains ! =====     Public Procedures     =============================
     mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
     returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
-    if (returnStatus /= PGS_S_SUCCESS) then
-    ! CALL MLSMessage(MLSMSG_Error, &
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+    ! call MLSMessage(MLSMSG_Error, &
     !                  ModuleName, 'Error retrieving log file name from PCF.')
       call announce_error(0, "Error retrieving log file name from PCF" )
     end if
@@ -253,13 +251,13 @@ contains ! =====     Public Procedures     =============================
     indx = INDEX(name, '/', .TRUE.)
     l2pcf%logGranID = name(indx+1:)
  
-    if (ERROR/=0 ) then
+    if ( ERROR/=0 ) then
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
     end if
 
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
+      if ( levels(gen) > 0 .or. index(switches,'L') /= 0 ) &
         & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
   			& CCSDSEndTime, CCSDSStartTime )
       call trace_end ( "OpenAndInit" )
@@ -268,9 +266,11 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine OpenAndInitialize
 
-  ! -------------------------------------------------  dump_L1B_database  -----
-  subroutine dump_L1B_database(num_l1b_files, l1binfo, l2pcf, &
-    & CCSDSEndTime, CCSDSStartTime)
+! =====     Private Procedures     =====================================
+
+  ! ------------------------------------------  Dump_L1B_database  -----
+  subroutine Dump_L1B_database ( num_l1b_files, l1binfo, l2pcf, &
+    & CCSDSEndTime, CCSDSStartTime )
  
     ! Dump info obtained during OpenAndInitialize:
     ! L1B databse
@@ -282,7 +282,7 @@ contains ! =====     Public Procedures     =============================
  
     ! Arguments
     integer, intent(in) :: num_l1b_files
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type(L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
@@ -295,67 +295,62 @@ contains ! =====     Public Procedures     =============================
     ! Begin
     version = 1
 
-    call output('L1B database:', advance='yes')
+    call output ( 'L1B database:', advance='yes')
  
     do i=1, num_l1b_files
       returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
         & physicalFilename)
-      call output('fileid:   ')
-      call output(l1bInfo%L1BRADIDs(i), advance='yes')
-      call output('name:   ')
-      call output(TRIM(physicalFilename), advance='yes')
+      call output ( 'fileid:   ')
+      call output ( l1bInfo%L1BRADIDs(i), advance='yes')
+      call output ( 'name:   ')
+      call output ( TRIM(physicalFilename), advance='yes')
     end do
 
-    call output('L1OA file:', advance='yes')
+    call output ( 'L1OA file:', advance='yes')
  
     returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
       & physicalFilename)
-    call output('fileid:   ')
-    call output(l1bInfo%L1BOAID, advance='yes')
-    call output('name:   ')
-    call output(TRIM(physicalFilename), advance='yes')
+    call output ( 'fileid:   ')
+    call output ( l1bInfo%L1BOAID, advance='yes')
+    call output ( 'name:   ')
+    call output ( TRIM(physicalFilename), advance='yes')
 
-    call output('Start Time:   ')
-    call output(CCSDSStartTime, advance='yes')
+    call output ( 'Start Time:   ')
+    call output ( CCSDSStartTime, advance='yes')
 
-    call output('End Time:   ')
-    call output(CCSDSEndTime, advance='yes')
+    call output ( 'End Time:   ')
+    call output ( CCSDSEndTime, advance='yes')
 
-    call output('Output version:   ')
-    call output(l2pcf%outputVersion, advance='yes')
+    call output ( 'Output version:   ')
+    call output ( l2pcf%outputVersion, advance='yes')
 
-    call output('cycle:   ')
-    call output(l2pcf%cycle, advance='yes')
+    call output ( 'cycle:   ')
+    call output ( l2pcf%cycle, advance='yes')
 
-    call output('Log file name:   ')
-    call output(TRIM(l2pcf%logGranID), advance='yes')
+    call output ( 'Log file name:   ')
+    call output ( TRIM(l2pcf%logGranID), advance='yes')
 
-  end subroutine dump_L1B_database
+  end subroutine Dump_L1B_database
 
   ! ------------------------------------------------  announce_error  -----
-  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
     & error_number )
   
     ! Arguments
 	
-    integer, intent(in)    :: lcf_where
-    character(LEN=*), intent(in)    :: full_message
-    logical, intent(in), optional :: use_toolkit
-    integer, intent(in), optional    :: error_number
+    integer, intent(in) :: Lcf_where
+    character(LEN=*), intent(in) :: Full_message
+    logical, intent(in), optional :: Use_toolkit
+    integer, intent(in), optional :: Error_number
 
     ! Local
-    logical :: just_print_it
-    logical, parameter :: default_output_by_toolkit = .true.
-	
-    if(present(use_toolkit)) then
-      just_print_it = use_toolkit
-    else if(default_output_by_toolkit) then
-      just_print_it = .false.
-    else
-      just_print_it = .true.
-    endif
+    logical :: Just_print_it
+    logical, parameter :: Default_output_by_toolkit = .true.
 
-    if(.not. just_print_it) then
+    just_print_it = default_output_by_toolkit
+    if ( present(use_toolkit) ) just_print_it = use_toolkit
+
+    if ( .not. just_print_it ) then
       error = max(error,1)
       call output ( '***** At ' )
 
@@ -367,7 +362,7 @@ contains ! =====     Public Procedures     =============================
 
       call output ( ': ' )
       call output ( "The " );
-      if ( lcf_where > 0) then
+      if ( lcf_where > 0 ) then
         call dump_tree_node ( lcf_where, 0 )
       else
         call output ( '(no lcf tree available)' )
@@ -375,7 +370,7 @@ contains ! =====     Public Procedures     =============================
 
       call output ( " Caused the following error:", advance='yes', &
        & from_where=ModuleName)
-      call output(trim(full_message), advance='yes', &
+      call output ( trim(full_message), advance='yes', &
         & from_where=ModuleName)
       if ( present(error_number) ) then
         call output ( 'error number ', advance='no' )
@@ -392,7 +387,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
 !===========================
-  end subroutine announce_error
+  end subroutine Announce_Error
 !===========================
 
 end module Open_Init
@@ -401,6 +396,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.34  2001/04/11 00:33:45  vsnyder
+! use 'output' instead of 'print'
+!
 ! Revision 2.33  2001/04/11 00:00:56  vsnyder
 ! Improve 'dump'
 !
@@ -468,7 +466,7 @@ end module Open_Init
 ! Correct calculation of "field"
 !
 ! Revision 2.11  2001/01/03 00:47:21  pwagner
-! Calls READL2AUXData from L2AUXData module
+! calls READL2AUXData from L2AUXData module
 !
 ! Revision 2.10  2000/12/04 21:47:46  pwagner
 ! Uses parser better
