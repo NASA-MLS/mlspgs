@@ -7,7 +7,7 @@ module GET_BETA_PATH_M
 
   implicit NONE
   private
-  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
+  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized, Get_Beta_Path_Cloud
 
   interface Get_Beta_Path
     module procedure Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
@@ -35,7 +35,7 @@ contains
         & Catalog, beta_group, gl_slabs, path_inds, beta_path,     &
         & gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,              &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, &
-        & ICON, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
+        & Incl_Cld )
 
     use MLSCommon, only: R8, RP, IP
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -55,15 +55,7 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    integer, intent(in)  :: ICON
     logical, intent(in) :: Incl_Cld
-
-!    include 'constants.f9h'
-    INTEGER :: NC, NU, NUA, NAB, NR
-    INTEGER, intent(in) :: IPSD(:)
-    REAL(rp), intent(in) :: WC(:,:)
-    REAL(rp) :: W0(NC)       ! SINGLE SCATTERING ALBEDO
-    REAL(rp) :: PHH(NC,NU)   ! PHASE FUNCTION
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -119,14 +111,11 @@ contains
           k = path_inds(j)
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
-            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,                &
-            &  Incl_Cld, cld_ext, IPSD(K), WC(:,K), NU, NUA, NAB, NR, NC,          &
-            &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
-          if ( .not. Incl_Cld ) then
+            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb, DBETA_DW=v0,   &
+            &  DBETA_DN=vp, DBETA_DV=vm )
+
              beta_path(j,i) = beta_path(j,i) + ratio * bb 
-          else
-             beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext 
-          end if
+
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
           if ( associated(dbeta_dn_path)) &
@@ -157,13 +146,11 @@ contains
             k = path_inds(j)
             tm = t_path_m(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tm, Frq, &
-            &    LineWidth, gl_slabs_m(k,ib), vm,                                  &
-            &    Incl_Cld, cld_ext, IPSD(k), WC(:,k), NU, NUA, NAB, NR, NC )
+            &    LineWidth, gl_slabs_m(k,ib), vm )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tp, Frq, &
-            &    LineWidth, gl_slabs_p(k,ib), vp,                                  &
-            &    Incl_Cld, cld_ext, IPSD(k), WC(:,k), NU, NUA, NAB, NR, NC )
+            &    LineWidth, gl_slabs_p(k,ib), vp )
             betap(j) = betap(j) + ratio * vp
           end do
           DeAllocate ( LineWidth )
@@ -262,6 +249,79 @@ contains
     end do ! i
   end subroutine Get_Beta_Path_Polarized
 
+!------------------------------------------------------------------
+  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path, z_path_c, &
+        & Catalog, beta_group, gl_slabs, path_inds, beta_path,    &
+        & ICON, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: R8, RP, IP
+    use CREATE_BETA_M, only: CREATE_BETA
+    use SpectroscopyCatalog_m, only: CATALOG_T,LINES
+    use cloud_extinction, only: get_beta_cloud
+
+! Inputs:
+
+    real(r8), intent(in) :: Frq ! frequency in MHz
+    real(rp), intent(in) :: T_path(:)   ! path temperatures
+    real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
+    real(rp), intent(in) :: z_path_c(:) ! =-log(p_path)
+    type(catalog_t), intent(in) :: Catalog(:)
+    type (slabs_struct), dimension(:,:) :: Gl_slabs
+    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+
+    type (beta_group_T), dimension(:) :: beta_group
+
+    integer, intent(in)  :: ICON
+    logical, intent(in) :: Incl_Cld
+    INTEGER :: NC, NU, NUA, NAB, NR
+    INTEGER, intent(in) :: IPSD(:)
+    REAL(rp), intent(in)  :: WC(:,:)
+    REAL(rp) :: W0(NC)       ! SINGLE SCATTERING ALBEDO
+    REAL(rp) :: PHH(NC,NU)   ! PHASE FUNCTION
+
+    type(slabs_struct), pointer :: gl_slabs_m(:,:) ! reduced
+
+    type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
+
+! outputs
+
+    real(rp), intent(out) :: beta_path(:,:) ! path beta for each species
+
+! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
+! caller doesn't need multiple branches.  These would be INTENT(OUT) if
+! we could say so.
+
+! Local variables..
+
+    integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
+              &    no_mol, n_path
+    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext, RHI
+
+! begin the code
+
+    no_mol = size(beta_group)
+    n_path = size(path_inds)
+
+    beta_path = 0.0
+
+    do i = 1, no_mol
+      do n = 1, beta_group(i)%n_elements         
+        do j = 1, n_path
+          k = path_inds(j)
+
+          call get_beta_cloud (Frq, t_path(k), p_path(k),         &
+                          &  WC(:,k), IPSD(k), N, NU, NUA, NAB, NR,       &
+                          &  cld_ext, W0, PHH                )      
+
+            beta_path(j,i) = beta_path(j,i) + cld_ext 
+
+         end do
+      end do
+    end do
+
+  end subroutine Get_Beta_Path_Cloud
+
 !----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -270,6 +330,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.24  2003/02/07 01:57:19  vsnyder
+! Delete USE RHIFromH2O because it's not used
+!
 ! Revision 2.23  2003/02/07 01:08:34  jonathan
 ! remove ICON option for compute super saturation
 !

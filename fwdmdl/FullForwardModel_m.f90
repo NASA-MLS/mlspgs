@@ -41,7 +41,7 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg
     use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
-    use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T
+    use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T,  Get_Beta_Path_Cloud
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
     use GLnp, only: NG, GX
@@ -280,6 +280,7 @@ contains
 
     real(rp), dimension(:,:), pointer :: BETA_PATH   ! Beta on path
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
+    real(rp), dimension(:,:), pointer :: BETA_PATH_cloud_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
@@ -398,7 +399,7 @@ contains
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
-    type (Grids_T) :: Grids_iwc  ! All the coordinates for WC
+    type (Grids_T) :: Grids_iwc  ! All the coordinates for WC   !JJ
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
@@ -441,7 +442,7 @@ contains
     ! Nullify all our pointers!
 
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
-      & beta_path, beta_path_c, beta_path_f, beta_path_polarized, &
+      & beta_path, beta_path_c, beta_path_cloud_c, beta_path_f, beta_path_polarized, &
       & channelOrigins, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
@@ -520,6 +521,7 @@ contains
       & config=fwdModelConf )
     scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
+    !JJ
     cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
       & quantityType=l_cloudIce, noError=.true. )    
     cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -612,7 +614,7 @@ contains
     call allocate_test ( grids_tmp%windowfinish, 1, 'Grids_tmp%windowfinish', &
                        & moduleName )
     call allocate_test ( grids_tmp%lin_log, 1, 'lin_log', moduleName )
-
+    !JJ
     call allocate_test ( grids_iwc%no_z, 1, 'Grids_iwc%no_z', moduleName )
     call allocate_test ( grids_iwc%no_p, 1, 'Grids_iwc%no_p', moduleName )
     call allocate_test ( grids_iwc%no_f, 1, 'Grids_iwc%no_f', moduleName )
@@ -649,7 +651,7 @@ contains
     call allocate_test ( grids_tmp%values, k, 'Grids_tmp%values', moduleName )
     call allocate_test ( grids_tmp%deriv_flags, k, 'Grids_tmp%deriv_flags', &
                        & moduleName )
-
+    !JJ
     call allocate_test ( grids_iwc%zet_basis, n_t_zeta, 'Grids_iwc%zet_basis', &
                        & moduleName )
     call allocate_test ( grids_iwc%phi_basis, no_sv_p_t, 'Grids_iwc%phi_basis', &
@@ -664,6 +666,7 @@ contains
     grids_tmp%phi_basis = temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
     grids_tmp%values = reshape(temp%values(:,windowStart:windowFinish),(/k/))
 
+    !JJ
     if ( associated ( cloudIce ) ) then
       grids_iwc%frq_basis = 0.0
       grids_iwc%zet_basis = CloudIce%template%surfs(1:n_t_zeta,1)
@@ -895,6 +898,7 @@ contains
 
 ! Setup our temporary `state vector' like arrays -------------------------
 
+    !JJ
     if ( spect_der ) then
       call load_sps_data ( FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
        &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,     &
@@ -1333,6 +1337,7 @@ contains
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
+    call allocate_test ( beta_path_cloud_c, npc, no_mol, 'beta_path__cloud_c',   moduleName )
     call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   no_ele, f_len,  'do_calc_fzp',   moduleName )
     call allocate_test ( do_calc_iwc,   no_ele, f_len,  'do_calc_iwc',   moduleName )
@@ -1885,6 +1890,7 @@ contains
             & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
             & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
+          ! JJ VAN/MIKE
           if ( associated(FwdModelConf%moleculesPol) ) then
             call get_beta_path ( frq, h, my_Catalog, beta_group, gl_slabs, &
               & indices_c(1:npc), beta_path_polarized )
@@ -1908,9 +1914,15 @@ contains
               & fwdModelConf%tolerance, do_gl(1:npc) )
           end if
 
-          ! The derivatives that get_beta_path computes depend on which
-          ! derivative arrays are allocated.  This avoids having four
-          ! paths, each with a different set of optional arguments.
+          ! JHJ         
+          IF ( associated(CloudIce) ) THEN
+
+          call get_beta_path_cloud ( Frq,                                   &
+            &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
+            &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
+            &  beta_path_cloud_c(1:npc,:),  ICON,                           &
+            &  fwdModelConf%Incl_Cld, IPSD(1:no_ele),                 &
+            &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )                    
 
           call get_beta_path ( Frq,                                   &
             &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
@@ -1919,9 +1931,35 @@ contains
             &  gl_slabs_m, t_path(1:no_ele)-del_temp,                 &     
             &  gl_slabs_p, t_path(1:no_ele)+del_temp,                 &     
             &  dbeta_dt_path_c, dbeta_dw_path_c,                      &     
-            &  dbeta_dn_path_c, dbeta_dv_path_c, ICON,                &
-            &  fwdModelConf%Incl_Cld, IPSD(1:no_ele),                 &
-            &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )                    
+            &  dbeta_dn_path_c, dbeta_dv_path_c,                      &
+            &  fwdModelConf%Incl_Cld )                    
+
+          alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
+                                  &  beta_path_c(1:npc,:), DIM=2) +  &
+                                  & SUM (beta_path_cloud_c(1:npc,:), DIM=2)
+
+          incoptdepth(1:npc) = alpha_path_c(1:npc) * del_s(1:npc)
+
+          ! Determine where to use Gauss-Legendre instead of a rectangle.
+
+          do_gl = .false.
+          call path_contrib ( incoptdepth(1:npc), e_rflty, &
+            & fwdModelConf%tolerance, do_gl(1:npc) )
+
+          call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
+
+          ELSE
+
+          !JJ BILL ORIGINAL
+          call get_beta_path ( Frq,                                   &
+            &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
+            &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
+            &  beta_path_c(1:npc,:),                                  &     
+            &  gl_slabs_m, t_path(1:no_ele)-del_temp,                 &     
+            &  gl_slabs_p, t_path(1:no_ele)+del_temp,                 &     
+            &  dbeta_dt_path_c, dbeta_dw_path_c,                      &     
+            &  dbeta_dn_path_c, dbeta_dv_path_c,                      &
+            &  fwdModelConf%Incl_Cld )                    
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:), DIM=2)
@@ -1936,6 +1974,8 @@ contains
 
           call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
 
+          ENDIF
+
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated, not which ones are present. 
           ! This avoids having four paths through the code, each with a
@@ -1948,9 +1988,8 @@ contains
             & gl_slabs_m, t_path(1:no_ele)-del_temp,                  &  
             & gl_slabs_p, t_path(1:no_ele)+del_temp,                  &  
             & dbeta_dt_path_f, dbeta_dw_path_f,                       &  
-            & dbeta_dn_path_f, dbeta_dv_path_f, ICON,                 &
-            & fwdModelConf%Incl_Cld, IPSD(1:no_ele),                  &
-            &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )
+            & dbeta_dn_path_f, dbeta_dv_path_f,                       &
+            & fwdModelConf%Incl_Cld )
 
           alpha_path_f(1:ngl) = SUM(sps_path(gl_inds(1:ngl),:) *  &
                                   & beta_path_f(1:ngl,:), DIM=2)
@@ -2805,6 +2844,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.125  2003/02/08 01:03:00  livesey
+! Bug fix in call to rad_tran
+!
 ! Revision 2.124  2003/02/07 01:07:41  jonathan
 ! add in option to compute dry and super-saturation case in load_sps
 !

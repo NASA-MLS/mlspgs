@@ -17,8 +17,8 @@ contains
 ! ----------------------------------------------  Create_beta  ---------
 
   subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,         &
-         &   slabs_0, beta_value, Incl_Cld,cld_beta,IPSD,WC,NU,NUA,NAB,NR,N, &
-         &   slabs_p, slabs_m, t_power,                     &
+         &   slabs_0, beta_value,                                            &
+         &   slabs_p, slabs_m, t_power,                                      &
          &   dbeta_dw, dbeta_dn, dbeta_dv  )
 
 !  For a given frequency and height, compute beta_value function.
@@ -38,8 +38,6 @@ contains
     real(rp), intent(in) :: fgr ! frequency in MHz
     real(rp), intent(in) :: pfaw(:) ! line widths
     type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
-    Logical :: Incl_Cld
-
 
 !    v0s(:)         ! pressure shifted line centers
 !    x1(:)          ! Doppler width
@@ -50,7 +48,7 @@ contains
 ! optional inputs for temperature derivatives
     type(slabs_struct), intent(in), optional :: slabs_p, slabs_m
 ! outputs
-    real(rp), intent(out) :: beta_value, cld_beta
+    real(rp), intent(out) :: beta_value
 ! optional outputs
     real(rp), optional, intent(out) :: T_POWER ! for temperature derivative
     real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
@@ -63,11 +61,7 @@ contains
     integer(ip) :: NL ! no of lines
 
     real(rp) :: ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
-!    include 'constants.f9h'
-    INTEGER :: N, NU, NUA, NAB, NR, IPSD
-    REAL(rp) :: WC(N)
-    REAL(rp) :: W0(N)       ! SINGLE SCATTERING ALBEDO
-    REAL(rp) :: PHH(N,NU)   ! PHASE FUNCTION
+
 !----------------------------------------------------------------------------
 
     nl = size(pfaw)
@@ -77,18 +71,6 @@ contains
 
 !  Setup absorption coefficients function
 !  Now get the beta_value:
-
-    IF ( .not. Incl_Cld ) THEN
-
-       cld_beta =0._rp   
-  
-    ELSE
-       !  WC, IPSD, N, NU, NUA, NAB, NR needed to be inputed from l2cf
-       !  will input WC later      
-       call get_beta_cloud (Fgr, Temp, Pressure,               &
-                          &  WC, IPSD, N, NU, NUA, NAB, NR,    &
-                          &  cld_beta, W0, PHH                 )      
-    ENDIF
 
     if ( spectag == sp_liq_h2o ) then ! ..................  Liquid Water
 
@@ -312,6 +294,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.19  2003/02/06 00:20:22  jonathan
+! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
+!
 ! Revision 2.18  2003/01/31 20:18:40  jonathan
 ! add get_beta_cloud
 !
