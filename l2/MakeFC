@@ -73,13 +73,18 @@ l2_NEEDS_fwdmdl = true
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
 ifdef l2_NEEDS_fwdmdl
-   depends_where=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+   depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
    PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
 else
-   depends_where=$(libmls_sources) $(srclib)
+   depends_where:=$(libmls_sources) $(srclib)
    PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a
+endif
+
+# Because LF95 can't handle write_meta.f90
+ifeq ($(MLSF95),LF95)
+   depends_where:=-d write_meta.f90 $(depends_where)
 endif
 
 PROG=mlsl2
@@ -159,6 +164,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.18  2001/03/14 17:19:37  pwagner
+# Omits write_meta.f90 if Lahey
+#
 # Revision 2.17  2001/03/13 19:07:59  pwagner
 # clean now removes executables, too
 #
