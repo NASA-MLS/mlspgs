@@ -148,6 +148,7 @@ CONTAINS
       radiance%values( ind, maf ) = &
              & radiance%values(ind,maf) + sbRatio * i_star_all(ptg_i)
     end do
+    WRITE(*,'(f7.2)') radiance%values(channel+125, maf )
 
     if ( .not. PRESENT(Jacobian) ) Return
 
@@ -274,6 +275,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.9  2002/07/23 22:26:52  livesey
+! Added ptan_der handling
+!
 ! Revision 2.8  2002/07/05 07:52:51  zvi
 ! Fixing bug in filling the Jacobian for atmos
 !

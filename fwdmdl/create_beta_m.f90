@@ -75,7 +75,6 @@ contains
     tm = Temp - 10.0_rp
 !
 !  Setup absorption coefficients function
-! NEED TO ADD THE PARDO WATER VAPOR CONTINUUM FOR 18003
 !  Now get the beta_value:
 !
     if (spectag == 18999) then
@@ -216,6 +215,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.10  2002/03/06 02:29:28  zvi
+! Removing more limits on large dNu
+!
 ! Revision 2.9  2002/02/28 07:16:41  zvi
 ! Removing limit on large dNu
 !

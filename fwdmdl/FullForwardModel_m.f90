@@ -1646,10 +1646,6 @@ CONTAINS
               &  beta_path_c(1:npc,:))
 
           endif
-! bills debug
-!          WRITE(*,'(a)') 'beta path'
-!          WRITE(*,'(3f12.4)') p_path(no_ele/2),t_path(no_ele/2), &
-!               beta_path_c(npc/2,1)
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:),DIM=2)
@@ -2502,6 +2498,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.74  2002/07/23 22:26:31  livesey
+! Added ptan_der, set k_atmos to zero on creation
+!
 ! Revision 2.73  2002/07/19 23:35:49  bill
 ! fixed undefined surf angle
 !
