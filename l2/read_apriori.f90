@@ -106,6 +106,7 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call cpu_time ( t1 )
     error = 0
     version = 1
+    allswathnames = ' '
     lastClimPCF = mlspcf_l2clim_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
@@ -395,6 +396,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.23  2001/10/08 21:35:43  pwagner
+! Initialize allswathnames
+!
 ! Revision 2.22  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
