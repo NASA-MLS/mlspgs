@@ -5,7 +5,7 @@ include ../Makefile.dep
 #          The three versions of libmls.a
 all: libmlsSub.a libmls.a libmlsSDPTK.a
 #
-#libmls.a      will contain all the OBJS except for 
+#libmls.a      will contain all the OBJS plus machine.o except for 
 #	                SDPToolkit.o  and  SDPToolkitSubstitute.o
 #libmlsSDPTK.a will contain libmls.a plus SDPToolkit.o
 #libmlsSub.a   will contain libmls.a plus SDPToolkitSubstitute.o
@@ -32,7 +32,8 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 TEST_ONLY=test_multiply.o test_sparsify.o \
 	test_cholesky.o test_multiply_vector.o
 
-libmlsSub.a: ${OBJS}
+${OBJS}: machine.o
+libmlsSub.a: ${OBJS} machine.o
 	ar ru $@ $?
 	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
@@ -61,8 +62,14 @@ L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 L2GPData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+machine.o:
+	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
+	$(FC) -c $(DUSTY) machine.f90
 
 # $Log$
+# Revision 1.7  2000/11/17 22:07:47  pwagner
+# table* needed by getCF_m
+#
 # Revision 1.6  2000/11/16 22:57:02  pwagner
 # Looks for %.f9h in srclib
 #
