@@ -58,6 +58,7 @@ module ForwardModelInterface
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
   use VGridsDatabase, only: VGrid_T
+  use dump_0, only: Dump
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -754,7 +755,7 @@ contains
       call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
         &                n_path, ndx_path(:,maf), E_rad(maf), ref_corr)
 
-      Radiances(1:Nptg,1:25) = 0.0
+      Radiances = 0.0
 
       ! If we're not doing frequency averaging, instead outputting radiances
       ! corresponding to delta function responses, we can setup the frequency
@@ -828,6 +829,7 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
+        print*,'Pointing:',ptg_i
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
@@ -877,11 +879,14 @@ contains
           endif
         end if
 !
+        print*,'Frequencies:',frequencies
 
 ! ------------------------------- Begin loop over frequencies ------
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
+
+          print*,'Calling rad tran'
 
           Call Rad_Tran(elvar(maf), Frq, &
              & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
@@ -894,8 +899,11 @@ contains
 
           RadV(frq_i) = Rad
 
+          print*,'Calling rad tran wd'
+
 ! Now, Compute the radiance derivatives:
 
+          k_temp_frq%values=0.0_r8
           Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
          &     elvar(maf),frq_i,FMI%band,Frq,noSpecies,z_path(k,maf), &
          &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
@@ -923,7 +931,7 @@ contains
             centerFreq = signal%lo + signal%centerFrequency
             sense = +1.0
           case default              ! Put error message here later
-            call MLSMessage(MLSMSG_Error, ModuleName, &
+             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Asked for folded in wrong place')
           end select
           do i = 1, noUsedChannels
@@ -956,7 +964,8 @@ contains
             end do                      ! Channel loop
           else
             do i = 1, noUsedChannels
-              k_temp(i,ptg_i,:,:) = k_temp_frq%values(1,:,:)
+              k_temp(i,ptg_i,1:temp%template%noSurfs,1:temp%template%noInstances) = &
+                &  k_temp_frq%values(1,1:temp%template%noSurfs,1:temp%template%noInstances)
             end do
           endif
         endif
@@ -1111,6 +1120,7 @@ contains
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if(ier /= 0) goto 99
         else
+
           call no_conv_at_all(ptan%values(:,maf),noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs, &
             &     FMI%band,ForwardModelConfig%temp_der,&
@@ -1123,6 +1133,7 @@ contains
             &     temp%template%noSurfs,temp%template%noInstances, &
             &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,&
             &     FMI%spectroscopic)
+
         endif
 
       end do                            ! Channel loop
@@ -1314,6 +1325,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.73  2001/04/09 22:21:41  livesey
+! An interim version, derivatives get right numbers.
+!
 ! Revision 2.72  2001/04/09 21:05:40  vsnyder
 ! Remove unneeded explicit conversion to double
 !
