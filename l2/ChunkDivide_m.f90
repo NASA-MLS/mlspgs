@@ -854,7 +854,7 @@ contains ! =================================== Public Procedures==============
         end if                          ! Consider this module
       end do                            ! Module Loop
       ! Convert this information into obstructions and tidy up.
-      call ConvertFlagsToObstructions ( valid, obstructions )
+      call ConvertFlagsToObstructions ( valid, mafRange, obstructions )
       call Deallocate_test ( valid, 'valid', ModuleName )
     end if                              ! Consider scan issues
 
@@ -872,6 +872,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.8  2001/11/12 20:31:23  livesey
+! Bug fix check in
+!
 ! Revision 2.7  2001/11/10 01:09:41  livesey
 ! Bug fixes
 !
