@@ -116,6 +116,8 @@ MODULE VectorQuantities         ! Quantities within vectors
      ! These are actually dimensioned (subVectorLen,noSubVectors)
   END TYPE QuantityTemplate_T
 
+  INTEGER, PRIVATE :: quantityTemplateCounter=0
+
   ! --------------------------------------------------------------------------
 
   CONTAINS
@@ -266,6 +268,10 @@ MODULE VectorQuantities         ! Quantities within vectors
        IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
             & MLSMSG_Allocate//"chanIndex")
     ENDIF
+
+    ! Se the id field and increment the counter
+    qty%id=quantityTemplateCounter
+    quantityTemplateCounter=quantityTemplateCounter+1
   END SUBROUTINE SetupNewQuantityTemplate
 
   ! --------------------------------------------------------------------------
@@ -355,6 +361,9 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.4  1999/12/01 23:01:41  livesey
+! Before renaming things to upper/lower case
+!
 ! Revision 1.3  1999/12/01 05:03:56  livesey
 ! Nightly checkin
 !
