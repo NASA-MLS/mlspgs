@@ -16,7 +16,7 @@ module OUTPUT_M
   public :: BLANKS, OUTPUT
   interface OUTPUT
     module procedure output_char, output_char_array, output_double
-    module procedure output_integer, output_logical
+    module procedure output_integer, output_logical, output_integer_array
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
@@ -179,6 +179,25 @@ contains
     return
   end subroutine OUTPUT_INTEGER
 
+  subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE )
+  ! Output INTEGERS to PRUNIT.
+    integer, intent(in) :: INTEGERS(:)
+    character(len=*), intent(in), optional :: ADVANCE
+    integer :: I ! loop inductor
+    do i = 1, size(integers)
+      call output_integer(integers(i), advance='no')
+      call blanks(3, advance='no')
+    end do
+    if ( present(advance) ) then
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=advance )
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=advance )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=advance )
+    end if
+  end subroutine OUTPUT_INTEGER_ARRAY
+
   subroutine OUTPUT_LOGICAL ( LOG, ADVANCE )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, intent(in) :: LOG
@@ -255,6 +274,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.7  2001/04/18 23:28:10  pwagner
+! Added output_integer_array
+!
 ! Revision 2.6  2001/04/07 01:53:28  vsnyder
 ! Output 0 instead 0.0e+00
 !
