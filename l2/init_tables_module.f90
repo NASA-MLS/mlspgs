@@ -31,9 +31,9 @@ module INIT_TABLES_MODULE
   ! The following will be used by subroutine acorn to build an array 
   ! id_cum(1:id_last) that can be passed directly to make_tree
   ! The advantage is that successive calls to acorn extend id_cum
-  ! eliminating the many continuation statements a single call to
+  ! eliminating the (too) many continuation statements a single call to
   ! make_tree would require
-  ! To do this, replace
+  ! To exploit this, replace
   !   call make_tree ( (/ &
   !      begin, stuff, .. &
   !      begin, morestuff, .. &
@@ -49,7 +49,7 @@ module INIT_TABLES_MODULE
   !   call make_tree ( id_cum(1:id_last) )
   private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
   integer :: ID_LAST
-  integer, parameter :: ID_LAST_MAX = 200     ! More or less
+  integer, parameter :: ID_LAST_MAX = 200     ! You will be told if too small
   integer, pointer, dimension(:) :: ID_CUM => null()
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -80,152 +80,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
   integer, parameter :: T_LAST           = t_vgridtype
 ! Field indices:
-  integer, parameter :: F_ANTENNAPATTERNS     = last_Spectroscopy_Field + 1
-  integer, parameter :: F_APRIORI             = f_antennaPatterns + 1
-  integer, parameter :: F_APRIORISCALE        = f_apriori + 1
-  integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
-  integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
-  integer, parameter :: F_BOUNDARYPRESSURE    = f_autofill + 1
-  integer, parameter :: F_CLOUD_DER           = f_boundarypressure + 1
-  integer, parameter :: F_CLOUD_WIDTH         = f_cloud_der + 1
-  integer, parameter :: F_COLCHANNELS         = f_cloud_width + 1
-  integer, parameter :: F_COLINSTANCES        = f_colChannels + 1
-  integer, parameter :: F_COLQUANTITY         = f_colInstances + 1
-  integer, parameter :: F_COLSURFACES         = f_colQuantity + 1
-  integer, parameter :: F_COLUMNABUNDANCE     = f_colSurfaces + 1
-  integer, parameter :: F_COLUMNS             = f_columnabundance + 1
-  integer, parameter :: F_COLUMNSCALE         = f_columns + 1
-  integer, parameter :: F_COMMENT             = f_columnscale + 1
-  integer, parameter :: F_COMPAREOVERLAPS     = f_comment + 1
-  integer, parameter :: F_COORDINATE          = f_compareOverlaps + 1
-  integer, parameter :: F_COPY                = f_coordinate + 1
-  integer, parameter :: F_COVARIANCE          = f_copy + 1
-  integer, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, parameter :: F_DECAY               = f_criteria + 1
-  integer, parameter :: F_DESTINATION         = f_decay + 1
-  integer, parameter :: F_DESTROYJACOBIAN     = f_destination + 1
-  integer, parameter :: F_DIAGONAL            = f_destroyJacobian + 1
-  integer, parameter :: F_DO_CONV             = f_diagonal + 1
-  integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
-  integer, parameter :: F_EARTHRADIUS         = f_do_freq_avg + 1
-  integer, parameter :: F_EXPLICITVALUES      = f_earthradius + 1
-  integer, parameter :: F_EXTINCTION          = f_explicitValues + 1
-  integer, parameter :: F_FIELD               = f_extinction + 1
-  integer, parameter :: F_FILE                = f_field + 1
-  integer, parameter :: F_FILTERSHAPES        = f_file + 1
-  integer, parameter :: F_FORMULA             = f_filtershapes + 1
-  integer, parameter :: F_FORWARDMODEL        = f_formula + 1
-  integer, parameter :: F_FRACTION            = f_forwardModel + 1
-  integer, parameter :: F_FRQGAP              = f_fraction + 1
-  integer, parameter :: F_FUZZ                = f_frqGap + 1   ! Secret
-  integer, parameter :: F_FWDMODELEXTRA       = f_fuzz + 1
-  integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
-  integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
-  integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
-  integer, parameter :: F_GEODANGLE           = f_geocAltitudeQuantity + 1
-  integer, parameter :: F_GPH                 = f_geodAngle + 1
-  integer, parameter :: F_H2OQUANTITY         = f_gph + 1
-  integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
-  integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_IGNORE              = f_hgrid + 1
-  integer, parameter :: F_INCLINATION         = f_ignore + 1
-  integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
-  integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
-  integer, parameter :: F_INTERPOLATE         = f_integrationTime + 1
-  integer, parameter :: F_INTERPOLATIONFACTOR = f_interpolate + 1
-  integer, parameter :: F_INVERT              = f_interpolationFactor + 1
-  integer, parameter :: F_JACOBIAN            = f_invert + 1
-  integer, parameter :: F_L2PC                = f_jacobian + 1
-  integer, parameter :: F_LAMBDA              = f_l2pc + 1
-  integer, parameter :: F_LENGTH              = f_lambda + 1
-  integer, parameter :: F_LOGBASIS            = f_length + 1
-  integer, parameter :: F_LOSQTY              = f_logbasis + 1
-  integer, parameter :: F_MATRIX              = f_losqty + 1
-  integer, parameter :: F_MAXF                = f_matrix + 1
-  integer, parameter :: F_MAXITERATIONS       = f_maxf + 1
-  integer, parameter :: F_MAXJ                = f_maxIterations + 1
-  integer, parameter :: F_MEASUREMENTS        = f_maxJ + 1
-  integer, parameter :: F_MEASUREMENTSD       = f_measurements + 1
-  integer, parameter :: F_METHOD              = f_measurementSD + 1
-  integer, parameter :: F_MIF                 = f_method + 1
-  integer, parameter :: F_MOLECULEDERIVATIVES = f_MIF + 1
-  integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
-  integer, parameter :: F_NABTERMS            = f_molecules + 1
-  integer, parameter :: F_NAZIMUTHANGLES      = f_nabterms + 1
-  integer, parameter :: F_NCLOUDSPECIES       = f_nazimuthangles  + 1
-  integer, parameter :: F_NMODELSURFS         = f_ncloudspecies + 1
-  integer, parameter :: F_NOFINEGRID          = f_nmodelsurfs + 1
-  integer, parameter :: F_NOMIFS              = f_nofinegrid + 1
-  integer, parameter :: F_NSCATTERINGANGLES   = f_nomifs  + 1
-  integer, parameter :: F_NSIZEBINS           = f_nscatteringangles + 1
-  integer, parameter :: F_NUMBER              = f_nsizebins + 1
-  integer, parameter :: F_OPTICALDEPTH        = f_number + 1
-  integer, parameter :: F_ORIGIN              = f_opticalDepth + 1
-  integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
-  integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
-  integer, parameter :: F_OUTPUTSD            = f_outputOverlaps + 1
-  integer, parameter :: F_OVERLAPS            = f_outputSD + 1
-  integer, parameter :: F_PERTURBATION        = f_overlaps + 1
-  integer, parameter :: F_PHIWINDOW           = f_perturbation + 1
-  integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
-  integer, parameter :: F_PRECISION           = f_pointingGrids + 1
-  integer, parameter :: F_PREFIXSIGNAL        = f_precision + 1
-  integer, parameter :: F_PTANQUANTITY        = f_prefixSignal + 1
-  integer, parameter :: F_QUANTITIES          = f_ptanQuantity + 1
-  integer, parameter :: F_QUANTITY            = f_quantities + 1
-  integer, parameter :: F_RADIANCEQUANTITY    = f_quantity + 1
-  integer, parameter :: F_RANGE               = f_radianceQuantity + 1
-  integer, parameter :: F_RATIOQUANTITY       = f_range + 1
-  integer, parameter :: F_REFGPHQUANTITY      = f_ratioQuantity + 1
-  integer, parameter :: F_REGORDERS           = f_refGPHQuantity + 1
-  integer, parameter :: F_REGQUANTS           = f_regOrders + 1
-  integer, parameter :: F_REGWEIGHT           = f_regQuants + 1
-  integer, parameter :: F_ROWCHANNELS         = f_regWeight + 1
-  integer, parameter :: F_ROWINSTANCES        = f_rowChannels + 1 
-  integer, parameter :: F_ROWQUANTITY         = f_rowInstances + 1
-  integer, parameter :: F_ROWS                = f_rowQuantity + 1
-  integer, parameter :: F_ROWSURFACES         = f_rows + 1
-  integer, parameter :: F_SCALE               = f_rowsurfaces + 1
-  integer, parameter :: F_SCECI               = f_scale + 1
-  integer, parameter :: F_SCVEL               = f_scECI + 1
-  integer, parameter :: F_SDNAME              = f_scVEL + 1
-  integer, parameter :: F_SGRID               = f_sdname + 1
-  integer, parameter :: F_SIGNAL              = f_sgrid + 1
-  integer, parameter :: F_SIGNALS             = f_signal + 1
-  integer, parameter :: F_SKIPOVERLAPS        = f_signals + 1
-  integer, parameter :: F_SOURCE              = f_skipOverlaps + 1
-  integer, parameter :: F_SOURCEAPRIORI       = f_source + 1
-  integer, parameter :: F_SOURCEGRID          = f_sourceApriori + 1
-  integer, parameter :: F_SOURCEL2AUX         = f_sourceGrid + 1
-  integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
-  integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
-  integer, parameter :: F_SOURCESGRID         = f_sourcequantity + 1
-  integer, parameter :: F_SOURCEVGRID         = f_sourcesgrid + 1
-  integer, parameter :: F_SPECIES             = f_sourcevGrid + 1
-  integer, parameter :: F_SPECT_DER           = f_species + 1
-  integer, parameter :: F_SPREAD              = f_spect_der + 1
-  integer, parameter :: F_STATE               = f_spread + 1
-  integer, parameter :: F_STOP                = f_state + 1
-  integer, parameter :: F_SUPERDIAGONAL       = f_stop + 1
-  integer, parameter :: F_SWATH               = f_superDiagonal + 1
-  integer, parameter :: F_SYSTEMTEMPERATURE   = f_swath + 1
-  integer, parameter :: F_TANGENTGRID         = f_systemTemperature + 1
-  integer, parameter :: F_TEMPERATUREQUANTITY = f_tangentGrid + 1
-  integer, parameter :: F_TEMPLATE            = f_temperatureQuantity + 1
-  integer, parameter :: F_TEMP_DER            = f_template + 1
-  integer, parameter :: F_TEST                = f_temp_der + 1
-  integer, parameter :: F_TNGTECI             = f_test + 1
-  integer, parameter :: F_TOLERANCE           = f_tngtECI + 1
-  integer, parameter :: F_TOLERANCEA          = f_tolerance + 1
-  integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
-  integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
-  integer, parameter :: F_TYPE                = f_tolerancer + 1
-  integer, parameter :: F_UNIT                = f_type + 1
-  integer, parameter :: F_VALUES              = f_unit + 1
-  integer, parameter :: F_VERSIONRANGE        = f_values + 1
-  integer, parameter :: F_VGRID               = f_versionrange + 1
-  integer, parameter :: F_VMRQUANTITY         = f_vgrid + 1
-  integer, parameter :: FIELD_LAST            = f_vmrquantity
+! Don't edit the following file directly--it is generated automatically
+! based on the file field_names.txt
+  include 'field_parm.f9h'    
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE                = last_Spectroscopy_Lit + 1
   integer, parameter :: L_APRIORI              = l_angle + 1
@@ -374,12 +231,6 @@ contains ! =====     Public procedures     =============================
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
-  ! This belongs somewhere before first call to acorn
-  !    allocate(id_cum(1:id_last_max), stat=id_last)
-  !  if(id_last /= 0) then
-  !          call MLSMessage ( MLSMSG_Error, ModuleName,&
-  !          &   'Unable to allocate id_cum' )
-  !  endif
     call allocate_test(id_cum, id_last_max, &
       & 'id_cum', ModuleName)
 
@@ -454,151 +305,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
-    field_indices(f_antennaPatterns) =     add_ident ( 'antennaPatterns' )
-    field_indices(f_apriori) =             add_ident ( 'apriori' )
-    field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
-    field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
-    field_indices(f_autofill) =            add_ident ( 'autofill' )
-    field_indices(f_boundarypressure) =    add_ident ( 'boundarypressure' )
-    field_indices(f_cloud_der) =           add_ident ( 'cloud_der' )
-    field_indices(f_cloud_width) =         add_ident ( 'cloud_width' )
-    field_indices(f_colChannels) =         add_ident ( 'colChannels' )
-    field_indices(f_colInstances) =        add_ident ( 'colInstances' )
-    field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
-    field_indices(f_colSurfaces) =         add_ident ( 'colSurfaces' )
-    field_indices(f_columnabundance) =     add_ident ( 'columnabundance' )
-    field_indices(f_columns) =             add_ident ( 'columns' )
-    field_indices(f_columnscale) =         add_ident ( 'columnScale' )
-    field_indices(f_comment) =             add_ident ( 'comment' )
-    field_indices(f_compareOverlaps) =     add_ident ( 'compareOverlaps' )
-    field_indices(f_coordinate) =          add_ident ( 'coordinate' )
-    field_indices(f_copy) =                add_ident ( 'copy' )
-    field_indices(f_covariance) =          add_ident ( 'covariance' )
-    field_indices(f_criteria) =            add_ident ( 'criteria' )
-    field_indices(f_decay) =               add_ident ( 'decay' )
-    field_indices(f_destination) =         add_ident ( 'destination' )
-    field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
-    field_indices(f_diagonal) =            add_ident ( 'diagonal' )
-    field_indices(f_do_conv) =             add_ident ( 'do_conv' )
-    field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
-    field_indices(f_earthRadius) =         add_ident ( 'earthRadius' )
-    field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
-    field_indices(f_extinction) =          add_ident ( 'extinction' )
-    field_indices(f_field) =               add_ident ( 'field' )
-    field_indices(f_file) =                add_ident ( 'file' )
-    field_indices(f_filtershapes) =        add_ident ( 'filterShapes' )
-    field_indices(f_formula) =             add_ident ( 'formula' )
-    field_indices(f_forwardModel) =        add_ident ( 'forwardModel' )
-    field_indices(f_fraction) =            add_ident ( 'fraction' )
-    field_indices(f_frqGap) =              add_ident ( 'frqGap' )
-    field_indices(f_fuzz) =                add_ident ( 'fuzz' )  ! Secret
-    field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
-    field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
-    field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
-    field_indices(f_geocAltitudeQuantity) =add_ident ( 'geocAltitudeQuantity' )
-    field_indices(f_geodAngle) =           add_ident ( 'geodAngle' )
-    field_indices(f_gph) =                 add_ident ( 'gph' )
-    field_indices(f_h2oquantity) =         add_ident ( 'h2oquantity' )
-    field_indices(f_height) =              add_ident ( 'height' )
-    field_indices(f_hgrid) =               add_ident ( 'hgrid' )
-    field_indices(f_ignore) =              add_ident ( 'ignore' )
-    field_indices(f_inclination) =         add_ident ( 'inclination' )
-    field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
-    field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
-    field_indices(f_interpolate) =         add_ident ( 'interpolate' )
-    field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
-    field_indices(f_invert) =              add_ident ( 'invert' )
-    field_indices(f_jacobian) =            add_ident ( 'jacobian' )
-    field_indices(f_lambda) =              add_ident ( 'lambda' )
-    field_indices(f_L2PC) =                add_ident ( 'l2pc' )
-    field_indices(f_length) =              add_ident ( 'length' )
-    field_indices(f_logBasis) =            add_ident ( 'logBasis' )
-    field_indices(f_losqty) =              add_ident ( 'losqty' )
-    field_indices(f_matrix) =              add_ident ( 'matrix' )
-    field_indices(f_maxF) =                add_ident ( 'maxF' )
-    field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
-    field_indices(f_maxJ) =                add_ident ( 'maxJ' )
-    field_indices(f_measurements) =        add_ident ( 'measurements' )
-    field_indices(f_measurementSD) =       add_ident ( 'measurementSD' )
-    field_indices(f_method) =              add_ident ( 'method' )
-    field_indices(f_mif) =                 add_ident ( 'mif' )
-    field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
-    field_indices(f_molecules) =           add_ident ( 'molecules' )
-    field_indices(f_nabterms) =            add_ident ( 'nabterms' )
-    field_indices(f_nazimuthangles) =      add_ident ( 'nazimuthangles' )
-    field_indices(f_ncloudspecies) =       add_ident ( 'ncloudspecies' )
-    field_indices(f_nmodelsurfs) =         add_ident ( 'nmodelsurfs' )
-    field_indices(f_noFineGrid) =          add_ident ( 'noFineGrid' )
-    field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
-    field_indices(f_nscatteringangles) =   add_ident ( 'nscatteringangles' )
-    field_indices(f_nsizebins) =           add_ident ( 'nsizebins' )
-    field_indices(f_number) =              add_ident ( 'number' )
-    field_indices(f_opticalDepth) =        add_ident ( 'opticalDepth' )
-    field_indices(f_origin) =              add_ident ( 'origin' )
-    field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
-    field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
-    field_indices(f_outputSD) =            add_ident ( 'outputSD' )
-    field_indices(f_overlaps) =            add_ident ( 'overlaps' )
-    field_indices(f_perturbation) =        add_ident ( 'perturbation' )
-    field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
-    field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
-    field_indices(f_precision) =           add_ident ( 'precision' )
-    field_indices(f_prefixSignal) =        add_ident ( 'prefixSignal' )
-    field_indices(f_ptanQuantity) =        add_ident ( 'ptanQuantity' )
-    field_indices(f_quantities) =          add_ident ( 'quantities' )
-    field_indices(f_quantity) =            add_ident ( 'quantity' )
-    field_indices(f_radianceQuantity ) =   add_ident ( 'radianceQuantity' )
-    field_indices(f_range) =               add_ident ( 'range' )
-    field_indices(f_ratioQuantity) =       add_ident ( 'ratioQuantity' )
-    field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
-    field_indices(f_regOrders) =           add_ident ( 'regOrders' )
-    field_indices(f_regQuants) =           add_ident ( 'regQuants' )
-    field_indices(f_regWeight) =           add_ident ( 'regWeight' )
-    field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
-    field_indices(f_rowInstances) =        add_ident ( 'rowInstances' )
-    field_indices(f_rowQuantity) =         add_ident ( 'rowQuantity' )
-    field_indices(f_rows) =                add_ident ( 'rows' )
-    field_indices(f_rowSurfaces) =         add_ident ( 'rowSurfaces' )
-    field_indices(f_scale) =               add_ident ( 'scale' )
-    field_indices(f_scECI) =               add_ident ( 'scECI' )
-    field_indices(f_scVel) =               add_ident ( 'scVel' )
-    field_indices(f_sdname) =              add_ident ( 'sdname' )
-    field_indices(f_sgrid) =               add_ident ( 'sgrid' )
-    field_indices(f_signal) =              add_ident ( 'signal' )
-    field_indices(f_signals) =             add_ident ( 'signals' )
-    field_indices(f_skipOverlaps) =        add_ident ( 'skipOverlaps' )
-    field_indices(f_source) =              add_ident ( 'source' )
-    field_indices(f_sourceapriori) =       add_ident ( 'sourceApriori' )
-    field_indices(f_sourcegrid) =          add_ident ( 'sourceGrid' )
-    field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
-    field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
-    field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
-    field_indices(f_sourcesGrid) =         add_ident ( 'sourcesGrid' )
-    field_indices(f_sourcevGrid) =         add_ident ( 'sourcevGrid' )
-    field_indices(f_species) =             add_ident ( 'species' )
-    field_indices(f_spect_der) =           add_ident ( 'spect_der' )
-    field_indices(f_spread) =              add_ident ( 'spread' )
-    field_indices(f_state) =               add_ident ( 'state' )
-    field_indices(f_stop) =                add_ident ( 'stop' )
-    field_indices(f_superDiagonal) =       add_ident ( 'superDiagonal' )
-    field_indices(f_swath) =               add_ident ( 'swath' )
-    field_indices(f_systemTemperature) =   add_ident ( 'systemTemperature' )
-    field_indices(f_tangentGrid) =         add_ident ( 'tangentGrid' )
-    field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
-    field_indices(f_template) =            add_ident ( 'template' )
-    field_indices(f_temp_der) =            add_ident ( 'temp_der' )
-    field_indices(f_test) =                add_ident ( 'test' )
-    field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
-    field_indices(f_tolerance) =           add_ident ( 'tolerance' )
-    field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
-    field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
-    field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
-    field_indices(f_type) =                add_ident ( 'type' )
-    field_indices(f_unit) =                add_ident ( 'unit' )
-    field_indices(f_values) =              add_ident ( 'values' )
-    field_indices(f_versionRange) =        add_ident ( 'versionRange' )
-    field_indices(f_vGrid) =               add_ident ( 'vgrid' )
-    field_indices(f_vmrquantity) =         add_ident ( 'vmrquantity' )
+    ! Don't edit the following file directly--it is generated automatically
+    ! based on the file field_names.txt
+    include 'field_add.f9h'    
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -1071,11 +780,6 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
-!    deallocate(id_cum, stat=id_last)
-!    if(id_last /= 0) then
-!            call MLSMessage ( MLSMSG_Error, ModuleName,&
-!            &   'Unable to deallocate id_cum' )
-!    endif
     call deallocate_test(id_cum, &
       & 'id_cum', ModuleName)
   contains
@@ -1099,7 +803,8 @@ contains ! =====     Public procedures     =============================
             &   'Illegal num of args to acorn' )
     elseif(id_next > id_last_max) then
             call MLSMessage ( MLSMSG_Error, ModuleName,&
-            &   'Accumulated too many ids in acorn' )
+            &   'Accumulated too many ids in acorn;' // &
+            &   ' increase id_last_max at line 52?')
     else
             id_cum(id_last+1:id_next) = ids
     endif
@@ -1110,6 +815,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.154  2001/08/23 16:25:01  pwagner
+! Implemented init_gen build of init_tables_module.f90
+!
 ! Revision 2.153  2001/08/08 23:49:25  pwagner
 ! Changed id_cum from allocatable to pointer; still dumps core if -gc option set
 !
