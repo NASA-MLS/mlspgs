@@ -66,7 +66,7 @@ contains
     use MLSCommon, only: R8, MLSCHUNK_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use Output_m, only: BLANKS, OUTPUT
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
@@ -2628,6 +2628,7 @@ contains
       integer :: S1(1), S2(1)           ! Results of minloc intrinsic
       integer :: SCANDIRECTION          ! +/-1 for up or down
       integer :: SON                    ! Tree node
+      integer :: STATUS                 ! Flag
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
       integer :: VECTORINDEX            ! Index
@@ -2721,27 +2722,9 @@ contains
         call Allocate_test ( channels, qty%template%noChans, &
           & 'channels', ModuleName )
         if ( got(f_channels) ) then     ! This subset is only for some channels
-          channels = .false.
-          do j = 2, nsons(channelsNode)
-            son = subtree ( j, channelsNode )
-            call expr ( son, units, value, type )
-            do i = 1, merge(1,2,type==num_value)
-              if ( units(i) /= phyq_dimensionless ) &
-                & call announceError ( wrongUnits, f_channels, string='no' )
-            end do
-            range_low = nint(value(1))
-            range_hi = nint(value(merge(1,2,type==num_value)))
-            select case ( node_id(son) )
-            case ( n_colon_less )
-              range_hi = range_hi - 1
-            case ( n_less_colon )
-              range_low = range_low + 1
-            case ( n_less_colon_less )
-              range_low = range_low + 1
-              range_hi = range_hi - 1
-            end select
-            channels ( range_low : range_hi ) = .true.
-          end do
+          call GetIndexFlagsFromList ( channelsNode, channels, status, &
+            & lower=lbound(channels,1) )
+          if ( status /= 0 ) call announceError ( wrongUnits, f_channels, string='no' )
         else
           channels = .true.             ! Apply this to all channels
         end if
@@ -3026,6 +3009,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.166  2002/08/26 20:01:59  livesey
+! Made subset us the GetIndexFlagsFromList routine to get channel flags
+!
 ! Revision 2.165  2002/08/24 01:38:28  vsnyder
 ! Implement horizontal regularization
 !
