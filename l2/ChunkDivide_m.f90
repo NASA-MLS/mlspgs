@@ -3,20 +3,24 @@
 
 module ChunkDivide_m
 
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use EXPR_M, only: EXPR
   use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
-  use Intrinsic, only: L_NONE, FIELD_INDICES
+  use MLSNumerics, only: Hunt
+  use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
   use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
   use Lexer_core, only: PRINT_SOURCE
   use Tree_types, only: N_EQUAL, N_NAMED
   use Init_Tables_Module, only: F_OVERLAP, F_MAXLENGTH, F_NOCHUNKS, &
     & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, F_SCANLOWERLIMIT, &
     & F_SCANUPPERLIMIT, F_NOSLAVES, FIELD_FIRST, FIELD_LAST, L_EVEN, &
-    & L_FIXED, F_MAXGAP, L_ORBITAL, S_CHUNKDIVIDE
+    & L_FIXED, F_MAXGAP, L_ORBITAL, S_CHUNKDIVIDE, L_BOTH, L_EITHER
+  use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Units, only: PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME, PHYQ_ANGLE, &
     & PHYQ_LENGTH, PHYQ_DIMENSIONLESS
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
+  use MLSSignals_m, only: MODULES, ISMODULESPACECRAFT
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use Output_M, only: BLANKS, OUTPUT
@@ -104,6 +108,8 @@ contains ! =================================== Public Procedures==============
     type (ChunkDivideConfig_T) :: CONFIG ! Configuration
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
     integer :: STATUS                   ! From deallocate
+    integer, dimension(2) :: MAFRANGE   ! Processing range in MAFs
+    integer :: TOTALMAFS                ! Total number of MAFs in file
 
     ! Executable code
     
@@ -119,17 +125,18 @@ contains ! =================================== Public Procedures==============
     ! location of obstructions
     nullify ( obstructions )
     if ( config%method /= l_fixed ) &
-      & call SurveyL1BData ( processingRange, l1bInfo, config, obstructions )
+      & call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+      & totalMAFS, obstructions )
 
     ! Now go place the chunks.
     select case ( config%method )
     case ( l_fixed )
       call ChunkDivide_Fixed ( config, chunks )
     case ( l_orbital )
-      call ChunkDivide_Orbital ( config, processingRange, l1bInfo, &
+      call ChunkDivide_Orbital ( config, mafRange, totalMAFs, l1bInfo, &
         & obstructions, chunks )
     case ( l_even )
-      call ChunkDivide_Even ( config, processingRange, l1bInfo, &
+      call ChunkDivide_Even ( config, mafRange, totalMAFs, l1bInfo, &
         & obstructions, chunks )
     end select
 
@@ -159,18 +166,20 @@ contains ! =================================== Public Procedures==============
   end subroutine AddObstructionToDatabase
 
   !----------------------------------------- ChunkDivide_Even --------
-  subroutine ChunkDivide_Even ( config, processingRange, l1bInfo, &
+  subroutine ChunkDivide_Even ( config, mafRange, totalMAFs, l1bInfo, &
     & obstructions, chunks )
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
-    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
+    integer, dimension(2), intent(in) :: MAFRANGE
+    integer :: TOTALMAFS
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
     ! Local variables
-    integer :: I                        ! Loop inductor
     
     ! Exectuable code
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "I'm sorry, we haven't written the code for even chunk divides yet" )
   end subroutine ChunkDivide_Even
 
   !----------------------------------------- ChunkDivide_Even --------
@@ -208,18 +217,194 @@ contains ! =================================== Public Procedures==============
   end subroutine ChunkDivide_Fixed
 
   !----------------------------------------- ChunkDivide_Orbital --------
-  subroutine ChunkDivide_Orbital ( config, processingRange, l1bInfo, &
+  subroutine ChunkDivide_Orbital ( config, mafRange, totalMAFs, l1bInfo, &
     & obstructions, chunks )
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
-    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
+    integer, dimension(2), intent(in) :: MAFRANGE
+    integer, intent(in) :: TOTALMAFS
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
+    ! Local parameters
+    real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
+
     ! Local variables
-    integer :: I                        ! Loop inductor
-    
+    type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
+    type (L1BData_T) :: TAITIME         ! From L1BOA
+    character(len=10) :: MODNAMESTR     ! Home module name as string
+    integer :: HOMEMAF                  ! first MAF after homeGeodAngle
+    real(r8) :: TESTANGLE               ! Angle to check for
+    real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
+    integer :: noChunks                 ! Number of chunks
+    integer :: ORBIT                    ! Used to locate homeMAF
+    integer :: NOMAFS                   ! Number of MAFs to consider
+    integer :: NOMAFSREAD               ! From ReadL1B
+    integer :: FLAG                     ! From ReadL1B
+    integer :: CHUNK                    ! Loop counter
+    real(r8) :: MINANGLE                 ! Of range in data
+    real(r8) :: MAXANGLE                 ! Of range in data
+    real(r8) :: MAXTIME                 ! Time range in data
+    real(r8) :: MINTIME                 ! Time range in data
+    real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
+    real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
+    integer :: NOCOMPLETECHUNKSBELOWHOME ! Used for placing chunks
+    integer :: STATUS                   ! From allocate etc.
+    real(r8) :: MINV                  ! Either minTime or minAngle
+    integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
+    integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
+
     ! Exectuable code
+    
+    ! Read in the data we're going to need
+    call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
+    call ReadL1BData ( l1bInfo%l1bOAId, trim(modNameStr)//'.tpGeodAngle', &
+      & tpGeodAngle, noMAFsRead, flag, firstMAF=mafRange(1), lastMAF=mafRange(2) )
+    call ReadL1BData ( l1bInfo%l1bOAId, 'MAFStartTimeTAI', &
+      & taiTime, noMAFsRead, flag, firstMAF=mafRange(1), lastMAF=mafRange(2) )
+    noMAFs = mafRange(2) - mafRange(1) + 1
+
+    minAngle = minval ( tpGeodAngle%dpField(1,1,:) )
+    maxAngle = maxval ( tpGeodAngle%dpField(1,1,:) )
+    minTime = minval ( taiTime%dpField(1,1,:) )
+    maxTime = maxval ( taiTime%dpField(1,1,:) )
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! First try to locate the last MAF before the homeGeodAngle
+    orbit = int ( tpGeodAngle%dpField(1,1,1)/360.0 )
+    if ( tpGeodAngle%dpField(1,1,1) < 0.0 ) orbit = orbit - 1
+    testAngle = config%homeGeodAngle + orbit*360.0
+    if ( config%maxLengthFamily == PHYQ_Angle ) then
+      angleIncrement = config%maxLength
+    else
+      angleIncrement = 360.0
+    end if
+
+    homeHuntLoop: do
+      if ( testAngle < minAngle ) then
+        testAngle = testAngle + angleIncrement
+        cycle
+      endif
+      if ( testAngle > maxAngle ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to establish a home major frame, using the first' )
+        homeMAF = 1
+        exit homeHuntLoop
+      end if
+      ! Find MAF which starts before this test angle
+      call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, homeMAF )
+      ! Now if this is close enough, accept it
+      if ( abs ( tpGeodAngle%dpField(1,1,homeMAF) - &
+        & testAngle ) < HomeAccuracy ) exit homeHuntLoop
+      ! Otherwise, keep looking
+      testAngle = testAngle + angleIncrement
+    end do homeHuntLoop
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! OK, now we have a home MAF, get a first cut for the chunks
+    ! First work out how many there will be
+    select case ( config%maxLengthFamily )
+    case ( PHYQ_Angle )
+      noChunks = int((maxAngle - minAngle)/config%maxLength) + 2
+    case ( PHYQ_Time )
+      noChunks = int((maxTime - minTime)/config%maxLength) + 2
+    case ( PHYQ_MAFs )
+      noChunks = int(noMAFs/config%maxLength) + 2
+    end select
+
+    ! Allocate them
+    allocate ( chunks(noChunks), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'chunks' )
+
+    ! Now place them, we'll get the chunk ends first, with code that varies
+    ! according to how the length was specified.
+    if ( config%maxLengthFamily == PHYQ_MAFs ) then
+      noCompleteChunksBelowHome = int( (homeMAF-1)/nint(config%maxLength))
+      ! Work out the boundaries (chunk starts) from there
+      chunks(1)%lastMAFIndex = homeMAF - noCompleteChunksBelowHome*nint(config%maxLength)
+      do chunk = 2, noChunks
+        chunks(chunk)%lastMAFIndex = chunks(chunk-1)%lastMAFIndex + nint(config%maxLength)
+      end do      
+    else
+      ! For angle and time, they are similar enough we'll just do some stuff
+      ! with pointers to allow us to use common code to sort them out
+      select case ( config%maxLengthFamily )
+      case ( PHYQ_Angle )
+        field => tpGeodAngle%dpField(1,1,:)
+        minV = minAngle
+      case ( PHYQ_Time )
+        field => taiTime%dpField(1,1,:)
+        minV = minTime
+      case ( PHYQ_MAFs)
+      end select
+      
+      ! Now find the chunk ends
+      call Allocate_test ( boundaries, noChunks-1, 'boundaries', ModuleName )
+      noCompleteChunksBelowHome = &
+        & int( (field(homeMAF)-minV)/config%maxLength )
+      ! Work out the boundaries (chunk starts) from there
+      boundaries(1) = field(homeMAF) - noCompleteChunksBelowHome*config%maxLength
+      do chunk = 2, noChunks
+        boundaries(chunk-1) = boundaries(chunk-2) + config%maxLength
+      end do
+      ! Now look for those in the data, set them as the chunk ends
+      call Hunt ( field, boundaries, chunks(1:noChunks-1)%lastMAFIndex, &
+        & allowTopValue=.true. )
+      chunks(noChunks)%lastMAFIndex = noMAFs
+      call Deallocate_test ( boundaries, 'boundaries', ModuleName )
+    end if
+
+    ! Now deduce the chunk starts from the ends of their predecessors
+    chunks(2:noChunks)%firstMAFIndex = chunks(1:noChunks-1)%lastMAFIndex + 1
+    chunks(1)%firstMAFIndex = 1
+    
+    ! Now offset these to the index in the file not the array
+    chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
+    chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! Think about overlaps
+    call Allocate_test ( newFirstMAFs, noChunks, 'newMAFs', ModuleName )
+    call Allocate_test ( newLastMAFs, noChunks, 'newMAFs', ModuleName )
+    if ( config%overlapFamily == PHYQ_MAFs ) then
+      newFirstMAFs = max(chunks%firstMAFIndex - nint(config%overlap), mafRange(1) )
+      newLastMAFs = min(chunks%lastMAFIndex + nint(config%overlap), mafRange(2) )
+    else
+      ! For angle and time, they are similar enough we'll just do some stuff
+      ! with pointers to allow us to use common code to sort them out
+      select case ( config%maxLengthFamily )
+      case ( PHYQ_Angle )
+        field => tpGeodAngle%dpField(1,1,:)
+        minV = minAngle
+      case ( PHYQ_Time )
+        field => taiTime%dpField(1,1,:)
+        minV = minTime
+      case ( PHYQ_MAFs)
+      end select
+      call Hunt ( field, field(chunks%firstMAFIndex-mafRange(1)+1) + &
+        & config%overlap, newFirstMAFs, allowTopValue=.true. )
+      call Hunt ( field, field(chunks%firstMAFIndex-mafRange(1)+1) - &
+        & config%overlap, newLastMAFs, allowTopValue=.true. )
+      ! Correct this again, so they are in the file not the array
+      newFirstMAFs = newFirstMAFs + mafRange(1) - 1
+      newLastMAFs = newLastMAFs + mafRange(1) - 1
+    end if
+    chunks%noMAFsUpperOverlap = newFirstMAFs - chunks%firstMAFIndex 
+    chunks%lastMAFIndex = newFirstMAFs
+    chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newLastMAFs
+    chunks%firstMAFIndex = newLastMAFs
+    call Deallocate_test ( newFirstMAFs, 'newMAFs', ModuleName )
+    call Deallocate_test ( newLastMAFs, 'newMAFs', ModuleName )
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! Now think about the obstructions
+    
+
+    ! Tidy up
+    call DeallocateL1BData ( tpGeodAngle )
+    call DeallocateL1BData ( taiTime )
+
   end subroutine ChunkDivide_Orbital
 
   !---------------------------------------------- ChunkDivideL2CF -----
@@ -354,6 +539,14 @@ contains ! =================================== Public Procedures==============
         & call AnnounceError ( root, notSpecified, notWanted(i) )
     end do
 
+    ! Make other checks of parameters
+    if ( config%criticalModules /= l_none ) then
+      if ( .not. got(f_scanLowerLimit) ) &
+        & call AnnounceError ( root, notSpecified, f_scanLowerLimit )
+      if ( .not. got (f_scanUpperLimit) ) &
+        & call AnnounceError ( root, notSpecified, f_scanUpperLimit )
+    end if
+
     ! Now check the units for various cases
     if ( all ( config%maxGapFamily /= &
       & (/ PHYQ_MAFs, PHYQ_Angle, PHYQ_Time /))) &
@@ -398,6 +591,42 @@ contains ! =================================== Public Procedures==============
 
   end subroutine ChunkDivideL2CF
 
+  ! ------------------------------------------ ConvertFlagsToObstructions --
+  subroutine ConvertFlagsToObstructions ( valid, obstructions )
+    ! This routine takes an array of logicals indicating good/bad data
+    ! and converts it into obstruction information.
+    logical, dimension(:), intent(in) :: VALID
+    type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+
+    ! Local variables
+    integer :: MAF                      ! Loop counter
+    logical :: LASTONEVALID             ! Flag
+    type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
+
+    ! Executable code
+    lastOneValid = .true.
+    do maf = 1, size(valid)
+      if ( valid(maf) .neqv. lastOneValid ) then
+        ! A transition either from good to bad or bad to good
+        if ( .not. valid(maf) ) then
+          ! From good to bad
+          newObstruction%range = .true.
+          newObstruction%mafs(1) = maf
+        else
+          newObstruction%mafs(2) = maf - 1
+          call AddObstructionToDatabase ( obstructions, newObstruction )
+        end if
+      end if
+      lastOneValid = valid(maf)
+    end do
+    
+    ! Make sure any range at the end gets added
+    if ( .not. lastOneValid ) then
+      newObstruction%mafs(2) = size(valid)
+      call AddObstructionToDatabase ( obstructions, newObstruction )
+    end if
+  end subroutine ConvertFlagsToObstructions
+
   ! ------------------------------------------- DeleteObstruction -------
   subroutine DeleteObstruction ( obstructions, index )
     ! Dummy arguments
@@ -427,12 +656,10 @@ contains ! =================================== Public Procedures==============
 
   ! --------------------------------------- Prune Obstructions ----------
   subroutine PruneObstructions ( obstructions )
-    ! Dummy arguments
-    type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
-
     ! This routine merges overlapping range obstructions and deletes
-    ! wall obstructions inside ranges.  Note that it assumes that the
-    ! obstructions are sorted.
+    ! wall obstructions inside ranges.  The job is made easier
+    ! by sorting the obstructions into order
+    type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
     ! Local variables
     integer :: I,J                      ! Loop counters
@@ -440,6 +667,7 @@ contains ! =================================== Public Procedures==============
     logical :: FOUNDONE                 ! Found at least one
 
     ! Executable code
+    if ( .not. associated ( obstructions ) ) return
     
     outerLoop: do
       foundOne = .false.
@@ -495,7 +723,8 @@ contains ! =================================== Public Procedures==============
   
   ! ----------------------------------------- SortObstructions ----------
   subroutine SortObstructions ( obstructions )
-    ! Dummy arguments
+    ! Sort the obstructions into order of increasing
+    ! mafs(1) (start/wall MAF index)
     type (Obstruction_T), dimension(:), intent(inout) :: OBSTRUCTIONS
 
     ! Local variables
@@ -529,17 +758,110 @@ contains ! =================================== Public Procedures==============
   end subroutine SayTime
 
   ! ------------------------------------------ SurveyL1BData -----------
-  subroutine SurveyL1BData ( processingRange, l1bInfo, config, obstructions )
+  subroutine SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+    & totalMAFs, obstructions )
+    ! This goes through the L1B data files and trys to spot possible
+    ! obstructions.
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (ChunkDivideConfig_T), intent(in) :: CONFIG
+    integer, dimension(2), intent(out) :: MAFRANGE   ! Processing range in MAFs
+    integer, intent(out) :: TOTALMAFS   ! Total in file
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+
+    ! Local variables
+    type (L1BData_T) :: TAITIME         ! Read from L1BOA file
+    type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
+    type (Obstruction_T) :: NEWOBSTRUCTION ! A single obstruction
+    logical, dimension(:), pointer :: VALID ! Flag for each MAF
+    logical :: THISONEVALID             ! To go into valid
+    logical :: LASTONEVALID             ! To run through valid
+    real(r8) :: SCANMAX ! Range of scan each maf
+    real(r8) :: SCANMIN ! Range of scan each mif
+    integer :: MOD                      ! Loop inductor
+    integer :: MAF                      ! Loop inductor
+    integer :: NOMAFS                   ! Number of MAFs in processing range
+    character(len=10) :: MODNAMESTR     ! Module name
+    integer :: FLAG                     ! From L1B
+    integer :: NOMAFSREAD               ! From L1B
+
+    ! Executable code
+    
+    ! Read time from the L1BOA file
+    call ReadL1BData ( l1bInfo%l1boaId, 'MAFStartTimeTAI', taiTime, totalMAFs, flag )
+
+    ! Deduce the first and last MAFs to consider
+    call Hunt ( taiTime%dpField(1,1,:), &
+      & (/ processingRange%startTime, processingRange%endTime /), &
+      & mafRange, allowTopValue=.true., allowBelowValue=.true. )
+
+    ! Check the validity of the MAF range returned
+    if ( mafRange(2) == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L1B data starts after requested processing range' )
+    if ( mafRange(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L1B data ends before requested processing range' )
+    mafRange = max(mafRange, 1)
+    noMAFS = mafRange(1) - mafRange(0) + 1
+
+    ! At this point we'd look through the L1B data for data gaps.
+    ! I want to defer this for now until I've reached agreement with VSP, RFJ
+    ! and RRL on how L1 would report these. NJL
+
+    ! Now look through the L1B data first look for scan problems
+    if ( config%criticalModules /= l_none ) then
+      call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
+      if ( config%criticalModules == l_both ) then
+        valid = .true.
+      else
+        valid = .false.
+      endif
+      do mod = 1, size(modules)
+        call get_string ( lit_indices(modules(mod)%name), modNameStr, strip=.true. )
+        if ( .not. modules(mod)%spacecraft .and. &
+          & any ( config%criticalModules == &
+          &     (/ modules(mod)%name, l_either, l_both /) ) ) then
+          ! Read the tangent point altitude
+          call ReadL1BData ( l1bInfo%l1boaID, trim(modNameStr)//'.tpGeodAlt', &
+            & tpGeodAlt, noMAFsRead, flag )
+          ! Consider the scan range in each MAF in turn
+          do maf = 1, noMAFs
+            scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
+            scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
+            thisOneValid = ( scanMin >= config%scanLowerLimit(0) .and. &
+              &              scanMin <= config%scanLowerLimit(1) ) .and. &
+              &            ( scanMax >= config%scanUpperLimit(0) .and. &
+              &              scanMax <= config%scanUpperLimit(1) )
+            if ( config%criticalModules == l_both ) then
+              valid(maf) = valid(maf) .and. thisOneValid
+            else
+              valid(maf) = valid(maf) .or. thisOneValid
+            end if
+          end do                        ! Maf loop
+          call DeallocateL1BData ( taiTime )
+        end if                          ! Consider this module
+      end do                            ! Module Loop
+      ! Convert this information into obstructions and tidy up.
+      call ConvertFlagsToObstructions ( valid, obstructions )
+      call Deallocate_test ( valid, 'valid', ModuleName )
+    end if                              ! Consider scan issues
+
+    ! Here we'll eventually look at radiances and switch changes.  For the
+    ! moment I'm deferring this one too. NJL.
+
+    ! Sort the obstructions into order and prune them of repeats, overlaps etc.
+    call PruneObstructions ( obstructions ) 
+
+    ! Tidy up
+    call DeallocateL1BData ( taiTime )
 
   end subroutine SurveyL1BData
 
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.4  2001/11/10 00:03:44  livesey
+! More work, still got issues!
+!
 ! Revision 2.3  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
