@@ -8,8 +8,8 @@ module ReadAPriori
   & READ_CLIMATOLOGY, ReadGriddedData
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
-  use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP !, s_ncep, &
-	!  & s_dao, s_clim 
+  use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
+    & L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, S_L2GP, LIT_INDICES
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData!, SetupNewL2AUXRecord
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
@@ -20,15 +20,13 @@ module ReadAPriori
 !  use OBTAINDAO, only: READ_DAO
 !  use OBTAINNCEP, only: READ_NCEP
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
-  use String_Table, only: GET_STRING
+  use String_Table, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED!, N_DOT
-
-! 	
-
+  use OUTPUT_M, only: OUTPUT
 
   implicit none
   private
@@ -51,7 +49,6 @@ contains ! =====     Public Procedures     =============================
 
   subroutine read_apriori ( root, L2GPDatabase, l2auxDatabase, aprioriData)
 
-
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -72,19 +69,16 @@ contains ! =====     Public Procedures     =============================
     integer :: l2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     character (LEN=480) :: msr     ! Error message if can't find file
-!?  type (Vector_T) :: newVector
 
     integer :: sd_id
     integer :: SON              ! Of root, an n_spec_args or a n_named
     integer :: swathName        ! sub-rosa index of name in swath='name'
-    character(len=FileNameLen) :: SwathNameString ! actual literal swath name
-!?  integer :: vectorIndex         ! In the vector database
-
-
-! These should be replaced by appropriate entries in init_tables_module
-	INTEGER, PARAMETER :: s_ncep=s_l2aux+1
-	INTEGER, PARAMETER :: s_dao=s_ncep+1
-	INTEGER, PARAMETER :: s_climatology=s_dao+1
+    integer :: sdName        ! sub-rosa index of name in sdName='name'
+    integer :: fieldName        ! sub-rosa index of name in field='name'
+    integer :: griddedOrigin            ! From tree
+    character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
+    character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
+    character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal fieldName
 
     if ( toggle (gen) ) call trace_begin( "read_apriori", root )
 
@@ -112,21 +106,29 @@ contains ! =====     Public Procedures     =============================
           fileName = sub_rosa(subtree(2,field))
         case ( f_swath )
           swathName = sub_rosa(subtree(2,field))
+        case ( f_sdname )
+          sdname = sub_rosa(subtree(2,field))
+        case ( f_field )
+          fieldName = sub_rosa(subtree(2,field))
+        case ( f_origin )
+          griddedOrigin = decoration(subtree(2,subtree(j,key)))
         end select
       end do
+
       if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'File name not specified in read a priori')
-      if ( swathName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Swath name not specified in read a priori')
-
+      
       call get_string ( FileName, fileNameString )
-      call get_string ( swathName, swathNameString )
       fileNameString=fileNameString(2:LEN_TRIM(fileNameString)-1)
-      swathNameString=swathNameString(2:LEN_TRIM(swathNameString)-1)
-
+      
       select case( FileType )
       case ( s_l2gp )
 
+        if ( swathName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Swath name not specified in read a priori')
+        
+        call get_string ( swathName, swathNameString )
+        swathNameString=swathNameString(2:LEN_TRIM(swathNameString)-1)
         ! Open the l2gp file
         fileHandle = swopen(FileNameString, DFACC_READ)
         if (fileHandle == -1) then
@@ -150,6 +152,11 @@ contains ! =====     Public Procedures     =============================
         ! copy.
       case ( s_l2aux )
 
+        if ( sdName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'sd name not specified in read a priori')
+        
+        call get_string ( sdName, sdNameString )
+        sdNameString=sdNameString(2:LEN_TRIM(sdNameString)-1)
         ! create SD interface identifier for l2aux
         sd_id = sfstart(FilenameString, DFACC_READ)
         IF (sd_id == -1) THEN
@@ -176,37 +183,47 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, l2Index )
         !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
         ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-        CALL ReadL2AUXData(sd_id, swathNameString, L2AUXDatabase(l2Index))
+        CALL ReadL2AUXData(sd_id, sdNameString, L2AUXDatabase(l2Index))
 
-	! The remaining cases are gridded data types
-!	ReadGriddedData(FileName, the_g_data, fieldName)
-      case ( s_ncep )
+      case ( s_gridded )
 
-        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
-        call decorate ( key, l2Index )
-			CALL ReadGriddedData(FileNameString, &
-			& aprioriData(l2Index), 'Some_field_name')
+        call output('Hello paul, in read gridded data section.',advance='yes')
+        call display_string(lit_indices(griddedOrigin),advance='yes')
+        if ( fieldName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Field name not specified in read a priori')
 
-      case ( s_dao )
-
-        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
-        call decorate ( key, l2Index )
-			CALL ReadGriddedData(FileNameString, &
-			& aprioriData(l2Index), 'Some_field_name')
-
-      case ( s_climatology )
-
-			CALL READ_CLIMATOLOGY(FileNameString, &
-			& aprioriData, mlspcf_l2clim_start, mlspcf_l2clim_end)
-
-      case default ! Can't get here if tree_checker worked correctly
+        call get_string ( fieldName, fieldNameString )
+        fieldNameString=fieldNameString(2:LEN_TRIM(fieldNameString)-1)
+        
+        select case ( griddedOrigin )
+        case ( l_ncep )
+          
+          l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
+          call decorate ( key, l2Index )
+          CALL ReadGriddedData(FileNameString, &
+            & aprioriData(l2Index), 'Some_field_name')
+          
+        case ( l_dao )
+          
+          l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
+          call decorate ( key, l2Index )
+          CALL ReadGriddedData(FileNameString, &
+            & aprioriData(l2Index), 'Some_field_name')
+          
+        case ( l_climatology )
+          
+          CALL READ_CLIMATOLOGY(FileNameString, &
+            & aprioriData, mlspcf_l2clim_start, mlspcf_l2clim_end)
+          
+        case default ! Can't get here if tree_checker worked correctly
+        end select
+      case default
       end select
-
-
-    end do
-
+      
+    end do                              ! Lines in l2cf loop
+    
     if (toggle(gen) ) call trace_end("read_apriori")
-
+  
   end subroutine read_apriori
 
 end module ReadAPriori
@@ -215,6 +232,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.4  2001/03/07 22:41:44  livesey
+! Reworked the l2cf aspects
+!
 ! Revision 2.3  2001/03/07 01:04:33  pwagner
 ! No longer uses obtainclim, obtaindao, obtainncep
 !
