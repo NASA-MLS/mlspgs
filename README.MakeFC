@@ -251,47 +251,50 @@ OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
 the other mlslevels.
 
-make the_option
+make the_target
+(note that all the targets are lower-case)
 
-option                 Effect
+the_target                 Effect
 
 mostlyclean  removes all binaries created during compilation and linking;
-           then deletes the subdirectory containing them
-clean      removes only the .o and .mod files from the subdirectory; 
-           any library or program files remain
-depends    recalculates dependencies;
-           typically done only after adding/removing a module or adding a
-           "USE ..." line to an existing module;
-           may require editing first line of f90makedep.pl (see below)
-configure  change configuration: compiler, (less often) platform/OS,
-           paths to Toolkit and other necessary libraries
+             then deletes the subdirectory containing them
+clean        removes only the .o and .mod files from the subdirectory;
+             any library or program files remain
+depends      recalculates dependencies;
+             typically done only after adding/removing a module or adding a
+             "USE ..." line to an existing module;
+             may require editing first line of f90makedep.pl (see below)
+configure    change configuration: compiler, (less often) platform/OS,
+             paths to Toolkit and other necessary libraries
 
 (All the following apply only at the top level)
-all        builds all the mlslevels
-distclean  does a clean; restores archive nearly to initial state
-help       complete summary of targets, settings, usage of MakeFC
-disthelp   prints this file
-install    moves the built programs from the mlslevels to INSTALLDIR
-makefile   makes a new symbolic link from MakeFC to Makefile
-           at the top level as well as each of the subdirectories;
-           useful for older archives before the link became automatic
-update     replaces Makefiles in subdirectories with latest versions after
-           recalculating dependencies; useful after a cvs update; also deletes
-           orphaned .o and .mod files left behind after sources removed
+all          builds all the mlslevels
+distclean    does a clean; restores archive nearly to initial state
+disthelp     prints this file
+help         prints a summary of targets, settings, usage of MakeFC
+install      moves the built programs from the mlslevels to INSTALLDIR
+             also puts shell script versions of each binary executable there
+             with names composed of binary + '.sh'; e.g., mlsl1.sh
+makefile     makes a new symbolic link from MakeFC to Makefile
+             at the top level as well as each of the subdirectories;
+             useful for older archives before the link became automatic
+update       replaces Makefiles in subdirectories with latest versions after
+             recalculating dependencies; useful after a cvs update; also deletes
+             orphaned .o and .mod files left behind after sources removed
 
 (The following are more specialized)
-configure_pvm  reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
 configure_fopts  reset default Fortran95 compiler and linker switches
-configure_full  combines configure, configure_pvm, configure_fopts
-configure_help  prints brief help on how to configure the build
+configure_full   combines configure, configure_pvm, configure_fopts
+configure_help   prints brief help on how to configure the build
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
   a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
   a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
-disttar    tar the whole mlspgs archive for distribution: mlspgs.tar
-substar    tar lib, l1, .. : lib.tar, l1.tar, .., and mlspgs_subs.tar
-tar        tar everything from mlspgs needed by the SIPS: mlspgs_sips.tar
+disttar      tar the whole mlspgs archive for distribution: mlspgs.tar
+substar      tar lib, l1, .. : lib.tar, l1.tar, .., and mlspgs_subs.tar
+tar          tar everything from mlspgs needed by the SIPS: mlspgs_sips.tar
 
 HOW IT WORKS
 Chronology:
@@ -374,9 +377,6 @@ improvements you think of. The configuration is messy, especially
 changing the paths.
 
 ACTUAL BUGS
-Unless either the Lahey compiler or the latest, "beta" copy of the NAG f95 is
-used, Matrix_Module.f90 in lib and l2 has been crudely hacked to compile.
-
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
 link properly. Sun and SGI versions seem correct. The solution is to build
 correct ones. See Hugh's page  http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
@@ -438,81 +438,65 @@ would compile and link for debugging rather than speed-optimized, assuming use
 of NAG f95. Alternatively, the first seven of the following can be set by
 configure_full.
 
-make the_option SETTING=value
+make the_target SETTING=value
 (note that the left-hand side of the equal sign is UPPER-CASE)
 
 SETTING            Use
 -------            ---
-FOPTS              Override default compiler option; note that you must
-                   use only legal options
-LDOPTS             Override default (blank) loader option; note that you must
-                   use only legal options
 BLAS               Path to an external blas library; unless LIB_BLAS set the 
                    library must then be named \$BLAS/libblas.a
                    You would use this if you already had a precompiled, 
                    highly-optimized library of the usual blas routines
+FFTW_ROOT          Path to the FFTW library; required for mlsl3
+FOPTS              Override default compiler option; note that you must
+                   use only legal options
+LDOPTS             Override default (blank) loader option; note that you must
+                   use only legal options
 LIB_BLAS           Name of the external blas library; if left unset the library
                    must then be named \$BLAS/libblas.a
 PVM_ROOT           Path to the root of the pvm libraries; note that they
                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
                    Warning: if PVM_ROOT is set, then so must PVM_ARCH
 PVM_ARCH           (see above)
-FFTW_ROOT          Path to the FFTW library; required for mlsl3
 
 The following cannot be set by configure_full
-TAR                Overrides name of tar command; e.g. path to GNU tar 
-                   in case your tar won't gzip for targets *targ
+CC                 Overrides the name by which the c compiler is called
+                   e.g., to build on pencil, I used "make CC=gcc"
+EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
+                   files while compiling
 FAFTER             Appears at the end of each line invoking the compiler
-                   e.g., for post-processing to highlight warnings and errors
-                   make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
-LAFTER             Appears at the end of the very long link statement
-                   e.g., for additional libraries required to link successfully
+                   e.g., to highlight warning and error messages issued by LF95
+                   make FAFTER='2>&1 | hl' 
+                   (to build and install this highlighter, type 'make hl')
 FC                 Overrides the name by which the Fortran compiler is called
                    e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
                    with Sun's own f95; then used "make FC=nagf95"
-CC                 Overrides the name by which the c compiler is called
-                   e.g., to build on pencil, I used "make CC=gcc"
-MLSCFILE           Overrides the name of the .configure file
 INSTALLDIR         Destination where install moves mlsl1, etc.
+LAFTER             Appears at the end of the very long link statement
+                   e.g., for additional libraries required to link successfully
+                   or else to highlight errors as in FAFTER
+MLSCFILE           Overrides the name of the .configure file
 PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
                    E.g., "make PGSTK="
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+
+The following are environmental settings
+HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
+                   (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
+                   (may be overridden by INSTALLDIR)
 
 ASSORTED COMMENTS
-To create Makefile.dep the shell script util/makemakedep.sh is launched,
-and it in turn uses one of the following:
- f90makedep.pl   the default; found in util; assumes perl or an alias
-                 is at /usr/bin/perl
- makedepf90      a c++ program; not supplied with mls; not recommended;
-                 may need to be compiled
-
-The latter is available from
-        http://www.helsinki.fi/~eedelman/makedepf90.html
-in binary form for linux, or as c++ sources that need to be compiled.
-
-If for some reason you do not wish to rely on a perl script, or lack perl, the
-shell script makemakedep.sh in util may be edited to switch it to launching
-makedepf90. The line
-        DEP_MAKER=2
-is clearly marked. Change the "2" to a "1". Of course you will need to obtain
-makedepf90, too. A drawback of doing this is that future dependency lists will
-fail to show any dependency on modules in files outside the source directory.
-
-The dependencies calculated by makedepf90 check only among files in the same
-directory as the source files. A consequence of this is that it does not show
-dependencies of files in l2 on prerequisites in lib. A consequence of this is
-that after changes to source files in lib, if the dependencies were recalculated
-by makedepf90, files in l2 may not be recompiled, even when they should be.
-This is a good reason to use f90makedep.pl, the default.
-
-The sources currently must reside directly under lib, srclib, or l[1-3],
-and this fact is "hard-wired" into the Makefiles.  It may become
-desirable to segregate them into a /src subdirectory parallel to the
-/MLSCONFG and /platforms subdirectories, and thus the Makefiles would
-need to changed to accomplish this.  In general, replacing "hard-wired"
-directory paths with variable ones, set in either .configure or set in a
-more permanent file, seems like a good idea. 
+The sources currently must reside directly under the mlslevels, and this fact
+is "hard-wired" into the Makefiles.  It may become desirable to segregate them
+into a /src subdirectory parallel to the /MLSCONFG and /platforms
+subdirectories, and thus the Makefiles would need to changed to accomplish
+this.  In general, replacing "hard-wired" directory paths with variable ones,
+set in either .configure or set in a more permanent file, seems like a good
+idea. 
 
 Under the lib directory is a lib/tests subdirectory containing five
 test programs. They were used to test libmls.a during development. It
@@ -523,11 +507,6 @@ under machines with names like machines/NAG.Linux/machine.f90 They are intended
 to contain machine/OS/compiler specific information the software can obtain at
 runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
 incorrect.
-
-Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
-sources required special compiler flags to compile successfully under NAG. You
-will see them mentioned explicitly at the end with its custom build
-instructions.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -574,10 +553,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2001-Jul-06
+-pw                           2000-Oct-24 to 2001-Aug-16
 EOF
 exit
 # $Log$
+# Revision 1.20  2001/07/26 23:26:29  pwagner
+# Mentions INSTALLDIR, MLSINSTALLDIR
+#
 # Revision 1.19  2001/07/24 23:35:26  pwagner
 # Mentions l3m; no longer recommend -gc
 #
