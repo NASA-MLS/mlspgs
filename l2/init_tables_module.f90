@@ -59,7 +59,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
   integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
-  integer, parameter :: F_COLCHANNELS         = f_autofill + 1
+  integer, parameter :: F_CLOUD_DER           = f_autofill + 1
+  integer, parameter :: F_COLCHANNELS         = f_cloud_der + 1
   integer, parameter :: F_COLINSTANCES        = f_colChannels + 1
   integer, parameter :: F_COLQUANTITY         = f_colInstances + 1
   integer, parameter :: F_COLSURFACES         = f_colQuantity + 1
@@ -393,6 +394,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
+    field_indices(f_cloud_der) =           add_ident ( 'cloud_der' )
     field_indices(f_colChannels) =         add_ident ( 'colChannels' )
     field_indices(f_colInstances) =        add_ident ( 'colInstances' )
     field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
@@ -615,16 +617,18 @@ contains ! =====     Public procedures     =============================
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, l_cloudInducedRadiance, &
-             l_cloudSensitivity, l_cloudOpticalDepth, &
+      begin, t+t_quantityType, l+l_baseline, &
+             l+l_cloudIce, l_cloudInducedRadiance, l+l_cloudExtinction, &
+             l+l_cloudSensitivity, l_cloudExtinction, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
-             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_losVel, &
+             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
+             l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_totalOpticalDepth, l+l_vmr, n+n_dt_def, &
+             l+l_totalExtinction, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
@@ -836,6 +840,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_cloud_der, t+t_boolean, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -963,6 +968,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.115  2001/05/31 22:07:40  livesey
+! More cloud stuff.
+!
 ! Revision 2.114  2001/05/31 20:29:55  livesey
 ! Added new vector types for cloud stuff.
 !
