@@ -13,7 +13,6 @@ module L1BData
     & DFNT_FLOAT32
   use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
-  use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN, NameLen
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
@@ -768,6 +767,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !-------------------------------------------------  ReadL1BData_hdf5  -----
   subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL )
+! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -1060,6 +1060,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.29  2002/11/22 21:48:54  pwagner
+! Commented out USE of MLSAUXData
+!
 ! Revision 2.28  2002/11/13 01:02:16  pwagner
 ! Actually reads hdf5 radiances
 !
