@@ -70,6 +70,9 @@ height
 hgrid
 
 ignore
+ignoreMask
+ignoreNegative
+ignoreZero
 inclination
 integrationGrid
 integrationTime
@@ -183,6 +186,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.5  2001/09/19 23:36:52  pwagner
+# Added ignoreMask, ..Negative, ..Zero
+#
 # Revision 2.4  2001/09/18 23:52:14  pwagner
 # Replaced error with noise
 #
