@@ -118,7 +118,7 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 
 $(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
-	$(MAKE) -f $(MakeFName) libmlsl3.a -C $(libmlsl3_sources)
+	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3m ghostbuster
 
@@ -180,3 +180,6 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.1  2001/07/20 00:01:42  pwagner
+# First commit
+#
