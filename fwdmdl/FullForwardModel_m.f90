@@ -171,6 +171,7 @@ CONTAINS
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
     integer, dimension(:), pointer :: GRIDS !Heights in ptgGrid for each tangent
+    integer, dimension(:), pointer :: CHANNELORIGINS ! Does this band start at 0 or 1
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
     integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
@@ -381,7 +382,7 @@ CONTAINS
     atmos_der = FwdModelConf%atmos_der
 
 ! ** ZEBUG
-    Print *,' temp_der, atmos_der, spect_der:',temp_der,atmos_der,spect_der
+!    Print *,' temp_der, atmos_der, spect_der:',temp_der,atmos_der,spect_der
 ! ** END ZEBUG
 
     if ( toggle(emit) ) &
@@ -389,7 +390,7 @@ CONTAINS
 
     ! Nullify all our pointers!
 
-    nullify ( grids, usedchannels, usedsignals, superset, indices_c, &
+    nullify ( grids, usedchannels, channelOrigins, usedsignals, superset, indices_c, &
       &       tan_inds, tan_press )
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl)
@@ -599,14 +600,17 @@ CONTAINS
     end do
     call allocate_test ( usedChannels, noUsedChannels, &
       & 'usedChannels', ModuleName )
+    call allocate_test ( channelOrigins, noUsedChannels, &
+      & 'channelOrigins', ModuleName )
     call allocate_test ( usedSignals, noUsedChannels, &
       & 'usedSignals', ModuleName )
     channel = 1
     do sigInd = 1, size(fwdModelConf%signals)
       do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
         if (fwdModelConf%signals(sigInd)%channels(i)) then
-          usedChannels(channel) = i + &
-            & lbound(fwdModelConf%signals(sigInd)%frequencies,1) - 1
+          channelOrigins(channel) = &
+            & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
+          usedChannels(channel) = i + channelOrigins(channel) - 1
           usedSignals(channel) = sigInd
           channel = channel + 1
         end if
@@ -2097,7 +2101,9 @@ CONTAINS
           end where
           whichPatternAsArray = minloc ( superset )
           whichPattern = whichPatternAsArray(1)
-!
+
+          ! Now change channel from starting at 0 or 1 to definately 1
+          channel = channel + 1 - channelOrigins(i)
           j = sv_t_len
           IF (.not. temp_der .AND. .not. atmos_der ) THEN
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
@@ -2264,6 +2270,7 @@ CONTAINS
     deallocate ( beta_group, stat=j)
 !
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
+    call Deallocate_test ( channelOrigins, 'channelOrigins', ModuleName )
     call Deallocate_test ( usedSignals, 'usedSignals', ModuleName )
 
     deallocate ( k_spect_dw, stat=ier )
@@ -2381,6 +2388,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.65  2002/06/24 21:11:24  zvi
+! Adding Grids_tmp stracture and modifying calling sequences
+!
 ! Revision 2.61  2002/06/17 17:12:15  bill
 ! fixed yet another bug--wgr
 !
