@@ -35,7 +35,7 @@ begin Fill
   yNoise$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
   ;; Optical depth may be turned on again, sometime, for the PEs
-  !ifdef(precisionEstimates,{},{od$1: Vector, template=od$1Template})
+  !ifdef(flagPrecisionEstimates,{},{od$1: Vector, template=od$1Template})
   ;; Define retrieval diagnostics vector
   diag$1: Vector, template=retrievalDiagnosticsTemplate
   ;; Fill state related vectors
@@ -50,12 +50,12 @@ begin Fill
   myCovariance$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert
   ;; Construct averaging kernel matrix
-  !ifdef(gotAK,{!dnl
+  !ifdef(flagGotAK,{!dnl
   akOut$1: Matrix, columns=x$1, rows=x$1
-  !ifdef(gotAnyAKs,{!dnl
+  !ifdef(flagGotAnyAKs,{!dnl
   !divert(!AVKDivert), akOut$1!divert},{!dnl
   !divert(!AVKDivert)akOut$1!divert})
-  !define(gotAnyAKs,{Yes})})
+  !define(flagGotAnyAKs,{Yes})})
   ;; Fill radiance related vectors
   Transfer, source=measurement, destination=y$1
   Transfer, source=measurementNoise, destination=yNoise$1
@@ -73,39 +73,37 @@ begin Fill
   Transfer, source=sdOut$1, destination=outputPrecision
   !ifdef(completePhasetroph2o,{!dnl
     ;; In this case copy TropH2O into H2O as requested
-    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, $
+    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, $
       method=vector, /interpolate
     ;; And its precision
-    Fill, quantity=outputPrecision.h2o!res, sourceQuantity=outputPrecision.tropH2O!res, $
+    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
       method=vector, /interpolate})
 
   ;; FM output will be turned on again, sometime, for the PEs
-  !ifdef(precisionEstimates,{},{Transfer, source=f$1, destination=fwm})
+  !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
   ;; Clean up
   Destroy, matrix=myCovariance$1
   ;; Compute new full GPH profile
-  Fill, quantity=state.gph!res, method=hydrostatic, $
-    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature!res
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
   ;; And GPH precision
-  Fill, quantity=outputPrecision.gph!res, method=gphPrecision, $
+  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
     refGPHPrecisionquantity=outputPrecision.refGPH, $
-    tempPrecisionQuantity=outputPrecision.temperature!res
+    tempPrecisionQuantity=outputPrecision.temperature
   ;; Compute RHI from H2O
-  Fill, quantity=state.rhi!res, h2oQuantity=state.h2o!res, $
-    temperatureQuantity=state.temperature!res, method=RHIFromH2O, /dontMask
+  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
   ;; And RHI precision
-  Fill, quantity=outputPrecision.rhi!res, $
-    h2oPrecisionQuantity=outputPrecision.h2o!res, $
-    tempPrecisionQuantity=outputPrecision.temperature!res, $
-    h2oQuantity=state.h2o!res, temperatureQuantity=state.temperature!res, $
+  Fill, quantity=outputPrecision.rhi, $
+    h2oPrecisionQuantity=outputPrecision.h2o, $
+    tempPrecisionQuantity=outputPrecision.temperature, $
+    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
     method=RHIPrecisionFromH2O, /dontMask
   ;; Set precision -ve when wose than 50% apriori precision
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
 end Fill
 
-!include(fillcolumns.l2cf)
-
-!ifdef(precisionEstimates,{},{
+!ifdef(flagPrecisionEstimates,{},{
   begin Join
     !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
   end Join})
@@ -115,13 +113,11 @@ end Fill
 ;; standard resolution equivalents
 !define(oneHiResTransfer,{Fill, quantity=state.$1, method=vector, $
   sourceQuantity=state.!trimHR($1), /interpolate!nl})
-!define(initHiRes,{!ifdef(skipHiRes,{},{
-begin Fill
+!define(initHiRes,{begin Fill
   Fill, quantity=state.Temperature_HR, method=vector, $
     sourceQuantity=state.Temperature, /interpolate
   !forall(oneHiResTransfer,!allHiResMolecules)
-end Fill
-})})
+end Fill})
 
 ;; These macros are used to accumulate quantities destined for the DGM
 ;; or DGG file.  $1 is the quantity within state, and $2 is the swath/sd
@@ -130,21 +126,24 @@ end Fill
 !define(DGMDivert,2)
 !define(AVKDivert,3)
 
-!define(joinDGG,{
+!define(storeDGG,{!ifdef(flagGotDGGs,{!divert(!DGGDivert),!divert})!dnl
+!define(flagGotDGGs,{Yes})!divert(!DGGDivert)$1!divert})
+
+!define(storeDGM,{!ifdef(flagGotDGMs,{!divert(!DGMDivert),!divert})!dnl
+!define(flagGotDGMs,{Yes})!divert(!DGMDivert)$1!divert})
+
+!define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
+!define(flagGotAVKs,{Yes})!divert(!AVKDivert)$1!divert})
+
+!define(joinDGG,{!dnl
+!storeDGG(joinedDGG_$1_!phase)!dnl
 joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
-  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
-  !divert(!DGGDivert)joinedDGG_$1_!phase!divert
-{
-; --ConfigInfo-- DGG: $2
-}
 })
-!define(joinDGM,{
+
+!define(joinDGM,{!dnl
+!storeDGM(joindDGM_$1_!phase)!storeDGM(joindDGM_$1_!phase_precision)!dnl
 joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
 joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
-!ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
-  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert
-{;} --ConfigInfo-- DGM: $2
-{;} --ConfigInfo-- DGM: $2 precision
 })
 
 ;; This macro is used to fill radiance chi squares
@@ -157,7 +156,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      noise=yNoise!phase.band$1
    Fill, quantity=radianceChisq.chisqChan$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
-     noise=yNoise!phase.band$1!nl})
+     noise=yNoise!phase.band$1
+   Fill, quantity=radianceChisq.chisqBinned$1, method=binmax, $
+     sourceQuantity=radianceChisq.chisqMMIF$1!nl})
+
 ;; This macro joins the above filled quantities
 !define(joinBandsRadianceChisq,{!dnl
    joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceChisq.chisqMMAF$1, $
@@ -166,8 +168,13 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      /prefixSignal, sdName=' chisqMMIF !phase'
    joinedDGM_chisqChan$1_!phase: l2aux, source=radianceChisq.chisqChan$1, $
      /prefixSignal, sdName=' chisqChan !phase'
-   !ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
-   !divert(!DGMDivert)joinedDGM_chisqMMAF$1_!phase, joinedDGM_chisqMMIF$1_!phase, joinedDGM_chisqChan$1_!phase!divert})
+   joinedDGG_chisqBinned$1_!phase: l2gp, radianceChisq.chisqBinned$1, $
+     /prefixSignal, swath=' chisqBinned !phase'
+   !storeDGM(joindDGM_chisqMMAF$1_!phase)!dnl
+   !storeDGM(joindDGM_chisqMMIF$1_!phase)!dnl
+   !storeDGM(joindDGM_chisqChan$1_!phase)!dnl
+   !storeDGG(joindDGG_chisqBinned$1_!phase)})
+
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
      !forall(fillBandsRadianceChisq,$*)
@@ -191,32 +198,26 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; in $2
 !define(directWriteFwmRad,{
   !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
-  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
-{;} --ConfigInfo-- FWM: !TrimQ(!signal($1)) model $2
-})
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})})
 
 ;; This macro uses the joinDGG (for the moment, will use DGM when we
 ;; got to hdf5) to join the diagnostics stuff
-!define(joinOneDiagDGG,{
+!define(joinOneDiagDGG,{!storeDGG(joindDGG_$1_!phase)!dnl
   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
-    swath='!translit($1,{_},{-})-!phase'
-  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
-  !divert(!DGGDivert)joinedDGG_$1_!phase!divert!dnl
-{;} --ConfigInfo-- DGG: !translit($1,{_},{-})-!phase
-})
+    swath='!translit($1,{_},{-})-!phase'!nl})
 
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
 ;  will add FM output to PEs later
-!ifdef(precisionEstimates,{!dnl
+!ifdef(flagPrecisionEstimates,{!dnl
   !define(retrievalArguments,{$
-  !ifdef(gotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
     measurements=y$1, measurementSD=yNoise$1, $
     apriori=a$1, covariance=myCovariance$1, $
     outputSD=sdOut$1, $
     vRegWeightVec=vr$1, hRegWeightVec=hr$1})},!dnl
 { !define(retrievalArguments,{$
-  !ifdef(gotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
   measurements=y$1, measurementSD=yNoise$1, $
   apriori=a$1, covariance=myCovariance$1, $
   outputSD=sdOut$1, fwdModelOut=f$1, $
@@ -224,6 +225,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.41  2003/03/22 01:18:24  livesey
+; Added initHiRes
+;
 ; Revision 1.40  2003/02/27 00:39:38  livesey
 ; General tidy up and dead wood removal
 ;
