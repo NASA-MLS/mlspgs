@@ -219,6 +219,7 @@ program MLSL2
    end if
 
 ! Parse the L2CF, producing an abstract syntax tree
+  status = 0
   if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
       & form='formatted', access='sequential', iostat=status )
@@ -335,6 +336,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.52  2001/07/19 22:00:09  pwagner
+! Better behaved when l2cf is stdin
+!
 ! Revision 2.51  2001/07/18 23:56:24  pwagner
 ! Gets error from close_mlscf
 !
