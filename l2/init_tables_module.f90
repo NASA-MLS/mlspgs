@@ -330,7 +330,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
              l+l_gloria, n+n_dt_def, &
-      begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, n+n_dt_def, &
+      begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
@@ -863,6 +863,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.231  2002/08/04 16:07:57  mjf
+! New method PE for ChunkDivide.
+!
 ! Revision 2.230  2002/08/03 01:14:42  vsnyder
 ! Add regAfter to control Tikhonov before/after column scaling -- default false
 !
