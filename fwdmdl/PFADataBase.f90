@@ -7,6 +7,7 @@ module PFADataBase_m
 
   use MLSCommon, only: R4
   use MLSSignals_m, only: Signal_T
+  use Molecules, only: First_Molecule, Last_Molecule
   use VGridsDatabase, only: VGrid_t
 
   implicit NONE
@@ -14,7 +15,7 @@ module PFADataBase_m
   public :: PFAData_t, PFAData, RK, SortPFAData
   public :: AddPFADatumToDatabase
   public :: Destroy_PFADataBase, Dump, Dump_PFADataBase, Dump_PFADatum
-  public :: PFADataOrder, PFADataOrderIndexed, Sort_PFADataBase
+  public :: PFA_By_Molecule, PFADataOrder, PFADataOrderIndexed, Sort_PFADataBase
   public :: Read_PFADataBase, Write_PFADatum, Write_PFADataBase
 
   interface Dump
@@ -40,9 +41,17 @@ module PFADataBase_m
   end type PFAData_T
 
   type(PFAData_t), pointer,save :: PFAData(:) => NULL()
+
   ! PFAData(SortPFAData(i)) < PFAData(SortPFAData(j)) if i < j, with "<"
   ! defined by PFADataOrder.
   integer, pointer, save :: SortPFAData(:) => NULL()
+
+  ! PFA_By_Molecule is used for quick access to the PFA data.
+  ! PFA_By_Molecule(m) indexes the last element of SortPFAData for
+  ! molecule m.  PFA_By_Molecule(first_molecule-1) is zero.  So the
+  ! number of PFA for molecule m is PFA_By_Molecule(m) - PFA_By_Molecule(m-1).
+  integer, save :: PFA_By_Molecule(first_molecule-1:last_molecule)
+  data PFA_By_Molecule(first_molecule-1) /0/
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -106,7 +115,11 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Cannot dump unallocated PFA data base" )
     do i = 1, size(pfaData)
-      call dump_PFADatum ( pfaData(i), details, i )
+      if ( associated(sortPFAdata) ) then
+        call dump_PFADatum ( pfaData(sortPFAdata(i)), details, sortPFAdata(i) )
+      else
+        call dump_PFADatum ( pfaData(i), details, i )
+      end if
     end do
   end subroutine Dump_PFADataBase
 
@@ -214,30 +227,46 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  Sort_PFADatabase  -----
   subroutine Sort_PFADatabase
-  ! Create the array SortPFAData such that PFAData(i) < PFAData(j) if i < j.
-  ! "<" is defined by PFADataOrder: First the molecules, then the
-  ! signal's fields, with sideband last.  The order isn't really
+  ! Create the array SortPFAData such that PFAData(SortPFAData(i)) <
+  ! PFAData(SortPFAData(j)) if i < j. "<" is defined by PFADataOrder: First
+  ! the molecules, then the signal's fields, with sideband last.  We use the
+  ! molecule for a quick search.  Otherwise, the order isn't really
   ! important.  What we're trying to do is make sure that we find stuff in
   ! the same order when we're processing the upper and lower sidebands.
 
     use Allocate_Deallocate, only: Allocate_Test
     use Sort_m, only: ISORT, GSORTP
 
-    integer :: I, J, K, N
+    integer :: I, J, N
 
     if ( associated(sortPFAData) ) return ! only do it once
+    if ( .not. associated(PFAData) ) return ! Can't sort it if it's not there
 
     n = size(PFAData)
 
     call allocate_test ( sortPFAData, n, 'SortPFAData', moduleName )
 
     ! First sort the Molecules field of every PFA datum.
-    do i = 1, n
-      call isort ( pfaData(i)%molecules, 1, size(pfaData(i)%molecules) )
-    end do
+!   do i = 1, n
+!     call isort ( pfaData(i)%molecules, 1, size(pfaData(i)%molecules) )
+!   end do
 
     ! Now sort the database
     call gsortp ( PFADataOrderIndexed, n, sortPFAData )
+
+    ! Now that it's sorted with molecule as the major key, make
+    ! PFA_By_Molecule.
+    j = size(SortPFAData)
+    do i = last_molecule, first_molecule, -1
+      do while ( j > 0 )
+        if ( PFAData(sortPFAData(j))%molecules(1) > i ) then
+          j = j - 1
+        else
+      exit
+        end if
+      end do
+      PFA_by_molecule(i) = j
+    end do
 
   end subroutine Sort_PFADatabase
 
@@ -313,6 +342,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.9  2004/11/04 03:42:09  vsnyder
+! Provide for both LBL_Ratio and PFA_Ratio in beta_group
+!
 ! Revision 2.8  2004/10/06 21:19:50  vsnyder
 ! Add sorting and comparing, some cannonball polishing
 !
