@@ -196,12 +196,14 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_DW_C  ! DO_CALC_DW  on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_DW_F  ! DO_CALC_DW  on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_IWC   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_HYD_C ! DO_CALC_HYD on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_T_C   ! DO_CALC_T on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T_F   ! DO_CALC_T on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP    ! 'Avoid zeros' indicator
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
@@ -285,7 +287,9 @@ contains
     real(rp), dimension(:,:), pointer :: DHDZ_GLGRID  ! dH/dZ on glGrid surfs
     real(rp), dimension(:,:), pointer :: DX_DT        ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: ETA_FZP      ! Eta_z x Eta_p * Eta_f
+    real(rp), dimension(:,:), pointer :: ETA_IWC      ! Eta_z x Eta_p * Eta_f
     real(rp), dimension(:,:), pointer :: ETA_ZP       ! Eta_z x Eta_p
+    real(rp), dimension(:,:), pointer :: ETA_Iwc_ZP       ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN   ! Eta_z x Eta_p for N
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN_C ! ETA_ZXP_DN on coarse grid
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN_F ! ETA_ZXP_DN on fine grid
@@ -431,12 +435,12 @@ contains
       & do_calc_dn, do_calc_dn_c, do_calc_dn_F, &
       & do_calc_dv, do_calc_dv_c, do_calc_dv_f, &
       & do_calc_dw, do_calc_dw_c, do_calc_dw_f, &
-      & do_calc_fzp, do_calc_hyd, do_calc_hyd_c, &
+      & do_calc_fzp, do_calc_iwc, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
-      & do_calc_zp, do_gl, drad_df, &
+      & do_calc_zp, do_calc_iwc_zp, do_gl, drad_df, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dx_dh_out, dx_dt, &
-      & dxdt_surface, dxdt_tan, est_scgeocalt, eta_fzp, &
-      & eta_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
+      & dxdt_surface, dxdt_tan, est_scgeocalt, eta_fzp, eta_iwc, &
+      & eta_zp, eta_iwc_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
       & eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, frequencies, &
@@ -501,7 +505,6 @@ contains
       & config=fwdModelConf )
     scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
-
     cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
       & quantityType=l_cloudIce, noError=.true. )    
     cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -1308,11 +1311,14 @@ contains
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
     call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   no_ele, f_len,  'do_calc_fzp',   moduleName )
+    call allocate_test ( do_calc_iwc,   no_ele, f_len,  'do_calc_iwc',   moduleName )
     call allocate_test ( do_calc_zp,    no_ele, p_len,  'do_calc_zp',    moduleName )
     call allocate_test ( eta_fzp,       no_ele, f_len,  'eta_fzp',       moduleName )
+    call allocate_test ( eta_iwc,       no_ele, f_len,  'eta_iwc',       moduleName )
     call allocate_test ( eta_zp,        no_ele, p_len,  'eta_zp',        moduleName )
+    call allocate_test ( eta_iwc_zp,    no_ele, p_len,  'eta_iwc_zp',    moduleName )
     call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',      moduleName )
-    call allocate_test ( iwc_path,      no_ele, 1, 'iwc_path',      moduleName )
+    call allocate_test ( iwc_path,      no_ele, 1, 'iwc_path',           moduleName )
 
     if ( temp_der ) then
 
@@ -1686,6 +1692,26 @@ contains
         tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
+
+      IF ( fwdModelConf%Incl_Cld ) THEN
+
+        call comp_eta_docalc_no_frq ( Grids_Iwc,z_path(1:no_ele), &
+          &  phi_path(1:no_ele), do_calc_iwc_zp(1:no_ele,:), eta_iwc_zp(1:no_ele,:) )
+
+       ! Compute IWC_PATH
+        Frq = 0.0
+        call comp_sps_path_frq ( Grids_iwc, firstSignal%lo, thisSideband, &
+          & Frq, eta_zp(1:no_ele,:), &
+          & do_calc_zp(1:no_ele,:), iwc_path(1:no_ele,:),      &
+          & do_calc_iwc(1:no_ele,:), eta_iwc(1:no_ele,:) )
+
+        ! Initialize the cloud parameters
+        WC(1,1:no_ele)=iwc_path(1:no_ele,1)
+        WC(2,1:no_ele)=0.      ! Zero now for water clouds
+        IPSD(1:no_ele)=1000    ! using MH PSD
+
+      ELSE
+
         call comp_eta_docalc_no_frq ( Grids_f,z_path(1:no_ele), &
           &  phi_path(1:no_ele), do_calc_zp(1:no_ele,:), eta_zp(1:no_ele,:) )
 
@@ -1699,16 +1725,13 @@ contains
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-       ! Compute IWC_PATH
-        Frq = 0.0
-        call comp_sps_path_frq ( Grids_iwc, firstSignal%lo, thisSideband, &
-          & Frq, eta_zp(1:no_ele,:), &
-          & do_calc_zp(1:no_ele,:), iwc_path(1:no_ele,:),      &
-          & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
-
+        !set cloud parameters to zero
+        iwc_path(1:no_ele,1) = 0.
         WC(1,1:no_ele)=iwc_path(1:no_ele,1)
-        WC(2,1:no_ele)=0._r8   !will change later
-        IPSD(1:no_ele)=1000    !will change later
+        WC(2,1:no_ele)=0.  
+        IPSD(1:no_ele)=1000
+
+      ENDIF
 
         if ( h2o_ind > 0 ) then
           call refractive_index ( p_path_c(1:npc), &
@@ -2593,9 +2616,13 @@ contains
     call deallocate_test ( beta_path_c,   'beta_path_c',   moduleName )
     call deallocate_test ( beta_path_f,   'beta_path_f',   moduleName )
     call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
+    call deallocate_test ( do_calc_iwc_zp,'do_calc_iwc_zp',moduleName )
     call deallocate_test ( do_calc_fzp,   'do_calc_fzp',   moduleName )
+    call deallocate_test ( do_calc_iwc,   'do_calc_iwc',   moduleName )
     call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
+    call deallocate_test ( eta_iwc_zp,    'eta_iwc_zp',    moduleName )
     call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
+    call deallocate_test ( eta_iwc,       'eta_iwc',       moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
     call deallocate_test ( iwc_path,      'iwc_path',      moduleName )
 
@@ -2697,6 +2724,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.120  2003/02/06 05:55:47  livesey
+! Fix to sort of fix Jonathan's cloud ice stuff.
+!
 ! Revision 2.119  2003/02/06 00:20:08  jonathan
 ! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
 !
