@@ -56,6 +56,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! readIntsFromChars  Converts an array of strings to ints using Fortran read
+! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
@@ -92,6 +93,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
+!       & [char* which])
 ! char* Reverse (char* str)
 ! strlist ReverseList (strlist str, [char inDelim])
 ! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
@@ -129,7 +132,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueStrings, hhmmss_value, ints2Strings, LinearSearchStringArray, &
    & List2Array, LowerCase, NumStringElements, &
-   & ReadCompleteLineWithoutComments, readIntsFromChars, &
+   & ReadCompleteLineWithoutComments, readIntsFromChars, ReplaceSubString, &
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
    & StringElementNum, unquote, utc_to_yyyymmdd
 
@@ -1209,6 +1212,192 @@ CONTAINS
 
   END SUBROUTINE readIntsFromChars
 
+  ! --------------------------------------------------  ReplaceSubString  -----
+  SUBROUTINE ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
+    ! Takes a string and replaces occurrence(s) of sub1 with sub2
+	 ! Defaults to replacing only the first
+    ! But if which == 'all' replaces all
+    ! or if which == 'last' replaces last
+    ! Note that, depending on no_trim, 'all' does the following:
+    ! (a) if no_trim == TRUE, multiple passes (up to 100) until no
+    !     further replacements are possible
+    !     ( which could be bad; e.g., if sub1 is 'sub1' and sub2 is 'sub11'
+    !     then (blah)sub1(blah)sub1..' becomes '(blah)sub1111...' )
+    ! (b) if no_trim is FALSE or missing, a single pass after chopping
+    !     the string up into separate sub1-containing pieces
+    !     ( e.g., '(blah)sub1(blah)sub1(blah)..' becomes
+    !      '(blah)sub2(blah)sub2(blah)..' )
+    !  
+    ! Will this still work if sub1 has leading or trailing blanks? 
+    ! How about sub2?
+    ! Do we need an optional arg, no_trim, say, that will leave them?
+    ! Tried coding it, but can't say for sure it works
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=*), INTENT(IN) :: sub1
+    CHARACTER (LEN=*), INTENT(IN) :: sub2
+    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), intent(in), optional :: which
+    logical, intent(in), optional :: no_trim
+
+    !----------Local vars----------!
+    integer, parameter         :: MAXREPLACEMENTS = 100
+    INTEGER :: i, array_size
+	 CHARACTER (LEN=1) :: strChar
+    character (len=5) :: my_which
+    character(len=len(str)) :: head
+    character(len=len(str)) :: tail
+    character(len=len(str)) :: sub_str
+    character(len=len(str)), dimension(MAXREPLACEMENTS) :: str_array
+    logical :: my_no_trim
+    !----------Executable part----------!
+    outstr = str
+    IF (LEN_trim(str) < 1 .or. len_trim(sub1) < 1) RETURN
+    my_which = 'first'
+    if ( present(which) ) my_which = lowercase(which)
+    my_no_trim = .false.
+    if ( present(no_trim) ) my_no_trim = no_trim
+
+    select case (my_no_trim)
+    case (.false.)
+      if ( index(str, trim(sub1)) < 1 ) return
+      select case (my_which)
+      case ('first')
+        call Replace_me ( str, outstr, .false. )
+      case ('last')
+        call Replace_me ( str, outstr, .true. )
+      case ('all')
+        call Split_me
+        outstr = ' '
+        str_array = ' '
+        do i=1, array_size
+          call Replace_me ( trim(str_array(i)), sub_str, .false. )
+          outstr = adjustl( trim(outstr) // sub_str )
+        enddo
+      end select
+    case (.true.)
+      if ( index(str, sub1) < 1 ) return
+      select case (my_which)
+      case ('first')
+        call Replace_me_no_trim ( str, outstr, .false. )
+      case ('last')
+        call Replace_me_no_trim ( str, outstr, .true. )
+      case ('all')
+        ! Originally, I despaired of solving this
+        ! CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        ! & 'Unable to ReplaceSubStrings with which=all and no_trim=TRUE yet')
+        ! Then I had an idea: Why not reinterpret this as multiple passes?
+        i = 0
+        str_array(1) = str
+        do
+          i = i + 1
+          ! print *, 'i ', i
+          ! print *, 'str_array(1) ', str_array(1)
+          call Replace_me_no_trim ( str_array(1), str_array(2), .false. )
+          ! print *, 'str_array(2) ', str_array(2)
+          if ( str_array(2) == str_array(1) .or. i > MAXREPLACEMENTS ) exit
+          str_array(1) = str_array(2)
+        enddo
+        outstr = str_array(2)
+      end select
+    end select
+    
+    contains
+      subroutine Replace_me ( the_orig, after_sub, back )
+        ! This replaces an instance of sub1 with sub2 in
+        ! the string the_orig
+        ! Either the first instance (if back == FALSE) or the last
+        ! Arguments
+        character(len=*), intent(in)  :: the_orig
+        character(len=*), intent(out) :: after_sub
+        logical, intent(in)           :: back
+        ! Local variables
+        integer :: istrt1, istrt2, ihead
+        if ( index(the_orig, sub1) == 0 ) then
+          after_sub = the_orig
+          return
+        endif
+        istrt1 = index(the_orig, trim(sub1), back=back)
+        istrt2 = istrt1 + len_trim(sub1)
+        ihead = 1
+        head = ' '
+        tail = ' '
+        if ( istrt1 > 1 ) then
+          head = the_orig(1:istrt1-1)
+          ihead = istrt1 - 1
+        endif
+        if ( istrt2 < len_trim(the_orig)+1 ) then
+          tail = the_orig(istrt2:)
+        endif
+        if ( sub2 /= ' ' ) then
+          after_sub = adjustl(head(1:ihead) // trim(sub2) // trim(tail))
+        else
+          after_sub = adjustl(head(1:ihead) // trim(tail))
+        endif
+      end subroutine Replace_me
+      subroutine Replace_me_no_trim ( the_orig, after_sub, back )
+        ! This replaces an instance of sub1 with sub2 in
+        ! the string the_orig -- w/o trimming leading or trailing blanks
+        ! Either the first instance (if back == FALSE) or the last
+        ! Arguments
+        character(len=*), intent(in)  :: the_orig
+        character(len=*), intent(out) :: after_sub
+        logical, intent(in)           :: back
+        ! Local variables
+        integer :: istrt1, istrt2, ihead
+        if ( index(the_orig, sub1) == 0 ) then
+          after_sub = the_orig
+          return
+        endif
+        istrt1 = index(the_orig, sub1, back=back)
+        istrt2 = istrt1 + len(sub1)
+        ihead = 0
+        head = ' '
+        tail = ' '
+        if ( istrt1 > 1 ) then
+          head = the_orig(1:istrt1-1)
+          ihead = istrt1 - 1
+        endif
+        if ( istrt2 < len(the_orig)+1 ) then
+          tail = the_orig(istrt2:)
+        endif
+        ! Now all the possibilities:
+        ! (1) the_orig = sub1
+        if ( ihead == 0 .and. istrt2 > len(the_orig) ) then
+          after_sub = sub2
+        ! (2) the_orig = (head)sub1
+        elseif ( istrt2 > len(the_orig) ) then
+          after_sub = head(1:ihead) // sub2
+        ! (3) the_orig = sub1(tail)
+        elseif ( ihead == 0 ) then
+          after_sub = sub2 // tail
+        ! (4) the_orig = (head)sub1(tail)
+        else
+          after_sub = head(1:ihead) // sub2 // tail
+        endif
+      end subroutine Replace_me_no_trim
+      subroutine Split_me
+        ! Will this still work if some of the str_arrays end in one or more ' '?
+        ! Arguments (none)
+        ! Local variables
+        integer :: istrt1, istrt2
+        array_size = 0
+        istrt2 = 0
+        do
+          if ( istrt2 > len_trim(str) - 1 ) return
+          if ( index(str(istrt2+1:), trim(sub1)) < 1 ) then
+            array_size = min(array_size+1, MAXREPLACEMENTS)
+            str_array(array_size) = str(istrt2+1:)
+            return
+          endif
+          istrt1 = istrt2 + index(str(istrt2+1:), trim(sub1))
+          array_size = min(array_size+1, MAXREPLACEMENTS)
+          str_array(array_size) = str(istrt2+1:istrt1 + len_trim(sub1) - 1)
+          istrt2 = istrt1 + len_trim(sub1)
+        enddo
+      end subroutine Split_me
+  END SUBROUTINE ReplaceSubString
+
   ! --------------------------------------------------  Reverse  -----
   FUNCTION Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
@@ -2241,6 +2430,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.28  2003/02/19 19:08:40  pwagner
+! Added ReplaceSubString
+!
 ! Revision 2.27  2003/02/01 00:28:32  pwagner
 ! Added utc_to_yyyymmdd
 !
