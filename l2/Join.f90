@@ -8,7 +8,7 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
-    & F_PRECISION, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
+    & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
@@ -22,10 +22,13 @@ module Join                     ! Join together chunk based data.
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_Deallocate
+  use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: DISPLAY_STRING, GET_STRING
+  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Types, only: T_STRING
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -75,26 +78,27 @@ contains ! =====     Public Procedures     =============================
     logical :: COMPAREOVERLAPS
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
+    integer :: HDFNAMEINDEX             ! Name of swath/sd
     integer :: GSON                     ! Son of Key
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: MLSCFLine
     logical :: OutputOverlaps
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
-    integer :: SDNAME                   ! Name index
     integer :: SON                      ! A son of ROOT
     integer :: SOURCE                   ! Index in AST
     integer :: STATUS                   ! Flag
-    integer :: SWATHNAME                ! Name index
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX              ! Index for vector to join
     integer :: QUANTITYINDEX            ! ind in qty tmpl database, not vector
+    logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
     integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
     logical :: TIMING
 
     real :: T1, T2     ! for timing
 
+    character(len=132) :: HDFNAME          ! Name for swath/sd
     logical :: GOT_FIELD(field_first:field_last)
     type (VectorValue_T), pointer :: Quantity
     type (VectorValue_T), pointer :: PrecisionQuantity
@@ -139,8 +143,8 @@ contains ! =====     Public Procedures     =============================
       source = null_tree
       compareOverlaps = .FALSE.
       outputOverlaps = .FALSE.
-      sdName=name
-      swathName=name
+      hdfNameIndex=name
+      prefixSignal = .false.
 
       ! Loop over the fields of the mlscf line
 
@@ -163,14 +167,16 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           precVectorIndex = decoration(decoration(subtree(1,source)))
           precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_prefixSignal )
+          prefixSignal= value == l_true
         case ( f_compareoverlaps )
           compareOverlaps = value == l_true
         case ( f_outputoverlaps )
           outputOverlaps = value == l_true 
         case (f_swath)
-          swathName= sub_rosa(subtree(2,gson))
+          hdfNameIndex = sub_rosa(subtree(2,gson))
         case (f_sdName)
-          sdName= sub_rosa(subtree(2,gson))
+          hdfNameIndex = sub_rosa(subtree(2,gson))
        case ( f_file)
           call announce_error(key,NotAllowed,field_index)
         case default ! Can't get here if tree_checker worked properly
@@ -193,6 +199,13 @@ contains ! =====     Public Procedures     =============================
           precisionQuantity => NULL()
         endif
         
+        hdfName = ''
+        if ( prefixSignal ) &
+          & call GetSignalName ( quantity%template%signal, hdfName, &
+          &   sideband=quantity%template%sideband )
+        call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
+        hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
+
         ! Now, depending on the properties of the source we deal with the
         ! vector quantity appropriately.
         if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
@@ -201,13 +214,14 @@ contains ! =====     Public Procedures     =============================
           ! with no vertical coordinate system go in l2gp files.
           if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
             & ModuleName, 'This quantity should be joined as an l2gp')
-          call JoinL2GPQuantities ( key, swathName, quantity, precisionQuantity, &
+          call JoinL2GPQuantities ( key, hdfNameIndex, quantity, precisionQuantity, &
             & l2gpDatabase, chunkNo )
         else
           ! All others go in l2aux files.
           if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
             & ModuleName, 'This quantity should be joined as an l2aux')
-          call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo, chunks )
+          call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
+            & l2auxDatabase, chunkNo, chunks )
         endif
 
       case default ! Timing
@@ -260,8 +274,8 @@ contains ! =====     Public Procedures     =============================
     & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
-    integer, intent(in) :: KEY     ! spec_args to Decorate with the L2GP index
-    integer, intent(in) :: NAME    ! Of the l2gp command
+    integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
+    integer, intent(in) :: NAME         ! For the swath
     type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
     type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
@@ -354,7 +368,7 @@ contains ! =====     Public Procedures     =============================
 
     ! name is an integer, but L2GP%name is Character data
     thisL2GP%nameIndex = name
-    call get_string(name, thisL2gp%name, strip=.true.)
+    call Get_String( name, thisL2GP%name, strip=.true.)
     lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
@@ -405,7 +419,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
-    integer, intent(in) :: NAME    ! of the l2aux command
+    integer, intent(in) :: NAME    ! for the sd
     type (VectorValue_T), intent(in) :: quantity
 !   integer, intent(in) :: quantityNo
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
@@ -611,6 +625,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.36  2001/05/10 16:31:24  livesey
+! Added prefix signal option for swath/sd name
+!
 ! Revision 2.35  2001/05/08 23:25:32  livesey
 ! Added the precision stuff for l2gp's
 !
