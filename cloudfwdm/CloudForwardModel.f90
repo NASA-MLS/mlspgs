@@ -173,7 +173,7 @@
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
 
-      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -293,7 +293,8 @@
       REAL(r8) :: RC11(3)
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: CHK_CLD(NZmodel)                        
-      REAL(r8) :: ZZT(NT)
+      REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHTS (meters)
+
       REAL(r8) :: ZZT1(NZmodel/8-1)            ! TANGENT HEIGHTS (meters) FOR CALCULATION 
                                                ! (a subset OF YZ)
                                                ! THE RESULT WILL BE INTERPOLATED TO ZZT
@@ -352,14 +353,30 @@
         STOP
       ENDIF
 
-      ! DEFINE INTERNAL TANGENT PRESSURES 
+! ----------------------------------
+! DEFINE INTERNAL TANGENT PRESSURES 
+! ----------------------------------
+
       MULTI=NZmodel/8-1
+
+      IF (IFOV .EQ. 0) THEN       
       DO I=1, Multi
-        ZZT1(I)=YZ(I*8)
-        ZPT1(I)=YP(I*8)
-        ZTT1(I)=YT(I*8)
+         ZZT1(I)=YZ(I*8)
+         ZPT1(I)=YP(I*8)
+         ZTT1(I)=YT(I*8)         
       ENDDO
- 
+      ENDIF
+
+      IF (IFOV .EQ. 1) THEN 
+      DO I=1, Multi
+        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
+        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
+      ENDDO
+
+      CALL GET_TAN_PRESS ( YP, YZ, YT, NZmodel,    &
+           &               ZPT1, ZZT1, ZTT1, Multi )
+      ENDIF
+
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 !-----------------------------------------------
@@ -539,7 +556,6 @@
 
          ENDIF
 
-
          IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
 ! ==========================================================================
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
@@ -548,22 +564,35 @@
 	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
 !	 Rs_eq = h_obs
 
+!         print*,h_obs, Rs_eq
+!         stop
 !---------------------------------------------------------------------------
 !	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
 !---------------------------------------------------------------------------
 
   	 DO I = 1, Multi
-            schi = (ZZT1(I) + RE) / Rs_eq
+
+            if (zzt1(i) .lt. 5000.0) then
+              schi = (ZZT1(I)*1.2 + RE) / Rs_eq    ! approximition account for 
+            else                                   ! refractive effect
+              schi = (ZZT1(I) + RE) / Rs_eq
+            endif
+
     	    IF(ABS(schi) > 1.0) THEN
       	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
                PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
                STOP
             END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
+!            print*, ptg_angle(i), elev_offset
   	 END DO
-
+!         stop
 !	 center_angle = ptg_angle(1)
-	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height
+!	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height         
+         center_angle = (ptg_angle(1) + ptg_angle(79)) /2.
+
+!         print*,center_angle
+!         stop
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
@@ -613,6 +642,10 @@
 	         stop
 	      endif
            
+
+!              print*,fft_press, rad0
+!              stop
+
          ! Make sure the fft_press array is MONOTONICALY increasing:
          is = 1
          do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1)) 
@@ -655,12 +688,16 @@
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 !====================================
 
+         IF (IFOV .EQ. 0) THEN       
+
          ! CLEAR-SKY BACKGROUND
-!         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
          ! CLOUD-INDUCED RADIANCE
-!         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
-!              &                 method='Linear')
+         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
+              &                 method='Linear')
+
+         ENDIF
            
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
