@@ -5272,52 +5272,71 @@ contains ! =====     Public Procedures     =============================
     subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, key )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(inout) :: A
+      type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
       ! Local variables
       character (len=128) :: MSTR
+      character (len=1) :: ABNAME
+      logical :: OKSOFAR
+      integer :: I
+      type (VectorValue_T), pointer :: AORB
       ! Executable code
+
+      ! Currently we have a rather brain dead approach to this, so
+      ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
-      if ( mstr /= 'a+b' .and. mstr /= 'a-b' ) then
+      if ( mstr /= 'a+b' .and. mstr /= 'a-b' .and. mstr /= 'a*b' ) then
         call Announce_Error ( key, 0, &
-          & 'Only a+b or a-b allowed for manipulation at the moment' )
+          & 'Only a+b, a-b, or a*b allowed for manipulation at the moment' )
         return
       end if
-      ! Check that this operation makes sense. Most of the time this means that
-      ! the quantities have the same template. In some cases however, we can be
-      ! a little more lenient
-      if ( a%template%name /= quantity%template%name .and. .not. ( &
-          &  ( a%template%minorFrame .and. quantity%template%minorFrame ) .and. &
-          &  ( a%template%signal == quantity%template%signal ) .and. &
-          &  ( a%template%sideband == quantity%template%sideband ) .and. &
-          &  ( a%template%frequencyCoordinate == &
-          &      quantity%template%frequencyCoordinate ) ) ) then
+
+      ! Now check the sanity of the request.
+      if ( .not. associated ( a ) .or. .not. associated ( b ) ) then
         call Announce_Error ( key, 0, &
-          & 'a is not of the same (or close enough) type as quantity' )
+          & 'You must supply both the a and b quantities' )
         return
       end if
-      if ( associated ( b ) ) then
-        if ( b%template%name /= quantity%template%name .and. .not. ( &
-          &  ( b%template%minorFrame .and. quantity%template%minorFrame ) .and. &
-          &  ( b%template%signal == quantity%template%signal ) .and. &
-          &  ( b%template%sideband == quantity%template%sideband ) .and. &
-          &  ( b%template%frequencyCoordinate == &
-          &      quantity%template%frequencyCoordinate ) ) ) then
+
+      okSoFar = .true.
+      do i = 1, 2
+        if ( i == 1 ) then
+          aorb => a
+          abName = 'a'
+        else
+          aorb => b
+          abName = 'b'
+        end if
+        
+        ! For minor frame quantities, check that we're on the same page
+        if ( quantity%template%minorFrame ) then
+          okSoFar = okSoFar .and. aorb%template%minorFrame .and. &
+            & quantity%template%signal == aorb%template%signal .and. &
+            & quantity%template%sideband == aorb%template%sideband .and. &
+            & quantity%template%frequencyCoordinate == aorb%template%frequencyCoordinate
+        else if ( mstr == 'a*b' ) then
+          ! In this case, just check that the coordinate systems for these quantities match
+          okSoFar = okSoFar .and. &
+            & DoHGridsMatch ( quantity, aorb ) .and. &
+            & DoVGridsMatch ( quantity, aorb ) .and. &
+            & DoFGridsMatch ( quantity, aorb )
+        else
+          ! For a+/-b these quantities must share a template
+          okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
+        end if
+        
+        if ( .not. okSoFar ) then
           call Announce_Error ( key, 0, &
-            & 'b is not of the same (or close enough) type as quantity' )
+            & abName // ' is not of the same (or close enough) type as quantity' )
           return
         end if
-      else
-        ! Later we'll be more tolerant of this
-        call Announce_Error ( key, 0, &
-          & 'You did not supply a b quantity' )
-        return
-      end if
+      end do
+
       ! OK do the simple work for now
       ! Later we'll do fancy stuff to parse the manipulation.
-      if(mstr .eq. 'a+b') then
+      if ( mstr .eq. 'a+b' ) then
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values + b%values
         else
@@ -5326,7 +5345,7 @@ contains ! =====     Public Procedures     =============================
           end where
         end if
       end if
-      if(mstr .eq. 'a-b') then
+      if ( mstr .eq. 'a-b' ) then
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values - b%values
         else
@@ -5335,6 +5354,16 @@ contains ! =====     Public Procedures     =============================
           end where
         end if
       end if
+      if ( mstr .eq. 'a*b' ) then
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = a%values * b%values
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = a%values * b%values
+          end where
+        end if
+      end if
+
     end subroutine FillQuantityByManipulation
 
     ! ----------------------------------------- FillWithReflectorTemperature ---
@@ -5981,6 +6010,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.238  2003/08/20 20:05:42  livesey
+! Added the a*b possibility to the manipulation fill.
+!
 ! Revision 2.237  2003/08/16 00:29:37  vsnyder
 ! Correct a blunder: deg2rad should have been rad2deg
 !
