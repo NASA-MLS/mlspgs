@@ -3,7 +3,7 @@
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
-  use GriddedData, only: GriddedData_T, v_is_pressure, &
+  use GriddedData, only: GriddedData_T, rgr, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
   use HDFEOS, only: HDFE_NENTDIM, &
     & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
@@ -15,7 +15,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
     &                split_path_name
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-    & LowerCase, ReplaceSubString
+    & List2Array, LowerCase, ReplaceSubString
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
@@ -172,6 +172,7 @@ contains
     character (len=MAXLISTLENGTH) :: gridlist
     character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
     character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=16), dimension(NENTRIESMAX) :: dimNames
     character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
     character (len=MAXNAMELENGTH) :: gridname, actual_field_name
@@ -188,6 +189,7 @@ contains
     integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     logical, parameter :: COUNTEMPTY=.true.
+    real(r4), parameter :: FILLVALUE = 1.e15
     real(r4), dimension(:,:,:,:), pointer :: all_the_fields
     real(r8), dimension(:), pointer :: dim_field
     logical, parameter :: DEEBUG = .false.
@@ -260,14 +262,14 @@ contains
       actual_field_name=DEFAULTDAOFIELDNAME
     endif
 
+    actual_dim_list = ' '
     if(present(GeoDimList)) then
       actual_dim_list=GeoDimList
-    else
-      actual_dim_list=GEO_FIELD1 // ',' // &
-        & GEO_FIELD2 // ',' // &
-        & GEO_FIELD3 // ',' // &
-        & GEO_FIELD4
     endif
+    if ( actual_dim_list == ' ' ) then
+      actual_dim_list = DEFAULTDAODIMLIST
+    endif
+    call List2Array (actual_dim_list, dimNames, countEmpty)
 
     ! Now find the rank of our field
     inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
@@ -332,16 +334,21 @@ contains
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
       call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     endif
+    call filter_fill_values(the_g_data%field, FILLVALUE)
     deallocate(all_the_fields)
     ! Now read the dims
     nullify(dim_field)
-    call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
+    ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
     the_g_data%lons = dim_field
-    call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
+    ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
     the_g_data%lats = dim_field
-    call read_the_dim(gd_id, 'Height', dims(3), dim_field)
+    ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
     the_g_data%Heights = dim_field
-    call read_the_dim(gd_id, 'Time', dims(4), dim_field)
+    ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
     the_g_data%lsts = dim_field
     deallocate(dim_field)        ! Before leaving, some light housekeeping
     ! Have not yet figured out how to assign these
@@ -464,6 +471,9 @@ contains
     integer :: projcode, zonecode, spherecode, directioncode
     integer :: i
     integer, external :: gdgridinfo, GDprojinfo, PGS_GCT_Init
+    integer, parameter :: Lon_offset = -180  ! Longitude start in degrees
+    integer, parameter :: Lat_offset = -90   ! Latitude start in degrees
+    real(r4), parameter :: FILLVALUE = 0.e0
     logical, parameter :: CHECKFORDIMSANYWAY = .false.
     logical, parameter :: DEEBUG = .false.
     ! Executable
@@ -642,6 +652,7 @@ contains
       call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
     endif
+    if ( FILLVALUE /= 0.e0 ) call filter_fill_values(the_g_data%field, FILLVALUE)
     the_g_data%heights = pressures(1:the_g_data%noHeights)
     deallocate(all_the_fields)
     deallocate(pressures)
@@ -660,10 +671,10 @@ contains
       !the_g_data%lats = dim_field
       !deallocate(dim_field)        ! Before leaving, some light housekeeping
       do i=1, xdimsize
-        the_g_data%lons(i) = i - 1
+        the_g_data%lons(i) = i - 1 + Lon_offset
       enddo
       do i=1, ydimsize
-        the_g_data%lats(i) = i - 1
+        the_g_data%lats(i) = i - 1 + Lat_offset
       enddo
     endif
     ! Have not yet figured out how to assign these
@@ -1381,6 +1392,40 @@ contains
   ! ----- utility procedures ----
   
   ! ------------------------------------------------  ncepFieldNameTohPa  -----
+  subroutine filter_fill_values ( field_values, fill_value )
+  ! Replace field_values equal to fill_value with UNDEFINED_VALUE
+  ! Note that:
+  ! for robustness under f.p. conversions, we actually check that
+  ! (a) if fill_value > 0, field_values > fill_value / alpha
+  ! (b) if fill_value < 0, field_values < fill_value / alpha
+  ! (c) if fill_value = 0, |field_values| < MINVALUE
+  ! Args
+  real(r4), intent(in)                             :: fill_value
+  real(rgr), dimension(:,:,:,:,:,:), intent(inout) :: field_values
+  ! Local variables
+  integer :: fill_sign
+  real(r4), parameter :: MINVALUE = 1.e-14
+  real, parameter :: alpha = 1.005
+  ! Executable
+  if ( abs(fill_value) < MINVALUE ) then
+    fill_sign = 0
+  else
+    fill_sign = int( sign(alpha, fill_value) )
+  endif
+  select case (fill_sign)
+  case (1)
+    where ( field_values > fill_value / alpha ) field_values = UNDEFINED_VALUE
+  case (-1)
+    where ( field_values < fill_value / alpha ) field_values = UNDEFINED_VALUE
+  case (0)
+    where ( abs(field_values) < MINVALUE ) field_values = UNDEFINED_VALUE
+  case default
+    call announce_error(0, 'illegal fill_sign in filter_field_values', &
+        & 'fill_sign: ', fill_sign)
+  end select
+  end subroutine filter_fill_values
+
+  ! ------------------------------------------------  ncepFieldNameTohPa  -----
   subroutine ncepFieldNameTohPa ( field_name, pressure )
 
     ! Snip INTRO and TAIL off filed_name
@@ -1482,6 +1527,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.24  2003/02/21 21:01:06  pwagner
+! Actually uses GeoDimList; filters Fill values
+!
 ! Revision 2.23  2003/02/20 21:23:40  pwagner
 ! More successful; cant read metadata yet
 !
