@@ -16,19 +16,22 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use Allocate_Deallocate, only: Allocate_test
-  use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
-  use MLSCommon, only: RV
+  use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
+  use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, L_L2GP, L_L2AUX
+  use MLSCommon, only: FindFirst, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
   use VectorsModule, only: VectorValue_T
 
   implicit none
   private
-  public :: DirectData_T, AddDirectToDatabase, DestroyDirectDatabase, &
-    & DirectWrite_L2Aux, DirectWrite_L2GP, SetupNewDirect
+  public :: DirectData_T, &
+    & AddDirectToDatabase, &
+    & DestroyDirectDatabase, DirectWrite_L2Aux, DirectWrite_L2GP, Dump, &
+    & ExpandDirectDB, ExpandSDNames, &
+    & SetupNewDirect
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -39,10 +42,18 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
+  interface DUMP
+    module procedure DumpDirectWrite
+    module procedure DumpDirectDB
+  end interface
+
   type DirectData_T
     integer :: type ! l_l2aux or l_l2gp  ! should be at least L2GPNameLen
+    integer :: Handle     ! Some bit of toolkit foolishness
+    integer :: NSDNames
     character(len=80), dimension(:), pointer :: sdNames => null()
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
+    character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O..'
   end type DirectData_T
   logical, parameter :: DEEBUG = .false.
   ! For Announce_Error
@@ -230,7 +241,7 @@ contains ! ======================= Public Procedures =========================
     end select
   end subroutine DirectWrite_L2Aux
 
-  ! ----------------------------------------------- DirectWrite_L2Aux_hdf4 --------
+  ! ------------------------------------------ DirectWrite_L2Aux_hdf4 --------
   subroutine DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
@@ -342,7 +353,7 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine DirectWrite_L2Aux_hdf4
 
-  ! ----------------------------------------------- DirectWrite_L2Aux_hdf5 --------
+  ! ------------------------------------------ DirectWrite_L2Aux_hdf5 --------
   subroutine DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
     & chunkNo, chunks )
 
@@ -466,10 +477,155 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine DirectWrite_L2Aux_hdf5
 
+  !------------------------------------------  DumpDirectDB  -----
+  subroutine DumpDirectDB ( directDB, Details )
+
+    ! This routine dumps the DirectWrite DB
+
+    ! Dummy arguments
+    type (DirectData_T), dimension(:), pointer  :: directDB
+    integer, intent(in), optional :: DETAILS
+
+    ! Local variables
+    integer :: i
+    call output ( '========== DirectWrite Data Base ==========', advance='yes' )
+    call output ( ' ', advance='yes' )
+    if ( size(directDB) < 1 ) then
+      call output ( '**** directWrite Database empty ****', advance='yes' )
+      return
+    endif
+    do i = 1, size(directDB)
+      call DumpDirectWrite(directDB(i), Details)
+    end do
+  end subroutine DumpDirectDB
+
+  !------------------------------------------  DumpDirectWrite  -----
+  subroutine DumpDirectWrite ( directWrite, Details )
+
+    ! This routine dumps the DirectWrite DB
+
+    ! Dummy arguments
+    type (DirectData_T)  :: directWrite
+    integer, intent(in), optional :: DETAILS
+
+    ! Local variables
+    integer :: i
+    integer :: myDetails
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+
+    call output ( 'File Name (base): ')
+    call output ( trim(directWrite%fileNameBase), advance='yes' )
+    call output ( 'Full File Name  : ')
+    call output ( trim(directWrite%fileName), advance='yes' )
+    call output ( 'Type  : ')
+    call output ( directWrite%type, advance='no' )
+    call blanks ( 3 )
+    if ( directWrite%type == l_l2aux ) then
+      call output ( '(l2aux)', advance='yes')
+    elseif ( directWrite%type == l_l2gp ) then
+      call output ( '(l2gp)', advance='yes')
+    else
+      call output ( '(unknown)', advance='yes')
+    endif
+    call output ( 'Handle  : ')
+    call output ( directWrite%Handle, advance='yes' )
+    call output ( 'Num sci. datasets  : ')
+    call output ( directWrite%NSDNames, advance='yes' )
+    if ( .not. associated(directWrite%SDNames)  .or. myDetails < 1 ) then
+      call output ( 's.d. names not associated', advance='yes' )
+      return
+    endif
+    do i = 1, size(directWrite%sdNames)
+      call blanks ( 3 )
+      call output(trim(directWrite%SDNames(i)), advance='yes')
+    end do
+  end subroutine DumpDirectWrite
+
+  !------------------------------------------  ExpandDirectDB  -----
+  subroutine ExpandDirectDB ( directDB, fileNameBase, directData, isNew )
+
+    ! This routine expands the DirectWrite DB if necessary
+    ! Returning either a match or a new one
+
+    ! Dummy arguments
+    type (DirectData_T), dimension(:), pointer  :: directDB
+    type (DirectData_T), pointer :: directData
+    character(len=*), intent(in) :: fileNameBase
+    logical, intent(out) :: isNew
+
+    ! Local variables
+    integer :: dbID
+    character(len=80), dimension(:), pointer :: sdNames => null()
+    type (DirectData_T)                      :: tempDirectData
+    ! Begin executable
+    isNew = .true.
+    ! Do we have any database yet?
+    if ( .not. associated(directDB) ) then
+      ! print *, 'Setting up initial database with ', trim(fileNameBase)
+      call SetupNewDirect(tempDirectData, 0)
+      dbID = AddDirectToDatabase( directDB, tempDirectData )
+      directData => directDB(dbID)
+    else
+      ! Check if the fileNameBase already there
+      dbID = FindFirst(fileNameBase == directDB%fileNameBase)
+      if ( dbID > 0 ) then
+        directData => directDB(dbID)
+        isNew = .false.
+        ! print *, 'Recognized ', trim(fileNameBase), ' in ', trim(directData%FileName)
+      else
+        call SetupNewDirect(tempDirectData, 0)
+        dbID = AddDirectToDatabase( directDB, tempDirectData )
+        directData => directDB(dbID)
+        ! print *, 'Adding to database ', trim(fileNameBase)
+      endif
+    endif
+  end subroutine ExpandDirectDB
+
+  !------------------------------------------  ExpandSDNames  -----
+  subroutine ExpandSDNames ( directData, sdName )
+
+    ! This routine adds to the sdNames arrays for a DirectWrite if necessary
+
+    ! Dummy arguments
+    type (DirectData_T), intent(inout)  :: directData
+    character(len=*), intent(in) :: sdName
+
+    ! Local variables
+    logical :: alreadyThere
+    character(len=80), dimension(:), pointer :: sdNames => null()
+    integer :: newsize
+    integer :: status
+    ! Check if the sdName already there
+    ! print *, 'Check if the sdName already there'
+    if ( associated(directData%sdNames) ) then
+      newSize=SIZE(directData%sdNames)+1
+      alreadyThere = any(sdName == directData%sdNames)
+      ! if ( alreadyThere ) print *, trim(sdName), ' already there'
+      if ( alreadyThere ) return
+    else
+      ! print *, 'Allocating for ', trim(sdName)
+      newSize=1
+    end if
+    directData%NsdNames = newsize
+    ! print *, ' allocating ', newsize
+    allocate(sdNames(newSize),STAT=status)
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "temp sdnames")
+    if ( newSize>1 ) sdNames(1:newSize-1) = directData%sdNames
+    if ( ASSOCIATED(directData%sdNames) ) &
+      & deallocate ( directData%sdNames, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "sdNames" )
+    directData%sdNames => sdNames
+    directData%sdNames(newSize) = sdName
+  end subroutine ExpandSDNames
+
   !------------------------------------------  SetupNewDirect  -----
   subroutine SetupNewDirect ( directData, NsdNames )
 
-    ! This routine sets up the arrays for an l2gp datatype.
+    ! This routine sets up the arrays for a directWrite
 
     ! Dummy arguments
     type (DirectData_T), intent(inout)  :: directData
@@ -477,7 +633,9 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     ! Allocate the sdNames
-
+    directData%NSDNames = NSDNames
+    nullify(directData%sdNames)
+    if ( NSDNames <= 0 ) return
     call allocate_test ( directData%sdNames, NsdNames, "directData%sdNames", &
          & ModuleName )
   end subroutine SetupNewDirect
@@ -647,6 +805,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.13  2003/11/14 23:38:45  pwagner
+! Uses DirectWrite databse in preference to repeated calls to toolkit
+!
 ! Revision 2.12  2003/08/28 23:51:39  livesey
 ! Various bug fixes and simplifications
 !
