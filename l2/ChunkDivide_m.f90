@@ -133,8 +133,6 @@ contains ! =================================== Public Procedures==============
       & call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
       & obstructions )
 
-    !call dump ( obstructions )
-
     ! Now go place the chunks.
     select case ( config%method )
     case ( l_fixed )
@@ -156,9 +154,6 @@ contains ! =================================== Public Procedures==============
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
-
-    ! call dump ( chunks )
-    ! stop
 
   end subroutine ChunkDivide
 
@@ -400,6 +395,8 @@ contains ! =================================== Public Procedures==============
       do chunk = 1, noChunks
         boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * config%maxLength
       end do
+      boundaries = min ( boundaries, maxV )
+      boundaries = max ( boundaries, minV )
       call Hunt ( field, boundaries, chunks%lastMAFIndex, &
         & allowTopValue=.true., nearest=.true. )
       call Deallocate_test ( boundaries, 'boundaries', ModuleName )
@@ -1155,6 +1152,10 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.15  2001/11/19 23:53:50  livesey
+! Works better, fixed bug with cases with all missing data, also handles
+! ends of processing range properly.
+!
 ! Revision 2.14  2001/11/19 23:33:45  livesey
 ! Interim version, some bugs to track down
 !
