@@ -759,6 +759,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_method, t+t_method, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
+             begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
              begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_regQuants, t+t_quantityType, n+n_field_type, &
              begin, f+f_regWeights, t+t_numeric, n+n_field_type, &
@@ -862,6 +863,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.230  2002/08/03 01:14:42  vsnyder
+! Add regAfter to control Tikhonov before/after column scaling -- default false
+!
 ! Revision 2.229  2002/07/18 22:02:56  vsnyder
 ! Exploit new CONTINUE argument of MAKE_TREE to get rid of ACORN
 !
