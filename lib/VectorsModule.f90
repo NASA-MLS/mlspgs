@@ -6,7 +6,7 @@ MODULE VectorsModule            ! Vectors in the MLS PGS suite
 !=============================================================================
 
   USE MLSMessageModule
-  USE VectorQuantities
+  USE QuantityTemplates
 
   IMPLICIT NONE
 
@@ -278,6 +278,9 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.2  1999/12/14 01:01:52  livesey
+! Changed DOUBLE PRECISION to REAL(r8)
+!
 ! Revision 1.1  1999/12/04 00:30:18  livesey
 ! First version.
 !
