@@ -12,12 +12,12 @@
 
         more << EOF
 tests--A set of subdirectories for testing the different levels of the mls
-software during development. Also a special subdirectory misc which will allow
-you to build and run stand-alone software without reference to the mls software.
+software during development. Also a special subdirectory misc to allow you to
+build and run stand-alone software without reference to the mls software.
 
 SUMMARY
 To test the mls software first make sure that you have properly built each of
-the levels with the following set of names: {l1 l2 l3 fwdmdl cloudfwdm lib}.
+the levels with the following set of names: {l1 l2 l3 l3m fwdmdl cloudfwdm lib}.
 These are the subdirectories in the parent directory to tests, which is the one
 where you are reading this. For more information on building the mls software,
 enter ../README.MakeFC. Sub-directories with the same set of names are
@@ -36,13 +36,13 @@ To make this easy, most of the steps have been automated, so you are required
 to do only the following:
 
 METHOD
-(1) Choose which of the levels {l1 l2 l3 fwdmdl cloudfwdm lib} contains what
+(1) Choose which of the levels {l1 l2 l3 l3m fwdmdl cloudfwdm lib} contains what
     needs to be tested; call this _level_
 
 (2) Write a test program that USE's the modules of _level_ to be tested
 
 (3) Copy that test program to tests/_level_ 
-    (if there were already sources there, hide or remove them)
+    (if there are any sources there already, hide or remove them)
 
 (4) cd tests/_level_
 
@@ -54,14 +54,16 @@ and run the resulting test program with suitable data.
 
 If instead you simply wish to build and test stand-alone software, copy the
 sources into tests/misc (after hiding or removing any sources already there)
-and carry out (4)-(6) above.
+and carry out (4)-(6) above. Note that from misc you can access the toolkit and
+its full panoply. You will not "see" any of the mls lib or any other level,
+however If you need any modules out of any mls level, you should probably be
+building in the tests counterpart of that level.
 
 WARNINGS
 Since the modules of level to be USE'd by test will not include _level_'s own
 driver, any internal subprograms inside that driver may have to copied to the
-test program if they are needed during the test. That due care is shown to
-needed declarations, assignments, allocations, and so on need not be elaborated
-but neither can it be overemphasized.
+test program if they are needed during the test. Don't forget to make any
+needed declarations, assignments, allocations, and so on.
 
 No debugging flags have been set among the the compiler switches. Setting them
 for the test program might not accomplish what is really desired, anyway, which
@@ -80,7 +82,7 @@ appropriate for the test case you are considering, you have two choices:
 at the following lines: (line 27)
 
   # This is the directory name from which we will get init_tables_module
-  # (either l1, l2, or l3)
+  # (one of l1, l2, or l3)
   init_m_dir = l2
 
 and change the assignment to l1 or l3. Then 
@@ -88,11 +90,24 @@ and change the assignment to l1 or l3. Then
 to remake the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change,
 and then
 	make
-	
--pw                           2001-Feb-01 to 2001-May-18
+
+Similar warnings and procedures apply to fwdmdl and cloudfwdm. l3m gets its
+init_tables_module from mlspgs/l3, just like its counterpart mlspgs/l3m.
+
+What about testing a new init_tables_module? Say you want to get the
+init_tables_module, not from init_m_dir but from tests/_level_ itself? I
+haven't tested this yet. In general, substituting a much-USEd module for the
+original in mlspgs/_level_ is unsafe because the modules that USE it are
+not being recompiled. Rather than a mere warning, this last point should
+perhaps be elevated to being a bug.
+
+-pw                           2001-Feb-01 to 2001-July-24
 EOF
 exit
 # $Log$
+# Revision 1.4  2001/07/16 20:57:46  pwagner
+# Mentions tests/misc
+#
 # Revision 1.3  2001/05/19 00:06:25  pwagner
 # Changes to reflect new ways to invoke MakeFC
 #
@@ -101,5 +116,4 @@ exit
 #
 # Revision 1.1  2001/02/01 23:09:33  pwagner
 # First commit
-#
 #
