@@ -13,6 +13,7 @@ module FullCloudForwardModel
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use AntennaPatterns_m, only: ANTENNAPATTERNS
+  use CloudySkyRadianceModel, only: CloudForwardModel
   use Hdf, only: DFACC_READ, DFACC_CREATE
   use HDFEOS, only: SWOPEN,     SWCLOSE
   use L2GPData, only: L2GPData_T, ReadL2GPData, WriteL2GPData
@@ -820,6 +821,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.26  2001/09/19 00:25:59  dwu
+! add M_banded to Jacobian
+!
 ! Revision 1.25  2001/09/04 15:59:44  jonathan
 ! add cloud_fov, jonathan
 !
