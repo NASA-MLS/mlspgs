@@ -11,6 +11,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   use VectorsModule, only: VectorValue_T
   use Dump_0, only: Dump
   use Output_m, only: Output
+  use Intrinsic, only: L_PHITAN
 
   implicit none
 
@@ -47,12 +48,13 @@ contains
 
   ! ---------------------------------------- FindOneClosestInstance -----
   integer function FindOneClosestInstance ( referenceQuantity, &
-    soughtQuantity, instance )
+    soughtQuantity, instance, useValue )
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
     type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
     type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
     integer, intent(in) :: instance
+    logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
 
     ! Local variables
     integer :: FIRSTGUESS               ! The result of hunt
@@ -61,14 +63,29 @@ contains
     integer :: BESTGUESS                ! The result
     real (r8) :: COST                   ! A cost function
     real (r8) :: BESTCOST               ! The best cost function
+    logical :: MYUSEVALUE
+    real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
 
     ! Executable code
     ! We'll skip the error checking we could do at this point, for speed.
 
     ! First we'll do a hunt to get ourselves in the right area.  Might as
     ! well start looking where we think that will be.
-    call Hunt ( referenceQuantity%template%phi(1,:), &
-      & soughtQuantity%template%phi(1,instance), firstGuess, &
+    myUseValue = .false.
+    if ( present(useValue) ) myUseValue = useValue
+
+    if ( myUseValue ) then
+      if ( soughtQuantity%template%quantityType == l_phiTan ) then
+        seek => soughtQuantity%values
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Cannot use useValue option for non phiTan quantities' )
+      end if
+    else
+      seek => soughtQuantity%template%phi
+    end if
+
+    call Hunt ( referenceQuantity%template%phi(1,:), seek(1,instance), firstGuess, &
       & start=max(min(instance,referenceQuantity%template%noInstances),1), &
       & allowTopValue=.true., nearest=.true. )
 
@@ -79,7 +96,7 @@ contains
     do firstGuess = lowGuess, highGuess
       cost = sum ( abs ( &
         & referenceQuantity%template%phi(1,firstGuess) - &
-        & soughtQuantity%template%phi(:,instance) ) )
+        & seek(:,instance) ) )
       if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
         bestGuess = firstGuess
         bestCost = cost
@@ -87,6 +104,41 @@ contains
     end do
     FindOneClosestInstance = bestGuess
   end function FindOneClosestInstance
+
+  ! --------------------------------------- FindInstanceWindow ---------
+  subroutine FindInstanceWindow ( quantity, phiTan, maf, phiWindow, &
+    & windowStart, windowFinish )
+    ! This returns the start end end of a window into a quantity such as
+    ! temperature for a given instance of a minor frame quantity
+    type (VectorValue_T), intent(in) :: QUANTITY ! Quantity e.g. temperature
+    type (VectorValue_T), intent(in) :: PHITAN ! Phitan information
+    integer, intent(in) :: MAF          ! Major frame sought
+    real (r8), intent(in) :: PHIWINDOW  ! Window size input
+    integer, intent(out) :: WINDOWSTART ! Output window start
+    integer, intent(out) :: WINDOWFINISH ! Output window finish
+
+    ! Local variables
+    integer :: CLOSESTINSTANCE
+    real(r8) :: PHIMIN, PHIMAX           ! Limiting values of phi for this MAF
+
+    ! Executable code
+    if ( phiWindow == 0.0 ) then
+      ! Just return closest instances
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
+        & useValue=.true. )
+      windowStart = closestInstance
+      windowFinish = closestInstance
+    else
+      phiMin = minval ( phiTan%values(:,maf) ) - phiWindow/2.0
+      phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow/2.0
+      call Hunt ( quantity%template%phi(1,:), phiMin, windowStart, &
+        & allowTopValue=.true. )
+      call Hunt ( quantity%template%phi(1,:), phiMax, windowFinish, &
+        & allowTopValue=.true. )
+      windowStart = max ( 1, windowStart - 1 )
+      windowFinish = min ( quantity%template%noInstances, windowFinish + 1 )
+    end if
+  end subroutine FindInstanceWindow
 
   ! --------------------------------------- DoHGridsMatch --------------
   logical function DoHGridsMatch ( a, b )
@@ -138,6 +190,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.13  2002/06/12 16:50:39  livesey
+! Added findInstanceWindow
+!
 ! Revision 2.12  2002/02/06 01:32:58  livesey
 ! Rewrote FindOneClosestInstance and FindClosestInstances to reflect the
 ! way in which they are mostly called, and to fix a bug.
