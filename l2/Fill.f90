@@ -39,7 +39,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
     & Vectors, QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, &
-    & Chunks, ChunkNo )
+    & FWModelConfig, Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
@@ -48,6 +48,8 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSChunk_T
     use DumpCommand_m, only: DumpCommand
     use Expr_M, only: EXPR, GetIndexFlagsFromList
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelSupport, only: FillFwdModelTimings
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
@@ -84,6 +86,7 @@ contains ! =====     Public Procedures     =============================
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
+      & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
@@ -180,6 +183,7 @@ contains ! =====     Public Procedures     =============================
     type (VGrid_T), dimension(:), pointer :: vGrids
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (mlSChunk_T), dimension(:), pointer :: Chunks
     integer, intent(in) :: ChunkNo
 
@@ -1138,6 +1142,12 @@ contains ! =====     Public Procedures     =============================
             & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
           call FillFoldedRadiance ( quantity, lsb, usb, lsbFraction, usbFraction, key )
 
+        case ( l_fwdModelTiming ) ! --- Fill timings for forward model  -----
+          call FillFwdModelTimings (quantity%values(:,1), FWModelConfig, 'fwdTiming')
+        case ( l_fwdModelMean ) ! --- Fill mean for forward model  -----
+          call FillFwdModelTimings (quantity%values(:,1), FWModelConfig, 'mean')
+        case ( l_fwdModelStdDev ) ! --- Fill std_dev for forward model  -----
+          call FillFwdModelTimings (quantity%values(:,1), FWModelConfig, 'stdDev')
         case ( l_gphPrecision) ! -------------  GPH precision  -----
           ! Need a tempPrecision and a refgphPrecision quantity
           if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
@@ -6876,6 +6886,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.276  2004/07/22 20:39:14  cvuu
+! Now can fill ForwardModel time, mean and std_dev
+!
 ! Revision 2.275  2004/06/29 18:06:28  pwagner
 ! May fill phase, section timings
 !
