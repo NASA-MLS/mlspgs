@@ -1981,6 +1981,7 @@ contains
 
     type(Catalog_T), pointer :: Catalog
     integer :: i, j, k, l, n, n_sps, nl, no_ele
+    logical :: Temp_Der
 
     real(rp) :: vel_z_correction
 
@@ -2002,8 +2003,25 @@ contains
 
       nl = Size(catalog%Lines)
 
-      if ( .not. present(t_der_flags) ) then
-        do j = 1, n
+      do j = 1, n
+        temp_der = present(t_der_flags)
+        if ( temp_der ) temp_der = t_der_flags(j)
+        if ( temp_der ) then ! do temperature derivative stuff
+          do k = 1, nl
+            l = catalog%lines(k)
+            call slabs_prep_dT ( t_path(j), catalog%mass, &
+              & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
+              & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+              & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+              & Vel_z_correction, &
+              & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
+              & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
+              & gl_slabs(j,i)%dslabs1_dv0(k), &
+              & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
+              & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
+              & gl_slabs(j,i)%dslabs1_dT(k) )
+          end do ! k = 1, nl
+        else
           do k = 1, nl
             l = catalog%lines(k)
             call slabs_prep ( t_path(j), catalog%mass, &
@@ -2015,27 +2033,8 @@ contains
               & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
               & gl_slabs(j,i)%dslabs1_dv0(k) )
           end do ! k = 1, nl
-        end do ! j = 1, n
-      else ! t_der_flags are present -- do temperature derivative stuff
-        do j = 1, n
-          if ( t_der_flags(j) ) then ! do temperature derivative stuff
-            do k = 1, nl
-              l = catalog%lines(k)
-              call slabs_prep_dT ( t_path(j), catalog%mass, &
-                & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
-                & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
-                & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
-                & Vel_z_correction, &
-                & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
-                & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
-                & gl_slabs(j,i)%dslabs1_dv0(k), &
-                & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
-                & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
-                & gl_slabs(j,i)%dslabs1_dT(k) )
-            end do ! k = 1, nl
-          end if ! t_der_flags(j)
-        end do ! j = 1, n
-      end if ! present(t_der_flags)
+        end if ! t_der_flags(j)
+      end do ! j = 1, n
 
       if ( Do_1D ) then
         ! fill in grid points on other side with above value
@@ -2076,6 +2075,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.29  2004/04/02 00:59:24  vsnyder
+! Get catalog from slabs structure
+!
 ! Revision 2.28  2004/03/30 02:25:08  vsnyder
 ! Comment out call to slabs_prep_dt until n1==0 etc are worked out
 !
