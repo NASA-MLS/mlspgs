@@ -291,11 +291,11 @@ C=========================================================================
      >                YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,
      >                ZT,ZZT,NT) 
 
-      DO I=1,NZmodel
-         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I),IPSD(I)
-      ENDDO
+c      DO I=1,NZmodel
+c         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I),IPSD(I)
+c      ENDDO
 
-         WRITE(21,*)(ZZT(I),I=1,NT)
+c         WRITE(21,*)(ZZT(I),I=1,NT)
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -447,7 +447,7 @@ C=================================================
                BETAc(ILYR,IFR)=0.
             ENDIF
 
-            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
+c            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
 
 c           WRITE(21,*) BETAc(ILYR,IFR),BETA(ILYR,IFR),W0(1,ILYR)  
 
