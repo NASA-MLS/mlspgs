@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module VectorHDF5
@@ -195,7 +195,7 @@ contains ! ========================================= Module procedures =======
     use HDF5, only: H5GOPEN_F, H5GCLOSE_F
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use MLSHDF5, only: LOADFROMHDF5DS, GETHDF5ATTRIBUTE, &
-      & READSTRINGINDEXFROMHDF5ATTRIBUTE, READLITINDEXFROMHDF5ATTRIBUTE
+      & READSTRINGINDEXFromHDF5Attr, READLITINDEXFromHDF5Attr
     ! Arguments
     integer, intent(in) :: LOCATION     ! HDF5 location of parent group
     character(len=*), intent(in) :: NAME ! Name of quantity template
@@ -238,9 +238,9 @@ contains ! ========================================= Module procedures =======
 
     ! Get the remaining stuff
     ! Write the low level stuff as attributes
-    call ReadStringIndexFromHDF5Attribute ( qID, 'name', qt%name )
+    call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
     call GetHDF5Attribute ( qID, 'id', qt%id )
-    call ReadLitIndexFromHDF5Attribute ( qID, 'quantityType', qt%quantityType )
+    call ReadLitIndexFromHDF5Attr ( qID, 'quantityType', qt%quantityType )
     call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
     call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
     call GetHDF5Attribute ( qID, 'noInstances', qt%noInstances )
@@ -254,11 +254,11 @@ contains ! ========================================= Module procedures =======
     call GetHDF5Attribute ( qID, 'minValue', qt%minValue )
     call GetHDF5Attribute ( qID, 'noInstancesLowerOverlap', qt%noInstancesLowerOverlap )
     call GetHDF5Attribute ( qID, 'noInstancesUpperOverlap', qt%noInstancesUpperOverlap )
-    call ReadLitIndexFromHDF5Attribute ( qID, 'verticalCoordinate', qt%verticalCoordinate )
+    call ReadLitIndexFromHDF5Attr ( qID, 'verticalCoordinate', qt%verticalCoordinate )
     call GetHDF5Attribute ( qID, 'badValue', qt%badValue )
-    call ReadLitIndexFromHDF5Attribute ( qID, 'unit', qt%unit )
+    call ReadLitIndexFromHDF5Attr ( qID, 'unit', qt%unit )
     call GetHDF5Attribute ( qID, 'scaleFactor', qt%scaleFactor )
-    call ReadLitIndexFromHDF5Attribute ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
+    call ReadLitIndexFromHDF5Attr ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
     call GetHDF5Attribute ( qID, 'lo', qt%lo )
     call GetHDF5Attribute ( qID, 'signal', qt%signal )
     call GetHDF5Attribute ( qID, 'sideband', qt%sideband )
@@ -305,7 +305,7 @@ contains ! ========================================= Module procedures =======
     use QuantityTemplates, only: NULLIFYQUANTITYTEMPLATE, QUANTITYTEMPLATE_T, &
       & ADDQUANTITYTEMPLATETODATABASE, INFLATEQUANTITYTEMPLATEDATABASE
     use MLSHDF5, only: ISHDF5DSPRESENT, GETHDF5ATTRIBUTE, LOADFROMHDF5DS, &
-      & READSTRINGINDEXFROMHDF5ATTRIBUTE
+      & READSTRINGINDEXFromHDF5Attr
     use HDF5, only: H5GOPEN_F, H5GCLOSE_F, H5GGET_OBJ_INFO_IDX_F
 
     ! Arguments
@@ -353,7 +353,7 @@ contains ! ========================================= Module procedures =======
     call GetHDF5Attribute ( vID, 'id', vt%id )
     call GetHDF5Attribute ( vID, 'totalInstances', vt%totalInstances )
     call GetHDF5Attribute ( vID, 'totalElements', vt%totalElements )
-    call ReadStringIndexFromHDF5Attribute ( vID, 'templateName', vt%name )
+    call ReadStringIndexFromHDF5Attr ( vID, 'templateName', vt%name )
 
     ! Open the quantity templates
     call h5gOpen_f ( vId, 'templates', gId, status )
@@ -460,6 +460,9 @@ contains ! ========================================= Module procedures =======
 end module VectorHDF5
 
 ! $Log$
+! Revision 2.2  2003/05/19 22:06:31  pwagner
+! Shortened names to Read..IndexFromHDF5Attr to comply with namelength standard
+!
 ! Revision 2.1  2003/05/13 20:32:50  livesey
 ! First version
 !
