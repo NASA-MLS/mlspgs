@@ -54,7 +54,7 @@ module DNWT_MODULE
 !           J(K,L) = Partial of F(K) / W.R.T. X(L), K = 1, NF, L = 1, NX
 !         Triangularize J, and compute (negative of the) gradient =
 !         -(Jacobian)**T * F.  This is the RHS of the normal equations
-!         J**T * J * "Candidate DX" = -J**T * F.            
+!         J**T * J * "Candidate DX" = -J**T * F.
 !         Set
 !           AJ%DIAG = element on diagonal with smallest absolute value,
 !                   after triangularization,
@@ -204,7 +204,7 @@ module DNWT_MODULE
   real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
   real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
   integer :: IFL, INC, ITER, ITKEN
-  integer :: K1IT, K2IT, KB
+  integer :: K1IT, KB
   integer :: NFL
   real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
   real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
@@ -216,7 +216,7 @@ module DNWT_MODULE
     real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
     real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
     integer :: IFL, INC, ITER, ITKEN
-    integer :: K1IT, K2IT, KB
+    integer :: K1IT, KB
     integer :: NFL
     real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
     real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
@@ -231,7 +231,7 @@ module DNWT_MODULE
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -410,10 +410,7 @@ contains
 ! ITER     Number of current iteration
 ! ITKEN    Index used to keep track of Aitken accelerations
 
-! K1IT     Counter on number of iterations to give basic internal
-!          output
-! K2IT     Counter on number of iterations to give extended internal
-!          output
+! K1IT     Number of iterations to give basic internal output
 ! KB       Flag set to indicate some past history
 !          =2    Starting
 !          =-J   (J>0) Making gradient move from best X (-KB serves as
@@ -493,7 +490,7 @@ contains
         &        750,      770,  770), -ifl
 
 ! Initialization
-   10 if (ifl /= nf_start) go to 222 ! User forcing retreat to best X
+   10 if ( ifl /= nf_start ) go to 222 ! User forcing retreat to best X
       ajn = c0
       condai = c0
       dxnl = c1
@@ -524,7 +521,7 @@ contains
       tp = spl*ajn*cp9
       if ( fn < fnl ) then
         if ( fn >= fnb ) then
-          if ( (max(tp,sql) <= sqmin) .and. &
+          if ( (max(tp, sql) <= sqmin) .and. &
                ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
         end if
         go to 219
@@ -547,21 +544,21 @@ contains
       if ( fn < fnl ) go to 735
       if ( inc >= 0 ) then
         if ( inc == 0 ) then ! Last X == Best X
-          dxnbig = max(dxnl,dxnois)
+          dxnbig = max(dxnl, dxnois)
         else      ! INC > 0 -- Last X not Best X
           if ( kb == 0 ) then
-            if (fn < fnb) then
+            if ( fn < fnb ) then
                gfac = -gfac
-               if (gfac >=  0) go to 927
+               if ( gfac >=  0 ) go to 927
             end if
             go to 228
           end if
-          if (dxnl <= dxnois) go to 219
+          if ( dxnl <= dxnois ) go to 219
           if ( kb < 0 ) go to 224
-          if ((tp >= min(sql,sqb+sqb)) .or. (inc >= huge(inc))) go to 222
+          if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= huge(inc)) ) go to 222
         end if
-        sqmin = min(sqb,max(spl,spact)*ajn*c4)
-        dxinc = max(dxnl*cp5,dxnois)
+        sqmin = min(sqb, max(spl, spact)*ajn*c4)
+        dxinc = max(dxnl*cp5, dxnois)
         inc = inc + 1
       end if
 
@@ -573,7 +570,7 @@ contains
 
   222 kb = -1
   224 kb = kb - 1
-      if (kb == (-4)) then
+      if ( kb == (-4) ) then ! Four consecutive gradient moves !
 
 ! Test if Jacobian matrix is being computed properly
 
@@ -594,7 +591,7 @@ contains
 
   240 continue
       aj%dxn = gradnb*gfac ! In case the caller wants to compute cosines
-      if (gfac <= c0) go to 780
+      if ( gfac <= c0 ) go to 780
       axmax = axmaxb
       dxn = aj%dxn
       gfac = gfac*cp125
@@ -612,51 +609,51 @@ contains
       ajn = aj%ajn       ! Largest L1 norm of column in upper triangle
       fnmin = aj%fnmin   ! L2 Norm of F not in column space of the Jacobian
       gradn = aj%gradn   ! L2 norm of gradient
-      if (gradn <= c0) then
+      if ( gradn <= c0 ) then
          gradn = c1
-         if (ajn <= c0) ajn=c1
+         if ( ajn <= c0) ajn=c1
       end if
-      condai = max(min(condai,diag/ajn),(diag/ajn)**2)
+      condai = max(min(condai, diag/ajn), (diag/ajn)**2)
       spact = cp25*condai
       frz = sqrt(abs((fn-fnmin)*(fn+fnmin)))
 
-      if (iter == 1) then ! First iteration
+      if ( iter == 1 ) then ! First iteration
         sp = spstrt
         spinc = sp
-        if (frz <= rnd*fnmin) go to 865
+        if ( frz <= rnd*fnmin ) go to 865
         dxi = cp125
       else
-        if (fn >= fnl) then
+        if ( fn >= fnl ) then
 
 ! Select new stabilizing parameter for case when F has increased
 
           kb = 1
-          if (dxnl < dxnois) then
+          if ( dxnl < dxnois ) then
             sp = c1pxm4*sp
-            sqmin = min (sqmin, sp*ajn)
+            sqmin = min(sqmin, sp*ajn)
 !           dxnl = dxnl / cp01
             go to 520
           end if
-          spfac = max((fn/fnl)**2,c10)
-          spinc = spl+spl+spact
+          spfac = max((fn/fnl)**2, c10)
+          spinc = spl + spl + spact
           dxi = c1
           go to 515
         end if
-        if (fn >= fnb) go to 460
+        if ( fn >= fnb ) go to 460
       end if
 
 ! New best X
 
       dxinc = dxmaxi
-      spinc = min(spinc,max(spmini,abs(ajscal)/ajn))
+      spinc = min(spinc, max(spmini, abs(ajscal)/ajn))
       sqmin = c0
       spb = spl
       sqb = sql
-      if (inc < 0) go to 520
-      if (inc /= 0) then
-        if (kb < 0) then
+      if ( inc < 0 ) go to 520
+      if ( inc /= 0 ) then
+        if ( kb < 0 ) then
           dxi = cp25
-        else if (kb == 1) then
+        else if ( kb == 1 ) then
           dxi = cp25*dxnl/dxnbig
         end if
         kb = 0
@@ -675,28 +672,28 @@ contains
 
 ! Select new stabilizing parameter
 
-  470 tp = min((frz/frzl),(fn/fnl))
+  470 tp = min((frz/frzl), (fn/fnl))
 
 ! Test if F appears almost linear over last step
 
-      if (fn**2 < fnxe) then ! F appears almost linear.
+      if ( fn**2 < fnxe ) then ! F appears almost linear.
         spfac = cp125*(c1p025-cdxdxl)*tp**2
-        if (spl <= spinc) spinc = cp25*spinc
+        if ( spl <= spinc) spinc = cp25*spinc
         dxi = min(dxi,cp25)
       else ! F not linear over last step
       ! spfac = tp*(fn**2)/fnxe
-      ! if (cdxdxl >= cp9) spfac = min(spfac,cp5)
-      ! On 020725, FTK recommended:
+      ! if ( cdxdxl >= cp9) spfac = min(spfac,cp5)
+      ! On 2002/07/25, FTK recommended:
         spfac = min(tp*(fn**2)/fnxe, 32.D0*(1.025D0 - cdxdxl)**2)
         dxi = c1
       end if
-  515 if (gradn > gradnl) spfac = spfac*gradnl/gradn
-      sp = max(spinc,min(spb,spl*spfac))
-  520 sp = max(sp,sqmin/ajn)
+  515 if ( gradn > gradnl) spfac = spfac*gradnl/gradn
+      sp = max(spinc, min(spb, spl*spfac))
+  520 sp = max(sp, sqmin/ajn)
       spl = sp
       sq = sp*ajn
       aj%sqt = sq
-      if (sp < spact) sq = sqmin
+      if ( sp < spact) sq = sqmin
       gradnl = gradn
 
 ! Do Levenberg-Marquardt stabilization, solve for "Candidate DX"
@@ -713,12 +710,12 @@ contains
   540 fnmin = aj%fnmin
       dxn = aj%dxn
       cgdx = aj%gdx/(gradn*dxn) ! Cosine ( gradient, dx )
-      condai = min(cgdx,gradn/(dxn*ajn**2),diag/ajn)
+      condai = min(cgdx, gradn/(dxn*ajn**2), diag/ajn)
       fnxe = fnmin**2
-      if (sq /= c0) fnxe = fnxe-(sq*dxn)**2
+      if ( sq /= c0) fnxe = fnxe - (sq*dxn)**2
       tp = dxinc
-      if (inc < 0) then
-        if (dxn <= dxinc) then
+      if ( inc < 0 ) then
+        if ( dxn <= dxinc ) then
           inc = huge(inc)
           cdxdxl = c0
           go to 735
@@ -726,9 +723,9 @@ contains
       else
         cdxdxl = aj%dxdxl/(dxn*dxnl)
         if ( fnxe > fnb**2 ) go to 222 ! Go do a gradient move
-        tp1 = min(cp5,dxi*((c1-cdxdxl)**2))
-        if (tp*tp1 > dxnl) tp = dxnl/tp1
-        if (dxn <= tp .or. sp >= 1.0e12_rk) then
+        tp1 = min(cp5, dxi*((c1-cdxdxl)**2))
+        if ( tp*tp1 > dxnl) tp = dxnl/tp1
+        if ( dxn <= tp .or. sp >= 1.0e12_rk ) then
           if ( inc == 0 ) go to 200
           cait = cbig
           go to 755
@@ -737,15 +734,9 @@ contains
 
 ! Step length is too large
 
-      if (k1it /= 0) then
-         write(output_line,3001) dxn,cdxdxl,spl,sq,cgdx,condai,inc,kb
- 3001    format(' DXN=',1PG10.3,'  CDXDXL=',G10.3,'  SPL=', &
-     &          G10.3,'  SQ=',G10.3,'  CGDX=',G10.3,        &
-     &          '  CI=',G10.3,'  I,K=',I2,',',I2)
-        call output(trim(output_line), advance='yes')
-      end if
+      if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
       spinc = sp
-      sp = c4*spl+min(condai+condai,min(cp125,condai)*(dxn-tp)/tp)
+      sp = c4*spl + min(condai+condai, min(cp125, condai)*(dxn-tp)/tp)
       sq = sp*ajn
       spl = sqrt(sp**2+spl**2)
       aj%sqt = spl*ajn
@@ -762,9 +753,9 @@ contains
 ! Re-enter here after saving X as "best X" and Gradient as "Best gradient"
 
   740 axmaxb = axmax
-      dxnois = max(dxnois,c1pxm4*dxnl)
-      gfac = min(cp125*dxn/gradn,ajn**(-2))
-      spg = spl+cp01
+      dxnois = max( dxnois, c1pxm4*dxnl)
+      gfac = min(cp125*dxn/gradn, ajn**(-2))
+      spg = spl + cp01
       fnb = fn
       frzb = frz
 !     fnminb = fnmin
@@ -781,15 +772,22 @@ contains
 ! Aitken acceleration
 
   750 tp = aj%dxdx
-      if (tp /= c0) then
-         tp = c1+aj%dxdxl/tp
+      if ( tp /= c0 ) then
+         tp = c1 + aj%dxdxl/tp
          tp = min(c10, max(tp,cp01))
-         if (abs(cait-tp) < abs(cp25*(cait+tp)-cp5)) then
+         if ( abs(cait-tp) < abs(cp25*(cait+tp)-cp5) ) then
+            ! Set DX = Aitken-modified DX = CAIT * "Candidate DX"
             cait = tp
-            itken = iter+2
-            go to 760
+            itken = iter + 2
+            sq = -cait
+            dxn = cait*dxn
+            aj%dxn = dxn ! In case the caller wants to compute cosines
+            aj%cait = cait
+            ifl = nf_dx_aitken
+            nflag = ifl
+            return
          end if
-         if (itken < iter) cait = tp
+         if ( itken < iter) cait = tp
       end if
 
 ! End of logic for Aitken acceleration
@@ -797,14 +795,6 @@ contains
 ! Store DX
 
   755 ifl = nf_dx
-      nflag = ifl
-      return
-! Store the Aitken-modified DX
-  760 sq = -cait
-      dxn = cait*dxn
-      aj%dxn = dxn ! In case the caller wants to compute cosines
-      aj%cait = cait
-      ifl = nf_dx_aitken
       nflag = ifl
       return
 
@@ -815,20 +805,10 @@ contains
       ! Come here after returning from a gradient move
   775 fnl = fn
       frzl = frz
-      fnxe = cp25*fn**2+cp76*fnxe
-  780 if (k1it /= 0) then
-         k1it = k1it-1
-         write(output_line,3002) iter,fn,frz,fnmin,fnxe,spl,sq
- 3002    format(' ITER=',I4,'  FN=',G10.3, '  FRZ=',G10.3, &
-     &          '  FNMIN=',G10.3,'  FNXE=', G10.3,'  SPL=',G10.3, &
-     &          '  SQ=',G10.3)
-         call output(trim(output_line), advance='yes')
-         write(output_line,3003) dxn,gradn,cgdx,cdxdxl,ajn,diag,condai, &
-     &                 inc,kb
- 3003    format(' DXN=', G10.3,'  GRADN=',G10.3,'  CGDX=',G10.3, &
-     &          '  CDXDXL=',G10.3,'  AJN=',G10.3,'  DIAG=',      &
-     &          G10.3,'  CI=',G10.3,'  I,K=',I2,',',I2)
-         call output(trim(output_line), advance='yes')
+      fnxe = cp25*fn**2 + cp76*fnxe
+  780 if ( k1it /= 0 ) then
+        k1it = k1it - 1
+        call nwtdb ( width=9, level=1, why='Before new X' )
       end if
 
 ! Compute new X and test for too small a correction
@@ -841,7 +821,7 @@ contains
 ! Re-enter after computing new X
 
   850 if ( .not. aj%big ) then
-         if ((spl <= spmini).or.(sq == c0))  go to 870
+         if ( (spl <= spmini).or.(sq == c0) ) go to 870
          dxnois = max(dxnois, c10*dxn)
       end if
       axmax = aj%axmax
@@ -850,7 +830,7 @@ contains
       nflag = nfl
       return
 
-  870 if ((inc > 0) .and. (kb /= 0)) go to 222
+  870 if ( (inc > 0) .and. (kb /= 0) ) go to 222
 
 ! Convergence -- move too small
 
@@ -894,7 +874,7 @@ contains
       valnom(8) = sqrt(sqrt(epsilon(values))) ** 3
       values(7:8) = valnom(7:8)
       first = .false.
-    end if      
+    end if
     if ( present(nopt) ) then
       if ( .not. present(xopt) ) then
         call ermsg ( me, 99, 2, 'NOPT present but XOPT absent', '.' )
@@ -906,16 +886,15 @@ contains
         ka = abs(k)
         select case ( ka )
 !****************** Change *DATA* values *******************
-        case ( 1, 2 ) ! Set K1IT and K2IT (data and common)
-          if (k > 0) iopts(ka) = nopt(i+1)
+        case ( 1, 2 ) ! Set K1IT
+          if ( k > 0) iopts(ka) = nopt(i+1)
           k1it = max(iopts(1),iopts(2))
-          k2it = iopts(2)
         case ( 3, 4, 7, 8 ) ! Change XSCAL and FSCAL indexes in data
                             ! or set up bounds option in data
-          if (k > 0) iopts(ka) = nopt(i+1)
+          if ( k > 0) iopts(ka) = nopt(i+1)
         case ( 5, 6 ) ! Set flags in data for reverse communi-
                       ! cation and special matrix operations
-          if (k > 0) iopts(ka) = 1
+          if ( k > 0) iopts(ka) = 1
           i = i - 1
         case ( 9, 10 ) ! Set to default values
           iopts = 0
@@ -925,14 +904,14 @@ contains
         case ( 11:19 ) ! Set in data SPSTRT, SPMINI, AJSCAL,
                        ! DXMAXI, RELSF, and DXNOIS
           values(ka-10) = valnom(ka-10) ! Reset to nominal value
-          if (k > 0) & ! If indicated, set to user input value
+          if ( k > 0) & ! If indicated, set to user input value
             values(ka-10) = xopt(nopt(i+1))
         case default
           indic = 1
           nact = 2
           call ermsg ( me, indic, nact, 'INVALID NOPT', ',' )
           ival(1) = i
-          ival(2) = nopt(i) 
+          ival(2) = nopt(i)
           call ervn ( labl, ival, '.' )
           return
         end select
@@ -940,7 +919,6 @@ contains
       end do
     else
       k1it = max(iopts(1),iopts(2))
-      k2it = iopts(2)
     end if
 !                     Reset every time one of them changes
     spmini = values(2)
@@ -958,7 +936,7 @@ contains
 
 ! *************************************************     DNWTDB     *****
 
-  subroutine DNWTDB ( AJ, WIDTH, LEVEL )
+  subroutine DNWTDB ( AJ, WIDTH, LEVEL, WHY )
 
 !   Print the scalars in the module.  Print the stuff in AJ if it's
 !   present.  Print the integer scalars first.  Then print
@@ -970,13 +948,14 @@ contains
     integer, intent(in), optional :: LEVEL ! Absent, do everything
     ! Present and 1 do everything
     ! Present and 0 do CDXDXL, CGDX, DXN, FN, FNMIN, INC, SP, SQ, SQRT(FNXE)
+    character(len=*), intent(in), optional :: WHY ! printed if present
 
 !   namelist /DNWTDB_OUT/ AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
 !   namelist /DNWTDB_OUT/ DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
 !   namelist /DNWTDB_OUT/ FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
 !   namelist /DNWTDB_OUT/ FRZL, GFAC, GRADN, GRADNB, GRADNL
 !   namelist /DNWTDB_OUT/ IFL, INC, ITER, ITKEN
-!   namelist /DNWTDB_OUT/ K1IT, K2IT, KB
+!   namelist /DNWTDB_OUT/ K1IT, KB
 !   namelist /DNWTDB_OUT/ NFL
 !   namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
 !   namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
@@ -990,7 +969,7 @@ contains
     if ( present(level) ) myLevel = level
     myWidth = 5
     if ( present(width) ) myWidth = max(5,min(9,width))
-    if ( level == 0 ) myWidth = min(8,myWidth)
+    if ( myLevel == 0 ) myWidth = min(8,myWidth)
 
     output_line = '-----     DNWT internal variables     ----------------------&
       &------------------------------------------------------------------'
@@ -998,33 +977,27 @@ contains
 
     call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
 
-    if ( myLevel > 0 ) then
-!     write ( *, '(a)' ) &
-      call output( &
-        & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL', &
-        & advance='yes' )
-      write ( output_line, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
-        & K1IT, K2IT, KB, adjustr(nflName)
-    else
-      call output ( &
-        & '       IFL        INC       NFL', advance='yes' )
-      write ( output_line, '(1x,a9,i11,1x,a9)' ) &
-        & adjustr(iflName), inc, adjustr(nflName)
-    end if
-    call output(trim(output_line), advance='yes')
+!   write ( *, '(a)' ) &
+    call output( &
+      & '       IFL        INC    ITER   ITKEN    K1IT      KB       NFL' )
+    if ( present(why) ) call output ( '  ' // why )
+    call output ( '', advance='yes' )
+    write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
+      & K1IT, KB, adjustr(nflName)
+    call output ( trim(output_line), advance='yes' )
 
     i = 1
     name_line = ''
     output_line = ''
-    if ( myLevel > 0 ) call add_to_line ( ajn,    'AJN' )
+    call add_to_line ( ajn,    'AJN' )
     if ( myLevel > 0 ) call add_to_line ( ajscal, 'AJSCAL' )
     if ( myLevel > 0 ) call add_to_line ( axmax,  'AXMAX' )
     if ( myLevel > 0 ) call add_to_line ( axmaxb, 'AXMAXB' )
     if ( myLevel > 0 ) call add_to_line ( cait,   'CAIT' )
     call add_to_line ( cdxdxl, 'CDXDXL' )
     call add_to_line ( cgdx,   'CGDX' )
-    if ( myLevel > 0 ) call add_to_line ( condai, 'CONDAI' )
-    if ( myLevel > 0 ) call add_to_line ( diag,   'DIAG' )
+    call add_to_line ( condai, 'CONDAI' )
+    call add_to_line ( diag,   'DIAG' )
     if ( myLevel > 0 ) call add_to_line ( dxi,    'DXI' )
     if ( myLevel > 0 ) call add_to_line ( dxinc,  'DXINC' )
     if ( myLevel > 0 ) call add_to_line ( dxmaxi, 'DXMAXI' )
@@ -1037,11 +1010,11 @@ contains
     if ( myLevel > 0 ) call add_to_line ( fnl,    'FNL' )
     call add_to_line ( fnmin,  'FNMIN' )
     call add_to_line ( sqrt(fnxe),   'FNXE**.5' )
-    if ( myLevel > 0 ) call add_to_line ( frz,    'FRZ' )
+    call add_to_line ( frz,    'FRZ' )
     if ( myLevel > 0 ) call add_to_line ( frzb,   'FRZB' )
     if ( myLevel > 0 ) call add_to_line ( frzl ,  'FRZL' )
     if ( myLevel > 0 ) call add_to_line ( gfac,   'GFAC' )
-    if ( myLevel > 0 ) call add_to_line ( gradn,  'GRADN' )
+    call add_to_line ( gradn,  'GRADN' )
     if ( myLevel > 0 ) call add_to_line ( gradnb, 'GRADNB' )
     if ( myLevel > 0 ) call add_to_line ( gradnl, 'GRADNL' )
     if ( myLevel > 0 ) call add_to_line ( relsf,  'RELSF' )
@@ -1051,7 +1024,7 @@ contains
     if ( myLevel > 0 ) call add_to_line ( spfac,  'SPFAC' )
     if ( myLevel > 0 ) call add_to_line ( spg,    'SPG' )
     if ( myLevel > 0 ) call add_to_line ( spinc,  'SPINC' )
-    if ( myLevel > 0 ) call add_to_line ( spl,    'SPL' )
+    call add_to_line ( spl,    'SPL' )
     if ( myLevel > 0 ) call add_to_line ( spmini, 'SPMINI' )
     if ( myLevel > 0 ) call add_to_line ( spstrt, 'SPSTRT' )
     call add_to_line ( sq,     'SQ ')
@@ -1160,7 +1133,6 @@ contains
     guts%iter = iter
     guts%itken = itken
     guts%k1it = k1it
-    guts%k2it = k2it
     guts%kb = kb
     guts%nfl = nfl
     guts%relsf = relsf
@@ -1230,6 +1202,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.38  2003/01/16 04:06:58  vsnyder
+! Change some output in DNWT
+!
 ! Revision 2.37  2003/01/15 01:49:51  vsnyder
 ! Add an '12-interesting-variables' dump
 !
