@@ -2,12 +2,13 @@
 #
 # This is the makefile for the EOS MLS Level 1 software
 #
-LDFLAGS= -lm -lnsl
+LDFLAGS= -lnsl
 MODULEPATH=../lib/
 MLSPGS_LIB_PATH=../lib
 TOOLKIT_LIB=${PGSLIB}/libPGSTK.a $
-HDF_LIB=/usr/local/HDF/lib/libmfhdf.a /usr/local/HDF/lib/libdf.a \
-	/usr/local/HDF/lib/libz.a
+HDF_LIB_PATH=/usr/local/HDF/lib
+HDF_LIB=$(HDF_LIB_PATH)/libmfhdf.a $(HDF_LIB_PATH)/libdf.a \
+	$(HDF_LIB_PATH)/libz.a
 
 # Note we define OBJS to be all the files EXCEPT MLSL1.o as this allows
 # the dependencies to be defined more simply.  Where we need to, we add
@@ -45,6 +46,9 @@ include ${MLSPGS_LIB_PATH}/makelibs.inc
 
 #
 # $Log$
+# Revision 1.5  2000/02/23 20:34:45  perun
+# Changed .o_debug to .dbg.o for SunOS
+#
 # Revision 1.4  2000/02/22 19:11:58  perun
 # Added use of F90{DEBUG}FLAGS
 #
