@@ -2,11 +2,11 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module LOAD_SPS_DATA_M
-  use MLSCommon, only: RP, IP
+  use MLSCommon, only: R8, RP, IP
   use Units, only: Deg2Rad
-  use Intrinsic, only: L_VMR
+  use Intrinsic, only: L_VMR, L_FREQUENCY, L_NONE
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
-  use Molecules, only: spec_tags
+  use Molecules, only: spec_tags, L_EXTINCTION
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   implicit none
@@ -21,7 +21,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: no_f(:)      ! No. of entries in frq. grid per sps
     integer,  pointer :: no_z(:)      ! No. of entries in zeta grid per sps
     integer,  pointer :: no_p(:)      ! No. of entries in phi  grid per sps
-    real(rp), pointer :: frq_basis(:) ! frq  grid entries (dim: tot_no_frq)
+    real(r8), pointer :: frq_basis(:) ! frq  grid entries (dim: tot_no_frq)
     real(rp), pointer :: zet_basis(:) ! zeta grid entries (dim: tot_no_zet)
     real(rp), pointer :: phi_basis(:) ! phi  grid entries (dim: tot_no_phi)
   end type Grids_T
@@ -35,16 +35,16 @@ module LOAD_SPS_DATA_M
 contains
 !-------------------------------------------------------------------
 
-  subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, p_len, &
+  subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, p_len, &
         &    f_len, h2o_ind, lin_log, sps_values, Grids_f, Grids_dw,    &
         &    Grids_dn, Grids_dv)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
-    integer, intent(in)    :: molecules(:)
-
-    integer, intent(out) :: f_len
-    integer, intent(out) :: p_len
-    integer, intent(out) :: h2o_ind
+    integer, intent(in)  :: MOLECULES(:)
+    integer, intent(in)  :: RADIOMETER
+    integer, intent(out) :: F_LEN
+    integer, intent(out) :: P_LEN
+    integer, intent(out) :: H2O_IND
 
     type (Grids_T) :: Grids_f   ! All the coordinates
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
@@ -90,10 +90,18 @@ contains
     p_len = 0
     h2o_ind = 0
     do i = 1 , n_sps
-      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_vmr, molecule=molecules(i) )
-!     kf = f%template%noChans        ! ** ZEBUG
-      kf = 1                         ! ** ZEBUG
+      if ( molecules(i) == l_extinction ) then
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_extinction, radiometer=radiometer )
+      else
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_vmr, molecule=molecules(i) )
+      endif
+      if ( f%template%frequencyCoordinate /= l_none ) then
+        kf = 1
+      else
+        kf = f%template%noChans
+      endif
       kz = f%template%noSurfs
       kp = f%template%noInstances
       Grids_f%no_z(i) = kz
@@ -129,10 +137,18 @@ contains
     s = 1
     f_len = 1
     do i = 1 , n_sps
-      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_vmr, molecule=molecules(i) )
-!     kf = f%template%noChans        ! ** ZEBUG
-      kf = 1                         ! ** ZEBUG
+      if ( molecules(i) == l_extinction ) then
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_extinction, radiometer=radiometer )
+      else
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_vmr, molecule=molecules(i) )
+      endif
+      if ( f%template%frequencyCoordinate /= l_none ) then
+        kf = 1
+      else
+        kf = f%template%noChans
+      endif
       kz = f%template%noSurfs
       kp = f%template%noInstances
       k = j + kp
@@ -140,8 +156,18 @@ contains
       m = s + kf
       r = f_len + kz * kp * kf
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
-! *** ZEBUG: f%template%%frequencies(:) does not exist yet ..
-!     Grids_f%frq_basis(s:m-1) = f%template%%frequencies(:)
+      if ( f%template%frequencyCoordinate /= l_none ) then
+        if ( f%template%frequencyCoordinate /= l_frequency ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Inappropriate frequency coordinate for a species" )
+        if ( associated(f%template%frequencies ) ) then
+          print*,'s,m-1,size(frequencies)',s,m-1,size(f%template%frequencies)
+          Grids_f%frq_basis(s:m-1) = f%template%frequencies
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Unable to deal with frequency coordinate for a species" )
+        endif
+      end if
       Grids_f%frq_basis(s:m-1) = 0.0
       Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
@@ -157,6 +183,7 @@ contains
       f_len = r
     enddo
     f_len = f_len - 1
+    
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
@@ -376,6 +403,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.1  2001/11/02 10:48:39  zvi
+! Implementing frequecy grid
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
