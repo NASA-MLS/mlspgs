@@ -251,7 +251,8 @@ contains ! =====     Public Procedures     =============================
             ! with no vertical coordinate system go in l2gp files.
             if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
               & ModuleName, 'This quantity should be joined as an l2gp')
-            call JoinL2GPQuantities ( key, hdfNameIndex, quantity, precisionQuantity, &
+            call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
+            & precisionQuantity, BndPressQuantity, ColAbundQuantity, &
               & l2gpDatabase, chunkNo )
           else
             ! All others go in l2aux files.
@@ -308,7 +309,8 @@ contains ! =====     Public Procedures     =============================
   ! the instances that we wish to store in the l2gp quantity.  Otherwise, it
   ! defaults to the non overlapped region.
 
-  subroutine JoinL2GPQuantities ( key, name, quantity, precision, l2gpDatabase, &
+  subroutine JoinL2GPQuantities ( key, name, quantity, &
+    & precision, BndPressQuantity, ColAbundQuantity, l2gpDatabase, &
     & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
@@ -316,6 +318,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME         ! For the swath
     type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
     type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
+    type (VectorValue_T), pointer :: BndPressQuantity ! Vector quantity
+    type (VectorValue_T), pointer :: ColAbundQuantity ! Vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
@@ -332,9 +336,12 @@ contains ! =====     Public Procedures     =============================
     integer :: NoSurfsInL2GP, NoFreqsInL2GP
     integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
     logical :: L2gpDataIsNew
+    logical :: newColumn
 !   real(r8), dimension(:,:), pointer :: Values !??? Not used ???
     
     if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
+
+   newColumn = associated(BndPressQuantity) .and. associated(ColAbundQuantity)
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -400,7 +407,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Expand l2gp (initially all zero-size arrays) to take the new information
     call ExpandL2GPDataInPlace ( thisL2GP, &
-      & thisL2GP%nTimes+noOutputInstances )
+      & newNTimes=thisL2GP%nTimes+noOutputInstances, &
+      & newColumn=newColumn )
 
     ! Now copy the information from the quantity to the l2gpData
 
@@ -672,6 +680,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.44  2001/08/02 00:18:55  pwagner
+! Began adding column quantities; incomplete
+!
 ! Revision 2.43  2001/07/31 23:25:32  pwagner
 ! Able to accept 2 new fields for join of column; does nothing yet
 !
