@@ -10,6 +10,7 @@ module L2PC_m
   ! will probably be HDF.
 
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
+  use Intrinsic, only: Lit_Indices
   use MLSCommon, only: R8
   use VectorsModule, only: DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
   use MatrixModule_1, only: DESTROYMATRIX, MATRIX_T
@@ -38,17 +39,18 @@ module L2PC_m
     type (Matrix_T) :: kStar            ! The jacobian matrix
   end type l2pc_T
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteOneL2PC ---------------
-  subroutine WriteOneL2PC ( l2pc, unit, lit_indices )
+  subroutine WriteOneL2PC ( l2pc, unit )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
@@ -56,7 +58,6 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (l2pc_T), intent(in), target :: l2pc
     integer, intent(in) :: unit
-    integer, intent(in), dimension(:) :: lit_indices
 
     ! Local parameters
     character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
@@ -158,7 +159,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine WriteOneL2PC
   
   ! --------------------------------------- WriteL2PC ---------------
-  subroutine ReadOneL2PC ( l2pc, unit, lit_indices, eof )
+  subroutine ReadOneL2PC ( l2pc, unit, eof )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
@@ -166,7 +167,6 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (l2pc_T), intent(out), target :: l2pc
     integer, intent(in) :: unit
-    integer, dimension(:), intent(in) :: lit_indices
     logical, intent(inout) :: eof
 
     ! Local variables
@@ -324,10 +324,9 @@ contains ! ============= Public Procedures ==========================
   end subroutine Close_L2PC_File
 
   ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( lun, lit_indices, l2pcDatabase )
+  subroutine Read_l2pc_file ( lun, l2pcDatabase )
     ! Read all the bins in an l2pc file
     integer, intent(in) :: lun
-    integer, intent(in), dimension(:) :: lit_indices
     type (l2pc_T), dimension(:), pointer :: l2pcDatabase
 
     ! Local variables
@@ -338,7 +337,7 @@ contains ! ============= Public Procedures ==========================
     ! Executable code
     eof = .false.
     do while (.not. eof )
-      call ReadOneL2PC ( l2pc, lun, lit_indices, eof )
+      call ReadOneL2PC ( l2pc, lun, eof )
       dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
     end do
   end subroutine Read_l2pc_file
@@ -391,6 +390,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.5  2001/04/26 02:48:08  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.4  2001/04/26 00:06:33  livesey
 ! Many changes. Working towards a working read routine
 !

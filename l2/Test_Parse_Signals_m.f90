@@ -8,7 +8,6 @@ module Test_Parse_Signals_m
 ! real work.
 
   use Allocate_Deallocate, only: Deallocate_Test
-  use Init_Tables_Module, only: Spec_Indices
   use Parse_Signal_m, only: Parse_Signal
   use MLSSignals_m, only: GetSignalName
 
@@ -34,7 +33,7 @@ contains
     print *, 'Enter radiometer strings: '
     do
       read ( *, '(a)', end=99 ) line
-      call parse_signal ( line, signal_indices, spec_indices, &
+      call parse_signal ( line, signal_indices, &
         & sideband=sideband, channels=channels )
       if ( associated(signal_indices) ) then
         print '(10i5)', signal_indices
@@ -52,6 +51,9 @@ contains
 end module Test_Parse_Signals_m
 
 ! $Log$
+! Revision 2.5  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.4  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
