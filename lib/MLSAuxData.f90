@@ -16,7 +16,7 @@ module MLSAuxData
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
-       h5tequal_f, h5fis_hdf5_f, h5eset_auto_f
+       h5tequal_f, h5fis_hdf5_f, h5eset_auto_f, h5gcreate_f, h5gclose_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -27,11 +27,9 @@ module MLSAuxData
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
-
 !     (data types and parameters)
 ! MLSAuxData_T                   Quantities from an L1B/L2 data file
 ! NAME_LEN                       Max length of l1b/l2 sds array name
-
 !                 (subroutines and functions)
 !
 ! Allocate_MLSAuxData          Allocates a MLSAuxData data structure.
@@ -60,6 +58,7 @@ module MLSAuxData
   public :: MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, &
       & Write_MLSAuxData, Deallocate_MLSAuxData, &
       & Read_MLSAuxAttributes, Write_MLSAuxAttributes, &
+      & CreateGroup_MLSAuxData,&
       & NAME_LEN
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -251,6 +250,28 @@ contains ! ============================ MODULE PROCEDURES ====================
     endif
 
  end subroutine Deallocate_MLSAuxData
+!-----------------------------------------------------------
+  subroutine CreateGroup_MLSAuxData(loc_id, group_name)
+!
+! External variables
+!
+    character(len=*), intent(in) :: group_name
+    integer(hid_t), intent(in)          :: loc_id ! From HDF
+!
+! Internal variables
+!
+    integer(hid_t) :: group_id
+    integer :: h5error
+
+     call h5gcreate_f(loc_id, trim(group_name), group_id, h5error)
+     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+      H5_ERROR_GROUP_CREATE // group_name)
+
+     call h5gclose_f(group_id, h5error)
+     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+      H5_ERROR_GROUP_CLOSE // group_name) 
+
+  end subroutine CreateGroup_MLSAuxData
 ! -------------------------------------------------  Create_MLSAuxData ----
   subroutine Create_MLSAuxData(file_id, MLSAuxData)
 !
@@ -1471,6 +1492,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.10  2002/10/05 00:52:50  jdone
+! CreateGroup_MLSAuxData added.
+!
 ! Revision 2.9  2002/10/05 00:30:20  jdone
 ! Write_MLSAuxData creates & writes dataset if not already created.
 !
