@@ -617,9 +617,9 @@ contains ! =====     Public Procedures     =============================
       last = last + spacing
     end if
 
-    ! Now outset by one to be sure
-    first = first - spacing
-    last = last + spacing
+    ! Now outset by one in the case where we're inside the MAFs
+    if ( first > minAngle ) first = first - spacing
+    if ( last < maxAngle ) last = last + spacing
 
     ! Now work out how many profiles that is and lay them down
     hGrid%noProfs = nint( (last-first) / spacing ) + 1
@@ -1092,6 +1092,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.33  2002/07/17 06:02:50  livesey
+! More conservative settings
+!
 ! Revision 2.32  2002/07/01 23:57:06  livesey
 ! Explicit HGrids now inherit the processing start time as their time.
 !

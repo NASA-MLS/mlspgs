@@ -20,15 +20,17 @@ module ForwardModelSupport
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, &
-    & F_INTEGRATIONGRID, F_L2PC, F_MOLECULE, F_MOLECULES, F_MOLECULEDERIVATIVES, &
+    & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
+    & F_MOLECULEDERIVATIVES, &
     & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
     & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
-    & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
+    & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy
   use L2ParInfo, only: PARALLEL
   use Lexer_Core, only: PRINT_SOURCE
-  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, BINSELECTOR_T
+  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, BINSELECTOR_T, &
+    & READCOMPLETEHDF5L2PCFILE
   use MLSCommon, only: R8
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -194,9 +196,13 @@ contains ! =====     Public Procedures     =============================
 !               fileName = PCFFileName
 !             endif
 !           endif
-          call open_l2pc_file (fileName, lun)
-          call read_l2pc_file ( lun )
-          call close_l2pc_file ( lun )
+          if ( index ( fileName, '.txt' ) /= 0 ) then
+            call open_l2pc_file ( fileName, lun)
+            call read_l2pc_file ( lun )
+            call close_l2pc_file ( lun )
+          else
+            call ReadCompleteHDF5L2PCFile ( fileName )
+          end if
         end do
       case default
         ! Can't get here if the type checker worked
@@ -347,12 +353,14 @@ contains ! =====     Public Procedures     =============================
     info%do_baseline = .false.
     info%do_freq_avg = .false.
     info%DEFAULT_spectroscopy = .false.
+    info%lockBins = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
     info%skipOverlaps = .false.
     info%differentialScan = .false.
     info%cloud_der = 0
+    info%nameFragment = 0
     info%no_cloud_species=2
     info%no_model_surfs =640
     info%NUM_SCATTERING_ANGLES=16
@@ -387,6 +395,10 @@ contains ! =====     Public Procedures     =============================
         info%do_baseline = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
+      case ( f_lockBins )
+        info%lockBins = get_boolean(son)
+      case ( f_nameFragment )
+        info%nameFragment = sub_rosa ( subtree(2,son) )
       case ( f_DEFAULT_spectroscopy )
         info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
@@ -636,6 +648,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.33  2002/07/17 06:02:36  livesey
+! New HDF5 l2pc stuff
+!
 ! Revision 2.32  2002/06/12 17:01:54  livesey
 ! Stuff to support change to real phiWindow from integer
 !
