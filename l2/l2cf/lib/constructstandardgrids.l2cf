@@ -16,8 +16,13 @@ vGridExtinctionHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,9:3]
 vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
 
-vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
-  start=1000mb, formula=[3:6,10:12]
+!ifdef(flagPrecisionEstimates,{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+},{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[3:6,10:12]
+})
 vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[19:12]
 vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
@@ -34,6 +39,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.14  2003/08/14 20:25:58  livesey
+; Higher resolution vGridBaseline, also removed flagSingleBaseline.
+;
 ; Revision 1.13  2003/08/13 21:04:46  livesey
 ; Now optionally goes back to old baseline vGrid
 ;
