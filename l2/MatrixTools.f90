@@ -1,19 +1,19 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module MatrixTools                      ! Various tools for matrices
 
   ! This module provides some tools for dealing matrices not already present in
   ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlocks subroutine.
 
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
   use PVMIDL, only: PVMIDLPACK
   use MatrixModule_1, only: MATRIX_T, MATRIX_DATABASE_T, &
     & FINDBLOCK, GETFROMMATRIXDATABASE, RC_INFO
   use MatrixModule_0, only: MATRIXELEMENT_T, DENSIFY, &
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
   use MLSCommon, only: R8, RM
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
 
   implicit none
   private
@@ -640,6 +640,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.17  2004/10/29 20:54:11  vsnyder
+! Remove USE for DUMP -- not referenced, some cosmetics
+!
 ! Revision 1.16  2004/09/28 00:40:06  livesey
 ! More informative log in CombineChannelsInMatrix
 !
