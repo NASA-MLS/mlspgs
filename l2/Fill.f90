@@ -1157,7 +1157,7 @@ contains ! =====     Public Procedures     =============================
     end if
     quantity%values = RESHAPE(l1bData%dpField, &
       & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
-    call DeallocateL1BData(l1bData,flag)
+    call DeallocateL1BData(l1bData)
 
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
   end subroutine FillVectorQuantityFromL1B
@@ -1307,6 +1307,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.55  2001/05/30 23:56:39  livesey
+! Changed for new L1BData
+!
 ! Revision 2.54  2001/05/30 20:16:26  vsnyder
 ! Add 'invert' field to 'fillCovariance' spec
 !
