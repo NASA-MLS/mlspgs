@@ -684,8 +684,12 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Now think about instanceLen
-    if ( (.NOT. qty%regular) .AND. (present(instanceLen)) ) then
-      qty%instanceLen = instanceLen
+    if ( .not. qty%regular ) then
+      if ( present(instanceLen) ) then
+        qty%instanceLen = instanceLen
+      else
+        qty%instanceLen = 0
+      end if
     else
       qty%instanceLen = qty%noSurfs*qty%noChans
     end if
@@ -767,6 +771,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.29  2002/11/27 01:06:26  livesey
+! Better handling of major frame quantities
+!
 ! Revision 2.28  2002/11/22 12:54:34  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
