@@ -1,0 +1,1760 @@
+Begin abstract syntax tree:
+ 1426:cfs
+ 1379:.dt_def
+    1:..identifier numeric decor=1
+ 1380:.dt_def
+    2:..identifier numeric_range decor=2
+ 1381:.dt_def
+    3:..identifier string decor=3
+ 1382:.dt_def
+    4:..identifier aprioriSource decor=4
+    5:..identifier clo decor=5
+    6:..identifier co decor=6
+    7:..identifier gph decor=23
+    8:..identifier gph_precision decor=24
+    9:..identifier h2o decor=25
+   10:..identifier hcl decor=26
+   11:..identifier hno3 decor=28
+   12:..identifier n2o decor=49
+   13:..identifier o3 decor=53
+   14:..identifier temperature decor=66
+   15:..identifier temperature_precision decor=67
+ 1383:.dt_def
+   16:..identifier aprioriType decor=5
+   17:..identifier climatology decor=4
+   18:..identifier l2gp decor=36
+   19:..identifier l2aux decor=35
+ 1384:.dt_def
+   20:..identifier boolean decor=6
+   21:..identifier true decor=70
+   22:..identifier false decor=18
+ 1385:.dt_def
+   23:..identifier criticalModule decor=7
+   24:..identifier both decor=3
+   25:..identifier either decor=15
+   26:..identifier GHz decor=22
+   27:..identifier neither decor=51
+   28:..identifier THz decor=69
+ 1386:.dt_def
+   29:..identifier hGridType decor=8
+   30:..identifier explicit decor=16
+   31:..identifier fixed decor=19
+   32:..identifier fractional decor=20
+   33:..identifier height decor=27
+   34:..identifier linear decor=37
+ 1387:.dt_def
+   35:..identifier mergeMethod decor=9
+   36:..identifier direct decor=13
+   37:..identifier weighted decor=72
+ 1388:.dt_def
+   38:..identifier mergeSource decor=10
+   39:..identifier DAO decor=7
+   40:..identifier NCEP decor=50
+ 1389:.dt_def
+   41:..identifier module decor=11
+   42:..identifier GHz decor=22
+   43:..identifier THz decor=69
+ 1390:.dt_def
+   44:..identifier molecule decor=12
+   45:..identifier clo decor=5
+   46:..identifier co decor=6
+   47:..identifier gph decor=23
+   48:..identifier h2o decor=25
+   49:..identifier hcl decor=26
+   50:..identifier hno3 decor=28
+   51:..identifier n2o decor=49
+   52:..identifier o3 decor=53
+ 1391:.dt_def
+   53:..identifier outputType decor=13
+   54:..identifier l2aux decor=35
+   55:..identifier l2gp decor=36
+ 1392:.dt_def
+   56:..identifier quantityType decor=14
+   57:..identifier baseline decor=2
+   58:..identifier extinction decor=17
+   59:..identifier gph decor=23
+   60:..identifier ptan decor=60
+   61:..identifier radiance decor=62
+   62:..identifier temperature decor=66
+   63:..identifier vmr decor=71
+ 1393:.dt_def
+   64:..identifier species decor=15
+   65:..identifier gph decor=23
+   66:..identifier gph_precision decor=24
+   67:..identifier temperature decor=66
+   68:..identifier temperature_precision decor=67
+ 1394:.dt_def
+   69:..identifier units decor=16
+   70:..identifier days decor=8
+   71:..identifier deg decor=9
+   72:..identifier degrees decor=10
+   73:..identifier dimensionless decor=11
+   74:..identifier dimless decor=12
+   75:..identifier dl decor=14
+   76:..identifier GHz decor=22
+   77:..identifier hours decor=29
+   78:..identifier hPa decor=30
+   79:..identifier Hz decor=31
+   80:..identifier k decor=32
+   81:..identifier km decor=34
+   82:..identifier logp decor=39
+   83:..identifier m decor=40
+   84:..identifier maf decor=41
+   85:..identifier mafs decor=42
+   86:..identifier mb decor=43
+   87:..identifier meters decor=44
+   88:..identifier MHz decor=45
+   89:..identifier minutes decor=48
+   90:..identifier orbits decor=54
+   91:..identifier pa decor=55
+   92:..identifier ppbv decor=56
+   93:..identifier ppmv decor=57
+   94:..identifier pptv decor=58
+   95:..identifier rad decor=61
+   96:..identifier radians decor=63
+   97:..identifier s decor=64
+   98:..identifier seconds decor=65
+   99:..identifier THz decor=69
+  100:..identifier vmr decor=71
+  101:..identifier zeta decor=73
+ 1395:.dt_def
+  102:..identifier vGridCoord decor=17
+  103:..identifier angle decor=1
+  104:..identifier geodaltitude decor=21
+  105:..identifier gph decor=23
+  106:..identifier none decor=52
+  107:..identifier pressure decor=59
+  108:..identifier theta decor=68
+  109:..identifier zeta decor=73
+ 1396:.dt_def
+  110:..identifier vGridType decor=18
+  111:..identifier explicit decor=16
+  112:..identifier linear decor=37
+  113:..identifier logarithmic decor=38
+ 1397:.spec_def
+  122:..identifier climatology decor=1
+  123:..field_type decor=122
+  114:...identifier type decor=36
+  115:...identifier aprioriType decor=1383
+  124:..field_type decor=122
+  116:...identifier source decor=29
+  117:...identifier aprioriSource decor=1382
+  125:..field_type decor=122
+  118:...identifier length decor=15
+  119:...identifier numeric decor=1379
+  126:..field_type decor=122
+  120:...identifier versionrange decor=34
+  121:...identifier string decor=1381
+ 1398:.spec_def
+  130:..identifier create decor=2
+  131:..field_type decor=130
+  127:...identifier template decor=35
+  132:..field_type decor=130
+  128:...identifier copy decor=6
+  133:..field_type decor=130
+  129:...identifier autofill decor=2
+ 1399:.spec_def
+  135:..identifier vector decor=11
+  136:..field_type decor=135
+  134:...identifier template decor=35
+ 1400:.spec_def
+  150:..identifier hgrid decor=3
+  151:..field_type decor=150
+  137:...identifier type decor=36
+  138:...identifier hGridType decor=1386
+  152:..field_type decor=150
+  139:...identifier module decor=18
+  140:...identifier module decor=1389
+  153:..field_type decor=150
+  141:...identifier fraction decor=9
+  142:...identifier numeric decor=1379
+  154:..field_type decor=150
+  143:...identifier height decor=12
+  144:...identifier numeric decor=1379
+  155:..field_type decor=150
+  145:...identifier mif decor=17
+  146:...identifier numeric decor=1379
+  156:..field_type decor=150
+  147:...identifier interpolationfactor decor=14
+  148:...identifier numeric decor=1379
+  157:..field_type decor=150
+  149:...identifier values decor=38
+ 1401:.spec_def
+  165:..identifier l2gp decor=4
+  166:..field_type decor=165
+  158:...identifier source decor=29
+  167:..field_type decor=165
+  159:...identifier compareoverlaps decor=4
+  160:...identifier boolean decor=1384
+  168:..field_type decor=165
+  161:...identifier outputoverlaps decor=21
+  162:...identifier boolean decor=1384
+  169:..field_type decor=165
+  163:...identifier hdfname decor=11
+  164:...identifier string decor=1381
+ 1402:.spec_def
+  177:..identifier l2aux decor=5
+  178:..field_type decor=177
+  170:...identifier source decor=29
+  179:..field_type decor=177
+  171:...identifier compareoverlaps decor=4
+  172:...identifier boolean decor=1384
+  180:..field_type decor=177
+  173:...identifier outputoverlaps decor=21
+  174:...identifier boolean decor=1384
+  181:..field_type decor=177
+  175:...identifier hdfname decor=11
+  176:...identifier string decor=1381
+ 1403:.spec_def
+  196:..identifier merge decor=6
+  197:..field_spec decor=196
+  182:...identifier apriori decor=1
+  183:...identifier climatology decor=1397
+  198:..field_type decor=196
+  184:...identifier source decor=29
+  185:...identifier mergeSource decor=1388
+  199:..field_type decor=196
+  186:...identifier species decor=30
+  187:...identifier species decor=1393
+  200:..field_type decor=196
+  188:...identifier range decor=26
+  189:...identifier numeric_range decor=1380
+  201:..field_type decor=196
+  190:...identifier height decor=12
+  191:...identifier numeric decor=1379
+  202:..field_type decor=196
+  192:...identifier method decor=16
+  193:...identifier mergeMethod decor=1387
+  203:..field_type decor=196
+  194:...identifier scale decor=27
+  195:...identifier numeric decor=1379
+ 1404:.spec_def
+  214:..identifier output decor=7
+  215:..field_type decor=214
+  204:...identifier type decor=36
+  205:...identifier outputType decor=1391
+  216:..field_type decor=214
+  206:...identifier file decor=7
+  207:...identifier string decor=1381
+  217:..field_spec decor=214
+  208:...identifier quantities decor=24
+  209:...identifier l2aux decor=1402
+  210:...identifier l2gp decor=1401
+  218:..field_spec decor=214
+  211:...identifier overlaps decor=22
+  212:...identifier l2aux decor=1402
+  213:...identifier l2gp decor=1401
+ 1405:.spec_def
+  222:..identifier template decor=9
+  223:..field_type decor=222
+  219:...identifier copy decor=6
+  224:..field_type decor=222
+  220:...identifier apriori decor=1
+  225:..field_type decor=222
+  221:...identifier autofill decor=2
+ 1406:.spec_def
+  229:..identifier tpfill decor=10
+  230:..field_type decor=229
+  226:...identifier type decor=36
+  231:..field_type decor=229
+  227:...identifier temperature decor=33
+  232:..field_type decor=229
+  228:...identifier gph decor=10
+ 1407:.spec_def
+  247:..identifier vgrid decor=13
+  248:..field_type decor=247
+  233:...identifier type decor=36
+  234:...identifier vGridType decor=1396
+  249:..field_type decor=247
+  235:...identifier coordinate decor=5
+  236:...identifier vGridCoord decor=1395
+  250:..field_type decor=247
+  237:...identifier number decor=20
+  238:...identifier numeric decor=1379
+  251:..field_type decor=247
+  239:...identifier per_decade decor=23
+  240:...identifier numeric decor=1379
+  252:..field_type decor=247
+  241:...identifier start decor=31
+  242:...identifier numeric decor=1379
+  253:..field_type decor=247
+  243:...identifier stop decor=32
+  244:...identifier numeric decor=1379
+  254:..field_type decor=247
+  245:...identifier values decor=38
+  246:...identifier numeric decor=1379
+ 1408:.spec_def
+  271:..identifier quantity decor=8
+  272:..field_type decor=271
+  255:...identifier band decor=3
+  256:...identifier string decor=1381
+  273:..field_type decor=271
+  257:...identifier f_firstindexchannel decor=8
+  258:...identifier boolean decor=1384
+  274:..field_spec decor=271
+  259:...identifier hgrid decor=13
+  260:...identifier hgrid decor=1400
+  275:..field_spec decor=271
+  261:...identifier vgrid decor=39
+  262:...identifier vgrid decor=1407
+  276:..field_type decor=271
+  263:...identifier molecule decor=19
+  264:...identifier molecule decor=1390
+  277:..field_type decor=271
+  265:...identifier radiometer decor=25
+  266:...identifier string decor=1381
+  278:..field_type decor=271
+  267:...identifier type decor=36
+  268:...identifier quantityType decor=1392
+  279:..field_type decor=271
+  269:...identifier unit decor=37
+  270:...identifier units decor=1394
+ 1409:.spec_def
+  284:..identifier vectortemplate decor=12
+  285:..field_spec decor=284
+  280:...identifier quantities decor=24
+  281:...identifier quantity decor=1408
+  286:..field_type decor=284
+  282:...identifier signals decor=28
+  283:...identifier string decor=1381
+ 1410:.section
+  295:..identifier globalsettings decor=1410
+  296:..name_def
+  287:...identifier VersionComment decor=4
+  288:...identifier string decor=1381
+  297:..name_def
+  289:...identifier InputVersionString decor=2
+  290:...identifier string decor=1381
+  298:..name_def
+  291:...identifier OutputVersionString decor=3
+  292:...identifier string decor=1381
+  299:..name_def
+  293:...identifier AllowClimatologyOverloads decor=1
+  294:...identifier boolean decor=1384
+ 1411:.section
+  300:..identifier readapriori decor=1411
+  301:..identifier climatology decor=1
+ 1412:.section
+  302:..identifier mergeapriori decor=1412
+  303:..identifier merge decor=6
+ 1413:.section
+  322:..identifier chunkdivide decor=1413
+  323:..name_def
+  304:...identifier CriticalBands decor=5
+  305:...identifier string decor=1381
+  324:..name_def
+  306:...identifier CriticalScanningModules decor=6
+  307:...identifier criticalModule decor=1385
+  325:..name_def
+  308:...identifier HomeGeodAngle decor=7
+  309:...identifier numeric decor=1379
+  326:..name_def
+  310:...identifier HomeModule decor=8
+  311:...identifier module decor=1389
+  327:..name_def
+  312:...identifier IdealLength decor=9
+  313:...identifier numeric decor=1379
+  328:..name_def
+  314:...identifier MaxGap decor=10
+  315:...identifier numeric decor=1379
+  329:..name_def
+  316:...identifier Overlap decor=11
+  317:...identifier numeric decor=1379
+  330:..name_def
+  318:...identifier ScanLowerLimit decor=12
+  319:...identifier numeric_range decor=1380
+  331:..name_def
+  320:...identifier ScanUpperLimit decor=13
+  321:...identifier numeric_range decor=1380
+ 1414:.section
+  332:..identifier construct decor=1414
+  333:..identifier vgrid decor=13
+  334:..identifier hgrid decor=3
+  335:..identifier quantity decor=8
+  336:..identifier vectortemplate decor=12
+ 1415:.section
+  337:..identifier fill decor=1415
+  338:..identifier vector decor=11
+  339:..identifier tpfill decor=10
+  340:..identifier create decor=2
+ 1416:.section
+  341:..identifier join decor=1416
+  342:..identifier l2gp decor=4
+  343:..identifier l2aux decor=5
+ 1417:.section
+  344:..identifier output decor=1417
+  345:..identifier output decor=7
+ 1418:.cf
+  354:..identifier globalsettings decor=1410
+  355:..equal decor=354
+  346:...identifier VersionComment decor=4
+  347:...string "L2CF Version 0-1-0 for version 0.1 of the MLS software"
+  356:..equal decor=354
+  348:...identifier InputVersionString decor=2
+  349:...string "v0-1-0-test"
+  357:..equal decor=354
+  350:...identifier OutputVersionString decor=3
+  351:...string "v0-1-0-test"
+  358:..equal decor=354
+  352:...identifier AllowClimatologyOverloads decor=1
+  353:...identifier false decor=18
+  359:..identifier globalsettings
+ 1419:.cf
+  536:..identifier readapriori decor=1411
+  537:..named
+  374:...identifier APRIORITEMP decor=375
+  375:...spec_args decor=536
+  370:....identifier climatology decor=1397
+  371:....assign decor=124
+  360:.....identifier source decor=29
+  361:.....identifier temperature decor=66
+  372:....assign decor=125
+  364:.....identifier length decor=15
+  365:.....unit
+  362:......number 200
+  363:......identifier km
+  373:....assign decor=126
+  368:.....identifier versionrange decor=34
+  369:.....colon
+  366:......string "1999-01-01T"
+  367:......string "2000-01-01T"
+  538:..named
+  390:...identifier APRIORITEMP_PRECISION decor=391
+  391:...spec_args decor=536
+  386:....identifier climatology decor=1397
+  387:....assign decor=124
+  376:.....identifier source decor=29
+  377:.....identifier temperature_precision decor=67
+  388:....assign decor=125
+  380:.....identifier length decor=15
+  381:.....unit
+  378:......number 200
+  379:......identifier km
+  389:....assign decor=126
+  384:.....identifier versionrange decor=34
+  385:.....colon
+  382:......string "1999-01-01T"
+  383:......string "2000-01-01T"
+  539:..named
+  406:...identifier APRIORIGPH decor=407
+  407:...spec_args decor=536
+  402:....identifier climatology decor=1397
+  403:....assign decor=124
+  392:.....identifier source decor=29
+  393:.....identifier gph decor=23
+  404:....assign decor=125
+  396:.....identifier length decor=15
+  397:.....unit
+  394:......number 200
+  395:......identifier km
+  405:....assign decor=126
+  400:.....identifier versionrange decor=34
+  401:.....colon
+  398:......string "1999-01-01"
+  399:......string "2000-01-01"
+  540:..named
+  422:...identifier APRIORIGPH_PRECISION decor=423
+  423:...spec_args decor=536
+  418:....identifier climatology decor=1397
+  419:....assign decor=124
+  408:.....identifier source decor=29
+  409:.....identifier gph_precision decor=24
+  420:....assign decor=125
+  412:.....identifier length decor=15
+  413:.....unit
+  410:......number 200
+  411:......identifier km
+  421:....assign decor=126
+  416:.....identifier versionrange decor=34
+  417:.....colon
+  414:......string "1999-01-01"
+  415:......string "2000-01-01"
+  541:..named
+  438:...identifier APRIORIH2O decor=439
+  439:...spec_args decor=536
+  434:....identifier climatology decor=1397
+  435:....assign decor=124
+  424:.....identifier source decor=29
+  425:.....identifier h2o decor=25
+  436:....assign decor=125
+  428:.....identifier length decor=15
+  429:.....unit
+  426:......number 200
+  427:......identifier km
+  437:....assign decor=126
+  432:.....identifier versionrange decor=34
+  433:.....colon
+  430:......string "1999-01-01"
+  431:......string "2000-01-01"
+  542:..named
+  454:...identifier APRIORIHNO3 decor=455
+  455:...spec_args decor=536
+  450:....identifier climatology decor=1397
+  451:....assign decor=124
+  440:.....identifier source decor=29
+  441:.....identifier hno3 decor=28
+  452:....assign decor=125
+  444:.....identifier length decor=15
+  445:.....unit
+  442:......number 200
+  443:......identifier km
+  453:....assign decor=126
+  448:.....identifier versionrange decor=34
+  449:.....colon
+  446:......string "1999-01-01"
+  447:......string "2000-01-01"
+  543:..named
+  470:...identifier APRIORIO3 decor=471
+  471:...spec_args decor=536
+  466:....identifier climatology decor=1397
+  467:....assign decor=124
+  456:.....identifier source decor=29
+  457:.....identifier o3 decor=53
+  468:....assign decor=125
+  460:.....identifier length decor=15
+  461:.....unit
+  458:......number 200
+  459:......identifier km
+  469:....assign decor=126
+  464:.....identifier versionrange decor=34
+  465:.....colon
+  462:......string "1999-01-01"
+  463:......string "2000-01-01"
+  544:..named
+  486:...identifier APRIORIHCL decor=487
+  487:...spec_args decor=536
+  482:....identifier climatology decor=1397
+  483:....assign decor=124
+  472:.....identifier source decor=29
+  473:.....identifier hcl decor=26
+  484:....assign decor=125
+  476:.....identifier length decor=15
+  477:.....unit
+  474:......number 200
+  475:......identifier km
+  485:....assign decor=126
+  480:.....identifier versionrange decor=34
+  481:.....colon
+  478:......string "1999-01-01"
+  479:......string "2000-01-01"
+  545:..named
+  502:...identifier APRIORICLO decor=503
+  503:...spec_args decor=536
+  498:....identifier climatology decor=1397
+  499:....assign decor=124
+  488:.....identifier source decor=29
+  489:.....identifier clo decor=5
+  500:....assign decor=125
+  492:.....identifier length decor=15
+  493:.....unit
+  490:......number 200
+  491:......identifier km
+  501:....assign decor=126
+  496:.....identifier versionrange decor=34
+  497:.....colon
+  494:......string "1999-01-01"
+  495:......string "2000-01-01"
+  546:..named
+  518:...identifier APRIORIN2O decor=519
+  519:...spec_args decor=536
+  514:....identifier climatology decor=1397
+  515:....assign decor=124
+  504:.....identifier source decor=29
+  505:.....identifier n2o decor=49
+  516:....assign decor=125
+  508:.....identifier length decor=15
+  509:.....unit
+  506:......number 200
+  507:......identifier km
+  517:....assign decor=126
+  512:.....identifier versionrange decor=34
+  513:.....colon
+  510:......string "1999-01-01"
+  511:......string "2000-01-01"
+  547:..named
+  534:...identifier APRIORICO decor=535
+  535:...spec_args decor=536
+  530:....identifier climatology decor=1397
+  531:....assign decor=124
+  520:.....identifier source decor=29
+  521:.....identifier co decor=6
+  532:....assign decor=125
+  524:.....identifier length decor=15
+  525:.....unit
+  522:......number 200
+  523:......identifier km
+  533:....assign decor=126
+  528:.....identifier versionrange decor=34
+  529:.....colon
+  526:......string "1999-01-01"
+  527:......string "2000-01-01"
+  548:..identifier readapriori
+ 1420:.cf
+  639:..identifier mergeapriori decor=1412
+  640:..spec_args decor=639
+  569:...identifier merge decor=1403
+  570:...assign decor=197
+  549:....identifier apriori decor=1
+  550:....identifier APRIORITEMP decor=375
+  571:...assign decor=198
+  551:....identifier source decor=29
+  552:....identifier NCEP decor=50
+  572:...assign decor=199
+  553:....identifier species decor=30
+  554:....identifier temperature decor=66
+  573:...assign decor=200
+  561:....identifier range decor=26
+  562:....colon
+  559:.....unit
+  555:......number 1000.0
+  556:......identifier mb
+  560:.....unit
+  557:......number 1
+  558:......identifier mb
+  574:...assign decor=202
+  563:....identifier method decor=16
+  564:....identifier weighted decor=72
+  575:...assign decor=203
+  567:....identifier scale decor=27
+  568:....unit
+  565:.....number 5
+  566:.....identifier km
+  641:..spec_args decor=639
+  596:...identifier merge decor=1403
+  597:...assign decor=197
+  576:....identifier apriori decor=1
+  577:....identifier APRIORITEMP_PRECISION decor=391
+  598:...assign decor=198
+  578:....identifier source decor=29
+  579:....identifier NCEP decor=50
+  599:...assign decor=199
+  580:....identifier species decor=30
+  581:....identifier temperature_precision decor=67
+  600:...assign decor=200
+  588:....identifier range decor=26
+  589:....colon
+  586:.....unit
+  582:......number 1000.0
+  583:......identifier mb
+  587:.....unit
+  584:......number 1
+  585:......identifier mb
+  601:...assign decor=202
+  590:....identifier method decor=16
+  591:....identifier weighted decor=72
+  602:...assign decor=203
+  594:....identifier scale decor=27
+  595:....unit
+  592:.....number 5
+  593:.....identifier km
+  642:..spec_args decor=639
+  615:...identifier merge decor=1403
+  616:...assign decor=197
+  603:....identifier apriori decor=1
+  604:....identifier APRIORIGPH decor=407
+  617:...assign decor=198
+  605:....identifier source decor=29
+  606:....identifier NCEP decor=50
+  618:...assign decor=199
+  607:....identifier species decor=30
+  608:....identifier gph decor=23
+  619:...assign decor=201
+  611:....identifier height decor=12
+  612:....unit
+  609:.....number 100.0
+  610:.....identifier mb
+  620:...assign decor=202
+  613:....identifier method decor=16
+  614:....identifier weighted decor=72
+  643:..spec_args decor=639
+  633:...identifier merge decor=1403
+  634:...assign decor=197
+  621:....identifier apriori decor=1
+  622:....identifier APRIORIGPH_PRECISION decor=423
+  635:...assign decor=198
+  623:....identifier source decor=29
+  624:....identifier NCEP decor=50
+  636:...assign decor=199
+  625:....identifier species decor=30
+  626:....identifier gph_precision decor=24
+  637:...assign decor=201
+  629:....identifier height decor=12
+  630:....unit
+  627:.....number 100.0
+  628:.....identifier mb
+  638:...assign decor=202
+  631:....identifier method decor=16
+  632:....identifier weighted decor=72
+  644:..identifier mergeapriori
+ 1421:.cf
+  684:..identifier chunkdivide decor=1413
+  685:..equal decor=684
+  647:...identifier IdealLength decor=9
+  648:...unit
+  645:....number 0.25
+  646:....identifier orbits
+  686:..equal decor=684
+  651:...identifier Overlap decor=11
+  652:...unit
+  649:....number 5
+  650:....identifier mafs
+  687:..equal decor=684
+  655:...identifier HomeGeodAngle decor=7
+  656:...unit
+  653:....number 0
+  654:....identifier degrees
+  688:..equal decor=684
+  657:...identifier HomeModule decor=8
+  658:...identifier GHz decor=22
+  689:..equal decor=684
+  666:...identifier ScanLowerLimit decor=12
+  667:...colon
+  664:....minus
+  661:.....unit
+  659:......number 10
+  660:......identifier km
+  665:....unit
+  662:.....number 20
+  663:.....identifier km
+  690:..equal decor=684
+  674:...identifier ScanUpperLimit decor=13
+  675:...colon
+  672:....unit
+  668:.....number 40
+  669:.....identifier km
+  673:....unit
+  670:.....number 100
+  671:.....identifier km
+  691:..equal decor=684
+  676:...identifier CriticalScanningModules decor=6
+  677:...identifier both decor=3
+  692:..equal decor=684
+  678:...identifier CriticalBands decor=5
+  679:...string "R1A:118.B1:PT or R1B:118.B21:PT and R2:190.B*"
+  693:..equal decor=684
+  682:...identifier MaxGap decor=10
+  683:...unit
+  680:....number 3
+  681:....identifier minutes
+  694:..identifier chunkdivide
+ 1422:.cf
+ 1025:..identifier construct decor=1414
+ 1026:..named
+  713:...identifier VGRIDHIRES decor=714
+  714:...spec_args decor=1025
+  707:....identifier vgrid decor=1407
+  708:....assign decor=249
+  695:.....identifier coordinate decor=5
+  696:.....identifier pressure decor=59
+  709:....assign decor=248
+  697:.....identifier type decor=36
+  698:.....identifier logarithmic decor=38
+  710:....assign decor=252
+  701:.....identifier start decor=31
+  702:.....unit
+  699:......number 1000
+  700:......identifier mb
+  711:....assign decor=250
+  703:.....identifier number decor=20
+  704:.....number 60
+  712:....assign decor=251
+  705:.....identifier per_decade decor=23
+  706:.....number 12
+ 1027:..named
+  735:...identifier VGRIDSTANDARD decor=736
+  736:...spec_args decor=1025
+  729:....identifier vgrid decor=1407
+  730:....assign decor=249
+  715:.....identifier coordinate decor=5
+  716:.....identifier pressure decor=59
+  731:....assign decor=248
+  717:.....identifier type decor=36
+  718:.....identifier logarithmic decor=38
+  732:....assign decor=252
+  721:.....identifier start decor=31
+  722:.....unit
+  719:......number 1000
+  720:......identifier mb
+  733:....assign decor=250
+  723:.....identifier number decor=20
+  724:.....number 25
+  725:.....number 24
+  734:....assign decor=251
+  726:.....identifier per_decade decor=23
+  727:.....number 12
+  728:.....number 6
+ 1028:..named
+  749:...identifier VGRIDGPH decor=750
+  750:...spec_args decor=1025
+  745:....identifier vgrid decor=1407
+  746:....assign decor=249
+  737:.....identifier coordinate decor=5
+  738:.....identifier pressure decor=59
+  747:....assign decor=248
+  739:.....identifier type decor=36
+  740:.....identifier explicit decor=16
+  748:....assign decor=254
+  743:.....identifier values decor=38
+  744:.....unit
+  741:......number 100
+  742:......identifier mb
+ 1029:..named
+  761:...identifier HGRIDSTANDARD decor=762
+  762:...spec_args decor=1025
+  757:....identifier hgrid decor=1400
+  758:....assign decor=152
+  751:.....identifier module decor=18
+  752:.....identifier GHz decor=22
+  759:....assign decor=151
+  753:.....identifier type decor=36
+  754:.....identifier fractional decor=20
+  760:....assign decor=153
+  755:.....identifier fraction decor=9
+  756:.....number 0.5
+ 1030:..named
+  775:...identifier HGRIDTROPOSPHERE decor=776
+  776:...spec_args decor=1025
+  771:....identifier hgrid decor=1400
+  772:....assign decor=152
+  763:.....identifier module decor=18
+  764:.....identifier GHz decor=22
+  773:....assign decor=151
+  765:.....identifier type decor=36
+  766:.....identifier height decor=27
+  774:....assign decor=154
+  769:.....identifier height decor=12
+  770:.....unit
+  767:......number 10
+  768:......identifier km
+ 1031:..named
+  787:...identifier TEMP decor=788
+  788:...spec_args decor=1025
+  783:....identifier quantity decor=1408
+  784:....assign decor=275
+  777:.....identifier vgrid decor=39
+  778:.....identifier VGRIDHIRES decor=714
+  785:....assign decor=274
+  779:.....identifier hgrid decor=13
+  780:.....identifier HGRIDSTANDARD decor=762
+  786:....assign decor=278
+  781:.....identifier type decor=36
+  782:.....identifier temperature decor=66
+ 1032:..named
+  799:...identifier gph decor=800
+  800:...spec_args decor=1025
+  795:....identifier quantity decor=1408
+  796:....assign decor=275
+  789:.....identifier vgrid decor=39
+  790:.....identifier VGRIDGPH decor=750
+  797:....assign decor=274
+  791:.....identifier hgrid decor=13
+  792:.....identifier HGRIDSTANDARD decor=762
+  798:....assign decor=278
+  793:.....identifier type decor=36
+  794:.....identifier gph decor=23
+ 1033:..named
+  817:...identifier h2o decor=818
+  818:...spec_args decor=1025
+  811:....identifier quantity decor=1408
+  812:....assign decor=275
+  801:.....identifier vgrid decor=39
+  802:.....identifier VGRIDSTANDARD decor=736
+  813:....assign decor=274
+  803:.....identifier hgrid decor=13
+  804:.....identifier HGRIDSTANDARD decor=762
+  814:....assign decor=278
+  805:.....identifier type decor=36
+  806:.....identifier vmr decor=71
+  815:....assign decor=276
+  807:.....identifier molecule decor=19
+  808:.....identifier h2o decor=25
+  816:....assign decor=279
+  809:.....identifier unit decor=37
+  810:.....identifier ppmv decor=57
+ 1034:..named
+  835:...identifier hno3 decor=836
+  836:...spec_args decor=1025
+  829:....identifier quantity decor=1408
+  830:....assign decor=275
+  819:.....identifier vgrid decor=39
+  820:.....identifier VGRIDSTANDARD decor=736
+  831:....assign decor=274
+  821:.....identifier hgrid decor=13
+  822:.....identifier HGRIDSTANDARD decor=762
+  832:....assign decor=278
+  823:.....identifier type decor=36
+  824:.....identifier vmr decor=71
+  833:....assign decor=276
+  825:.....identifier molecule decor=19
+  826:.....identifier hno3 decor=28
+  834:....assign decor=279
+  827:.....identifier unit decor=37
+  828:.....identifier ppbv decor=56
+ 1035:..named
+  853:...identifier o3 decor=854
+  854:...spec_args decor=1025
+  847:....identifier quantity decor=1408
+  848:....assign decor=275
+  837:.....identifier vgrid decor=39
+  838:.....identifier VGRIDSTANDARD decor=736
+  849:....assign decor=274
+  839:.....identifier hgrid decor=13
+  840:.....identifier HGRIDSTANDARD decor=762
+  850:....assign decor=278
+  841:.....identifier type decor=36
+  842:.....identifier vmr decor=71
+  851:....assign decor=276
+  843:.....identifier molecule decor=19
+  844:.....identifier o3 decor=53
+  852:....assign decor=279
+  845:.....identifier unit decor=37
+  846:.....identifier ppmv decor=57
+ 1036:..named
+  871:...identifier hcl decor=872
+  872:...spec_args decor=1025
+  865:....identifier quantity decor=1408
+  866:....assign decor=275
+  855:.....identifier vgrid decor=39
+  856:.....identifier VGRIDSTANDARD decor=736
+  867:....assign decor=274
+  857:.....identifier hgrid decor=13
+  858:.....identifier HGRIDSTANDARD decor=762
+  868:....assign decor=278
+  859:.....identifier type decor=36
+  860:.....identifier vmr decor=71
+  869:....assign decor=276
+  861:.....identifier molecule decor=19
+  862:.....identifier hcl decor=26
+  870:....assign decor=279
+  863:.....identifier unit decor=37
+  864:.....identifier ppbv decor=56
+ 1037:..named
+  889:...identifier clo decor=890
+  890:...spec_args decor=1025
+  883:....identifier quantity decor=1408
+  884:....assign decor=275
+  873:.....identifier vgrid decor=39
+  874:.....identifier VGRIDSTANDARD decor=736
+  885:....assign decor=274
+  875:.....identifier hgrid decor=13
+  876:.....identifier HGRIDSTANDARD decor=762
+  886:....assign decor=278
+  877:.....identifier type decor=36
+  878:.....identifier vmr decor=71
+  887:....assign decor=276
+  879:.....identifier molecule decor=19
+  880:.....identifier clo decor=5
+  888:....assign decor=279
+  881:.....identifier unit decor=37
+  882:.....identifier ppbv decor=56
+ 1038:..named
+  907:...identifier n2o decor=908
+  908:...spec_args decor=1025
+  901:....identifier quantity decor=1408
+  902:....assign decor=275
+  891:.....identifier vgrid decor=39
+  892:.....identifier VGRIDSTANDARD decor=736
+  903:....assign decor=274
+  893:.....identifier hgrid decor=13
+  894:.....identifier HGRIDSTANDARD decor=762
+  904:....assign decor=278
+  895:.....identifier type decor=36
+  896:.....identifier vmr decor=71
+  905:....assign decor=276
+  897:.....identifier molecule decor=19
+  898:.....identifier n2o decor=49
+  906:....assign decor=279
+  899:.....identifier unit decor=37
+  900:.....identifier ppbv decor=56
+ 1039:..named
+  925:...identifier co decor=926
+  926:...spec_args decor=1025
+  919:....identifier quantity decor=1408
+  920:....assign decor=275
+  909:.....identifier vgrid decor=39
+  910:.....identifier VGRIDSTANDARD decor=736
+  921:....assign decor=274
+  911:.....identifier hgrid decor=13
+  912:.....identifier HGRIDSTANDARD decor=762
+  922:....assign decor=278
+  913:.....identifier type decor=36
+  914:.....identifier vmr decor=71
+  923:....assign decor=276
+  915:.....identifier molecule decor=19
+  916:.....identifier co decor=6
+  924:....assign decor=279
+  917:.....identifier unit decor=37
+  918:.....identifier ppmv decor=57
+ 1040:..named
+  940:...identifier O3_190 decor=941
+  941:...spec_args decor=1025
+  935:....identifier quantity decor=1408
+  936:....assign decor=275
+  927:.....identifier vgrid decor=39
+  928:.....identifier VGRIDSTANDARD decor=736
+  937:....assign decor=274
+  929:.....identifier hgrid decor=13
+  930:.....identifier HGRIDSTANDARD decor=762
+  938:....assign decor=278
+  931:.....identifier type decor=36
+  932:.....identifier vmr decor=71
+  939:....assign decor=276
+  933:.....identifier molecule decor=19
+  934:.....identifier o3 decor=53
+ 1041:..named
+  955:...identifier O3_640 decor=956
+  956:...spec_args decor=1025
+  950:....identifier quantity decor=1408
+  951:....assign decor=275
+  942:.....identifier vgrid decor=39
+  943:.....identifier VGRIDSTANDARD decor=736
+  952:....assign decor=274
+  944:.....identifier hgrid decor=13
+  945:.....identifier HGRIDSTANDARD decor=762
+  953:....assign decor=278
+  946:.....identifier type decor=36
+  947:.....identifier vmr decor=71
+  954:....assign decor=276
+  948:.....identifier molecule decor=19
+  949:.....identifier o3 decor=53
+ 1042:..named
+  970:...identifier N2O_190 decor=971
+  971:...spec_args decor=1025
+  965:....identifier quantity decor=1408
+  966:....assign decor=275
+  957:.....identifier vgrid decor=39
+  958:.....identifier VGRIDSTANDARD decor=736
+  967:....assign decor=274
+  959:.....identifier hgrid decor=13
+  960:.....identifier HGRIDSTANDARD decor=762
+  968:....assign decor=278
+  961:.....identifier type decor=36
+  962:.....identifier vmr decor=71
+  969:....assign decor=276
+  963:.....identifier molecule decor=19
+  964:.....identifier n2o decor=49
+ 1043:..named
+  985:...identifier N2O_640 decor=986
+  986:...spec_args decor=1025
+  980:....identifier quantity decor=1408
+  981:....assign decor=275
+  972:.....identifier vgrid decor=39
+  973:.....identifier VGRIDSTANDARD decor=736
+  982:....assign decor=274
+  974:.....identifier hgrid decor=13
+  975:.....identifier HGRIDSTANDARD decor=762
+  983:....assign decor=278
+  976:.....identifier type decor=36
+  977:.....identifier vmr decor=71
+  984:....assign decor=276
+  978:.....identifier molecule decor=19
+  979:.....identifier n2o decor=49
+ 1044:..named
+  994:...identifier PTAN118 decor=995
+  995:...spec_args decor=1025
+  991:....identifier quantity decor=1408
+  992:....assign decor=278
+  987:.....identifier type decor=36
+  988:.....identifier ptan decor=60
+  993:....assign decor=277
+  989:.....identifier radiometer decor=25
+  990:.....string "R1A:118"
+ 1045:..named
+ 1003:...identifier PTAN2T5H decor=1004
+ 1004:...spec_args decor=1025
+ 1000:....identifier quantity decor=1408
+ 1001:....assign decor=278
+  996:.....identifier type decor=36
+  997:.....identifier ptan decor=60
+ 1002:....assign decor=277
+  998:.....identifier radiometer decor=25
+  999:.....string "R5H:2T5"
+ 1046:..named
+ 1023:...identifier STATETEMPLATE decor=1024
+ 1024:...spec_args decor=1025
+ 1021:....identifier vectortemplate decor=1409
+ 1022:....assign decor=285
+ 1005:.....identifier quantities decor=24
+ 1006:.....identifier PTAN118 decor=995
+ 1007:.....identifier PTAN2T5H decor=1004
+ 1008:.....identifier TEMP decor=788
+ 1009:.....identifier gph decor=800
+ 1010:.....identifier h2o decor=818
+ 1011:.....identifier hno3 decor=836
+ 1012:.....identifier o3 decor=854
+ 1013:.....identifier hcl decor=872
+ 1014:.....identifier clo decor=890
+ 1015:.....identifier n2o decor=908
+ 1016:.....identifier co decor=926
+ 1017:.....identifier O3_190 decor=941
+ 1018:.....identifier O3_640 decor=956
+ 1019:.....identifier N2O_190 decor=971
+ 1020:.....identifier N2O_640 decor=986
+ 1047:..identifier construct
+ 1423:.cf
+ 1072:..identifier fill decor=1415
+ 1073:..named
+ 1052:...identifier STATE decor=1053
+ 1053:...spec_args decor=1072
+ 1050:....identifier vector decor=1399
+ 1051:....assign decor=136
+ 1048:.....identifier template decor=35
+ 1049:.....identifier STATETEMPLATE
+ 1074:..named
+ 1058:...identifier apriori decor=1059
+ 1059:...spec_args decor=1072
+ 1056:....identifier vector decor=1399
+ 1057:....assign decor=136
+ 1054:.....identifier template decor=35
+ 1055:.....identifier STATETEMPLATE
+ 1075:..named
+ 1064:...identifier MAINR1RADIANCES decor=1065
+ 1065:...spec_args decor=1072
+ 1062:....identifier vector decor=1399
+ 1063:....assign decor=136
+ 1060:.....identifier template decor=35
+ 1061:.....identifier MAINR1RADIANCESTEMPLATE
+ 1076:..named
+ 1070:...identifier OTHERRADIANCES decor=1071
+ 1071:...spec_args decor=1072
+ 1068:....identifier vector decor=1399
+ 1069:....assign decor=136
+ 1066:.....identifier template decor=35
+ 1067:.....identifier OTHERRADIANCESTEMPLATE
+ 1077:..identifier fill
+ 1424:.cf
+ 1254:..identifier join decor=1416
+ 1255:..named
+ 1088:...identifier TEMPL2GP decor=1089
+ 1089:...spec_args decor=1254
+ 1084:....identifier l2gp decor=1401
+ 1085:....assign decor=166
+ 1080:.....identifier source decor=29
+ 1081:.....dot
+ 1078:......identifier STATE
+ 1079:......identifier TEMP
+ 1086:....set_one decor=167
+ 1082:.....identifier compareoverlaps decor=4
+ 1087:....set_one decor=168
+ 1083:.....identifier outputoverlaps decor=21
+ 1256:..named
+ 1100:...identifier GPHL2GP decor=1101
+ 1101:...spec_args decor=1254
+ 1096:....identifier l2gp decor=1401
+ 1097:....assign decor=166
+ 1092:.....identifier source decor=29
+ 1093:.....dot
+ 1090:......identifier STATE
+ 1091:......identifier gph
+ 1098:....set_one decor=167
+ 1094:.....identifier compareoverlaps decor=4
+ 1099:....set_one decor=168
+ 1095:.....identifier outputoverlaps decor=21
+ 1257:..named
+ 1112:...identifier H2OL2GP decor=1113
+ 1113:...spec_args decor=1254
+ 1108:....identifier l2gp decor=1401
+ 1109:....assign decor=166
+ 1104:.....identifier source decor=29
+ 1105:.....dot
+ 1102:......identifier STATE
+ 1103:......identifier h2o
+ 1110:....set_one decor=167
+ 1106:.....identifier compareoverlaps decor=4
+ 1111:....set_one decor=168
+ 1107:.....identifier outputoverlaps decor=21
+ 1258:..named
+ 1124:...identifier HNO3L2GP decor=1125
+ 1125:...spec_args decor=1254
+ 1120:....identifier l2gp decor=1401
+ 1121:....assign decor=166
+ 1116:.....identifier source decor=29
+ 1117:.....dot
+ 1114:......identifier STATE
+ 1115:......identifier hno3
+ 1122:....set_one decor=167
+ 1118:.....identifier compareoverlaps decor=4
+ 1123:....set_one decor=168
+ 1119:.....identifier outputoverlaps decor=21
+ 1259:..named
+ 1136:...identifier O3L2GP decor=1137
+ 1137:...spec_args decor=1254
+ 1132:....identifier l2gp decor=1401
+ 1133:....assign decor=166
+ 1128:.....identifier source decor=29
+ 1129:.....dot
+ 1126:......identifier STATE
+ 1127:......identifier o3
+ 1134:....set_one decor=167
+ 1130:.....identifier compareoverlaps decor=4
+ 1135:....set_one decor=168
+ 1131:.....identifier outputoverlaps decor=21
+ 1260:..named
+ 1148:...identifier HCLL2GP decor=1149
+ 1149:...spec_args decor=1254
+ 1144:....identifier l2gp decor=1401
+ 1145:....assign decor=166
+ 1140:.....identifier source decor=29
+ 1141:.....dot
+ 1138:......identifier STATE
+ 1139:......identifier hcl
+ 1146:....set_one decor=167
+ 1142:.....identifier compareoverlaps decor=4
+ 1147:....set_one decor=168
+ 1143:.....identifier outputoverlaps decor=21
+ 1261:..named
+ 1160:...identifier CLOL2GP decor=1161
+ 1161:...spec_args decor=1254
+ 1156:....identifier l2gp decor=1401
+ 1157:....assign decor=166
+ 1152:.....identifier source decor=29
+ 1153:.....dot
+ 1150:......identifier STATE
+ 1151:......identifier clo
+ 1158:....set_one decor=167
+ 1154:.....identifier compareoverlaps decor=4
+ 1159:....set_one decor=168
+ 1155:.....identifier outputoverlaps decor=21
+ 1262:..named
+ 1172:...identifier N2OL2GP decor=1173
+ 1173:...spec_args decor=1254
+ 1168:....identifier l2gp decor=1401
+ 1169:....assign decor=166
+ 1164:.....identifier source decor=29
+ 1165:.....dot
+ 1162:......identifier STATE
+ 1163:......identifier n2o
+ 1170:....set_one decor=167
+ 1166:.....identifier compareoverlaps decor=4
+ 1171:....set_one decor=168
+ 1167:.....identifier outputoverlaps decor=21
+ 1263:..named
+ 1184:...identifier COL2GP decor=1185
+ 1185:...spec_args decor=1254
+ 1180:....identifier l2gp decor=1401
+ 1181:....assign decor=166
+ 1176:.....identifier source decor=29
+ 1177:.....dot
+ 1174:......identifier STATE
+ 1175:......identifier co
+ 1182:....set_one decor=167
+ 1178:.....identifier compareoverlaps decor=4
+ 1183:....set_one decor=168
+ 1179:.....identifier outputoverlaps decor=21
+ 1264:..named
+ 1196:...identifier O3_190L2GP decor=1197
+ 1197:...spec_args decor=1254
+ 1192:....identifier l2gp decor=1401
+ 1193:....assign decor=166
+ 1188:.....identifier source decor=29
+ 1189:.....dot
+ 1186:......identifier STATE
+ 1187:......identifier O3_190
+ 1194:....set_one decor=167
+ 1190:.....identifier compareoverlaps decor=4
+ 1195:....set_one decor=168
+ 1191:.....identifier outputoverlaps decor=21
+ 1265:..named
+ 1208:...identifier O3_240L2GP decor=1209
+ 1209:...spec_args decor=1254
+ 1204:....identifier l2gp decor=1401
+ 1205:....assign decor=166
+ 1200:.....identifier source decor=29
+ 1201:.....dot
+ 1198:......identifier STATE
+ 1199:......identifier O3_240
+ 1206:....set_one decor=167
+ 1202:.....identifier compareoverlaps decor=4
+ 1207:....set_one decor=168
+ 1203:.....identifier outputoverlaps decor=21
+ 1266:..named
+ 1220:...identifier N2O_190L2GP decor=1221
+ 1221:...spec_args decor=1254
+ 1216:....identifier l2gp decor=1401
+ 1217:....assign decor=166
+ 1212:.....identifier source decor=29
+ 1213:.....dot
+ 1210:......identifier STATE
+ 1211:......identifier N2O_190
+ 1218:....set_one decor=167
+ 1214:.....identifier compareoverlaps decor=4
+ 1219:....set_one decor=168
+ 1215:.....identifier outputoverlaps decor=21
+ 1267:..named
+ 1232:...identifier N2O_640L2GP decor=1233
+ 1233:...spec_args decor=1254
+ 1228:....identifier l2gp decor=1401
+ 1229:....assign decor=166
+ 1224:.....identifier source decor=29
+ 1225:.....dot
+ 1222:......identifier STATE
+ 1223:......identifier N2O_640
+ 1230:....set_one decor=167
+ 1226:.....identifier compareoverlaps decor=4
+ 1231:....set_one decor=168
+ 1227:.....identifier outputoverlaps decor=21
+ 1268:..named
+ 1242:...identifier PTAN118L2GP decor=1243
+ 1243:...spec_args decor=1254
+ 1239:....identifier l2aux decor=1402
+ 1240:....assign decor=178
+ 1236:.....identifier source decor=29
+ 1237:.....dot
+ 1234:......identifier STATE
+ 1235:......identifier PTAN118
+ 1241:....set_one decor=180
+ 1238:.....identifier outputoverlaps decor=21
+ 1269:..named
+ 1252:...identifier PTAN2T5HL2GP decor=1253
+ 1253:...spec_args decor=1254
+ 1249:....identifier l2aux decor=1402
+ 1250:....assign decor=178
+ 1246:.....identifier source decor=29
+ 1247:.....dot
+ 1244:......identifier STATE
+ 1245:......identifier PTAN2T5H
+ 1251:....set_one decor=180
+ 1248:.....identifier outputoverlaps decor=21
+ 1270:..identifier join
+ 1425:.cf
+ 1366:..identifier output decor=1417
+ 1367:..spec_args decor=1366
+ 1275:...identifier output decor=1404
+ 1276:...assign decor=216
+ 1271:....identifier file decor=7
+ 1272:....string 'l2gp_temp'
+ 1277:...assign decor=217
+ 1273:....identifier quantities decor=24
+ 1274:....identifier TEMPL2GP decor=1089
+ 1368:..spec_args decor=1366
+ 1282:...identifier output decor=1404
+ 1283:...assign decor=216
+ 1278:....identifier file decor=7
+ 1279:....string 'l2gp_gph'
+ 1284:...assign decor=217
+ 1280:....identifier quantities decor=24
+ 1281:....identifier GPHL2GP decor=1101
+ 1369:..spec_args decor=1366
+ 1289:...identifier output decor=1404
+ 1290:...assign decor=216
+ 1285:....identifier file decor=7
+ 1286:....string 'l2gp_h2o'
+ 1291:...assign decor=217
+ 1287:....identifier quantities decor=24
+ 1288:....identifier H2OL2GP decor=1113
+ 1370:..spec_args decor=1366
+ 1296:...identifier output decor=1404
+ 1297:...assign decor=216
+ 1292:....identifier file decor=7
+ 1293:....string 'l2gp_hno3'
+ 1298:...assign decor=217
+ 1294:....identifier quantities decor=24
+ 1295:....identifier HNO3L2GP decor=1125
+ 1371:..spec_args decor=1366
+ 1303:...identifier output decor=1404
+ 1304:...assign decor=216
+ 1299:....identifier file decor=7
+ 1300:....string 'l2gp_o3'
+ 1305:...assign decor=217
+ 1301:....identifier quantities decor=24
+ 1302:....identifier O3L2GP decor=1137
+ 1372:..spec_args decor=1366
+ 1310:...identifier output decor=1404
+ 1311:...assign decor=216
+ 1306:....identifier file decor=7
+ 1307:....string 'l2gp_hcl'
+ 1312:...assign decor=217
+ 1308:....identifier quantities decor=24
+ 1309:....identifier HCLL2GP decor=1149
+ 1373:..spec_args decor=1366
+ 1317:...identifier output decor=1404
+ 1318:...assign decor=216
+ 1313:....identifier file decor=7
+ 1314:....string 'l2gp_clo'
+ 1319:...assign decor=217
+ 1315:....identifier quantities decor=24
+ 1316:....identifier CLOL2GP decor=1161
+ 1374:..spec_args decor=1366
+ 1324:...identifier output decor=1404
+ 1325:...assign decor=216
+ 1320:....identifier file decor=7
+ 1321:....string 'l2gp_n2o'
+ 1326:...assign decor=217
+ 1322:....identifier quantities decor=24
+ 1323:....identifier N2OL2GP decor=1173
+ 1375:..spec_args decor=1366
+ 1331:...identifier output decor=1404
+ 1332:...assign decor=216
+ 1327:....identifier file decor=7
+ 1328:....string 'l2gp_co'
+ 1333:...assign decor=217
+ 1329:....identifier quantities decor=24
+ 1330:....identifier COL2GP decor=1185
+ 1376:..spec_args decor=1366
+ 1350:...identifier output decor=1404
+ 1351:...assign decor=216
+ 1334:....identifier file decor=7
+ 1335:....string 'l2gp_others'
+ 1352:...assign decor=217
+ 1336:....identifier quantities decor=24
+ 1337:....identifier O3_190L2GP decor=1197
+ 1338:....identifier O3_240L2GP decor=1209
+ 1339:....identifier N2O_190L2GP decor=1221
+ 1340:....identifier N2O_640L2GP decor=1233
+ 1353:...assign decor=218
+ 1341:....identifier overlaps decor=22
+ 1342:....identifier TEMPL2GP decor=1089
+ 1343:....identifier GPHL2GP decor=1101
+ 1344:....identifier H2OL2GP decor=1113
+ 1345:....identifier HNO3L2GP decor=1125
+ 1346:....identifier O3L2GP decor=1137
+ 1347:....identifier HCLL2GP decor=1149
+ 1348:....identifier CLOL2GP decor=1161
+ 1349:....identifier N2OL2GP decor=1173
+ 1377:..spec_args decor=1366
+ 1362:...identifier output decor=1404
+ 1363:...assign decor=216
+ 1354:....identifier file decor=7
+ 1355:....string 'l2aux_full'
+ 1364:...assign decor=217
+ 1356:....identifier quantities decor=24
+ 1357:....identifier PTAN118L2GP decor=1243
+ 1358:....identifier PTAN2T5HL2GP decor=1253
+ 1365:...assign decor=218
+ 1359:....identifier overlaps decor=22
+ 1360:....identifier PTAN118L2GP decor=1243
+ 1361:....identifier PTAN2T5HL2GP decor=1253
+ 1378:..identifier output
+End abstract syntax tree
+Section: GLOBALSETTINGS
+ Definitions:
+  VERSIONCOMMENT = "L2CF VERSION 0-1-0 FOR VERSION 0.1 OF THE MLS SOFTWARE", TYPE: str_value
+  INPUTVERSIONSTRING = "V0-1-0-TEST", TYPE: str_value
+  OUTPUTVERSIONSTRING = "V0-1-0-TEST", TYPE: str_value
+  ALLOWCLIMATOLOGYOVERLOADS = FALSE, TYPE: enum_value
+ Specifications:
+Section: READAPRIORI
+ Specifications:
+  Specification: APRIORITEMP: CLIMATOLOGY
+   SOURCE = TEMPERATURE, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01T" : "2000-01-01T", TYPE: str_range
+  Specification: APRIORITEMP_PRECISION: CLIMATOLOGY
+   SOURCE = TEMPERATURE_PRECISION, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01T" : "2000-01-01T", TYPE: str_range
+  Specification: APRIORIGPH: CLIMATOLOGY
+   SOURCE = GPH, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIGPH_PRECISION: CLIMATOLOGY
+   SOURCE = GPH_PRECISION, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIH2O: CLIMATOLOGY
+   SOURCE = H2O, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIHNO3: CLIMATOLOGY
+   SOURCE = HNO3, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIO3: CLIMATOLOGY
+   SOURCE = O3, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIHCL: CLIMATOLOGY
+   SOURCE = HCL, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORICLO: CLIMATOLOGY
+   SOURCE = CLO, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORIN2O: CLIMATOLOGY
+   SOURCE = N2O, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+  Specification: APRIORICO: CLIMATOLOGY
+   SOURCE = CO, TYPE: enum_value
+   LENGTH = 2.0E+05, units = length, TYPE: num_value
+   VERSIONRANGE = "1999-01-01" : "2000-01-01", TYPE: str_range
+Section: MERGEAPRIORI
+ Specifications:
+  Specification: MERGE
+   APRIORI = APRIORITEMP, TYPE: enum_value
+   SOURCE = NCEP, TYPE: enum_value
+   SPECIES = TEMPERATURE, TYPE: enum_value
+   RANGE = 1.0E+03 : 1.0, units = pressure, TYPE: range
+   METHOD = WEIGHTED, TYPE: enum_value
+   SCALE = 5.0E+03, units = length, TYPE: num_value
+  Specification: MERGE
+   APRIORI = APRIORITEMP_PRECISION, TYPE: enum_value
+   SOURCE = NCEP, TYPE: enum_value
+   SPECIES = TEMPERATURE_PRECISION, TYPE: enum_value
+   RANGE = 1.0E+03 : 1.0, units = pressure, TYPE: range
+   METHOD = WEIGHTED, TYPE: enum_value
+   SCALE = 5.0E+03, units = length, TYPE: num_value
+  Specification: MERGE
+   APRIORI = APRIORIGPH, TYPE: enum_value
+   SOURCE = NCEP, TYPE: enum_value
+   SPECIES = GPH, TYPE: enum_value
+   HEIGHT = 1.0E+02, units = pressure, TYPE: num_value
+   METHOD = WEIGHTED, TYPE: enum_value
+  Specification: MERGE
+   APRIORI = APRIORIGPH_PRECISION, TYPE: enum_value
+   SOURCE = NCEP, TYPE: enum_value
+   SPECIES = GPH_PRECISION, TYPE: enum_value
+   HEIGHT = 1.0E+02, units = pressure, TYPE: num_value
+   METHOD = WEIGHTED, TYPE: enum_value
+Section: CHUNKDIVIDE
+ Definitions:
+  IDEALLENGTH = 90.0, units = angle, TYPE: num_value
+  OVERLAP = 5.0, units = mafs, TYPE: num_value
+  HOMEGEODANGLE = 0.0E+000, units = angle, TYPE: num_value
+  HOMEMODULE = GHZ, TYPE: enum_value
+  SCANLOWERLIMIT = -1.0E+04 : 2.0E+04, units = length, TYPE: range
+  SCANUPPERLIMIT = 4.0E+04 : 1.0E+05, units = length, TYPE: range
+  CRITICALSCANNINGMODULES = BOTH, TYPE: enum_value
+  CRITICALBANDS = "R1A:118.B1:PT OR R1B:118.B21:PT AND R2:190.B*", TYPE: str_value
+  MAXGAP = 1.8E+02, units = time, TYPE: num_value
+ Specifications:
+Section: CONSTRUCT
+ Specifications:
+  Specification: VGRIDHIRES: VGRID
+   COORDINATE = PRESSURE, TYPE: enum_value
+   TYPE = LOGARITHMIC, TYPE: enum_value
+   START = 1.0E+03, units = pressure, TYPE: num_value
+   NUMBER = 60.0, units = dimensionless, TYPE: num_value
+   PER_DECADE = 12.0, units = dimensionless, TYPE: num_value
+  Specification: VGRIDSTANDARD: VGRID
+   COORDINATE = PRESSURE, TYPE: enum_value
+   TYPE = LOGARITHMIC, TYPE: enum_value
+   START = 1.0E+03, units = pressure, TYPE: num_value
+   NUMBER = 25.0, units = dimensionless, TYPE: num_value
+    = 24.0, units = dimensionless, TYPE: num_value
+   PER_DECADE = 12.0, units = dimensionless, TYPE: num_value
+    = 6.0, units = dimensionless, TYPE: num_value
+  Specification: VGRIDGPH: VGRID
+   COORDINATE = PRESSURE, TYPE: enum_value
+   TYPE = EXPLICIT, TYPE: enum_value
+   VALUES = 1.0E+02, units = pressure, TYPE: num_value
+  Specification: HGRIDSTANDARD: HGRID
+   MODULE = GHZ, TYPE: enum_value
+   TYPE = FRACTIONAL, TYPE: enum_value
+   FRACTION = 0.5, units = dimensionless, TYPE: num_value
+  Specification: HGRIDTROPOSPHERE: HGRID
+   MODULE = GHZ, TYPE: enum_value
+   TYPE = HEIGHT, TYPE: enum_value
+   HEIGHT = 1.0E+04, units = length, TYPE: num_value
+  Specification: TEMP: QUANTITY
+   VGRID = VGRIDHIRES, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = TEMPERATURE, TYPE: enum_value
+  Specification: GPH: QUANTITY
+   VGRID = VGRIDGPH, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = GPH, TYPE: enum_value
+  Specification: H2O: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = H2O, TYPE: enum_value
+   UNIT = PPMV, TYPE: enum_value
+  Specification: HNO3: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = HNO3, TYPE: enum_value
+   UNIT = PPBV, TYPE: enum_value
+  Specification: O3: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = O3, TYPE: enum_value
+   UNIT = PPMV, TYPE: enum_value
+  Specification: HCL: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = HCL, TYPE: enum_value
+   UNIT = PPBV, TYPE: enum_value
+  Specification: CLO: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = CLO, TYPE: enum_value
+   UNIT = PPBV, TYPE: enum_value
+  Specification: N2O: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = N2O, TYPE: enum_value
+   UNIT = PPBV, TYPE: enum_value
+  Specification: CO: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = CO, TYPE: enum_value
+   UNIT = PPMV, TYPE: enum_value
+  Specification: O3_190: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = O3, TYPE: enum_value
+  Specification: O3_640: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = O3, TYPE: enum_value
+  Specification: N2O_190: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = N2O, TYPE: enum_value
+  Specification: N2O_640: QUANTITY
+   VGRID = VGRIDSTANDARD, TYPE: enum_value
+   HGRID = HGRIDSTANDARD, TYPE: enum_value
+   TYPE = VMR, TYPE: enum_value
+   MOLECULE = N2O, TYPE: enum_value
+  Specification: PTAN118: QUANTITY
+   TYPE = PTAN, TYPE: enum_value
+   RADIOMETER = "R1A:118", TYPE: str_value
+  Specification: PTAN2T5H: QUANTITY
+   TYPE = PTAN, TYPE: enum_value
+   RADIOMETER = "R5H:2T5", TYPE: str_value
+  Specification: STATETEMPLATE: VECTORTEMPLATE
+   QUANTITIES = PTAN118, TYPE: enum_value
+    = PTAN2T5H, TYPE: enum_value
+    = TEMP, TYPE: enum_value
+    = GPH, TYPE: enum_value
+    = H2O, TYPE: enum_value
+    = HNO3, TYPE: enum_value
+    = O3, TYPE: enum_value
+    = HCL, TYPE: enum_value
+    = CLO, TYPE: enum_value
+    = N2O, TYPE: enum_value
+    = CO, TYPE: enum_value
+    = O3_190, TYPE: enum_value
+    = O3_640, TYPE: enum_value
+    = N2O_190, TYPE: enum_value
+    = N2O_640, TYPE: enum_value
+Section: FILL
+ Specifications:
+  Specification: STATE: VECTOR
+   TEMPLATE = STATETEMPLATE, TYPE: enum_value
+  Specification: APRIORI: VECTOR
+   TEMPLATE = STATETEMPLATE, TYPE: enum_value
+  Specification: MAINR1RADIANCES: VECTOR
+   TEMPLATE = MAINR1RADIANCESTEMPLATE, TYPE: enum_value
+  Specification: OTHERRADIANCES: VECTOR
+   TEMPLATE = OTHERRADIANCESTEMPLATE, TYPE: enum_value
+Section: JOIN
+ Specifications:
+  Specification: TEMPL2GP: L2GP
+   SOURCE = STATE.TEMP, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: GPHL2GP: L2GP
+   SOURCE = STATE.GPH, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: H2OL2GP: L2GP
+   SOURCE = STATE.H2O, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: HNO3L2GP: L2GP
+   SOURCE = STATE.HNO3, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: O3L2GP: L2GP
+   SOURCE = STATE.O3, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: HCLL2GP: L2GP
+   SOURCE = STATE.HCL, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: CLOL2GP: L2GP
+   SOURCE = STATE.CLO, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: N2OL2GP: L2GP
+   SOURCE = STATE.N2O, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: COL2GP: L2GP
+   SOURCE = STATE.CO, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: O3_190L2GP: L2GP
+   SOURCE = STATE.O3_190, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: O3_240L2GP: L2GP
+   SOURCE = STATE.O3_240, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: N2O_190L2GP: L2GP
+   SOURCE = STATE.N2O_190, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: N2O_640L2GP: L2GP
+   SOURCE = STATE.N2O_640, TYPE: label
+   COMPAREOVERLAPS = 1.0, TYPE: log_value
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: PTAN118L2GP: L2AUX
+   SOURCE = STATE.PTAN118, TYPE: label
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+  Specification: PTAN2T5HL2GP: L2AUX
+   SOURCE = STATE.PTAN2T5H, TYPE: label
+   OUTPUTOVERLAPS = 1.0, TYPE: log_value
+Section: OUTPUT
+ Specifications:
+  Specification: OUTPUT
+   FILE = 'L2GP_TEMP', TYPE: str_value
+   QUANTITIES = TEMPL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_GPH', TYPE: str_value
+   QUANTITIES = GPHL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_H2O', TYPE: str_value
+   QUANTITIES = H2OL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_HNO3', TYPE: str_value
+   QUANTITIES = HNO3L2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_O3', TYPE: str_value
+   QUANTITIES = O3L2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_HCL', TYPE: str_value
+   QUANTITIES = HCLL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_CLO', TYPE: str_value
+   QUANTITIES = CLOL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_N2O', TYPE: str_value
+   QUANTITIES = N2OL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_CO', TYPE: str_value
+   QUANTITIES = COL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2GP_OTHERS', TYPE: str_value
+   QUANTITIES = O3_190L2GP, TYPE: enum_value
+    = O3_240L2GP, TYPE: enum_value
+    = N2O_190L2GP, TYPE: enum_value
+    = N2O_640L2GP, TYPE: enum_value
+   OVERLAPS = TEMPL2GP, TYPE: enum_value
+    = GPHL2GP, TYPE: enum_value
+    = H2OL2GP, TYPE: enum_value
+    = HNO3L2GP, TYPE: enum_value
+    = O3L2GP, TYPE: enum_value
+    = HCLL2GP, TYPE: enum_value
+    = CLOL2GP, TYPE: enum_value
+    = N2OL2GP, TYPE: enum_value
+  Specification: OUTPUT
+   FILE = 'L2AUX_FULL', TYPE: str_value
+   QUANTITIES = PTAN118L2GP, TYPE: enum_value
+    = PTAN2T5HL2GP, TYPE: enum_value
+   OVERLAPS = PTAN118L2GP, TYPE: enum_value
+    = PTAN2T5HL2GP, TYPE: enum_value

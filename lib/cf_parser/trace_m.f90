@@ -1,0 +1,49 @@
+module TRACE_M
+
+  use LEXER_CORE, only: PRINT_SOURCE
+  use OUTPUT_M, only: OUTPUT
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+
+  integer, public :: DEPTH   ! Depth in tree.  Used for trace printing.
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id$"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
+contains ! ====     Public Procedures     ==============================
+! --------------------------------------------------  TRACE_BEGIN  -----
+  subroutine TRACE_BEGIN ( NAME, ROOT )
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+    character(len=*), intent(in) :: NAME
+    integer, intent(in) :: ROOT
+    integer :: I              ! Loop inductor
+    call output ( root, 4 ); call output ( ': ' )
+    do i = 1, depth
+      call output ( '.' )
+    end do
+    call output ( 'Enter ' ); call output ( name );
+    call output ( ' with ' );
+    call dump_tree_node ( root, 0 )
+    call output ( ' at ' )
+    call print_source ( source_ref(root), advance='yes' )
+    depth = depth + 1
+  end subroutine TRACE_BEGIN
+! --------------------------------------------------    TRACE_END  -----
+  subroutine TRACE_END ( NAME )
+  ! Decrement DEPTH.  Print "EXIT NAME with DEPTH dots in front.
+    character(len=*), intent(in) :: NAME
+    integer :: I              ! Loop inductor
+    depth = depth - 1
+    call output ( '      ' )
+    do i = 1, depth
+      call output ( '.' )
+    end do
+    call output ( 'Exit ' ); call output ( name, advance='yes' );
+  end subroutine TRACE_END
+end module TRACE_M
+
+! $Log$
