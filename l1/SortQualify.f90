@@ -11,7 +11,7 @@ MODULE SortQualify ! Sort and qualify the L0 data
   USE EngUtils, ONLY : NextEngMAF
   USE EngTbls, ONLY : EngMAF
   USE SciUtils, ONLY : NextSciMAF
-  USE Calibration, ONLY : CalWin, MAFdata_T, UpdateCalVectors
+  USE Calibration, ONLY : CalWin, CalMAFdata, MAFdata_T, UpdateCalVectors
 
   IMPLICIT NONE
 
@@ -271,6 +271,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2001/09/10 16:18:25  perun
+! Added CalMAFdata from Calibration module
+!
 ! Revision 2.2  2001/03/05 19:54:41  perun
 ! Check TAI against input TAI
 !
