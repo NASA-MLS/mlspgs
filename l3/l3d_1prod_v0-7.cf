@@ -113,17 +113,13 @@ BEGIN DailyMap
     ;; calMethod -- method of calculation for zonal means:
     ;;              l2 = from Level 2
     ;;              l3 = from Level 3 daily maps
-    ;; zComLvl -- daily zonal mean combined pressure levels
-    ;; zAscLvl -- daily zonal mean ascending pressure levels
-    ;; zDesLvl -- daily zonal mean descending pressure levels
     ;;
     mapSpec,l3prodNameD="ClO",timeD="12:00:00",mode=all, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
-            l3presLvl=1.0:1.2,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
+            l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="CLOL3DM", calMethod=l3, $
-            zComLvl=1.0:100.0,zAscLvl=1.0:100.0,zDesLvl=1.0:100.0
+            label="CLOL3DM", calMethod=l3
     ;;
 END DailyMap
 ;
@@ -156,4 +152,7 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2001/05/04 18:45:31  nakamura
+; V0.7 l3cf for one product (ClO).
+;
 ;
