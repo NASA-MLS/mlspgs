@@ -1094,6 +1094,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LINE                     ! Loop counter
     integer :: MAF                      ! Loop counter
     integer :: MIFSPERLINE              ! Number of mifs covered by a line
+    integer :: NOEMPTYWINDOWS           ! Number of empty windows
     integer :: NOBINS                   ! Number of characters to print
     integer :: NOMAFS                   ! From L1B read
     integer :: NOMIFS                   ! Deduced
@@ -1179,22 +1180,32 @@ contains ! =====     Public Procedures     =============================
 
     ! Now print them out
     noWindows = noBins / width
+    noEmptyWindows = 0
     if ( mod ( noBins, width ) /= 0 ) noWindows = noWindows + 1
     do window = 1, noWindows
-      call output ( ' ', advance='yes' )
       windowSize = width
       start = ( window-1 ) * width + 1
       if ( window == noWindows ) windowSize = mod ( noBins, width )
-      do line = noLines, 1, -1
-        do char = start, start+windowSize-2
-          call output ( text ( char, line ) )
+      if ( all ( text ( start : start+windowSize-1, : ) == ' ' ) ) then
+        noEmptyWindows = noEmptyWindows + 1
+      else
+        if ( noEmptyWindows > 0 ) then
+          call output ( noEmptyWindows )
+          call output ( ' empty windows suppressed', advance='yes' )
+          noEmptyWindows = 0
+        end if
+        call output ( ' ', advance='yes' )
+        do line = noLines, 1, -1
+          do char = start, start+windowSize-2
+            call output ( text ( char, line ) )
+          end do
+          call output  ( text ( start+windowSize-1, line ), advance='yes' ) 
         end do
-        call output  ( text ( start+windowSize-1, line ), advance='yes' ) 
-      end do
-      do char = start, start+windowSize-2
-        call output ( '-' )
-      end do
-      call output ( '-', advance='yes' )
+        do char = start, start+windowSize-2
+          call output ( '-' )
+        end do
+        call output ( '-', advance='yes' )
+      end if
     end do
 
     ! Finish off
@@ -1309,7 +1320,7 @@ contains ! =====     Public Procedures     =============================
         & chunks(chunk-1)%hGridOffsets
     end do
     ! Now fill (i.e. spread) the hGridTotals array
-    do chunk = 1, size ( chunks ) - 1
+    do chunk = 1, size ( chunks )
       chunks(chunk)%hGridTotals = chunks(size(chunks))%hGridOffsets
     end do
     ! Now move hGridOffsets back one to get the offsets we want.
@@ -1404,6 +1415,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.57  2003/08/28 23:52:36  livesey
+! Bug fix for computing total size of hGrid, and tidied up the geometry
+! dumper.
+!
 ! Revision 2.56  2003/08/11 20:55:20  livesey
 ! Changed 0 profiles error to warning
 !
