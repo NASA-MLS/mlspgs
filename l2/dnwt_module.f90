@@ -129,6 +129,8 @@ module DNWT_MODULE
                            ! of factored Jacobian matrix
     real(rk) :: AXMAX      ! MAXVAL(ABS(X))
     real(rk) :: CAIT = 0.0 ! Aitken parameter -- intent(out)
+    real(rk) :: CHISQMINNORM ! FNMIN^2 / no degrees of freedom
+    real(rk) :: CHISQNORM  ! FNORM^2 / no degrees of freedom
     real(rk) :: DIAG       ! Smallest | diagonal element | after factoring
     real(rk) :: DXDX       ! dot_product( DX, DX )
     real(rk) :: DXDXL      ! dot_product( "candidate DX", DX )
@@ -136,8 +138,6 @@ module DNWT_MODULE
     real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
     real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
     real(rk) :: FNORM      ! L2 Norm of F at current X
-    real(rk) :: CHISQMINNORM ! FNMIN^2 / no degrees of freedom
-    real(rk) :: CHISQNORM  ! FNORM^2 / no degrees of freedom
     real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
     real(rk) :: GFAC       ! Amount of best gradient to use for DX
     real(rk) :: GRADN      ! L2 norm of Gradient
@@ -1217,6 +1217,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.36  2002/10/25 22:24:33  livesey
+! Changed order of nwt_t
+!
 ! Revision 2.35  2002/10/23 01:15:06  livesey
 ! Added chiSq stuff
 !
