@@ -1,335 +1,343 @@
-MODULE convolve_all_m
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-  implicit none
+module Convolve_All_m
+
+  implicit NONE
   private
   public :: CONVOLVE_ALL
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-     "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
-     "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
- CONTAINS
+ contains
 ! ============================================  convolve_all =====
 ! This subprogram adds the effects of antenna smearing to the radiance.
-!
-  SUBROUTINE convolve_all(FwdMdlConfig,FwdMdlIn,FwdMdlExtra,maf,channel,&
-           & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,&
-           & rad_in,chi_out,dhdz_out,dx_dh_out,sbRatio,AntennaPattern,  &
-           & t_deriv_flag,Grids_f,Jacobian,rowFlags,req,rsc,earth_frac, &
-           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df,ptan_Der)
 
-    use MLSCommon, ONLY: I4, r4, R8, rp
+  subroutine Convolve_All ( FwdMdlConfig, FwdMdlIn, FwdMdlExtra, maf, channel, &
+           & winStart, winFinish, mol_cat_index, temp, ptan, radiance, chi_in, &
+           & rad_in, chi_out, dhdz_out, dx_dh_out, sbRatio, AntennaPattern,    &
+           & t_deriv_flag, Grids_f, Jacobian, rowFlags, req, rsc, earth_frac,  &
+           & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
+           & ptan_Der )
+
+    use MLSCommon, only: I4, r4, R8, rp
     use intrinsic, only: L_VMR
     use Molecules, only: L_EXTINCTION
     use Allocate_Deallocate, only: allocate_test, deallocate_test
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+    use Fov_Convolve_m, only: Fov_Convolve
     use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
     use AntennaPatterns_m, only: AntennaPattern_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
     use Load_sps_data_m, only: Grids_T
-!
-! inputs
-!
-  Type (ForwardModelConfig_T), intent(in) :: FwdMdlCONFIG
-  Type (Vector_t), intent(in) :: FwdMdlIN, FwdMdlEXTRA
-!
-  Integer, intent(in) :: MAF
-  Integer, intent(in) :: CHANNEL
-  Integer, intent(in) :: WINSTART
-  Integer, intent(in) :: WINFINISH
-  Integer, intent(IN) :: mol_cat_index(:)
-!
-  Type (VectorValue_T), intent(in) :: TEMP
-  Type (VectorValue_T), intent(in) :: PTAN
-!
-  REAL(rp), INTENT(in) :: chi_in(:)    ! inputted pointing angles radians
-  REAL(rp), INTENT(in) :: rad_in(:)    ! inputted radiances
-  REAL(rp), INTENT(in) :: chi_out(:)   ! outputted pointing angles radians
-  REAL(rp), INTENT(in) :: dhdz_out(:)  ! dhdz on the outputted pointing grid
-  REAL(rp), INTENT(in) :: dx_dh_out(:) ! dx/dh on the outputted pointing grid
-!
-  Real(r8), intent(in) :: SbRatio
 
-  Type(antennaPattern_T), intent(in) :: AntennaPattern
-!
-  Logical, dimension(:), pointer :: t_deriv_flag
-!
-  Type (Grids_T), intent(in) :: Grids_f
-  Type (Matrix_T), OPTIONAL, intent(inout) :: Jacobian
-!
-  Logical, intent(inout) :: rowFlags(:) ! Flag to calling code
-!
-  REAL(rp), OPTIONAL, INTENT(in) :: req ! equivalent earth radius
-  REAL(rp), OPTIONAL, INTENT(in) :: rsc ! spacecraft radius
-  REAL(rp), OPTIONAL, INTENT(in) :: earth_frac ! fraction of earth in total
+! inputs
+
+    type (ForwardModelConfig_T), intent(in) :: FwdMdlCONFIG
+    type (Vector_t), intent(in) :: FwdMdlIN, FwdMdlEXTRA
+
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: WINSTART
+    integer, intent(in) :: WINFINISH
+    integer, intent(IN) :: mol_cat_index(:)
+
+    type (vectorvalue_t), intent(in) :: TEMP
+    type (vectorvalue_t), intent(in) :: PTAN
+
+    real(rp), intent(in) :: chi_in(:)    ! inputted pointing angles radians
+    real(rp), intent(in) :: rad_in(:)    ! inputted radiances
+    real(rp), intent(in) :: chi_out(:)   ! outputted pointing angles radians
+    real(rp), intent(in) :: dhdz_out(:)  ! dhdz on the outputted pointing grid
+    real(rp), intent(in) :: dx_dh_out(:) ! dx/dh on the outputted pointing grid
+
+    real(r8), intent(in) :: SbRatio
+
+    type(antennaPattern_T), intent(in) :: AntennaPattern
+
+    logical, dimension(:), pointer :: t_deriv_flag
+
+    type (Grids_T), intent(in) :: Grids_f
+    type (Matrix_t), optional, intent(inout) :: Jacobian
+
+    logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+
+    real(rp), optional, intent(in) :: Req ! equivalent earth radius
+    real(rp), optional, intent(in) :: Rsc ! spacecraft radius
+    real(rp), optional, intent(in) :: Earth_frac ! fraction of earth in total
 !                                   filled out pattern
-  logical, intent(in), optional :: ptan_der ! Flag
+    logical, intent(in), optional :: Ptan_der ! Flag
 
 ! note req, rsc and earth_frac are non critical parameters and don't
 ! really need to be supplied externally. They are used to partition the
 ! full fft field between earth and space components.
-!
+
 ! stuff for temperature derivatives
-!
-  REAL(rp), OPTIONAL, INTENT(in) :: surf_angle ! An angle that defines the
+
+    real(rp), optional, intent(in) :: surf_angle ! An angle that defines the
 !                                   Earth surface.
-  REAL(rp), OPTIONAL, INTENT(in) :: di_dt(:,:) ! derivative of radiance wrt
+    real(rp), optional, intent(in) :: di_dt(:,:) ! derivative of radiance wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:) ! derivative of angle wrt
+    real(rp), optional, intent(in) :: dx_dt(:,:) ! derivative of angle wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: d2x_dxdt(:,:) ! 2nd derivative wrt angle
+    real(rp), optional, intent(in) :: d2x_dxdt(:,:) ! 2nd derivative wrt angle
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_tan(:,:) ! derivative of angle wrt
+    real(rp), optional, intent(in) :: dxdt_tan(:,:) ! derivative of angle wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_surface(:,:) ! derivative of angle
+    real(rp), optional, intent(in) :: dxdt_surface(:,:) ! derivative of angle
 !                                   wrt temperature at the surface
-!
+
 ! stuff for atmospheric derivatives
-!
-  REAL(rp), OPTIONAL, INTENT(in) :: di_df(:,:) ! mixing ratio derivatives or
+
+    real(rp), optional, intent(in) :: di_df(:,:) ! mixing ratio derivatives or
 !                                   any parameter where a simple convolution
 !                                   will suffice
 ! outputs
-!
-  Type (VectorValue_T), intent(inout) :: RADIANCE   ! Outputed radiances
-!
+
+    type (VectorValue_T), intent(inout) :: RADIANCE   ! Outputed radiances
+
 ! Internal stuff
-!
-  type (VectorValue_T), pointer :: F   ! An arbitrary species
 
-  Integer(i4) :: j,k,Row,Col,ind,jz,sps_i,ptg_i,noPtan,noChans,jf
+    type (VectorValue_T), pointer :: F   ! An arbitrary species
 
-  Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
-!
-  REAL(r8) :: r
-!
-  REAL(r8), POINTER :: drad_dt_out(:,:)
-  REAL(r8), POINTER :: drad_df_out(:,:)
+    integer(i4) :: k, Row, Col, ind, jz, sps_i, ptg_i, noPtan, noChans, jf
 
-  REAL(r8), POINTER :: temp_dxdt_tan(:,:)
+    integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
 
-  Real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+    real(r8) :: R
 
-  logical :: my_ptan_der
-!
-  my_ptan_der = .false.
-  if ( present ( ptan_der ) ) my_ptan_der = ptan_der
-  n_t_zeta = temp%template%noSurfs
-  no_sv_p_t = winFinish - winStart + 1
-  sv_t_len = n_t_zeta * no_sv_p_t
+    real(r8), pointer :: drad_dt_out(:,:)
+    real(r8), pointer :: drad_df_out(:,:)
 
-  no_mol = SIZE(mol_cat_index)
-  noChans = Radiance%template%noChans
-  noPtan = ptan%template%nosurfs
+    real(r8), pointer :: temp_dxdt_tan(:,:)
 
-  f_len = 0
-  if ( PRESENT(di_df) ) f_len = SIZE(di_df,dim=2)
-!
+    real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+
+    logical :: my_ptan_der
+
+    my_ptan_der = .false.
+    if ( present ( ptan_der ) ) my_ptan_der = ptan_der
+    n_t_zeta = temp%template%noSurfs
+    no_sv_p_t = winFinish - winStart + 1
+    sv_t_len = n_t_zeta * no_sv_p_t
+
+    no_mol = size(mol_cat_index)
+    noChans = Radiance%template%noChans
+    noPtan = ptan%template%nosurfs
+
+    f_len = 0
+    if ( present(di_df) ) f_len = SIZE(di_df,dim=2)
+
 ! Load the Radiance values into the Radiance structure:
-!
-  SRad = 0.0_r8
-  CALL fov_convolve(antennaPattern,chi_in,rad_in,chi_out,SRad, &
-                 &  drad_dx_out=di_dx)
 
-  do ptg_i = 1, noPtan
-    ind = channel + noChans * (ptg_i - 1)
-    Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
-                                     &  sbRatio * SRad(ptg_i)
-  end do
-!
-  j = 0
-  IF ( PRESENT(Jacobian) ) j = 2
-  if(j < 1) Return
-!
+    SRad = 0.0_r8
+    call fov_convolve ( antennaPattern, chi_in, rad_in, chi_out, SRad,  &
+                     &  drad_dx_out=di_dx )
+
+    do ptg_i = 1, noPtan
+      ind = channel + noChans * (ptg_i - 1)
+      Radiance%values(ind,maf) = Radiance%values(ind,maf) + &
+                                       &  sbRatio * SRad(ptg_i)
+    end do
+
+    if ( .not. present(Jacobian) ) return
+
 ! Compute dI/dPtan using the chain rule:
-!
-  SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
-!
+
+    SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
+
 ! Now, load the dI/dPtan values into the Jacobian:
 ! (First, find index location Jacobian and write the derivative)
-!
-  row = FindBlock( Jacobian%row, radiance%index, maf )
-  rowFlags(row) = .TRUE.
+
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+    rowFlags(row) = .TRUE.
 
 ! Of course, we might not care about ptan
 
-  if ( my_ptan_der ) then
-    col = FindBlock ( Jacobian%col, ptan%index, maf )
+    if ( my_ptan_der ) then
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
 
-    select case (jacobian%block(Row,col)%kind)
-      case (m_absent)
-        call CreateBlock (Jacobian, row, col, m_banded, noPtan*noChans, &
-                        & bandHeight=noChans)
-        jacobian%block(row,col)%values = 0.0_r8
-      case (m_banded)
-      case default
-        call MLSMessage (MLSMSG_Error, ModuleName,&
-                      & 'Wrong matrix type for ptan derivative')
-    end select
-
-    do ptg_i = 1, noPtan
-      ind = channel + noChans * (ptg_i-1)
-      r = jacobian%block(row,col)%values(ind,1)
-      Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
-    end do
-
-  endif
-
-  IF (.not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
-                &  FwdMdlConfig%spect_der/)) ) RETURN
-!
-  nullify (drad_dt_out,drad_df_out,temp_dxdt_tan)
-!
-  IF (FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) THEN
-!
-    SRad = 0.0_r8
-    CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
-    CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-                        & DI_DF=di_df, DI_DF_FLAG=grids_f%deriv_flags, &
-                        & DRAD_DF_OUT=drad_df_out)
-!
-  ELSE IF (FwdMdlConfig%temp_der) THEN
-!
-    CALL ALLOCATE_TEST(drad_dt_out,noPtan,sv_t_len,'drad_dt_out',ModuleName)
-
-    Call ALLOCATE_TEST(temp_dxdt_tan,noPtan,sv_t_len,'temp_dxdt_tan',&
-                    &  ModuleName )
-!
-    temp_dxdt_tan = dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan)
-!
-    IF (FwdMdlConfig%atmos_der) then
-!
-      CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
-      CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt, &
-         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
-         & DI_DF_FLAG=grids_f%deriv_flags, DRAD_DF_OUT=drad_df_out)
-!
-    ELSE
-!
-      CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
-         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out)
-!
-    ENDIF
-!
-! Load the Temp. derivative values into the Jacobian
-!
-    row = FindBlock( Jacobian%row, Radiance%index, maf )
-    rowFlags(row) = .TRUE.
-
-    sv_t_len = 0
-    do jf = winStart, winFinish
-
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      select case ( Jacobian%block(row,col)%kind )
-        case ( m_absent )
-                call CreateBlock ( Jacobian, row, col, m_full )
-                jacobian%block(row,col)%values = 0.0_r8
-        case ( m_full )
+      select case (jacobian%block(Row,col)%kind)
+        case (m_absent)
+          call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
+                           & bandHeight=noChans )
+          jacobian%block(row,col)%values = 0.0_r8
+        case (m_banded)
         case default
-                call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  & 'Wrong type for temperature derivative matrix' )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+                          & 'Wrong matrix type for ptan derivative' )
       end select
 
-      do k = 1, n_t_zeta
+      do ptg_i = 1, noPtan
+        ind = channel + noChans * (ptg_i-1)
+        r = jacobian%block(row,col)%values(ind,1)
+        Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+      end do
+
+    end if
+
+    if ( .not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
+                  &  FwdMdlConfig%spect_der/)) ) return
+
+    nullify ( drad_dt_out, drad_df_out, temp_dxdt_tan )
+
+    if ( FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der ) then
+
+      SRad = 0.0_r8
+      call allocate_test ( drad_df_out, noPtan, f_len, 'drad_df_out', ModuleName )
+      call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+                        & DI_DF=di_df,  DI_DF_FLAG=grids_f%deriv_flags,  &
+                        & DRAD_DF_OUT=drad_df_out )
+
+    else if ( FwdMdlConfig%temp_der ) then
+
+      call allocate_test ( drad_dt_out, noPtan, sv_t_len, 'drad_dt_out', &
+                         & ModuleName )
+
+      call allocate_test ( temp_dxdt_tan, noPtan, sv_t_len, 'temp_dxdt_tan', &
+                        &  ModuleName )
+
+      temp_dxdt_tan = dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan)
+
+      if ( FwdMdlConfig%atmos_der ) then
+
+        call allocate_test ( drad_df_out, noPtan, f_len, 'drad_df_out', ModuleName)
+        call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt,  &
+           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out, DI_DF=di_df,  &
+           & DI_DF_FLAG=grids_f%deriv_flags,  DRAD_DF_OUT=drad_df_out )
+
+      else
+
+        call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt, &
+           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out )
+
+      end if
+
+! Load the Temp. derivative values into the Jacobian
+
+      row = FindBlock( Jacobian%row, Radiance%index, maf )
+      rowFlags(row) = .TRUE.
+
+      sv_t_len = 0
+      do jf = winStart, winFinish
+
+        col = FindBlock ( Jacobian%col, temp%index, jf )
+        select case ( Jacobian%block(row,col)%kind )
+          case ( m_absent )
+            call CreateBlock ( Jacobian, row, col, m_full )
+            jacobian%block(row,col)%values = 0.0_r8
+          case ( m_full )
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Wrong type block for temperature derivative matrix' )
+        end select
+
+        do k = 1, n_t_zeta
 
 ! Check if derivatives are needed for this (zeta & phi) :
 
-        sv_t_len = sv_t_len + 1
-        if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
+          sv_t_len = sv_t_len + 1
+          if ( .NOT. t_deriv_flag(sv_t_len)) cycle
 
 ! run through representation basis coefficients
         
-        do ptg_i = 1, noPtan
-          r = drad_dt_out(ptg_i,sv_t_len)
-          ind = channel + noChans * (ptg_i-1)
-          jacobian%block(row,col)%values(ind,k) =  &
-               & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+          do ptg_i = 1, noPtan
+            r = drad_dt_out(ptg_i,sv_t_len)
+            ind = channel + noChans * (ptg_i-1)
+            jacobian%block(row,col)%values(ind,k) =  &
+                 & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+          end do
+
         end do
 
       end do
 
-    end do
-!
-    CALL DEALLOCATE_TEST(drad_dt_out,'drad_dt_out',ModuleName)
-    Call DEALLOCATE_TEST(temp_dxdt_tan,'temp_dxdt_tan',ModuleName)
+      call deallocate_test ( drad_dt_out, 'drad_dt_out', ModuleName )
+      call deallocate_test ( temp_dxdt_tan, 'temp_dxdt_tan', ModuleName )
 
-  ENDIF
+    end if
 
-  IF (.not. FwdMdlConfig%atmos_der) Return
-!
+    if ( .not. FwdMdlConfig%atmos_der) Return
+
 ! load Atmospheric derivatives into jacobian
-!
-  row = FindBlock( Jacobian%row, Radiance%index, maf )
-  rowFlags(row) = .TRUE.
-!
-  sv_f = 0
-  do sps_i = 1, no_mol
-!
-    jz = mol_cat_index(sps_i)
-    k = FwdMdlConfig%molecules(jz)
-    if (k == l_extinction ) then
-      f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
-          l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
-    else
-      f => GetVectorQuantityByType ( FwdMdlIn, &
-         & quantityType=l_vmr, molecule=k, noError=.true. )
-    endif
 
-    if(.not. associated(f) ) then
-      jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
-      k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
-      sv_f = sv_f + jf * k
-      CYCLE
-    endif
-!
-    DO jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
-!
-      col = FindBlock ( Jacobian%col, f%index, jf)
-      select case ( Jacobian%block(row,col)%kind )
-        case ( m_absent )
-          call CreateBlock ( Jacobian, row, col, m_full )
-          jacobian%block(row,col)%values = 0.0_r8
-        case ( m_full )
-        case default
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Wrong type for atmospheric derivative matrix' )
-      end select
+    row = FindBlock( Jacobian%row, Radiance%index, maf )
+    rowFlags(row) = .TRUE.
 
-      DO k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+    sv_f = 0
+    do sps_i = 1, no_mol
+
+      jz = mol_cat_index(sps_i)
+      k = FwdMdlConfig%molecules(jz)
+      if ( k == l_extinction ) then
+        f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
+            l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
+      else
+        f => GetVectorQuantityByType ( FwdMdlIn, &
+           & quantityType=l_vmr, molecule=k, noError=.true. )
+      end if
+
+      if ( .not. associated(f) ) then
+        jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
+        k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+        sv_f = sv_f + jf * k
+        cycle
+      end if
+
+      do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
+
+        col = FindBlock ( Jacobian%col, f%index, jf)
+        select case ( Jacobian%block(row,col)%kind )
+          case ( m_absent )
+            call CreateBlock ( Jacobian, row, col, m_full )
+            jacobian%block(row,col)%values = 0.0_r8
+          case ( m_full )
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Wrong type block for atmospheric derivative matrix' )
+        end select
+
+        do k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
 
 ! Check if derivatives are needed for this (zeta & phi) :
 
-        sv_f = sv_f + 1
-        if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
+          sv_f = sv_f + 1
+          if ( .NOT. Grids_f%deriv_flags(sv_f) ) cycle
 
 ! run through representation basis coefficients
 
-        do ptg_i = 1, noPtan
-          r = drad_df_out(ptg_i,sv_f)
-          ind = channel + noChans * (ptg_i-1)
-          jacobian%block(row,col)%values(ind,k) = &
-              & jacobian%block(row,col)%values(ind,k) + sbRatio * r
-        end do
-!
-      end do
-!
-    end do
-!
-  end do
-!
-  Call Deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
-!
- END SUBROUTINE convolve_all
+          do ptg_i = 1, noPtan
+            r = drad_df_out(ptg_i,sv_f)
+            ind = channel + noChans * (ptg_i-1)
+            jacobian%block(row,col)%values(ind,k) = &
+                & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+          end do
 
-END MODULE convolve_all_m
+        end do
+
+      end do
+
+    end do
+
+    call deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
+
+ end subroutine Convolve_All
+
+end module Convolve_All_m
+
 ! $Log$
+! Revision 2.19  2002/09/05 20:48:13  livesey
+! Fixed handling of vmr derivative flags.
+!
 ! Revision 2.18  2002/08/20 22:36:39  livesey
 ! Moved uses inside routine
 !
