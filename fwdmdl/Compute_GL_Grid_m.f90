@@ -50,12 +50,10 @@ contains
     real(rp), dimension(:), pointer :: Tan_Press
 
   ! Local variables
-    integer :: J
+    integer :: I, J
     integer, parameter :: Ngp1 = Ng+1  ! NG + 1
     integer :: NLM1                               ! NLVL - 1
     integer :: No_Tan_Hts
-    integer(ip), dimension(:), pointer :: Rec_Tan_Inds ! recommended tangent
-      !                                             point indices from make_z_grid
     integer :: SPS_I
     integer :: Z_All_Prev, Z_All_Size
     real(rp), dimension(:), pointer :: Z_all  ! mass storage of representation
@@ -64,8 +62,7 @@ contains
       !                                  radiative transfer calculations
       ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
 
-    nullify ( p_glgrid, rec_tan_inds, tan_inds, tan_press, z_all, z_glgrid, &
-      & z_psig )
+    nullify ( p_glgrid, tan_inds, tan_press, z_all, z_glgrid, z_psig )
 
 ! Insert automatic preselected integration gridder here. Need to make a
 ! large concatenated vector of bases and pointings.
@@ -109,7 +106,7 @@ contains
 
 ! Now, create the final grid and discard the temporary array:
 
-    call make_z_grid ( z_all, z_psig, rec_tan_inds )
+    call make_z_grid ( z_all, z_psig )
     call deallocate_test ( z_all, 'z_all', moduleName )
 
 ! note that z_psig(1) is the designated surface
@@ -144,12 +141,10 @@ contains
     call allocate_test ( tan_inds,  no_tan_hts, 'tan_inds',  moduleName )
     call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
 
-! Compute tan_inds from rec_tan_inds
+! Compute tan_inds
 
     tan_inds(1:j) = 1
-    tan_inds(j+1:no_tan_hts) = (rec_tan_inds - 1) * Ngp1 + 1
-
-    call deallocate_test ( rec_tan_inds, 'rec_tan_inds', moduleName )
+    tan_inds(j+1:no_tan_hts) = (/ (i * Ngp1 + 1, i = 0, Nlm1) /)
 
 ! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_glgrid
 
@@ -165,6 +160,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.4  2003/09/19 18:10:38  vsnyder
+! Simplify computation of tangent point indices
+!
 ! Revision 2.3  2003/06/20 19:35:17  pwagner
 ! Quanities now share grids stored separately in databses
 !
