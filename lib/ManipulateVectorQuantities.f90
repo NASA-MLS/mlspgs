@@ -132,9 +132,10 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
         &  ( a%template%noInstances /= b%template%noInstances ) ) return
       if ( any(abs(a%template%surfs - &
         &          b%template%surfs) > zTol) ) return
-      if ( (.not. a%template%regular ) .and. &
-        &  ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
-        &    any(a%template%chanIndex /= b%template%chanIndex) ) ) return
+      if (.not. a%template%regular ) then
+        if ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
+          &  any(a%template%chanIndex /= b%template%chanIndex) ) return
+      end if
 
       DoVGridsMatch = .true.
     end function DoVGridsMatch
@@ -142,6 +143,9 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.7  2001/05/11 00:03:41  livesey
+! Fixed but with DoVGridsMatch
+!
 ! Revision 2.6  2001/05/10 23:29:27  livesey
 ! Added DoHGridsMatch and DoVGridsMatch
 !
