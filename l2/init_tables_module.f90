@@ -143,10 +143,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VALUES              = f_versionrange + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
-! integer, parameter :: FIELD_LAST = f_weight
-  !??? Fields from here may be temporary for driving the forward model
-  integer, parameter :: F_ZVI                 = f_weight + 1   !???
-  integer, parameter :: FIELD_LAST = f_zvi
+  integer, parameter :: FIELD_LAST = f_weight
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
@@ -230,9 +227,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTOR             = s_time + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
-  integer, parameter :: S_L2LOAD             = s_vgrid + 1       !??? for Zvi
-  integer, parameter :: SPEC_LAST = s_l2load
-! integer, parameter :: SPEC_LAST = s_vGrid
+  integer, parameter :: SPEC_LAST = s_vGrid
   integer :: SPEC_INDICES(spec_first:spec_last)
 
 ! Parameter names:
@@ -443,7 +438,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_weight) =              add_ident ( 'weight' )
-    field_indices(f_zvi) =                 add_ident ( 'zvi' )         !???
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -495,8 +489,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
-    spec_indices(s_l2load) =               add_ident ( 'l2load' )!??? for Zvi
-    spec_indices(s_sids) =                 add_ident ( 'sids' )  !??? for Zvi
+    spec_indices(s_sids) =                 add_ident ( 'sids' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -761,10 +754,6 @@ contains ! =====     Public procedures     =============================
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
              nd+n_spec_def /) )
-    call make_tree ( (/ &                                    !???
-      begin, s+s_l2load, &                                   !???
-             begin, f+f_zvi, t+t_string, n+n_field_type, &   !???
-             nadp+n_spec_def /) )                            !???
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -782,7 +771,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def,&
-             s+s_time, s+s_l2load, s+s_forwardModel, s+s_forwardModelGlobal, &
+             s+s_time, s+s_forwardModel, s+s_forwardModelGlobal, &
              s+s_vgrid, &
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
@@ -820,6 +809,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.70  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.69  2001/04/10 00:01:53  vsnyder
 ! Prevent duplicate fields on 'matrix' spec
 !
