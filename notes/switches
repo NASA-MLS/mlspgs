@@ -9,36 +9,38 @@ Switches (set by -S option in mlsl2's command line):
   S => MLSSignals
   V => VGrids (in globalSettings)
 
-  cab =>   Column Abundance-containing l2gp swaths dumped
-  chi =>   chi-related diagnostic quantities dumped
-  cho =>   How good was the Cholesky decomposition?
-  chu =>   Enslaved chunk processing
-  col =>   Column scale vector for Newton iteration
-  diag =>  diagonal of factored normal equations
-  dvec =>  'DX' vector during Newton iteration
-  fac =>   Factors of normal equations during retriever iterations
-  fvec =>  'F' vector during Newton iteration
-  glo =>   Global settings
-  gvec =>  Gradient vector during Newton iteration
-  jac =>   Jacobian during retriever iterations
-  l2aux => l2aux quantities (all) dumped
-  l2gp =>  l2gp swaths (all) dumped
-  log =>   Log file messages
-  mas =>   Activities of the PVM master task
-  msk =>   Mask set up by subset command in Retrieve
-  neq =>   Normal equations during retriever iterations
-  ndb =>   Dump the Newton method's internal variables before every step
-  nwt =>   Action flag at each return from Newton solver
-  pro =>   Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
-  qtmp =>  Quantity templates being constructed
-  rad =>   Radiances in ForwardModelInterface
-  sca =>   Scalars of interest to the Newton method
-  slv =>   Show output of slaves using pvmfcatchout
-  spa =>   Sparsity structure of fac, jac, neq
-  svec =>  Final state vector after Newton iteration
-  time =>  Summarize time consumed by each code section
-  tps =>   Test_Parse_Signals
-  xvec =>  'X' vector during Newton iteration
+  cab =>    Column Abundance-containing l2gp swaths dumped
+  chi =>    chi-related diagnostic quantities dumped
+  cho =>    How good was the Cholesky decomposition?
+  chu =>    Enslaved chunk processing
+  col =>    Column scale vector for Newton iteration
+  diag =>   diagonal of factored normal equations
+  dvec =>   'DX' vector during Newton iteration
+  fac =>    Factors of normal equations during retriever iterations
+  fvec =>   'F' vector during Newton iteration
+  glo =>    Global settings
+  global => Global settings and l1b files data
+  gvec =>   Gradient vector during Newton iteration
+  jac =>    Jacobian during retriever iterations
+  l1b =>    l1b quantities dumped (only when filled from)
+  l2aux =>  l2aux quantities (all) dumped
+  l2gp =>   l2gp swaths (all) dumped
+  log =>    Log file messages
+  mas =>    Activities of the PVM master task
+  msk =>    Mask set up by subset command in Retrieve
+  neq =>    Normal equations during retriever iterations
+  ndb =>    Dump the Newton method's internal variables before every step
+  nwt =>    Action flag at each return from Newton solver
+  pro =>    Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
+  qtmp =>   Quantity templates being constructed
+  rad =>    Radiances in ForwardModelInterface
+  sca =>    Scalars of interest to the Newton method
+  slv =>    Show output of slaves using pvmfcatchout
+  spa =>    Sparsity structure of fac, jac, neq
+  svec =>   Final state vector after Newton iteration
+  time =>   Summarize time consumed by each code section
+  tps =>    Test_Parse_Signals
+  xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
@@ -67,6 +69,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.11  2001/10/16 23:31:20  pwagner
+ Added msk qtmp switches
+
  Revision 1.10  2001/09/28 18:07:18  pwagner
  Added time switch
 
