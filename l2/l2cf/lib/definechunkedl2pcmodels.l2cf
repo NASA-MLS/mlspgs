@@ -1,0 +1,42 @@
+;; $Id$
+
+;; This is like definel2pcmodels in that it defines a set of l2pc
+;; models.  However, these use the specificQuantities and molecules2X to
+;; do there stuff, so need to be defined inside construct rather than
+;; globalsettings.  Hence also, they need to have a phase name handle
+
+;; We choose 100.0 for the phiWindow to ensure we use the full l2pc
+;; information available.
+
+!define(chunkedL2pcF,{
+;; First the single extinction cases
+;; Now the double exinction cases
+l2pcSidsFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcSidsFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcODFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiWindow=100.0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcODFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), phiWindow=0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcRetFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]
+l2pcRetFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
+  extinctionConstant!radiometerForBand($1)]})
+
+;; Do all the 'standard' bands only this time.
+!forall(chunkedL2pcF,!allBands)
