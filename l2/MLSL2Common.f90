@@ -32,8 +32,6 @@ MODULE MLSL2Common              ! Common data types for the MLSL2 program
 
   ! --------------------------------------------------------------------------
 
-CONTAINS
-
 !=============================================================================
 !=============================================================================
 END MODULE MLSL2Common
@@ -41,6 +39,9 @@ END MODULE MLSL2Common
 
 !
 ! $Log$
+! Revision 2.3  2001/09/09 03:03:59  livesey
+! Bug fix
+!
 ! Revision 2.2  2001/09/09 02:48:37  livesey
 ! Moved FindFirst into MLSCommon
 !
