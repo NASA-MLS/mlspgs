@@ -37,7 +37,8 @@ contains
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-      & F_channels, F_cloudChannels, F_cloudRadiance, F_cloudRadianceCutOff, &
+      & F_channels, F_cloudChannels, F_cloudHeight, F_cloudRadiance, &
+      & F_cloudRadianceCutOff, &
       & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
       & F_diagnostics, F_diagonal, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
@@ -3454,7 +3455,10 @@ contains
       integer :: FIELD                  ! Field type from tree
       integer :: GSON                   ! Tree node
       integer :: HEIGHT                 ! Loop counter
+      integer :: HEIGHT1                 ! Loop counter
+      integer :: CLOUDHEIGHTNODE             ! Tree node for cloudheight values
       integer :: HEIGHTNODE             ! Tree node for height values
+      integer :: CLOUDHEIGHTUNIT             ! Unit for cloudheights command
       integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: IND,IND1,J, I          ! Aarray indices
       integer :: INSTANCE               ! Loop counter
@@ -3478,6 +3482,7 @@ contains
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical, dimension(:), pointer :: CLOUDCHANNELS ! Are we dealing with these cloud channels
+      logical :: DOTHISCLOUDHEIGHT           ! Flag
       logical :: DOTHISHEIGHT           ! Flag
       logical :: DOTHISCHANNEL          ! Flag
       logical :: ISCLOUD                ! Flag
@@ -3504,6 +3509,8 @@ contains
           ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
         case ( f_height )
           heightNode = son
+        case ( f_cloudHeight )
+          cloudHeightNode = son
         case ( f_channels )
           channelsNode = son
         case ( f_cloudChannels )
@@ -3577,6 +3584,30 @@ contains
           end do
         end do
       end if
+      ! Preprocess the height stuff.
+      cloudheightUnit = phyq_dimensionless
+      if ( got(f_cloudheight) ) then
+        do j = 2, nsons(cloudheightNode)
+          call expr ( subtree(j,cloudheightNode), units, value, type )
+          ! Make sure the range has non-dimensionless units -- the type
+          ! checker only verifies that they're consistent.  We need to
+          ! check each range separately, because the units determine the
+          ! scaling of the values.
+          if ( all(units == phyq_dimensionless) ) call announceError ( &
+            & wrongUnits, f_cloudheight, string = 'length or pressure.' )
+          ! Check consistency of units -- all the same, or dimensionless. The
+          ! type checker verifies the consistency of units of ranges, but not
+          ! of array elements.
+          do i = 1, 2
+            if ( cloudheightUnit == phyq_dimensionless ) then
+              cloudheightUnit = units(i)
+            else if ( units(i) /= phyq_dimensionless .and. &
+              &       units(i) /= cloudheightUnit ) then
+              call announceError ( inconsistentUnits, f_cloudheight )
+            end if
+          end do
+        end do
+      end if
 
       ! ----- finish checking ------
 
@@ -3614,11 +3645,35 @@ contains
                  doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
                end if
 
+               ! determine cloud flag
                isCloud = .false.
-               ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
-               if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
-                  & isCloud = .true.
-                  
+               if( got(f_cloudheight) ) then 
+                  ! use the given height range to find cloud flag
+                  do height1 = 1,cloudRadiance%template%noSurfs
+                     doThisCloudHeight = .true.
+                     if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) > value(1)
+                     else
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) >= value(1)
+                     end if
+                     if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) < value(2)
+                     else
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) <= value(2)
+                     end if
+                  ind1 = useThisChannel + cloudRadiance%template%noChans*(height1-1)
+                  if ( doThisCloudHeight .and. &
+                     & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+                     & isCloud = .true.
+                  enddo
+               else
+                  ! use the same mif radiance to find cloud flag
+                  ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
+                  if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+                     & isCloud = .true.
+               endif
+               
+               ! assign cloud flag
                do channel = 1, qty%template%noChans
                   doThisChannel = .true.
                   if ( associated(channels) ) doThisChannel = channels(channel)
@@ -3648,6 +3703,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.228  2003/02/05 04:07:05  dwu
+! add cloudheight option for flagcloud
+!
 ! Revision 2.227  2003/02/03 23:08:50  vsnyder
 ! Delete test for small residual -- there's a test relative to FNMIN in
 ! dnwt.  Add stuff for dnwt to use Mor\'e and Sorensen algorithm to
