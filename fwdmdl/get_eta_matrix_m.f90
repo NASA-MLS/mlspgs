@@ -1,5 +1,5 @@
-
-! This module computes the eta matrix
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Get_Eta_Matrix_m
 
@@ -21,6 +21,8 @@ contains
 !---------------------------------------------------
   subroutine Get_Eta_Sparse ( Basis, Grid, Eta, Not_zero )
 
+! Compute the eta matrix
+
 ! Inputs
 
     real(rp), intent(in) :: Basis(:) ! basis break points
@@ -41,10 +43,10 @@ contains
 ! I is the independent variable grid index and J is the coefficient index
 
     n_coeffs = size(basis)
-    eta = 0.0_rp
+    eta(:,:n_coeffs) = 0.0_rp
     if ( present(not_zero) ) then
 
-      not_zero = .false.
+      not_zero(:,:n_coeffs) = .false.
 
 ! The wheres could be replaced with a search routine which would speed
 ! this up some more but you have to worry about sorting grid.
@@ -60,8 +62,8 @@ contains
       do j = 2 , n_coeffs
         del_basis = basis(j) - basis(j-1)
         where ( basis(j-1) <= grid .and. grid <= basis(j) )
-          eta(:,j-1) = (basis(j) - grid)/ del_basis
-          eta(:,j) =   (grid - basis(j-1))/ del_basis
+          eta(:,j-1) = (basis(j) - grid) / del_basis
+          eta(:,j) =   (grid - basis(j-1)) / del_basis
           not_zero(:,j-1) = .true.
           not_zero(:,j) = .true.
         end where
@@ -69,7 +71,7 @@ contains
 
 ! last basis calculation
 
-      where(basis(n_coeffs) < grid)
+      where ( basis(n_coeffs) < grid )
         eta(:,n_coeffs) = 1.0_rp
         not_zero(:,n_coeffs) = .true.
       end where
@@ -101,6 +103,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.1  2002/09/06 18:17:19  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 
