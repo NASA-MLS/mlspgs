@@ -162,8 +162,6 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Vector_T) :: Vec               ! Vector used to define the row
       ! or column space of the matrix, if any.
     integer :: NB = 0              ! Number of blocks of rows or columns
-    logical :: Extra = .false.     ! There is an extra row or column that is
-      ! not accounted for by vec.
     logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
       ! major order and quantity is the minor order.
     integer, pointer :: Nelts(:) => NULL()  ! Numbers of rows or columns in
@@ -448,11 +446,11 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  ClearRows_1  -----
   subroutine ClearRows_1 ( X, RowBlock, Vec )
-  ! Clear the rows of X for which the mask in X's row-defining vector
-  ! has nonzero bits.  If RowBlock is present, it specifies that only
-  ! the rows in that row block are to be cleared.  Otherwise, rows in
-  ! all row blocks are cleared.  If the vector Vec is present, its
-  ! elements that correspond to nonzero bits of its mask are cleared.
+  ! Clear the rows of X for which the mask in X's row-defining vector has a
+  ! nonzero M_LinAlg bit.  If RowBlock is present, it specifies that only the
+  ! rows in that row block are to be cleared.  Otherwise, rows in all row
+  ! blocks are cleared.  If the vector Vec is present, its elements that
+  ! correspond to nonzero bits of its mask are cleared.
     type(Matrix_T), intent(inout) :: X
     integer, intent(in), optional :: RowBlock
     type(Vector_T), intent(inout), optional :: Vec
@@ -1046,7 +1044,7 @@ contains ! =====     Public Procedures     =============================
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
-    integer, dimension(:), pointer :: MJ ! Mask for column J, if any
+    character, dimension(:), pointer :: MJ ! Mask for column J, if any
     logical :: My_Clone       ! My copy of Clone or false if it's absent
     logical :: My_Mask        ! My copy of UseMask or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
@@ -1215,7 +1213,7 @@ contains ! =====     Public Procedures     =============================
 
     logical :: DO_UPDATE
     integer :: I, J, K             ! Subscripts for [AZ]%Block
-    integer, dimension(:), pointer :: MI, MJ ! Masks for columns I, J if any
+    character, dimension(:), pointer :: MI, MJ ! Masks for columns I, J if any
     logical :: My_Mask
     logical :: MY_UPDATE
     integer :: R1, R2              ! Rows upon which to operate
@@ -1712,6 +1710,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.62  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.61  2001/11/08 02:06:30  vsnyder
 ! Added #rows to sparsness structure display
 !
