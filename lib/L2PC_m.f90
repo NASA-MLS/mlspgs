@@ -18,7 +18,7 @@ module L2PC_m
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP
+    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -63,8 +63,131 @@ module L2PC_m
 
 contains ! ============= Public Procedures ==========================
 
+  ! ------------------------------------  Add l2pc  to database ----
+  integer function AddL2PCToDatabase ( Database, Item )
+    
+    ! This function simply adds an l2pc  to a database of said l2pc s.
+    
+    type(Matrix_T), dimension(:), pointer :: Database
+    type(Matrix_T) :: Item
+    
+    type(Matrix_T), dimension(:), pointer :: TempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddL2PCToDatabase = newSize
+  end function AddL2PCToDatabase
+
+  ! -----------------------------------  Close_L2PC_File  -----
+  subroutine Close_L2PC_File ( Lun )
+    integer, intent(in) :: lun
+    close ( lun )
+  end subroutine Close_L2PC_File
+
+  ! ----------------------------------------------- DestroyL2PC ----
+  subroutine DestroyL2PC ( l2pc )
+    ! Dummy arguments
+    type (Matrix_T), intent(inout), target :: L2PC
+
+    integer :: QUANTITY                 ! Loop index
+    integer :: VECTOR                   ! Loop index
+
+    type (QuantityTemplate_T), pointer :: Qt ! Temporary pointer
+    type (Vector_T), pointer :: V       ! Temporary pointer
+
+    ! Exectuable code
+    do vector = 1, 2
+      if ( vector == 1 ) then
+        v => l2pc%col%vec
+      else
+        v => l2pc%row%vec
+      end if
+      
+      do quantity = 1, size(v%quantities)
+        qt => v%quantities(quantity)%template
+        call deallocate_test (qt%surfs, 'qt%surfs', ModuleName)
+        call deallocate_test (qt%phi, 'qt%phi', ModuleName)
+        call deallocate_test (v%quantities(quantity)%values, 'q%values',&
+          & ModuleName)
+      end do
+      deallocate (v%quantities)
+    end do
+    
+    ! Destory kStar
+    call DestroyMatrix ( l2pc )
+    
+  end subroutine DestroyL2PC
+
+  ! ------------------------------------------- DestroyL2PCDatabase ---
+  subroutine DestroyL2PCDatabase
+
+    ! Local variables
+    integer :: I, Status
+
+    if (associated(l2pcDatabase)) then
+      do i = 1, size(l2pcDatabase)
+        call DestroyL2PC ( l2pcDatabase(i) )
+      end do
+      deallocate ( l2pcDatabase, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_deallocate // "l2pcDatabase" )
+    end if
+  end subroutine DestroyL2PCDatabase
+
+  ! ------------------------------------ open_l2pc_file ------------
+  subroutine Open_L2PC_File ( Filename, Lun )
+
+    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
+    integer, intent(out) :: Lun              ! Logical unit number to read it
+
+    logical :: Exist, Opened
+    integer :: Status
+
+    do lun = 20, 99
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) exit
+    end do
+    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "No logical unit numbers available" )
+    open ( unit=lun, file=filename, status='old', form='formatted', &
+      & access='sequential', iostat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Unable to open l2pc file " // Filename )
+  end subroutine Open_L2PC_File
+
+  ! ------------------------------------- Read_l2pc_file ------
+  subroutine Read_l2pc_file ( Lun )
+    use Trace_M, only: Trace_begin, Trace_end
+    use Toggles, only: Toggle, gen
+    ! Read all the bins in an l2pc file
+    integer, intent(in) :: lun
+
+    ! Local variables
+    type (Matrix_T) :: L2pc
+    integer :: Dummy
+    logical :: Eof
+
+    ! Executable code
+    if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
+    eof = .false.
+    do while (.not. eof )
+      call ReadOneL2PC ( l2pc, lun, eof )
+      if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+
+      ! Now nullify the pointers in l2pc so we don't clobber the one we've written
+      nullify ( l2pc%block )
+      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
+      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
+      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
+      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
+      
+    end do
+
+    if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
+  end subroutine Read_l2pc_file
+
   ! --------------------------------------- WriteOneL2PC ---------------
-  subroutine WriteOneL2PC ( L2pc, Unit )
+  subroutine WriteOneL2PC ( L2pc, Unit, packed )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
@@ -72,17 +195,23 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (matrix_T), intent(in), target :: L2pc
     integer, intent(in) :: Unit
+    logical, intent(in), optional :: PACKED
 
     ! Local parameters
     character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
     character (len=*), parameter :: iFmt = "(8(2x,i6))"
-
 
     ! Local variables
     integer :: BlockCol                 ! Index
     integer :: BlockRow                 ! Index
     integer :: Quantity                 ! Loop counter
     integer :: Vector                   ! Loop counter
+    integer :: AdjustedIndex            ! Index into quantities not skipped
+
+    logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
+    logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
+    logical, dimension(:), pointer :: THISPACK
+    logical :: MYPACKED
 
     character (len=132) :: Line, Word1, Word2 ! Line of text
 
@@ -90,7 +219,18 @@ contains ! ============= Public Procedures ==========================
     type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
     type (Vector_T), pointer :: V       ! Temporary pointer
 
-    ! executable code
+    ! Executable code
+
+    myPacked = .false.
+    if ( present ( packed ) ) myPacked = packed
+
+    ! Work out which quantities we can skip
+    if ( myPacked ) then
+      call MakeMatrixPackMap ( l2pc, rowPack, colPack )
+    else
+      rowPack = .true.
+      colPack = .true.
+    end if
 
     ! First dump the xStar and yStar
     do vector = 1, 2
@@ -98,50 +238,57 @@ contains ! ============= Public Procedures ==========================
       if ( vector == 1 ) then
         write (unit,*) 'xStar'
         v => l2pc%col%vec
+        thisPack => colPack
       else
         write (unit,*) 'yStar'
         v => l2pc%row%vec
+        thisPack => rowPack
       end if
 
-      write (unit,*) size(v%quantities)
+      write (unit,*) count ( thisPack )
       ! Loop over quantities
       do quantity = 1, size(v%quantities)
-        qt => v%quantities(quantity)%template
-
-        ! Write quantity type
-        call get_string ( lit_indices(qt%quantityType), line )
-        write (unit,*) trim(line)
-        
-        ! Write other info associated with type
-        select case ( qt%quantityType )
-        case (l_vmr)
-          call get_string ( lit_indices(qt%molecule), line )
+        if ( thisPack(quantity) ) then
+          qt => v%quantities(quantity)%template
+          
+          ! Write quantity type
+          call get_string ( lit_indices(qt%quantityType), line )
           write (unit,*) trim(line)
-        case (l_radiance)
-          call GetSignalName ( qt%signal, line, sideband=qt%sideband )
-          write (unit,*) trim(line)
-        end select
-
-        ! Write out the dimensions for the quantity and the edges
-        write (unit,*) qt%noChans, qt%noSurfs, qt%noInstances,&
-          &  'noChans, noSurfs, noInstances'
-        write (unit,*) qt%coherent, qt%stacked, &
-          &  'coherent, stacked'
-        if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
-          & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
-          &   call MLSMessage(MLSMSG_Error,ModuleName, &
-          &     "Only zeta coordinates allowed (or none) for xStar.")
-        write (unit,*) 'surfs'
-        write (unit, rFmt) qt%surfs
-        write (unit,*) 'phi'
-        write (unit, rFmt) qt%phi
-
+          
+          ! Write other info associated with type
+          select case ( qt%quantityType )
+          case (l_vmr)
+            call get_string ( lit_indices(qt%molecule), line )
+            write (unit,*) trim(line)
+          case (l_radiance)
+            call GetSignalName ( qt%signal, line, sideband=qt%sideband )
+            write (unit,*) trim(line)
+          end select
+          
+          ! Write out the dimensions for the quantity and the edges
+          write (unit,*) qt%noChans, qt%noSurfs, qt%noInstances,&
+            &  'noChans, noSurfs, noInstances'
+          write (unit,*) qt%coherent, qt%stacked, &
+            &  'coherent, stacked'
+          if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
+            & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
+            &   call MLSMessage(MLSMSG_Error,ModuleName, &
+            &     "Only zeta coordinates allowed (or none) for xStar.")
+          write (unit,*) 'surfs'
+          write (unit, rFmt) qt%surfs
+          write (unit,*) 'phi'
+          write (unit, rFmt) qt%phi
+        end if
       end do                            ! First loop over quantities
 
       ! Now do a second loop and write the values
-      do quantity = 1, size(v%quantities)
-        write (unit,*) 'values', quantity
-        write (unit,rFmt) v%quantities(quantity)%values
+      adjustedIndex = 1
+      do quantity = 1, count ( thisPack )
+        if ( thisPack(quantity) ) then
+          write (unit,*) 'values', adjustedIndex
+          write (unit,rFmt) v%quantities(quantity)%values
+          adjustedIndex = adjustedIndex + 1
+        end if
       end do                            ! Second loop over quantities
 
     end do                              ! Loop over xStar/yStar
@@ -180,7 +327,52 @@ contains ! ============= Public Procedures ==========================
     end do
 
   end subroutine WriteOneL2PC
-  
+
+  ! ======================================= PRIVATE PROCEDURES ====================
+
+  ! ----------------------------------- MakeMatrixPackMap -----------
+  subroutine MakeMatrixPackMap ( m, rowPack, colPack )
+    ! This subroutine fills the boolean arrays rowPack, colPack
+    ! (each length row/col%noQuantities) with a flag set true
+    ! if the quantity has any derivatives at all
+    
+    ! Dummy arguments
+    type (Matrix_T), intent(in) :: M
+    logical, intent(out), dimension(M%row%vec%template%noQuantities) :: ROWPACK
+    logical, intent(out), dimension(M%col%vec%template%noQuantities) :: COLPACK
+
+    ! Local variables
+    integer :: ROWQ                     ! Loop counter
+    integer :: COLQ                     ! Loop counter
+    integer :: ROWI                     ! Loop counter
+    integer :: COLI                     ! Loop counter
+    integer :: ROWBLOCK                 ! Block index
+    integer :: COLBLOCK                 ! Block index
+
+    ! Executable code
+
+    rowPack = .false.
+    colPack = .false.
+
+    ! Do a nested loop over cols/rows
+    ! I tried to be fancy with cycles etc. but the code got really messy.
+    ! This simple approach is probably the clearest.
+    do colQ = 1, m%col%vec%template%noQuantities
+      do colI = 1, m%col%vec%quantities(colQ)%template%noInstances
+        colBlock = FindBlock ( m%col, colQ, colI )
+        do rowQ = 1, m%row%vec%template%noQuantities
+          do rowI = 1, m%row%vec%quantities(rowQ)%template%noInstances
+            rowBlock = FindBlock ( m%row, rowQ, rowI )
+            if ( m%block ( rowBlock, colBlock ) % kind /= M_Absent ) then
+              rowPack ( rowQ ) = .true.
+              colPack ( colQ ) = .true.
+            end if
+          end do
+        end do
+      end do
+    end do
+  end subroutine MakeMatrixPackMap
+
   ! --------------------------------------- WriteL2PC ---------------
   subroutine ReadOneL2PC ( L2pc, Unit, Eof )
     ! This subroutine writes an l2pc to a file
@@ -485,132 +677,12 @@ contains ! ============= Public Procedures ==========================
     end do
   end subroutine ReadOneVector
 
-  ! ------------------------------------ open_l2pc_file ------------
-  subroutine Open_L2PC_File ( Filename, Lun )
-
-    character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
-    integer, intent(out) :: Lun              ! Logical unit number to read it
-
-    logical :: Exist, Opened
-    integer :: Status
-
-    do lun = 20, 99
-      inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
-    end do
-    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No logical unit numbers available" )
-    open ( unit=lun, file=filename, status='old', form='formatted', &
-      & access='sequential', iostat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open l2pc file " // Filename )
-  end subroutine Open_L2PC_File
-
-  ! -----------------------------------  Close_L2PC_File  -----
-  subroutine Close_L2PC_File ( Lun )
-    integer, intent(in) :: lun
-    close ( lun )
-  end subroutine Close_L2PC_File
-
-  ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( Lun )
-    use Trace_M, only: Trace_begin, Trace_end
-    use Toggles, only: Toggle, gen
-    ! Read all the bins in an l2pc file
-    integer, intent(in) :: lun
-
-    ! Local variables
-    type (Matrix_T) :: L2pc
-    integer :: Dummy
-    logical :: Eof
-
-    ! Executable code
-    if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
-    eof = .false.
-    do while (.not. eof )
-      call ReadOneL2PC ( l2pc, lun, eof )
-      if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
-
-      ! Now nullify the pointers in l2pc so we don't clobber the one we've written
-      nullify ( l2pc%block )
-      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
-      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
-      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
-      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
-      
-    end do
-
-    if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
-  end subroutine Read_l2pc_file
-
-  ! ------------------------------------  Add l2pc  to database ----
-  integer function AddL2PCToDatabase ( Database, Item )
-    
-    ! This function simply adds an l2pc  to a database of said l2pc s.
-    
-    type(Matrix_T), dimension(:), pointer :: Database
-    type(Matrix_T) :: Item
-    
-    type(Matrix_T), dimension(:), pointer :: TempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddL2PCToDatabase = newSize
-  end function AddL2PCToDatabase
-
-  ! ----------------------------------------------- DestroyL2PC ----
-  subroutine DestroyL2PC ( l2pc )
-    ! Dummy arguments
-    type (Matrix_T), intent(inout), target :: L2PC
-
-    integer :: QUANTITY                 ! Loop index
-    integer :: VECTOR                   ! Loop index
-
-    type (QuantityTemplate_T), pointer :: Qt ! Temporary pointer
-    type (Vector_T), pointer :: V       ! Temporary pointer
-
-    ! Exectuable code
-    do vector = 1, 2
-      if ( vector == 1 ) then
-        v => l2pc%col%vec
-      else
-        v => l2pc%row%vec
-      end if
-      
-      do quantity = 1, size(v%quantities)
-        qt => v%quantities(quantity)%template
-        call deallocate_test (qt%surfs, 'qt%surfs', ModuleName)
-        call deallocate_test (qt%phi, 'qt%phi', ModuleName)
-        call deallocate_test (v%quantities(quantity)%values, 'q%values',&
-          & ModuleName)
-      end do
-      deallocate (v%quantities)
-    end do
-    
-    ! Destory kStar
-    call DestroyMatrix ( l2pc )
-    
-  end subroutine DestroyL2PC
-
-  ! ------------------------------------------- DestroyL2PCDatabase ---
-  subroutine DestroyL2PCDatabase
-
-    ! Local variables
-    integer :: I, Status
-
-    if (associated(l2pcDatabase)) then
-      do i = 1, size(l2pcDatabase)
-        call DestroyL2PC ( l2pcDatabase(i) )
-      end do
-      deallocate ( l2pcDatabase, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_deallocate // "l2pcDatabase" )
-    end if
-  end subroutine DestroyL2PCDatabase
-
 end module L2PC_m
 
 ! $Log$
+! Revision 2.22  2002/01/18 00:34:23  livesey
+! Added packed option to writeonel2pc, with supporting code.
+!
 ! Revision 2.21  2001/06/21 22:45:43  livesey
 ! Found another one of those `clobbering the latest database item' gotchas in the code.
 !
