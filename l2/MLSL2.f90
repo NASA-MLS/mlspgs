@@ -148,14 +148,16 @@ program MLSL2
   !---------------- Task (3) ------------------
   i = 1+hp
   command_line = ' '
+  do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+    call getarg ( i, line )
+    if ( line(1:4) /= '-Wl,' ) exit
+    call AccumulateSlaveArguments(line) ! pass them to slave processes
+    i = i + 1
+  end do
   do ! Process the command line options to set toggles
     copyArg = .true.
     call getarg ( i, line )
     command_line = trim(command_line) // ' ' // trim(line)
-    if ( line(1:4) == '-Wl,' ) then     ! skip Lahey/Fujitsu run-time options
-      i = i + 1
-      call AccumulateSlaveArguments(line)
-    end if
     if ( line(1:2) == '--' ) then       ! "word" options
       n = 0
       switch = .true.
@@ -595,6 +597,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.79  2002/08/21 18:22:26  vsnyder
+! Revise processing of Lahey/Fujitsy runtime (-Wl) options
+!
 ! Revision 2.78  2002/08/15 21:48:51  pwagner
 ! h5open(close)_f now called at start (end)
 !
