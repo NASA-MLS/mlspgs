@@ -188,36 +188,32 @@ Contains
     Real(rp), intent(in) :: NH
 
     Integer :: iter
-    Logical :: bound
-    Real(rp) :: v1,v2,f1,f2,df,fpos,fneg,hpos,hneg
+    Logical :: bracketed
+    Real(rp) :: v1,v2,f1,f2,df,hpos,hneg
 
     Integer,  PARAMETER :: Max_Iter = 20
 
-     bound = .FALSE.
-     f1 = h1 * (1.0 + n1) - NH
-     f2 = h2 * (1.0 + n2) - NH
+     bracketed = .FALSE.
+     f1 = h1 * (1.0_rp + n1) - NH
+     f2 = h2 * (1.0_rp + n2) - NH
      df = (f2 - f1) / (h2 - h1)
 
      if(f1*f2 < 0.0_rp) then
-       bound = .TRUE.
+       bracketed = .TRUE.
        if(f1 < 0.0_rp) then
-         fneg = f1
          hneg = h1
-         fpos = f2
          hpos = h2
        else
-         fpos = f1
          hpos = h1
-         fneg = f2
          hneg = h2
        endif
      else
-       Print *,'** Warning from Solve_Hn: ROOT is NOT bound ..'
+       Print *,'** Warning from Solve_Hn: Could not bracket the root ..'
      endif
 
      iter = 1
-     v2 = (h1*abs(f2)+h2*abs(f1))/(abs(f1)+abs(f2))
-     f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
+     v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+     f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
 
      DO
 
@@ -226,35 +222,33 @@ Contains
 
        v2 = v1 - f1 / df
 
-       if(bound) then
-         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) v2 = 0.5_rp*(hneg + hpos)
+       if(bracketed) then
+         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
+           &  v2 = 0.5_rp * (hneg + hpos)
        endif
 
-       f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
+       f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
 
        if(abs(f2) < Tiny .OR. abs(v2-v1) < Tiny) EXIT
 
        if(Iter == Max_Iter) EXIT
 
-       iter = iter + 1
-       df = (f2 - f1) / (v2 - v1)
-
-       if(bound) then
+       if(bracketed) then
          if(f2 < 0.0_rp) then
-           fneg = f2
            hneg = v2
          else
-           fpos = f2
            hpos = v2
          endif
-         df = (fpos - fneg) / (hpos - hneg)
        endif
+
+       iter = iter + 1
+       df = (f2 - f1) / (v2 - v1)
 
      END DO
 
      if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) then
-       Print *,'** Warning from Solve_Hn: DID NOT converged within ',Max_Iter, &
-             & ' iterations ..'
+       Print *,'** Warning from Solve_Hn: Did not converged within ', &
+            &  Max_Iter,' iterations ..'
      endif
 
      H = v2
@@ -287,6 +281,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.5  2002/02/18 01:01:58  zvi
+! Let the program crash & burn for LARGE negative Sqrt Arg.
+!
 ! Revision 2.4  2002/02/17 03:23:40  zvi
 ! Better code for convergance in Solve_Hn
 !
