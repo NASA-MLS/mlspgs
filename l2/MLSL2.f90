@@ -454,6 +454,8 @@ program MLSL2
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line) )
+    elseif(index(switches, 'pro') /= 0) then                            
+      call announce_success(L2CF_file, l2cf_unit)               
     end if
     inunit = l2cf_unit
   else if ( pcf_for_input ) then
@@ -464,6 +466,8 @@ program MLSL2
       call output(status, advance='yes')
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf" )
+    elseif(index(switches, 'pro') /= 0) then                            
+      call announce_success(L2CF_file, inunit)               
     end if
   end if
   error = status
@@ -688,9 +692,27 @@ contains
     endif
   end subroutine Dump_settings
 
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, unit_number )
+    character(LEN=*), intent(in)   :: Name
+    integer, intent(in)            :: unit_number
+
+    call output ( 'Level 2 configuration file ' )
+    call output ( 'name : ' )
+    call blanks(4)
+    call output ( trim(Name), advance='no')
+    call blanks(10)
+    call output ( 'unit number : ' )
+    call blanks(4)
+    call output ( unit_number, advance='yes')
+  end subroutine announce_success
+
 end program MLSL2
 
 ! $Log$
+! Revision 2.90  2002/12/10 00:39:06  pwagner
+! Announces success a la read_apriori
+!
 ! Revision 2.89  2002/12/06 22:33:41  livesey
 ! Added the snoop name stuff
 !
