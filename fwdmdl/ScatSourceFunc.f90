@@ -96,7 +96,6 @@ contains
                                           ! 3 = NEAR SIDE CLOUD ONLY
       integer :: IH, IND, IP, ISPI, ITS, ITT, J, JM, K, K1, L
       integer :: LMIN( size(temp_air) )   ! LOWEST LAYER REACHED BY A TANGENT HT
-      integer :: NU                       ! Number of scattering angles
 
 !-------------------------------------------------------------------------------------
 
@@ -120,13 +119,17 @@ contains
 
       call ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
       
-
       WC=0.0
       PHH=0.0
       cld_ext=0.0
       WC(1,10) = 0.01   !test only
       WC(1,11) = 0.01   !test only
       dtau =0.0
+
+!         CALL CLEAR_SKY(L-1,NU,TS,S,LORS,SWIND,                         &
+!              &         YZ,YP,YT,YQ,VMR,NS,                             &
+!              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
+!              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
 
       do K=1,L-1
         call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,        &
@@ -274,6 +277,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.2  2003/10/28 22:06:37  jonathan
+! add Z as input variable for later use
+!
 ! Revision 2.1  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
