@@ -206,14 +206,14 @@ contains ! ======================================== BaselineForwardModel ======
       
       if ( associated ( baseline%template%frequencies ) ) then
         call Hunt ( baseline%template%frequencies, &
-          & signal%frequencies+signal%centerFrequency, chan0 )
+          & signal%direction*signal%frequencies+signal%centerFrequency, chan0 )
       else
         chan0 = 1
       end if
       chan1 = min ( chan0+1, noBslChans )
       if ( associated ( baseline%template%frequencies ) ) then
         where ( chan1 /= chan0 )
-          chanWt1 = ( signal%frequencies+signal%centerFrequency - &
+          chanWt1 = ( signal%frequencies+signal%direction*signal%centerFrequency - &
             & baseline%template%frequencies(chan0) ) / &
             & ( baseline%template%frequencies(chan1) - &
             &   baseline%template%frequencies(chan0) ) 
@@ -391,6 +391,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.8  2002/05/03 23:29:04  livesey
+! Added direction stuff
+!
 ! Revision 2.7  2002/01/17 02:16:38  livesey
 ! Bug, rowBlock wasn't set in some cases
 !
