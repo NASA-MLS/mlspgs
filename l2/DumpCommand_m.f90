@@ -173,7 +173,6 @@ contains
         end if
       case ( f_pfaData )
         do i = 2, nsons(son)
-          call output ( ' PFA Data' )
           call dump ( pfaData(decoration(decoration(subtree(i,son)))), details )
         end do
       case ( f_quantity ) ! Dump vector quantities
@@ -275,6 +274,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.12  2004/10/06 20:19:39  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.11  2004/09/24 22:24:20  vsnyder
 ! Make PFA dump aware of 'details' switch
 !
