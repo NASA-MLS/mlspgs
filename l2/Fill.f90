@@ -4654,7 +4654,9 @@ contains ! =====     Public Procedures     =============================
       else
         if ( noValues /= &
           & quantity%template%instanceLen * quantity%template%noInstances ) &
-          & call Announce_Error ( valuesNode, invalidExplicitFill )
+          & call Announce_Error ( valuesNode, invalidExplicitFill, &
+            & extraInfo = (/ &
+              & quantity%template%instanceLen * quantity%template%noInstances /) )
       end if
 
       ! Get the values the user asked for, checking their units
@@ -5821,7 +5823,10 @@ contains ! =====     Public Procedures     =============================
       case ( errorReadingL1B )
         call output ( " L1B file could not be read.", advance='yes' )
       case ( invalidExplicitFill )
-        call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
+        call output ( " value has inappropriate dimensionality for explicit fill.", advance='yes' )
+        call output ( " Should have " )
+        call output ( extraInfo )
+        call output ( " elements.", advance='yes' )
       case ( m1_too_small )
         call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
       case ( m2_too_small )
@@ -5919,6 +5924,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.235  2003/08/13 19:23:45  vsnyder
+! Make an error message more informative
+!
 ! Revision 2.234  2003/08/08 23:07:02  livesey
 ! Added the rotate field fill.
 !
