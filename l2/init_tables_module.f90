@@ -906,6 +906,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
+             begin, f+f_DACSfilterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_l1brad, &
@@ -1068,6 +1069,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.325  2003/07/16 01:06:36  vsnyder
+! Add DACS filter shapes
+!
 ! Revision 2.324  2003/07/15 22:11:37  livesey
 ! Added stuff for hybrid model
 !
