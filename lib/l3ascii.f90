@@ -401,6 +401,8 @@ contains
 
     !----Executable code ---- !
 
+    nullify ( tmpalt, tmpdate )
+
     ! --- Set default values for all optional parameters
     if ( present(lat) ) then
       inlat = lat
@@ -964,6 +966,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.17  2002/07/11 11:30:59  mjf
+! Nullified two pointers before using allocate_test
+!
 ! Revision 2.16  2002/07/02 19:55:49  livesey
 ! Fixed trivial problem caught by NAG
 !
