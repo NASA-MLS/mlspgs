@@ -48,7 +48,7 @@ MODULE Temporary_types
 
 ! Geolocation information, dimensioned (noProfs)
 
-      DOUBLE PRECISION, DIMENSION(:), POINTER :: latitude, longitude, time, &
+      REAL(r8), DIMENSION(:), POINTER :: latitude, longitude, time, &
                          solarTime, solarZenith, losAngle, geodAngle
 
       INTEGER, DIMENSION(:), POINTER :: profMIF
@@ -127,7 +127,7 @@ MODULE Temporary_types
 
 ! Value holder for "real" type
 
-      DOUBLE PRECISION :: RealValue
+      REAL(r8) :: RealValue
 
 ! Value holder for integer type
 
@@ -143,8 +143,8 @@ MODULE Temporary_types
 
 ! Value holder for upper and lower bounds fields
 
-      DOUBLE PRECISION :: RangeLowerBound
-      DOUBLE PRECISION :: RangeUpperBound
+      REAL(r8) :: RangeLowerBound
+      REAL(r8) :: RangeUpperBound
 
    END TYPE L2cfCell
 
@@ -153,6 +153,9 @@ END MODULE Temporary_types
 !=========================
 
 !# $Log$
+!# Revision 1.1  1999/12/17 18:21:08  livesey
+!# Moved from l2
+!#
 !# Revision 1.2  1999/12/14 22:56:18  livesey
 !# Regular commit
 !#
