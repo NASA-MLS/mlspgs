@@ -16,8 +16,9 @@ begin Fill
   ;; Now invoke it for our significant channels.
   !fillOneCloudRadBin(5,1)
   !fillOneCloudRadBin(10,1)
-  !fillOneCloudRadBin(33,3)
   !fillOneCloudRadBin(15,25)
+  !fillOneCloudRadBin(32,1)
+  !fillOneCloudRadBin(33,3)
 
   ;; Now define a macro to do the same for the cloudSummary data
   ;;   band=$1, channel=$2
@@ -36,8 +37,9 @@ begin Fill
   ;; Now invoke it for our significant channels.
   !fillOneCloudSummary(5,1)
   !fillOneCloudSummary(10,1)
-  !fillOneCloudSummary(33,3)
   !fillOneCloudSummary(15,25)
+  !fillOneCloudSummary(32,1)
+  !fillOneCloudSummary(33,3)
 
 end Fill
 
