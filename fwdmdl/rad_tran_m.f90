@@ -34,8 +34,8 @@ contains
 
   ! inputs
 
-    INTEGER(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    integer(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
     real(r8), intent(in) :: frq ! calculation frequency in MHz.
     real(rp), intent(in) :: s_temp ! farside boundary temperature
   !                                usually cosmic space (2.7K).
@@ -348,6 +348,7 @@ contains
                          &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx, &
                          &  ptg_i, frq_i )
 
+    use DO_DELTA_M, ONLY: PATH_OPACITY
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
 
@@ -602,7 +603,7 @@ contains
 
 ! compute the t_script derivative
 
-    call dt_script_dt(t_path_c,eta_zxp_c,freq,dt_scr_dt)
+    call dt_script_dt ( t_path_c, eta_zxp_c, freq, dt_scr_dt )
 
 ! compute the opacity derivative singularity value
 
@@ -830,6 +831,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.11  2003/02/07 02:12:00  vsnyder
+! Move some USE statements down
+!
 ! Revision 2.10  2003/02/03 19:00:52  bill
 ! changed interface to rad tran to speed up program
 !
