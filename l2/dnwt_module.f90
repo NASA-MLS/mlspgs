@@ -800,7 +800,7 @@ contains
 
 ! Re-enter after computing new X
 
-  850 if ( aj%big ) then
+  850 if ( .not. aj%big ) then
          if ((spl <= spmini).or.(sq == c0))  go to 870
          dxnois = max(dxnois, c10*dxn)
       end if
@@ -977,6 +977,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.9  2001/05/18 01:02:43  vsnyder
+! Checking for 'big' move incorrectly
+!
 ! Revision 2.8  2001/05/17 20:15:28  vsnyder
 ! Make sure aj%dxdxl has an initial value
 !
