@@ -558,7 +558,9 @@ contains ! =====     Public Procedures     =============================
     integer :: LASTPROFINRUN            ! Index of last profile in processing time
 
     real(r8) :: MINANGLE                ! Smallest angle in chunk
+    real(r8) :: MINANGLELASTMAF         ! Gives 'range' of last maf
     real(r8) :: MAXANGLE                ! Largest angle in chunk
+    real(r8) :: MAXANGLEFIRSTMAF        ! Gives 'range' of first maf
     real(r8) :: FIRST                   ! First point in of hGrid
     real(r8) :: LAST                    ! Last point in hGrid
     real(r8), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
@@ -586,7 +588,9 @@ contains ! =====     Public Procedures     =============================
       & lastMAF=chunk%lastMAFIndex+1 )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
+    maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
     maxAngle = maxval ( l1bField%dpField(1,:,noMAFs) )
+    minAngleLastMAF = minval ( l1bField%dpField(1,:,noMAFs) )
     nullify ( mif1GeodAngle )
     call Allocate_test ( mif1GeodAngle, noMAFs, 'mif1Geodangle', ModuleName )
     mif1GeodAngle = l1bField%dpField(1,1,1:noMAFs)
@@ -620,9 +624,30 @@ contains ! =====     Public Procedures     =============================
       last = last + spacing
     end if
 
-    ! Now outset by one in the case where we're inside the MAFs
-    if ( first > minAngle ) first = first - spacing
-    if ( last < maxAngle ) last = last + spacing
+    ! Now in the case where we have overlaps, let's try and have the
+    ! first and last profile inside the MAF range
+    if ( chunk%noMAFsLowerOverlap > 0 ) then
+      setFirstLoop: do
+        if ( first >= last ) exit setFirstLoop
+        if ( first > maxAngleFirstMAF ) exit setFirstLoop
+        first = first + spacing
+      end do setFirstLoop
+      ! I'm commenting this bit out for the moment, as I think I don't
+      ! want it.
+      ! else 
+      !   if ( first > minAngle ) first = first - spacing
+    end if
+    if ( chunk%noMAFsUpperOverlap > 0 ) then
+      setLastLoop: do
+        if ( last <= first ) exit setLastLoop
+        if ( last < minAngleLastMAF ) exit setLastLoop
+        last = last - spacing
+      end do setLastLoop
+      ! I'm commenting this bit out for the moment, as I think I don't
+      ! want it.
+      ! else
+      !   if ( last < maxAngle ) last = last + spacing
+    end if
 
     ! Now work out how many profiles that is and lay them down
     hGrid%noProfs = nint( (last-first) / spacing ) + 1
@@ -711,26 +736,16 @@ contains ! =====     Public Procedures     =============================
     ! Now work out how much of this HGrid is overlap
     ! The deal will be the first legitimate profile is the first one who's phi
     ! is above the first non overlapped MAF.
-    ! The exceptions are for the first and last chunks, where the later test
-    ! for the processing time range is the limiting factor
-    if ( chunkNo > 1 ) then
-      call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
-        & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
-      ! So the hunt returns the index of the last overlapped, which is
-      ! the number we want to be in the overlap.
-    else
-      hGrid%noProfsLowerOverlap = 0
-    end if
+    call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
+      & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    ! So the hunt returns the index of the last overlapped, which is
+    ! the number we want to be in the overlap.
 
-    if ( chunkNo < size(chunks) ) then
-      call Hunt ( hGrid%phi, nextAngle, &
-        & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
-      ! Here the hunt returns the index of the last non overlapped profile
-      ! So we do a subtraction to get the number in the overlap.
-      hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
-    else
-      hGrid%noProfsUpperOverlap = 0
-    end if
+    call Hunt ( hGrid%phi, nextAngle, &
+      & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    ! Here the hunt returns the index of the last non overlapped profile
+    ! So we do a subtraction to get the number in the overlap.
+    hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
 
     if ( index ( switches, 'hgrid' ) /= 0 ) then
       call output ( 'Initial Hgrid size: ' )
@@ -1095,6 +1110,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.36  2002/08/09 16:56:37  livesey
+! Modified the edge handling to avoid having 'orphaned' profiles beyond
+! the edges of the scan range.
+!
 ! Revision 2.35  2002/08/04 16:03:33  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
