@@ -131,7 +131,7 @@ program MLSL2
   !---------------- Task (2) ------------------
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
-  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=4051 )
+  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=7841 )
   call allocate_decl ( ndecls=1000 )
   call allocate_tree ( n_tree=60000 )
   call init_tables
@@ -570,6 +570,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.72  2002/05/14 00:26:49  livesey
+! Larger table sizes (may be unnecessary)
+!
 ! Revision 2.71  2002/04/24 20:21:13  livesey
 ! Upped some string sizes.
 !
