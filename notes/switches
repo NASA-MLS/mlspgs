@@ -10,6 +10,7 @@ Switches (set by -S option in mlsl2's command line):
   V => VGrids (in globalSettings)
 
   cab => Column Abundance-containing l2gp swaths dumped
+  chi => chi-related diagnostic quantities dumped
   cho => How good was the Cholesky decomposition?
   chu => Enslaved chunk processing
   col => Column scale vector for Newton iteration
@@ -38,7 +39,7 @@ Switches (set by -S option in mlsl2's command line):
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
-and lower-case letters for strings.
+and lower-case letters for strings. Switches are case-sensitive.
 
 The -S option sets the "switches" array in toggles_core.f90.
 It's tested by "if ( index(switches,'foo') /= 0 ) then ..." so
@@ -49,6 +50,11 @@ but beware: literally setting -Sscalars may also turn on an unwanted switch,
 "lars", causing mlsl2 to begin outputting all text in "Swedish Chef" mode
 BORK! BORK! BORK!
 
+Let us clarify the requirement for adding new switches above:
+if an existing switch is 'abc' don't add a new switch that contains
+'abc' as a substring. Why? Because turning on your switch will
+automatically turn on the existing 'abc' switch, too.
+
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
 
@@ -58,6 +64,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.8  2001/08/06 23:14:03  pwagner
+ cab, chu, diag, l2gp, l2aux added
+
  Revision 1.7  2001/05/24 18:12:43  vsnyder
  Add ndb switch
 
