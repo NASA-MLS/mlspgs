@@ -1168,7 +1168,8 @@ contains
     if ( present(name) ) then
       call output ( name )
       if ( clean ) then 
-        call output ( " \ " )
+        call output ( trim(" \ ") ) ! This goofiness is to outwit an incorrect
+                                    ! Intel compiler.
         call output ( size )
       end if
       if ( size == 1 ) call output ( ' ' )
@@ -1347,6 +1348,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.30  2003/09/19 02:00:14  vsnyder
+! More about the goofy Intel compiler
+!
 ! Revision 2.29  2003/09/15 17:43:41  livesey
 ! Cosmetic change for fussy (and wrong) intel compiler
 !
