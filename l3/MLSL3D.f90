@@ -6,7 +6,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 !==========================================
 
   USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
-  !USE H5LIB, ONLY: h5open_f, h5close_f
+  USE H5LIB, ONLY: h5open_f, h5close_f
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE L2Interface, ONLY: ReadL2GPProd, ReadL2GPAttribute
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T  
@@ -164,6 +164,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.16  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
 ! Revision 1.15  2004/01/07 21:57:36  cvuu
 ! version 1.4 commit
 !
