@@ -43,8 +43,8 @@ MODULE Synoptic
 CONTAINS
 
 !-------------------------------------------------------------------------
-   SUBROUTINE DailyCoreProcessing(cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, l3dm, dmA, dmD, &
-				  l3r, residA, residD, flags)
+   SUBROUTINE DailyCoreProcessing(cfDef, cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, l3dm, dmA, dmD, &
+				  l3r, residA, residD, mis_l2Days, mis_Days, flags)
 !-------------------------------------------------------------------------
 
 ! Brief description of program
@@ -54,6 +54,7 @@ CONTAINS
 
 	! Variable definitions
 
+        TYPE( L3CFDef_T ) :: cfDef
         TYPE( PCFData_T ) :: pcf
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
@@ -71,9 +72,13 @@ CONTAINS
 
         REAL(r8), POINTER :: avgPeriod(:)
 
+        INTEGER, DIMENSION(l2gp(1)%nLevels) :: perMisPoints
 	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
 	Real (r8), DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: delTad 
-        REAL(r8), DIMENSION(:), POINTER :: l3Result       ! returned reconstructed result 
+        REAL(r8), DIMENSION(:), POINTER :: l3Result(:)       ! returned reconstructed result 
+
+        REAL(r8), DIMENSION(:), POINTER :: sortTemp(:)       ! hold sort array temporary
+        INTEGER, POINTER, DIMENSION(:) :: pt(:)
 
         INTEGER, POINTER, DIMENSION(:) :: nc(:), nca(:), ncd(:)
         Real (r8), POINTER, DIMENSION(:) :: startTime(:), endTime(:)
@@ -82,13 +87,17 @@ CONTAINS
 
 	INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
 
-        integer i, j, iP, kP, iD, iL
-	real tau0, l3ret
+        integer mis_l2Days, mis_l2Days_temp
+
+        CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow), mis_Days_temp(maxWindow)
+
+        integer i, j, iP, kP, iD, iL, iT
+	real tau0, l3ret, avg
 	real(r8) lonD0_in, lonA0_in
 
 !*** Initilize variables
  
-        nwv = 10
+        nwv = cfProd%rangWavenumber(2) - cfProd%rangWavenumber(1) + 1
         nf = 60 
 
 	nlev = 0
@@ -112,7 +121,7 @@ CONTAINS
 
 !*** Initilize POINTERS
 
-        IF (cfProd%mode == 'all') THEN
+        IF (cfProd%mode == 'all' .or. cfProd%mode == 'ado') THEN
            numSwaths = 3
         ELSE
            numSwaths = 1
@@ -125,7 +134,7 @@ CONTAINS
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
         ENDIF
 
-        IF (cfProd%mode == 'all') THEN
+        IF (cfProd%mode == 'all' .or. cfProd%mode == 'ado') THEN
            l3sp(1)%name = cfProd%l3prodNameD
            l3sp(2)%name = TRIM(cfProd%l3prodNameD) // 'Ascending'
            l3sp(3)%name = TRIM(cfProd%l3prodNameD) // 'Descending'
@@ -149,6 +158,15 @@ CONTAINS
            l3sp(j)%l3spImgValue = 0.0 
            l3sp(j)%l3spImgPrecision = 0.0 
 
+           l3spPrec(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
+           l3spPrec(j)%latitude = cfProd%latGridMap(:l3sp(j)%nLats)
+           l3spPrec(j)%waveNumber = 0.0
+           l3spPrec(j)%frequency = 0.0
+           l3spPrec(j)%l3spRelValue = 0.0
+           l3spPrec(j)%l3spRelPrecision = 0.0
+           l3spPrec(j)%l3spImgValue = 0.0
+           l3spPrec(j)%l3spImgPrecision = 0.0
+
         ENDDO
 
         numDays = cfProd%nDays
@@ -158,7 +176,7 @@ CONTAINS
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
         ENDIF
 
-!!      Initialize Daily Map 
+!!      Initialize Daily Map & Diagnostic
 
         l3dm%name = cfProd%l3prodNameD
         dmA%name = TRIM(cfProd%l3prodNameD) // 'Ascending'
@@ -166,9 +184,9 @@ CONTAINS
 
         DO j = 1, numDays
 
-           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, l3dm(j) )
-           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, dmA(j) )
-           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, dmD(j) )
+           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, l3dm(j) )
+           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmA(j) )
+           CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmD(j) )
 
            l3dm(j)%time = cfProd%timeD(j)
            dmA(j)%time = cfProd%timeD(j)
@@ -198,9 +216,12 @@ CONTAINS
 
 !!      Initialize Daily Map Residues
 
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, l3r)
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, residA)
-        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, residD)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
+                          mis_l2Days_temp, mis_Days_temp, l3r)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
+                          mis_l2Days_temp, mis_Days_temp, residA)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, pcf%l3EndDay, rDays, &
+                          mis_l2Days_temp, mis_Days_temp, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
         residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
@@ -208,8 +229,14 @@ CONTAINS
 
         DO j = 1, rDays
            l3r(j)%l2gpValue    = 0.0
+           l3r(j)%latitude     = 0.0
+           l3r(j)%longitude    = 0.0
            residA(j)%l2gpValue = 0.0
+           residA(j)%latitude  = 0.0
+           residA(j)%longitude = 0.0
            residD(j)%l2gpValue = 0.0
+           residD(j)%latitude  = 0.0
+           residD(j)%longitude = 0.0
         ENDDO
  
 !!      Initialize Flags
@@ -258,7 +285,7 @@ CONTAINS
 			atimes, dtimes, 			&
 			afields, dfields, 			&
 			aprec, dprec,                           &
-			delTad )
+			delTad, perMisPoints )
 
 !*** Main Loop 
 
@@ -323,6 +350,18 @@ CONTAINS
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, l3dm(iD)%nLons
+                        avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(l3dm(iD)%nLons)
+                      l3dm(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, l3dm(iD)%nLons
+                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +       &
+                                                   (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/real(l3dm(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -365,6 +404,18 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons)
+                      dmA(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
+                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -395,6 +446,18 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons)
+                      dmD(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
+                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -417,7 +480,7 @@ CONTAINS
 		   flags%writel3sp = .TRUE.
                 ELSE IF (cfProd%mode == 'ado') THEN
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
-                   CALL CordTransform(cfProd%mode)
+                   CALL CordTransform('asc')
                    CALL FFSMA(l3sp(2), iP, J)
                    DO iD = 1, cfProd%nDays
                       CALL Reconstruct('asc', real(dmA(iD)%time-l2gp(1)%time(1))/86400.0,       &
@@ -425,6 +488,18 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
                         dmA(iD)%l3dmValue(iP, J, I) = l3Result(I)
                       ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons)
+                      dmA(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
+                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                    ENDDO 
 
                    DO iD = 1, rDays
@@ -447,7 +522,7 @@ CONTAINS
                    flags%writel3rAsc  = .TRUE.
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
-                   CALL CordTransform(cfProd%mode)
+                   CALL CordTransform('des')
                    CALL FFSMD(l3sp(3), iP, J)
                    DO iD = 1, cfProd%nDays
                       CALL Reconstruct('des', real(dmD(iD)%time-l2gp(1)%time(1))/86400.0,       &
@@ -455,6 +530,18 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
                         dmD(iD)%l3dmValue(iP, J, I) = l3Result(I)
                       ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons)
+                      dmD(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
+                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
                    ENDDO 
 
                    DO iD = 1, rDays
@@ -486,6 +573,18 @@ CONTAINS
                       DO I = 1, l3dm(iD)%nLons
 			l3dm(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, l3dm(iD)%nLons
+                        avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(l3dm(iD)%nLons)
+                      l3dm(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, l3dm(iD)%nLons
+                        l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J) +       &
+                                                   (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      l3dm(iD)%latRss(iP, J) = l3dm(iD)%latRss(iP, J)/real(l3dm(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -528,6 +627,18 @@ CONTAINS
                       DO I = 1, dmA(iD)%nLons
 			dmA(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons)
+                      dmA(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J) +         &
+                                                   (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmA(iD)%latRss(iP, J) = dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -558,6 +669,18 @@ CONTAINS
                       DO I = 1, dmD(iD)%nLons
 			dmD(iD)%l3dmValue(iP, J, I) = l3Result(I) 
 		      ENDDO
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+                      avg = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons)
+                      dmD(iD)%latRss(iP, J) = 0.0
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J) +         &
+                                                   (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      dmD(iD)%latRss(iP, J) = dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
 		   ENDDO
 
                    DO iD = 1, rDays
@@ -587,6 +710,471 @@ CONTAINS
 	  ENDDO
 
 	ENDDO
+
+          !*** Sort into time ascending order according to l2gp format
+          IF (cfProd%mode == 'com') THEN
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nc(iD)), STAT=error )
+                      DO i = 1, nc(iD)
+                        pt(i) = 0
+                        sortTemp(i) = 0.0
+                      ENDDO
+                      CALL DSORTP(l3r(iD)%time, 1, nc(iD), pt)
+                      !** do time
+                      CALL DSORT(l3r(iD)%time, 1, nc(iD))
+                      !** do latitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      CALL DSORTP(-abs(l3r(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
+                      DO i = 1, cfDef%N
+                        l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, l3dm(iD)%nLons
+                        avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(l3dm(iD)%nLons*cfProd%nLats)
+                      l3dm(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, l3dm(iD)%nLons
+                        l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP) +         &
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/real(l3dm(iD)%nLons*cfProd%nLats)
+                      l3dm(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+          ELSE IF (cfProd%mode == 'asc') THEN
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nc(iD)), STAT=error )
+                      CALL DSORTP(residA(iD)%time, 1, nc(iD), pt)
+                      !** do time
+                      CALL DSORT(residA(iD)%time, 1, nc(iD))
+                      !** do latitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residA(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residA(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+          ELSE IF (cfProd%mode == 'des') THEN
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nc(iD)), STAT=error )
+                      CALL DSORTP(residD(iD)%time, 1, nc(iD), pt)
+                      !** do time
+                      CALL DSORT(residD(iD)%time, 1, nc(iD))
+                      !** do latitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residD(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residD(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+          ELSE IF (cfProd%mode == 'ado') THEN
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nca(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nca(iD)), STAT=error )
+                      CALL DSORTP(residA(iD)%time, 1, nca(iD), pt)
+                      !** do time
+                      CALL DSORT(residA(iD)%time, 1, nca(iD))
+                      !** do latitude
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nca(iD)), STAT=error )
+                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+
+                DO iD = 1, rDays
+                      ALLOCATE( pt(ncd(iD)), STAT=error )
+                      ALLOCATE( sortTemp(ncd(iD)), STAT=error )
+                      CALL DSORTP(residD(iD)%time, 1, ncd(iD), pt)
+                      !** do time
+                      CALL DSORT(residD(iD)%time, 1, ncd(iD))
+                      !** do latitude
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(ncd(iD)), STAT=error )
+                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+          ELSE IF (cfProd%mode == 'all') THEN
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nca(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nca(iD)), STAT=error )
+                      CALL DSORTP(residA(iD)%time, 1, nca(iD), pt)
+                      !** do time
+                      CALL DSORT(residA(iD)%time, 1, nca(iD))
+                      !** do latitude
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nca(iD)
+                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nca(iD)
+                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nca(iD)), STAT=error )
+                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        avg = avg + dmA(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmA(iD)%nLons
+                        dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP) +   &
+                                           (dmA(iD)%l3dmValue(iP, J, I)-avg)*(dmA(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmA(iD)%gRss(iP) = dmA(iD)%gRss(iP)/real(dmA(iD)%nLons*cfProd%nLats)
+                      dmA(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+
+                DO iD = 1, rDays
+                      ALLOCATE( pt(ncd(iD)), STAT=error )
+                      ALLOCATE( sortTemp(ncd(iD)), STAT=error )
+                      CALL DSORTP(residD(iD)%time, 1, ncd(iD), pt)
+                      !** do time
+                      CALL DSORT(residD(iD)%time, 1, ncd(iD))
+                      !** do latitude
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, ncd(iD)
+                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, ncd(iD)
+                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(ncd(iD)), STAT=error )
+                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      DO i = 1,cfDef%N
+                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        avg = avg + dmD(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, dmD(iD)%nLons
+                        dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP) +   &
+                                           (dmD(iD)%l3dmValue(iP, J, I)-avg)*(dmD(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      dmD(iD)%gRss(iP) = dmD(iD)%gRss(iP)/real(dmD(iD)%nLons*cfProd%nLats)
+                      dmD(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+
+                DO iD = 1, rDays
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      ALLOCATE( sortTemp(nc(iD)), STAT=error )
+                      CALL DSORTP(l3r(iD)%time, 1, nc(iD), pt)
+                      !** do time
+                      CALL DSORT(l3r(iD)%time, 1, nc(iD))
+                      !** do latitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%latitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%latitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do longitude
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%longitude(i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%longitude(i) = sortTemp(pt(i))
+                      ENDDO
+                      !** do value
+                      DO i = 1, nc(iD)
+                        sortTemp(i) = l3r(iD)%l2gpValue(1, iP, i)
+                      ENDDO
+                      DO i = 1, nc(iD)
+                        l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                      ENDDO
+                      DeAllocate(sortTemp)
+                      DeAllocate(pt)
+
+                      !*** Calculate Maxmum Difference
+                      ALLOCATE( pt(nc(iD)), STAT=error )
+                      CALL DSORTP(-abs(l3r(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      DO i = 1,cfDef%N
+                        l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
+                      ENDDO
+                      DeAllocate(pt)
+
+                      !***Root-Sum-Square for each latitude, dimensioned (nLevels)
+                      avg = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, l3dm(iD)%nLons
+                        avg = avg + l3dm(iD)%l3dmValue(iP, J, I)
+                      ENDDO
+                      ENDDO
+                      avg = avg/real(l3dm(iD)%nLons*cfProd%nLats)
+                      l3dm(iD)%gRss(iP) = 0.0
+                      DO J = 1, cfProd%nLats
+                      DO I = 1, l3dm(iD)%nLons
+                        l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP) +         &
+                                           (l3dm(iD)%l3dmValue(iP, J, I)-avg)*(l3dm(iD)%l3dmValue(iP, J, I)-avg)
+                      ENDDO
+                      ENDDO
+                      l3dm(iD)%gRss(iP) = l3dm(iD)%gRss(iP)/real(l3dm(iD)%nLons*cfProd%nLats)
+                      l3dm(iD)%perMisPoints(iP) = perMisPoints(iP)
+                ENDDO
+          END IF
+
+        ENDDO
 
    !*** Calculate Field Precisions ********
 
@@ -639,8 +1227,7 @@ CONTAINS
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSM(l3spPrec(1), iP, J)
-                   !DO iD = 1, cfProd%nDays
-                   DO iD = 1, 1 
+                   DO iD = 1, cfProd%nDays
         	      CALL Reconstruct(cfProd%mode, real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, 	&
 				    l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
                       DO I = 1, l3dm(iD)%nLons
@@ -767,7 +1354,7 @@ CONTAINS
    SUBROUTINE SortData(cfProd, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
 		alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
 		atimes_interp, dtimes_interp, afields_interp, dfields_interp,	&
-		aprec_interp, dprec_interp, delTad)
+		aprec_interp, dprec_interp, delTad, perMisPoints)
 !-------------------------------------------------------------------------
 
         integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr, lindex, lindex_prev
@@ -798,6 +1385,8 @@ CONTAINS
 
 	INTEGER, DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: anlats, dnlats
 	Real (r8), DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: delTad 
+
+        INTEGER, DIMENSION(pEndIndex-pStartIndex+1) :: perMisPoints, numData
 
 !*** Calculate the number of points in each pressure level 
 
@@ -840,6 +1429,11 @@ CONTAINS
 
 !*** Re-arrange the data into longitude order for each pressure level 
 
+        DO kP = pStartIndex, pEndIndex
+          perMisPoints(kP+1-pStartIndex) = 0
+          numData(kP+1-pStartIndex) = 0
+        ENDDO
+
         nstart = 1
 	DO iD = 1, l2Days
 	  DO iT = 1, l2gp(iD)%nTimes
@@ -852,10 +1446,16 @@ CONTAINS
                 l2Lats(nstart, iP) = l2gp(iD)%latitude(iT)
                 l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, kP, iT) 
 		l2Prec(nstart, iP) = l2gp(iD)%l2gpPrecision(1, kP, iT)
+                IF(l2Values(nstart, iP) < 0.0) perMisPoints(iP) = perMisPoints(iP) + 1
+                numData(iP) = numData(iP) + 1
 	    ENDDO
             nstart = nstart + 1
 	  ENDDO
 	ENDDO
+
+        DO kP = pStartIndex, pEndIndex
+          perMisPoints(kP+1-pStartIndex) = 100*perMisPoints(kP+1-pStartIndex)/numData(kP+1-pStartIndex)
+        ENDDO
 
 !*** Re-arrange the longitude into sequence 
 
@@ -1044,6 +1644,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.18  2001/09/27 20:38:31  ybj
+! Add Precision Calculation & ado mode
+!
 ! Revision 1.17  2001/09/27 20:07:14  ybj
 ! Add Precision Calculation
 !
