@@ -83,6 +83,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: any_errors  ! non-zero means trouble
 
     logical, parameter :: DEBUG = .false.
+    integer :: FileIndex                ! In the string table
     character(len=255) :: FileName      ! Duh
     integer :: I, J                     ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
@@ -120,16 +121,16 @@ contains ! =====     Public Procedures     =============================
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_filtshps_start, &
             & 'Filter Shapes File not found in PCF' )
-          call open_filter_shapes_file ( fileName, lun )
-          call read_filter_shapes_file ( lun )
+          call open_filter_shapes_file ( fileName, lun, fileIndex )
+          call read_filter_shapes_file ( lun, fileIndex )
           call close_filter_shapes_file ( lun )
         end do
       case ( f_DACSfilterShapes )
         do j = 2, nsons(son)
           call get_file_name ( mlspcf_dacsfltsh_start, &
             & 'DACS Filter Shapes File not found in PCF' )
-          call open_filter_shapes_file ( fileName, lun )
-          call read_DACS_filter_shapes_file ( lun )
+          call open_filter_shapes_file ( fileName, lun, fileIndex )
+          call read_DACS_filter_shapes_file ( lun, fileIndex )
           call close_filter_shapes_file ( lun )
         end do
       case ( f_pointingGrids )
@@ -854,39 +855,39 @@ op:   do j = 2, nsons(pfaTree)
     timingSize = size(FWModelconfig)
 
     if (which == 'fwdTiming') then
-        do i =1, size(FWModelConfig)
-           timings(i) = FWModelConfig(i)%sum_DeltaTime
-        enddo
-    endif
+      do i =1, size(FWModelConfig)
+        timings(i) = FWModelConfig(i)%sum_DeltaTime
+      end do
+    end if
 
     if (which == 'mean') then
-       	do i =1, size(FWModelConfig)
-          if (FWModelConfig(i)%sum_DeltaTime == 0.0 ) then
-	    timings(i) = 0.0
-          else
-       	    timings(i) = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
-          endif
-        enddo
-     endif
+      do i =1, size(FWModelConfig)
+        if (FWModelConfig(i)%sum_DeltaTime == 0.0 ) then
+          timings(i) = 0.0
+        else
+          timings(i) = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
+        end if
+      end do
+     end if
 
     if (which == 'stdDev') then
-       	do i =1, size(FWModelConfig)
-       	    tmp_mean = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
-            mean_sqDelta =  FWModelConfig(i)%sum_squareDeltaTime / &
-                & FWModelConfig(i)%Ntimes
-            if (FWModelConfig(i)%Ntimes <= 1) then
-                meanTimes = 1.0
-            else
-                meanTimes = FWModelConfig(i)%Ntimes / (FWModelConfig(i)%Ntimes - 1)
-            end if
-            if (FWModelConfig(i)%sum_DeltaTime == 0.0 .AND. &
-                  & FWModelConfig(i)%sum_squareDeltaTime == 0.0 ) then
-		timings(i) = 0.0
-            else
-            	timings(i) = sqrt(abs(meanTimes * (mean_sqDelta - (tmp_mean * tmp_mean))))
-	    endif
-        enddo
-     endif
+      do i =1, size(FWModelConfig)
+        tmp_mean = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
+        mean_sqDelta =  FWModelConfig(i)%sum_squareDeltaTime / &
+          & FWModelConfig(i)%Ntimes
+        if (FWModelConfig(i)%Ntimes <= 1) then
+          meanTimes = 1.0
+        else
+          meanTimes = FWModelConfig(i)%Ntimes / (FWModelConfig(i)%Ntimes - 1)
+        end if
+        if (FWModelConfig(i)%sum_DeltaTime == 0.0 .AND. &
+            & FWModelConfig(i)%sum_squareDeltaTime == 0.0 ) then
+          timings(i) = 0.0
+        else
+          timings(i) = sqrt(abs(meanTimes * (mean_sqDelta - (tmp_mean * tmp_mean))))
+        end if
+      end do
+    end if
 
   end subroutine FillFwdModelTimings
 
@@ -910,7 +911,7 @@ op:   do j = 2, nsons(pfaTree)
        call get_string ( FWModelConfig(i)%name, thisNames )
        fwdNames = catLists(trim(fwdNames), trim(thisNames), ' ')
        ! print *,' fwdNames: ', trim(fwdNames)
-    enddo
+    end do
 
   end function ShowFwdModelNames
 
@@ -1097,6 +1098,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.105  2004/12/13 20:15:40  vsnyder
+! Add filter file names to string table
+!
 ! Revision 2.104  2004/11/16 02:56:01  vsnyder
 ! Dump imputed to wrong requestor
 !
