@@ -3191,11 +3191,62 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional :: LASTINSTANCE
       ! The last two are set if only part (e.g. overlap regions) of the quantity
       ! is to be stored in the column data.
+      ! Parameters                               or newer idl-like one (default)
+      logical, parameter :: OLDBUGS = .false.  ! Whether to use older buggy
+      logical :: useoldbugs
+      ! Executable
+      useoldbugs = OLDBUGS
+      if ( index(switches, 'colold') /= 0 ) useoldbugs = .true.
+      if ( index(switches, 'colidl') /= 0 ) useoldbugs = .false.
+      if ( useoldbugs ) then
+        if ( index(switches, 'l2gp') /= 0 ) &
+          & call output('Filling column using buggy old method', advance='yes')
+        call  FillColAbundance_bug ( key, qty, bndPressQty, vmrQty, &
+          & firstInstance, lastInstance )
+      else
+        if ( index(switches, 'l2gp') /= 0 ) &
+          & call output('Filling column using Bills idl method', advance='yes')
+        call  FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
+          & firstInstance, lastInstance )
+      endif
+    end subroutine FillColAbundance
+
+
+    ! ------------------------------------------- FillColAbundance_bug ---
+    subroutine FillColAbundance_bug ( key, qty, bndPressQty, vmrQty, &
+      & firstInstance, lastInstance )
+      ! A special fill according to Appendix A of EOS MLS ATBD
+      ! JPL D-16159
+      ! EOS MLS DRL 601 (part 3)
+      ! ATBD-MLS-03
+      ! (Livesey and Wu)
+
+      ! Assumptions:
+      ! (1)This fill operation is triggered by a command
+      !    such as the following in the lcf
+      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
+      !      boundaryPressure=state.tpPressure
+      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
+      !    it is in fact identical to the coefficients of the mls basis functions
+      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
+      !    same logarithmic distance from one another
+      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
+      ! (5)Unless first,last instances are args, fill all instances
+      !    (unlike join which has to worry about chunks and overlaps)
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) :: BNDPRESSQTY
+      type (VectorValue_T), intent(in) :: VMRQTY
+      integer, intent(in), optional :: FIRSTINSTANCE
+      integer, intent(in), optional :: LASTINSTANCE
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in the column data.
 
       ! Local parameters
       real(r8), parameter :: AOVERMG = 4.12e5 / (2.687 * 0.192)
 
       ! Local variables
+      logical :: printMe
       integer :: SURFACE
       integer :: INSTANCE
       integer :: FIRSTSURFACE
@@ -3254,6 +3305,9 @@ contains ! =====     Public Procedures     =============================
       p = 10.0 ** ( - vmrQty%template%surfs(:,1) )
 
       do instance = useFirstInstance, useLastInstance
+        printMe = (instance == useFirstInstance) .and. (index(switches, 'column') /= 0)
+        if ( printMe ) print *, 'switches: ', trim(switches)
+        if ( printMe ) print *, 'index(switches, column) ', index(switches, 'column')
         ! Find 1st surface at or above tropopause
         ! (i.e., at a pressure equal to or less than boundaryPressure)
         if ( instance > size(bndPressQty%values, 2) ) then
@@ -3277,6 +3331,10 @@ contains ! =====     Public Procedures     =============================
         columnSum = 0.0
         Delta_p_plus = p(firstSurface+1) - p(firstSurface)
         Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
+        if ( printMe ) then
+          print *, 'thisBndPress: ', thisBndPress
+          print *, 'firstSurface: ', firstSurface
+        endif
         ! Loop over surfaces from tropoause+1 to uppermost-1
         do surface = firstSurface + 1, vmrQty%template%noSurfs - 1
           Delta_p_minus = - Delta_p_plus
@@ -3287,12 +3345,269 @@ contains ! =====     Public Procedures     =============================
             & vmrQty%values(surface, instance) * &
             & ( Delta_p_minus/Delta_log_minus - &
             &   Delta_p_plus/Delta_log_plus )          
+        if ( printMe ) then
+          print *, 'columnSum: ', columnSum
+        endif
         end do
         qty%values ( 1, instance ) = AoverMg * columnSum
       end do
 
       call Deallocate_test ( p, 'p', ModuleName )
-    end subroutine FillColAbundance
+    end subroutine FillColAbundance_bug
+
+    ! ------------------------------------------- FillColAbundance_idl ---
+    subroutine FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
+      & firstInstance, lastInstance )
+      ! A special fill according to W.R.Read's idl code
+
+      ! Assumptions:
+      ! (1)This fill operation is triggered by a command
+      !    such as the following in the lcf
+      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
+      !      boundaryPressure=state.tpPressure
+      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
+      !    it is in fact identical to the coefficients of the mls basis functions
+      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
+      !    same logarithmic distance from one another
+      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
+      ! (5)Unless first,last instances are args, fill all instances
+      !    (unlike join which has to worry about chunks and overlaps)
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) :: BNDPRESSQTY
+      type (VectorValue_T), intent(in) :: VMRQTY
+      integer, intent(in), optional :: FIRSTINSTANCE
+      integer, intent(in), optional :: LASTINSTANCE
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in the column data.
+
+      ! Local parameters
+      real(r8) :: LN10         ! = LOG(10.d0)
+      real(r8), parameter :: INVERMGPPMV = 0.789 ! in DU / (ppmv hPa)
+      real(r8), parameter :: INVERMG = INVERMGPPMV*1.d6 ! in DU / (vmr hPa)
+
+      ! Local variables
+      logical :: printMe
+      integer :: SURFACE
+      integer :: INSTANCE
+      integer :: FIRSTSURFACEABOVE
+      integer :: FIRSTSURFACEBELOW
+      integer :: USEFIRSTINSTANCE
+      integer :: USELASTINSTANCE
+      integer :: N
+      integer :: NOOUTPUTINSTANCES
+      real (r8) :: THISBNDPRESS
+      real (r8) :: zeta            ! -log(THISBNDPRESS)
+      real (r8) :: zetaTmp
+      real (r8) :: COLUMNSUM
+      real (r8) :: TRAPEZOIDSUM
+      real (r8) :: DELTAZETA      ! Zetai[s+1] - Zetai[s]
+
+      real (r8)                        :: Zetaa
+      real (r8), pointer, dimension(:) :: Zetab
+      real (r8), pointer, dimension(:) :: Zetac
+      real (r8)                        :: Zetad
+      real (r8), pointer, dimension(:) :: Zetai
+      real (r8)                        :: Pa         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
+      real (r8)                        :: Pd         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
+
+      ! Executable code
+      LN10 = LOG(10.d0)  ! Compiler won't let this be a parameter
+      ! First check that things are OK.
+      if ( (qty%template%quantityType /= l_columnAbundance) .or. &
+        &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
+        &  (vmrQty%template%quantityType /= l_vmr) ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Wrong quantity type found while filling column abundance'  )
+        return
+      else if ( qty%template%molecule /= vmrQty%template%molecule) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Attempt to fill column abundance with different molecule'  )
+        return
+      else if ( .not. ( DoHgridsMatch( qty, vmrQty ) .and. &
+        & DoHgridsMatch( qty, bndPressQty ) ) ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Attempt to fill column abundance with different HGrids'  )
+        return
+      else if ( .not. any(vmrQty%template%verticalCoordinate == &
+        & (/l_zeta/)) ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Fill column abundance, but vmr not on zeta surfs.'  )
+        return
+      end if
+
+      ! Work out what to do with the first and last Instance information
+      useFirstInstance = 1
+      useLastInstance = qty%template%noInstances
+      if ( present ( firstInstance ) ) useFirstInstance = firstInstance
+      if ( present ( lastInstance ) ) useLastInstance = lastInstance
+      noOutputInstances = useLastInstance-useFirstInstance+1
+
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
+
+      nullify ( Zetab, Zetac, Zetai, pb, pc, pi )
+      ! call allocate_test ( Zetaa, vmrQty%template%noSurfs, 'Zetaa', ModuleName )
+      call allocate_test ( Zetab, vmrQty%template%noSurfs, 'Zetab', ModuleName )
+      call allocate_test ( Zetac, vmrQty%template%noSurfs, 'Zetac', ModuleName )
+      ! call allocate_test ( Zetad, vmrQty%template%noSurfs, 'Zetad', ModuleName )
+      call allocate_test ( Zetai, vmrQty%template%noSurfs, 'Zetai', ModuleName )
+      ! call allocate_test ( pa, vmrQty%template%noSurfs, 'pa', ModuleName )
+      call allocate_test ( pb, vmrQty%template%noSurfs, 'pb', ModuleName )
+      call allocate_test ( pc, vmrQty%template%noSurfs, 'pc', ModuleName )
+      ! call allocate_test ( pd, vmrQty%template%noSurfs, 'pd', ModuleName )
+      call allocate_test ( pi, vmrQty%template%noSurfs, 'pi', ModuleName )
+      Zetai = vmrQty%template%surfs(:,1)
+      pi = 10.0 ** ( -Zetai  )
+      N = vmrQty%template%noSurfs
+      do instance = useFirstInstance, useLastInstance
+        printMe = (instance == useFirstInstance) .and. (index(switches, 'column') /= 0)
+        if ( printMe ) print *, 'switches: ', trim(switches)
+        if ( printMe ) print *, 'index(switches, column) ', index(switches, 'column')
+        ! Find 1st surface at or above tropopause
+        ! (i.e., at a pressure equal to or less than boundaryPressure)
+        ! This next check should be unnecessary--the HGrids were already matched
+        if ( instance > size(bndPressQty%values, 2) ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Cant fill column--instance outside b.pres. range' )
+          call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
+          return
+        endif
+        thisBndPress = bndPressQty%values(1,instance)
+        ! In case where WMO algorithm failed, use bottom of basis
+        if ( thisBndPress <= 0.0 ) &
+          & thisBndPress = 10.0 ** ( - vmrQty%template%surfs(1,1) )
+        if ( thisBndPress <= 0._r8 ) then
+          call Announce_error ( key, No_Error_code, &
+          & 'Fill column abundance, illegal bound. pr. at this instance' )
+        endif
+        zeta = -log10 ( thisBndPress )
+        Zetaa = max(Zetai(N), zeta)
+        do surface=1, N
+          Zetab(surface) = Zetai(min(surface+1,N))
+        end do
+        do surface=1, N
+          Zetab(surface) = min(max(zeta, Zetai(surface)), Zetab(surface))
+          zetaTmp = zeta
+          if ( surface > 1 ) zetaTmp = max(zeta, Zetai(surface-1))
+          Zetac(surface) = min(zetaTmp, Zetai(surface))
+        end do
+        Zetad = min(Zetai(1), zeta)
+        Pa = 10. ** (-Zetaa)
+        Pb = 10. ** (-Zetab)
+        Pc = 10. ** (-Zetac)
+        Pd = 10. ** (-Zetad)
+        if ( printMe ) then
+          call output ( 'zeta: ', advance='no')
+          call output ( zeta, advance='yes')
+          call output ( 'zetaA: ', advance='no')
+          call output ( zetaA, advance='yes')
+          call output ( 'zetaD: ', advance='no')
+          call output ( zetaD, advance='yes')
+          call output ( 'PA: ', advance='no')
+          call output ( PA, advance='yes')
+          call output ( 'PD: ', advance='no')
+          call output ( PD, advance='yes')
+          call output ( 'zetaI   zetaB     zetaC      Pi   Pb   Pc', advance='yes')
+          do surface=1, N
+            call output( (/ zetai(surface), zetab(surface), zetac(surface), &
+             & Pi(surface), Pb(surface), Pc(surface)/) , advance='yes')
+          enddo
+        endif
+        ! Find 1st surface immediately above tropopause
+        firstSurfaceAbove = FindFirst (Pi < thisBndPress)
+        if ( firstSurfaceAbove < 1 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Filling column, but tropopause below 1st surface' )
+          firstSurfaceBelow = 1
+        elseif ( firstSurfaceAbove == 1 ) then
+          ! Nothing special
+          firstSurfaceBelow = 1
+        elseif ( firstSurfaceAbove > N ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Cant column, tropopause above top surface' )
+          call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
+          return
+        else  ! Nothing special
+          firstSurfaceBelow = firstSurfaceAbove - 1
+        endif
+        if ( printMe ) then
+          print *, 'thisBndPress: ', thisBndPress
+          print *, 'firstSurfaceAbove: ', firstSurfaceAbove
+          print *, 'firstSurfaceBelow: ', firstSurfaceBelow
+        endif
+        ! Do summation
+        columnSum = vmrQty%values(N, instance) * Pa  ! Initialize sum
+        if ( printMe ) then
+          print *, 'columnSum: ', columnSum
+          trapezoidSum = 0.
+          do surface=firstSurfaceAbove, N-1
+            trapezoidsum = trapezoidsum + 0.5 * ( &
+              & vmrQty%values(surface, instance) + vmrQty%values(surface+1, instance) &
+              & ) * ( Pi(surface+1)-Pi(surface))
+          enddo
+        endif
+        ! Loop over surfaces from 1 to uppermost-1
+        do surface = 1, N-1
+          deltaZeta = Zetai(surface+1) - Zetai(surface)
+          if ( deltaZeta == 0._r8 ) cycle
+          columnSum = columnSum + &
+            & vmrQty%values(surface, instance) / deltaZeta * &
+            & ( &
+            & Pb(surface)*(Zetai(surface+1)-Zetab(surface)) &
+            & + &
+            & (Pi(surface+1) - Pb(surface))/ln10 &
+            & )
+        if ( printMe ) print *, 'columnSum: ', columnSum, surface
+        end do
+        ! Loop over surfaces from 2 to uppermost
+        do surface = 2, N
+          deltaZeta = Zetai(surface) - Zetai(surface-1)
+          if ( deltaZeta == 0._r8 ) cycle
+          columnSum = columnSum + &
+            & vmrQty%values(surface, instance) / deltaZeta * &
+            & ( &
+            & Pc(surface)*(Zetac(surface)-Zetai(surface)) &
+            & + &
+            & (Pc(surface) - Pi(surface))*(1./ln10 + deltaZeta) &
+            & )
+          ! columnSum = columnSum + &
+          ! & vmrQty%values(surface, instance) / deltaZeta * &
+          ! & ( &
+          ! & Pc(surface)*(Zetac(surface)-Zetai(surface)) &
+          ! & + &
+          ! & (Pc(surface) - Pi(surface))/ln10 &
+          ! & )
+        if ( printMe ) print *, 'columnSum: ', columnSum, surface
+        end do
+        columnSum = columnSum + vmrQty%values(1, instance) * (Pd - Pi(1))
+        if ( printMe ) print *, 'columnSum: ', columnSum
+        if ( printMe ) print *, 'trapezoid: ', -trapezoidSum
+        qty%values ( 1, instance ) = InverMg * columnSum
+      end do
+      call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
+    end subroutine FillColAbundance_idl
+    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)    
+      real (r8), pointer, dimension(:) :: Zetab
+      real (r8), pointer, dimension(:) :: Zetac
+      real (r8), pointer, dimension(:) :: Zetai
+      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
+      ! call Deallocate_test ( pa, 'pa', ModuleName )
+      call Deallocate_test ( pb, 'pb', ModuleName )
+      call Deallocate_test ( pc, 'pc', ModuleName )
+      ! call Deallocate_test ( pd, 'pd', ModuleName )
+      call Deallocate_test ( pi, 'pi', ModuleName )
+      ! call Deallocate_test ( Zetaa, 'Zetaa', ModuleName )
+      call Deallocate_test ( Zetab, 'Zetab', ModuleName )
+      call Deallocate_test ( Zetac, 'Zetac', ModuleName )
+      ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
+      call Deallocate_test ( Zetai, 'Zetai', ModuleName )
+    end subroutine DeallocateStuff    
 
     ! ------------------------------------- FillFoldedRadiance ---
     subroutine FillFoldedRadiance ( radiance, lsb, usb, &
@@ -6263,6 +6578,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.256  2004/02/19 23:59:00  pwagner
+! Integrates column abundances using WReads method
+!
 ! Revision 2.255  2004/02/17 14:08:27  livesey
 ! Added functionality to the box car and binning fills
 !
