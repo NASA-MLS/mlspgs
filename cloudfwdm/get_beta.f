@@ -72,7 +72,8 @@ C-------------------------------------
             IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.) GOTO 100 ! SAVE CPU
 
             IF(T .LE. QTP(2)) THEN
-               QRAT = (QLG(3,I)-QLG(1,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+c               QRAT = (QLG(3,I)-QLG(1,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+               QRAT = (QLG(2,I)-QLG(1,I))+(QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
             ELSE
                QRAT = (QLG(2,I)-QLG(1,I))*(T-QTP(1))/(QTP(2)-QTP(1))
             ENDIF
