@@ -244,40 +244,46 @@ END TYPE GriddedData_T
   ! This subroutine adds a quantity template to a database, or creates the
   ! database if it doesn't yet exist
 
-  SUBROUTINE AddGridTemplateToDatabase(database,qty)
+!  SUBROUTINE AddGridTemplateToDatabase(database,qty)
+  INTEGER FUNCTION AddGridTemplateToDatabase(database,item)
 
     ! Dummy arguments
     TYPE (GriddedData_T), DIMENSION(:), POINTER :: database
-    TYPE (GriddedData_T), INTENT(IN) :: qty
+    TYPE (GriddedData_T), INTENT(IN) :: item
+!    TYPE (GriddedData_T), INTENT(IN) :: qty
 
     ! Local variables
     TYPE (GriddedData_T), DIMENSION(:), POINTER :: tempDatabase
-    INTEGER :: newSize,status
+!    INTEGER :: newSize,status
 
     ! Executable code
 
-    IF (ASSOCIATED(database)) THEN
+!    IF (ASSOCIATED(database)) THEN
        ! Check we don't already have one of this name
-       IF (LinearSearchStringArray(database%quantityName, qty%quantityName, &
-            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
-            & ModuleName,MLSMSG_Duplicate//qty%quantityName)
-       newSize=SIZE(database)+1
-    ELSE
-       newSize=1
-    ENDIF
-    ALLOCATE(tempDatabase(newSize),STAT=status)
-    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & "Allocation failed for tempDatabase")
+!       IF (LinearSearchStringArray(database%quantityName, qty%quantityName, &
+!            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+!            & ModuleName,MLSMSG_Duplicate//qty%quantityName)
+!       newSize=SIZE(database)+1
+!    ELSE
+!       newSize=1
+!    ENDIF
+!    ALLOCATE(tempDatabase(newSize),STAT=status)
+!    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+!         & "Allocation failed for tempDatabase")
 
-    IF (newSize>1) tempDatabase(1:newSize-1)=database
-    tempDatabase(newSize)=qty
-    IF (ASSOCIATED(database)) THEN
-       DEALLOCATE(database, STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"database")
-    end if
-    database=>tempDatabase
-  END SUBROUTINE AddGridTemplateToDatabase
+!    IF (newSize>1) tempDatabase(1:newSize-1)=database
+!    tempDatabase(newSize)=qty
+!    IF (ASSOCIATED(database)) THEN
+!       DEALLOCATE(database, STAT=status)
+!       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+!         & MLSMSG_DeAllocate//"database")
+!    end if
+!    database=>tempDatabase
+
+    include "addItemToDatabase.f9h"
+    AddGridTemplateToDatabase = newSize
+
+  END FUNCTION AddGridTemplateToDatabase
 
   ! --------------------------------------------------------------------------
 
@@ -339,11 +345,12 @@ END TYPE GriddedData_T
     !    print*,headerline
   end subroutine l3ascii_open
 
-  subroutine l3ascii_read_field(unit,field)
+  subroutine l3ascii_read_field(unit, field, end_of_file)
     use dates_module    ! Shoud use SDP Toolkit eventually. 
     ! ----Arguments ----!
     integer, intent(in) :: unit
     type(GriddedData_T), intent(inout) :: field
+    logical , intent(out) :: end_of_file
     !-------Local Variables --------!
     character(len=*),parameter :: dummyyear="1993"
     logical :: opened
@@ -354,9 +361,9 @@ END TYPE GriddedData_T
     integer :: tmpaxis_len, idate, word_count
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
-    logical :: end_of_file
     !---- Executable statements ----! 
     nullify(tmpaxis)
+	 end_of_file = .TRUE.	! Terminate loops based around this on error
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
     inquire(unit=unit,opened=opened)
@@ -391,7 +398,7 @@ END TYPE GriddedData_T
        deallocate(field%dateStarts)
        deallocate(field%dateEnds)
        deallocate(field%field)
-    else
+!    else
        !       print*,"This is a new struct"
 !       field%reusing=313323435
     endif
@@ -1121,6 +1128,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.2  2001/02/21 00:36:43  pwagner
+! l3ascii_read_field now has eof as intent(out) arg
+!
 ! Revision 2.1  2001/02/20 21:51:39  pwagner
 ! Functions absorbed from gridded_data_module
 !
