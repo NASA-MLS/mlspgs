@@ -1084,7 +1084,7 @@ contains ! ============= Public procedures ===================================
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
       l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
       l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
-      l_reflrefl, phyq_dimensionless, p_reflector, next, &
+      l_reflrefl, phyq_dimensionless, p_signal, p_reflector, next, &
       l_reflspill, phyq_temperature, p_signal, p_majorframe, p_reflector, next, &
       l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
