@@ -23,15 +23,16 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model with derivatives
 
-Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,  &
-      &    z_path, h_path, t_path, phi_path, dHdz_path, atmospheric,  &
+Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
+      &    spect_der,z_path,h_path,t_path,phi_path,dHdz_path,atmospheric,&
       &    beta_path,spsfunc_path,t_z_basis,f_basis,no_coeffs_f,mr_f, &
-      &    no_t, ref_corr, no_phi_f, phi_basis_f, temp_der, no_phi_t, &
+      &    no_t, ref_corr, no_phi_f, phi_basis_f, no_phi_t, &
       &    t_phi_basis, dh_dt_path, spect_atmos, spectroscopic, k_temp,&
       &    k_atmos, k_spect_dw, k_spect_dn, k_spect_dnu,is_f_log,brkpt,&
       &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
 !
-    Logical, intent(in) :: TEMP_DER, IS_F_LOG(*)
+    Logical, intent(in) :: temp_der,atmos_der,spect_der
+    Logical, intent(in) :: IS_F_LOG(*)
 
     Integer(i4), intent(in) :: FRQ_I,N_LVLS,NO_PHI_T,NO_T, BAND, &
    &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI
@@ -77,46 +78,48 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,  &
     Real(r8), Parameter, Dimension(N2lvl) :: ary_zero = 0.0
 !
     Ngp1 = Ng + 1
+
+    if(atmos_der) then
 !
 !  Atmospheric derivatives:
 !
-    Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
-   &     beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
-   &     Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
-   &     phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
-    if (Ier /= 0) Return
+      Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
+   &       beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
+   &       Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
+      if (Ier /= 0) Return
 !
 ! Compute atmosperic derivatives for this channel
 !
-    Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
-   &            no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
-   &            no_phi_f,k_atmos,Ier)
-    if (Ier /= 0) Return
+      Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
+   &              no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
+   &              no_phi_f,k_atmos,Ier)
+      if (Ier /= 0) Return
 !
-    if (frq_i > 0) then      ! ** DEBUG, do Deriv. for all channel(s)
-!   if (frq_i == 1) then     ! ** DEBUG, do Deriv. for 1 channel(s) only
-!   if (frq_i <= -1) then    ! ** DEBUG, Skip derivatives altogether ..
+    endif
 !
 ! Compute temperature derivative for this channel (if requested)
 !
-      if (temp_der) then
+    if (temp_der) then
 !
 ! Create the dt_scrpt_dnp arrays for all coefficients:
 !
-        do i = 1, no_phi_t
-          do j = 1, no_t
-            CALL d_t_script_dtnp(Frq, t_z_basis, t_phi_basis,    &
-           &     brkpt, no_ele, z_path, t_path, phi_path,        &
-           &     Ng, j, i, no_t, no_phi_t, dt_scrpt_dnp(1:,j,i))
-          end do
+      do i = 1, no_phi_t
+        do j = 1, no_t
+          CALL d_t_script_dtnp(Frq, t_z_basis, t_phi_basis,    &
+         &     brkpt, no_ele, z_path, t_path, phi_path,        &
+         &     Ng, j, i, no_t, no_phi_t, dt_scrpt_dnp(1:,j,i))
         end do
+      end do
 !
-        Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
-       &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
-       &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
-       &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
+      Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
+     &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
+     &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
+     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
 !
-      end if
+    end if
+!
+    if (spect_der) then
 !
 !  ** Spectroscopic derivatives here:
 !

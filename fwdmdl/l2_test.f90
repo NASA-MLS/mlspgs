@@ -315,13 +315,14 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
 ! Now, Compute the radiances derivatives:
 !
         CALL Rad_Tran_WD(frq_i,FMI%band,Frq,FMC%N_lvls,FMI%n_sps, &
+       &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,            &
        &     z_path(k,l),h_path(k,l),t_path(k,l),phi_path(k,l),   &
        &     dHdz_path(k,l),T_FMI%atmospheric,beta_path(1:,frq_i),&
        &     spsfunc_path(1:,k,l),T_FMI%t_zeta_basis,  &
        &     T_FMI%f_zeta_basis,T_FMI%no_coeffs_f,   &
        &     T_FMI%mr_f,T_FMI%no_t,ref_corr(1:,k),T_FMI%no_phi_f,       &
-       &     T_FMI%f_phi_basis,FMC%temp_der,T_FMI%no_phi_t,             &
-       &     T_FMI%t_phi_basis,dh_dt_path(k,l),FMI%spect_atmos,         &
+       &     T_FMI%f_phi_basis,T_FMI%no_phi_t,T_FMI%t_phi_basis,  &
+       &     dh_dt_path(k,l),FMI%spect_atmos,         &
        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
        &     k_spect_dn_frq,k_spect_dnu_frq,T_FMI%is_f_log,brkpt,       &
        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
