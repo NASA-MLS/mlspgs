@@ -9,6 +9,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HGrid, only: hGrid_T
+  use Dump_0, only: Dump
   use EXPR_M, only: EXPR
   use INIT_TABLES_MODULE, only: F_BAND, F_GEODANGLE, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
@@ -39,7 +40,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TREE_TYPES, only: N_SET_ONE
   use VGridsDatabase, only: VGrid_T
   use Init_tables_module, ONLY: LIT_INDICES
-  use Units, only: DEG2RAD
+  use Units, only: DEG2RAD, RAD2DEG
 
   implicit none
   private
@@ -623,8 +624,7 @@ contains ! =====     Public Procedures     =============================
       call expr (subtree ( maf+1, geodAngleNode), expr_units, expr_value )
       mifGeolocation(instrumentModule)%phi(:,maf) = expr_value(1)
       mifGeolocation(instrumentModule)%geodLat(:,maf) = &
-        &  asin( sin(deg2rad*mifGeolocation(instrumentModule)%phi(:,maf)) * &
-        &        sin(deg2rad*incline) )/deg2rad
+        & mifGeolocation(instrumentModule)%phi(:,maf) ! Sort this out later
     end do
 
   end subroutine ForgeMinorFrames
@@ -688,6 +688,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.23  2001/04/24 22:21:17  livesey
+! Gave up on latitude for forge
+!
 ! Revision 2.22  2001/04/23 23:25:10  livesey
 ! Fixed bug in forge
 !
