@@ -728,11 +728,21 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 	& "in make_log_axis: axis_len < 1")
 	endif
 	
+!    print*,"axis length=", axis_len
     allocate(axis(1:axis_len))
     axis(1)=-log10(basepressure)
     stind=0
+!    print*,"nsections=", nsections
     do j=1,nsections
        gridstep=1.0_r8/n_levs_per_dec(j)
+!    print*,"j=", j
+!    print*,"n_levs_per_dec(j)=", n_levs_per_dec(j)
+!    print*,"gridstep=", gridstep
+	 if(gridstep <= 0.d0) then
+		call announce_error(0, &
+	& "in make_log_axis: gridstep <= 0")
+		stop
+	endif
        if (j == 1) then
           st=2
        else
@@ -743,9 +753,21 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
        end do
        stind=stind+n_levs_in_sec(j)
     end do
-    axis=10.0_r8**(-axis)
+
+!    call dump ( axis, &
+!          & '  log(log axis) =' )
+
+! not sure why this doesn't always work, but it doesn't for paw
+!    axis=10.0_r8**(-axis)
+! (possibly a compiler bug for NAG on Linux)
+! so instead we'll use the equivalent:
+    axis=exp(-log(10.)*axis)
+!
+
     deallocate(n_levs_in_sec, n_levs_per_dec,axints)
 
+!        call dump ( axis, &
+!          & '  log axis =' )
   end subroutine make_log_axis
 
   subroutine make_linear_axis(inline,axis,axis_len)
@@ -997,6 +1019,9 @@ END MODULE l3ascii
 
 !
 ! $Log$
+! Revision 2.5  2001/03/29 00:51:35  pwagner
+! make_log_axis now always works
+!
 ! Revision 2.4  2001/03/28 00:24:38  pwagner
 ! Some error controls, ErrType added
 !
