@@ -506,27 +506,6 @@ contains
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
 
-!     call output ("Early work:",advance='yes')
-!     call output ("t_zeta_basis",advance='yes')
-!     call dump(TFMI%t_zeta_basis)
-!     call output ("temp%template%surfs",advance='yes')
-!     call dump(temp%template%surfs)
-!     call output ("t_phi_basis",advance='yes')
-!     call dump(TFMI%t_phi_basis)
-!     call output ("temp%template%phi",advance='yes')
-!     call dump(temp%template%phi)
-!     call output ("t_coeff",advance='yes')
-!     call dump(TFMI%t_coeff)
-!     call output ("temp%values",advance='yes')
-!     call dump(temp%values)
-!     stop
-
-!     call output("ptan%values(:,3)",advance='yes')
-!     call dump(ptan%values(:,3))
-!     call output("tfmi%ptg_press%lin_val",advance='yes')
-!     call dump( real(tfmi%ptg_press%lin_val,r8) )
-!     stop
-
     print*,'Got part of the way through'
 
     fmc%atmos_der = forwardModelConfig%atmos_der
@@ -546,13 +525,6 @@ contains
 
     elev_offset = 0.0                         ! Zero elev_offset in any case
 
-!
-! Load the "Frequency gridding by pointing" file ("Bill's" file..)
-!
-! This has been moved into ForwardModelGlobalSetup, q.v.
-!   Call ptg_frq_load(FMC, FMI, Ier)
-!   if(ier /= 0) goto 99
-
     signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
     whichPointingGrid = signal%pointingGrid
     if ( whichPointingGrid <= 0 ) &
@@ -562,12 +534,6 @@ contains
     call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press, &
     & tol, grids )
 
-!??? Zvi:  The frequency pointing grids (The "Bill" file) are now read by
-!??? PointingGrid_m.  That routine doesn't any longer have the tangent
-!??? pressure arrays, so it doesn't eliminate grids that aren't "near"
-!??? tangent pressures.  The intent is that get_grids_near_tan_pressures
-!??? gives you the indices of the frequency grids that are "near" tangent
-!??? pressures.
 !
 ! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
 ! Radians (instead of Degrees). Also compute the effective earth radius.
@@ -635,10 +601,6 @@ contains
 ! **********************  MAIN Pointing Loop *******************
 !
       DO ptg_i = 1, no_tan_hts-1
-
-!??? Zvi: This is as far as I got in my new scheme for frequency pointing
-!??? grids.  Below, you'll need to use PointingGrids(grids(ptg_i)).  See
-!??? the PointingGrid_m module for details of the data structure.
 
         k = ptg_i
         h_tan = tan_hts(k,l)
@@ -781,6 +743,7 @@ contains
 !         IF(ier /= 0) goto 99
 !
         end do
+
 !
 ! Frequency Average the radiances with the appropriate filter shapes
 !
@@ -1207,6 +1170,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.30  2001/03/21 01:10:09  livesey
+! Interim version before dealing with mr_f
+!
 ! Revision 2.29  2001/03/21 01:07:45  livesey
 ! Before moving away from mr_f
 !
