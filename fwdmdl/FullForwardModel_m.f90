@@ -647,7 +647,7 @@ contains ! ================================ FullForwardModel routine ======
     do j = 1, noSpecies
       ! Skip if the next molecule is negative (indicates that this one is a
       ! parent)
-      if ( j < noSpecies ) then
+      if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
         if ( fwdModelConf%molecules(j+1) < 0 ) cycle
       end if
       l=abs(fwdModelConf%molecules(j))
@@ -2163,6 +2163,10 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.43  2002/05/14 22:32:45  livesey
+! Added single sideband stuff.  Also skip line gathering for parent
+! molecules.
+!
 ! Revision 2.42  2002/05/14 00:19:10  livesey
 ! Minor bug fixes
 !
