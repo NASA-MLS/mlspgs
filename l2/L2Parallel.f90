@@ -372,6 +372,7 @@ contains ! ================================ Procedures ======================
       & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled )
     directWriteFiles = 0
     directWriteStatus = 0
+    noDirectWriteFiles = 0
 
     ! Work out the information on our virtual machine
     call GetMachineNames ( machineNames )
@@ -1061,6 +1062,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.36  2002/07/18 02:15:29  livesey
+! Bug fix, uninitialised variable
+!
 ! Revision 2.35  2002/05/29 22:43:22  livesey
 ! Embarssing bug fix, finished=.true. was wrong side of if statement.
 !
