@@ -3,7 +3,7 @@
 
 !=============================================================================
 module ForwardModelInterface
-  !=============================================================================
+!=============================================================================
 
   ! Set up the forward model.  Interface from the retrieve step to the
   ! forward model.
@@ -15,8 +15,9 @@ module ForwardModelInterface
   use AntennaPatterns_m, only: Close_Antenna_Patterns_File, &
     & Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
   use Declaration_Table, only: NUM_VALUE, RANGE
-  use Dump_0, only: DUMP
   use Expr_M, only: EXPR
+  use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
+    & ForwardModelConfig_T, ForwardModelSignalInfo_T
   use SpectroscopyCatalog_m, only: Catalog_T, Lines, Catalog
   use FilterShapes_m, only: Close_Filter_Shapes_File, &
     & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
@@ -47,7 +48,7 @@ module ForwardModelInterface
   use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName
   use Molecules, only: spec_tags
   use MoreTree, only: Get_Boolean, Get_Field_ID
-  use Output_M, only: Output, Blanks
+  use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
     & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
@@ -58,7 +59,7 @@ module ForwardModelInterface
   use Units, only: DegToRad => Deg2Rad
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
-  use VGrid, only: VGRID_T, DUMP
+  use VGridsDatabase, only: VGrid_T
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -66,13 +67,12 @@ module ForwardModelInterface
 
   implicit none
   private
-  public :: AddForwardModelConfigToDatabase, ConstructForwardModelConfig, &
-    Dump, DestroyFWMConfigDatabase, ForwardModel, ForwardModelGlobalSetup, &
-    ForwardModelConfig_T, ForwardModelSignalInfo_T
+  public :: ConstructForwardModelConfig, Dump, ForwardModel, &
+    ForwardModelGlobalSetup, ForwardModelSignalInfo_T
 
-  interface DUMP
-    module procedure DUMP_FORWARDMODELCONFIGS
-  end interface
+  interface Dump
+    module procedure MyDump_ForwardModelConfigs
+  end interface Dump
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -81,28 +81,6 @@ module ForwardModelInterface
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
-
-  type ForwardModelSignalInfo_T
-    integer :: signal                   ! The signal we're considering
-    logical, dimension(:), pointer :: channelIncluded=>null() ! Which channels to use
-  end type ForwardModelSignalInfo_T
-
-  type ForwardModelConfig_T
-    integer :: fwmType        ! l_linear, l_full or l_scan
-    logical :: Atmos_Der      ! Do atmospheric derivatives
-    logical :: Do_Conv        ! Do convolution
-    logical :: Do_Freq_Avg    ! Do Frequency averaging
-    integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
-    logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
-    real(r8) :: The_Freq      ! Frequency to use if .not. do_freq_avg
-    type (ForwardModelSignalInfo_T), dimension(:), pointer :: siginfo=>NULL()
-    logical :: Spect_Der      ! Do spectroscopy derivatives
-    logical :: Temp_Der       ! Do temperature derivatives
-    type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
-    type(vGrid_T), pointer :: tangentGrid     ! Zeta grid for integration
-    integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
-    integer :: phiWindow            ! Window size for examining stuff
-  end type ForwardModelConfig_T
 
   ! Error codes
 
@@ -168,7 +146,7 @@ contains
   end subroutine ForwardModelGlobalSetup
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
-  type (ForwardModelConfig_T) function ConstructForwardModelConfig &
+  type (forwardModelConfig_T) function ConstructForwardModelConfig &
     & ( ROOT, VGRIDS ) result(info)
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
@@ -178,8 +156,8 @@ contains
     !                                     "spec_args" vertex. Local variables
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
-    type (Signal_T) :: thisSignal ! A signal
-    type (ForwardModelSignalInfo_T), pointer :: thisFWMSignal=>NULL() ! A signal
+    type (signal_T) :: thisSignal ! A signal
+    type (forwardModelSignalInfo_T), pointer :: thisFWMSignal=>NULL() ! A signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -320,8 +298,8 @@ contains
     ! Now some more error checking
     select case (info%fwmType)
     case (l_full)
-      if (.not. all(got( (/f_molecules, f_signals/) ))) &
-        & call AnnounceError (IncompleteFullFwm, root)
+      if (.not. all(got( (/ f_molecules, f_signals, f_integrationGrid, &
+        & f_tangentGrid /) ))) call AnnounceError (IncompleteFullFwm, root)
 
       ! Now identify the Earth's surface in the tangent grid
       call Hunt(info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
@@ -830,9 +808,9 @@ contains
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
-        call get_beta_path(frequencies,My_Catalog,no_ele,z_path(ptg_i,maf), &
-          &                t_path(ptg_i,maf),beta_path,                  &
-          &                1.0e-3*losVel%values(1,maf),ier)
+        call get_beta_path ( frequencies, my_Catalog, no_ele, &
+          &                  z_path(ptg_i,maf), t_path(ptg_i,maf), beta_path, &
+          &                  0.001*losVel%values(1,maf), ier )
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -1252,102 +1230,7 @@ contains
 
   end subroutine ForwardModel
 
-  ! ----------------------------  AddForwardModelConfigToDatabase  -----
-  integer function AddForwardModelConfigToDatabase ( database, item )
-
-    ! Add a quantity template to a database, or create the database if it
-    ! doesn't yet exist
-
-    ! Dummy arguments
-    type (ForwardModelConfig_T), dimension(:), pointer :: database
-    type (ForwardModelConfig_T), intent(in) :: item
-
-    ! Local variables
-    type (ForwardModelConfig_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddForwardModelConfigToDatabase = newSize
-  end function AddForwardModelConfigToDatabase
-
-  ! --------------------------  DestroyForwardModelConfigDatabase  -----
-  subroutine DestroyFWMConfigDatabase(database)
-    ! Dummy arguments
-    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
-
-    ! Local variables
-    integer :: CONFIG                   ! Loop counter
-    integer :: SIGNAL                   ! Loop counter
-    integer :: STATUS                   ! Flag
-
-    if (associated(database)) then
-      do config = 1, size(database)
-        do signal = 1, size(database(config)%sigInfo)
-          deallocate(database(config)%sigInfo(signal)%channelIncluded,stat=status)
-          if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-            & MLSMSG_Deallocate//"database%signals%channelIncluded")
-        end do
-        deallocate (database(config)%sigInfo, stat=status)
-        if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & MLSMSG_Deallocate//"database%signals")
-        deallocate (database(config)%molecules, stat=status)
-        if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & MLSMSG_Deallocate//"database%molecules")
-      end do
-
-      deallocate (database, stat=status)
-      if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
-        & MLSMSG_Deallocate//"database")
-    end if
-  end subroutine DestroyFWMConfigDatabase
-
   ! =====     Private Procedures     =====================================
-  ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
-  subroutine Dump_ForwardModelConfigs ( database )
-    type (ForwardModelConfig_T), dimension(:), pointer :: database
-
-    ! Local variables
-    integer :: I, J                          ! Loop counters
-    character (len=MaxSigLen) :: SignalName  ! A line of text
-
-    ! executable code
-    if ( associated(database) ) then
-      do i = 1, size(database)
-        call output ( 'FowardModelConfig: ' )
-        call output ( i, advance = 'yes' )
-        call output ( '  Atmos_der:' )
-        call output ( database(i)%atmos_der, advance='yes' )
-        call output ( '  Do_conv:' )
-        call output ( database(i)%do_conv, advance='yes' )
-        call output ( '  Do_freq_avg:' )
-        call output ( database(i)%do_freq_avg, advance='yes' )
-        call output ( '  Spect_der:' )
-        call output ( database(i)%spect_der, advance='yes' )
-        call output ( '  Temp_der:' )
-        call output ( database(i)%temp_der, advance='yes' )
-        call output ( '  The_freq:' )
-        call output ( database(i)%the_freq, advance='yes' )
-        call output ( '  Molecules: ', advance='yes' )
-        do j = 1, size(database(i)%molecules)
-          call output ( '    ' )
-          call display_string(lit_indices(database(i)%molecules(j)))
-          if (database(i)%moleculeDerivatives(j)) then
-            call output (' compute derivatives', advance='yes')
-          else
-            call output (' no derivatives', advance='yes')
-          end if
-        end do
-        call output ( '  Signals:', advance='yes')
-        do j = 1, size(database(i)%sigInfo)
-          call output ( '    ' )
-          call GetSignalName( database(i)%sigInfo(j)%signal, signalName)
-          call output ( signalName//' channelIncluded:', advance='yes')
-          call dump ( database(i)%sigInfo(j)%channelIncluded )
-        end do
-      end do
-    end if
-  end subroutine Dump_ForwardModelConfigs
-
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, FieldIndex )
     integer, intent(in) :: Code       ! Index of error message
@@ -1379,107 +1262,20 @@ contains
       call output ( 'phiWindow is not odd' )
     end select
   end subroutine AnnounceError
-!
-!zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
-! ----------------------------------------  Dump_Lines_Database  -----
-  subroutine Dump_Lines_Database ( Start, End, Number )
-    use Dump_0, only: Dump
-    integer, intent(in), optional :: Start, End
-    logical, intent(in), optional :: Number
-    integer :: I                   ! Subscript, loop inductor
-    integer :: MyStart, MyEnd
-    logical :: MyNumber
-
-    myStart = 1
-    if ( present(start) ) myStart = start
-    myEnd = size(lines)
-    if ( present(end) ) myEnd = end
-    myNumber = .true.
-    if ( present(number) ) myNumber = number
-    if ( .not. present(start) .and. .not. present(end) ) then
-      call output ('Spectroscopy lines database: SIZE = ' )
-      call output ( size(lines), advance='yes' )
-    end if
-    do i = myStart, myEnd
-      if ( myNumber ) then
-        call output ( i, 4 )
-        call output ( ': ' )
-      else
-        call blanks ( 6 )
-      end if
-      if ( lines(i)%line_name /= 0 ) then
-        call output ( 'Name = ' )
-        call display_string ( lines(i)%line_name )
-        call output ( ', ' )
-      end if
-      call output ( 'V0 = ' )
-      call output ( lines(i)%v0 )
-      call output ( ', El = ' )
-      call output ( lines(i)%el )
-      call output ( ', Str =' )
-      call output ( lines(i)%str )
-      call output ( ', W =' )
-      call output ( lines(i)%str, advance='yes' )
-      call blanks ( 6 )
-      call output ( 'Ps = ' )
-      call output ( lines(i)%ps )
-      call output ( ', N = ' )
-      call output ( lines(i)%n )
-      call output ( ': Delta = ' )
-      call output ( lines(i)%delta )
-      call output ( ', N1 = ' )
-      call output ( lines(i)%n1, advance='yes' )
-      call blanks ( 6 )
-      call output ( 'Gamma = ' )
-      call output ( lines(i)%gamma )
-      call output ( ', N2 = ' )
-      call output ( lines(i)%n2, advance='yes' )
-    end do
-  end subroutine Dump_Lines_Database
-! -------------------------------------  Dump_SpectCat_Database  -----
-  subroutine Dump_SpectCat_Database (my_catalog, Lit_Indices )
-
-    use Dump_0, only: Dump
-
-    type(Catalog_T),dimension(:),intent(in) :: My_Catalog
-    integer, intent(in), dimension(:) :: Lit_Indices
-
-    integer :: I, J                ! Subscript, loop inductor
-
-    call output ( 'Spectroscopy my_catalog: SIZE = ' )
-    call output ( size(my_catalog), advance='yes' )
-    do i = 1, size(my_catalog)
-      call output ( i, 4 )
-      call output ( ': ' )
-      if ( my_catalog(i)%species_name /= 0 ) then
-        call display_string ( my_catalog(i)%species_name )
-        call output ( ', ' )
-      end if
-      call output ( 'Species = ' )
-      call display_string ( lit_indices(my_catalog(i)%molecule) )
-      call output ( ', SpecTag = ' )
-      call output ( my_catalog(i)%spec_tag )
-      call output ( ', Qlog = [ ' )
-      do j = 1, 3
-        call output ( my_catalog(i)%qlog(j) )
-        if ( j < 3 ) call output ( ', ' )
-      end do
-      call output ( ' ]', advance='yes' )
-      call blanks ( 6 + int(log10(i+0.0)) )
-      call output ( 'Lines:', advance='yes' )
-      do j = 1, size(my_catalog(i)%lines)
-        call dump_lines_database ( my_catalog(i)%lines(j), &
-       &                           my_catalog(i)%lines(j), .false. )
-      end do
-    end do ! i
-  end subroutine Dump_SpectCat_Database
-
-!zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+  ! ---------------------------------  MyDump_ForwardModelConfigs  -----
+  subroutine MyDump_ForwardModelConfigs ( ForwardModelConfigs )
+    type(forwardModelConfig_T), pointer, dimension(:) :: ForwardModelConfigs
+    call dump ( forwardModelConfigs, lit_indices )
+  end subroutine MyDump_ForwardModelConfigs
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.68  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.67  2001/04/07 01:38:22  livesey
 ! Another interim working version
 !
