@@ -376,7 +376,7 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_binMax, l+l_binMin, l+l_binTotal, &
+      begin, t+t_fillMethod, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
              l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -1114,6 +1114,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.348  2004/01/20 20:26:12  livesey
+! Added binMean
+!
 ! Revision 2.347  2004/01/17 03:04:15  vsnyder
 ! Provide for functions in expressions
 !
