@@ -97,7 +97,7 @@ contains
     integer, intent(in), optional :: What ! mask of which bits to count
     ! Count the number of nonzero bits in all of the elements of Word.
     integer :: I
-    countCharBits_1 = countBits(array(1))
+    countCharBits_1 = countBits(array(1),what)
     do i = 2, size(array)
       countCharBits_1 = countCharBits_1 + countBits(array(i),what)
     end do
@@ -109,7 +109,7 @@ contains
     integer, intent(in), optional :: What ! mask of which bits to count
     ! Count the number of nonzero bits in all of the elements of Word.
     integer :: I
-    countCharBits_2 = countBits(array(:,1))
+    countCharBits_2 = countBits(array(:,1),what)
     do i = 2, size(array,2)
       countCharBits_2 = countCharBits_2 + countBits(array(:,i),what)
     end do
@@ -122,6 +122,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.5  2003/05/10 00:56:31  livesey
+! Bug fix in CountCharBits_1/2
+!
 ! Revision 2.4  2002/10/08 00:09:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
