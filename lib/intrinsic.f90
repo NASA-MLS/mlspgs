@@ -111,7 +111,6 @@ contains ! =====     Public procedures     =============================
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
@@ -237,6 +236,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.50  2003/09/12 18:39:19  vsnyder
+! Remove unused USE statement
+!
 ! Revision 2.49  2003/08/16 01:14:03  vsnyder
 ! Add optional 'polarization' field to 'radiometer' spec
 !
