@@ -285,6 +285,10 @@ contains ! =====     Public Procedures     =============================
     
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
 
+    if ( index ( switches, 'geom' ) /= 0 ) &
+      & call DumpChunkHGridGeometry ( hGrid, chunks(chunkNo), &
+      & trim(instrumentModuleName), l1bInfo )
+
   end function CreateHGridFromMLSCFInfo
 
   ! ------------------------------------- CreateMIFBasedHGrids -----------
@@ -611,9 +615,7 @@ contains ! =====     Public Procedures     =============================
       last = last + spacing
     end if
 
-    ! Now, for the moment at least I'm going to 'outset' these.
-    ! This is to ensure that even if one's asked for overlaps=0 in
-    ! chunkDivide, that we'll not get any funny gaps
+    ! Now outset by one to be sure
     first = first - spacing
     last = last + spacing
 
@@ -747,7 +749,7 @@ contains ! =====     Public Procedures     =============================
         if ( index ( switches, 'hgrid' ) /= 0 ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
-        call DeleteHGridOverlap ( hGrid, -1, firstProfInRun )
+        call TrimHGrid ( hGrid, -1, firstProfInRun )
       end if
       
       call Hunt ( hGrid%time, processingRange%endTime, &
@@ -756,7 +758,7 @@ contains ! =====     Public Procedures     =============================
         if ( index ( switches, 'hgrid' ) /= 0 ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
-        call DeleteHGridOverlap ( hGrid, 1, hGrid%noProfs-lastProfInRun )
+        call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
       end if
     end if
 
@@ -813,36 +815,31 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine CreateEmptyHGrid
 
-  ! ---------------------------------------  DeleteHGridOverlap ---
-  subroutine DeleteHGridOverlap ( hGrid, side, noProfs )
+  ! ---------------------------------------  TrimHGrid ---
+  subroutine TrimHGrid ( hGrid, side, NOTODELETE )
     type (HGrid_T), intent(inout) :: HGrid
     integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
-    integer, intent(in), optional :: NOPROFS ! How many to delete, default all
+    integer, intent(in) :: NOTODELETE ! How many to delete, default all
     ! Local variables
     integer :: newNoProfs
     real(r8), dimension(:), pointer :: temp
     integer :: first, last
-    integer :: toDelete                 ! Number to delete
 
     ! Executable code
     select case ( side )
     case ( -1 )
-      toDelete = hGrid%noProfsLowerOverlap
-      if ( present ( noProfs ) ) toDelete = noProfs
-      newNoProfs = hGrid%noProfs - toDelete
-      first = toDelete + 1
+      newNoProfs = hGrid%noProfs - noToDelete
+      first = noToDelete + 1
       last = hGrid%noProfs
-      hGrid%noProfsLowerOverlap = max ( hGrid%noProfsLowerOverlap - toDelete, 0 )
+      hGrid%noProfsLowerOverlap = max ( hGrid%noProfsLowerOverlap - noToDelete, 0 )
     case ( 1 )
-      toDelete = hGrid%noProfsUpperOverlap
-      if ( present ( noProfs ) ) toDelete = noProfs
-      newNoProfs = hGrid%noProfs - toDelete
+      newNoProfs = hGrid%noProfs - noToDelete
       first = 1
       last = newNoProfs
-      hGrid%noProfsUpperOverlap = max ( hGrid%noProfsUpperOverlap - toDelete, 0 )
+      hGrid%noProfsUpperOverlap = max ( hGrid%noProfsUpperOverlap - noToDelete, 0 )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Invalid side argument to DeleteOverlaps' )
+        & 'Invalid side argument to TrimHGrid' )
     end select
     if ( newNoProfs <= 0 ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
@@ -875,7 +872,7 @@ contains ! =====     Public Procedures     =============================
     hGrid%losAngle = temp ( first : last )
 
     call Deallocate_test ( temp, 'temp', ModuleName )
-  end subroutine DeleteHGridOverlap
+  end subroutine TrimHGrid
     
   ! ---------------------------------------  DestroyHGridContents  -----
   subroutine DestroyHGridContents ( hGrid )
@@ -920,6 +917,132 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyHGridDatabase
 
+  ! ----------------------------------------- DumpChunkHGridGeometry
+  subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
+    & instrumentModuleName, l1bInfo )
+    type (HGrid_T), intent(in) :: HGRID
+    type (L1BInfo_T), intent(in) :: L1BINFO
+    character (len=*) :: INSTRUMENTMODULENAME
+    type (MLSChunk_T), intent(in) :: CHUNK
+
+    ! Local parameters
+    real (r8), parameter :: BINSIZE=0.05 ! Width of one character in degrees
+    integer, parameter :: NOLINES=8     ! Number of lines that make up a scan
+    integer, parameter :: WIDTH=75      ! Number of columns to print at a time
+
+    ! Local variables
+    character (len=1), dimension(:,:), pointer :: TEXT
+    integer :: CHAR                     ! Loop counter
+    integer :: CHARMAX                  ! Last character to fill
+    integer :: CHARMIN                  ! First character to fill
+    integer :: FIRSTMIF                 ! First mif to consider
+    integer :: FLAG                     ! From L1B read
+    integer :: LASTMIF                  ! Last mif to consider
+    integer :: LINE                     ! Loop counter
+    integer :: MAF                      ! Loop counter
+    integer :: MIFSPERLINE              ! Number of mifs covered by a line
+    integer :: NOBINS                   ! Number of characters to print
+    integer :: NOMAFS                   ! From L1B read
+    integer :: NOMIFS                   ! Deduced
+    integer :: NOWINDOWS                ! Number of blocks of text
+    integer :: PROF                     ! Loop counter
+    integer :: START                    ! Index
+    integer :: WINDOW                   ! Loop counter
+    integer :: WINDOWSIZE               ! Number of characters in this window
+    real (r8) :: PHIMAX                 ! Maximum value to consider
+    real (r8) :: PHIMIN                 ! Minimum value to consider
+    real (r8) :: THISPHIMAX             ! Max phi in a line for a maf
+    real (r8) :: THISPHIMIN             ! Min phi in a line for a maf
+    real (r8), dimension(:,:), pointer :: MIFPHI ! Tangent phis
+    type (L1BData_T) :: L1BFIELD
+
+    ! Executable code
+
+    ! Read the geodetic angle from the L1Bfile
+    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
+      & l1bField, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, &
+      & lastMAF=chunk%lastMAFIndex
+    mifPhi => l1bField%dpField(1,:,:)
+
+    phiMin = minval ( mifPhi )
+    phiMax = maxval ( mifPhi )
+    phiMin = min ( phiMin, hGrid%phi(1) )
+    phiMax = max ( phiMax, hGrid%phi(hGrid%noProfs) )
+
+    ! Now setup the text to print
+    noBins = ( phiMax - phiMin ) / binSize
+    allocate ( text ( noBins, noLines ), stat=flag )
+    if ( flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'text' )
+    text = ' '
+
+    ! Trivial stuff to setup
+    noMIFs = size ( mifPhi, 1 )
+    mifsPerLine = noMIFs / noLines
+    
+    ! Now loop over the mafs and fill them up
+    do maf = 1, noMAFs
+      do line = 1, noLines
+        firstMIF = (line-1) * mifsPerLine + 1
+        lastMIF = firstMIF + mifsPerLine - 1
+        if ( line == noLines ) lastMIF = noMIFs
+        thisPhiMin = minval ( mifPhi ( firstMIF:lastMIF, maf ) )
+        thisPhiMax = maxval ( mifPhi ( firstMIF:lastMIF, maf ) )
+        charMin = ( thisPhiMin - phiMin ) / binSize + 1
+        charMax = ( thisPhiMax - phiMin ) / binSize + 1
+        charMin = min ( max ( charMin, 1 ), noBins )
+        charMax = min ( max ( charMax, 1 ), noBins )
+        if ( ( maf < chunk%noMAFsLowerOverlap+1 ) .or. &
+          &  ( maf > chunk%lastMAFIndex - chunk%firstMAFIndex + 1 - &
+          & chunk%noMAFsUpperOverlap) ) then
+          text ( charMin:charMax , line ) = '*'
+        else
+          text ( charMin:charMax , line ) = '#'
+        end if
+      end do
+    end do
+
+    ! Now loop over the profiles and place them
+    do prof = 1, hGrid%noProfs
+      charMin = ( hGrid%phi(prof) - phiMin ) / binSize + 1
+      charMin = min ( max ( charMin, 1 ), noBins )
+      if ( ( prof < hGrid%noProfsLowerOverlap+1 ) .or. &
+        &  ( prof > hGrid%noProfs-hGrid%noProfsUpperOverlap) ) then
+        text ( charMin, : ) = ':'
+      else
+        text ( charMin, : ) = '|'
+      end if
+    end do
+
+    ! Now print them out
+    noWindows = noBins / width
+    if ( mod ( noBins, width ) /= 0 ) noWindows = noWindows + 1
+    do window = 1, noWindows
+      call output ( ' ', advance='yes' )
+      windowSize = width
+      start = ( window-1 ) * width + 1
+      if ( window == noWindows ) windowSize = mod ( noBins, width )
+      do line = 1, noLines
+        do char = start, start+windowSize-2
+          call output ( text ( char, line ) )
+        end do
+        call output  ( text ( start+windowSize-1, line ), advance='yes' ) 
+      end do
+      do char = start, start+windowSize-2
+        call output ( '-' )
+      end do
+      call output ( '-', advance='yes' )
+    end do
+
+    ! Finish off
+    deallocate ( text, stat=flag )
+    if ( flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'text' )
+    call DeallocateL1BData ( l1bField )
+
+  end subroutine DumpChunkHGridGeometry
+ 
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -967,6 +1090,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.29  2002/06/29 05:55:19  livesey
+! Added the geom diagnostic
+!
 ! Revision 2.28  2002/06/18 22:41:26  livesey
 ! More fixes to do with nasty aspects of regular hGrids on day boundaries
 !
