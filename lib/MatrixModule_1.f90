@@ -976,16 +976,19 @@ contains ! =====     Public Procedures     =============================
     if ( a%row%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
+    if ( a%col%vec%template%id /= z%template%id ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
-    call cloneVector ( z, v ) ! Copy characteristics, allocate values
-    do j = 1, a%col%nb
-      k = a%col%quant(j)
-      l = a%col%inst(j)
+!???? Why is this here! call cloneVector ( z, v ) ! Copy characteristics, allocate values
+    do i = 1, a%col%nb
+      k = a%col%quant(i)
+      l = a%col%inst(i)
       do_update = my_update
-      do i = 1, a%row%nb
-        m = a%row%quant(i)
-        n = a%row%inst(i)
+      do j = 1, a%row%nb
+        m = a%row%quant(j)
+        n = a%row%inst(j)
         call multiplyMatrixVector ( a%block(i,j), &
           & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
           & do_update )
@@ -1012,9 +1015,12 @@ contains ! =====     Public Procedures     =============================
     if ( a%col%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
+    if ( a%row%vec%template%id /= z%template%id ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
-    call cloneVector ( z, v ) ! Copy characteristics, allocate values
+!??? Why is this here! call cloneVector ( z, v ) ! Copy characteristics, allocate values
     do i = 1, a%row%nb
       m = a%row%quant(i)
       n = a%row%inst(i)
@@ -1022,8 +1028,9 @@ contains ! =====     Public Procedures     =============================
       do j = 1, a%col%nb
         k = a%col%quant(j)
         l = a%col%inst(j)
+        print*,j,k,l,shape(z%quantities(m)%values(:,n))
         call multiplyMatrixVectorNoT ( a%block(i,j), &
-          & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
+          & v%quantities(k)%values(:,l), z%quantities(m)%values(:,n), &
           & do_update )
         do_update = .true.
       end do ! i = 1, a%row%nb
@@ -1465,6 +1472,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.23  2001/04/28 04:42:29  livesey
+! Removing some of the unnecessary(?) assertions of square matrices in
+! multiplyMatrixVector and its relatives.  Also sorted out some of the
+! conditions, and loops for the multiplyMatrixVectorNoT case.
+!
 ! Revision 2.22  2001/04/28 01:28:36  livesey
 ! Change in rcInfo_T, vec is now a copy of the parent vector, not a pointer.
 !
