@@ -165,21 +165,22 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: SECTION_FIRST = z_globalSettings, &
                                 SECTION_LAST = z_Output
   integer, public :: SECTION_INDICES(section_first:section_last)
-! Specification indices:
-  integer, public, parameter :: S_CLIMATOLOGY = 1
-  integer, public, parameter :: S_CREATE = 2
-  integer, public, parameter :: S_HGRID = 3
-  integer, public, parameter :: S_L2GP = 4
-  integer, public, parameter :: S_L2AUX = 5
-  integer, public, parameter :: S_MERGE = 6
-  integer, public, parameter :: S_OUTPUT = 7
-  integer, public, parameter :: S_QUANTITY = 8
-  integer, public, parameter :: S_TEMPLATE = 9
-  integer, public, parameter :: S_TIME = 10
-  integer, public, parameter :: S_TPFILL = 11
-  integer, public, parameter :: S_VECTOR = 12
-  integer, public, parameter :: S_VECTORTEMPLATE = 13
-  integer, public, parameter :: S_VGRID = 14
+! Specification indices don't overlap parameter indices, so a section can
+! have both parameters and specifications:
+  integer, public, parameter :: S_CLIMATOLOGY =    last_parm + 1
+  integer, public, parameter :: S_CREATE =         s_climatology + 1
+  integer, public, parameter :: S_HGRID =          s_create + 1
+  integer, public, parameter :: S_L2GP =           s_hgrid + 1
+  integer, public, parameter :: S_L2AUX =          s_l2gp + 1
+  integer, public, parameter :: S_MERGE =          s_l2aux + 1
+  integer, public, parameter :: S_OUTPUT =         s_merge + 1
+  integer, public, parameter :: S_QUANTITY =       s_output + 1
+  integer, public, parameter :: S_TEMPLATE =       s_quantity + 1
+  integer, public, parameter :: S_TIME =           s_template + 1
+  integer, public, parameter :: S_TPFILL =         s_time + 1
+  integer, public, parameter :: S_VECTOR =         s_tpfill + 1
+  integer, public, parameter :: S_VECTORTEMPLATE = s_vector + 1
+  integer, public, parameter :: S_VGRID =          s_vectortemplate + 1
   integer, public, parameter :: SPEC_FIRST = s_Climatology, SPEC_LAST = s_vGrid
   integer, public :: SPEC_INDICES(spec_first:spec_last)
 
@@ -610,6 +611,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.3  2000/11/16 01:46:16  vsnyder
+! Revise section numbers so they don't overlap parameter numbers.
+!
 ! Revision 2.2  2000/11/16 01:22:59  vsnyder
 ! Add a "time" spec to every section.
 !
