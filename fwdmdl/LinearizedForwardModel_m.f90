@@ -329,13 +329,19 @@ contains ! =====     Public Procedures     =============================
 
         ! If it's not in the state vector, perhaps make a fuss
         if ( .not. associated(stateQ) ) then
-          if ( any(l2pcQ%template%quantityType == &
-            & (/ l_temperature, l_vmr /)) .and. &
-            & l2pcQ%template%molecule /= l_extinction ) then
-            call get_string ( l2pcQ%template%name, word, strip=.true. )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              &  "No quantity in state vectors found to match "//trim(word) )
-          end if
+          ! I'm commenting out the 'make a fuss' code, as it can't
+          ! distinguish between tropH2O and H2O.
+          ! One could be clever and see if the l2pc actually has some derivatives
+          ! for this quantity, but I'll postpone that level of complexity for the moment.
+          
+!           if ( any(l2pcQ%template%quantityType == &
+!             & (/ l_temperature, l_vmr /)) .and. &
+!             & l2pcQ%template%molecule /= l_extinction ) then
+!             call get_string ( l2pcQ%template%name, word, strip=.true. )
+!             call MLSMessage ( MLSMSG_Warning, ModuleName, &
+!               &  "No quantity in state vectors found to match "//trim(word) )
+!           end if
+
           cycle                         ! Go to next l2pc quantity
         end if
 
@@ -877,6 +883,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.29  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.28  2002/10/02 23:19:51  livesey
 ! Various bug fixes associated with extinction
 !
