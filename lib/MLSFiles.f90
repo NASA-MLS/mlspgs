@@ -1489,7 +1489,10 @@ contains
       mls_inqswath = swinqswath(FileName, swathList, strBufSize)
     else                          
       mls_inqswath = NOSUCHHDFVERSION  
-    endif                         
+    endif
+    if ( strBufSize > len(swathList) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'HDF trod on my memory' )
+    swathList = swathList ( 1:strBufSize )
 
   end function mls_inqswath
 
@@ -1592,7 +1595,7 @@ contains
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      case default
        call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
-         & returnStatus)
+1         & returnStatus)
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      end select
    endif
@@ -1908,6 +1911,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.53  2004/01/21 18:48:59  livesey
+! Bug fix in mls_inqswath
+!
 ! Revision 2.52  2003/06/23 21:06:55  pwagner
 ! Moved use HDF5 down among module procedures to speed up Lahey compilation
 !
