@@ -4,9 +4,9 @@
 ; _day.
 
 
-ifdef(_band, ,define(_band,{12U}))
-define(_outpath,/nas/bigdata/livesey/misc/)
-define(_ver,test3)
+ifdef(_band, ,define(_band,{1L}))
+define(_outpath,/bigdata/livesey/misc/)
+define(_ver,test4)
 define(_day,1996-051)
 define(_year,1996)
 define(_signal,_sigBand$1)
@@ -34,7 +34,7 @@ l2cfinc(readl2gpfiles.l2cf)
 ; -------------------------------------------- Global settings ----
 BEGIN GlobalSettings
 
-    l1Boa, file='/nas/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+    l1Boa, file='/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
     startTime = "00:00:00"
     endTime = "23:59:59"
 
@@ -68,7 +68,7 @@ END GlobalSettings
 
 ; ------------------------------------------ Chunk divide  ----
 BEGIN ChunkDivide
-    IdealLength =             0.05 orbits
+    IdealLength =             0.25 orbits
     overlap =                 3 MAFs
     HomeGeodAngle =           0 degrees
     HomeModule =              GHz
