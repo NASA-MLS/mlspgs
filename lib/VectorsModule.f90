@@ -30,6 +30,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! ConstantXVector              Result z = A x
 ! ConstructVectorTemplate      Creates a vectorTemplate from a list of quantities
 ! CopyVector                   z = x, including copying values and mask
+! CopyVectorMask               Copy mask for x to z, assuming compatible vectors
 ! CreateMaskArray              Allocate a MASK array
 ! CreateMask                   Allocate the MASK array for a vector quantity
 ! CreateVector                 Creates an empty vector according to a given template
@@ -558,6 +559,28 @@ contains ! =====     Public Procedures     =============================
       end do
     end if
   end subroutine CopyVector
+
+  ! --------------------------------------------- CopyVectorMask ---------
+  subroutine CopyVectorMask ( Z, X )
+    ! Copy vector mask from x to z
+    type (Vector_T), intent(inout) :: Z
+    type (Vector_T), intent(in) :: X
+    ! Local variables
+    integer :: Q
+    ! Executable code
+    if ( x%template%name /= z%template%name ) call MLSMessage ( &
+      & MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyMask' )
+    do q = 1, size(x%quantities)
+      if ( associated ( x%quantities(q)%mask ) ) then
+        call CreateMask ( z%quantities(q) )
+        z%quantities(q)%mask = x%quantities(q)%mask
+      else
+        if ( associated ( z%quantities(q)%mask ) ) &
+          & call Deallocate_test ( z%quantities(q)%mask, &
+          & 'z%quantities(?)%mask', ModuleName )
+      end if
+    end do
+  end subroutine CopyVectorMask
 
   ! ---------------------------------------------  CreateMaskArray  -----
   subroutine CreateMaskArray ( mask, values )
@@ -1696,6 +1719,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.75  2002/02/07 02:53:06  vsnyder
+! Add parameter for FullDerivatives bit for mask
+!
 ! Revision 2.74  2002/02/05 02:39:59  vsnyder
 ! Change mask from 1-bit per to 8-bits per (using character)
 !
