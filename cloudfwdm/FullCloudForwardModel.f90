@@ -78,6 +78,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_EFFECTIVEOPTICALDEPTH,                              &
                        & L_ELEVOFFSET,                                         &
                        & L_GPH,                                                &
+                       & L_IWC_HIGH_HEIGHT,                                    &
+                       & L_IWC_LOW_HEIGHT,                                     &
+                       & L_IWP,                                                &
                        & L_LOSTRANSFUNC,                                       &
                        & L_LOSVEL,                                             &
                        & L_MASSMEANDIAMETERICE,                                & 
@@ -217,8 +220,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8) :: CloudHeight                        ! Cloud Top Height
 
     logical, dimension(:), pointer :: doChannel    ! Do this channel?
-    logical :: DoHighZt                            ! Flag
-    logical :: DoLowZt                             ! Flag
     logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )
 !   logical :: dee_bug = .true.  
     logical :: prt_log = .false.
@@ -255,16 +256,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! ------------------------------------
 
     maf = fmStat%maf
-
-    !------------------------------------------
-    ! Determine which retrieval is to be used
-    !    cloud_der = 0     high tangent height
-    !    cloud_der = 1     low tangent height
-    !------------------------------------------
-    doHighZt = .false.
-    doLowZt  = .false.
-    if (forwardModelConfig%cloud_der == 1) doHighZt = .true.
-    if (forwardModelConfig%cloud_der == 2) doLowZt  = .true.
 
     !--------------------------------------------
     ! Loop over signals
@@ -628,7 +619,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                       'Need cloud radiances to estimate cloud top in retrieval' )
       else
        iCloudHeight = 0
-       if(doHighZt) then
+       if(forwardModelConfig%cloud_der == l_iwc_high_height) then
          do mif = 1, noMifs
            if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) &
                 & iCloudHeight = mif
@@ -869,7 +860,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Jacobian for high tangent height retrieval (only one frequency)
     !--------------------------------------------
 
-    if (doHighZt .and. present(jacobian)) then      
+    if (forwardModelConfig%cloud_der == l_iwc_high_height &
+      & .and. present(jacobian)) then      
     ! do not handle multiple signals and channels  
       if(size(forwardModelConfig%signals) > 1 .and. size(doChannel) > 1) then
          print*,'only one frequency and one signal is allowed'
@@ -984,12 +976,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       Deallocate( w_fine, stat=status )
       Deallocate( s_fine, stat=status )
       
-    end if     ! doHighZt
+    end if     ! high tangent height case
 
     !--------------------------------------------
     ! Jacobian for low tangent height retrieval
     !--------------------------------------------
-    if (doLowZt .and. present(jacobian)) then
+    if (forwardModelConfig%cloud_der == l_iwc_low_height &
+      & .and. present(jacobian)) then
     
         colJBlock = FindBlock ( Jacobian%col, state_los%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
@@ -1014,7 +1007,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           end if  ! doChannel
         end do    ! channel
 
-    endif      ! doLowZt
+    endif      ! low tangent height case
 
     !------------------------------
     ! End of output jacobian
@@ -1074,6 +1067,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.114  2003/04/08 20:03:55  dwu
+! fix a bug in handling no of cloud species. now this number is meanful
+!
 ! Revision 1.113  2003/04/05 17:30:43  dwu
 ! clean up
 !
