@@ -118,6 +118,7 @@ contains ! ====     Public Procedures     ==============================
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
+    nullify ( l2pcf%anText ) ! for Sun's rubbish compiler
     depth = 0
     totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -350,6 +351,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.82  2002/03/20 00:49:44  pwagner
+! chi1 dumps only 1st chunk, unlike chi
+!
 ! Revision 2.81  2002/02/05 00:44:03  pwagner
 ! Added garbage collection stuff
 !
