@@ -772,7 +772,7 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_FLOAT32, &
+    status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_INT32, &
          HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD8
@@ -1211,6 +1211,11 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.24  2001/03/12 20:25:04  vsnyder
+! Improve dump_l2gp.  Nullify components of l2gp before calling
+! SetupNewL2GPRecord from ExpandL2GPDataInPlace, so as not to clobber the
+! component pointers carefully copied to tempL2gp.
+!
 ! Revision 2.23  2001/03/01 18:37:51  livesey
 ! Added dumper routine
 !
