@@ -52,7 +52,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -330,7 +330,7 @@ subtrees:   do while ( j <= howmany )
 
     ! Close hdf5 (believe it or not there is no interface for this routine!)
     call H5Close_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'Unable to close HDF5' )
 
   contains
@@ -365,6 +365,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.85  2002/08/20 22:10:50  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.84  2002/08/07 00:05:27  livesey
 ! Added calls to H5Open_F and H5Close_F
 !
