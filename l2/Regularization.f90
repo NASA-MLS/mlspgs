@@ -26,11 +26,23 @@ contains
   ! -------------------------------------------------  Regularize  -----
   subroutine Regularize ( A, Orders, Quants, Weights, WeightVec, Rows, Horiz )
 
-  !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
-  ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
-  ! difference operator of order $k$.  $\Delta^k$ has binomial
-  ! coefficients with alternating sign.  The operator is normalized so that
-  ! the sum of the coefficients is one.
+  !{Compute the matrix $\mathbf{R}$ for Tikhonov regularization.  Tikhonov
+  ! regularization consists of adding least-squares conditions of the form
+  ! $\mathbf{R x}_n \simeq 0$ to the least-squares problem.  Since we want to
+  ! solve for $\delta \mathbf{x} = \mathbf{x}_{n+1}-\mathbf{x}_n$, where $n$
+  ! is the iteration number of the Newton iteration, this becomes $\mathbf{R}
+  ! \delta \mathbf{x} \simeq -\mathbf{R} \mathbf{x}_n$, where $\mathbf{R} = w
+  ! \mathbf{W} \mathbf{\Delta}^k$.  The quantities $w$, $\mathbf{W}$ and
+  ! $\mathbf{\Delta}^k$ are described below.  Blocks of $\mathbf{R}$ are
+  ! stored in {\tt A}.
+  !
+  ! $\mathbf{\Delta}^k$ is the central difference operator of order $k$.  The
+  ! $j^{\text{th}}$ row of $\mathbf{\Delta}^k$ has $(-1)^i C_i^k / 2^k$
+  ! beginning in column j, where $C_i^k$ are binomial coefficients; the sum
+  ! of the absolute values of the coefficients in each row is therefore one. 
+  ! For each block of {\tt A}, $(-1)^i C_i^k$ is stored in the $(j,j+i)$
+  ! element of that block.  $\mathbf{\Delta}^k$ has $N-k$ rows, where $N$ is
+  ! the number of columns.
   !
   ! The order $k$ is given by the {\tt Orders} argument, which is the index in
   ! the tree of the {\tt regOrders} field of the {\tt retrieve} specification.
@@ -47,24 +59,17 @@ contains
   ! only one value may be given for each of the {\tt regOrders} and {\tt
   ! regWeights} fields.
   !
-  ! The {\tt Weights} argument is the index in the tree of the {\tt regWeights}
-  ! field.  It gives a weight for the regularization.  If one value is given,
-  ! it is used for every quantity.  If several are given, the number given must
+  ! The {\tt Weights} argument is the index in the tree of the {\tt
+  ! regWeights} field.  It gives a weight $w$ for the regularization.  If one
+  ! value is given, the rows of the regularization matrix for every quantity
+  ! are multiplied by this value.  If several are given, the number given must
   ! be the same as the number of quantities, and corresponding weights are
-  ! applied to corresponding quantities.  The weights can also be given by {\tt
-  ! WeightVec}, which if present must have the same template as the column
-  ! template for A.  For each quantity, the weight vector is averaged to the
-  ! number of rows of regularization (i.e., (number of columns)~- (order of
-  ! regularization operator)) using the absolute value of the regularization
-  ! operator.  If both {\tt regWeights} and {\tt regWeightVec} are provided,
-  ! their product is used.
-  !
-  ! It is necessary that the number of rows in the row block of A that has
-  ! the most rows be large enough to accomodate the regularization~--
-  ! roughly at least (number of columns of a)~- min(order)).  If the
-  ! regularization order for a block is less than one less than the number of
-  ! columns of that block, the regularization order is set to one less than
-  ! the number of columns for that block, and a warning message is emitted.
+  ! applied to corresponding quantities.  If it is not given, $w = 1$.  The
+  ! argument {\tt WeightVec}, if present, must have the same template as the
+  ! column template for A.  For each quantity, the weight vector is averaged
+  ! to the number of rows of regularization (i.e., (number of columns)~- $k$)
+  ! using $|\mathbf{\Delta}^k|$.  Then it is used as the diagonal of the
+  ! row-scaling matrix $W$.  If {\tt WeightVec} is absent, one is used.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
@@ -615,6 +620,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.30  2002/10/21 22:27:44  vsnyder
+! Update comments to reflect reality
+!
 ! Revision 2.29  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
