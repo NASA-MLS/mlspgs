@@ -1495,12 +1495,15 @@ contains
         endif
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
         if(spect_der) then
-          Call eval_spect_path(Grids_dw,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dw(1:no_ele,:),eta_zxp_dw(1:no_ele,:))
-          Call eval_spect_path(Grids_dn,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dn(1:no_ele,:),eta_zxp_dn(1:no_ele,:))
-          Call eval_spect_path(Grids_dv,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dv(1:no_ele,:),eta_zxp_dv(1:no_ele,:))
+          Call eval_spect_path(Grids_dw, firstSignal%lo, thisSideband, &
+            & z_path(1:no_ele),phi_path(1:no_ele), &
+            & do_calc_dw(1:no_ele,:),eta_zxp_dw(1:no_ele,:))
+          Call eval_spect_path(Grids_dn, firstSignal%lo, thisSideband, &
+            & z_path(1:no_ele),phi_path(1:no_ele), &
+            & do_calc_dn(1:no_ele,:),eta_zxp_dn(1:no_ele,:))
+          Call eval_spect_path(Grids_dv, firstSignal%lo, thisSideband, &
+            & z_path(1:no_ele),phi_path(1:no_ele), &
+            & do_calc_dv(1:no_ele,:),eta_zxp_dv(1:no_ele,:))
         endif
 
         tan_temp(ptg_i) = one_tan_temp(1)
@@ -1514,9 +1517,10 @@ contains
        ! to compute sps_path for all those witn no frequency component
 
         Frq = 0.0
-        Call comp_sps_path_frq(Grids_f,Frq,eta_zp(1:no_ele,:), &
-           & do_calc_zp(1:no_ele,:),sps_path(1:no_ele,:),      &
-           & do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
+        Call comp_sps_path_frq(Grids_f, firstSignal%lo, thisSideband, &
+          & Frq,eta_zp(1:no_ele,:), &
+          & do_calc_zp(1:no_ele,:),sps_path(1:no_ele,:),      &
+          & do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
 
         if (h2o_ind > 0) then
           Call refractive_index(p_path(indices_c(1:npc)), &
@@ -1607,9 +1611,10 @@ contains
           ! Setup path quantities --------------------------------------
 
           ! Compute the sps_path for this Frequency
-          Call comp_sps_path_frq(Grids_f,Frq,eta_zp(1:no_ele,:), &
-            &  do_calc_zp(1:no_ele,:),sps_path(1:no_ele,:),      &
-            &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
+          Call comp_sps_path_frq(Grids_f, firstSignal%lo, thisSideband, &
+            & Frq,eta_zp(1:no_ele,:), &
+            & do_calc_zp(1:no_ele,:),sps_path(1:no_ele,:),      &
+            & do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
 
           if(temp_der  .and. spect_der) then
 
@@ -2493,6 +2498,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.82  2002/08/20 23:33:23  livesey
+! Fixed bug with handling of extinction
+!
 ! Revision 2.81  2002/08/20 22:37:04  livesey
 ! Moved uses inside routine
 !
