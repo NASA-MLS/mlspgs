@@ -26,8 +26,7 @@ contains
   ! (rec_tan_inds), that isn't needed anywhere else.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use ForwardModelConfig, only: ForwardModelConfig_t
-    use ForwardModelVectorTools, only: QtyStuff_T
+    use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use GLnp, only: NG, GX
     use Make_Z_Grid_M, only: Make_Z_Grid
     use MLSCommon, only: RP
@@ -160,6 +159,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.8  2004/11/01 20:23:41  vsnyder
+! Moved QtyStuff_t and associated dump routine to ForwardModelConfig
+!
 ! Revision 2.7  2004/07/02 01:35:52  vsnyder
 ! Correct a comment
 !
