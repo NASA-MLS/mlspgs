@@ -28,11 +28,10 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, parameter :: T_APRIORISOURCE  = t_last_intrinsic+1
-  integer, parameter :: T_APRIORITYPE    = t_apriorisource+1
-  integer, parameter :: T_CRITICALMODULE = t_aprioritype+1
+  integer, parameter :: T_CRITICALMODULE = t_last_intrinsic+1
   integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
-  integer, parameter :: T_HGRIDTYPE      = t_fillmethod+1
+  integer, parameter :: T_GRIDDEDORIGIN  = t_fillmethod+1
+  integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
   integer, parameter :: T_MATRIX         = t_hgridtype+1
   integer, parameter :: T_MERGEMETHOD    = t_matrix+1
   integer, parameter :: T_METHOD         = t_mergemethod+1
@@ -68,7 +67,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_DIAGONAL            = f_deferred + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
   integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
-  integer, parameter :: F_FILE                = f_explicitvalues + 1
+  integer, parameter :: F_FIELD               = f_explicitvalues + 1
+  integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FIRST               = f_file + 1
   integer, parameter :: F_FRACTION            = f_first + 1
   integer, parameter :: F_FREQUENCIES         = f_fraction + 1
@@ -93,7 +93,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MODULE              = f_MIF + 1
   integer, parameter :: F_MOLECULE            = f_module + 1 
   integer, parameter :: F_NUMBER              = f_molecule + 1
-  integer, parameter :: F_OUTPUTCOVARIANCE    = f_number + 1
+  integer, parameter :: F_ORIGIN              = f_number + 1
+  integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
   integer, parameter :: F_PER_DECADE          = f_overlaps + 1
@@ -225,11 +226,11 @@ module INIT_TABLES_MODULE
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_parm + 1
   integer, parameter :: S_BAND               = s_apriori + 1
-  integer, parameter :: S_CLIMATOLOGY        = s_band + 1
-  integer, parameter :: S_CREATE             = s_climatology + 1
+  integer, parameter :: S_CREATE             = s_band + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
-  integer, parameter :: S_HGRID              = s_forwardModel + 1
+  integer, parameter :: S_GRIDDED            = s_forwardModel + 1
+  integer, parameter :: S_HGRID              = s_gridded + 1
   integer, parameter :: S_L2GP               = s_hgrid + 1
   integer, parameter :: S_L2AUX              = s_l2gp + 1
   integer, parameter :: S_MATRIX             = s_l2aux + 1
@@ -297,10 +298,9 @@ contains ! =====     Public procedures     =============================
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
-    data_type_indices(t_apriorisource) =   add_ident ( 'aprioriSource' )
-    data_type_indices(t_aprioritype) =     add_ident ( 'aprioriType' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
+    data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
     data_type_indices(t_mergemethod) =     add_ident ( 'mergeMethod' )
@@ -376,6 +376,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
+    field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -401,6 +402,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_molecule) =            add_ident ( 'molecule' )
     field_indices(f_number) =              add_ident ( 'number' )
+    field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
@@ -479,10 +481,10 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_band) =                 add_ident ( 'band' )
-    spec_indices(s_climatology) =          add_ident ( 'climatology' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
+    spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
@@ -528,12 +530,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_string, n+n_dt_def /) )
     ! Define the enumerated types
     call make_tree ( (/ &
-      begin, t+t_aprioriSource, l+l_clo, l+l_co, l+l_gph, l+l_gph_precision, &
-             l+l_h2o, l+l_hcl, l+l_hno3, l+l_n2o, l+l_o3, l+l_temperature, &
-             l+l_temperature_prec, n+n_dt_def, &
-      begin, t+t_aprioritype, l+l_climatology, l+l_l2gp, l+l_l2aux, &
-             n+n_dt_def, &
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_hydrostatic, &
@@ -625,11 +623,10 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
-      begin, s+s_climatology, &
-             begin, f+f_type, t+t_aprioriType, n+n_field_type, &
-             begin, f+f_source, t+t_aprioriSource, n+n_field_type, &
-             begin, f+f_length, t+t_numeric, n+n_field_type, &
-             begin, f+f_versionRange, t+t_string, n+n_field_type, &
+      begin, s+s_gridded, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_field, t+t_string, n+n_field_type, &
+             begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_create, &
              begin, f+f_template, n+n_field_type, &
@@ -646,8 +643,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_merge, &  ! Must be AFTER S_Climatology
-             begin, f+f_apriori, s+s_climatology, n+n_field_spec, &
+      begin, s+s_merge, &  ! Must be AFTER S_Gridded
+             begin, f+f_apriori, s+s_gridded, n+n_field_spec, &
              begin, f+f_source, t+t_mergeSource, n+n_field_type, &
              begin, f+f_species, t+t_species, n+n_field_type, &
              begin, f+f_range, t+t_numeric_range, n+n_field_type, &
@@ -797,7 +794,7 @@ contains ! =====     Public procedures     =============================
                     n+n_name_def, &
              s+s_l2load, &                                   !???
              n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_climatology, s+s_l2gp, &
+      begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
       begin, z+z_chunkdivide, &
@@ -838,6 +835,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.37  2001/03/07 22:41:55  livesey
+! Reworked readapriori section
+!
 ! Revision 2.36  2001/03/06 20:52:33  livesey
 ! Removed unpackOutput option for joins
 !
