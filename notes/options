@@ -47,6 +47,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
     (--npcf sets --nmeta and --ncfpcf.)
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit
     (--ntk sets --npcf, --ncfpcf and --nmeta)
+  --version: Print current version number
   --[n]wall: Use wall clock instead of CPU_TIME
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
@@ -81,6 +82,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.10  2002/02/05 00:39:56  pwagner
+ garbage collecting options
+
  Revision 1.9  2002/01/18 00:57:36  livesey
  Added the --chunk option
 
