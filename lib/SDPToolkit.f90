@@ -11,7 +11,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &
-   "$Id$"
+   &"$Id$"&
     & "$RCSfile$"
 !----------------------------------------------------------
 
@@ -195,6 +195,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.10  2002/10/01 20:27:11  bwknosp
+! Fixed problem
+!
 ! Revision 2.9  2002/10/01 20:08:48  bwknosp
 ! Added Id and RCS info
 !
