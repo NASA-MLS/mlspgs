@@ -6,6 +6,7 @@ module Fill                     ! Create vectors and fill them.
 !=============================================================================
 
   USE L2GPData
+  USE L2AUXData
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR ! Later, s_Fill
                                                            ! will be added
@@ -49,7 +50,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( root, l1bInfo, aprioriData, vectorTemplates, vectors, &
-    & qtyTemplates , L2GPDatabase)
+    & qtyTemplates , L2GPDatabase, L2AUXDatabase)
 
   ! This is the main routine for the module.  It parses the relevant lines
   ! of the l2cf and works out what to do.
@@ -62,6 +63,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), dimension(:), pointer :: vectors
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: L2AUXDatabase
 
     ! Local variables
     integer :: I, J                ! Loop indices for section, spec
@@ -73,10 +75,11 @@ contains ! =====     Public Procedures     =============================
     integer :: vectorName          ! Sub-rosa index
     integer :: quantityName        ! Sub-rosa index
     integer :: sourceName          ! Sub-rosa index
+    integer :: l2Index             ! Where source is among l2gp or l2aux database
     INTEGER :: VectorDBSize
     CHARACTER (LEN=NameLen) :: vectorNameString, templateNameString
     CHARACTER (LEN=NameLen) :: sourceNameString, quantityNameString
-
+    LOGICAL :: is_l2gp, is_l2aux
 
     ! These should be moved into open_init some day soon
 !    INTEGER :: mlspcf_ol2gp_start=22000
@@ -131,7 +134,9 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
      case ( s_fill )
-          ! We can only fill vectors from an old l2gp file for now
+          ! We can for now only fill vectors from either:
+        ! old l2gp file
+        ! old l2aux file
         !          vectorName=""
         !          sourceName=""
         !          quantityName=""
@@ -173,9 +178,42 @@ contains ! =====     Public Procedures     =============================
 
 !          vectorIndex=LinearSearchStringArray(vectors%name,&
 !               & vectorName,caseInsensitive=.FALSE.)
-          CALL FillOL2GPVector(L2GPDatabase(1), qtyTemplates, &
-               & vectors(vectorIndex), quantityNameString, qtiesStart)
 
+
+! Is our source of type l2gp or l2aux?
+         is_l2gp = .FALSE.
+         is_l2aux = .FALSE.
+ 
+         l2Index = 1
+         DO WHILE (.NOT. is_l2gp .AND. l2Index.LE.SIZE(L2GPDatabase))
+             IF(sourceName.EQ.L2GPDatabase(l2Index)%nameIndex) THEN
+                 is_l2gp = .TRUE.
+                 exit
+             ENDIF
+             l2Index = l2Index + 1
+         ENDDO
+ 
+         IF(.NOT. is_l2gp) THEN
+                l2Index = 1
+                DO WHILE (.NOT. is_l2aux .AND. l2Index.LE.SIZE(L2AUXDatabase))
+                    IF(sourceName.EQ.L2AUXDatabase(l2Index)%Name) THEN
+                        is_l2gp = .TRUE.
+                        exit
+                    ENDIF
+                    l2Index = l2Index + 1
+                ENDDO
+         ENDIF
+         
+! Fill
+         IF(is_l2gp) THEN
+                CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
+                      & vectors(vectorIndex), quantityNameString, qtiesStart)
+
+         ELSE
+                CALL FillOL2AUXVector(L2AUXDatabase(l2Index), qtyTemplates, &
+                      & vectors(vectorIndex), quantityNameString, qtiesStart)
+
+         ENDIF
           ! This is *not* going to work if you have more than one vector
 
           qtiesStart = qtiesStart+1
@@ -406,6 +444,25 @@ ENDIF
 !     & 'Failed to deallocate temp OldL2GPData')
 END SUBROUTINE FillOL2GPVector
 
+!=============================== FillOL2AUXVector ==========================
+SUBROUTINE FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
+& Output, QuantityName, qtiesStart)
+!=============================== FillOL2AUXVector ==========================
+
+! If the times, pressures, and geolocations match,
+! fill the vector Output with values taken from the appropriate quantity in
+! Old L2AUX vector OldL2AUXData
+! 
+
+INTEGER, INTENT(IN) ::                            qtiesStart
+TYPE(L2AUXData_T) ::                               OldL2AUXData
+    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+!TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
+TYPE(Vector_T), INTENT(INOUT) ::                  Output
+CHARACTER*(*), INTENT(IN) ::                      QuantityName
+
+END SUBROUTINE FillOL2AUXVector
+
 !=============================== nearby ==========================
 FUNCTION nearby(x, y)
 !=============================== nearby ==========================
@@ -515,6 +572,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.7  2000/12/05 00:40:50  pwagner
+! Added FillOL2AUXVector
+!
 ! Revision 2.6  2000/11/30 00:22:52  pwagner
 ! functions properly moved to read a priori
 !
