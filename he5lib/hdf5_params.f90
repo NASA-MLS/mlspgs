@@ -4,7 +4,7 @@ module hdf5_params
 ! HDF-EOS5 programs. These are not needed by the Fortran 90 interface to
 ! straight HDF5 -- it provides its own parameters via the module HDF5.
 
-integer,public,parameter::H5F_ACC_RDWR=1, H5F_ACC_TRUNC=2, H5F_ACC_RDONLY=0
+integer,public,parameter::H5F_ACC_RDWR=0, H5F_ACC_TRUNC=2, H5F_ACC_RDONLY=1
 integer,public,parameter::H5S_UNLIMITED=-1
 
 ! is this right......
