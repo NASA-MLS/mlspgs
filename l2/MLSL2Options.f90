@@ -30,9 +30,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
-  logical, parameter :: PUNISH_FOR_INVALID_PCF=.FALSE.  ! set to true
-  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.FALSE.  ! set to true
-  logical, parameter :: PUNISH_FOR_NO_L1BOA=.FALSE.  ! set to true
+  logical, parameter :: PUNISH_FOR_INVALID_PCF=.false.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false.  ! set to true
+  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.  ! set to true
   logical :: PCF = .false.                         ! Open L2CF using PCF ?
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -40,14 +40,23 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! when set to 0, it allows program to run w/o creating metadata
    integer, parameter :: PENALTY_FOR_NO_METADATA = 0
 
+   ! Change the following to -2 before delivering to sips;
+   ! (its possible values and their effects on normal output:
+   ! -1          sent to stdout (via print *, '...')
+   ! -2          sent to Log file (via MLSMessage)
+   ! < -2        both stdout and Log file
+   ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
+   integer, parameter :: OUTPUT_PRINT_UNIT = -1
+
 !=============================================================================
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.2  2001/04/17 20:26:28  pwagner
+! Added OUTPUT_PRINT_UNIT
+!
 ! Revision 2.1  2001/04/16 23:53:10  pwagner
 ! First commit
 !
-!
-
