@@ -67,7 +67,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use MatrixModule_0, only: CreateBlock, Dump, M_Absent, M_Banded, &
+    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, &
       & MatrixElement_T
     use MatrixModule_1, only: Matrix_T
     use MLSCommon, only: R8
@@ -96,7 +96,7 @@ contains
     integer, parameter :: TooFewRows = RegTemplate + 1   ! Won't fit
     integer, parameter :: Unitless = TooFewRows + 1      ! Orders must be unitless
 
-    integer :: Error       ! non-zero if an error occurs
+    integer :: Error               ! non-zero if an error occurs
 
     integer :: C1, C2              ! Column boundaries, esp. if a mask is used.
     integer :: I, J                ! Subscripts, Loop inductors
@@ -107,7 +107,6 @@ contains
     integer :: NI, NQ              ! Indices for instance and quantity
     integer :: NROW                ! Number of rows in first row block of A
     integer :: Ord                 ! Order for the current block
-    integer :: R                   ! Row block with most rows
     integer :: Type                ! Type of value returned by EXPR
     integer :: Units(2)            ! Units of value returned by EXPR
     double precision :: Value(2)   ! Value returned by EXPR
@@ -141,16 +140,6 @@ contains
     end if
 
     if ( error == 0 ) then
-
-    rows = 0
-      r = 1
-      nrow = a%row%nelts(r)
-      do ib = 2, a%row%nb ! Find the block with the most rows
-        if ( a%row%nelts(ib) > nrow ) then
-          r = ib
-          nrow = a%row%nelts(r)
-        end if
-      end do
 
       maxCols = 0
       do ib = 1, a%col%nb ! Find number of columns in widest block
@@ -200,23 +189,23 @@ contains
           end do
         end if
         ncol = a%col%nelts(ib)
+        nrow = a%row%nelts(ib)
         if ( ord > ncol-1 ) then
           warn = .true.
           ord = ncol - 1
         end if
-        if ( rows + ncol - ord - 1 > a%row%nelts(ib) ) &
-          & call announceError ( tooFewRows, orders )
+        if ( ncol - ord > a%row%nelts(ib) ) then
+          print *, 'ncol, ord, nb, a%row%nelts(ib) =', ncol, ord, nb, a%row%nelts(ib)
+          call announceError ( tooFewRows, orders )
+        end if
         if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
         if ( error /= 0 ) warn = .true.
-        if ( ord == 0 .or. wt <= 0.0_r8 .or. error /= 0 ) then
-          call createBlock ( a%block(r,ib), nrow, ncol,  m_absent )
-          error = 0
-        else
-          call createBlock ( a%block(r,ib), nrow, ncol, m_banded, &
+        if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
+          call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
             & (ncol-ord)*(ord+1) )
-          a%block(r,ib)%r1 = 0          ! in case there's a mask
-          a%block(r,ib)%r2 = 0
-          a%block(r,ib)%values = 0.0_r8
+          a%block(ib,ib)%r1 = 0         ! in case there's a mask
+          a%block(ib,ib)%r2 = 0
+          a%block(ib,ib)%values = 0.0_r8
 
           rows = rows + 1
 
@@ -228,40 +217,38 @@ contains
             if ( associated(weightVec) ) then
               wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
                 & weightVec%quantities(nq)%values(:,ni)
-              call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt, wtVec )
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt, wtVec )
             else
-              call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt )
+              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt )
             end if
           else
             ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
             c2 = 1
-o:          do while ( c2 <= a%block(r,ib)%ncols )
+o:          do while ( c2 <= a%block(ib,ib)%ncols )
               c1 = c2
               do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
                   & /= 0 )
-                if ( c1 >= a%block(r,ib)%ncols ) exit o
+                if ( c1 >= a%block(ib,ib)%ncols ) exit o
                 c1 = c1 + 1
               end do
               c2 = c1 + 1
               do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
                   & == 0 )
                 c2 = c2 + 1
-                if ( c2 > a%block(r,ib)%ncols ) exit
+                if ( c2 > a%block(ib,ib)%ncols ) exit
               end do
               if ( associated(weightVec) ) then
                 wtVec = 0.0_r8
                 wtVec ( c1 : c2-1 ) = weightVec%quantities(nq)%values(c1:c2-1,ni)
-                call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt, wtVec )
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec )
               else
-                call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt )
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
               end if
             end do o
           end if
 
         end if
-
-        if ( index(switches,'reg') /= 0 ) &
-          & call dump ( a%block(r,ib), name='Tikhonov', details=2 )
+        error = 0
 
       end do
       call deallocate_test ( wtVec, "Weight vector", moduleName )
@@ -361,10 +348,10 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
       ! last ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1
       ! elements.  E.g., for order three, the first four rows look like:
 
-      !  1  -1   3  -1
-      !      1  -1   3  -1
-      !          1  -1   3  -1
-      !              1  -1   3  -1
+      !  1  -3   3  -1
+      !      1  -3   3  -1
+      !          1  -3   3  -1
+      !              1  -3   3  -1
 
       ! (assuming there are at least seven columns)
 
@@ -375,7 +362,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
       do i = 1, ord + 1
         nv = b%r2(k-1) + 1
         j = min(i,maxRow) ! Number of coefficients
-        b%r1(k) = rows
+        b%r1(k) = i
         b%r2(k) = nv + j - 1
         if ( present(wtVec) ) then
           b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:i+j-1)
@@ -387,8 +374,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
       ! Fill in coefficients from all of C(:Ord)
       do i = ord+2, maxRow
         nv = b%r2(k-1) + 1
-        rows = rows + 1
-        b%r1(k) = rows
+        b%r1(k) = i - ord
         b%r2(k) = nv + ord
         if ( present(wtVec) ) then
           b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:i+ord)
@@ -402,8 +388,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
       j = min(maxrow-1,ord) - 1 ! Index of last coefficient
       do i = max(ord+2,maxRow+1), ncol
         nv = b%r2(k-1) + 1
-        rows = rows + 1
-        b%r1(k) = rows
+        b%r1(k) = i - ord
         b%r2(k) = nv + j
         if ( present(wtVec) ) then
           b%values(nv:nv+j,1) = c(0:j) * wtVec(ncol-j:ncol)
@@ -413,6 +398,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
         j = j - 1
         k = k + 1
       end do
+      rows = rows + maxRow
     end subroutine FillBlock
 
   end subroutine Regularize
@@ -420,6 +406,12 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.19  2002/08/20 19:54:19  vsnyder
+! Re-arrange to use a matrix with the same row and column vector definitions.
+! Don't try to put all of the regularization into one block.  Instead, fill
+! each diagonal block of the matrix with regularization for that quantity
+! and instance.
+!
 ! Revision 2.18  2002/08/16 21:33:02  livesey
 ! Bug fix in tooFewRows message
 !
