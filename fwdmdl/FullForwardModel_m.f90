@@ -191,7 +191,6 @@ contains ! ================================ FullForwardModel routine ======
     type(path_int_vector_2d), allocatable, dimension(:,:) :: SPS_PHI_LOOP
     type(path_int_vector_2d), allocatable, dimension(:,:) :: SPS_ZETA_LOOP
 
-    real(r8) :: tol
     Integer :: no_midval_ndx, no_gl_ndx, max_nl, max_num_frq
     Integer, DIMENSION(:,:), ALLOCATABLE :: gl_ndx, midval_ndx
     real(r8), dimension(:,:),  pointer :: midval_delta   ! (N2lvl,Nsps)
@@ -345,9 +344,6 @@ contains ! ================================ FullForwardModel routine ======
     maxVert = 2 * ( (NG+1) * (nlvl-1) + 1)
     phiWindow = FwdModelConf%phiWindow
 
-    tol = +0.2
-!   tol = -0.2
-
     if ( toggle(emit) ) then
       print*,'Dimensions:'
       print*,'noMAFs:',noMAFs
@@ -360,7 +356,7 @@ contains ! ================================ FullForwardModel routine ======
       print*,'noSpecies:',noSpecies
       print*,'maxNoFSurfs:',maxNoFSurfs
       print*,'MAF:',fmStat%maf
-      print*,'tol:',tol
+      print*,'tolerance:',fwdModelConf%tolerance
     end if
 
     ! Work out which channels are used, also check we have radiances for them.
@@ -850,7 +846,7 @@ contains ! ================================ FullForwardModel routine ======
           ! ------------------------------- Begin loop over frequencies ------
           do frq_i = 1, noFreqs
 !
-            Call path_contrib(tau, brkpt, no_ele, tol, mid, midval_ndx, &
+            Call path_contrib(tau, brkpt, no_ele, fwdModelConf%tolerance, mid, midval_ndx, &
               &  no_midval_ndx, gl_ndx, no_gl_ndx, Ier)
             if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Path_contrib failed' )
@@ -1269,6 +1265,9 @@ contains ! ================================ FullForwardModel routine ======
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 1.2  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.1  2001/05/29 22:53:51  livesey
 ! First version, taken from old ForwardModelInterface.f90
 !
