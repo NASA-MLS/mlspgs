@@ -626,7 +626,7 @@ spectra, molecule=o3_asym_o_18, Qlog=[3.8582, 3.6708, 3.4065], $
                  ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
   o3_sym_o_18_2: line, v0= 2535208.0603 MHz, el= 649.4622, str= -2.7769, w= 2.051, $
                  ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-spectra, molecule=o3_sym_18, Qlog=[3.5472, 3.3599, 3.0959], lines=[o3_sym_18_1, o3_sym_18_2]
+spectra, molecule=o3_sym_o_18, Qlog=[3.5472, 3.3599, 3.0959], lines=[o3_sym_o_18_1, o3_sym_o_18_2]
 
 END Spectroscopy
 
@@ -853,6 +853,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.16  2001/04/06 18:29:02  pwagner
+; fixed van's typo
+;
 ; Revision 2.15  2001/04/05 18:22:12  vsnyder
 ; Correct names of two molecules
 ;
