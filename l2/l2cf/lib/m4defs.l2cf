@@ -78,8 +78,8 @@ changesyntax({@!})
 !define(doy,{!substr(}$1{,5,3)})
 
 ; This macro calls a python script to add dates etc.
-!define(ccsdsbadd,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbadd $1 $2))})
-!define(ccsdsbtodao,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbtodao $1))})
+!define(ccsdsbadd,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbadd.py $1 $2))})
+!define(ccsdsbtodao,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbtodao.py $1))})
 
 ; ---------------------------------------- Parameter=value macros
 
