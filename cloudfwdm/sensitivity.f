@@ -1,6 +1,7 @@
 
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,
      >                       delTAU,delTAUc,TAUeff,SS,
+     >                       BETA,BETAc,DDm,Dm,DDZ,DZ,
      >                       N,NF,IRF,ISWI,RE)
 C----------------------------------------------------------------
 
@@ -14,13 +15,64 @@ C----------------------------------------------------------------
       REAL SS(NT+1,NF)                         ! CLOUD RADIANCE SENSITIVITY
       REAL TAUeff(NT+1,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
-      REAL delTAU(NH-1)                        ! CLEAR-SKY  
+      REAL delTAU(NH-1)                        ! TOTAL EXTINCTION 
       REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
+
+      REAL BETA(NZ,NF)                         ! TOTAL EXTINCTION
+      REAL BETAc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
+      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
+      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
+      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
 
       REAL*8 RE
       REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL ZH(NH),ZA(NZ)
       INTEGER I,K,J,iflag
 C-----------------------------------------------------------------------------
+
+C===============================================================
+C     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
+C===============================================================
+
+      DO I=1,NH-1
+         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
+      END DO
+
+      DO I=1,NZ-1
+         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
+      END DO
+
+      DO J=1,NZ-1
+      
+         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
+         
+         BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*
+     >                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         BETAc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))*
+     >                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*
+     >                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
+
+         DZ(J)=((ZH(JM+1)-ZA(J))*DDZ(JM)+(ZA(J)-ZH(JM))*
+     >                DDZ(JM+1))/(ZH(JM+1)-ZH(JM))             
+
+      ENDDO
+
+      DO J=1,NZ-1
+            IF (DZ(J) .GT. 0.) THEN 
+               BETA(J,IRF)=BETA(J,IRF)/DZ(J)
+               BETAc(J,IRF)=BETAc(J,IRF)/DZ(J)
+            ELSE
+               BETA(J,IRF)=0.
+               BETAc(J,IRF)=0.
+            ENDIF
+      ENDDO
 
 C==========================================================================
 C     RADIANCE SENSITIVITY CALCULATIONS

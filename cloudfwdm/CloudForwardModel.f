@@ -206,10 +206,10 @@ C-------------------------------
       REAL PHI(NUA)                            ! SCATTERING AZIMUTH ANGLES
       REAL UI(NU,NU,NUA)                       ! COSINE OF INCIDENT TB ANGLES
       REAL THETAI(NU,NU,NUA)                   ! ANGLES FOR INCIDENT TB
-      REAL PHH(N,NU,NZ-1)                      ! PHASE FUNCTION 
-      REAL TAU(NZ-1)                           ! TOTAL OPTICAL DEPTH
-      REAL TAU100(NZ-1)                        ! TOTAL OPTICAL DEPTH AT 100%RH
-      REAL W0(N,NZ-1)                          ! SINGLE SCATTERING ALBEDO
+      REAL PHH(N,NU,NZmodel-1)                      ! PHASE FUNCTION 
+      REAL TAU(NZmodel-1)                           ! TOTAL OPTICAL DEPTH
+      REAL TAU100(NZmodel-1)                        ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL W0(N,NZmodel-1)                          ! SINGLE SCATTERING ALBEDO
       
       REAL S                                   ! SALINITY
       REAL SWIND                               ! SEA SURFACE WIND
@@ -218,14 +218,14 @@ C-------------------------------
       REAL RC0(3)                              ! GAS ABS.SCAT.EXT COEFFS.
       REAL RC(N,3)                             ! CLOUD ABS.SCAT.EXT COEFFS.
       REAL RC_TOT(3)                           ! TOTAL ABS.SCAT.EXT COEFFS.
-      REAL Z(NZ-1)                             ! MODEL LAYER THICKNESS (m)
-      REAL TAU0(NZ-1)                          ! CLEAR-SKY OPTICAL DEPTH
-      REAL TEMP(NZ-1)                          ! MEAN LAYER TEMPERATURE (K)
+      REAL Z(NZmodel-1)                        ! MODEL LAYER THICKNESS (m)
+      REAL TAU0(NZmodel-1)                     ! CLEAR-SKY OPTICAL DEPTH
+      REAL TEMP(NZmodel-1)                     ! MEAN LAYER TEMPERATURE (K)
 
-      REAL TT(NT+1,NZ)                         ! CLOUDY-SKY TB AT TANGENT 
+      REAL TT(NT+1,NZmodel)                         ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL TT0(NT+1,NZ)                        ! CLEAR-SKY TB AT TANGENT
+      REAL TT0(NT+1,NZmodel)                        ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 C---------------------------------------------
@@ -240,7 +240,7 @@ C---------------------------------------------
       REAL YT (NZmodel)
       REAL YQ (NZmodel)                             ! H2O VOLUME MIXING RATIO
       REAL VMR(NS,NZmodel)                          ! 1=O3 VOLUME MIXING RATIO
-                               
+      REAL DDm(N,NZmodel)                         
 C----------------------------
 C     CLOUD MODEL PARAMETERS
 C----------------------------
@@ -250,8 +250,8 @@ C----------------------------
       REAL DEPTH                               ! TOTAL OPTICAL DEPTH
                                                ! (CLEAR+CLOUD)
 
-      REAL delTAU(NZ-1)                        ! TOTAL EXTINCTION
-      REAL delTAUc(NZ-1)                       ! CLOUDY-SKY EXTINCTION
+      REAL delTAU(NZmodel-1)                        ! TOTAL EXTINCTION
+      REAL delTAUc(NZmodel-1)                       ! CLOUDY-SKY EXTINCTION
       
 C---------------------------
 C     WORK SPACE PARAMETERS
@@ -260,7 +260,7 @@ C---------------------------
       INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC,L
 
       REAL HT,DMA,RATIO
-      REAL PH0(N,NU,NZ-1),W00(N,NZ-1)  
+      REAL PH0(N,NU,NZmodel-1),W00(N,NZmodel-1)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
       REAL CHK_CLD(NZmodel)                        
       REAL ZZT(NT)
@@ -273,6 +273,7 @@ C---------------------------
       REAL BC(3,NR)                            ! SINGLE PARTICLE ABS/SCAT/EXT 
                                                ! COEFFS
 
+      REAL DZ(NZ-1)
       COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
 
 C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
@@ -291,9 +292,9 @@ C=========================================================================
      >                YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,
      >                ZT,ZZT,NT) 
 
-c      DO I=1,NZmodel
-c         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I),IPSD(I)
-c      ENDDO
+      DO I=1,NZmodel
+         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I),IPSD(I)
+      ENDDO
 
 c         WRITE(21,*)(ZZT(I),I=1,NT)
 
@@ -339,7 +340,7 @@ C=========================================================================
 
        DO 2000 IFR=1, NF
 
-         CALL CLEAR_SKY(NZ-1,NU,TS,S,LORS,SWIND,
+         CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,
      >                  YZ,YP,YT,YQ,VMR,
      >                  FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
@@ -349,7 +350,7 @@ C-----------------------------------------------------
 C        ASSUME 100% SATURATION IN CLOUD LAYER
 C-----------------------------------------------------
 
-         DO IL=1, NZ-1                   ! 100% SATURATION INSIDE CLOUD 
+         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL
                IF(YZ(IL) .LT. 20.)THEN
@@ -366,7 +367,7 @@ C-----------------------------------------------------
 
 C--------------------------------------------------------
 
-         DO 1000 ILYR=1, NZ-1             ! START OF MODEL LAYER LOOP:   
+         DO 1000 ILYR=1, NZmodel-1             ! START OF MODEL LAYER LOOP:   
  
             RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0.
@@ -430,7 +431,7 @@ C=================================================
                   W0(ISPI,ILYR)=1.
                ENDIF
 
-               Dm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
             ENDDO
 
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
@@ -439,15 +440,15 @@ C=================================================
             delTAU(ILYR) = DEPTH
             delTAUc(ILYR)= CDEPTH(1)
 
-            IF (Z(ILYR) .NE. 0) THEN 
-               BETA(ILYR,IFR)=DEPTH/Z(ILYR)
-               BETAc(ILYR,IFR)=CDEPTH(1)/Z(ILYR)
-            ELSE
-               BETA(ILYR,IFR)=0.
-               BETAc(ILYR,IFR)=0.
-            ENDIF
+c            IF (Z(ILYR) .NE. 0) THEN 
+c               BETA(ILYR,IFR)=DEPTH/Z(ILYR)
+c               BETAc(ILYR,IFR)=CDEPTH(1)/Z(ILYR)
+c            ELSE
+c               BETA(ILYR,IFR)=0.
+c               BETAc(ILYR,IFR)=0.
+c            ENDIF
 
-c            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
+            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
 
 c           WRITE(21,*) BETAc(ILYR,IFR),BETA(ILYR,IFR),W0(1,ILYR)  
 
@@ -459,13 +460,13 @@ C==================================================
 
          CALL HEADER(4)
 
-         CALL RADXFER(NZ-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,
      >              FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,
      >              UI,UA,TT0,NT,ICON,RE)                          !CLEAR-SKY
 
          IF(ICON .GT. 1) THEN                                          
 
-           CALL RADXFER(NZ-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,
      >             FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,
      >             UI,UA,TT,NT,ICON,RE)                            !CLOUDY-SKY
 
@@ -476,12 +477,13 @@ C    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 C====================================
 
          DO I=1,NT
-            TB0(I,IFR)=TT0(I,NZ)                  ! CLEAR-SKY BACKGROUND      
-            DTcir(I,IFR)=TT(I,NZ)-TT0(I,NZ)      ! CLOUD-INDUCED RADIANCE
+            TB0(I,IFR)=TT0(I,NZmodel)                  ! CLEAR-SKY BACKGROUND      
+            DTcir(I,IFR)=TT(I,NZmodel)-TT0(I,NZmodel)  ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZ,NZ,
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ,
      >                     delTAU,delTAUc,TAUeff,SS,
+     >                     BETA, BETAc, DDm, Dm, Z, DZ,
      >                     N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
