@@ -508,9 +508,10 @@ contains
   subroutine DRad_tran_dt ( z_path_c, h_path_c, t_path_c, dh_dt_path_c, &
                          &  alpha_path_c, alphaxn_path_c, eta_zxp_c, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
-                         &  freq, do_gl, h_path_f, t_path_f, dh_dt_path_f, &
+                         &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
-                         &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dt,  &
+                         &  ds_dh_gl, dh_dz_gl, t_script, dt_scr_dt, &
+                         &  tau, i_stop, drad_dt,  &
                          &  ptg_i, frq_i )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
@@ -519,55 +520,55 @@ contains
 
 ! Inputs
 
-    real(rp), intent(in) :: z_path_c(:) ! path -log(P) on main grid.
-    real(rp), intent(in) :: h_path_c(:) ! path heights + req on main grid km.
-    real(rp), intent(in) :: t_path_c(:) ! path temperature(K) on main grid.
+    real(rp), intent(in) :: z_path_c(:)     ! path -log(P) on main grid.
+    real(rp), intent(in) :: h_path_c(:)     ! path heights + req on main grid km.
+    real(rp), intent(in) :: t_path_c(:)     ! path temperature(K) on main grid.
     real(rp), intent(in) :: dh_dt_path_c(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on main grid.
     real(rp), intent(in) :: alpha_path_c(:) ! path absorption(km^-1)
 !                                             on main grid.
     real(rp), intent(in) :: alphaxn_path_c(:) ! path absorption times
 !                            temperature power(km^-1) on main grid.
-    real(rp), intent(in) :: eta_zxp_c(:,:) ! representation basis function
+    real(rp), intent(in) :: eta_zxp_c(:,:)  ! representation basis function
 !                                              main grid.
     logical, intent(in) :: do_calc_t_c(:,:) ! A logical indicating where the
 !                    representation basis function is not zero on main grid.
     logical, intent(in) :: do_calc_hyd_c(:,:) ! A logical indicating where the
 !                    dh_dt function is not zero on main grid.
-    real(rp), intent(in) :: del_s(:) ! unrefracted path length.
-    real(rp), intent(in) :: ref_cor(:) ! refracted to unrefracted path
-!                                        length ratios.
-    real(rp), intent(in) :: h_tan ! tangent height + req (km).
-    real(rp), intent(in) :: dh_dt_tan(:) ! derivative of path height wrt
-!                                       temperature at the tangent (km/K).
-    real(r8), intent(in) :: freq ! calculation frequency (MHz).
-    logical, intent(in) :: do_gl(:) ! A logical indicating where to do gl
-!                                     integrations.
-    real(rp), intent(in) :: h_path_f(:) ! path heights + req on gl grid km.
-    real(rp), intent(in) :: t_path_f(:) ! path temperature(K) on gl grid.
+    real(rp), intent(in) :: del_s(:)        ! unrefracted path length.
+    real(rp), intent(in) :: ref_cor(:)      ! refracted to unrefracted path
+!                                             length ratios.
+    real(rp), intent(in) :: h_tan           ! tangent height + req (km).
+    real(rp), intent(in) :: dh_dt_tan(:)    ! derivative of path height wrt
+!                                             temperature at the tangent (km/K).
+    logical, intent(in) :: do_gl(:)         ! A logical indicating where to do
+!                                             gl integrations.
+    real(rp), intent(in) :: h_path_f(:)     ! path heights + req on gl grid km.
+    real(rp), intent(in) :: t_path_f(:)     ! path temperature(K) on gl grid.
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on gl grid.
     real(rp), intent(in) :: alpha_path_f(:) ! path absorption(km^-1) on gl grid.
     real(rp), intent(in) :: alphaxn_path_f(:) ! path absorption times
 !                            temperature power(km^-1) on gl grid.
-    real(rp), intent(in) :: eta_zxp_f(:,:) ! representation basis function
+    real(rp), intent(in) :: eta_zxp_f(:,:)  ! representation basis function
 !                                              gl grid.
     logical, intent(in) :: do_calc_t_f(:,:) ! A logical indicating where the
 !                    representation basis function is not zero on gl grid.
-    real(rp), intent(in) ::  ds_dh_gl(:) ! path length wrt height derivative on
-!                                          gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
-!                                         gl grid.
-    real(rp), intent(in) :: t_script(:) ! differential temperatures (K).
-    real(rp), intent(in) :: tau(:) ! transmission function.
-    integer(ip), intent(in) :: i_stop ! path stop index
-    integer(ip), intent(in) :: ptg_i,frq_i ! debugger statements
+    real(rp), intent(in) ::  ds_dh_gl(:)    ! path length wrt height derivative
+!                                             on gl grid.
+    real(rp), intent(in) :: dh_dz_gl(:)     ! path height wrt zeta derivative
+!                                             on gl grid.
+    real(rp), intent(in) :: t_script(:)     ! differential temperatures (K).
+    real(rp), intent(in) :: dt_scr_dt(:,:)  ! d t_script / d T * d T / d eta.
+    real(rp), intent(in) :: tau(:)          ! transmission function.
+    integer(ip), intent(in) :: i_stop       ! path stop index
+    integer(ip), intent(in) :: ptg_i, frq_i ! debugger statements
 
 ! Outputs
 
-    real(rp), intent(out) :: drad_dt(:)    ! derivative of radiances wrt
-!                                            mixing ratio statevector
-!                                            element. (K)
+    real(rp), intent(out) :: drad_dt(:)     ! derivative of radiances wrt
+!                                             mixing ratio statevector
+!                                             element. (K)
 ! Internals
 
     integer(ip) :: sv_i, sv_t, n_inds, i, j, k, l, i_start
@@ -579,7 +580,6 @@ contains
     integer(ip), pointer :: more_inds(:) ! more_inds => part_of_more_inds_B
 
     real(rp) :: d_delta_dt(1:size(tau))
-    real(rp) :: dt_scr_dt(1:size(tau),1:size(eta_zxp_c,dim=2))
     real(rp), target, dimension(1:size(tau)) :: del_zeta_B, gl_delta_B
     real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
     real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
@@ -594,10 +594,6 @@ contains
     n_path = size(tau)
     sv_t = size(eta_zxp_c,dim=2)
     mid = n_path / 2
-
-! compute the t_script derivative
-
-    call dt_script_dt ( t_path_c, eta_zxp_c, freq, dt_scr_dt )
 
 ! compute the opacity derivative singularity value
 
@@ -825,6 +821,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.13  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.12.2.2  2003/03/20 01:42:26  vsnyder
 ! Revise Grids_T structure
 !

@@ -25,7 +25,7 @@ module GET_BETA_PATH_M
 contains
 
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
-  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, &
+  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
         & Catalog, beta_group, polarized, gl_slabs, path_inds,     &
         & beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,   &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path)
@@ -40,9 +40,10 @@ contains
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq         ! frequency in MHz
-    real(rp), intent(in) :: T_path(:)   ! path temperatures
-    real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
+    real(r8), intent(in) :: Frq          ! frequency in MHz
+    real(rp), intent(in) :: P_path(:)    ! path pressures in hPa!
+    real(rp), intent(in) :: T_path(:)    ! path temperatures
+    real(rp), intent(in) :: Tanh_path(:) ! tanh(0.5*h_over_k*frq / t_path)
     type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
@@ -97,7 +98,7 @@ contains
     real(rp) :: Ratio, BB, VP, V0, VM, T, TM, TP, BP, BM
     real(rp), allocatable, dimension(:) :: LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
-    real(rp), dimension(size(path_inds)) :: tanh1, tanh1_p, tanh1_m
+    real(rp), dimension(size(path_inds)) :: tanh1_p, tanh1_m
 
 ! begin the code
 
@@ -105,9 +106,7 @@ contains
     n_path = size(path_inds)
 
     beta_path = 0.0
-! Note that expa only depends on temperature.
-! compute path hyperbolic tangent
-    tanh1 = tanh(0.5_rp * h_over_k * frq / t_path(path_inds))
+    ! compute path hyperbolic tangent
 
     if ( associated(dbeta_dw_path) ) dbeta_dw_path(1:n_path,:) = 0.0
     if ( associated(dbeta_dn_path) ) dbeta_dn_path(1:n_path,:) = 0.0
@@ -123,8 +122,8 @@ contains
           k = path_inds(j)
 
           call create_beta ( spectag, catalog(ib)%continuum, p_path(k),   &
-            & t_path(k), Frq, lines(catalog(ib)%lines)%w, gl_slabs(k,ib), &
-            & tanh1(j), bb, polarized .and. catalog(ib)%polarized,        &
+            & t_path(j), Frq, lines(catalog(ib)%lines)%w, gl_slabs(k,ib), &
+            & tanh_path(j), bb, polarized .and. catalog(ib)%polarized,    &
             & DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
 
           beta_path(j,i) = beta_path(j,i) + ratio * bb 
@@ -174,7 +173,7 @@ contains
         end do
         do j = 1 , n_path
           k = path_inds(j)
-          t  = t_path(k)
+          t  = t_path(j)
           tm = t_path_m(k)
           tp = t_path_p(k)
           bm = betam(j)
@@ -353,6 +352,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.32  2003/05/10 00:48:09  vsnyder
+! Add TeXnicalities
+!
 ! Revision 2.31  2003/05/09 20:07:07  vsnyder
 ! Correct kind parameter for H, specify intent for GL_slabs and Beta_group
 !
