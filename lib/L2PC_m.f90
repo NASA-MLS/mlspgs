@@ -1123,19 +1123,16 @@ contains ! ============= Public Procedures ==========================
     end if
 
     ! Loop over blocks and read them
-    do blockRow = 1, l2pc%row%NB
-      do blockCol = 1, l2pc%col%NB
-        ! Access this block
-        write ( name, * ) 'Block', blockRow, blockCol
-        call h5gOpen_f ( blocksId, trim(name), blockId, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to open group for l2pc matrix block '//trim(name) )
-        ! Could check it's the block we're expecting but I think I'll be lazy
-        call GetHDF5Attribute ( blockID, 'kind', kind )
-        if ( myShallow .or. kind == m_absent ) then
-          if ( kind /= m_absent ) kind = m_unknown
-          call CreateBlock ( l2pc, blockRow, blockCol, kind )
-        else
+    if ( .not. myShallow ) then
+      do blockRow = 1, l2pc%row%NB
+        do blockCol = 1, l2pc%col%NB
+          ! Access this block
+          write ( name, * ) 'Block', blockRow, blockCol
+          call h5gOpen_f ( blocksId, trim(name), blockId, status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to open group for l2pc matrix block '//trim(name) )
+          ! Could check it's the block we're expecting but I think I'll be lazy
+          call GetHDF5Attribute ( blockID, 'kind', kind )
           if ( kind == m_banded .or. kind == m_column_sparse ) then
             call GetHDF5Attribute ( blockID, 'noValues', noValues )
             call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
@@ -1151,10 +1148,17 @@ contains ! ============= Public Procedures ==========================
           call h5gClose_f ( blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unable to close group for input l2pc matrix block '//trim(name) )
-        end if
         end do
-    end do
-    
+      end do
+    else
+      ! Otherwise, flag the whole matrix as unknown
+      do blockRow = 1, l2pc%row%NB
+        do blockCol = 1, l2pc%col%NB
+          call CreateBlock ( l2pc, blockRow, blockCol, m_unknown )
+        end do
+      end do
+    end if
+        
     ! Finish up, though if in shallow mode, then keep the groups open
     if ( .not. myShallow ) then
       call h5gClose_f ( blocksID, status )
@@ -1447,6 +1451,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.43  2002/08/21 23:10:11  livesey
+! No longer scans each bin for blocks
+!
 ! Revision 2.42  2002/08/20 21:01:40  livesey
 ! Bug fix in DestroyL2PCInfoDatabase
 !
