@@ -30,7 +30,8 @@ module ConstructQuantityTemplates
   integer, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
   integer, parameter :: P_FGRID              = P_MUSTBEZETA + 1
   integer, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
-  integer, parameter :: P_HGRID              = P_FGRIDOPTIONAL + 1
+  integer, parameter :: P_FLEXIBLEVHGRID     = P_FGRIDOPTIONAL + 1
+  integer, parameter :: P_HGRID              = P_FLEXIBLEVHGRID + 1
   integer, parameter :: P_MODULE             = P_HGRID + 1
   integer, parameter :: P_MOLECULE           = P_MODULE + 1
   integer, parameter :: P_SGRID              = P_MOLECULE + 1
@@ -96,8 +97,7 @@ contains ! ============= Public procedures ===================================
 
     ! Local variables
     logical :: LOGBASIS                 ! To place in quantity
-    logical :: MAJORFRAME               ! Is a major frame quantity
-    logical :: MINORFRAME               ! Is a minor frame quantity
+    logical :: ISMINORFRAME             ! Is a minor frame quantity
     logical :: REGULAR                  ! Flag
     logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
     logical, dimension(field_first:field_last) :: GOT ! Fields
@@ -238,13 +238,15 @@ contains ! ============= Public procedures ===================================
     ! Now check various things out first check that required fields are present
     ! according to the quantity type
     ! First those that are fairly clear cut to check
-    if ( got ( f_hGrid ) .neqv. properties ( p_hGrid ) ) &
-      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
-      & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType, &
-      & severity='nonfatal' )
-    if ( got ( f_vGrid ) .neqv. properties ( p_vGrid ) ) &
-      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
-      & got(f_vGrid) ) ) // ' vGrid for quantity type ', quantityType )
+    if ( .not. properties ( p_flexibleVHGrid ) ) then
+      if ( got ( f_hGrid ) .neqv. properties ( p_hGrid ) ) &
+        & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+        & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType, &
+        & severity='nonfatal' )
+      if ( got ( f_vGrid ) .neqv. properties ( p_vGrid ) ) &
+        & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+        & got(f_vGrid) ) ) // ' vGrid for quantity type ', quantityType )
+    endif
     if ( got ( f_sGrid ) .neqv. properties ( p_sGrid ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_sGrid) ) ) // ' sGrid for quantity type ', quantityType )
@@ -274,7 +276,7 @@ contains ! ============= Public procedures ===================================
       & got(f_Module) ) ) // ' module for quantity type ', quantityType )
 
     ! Now do more derived checking / setting up
-    if ( properties ( p_mustBeZeta ) ) then
+    if ( properties ( p_mustBeZeta ) .and. got(f_vGrid) ) then
       if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
         & call Announce_error ( root, 'Expecting log pressure coordinates for', &
         & quantityType )
@@ -312,8 +314,17 @@ contains ! ============= Public procedures ===================================
       frequencyCoordinate = l_none
     end if
 
+    ! Now deal with the fleixbleVHGrid quantities
+    if ( properties(p_flexibleVHGrid) ) then
+      if ( got ( f_hGrid ) .neqv. got ( f_vGrid ) ) &
+        & call Announce_Error ( root, 'Must supply both or neither vGrid and hGrid' )
+      isMinorFrame = .not. got ( f_hGrid )
+    else
+      isMinorFrame = properties(p_minorFrame)
+    endif
+
     ! Now do the setup for the different families of quantities
-    if ( properties(p_minorFrame) ) then
+    if ( isMinorFrame ) then
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
         & instrumentModule, qty, noChans=noChans, mifGeolocation=mifGeolocation, &
         & regular=regular )
@@ -325,9 +336,9 @@ contains ! ============= Public procedures ===================================
     else
       ! Setup a non major/minor frame quantity
       noInstances = 1
-      if ( properties ( p_hGrid ) ) noInstances = hGrids(hGridIndex)%noProfs
+      if ( got ( f_hGrid ) ) noInstances = hGrids(hGridIndex)%noProfs
       noSurfs = 1
-      if ( properties ( p_vGrid ) ) noSurfs = vGrids(vGridIndex)%noSurfs
+      if ( got ( f_vGrid ) ) noSurfs = vGrids(vGridIndex)%noSurfs
 
       ! Setup the quantity template
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
@@ -336,7 +347,7 @@ contains ! ============= Public procedures ===================================
         & sharedVGrid=.true., sharedHGrid=.true., sharedFGrid=.true. )
 
       ! Setup the horizontal coordinates
-      if ( properties(p_hGrid) ) then
+      if ( got(f_hGrid) ) then
         qty%hGridIndex = hGridIndex
         call PointQuantityToHGrid ( hGrids(hGridIndex), qty )
       else
@@ -344,7 +355,7 @@ contains ! ============= Public procedures ===================================
       end if
       ! Work out the instance offset
       if ( associated ( chunk%hGridOffsets ) ) then
-        if ( properties ( p_hGrid )  ) then
+        if ( got ( f_hGrid )  ) then
           qty%instanceOffset = chunk%hGridOffsets(hGridIndex)
           qty%grandTotalInstances = chunk%hGridTotals(hGridIndex)
         else
@@ -356,7 +367,7 @@ contains ! ============= Public procedures ===================================
       end if
 
       ! Setup the vertical coordiantes
-      if ( properties(p_vGrid) ) then
+      if ( got (f_vGrid) ) then
         qty%vGridIndex = vGridIndex
         qty%verticalCoordinate = vGrids(vGridIndex)%verticalCoordinate
         qty%surfs => vGrids(vGridIndex)%surfs
@@ -1007,7 +1018,7 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_adopted, phyq_dimensionless, none, next, &
-      l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
+      l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometer, &
                   p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
       l_calSidebandFraction, phyq_dimensionless, p_signal, next, &
@@ -1130,7 +1141,8 @@ contains ! ============= Public procedures ===================================
         message = "Badly defined major/minor frame quantity"
       end if
       ! Check that mustBeZeta quantities have a vGrid
-      if ( propertyTable ( p_mustBeZeta, i ) .and. .not. propertyTable ( p_vGrid, i ) ) then
+      if ( propertyTable ( p_mustBeZeta, i ) .and. .not. &
+        & ( propertyTable ( p_vGrid, i ) .or. propertyTable ( p_flexibleVHGrid, i ) ) ) then
         valid = .false.
         message = "Quantity must have vGrid if it must be on log-pressure"
       end if
@@ -1215,6 +1227,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.114  2004/08/16 23:42:54  livesey
+! Added p_flexibleVHGrid in order to allow minor frame dependent
+! baselines.
+!
 ! Revision 2.113  2004/06/29 00:09:25  pwagner
 ! New phaseTiming type
 !
