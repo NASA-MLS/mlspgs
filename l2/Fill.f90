@@ -56,7 +56,7 @@ contains ! =====     Public Procedures     =============================
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
-      & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
+      & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
@@ -325,6 +325,7 @@ contains ! =====     Public Procedures     =============================
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
     integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
+    logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
@@ -513,6 +514,7 @@ contains ! =====     Public Procedures     =============================
       dontMask = .false.
       excludeBelowBottom = .false.
       extinction = .false.
+      centerVertically = .false.
       force = .false.
       fromPrecision = .false.
       got= .false.
@@ -742,6 +744,8 @@ contains ! =====     Public Procedures     =============================
               call Announce_error ( key, no_error_code, &
               & 'Channel should be dimensionless' )
             channel = valueAsArray(1)
+          case ( f_centerVertically )
+            centerVertically = get_boolean ( gson )
           case ( f_earthRadius ) ! For losGrid fill
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1083,7 +1087,7 @@ contains ! =====     Public Procedures     =============================
           end if
 
           call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-            & channel, fillMethod, additional, excludeBelowBottom )
+            & channel, fillMethod, additional, excludeBelowBottom, centerVertically )
 
         case ( l_boxcar )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -6169,7 +6173,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- FillWithBinResults -----
     subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-      & channel, method, additional, excludeBelowBottom )
+      & channel, method, additional, excludeBelowBottom, centerVertically )
       ! This fills a coherent quantity with the max/min binned value of 
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
@@ -6182,6 +6186,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: METHOD
       logical, intent(in) :: ADDITIONAL
       logical, intent(in) :: EXCLUDEBELOWBOTTOM
+      logical, intent(in) :: CENTERVERTICALLY
 
       ! Local variables
       real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
@@ -6210,8 +6215,14 @@ contains ! =====     Public Procedures     =============================
         call Allocate_test ( sourceHeights, sourceQuantity%template%nosurfs, &
           & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
         sourceHeights = ptanQuantity%values
+        if ( quantity%template%verticalCoordinate /= l_zeta ) &
+          & call Announce_Error ( key, 0, &
+          & 'Vertical coordinate in quantity to fill is not zeta' )
       else
         sourceHeights => sourceQuantity%template%surfs
+        if ( sourceQuantity%template%verticalCoordinate /= quantity%template%verticalCoordinate ) &
+          & call Announce_Error ( key, 0, &
+          & 'Vertical coordinates in binned fill do not match' )
       end if
 
       ! Setup index arrays
@@ -6225,12 +6236,12 @@ contains ! =====     Public Procedures     =============================
       ! incoherent quantities
       if ( sourceQuantity%template%coherent ) then
         call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,1), surfs(:,1), &
-          & allowTopValue=.true., allowBelowValue=excludeBelowBottom )
+          & allowTopValue=.true., allowBelowValue=excludeBelowBottom, nearest=centerVertically )
         surfs = spread ( surfs(:,1), 2, sourceQuantity%template%noInstances )
       else
         do si = 1, sourceQuantity%template%noInstances
           call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,si), surfs(:,si), &
-            & allowTopValue=.true., allowBelowValue=excludeBelowBottom )
+            & allowTopValue=.true., allowBelowValue=excludeBelowBottom, nearest=centerVertically )
         end do
       end if
 
@@ -6896,6 +6907,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.281  2004/09/10 23:53:10  livesey
+! Added centerVertically option for binmean/max/min fill
+!
 ! Revision 2.280  2004/08/24 23:24:46  pwagner
 ! Asks ReadL1BData to pad, contract--partly tested
 !
