@@ -22,6 +22,7 @@
 # -sortf        sort by the final column, usu. the total timing figure
 # -s2h          convert timings from seconds to hours
 # -h2s          convert timings from hours to seconds
+# -node         include node numbers on each line
 # -h[elp]       print brief help message; exit
 #
 #Note:
@@ -91,6 +92,8 @@ get_unique_name()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
+USEHOMEFORTEMPS=1
+#               ^  -- set this to 1 if may run in foreign directories
 PRINT_TOO_MUCH=0
 #              ^  -- set this to 1 if willing to try patience of users
 me="$0"
@@ -102,6 +105,7 @@ reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 the_perl_script="`echo $0 | sed 's/'$my_name'/chunktimes.pl/'`"
 list=""
 reverse="no"
+nodeToo="no"
 sort="no"
 s_column="0"
 convert=""
@@ -138,6 +142,10 @@ while [ "$more_opts" = "yes" ] ; do
 	    shift
        sort="yes"
        ;;
+    -node )
+	    shift
+       nodeToo="yes"
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
@@ -165,8 +173,18 @@ if [ "$convert" != "" ]
 then
   extra_args="$convert $extra_args"
 fi
-temp_file1=`get_unique_name ct1`
-temp_file2=`get_unique_name ct2`
+if [ "$nodeToo" != "no" ]
+then
+  extra_args="-node $extra_args"
+fi
+if [ "$USEHOMEFORTEMPS" = "1" ]
+then
+  temp_file1=$HOME/`get_unique_name ct1`
+  temp_file2=$HOME/`get_unique_name ct2`
+else
+  temp_file1=`get_unique_name ct1`
+  temp_file2=`get_unique_name ct2`
+fi
 if [ $PRINT_TOO_MUCH = "1" ]                            
 then                                                    
    echo " Summary of options to $me "  
@@ -192,6 +210,10 @@ else
   then
     s_column=`cat $temp_file1 | wc -w`
     s_column=`expr $s_column - 1`
+    if [ "$nodeToo" = "yes" ]
+    then
+      s_column=`expr $s_column - 1`
+    fi
   fi
   if [ $PRINT_TOO_MUCH = "1" ]                          
   then                                                  
@@ -210,6 +232,9 @@ cat $temp_file1
 rm -f $temp_file1 $temp_file2
 exit
 # $Log$
+# Revision 1.2  2004/07/13 21:23:22  pwagner
+# Fixed bugs; added -s2h and -h2s options
+#
 # Revision 1.1  2004/05/13 22:51:58  pwagner
 # First commit
 #

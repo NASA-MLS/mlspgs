@@ -24,6 +24,8 @@
 #                     (instead of the default)
 # -s2h              convert times from seconds to hours
 # -h2s              convert times from hours to seconds
+# -node             include node number on each line
+#                     (assumes slave logs stored in pvmlog/compute-0-nn.mmm.log)
 # Bugs and limitations:
 # (1) Should be able to handle toolkitless runs
 #      would need to change from $_[7] to $_[5] and
@@ -37,6 +39,8 @@
 
 # "$Id$"
 #
+my @a;
+my @b;
 my $chunk;
 my $headList;
 my $headonly;
@@ -44,6 +48,8 @@ my $ishead;
 my $lastChunk;
 my $more_opts;
 my $nohead;
+my $nodeNumber;
+my $nodeToo;
 my $numChunks;
 my $time;
 my $timeConvert;
@@ -58,6 +64,7 @@ my %times;
 $headList = "initptan,updateptan,inituth,core,coreplusr2,highcloud,coreplusr3,coreplusr4,coreplusr5,(final)";
 $headonly = 0;
 $nohead = 0;
+$nodeToo = 0;
 $timeConvert = 1;
 $more_opts = TRUE;
 while ($more_opts) {
@@ -77,6 +84,9 @@ while ($more_opts) {
    } elsif ($ARGV[0] =~ /^-h2s/) {
       $timeConvert = 1./3600;
       shift;
+   } elsif ($ARGV[0] =~ /^-node/) {
+      $nodeToo = 1;
+      shift;
    } else {
       $more_opts = 0;
    }
@@ -86,6 +96,7 @@ for $Sp (@Sps) {
   $times{"$Sp"} = "$Sp";
   }
 $times{chunk} = "chunk";
+$times{node} = "node";
 $results[0] = %times;
 $lastChunk = 0;
 # print $times{chunk}, "\n";
@@ -96,7 +107,21 @@ $lastChunk = 0;
 # print @values, "\n";
 $ishead = TRUE;
 while (<>) {
-  if (/\(Slave/) {
+  if (/pvmlog/) {
+    # Try to pull node number out of typical line like
+    #/home/pwagner/l2tests/v1.42/pvmlog/compute-0-104.4919.log mlsl2.log
+       # print $_, "\n";
+       @b = split;
+       @a = split/\//, $b[$#b-1];
+       @b = split/\./, $a[$#a];
+       $nodeNumber = $b[0];
+       # print $nodeNumber;
+       # Why is the following inelegance necessary?
+       if ( $nohead  && $nodeToo && $ishead ) {
+         $times{node} = $nodeNumber;
+       }
+  }
+  elsif (/\(Slave/) {
     chomp;
     split;
     # print "After split: @_ \n";
@@ -121,6 +146,10 @@ while (<>) {
             # printf("%.2f %s", $time, ' ');
             &PrintTime($time);
           }
+        }
+        if ( $nodeToo ) {
+          print $times{node};
+          $times{node} = $nodeNumber;
         }
         print "\n";
       }
@@ -167,6 +196,9 @@ sub PrintTime {
    }
 }
 # $Log$
+# Revision 1.2  2004/07/13 21:23:22  pwagner
+# Fixed bugs; added -s2h and -h2s options
+#
 # Revision 1.1  2004/05/13 22:51:58  pwagner
 # First commit
 #
