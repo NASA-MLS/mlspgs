@@ -2,8 +2,11 @@
 
 FC= lf95
 FOPTS= -g --chk --info
-PLATFORM= LF95.Linux
+PLATFORM= LF95.Linux.slow
 PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
+CC=cc
+HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
+HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
 
 CondenseLeakLog: CondenseLeakLog.f90
 	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(PLATFORM) \
@@ -22,14 +25,21 @@ Filter_Fit: Filter_Fit.f90
 f90tex: f90tex.f90
 	$(FC) $(FOPTS) -o f90tex f90tex.f90 \
           -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls -static
 
 init_gen: init_gen.f90
 	$(FC) $(FOPTS) -o init_gen init_gen.f90 \
         -I $(HOME)/mlspgs/lib/$(PLATFORM) \
           -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
 
+h5cat: h5cat.c
+	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c -static -static-libgcc \
+          -L $(HDF5LIB) -lz -lm -lhdf5
+
 # $Log$
+# Revision 1.2  2001/07/25 02:07:24  vsnyder
+# Account for init_gen
+#
 # Revision 1.1  2001/06/01 21:52:45  vsnyder
 # Initial commit
 #
