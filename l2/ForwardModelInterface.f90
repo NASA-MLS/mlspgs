@@ -598,9 +598,9 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    do maf = 3, 3
+    !do maf = 3, 3
+    do maf = 1, radiance%template%noInstances
       print*,'Major frame: ',maf
-      ! do maf = 1, radiance%template%noInstances (HOPEFULLY THE FINAL FORM!)
 
       phi_tan = fmc%phi_tan_mmaf(maf) !??? Get this from state vector lter
 
@@ -644,7 +644,6 @@ contains
           call MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Bad value of signal%sideband')
         end select
-        print*,'Using:',frequencies
         noFreqs = size(frequencies)
       endif
 
@@ -653,7 +652,7 @@ contains
       maxNoFreqs = size(PointingGrids(whichPointingGrid)%OneGrid(grids(1))%Frequencies)
       do ptg_i = 2, no_tan_hts - 1
         maxNoFreqs = max ( maxNoFreqs, size(PointingGrids(whichPointingGrid) &
-          & %OneGrid(grids(1))%Frequencies) )
+          & %OneGrid(grids(ptg_i))%Frequencies) )
       end do
 
       ! Now allocate arrays this size
@@ -718,7 +717,6 @@ contains
 
         ! ------------------------------- Begin loop over frequencies ------
         do frq_i = 1, noFreqs
-          print*,'    Frequency:',frq_i,' of ',noFreqs
 
           Frq = frequencies(frq_i)
 
@@ -749,7 +747,6 @@ contains
 
         end do                          ! Frequency loop
         ! ----------------------------- End loop over frequencies ----
-
 
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
@@ -908,14 +905,17 @@ contains
 
         if(FMC%do_conv) then
 
+          ! Note I am replacing the i's in the k's with 1's (enclosed in
+          ! brackets to make it clear.)  We're not wanting derivatives anyway
+          ! so it shouldn't matter
           call convolve_all(ptan%values(:,maf),TFMI%atmospheric,FMI%n_sps,   &
             &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,                   &
             &     FMI%tan_press,ptg_angles(:,maf),tan_temp(:,maf), &
             &     dx_dt, d2x_dxdt,FMI%band,center_angle,FMI%fft_pts,          &
-            &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
-            &     k_spect_dw(i,:,:,:,:),k_spect_dn(i,:,:,:,:),    &
-            &     k_spect_dnu(i,:,:,:,:),FMI%spect_atmos,no_tan_hts,  &
-            &     k_info_count,i_star_all(i,:),k_star_all(i,:,:,:,:), &
+            &     Radiances(:,ch),k_temp((1),:,:,:),k_atmos((1),:,:,:,:), &
+            &     k_spect_dw((1),:,:,:,:),k_spect_dn((1),:,:,:,:),    &
+            &     k_spect_dnu((1),:,:,:,:),FMI%spect_atmos,no_tan_hts,  &
+            &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
             &     TFMI%no_phi_f,   &
             &     FMI%spectroscopic,temp%template%surfs(:,1),FMI%Xlamda,FMI%Aaap,&
@@ -923,13 +923,16 @@ contains
           if(ier /= 0) goto 99
         else
           
+          ! Note I am replacing the i's in the k's with 1's (enclosed in
+          ! brackets to make it clear.)  We're not wanting derivatives anyway
+          ! so it shouldn't matter
           call no_conv_at_all(ptan%values(:,maf),FMI%n_sps,FMI%tan_press, &
             &     FMI%band,FMC%temp_der,FMC%atmos_der,FMC%spect_der,      &
-            &     Radiances(:,ch),k_temp(i,:,:,:),                    &
-            &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:),       &
-            &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),   &
+            &     Radiances(:,ch),k_temp((1),:,:,:),                    &
+            &     k_atmos((1),:,:,:,:),k_spect_dw((1),:,:,:,:),       &
+            &     k_spect_dn((1),:,:,:,:),k_spect_dnu((1),:,:,:,:),   &
             &     FMI%spect_atmos, no_tan_hts,k_info_count,               &
-            &     i_star_all(i,:), k_star_all(i,:,:,:,:),            &
+            &     i_star_all(i,:), k_star_all((1),:,:,:,:),            &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances, &
             &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,    &
             &     FMI%spectroscopic)
@@ -1170,6 +1173,11 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.34  2001/03/23 23:55:54  livesey
+! Another interim version.  Frequency averaging doesn't crash but
+! produces bad numbers. Note that the handling of k_... when passed to
+! the convolution (or noconvolution) routine is highly nefarious.
+!
 ! Revision 2.33  2001/03/23 19:00:14  livesey
 ! Interim version, tidied some stuff up, still gets same numbers as Zvi
 !
