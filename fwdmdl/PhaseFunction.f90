@@ -28,12 +28,12 @@ contains
 	subroutine pfsetup(n, p, dp, u, nu)
 
    ! Arguments
-   ! (Jonathan--please describe inputs and outputs; even partrially)
-   integer, intent(in)   :: n     
-   integer, intent(in)   :: nu    
-	real(r8), intent(in)  :: u(nu) 
-	real(r8), intent(out) :: p(n,nu)
-	real(r8), intent(out) :: dp(n,nu)
+
+   integer, intent(in)   :: n     ! Maximum number of a, b terms for Mie Cal.  
+   integer, intent(in)   :: nu    ! Number of scattering angles
+	real(r8), intent(in)  :: u(nu)    ! Cosine of scattering angle
+	real(r8), intent(out) :: p(n,nu)  ! Legendre polynomials
+	real(r8), intent(out) :: dp(n,nu) ! delta p
    ! Local variables
 	integer :: i, j
 	real(r8) :: w1, w2, v1, v2, us
@@ -43,7 +43,6 @@ contains
      CALL MLSMessage(MLSMSG_Error, ModuleName, &
              & ' n too small to set up phase functions ')
    outer_loop: do i=1, nu
-	  ! do 100 i=1,nu
 	  us = sqrt(1-u(i)*u(i))
 	  w1 = us
 	  w2 = 3*u(i)*w1
@@ -54,7 +53,6 @@ contains
 	  dp(1,i)=v1
 	  dp(2,i)=v2
      do j=3, n
-	  ! do j=3,n
 	    p(j,i)=(2.*j-1.)/(j-1.)*w2*u(i) - j/(j-1.)*w1
 	    dp(j,i)=(2*j-1.)/(j-1.)*(u(i)*v2-w2*us)-j/(j-1.)*v1
 	    w1 = w2
@@ -62,7 +60,6 @@ contains
 	    v1 = v2
 	    v2 = dp(j,i)
 	  enddo
-     ! 100	continue
    end do outer_loop
 
   END SUBROUTINE PFSETUP
@@ -74,6 +71,9 @@ contains
 end module PhaseFunction
 
 ! $Log$
+! Revision 2.2  2003/10/09 16:11:26  jonathan
+! add description to input parameter
+!
 ! Revision 2.1  2003/01/31 18:35:55  jonathan
 ! moved from cldfwm
 !
