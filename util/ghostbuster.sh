@@ -48,6 +48,50 @@ UserPrompt()
     read user_response
 }
 
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
 #------------------------------- extant_files ------------
 #
 # Function to return only those files among the args
@@ -105,9 +149,11 @@ TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
 #
 #           How to rename or hide excluded files so they !~= %.f90
-dsuffix=".xug"
-#         ^^^----- this is the suffix stuck onto any excluded files
+#dsuffix=".xug"
+#          ^^^----- this is the suffix stuck onto any excluded files
 #                   or else the name of a temp directory hiding them
+dsuffix=".`get_unique_name g`"
+echo "Hiding excluded files behind temp directory $dsuffix"
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
@@ -231,9 +277,10 @@ done
                 		change_perl="$your_perl"
 			fi
    		if [ "$change_perl" != "" ] ; then
-            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > temp.pl
+            temp_name=`get_unique_name pl`
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
 				chmod u+w "$the_GHOSTFINDER"
-         	mv temp.pl "$the_GHOSTFINDER"
+         	mv $temp_name "$the_GHOSTFINDER"
 				chmod a+x "$the_GHOSTFINDER"
 				echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
          fi
@@ -286,6 +333,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.6  2002/01/29 23:43:13  pwagner
+# Cleans up excluded files from .xug dir before exiting
+#
 # Revision 1.5  2001/11/21 00:26:35  pwagner
 # Fixed bug in ignored files
 #

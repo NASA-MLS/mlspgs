@@ -99,6 +99,50 @@
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
 #---------------------------- extract_loa
 #
 # Function to return the args embedded in the file named as $1
@@ -326,9 +370,11 @@ if [ "$loa_on_command_line" = "no" ] ; then
 fi
 
 # write foreword portion
-rm -f temp.fwd 
+temp_fwd=`get_unique_name fwd`
+temp_fwd2=`get_unique_name fwd2`
+rm -f $temp_fwd 
 sed -n '/-- foreword/,/-- End foreword/ p' "$templateFile" \
-  | sed '1 d; $ d' > temp.fwd                     
+  | sed '1 d; $ d' > $temp_fwd                     
 
 arg_number=1
 if [ "$DEEBUG" = "true" ]
@@ -345,14 +391,14 @@ do
      arg_list=`sed -n '/-- args/,/-- End args/ p' "$loaFile" \
        | sed -n "$next_arg p"`                                   
    fi                                                            
-   mv temp.fwd tempp.fwd
-   sed 's/#'$arg_number'/'"$arg_list"'/g' tempp.fwd > temp.fwd
+   mv $temp_fwd $temp_fwd2
+   sed 's/#'$arg_number'/'"$arg_list"'/g' $temp_fwd2 > $temp_fwd
    arg_number=`expr $arg_number + 1`
 done
 if [ "$DEEBUG" = "true" ]   
 then                        
    echo "Done with foreword portion"
-   cat temp.fwd
+   cat $temp_fwd
 fi
 
 # write Repeat portions
@@ -364,7 +410,7 @@ fi
 while [ $rep -le $how_many ]
 do
    sed -n '/-- Repeat/,/-- End Repeat/ p' "$templateFile" \
-     | sed '1 d; $ d' >> temp.fwd
+     | sed '1 d; $ d' >> $temp_fwd
    arg_number=1
    if [ "$DEEBUG" = "true" ]
    then
@@ -384,8 +430,8 @@ do
       then
          echo "element $element of $arg_list"
       fi
-      mv temp.fwd tempp.fwd
-      sed 's/#'$arg_number'/'"$element"'/g' tempp.fwd > temp.fwd
+      mv $temp_fwd $temp_fwd2
+      sed 's/#'$arg_number'/'"$element"'/g' $temp_fwd2 > $temp_fwd
       arg_number=`expr $arg_number + 1`
    done
    rep=`expr $rep + 1`
@@ -394,12 +440,12 @@ done
 if [ "$DEEBUG" = "true" ]   
 then                        
    echo "Done with Repeat portion"
-   cat temp.fwd
+   cat $temp_fwd
 fi
 
 # write afterword portion
 sed -n '/-- afterword/,/-- End afterword/ p' "$templateFile" \
-  | sed '1 d; $ d' >> temp.fwd                     
+  | sed '1 d; $ d' >> $temp_fwd
 
 arg_number=1
 if [ "$DEEBUG" = "true" ]
@@ -415,8 +461,8 @@ do
      arg_list=`sed -n '/-- args/,/-- End args/ p' "$loaFile" \
        | sed -n "$next_arg p"`                                   
    fi                                                            
-   mv temp.fwd tempp.fwd
-   sed 's/#'$arg_number'/'"$arg_list"'/g' tempp.fwd > temp.fwd
+   mv $temp_fwd $temp_fwd2
+   sed 's/#'$arg_number'/'"$arg_list"'/g' $temp_fwd2 > $temp_fwd
    arg_number=`expr $arg_number + 1`
 done
 if [ "$DEEBUG" = "true" ]   
@@ -425,12 +471,15 @@ then
 fi
 if [ "$SPLITLONGLINES" = "true" ]
 then
-   $PERLUTIL -f temp.fwd -d "," -t '$' -c ';'
+   $PERLUTIL -f $temp_fwd -d "," -t '$' -c ';'
 else
-   cat temp.fwd
+   cat $temp_fwd
 fi
-rm -f temp.fwd tempp.fwd
+rm -f $temp_fwd $temp_fwd2
 
 # Done at last
 exit
 # $Log$
+# Revision 1.1  2002/04/09 19:40:39  pwagner
+# First commit
+#

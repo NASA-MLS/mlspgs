@@ -91,6 +91,50 @@ eecchhoo()
     fi
 }
 
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
 #------------------------------- which_blas ------------
 #
 # Function to determine Which of possible BLAS options {a b c} is active
@@ -171,7 +215,8 @@ mega_buck()
          exit 1
    else
       
-      unique_name=temp.$$
+      unique_name=`get_unique_name`
+#      unique_name=temp.$$
       rm -f $unique_name
 #      rm -f temp.mega_buck
 
@@ -943,26 +988,28 @@ lhs_eq_rhs()
 # &        echo "3rd arg is $3"
 # &     fi
 
-      rm -f temp.lhs_eq_rhs
+      lhs_unique_name=`get_unique_name lhs`
+      rm -f $lhs_unique_name
+#      rm -f temp.lhs_eq_rhs
       if [ $# -lt 3 -a "$1" != "" ]
       then
-         echo "$1"="'"$2"'" > temp.lhs_eq_rhs
-         . temp.lhs_eq_rhs
+         echo "$1"="'"$2"'" > $lhs_unique_name
+         . $lhs_unique_name
       else
          mega_buck $3 $1
          lhs=$mega_buck_result
          if [ "$lhs" != "" ] ; then
             mega_buck $3 $2
             rhs=$mega_buck_result
-            echo "$lhs"="'"$rhs"'" > temp.lhs_eq_rhs
-            . temp.lhs_eq_rhs
+            echo "$lhs"="'"$rhs"'" > $lhs_unique_name
+            . $lhs_unique_name
          fi
       fi
 #     if [ "$debugging" = "on" ] ; then
-#        echo "listing of temp.lhs_eq_rhs"
-#        cat "temp.lhs_eq_rhs"
+#        echo "listing of $lhs_unique_name
+#        cat "$lhs_unique_name"
 #     fi
-     rm -f temp.lhs_eq_rhs
+     rm -f $lhs_unique_name
 }
       
 #------------------------------- Main Program ------------
@@ -1474,6 +1521,9 @@ if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
 fi
 exit
 # $Log$
+# Revision 1.30  2002/07/18 19:38:32  pwagner
+# Replaced with temp.mega_buck with PID-derived unique_name
+#
 # Revision 1.29  2002/02/06 00:46:18  pwagner
 # Optionally checks that machine files are up-to-date
 #

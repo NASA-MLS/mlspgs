@@ -62,6 +62,50 @@
 
 # "$Id$"
 
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
 #
 #------------------------------- what_diff_opt ------------
 #
@@ -99,6 +143,8 @@ what_diff_opt()
 
 diff_fun()
 {
+   temp1=`get_unique_name 1`
+   temp2=`get_unique_name 2`
    the_diff="0"
 	if [ $# -lt "2" ]
 	then
@@ -106,11 +152,11 @@ diff_fun()
       exit 1
 	elif [ -f "$1" -a -f "$2" ]
 	then
-      rm -f temp1 temp2
-      od -t c "$1" > temp1
-      od -t c "$2" > temp2
-      the_diff=`diff temp1 temp2 | wc -l`
-      rm -f temp1 temp2
+      rm -f $temp1 $temp2
+      od -t c "$1" > $temp1
+      od -t c "$2" > $temp2
+      the_diff=`diff $temp1 $temp2 | wc -l`
+      rm -f $temp1 $temp2
    else
       echo "diff_fun: file not found"
       exit 1
@@ -321,6 +367,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.6  2002/07/10 23:44:26  pwagner
+# Exits with status 1 when LF95 should but does not
+#
 # Revision 1.5  2002/06/26 19:03:04  pwagner
 # Passes exit status from command back to whoever called
 #

@@ -106,6 +106,50 @@ UserPrompt()
     read user_response
 }
 
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
 #------------------------------- extant_files ------------
 #
 # Function to return only those files among the args
@@ -169,7 +213,7 @@ DEPMAKER=2
 #if you use f90makedep.pl, you may have a problem if the path where you keep
 #your copy of perl is different from the one in its 1st line
 #compare 'which perl' with 'sed -n "1 p" f90makedep.pl
-#The script will attempt ot anticipate this problem and ask you if it
+#The script will attempt to anticipate this problem and ask you if it
 #should fix f90makedep.pl
 #
 #makemakedep.sh may act courteously in the following sense:
@@ -191,9 +235,10 @@ EDIT_GB_PERL_PATH=1
 
 #
 #           How to rename or hide excluded files so they !~= %.f90
-dsuffix=".xui"
-#         ^^^----- this is the suffix stuck onto any excluded files
+#dsuffix=".xui"
+#          ^^^----- this is the suffix stuck onto any excluded files
 #                   or else the name of a temp directory hiding them
+dsuffix=".`get_unique_name m`"
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
@@ -479,9 +524,10 @@ else
                 		change_perl="$your_perl"
 			fi
    		if [ "$change_perl" != "" ] ; then
-            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
+            temp_name=`get_unique_name pl`
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > $temp_name
 				chmod u+w "$the_DEPMAKER"
-         	mv temp.pl "$the_DEPMAKER"
+         	mv $temp_name "$the_DEPMAKER"
 				chmod a+x "$the_DEPMAKER"
 				echo "*** You have fixed f90makedep.pl to look for $your_perl"
    		   if [ "$EDIT_GB_PERL_PATH" = "1" ] ; then
@@ -491,9 +537,9 @@ else
 	            the_GHOSTFINDER="`echo $0 | sed 's/makemakedep.sh/f90GhostFiles.pl/'`"
             	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
                if [ "$script_perl" != "$your_perl" ] ; then
-                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > temp.pl
+                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
 		      		chmod u+w "$the_GHOSTFINDER"
-         	      mv temp.pl "$the_GHOSTFINDER"
+         	      mv $temp_name "$the_GHOSTFINDER"
 		      		chmod a+x "$the_GHOSTFINDER"
 				      echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
                fi
@@ -540,6 +586,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.20  2002/06/21 00:10:13  pwagner
+# First commit
+#
 # Revision 1.19  2002/06/04 17:03:07  pwagner
 # fixed bare word assignment value =
 #
