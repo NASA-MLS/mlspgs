@@ -320,13 +320,9 @@ END MODULE SignalsFile
 !=============================================================================
 
 ! $Log$
+! Revision 1.2  1999/11/03 23:56:26  livesey
+! A trivial change to test out the cvs watch stuff.
+!
 ! Revision 1.1  1999/11/03 23:53:58  livesey
 ! Added mlsstrings and signalsfile
-!
-! Revision 1.2  1999/11/03 03:59:26  livesey
-! Transfer home
-!
-! Revision 1.1  1999/11/03 02:53:57  livesey
-! Added f90 stuff
-!
  
