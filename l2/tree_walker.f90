@@ -27,7 +27,7 @@ contains ! ====     Public Procedures     ==============================
 
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
-    use Construct, only: MLSL2Construct, MLSL2DeConstruct
+    use Construct, only: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
     use Dumper, only: Dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase
@@ -45,6 +45,7 @@ contains ! ====     Public Procedures     ==============================
       & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
     use JOIN, only: MLSL2Join
     use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
+    use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
     use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
     use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
@@ -133,8 +134,12 @@ contains ! ====     Public Procedures     ==============================
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
+
+    ! Now loop over the sections in the tree
     do while ( i <= howmany )
       son = subtree(i,root)
+
+      ! First those involved in 'preprocessing'
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
@@ -152,10 +157,11 @@ contains ! ====     Public Procedures     ==============================
         call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeGrids )
         call mergeGrids ( son, griddedDataBase )
+
+      ! Chunk divide can be a special one, in slave mode, we just listen out
+      ! for instructions.
       case ( z_chunkdivide )
         if ( .not. parallel%slave ) then
-          ! This is the old routine, which will be going away shortly
-          ! call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
           if ( singleChunk /= 0 ) then
             firstChunk = singleChunk
@@ -176,11 +182,21 @@ contains ! ====     Public Procedures     ==============================
         end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'scan_divide', t1)
+
+      ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
-        ! In case where there are no chunks or we're a master do special stuff
-        if ( parallel%master .or. size(chunks) < 1 ) then 
+        ! Do special stuff in some parallel cases, or where there are
+        ! no chunks.
+        if ( size(chunks) < 1 .or. parallel%master .or. &
+          & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master ) &
             & call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+          if ( parallel%slave .and. parallel%fwmParallel ) then
+            call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
+              & chunks, chunkNo ) 
+            call L2FWMSlaveTask ( mifGeolocation )
+          end if
+          ! Sort out the timings
           select case ( decoration(subtree(1,son)) ) ! section index
           case ( z_construct )
             call add_to_section_timing ( 'construct', t1)
@@ -191,13 +207,17 @@ contains ! ====     Public Procedures     ==============================
           case ( z_retrieve )
             call add_to_section_timing ( 'retrieve', t1)
           end select
+
         else
-          do chunkNo = firstChunk, lastChunk
+        ! Otherwise, this is the 'standard' work for these sections.
+          do chunkNo = firstChunk, lastChunk ! ----------------------- Chunk loop
             if ( index(switches,'chu') /= 0 ) then
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
             end if
+            if ( parallel%master .and. parallel%fwmParallel ) &
+              & call LaunchFWMSlaves ( chunks ( chunkNo ) )
             j = i
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
@@ -229,25 +249,12 @@ subtrees:   do while ( j <= howmany )
             if ( index(switches,'chi1') /= 0 .and. chunkNo > 1) then
               ! Dumps nothing after 1st chunk
             elseif ( index(switches,'chi') /= 0 ) then
-            !if ( .not. (toggle(gen) .and. levels(gen) > 0 ) .and. &
-            !  & index(switches,'chi') /= 0 ) then
-              ! Dumps every chunk
-              
-              !call output('Here is a minor frame example', advance='yes')
-              !call dump_vectors( vectors, details=1, &
-              !& quantityTypes = (/l_Ptan/) )
-              !call GetSignalIndex('R2:190.B3F:N2O', signal_index)
-              !call output('Here is one that is not minor frame', advance='yes')
-              !call output('R2:190.B3F:N2O index: ', advance='no')
-              !call output(signal_index, advance='yes')
-              !call dump_vectors( vectors, details=1, &
-              !& quantityTypes = (/l_radiance/), signal_ids = (/signal_index/), &
-              !& thenditchafterdump=.true. )
               call output('Here are our diagnostics for chunk ', advance='no')
               call output(chunkNo, advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
             end if
+
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( size(chunks) > 1) then
@@ -261,9 +268,11 @@ subtrees:   do while ( j <= howmany )
             end if
             call ForgetOptimumLon0
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
-          end do ! on chunkNo
+
+          end do ! ---------------------------------- End of chunk loop
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
+      ! Output is always the last section
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
@@ -304,6 +313,8 @@ subtrees:   do while ( j <= howmany )
       end select
       i = i + 1
     end do
+
+    ! Now finish up
     call CloseParallel
     call destroy_ant_patterns_database
     call DestroyBinSelectorDatabase
@@ -356,6 +367,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.92  2002/09/25 20:09:32  livesey
+! Changes to allow chunk based forwardModel configs
+!
 ! Revision 2.91  2002/09/24 22:17:50  pwagner
 ! Defines t1 before call to add_to_section_timing
 !
