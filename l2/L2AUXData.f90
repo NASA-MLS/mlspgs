@@ -246,7 +246,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity
+    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
@@ -272,7 +272,7 @@ contains ! =====     Public Procedures     =============================
     character (LEN=480) :: msr
 
     integer :: sds_index, sds_id, rank, data_type, num_attrs, dim, dim_id
-    integer :: dim_sizes(MAXRANK)
+    integer :: dim_sizes(MAXRANK), dim_size1
     integer :: dim_families(MAXRANK)
     character (LEN=len(quantityname)) :: sds_name
     character (LEN=132) :: dim_name
@@ -299,6 +299,7 @@ contains ! =====     Public Procedures     =============================
          
     status = sfginfo(sds_id, sds_name, rank, dim_sizes, data_type, &
     & num_attrs)
+
     if (status == -1) then
        call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          & get sf info.')
@@ -312,25 +313,28 @@ contains ! =====     Public Procedures     =============================
     firstCheck = present(firstProf)
     lastCheck = present(lastProf)
 
-
     ! Uncertain what to do with those just yet
     ! Now find dimension family of dimension; e.g., MAF
-    do dim=1, rank
+    dim_size1 = 0
+     do dim=1, rank
+
     	write(dim_char, '(I1)') dim
-    	dim_id = sfdimid(sds_id, dim)
+    	dim_id = sfdimid(sds_id, dim-1)		! dim starts from 0
         if(dim_id == -1) then
+
            msr = 'Failed to &
            & get dim_id for dim index number ' // dim_char
            call MLSMessage(MLSMSG_Error, ModuleName, msr)
         else
-            status = sfgdinfo(dim_id, dim_name, dim_sizes(dim), data_type, &
+            status = sfgdinfo(dim_id, dim_name, dim_size1, data_type, &
             & num_attrs)
+
             if(status == -1) then
                   msr = 'Failed to &
                   & get dim_info for dim index number ' // dim_char
                   call MLSMessage(MLSMSG_Error, ModuleName, msr)
             else
-                dim_families(dim) = 0 !LinearSearchStringArray(L2AUXDimNames, dim_name)
+                dim_families(dim) = dim_size1
                 if(dim_families(dim) == 0) then
                      msr = 'Failed to &
                      & find ' //dim_name // ' among L2AuxDimNames'
@@ -436,7 +440,7 @@ contains ! =====     Public Procedures     =============================
           & "Error setting dimension name to SDS l2aux file:")
 !		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error setting dimension name to SDS l2aux file:")
-			endif
+	endif
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT64,&
           & l2aux%dimensions(dimensionInData)%values)
@@ -447,7 +451,7 @@ contains ! =====     Public Procedures     =============================
           & "Error writing dimension scale in l2auxFile:" )
 !		      call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error writing dimension scale in l2auxFile:" )
-		  endif
+	endif
         dimensionInFile=dimensionInFile+1
       endif
     end do
@@ -502,6 +506,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.17  2001/07/11 20:50:46  dwu
+! fix problem in readl2auxdata
+!
 ! Revision 2.16  2001/05/30 23:53:31  livesey
 ! Changed for new version of L1BData
 !
