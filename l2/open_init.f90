@@ -14,6 +14,7 @@ module Open_Init
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
   &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
   &                        PCF, CREATEMETADATA
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
@@ -28,7 +29,7 @@ module Open_Init
     &                mlspcf_l2_param_switches, &
     &                mlspcf_pcf_start
   use MLSStrings, only: LowerCase
-  use Output_m, only: Output
+  use Output_m, only: BLANKS, Output
   use PCFHdr, only: CreatePCFAnnotation
   use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
     &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
@@ -133,7 +134,13 @@ contains ! =====     Public Procedures     =============================
 
     integer :: Indx, Mlspcf_log, Version
 
+    real :: T1, T2                      ! for timing
+    logical :: TIMING
 !    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
+
+    ! Executable code
+    timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
@@ -177,6 +184,7 @@ contains ! =====     Public Procedures     =============================
       call output('========   (These must supplied through the l2cf)  ========', advance='yes')
       call trace_end ( "OpenAndInit" )
     end if
+    if ( timing ) call sayTime
     return
    endif
 
@@ -365,8 +373,21 @@ contains ! =====     Public Procedures     =============================
           & CCSDSEndTime, CCSDSStartTime, processingrange )
       call trace_end ( "OpenAndInit" )
     end if
+    if ( timing ) call sayTime
     return
 
+  contains
+    subroutine SayTime
+      call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
+      call output ( "Timing for open_init = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine OpenAndInitialize
 
   ! ------------------------------------------  Dump_L1B_database  -----
@@ -527,6 +548,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.54  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.53  2001/08/09 00:23:05  pwagner
 ! pcf param for extra switches added; read
 !
