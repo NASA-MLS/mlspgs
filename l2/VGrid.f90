@@ -103,6 +103,7 @@ contains ! =====     Public Procedures     =============================
     vGrid%name = name
     vGrid%noSurfs = 0
     vGrid%verticalCoordinate = L_None
+    nullify ( vGrid%Surfs ) ! for Sun's rubbish compiler
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -376,6 +377,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.12  2002/08/04 16:04:24  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.11  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
