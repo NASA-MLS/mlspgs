@@ -19,7 +19,7 @@ module CS_ExpMat_M
 contains
 
 ! ----------------------------------------------------  CS_ExpMat  -----
-  subroutine CS_ExpMat ( A, Ex )
+  subroutine CS_ExpMat ( A, Ex, Status )
 
 !  Compute the exponential function of a complex, 2x2 matrix, A
 
@@ -30,6 +30,9 @@ contains
 
     complex(rk), intent(in) :: A(2,2)
     complex(rk), intent(out) :: Ex(2,2)
+    integer, optional, intent(out) :: Status ! zero => OK, else overflow in EXP
+
+    real(rk), save :: Big = -1.0_rk          ! Log(Huge(0.0_rk)), eventually
     complex(rk) :: EH    ! (exp(h)-1) / h
     complex(rk) :: Ev(2) ! Eigenvalues of A
     complex(rk) :: EZ2   ! exp(z2)
@@ -86,8 +89,25 @@ contains
 !  Now compute Sylvester's identity (as rearranged to avoid trouble
 !  as h -> 0).
 
+    if ( present(status) ) then
+      if ( big < 0.0_rk ) big = log(huge(0.0_rk))
+      if ( real(ev(2)) >= big ) then
+        status = 1
+        return
+      end if
+      status = 0
+    end if
+
     ez2 = exp(Ev(2))
     h = ev(1) - ev(2) ! z1 - z2
+
+    if ( present(status) ) then
+      if ( real(h) >= big ) then
+        status = 1
+        return
+      end if
+    end if
+
     eh = crrexp ( h ) ! (exp(h)-1)/h
     w = ez2 * eh      ! exp(z2) * (exp(h)-1)/h
 
@@ -108,6 +128,9 @@ contains
 end module CS_ExpMat_M
 
 ! $Log$
+! Revision 2.3  2003/06/27 22:05:18  vsnyder
+! Add 'status' argument
+!
 ! Revision 2.2  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
