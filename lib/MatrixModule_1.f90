@@ -191,12 +191,13 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Matrix_SPD_T), pointer :: SPD => NULL()
   end type Matrix_Database_T
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
 
@@ -314,7 +315,7 @@ contains ! =====     Public Procedures     =============================
           & "Incompatible arrays in AddMatrices" )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
-        x%block(i,j) = x%block(i,j) + y%block(i,j)
+        x%block(i,j) = x%block(i,j) + y%block(i,j) ! Defined =, +
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
   end subroutine AddToMatrix
@@ -444,13 +445,13 @@ contains ! =====     Public Procedures     =============================
     call copyRCInfo ( z%row, x%row )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
-        z%block(i,j) = x%block(i,j)
+        z%block(i,j) = x%block(i,j) ! Defined assignment, from MatrixModule_0
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
   end subroutine CopyMatrix
 
   ! --------------------------------------------  CopyMatrixValue  -----
-  subroutine CopyMatrixValue ( Z, X )   ! Copy the elements of X to Z
+  subroutine CopyMatrixValue ( Z, X )   ! Copy the elements of X to Z.
   ! Z and X must have the same template, but it's OK if they don't both
   ! have row%extra or col%extra.  If Z has extra and X does not, Z's
   ! extra is deleted.
@@ -1463,6 +1464,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.19  2001/04/25 01:12:39  vsnyder
+! Improve some comments
+!
 ! Revision 2.18  2001/04/25 00:50:25  vsnyder
 ! Provide MultiplyMatrixNoT
 !
