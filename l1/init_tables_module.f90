@@ -96,8 +96,9 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
   INTEGER, PUBLIC, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
   INTEGER, PUBLIC, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle = p_MoonToSpaceAngle + 1
-  INTEGER, PUBLIC, PARAMETER :: P_DACSWINDOW = p_MoonToLimbAngle + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_GHz = p_MoonToSpaceAngle + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle_THz = p_MoonToLimbAngle_GHz + 1
+  INTEGER, PUBLIC, PARAMETER :: P_DACSWINDOW = p_MoonToLimbAngle_THz + 1
 
   ! In Output section:
 
@@ -175,7 +176,8 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_simoa)=                  add_ident ( 'SimOA' )
     parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
     parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
-    parm_indices(p_MoonToLimbAngle)=        add_ident ( 'MoonToLimbAngle' )
+    parm_indices(p_MoonToLimbAngle_GHz)=    add_ident ( 'MoonToLimbAngleGHz' )
+    parm_indices(p_MoonToLimbAngle_THz)=    add_ident ( 'MoonToLimbAngleTHz' )
     parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
 
     ! Put section names into the symbol table
@@ -310,7 +312,8 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_THzSpaceAngle, t+t_numeric, n+n_name_def, &
              begin, p+p_THzMaxBias, t+t_numeric, n+n_name_def, &
              begin, p+p_MoonToSpaceAngle, t+t_numeric, n+n_name_def, &
-             begin, p+p_MoonToLimbAngle, t+t_numeric, n+n_name_def, &
+             begin, p+p_MoonToLimbAngle_GHz, t+t_numeric, n+n_name_def, &
+             begin, p+p_MoonToLimbAngle_THz, t+t_numeric, n+n_name_def, &
              begin, p+p_dacswindow, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
@@ -331,6 +334,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.20  2005/01/28 16:58:47  perun
+! Split MoonToLimbAngle into GHz and THz
+!
 ! Revision 2.19  2004/12/01 17:09:38  perun
 ! Remove VersionComment and add DACSwindow
 !
@@ -350,6 +356,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.20  2005/01/28 16:58:47  perun
+! Split MoonToLimbAngle into GHz and THz
+!
 ! Revision 2.19  2004/12/01 17:09:38  perun
 ! Remove VersionComment and add DACSwindow
 !
