@@ -70,7 +70,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 
       INTEGER FUNCTION Pgs_pc_getReference(file_handle, file_version, physicalfilename)
         INTEGER, INTENT(IN) :: file_handle
-        INTEGER, INTENT(OUT) :: file_version
+        INTEGER, INTENT(INOUT) :: file_version
         character (LEN=*), INTENT(OUT) :: physicalfilename
       END FUNCTION Pgs_pc_getReference
 
@@ -112,6 +112,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.2  2000/09/26 14:18:02  pumphrey
+! Changed an arg of PGS_PC_Getreference to INOUT.
+!
 ! Revision 2.1  2000/09/19 11:16:38  pumphrey
 ! Removed INCLUDEs of files that are not supplied with the SDP toolkit
 !
