@@ -187,8 +187,10 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Allocate the data fields
 
-    CALL allocate_test(l2gp%l2gpValue,useNFreqs,useNLevels,useNTimes,"l2gp%l2gpValue", ModuleName)
-    CALL allocate_test(l2gp%l2gpPrecision,useNFreqs,useNLevels,useNTimes,"l2gp%l2gpPrecision", ModuleName)
+    CALL allocate_test(l2gp%l2gpValue,useNFreqs,useNLevels,&
+      & useNTimes,"l2gp%l2gpValue", ModuleName)
+    CALL allocate_test(l2gp%l2gpPrecision,useNFreqs,useNLevels,&
+      & useNTimes,"l2gp%l2gpPrecision", ModuleName)
 
     CALL allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     CALL allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
@@ -213,7 +215,6 @@ CONTAINS ! =====     Public Procedures     =============================
     CALL deallocate_test ( l2gp%longitude,    "l2gp%longitude",    ModuleName )
     CALL deallocate_test ( l2gp%solarTime,    "l2gp%solarTime",    ModuleName )
     CALL deallocate_test ( l2gp%solarZenith,  "l2gp%solarZenith",  ModuleName )
-    CALL deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
     CALL deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
     CALL deallocate_test ( l2gp%geodAngle,    "l2gp%geodAngle",    ModuleName )
     CALL deallocate_test ( l2gp%chunkNumber,  "l2gp%chunkNumber",  ModuleName )
@@ -1118,7 +1119,7 @@ CONTAINS ! =====     Public Procedures     =============================
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
-    l2gp%quality = 0
+    !  l2gp%quality = 0 !??????? Why was this here !??? NJL
     status = swwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          REAL(l2gp%quality))
     IF ( status == -1 ) THEN
@@ -1220,6 +1221,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.27  2001/04/20 03:00:59  livesey
+! Made L2GPNameLen public
+!
 ! Revision 2.26  2001/04/20 02:05:09  vsnyder
 ! Cosmetic changes: Default visibility is now private
 !
