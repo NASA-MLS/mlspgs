@@ -59,7 +59,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
   integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
-  integer, parameter :: F_COLUMNS             = f_autofill + 1
+  integer, parameter :: F_COLCHANNELS         = f_autofill + 1
+  integer, parameter :: F_COLQUANTITY         = f_colChannels + 1
+  integer, parameter :: F_COLSURFACES         = f_colQuantity + 1
+  integer, parameter :: F_COLUMNS             = f_colSurfaces + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
   integer, parameter :: F_COMMENT             = f_columnscale + 1
   integer, parameter :: F_COMPAREOVERLAPS     = f_comment + 1
@@ -114,8 +117,11 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
-  integer, parameter :: F_ROWS                = f_refGPHQuantity + 1
-  integer, parameter :: F_SCALE               = f_rows + 1
+  integer, parameter :: F_ROWCHANNELS         = f_refGPHQuantity + 1
+  integer, parameter :: F_ROWQUANTITY         = f_rowChannels + 1
+  integer, parameter :: F_ROWS                = f_rowQuantity + 1
+  integer, parameter :: F_ROWSURFACES         = f_rows + 1
+  integer, parameter :: F_SCALE               = f_rowsurfaces + 1
   integer, parameter :: F_SCECI               = f_scale + 1
   integer, parameter :: F_SCVEL               = f_scECI + 1
   integer, parameter :: F_SDNAME              = f_scVEL + 1
@@ -215,7 +221,8 @@ module INIT_TABLES_MODULE
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_CREATE             = s_apriori + 1
-  integer, parameter :: S_FILL               = s_create + 1
+  integer, parameter :: S_DUMPBLOCK          = s_create + 1
+  integer, parameter :: S_FILL               = s_dumpblock + 1
   integer, parameter :: S_FORGE              = s_fill + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
@@ -364,6 +371,10 @@ contains ! =====     Public procedures     =============================
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
+    field_indices(f_colChannels) =         add_ident ( 'colChannels' )
+    field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
+    field_indices(f_colSurfaces) =         add_ident ( 'colSurfaces' )
+    field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
     field_indices(f_comment) =             add_ident ( 'comment' )
@@ -421,6 +432,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_range) =               add_ident ( 'range' )
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rows) =                add_ident ( 'rows' )
+    field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
+    field_indices(f_rowQuantity) =         add_ident ( 'rowQuantity' )
+    field_indices(f_rowSurfaces) =         add_ident ( 'rowSurfaces' )
     field_indices(f_scale) =               add_ident ( 'scale' )
     field_indices(f_scECI) =               add_ident ( 'scECI' )
     field_indices(f_scVel) =               add_ident ( 'scVel' )
@@ -491,6 +505,7 @@ contains ! =====     Public procedures     =============================
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_create) =               add_ident ( 'create' )
+    spec_indices(s_dumpblock) =            add_ident ( 'dumpblock' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
@@ -788,7 +803,20 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
-             nd+n_spec_def /) )
+             nd+n_spec_def, &
+      begin, s+s_dumpblock, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_rowChannels, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             nadp+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -831,7 +859,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
-      begin, z+z_retrieve, s+s_matrix, s+s_retrieve, &
+      begin, z+z_retrieve, s+s_dumpBlock, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
@@ -846,6 +874,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.88  2001/05/02 02:35:42  livesey
+! Added the DumpBlock items to retrieve, and associated f_ fields.
+!
 ! Revision 2.87  2001/05/01 23:27:27  pwagner
 ! Added l_l2dgg literal type as possible output field type
 !
