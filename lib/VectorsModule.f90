@@ -98,7 +98,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
-  public :: M_LinAlg
+  public :: M_FullDerivatives, M_LinAlg
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -178,7 +178,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! linear algebra.  Other bits can be used for other purposes.
   end type VectorValue_T
 
-  integer, parameter :: M_LinAlg = 1    ! Bit of MASK field of VectorValue_T
+  ! Bit of MASK field of VectorValue_T
+  integer, parameter :: M_FullDerivatives = 2
+  integer, parameter :: M_LinAlg = 1
 
   ! This type describes a vector.
 
@@ -1694,6 +1696,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.74  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.73  2002/01/18 00:34:53  livesey
 ! Bug fix, copyVector wasn't ensuring that mask in destination was
 ! allocated.
