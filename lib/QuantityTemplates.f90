@@ -580,6 +580,27 @@ contains ! =====     Public Procedures     =============================
     InflateQuantityTemplateDatabase = firstNewItem
   end function InflateQuantityTemplateDatabase
 
+  ! ----------------------------------------NullifyQuantityTemplate -----
+  subroutine NullifyQuantityTemplate ( Q )
+    ! Given a quantity template, nullify all the pointers associated with it
+    type ( QuantityTemplate_T ), intent(out) :: Q
+
+    ! Executable code
+    nullify ( q%surfs )
+    nullify ( q%phi )
+    nullify ( q%geodLat )
+    nullify ( q%lon )
+    nullify ( q%time )
+    nullify ( q%solarTime )
+    nullify ( q%solarZenith )
+    nullify ( q%losAngle )
+    nullify ( q%mafIndex )
+    nullify ( q%mafCounter )
+    nullify ( q%frequencies )
+    nullify ( q%surfIndex )
+    nullify ( q%chanIndex )
+  end subroutine NullifyQuantityTemplate
+
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, source, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame )
@@ -746,6 +767,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.27  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.26  2002/09/24 21:36:42  livesey
 ! Added minValue
 !

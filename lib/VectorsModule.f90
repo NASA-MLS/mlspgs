@@ -73,7 +73,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
   use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity
+  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, &
+    & NullifyQuantityTemplate
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -97,6 +98,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
+  public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector
   public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
   ! Types
@@ -262,6 +264,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
+    call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
@@ -339,6 +342,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
+    call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = &
@@ -626,8 +630,6 @@ contains ! =====     Public Procedures     =============================
     do i = 1, size(x%quantities)
       if ( associated(x%quantities(i)%mask) ) then
         call createMask ( z%quantities(i) )
-      else
-        nullify ( z%quantities(i)%mask ) ! for Sun's rubbish compiler
       end if
     end do
     if ( present(database) ) i = addVectorToDatabase ( database, z )
@@ -650,6 +652,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
+    call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = a * x%quantities(i)%values
@@ -756,7 +759,6 @@ contains ! =====     Public Procedures     =============================
       end if
     else
       do i = 1, size(x%quantities)
-        if ( doMask ) nullify ( z%quantities(i)%mask ) ! for Sun's rubbish compiler
         if ( doValues ) z%quantities(i)%values = x%quantities(i)%values
         if ( doMask .and. associated (x%quantities(i)%mask ) ) then
           call CreateMask ( z%quantities(i) )
@@ -793,7 +795,6 @@ contains ! =====     Public Procedures     =============================
     ! Allocate the MASK array for a vector quantity.
     character, dimension(:,:), pointer :: MASK ! To create
     real(rv), dimension(:,:), pointer :: VALUES ! Template values
-    nullify ( mask ) ! for Sun's rubbish compiler
     call allocate_test ( mask, (size(values,1)), &
       & size(values,2), "MASK in CreateMaskArray", ModuleName )
     mask = char(0) ! All vector elements are interesting
@@ -1675,6 +1676,40 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine MultiplyVectors
 
+  ! ---------------------------------------------- NullifyVectorTemplate -----
+  subroutine NullifyVectorTemplate ( V )
+    ! Given a vector template, nullify all the pointers associated with it
+    type ( VectorTemplate_T ), intent(out) :: V
+
+    ! Executable code
+    v%id = 0
+    v%name = 0
+    nullify ( v%quantities )
+  end subroutine NullifyVectorTemplate
+
+  ! ---------------------------------------------- NullifyVectorValue -----
+  subroutine NullifyVectorValue ( V )
+    ! Given a vector value, nullify all the pointers associated with it
+    type ( VectorValue_T ), intent(out) :: V
+
+    ! Executable code
+    call nullifyQuantityTemplate ( v%template )
+    nullify ( v%values )
+    nullify ( v%mask )
+  end subroutine NullifyVectorValue
+
+  ! ---------------------------------------------- NullifyVector -----
+  subroutine NullifyVector ( V )
+    ! Given a vector, nullify all the pointers associated with it
+    type ( Vector_T ), intent(out) :: V
+
+    ! Executable code
+    v%name = 0
+    v%globalUnit = PHYQ_Invalid
+    call nullifyVectorTemplate ( v%template )
+    nullify ( v%quantities )
+  end subroutine NullifyVector
+
   !-----------------------------------------  RmVectorFromDatabase  -----
   integer function RmVectorFromDatabase ( DATABASE, ITEM )
 
@@ -1802,6 +1837,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot subtract vectors having different templates" )
+    call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
@@ -2053,6 +2089,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.93  2002/10/19 18:53:26  livesey
+! Changed from huge to our own value (temporarily?)
+!
 ! Revision 2.92  2002/10/17 18:18:25  livesey
 ! Added low/high bound stuff
 !
