@@ -8,7 +8,6 @@ MODULE OutputL1B_HDF5
   USE OutputL1B_DataTypes, ONLY: LENUTC, L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
   USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
   USE MLSAuxData, ONLY: Build_MLSAuxData, CreateGroup_MLSAuxData
-  USE HDF5, ONLY: HID_T
   USE MLSCommon
   USE MLSL1Common, ONLY: L1BFileInfo_T
   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
@@ -43,6 +42,7 @@ CONTAINS
 
   !------------------------------------------------------------ OutputL1B_index
   SUBROUTINE OutputL1B_index_HDF5 (noMAF, sd_id, index)
+    USE HDF5, ONLY: HID_T
     ! This subroutine writes the time/MIF indexing quantities to the HDF file. 
     ! Assumes HDF5 FORTRAN APIs have been invoked to open/create files.
     ! Arguments
@@ -78,6 +78,7 @@ CONTAINS
   END SUBROUTINE OutputL1B_index_HDF5
 !----------------------------------------------------------------- OutputL1B_sc
   SUBROUTINE OutputL1B_sc_HDF5 (noMAF, sd_id, sc)
+    USE HDF5, ONLY: HID_T
     ! It writes the spacecraft quantities to a group in an HDF5 file.
     ! Assumes l1/Close_Files will close files.
     ! Arguments
@@ -146,6 +147,7 @@ CONTAINS
 
 !---------------------------------------------------------------- OutputL1B_GHz
   SUBROUTINE OutputL1B_GHz_HDF5 (noMAF, sd_id, tp)
+    USE HDF5, ONLY: HID_T
   ! This subroutine writes the GHz tangent point quantities to a group 
   ! in an HDF5 file.  Assumes HDF5 FORTRAN APIs have been invoked by 
   ! l1/OpenInit to open files. Assumes l1/Close_Files will close files.
@@ -231,6 +233,7 @@ CONTAINS
 
 !---------------------------------------------------------------- OutputL1B_THz
   SUBROUTINE OutputL1B_THz_HDF5 (noMAF, sd_id, tp)
+    USE HDF5, ONLY: HID_T
     ! This subroutine writes the THz tangent point quantities to a 
     ! group in an HDF5 file.
     ! Assumes HDF5 FORTRAN APIs have been invoked by l1/OpenInit to open files.
@@ -313,6 +316,7 @@ CONTAINS
 !---------------------------------------------------------------- OutputL1B_rad
   SUBROUTINE OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, Reflec, &
        MAFStartTimeGIRD, rad)
+    USE HDF5, ONLY: HID_T
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
     ! Assumes HDF5 FORTRAN APIs have been invoked by l1/OpenInit to open files.
     ! Assumes l1/Close_Files will close files.
@@ -505,6 +509,9 @@ CONTAINS
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.7  2003/09/29 18:27:19  pwagner
+! Moved hdf5 stuff to work around IFC internal compiler error
+!
 ! Revision 2.6  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !
