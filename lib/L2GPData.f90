@@ -1455,25 +1455,38 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ DUMP_L2GP ------------
 
-  subroutine Dump_L2GP ( L2gp, Name )
+  subroutine Dump_L2GP ( L2gp, Name, ColumnsOnly )
 
     ! Dummy arguments
-    type (l2gpData_T), intent(in) :: L2GP(:)
-    character(len=*), optional :: Name
+    type (l2gpData_T), intent(in) ::          L2GP(:)
+    character(len=*), intent(in), optional :: Name
+    logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
 
     ! Local variables
-    integer :: i
+    integer :: i, Colm
+    logical :: myColumnsOnly
+    
+    if( present(ColumnsOnly)) then
+      myColumnsOnly = ColumnsOnly
+    else
+      myColumnsOnly = .false.
+    endif
 
     if ( present(name) ) call output ( name, advance='yes' )
     do i = 1, size(l2gp)
       call output ( 'L2GP Data: ')
-      call display_string ( l2gp(i)%nameIndex, advance='yes' )
+      if(l2gp(i)%nameIndex > 0) then
+        call display_string ( l2gp(i)%nameIndex, advance='yes' )
+      else
+        call output ( '(the nameIndex is 0) ', advance='yes')
+      endif
       call output ( 'nTimes: ')
       call output ( l2gp(i)%nTimes, 5)
       call output ( '  nLevels: ')
       call output ( l2gp(i)%nLevels, 3)
       call output ( '  nFreqs: ')
       call output ( l2gp(i)%nFreqs, 3, advance='yes')
+      if(myColumnsOnly .and. l2gp(i)%nColumns==0) CYCLE
       
       call dump ( l2gp(i)%pressures, 'Pressures:' )
       
@@ -1503,17 +1516,29 @@ contains ! =====     Public Procedures     =============================
       !    call dump ( l2gp(i)%status, 'Status:' )
       
       call dump ( l2gp(i)%quality, 'Quality:' )
+      
+      if( l2gp(i)%nColumns <= 0 ) CYCLE
+      call output ( 'nColumnAbundances: ')
+      call output ( l2gp(i)%nColumns, 5, advance='yes')
+      do Colm=1, l2gp(i)%nColumns
+          call output ( 'Column Type:' )
+          call output ( l2gp(i)%columnTypes(Colm), advance='yes' )
+          call dump ( l2gp(i)%columnValues(:, Colm), 'Column Values:' )
+          call dump ( l2gp(i)%boundaryPressures(:, Colm), 'Tropopause values:' )
+      enddo
 
     end do
   end subroutine Dump_L2GP
     
-
   !=============================================================================
 end module L2GPData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.34  2001/08/03 23:13:52  pwagner
+! Began testing; at least now exits normally again
+!
 ! Revision 2.33  2001/08/03 00:02:26  pwagner
 ! Ncolumns now a component of data type; swapi via ints not strings
 !
