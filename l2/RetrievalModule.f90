@@ -40,7 +40,7 @@ module RetrievalModule
     & Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: CloneVector, CopyVector, DestroyVectorInfo, &
-    & DestroyVectorMask, Vector_T
+    & Vector_T
 
   implicit NONE
   private
@@ -348,10 +348,6 @@ contains
         if ( got(f_fwdModelOut) ) call copyVector ( fwdModelOut, f )
         call destroyVectorInfo ( f )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
-        ! Clear the masks of every vector
-        do j = 1, size(vectorDatabase)
-          call destroyVectorMask ( vectorDatabase(i) )
-        end do
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase)
@@ -569,7 +565,7 @@ contains
         end if
 
       do ! Newtonian iteration
-          if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
+        if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
             & call nwtdb
         call nwta ( nwt_flag, aj )
           if ( index(switches,'nwt') /= 0 ) then
@@ -1307,7 +1303,7 @@ contains
           do channel = 1, qty%template%noChans
             doThis = .true.
             if ( associated(channels) ) doThis = channels(channel)
-            if ( .not. doThis ) then
+            if ( doThis ) then
               do height = 1, qty%template%noSurfs
                 call SetMask ( qty%mask(:,instance), &
                   & (/ channel+qty%template%noChans*(height-1) /) )
@@ -1358,6 +1354,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.62  2001/09/25 05:57:36  livesey
+! Removed call to destroyVectorMask, and the erroneous .not. doThis
+!
 ! Revision 2.61  2001/09/25 00:49:59  vsnyder
 ! Copy mask from measurements to f_rowScaled
 !
