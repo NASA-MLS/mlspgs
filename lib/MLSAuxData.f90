@@ -21,6 +21,7 @@ module MLSAuxData
 
   implicit NONE
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -42,6 +43,7 @@ module MLSAuxData
 !                              to a file.
 ! Deallocate_MLSAuxData        Called when an MLSAuxData is finished.
 !
+! === (end of toc) ===
   private
 
   public :: MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, &
@@ -643,10 +645,10 @@ contains ! ============================ MODULE PROCEDURES ====================
       elseif ( type_id == H5T_NATIVE_CHARACTER ) then
         myQuantityType = 'character'
   !    case (H5T_NATIVE_REAL, H5T_IEEE_F32LE)
-      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+      elseif ( type_id == H5T_NATIVE_REAL .or. type_id == H5T_IEEE_F32LE ) then
         myQuantityType = 'real'
   !    case (H5T_NATIVE_DOUBLE, H5T_IEEE_F64LE)
-      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+      elseif ( type_id == H5T_NATIVE_DOUBLE .or. type_id == H5T_IEEE_F64LE ) then
         myQuantityType = 'double'
   !    case default
       else
@@ -965,6 +967,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.5  2002/09/27 23:37:54  pwagner
+! More progress toward hdf5-capable l1b files
+!
 ! Revision 2.4  2002/09/26 23:58:04  pwagner
 ! Moved attributes out of create function; standalone attribute io, too
 !
