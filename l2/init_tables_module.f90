@@ -733,6 +733,7 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
@@ -950,6 +951,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.284  2003/02/14 01:56:36  livesey
+! Added the 'additional' capability in subset
+!
 ! Revision 2.283  2003/02/13 21:43:50  livesey
 ! Added f_profile to fill
 !
