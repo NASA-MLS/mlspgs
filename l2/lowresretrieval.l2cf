@@ -1,0 +1,213 @@
+; This l2cf is an attempt to make a universal l2cf for doing sids runs
+; This is a simple l2cf for testing purposes. Mainly for testing the
+; M4 stuff.  The band number to do is passed in as _band, the date as
+; _day.
+
+define(_outpath,/nas/bigdata/livesey/misc/)
+define(_ver,v0-5-test1)
+define(_day,1996-051)
+define(_year,1996)
+
+define(_signal,_sigBand$1)
+define(_molecules,_mol$1)
+define(_systemp, _systemp$1)
+
+; First some m4 directives.
+include(m4defs.l2cf)
+
+; Now include the valid signals database
+l2cfinc(validsignals-emls.l2cf)
+
+; Now the spectroscopy database
+l2cfinc(spectroscopy.l2cf)
+
+; Now read the l2gp files for each specie
+l2cfinc(readl2gpfiles.l2cf)
+
+; Now read the gridded data for each specie
+l2cfinc(readclimatology.l2cf)
+
+; -------------------------------------------- Global settings ----
+BEGIN GlobalSettings
+
+    l1Boa, file='/nas/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+    startTime = "00:00:00"
+    endTime = "00:04:00"
+
+;    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+;                   start=1000mb, formula=[25:12, 24:6]
+    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start=1000mb, formula=[37:6]
+
+    vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
+
+    forwardModelGlobal, $
+      l2pc='/nas/bigdata/livesey/misc/l2pc_band6U_v1.0-lowres.dat'
+
+    sidsFwm: forwardModel, type=linear,  $
+      signals = 'R2:190.B6UF:O3', $
+      molecules = o3
+    retFwm: forwardModel, type=linear,  $
+      signals = 'R2:190.B6UF:O3', $
+      molecules = o3, moleculeDerivatives=o3, /atmos_der, phiWindow=5
+    outFwm: forwardModel, type=linear,  $
+      signals = 'R2:190.B6UF:O3', $
+      molecules = o3, phiWindow=5
+
+END GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+BEGIN ChunkDivide
+;    IgnoreL1B=true
+;    IdealLength=10 MAFs
+;    NoChunks=1
+    IdealLength =             0.125 orbits
+    overlap =                 0 MAFs
+    HomeGeodAngle =           0 degrees
+    HomeModule =              GHz
+    ScanLowerLimit =          -10 km : 20 km
+    ScanUpperLimit =          40 km : 100 km
+    CriticalScanningModules = Both
+    MaxGap =                  3 minutes
+END ChunkDivide
+
+; ------------------------------------------- Construct sections --
+BEGIN Construct
+
+    hGridStandard: hGrid, type=height, height=15km, module=GHz
+
+END Construct
+
+l2cfinc(constructstandardspecies.l2cf)
+l2cfinc(constructunfoldedradiances.l2cf)
+
+BEGIN Construct
+    stateTemplate: VectorTemplate, quantities=  $
+      [ o3 ]
+
+    extraStateTemplate: VectorTemplate, quantities =  $
+      [ temp, refGPH, ptanGHz, tngtGeocAltGHz, h2o ]
+
+    measTemplate: VectorTemplate, quantities= $
+      [ band6U ]
+END Construct
+
+; ------------------------------------------- Fill -----------------
+
+BEGIN Fill
+
+    ;; Define the vectors
+    x: Vector, template=stateTemplate ; State
+    a: Vector, template=stateTemplate ; A priori
+    sdIn: Vector, template=stateTemplate ; A priori standard deviation
+    sdOut: Vector, template=stateTemplate ; Solution standard deviation
+    t: Vector, template=stateTemplate ; Truth
+
+    b: Vector, template=extraStateTemplate ; Extra state
+    y: Vector, template=measTemplate ; Radiances
+    ya: Vector, template=measTemplate ; Radiances for a priori state
+    f: Vector, template=measTemplate ; Forward model radiances
+    yNoise: Vector, template=measTemplate ; Radiance noise
+
+    ;; Define the matrix
+    K: Matrix, rows=y, columns=x
+
+    ;; Fill t with the `truth'
+    Fill, quantity=t.o3,    method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+    
+    ;; Fill a and x with a apriori
+    Fill, quantity=a.o3,    method=gridded, sourceGrid=gridO3, /interpolate
+    Fill, quantity=x.o3,    method=gridded, sourceGrid=gridO3, /interpolate
+
+; OR can use truth
+;     Fill, quantity=a.o3,    method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+;     Fill, quantity=x.o3,    method=l2gp, sourceL2GP=l2gpO3Input, /interpolate
+
+    ;; Now fill the remaining state quantities
+    Fill, quantity=b.temp,   method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+    Fill, quantity=b.refGPH, method=explicit,explicitvalues=16km,/spread ; FIX LATER!!!
+    Fill, quantity=b.h2o,    method=gridded, sourceGrid=gridH2O, /interpolate
+
+    Fill, quantity=b.tngtGeocAltGHz, method=l1b
+
+    ;; Now the two tangent presssures
+    Fill, quantity=b.ptanGHz, method=hydrostatic, $
+      h2oQuantity=b.h2o, $
+      temperatureQuantity=b.temp, $
+      refGPHQuantity=b.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltGHz, $
+      maxIterations=10
+
+    ;; Define matrices
+    ;; myJacobian: matrix, rows=radiance, columns=state
+    myCovariance: matrix, columns=x, type=spd, /extra
+
+    Fill, quantity=sdIn.o3, method=explicit, explicitValues= 5 ppmv, /spread
+    fillCovariance, matrix=myCovariance, diagonal=sdIn, /invert
+
+END Fill
+
+; ------------------------------------------------------- Sids -----
+
+BEGIN Retrieve
+
+   time
+   sids, fwdModelIn=t, fwdModelExtra=b, fwdModelOut=y,$
+     forwardModel=[sidsFwm]
+   sids, fwdModelIn=a, fwdModelExtra=b, fwdModelOut=ya,$
+     forwardModel=[outFwm]
+
+END Retrieve
+
+; ------------------------------------------------- Fill, noise -----
+
+BEGIN Fill
+
+    Fill, quantity=yNoise.band6U, radianceQuantity=y.band6U,  $
+      systemTemperature= 2000K, integrationTime=0.16 s,  $
+      method = estimatedNoise
+
+END Fill
+
+; ------------------------------------------------------- Retrieve -----
+
+BEGIN Retrieve
+
+   Retrieve, state=x, fwdModelExtra=b, measurements=y, measurementSD=yNoise, $
+      forwardModel=retFwm, $
+      covariance=myCovariance, apriori=a, columnScale=norm, $
+      maxF=2, maxJ=1, lambda=0.0,outputSD=sdOut
+   sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=f,$
+     forwardModel=[outFwm]
+
+END Retrieve
+
+
+; ------------------------------------------------------- Join -----
+
+BEGIN Join
+    l2gpTemp: l2gp, source=b.temp, swath = 'Temperature'
+    l2gpO3x:  l2gp, source=x.o3, swath = 'O3', precision=sdOut.o3
+    l2gpO3a:  l2gp, source=a.o3, swath = 'O3', precision=sdIn.o3
+    l2gpO3t:  l2gp, source=t.o3,  swath = 'O3'
+
+    measRadL2AUX: l2aux, source=y.band6U, /prefixSignal, sdName=''
+    measNoiseL2AUX: l2aux, source=yNoise.band6U, /prefixSignal, sdName=' precision'
+    aprioriRadL2AUX: l2aux, source=ya.band6U, /prefixSignal, sdName=' apr'
+    fitRadL2AUX: l2aux, source=f.band6U, /prefixSignal, sdName=' fit'
+    ptanGHzL2AUX: l2aux, source=b.ptanGHz
+END Join
+
+
+; ---------------------------------------------------------  Output  -----
+BEGIN Output
+    
+    output, file='{}_outpath{}temp_lowres.l2gp', quantities=l2gpTemp, type=l2gp
+    output, file='{}_outpath{}o3_x_lowres.l2gp', quantities=l2gpO3x, type=l2gp
+    output, file='{}_outpath{}o3_a_lowres.l2gp', quantities=l2gpO3a, type=l2gp
+    output, file='{}_outpath{}o3_t_lowres.l2gp', quantities=l2gpO3t, type=l2gp
+
+    output, file='{}_outpath{}data_lowres.l2aux', quantities=  $
+      [ ptanGHzL2AUX, measRadL2Aux, fitRadL2Aux, measNoiseL2AUX, aprioriRadL2AUX ], type=l2aux
+
+END Output

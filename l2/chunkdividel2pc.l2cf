@@ -1,0 +1,7 @@
+; ------------------------------------------ Chunk divide  ----
+begin ChunkDivide
+    ignoreL1B = true
+    idealLength = 1 MAFs
+    overlap = 0 MAFs
+    noChunks = 1
+end ChunkDivide

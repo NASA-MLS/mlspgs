@@ -1,0 +1,54 @@
+; Valid signals for UARS MLS (note NOT EOS!!!)
+
+BEGIN MLSSignals
+
+    ;; Modules
+    SC: Module, /spaceCraft
+    GHz: Module
+
+    ;; Radiometers with their nominal local osciallator frequencies:
+    R1: radiometer, suffix="63",  module=GHz, lo= 63.283 GHz
+    R2: radiometer, suffix="205", module=GHz, lo=203.267 GHz
+    R3: radiometer, suffix="183", module=GHz, lo=184.778 GHz
+
+    ;; Spectrometer types, 15 channel filter bank only
+    FB15: spectrometerType, first= 1, $
+      channels=[ 209 MHz : 128 MHz, 305 MHz : 64 MHz, 353 MHz : 32 MHz, $
+                 377 MHz :  16 MHz, 389 MHz :  4 MHz, 395 MHz :  2 MHz, $
+                 398 MHz :   2 MHz, 400 MHz :  2 MHz, 402 MHz :  2 MHz, $
+                 405 MHz :   4 MHz, 411 MHz :  8 MHz, 423 MHz : 16 MHz, $
+                 447 MHz :  32 MHz, 495 MHz :  64 MHz, 591 MHz :128 MHz ]
+
+    ;; Bands
+    B1: band, suffix="PT", radiometer=R1, spectrometerType=FB15,  $
+      centerFrequency=685.3 MHz
+    B2: band, suffix="ClO", radiometer=R2, spectrometerType=FB15,  $
+      centerFrequency=685.3 MHz
+    B3: band, suffix="H2O2", radiometer=R2, spectrometerType=FB15,  $
+      centerFrequency=1707.77 MHz
+    B4: band, suffix="O3", radiometer=R2, spectrometerType=FB15,  $
+      centerFrequency=2465.21 MHz
+    B5: band, suffix="H2O", radiometer=R3, spectrometerType=FB15,  $
+      centerFrequency=1867.74 MHz
+    B6: band, suffix="O3", radiometer=R3, spectrometerType=FB15,  $
+      centerFrequency=0.0 MHz
+
+    ;; Valid signals
+    sig_band1: signal, band=B1, switch=0, spectrometer=1 ; R1.B1F.S0.FB15-1
+    sig_band2: signal, band=B2, switch=0, spectrometer=2 ; R2.B2F.S0.FB15-2
+    sig_band3: signal, band=B3, switch=1, spectrometer=3 ; R2.B3F.S1.FB15-3
+    sig_band4: signal, band=B4, switch=0, spectrometer=4 ; R2.B4F.S0.FB15-4
+    sig_band4: signal, band=B5, switch=0, spectrometer=5 ; R3.B5F.S0.FB15-5
+    sig_band6: signal, band=B6, switch=2, spectrometer=6 ; R3.B6F.S0.FB15-6
+
+
+    ;; Alternates
+    sig_band1alt: signal, band=B1, switch=1, spectrometer=3 ; R1.B1F.S1.FB15-3
+    sig_band2alt: signal, band=B2, switch=1, spectrometer=3 ; R2.B2F.S1.FB15-3
+    sig_band3alt: signal, band=B3, switch=2, spectrometer=6 ; R2.B3F.S2.FB15-6
+    sig_band4alt: signal, band=B4, switch=1, spectrometer=3 ; R2.B4F.S1.FB15-3
+    sig_band4alt: signal, band=B5, switch=1, spectrometer=3 ; R3.B5F.S1.FB15-3
+    sig_band6alt: signal, band=B6, switch=1, spectrometer=3 ; R3.B6F.S1.FB15-3
+
+END MLSSignals
+

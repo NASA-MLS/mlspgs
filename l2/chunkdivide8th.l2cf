@@ -1,0 +1,11 @@
+; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  idealLength = 0.125 orbits
+  overlap = 5 MAFs
+  homeGeodAngle =           0 degrees
+  homeModule =              GHz
+  scanLowerLimit =          -10 km : 20 km
+  scanUpperLimit =          40 km : 100 km
+  criticalScanningModules = Both
+  maxGap =                  1.5 minutes
+end ChunkDivide

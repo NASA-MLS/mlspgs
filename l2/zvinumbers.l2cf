@@ -1,0 +1,166 @@
+; This l2cf is an attempt to make a universal l2cf for doing sids runs
+; This is a simple l2cf for testing purposes. Mainly for testing the
+; M4 stuff.  The band number to do is passed in as _band, the date as
+; _day.
+
+ifdef(_band, ,define(_band,{2L}))
+define(_outpath,/nas/bigdata/livesey/misc/)
+define(_ver,test1)
+define(_signal,_sigBand$1)
+define(_molecules,_mol$1)
+define(_systemp, _systemp$1)
+
+; First some m4 directives.
+include(m4defs.l2cf)
+
+; Now include the valid signals database
+l2cfinc(validsignals-emls.l2cf)
+
+; Now define the signals for each band
+l2cfinc(signalsforband.l2cf)
+
+; Now the spectroscopy database
+l2cfinc(spectroscopy.l2cf)
+
+; Now the list of which lines apply for which bands
+l2cfinc(moleculesperband.l2cf)
+
+; Now read the gridded climatology data
+l2cfinc(readclimatology.l2cf)
+
+; -------------------------------------------- Global settings ----
+BEGIN GlobalSettings
+
+    ;; This should really be irrelevant
+    l1Boa, file='{}_nas{}/{}_data{}/emls/l1boa/truth/1996/MLS-Aura_L1BOA_Full_s4-t_1996-051.dat'
+    startTime = "00:00:00"
+    endTime = "01:00:00"
+
+;    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+;                   start=1000mb, formula=[25:12, 24:6]
+    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start=1000mb, formula=[37:6]
+
+    vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
+
+    fwmIntegrationGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 1000mb, formula=[ 65:48, 40:24, 40:12 ]
+
+    ;; Forward model tangent grid needs points below the surface.
+    fwmTangentGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 10.0e9 mb, formula=[ 8:1, 32:24, 20:12, 20:6 ]
+    vGridPtan: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 1000mb, formula=[ 25:12, 18:6 ]
+
+    forwardModelGlobal, $
+      antennaPatterns='aaap_emls_sids_v03.dat', $
+      filterShapes='all_filter_banks.dat', $
+      pointingGrids='grid_file_mdb.dat'
+
+    l2pcFwm: forwardModel, type=full,  $
+      signals = 'R2:190.B2LF:H2O.C1', $
+      molecules = H2O, $
+      integrationGrid=fwmIntegrationGrid, $
+      phiWindow=5, $
+      frqGap=2 GHz, $
+      tangentGrid=fwmTangentGrid
+
+END GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+BEGIN ChunkDivide
+
+    IgnoreL1B = true
+    IdealLength = 1 MAFs
+    Overlap = 0 MAFs
+    NoChunks = 1
+
+END ChunkDivide
+
+; ------------------------------------------- Construct sections --
+BEGIN Construct
+
+    Forge, module=GHz, noMIFs=43, geodAngle= 0 degrees, inclination = 98.145 degrees
+    Forge, module=THz, noMIFs=43, geodAngle= 0 degrees, inclination = 98.145 degrees
+
+    hGridStandard: hGrid, type=explicit, module=GHz, values=[-3,-1.5,0,1.5,3]
+
+END Construct
+
+l2cfinc(constructstandardspecies.l2cf)
+l2cfinc(constructunfoldedradiances.l2cf)
+
+BEGIN Construct
+
+    stateTemplate: VectorTemplate, quantities=  $
+      [temp, refGPH, ptanGHz, ptanTHz, _AllMolecules ]
+    extraStateTemplate: VectorTemplate, quantities =  $
+      [ _AllElevs, _AllSBRatios, _LesserState, _AllISORatios ]
+
+    measTemplate: VectorTemplate, quantities= $
+      [ {band}_band ]
+
+END Construct
+
+; ------------------------------------------- Fill -----------------
+
+BEGIN Fill
+
+    ;; Define the vectors
+    x: Vector, template=stateTemplate
+    b: Vector, template=extraStateTemplate
+    y: Vector, template=measTemplate
+
+    ;; Define the matrix
+    K: Matrix, rows=y, columns=x
+
+END Fill
+
+; Define the names of the standard vectors for the canned fills used below
+
+define(_x,x)
+define(_b,b)
+l2cfinc(filllesserstate_l2pc.l2cf)
+l2cfinc(fillisotopes.l2cf)
+
+; Now fill the main state quantities from the climatology data
+
+l2cfinc(fillfromclimatology.l2cf)
+
+BEGIN Fill
+
+    ;; Now fill geopotential height
+    Fill, quantity=x.refGPH, method=explicit, explicitValues=16km,/spread
+
+    ;; Now the two tangent presssures
+    Fill, quantity=x.ptanGHz, method=vGrid, sourceVGrid=vGridPtan
+    Fill, quantity=x.ptanTHz, method=vGrid, sourceVGrid=vGridPtan
+    
+END Fill
+
+l2cfinc(fillsidebandratios.l2cf)
+
+; ------------------------------------------------------- Retrieve -----
+
+BEGIN Retrieve
+
+   time
+   sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=y,$
+     forwardModel=[l2pcFwm], jacobian=K
+
+END Retrieve
+
+; ------------------------------------------------------- Join -----
+
+BEGIN Join
+END Join
+
+; ---------------------------------------------------------  Output  -----
+BEGIN Output
+    
+    output, file='{}_outpath{}l2pc_band{}_band{}_v1.0-lowres.dat', quantities=K, $
+      type=l2pc
+
+END Output
+
+
