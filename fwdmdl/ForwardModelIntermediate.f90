@@ -10,8 +10,6 @@ module ForwardModelIntermediate
   ! calling code.
 
   use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Deallocate, MLSMSG_ERROR
-  use Allocate_Deallocate, only: DEALLOCATE_TEST
 
   implicit none
   private
@@ -46,6 +44,9 @@ contains
 
   ! ------------------------------------------ DestroyForwardModelIntemediate ---
   subroutine DestroyForwardModelIntermediate ( ifm )
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+
     type (ForwardModelIntermediate_T), intent(inout) :: ifm
 
     ! Local variables
@@ -64,6 +65,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.1  2001/10/02 16:51:41  livesey
+! Removed fmStat%finished and reordered loops in forward models
+!
 ! Revision 2.0  2001/09/17 20:26:25  livesey
 ! New forward model
 !
