@@ -575,7 +575,13 @@ contains ! =====     Public Procedures     =============================
     goodDim=l2aux%dimensions%dimensionFamily /= L_None
     noDimensionsUsed = min(COUNT(goodDim), myL2AUXRank)
     call allocate_test(dimSizes,noDimensionsUsed,'dimSizes',ModuleName)
-    dimSizes=PACK(l2aux%dimensions(1:noDimensionsUsed)%noValues, goodDim(1:noDimensionsUsed))
+    if ( present(DimNames) ) then
+      dimSizes = PACK(l2aux%dimensions(1:noDimensionsUsed)%noValues, &
+        & goodDim(1:noDimensionsUsed))
+    else
+      dimSizes = PACK(l2aux%dimensions%noValues, &
+        & goodDim)
+    endif
 
     ! Create the sd within the file
     sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT32, &
@@ -722,6 +728,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.29  2002/11/08 23:14:41  pwagner
+! Should work again with mlsl2
+!
 ! Revision 2.28  2002/11/08 18:25:33  jonathan
 ! Changes to allow writing rank 2; also reuse_DimNames
 !
