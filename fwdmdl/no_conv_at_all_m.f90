@@ -14,6 +14,7 @@ module NO_CONV_AT_ALL_M
   use String_Table, only: GET_STRING
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+  use Molecules, only: L_EXTINCTION
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
 
   implicit NONE
@@ -169,9 +170,14 @@ contains
       uk = ubound(k_atmos,3)
       do is = 1, size(ForwardModelConfig%molecules)
 
-         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
-          & molecule=forwardModelConfig%molecules(is), noError=.true. )
-
+        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
+            & noError=.true. )
+        else
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+        endif
         if ( associated(f) ) then
 
           Rad(1:) = 0.0
@@ -215,6 +221,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.21  2001/05/09 19:46:49  vsnyder
 ! Use new bandHeight argument of createBlock
 !
