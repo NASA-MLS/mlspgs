@@ -17,6 +17,11 @@ OutputL1B.o: outputl1b.mod
    -T OutputL1B.o outputl1b.mod 
 outputl1b.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: outputl1b_hdf4.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+outputl1b_hdf4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
 tree_checker.mod: tree_checker.f90 init_tables_module.mod
 	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 tree_checker.o: tree_checker.mod tree_checker.f90
@@ -191,6 +196,8 @@ else
 
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
 
 # l2
 # This keeps switch_usage up-to-date with notes/switches
@@ -323,6 +330,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.10  2002/08/23 20:32:23  pwagner
+# Removed lib trickery L2GPData, MLSFiles, etc.
+#
 # Revision 1.9  2002/07/25 20:58:57  pwagner
 # No custom builds for Lahey-specific 3 lib modules if marking uptodate
 #

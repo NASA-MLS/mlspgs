@@ -10,6 +10,11 @@ OutputL1B.o: OUTPUTL1B.mod
    -T OutputL1B.o OUTPUTL1B.mod 
 OUTPUTL1B.mod:
 	$(UTILDIR)/newAifBdiff.sh -a OUTPUTL1B.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: OUTPUTL1B_HDF4.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T OutputL1B_HDF4.o OUTPUTL1B_HDF4.mod 
+OUTPUTL1B_HDF4.mod:
+	$(UTILDIR)/newAifBdiff.sh -a OUTPUTL1B_HDF4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
 TREE_CHECKER.mod: INIT_TABLES_MODULE.mod tree_checker.f90
 	$(UTILDIR)/newAifBdiff.sh -a TREE_CHECKER.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 tree_checker.o: TREE_CHECKER.mod tree_checker.f90
@@ -172,6 +177,8 @@ else
 
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
 
 # l2
 # This keeps switch_usage up-to-date with notes/switches
@@ -296,6 +303,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.6  2002/07/18 18:00:51  pwagner
+# .o now depends on file_name even if .mod mediated
+#
 # Revision 1.5  2002/07/15 23:20:19  pwagner
 # Added build instructions for getcf_m.mod
 #
