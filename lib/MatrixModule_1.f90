@@ -13,7 +13,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
     & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
     & GetDiagonal, GetMatrixElement, GetVectorFromColumn, InvertCholesky, &
-    & M_Absent, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
+    & M_Absent, M_Column_Sparse, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
     & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
     & MultiplyMatrixVectorNoT, &
     & operator(+), &
@@ -1786,9 +1786,12 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Upper   ! Only do the upper triangle
     !                                          if present and true.
 
+    integer, parameter :: KB = 1024
+    integer, parameter :: MB = KB * 1024
+    integer, parameter :: GB = MB * 1024
     !                         Absent Banded Sparse   Full
     character :: CHARS(0:3) = (/ '-',   'B',   'S',   'F' /)
-    integer :: I, J
+    integer :: I, J, N
     logical :: MyUpper
 
     if ( present(name) ) call output ( name )
@@ -1801,6 +1804,7 @@ contains ! =====     Public Procedures     =============================
     end if
     myUpper = .false.
     if ( present(upper) ) myUpper = upper
+    n = 0
     do i = 1, matrix%row%nb
       call output ( i, 3 )
       call output ( ':' )
@@ -1811,9 +1815,33 @@ contains ! =====     Public Procedures     =============================
         else
           call output ( chars(matrix%block(i,j)%kind) )
         end if
+        select case ( matrix%block(i,j)%kind )
+        case ( M_Full )
+          n = n + matrix%block(i,j)%nRows * matrix%block(i,j)%nCols
+        case ( M_Banded, M_Column_Sparse )
+          n = n + size ( matrix%block(i,j)%values, 1 )
+        end select
       end do ! j
       call output ( matrix%row%nelts(i), places=5, advance='yes' )
     end do ! i
+    call output ( 'Total matrix size: ' )
+    ! Convert size to bytes (is there a better way to do this to automatically
+    ! deal with the case when we decice to switch to r4)
+    n = n * 8
+    ! Make a 'nice' output
+    if ( n < kb ) then
+      call output ( n*1.0, format='(f5.1)' )
+      call output ( ' bytes', advance='yes' )
+    else if ( n < Mb ) then
+      call output ( n*1.0/kb, format='(f5.1)' )
+      call output ( ' kb', advance='yes' )
+    else if ( n < Gb ) then
+      call output ( n*1.0/Mb, format='(f5.1)' )
+      call output ( ' Mb', advance='yes' )
+    else
+      call output ( n*1.0/Gb, format='(f5.1)' )
+      call output ( ' Gb', advance='yes' )
+    end if
   end subroutine Dump_Struct
 
   ! --------------------------------------------------  MinDiag_1  -----
@@ -1830,6 +1858,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.69  2002/06/22 06:50:25  livesey
+! Added print of matrix size in -Sspa
+!
 ! Revision 2.68  2002/06/18 01:22:49  vsnyder
 ! Add Spill_1.  Cosmetic changes in LaTeX stuff and elsewhere.
 !
