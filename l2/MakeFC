@@ -137,7 +137,7 @@ $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
 
 tar:
 
@@ -204,6 +204,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.30  2001/05/31 20:19:31  pwagner
+# Added ghostbuster to .PHONY list
+#
 # Revision 2.29  2001/05/23 22:27:41  pwagner
 # Expanded LIB_prereqs
 #
