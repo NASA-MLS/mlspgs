@@ -83,7 +83,7 @@ contains ! =====     Public Procedures     =============================
     integer :: vectorIndex, quantityIndex
     type (QuantityTemplate_T), pointer :: quantity
     logical :: compareOverlaps, outputOverlaps, unpackOutput
-    double precision :: T1, T2     ! for timing
+    REAL :: T1, T2     ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -199,7 +199,7 @@ contains ! =====     Public Procedures     =============================
     subroutine SayTime
       call cpu_time ( t2 )
       call output ( "Timing for MLSL2Join =" )
-      call output ( t2 - t1, advance = 'yes' )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
 
@@ -638,8 +638,10 @@ contains ! =====     Public Procedures     =============================
 !     firstProfile = lastProfile-noOutputInstances+1
     end if
 
-    vectorQuantity = GetVectorQuantity ( vector, quantity%name, &
-      & quantityIsName=.TRUE. )
+!    vectorQuantity = GetVectorQuantity ( vector, quantity%name, &
+!      & quantityIsName=.TRUE. )
+
+    vectorQuantity = GetVectorQuantity ( vector, quantity%name)
 
 !    thisL2AUX%values = &
 !      & vectorQuantity%values(useFirstInstance:useLastInstance,:,:)
@@ -714,6 +716,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.6  2001/01/03 18:15:13  pwagner
+! Changed types of t1, t2 to real
+!
 ! Revision 2.5  2000/11/16 02:19:01  vsnyder
 ! Implement timing.
 !
