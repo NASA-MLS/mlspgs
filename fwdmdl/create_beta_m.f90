@@ -159,5 +159,7 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.4  2001/02/19 22:14:21  zvi
+!
 ! Revision 1.1  2001/02/01 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

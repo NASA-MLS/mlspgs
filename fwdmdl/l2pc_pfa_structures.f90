@@ -122,6 +122,8 @@ module L2PC_PFA_STRUCTURES
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 1.6  2001/02/19 22:14:21  zvi
+!
 ! Revision 1.1  2000/06/21 21:56:15  zvi
 ! First version D.P.
 !

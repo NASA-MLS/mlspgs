@@ -179,5 +179,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.4  2001/02/19 22:14:21  zvi
+!
 ! Revision 1.1 2001/02/01 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90

@@ -35,6 +35,8 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 1.2  2001/02/19 22:14:21  zvi
+!
 ! Initial conversion to Fortran 90
 ! 2000/11/20 21:56:09  zvi
 ! First version D.P.
