@@ -41,10 +41,10 @@ contains
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
       & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
       & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
-      & F_height, f_hRegOrders, f_hRegQuants, f_hRegWeights, f_hRegWeightVec, &
-      & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, &
-      & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
-      & F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
+      & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
+      & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
+      & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, &
+      & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
       & F_regAfter, F_regApriori, F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
@@ -64,7 +64,7 @@ contains
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
     use MatrixTools, only: DumpBlock
-    use MLSCommon, only: R8, MLSCHUNK_T, RM
+    use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
@@ -124,9 +124,10 @@ contains
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
-    integer :: HRegOrders                ! Regularization orders
-    integer :: HRegQuants                ! Regularization quantities
-    integer :: HRegWeights               ! Weight of regularization conditions
+    type(vector_T), pointer :: HighBound ! For state during retrieval
+    integer :: HRegOrders               ! Regularization orders               
+    integer :: HRegQuants               ! Regularization quantities           
+    integer :: HRegWeights              ! Weight of regularization conditions 
     type(vector_T), pointer :: HRegWeightVec  ! Weight vector for regularization
     integer :: I, J, K                  ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
@@ -139,6 +140,7 @@ contains
                                         ! (masked-off rows of Jacobian)
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
+    type(vector_T), pointer :: LowBound ! For state during retrieval
     integer :: MaxJacobians             ! Maximum number of Jacobian
                                         ! evaluations of Newtonian method
     type(vector_T), pointer :: Measurements  ! The measurements vector
@@ -329,6 +331,8 @@ contains
             fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_highBound )
+            highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_hRegOrders )
             hRegOrders = son
           case ( f_hRegQuants )
@@ -339,6 +343,8 @@ contains
             hRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_jacobian )
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+          case ( f_lowBound )
+            lowBound => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_measurements )
             measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
             call cloneVector ( v(f), measurements, vectorNameText='_f' )
@@ -414,6 +420,14 @@ contains
           if ( got(f_apriori) ) then
             if ( apriori%template%id /= state%template%id ) &
               & call announceError ( inconsistent, f_apriori, f_state )
+          end if
+          if ( got(f_highBound) ) then
+            if ( highBound%template%id /= state%template%id ) &
+              & call announceError ( inconsistent, f_highBound, f_state )
+          end if
+          if ( got(f_lowBound) ) then
+            if ( lowBound%template%id /= state%template%id ) &
+              & call announceError ( inconsistent, f_lowBound, f_state )
           end if
           if ( associated(covariance) ) then
             if ( covariance%m%row%vec%template%id /= state%template%id .or. &
@@ -678,6 +692,8 @@ contains
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
+      integer :: IQ, IVX, IVY           ! Subscripts used during MU computation
+      integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T), pointer :: KTK ! The Jacobian-derived part of the
                                         ! normal equations.  NormalEquations
                                         ! if no averaging kernel is requested,
@@ -685,9 +701,9 @@ contains
       type(matrix_SPD_T), target :: KTKSep ! The Jacobian-derived part of the
                                         ! normal equations if an averaging kernel
                                         ! is requested.
+      real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
-      integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T), target :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumJ                   ! Number of Jacobian evaluations
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
@@ -1400,6 +1416,42 @@ contains
           aj%fnmin = sqrt(aj%fnmin)
           ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX) )
+          ! Shorten candidateDX if necessary to stay within the bounds
+          mu = 1.0_rv
+          if ( got(f_lowBound) ) then
+            do iq = 1, size(v(x)%quantities)
+              do ivx = 1, size(v(x)%quantities(iq)%values,1)
+                do ivy = 1, size(v(x)%quantities(iq)%values,2)
+                  if ( v(x)%quantities(iq)%values(ivx,ivy) + &
+                    &  mu * v(candidateDX)%quantities(iq)%values(ivx,ivy) < &
+                    &  lowBound%quantities(iq)%values(ivx,ivy) ) &
+                      & mu = ( lowBound%quantities(iq)%values(ivx,ivy) - &
+                      &        v(x)%quantities(iq)%values(ivx,ivy) ) &
+                      &      / v(candidateDX)%quantities(iq)%values(ivx,ivy)
+                end do
+              end do
+            end do
+          end if
+          if ( got(f_highBound) ) then
+            do iq = 1, size(v(x)%quantities)
+              do ivx = 1, size(v(x)%quantities(iq)%values,1)
+                do ivy = 1, size(v(x)%quantities(iq)%values,2)
+                  if ( v(x)%quantities(iq)%values(ivx,ivy) + &
+                    &  mu * v(candidateDX)%quantities(iq)%values(ivx,ivy) > &
+                    &  highBound%quantities(iq)%values(ivx,ivy) ) &
+                      & mu = ( v(x)%quantities(iq)%values(ivx,ivy) - &
+                      &        highBound%quantities(iq)%values(ivx,ivy) ) &
+                      &      / v(candidateDX)%quantities(iq)%values(ivx,ivy)
+                end do
+              end do
+            end do
+          end if
+          if ( mu <= 1.0_rv ) then
+            do iq = 1, size(v(candidateDX)%quantities)
+              v(candidateDX)%quantities(iq)%values = &
+                & mu * v(candidateDX)%quantities(iq)%values
+            end do
+          end if
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
@@ -2984,6 +3036,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.190  2002/10/17 00:16:40  vsnyder
+! Add lowBound and highBound fields for the Retrieve spec
+!
 ! Revision 2.189  2002/10/08 17:41:38  livesey
 ! Bug fixes in FWMParallel stuff
 !
