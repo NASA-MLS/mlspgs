@@ -659,6 +659,11 @@ contains
 
 !    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
+    if ( hdfReturn /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata mls_sfend in third_grouping.", &
+        & error_number=hdfReturn) 
+    end if
 
     returnStatus = pgs_met_remove() 
 
@@ -775,6 +780,11 @@ contains
 
 !    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
+    if ( hdfReturn /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata mls_sfend in populate_metadata_std.", &
+        & error_number=hdfReturn) 
+    end if
 
     ! Annotate the file with the PCF
 
@@ -901,6 +911,11 @@ contains
 
 !    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
+    if ( hdfReturn /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata mls_sfend in populate_metadata_oth.", &
+        & error_number=hdfReturn) 
+    end if
 
 ! Annotate the file with the PCF
 
@@ -1437,6 +1452,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.24  2002/01/31 00:37:45  pwagner
+! Checks return value of mls_sfend
+!
 ! Revision 2.23  2002/01/26 00:08:20  pwagner
 ! Housekeeping; changed proclaim to announce_success
 !
