@@ -105,7 +105,8 @@ module MLSHDF5
   interface GetHDF5Attribute
     module procedure GetHDF5Attribute_int, GetHDF5Attribute_logical, &
       & GetHDF5Attribute_string, GetHDF5Attribute_sngl, GetHDF5Attribute_dbl, &
-      & GetHDF5Attribute_snglarr1
+      & GetHDF5Attribute_snglarr1, GetHDF5Attribute_intarr1, &
+      & GetHDF5Attribute_dblarr1
   end interface
 
   interface IsHDF5AttributePresent
@@ -689,6 +690,34 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close attribute '//trim(name) )
   end subroutine GetHDF5Attribute_int
    
+  ! ------------------------------------------- GetHDF5Attribute_intarr1
+  subroutine GetHDF5Attribute_intarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(out) :: VALUE(:)       ! Result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read an array into our one value.
+    call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, & 
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read attribute '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute '//trim(name) )
+  end subroutine GetHDF5Attribute_intarr1
+
   ! ------------------------------------------- GetHDF5Attribute_string
   subroutine GetHDF5Attribute_string ( itemID, name, value )
     integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
@@ -820,6 +849,34 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dble attribute  '//trim(name) )
   end subroutine GetHDF5Attribute_dbl
    
+  ! ------------------------------------------- GetHDF5Attribute_dblarr1
+  subroutine GetHDF5Attribute_dblarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r8), intent(out) :: VALUE(:)     ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dblarr1 attribute '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dblarr1 attribute  '//trim(name) )
+  end subroutine GetHDF5Attribute_dblarr1
+
   ! ------------------------------------- GetHDF5DSDims
   subroutine GetHDF5DSDims ( FileID, name, DIMS, maxDims )
     integer, intent(in) :: FILEID       ! fileID
@@ -3066,6 +3123,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.32  2003/09/12 16:40:27  cvuu
+! Add subroutines to get L1BOA attributes
+!
 ! Revision 2.31  2003/08/07 15:44:19  perun
 ! Add MakeHDF5Attribute_intarr1
 !
