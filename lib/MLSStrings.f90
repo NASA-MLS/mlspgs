@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -468,7 +468,7 @@ CONTAINS
     integer :: i
     logical :: mystrict
     integer :: hvalue, mvalue
-    logical, parameter :: DeeBUG = .false.
+!    logical, parameter :: DeeBUG = .false.
     !----------Executable part----------!
 
    if(present(separator)) then
@@ -517,18 +517,10 @@ CONTAINS
       ss=Reverse(trim(ss))
    endif
 
-   if(DeeBUG) then
-      print *, 'hh ', hh
-      print *, 'mm ', mm
-      print *, 'ss ', trim(ss)
-   endif
    do i=1, len_trim(ss)
       if( .not. (index(digits, ss(i:i)) > 0 .or. ss(i:i) == '.') ) return
    enddo
 
-   if(DeeBUG) then
-      print *, 'ss passed first test'
-   endif
    ! Check if mm complies
    if(len_trim(mm) <= 0) then
       if(mystrict) then
@@ -539,9 +531,6 @@ CONTAINS
         if( .not. (index(digits, mm(i:i)) > 0) ) return
       enddo
    endif      
-   if(DeeBUG) then
-      print *, 'mm passed first test'
-   endif
 
    ! Check if hh complies
    hh=Reverse(trim(hh))
@@ -566,9 +555,6 @@ CONTAINS
    else
       read(hh(1:2), time_conversion, iostat=ErrTyp) hvalue
    endif
-   if(DeeBUG) then
-      print *, 'hh value conversion error ', ErrTyp
-   endif
    
    if(ErrTyp /= 0) then
       return
@@ -583,9 +569,6 @@ CONTAINS
       read(mm, time_conversion, iostat=ErrTyp) mvalue
    endif
 
-   if(DeeBUG) then
-      print *, 'mm value conversion error ', ErrTyp
-   endif
    if(ErrTyp /= 0) then
       return
    elseif(mvalue < 0 .or. mvalue > 59) then
@@ -600,9 +583,6 @@ CONTAINS
       read(ss, real_conversion, iostat=ErrTyp) value
    endif
    
-   if(DeeBUG) then
-      print *, 'ss value conversion error ', ErrTyp
-   endif
    if(ErrTyp /= 0) then
       return
    elseif(value < 0. .or. value > 60.) then
@@ -1385,6 +1365,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2002/01/09 23:46:05  pwagner
+! Removed debugging stuff
+!
 ! Revision 2.16  2001/08/03 00:03:08  pwagner
 ! Added ints2Strings and strings2Ints
 !

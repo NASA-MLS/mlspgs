@@ -1,6 +1,4 @@
-
-
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -8,28 +6,23 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   !=============================================================================
 
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
-    & v_is_gph, v_is_theta, AddGriddedDataToDatabase, Dump
-  use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
-    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
-    & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
-  use Hdf, only: SUCCEED, DFACC_RDONLY
+  use GriddedData, only: GriddedData_T, v_is_pressure, &
+    & AddGriddedDataToDatabase, Dump
+  use HDFEOS, only: HDFE_NENTDIM, &
+    & gdopen, gdattach, gdfldinfo, &
+    & gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  use Hdf, only: DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, LineLen, NameLen, FileNameLen
+  use MLSCommon, only: LineLen, NameLen, FileNameLen
   use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
     &                split_path_name
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
-    & MLSMSG_Deallocate, MLSMSG_Warning
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-    & GetIntHashElement, LowerCase
-  use OUTPUT_M, only: OUTPUT
+    & LowerCase
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & UseSDPToolkit
-  use Toggles, only: Gen, Levels, Switches, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -42,7 +35,15 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+!     c o n t e n t s
+!     - - - - - - - -
 
+! source_file_already_read   Is source file among those already read?
+! obtain_clim                An atavism--should be removed
+! read_climatology           Reads a l3ascii file for the data_array
+! obtain_dao                 An atavism--should be removed
+! obtain_ncep                An atavism--should be removed
+! ReadGriddedData            Reads a Gridded Data file appropriate for 'ncep' or 'dao'
 
   public:: source_file_already_read
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
@@ -100,10 +101,8 @@ contains
 
     ! Local Variables
 
-    integer :: edges(4)
     integer :: file_id, gd_id
     integer :: inq_success
-    integer :: i
     integer :: nentries, ngrids, ndims, nfields
     integer :: strbufsize
     !  character (len=80) :: msg, mnemonic
@@ -118,9 +117,9 @@ contains
     character (len=MAXLISTLENGTH), dimension(1) :: dimlists
     character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
-    character (len=MAXNAMELENGTH) :: gridname, actual_field_name, the_dim
-    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes, start, stride
-    integer                        :: our_rank, size, numberType
+    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
     integer, parameter             :: i_longitude=1
@@ -275,7 +274,6 @@ contains
     !Local Variables
 
     type (GriddedData_T):: qty
-    character (LEN=256) :: msg, mnemonic
     integer:: CliUnit, processCli, returnStatus, version
 
     logical :: end_of_file = .false.
@@ -501,7 +499,6 @@ contains
     !    real(R8) :: data_array(XDIM, YDIM, ZDIM)
     integer :: DAOFileHandle, DAO_Version
     character (LEN=132) :: DAOphysicalFilename
-    character (len=256) :: mnemonic, msg
     type (GriddedData_T):: qty
     integer :: returnStatus
     !   integer :: sd_id
@@ -637,10 +634,25 @@ contains
       return
     endif
 
-    print*,'Database, filenames:',GriddedDatabase%sourceFilename
-    print*,'Database, fieldNames:',GriddedDatabase%quantityName
-    print*,'Source file:',source_file
-    print*,'field_name:',field_name
+!    print*,'Database, filenames:',GriddedDatabase%sourceFilename
+!    print*,'Database, fieldNames:',GriddedDatabase%quantityName
+!    print*,'Source file:',source_file
+!    print*,'field_name:',field_name
+     call output('Database, filenames:', advance='no')
+     call blanks(3)
+     call output(GriddedDatabase%sourceFilename, advance='yes')
+
+     call output('Database, fieldNames:', advance='no')
+     call blanks(3)
+     call output(GriddedDatabase%quantityName, advance='yes')
+
+     call output('Source file:', advance='no')
+     call blanks(3)
+     call output(source_file, advance='yes')
+
+     call output('field_name:', advance='no')
+     call blanks(3)
+     call output(field_name, advance='yes')
 
     do i=1, size(GriddedDataBase)
 
@@ -717,12 +729,14 @@ contains
         call output(error_number, places=9, advance='yes')
       endif
     else
-      print*, '***Error in module ', ModuleName
-      print*, trim(full_message)
-      if(present(error_number)) then
-        print*, 'error number ', error_number
-      endif
-    endif
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
 
     !===========================
   end subroutine announce_error
@@ -734,6 +748,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.17  2002/01/09 23:48:40  pwagner
+! Added toc; each print became call output
+!
 ! Revision 2.16  2001/10/26 23:14:37  pwagner
 ! Complies with Gridded data dump
 !
