@@ -235,12 +235,12 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS)  srclib\
-   util blas pcf idllib sids tables notes tests\
+   util blas sids tables notes tests\
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
-#    make tar_sips TAR=/usr/local/gnu/bin/tar
+#    make tar TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 # These are all the configurations that will be removed by clean_all
@@ -473,7 +473,8 @@ disttar:
         rm -f ../mlspgs.tar; \
 	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/$(MLSCFILE)\
 	--exclude CVS\
-	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
+	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
+	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* \
 	--exclude mlsl[0-9]
 
 disttarz: disttar ../mlspgs.tar
@@ -485,14 +486,16 @@ disttarg:
         rm -f ../mlspgs.tgz; \
 	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/$(MLSCFILE) \
 	--exclude CVS\
-	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
+	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
+	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* \
 	--exclude mlsl[0-9]
 
 tar:
 	@echo "tar-ing mlspgs for sips"; \
         rm -f ../mlspgs_sips.tar; \
 	$(TAR) hcvf ../mlspgs_sips.tar $(EVERYTHING) --exclude CVS\
-	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\*
+	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
+	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* 
 
 tarz: tar ../mlspgs_sips.tar
 	@echo "... then gzipping it"; cd ..; rm -f mlspgs_sips.tgz; \
@@ -502,7 +505,8 @@ targ:
 	@echo "tar-ing mlspgs for sips"; \
         rm -f ../mlspgs_sips.tgz; \
 	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS \
-	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\*
+	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
+	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* 
 
 substars:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -661,6 +665,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.48  2001/08/17 23:16:54  pwagner
+# Fixed bug in build commands for h5subset
+#
 # Revision 1.47  2001/08/16 00:11:34  pwagner
 # Added hl to list of new targets
 #
