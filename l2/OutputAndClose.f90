@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=======================================================================================
@@ -714,10 +714,8 @@ contains ! =====     Public Procedures     =============================
   subroutine DirectWrite ( quantity, sdName, file, hdfVersion, &
     & chunkNo, chunks )
 
-    use Intrinsic, only: L_None
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: MLS_SFSTART, MLS_SFEND
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -729,6 +727,50 @@ contains ! =====     Public Procedures     =============================
 
     ! Local parameters
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
+
+    ! Saved variable - used to work out file information.
+    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
+    integer, save :: NOCREATEDFILES=0   ! Number of files created
+
+    ! Local variables
+    ! executable code
+
+    ! Setup information, sanity checks etc.
+    !if ( hdfVersion /= 4 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !  & 'Unsupported hdfVersion for directWrite' )
+    select case (hdfversion)
+    case (HDFVERSION_4)
+      call DirectWrite_hdf4 ( quantity, sdName, file, &
+        & chunkNo, chunks )
+    case (HDFVERSION_5)
+      call DirectWrite_hdf5 ( quantity, sdName, file, &
+        & chunkNo, chunks )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unsupported hdfVersion for directWrite (currently only 4 or 5)' )
+    end select
+  end subroutine DirectWrite
+
+  ! ----------------------------------------------- DirectWrite_hdf4 --------
+  subroutine DirectWrite_hdf4 ( quantity, sdName, file, &
+    & chunkNo, chunks )
+
+    use Intrinsic, only: L_None
+    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
+      & FINISHEDDIRECTWRITE
+    use MLSCommon, only: MLSCHUNK_T
+    use MLSFiles, only: HDFVERSION_4, MLS_SFSTART, MLS_SFEND
+    use VectorsModule, only: VectorValue_T
+
+    type (VectorValue_T), intent(in) :: QUANTITY
+    integer, intent(in) :: SDNAME       ! Name of sd in output file
+    integer, intent(in) :: FILE         ! Name of output file
+    integer, intent(in) :: CHUNKNO      ! Index into chunks
+    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+
+    ! Local parameters
+    integer, parameter :: MAXFILES = 100             ! Set for an internal array
+    integer, parameter :: HDFVERSION = HDFVERSION_4
 
     ! Saved variable - used to work out file information.
     integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
@@ -751,8 +793,6 @@ contains ! =====     Public Procedures     =============================
     ! executable code
 
     ! Setup information, sanity checks etc.
-    if ( hdfVersion /= 4 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unsupported hdfVersion for directWrite' )
     call get_string ( file, filename, strip=.true. )
     call get_string ( sdName, sdNameStr, strip=.true. )
     if ( quantity%template%frequencyCoordinate == L_None ) then
@@ -769,14 +809,15 @@ contains ! =====     Public Procedures     =============================
       if ( createFile ) then
         noCreatedFiles = noCreatedFiles + 1
         if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
-          & MLSMSG_Error, ModuleName, 'Too many direct write files' )
+          & MLSMSG_Error, ModuleName, 'Too many direct write files (hdf4)' )
         createdFilenames ( noCreatedFiles ) = file
       end if
     end if
 
     ! Create or open the file
     if ( createFile ) then
-      fileID = mls_sfstart ( trim(filename), DFACC_CREATE, hdfVersion=hdfVersion )
+      fileID = mls_sfstart ( trim(filename), DFACC_CREATE, &
+       & hdfVersion=hdfVersion )
     else
       fileID = mls_sfstart ( trim(filename), DFACC_RDWR, hdfVersion=hdfVersion )
     end if
@@ -794,7 +835,7 @@ contains ! =====     Public Procedures     =============================
       sdId = sfSelect ( fileID, sdIndex )
     end if
     if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Error accessing SD '//trim(sdNameStr) )
+     & 'Error accessing SD '//trim(sdNameStr) // ' (hdf4)')
 
     ! What exactly will be our contribution
     stride = 1
@@ -822,15 +863,144 @@ contains ! =====     Public Procedures     =============================
     ! End access to the SD and close the file
     status = sfEndAcc ( sdId )
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Error ending access to direct write sd' )
+        & 'Error ending access to direct write sd (hdf4)' )
     status = mls_sfend( fileID, hdfVersion=hdfVersion)
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Error ending closing direct write file' )
+        & 'Error ending closing direct write file (hdf4)' )
 
     ! Tell master we're done
     if ( parallel%slave ) call FinishedDirectWrite
 
-  end subroutine DirectWrite
+  end subroutine DirectWrite_hdf4
+
+  ! ----------------------------------------------- DirectWrite_hdf5 --------
+  subroutine DirectWrite_hdf5 ( quantity, sdName, file, &
+    & chunkNo, chunks )
+
+    use HDF5, only: h5dopen_f
+    use Intrinsic, only: L_None
+    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
+     &  FINISHEDDIRECTWRITE
+    use MLSCommon, only: MLSCHUNK_T
+    use MLSFiles, only: HDFVERSION_5, MLS_SFSTART, MLS_SFEND
+    use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
+    use VectorsModule, only: VectorValue_T
+
+    type (VectorValue_T), intent(in) :: QUANTITY
+    integer, intent(in) :: SDNAME       ! Name of sd in output file
+    integer, intent(in) :: FILE         ! Name of output file
+    integer, intent(in) :: CHUNKNO      ! Index into chunks
+    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+
+    ! Local parameters
+    integer, parameter :: MAXFILES = 100             ! Set for an internal array
+    integer, parameter :: HDFVERSION = HDFVERSION_5
+
+    ! Saved variable - used to work out file information.
+    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
+    integer, save :: NOCREATEDFILES=0   ! Number of files created
+
+    ! Local variables
+    character (len=1024) :: FILENAME    ! The actual filename
+    character (len=1024) :: SDNAMESTR   ! SDName as a string
+    logical :: CREATEFILE               ! Set if file needs to be created
+    integer :: FILEID                   ! File handle
+    integer :: SDINDEX                  ! Index of sd
+    integer :: SDID                     ! Handle for sd
+    integer :: STATUS                   ! Status flag
+    integer :: START(3)                 ! HDF array starting position
+    integer :: STRIDE(3)                ! HDF array stride
+    integer :: SIZES(3)                 ! HDF array sizes
+    integer :: NODIMS                   ! Also index of maf dimension
+    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
+    logical :: already_there
+
+    ! executable code
+
+    ! Setup information, sanity checks etc.
+    call get_string ( file, filename, strip=.true. )
+    call get_string ( sdName, sdNameStr, strip=.true. )
+    if ( quantity%template%frequencyCoordinate == L_None ) then
+      noDims = 2
+    else
+      noDims = 3
+    end if
+
+    ! If we're a slave, we need to request permission from the master.
+    if ( parallel%slave ) then
+      call RequestDirectWritePermission ( file, createFile )
+    else
+      createFile = .not. any ( createdFilenames == file )
+      if ( createFile ) then
+        noCreatedFiles = noCreatedFiles + 1
+        if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'Too many direct write files (hdf5)' )
+        createdFilenames ( noCreatedFiles ) = file
+      end if
+    end if
+
+    ! Create or open the file
+    if ( createFile ) then
+      fileID = mls_sfstart ( trim(filename), DFACC_CREATE, &
+       &                                                 hdfVersion=hdfVersion )
+    else
+      fileID = mls_sfstart ( trim(filename), DFACC_RDWR, hdfVersion=hdfVersion )
+    end if
+
+    ! Create or access the SD
+    ! sdIndex = sfn2index ( fileID, trim(sdNameStr) )
+    already_there = IsHDF5DSPresent(fileID, trim(sdNameStr))
+    if ( .not. already_there ) then
+      lastChunk = chunks(size(chunks))
+      sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
+      sizes(noDims-1) = quantity%template%noSurfs
+      if ( noDims == 3 ) sizes(1) = quantity%template%noChans
+      ! call h5sCreate_simple_f ( 3, int(shp, hSize_T), spaceID, status )
+      !sdId  = sfCreate ( fileID, trim(sdNameStr), DFNT_FLOAT32, &
+      !  & noDims, sizes )
+    ! else
+     ! call h5dopen_f ( fileID, trim(sdNameStr), sdIndex, status )
+    end if
+    ! if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !  & 'Error accessing SD '//trim(sdNameStr) // ' (hdf5)' )
+
+    ! What exactly will be our contribution
+    stride = 1
+    start = 0
+    sizes(noDims) = quantity%template%noInstances - &
+      & quantity%template%noInstancesLowerOverlap - &
+      & quantity%template%noInstancesUpperOverlap
+    sizes(noDims-1) = quantity%template%noSurfs
+    if ( noDims == 3 ) sizes(1) = quantity%template%noChans
+    start(noDims) = quantity%template%mafIndex ( &
+      & 1+quantity%template%noInstancesLowerOverlap )
+
+    ! Now write it out
+! >     status = SFWDATA_F90(sdId, start(1:noDims), &
+! >       & stride(1:noDims), sizes(1:noDims), real ( &
+! >       &   quantity%values ( :, &
+! >       &   1+quantity%template%noInstancesLowerOverlap : &
+! >       &    quantity%template%noInstances - quantity%template%noInstancesUpperOverlap &
+! >       &  ) ) )
+    call SaveAsHDF5DS( fileID, trim(sdNameStr), real(quantity%values), &
+      & start, sizes, may_add_to=.true., adding_to=already_there)
+    ! if ( status /= 0 ) then
+    !  call announce_error (0,&
+    !    & "Error writing SDS data to l2aux file:  " )
+    ! end if
+
+    ! End access to the SD and close the file
+    ! status = sfEndAcc ( sdId )
+    ! if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !     & 'Error ending access to direct write sd' )
+    status = mls_sfend( fileID, hdfVersion=hdfVersion)
+    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Error ending closing direct write file (hdf5)' )
+
+    ! Tell master we're done
+    if ( parallel%slave ) call FinishedDirectWrite
+
+  end subroutine DirectWrite_hdf5
 
 ! =====     Private Procedures     =====================================
 
@@ -908,6 +1078,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.64  2003/01/23 23:31:42  pwagner
+! May directwrite to hdf5 l2aux files
+!
 ! Revision 2.63  2002/12/11 22:21:05  pwagner
 ! Makes soft link to data field name from L2gpValue field in hdf5 l2gp
 !
