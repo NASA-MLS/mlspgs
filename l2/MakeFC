@@ -111,7 +111,7 @@ $(libmls_objs)/libmls.a: $(libmls_f90)
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
 
 tar:
 
@@ -175,6 +175,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.21  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
 # Revision 2.20  2001/04/02 23:46:17  pwagner
 # Now even LF95 should use write_meta
 #
