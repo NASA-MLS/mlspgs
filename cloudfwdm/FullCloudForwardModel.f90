@@ -652,12 +652,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & WC,                                                                  &
       & int(sizeDistribution%values(:,instance)),                            &
       & 10.0**(-ptan%values(:,maf)),                                         &
-      & zt, &
+      & zt,                                                                  &
       & earthradius%values(1,maf),                                           &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
       & forwardModelConfig%cloud_fov,                                        &
+      & forwardModelConfig%default_spectroscopy,                             &
       & phi_tan,                                                             &
       & scGeocAlt%values(1,1),                                               &
       & elevOffset%values(1,1),                                              &
@@ -924,6 +925,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.85  2001/11/09 18:12:13  jonathan
+! add deallocate my_catalog
+!
 ! Revision 1.84  2001/11/09 18:05:24  jonathan
 ! pass spectra catalog into CloudySkyRadianceModel
 !

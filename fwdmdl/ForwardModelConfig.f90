@@ -52,7 +52,7 @@ module ForwardModelConfig
     real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
-    logical :: DF_spectroscopy      !
+    logical :: Default_spectroscopy      !
     integer :: no_cloud_species     ! No of Cloud Species '2'
     integer :: no_model_surfs       ! No of Model surfaces '640'
     integer :: NUM_SCATTERING_ANGLES! No of scattering angles '16'
@@ -147,6 +147,8 @@ contains
         call output ( '  Do_Baseline:' )
         call output ( database(i)%do_Baseline, advance='yes' )
         call output ( '  Do_freq_avg:' )
+        call output ( database(i)%Default_spectroscopy, advance='yes' )
+        call output ( '  Default_spectroscopy:' )
         call output ( database(i)%do_freq_avg, advance='yes' )
         call output ( '  frqGap:' )
         call output ( database(i)%frqGap, advance='yes' )
@@ -181,6 +183,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.2  2001/11/15 20:56:38  jonathan
+! add df_spectroscopy
+!
 ! Revision 2.1  2001/10/02 20:37:09  livesey
 ! Added do_baseline
 !
