@@ -359,15 +359,19 @@ contains ! =====     Public Procedures     =============================
   end function CHECK_UNITS
 
   ! ----------------------------------------------  MyDump_VGrids  -----
-  subroutine MyDump_VGrids ( VGrids )
+  subroutine MyDump_VGrids ( VGrids, Details )
     type(vGrid_T), intent(in), dimension(:) :: VGrids
-    call dump ( vGrids, lit_indices )
+    integer, intent(in), optional :: Details
+    call dump ( vGrids, lit_indices, details )
   end subroutine MyDump_VGrids
 
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.9  2001/04/10 23:53:45  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.8  2001/04/07 01:50:49  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
