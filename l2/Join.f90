@@ -29,8 +29,8 @@ module Join                     ! Join together chunk based data.
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use VectorsModule, only: GetVectorQuantity, ValidateVectorQuantity, Vector_T, &
-    & VectorValue_T, DUMP
+  use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
+    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
   use Intrinsic, ONLY: L_NONE, L_INSTRUMENTCHANNEL, L_USBFREQUENCY, L_LSBFREQUENCY,&
        L_INTERMEDIATEFREQUENCY
 
@@ -159,7 +159,8 @@ contains ! =====     Public Procedures     =============================
 
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
-      quantity => vectors(vectorIndex)%quantities(quantityIndex)
+
+      quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
 
       ! Now, depending on the properties of the source we deal with the
       ! vector quantity appropriately.
@@ -168,6 +169,8 @@ contains ! =====     Public Procedures     =============================
         & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
+        call display_string(quantity%template%name)
+        print*,'Quantity dimensions:',quantity%template%noSurfs, quantity%template%noInstances
         call JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
@@ -665,6 +668,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.14  2001/03/05 01:01:12  livesey
+! Bug fix, now uses GetVectorQtyFromTemplateIndex
+!
 ! Revision 2.13  2001/03/01 18:38:27  livesey
 ! Fixed bug with verticalCoordinate==l_Zeta
 !
