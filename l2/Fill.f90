@@ -3236,18 +3236,26 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs) :: z, Tz, Ez, iwc0
       real (r8), dimension(Temperaturequantity%template%noSurfs) :: zt
       real (r8), dimension(sourceQuantity%template%noSurfs) :: ze
+      ! new temperature on the same hGrid as in quantity
+      real (r8), dimension(Temperaturequantity%template%noSurfs,quantity%template%noInstances) :: temp 
       integer :: i
      
-      if(sourceQuantity%template%noInstances /= Quantity%template%noInstances) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "IWC and Extinction profile numbers are not matched")
-      if(TemperatureQuantity%template%noInstances /= Quantity%template%noInstances) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "IWC and Temperature profile numbers are not matched")
       if(.not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "one of the quantities is not coherent")
+      if(sourceQuantity%template%noInstances /= Quantity%template%noInstances) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "IWC and Extinction profile numbers are not matched")
+
+      if(TemperatureQuantity%template%noInstances /= Quantity%template%noInstances) then
+         do i=1,Temperaturequantity%template%noSurfs
+           call InterpolateValues( temp(i,:), TemperatureQuantity%values(i, :), &
+             & quantity%template%phi(1,:),TemperatureQuantity%template%phi(1,:) , 'Linear' )
+         end do
+      else
+         temp = TemperatureQuantity%values
+      end if
 
       do i=1, quantity%template%noInstances
       
@@ -3269,7 +3277,7 @@ contains ! =====     Public Procedures     =============================
           zt = Temperaturequantity%template%surfs(:,i)            
         end if
         
-        call InterpolateValues( Tz, TemperatureQuantity%values(:, i), &
+        call InterpolateValues( Tz, Temp(:, i), &
              & z, zt, 'Linear', extrapolate='Constant' )
         call InterpolateValues( Ez, sourceQuantity%values(:, i), &
              & z, ze, 'Linear', extrapolate='Constant' )
@@ -5777,6 +5785,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.221  2003/05/21 18:58:57  dwu
+! allow temperature and iwc on different hGrids in iwcFromExtinction
+!
 ! Revision 2.220  2003/05/21 18:04:30  livesey
 ! Added a bit more intelligence to FillCovariance
 !
