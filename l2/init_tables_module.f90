@@ -775,6 +775,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
+             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
@@ -941,6 +942,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.275  2003/01/29 01:48:29  vsnyder
+! Add 'polarized' field to forwardModel
+!
 ! Revision 2.274  2003/01/18 02:37:21  livesey
 ! Added quantityType to l2aux
 !
