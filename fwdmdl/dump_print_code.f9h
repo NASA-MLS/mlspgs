@@ -8,7 +8,7 @@
       k = windowFinish - windowStart + 1
       print *, ' windowStart:', windowStart, '  windowFinish:', windowFinish
       print *, 'phi_tan_mmaf\', k
-      print '(5(2x,f8.3))', firstRadiance%template%phi(1,windowStart:windowFinish)
+      print '(5(2x,f8.3))', temp%template%phi(1,windowStart:windowFinish)
 
       print *
       print *, 'vel_z_mmaf\', k
@@ -85,7 +85,7 @@
       j = noUsedchannels
       Frq = fwdModelConf%signals(usedSignals(j))%centerFrequency
       r = fwdModelConf%signals(usedSignals(j))%frequencies(usedChannels(j))
-      print *, 'Size Band =', sidebandStart
+      print *, 'Side Band =', fwdModelConf%sidebandStart
       print *, 'Channel =', usedChannels(j)
       print 973, 'Radiometer (L.O.) Freq. =', firstSignal%lo
       print 973, '    Band (Center) Freq. =', Frq
@@ -107,6 +107,9 @@
 !     Call MLSMessage ( MLSMSG_Error, ModuleName, "End of DUMP print cycle")
 !
 ! $Log$
+! Revision 2.3  2003/06/18 02:00:01  vsnyder
+! Get phi from temp quantity; get sidebandStart from fwdModelConf
+!
 ! Revision 2.2  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
