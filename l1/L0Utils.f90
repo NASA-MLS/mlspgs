@@ -232,7 +232,7 @@ CONTAINS
 ! Test checksum value
 
     DO i = 1, 6
-       DO n = 1, 256
+       DO n = 1, 128
           IDN(n) = BigEndianStr (engpkt(i)((n*2-1):n*2))
        ENDDO
        IF (CheckSum (IDN, 127) /= IDN(128)) THEN
@@ -270,6 +270,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2005/02/28 17:15:10  perun
+! Corrected loop for testing checksum
+!
 ! Revision 2.6  2004/11/10 15:33:11  perun
 ! Test checksum eng value for correctness
 !
