@@ -1,25 +1,36 @@
 
-      SUBROUTINE CloudForwardModel (FREQUENCY,PRESSURE,HEIGHT,
-     1            TEMPERATURE,VMRin,ZT, NF,NZ,NT,
-     2            WCscale,ITYPE,IPSD,ISURF,ISWI,IRHB,CHT,
-     3            TB0,DTcir,DTAU,DTAUc,DZ,Dm,TAUeff,SS)  
+      SUBROUTINE CloudForwardModel (NF, NZ, NT, NS,
+     1           FREQUENCY,PRESSURE,HEIGHT,TEMPERATURE,VMRin,IWC,LWC,
+     1           ZT, RE, IPSD, ISURF, ISWI, ICON,
+     2           TB0,DTcir,BETA,BETAc,Dm,TAUeff,SS )  
 
 C===========================================================================C
-C   >>>>>>>>>> CLOUDY-SKY MICROWAVE RADIATIVE TRANSFER PROGRAM <<<<<<<<<<   C
+C   >>>>>>>> CLOUDY-SKY FORWARD MODEL FOR MICROWAVE LIMB SOUNDER <<<<<<<<   C
 C---------------------------------------------------------------------------C
 C                                                                           C
-C     DESCRIPTION OF MODEL PARAMETERS                                       C
-C     -------------------------------                                       C
-C     1. INPUT: FREQUENCY, L2 ATMOSPHERIC PROFILES (INDICED AT PRESSURE     C 
-C                LEVELS), AND TANGENT HEIGHTS.                              C
-C     2. USER DEFINED CLOUD/MODEL PARAMETERS. DEFAULT: 0.,0,0,0,0,0,0.      C
-C     3. OUTPUT: TB0, DTcir:  CLEAR-SKY, AND CLOUD-INDUCED RADIANCES FOR    C 
-C                             EACH TANGENT HEIGHT ZT;                       C
-C                DTAU, DTAUc: TOTAL, AND CLOUD OPTICAL DEPTHS FOR EACH      C
-C                             ATMOSPHERIC LAYER DZ;                         C
-C                TAUeff, SS:  EFFECTIVE CLOUD OPTICAL DEPTH, AND CLOUD      C
-C                             RADIANCE SENSITIVITY AT TANGENT HEIGHT ZT;    C
-C                Dm:          MASS-MEAN-DIAMETER OF CLOUD HYDROMETERS.      C
+C     DESCRIPTION OF MODEL PARAMETERS           NOTES                       C
+C     -------------------------------           -----                       C
+C     1. INPUT:  FREQUENCY  (NF)                                            C 
+C                PRESSURE   (NZ)    . The internal model resuires NZ=640    C
+C                HEIGHT     (NZ)      and the top model layer is defined    C
+C                TEMPERATURE(NZ)      at PRESSURE(640)=10^(-(40./16.-3.)).  C 
+C                VMRin      (NS,NZ) . Volume mixing ratios (N:1=H2O,2=O3)   C
+C                IWC        (NZ)                                            C
+C                LWC        (NZ)                                            C
+C                ZT         (NT)    . Tangent pressure                      C
+C                RE                 . Earth radius                          C
+C                IPSD,ISURE,ISWI,   . User determined size-distribution,    C
+C                ICON                 surface-type, sensitivity calcula-    C
+C                                     tion and cloud control switches.      C 
+C                                     Default: (0,0,0,2)                    C
+C                                                                           C
+C     2. OUTPUT: TB0     (NT,NF)    . Background clear-sky radiance         C 
+C                DRcir   (NT,NF)    . Cloud induced radiance                C
+C                BETA    (NZ-1,NF)  . Total extinction profile              C
+C                BETAc   (NZ-1,NF)  . Cloud extinction profile              C
+C                TAUeff  (NT,NF)    . Effective cloud optical depth         C
+C                SS      (NT,NF)    . Cloud radiance sensitivity            C
+C                Dm      (2,NZ-1)   . Mass-mean-diameters (1=ice,2=water)   C
 C     -------------------------------                                       C
 C     FREQUENCY RANGE: 1-3000GHz                                            C
 C                                                                           C
@@ -44,14 +55,7 @@ C---------------------------------------
       INTEGER NF                               ! NUMBER OF FREQUENCIES
       INTEGER NZ                               ! NUMBER OF PRESSURE LEVELS
       INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
-
-      INTEGER ITYPE                            ! CLOUD MODEL TYPE
-                                               ! 0 = CLEAR-SKY    
-                                               ! 1 = DEEP-CONVECTIVE
-                                               ! 2 = FRONTAL
-                                               ! 3 = ANVIL
-                                               ! 4 = THIN-LAYER
-                                               ! 101-104 NEAR SIDE CLOUDS ONLY 
+      INTEGER NS                               ! NUMBER OF SPECIES
 
       INTEGER IPSD                             ! SIZE-DISTRIBUTION TYPE
                                                ! 0 = MH          
@@ -70,48 +74,44 @@ C---------------------------------------
   
       INTEGER ISWI                             ! SENSITIVITY SWITCH
                                                ! 0 = NO SENSITIVITY CALCULATION
-                                               ! 1 = COMPUTE SENSITIVITY 
-     
-      INTEGER IRHB                             ! RELITIVE HUMIDITY BELOW CLOUD
-                                               ! 0 = < 100% R.H. BELOW CLOUD 
-                                               ! 1 =   100% R.H. BELOW CLOUD
+                                               ! 1 = COMPUTE SENSITIVITY
 
-      REAL CHT                                 ! CLOUD PROFILE/HEIGHT SHIFT
-                                               ! 0.0 = DEFAULT CLOUD PROFILE
-                                               ! 1.0 = MOVE CLOUD 1KM UP
-                                               ! -1. = MOVE CLOUD 1KM DOWN
-
-      REAL WCscale                             ! CLOUD WATER SCALING FACTOR
-                                               ! (DEFAULT MAX IWC/LWC = 1.)
+      INTEGER ICON                             ! CLOUD CONTROL SWITCH
+                                               ! 0 = NO CLOUD
+                                               ! 1 = NEAR SIDE CLOUD ONLY
+                                               ! 2 = DEFAULT
 
       REAL FREQUENCY(NF)                       ! FREQUENCIES (GHz)
       REAL PRESSURE(NZ)                        ! PRESSURE LEVEL
       REAL HEIGHT(NZ)                          ! PRESSURE HEIGHT
       REAL TEMPERATURE(NZ)                     ! ATMOSPHERIC TEMPERATURE
-
-      REAL VMRin(5,NZ)                         ! 1=H2O VOLUME MIXING RATIO
+      REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL ZT(NT)                              ! TANGENT HEIGHT
+      REAL IWC(NZ)                             ! ICE WATER CONTENT
+      REAL LWC(NZ)                             ! LIQUID WATER CONTENT
+
+      REAL ZT(NT)                              ! TANGENT PRESSURE
+      REAL*8 RE                                ! EARTH RADIUS
 
 C--------------------------------------
 C     OUTPUT PARAMETERS (OUTPUT TO L2)        
 C--------------------------------------
 
-      REAL TB0(NT+1,NF)                        ! CLEAR-SKY TB AT ZT
-      REAL DTcir(NT+1,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL TB0(NT,NF)                          ! CLEAR-SKY TB AT ZT
+      REAL DTcir(NT,NF)                        ! CLOUD-INDUCED RADIANCE
 
-      REAL TAUeff(NT+1,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
-      REAL SS(NT+1,NF)                         ! CLOUD RADIANCE SENSITIVITY
-                                               ! ZT(NT+1) FOR ZENITH LOOKING 
+      REAL TAUeff(NT,NF)                       ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL SS(NT,NF)                           ! CLOUD RADIANCE SENSITIVITY
+                                               ! (NT+1) FOR ZENITH LOOKING) 
 
-      REAL DTAU(NZ-1,NF)                       ! TOTAL OPTICAL DEPTH
-      REAL DTAUc(NZ-1,NF)                      ! CLOUDY OPTICAL DEPTH
-      REAL DZ(NZ-1)                            ! LAYER THICKNESS
+      REAL BETA(NZ-1,NF)                       ! TOTAL OPTICAL DEPTH
+      REAL BETAc(NZ-1,NF)                      ! CLOUDY OPTICAL DEPTH
 
       REAL Dm(2,NZ-1)                          ! MASS-MEAN-DIAMETER
 
                                                ! -- END OF INTERFACE AREA -- !
+
 C-----------------------------------------------------------------------------
                                                
 C-------------------------------
@@ -119,8 +119,7 @@ C     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 C-------------------------------
 
       REAL PI
-      REAL*8 RE                                ! EARTH RADIUS
-      PARAMETER (PI=3.1415926, RE=6370.D3)
+      PARAMETER (PI=3.1415926)
       
       INTEGER L                                ! NO. OF ATMOS. LAYERS
       INTEGER NFREQ                            ! NO. OF FREQ READ IN
@@ -132,10 +131,14 @@ C-------------------------------
       INTEGER MAXFS                            ! MAX. NO. OF FREQUENCIES
       INTEGER MNT                              ! MAX. NO. OF TANGENT HEIGHTS 
 
-      PARAMETER (L=639,NU=16,NUA=8,MAXFS=500,MNT=500,N=2)
+      PARAMETER (L=639,NU=16,NUA=8,N=2,NIWC=10,
+     >           MAXFS=500,MNT=500)            ! THESE ARE THE FIXED INTERNAL 
+                                               ! PARAMETERS. WE SET THESE 
+                                               ! CONSTANTS HERE TO REDUCE THE 
+                                               ! NUMBER OF PARAMETERS PASSED 
+                                               ! THROUGH L2
 
       INTEGER LORS                             ! SURFACE TYPE: LAND OR SEA
-
 
       REAL U(NU)                               ! COSINE OF SCATTERING ANGLES
       REAL DU(NU)                              ! DELTA U
@@ -160,10 +163,10 @@ C-------------------------------
       REAL TAU0(L)                             ! CLEAR-SKY OPTICAL DEPTH
       REAL TEMP(L)                             ! MEAN LAYER TEMPERATURE (K)
 
-      REAL TT(MNT+1,L+1)                       ! CLOUDY-SKY TB AT TANGENT 
+      REAL TT(MNT,L+1)                         ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL TT0(MNT+1,L+1)                      ! CLEAR-SKY TB AT TANGENT
+      REAL TT0(MNT,L+1)                        ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
       REAL FREQ(MAXFS)                         ! FREQUENCIES (GHz)
@@ -198,25 +201,30 @@ C---------------------------
 C     WORK SPACE PARAMETERS
 C---------------------------
 
-      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP
+      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC
 
-      REAL HT,DMA
+      REAL HT,DMA,RATIO
       REAL PH0(N,NU,L),W00(N,L)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
       REAL CHK_CLD(L+1)                        
+      REAL ZZT(MNT)
 
 
 C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
       CALL HEADER(1)
 
-C==============================
-C   >>>>>> MODEL-INPUT <<<<<<< 
-C==============================
+C=========================================================================
+C                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
+C-------------------------------------------------------------------------
+C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
+C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
+C=========================================================================
 
-      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,  
-     >                  YP,YZ,YT,YQ,VMR,L+1)         ! INTERPOLATE NZ TO L+1
-      CALL CLOUD_MODEL(ITYPE,CHT,WC,CHK_CLD,YZ,L+1)  ! DEFINE CLOUD PROFILES
+      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,  
+     >                  YP,YZ,YT,YQ,VMR,L+1,ZT,ZZT,NT) 
+                                                       
+      CALL CLOUD_CHECK(PRESSURE,IWC,LWC,NZ,WC,CHK_CLD,L+1)     
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -225,21 +233,43 @@ C-----------------------------------------------
       CALL ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
 
 C----------------------------------
-C        SURFACE INFORMATION
+C     SURFACE INFORMATION
 C----------------------------------
 
-         LORS  = ISURF          
-         TS    = 288.
-         S     = 35.
-         SWIND = 0.
+      LORS  = ISURF          
+      TS    = 288.
+      S     = 35.
+      SWIND = 0.
 
-C=======================================
-C    >>>>>>> CLEAR-SKY MODULE <<<<<<<<
-C=======================================
+      IF (ISWI .EQ. 0) THEN                  
+         RATIO=1.
+         MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
+      ELSE
+          MY_NIWC=NIWC
+      endif
+
+C------------------------------------------
+C     PERFORM FULL SENSITIVITY CALCULATION
+C------------------------------------------
+
+      DO 3000 IIWC=1, MY_NIWC
+         if (ISWI .EQ. 0) THEN
+            ratio=1.
+         else
+      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9
+      endif
+C=========================================================================
+C                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
+C-------------------------------------------------------------------------
+C     COMPUTE CLEAR-SKY ABSORPTION COEFFICIENTS, INCLUDING DRY, WET 
+C     CONTINUMA AND LINE EMISSIONS.   
+C=========================================================================
 
       NFREQ=NF
 
-      DO 9000 IFR=1, NFREQ                  ! START OF FREQUENCY LOOP
+      DO 2000 IFR=1, NFREQ      ! START OF FREQUENCY LOOP
+
+         FREQ(IFR)=FREQUENCY(IFR)
 
          CALL CLEAR_SKY(L,NU,TS,S,LORS,SWIND,YZ,YP,YT,YQ,VMR,
      >                     FREQ(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
@@ -258,12 +288,6 @@ C-----------------------------------------------------
                ENDIF
             ENDIF
          ENDDO
-
-         IF (IRHB .EQ. 1) THEN
-            DO IL=1,ICLD_TOP              ! ASSUME 100% SATURATION BELOW CLOUD 
-               TAU0(IL)=TAU100(IL)        ! (OPTIONAL FOR CONVECTIVE CLOUD)
-            ENDDO
-         ENDIF   
 
 C--------------------------------------------------------
 
@@ -298,7 +322,7 @@ C--------------------------------------------------------
             IF(CHK_CLD(ILYR) .NE. 0.) THEN 
 
                DO ISPI=1,N
-                  CWC = WCscale*WC(ISPI,ILYR) 
+                  CWC = WC(ISPI,ILYR) 
                   CWC = MAX(1.E-9,CWC)
               
 C=================================================
@@ -341,20 +365,19 @@ C=================================================
 
  1000    CONTINUE                         ! END OF MODEL LAYER LOOP
 
-
-
 C==================================================
 C    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
 C==================================================
 
          CALL HEADER(4)
 
-         CALL RADXFER(L,NU,NUA,U,DU,PH0,NT,ZT,W00,TAU0,RS,TS,FREQ(IFR),
-     >                YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT0,MNT,0)   ! CLEAR-SKY
+         CALL RADXFER(L,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,FREQ(IFR),
+     >                YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT0,MNT,ICON,RE)  !CLEAR-SKY
 
-         IF(ITYPE .NE. 0) THEN                                      ! CLOUDY-SKY
-            CALL RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ(IFR),
-     >                   YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ITYPE) 
+         IF(ICON .NE. 0) THEN                                          
+
+           CALL RADXFER(L,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,FREQ(IFR),
+     >                YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)   !CLOUDY-SKY
 
          ENDIF
 
@@ -362,16 +385,22 @@ C====================================
 C    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 C====================================
 
-         DO I=1,NT+1
-            TB0(I,IFR)=TT0(I,L+1)                  ! CLEAR-SKY BACKGROUND           
+         DO I=1,NT
+            TB0(I,IFR)=TT0(I,L+1)                  ! CLEAR-SKY BACKGROUND      
             DTcir(I,IFR)=TT(I,L+1)-TT0(I,L+1)      ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-         CALL SENSITIVITY (DTcir,ZT,NT,YP,YZ,L+1,PRESSURE,NZ,
-     >                     delTAU,delTAUc,DTAU,DTAUc,TAUeff,SS,
-     >                     DDm,Dm,Z,DZ,N,NF,IFR,ISWI)  ! SENSITIVITY PARAMETERS
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,L+1,PRESSURE,NZ,
+     >                     delTAU,delTAUc,BETA,BETAc,TAUeff,SS,
+     >                     DDm,Dm,N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
- 9000 CONTINUE                               ! END OF FREQUENCY LOOP   
+ 2000 CONTINUE                               ! END OF FREQUENCY LOOP   
+
+c      IF (ISWI .EQ. 0) THEN
+c         GOTO 200
+c      ENDIF
+
+ 3000 CONTINUE
 
       CALL HEADER(5)
 
@@ -381,7 +410,7 @@ C-----------------------<<<<<<<<<<<<< END >>>>>>>>>>>>------------------------C
       RETURN
       END
 
-     
+# $Log: CloudForwardModel.f,v      
 
 
 
