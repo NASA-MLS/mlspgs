@@ -741,16 +741,19 @@ internalsaymake:
 	  cd ..; \
 	done
 
-internalupdate: internalsaymake internalmftests
+internalupdate: internalsaymake
 	@echo "Updating the Makefile in $(SUBDIRS)"; \
+    m_option="-machine" ; \
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-         -cf "$(MLSCFILE)" -nc -nd; \
+         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
 		cd .. ; \
+      m_option="" ; \
 	done
 #	@$(MAKE) -f $(MakeFName) ghostbuster
 	@$(MAKE) -f $(MakeFName) internaldepends
+	@$(MAKE) -f $(MakeFName) internalmftests
 
 internalreset_copy:
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
@@ -819,6 +822,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.62  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
 # Revision 1.61  2002/01/22 21:44:26  pwagner
 # Added commands to build heconvert
 #
