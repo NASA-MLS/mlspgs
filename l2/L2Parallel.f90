@@ -787,14 +787,18 @@ contains ! ================================ Procedures ======================
     
     do res = 1, size ( storedResults )
       valInd = storedResults(res)%valInds(chunk)
-      call DestroyVectorInfo ( joinedVectors(valInd) )
-      call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
-      call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+      if ( valInd /= 0 ) then
+        call DestroyVectorInfo ( joinedVectors(valInd) )
+        call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+        call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
+      end if
       if ( storedResults(res)%gotPrecision ) then
         precInd = storedResults(res)%precInds(chunk)
-        call DestroyVectorInfo ( joinedVectors(precInd) )
-        call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
-        call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+        if ( precInd /= 0 ) then
+          call DestroyVectorInfo ( joinedVectors(precInd) )
+          call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+          call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+        end if
       end if
       if ( storedResults(res)%gotBP ) then
         bpInd = storedResults(res)%bpInds(chunk)
@@ -812,6 +816,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.20  2001/09/10 23:39:12  livesey
+! Minor change, not sure what it did, sorry.
+!
 ! Revision 2.19  2001/09/09 02:52:43  livesey
 ! Now gets find first from a different place
 !
