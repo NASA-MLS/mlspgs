@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -12,7 +12,7 @@ module Open_Init
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
-  use MLSStrings, only: utc_to_yyyymmdd
+  use MLSStrings, only: catLists, utc_to_yyyymmdd
   use Output_m, only: BLANKS, Output
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: max_orbits
@@ -450,7 +450,7 @@ contains ! =====     Public Procedures     =============================
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_switches, extra_switches)
 
     if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ') then
-      switches = trim(switches) // ',' // trim(extra_switches)
+      switches = catLists(trim(switches), trim(extra_switches))
     end if
 	
 ! Get the name of the log file from the PCF
@@ -748,6 +748,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.77  2004/06/29 00:10:17  pwagner
+! Exploit catlist function
+!
 ! Revision 2.76  2003/10/29 00:07:17  pwagner
 ! GlobalAttributes%ProcessLevel assigned appropriate value
 !
