@@ -19,7 +19,7 @@ print "U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged
 
 #Log files suppressed
 
-`PGS_PC_Shell.sh /user2/nakamura/L1BOA/sids_l1boa 1111 /user2/nakamura/L1BOA/PCF.sids 50`;
+`PGS_PC_Shell.sh NAG.Linux/test 0111 PCF.sids 50`;
 
 print "sids_l1boa.pl finished\n";
 

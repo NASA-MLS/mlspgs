@@ -75,12 +75,12 @@
 # Next non-comment line is the default location for PRODUCT INPUT FILES
 # WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
 # data set files to the location specified by the new setting.
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #-----------------
 # Test input files
 #-----------------
-322|sids_uif.txt|/user2/nakamura/L1BOA||||1
+322|sids_uif.txt|||||1
 #
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
@@ -161,9 +161,9 @@
 # dump metadata from the hdf attributes and is used by PGS_MET_GetPCAttr.
 # (DO NOT REMOVE THESE ENTRIES)
 #------------------------------------------------------------------------
-10250|MCF|/user2/nakamura/L1BOA||||1
-10252|GetAttr.temp|/user2/nakamura/L1BOA||||1
-10254|MCFWrite.temp|/user2/nakamura/L1BOA||||1
+10250|MCF|||||1
+10252|GetAttr.temp|||||1
+10254|MCFWrite.temp|||||1
 #
 #
 # -----------------------------------------------------------------------
@@ -174,12 +174,8 @@
 # or attitude files.
 # -----------------------------------------------------------------------
 #
-10501|EOSCHEM_1996-11-30.eph|/user2/nakamura/L1BOA/EPH||||3
-10501|EOSCHEM_1996-12-01.eph|/user2/nakamura/L1BOA/EPH||||2
-10501|EOSCHEM_1996-12-02.eph|/user2/nakamura/L1BOA/EPH||||1
-10502|EOSCHEM_1996-11-30.att|/user2/nakamura/L1BOA/EPH||||3
-10502|EOSCHEM_1996-12-01.att|/user2/nakamura/L1BOA/EPH||||2
-10502|EOSCHEM_1996-12-02.att|/user2/nakamura/L1BOA/EPH||||1
+10501|EOSAURA_1996-12-01.eph|||||1
+10502|EOSAURA_1996-12-01.att|||||1
 #
 #------------------------------------------------------------------------
 # Datasets for PGS_DEM tools.
@@ -213,12 +209,12 @@
 #########################################################################
 #
 # Next line is the default location for PRODUCT OUTPUT FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #------------------
 # Test output files
 #------------------
-333|mls_l1b_oa_v0-01.1996-336|/user2/nakamura/L1BOA||||1
+333|mls_l1b_oa_v0-01.esyscmd(`ccsdsatob TargetDate')|||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -250,7 +246,7 @@
 #########################################################################
 #
 # Next line is the default location for SUPPORT INPUT FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #  
 # -----------------------------------------------------------------------
@@ -348,14 +344,14 @@
 # -----------------------------------------------------------------------
 # leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10301|leapsec.dat|~/database/common/TD||||1
-10301|leapsec.sids|/user2/nakamura/L1BOA/EPH||||1
+10301|leapsec.dat|~/database/common/TD||||1
+#10301|leapsec.sids|/EPH||||1
 #
 # -----------------------------------------------------------------------
 # polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10401|utcpole.dat|~/database/common/CSC||||1
-10401|utcpole.sids|/user2/nakamura/L1BOA/EPH||||1
+10401|utcpole.dat|~/database/common/CSC||||1
+#10401|utcpole.sids|/EPH||||1
 #
 # -----------------------------------------------------------------------
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
@@ -365,7 +361,7 @@
 # -----------------------------------------------------------------------
 # JPL planetary ephemeris file (binary form) (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-10601|de200.eos|~/database/sun5/CBP||||1
+10601|de200.eos|~/database/linux/CBP||||1
 #
 # -----------------------------------------------------------------------
 # spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
@@ -389,7 +385,7 @@
 #########################################################################
 #
 # Next line is default location for SUPPORT OUTPUT FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #
 # -----------------------------------------------------------------------
@@ -399,9 +395,9 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/user2/nakamura/L1BOA||||1
-10101|LogReport|/user2/nakamura/L1BOA||||1
-10102|LogUser|/user2/nakamura/L1BOA||||1
+10100|LogStatus|||||1
+10101|LogReport|||||1
+10102|LogUser|||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1
 10105|TmpUser|||||1
@@ -540,7 +536,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE INPUT FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #
 ?   INTERMEDIATE OUTPUT
@@ -556,7 +552,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE OUTPUT FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #
 ?   TEMPORARY I/O
@@ -571,7 +567,7 @@
 #########################################################################
 #
 # Next line is default location for TEMPORARY FILES
-!  ~/runtime
+!  /user1/livesey/mlspgs/sids/l1boa/
 #
 #
 ?   END
