@@ -85,7 +85,8 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	esac 
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean alltests tar tarz targ mostlyclean all
+.PHONY: configure depends clean alltests tar tarz targ mostlyclean \
+	all libmls.a
 
 tar:
 
@@ -162,6 +163,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.19  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
 # Revision 2.18  2001/04/02 17:38:50  pwagner
 # make clean no longer causes bogus error messages in tests
 #
