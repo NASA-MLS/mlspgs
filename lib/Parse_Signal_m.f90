@@ -399,10 +399,9 @@ o:  do
         spectrometer = signals(i)%spectrometerType
         if ( band_i >= 0 ) bandMatch(i) = band_i == signals(i)%band
         if ( numChannelNums > 0 ) &
-          & channelMatch(i) = lbound(myChannels,1) >= &
-            & lbound(spectrometerTypes(spectrometer)%frequencies,1) .and. &
-            & ubound(myChannels,1) <= &
-            & ubound(spectrometerTypes(spectrometer)%frequencies,1)
+          & channelMatch(i) = &
+            & lbound(myChannels,1) >= lbound(signals(i)%frequencies,1) .and. &
+            & ubound(myChannels,1) <= ubound(signals(i)%frequencies,1)
         if ( radiometer_i >= 0 ) radiometerMatch(i) = &
           & radiometer_i == signals(i)%radiometer
         if ( spectrometer_n >= 0 ) spectrometerMatch(i) = &
@@ -437,6 +436,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.8  2001/04/11 20:19:46  vsnyder
+! Look for channels in signals instead of spectrometers
+!
 ! Revision 2.7  2001/04/11 02:10:45  vsnyder
 ! Fix a typo
 !
