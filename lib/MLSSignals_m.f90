@@ -607,8 +607,14 @@ contains
     type(signal_T), intent(inout) :: Signal
 
     call deallocate_test ( signal%channels, 'Signal', moduleName )
-    ! Don't destroy Frequencies or Widths.  Those fields are shallow
-    ! copies here.  They're destroyed in DestroySpectrometerType.
+    ! Don't destroy Frequencies or Widths unless signal%Deferred.  Those
+    ! fields are shallow copies here.  They're destroyed in
+    ! DestroySpectrometerType.
+    if ( signal%deferred ) then
+      call deallocate_test ( signal%frequencies, "signal%frequencies", &
+        & moduleName )
+      call deallocate_test ( signal%widths, "signal%widths", moduleName )
+    end if
   end subroutine DestroySignal
 
   ! --------------------------------------  DestroySignalDatabase  -----
@@ -1097,6 +1103,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.28  2001/04/21 01:05:26  vsnyder
+! Deallocate Frequencies and Widths in DestroySignal if it's deferred
+!
 ! Revision 2.27  2001/04/20 22:41:25  vsnyder
 ! Publish DestroySignal
 !
