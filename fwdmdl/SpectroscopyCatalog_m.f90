@@ -104,9 +104,8 @@ contains ! =====  Public Procedures  ===================================
       & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
       & F_Molecule, F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
       & F_Str, F_UMLSSIGNALS, F_V0, F_W
-    use Intrinsic, only: Lit_Indices, L_EMLS, L_MLS1, L_UMLS, &
-      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
-      & S_Time
+    use Intrinsic, only: L_EMLS, L_MLS1, L_UMLS, &
+      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, S_Time
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
@@ -606,10 +605,11 @@ contains ! =====  Public Procedures  ===================================
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
 
     integer :: I                   ! Subscript, loop inductor
+    character(len=3), parameter :: SB(-1:1) = (/ 'low', '   ', 'upp' /)
 
     call output ( 'Spectroscopy catalog' )
     if ( present(name) ) call output ( ' '//trim(name) )
-    if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
+    if ( present(sideband) ) call output ( ' for ' // sb(sideband) // 'er sideband' )
     call newLine
     do i = lbound(catalog,1), ubound(catalog,1)
       if ( catalog(i)%molecule == l_none ) cycle
@@ -1338,6 +1338,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.36  2005/01/20 02:28:45  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.35  2005/01/13 01:32:24  vsnyder
 ! Add DefaultIsotopeRatio to Catalog_t
 !
