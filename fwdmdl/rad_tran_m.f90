@@ -5,7 +5,8 @@ module RAD_TRAN_M
 
   implicit NONE
   private
-  public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  public :: RAD_TRAN, RAD_TRAN_PFA, RAD_TRAN_POL
+  public :: DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
   public :: Get_Do_Calc
   private ::  Get_Do_Calc_Indexed, Get_Inds
 
@@ -89,7 +90,7 @@ contains
         aa = gl_inds(a)
         incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
           & del_zeta(more_inds(i)) * &
-          & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
+          & sum( (alpha_path_gl(a:a+ng-1) - alpha_path_c(more_inds(i))) * &            
                & ds_dz_gw(aa:aa+ng-1) ) 
         a = a + ng
       end do ! i
@@ -101,6 +102,56 @@ contains
     call scrt_dn ( t_script, e_rflty, incoptdepth, tau, rad, i_stop )
 
   end subroutine Rad_tran
+
+!--------------------------------------------------  Rad_Tran_PFA  -----
+
+  ! Combine the tau's for PFA and non-PFA models.
+
+  subroutine Rad_Tran_PFA ( KLo, KHi, Channel, &
+    & Tau_LBL, Tau_PFA, T_Script_LBL, T_Script_PFA, &
+    & RadV )
+
+    use D_Hunt_m, only: Hunt
+    use MLSCommon, only: RP, R8
+    use Tau_M, only: Tau_T
+
+    integer, intent(in) :: KLo, KHi             ! Frequency indices for Tau_LBL
+    integer, intent(in) :: Channel              ! Which channel in Tau_PFA?
+                                                ! Index in channels stru, not chan#
+    type(tau_t), intent(in) :: Tau_LBL, Tau_PFA ! Tau structures
+    real(rp), intent(in) :: T_Script_LBL(:,:)   ! Delta B, Path X Frequencies
+    real(rp), intent(in) :: T_Script_PFA(:,:)   ! Delta B, Path X Channels
+    real(rp), intent(out) :: RadV(:)            ! Radiances at frequencies
+                                                ! within the channel
+
+    integer :: FRQ_I                            ! Frequency index
+    integer :: N_Tau_Min                        ! Min(N_Tau_LBL, N_Tau_PFA)
+    integer :: N_Tau_LBL, N_Tau_PFA             ! Tau_*%i_stop(channel)
+    integer :: PATH_I                           ! Path index
+
+    n_tau_PFA = tau_PFA%i_stop(channel)
+
+    do frq_i = klo, khi
+      n_tau_LBL = tau_LBL%i_stop(frq_i)
+      n_tau_min = min(n_tau_LBL, n_tau_PFA)
+      radV(frq_i) = t_script_lbl(1,frq_i)
+      do path_i = 2, n_tau_min
+        radV(frq_i) = radV(frq_i) + &
+          & t_script_lbl(path_i,frq_i) * tau_lbl%tau(path_i,frq_i) * &
+          &                              tau_pfa%tau(path_i,channel)
+      end do ! path_i
+      ! Tau's after i_stop are 1.0.  At most one of the next two loops does something.
+      do path_i = n_tau_min+1, n_tau_PFA
+        radV(frq_i) = radV(frq_i) + &
+          & t_script_pfa(path_i,channel) * tau_PFA%tau(path_i,channel)
+      end do ! path_i
+      do path_i = n_tau_min+1, n_tau_LBL
+        radV(frq_i) = radV(frq_i) + &
+          & t_script_lbl(path_i,frq_i) * tau_LBL%tau(path_i,frq_i)
+      end do ! path_i
+    end do ! frq_i
+
+  end subroutine Rad_Tran_PFA
 
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
@@ -589,8 +640,6 @@ contains
 
   end subroutine DRad_tran_dx
 
-!{\newpage
-
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
@@ -994,6 +1043,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.39  2004/08/03 22:06:46  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.38  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !
