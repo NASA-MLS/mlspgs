@@ -1077,6 +1077,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
              begin, f+f_destroyJacobian, t+t_boolean, n+n_field_type, &
              begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
+             begin, f+f_singleMAF, t+t_numeric, n+n_field_type, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1186,6 +1187,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.363  2004/03/31 03:59:43  livesey
+! Added singleMAF option
+!
 ! Revision 2.362  2004/03/24 01:03:12  livesey
 ! Added f_date to s_hgrid
 !
