@@ -178,6 +178,7 @@ radianceQuantity
 range
 ratioQuantity
 refGPHquantity
+refGPHPrecisionquantity
 refract
 regAfter
 regApriori               ! Regularization is to apriori, not zero
@@ -253,6 +254,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.54  2002/10/16 20:19:13  mjf
+# Added GPH precision.
+#
 # Revision 2.53  2002/10/03 13:43:37  mjf
 # Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
 # names < 31 long.
