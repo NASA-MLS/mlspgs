@@ -1819,6 +1819,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
       integer :: I, J                   ! Subscripts, loop inductors
       integer :: INSTANCE               ! Loop counter
       integer :: QUANTITYINDEX          ! Index
+      integer :: NROWS                  ! Loop limit dumping mask
+      integer :: ROW                    ! Row index dumping mask
       integer :: SON                    ! Tree node
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
@@ -1836,6 +1838,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
       logical :: DOTHIS                 ! Flag
       integer, parameter ::                      MAXCOLUMNS = 127
       character(len=1), dimension(MAXCOLUMNS) :: maskedMan
+      character(len=5) ::                        decades
+      real(r8)         ::                        heightMin, heightMax
 
       ! Executable code
       nullify ( channels, qty, ptan )
@@ -1999,21 +2003,69 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
           call output ( ' Qty_Template_Name = ' )
           call display_string ( qty%template%name )
         end if
+        call output ( ' ', advance='yes' )
         call output ( 'Elements per mask = ' )
         call output ( size(qty%values,1), advance='yes' )
+        call output ( 'noChans = ' )
+        call output ( qty%template%noChans, advance='no' )
+        call output ( ' noSurfs = ' )
+        call output ( qty%template%noSurfs, advance='no' )
+        call output ( ' noInstances = ' )
+        call output ( qty%template%noInstances, advance='no' )
+        call output ( ' instanceLen = ' )
+        call output ( qty%template%instanceLen, advance='yes' )
         call dump ( qty%mask, format='(1x,z8.8)' )
+        ! P. Wagner's inspection of masking array
+        if ( got(f_height) ) then
+          nrows = qty%template%noSurfs
+          call output ( '(Suppressing channel info, rows are surfaces) ', &
+          & advance='no' )
+        else
+          nrows = qty%template%noChans
+          call output ( '(Suppressing mif info, rows are channels) ', &
+          & advance='no' )
+        endif
+        nrows = min(nrows, MAXCOLUMNS)
         call output ( 'column, row look at mask', advance='yes' )
+        maskedMan=' '
+        call output ( 'column ', advance='no' )
+        call blanks(14, advance='no')
+        call output ( 'mask', advance='yes' )
+        call output ( 'rows ->', advance='no' )
+        do j=10, nrows, 10
+          call blanks(10-len(decades), advance='no')
+          write(decades, '(i5.2)') mod(j, 100)
+          call output(decades, advance='no')
+        enddo
+        call output(' ', advance='yes')
+        heightMin=+1.d4
+        heightMax=-1.d4
         do i=1, size(qty%values(1,:))
           maskedMan='0'
-          do j=1, min(size(qty%values(:,1)), MAXCOLUMNS)
-            if ( IsVectorQtyMasked(qty, j, i) ) maskedMan(j)='1'
+          do j=1, nrows
+            if ( got(f_height) ) then
+              row = 1 + qty%template%noChans*(j-1)
+            else
+              row = j
+            endif
+            if ( IsVectorQtyMasked(qty, row, i) ) then
+              maskedMan(j)='1'
+              if ( got(f_height) .and. j <= size(theseheights)) then
+                heightMin = min(heightMin, theseheights(j))
+                heightMax = max(heightMax, theseheights(j))
+              endif
+            endif
           enddo
-          j=min(size(qty%values(:,1)), MAXCOLUMNS)
-          call output ( 'column ', advance='no' )
-          call output ( i, advance='no' )
+          call output ( i, format='(i3)', advance='no' )
           call blanks(4, advance='no')
-          call output ( MaskedMan(1:j), advance='yes' )
+          call output ( MaskedMan(1:nrows), advance='yes' )
         enddo
+        if ( got(f_height) ) then
+          call output ( 'min, max heights masked out: ', advance='no' )
+          call output ( exp(-log(10.)*heightMax), advance='no' )
+          call blanks(4, advance='no')
+          call output ( exp(-log(10.)*heightMin), advance='yes' )
+        endif
       end if
     end subroutine SetupSubset
   end subroutine Retrieve
@@ -2021,6 +2073,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.97  2001/10/17 23:37:29  pwagner
+! Improved dump of mask
+!
 ! Revision 2.96  2001/10/17 20:50:30  dwu
 ! a fix of cloud retrieval
 !
