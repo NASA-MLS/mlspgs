@@ -13,6 +13,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
   use MLSSignalNomenclature, only: MLSSignal_T
+  use Intrinsic, only: L_None
 
   implicit none
   public
@@ -23,26 +24,6 @@ module QuantityTemplates         ! Quantities within vectors
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   !-----------------------------------------------------------------------------
-
-  ! This set of integers defines how quantities are broken into `channels'
-  ! These are known as FGrid information.  Rather than have an FGrid module,
-  ! for the moment we'll just handle this information here. This may be split
-  ! out in later versions of the code.
-
-  integer, parameter :: NoFGTypes=5
-  character (len=24), parameter, dimension(NoFGTypes) :: &
-    & FGTypeNames= (/ &
-    & "No frequency dependence ", &
-    & "MLS Channel             ", &
-    & "Intermediate Frequecny  ", &
-    & "Upper Sideband Frequency", &
-    & "Lower Sideband Frequency"/)
-  integer, parameter :: FG_Invalid=0
-  integer, parameter :: FG_None=1
-  integer, parameter :: FG_InstrumentChannel=2
-  integer, parameter :: FG_IntermediateFrequency=3
-  integer, parameter :: FG_USBFrequency=4
-  integer, parameter :: FG_LSBFrequency=5
 
   ! Define some global parameters and data types.
 
@@ -151,7 +132,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! Some families of quantities require special additional information.
     ! This is given here if needed.
 
-    integer :: radiometerIndex ! Which radiometer does a ptan qty refer to?
+    integer :: instrumentModule ! Literal, L_GHz, L_THz or L_None
+    integer :: radiometer       ! For ptan etc. e.g. L_R1A
     integer :: molecule ! What molecule does this refer to? (One of the l_...
                         ! lits of type t_molecule in Init_Tables_Module.)
 
@@ -284,7 +266,9 @@ contains ! =====     Public Procedures     =============================
       qty%stacked = source%stacked
       qty%regular = source%regular
       qty%minorFrame = source%minorFrame
-      qty%instanceLen = source%instanceLen
+      qty%instanceLen =  source%instanceLen
+      qty%verticalCoordinate = source%verticalCoordinate
+      qty%frequencyCoordinate = source%frequencyCoordinate
     else ! We have no template, setup a very bare quantity
       qty%noInstances = 1
       qty%noSurfs = 1
@@ -294,6 +278,8 @@ contains ! =====     Public Procedures     =============================
       qty%regular = .TRUE.
       qty%minorFrame = .FALSE.
       qty%instanceLen = 1
+      qty%verticalCoordinate=l_none
+      qty%frequencyCoordinate=l_none
     end if
 
     ! Now, see if the user asked for modifications to this
@@ -402,6 +388,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.2  2000/12/04 23:43:59  vsnyder
+! Move more of addItemToDatabase into the include
+!
 ! Revision 2.1  2000/10/13 00:00:37  vsnyder
 ! Moved from mlspgs/l2 to mlspgs/lib
 !
@@ -411,5 +400,3 @@ end module QuantityTemplates
 ! Revision 1.1  2000/09/02 02:05:04  vsnyder
 ! Initial entry
 !
-
-

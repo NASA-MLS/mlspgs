@@ -694,7 +694,7 @@ contains ! =====     Public Procedures     =============================
           if ( vector%quantities(search)%template%molecule /= molecule ) cycle
         end if
         if ( present(radiometer) ) then
-          if ( vector%quantities(search)%template%radiometerIndex /= &
+          if ( vector%quantities(search)%template%radiometer /= &
             &  radiometer ) cycle
         end if
         GetVectorQuantityIndexByType = search
@@ -856,6 +856,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.11  2001/02/08 00:36:29  vsnyder
+! Don't destroy in DestroyVectorValues if vector%quantities is disassociated
+!
 ! Revision 2.10  2001/02/08 00:34:41  vsnyder
 ! Don't destroy in DestroyVectorInfo if vector%quantities is disassociated
 !
