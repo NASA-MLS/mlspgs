@@ -426,7 +426,7 @@ contains
     end do ! i
   end subroutine Dump_Filter_Shapes_Database
 
-  ! ---------------------------  Dump_DACS_Filter_Database  -----
+  ! ----------------------------------  Dump_DACS_Filter_Database  -----
   subroutine Dump_DACS_Filter_Database
     use Dump_0, only: Dump
     use Output_m, only: Output
@@ -439,11 +439,12 @@ contains
       call output ( i, 4 )
       call output ( ':    Signal = ' )
       call GetNameOfSignal ( DACSfilterShapes(i)%signal, sigName )
-      call output ( sigName, advance='yes' )
+      call output ( trim(sigName), advance='yes' )
       call dump ( DACSfilterShapes(i)%filterShape, name='FilterShape' )
       call dump ( DACSfilterShapes(i)%filterGrid, name='FilterGrid', &
-        & width=4, format='(1x,1pg18.11)' )
-      call dump ( DACSfilterShapes(i)%lo_apod, name='LO_Apod' )
+        & width=5, format='(f14.5)' )
+      call dump ( DACSfilterShapes(i)%lo_apod, name='LO_Apod', &
+        & width=7, format='(f10.6)' )
       call dump ( DACSfilterShapes(i)%ch_norm, name='CH_Norm' )
     end do ! i
   end subroutine Dump_DACS_Filter_Database
@@ -476,6 +477,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.10  2003/08/15 00:20:50  michael
+! changed debugging switch for dump_DACS_filter_database
+!
 ! Revision 2.9  2003/07/16 01:06:50  vsnyder
 ! Add DACS filter shapes
 !
