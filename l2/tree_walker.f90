@@ -26,7 +26,7 @@ module TREE_WALKER
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
   use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
-  use L2Parallel, only: GETCHUNKFROMMASTER, L2MASTERTASK
+  use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
   use L2PC_m, only: DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
@@ -80,6 +80,7 @@ contains ! ====     Public Procedures     ==============================
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
     type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
+    integer ::                                   FIRSTCHUNK ! For chunk loop
     type (ForwardModelConfig_T), dimension(:), &
       & pointer ::                               ForwardModelConfigDatabase
     type (GriddedData_T), dimension(:), &
@@ -87,6 +88,7 @@ contains ! ====     Public Procedures     ==============================
     type (HGrid_T), dimension(:), pointer ::     HGrids
     integer ::                                   HOWMANY  ! Nsons(Root)
     integer ::                                   I, J     ! Loop inductors
+    integer ::                                   LASTCHUNK ! For chunk loop
     type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
@@ -142,20 +144,23 @@ contains ! ====     Public Procedures     ==============================
           ! This is the old routine, which will be going away shortly
           ! call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
+          firstChunk = 1
+          lastChunk = size(chunks)
           if ( countChunks ) then
             error_flag = 0
             call output ( size(chunks) )
             return
           end if
         else
-          call GetChunkFromMaster ( chunks )
+          call GetChunkInfoFromMaster ( chunks, chunkNo )
+          firstChunk = chunkNo
+          lastChunk = chunkNo
         endif
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'scan_divide', t1)
       case ( z_construct, z_fill, z_join, z_retrieve )
         ! In case where there are no chunks or we're a master do special stuff
-        if ( parallel%master .or. &
-          & lbound(chunks,1) > ubound(chunks,1) ) then 
+        if ( parallel%master .or. size(chunks) < 1 ) then 
           if ( parallel%master ) &
             & call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           select case ( decoration(subtree(1,son)) ) ! section index
@@ -169,7 +174,7 @@ contains ! ====     Public Procedures     ==============================
             call add_to_section_timing ( 'retrieve', t1)
           end select
         else
-          do chunkNo = lbound(chunks,1), ubound(chunks,1)
+          do chunkNo = firstChunk, lastChunk
             if ( index(switches,'chu') /= 0 ) then
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
@@ -293,6 +298,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.75  2001/12/16 00:57:12  livesey
+! Now passes all chunks to construct
+!
 ! Revision 2.74  2001/12/14 01:43:20  livesey
 ! Passes processingRange to HGrid via Construct
 !
