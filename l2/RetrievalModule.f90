@@ -41,7 +41,7 @@ contains
       & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
       & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_hRegOrders, f_hRegQuants, f_hRegWeights, f_hRegWeightVec, &
-      & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
+      & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, &
       & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
       & F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
@@ -54,7 +54,7 @@ contains
       & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
       & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
-      & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
+      & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
       & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time
@@ -95,7 +95,7 @@ contains
 
     ! Default values:
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
-    integer, parameter :: DefaultMaxF = 30, DefaultMaxJ = 5
+    integer, parameter :: DefaultMaxJ = 5
     integer, parameter :: DefaultMethod = l_newtonian
     double precision, parameter :: DefaultToleranceA = 1.0d-6 ! for NWT
     double precision, parameter :: DefaultToleranceF = 1.0d-6 ! for NWT
@@ -138,8 +138,6 @@ contains
                                         ! (masked-off rows of Jacobian)
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
-    integer :: MaxFunctions             ! Maximum number of function
-                                        ! evaluations of Newtonian method
     integer :: MaxJacobians             ! Maximum number of Jacobian
                                         ! evaluations of Newtonian method
     type(vector_T), pointer :: Measurements  ! The measurements vector
@@ -289,7 +287,6 @@ contains
         hRegWeights = 0
         nullify ( hRegWeightVec )
         initLambda = defaultInitLambda
-        maxFunctions = defaultMaxF
         maxJacobians = defaultMaxJ
         method = defaultMethod
         toleranceA = defaultToleranceA
@@ -356,7 +353,7 @@ contains
             outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
+          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, &
             &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -368,8 +365,6 @@ contains
               fuzz = value(1)
             case ( f_lambda )
               initLambda = value(1)
-            case ( f_maxF )
-              maxFunctions = value(1)
             case ( f_maxJ )
               maxJacobians = value(1)
             case ( f_toleranceA )
@@ -564,7 +559,7 @@ contains
       error = max(error,1)
       call output ( '***** At ' )
       call print_source ( source_ref(son) )
-      call output ( ' RetrievalModule complained: ' )
+      call output ( ', RetrievalModule complained: ' )
       select case ( code )
       case ( badOpticalDepthSignal )
         call output ( 'Mismatch in signal/sideband for radiance and optical depth', &
@@ -688,7 +683,7 @@ contains
                                         ! to get J.
       integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T), target :: NormalEquations  ! Jacobian**T * Jacobian
-      integer :: NumF, NumJ             ! Number of Function, Jacobian evaluations
+      integer :: NumJ                   ! Number of Jacobian evaluations
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
                                         ! the action to take.
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
@@ -760,7 +755,6 @@ contains
         end do
       end if
         if ( index(switches,'xvec') /= 0 ) call dump ( v(x), name='Original X' )
-      numF = 0
       numJ = 0
       aj%axmax = 0.0
         call time_now ( t0 ) ! time base for Newtonian iteration
@@ -797,8 +791,6 @@ contains
             if ( nwt_flag == nf_getJ ) theFlagName = 'GETJ'
             call output ( 'Newton method flag = ' )
             call output ( trim(theFlagName) )
-            call output ( ', numF = ' )
-            call output ( numF )
             call output ( ', numJ = ' )
             call output ( numJ )
             call output ( ' at ' )
@@ -899,7 +891,7 @@ contains
             call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
               & vectorNameText='_aprioriMinusX' ) ! a-x := a
             call subtractFromVector ( v(aprioriMinusX), v(x) ) ! a-x := a - x
-            if ( got(f_regApriori) ) &
+            if ( tikhonovApriori ) &
               & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
               & vectorNameText='_regRHS' )
             if ( got(f_aprioriScale) ) &
@@ -982,7 +974,7 @@ contains
                 call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
                   & hRegWeightVec, tikhonovRows, horiz=.true. )
               end if
-              if ( got(f_regApriori) ) then ! reg_*_x := R * (apriori - x)
+              if ( tikhonovApriori ) then ! reg_*_x := R * (apriori - x)
                 call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
               else                          ! reg_*_x := -R * x
                 call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
@@ -1126,7 +1118,7 @@ contains
                 call getDiagonal ( normalEquations%m, v(columnScaleVector) )
               end select
 
-              if ( got(f_regApriori) ) then
+              if ( tikhonovApriori ) then
                 call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
               else
                 call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
@@ -1539,7 +1531,6 @@ contains
           call fillDiagVec ( l_dnwt_gradn, aj%gradn )
           call fillDiagVec ( l_dnwt_sq, aj%sq )
           call fillDiagVec ( l_dnwt_sqt, aj%sqt )
-          call fillDiagVec ( l_numF, real(numF, r8))
           call fillDiagVec ( l_numJ, real(numJ, r8))
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
@@ -2959,6 +2950,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.185  2002/09/23 23:15:08  vsnyder
+! Delete maxF
+!
 ! Revision 2.184  2002/09/23 20:21:21  livesey
 ! Now copies mask from f_rowScaled to f.  Only important for snooping.
 !
