@@ -50,6 +50,8 @@ begin Fill
   ;; Put H2O in trop h2o
   Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $
     method=vector, /interpolate
+  Fill, quantity=truth.tropH2O_HR, sourceQuantity=truth.h2o_HR, $
+    method=vector, /interpolate
 
   ;; --------------------------------------------- Ptan
 
