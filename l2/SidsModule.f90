@@ -224,6 +224,10 @@ contains
               maf2 = maf2 - chunk%noMAFsUpperOverlap
             end if
           else
+            if ( (singleMAF < 1) .or. &
+              & (singleMAF > chunk%lastMAFIndex - chunk%firstMAFIndex + 1) ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Illegal value of singleMAF' )
             maf1 = singleMAF
             maf2 = singleMAF
           end if
@@ -355,6 +359,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.47  2004/06/21 22:50:55  livesey
+! Some trapping of silly values of singleMAF in sids command
+!
 ! Revision 2.46  2004/05/19 19:16:12  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
