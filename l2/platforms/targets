@@ -30,12 +30,6 @@ include ../Makefile.dep
 # the variable BLAS should be defined
 # e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
 
-# RETRIEVAL_OBJS
-# This variable is defined only if MLSCONFG=LF95.Linux
-# otherwise it is blank
-# This is because it needs MatrixModule_0 in lib which the NAG f95 v4.0
-# compiler cannot handle
-
 # PGSTK
 # This variable is defined only if you will use the toolkit
 # to build the level 2 software
@@ -50,20 +44,7 @@ include $(srclib)/Makefile.dep
 #ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
 ALLOBJS = $(OBJS) $(srclib_objs)
 
-#Dependency rules for RETRIEVAL_OBJS (if we need them)
-#ForwardModelInterface.o: ForwardModelInterface.f90 ${OBJS} $(srclib_objs)
-#RetrievalModule.o: RetrievalModule.f90 ForwardModelInterface.o ${OBJS} $(srclib_objs)
-
-#                  PVM v. non-PVM options
-# If we implement an option to allow non-PVM-dependent installations
-# uncomment this next line; this will set our PVM objects
-# w/o complaining if it does not exist yet;
-# the latter case leaves PVM_OBJS empty
-#-include ../PVM_OBJS.inc
-#-------------------- without the non-PVM option
-# The following lines hardwire PVM_OBJS and so *require* PVM
-# If we implement the non-PVM option, comment out all these
-#PVM_OBJS=SnoopMLSL2.o
+CONFDIR=../..
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -135,7 +116,29 @@ tar:
 	tar hcvzf l2.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # ========================================================================
+
+# Custom build commands for some modules
+
+# This is to keep switch_usage up-to-date with notes/switches
+MLSL2.o: $(CONFDIR)/notes/switches
+	@rm -f swMLSL2.f90 MLSL2.f90 part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/, /mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed '1 d; $$ d' part_2 > swMLSL2.f90 ; \
+	mv swMLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > swMLSL2.f90 ; \
+	mv swMLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > swMLSL2.f90 ; \
+	mv swMLSL2.f90 MLSL2.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
+	rm -f MLSL2.f90 part_1 part_2 part_3
+
+
 # $Log$
+# Revision 1.17  2001/05/09 23:37:02  pwagner
+# Optionally builds level 2 w/o toolkit support
+#
 # Revision 1.16  2001/04/01 00:20:08  pwagner
 # Bug fixes plus allows untargeted make inside MLSCONFG
 #
