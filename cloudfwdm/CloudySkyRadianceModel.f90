@@ -545,7 +545,7 @@ contains
 
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
-               IF(CWC .EQ. 0._r8 .and. ICON .ne. 0) cycle      !Don't compute this cloud info
+            IF(CWC .ne. 0._r8 .and. ICON .ne. 0) then      !Don't compute this cloud info
                   
                CWC = MAX(1.E-9_r8,CWC)
               
@@ -561,6 +561,7 @@ contains
                CDEPTH(ISPI)=RC11(3)*Z(ILYR)
                RC_TMP(ISPI,:)=RC11        ! VOLUME EXT/SCAT/ABS COEFFS
                DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+            ENDIF
             ENDDO
                               
             DO J=1,3                               ! ADD all COEFFICIENTS
@@ -787,6 +788,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.23  2001/10/24 23:15:47  dwu
+! some cleanup and correction
+!
 ! Revision 1.22  2001/10/24 17:30:49  jonathan
 ! some minor changes
 !
