@@ -443,7 +443,7 @@ sub MakeDependsf90 {
          # This bit of filtering is to exclude statements that begin 
          # module procedure ...
          if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {    
-            value = $key;                                                
+            $value = $key;                                                
          } else {                                                        
            /^\s*module\s+([^\s!]+)/i &&
             ($filename{&toLower($1)} = $file) =~ s/\.f90$/.o/;
@@ -495,7 +495,7 @@ sub MakeDependsf90 {
              # This bit of filtering is to exclude statements that begin 
              # module procedure ...
              if ( /^\s*module\s+[pP][rR][oO][cC][eE][dD][uU][rR][eE]/ ) {
-                value = $key;
+                $value = $key;
              } else {
                /^\s*module\s+([^\s!]+)/i &&
                 ($key = &toLower($1));
@@ -651,6 +651,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.5  2002/05/29 22:19:49  pwagner
+# New changes--hurriedly committed because of filesys errors
+#
 # Revision 1.4  2002/05/22 00:37:26  pwagner
 # Work with new (1)-mod variant dependency files
 #

@@ -301,7 +301,7 @@ while [ "$more_opts" = "yes" ] ; do
 	    shift
        ;;
     -p )
-       dep_file=Makefile.dep
+       dep_file="$2"
        shift
 	    shift
        ;;
@@ -339,6 +339,7 @@ done
 if [ $PRINT_TOO_MUCH = "1" ]                            
 then                                                    
    echo " Summary of options to $me "  
+   echo " dependency file name: $dep_file "  
    echo " include_f90: $include_f90 "  
    echo " include_f77: $include_f77 "  
    echo " include_c: $include_c "  
@@ -538,6 +539,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.18  2002/05/22 00:37:26  pwagner
+# Work with new (1)-mod variant dependency files
+#
 # Revision 1.17  2002/05/02 16:10:38  pwagner
 # -nodep option disables tracing dependencies
 #
