@@ -403,14 +403,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Local
     integer :: myhdfVersion
-
+    
     ! Executable code
     if (present(hdfVersion)) then
       myhdfVersion = hdfVersion
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
-
+    !print*,"In readl2gpdata: first/last prof=",firstProf, lastProf
     if (myhdfVersion == HDFVERSION_4) then
       call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
@@ -423,7 +423,8 @@ contains ! =====     Public Procedures     =============================
 !       call MLSMessage ( MLSMSG_Error, ModuleName, &
 !            & 'This version of L2GPData not yet ready for hdf5' )
     endif
-
+    !print*,"In readl2gpdata: first/last/read prof=",firstProf,&
+    !  lastProf,numProfs
   end subroutine ReadL2GPData
 
   ! ---------------------- ReadL2GPData_hdf4  -----------------------------
@@ -823,10 +824,10 @@ contains ! =====     Public Procedures     =============================
     character (LEN=80) :: list
     character (LEN=480) :: msr
 
-    integer :: alloc_err, first, freq, lev, nDims, size, swid, status
+    integer :: alloc_err, first, freq, lev, nDims, size, ulsize, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
-    logical :: firstCheck, lastCheck
+    logical :: firstCheck, lastCheck, timeIsUnlim
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
 !  How to deal with status and columnTypes? swrfld fails
@@ -837,7 +838,7 @@ contains ! =====     Public Procedures     =============================
     integer, allocatable, dimension(:,:) :: string_buffer
 
     ! Attach to the swath for reading
-
+    !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
     
     swid = HE5_SWattach(L2FileHandle, l2gp%Name)
@@ -850,21 +851,34 @@ contains ! =====     Public Procedures     =============================
     freq = 0
 
     nDims = HE5_SWinqdims(swid, list, dims)
+    !print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &get dimension information.')
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
+    if ( index(list,'Unlim') /= 0 ) then 
+      timeIsUnlim = .TRUE.
+    else
+      timeIsUnlim = .FALSE.
+    endif
 
     size = HE5_SWdiminfo(swid, DIM_NAME1)
+    !print*,"Got dims for ",DIM_NAME1," it was",size
     if (size == -1) then
        msr = SZ_ERR // DIM_NAME1
        call MLSMessage(MLSMSG_Error, ModuleName, msr)
     endif
+    ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
+    ! HE5_SWdiminfo returns 1 instead of the right answer.
+      
     l2gp%nTimes = size
     nTimes=size
+
     if (lev == 0) then
        nLevels = 0
     else
+      size = HE5_SWdiminfo(swid, DIM_NAME2)
+      !print*,"Got dims for ",DIM_NAME2," it was",size
        size = HE5_SWdiminfo(swid, DIM_NAME2)
        if (size == -1) then
           msr = SZ_ERR // DIM_NAME2
@@ -875,6 +889,8 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if (freq == 1) then
+      size = HE5_SWdiminfo(swid, DIM_NAME3)
+      !print*,"Got dims for ",DIM_NAME3," it was",size
        size = HE5_SWdiminfo(swid, DIM_NAME3)
        if (size == -1) then
           msr = SZ_ERR // DIM_NAME3
@@ -891,8 +907,10 @@ contains ! =====     Public Procedures     =============================
     lastCheck = present(lastProf)
 
     if (firstCheck) then
-
-       if ( (firstProf >= l2gp%nTimes) .or. (firstProf < 0) ) then
+      ! Note that if time is an umlimited dimension, HDF-EOS won't 
+      ! nTimes is wrong.
+       if ( (timeIsUnlim .and. firstProf >= l2gp%nTimes) &
+         .or. (firstProf < 0) ) then
           msr = MLSMSG_INPUT // 'firstProf'
           call MLSMessage(MLSMSG_Error, ModuleName, msr)
        else
@@ -912,6 +930,14 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage(MLSMSG_Error, ModuleName, msr)
        endif
 
+       ! If user has supplied "last" _and_ time is unlimited, we have
+       ! to believe the user about how many profiles there are.
+       ! This is _crap_ and is a temporary workaround. 
+       if(timeIsUnlim) then
+         myNumProfs = lastProf - first + 1
+         nTimes=lastprof-first+1
+         l2gp%nTimes=nTimes
+       endif
        if (lastProf >= nTimes) then
           myNumProfs = nTimes - first
        else
@@ -1165,9 +1191,11 @@ contains ! =====     Public Procedures     =============================
     status = HE5_SWdetach(swid)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &detach from swath interface after reading.')
-
+    !print*," leaving readl2gpdata_hdf5: first/last/read=",&
+    !  firstprof,lastprof,myNumProfs
     ! Set numProfs if wanted
     if (present(numProfs)) numProfs=myNumProfs
+
 
     !-----------------------------
   end subroutine ReadL2GPData_hdf5
@@ -1758,7 +1786,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
+       !print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
        status = HE5_SWdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
@@ -2473,6 +2501,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.21  2002/10/09 14:05:30  hcp
+! replaced HE5S_UNLIMITED with   HE5S_UNLIMITED_F
+!
 ! Revision 1.20  2002/08/15 22:26:22  pwagner
 ! Added he5_swdefchunk to .._createFile_hdf5
 !
