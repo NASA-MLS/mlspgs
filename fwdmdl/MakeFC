@@ -68,7 +68,16 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 #wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(blaslib_f)
+endif
 
 #PROG=l2_test
 PROG=libfwdmdl.a
@@ -81,8 +90,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 l2_test: libfwdmdl.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
@@ -144,6 +152,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.16  2001/05/17 20:02:59  pwagner
+# Automatically rebuilds lib on change to machine.f90
+#
 # Revision 1.15  2001/05/14 23:58:42  pwagner
 # default .configure name now set by environment
 #
