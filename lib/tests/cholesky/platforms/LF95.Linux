@@ -30,7 +30,7 @@ BLASLIB =
 vpath %.o ./
 vpath %.f90 ../
 vpath %.f9h ../
-vpath %.f $(blas_srcdir)
+vpath %.f ../ $(blas_srcdir)
 
 FC = lf95
 
@@ -84,6 +84,9 @@ DUSTY = $(FOPTS)
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00/hdfeos/lib/linux
 
 # $Log$
+# Revision 1.2  2000/11/11 00:24:43  pwagner
+# in accord with van's recent changes
+#
 # Revision 1.1  2000/10/24 21:01:01  pwagner
 # first commit
 #
