@@ -66,6 +66,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
 
   logical, parameter ::          COUNTEMPTY = .true.
   logical, parameter ::          MODIFYPHASENAMES = .false.
+  logical, parameter ::          SHOWDATEANDTIME = .false.
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          MAXPHASES = 100
   integer, parameter ::          MAXCHUNKS = 360
@@ -114,7 +115,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      filenames(n_filenames) = filename
   enddo
   showTimings = (options%details == ' ')
-  if ( showTimings ) call output_date_and_time(msg='starting chunktimes', &
+  if ( showTimings .and. SHOWDATEANDTIME ) call output_date_and_time(msg='starting chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   if ( NumStringElements(trim(options%binopts), .true. ) > 0 ) then
     read(trim(options%binopts), *) statistic%nbins, statistic%bounds
@@ -248,7 +249,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       deallocate(alltimings, stat=status)
     endif
   endif
-  if ( showTimings ) call output_date_and_time(msg='ending chunktimes', &
+  if ( showTimings .and. SHOWDATEANDTIME ) call output_date_and_time(msg='ending chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   call mls_h5close(error)
 contains
@@ -655,6 +656,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.6  2005/03/18 01:01:19  pwagner
+! -details option narrows output from -fail
+!
 ! Revision 1.5  2005/03/04 18:50:15  pwagner
 ! Can simulate l2q performance
 !
