@@ -332,7 +332,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  CholeskyFactor_0  -----
   subroutine CholeskyFactor_0 ( Z, XOPT )
   ! If XOPT is present compute Z such that Z^T Z = XOPT and Z is upper-
-  ! triangular. Otherwise, replace Z such that Z(output) = Z(input)^T
+  ! triangular. Otherwise, replace Z such that Z(output)^T Z(output) =
   ! Z(input) and Z(output) is upper-triangular.
     type(MatrixElement_T), target, intent(inout) :: Z
     type(MatrixElement_T), target, intent(in), optional :: XOPT
@@ -550,15 +550,16 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(out) :: Z
     type(MatrixElement_T), intent(in) :: X
     call CloneBlock ( Z, X )
-    z%values = x%values
+    if ( x%kind /= m_absent ) z%values = x%values
   end subroutine CopyBlock
 
   ! ----------------------------------------------  CreateBlock_0  -----
-  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero )
+  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues )
   ! Create a matrix block, but don't fill any elements or structural
   ! information.  The "NumberNonzero" is required if and only if the
   ! "Kind" argument has the value M_Banded or M_Column_Sparse.
   ! The block is first destroyed, so as not to have a memory leak.
+  ! If NoValues is present and true, the values component is not allocated
 
   ! Filling the block after it's created depends on the kind.
   !  M_Absent: Do nothing
@@ -582,7 +583,12 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: nRows, nCols, Kind
     integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
                                                    ! M_Column_Sparse
+    logical, intent(in), optional :: NoValues
 
+    logical :: Values
+
+    values = .true.
+    if ( present(noValues) ) values = .not. noValues
     call destroyBlock ( z )
     select case ( kind )
     case ( M_Absent )
@@ -592,16 +598,19 @@ contains ! =====     Public Procedures     =============================
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
       call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
       z%r2(0) = 0
-      call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
+      if ( values ) &
+        & call allocate_test ( z%values, numberNonzero, 1, "z%values", ModuleName )
     case ( M_Column_sparse )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName, lowBound=0 )
       z%r1(0) = 0
       call allocate_test ( z%r2, numberNonzero, "z%r2", ModuleName )
-      call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
+      if ( values ) &
+        & call allocate_test ( z%values, NumberNonzero, 1, "z%values", ModuleName )
     case ( M_Full )
       call allocate_test ( z%r1, 0, "z%r1", ModuleName )
-      call allocate_test ( z%r2, 0, "z%r1", ModuleName )
-      call allocate_test ( z%values, nRows, nCols, "z%values", ModuleName )
+      call allocate_test ( z%r2, 0, "z%r2", ModuleName )
+      if ( values ) &
+        & call allocate_test ( z%values, nRows, nCols, "z%values", ModuleName )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Invalid matrix block kind in CreateBlock" )
@@ -645,13 +654,14 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyBlock_0 ( B )
     ! Deallocate the pointer components of the matrix block B
     type(MatrixElement_T), intent(inout) :: B
-    ! Don't destroy absent blocks, as they all point to the same place
+    ! Don't bother to destroy absent blocks
     if (b%kind /= M_Absent) then
       call deallocate_test ( b%r1, "b%r1", ModuleName )
       call deallocate_test ( b%r2, "b%r2", ModuleName )
       call deallocate_test ( b%values, "b%values", ModuleName )
-      b%nrows = 0
-      b%ncols = 0
+      ! Don't clobber b%nrows and b%ncols: They may be arguments to a
+      ! caller of DestroyBlock_0.
+      b%kind = m_absent
     endif
   end subroutine DestroyBlock_0
 
@@ -790,20 +800,25 @@ contains ! =====     Public Procedures     =============================
 
     nullify ( z )
     my_sub = .false.
-    if ( present(subtract) ) my_sub = my_sub
+    if ( present(subtract) ) my_sub = subtract
     my_upd = .false.
     if ( present(update) ) my_upd = update
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
+      if ( .not. my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
       return
     end if
     if ( xb%nrows /= yb%nrows ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in Multiply_Matrix_Blocks" )
     if ( my_upd ) then
-      if ( xb%ncols /= zb%nrows .or. yb%ncols /= zb%ncols ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "ZB Matrix size incompatible in Multiply_Matrix_Blocks" )
+      if ( zb%kind /= m_absent ) then
+        if ( xb%ncols /= zb%nrows .or. yb%ncols /= zb%ncols ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "ZB Matrix size incompatible in Multiply_Matrix_Blocks" )
+      else
+        zb%nrows = xb%ncols
+        zb%ncols = yb%ncols
+      end if
     else
       zb%nrows = xb%ncols
       zb%ncols = yb%ncols
@@ -816,7 +831,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, zb%nrows, zb%ncols, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
-        if ( update ) then
+        if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -844,11 +859,11 @@ contains ! =====     Public Procedures     =============================
               z(i,j) = z(i,j) + &
                        & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
             else
-            end if
 !             z(i,j) = z(i,j) - &
 !                      & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
               z(i,j) = z(i,j) - &
                        & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+            end if
           end do ! i
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
@@ -858,7 +873,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for banded X sparse in Multiply_Matrix_Blocks", ModuleName )
-        if ( update ) then
+        if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -901,10 +916,14 @@ contains ! =====     Public Procedures     =============================
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB banded, YB full
-        if ( .not. my_upd ) then
-          call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
-          zb%values = 0.0_r8
+        if ( zb%kind /= m_full ) then
+          call allocate_test ( z, xb%ncols, yb%ncols, &
+            & "Z for banded X full in Multiply_Matrix_Blocks", ModuleName )
+          if ( my_upd ) call densify ( z, zb )
+          call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
+          zb%values => z
         end if
+        if ( .not. my_upd ) zb%values = 0.0_r8
         do i = 1, xb%ncols    ! Rows of ZB
           if ( present(xmask) ) then
             if ( btest(xmask(i/b),mod(i,b)) ) cycle
@@ -930,6 +949,7 @@ contains ! =====     Public Procedures     =============================
             end if
           end do ! j
         end do ! i
+        zb%values => z
       end select
     case ( M_Column_sparse )
       select case ( yb%kind )
@@ -938,7 +958,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for sparse X banded in Multiply_Matrix_Blocks", ModuleName )
-        if ( update ) then
+        if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -985,7 +1005,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for sparse X sparse in Multiply_Matrix_Blocks", ModuleName )
-        if ( update ) then
+        if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -1031,10 +1051,14 @@ contains ! =====     Public Procedures     =============================
         call sparsify ( z, zb, & ! Zb := Z
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
-        if ( .not. my_upd ) then
-          call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
-          zb%values = 0.0_r8
+        if ( zb%kind /= m_full ) then
+          call allocate_test ( z, xb%ncols, yb%ncols, &
+            & "Z for sparse X full in Multiply_Matrix_Blocks", ModuleName )
+          if ( my_upd ) call densify ( z, zb )
+          call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
+          zb%values => z
         end if
+        if ( .not. my_upd ) zb%values = 0.0_r8
         do j = 1, yb%ncols    ! Columns of ZB
           if ( present(ymask) ) then
             if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
@@ -1061,10 +1085,14 @@ contains ! =====     Public Procedures     =============================
         end do ! j
       end select
     case ( M_Full )
-      if ( .not. my_upd ) then
-        call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
-        zb%values = 0.0_r8
+      if ( zb%kind /= m_full ) then
+        call allocate_test ( z, xb%ncols, yb%ncols, &
+          & "Z for full X <anything> in Multiply_Matrix_Blocks", ModuleName )
+        if ( my_upd ) call densify ( z, zb )
+        call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
+        zb%values => z
       end if
+      if ( .not. my_upd ) zb%values = 0.0_r8
       select case ( yb%kind )
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, yb%ncols    ! Columns of ZB
@@ -1637,13 +1665,16 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                          ! Subscripts and loop inductors
     integer :: N                             ! min(a%ncols,a%nrows)
+    integer :: NCols, NRows                  ! Copies of a%...
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
     nullify ( t )
     n = min(a%ncols,a%nrows)
     select case ( a%kind )
     case ( m_absent )
-      call createBlock ( a, a%nRows, a%nCols, m_banded, n )
+      ncols = a%nCols ! because the first argument of CreateBlock is intent(out)
+      nrows = a%nRows
+      call createBlock ( a, nRows, nCols, m_banded, n )
       do i = 1, n
         a%r1(i) = i
         a%r2(i) = i
@@ -1707,6 +1738,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                          ! Subscripts and loop inductors
     integer :: N                             ! min(a%ncols,a%nrows)
+    integer :: NCols, NRows                  ! Copies of a%...
     real(r8) :: S                            ! Sign to use for X, +1 or -1
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
@@ -1718,7 +1750,9 @@ contains ! =====     Public Procedures     =============================
     n = min(a%ncols,a%nrows)
     select case ( a%kind )
     case ( m_absent )
-      call createBlock ( a, a%nRows, a%nCols, m_banded, n )
+      ncols = a%ncols ! because the first argument of CreateBlock is intent(out)
+      nrows = a%nrows
+      call createBlock ( a, nRows, nCols, m_banded, n )
       do i = 1, n
         a%r1(i) = i
         a%r2(i) = i
@@ -1796,11 +1830,12 @@ contains ! =====     Public Procedures     =============================
     my_details = .true.
     if ( present(details) ) my_details = details
     if ( present(name) ) call output ( name, advance='yes' )
+    call output ( '  ' )
     call output ( matrix_block%nrows ); call output ( " Rows, " )
     call output ( matrix_block%ncols ); call output ( " Columns, " )
     select case ( matrix_block%kind )
     case ( m_banded )
-      call output ( ' Banded' )
+      call output ( 'Banded' )
       if ( my_details ) then
         call output ( ' First-nonzero-rows =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
@@ -1808,7 +1843,7 @@ contains ! =====     Public Procedures     =============================
         call dump ( matrix_block%r2(1:) )
       end if
     case ( m_column_sparse )
-      call output ( ' Column-sparse' )
+      call output ( 'Column-sparse' )
       if ( my_details ) then
         call output ( ' Last-in-column =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
@@ -1819,7 +1854,7 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Full' )
     end select
     if ( matrix_block%kind == M_Absent ) then
-      call output ( ' Absent', advance='yes' )
+      call output ( 'Absent', advance='yes' )
     else if ( my_details ) then
       call output ( ' Values =', advance='yes' )
       if ( present(bounds) ) then
@@ -1837,6 +1872,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.22  2001/05/08 20:29:40  vsnyder
+! Periodic commit -- workong on sparse matrix blunders
+!
 ! Revision 2.21  2001/05/03 02:10:26  vsnyder
 ! Nullify a bunch of pointers that should have been but weren't.  Use a
 ! disassociated VALUES array instead of a zero-size one for absent blocks.
