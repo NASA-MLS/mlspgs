@@ -52,8 +52,9 @@ module Open_Init
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+  integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
   integer, parameter :: CCSDSLen=27
-  integer, private :: ERROR
+  integer, private ::   ERROR
   
 contains ! =====     Public Procedures     =============================
 
@@ -132,7 +133,7 @@ contains ! =====     Public Procedures     =============================
 
     character (len=len(switches)) :: extra_switches
 
-    integer :: Indx, Mlspcf_log, Version
+    integer :: Indx, Version
 
     real :: T1, T2                      ! for timing
     logical :: TIMING
@@ -170,6 +171,8 @@ contains ! =====     Public Procedures     =============================
    l2pcf%startutc = '(undefined)'
    l2pcf%endutc = '(undefined)'
    l2pcf%cycle = ' '
+   l2pcf%InputVersion = ' '
+   l2pcf%PGEVersion = ' '
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
@@ -351,9 +354,9 @@ contains ! =====     Public Procedures     =============================
 ! Get the name of the log file from the PCF
 
     version = 1
-    mlspcf_log = 10101			! This seems to be hard-wired into PCF
+!    mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
-    returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+    returnStatus = Pgs_pc_getReference(MLSPCF_LOG, version, name)
     if ( returnStatus /= PGS_S_SUCCESS .AND. PUNISH_FOR_INVALID_PCF) then
       call announce_error ( 0, "Error retrieving log file name from PCF" )
     elseif ( returnStatus == PGS_S_SUCCESS) then
@@ -548,6 +551,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.55  2001/10/25 23:33:59  pwagner
+! Initializes InputVersion, PGEVersion to blank
+!
 ! Revision 2.54  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
