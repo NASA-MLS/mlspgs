@@ -25,7 +25,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, AddToMatrixDatabase, AddToMatrix
+  public :: AddMatrices, AddMatrixToDatabase, AddToMatrix
   public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateEmptyMatrix
@@ -1318,6 +1318,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.10  2001/04/09 23:32:19  vsnyder
+! Correct typo
+!
 ! Revision 2.9  2001/02/22 02:09:36  vsnyder
 ! OOPS -- Forgot to make InvertCholesky public
 !
