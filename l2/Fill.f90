@@ -126,6 +126,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
+    use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String
@@ -3161,11 +3162,12 @@ contains ! =====     Public Procedures     =============================
               Quantity%values(qIndex, i) = &
                & H2OofZeta(s) &
                & * &
-               & exp(invs*( &
-               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-               & + &
-               & 3.56654*log(T/273.16) &
-               & ))
+               & RHIFromH2O_Factor(T, zeta(qIndex), vmr_unit_cnv, invert)
+! >                & exp(invs*( &
+! >                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+! >                & + &
+! >                & 3.56654*log(T/273.16) &
+! >                & ))
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
           end do
@@ -3201,22 +3203,22 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillRHIFromH2O
 
       ! Properly belongs in FillRHIFromH2O, but that would make two levels
-      function C ( T )
-        ! As found in ref.
-        real(r8), intent(in)   :: T
-        real(r8)               :: C
-        ! Local
-        real(r8), parameter    :: a0 = -1.2141649d0
-        real(r8), parameter    :: a1 = 9.09718d0
-        real(r8), parameter    :: a2 = 0.876793d0
-        real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-        !
-        if ( T > 0.d0 ) then
-          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
-        else
-          C = ILLEGALTEMP
-        end if
-      end function C
+! >       function C ( T )
+! >         ! As found in ref.
+! >         real(r8), intent(in)   :: T
+! >         real(r8)               :: C
+! >         ! Local
+! >         real(r8), parameter    :: a0 = -1.2141649d0
+! >         real(r8), parameter    :: a1 = 9.09718d0
+! >         real(r8), parameter    :: a2 = 0.876793d0
+! >         real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+! >         !
+! >         if ( T > 0.d0 ) then
+! >           C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+! >         else
+! >           C = ILLEGALTEMP
+! >         end if
+! >       end function C
 
 !MJF
       ! ------------------------------------- FillRHIPrecisionFromH2O ----
@@ -3290,13 +3292,14 @@ contains ! =====     Public Procedures     =============================
       integer ::                          S_TPrecision         ! Instance num for surfs
       integer ::                          S_T         ! Instance num for surfs
       logical ::                          skipMe                                
-      real (r8) ::                        TPrecision
-      real (r8) ::                        T
+!     real (r8) ::                        TPrecision
+!     real (r8) ::                        T
       character(len=*), parameter ::      VMR_UNITS = 'vmr'
       integer ::                          VMR_UNIT_CNV
       logical ::                          wereAnySkipped
-      real (r8) ::                        df_db       ! RHi deriv wrt H2O
-      real (r8) ::                        df_dT       ! RHi deriv wrt T
+!     real (r8) ::                        df_db       ! RHi deriv wrt H2O
+!     real (r8) ::                        df_dT       ! RHi deriv wrt T
+      real (r8) ::                        rhi_precision
       ! These automatic arrays could cause trouble later
       ! You may consider declaring them as pointers and
       ! calling allocate_test and deallocate_test
@@ -3563,22 +3566,27 @@ contains ! =====     Public Procedures     =============================
             ! But skip no matter what else if temperature illegal
             skipMe = skipMe .or. TofZeta(s) <= 0.0
             if ( .not. skipMe ) then
-              T = TofZeta(s)
-              df_db = exp(invs*( &
-               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-               & + &
-               & 3.56654*log(T/273.16) &
-               & ))
-              df_dT = H2OofZeta(s) * exp(invs*( &
-               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-               & + &
-               & 3.56654*log(T/273.16) &
-               & )) &
-               & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
-              Quantity%values(qIndex, i) = sqrt (&
-               & ( H2OPrecisionofZeta(s) * df_db )**2 &
-               & + ( TPrecisionofZeta(s) * df_dT )**2 &
-               & )
+!               T = TofZeta(s)
+!               df_db = exp(invs*( &
+!                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+!                & + &
+!                & 3.56654*log(T/273.16) &
+!                & ))
+!               df_dT = H2OofZeta(s) * exp(invs*( &
+!                & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+!                & + &
+!                & 3.56654*log(T/273.16) &
+!                & )) &
+!                & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
+!               Quantity%values(qIndex, i) = sqrt (&
+!                & ( H2OPrecisionofZeta(s) * df_db )**2 &
+!                & + ( TPrecisionofZeta(s) * df_dT )**2 &
+!                & )
+              call RHIPrecFromH2O(H2OofZeta(s), &
+               & TofZeta(s), zeta(qIndex), vmr_unit_cnv, &
+               & H2OPrecisionofZeta(s), TPrecisionofZeta(s), &
+               & rhi_precision)
+              Quantity%values(qIndex, i) = rhi_precision
             end if
             wereAnySkipped = wereAnySkipped .or. skipMe
           end do
@@ -3614,24 +3622,24 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillRHIPrecisionFromH2O
 
       ! Properly belongs in FillRHIPrecisionFromH2O, but that would make two levels
-      function dC_dT ( T )
-        ! As found in ref.
-        real(r8), intent(in)   :: T
-        real(r8)               :: dC_dT
-        ! Local
-        real(r8), parameter    :: a0 = -1.2141649d0
-        real(r8), parameter    :: a1 = 9.09718d0
-        real(r8), parameter    :: a2 = 0.876793d0
-        real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-        !
-        if ( T > 0.d0 ) then
-          dC_dT = a1*(273.16/T**2) - a2/273.16
-!!$          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
-        else
-          dC_dT = ILLEGALTEMP
-!!$          C = ILLEGALTEMP
-        end if
-      end function dC_dT
+!       function dC_dT ( T )
+!         ! As found in ref.
+!         real(r8), intent(in)   :: T
+!         real(r8)               :: dC_dT
+!         ! Local
+!         real(r8), parameter    :: a0 = -1.2141649d0
+!         real(r8), parameter    :: a1 = 9.09718d0
+!         real(r8), parameter    :: a2 = 0.876793d0
+!         real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+!         !
+!         if ( T > 0.d0 ) then
+!           dC_dT = a1*(273.16/T**2) - a2/273.16
+! !!$          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+!         else
+!           dC_dT = ILLEGALTEMP
+! !!$          C = ILLEGALTEMP
+!         end if
+!       end function dC_dT
 
 !MJF
     ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
@@ -4779,6 +4787,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.180  2003/01/28 21:53:07  pwagner
+! RHI H2O conversions moved to fwdmdl from l2/Fill
+!
 ! Revision 2.179  2003/01/16 21:48:58  vsnyder
 ! Fix a comment
 !
