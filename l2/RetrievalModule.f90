@@ -1335,8 +1335,6 @@ contains
             enddo
           end do
         end if
-        print*,'Mask:'
-        call DumpMask ( qty%mask(:,instance), qty%template%instanceLen )
 
         ! Tidy up
         if ( associated ( channels ) ) &
@@ -1349,6 +1347,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.57  2001/07/12 22:18:05  livesey
+! Got rid of an old diagnostic
+!
 ! Revision 2.56  2001/07/12 22:11:46  vsnyder
 ! Maybe the column scaling is right now....
 !
