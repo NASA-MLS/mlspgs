@@ -166,7 +166,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type :: VectorTemplate_T
      
     ! Administrative stuff
-    integer :: Id = 0          ! Id code for vector (for checking purposes)
     integer :: Name = 0        ! Sub-rosa index of name, if any, else zero
 
     ! General information about the vector
@@ -195,6 +194,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! what is not interesting.  Zero means something about VALUES(i,j) is
     ! interesting, and one means it is not.  The low-order bit is used for
     ! linear algebra.  Other bits can be used for other purposes.
+    integer :: label = 0                ! An optional label for this to be used
+    ! as for example a swath name.  Often used in conjunction with the 'batch'
+    ! approach to direct writes.
   end type VectorValue_T
 
   ! Bit of MASK field of VectorValue_T
@@ -237,7 +239,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
     if ( present(scale) ) then
       do i = 1, size(x%quantities)
@@ -267,7 +269,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
     call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
@@ -345,7 +347,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
     call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
@@ -393,7 +395,8 @@ contains ! =====     Public Procedures     =============================
     totalElements = 0
     do qty = 1, vector%template%noQuantities
       call output ( 'Checking integrity for quantity ' )
-      call output ( qty, advance='yes' )
+      call display_string ( vector%quantities(qty)%template%name, &
+        & strip=.true., advance='yes' )
       CheckIntegrity_Vector = CheckIntegrity_Vector .and. &
         & CheckIntegrity ( vector%quantities(qty), .true. )
       totalInstances = totalInstances + vector%quantities(qty)%template%noInstances
@@ -706,12 +709,8 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate//"Vector quantities" )
 
     ! Copy quantities over
-
     vectorTemplate%quantities = selected
 
-    ! Increment the id counter and set the id field
-    vectorTemplateCounter = vectorTemplateCounter + 1
-    vectorTemplate%id = vectorTemplateCounter
   end subroutine ConstructVectorTemplate
 
   ! -------------------------------------------------  CopyVector  -----
@@ -746,7 +745,7 @@ contains ! =====     Public Procedures     =============================
     if ( myclone ) then
       call cloneVector ( Z, X, vectorNameText=vectorNameText, database=database )
     else
-      if ( x%template%id /= z%template%id ) call MLSMessage &
+      if ( x%template%name /= z%template%name ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
     end if
     if ( present(quant) ) then
@@ -958,7 +957,6 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%noQuantities = 0
     vectorTemplate%totalInstances = 0
     vectorTemplate%totalElements = 0
-    vectorTemplate%id = 0
     vectorTemplate%name = 0
   end subroutine DestroyVectorTemplateInfo
 
@@ -986,7 +984,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
     z = 0.0_rv
     do i = 1, size(x%quantities)
@@ -1004,7 +1002,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables:
     integer :: I, J, K        ! Subscripts and loop inductors
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
     z = 0.0_rv
     do i = 1, size(x%quantities)
@@ -1157,8 +1155,6 @@ contains ! =====     Public Procedures     =============================
       call output ( ' Template_Name = ' )
       call display_string ( vector%template%name )
     end if
-    call output ( ' Template_ID = ' )
-    call output ( vector%template%id, advance='yes' )
     if ( myDetails < -1 ) return
     do j = 1, size(vector%quantities)
       dumpThisQty = .true.
@@ -1312,9 +1308,7 @@ contains ! =====     Public Procedures     =============================
     call output ( qty%template%noInstances, advance='no' )
     call output ( ' instanceLen = ' )
     call output ( qty%template%instanceLen, advance='yes' )
-    call output ( ' Qty_Template_ID = ' )
-    call output ( qty%template%id, advance='yes' )
-    call output ( '    signal: ')
+    call output ( ' signal: ')
     if ( qty%template%signal < 1 ) then
       call output ( '    (no database entry for this quantity) ', advance='yes')
     elseif ( signals(qty%template%signal)%name < 1 ) then
@@ -1374,8 +1368,6 @@ contains ! =====     Public Procedures     =============================
     call output ( size(vector_templates), advance='yes' )
     do i = 1, size(vector_templates)
       call output ( i, 4 )
-      call output ( ': Id = ' )
-      call output ( vector_templates(i)%id )
       if ( vector_templates(i)%name /= 0 ) then
         call output ( ' Name = ' )
         call display_string ( vector_templates(i)%name )
@@ -1736,7 +1728,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I                        ! Subscript and loop inductor
     type(Vector_T), pointer :: Result   ! associated to either X or Z
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot multiply vectors having different templates" )
     if ( present(z) ) then
       call CloneVector ( z, x, vectorNameText='_z' )
@@ -1767,7 +1759,6 @@ contains ! =====     Public Procedures     =============================
     type ( VectorTemplate_T ), intent(out) :: V
 
     ! Executable code
-    v%id = 0
     v%name = 0
     nullify ( v%quantities )
   end subroutine NullifyVectorTemplate
@@ -1831,7 +1822,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     z => x
     if ( present(y) ) then
-      if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+      if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Scaled vector has different template from original' )
       z => y
     end if
@@ -1885,7 +1876,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot subtract vectors having different templates" )
     if ( present(quant) ) then
       if ( present(inst) ) then
@@ -1920,7 +1911,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+    if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot subtract vectors having different templates" )
     call nullifyVector ( z ) ! for Sun's still useless compiler
     call CloneVector ( z, x, vectorNameText='_z' )
@@ -2174,6 +2165,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.101  2003/06/03 20:47:05  livesey
+! Typo bug fix
+!
 ! Revision 2.100  2003/06/03 19:23:03  livesey
 ! Added check to see that vector has not been destroyed
 !

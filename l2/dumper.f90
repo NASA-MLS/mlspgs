@@ -68,31 +68,30 @@ contains ! =====     Private Procedures     ============================
       call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex )
       call output ( '      non-overlap chunk size= ' )
       call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
-        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1)
-      call output ( '      accumulatedMAFs = ' )
-      call output ( chunks(i)%accumulatedMAFs, advance='yes' )
+        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
+        & advance='yes' )
     end do
   end subroutine DUMP_CHUNKS
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
   subroutine DUMP_a_HGRID ( aHGRID )
-    use HGRID, only: HGRID_T
+    use HGridsDatabase, only: HGRID_T
     type(hGrid_T), intent(in) :: aHGRID
     integer :: J
       do j = 1, ahgrid%noProfs
-        call output ( ahgrid%phi(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%geodLat(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%lon(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%time(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%solarTime(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%solarZenith(j), '(1x,1pg13.6)' )
-        call output ( ahgrid%losAngle(j), '(1x,1pg13.6)', advance='yes' )
+        call output ( ahgrid%phi(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%geodLat(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%lon(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%time(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%solarTime(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%solarZenith(1,j), '(1x,1pg13.6)' )
+        call output ( ahgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
       end do
   end subroutine DUMP_a_HGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
   subroutine DUMP_HGRIDS ( HGRIDS )
-    use HGRID, only: HGRID_T
+    use HGridsDatabase, only: HGRID_T
     use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: HGRIDS(:)
     integer :: I, J
@@ -141,7 +140,6 @@ contains ! =====     Private Procedures     ============================
       call output ( i, 4 )
       call output ( ': Name = ' )
       call display_string ( quantity_templates(i)%name )
-      call output ( ' Id = ' ); call output ( quantity_templates(i)%id )
       call output ( ' quantityType = ' )
       call display_string ( lit_indices(quantity_templates(i)%quantityType), &
         & advance='yes' )
@@ -174,9 +172,7 @@ contains ! =====     Private Procedures     ============================
       call output ( quantity_templates(i)%badValue )
       call output ( ' Unit = ' )
       call display_string ( phyq_indices(quantity_templates(i)%unit) )
-      call output ( ' ScaleFactor = ' )
-      call output ( quantity_templates(i)%scaleFactor, advance='yes' )
-      call output ( '      InstanceLen = ' )
+      call output ( ' InstanceLen = ' )
       call output ( quantity_templates(i)%InstanceLen, advance='yes' )
       if ( myDetails < 0 ) then
         call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
@@ -187,10 +183,6 @@ contains ! =====     Private Procedures     ============================
         call dump ( quantity_templates(i)%solarTime, '      SolarTime = ' )
         call dump ( quantity_templates(i)%solarZenith, '      SolarZenith = ' )
         call dump ( quantity_templates(i)%losAngle, '      LosAngle = ' )
-        if ( associated(quantity_templates(i)%mafIndex) ) then
-          call dump ( quantity_templates(i)%mafIndex, '      MAFIndex = ' )
-          call dump ( quantity_templates(i)%mafCounter, '      MAFCounter = ' )
-        end if
         if ( associated(quantity_templates(i)%frequencies) ) then
           call output ( '      FrequencyCoordinate = ' )
           call output ( quantity_templates(i)%frequencyCoordinate )
@@ -239,6 +231,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.16  2003/05/05 23:00:34  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.15.2.1  2003/03/27 23:17:10  vsnyder
 ! Use DUMP_a_HGRID in Dump_Hgrids instead of duplicating it
 !

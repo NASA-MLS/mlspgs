@@ -37,8 +37,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Some administrative stuff
 
-    integer :: Name            ! Sub-rosa index of quantity name
-    integer :: id              ! Id code for quantity (for checking stuff)
+    integer :: name            ! Sub-rosa index of quantity name
 
     ! This integer is of an enumerated type describing what kind of
     ! quantity this is -- one of the l_lits of type t_quantityType
@@ -64,11 +63,6 @@ module QuantityTemplates         ! Quantities within vectors
     ! all incoherent unstacked quantities are minor frame quantities.
 
     logical :: minorFrame      ! Is this a minor frame quantity.
-
-   ! At least in the beginning
-   ! there will only be a few major frame quantities
-   ! (These are vector quantities with no vert. coord. that share
-   !  their other geoloc., e.g. lat and lon, with minor frame quants.)
     logical :: majorFrame      ! Is this a major frame quantity.
 
     ! This one indicates whether log or linear interpolation should be used
@@ -81,41 +75,38 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstancesLowerOverlap
     integer :: noInstancesUpperOverlap
 
-    ! Vertical coordinate
-
-    integer :: verticalCoordinate ! The vertical coordinate used.  These
-                                  ! are l_lits of the type t_VGridCoord
-                                  ! defined in Init_Tables_Module.
-
     ! Misc. information
-
     real(r8) :: badValue      ! Value used to flag bad/missing data
     integer :: unit           ! Unit quantity is in when scaled as below,
                               ! an l_lit of the type t_units in Units.f90.
-    real(r8) :: scaleFactor   ! Scale factor used when printing etc.
 
     ! For regular quantities the number of elements of each instance
     ! is simply noSurfs*noChans.  For irregular ones it is less, but it is
     ! constant from instance to instance; this is that number.
-
     integer :: instanceLen
 
-    ! Give the vertical coordinates
-
+    ! Vertical coordinate
+    integer :: verticalCoordinate ! The vertical coordinate used.  These
+                                  ! are l_lits of the type t_VGridCoord
+                                  ! defined in Init_Tables_Module.
+    logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
+    integer :: vGridIndex         ! Index of any vGrid used
     real(r8), dimension(:,:), pointer :: surfs => NULL()
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
     ! (noSurfs, noInstances) for incoherent ones.
 
     ! Horizontal coordinates
-
+    logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
+    integer :: hGridIndex               ! Index of any hGrid used
+    integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
+    ! for example MAF index, or profile index.
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
     ! This is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.
     
     ! These other coordinates are dimensioned in the same manner:
-
     real(r8), dimension(:,:), pointer :: geodLat => NULL()
     real(r8), dimension(:,:), pointer :: lon => NULL()
     real(r8), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
@@ -123,25 +114,18 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8), dimension(:,:), pointer :: solarZenith => NULL()
     real(r8), dimension(:,:), pointer :: losAngle => NULL()
 
-    ! These optional integer arrays are used for minor frame quantities,
-    ! to index the major frames.
-
-    integer, dimension(:), pointer :: mafIndex => NULL() ! (noInstances) index in l1b file
-    integer, dimension(:), pointer :: mafCounter => NULL() ! (noInstances) from l1b
-
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! For quantities containing `channels' the following information may or
     ! may not be useful.
 
     ! Some quantities are on abritrary freqency grids; these quantities refer
     ! to those.
-
     integer :: frequencyCoordinate ! An enumerated type, e.g. FG_USBFreq
+    logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
+    integer :: fGridIndex               ! Index of any fGrid Index used
     real(r8), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
                                                    ! (noChans)
-
-    real(r8) :: lo     ! Local oscillator (optional)
-
+    real(r8) :: lo                      ! Local oscillator
     integer :: signal                   ! Index into signals database
     integer :: sideband                 ! Associated sideband -1, 0, +1
 
@@ -164,10 +148,6 @@ module QuantityTemplates         ! Quantities within vectors
     integer, dimension(:,:), pointer :: chanIndex => NULL()
     ! These are actually dimensioned (instanceLen, noInstances)
   end type QuantityTemplate_T
-
-  ! Incrementing counter used to set the id field of a quantity template:
-
-  integer, save, public :: quantityTemplateCounter = 0
 
   ! Local procedures
   interface CheckIntegrity
@@ -420,42 +400,6 @@ contains ! =====     Public Procedures     =============================
       CheckIntegrity_QuantityTemplate = .false.      
     end if
 
-    ! Check stuff specific for major/minor frame stuff
-    if ( qty%minorFrame .or. qty%majorFrame ) then
-      if ( .not. associated ( qty%mafIndex ) ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'The quantity template '//trim(name)// ' does not have mafIndex associated' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-      if ( .not. associated ( qty%mafCounter ) ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'The quantity template '//trim(name)// ' does not have mafCounter associated' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-
-      if ( lbound ( qty%mafIndex, 1 ) /= 1 ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'Bad lbound for mafIndex' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-      if ( lbound ( qty%mafCounter, 1 ) /= 1 ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'Bad lbound for mafCounter' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-
-      if ( ubound ( qty%mafIndex, 1 ) /= qty%noInstances ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'Bad ubound for mafIndex' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-      if ( ubound ( qty%mafIndex, 1 ) /= qty%noInstances ) then
-        call MLSMessage ( messageType, ModuleName, &
-          & 'Bad ubound for mafIndex' )
-        CheckIntegrity_QuantityTemplate = .false.      
-      end if
-    end if
-
     ! Check irregular stuff
     if ( .not. qty%regular ) then
       call MLSMessage ( messageType, ModuleName, &
@@ -469,97 +413,45 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
-
-  ! Destroy a quantity template
-
     ! Dummy argument
     type (QuantityTemplate_T), intent(inout) :: QTY
 
-    ! Local variables
-    character (LEN=32) :: quantityNameStr
-
     ! Executable code
+    if ( .not. qty%sharedVGrid ) then
+      call deallocate_test ( qty%surfs, "qty%surfs", ModuleName )
+    end if
 
-    if ( DEEBUG ) then
-      call output('Destroying Quantity template contents', advance='yes')
-      call output('minor frame? ', advance='no')
-      call output(qty%minorFrame, advance='no')
-      call output('   major frame? ', advance='no')
-      call output(qty%majorFrame, advance='no')
-      call output('   template  name ', advance='no')
-      if ( qty%name < 1 ) then
-        call output('   (unnamed) ', advance='yes')
-      else
-        call get_string(qty%name, quantityNameStr, strip=.true., noerror=.true.)
-        call output(trim(quantityNameStr), advance='yes')
-      endif
-    endif
-    if ( DEEBUG ) call output('Deallocating qty%surfs', advance='no')
-    call deallocate_test ( qty%surfs, "qty%surfs", ModuleName )
-    if ( DEEBUG ) call output('  qty%phi', advance='no')
-    call deallocate_test ( qty%phi, "qty%phi", ModuleName )
-    if ( DEEBUG ) call output('  qty%geodLat', advance='no')
-    call deallocate_test ( qty%geodLat, "qty%geodLat", ModuleName )
-    if ( DEEBUG ) call output('  qty%lon', advance='no')
-    call deallocate_test ( qty%lon, "qty%lon", ModuleName )
-    if ( DEEBUG ) call output('  qty%time', advance='no')
-    call deallocate_test ( qty%time, "qty%time", ModuleName )
-    if ( DEEBUG ) call output('  qty%solartime', advance='no')
-    call deallocate_test ( qty%solarTime, "qty%solarTime", ModuleName )
-    if ( DEEBUG ) call output('  qty%solarzenith', advance='no')
-    call deallocate_test ( qty%solarZenith, "qty%solarZenith", ModuleName )
-    if ( DEEBUG ) call output('  qty%losAngle', advance='no')
-    call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
-    if ( DEEBUG ) call output('  qty%frequencies', advance='yes')
-    call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
-
-!    if (qty%minorFrame .or. qty%majorFrame) then
-    if ( qty%minorFrame ) then
-      if ( DEEBUG ) call output('Deallocating qty%MAFIndex', advance='no')
-      call deallocate_test ( qty%MAFIndex, "qty%MAFIndex", ModuleName )
-      if ( DEEBUG ) call output('  qty%MAFCounter', advance='yes')
-      call deallocate_test ( qty%MAFCounter, "qty%MAFCounter", ModuleName )
+    if ( .not. qty%sharedHGrid ) then
+      call deallocate_test ( qty%phi, "qty%phi", ModuleName )
+      call deallocate_test ( qty%geodLat, "qty%geodLat", ModuleName )
+      call deallocate_test ( qty%lon, "qty%lon", ModuleName )
+      call deallocate_test ( qty%time, "qty%time", ModuleName )
+      call deallocate_test ( qty%solarTime, "qty%solarTime", ModuleName )
+      call deallocate_test ( qty%solarZenith, "qty%solarZenith", ModuleName )
+      call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
     end if
     
-    if (.NOT. qty%regular) then
-      if ( DEEBUG ) call output('Deallocating qty%surfIndex', advance='no')
-      call deallocate_test ( qty%surfIndex, "qty%surfIndex", ModuleName )
-      if ( DEEBUG ) call output('  qty%chanIndex', advance='yes')
-      call deallocate_test ( qty%chanIndex, "qty%chanIndex", ModuleName )
+    if ( .not. qty%sharedFGrid ) then
+      call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
     end if
 
+    if ( .not. qty%regular) then
+      call deallocate_test ( qty%surfIndex, "qty%surfIndex", ModuleName )
+      call deallocate_test ( qty%chanIndex, "qty%chanIndex", ModuleName )
+    end if
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
-  subroutine DestroyQuantityTemplateDatabase ( database, &
-    & ignoreMinorFrame, ignoreMajorFrame )
-
-  ! Destroy a quantity template database
-
+  subroutine DestroyQuantityTemplateDatabase ( database )
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
-    logical, intent(in), optional :: ignoreMinorFrame
-    logical, intent(in), optional :: ignoreMajorFrame
 
     ! Local variables
     integer :: qtyIndex, status
-    logical :: myIgnoreMinorFrame
-    logical :: myIgnoreMajorFrame
-    
-    myIgnoreMinorFrame = .false.
-    if ( present ( ignoreMinorFrame ) ) myIgnoreMinorFrame = ignoreMinorFrame
-    myIgnoreMajorFrame = .false.
-    if ( present ( ignoreMajorFrame ) ) myIgnoreMajorFrame = ignoreMajorFrame
 
     if ( associated(database) ) then
-      do qtyIndex = 1, SIZE(database)
-        if ( &
-          & .not. ( &
-            & (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) &
-            & .or. &
-            & (database(qtyIndex)%majorFrame .and. myIgnoreMajorFrame) &
-            & ) &
-          & ) call DestroyQuantityTemplateContents ( database(qtyIndex) )
+      do qtyIndex = 1, size ( database )
+        call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       deallocate ( database, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -597,16 +489,15 @@ contains ! =====     Public Procedures     =============================
     nullify ( q%solarTime )
     nullify ( q%solarZenith )
     nullify ( q%losAngle )
-    nullify ( q%mafIndex )
-    nullify ( q%mafCounter )
     nullify ( q%frequencies )
     nullify ( q%surfIndex )
     nullify ( q%chanIndex )
   end subroutine NullifyQuantityTemplate
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
-  subroutine SetupNewQuantityTemplate ( qty, source, noInstances, noSurfs, &
-    & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame )
+  subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
+    & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
+    & sharedVGrid, sharedHGrid, sharedFGrid )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -615,7 +506,6 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (QuantityTemplate_T), intent(inout) :: qty ! Result
 
-    type (QuantityTemplate_T), optional, intent(in) :: source ! Template
     integer, intent(in), optional :: noInstances
     integer, intent(in), optional :: noSurfs
     integer, intent(in), optional :: noChans
@@ -625,51 +515,60 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: instanceLen
     logical, intent(in), optional :: minorFrame
     logical, intent(in), optional :: majorFrame
+    logical, intent(in), optional :: sharedVGrid
+    logical, intent(in), optional :: sharedHGrid
+    logical, intent(in), optional :: sharedFGrid
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
     integer :: noInstancesToAllocate    ! For allocations
 
     ! Executable code
-
-    call destroyQuantityTemplateContents ( qty ) ! Avoid memory leaks
-
-    ! First, if we have a template setup according to that
-    if (present(source)) then
-      qty%noInstances = source%noInstances
-      qty%noSurfs = source%noSurfs
-      qty%noChans = source%noChans
-      qty%coherent = source%coherent
-      qty%stacked = source%stacked
-      qty%regular = source%regular
-      qty%minorFrame = source%minorFrame
-      qty%majorFrame = source%majorFrame
-      qty%logBasis = source%logBasis
-      qty%instanceLen =  source%instanceLen
-      qty%verticalCoordinate = source%verticalCoordinate
-      qty%frequencyCoordinate = source%frequencyCoordinate
-    else ! We have no template, setup a very bare quantity
-      qty%noInstances = 1
-      qty%noSurfs = 1
-      qty%noChans = 1
-      qty%coherent = .TRUE.
-      qty%stacked = .TRUE.
-      qty%regular = .TRUE.
-      qty%logBasis = .FALSE.
-      qty%minorFrame = .FALSE.
-      qty%majorFrame = .FALSE.
-      qty%instanceLen = 1
-      qty%verticalCoordinate=l_none
-      qty%frequencyCoordinate=l_none
-    end if
+    qty%name = 0
+    qty%quantityType = 0
+    qty%noInstances = 1
+    qty%noSurfs = 1
+    qty%noChans = 1
+    qty%coherent = .true.
+    qty%stacked = .true.
+    qty%regular = .true.
+    qty%minorFrame = .false.
+    qty%majorFrame = .false.
+    qty%logBasis = .false.
+    qty%minValue = - huge ( 0.0_r8 )
+    qty%noInstancesLowerOverlap = 0
+    qty%noInstancesUpperOverlap = 0
+    qty%badValue = huge ( 0.0_r8 )
+    qty%unit = 0
+    qty%instanceLen = 1
+    qty%verticalCoordinate = l_none
+    qty%sharedVGrid = .false.
+    qty%vGridIndex = 0
+    qty%sharedHGrid = .false.
+    qty%hGridIndex = 0
+    qty%instanceOffset = 0
+    qty%frequencyCoordinate = l_none
+    qty%sharedFGrid = .false.
+    qty%fGridIndex = 0
+    qty%lo = 0.0_r8
+    qty%signal = 0
+    qty%sideband = 0
+    qty%instrumentModule = 0
+    qty%radiometer = 0
+    qty%reflector = 0
+    qty%molecule = 0
 
     ! Now, see if the user asked for modifications to this
-    if ( present(noInstances) ) qty%noInstances = noInstances
-    if ( present(noSurfs) ) qty%noSurfs = noSurfs
-    if ( present(noChans) ) qty%noChans = noChans
-    if ( present(regular) ) qty%regular = regular
-    if ( present(minorFrame) ) qty%minorFrame = minorFrame
-    if ( present(majorFrame) ) qty%majorFrame = majorFrame
+    if ( present ( noInstances) )  qty%noInstances = noInstances
+    if ( present ( noSurfs) )      qty%noSurfs = noSurfs
+    if ( present ( noChans) )      qty%noChans = noChans
+    if ( present ( regular) )      qty%regular = regular
+    if ( present ( minorFrame) )   qty%minorFrame = minorFrame
+    if ( present ( majorFrame) )   qty%majorFrame = majorFrame
+    if ( present ( sharedVGrid ) ) qty%sharedVGrid = sharedVGrid
+    if ( present ( sharedHGrid ) ) qty%sharedHGrid = sharedHGrid
+    if ( present ( sharedFGrid ) ) qty%sharedFGrid = sharedFGrid
+
     if ( qty%minorFrame ) then
       if ( present(coherent) ) then
         if ( coherent ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -697,8 +596,7 @@ contains ! =====     Public Procedures     =============================
       qty%instanceLen = qty%noSurfs*qty%noChans
     end if
 
-    ! Now we allocate all the arrays we're going to need
-
+    ! Now we allocate all the arrays we're going to need if necessary
     if ( qty%coherent ) then 
       noInstancesToAllocate = 1
     else
@@ -712,45 +610,36 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! First the vertical coordinates
-
-    call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
-      & "qty%surfs", ModuleName )
+    if ( qty%sharedVGrid ) then
+      nullify ( qty%surfs )
+    else
+      call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
+        & "qty%surfs", ModuleName )
+    end if
 
     ! Now the horizontal coordinates
 
-    call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
-      & "qty%phi", ModuleName )
-
-    call allocate_test ( qty%geodLat, noSurfsToAllocate, qty%noInstances, &
-      & "qty%geodLat", ModuleName )
-
-    call allocate_test ( qty%lon, noSurfsToAllocate, qty%noInstances, &
-      & "qty%lon", ModuleName )
-
-    call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
-      & "qty%time", ModuleName )
-
-    call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
-      & "qty%solarTime", ModuleName )
-
-    call allocate_test ( qty%solarZenith, noSurfsToAllocate, qty%noInstances, &
-      & "qty%solarZenith", ModuleName )
-
-    call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
-      & "qty%losAngle", ModuleName )
-
-    ! Now some other stuff to allocate
-
-    if ( qty%minorFrame .or. qty%majorFrame ) then
-      call allocate_test ( qty%MAFIndex, qty%noInstances, &
-        & "qty%MAFIndex", ModuleName )
-      call allocate_test ( qty%MAFCounter, qty%noInstances, &
-        & "qty%MAFCounter", ModuleName )
+    if ( qty%sharedHGrid ) then
+      nullify ( qty%phi, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
+        & qty%solarZenith, qty%losAngle )
     else
-      nullify ( qty%MAFIndex, qty%MAFCounter )
+      call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
+        & "qty%phi", ModuleName )
+      call allocate_test ( qty%geodLat, noSurfsToAllocate, qty%noInstances, &
+        & "qty%geodLat", ModuleName )
+      call allocate_test ( qty%lon, noSurfsToAllocate, qty%noInstances, &
+        & "qty%lon", ModuleName )
+      call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
+        & "qty%time", ModuleName )
+      call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
+        & "qty%solarTime", ModuleName )
+      call allocate_test ( qty%solarZenith, noSurfsToAllocate, qty%noInstances, &
+        & "qty%solarZenith", ModuleName )
+      call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
+        & "qty%losAngle", ModuleName )
     end if
 
-    if (.NOT. qty%regular) then
+    if ( .not. qty%regular) then        !
       call allocate_test ( qty%surfIndex, qty%instanceLen, qty%noInstances, &
         & "qty%surfIndex", ModuleName )
       call allocate_test ( qty%chanIndex, qty%instanceLen, qty%noInstances, &
@@ -759,9 +648,6 @@ contains ! =====     Public Procedures     =============================
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
 
-    ! Increment the id counter and set the id field
-    quantityTemplateCounter = quantityTemplateCounter + 1
-    qty%id = quantityTemplateCounter
   end subroutine SetupNewQuantityTemplate
 
 !=============================================================================
@@ -774,6 +660,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.32  2003/05/29 16:36:41  livesey
+! Added the reflector item
+!
 ! Revision 2.31  2003/01/14 21:35:53  vsnyder
 ! Add EPOCH and a comment about it in 'time' component
 !
