@@ -35,6 +35,7 @@ module TREE_WALKER
   use TREE, only: DECORATION, NSONS, SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
   use VectorsModule, only: DestroyVectorDatabase, Vector_T, VectorTemplate_T
+  use VGrid, only: DestroyVGridDatabase, VGrid_T
 
   implicit NONE
   private
@@ -67,6 +68,7 @@ contains ! ====     Public Procedures     ==============================
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors => NULL()
+    type (VGrid_T), dimension(:), pointer :: VGrids => NULL()
 
     ! Forward model configurations
     type (ForwardModelConfig_T), dimension(:), &
@@ -94,8 +96,8 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-!       call set_global_settings ( son, forwardModelConfigDatabase ) !??? Restore when l2load isn't needed
-        call set_global_settings ( son, forwardModelConfigDatabase, &
+!       call set_global_settings ( son, forwardModelConfigDatabase, vGrids ) !??? Restore when l2load isn't needed
+        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
           & fmc ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
@@ -116,7 +118,7 @@ subtrees: do while ( j <= howmany )
             select case ( decoration(subtree(1,son)) ) ! section index
             case ( z_construct )
               call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                & qtyTemplates, vectorTemplates, mifGeolocation )
+                & qtyTemplates, vectorTemplates, vGrids, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, aprioriData, vectorTemplates, &
                 & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
@@ -154,12 +156,17 @@ subtrees: do while ( j <= howmany )
       end select
       i = i + 1
     end do
+    call destroyVGridDatabase ( vGrids )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
   end subroutine WALK_TREE_TO_DO_MLS_L2
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.21  2001/03/17 03:30:25  vsnyder
+! Remove FMI and TFMI from the call to set_global_settings, since it no
+! longer uses them.
+!
 ! Revision 2.20  2001/03/17 00:45:53  livesey
 ! Added forwardModelConfigDatabase
 !

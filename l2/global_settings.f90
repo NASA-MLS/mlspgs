@@ -1,12 +1,17 @@
 module GLOBAL_SETTINGS
 
+  use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
+    & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
-    & S_FORWARDMODEL
+    & S_FORWARDMODEL, S_VGRID
   use MLSCommon, only: R8
-  use TOGGLES, only: GEN, TOGGLE
+  use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
+  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+  use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, Dump, VGrid_T
+  use TREE_TYPES, only: N_EQUAL, N_NAMED
 
 !??? Begin temporary stuff to start up the forward model
   use ForwardModelInterface, only: AddForwardModelConfigToDatabase, &
@@ -16,10 +21,7 @@ module GLOBAL_SETTINGS
   use L2_test_structures_m, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
     & TEMPORARY_FWD_MDL_INFO
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-  use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use String_Table, only: Get_String
-  use TREE, only: NODE_ID, DECORATE
-  use TREE_TYPES, only: N_EQUAL, N_NAMED
 !??? End of temporary stuff to start up the forward model
 
   implicit NONE
@@ -42,11 +44,14 @@ module GLOBAL_SETTINGS
 
 contains
 
-! subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase ) !??? Restore when l2load isn't needed
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, FMC )
-    integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
-    type(ForwardModelConfig_T), dimension(:), pointer :: FORWARDMODELCONFIGDATABASE
+  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
+!   & VGrids ) !??? Restore when l2load isn't needed
+    & VGrids, FMC ) !??? Remove when l2load isn't needed
 
+    integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
+    type(ForwardModelConfig_T), dimension(:), pointer :: &
+      & ForwardModelConfigDatabase
+    type ( vGrid_T ), pointer, dimension(:) :: VGrids
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
@@ -57,6 +62,7 @@ contains
     character(len=255) :: LINE     !??? Temporary for l2load
 
     integer :: I         ! Index of son of root
+    integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
     integer :: SON       ! Son of root
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
@@ -75,7 +81,12 @@ contains
           version_comment = sub_rosa(subtree(2,son))
         end select
       else
-        if ( node_id(son) == n_named ) son = subtree(2,son)
+        if ( node_id(son) == n_named ) then
+          name = sub_rosa(subtree(1,son))
+          son = subtree(2,son)
+        else
+          name = 0
+        end if
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           call forwardModelGlobalSetup ( son )
@@ -89,17 +100,27 @@ contains
           fmc%z = line(2:len_trim(line)-1)
           call l2_load ( fmc, ier=ier )
           !??? End temporary stuff for l2load
+        case ( s_vgrid )
+          call decorate ( son, AddVGridToDatabase ( vGrids, &
+            & CreateVGridFromMLSCFInfo ( name, son ) ) )
         end select
       end if
     end do
 
-    if ( toggle(gen) ) call trace_end ( 'SET_GLOBAL_SETTINGS' )
+    if ( toggle(gen) ) then
+      if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
+        & call dump ( vgrids )
+      call trace_end ( 'SET_GLOBAL_SETTINGS' )
+    end if
 
   end subroutine SET_GLOBAL_SETTINGS
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.9  2001/03/17 03:24:23  vsnyder
+! Work on forwardModelGlobalSetup
+!
 ! Revision 2.8  2001/03/17 00:57:36  livesey
 ! Removed dump.
 !
