@@ -144,7 +144,7 @@ BEGIN DailyMap
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             rangFrequency= -1.0:6.0,dF=0.2,   $
-            l3presLvl=0.01:316.0,rangWavenumber=1:8, mode=all, label="O3L3DM"
+            l3presLvl=0.316:316.0,rangWavenumber=1:8, mode=all, label="O3L3DM"
     mapSpec,l3prodNameD="OH",timeD="12:00:00",intpMethod=lin, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
@@ -187,6 +187,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2001/03/27 19:45:12  nakamura
+; Updated comment, freq, & wv information.
+;
 ; Revision 1.1  2001/03/01 19:50:26  nakamura
 ; Initial revision
 ;
