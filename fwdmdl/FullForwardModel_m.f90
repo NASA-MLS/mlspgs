@@ -194,8 +194,6 @@ CONTAINS
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
-    logical, dimension(:), pointer :: T_DERIV_FLAG
-
     real(r8) :: FRQ                     ! Frequency
 
     real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
@@ -343,10 +341,11 @@ CONTAINS
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T), pointer :: thisLine
 
-    type (Grids_T) :: Grids_f   ! All the coordinates
+    type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
     type (Grids_T) :: Grids_dn  ! All the spectroscopy(N) coordinates
     type (Grids_T) :: Grids_dv  ! All the spectroscopy(V) coordinates
+    type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
@@ -395,7 +394,7 @@ CONTAINS
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl)
     nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
-           &  do_calc_hyd, do_calc_t, do_calc_fzp, t_deriv_flag )
+           &  do_calc_hyd, do_calc_t, do_calc_fzp )
     nullify ( k_temp, k_atmos, k_spect_dw, k_spect_dn, k_spect_dv )
     nullify ( frequencies )
     nullify ( alpha_path_c, del_s, dhdz_path, drad_df, drad_dn, &
@@ -535,15 +534,59 @@ CONTAINS
 
     Vel_Cor = 1.0_rp - losvel%values(1,maf)/299792458.3_rp
 
-  !  Get some dimensions that we'll use a lot
+! Work out the `window' stuff for temperature. Create the Grids_tmp stracture:
 
-    ! Work out the `window' stuff for temperature.
     CALL findinstancewindow(temp,phitan,maf,fwdModelConf%phiWindow, &
-    & windowStart, windowFinish)
-    no_sv_p_t = windowFinish-windowStart+1
-    sv_t_len = n_t_zeta*no_sv_p_t
+                          & windowStart, windowFinish)
 
-    ! Work out which channels are used, also check we have radiances for them.
+    no_sv_p_t = windowFinish-windowStart+1
+    sv_t_len = n_t_zeta * no_sv_p_t
+!
+    CALL allocate_test(Grids_tmp%no_z,1,'Grids_tmp%no_z',modulename )
+    CALL allocate_test(Grids_tmp%no_p,1,'Grids_tmp%no_p',modulename )
+    CALL allocate_test(Grids_tmp%no_f,1,'Grids_tmp%no_f',modulename )
+    CALL allocate_test(Grids_tmp%windowstart,1,'Grids_tmp%windowstart',&
+                     & modulename )
+    CALL allocate_test(Grids_tmp%windowfinish,1,'Grids_tmp%windowfinish',&
+                     & modulename )
+    call Allocate_test(Grids_tmp%lin_log,1,'lin_log',ModuleName )
+
+    Grids_tmp%no_f = 1
+    Grids_tmp%no_z = n_t_zeta
+    Grids_tmp%no_p = no_sv_p_t
+    Grids_tmp%lin_log = .FALSE.
+    Grids_tmp%windowStart(1) = windowStart
+    Grids_tmp%windowFinish(1) = windowFinish
+!
+! Allocate space for the zeta, phi & freq. basis componenets
+!
+    k = sv_t_len
+    CALL allocate_test(Grids_tmp%zet_basis,n_t_zeta,'Grids_tmp%zet_basis',&
+                     & ModuleName)
+    CALL allocate_test(Grids_tmp%phi_basis,no_sv_p_t,'Grids_tmp%phi_basis',&
+                     & ModuleName)
+    CALL allocate_test(Grids_tmp%frq_basis,1,'Grids_tmp%frq_basis',ModuleName)
+    CALL allocate_test(Grids_tmp%values,k,'Grids_tmp%values',ModuleName)
+    CALL allocate_test(Grids_tmp%deriv_flags,k,'Grids_tmp%deriv_flags',&
+                     & ModuleName)
+
+    Grids_tmp%frq_basis=0.0
+    Grids_tmp%zet_basis=temp%template%surfs(1:n_t_zeta,1)
+    Grids_tmp%phi_basis=temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
+
+    Grids_tmp%values = RESHAPE(temp%values(:,windowStart:windowFinish),(/k/))
+
+! ** Initialize to ALL derivatives flags to TRUE :
+    Grids_tmp%deriv_flags(1:k) = .TRUE.
+
+! ** Now Load the Temp. derivative coeff. flag according to the L2CF
+
+    IF(associated(temp%mask)) Grids_tmp%deriv_flags = RESHAPE((IAND( &
+       & M_FullDerivatives,ICHAR(temp%mask(:,WindowStart:WindowFinish)))==0), &
+       & (/sv_t_len/))
+!
+! Work out which channels are used, also check we have radiances for them.
+
     noUsedChannels = 0
     do sigInd = 1, size(fwdModelConf%signals)
       thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
@@ -762,10 +805,8 @@ CONTAINS
                  &  grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                        &  grids_f%no_f(h2o_ind) + 1
-      CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
-         & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
-         & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish),(/sv_t_len/)),&
+      CALL get_chi_out(ptan%values(:,maf), Deg2Rad*phitan%values(:,maf), &
+         & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -776,10 +817,7 @@ CONTAINS
          & lin_log=grids_f%lin_log(h2o_ind))
     ELSE IF (h2o_ind == 0 .and. .not. temp_der) THEN
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
-         & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
-         & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish), &
-         & (/sv_t_len/)), &
+         & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -798,9 +836,7 @@ CONTAINS
       beg_ind=end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                      &  grids_f%no_f(h2o_ind) + 1
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
-         & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
-         & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish),(/sv_t_len/)),&
+         & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -816,10 +852,7 @@ CONTAINS
       CALL ALLOCATE_TEST(d2xdxdt_tan,ptan%template%nosurfs, &
          & no_sv_p_t,temp%template%nosurfs,'d2xdxdt_tan',ModuleName )
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
-         & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
-         & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish), &
-         & (/sv_t_len/)), &
+         & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -937,9 +970,7 @@ CONTAINS
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
 
-    Call two_d_hydrostatic(temp%template%surfs(:,1),  &
-      &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-      &  temp%values(:,windowStart:windowFinish), &
+    Call two_d_hydrostatic(Grids_tmp, &
       &  SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t),&
       &  0.001*refGPH%values(1,windowStart:windowFinish),z_glgrid, &
       &  orbIncline%values(1,maf)*Deg2Rad,t_glgrid,h_glgrid, &
@@ -993,10 +1024,7 @@ CONTAINS
         beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
         &         grids_f%no_f(h2o_ind) + 1
         CALL get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
-           & 0.001_rp*est_scgeocalt(1:1), temp%template%surfs(:,1), &
-           & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-           & RESHAPE(temp%values(:,windowStart:windowFinish), &
-           & (/sv_t_len/)), &
+           & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
            & orbIncline%values(1,maf)*Deg2Rad, &
@@ -1008,10 +1036,7 @@ CONTAINS
            & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface)
       ELSE IF (h2o_ind == 0) THEN
         CALL get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
-           & 0.001_rp*est_scgeocalt(1:1), temp%template%surfs(:,1), &
-           & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-           & RESHAPE(temp%values(:,windowStart:windowFinish), &
-           & (/sv_t_len/)), &
+           & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
            & orbIncline%values(1,maf)*Deg2Rad, &
@@ -1111,15 +1136,6 @@ CONTAINS
 !      CALL allocate_test ( k_temp,noUsedChannels, no_tan_hts, n_t_zeta, &
 !                         & no_sv_p_t, 'k_temp',modulename)
       ALLOCATE(k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t))
-      call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
-
-      t_deriv_flag(1:sv_t_len) = .TRUE.  ! ** Initialize to ALL derivatives
-
-! ** Loading the Temp. derivative coeff. flag according to the L2CF
-
-      IF(associated(temp%mask)) t_deriv_flag = RESHAPE((IAND( &
-        & M_FullDerivatives,ICHAR(temp%mask(:,WindowStart:WindowFinish)))==0), &
-        & (/sv_t_len/))
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
       call Allocate_test ( dbeta_dt_path_c,npc,no_mol,'dbeta_dt_path_c', &
@@ -1340,9 +1356,8 @@ CONTAINS
           if(temp_der) then
             ! Set up temperature representation basis stuff
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
-              &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
-              &  z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid,                     &
-              &  Deg2Rad*orbIncline%values(1,maf),t_deriv_flag,              &
+              &  Grids_tmp%phi_basis,z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid, &
+              &  Deg2Rad*orbIncline%values(1,maf),Grids_tmp%deriv_flags,     &
               &  h_path(1:no_ele),phi_path(1:no_ele),                        &
               &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
               &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
@@ -1350,14 +1365,13 @@ CONTAINS
               &  DDHIDHIDTL0 = ddhidhidtl0 ,DDHTDHTDTL0 = tan_d2h_dhdt,      &
               &  DHIDTLM=dh_dt_glgrid,                                       &
               &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
-              &  Z_BASIS = temp%template%surfs(:,1),                         &
+              &  Z_BASIS = Grids_tmp%zet_basis,                              &
               &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:))
           else
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
-              &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
-              &  z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid,                     &
+              &  Grids_tmp%phi_basis,z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid, &
               &  Deg2Rad*orbIncline%values(1,maf),                           &
               &  dummy,h_path(1:no_ele),phi_path(1:no_ele),                  &
               &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
@@ -1372,23 +1386,21 @@ CONTAINS
           if(temp_der) then
             ! Set up temperature representation basis stuff
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
-              &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
-              &  z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid,                     &
+              &  Grids_tmp%phi_basis,z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid, &
               &  Deg2Rad*orbIncline%values(1,maf),                           &
-              &  t_deriv_flag,h_path(1:no_ele),phi_path(1:no_ele),           &
+              &  Grids_tmp%deriv_flags,h_path(1:no_ele),phi_path(1:no_ele),  &
               &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
               &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
               &  DHTDTL0=tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,               &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM=dh_dt_glgrid,           &
               &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
-              &  Z_BASIS = temp%template%surfs(:,1),                         &
+              &  Z_BASIS = Grids_tmp%zet_basis,                              &
               &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:))
           else
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
-              &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
-              &  z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid,                     &
+              &  Grids_tmp%phi_basis,z_glgrid,h_glgrid,t_glgrid,dhdz_glgrid, &
               &  Deg2Rad*orbIncline%values(1,maf),                           &
               &  dummy,h_path(1:no_ele),phi_path(1:no_ele),                  &
               &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
@@ -1435,8 +1447,6 @@ CONTAINS
           call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),    &
           &    one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp, &
           &    ptg_angles(ptg_i),tan_dh_dt(1,:,:),tan_d2h_dhdt(1,:,:), &
-          &    t_path(no_ele/2), 1.0 / dhdz_path(no_ele/2), &
-          &    TRANSPOSE(RESHAPE(eta_zxp_t(no_ele/2,:),(/n_t_zeta,no_sv_p_t/))), &
           &    dx_dt(ptg_i,:,:),d2x_dxdt(ptg_i,:,:))
         else
           call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2), &
@@ -2093,13 +2103,13 @@ CONTAINS
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1) )
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
@@ -2108,14 +2118,14 @@ CONTAINS
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
@@ -2148,6 +2158,7 @@ CONTAINS
       endif
 
       if (atmos_der) then
+         call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
          call Deallocate_test ( k_atmos_frq, 'k_atmos_frq', ModuleName )
       endif
 
@@ -2284,6 +2295,7 @@ CONTAINS
 
     call DestroyCompleteSlabs ( gl_slabs )
     call destroygrids_t(grids_f)
+    call destroygrids_t(grids_tmp)
 
     call Deallocate_test ( dhdz_path, 'dhdz_path', ModuleName )
     call Deallocate_test ( h_path,    'h_path',    ModuleName )
@@ -2311,9 +2323,9 @@ CONTAINS
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
     CALL DEALLOCATE_TEST(tan_chi_out,'tan_chi_out',ModuleName )
+
     if(temp_der) then
-!     CALL deallocate_test ( k_temp, 'k_temp', Modulename )
-      deallocate( k_temp)
+      deallocate( k_temp, STAT=i)
       call Deallocate_test ( dRad_dt, 'dRad_dt', ModuleName )
       call Deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', ModuleName )
       call Deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
@@ -2322,7 +2334,6 @@ CONTAINS
       call Deallocate_test ( eta_zxp_t, 'eta_zxp_t', ModuleName )
       call Deallocate_test ( tan_dh_dt, 'tan_dh_dt', ModuleName )
       call Deallocate_test ( tan_d2h_dhdt, 'tan_d2h_dhdt', ModuleName )
-      call Deallocate_test ( t_deriv_flag, 't_deriv_flag', ModuleName )
       CALL DEALLOCATE_TEST(dxdt_tan,'dxdt_tan',ModuleName )
       CALL DEALLOCATE_TEST(d2xdxdt_tan,'d2xdxdt_tan',ModuleName )
       CALL deallocate_test(dxdt_surface,'dxdt_surface',modulename)
@@ -2332,7 +2343,6 @@ CONTAINS
 
     if ( atmos_der ) then
       call Deallocate_test ( dRad_df, 'dRad_df', ModuleName )
-      call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
     end if
 
     if(spect_der) then

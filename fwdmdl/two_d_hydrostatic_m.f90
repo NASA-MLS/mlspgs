@@ -4,6 +4,7 @@ MODULE two_d_hydrostatic_m
   USE Geometry, ONLY: earthRadA, earthRadB, PI
   USE hydrostatic_m, only: hydrostatic
   USE get_eta_m, only: get_eta
+  USE Load_sps_data_m, ONLY: Grids_T
   IMPLICIT none
   Private
   Public two_d_hydrostatic
@@ -16,16 +17,12 @@ MODULE two_d_hydrostatic_m
   CONTAINS
 !---------------------------------------------------------------------------
 
-  SUBROUTINE two_d_hydrostatic(z_basis,p_basis,t_coeffs,z_refs,h_refs, &
-          &  z_grid,beta,t_grid,h_grid,dhidzij,dhidtlm,ddhdhdtl0)
+  SUBROUTINE two_d_hydrostatic(Grids_tmp,z_refs,h_refs,z_grid,beta,t_grid, &
+                            &  h_grid,dhidzij,dhidtlm,ddhdhdtl0)
 !
 ! inputs:
 !
-  REAL(rp), INTENT(in) :: z_basis(:) !vertical temperature representation basis
-  REAL(rp), INTENT(in) :: p_basis(:) !horizontal temperature representation
-!                                 basis in absolute plane projected orbital
-!                                 incline angle (Radians)
-  REAL(rp), INTENT(in) :: t_coeffs(:,:) !2-D grid of temperature values
+  type (Grids_T), INTENT(in) :: Grids_tmp   ! All Temperature's coordinates
   REAL(rp), INTENT(in) :: z_refs(:)  !reference pressures
   REAL(rp), INTENT(in) :: h_refs(:)  !reference geopotential heights at z_refs
 !                                 the horizontal bases for these is aligned
@@ -45,7 +42,7 @@ MODULE two_d_hydrostatic_m
 !                             at the tangent only---used for antenna affects
 ! internal stuff
 !
-  INTEGER(ip) :: n_vert,z_coeffs,p_coeffs,i
+  INTEGER(ip) :: n_vert,z_coeffs,p_coeffs,i,j1,j2
 
   REAL(rp) :: c
   REAL(rp), ALLOCATABLE, DIMENSION(:) :: lats,t_prfl,h_prfl,dhidzi,red_phi_t
@@ -56,8 +53,8 @@ MODULE two_d_hydrostatic_m
 ! allocate arrays
 !
   n_vert = SIZE(z_grid)
-  z_coeffs = SIZE(z_basis)
-  p_coeffs = SIZE(p_basis)
+  z_coeffs = Grids_tmp%no_z(1)
+  p_coeffs = Grids_tmp%no_p(1)
 !
 ! allocate arrays
 !
@@ -73,7 +70,7 @@ MODULE two_d_hydrostatic_m
 !
 ! rephase the phi
 !
-  red_phi_t = MODULO(p_basis,2.0_rp*Pi)
+  red_phi_t = MODULO(Grids_tmp%phi_basis,2.0_rp*Pi)
   WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
               &  red_phi_t = Pi - red_phi_t
   WHERE(red_phi_t > 1.5_rp*Pi) red_phi_t = red_phi_t - 2.0_rp*Pi
@@ -85,9 +82,12 @@ MODULE two_d_hydrostatic_m
 !
   IF(PRESENT(ddhdhdtl0)) THEN
     ALLOCATE(ddhdhdtq(1:n_vert,1:z_coeffs))
+    j2 = 0
     DO i = 1,p_coeffs
-      CALL hydrostatic(lats(i),z_basis,t_coeffs(:,i),z_grid,z_refs(i), &
-                h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi,ddhdhdtq)
+      j1 = j2 + 1
+      j2 = j1 + z_coeffs - 1
+      CALL hydrostatic(lats(i),Grids_tmp%zet_basis,Grids_tmp%values(j1:j2),&
+         & z_grid,z_refs(i),h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi,ddhdhdtq)
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
@@ -96,9 +96,12 @@ MODULE two_d_hydrostatic_m
     END DO
     DEALLOCATE(ddhdhdtq)
   ELSE
+    j2 = 0
     DO i = 1,p_coeffs
-      CALL hydrostatic(lats(i),z_basis,t_coeffs(:,i),z_grid,z_refs(i), &
-                h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi)
+      j1 = j2 + 1
+      j2 = j1 + z_coeffs - 1
+      CALL hydrostatic(lats(i),Grids_tmp%zet_basis,Grids_tmp%values(j1:j2),&
+         & z_grid,z_refs(i),h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi)
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
@@ -118,6 +121,9 @@ MODULE two_d_hydrostatic_m
 END MODULE two_d_hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.2  2002/06/07 14:59:00  bill
+! fixed latitude calculation--wgr
+!
 ! Revision 2.1  2002/02/02 11:20:08  zvi
 ! Some cosmetic changes
 !
