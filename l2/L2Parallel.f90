@@ -28,7 +28,7 @@ module L2Parallel
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING
   use MLSSets, only: FINDFIRST
-  use MLSStringLists, only: ExpandStringRange
+  use MLSStringLists, only: catLists, ExpandStringRange
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
@@ -632,6 +632,7 @@ contains ! ================================ Procedures ======================
             machineFree(machine) = .true.
             chunkMachines(chunk) = 0
           end if
+          parallel%numCompletedChunks = parallel%numCompletedChunks + 1
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Master status:', advance='yes' )
             call output ( count(chunksCompleted) )
@@ -795,6 +796,10 @@ contains ! ================================ Procedures ======================
                 end where
               end if
             end if
+            
+            ! Save dead chunk number, increment casualty figure
+            parallel%failedChunks = catLists(parallel%failedChunks, deadChunk)
+            parallel%numFailedChunks = parallel%numFailedChunks + 1
           else
             ! Otherwise we'd already forgotten about this slave, it told
             ! us it had finished.
@@ -1330,6 +1335,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.67  2004/09/16 00:18:03  pwagner
+! Keeps record of completed, failed chunks
+!
 ! Revision 2.66  2004/08/05 22:47:47  pwagner
 ! New --chunkRange option to run selected chunks in parallel mode
 !
