@@ -281,7 +281,7 @@ contains ! =====     Public Procedures     =============================
       call PopulateL2PCBin ( l2pcBins(sideband) )
 
       ! Setup a sideband fraction array
-      if ( sidebandStart /= sidebandStop ) then   ! We're folding
+      if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then   ! We're folding
         ! Change to this if statement later
         ! if ( signal%sideband == 0 .and. .not. fmConf%forceSidebandFraction ) then !????
         if ( associated ( sidebandFraction ) ) then
@@ -1132,6 +1132,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.49  2003/10/28 23:44:15  livesey
+! Various changes involved in adding the forceFoldedOutput option to
+! support the hybrid model.
+!
 ! Revision 2.48  2003/10/09 22:17:10  livesey
 ! Various bug fixes, and added the call to CheckForSimpleBandedLayout
 !
