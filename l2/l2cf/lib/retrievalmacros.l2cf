@@ -32,8 +32,8 @@
 ;;;!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 ;;;!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 !define(CloudFilename, !dnl
-{!ifdef(usingPCF,{'L2AUX-DGM'},!dnl
-{'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})})
+{!ifdef(usingPCF,{L2AUX-DGM},!dnl
+{!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -207,15 +207,15 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
-DirectWrite, file=!DGGFilename, hdfVersion=!hdfVersion, $
+DirectWrite, file='!DGGFileName', hdfVersion=!hdfVersion, $
   type=l2dgg, !undivert(!directDGGDivert)})
 ;; Now the DGMs
 !ifdef(flagGotDirectDGMs,{!dnl
-DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
+DirectWrite, file='!DGMFileName', hdfVersion=!hdfVersion, $
   type=l2aux, !undivert(!directDGMDivert)})
 ;; Now the cloud stuff
 !ifdef(flagGotDirectClouds,{!dnl
-DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
+DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
   type=l2aux, !undivert(!directCloudDivert)})
 ;; Clear our macros
 !undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})
@@ -362,6 +362,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.70  2003/09/02 22:25:25  pwagner
+; Output/DirectWrite to abbreviated fileNames only if usingPCF
+;
 ; Revision 1.69  2003/09/02 20:52:09  pwagner
 ; CloudFilename same as DGMFilename if usingPCF
 ;
