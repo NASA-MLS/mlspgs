@@ -36,6 +36,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !                    Returns string from hash list corresponding to key string
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
+!                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
 ! ints2Strings       Converts an array of integers to strings using "char" ftn
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
@@ -83,10 +84,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   integer, public, parameter :: KEYNOTFOUND=-1
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
   ! hhmmss_value
-!  public :: INVALIDHHMMSSSTRING
   integer, public, parameter :: INVALIDHHMMSSSTRING = 1
   ! strings2Ints
-!  public :: LENORSIZETOOSMALL
   integer, public, parameter :: LENORSIZETOOSMALL=-999
 
 CONTAINS
@@ -542,7 +541,7 @@ CONTAINS
 
     ! Returns ErrTyp=0 unless an error occurs
 
-    ! Lenient wrt non-compilant formats:
+    ! Lenient wrt utc and non-compliant formats:
     ! ignores chars in front of 'hh' and a terminal,
     ! non-numerical char: e.g., '2000-01-01T00:00:00.000000Z'
     ! will be treated the same as '00:00:00.0000000'
@@ -553,6 +552,8 @@ CONTAINS
     ! If given optional arg separator, uses separator as field separator
     
     ! Useful to allow an added way to input time
+    
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
     !--------Argument--------!
     character(len=*),intent(in) :: str
     real(r8) :: value
@@ -1909,6 +1910,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2002/04/29 17:39:31  pwagner
+! Comments re hhmmss_value mention mls_utctotai
+!
 ! Revision 2.21  2002/02/22 23:35:42  pwagner
 ! SortList checks on lax elem length, not number of elems
 !
