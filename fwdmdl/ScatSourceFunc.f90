@@ -339,17 +339,21 @@ contains
 
   end subroutine Interp_Tscat
 
-  subroutine Convert_grid ( salb_path, cext_path, path_inds, beta_path_cloud, w0_path )
+  subroutine Convert_grid ( salb_path, cext_path, tt_path, path_inds, &
+                          & beta_path_cloud, w0_path, tt_path_c )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
 
     real(rp), intent(in) :: Salb_path(:,:) ! single scattering albedo gl grids  
     real(rp), intent(in) :: Cext_path(:,:) ! cloud extinction on gl grids
+    real(rp), intent(in) :: tt_path(:,:)   ! scating source func on gl grids
+
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
     real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction on coarse grids
     real(rp), intent(out) :: w0_path(:)         ! single scattering albedo coarse grids
+    real(rp), intent(out) :: tt_path_c(:)       ! scattering source func coarse grids
 
     integer(ip) :: j, k, n_path
 
@@ -357,6 +361,7 @@ contains
 
     beta_path_cloud = 0.0_rp
     w0_path         = 0.0_rp
+    tt_path_c       = 0.0_rp
 
     n_path = size(path_inds)
 
@@ -365,6 +370,7 @@ contains
        k = path_inds(j)
        beta_path_cloud(j) = beta_path_cloud(j) + Cext_path(k,1)
        w0_path(j)         = w0_path(j)         + Salb_path(k,1)     
+       tt_path_c(j)       = tt_path_c(j)       + tt_path(k,1)  
             
     end do
 
@@ -377,6 +383,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.8  2003/12/07 19:46:25  jonathan
+! update for use in 2D cloud FWM
+!
 ! Revision 2.7  2003/12/01 17:25:02  jonathan
 ! add scat alb
 !
