@@ -260,7 +260,6 @@ contains
       REAL(r8) :: TS                           ! SURFACE TEMPERATURE (K)
       REAL(r8) :: RS(NU/2)                     ! SURFACE REFLECTIVITY
       REAL(r8) :: RC0(3)                       ! GAS ABS.SCAT.EXT COEFFS.
-      REAL(r8) :: RC(N,3)                      ! CLOUD ABS.SCAT.EXT COEFFS.
       REAL(r8) :: RC_TOT(3)                    ! TOTAL ABS.SCAT.EXT COEFFS.
       REAL(r8) :: Z(NZmodel-1)                 ! MODEL LAYER THICKNESS (m)
       REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
@@ -517,14 +516,16 @@ contains
             DO IL=1, ICLD_TOP                 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
             ENDDO
-         ENDIF   
+         ENDIF
 
-         delTAU100=TAU0                       !Initialize to TAU0
-
-         DO IL=1,MAX(ICLD_TOP,I100_TOP)       ! THIS IS FOR RETRIEVAL PURPOSE 
+!        delTAU100 will be used for transmission function calculation
+         delTAU100=TAU0                       ! Initialize to TAU0,                                         
+         
+         if (ICON .ne. 0) then                ! only for cloudy retrieval cases
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)        
               delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
-         ENDDO                                ! 100MB
-
+         ENDDO                                ! 100MB or cloud top
+         endif
 !----------------------------------------------------------------------------------
 
          DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
@@ -534,15 +535,13 @@ contains
             RC0(3)=RC0(1)                     ! CLEAR-SKY EXTINCTION COEFFICIENT
 
             DO J=1,3
-               RC_TOT(J) = 0._r8
+               RC_TOT(J) = 0._r8           ! total extinction
                RC11(J)=0._r8
             ENDDO
 
+            RC_TMP=0._r8    ! cloud extinction
+
             DO ISPI=1,2
-               DO J=1,3
-                  RC(ISPI,J)=0._r8
-                  RC_TMP(ISPI,J)=0._r8
-               ENDDO
                CDEPTH(ISPI) = 0._r8
                DO K=1,NU
                   PHH(ISPI,K,ILYR) = 0._r8
@@ -556,7 +555,7 @@ contains
             DEPTH  = 0._r8
             CWC = 1.E-9_r8
 
-            IF(CHK_CLD(ILYR) .NE. 0.) THEN 
+            IF(CHK_CLD(ILYR) .NE. 0. .and. ICON .ne. 0) THEN 
 
                DO ISPI=1,N
                   CWC = RATIO*WC(ISPI,ILYR) 
@@ -579,14 +578,13 @@ contains
                      RC_TMP(ISPI,J)=RC11(J)       ! VOLUME EXT/SCAT/ABS COEFFS
                   ENDDO
                ENDDO
-            ENDIF
+            ENDIF  ! cloud phase function
                               
-            DO J=1,3                               ! ADD CLEAR-SKY COEFFICIENTS
+            DO J=1,3                               ! ADD all COEFFICIENTS
                RC_TOT(J)=RC0(J)+RC_TMP(1,J)+RC_TMP(2,J)
             ENDDO
 
-            DO ISPI=1,N        
-                                        
+            DO ISPI=1,N
                W0(ISPI,ILYR)=RC_TMP(ISPI,2)/RC_TOT(3) ! SINGLE SCATTERING ALBEDO   
                IF(W0(ISPI,ILYR) .GT. 1.) THEN         
                   W0(ISPI,ILYR)=1.
@@ -782,7 +780,7 @@ contains
               &                 method='Linear')
 
          ENDIF
-         
+
 !         if (iswi == 0) &
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
@@ -807,6 +805,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.21  2001/10/19 19:33:47  dwu
+! change DDm dimension from NH to NH-1
+!
 ! Revision 1.20  2001/10/19 19:30:36  dwu
 ! initialize output quantities
 !
