@@ -92,11 +92,11 @@ for mol = 0, noMols - 1 do begin
     AddWordToLine,text,unit,4, $
       'ns= '+strtrim(string(data(mol).ns(line), format='(f6.3)'),2) + ', '
     AddWordToLine,text,unit,4, $
-      'gamma= '+strtrim(string(data(mol).int1(line), format='(g15.5)'),2) + ', '
+      'delta= '+strtrim(string(data(mol).int1(line), format='(g15.5)'),2) + ', '
     AddWordToLine,text,unit,4, $
       'n1= '+strtrim(string(data(mol).n1(line), format='(f6.3)'),2) + ', '
     AddWordToLine,text,unit,4, $
-      'delta= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
+      'gamma= '+strtrim(string(data(mol).int2(line), format='(g15.5)'),2) + ', '
     AddWordToLine,text,unit,4, $
       'n2= '+strtrim(string(data(mol).n2(line), format='(f6.3)'),2)
 
