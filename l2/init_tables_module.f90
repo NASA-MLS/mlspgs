@@ -552,6 +552,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_quantityType, t+t_quantityType, n+n_field_type, &
              begin, f+f_sdname, t+t_string, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
@@ -940,6 +941,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.274  2003/01/18 02:37:21  livesey
+! Added quantityType to l2aux
+!
 ! Revision 2.273  2003/01/16 00:55:52  jonathan
 ! add do_1d
 !
