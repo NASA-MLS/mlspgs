@@ -12,8 +12,7 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA, &
-    & S_CLOUDFORWARDMODEL
+    & S_L1BRAD, S_L1BOA
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN, &
     & DeallocateL1BData
   use L2GPData, only: L2GPDATA_T
@@ -187,9 +186,6 @@ contains
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           call forwardModelGlobalSetup ( son, returnStatus )
           error = max(error, returnStatus)
-        case ( s_cloudforwardModel )
-          call decorate (son, AddForwardModelConfigToDatabase ( &
-            & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
@@ -478,6 +474,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.39  2001/07/09 22:53:20  pwagner
+! Obeys CloudForwardModel; for now same as ForwardModel
+!
 ! Revision 2.38  2001/06/07 21:58:28  pwagner
 ! Added Copyright statement
 !
