@@ -50,10 +50,11 @@ dobsonunits
 dv
 dw
 
+ECRtoFOV
 earthradius
 earthRefl
-elevOffset
 effectiveOpticalDepth
+elevOffset
 emls
 
 false
@@ -99,6 +100,7 @@ magneticField
 magneticModel
 massMeanDiameterIce
 massMeanDiameterWater
+matrix3x3
 mb
 meters
 MHz
@@ -107,8 +109,8 @@ mifs
 minutes
 
 nameFragment
-none
 noiseBandwidth
+none
 
 opticalDepth
 orbitInclination
@@ -166,6 +168,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.22  2003/05/05 23:00:05  livesey
+# Merged in feb03 newfwm branch
+#
 # Revision 2.21  2003/04/22 00:18:33  dwu
 # move in boundarypressure from L2
 #
@@ -174,6 +179,9 @@ zeta
 #
 # Revision 2.19  2003/03/06 19:46:49  pwagner
 # columnAbundance moved to lib from l2
+#
+# Revision 2.18.2.1  2003/03/27 00:48:56  vsnyder
+# Add ECRtoFOV
 #
 # Revision 2.18  2003/02/06 00:44:55  livesey
 # Added nameFragment and sza for binSelector
