@@ -60,7 +60,7 @@ PROG=libmls.a
 #PROG=all
 
 #In case this is called with "make libmls.a"
-libmls.a: all
+libmls.a:
 
 #the subdirectory where testing programs kept
 testdir = tests
@@ -83,7 +83,6 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
 		;; \
 	esac 
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
 	all libmls.a
@@ -163,6 +162,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.20  2001/04/06 19:44:27  pwagner
+# Fixed double-make problem
+#
 # Revision 2.19  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #
