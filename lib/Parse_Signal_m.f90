@@ -517,7 +517,7 @@ o:  do
       error = max(error,1)
       myTree = 0
       if ( present(tree) ) myTree = tree
-      call output ( 'At ' )
+      call output ( '***** At ' )
       if ( mytree > 0 ) then
         call print_source ( source_ref(mytree) )
       else
@@ -647,6 +647,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.21  2005/03/24 01:38:36  vsnyder
+! Spiff up an error message
+!
 ! Revision 2.20  2005/02/05 00:05:07  vsnyder
 ! Correct the low bound for channels in Expand_signal_list.  Handle
 ! disassociated channels argument from parse_signal correctly in
