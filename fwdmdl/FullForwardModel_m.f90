@@ -183,7 +183,7 @@ contains
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
 
-    logical, dimension(:), pointer :: DO_GL ! GL indicator
+    logical, dimension(:), pointer :: DO_GL ! Indicator of where to do GL
 
     logical, dimension(:,:), pointer :: DO_CALC_DN    ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_DN_C  ! DO_CALC_DN on coarse grid
@@ -198,17 +198,16 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_IWC   ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_HYD_C ! DO_CALC_HYD on coarse grid
-    logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_T     ! eta_zxp_t /= 0.
     logical, dimension(:,:), pointer :: DO_CALC_T_C   ! DO_CALC_T on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T_F   ! DO_CALC_T on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP! 'Avoid zeros' indicator  !JJ
-    LOGICAL, DIMENSION(:), pointer :: true_path_flags ! array of trues
-    LOGICAL, DIMENSION(:), pointer :: t_der_path_flags! a flag that tells the
+    logical, dimension(:), pointer :: true_path_flags ! array of trues
+    logical, dimension(:), pointer :: t_der_path_flags! a flag that tells
 ! where an absorption coefficient is needed for a temperature derivative.
-! Only useful when subsetting temperature derivatives.
-
-! Array of Flags indicating  which Temp. coefficient to process
+! Only useful when subsetting temperature derivatives.  For point I on the
+! path, this is any(do_calc_t(I,1:sv_t_len)).
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
@@ -1567,7 +1566,7 @@ contains
               ! the hope a clever compiler will do better optimization with
               ! a constant extent.
               if ( temp_der .or. atmos_der ) then
-                ! Will need beta_path_polarized * tanh1_c
+                ! Will need beta_path_polarized * tanh1_c later.
                 ! Add contributions from nonpolarized molecules 1/4 1/2 1/4 
                 ! to alpha here
                 do j = 1, npc
@@ -1577,7 +1576,7 @@ contains
                     & (/ 0.25, 0.50, 0.25 /) * alpha_path_c(j)
                 end do
               else
-                ! Won't need beta_path_polarized * tanh1_c
+                ! Won't need beta_path_polarized * tanh1_c later.
                 ! Add contributions from nonpolarized molecules 1/4 1/2 1/4 
                 ! to alpha here
                 do j = 1, npc
@@ -1774,19 +1773,16 @@ contains
             ! In the polarized case, drad_tran_dt calculates d_delta_dt for
             ! use in the polarized case, but the final derivative is not used.
             call drad_tran_dt ( z_path_c(1:npc ),                              &
-              & h_path_c(1:npc),                                               &
-              & t_path_c(1:npc), dh_dt_path_c(1:npc,:),                        &
-              & alpha_path_c(1:npc), &
-              & sps_beta_dbeta_c(:npc), &
+              & h_path_c(1:npc), t_path_c(1:npc), dh_dt_path_c(1:npc,:),       &
+              & alpha_path_c(1:npc), sps_beta_dbeta_c(:npc),                   &
               & eta_zxp_t_c(1:npc,:), do_calc_t_c(1:npc,:),                    &
               & do_calc_hyd_c(1:npc,:), del_s(1:npc), ref_corr(1:npc),         &
               & Req + one_tan_ht(1), dh_dt_path(brkpt,:), do_gl(1:npc),        &
               & h_path_f(:ngl), t_path_f(:ngl), dh_dt_path_f(:ngl,:),          &
-              & alpha_path_f(1:ngl),                                           &
-              & sps_beta_dbeta_f(:ngl),    &
+              & alpha_path_f(1:ngl), sps_beta_dbeta_f(:ngl),                   &
               & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)),   &
               & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), d_t_scr_dt(1:npc,:), &
-              & tau(1:npc), i_stop, grids_tmp%deriv_flags,       &
+              & tau(1:npc), i_stop, grids_tmp%deriv_flags,                     &
               & d_delta_dt(1:npc,:), drad_dt )
 
             if ( .not. FwdModelConf%polarized ) then
@@ -2665,6 +2661,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.170  2003/09/09 00:04:27  vsnyder
+! Supply E and Sqrt_Earth_Rflty to mcrt_der
+!
 ! Revision 2.169  2003/08/16 01:14:58  vsnyder
 ! Use radiometers%polarization to choose 1,1 or 2,2 element
 !
