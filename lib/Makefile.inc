@@ -73,12 +73,10 @@ clean:
 # actions:
 
 L1BData.o: MLSCommon.o MLSMessageModule.o
-	$(F90) $(FOPTS) -c $I$S $(DUSTY) $S/L1BData.f90
+	$(F90) $(FOPTS) -c $(DUSTY) $S/L1BData.f90
 L2GPData.o: Allocate_Deallocate.o HDF-EOS.o Hdf.o MLSCommon.o \
 	MLSMessageModule.o swapi.o addItemToDatabase.f9h
 	$(F90) $(FOPTS) -c $I$S $(DUSTY) $S/L2GPData.f90
-dump_0.o: $(CF)/output_m.o
-	$(F90) $(FOPTS) -c $I$S $S/dump_0.f90
 
 
 # SDPToolkit needs several "include" files that aren't here.  If you
@@ -87,9 +85,9 @@ dump_0.o: $(CF)/output_m.o
 
 T = $(TOOLKIT)/include
 SDPToolkit.o: MLSCommon.o $T/PGS_CBP.f $T/PGS_CBP_6.f $T/PGS_CSC_4.f \
-        $T/PGS_EPH_5.f $T/PGS_IO.f $T/PGS_IO_1.f $T/PGS_MEM_7.f \
-	$T/PGS_MET.f $T/PGS_MET_13.f $T/PGS_PC.f $T/PGS_PC_9.f \
-	$T/PGS_SMF.f $T/PGS_TD.f $T/PGS_TD_3.f
+          $T/PGS_EPH_5.f $T/PGS_IO.f $T/PGS_IO_1.f $T/PGS_MEM_7.f \
+	  $T/PGS_MET.f $T/PGS_MET_13.f $T/PGS_PC.f $T/PGS_PC_9.f \
+	  $T/PGS_SMF.f $T/PGS_TD.f $T/PGS_TD_3.f
 	$(F90) $(FOPTS) -c $I$T $S/SDPToolkit.f90
 
 # None of the following dependencies are special, and none of them have
@@ -161,6 +159,10 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.14  2000/10/12 20:24:08  vsnyder
+# Simplify default inference rule's action; remove explicit rules for
+# test_multiply.o and test_sparsify.o
+#
 # Revision 2.13  2000/10/12 20:11:23  vsnyder
 # Account for changes in accessibility of MatrixModule_0; remove test_multiply
 # and test_sparsify from list of OBJS that contribute to libmls.a
