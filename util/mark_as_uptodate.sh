@@ -30,6 +30,7 @@
 # -C MLSCFILE        use arg for MLSCFILE instead of .configure
 # -fyes              begin with MARK_ALL_AS_UPTODATE set to "yes"
 # -fno               begin with MARK_ALL_AS_UPTODATE set to "no"
+# -mod ext           use .ext instead of .mod for module name extension
 # -syes              skip going through prerequisite directories
 # -sno               don't skip going through prerequisite directories
 # -t                 special use: touch target_name 
@@ -81,11 +82,35 @@ extant_files()
 #
 # Function to mark files
 # usage: mark_files arg1 [arg2] ..
+# Anomalies and bugs:
+# Why the ugly repetition?
+# Sometimes a single invocation left a prerequisite subdirectory
+# not uptodate (Why?--this needs study)
 
 mark_files()
 {
-   extant_files *.o *.mod
-   touch $extant_files_result
+#   extant_files *.o *.mod
+#   echo *.${ext}
+   extant_files *.${ext}
+#   echo "extant_files: $extant_files_result"
+   if [ "$extant_files_result" != "" ]            
+   then  
+     touch $extant_files_result
+     if [ "$verbose" != "" ]            
+     then  
+        echo "touched: $extant_files_result"                      
+     fi                                 
+   fi
+   extant_files *.o
+   if [ "$extant_files_result" != "" ]            
+   then  
+     touch $extant_files_result
+     if [ "$verbose" != "" ]            
+     then  
+        echo "touched: $extant_files_result"                      
+        echo "Now will $MYMAKE in `pwd`"                      
+     fi                                 
+   fi
    if [ "$verbose" != "" ]            
    then  
       echo "touched: $extant_files_result"                        
@@ -94,13 +119,17 @@ mark_files()
    if [ "$MLSCONFG" != "" -a "$MLSCFILE" != "" ]
    then
       $MYMAKE -t MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
+      $MYMAKE -t MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
    elif [ "$MLSCONFG" != "" ]
    then
+      $MYMAKE -t MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no
       $MYMAKE -t MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no
    elif [ "$MLSCFILE" != "" ]
    then
       $MYMAKE -t MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
+      $MYMAKE -t MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
    else
+      $MYMAKE -t MARK_ALL_AS_UPTODATE=no
       $MYMAKE -t MARK_ALL_AS_UPTODATE=no
    fi
 }
@@ -148,6 +177,7 @@ fi
 # special_use                       no
 # verbose                           no
 # SKIP_PDS                          no
+# ext                               mod
 #----------------------- Implementation -----------------------
 
 target_name=""
@@ -160,6 +190,7 @@ MLSCFILE=""
 MARK_ALL_AS_UPTODATE=""
 special_use=no
 verbose=no
+ext=mod
 SKIP_PDS=no
 NORMAL_STATUS=0
 return_status=0
@@ -196,6 +227,11 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
 	-fno )
 	    MARK_ALL_AS_UPTODATE=no
+	    shift
+	;;
+	-mod )
+	    ext=$2
+	    shift
 	    shift
 	;;
 	-syes )
@@ -236,6 +272,7 @@ then
   echo "MLSCONFG $MLSCONFG"
   echo "MLSCFILE $MLSCFILE"
   echo "MARK_ALL_AS_UPTODATE? $MARK_ALL_AS_UPTODATE"
+  echo "mod file name ext $ext"
   echo "target_name $target_name"
   echo "special_use? $special_use"
   echo "skip prerequisite directories? $SKIP_PDS"
@@ -351,6 +388,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.2  2002/07/01 20:52:04  pwagner
+# Added special usage via -t option
+#
 # Revision 1.1  2002/06/21 00:10:13  pwagner
 # First commit
 #
