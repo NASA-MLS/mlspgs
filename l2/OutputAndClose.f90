@@ -18,11 +18,12 @@ module OutputAndClose ! outputs all data from the Join module to the
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, &
     & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, &
-    & mlspcf_mcf_l2dgg_start, PENALTY_FOR_NO_METADATA
+    & mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, Pgs_smf_getMsg
@@ -33,7 +34,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
   use WriteMetadata, only: PCFData_T, populate_metadata_std, &
-    & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf, MCFFORL2GPOPTION
+    & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf
 
   implicit none
   private
@@ -78,17 +79,6 @@ contains ! =====     Public Procedures     =============================
 	 type(PCFData_T) :: l2pcf
       CHARACTER (LEN=1), POINTER :: anText(:)
 
-
-  ! - - - External Procedures
-
-! Not needed any longer
-!    interface
-!      integer function SFSDMNAME ( DIM_ID, DIM_NAME ) ! An HDF function
-!        integer, intent(in) :: DIM_ID
-!        character(len=*), intent(in) :: DIM_NAME
-!      end function SFSDMNAME
-!    end interface
-
   ! - - - Local declarations - - -
 
     integer :: db_index
@@ -105,7 +95,6 @@ contains ! =====     Public Procedures     =============================
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
     integer, parameter:: MAXQUANTITIESPERFILE=64        
-!    integer, parameter :: MCFFORL2GPOPTION=1		! 1, 2 or 3
     integer :: metadata_error
     character (len=32) :: mnemonic
     character (len=256) :: msg
@@ -173,18 +162,7 @@ contains ! =====     Public Procedures     =============================
 			if(DEBUG) call output('output file type l2gp', advance='yes')
           ! Get the l2gp file name from the PCF
 
- !         l2gpFileHandle = mlspcf_l2gp_start
- !         found = .FALSE.
- !         do while ((.NOT. found) .AND. (l2gpFileHandle <=  mlspcf_l2gp_end))
- !           l2gp_Version=1
- !           returnStatus = Pgs_pc_getReference(l2gpFileHandle, l2gp_Version, &
- !             & l2gpPhysicalFilename)
- !           
- !           if ( returnStatus == PGS_S_SUCCESS ) then
- !             if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
- !               found = .true.
- 
-  				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+   				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
 				& mlspcf_l2gp_end, &
             & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
@@ -276,39 +254,18 @@ contains ! =====     Public Procedures     =============================
 						& numquantitiesperfile, QuantityNames, anText, metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
-!              else                ! Found the right file
-!                l2gpFileHandle = l2gpFileHandle + 1
-!              end if
 
             else
-!              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!              call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                &  "Error finding l2gp file:  "//mnemonic//" "//msg )
               call announce_error ( ROOT, &
                 &  "Error finding l2gp file matching:  "//file_base, returnStatus)
 
             end if
             
-!          end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
-!          IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-!            'Unable to find filename containing '//TRIM(file_base))
-          
         case ( l_l2aux )
           
  			if(DEBUG) call output('output file type l2aux', advance='yes')
          ! Get the l2aux file name from the PCF
           
-!          l2auxFileHandle = mlspcf_l2dgm_start
-!          found = .FALSE.
-!          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
-!            l2aux_Version=1
-!            returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
-!              & l2auxPhysicalFilename)
-            
-!            if ( returnStatus == PGS_S_SUCCESS ) then
-!              if ( INDEX(l2auxPhysicalFilename, TRIM(file_base)) /= 0 )then
-!                found = .TRUE.
-                
   				l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
             & mlspcf_l2dgm_end, &
              & PCFL2FCSAMECASE, returnStatus, l2aux_Version, DEBUG, &
@@ -361,9 +318,6 @@ contains ! =====     Public Procedures     =============================
                 ! Now close the file
                 returnStatus = sfend(sdfid)
                 if ( returnStatus /= PGS_S_SUCCESS ) then
- !                 call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
- !                 call MLSMessage ( MLSMSG_Error, ModuleName, &
- !                   &  "Error closing l2aux file:  "//mnemonic//" "//msg )
               		 call announce_error ( ROOT, &
                	 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
                end if
@@ -397,19 +351,11 @@ contains ! =====     Public Procedures     =============================
 						& numquantitiesperfile, QuantityNames, anText, metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
-!              else
-!                l2auxFileHandle =  l2auxFileHandle + 1
-!              end if
 
             else
-!              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!              call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                &  "Error finding l2aux file:  "//mnemonic//" "//msg )
               call announce_error ( ROOT, &
                 &  "Error finding l2aux file matching:  "//file_base, returnStatus)
             end if
-            
-!          end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
 
         end select
       case ( s_time )
@@ -471,7 +417,6 @@ contains ! =====     Public Procedures     =============================
 
     error = max(error,1)
     call output ( '***** At ' )
-!    call print_source ( source_ref(where) )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
     else
@@ -500,6 +445,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.23  2001/04/16 23:51:08  pwagner
+! Gets penalty from MLSL2Options
+!
 ! Revision 2.22  2001/04/13 23:48:37  pwagner
 ! Removed bogus increment of l2gp_mcf
 !
