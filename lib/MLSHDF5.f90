@@ -118,10 +118,10 @@ module MLSHDF5
 
   interface LoadFromHDF5DS
     module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
-      LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
-      LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
+      & LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
+      & LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
       & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
-      & LoadFromHDF5DS_chararr1
+      & LoadFromHDF5DS_chararr1, LoadFromHDF5DS_chararr2
   end interface
 
   ! Local parameters
@@ -2816,6 +2816,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.25  2003/05/13 04:46:42  livesey
+! Bug fix, added more specifics to generic
+!
 ! Revision 2.24  2003/05/12 18:08:10  pwagner
 ! Added 1d, 2d char array dsets, 2d int dset, gets of sngl, dbl scalar attrs
 !
