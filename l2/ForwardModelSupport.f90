@@ -594,10 +594,7 @@ contains ! =====     Public Procedures     =============================
             & call announceError ( noBetaGroup, son )
           call allocate_test ( info%beta_group(i)%lbl_molecules, nsons(son)-1, &
             & 'info%beta_group(i)%lbl_molecules', moduleName )
-          call allocate_test ( info%beta_group(i)%ratio, nsons(son)-1, &
-            & 'info%beta_group(i)%ratio', moduleName )
           info%beta_group(i)%molecule = decoration(subtree(1,son)) ! group name
-          info%beta_group(i)%ratio = 0.0
           j = nsons(son)
           if ( j < 2 ) call announceError ( badMoleculeGroup, son )
           nelts = nelts + j - 1
@@ -615,9 +612,6 @@ contains ! =====     Public Procedures     =============================
           call allocate_test ( info%beta_group(i)%lbl_molecules, 1, &
             & 'info%beta_group(i)%lbl_molecules', moduleName )
           info%beta_group(i)%lbl_molecules(1) = info%beta_group(i)%molecule
-          call allocate_test ( info%beta_group(i)%ratio, 1, &
-            & 'info%beta_group(i)%ratio', moduleName )
-          info%beta_group(i)%ratio(1) = 1.0
         end if
         if ( got(f_pfaMolecules) ) then
           ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
@@ -687,6 +681,18 @@ op:   do j = 2, nsons(pfaTree)
         call deallocate_test ( tempPFA, 'TempPFA', moduleName )
       end do ! i
     end if
+
+    ! Now the isotope ratio fields
+    do i = 1, size(info%beta_group)
+      call allocate_test ( info%beta_group(i)%LBL_Ratio, &
+        &                  size(info%beta_group(i)%LBL_Molecules), &
+        &                  'LBL_Ratio', moduleName )
+      info%beta_group(i)%LBL_Ratio = 1.0
+      call allocate_test ( info%beta_group(i)%PFA_Ratio, &
+        &                  size(info%beta_group(i)%PFA_Molecules), &
+        &                  'PFA_Ratio', moduleName )
+      info%beta_group(i)%PFA_Ratio = 1.0
+    end do ! i
 
     info%moleculeDerivatives => info%beta_group%derivatives
     info%moleculeDerivatives = .false.
@@ -1087,6 +1093,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.102  2004/11/04 03:42:33  vsnyder
+! Provide for both LBL_Ratio and PFA_Ratio in beta_group
+!
 ! Revision 2.101  2004/11/01 20:27:55  vsnyder
 ! Reorganization of representation for molecules and beta groups
 !
