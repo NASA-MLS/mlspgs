@@ -21,13 +21,16 @@ module DCOSH1_M
 
 contains
 
-  function DCOSH1 ( X ) result ( COSH1 )
+  elemental function DCOSH1 ( X ) result ( COSH1 )
     integer, parameter :: RK = kind(0.0d0)
     include 'cosh1.f9h'
   end function DCOSH1
 end module DCOSH1_M
 
 ! $Log$
+! Revision 2.2  2002/10/11 20:36:26  vsnyder
+! Make it elemental
+!
 ! Revision 2.1  2002/10/11 19:44:00  vsnyder
 ! Initial commit
 !
