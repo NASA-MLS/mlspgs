@@ -490,7 +490,7 @@
 
          IF(ICON .GT. 1) THEN                               
 
-           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT,W0,TAU,RS,TS,&
+           CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
                 &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
 
@@ -510,10 +510,6 @@
               &            delTAU,delTAUc,TAUeff(:,IFR),SS(:,IFR),               &
               &            BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ,            &
               &            N,ISWI,RE) ! COMPUTE SENSITIVITY
-
-
-            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
-            CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
 
 
