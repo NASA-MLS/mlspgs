@@ -81,6 +81,7 @@ endif
 #   mlsconfigure           Configures Makefiles for building mlks software
 #   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
 #   reecho.sh              Filter list of args to remove bogus ones
+#   uotodate.make          Ensure that custom machine files are up-to-date
 #   which_fftw.sh          Construct correct fftw link lines for level 3
 #
 #  More info on some of these scripts is available via
@@ -182,6 +183,7 @@ SHELL = /bin/sh
 # end_stmts      -- build and install this prog
 # f90tex         -- build and install this prog
 # init_gen       -- build and install this prog
+# h5cat          -- build and install this prog
 # h5subset       -- build and install this prog
 # heconvert      -- build and install this prog
 # hl             -- build and install this prog
@@ -352,8 +354,8 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
-#              (functional)
-
+#              (functional targets)
+#              summoned by "make command"
 mostlyclean:
 	@echo "Cleaning $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
@@ -495,7 +497,7 @@ install:
 	esac ; \
 	done
 
-# unshar the sources for the executables
+# unshar the sources for the executables (heconvert so far)
 $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
 	@cd $(MLSBIN); \
    /bin/sh heconvert.shar
@@ -503,7 +505,8 @@ $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
 # build and install some of the executables out of util
 CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 #convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
 #	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -511,22 +514,25 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
 	@case "$(HDF5)" in \
 	"") \
-		echo "Sorry--need to define HDF5 before building heconvert" ; \
+		echo "Sorry--you must define HDF5 before building heconvert" ; \
 		echo "Try make configure" ; \
 		exit 2 ; \
 		;; \
 	*) \
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-      -c $(MLSCONFG) -p $@ $(MLSBIN)/convert.c \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) $(MLSBIN)/convert.c \
       -I $(MLSBIN) \
       -I $(HDFEOS5)/../../include \
       -I $(HDFEOS)/../../include \
@@ -538,18 +544,36 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
 
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
 	@case "$(HDF5)" in \
 	"") \
-		echo "Sorry--need to define HDF5 before building h5subset" ; \
+		echo "Sorry--you must define HDF5 before building h5subset" ; \
 		echo "Try make configure" ; \
 		exit 2 ; \
 		;; \
 	*) \
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-      -c $(MLSCONFG) -p $@ \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) \
+      -i "-I $(HDF5)/../include" \
+      $(MLSBIN)/$@.c \
+		;; \
+	esac 
+
+h5cat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5cat.c
+	@case "$(HDF5)" in \
+	"") \
+		echo "Sorry--you must define HDF5 before building h5cat" ; \
+		echo "Try make configure" ; \
+		exit 2 ; \
+		;; \
+	*) \
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) \
       -i "-I $(HDF5)/../include" \
       $(MLSBIN)/$@.c \
 		;; \
@@ -557,7 +581,8 @@ h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
 
 hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-      -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.c
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c
 
 # allow user to forego "-f MakeFC" nonsense
 makefile:
@@ -788,7 +813,7 @@ show_copy:
 
 $(LEVELS): lib
 
-ifdef HDFVERSION
+ifdef HDFVERSIONS
    $(LEVELS): he5lib
 endif
 
@@ -822,6 +847,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.63  2002/02/06 00:47:43  pwagner
+# Adds check for up-to-date machine files during update
+#
 # Revision 1.62  2002/01/29 00:46:47  pwagner
 # Builds he5lib when HDFVERSIONS defined
 #
