@@ -17,6 +17,8 @@ esac
 
 VERSION=v1.0.1
 SIMULATION=s5
+YEAR=1996
+FWMVERSION=''
 
 # Now work out what we have been asked for.
 while [ -n "$(echo $1)" ]; do
@@ -26,6 +28,12 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ -z "${1##--simulation=*}" ]; then
 	SIMULATION=${1#--simulation=}
+    fi
+    if [ -z "${1##--year=*}" ]; then
+	YEAR=${1#--year=}
+    fi
+    if [ -z "${1##--fwmVersion=*}" ]; then
+	FWMVERSION=${1#--fwmVersion=}
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
@@ -66,14 +74,14 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/$VERSION"
 	else
-	    echo "/data/emls/l1boa/$SIMULATION--t/1996"
+	    echo "/data/emls/l1boa/$SIMULATION--t/$YEAR"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/$VERSION"
+	    echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION"
 	fi
     fi
     if [ $1 == "--l2cal" ]; then
@@ -86,10 +94,20 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--leapsec" ]; then
 	echo "$HOME/emls/$VERSION"
     fi
+    if [ $1 == "--dao" ]; then
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/work3/livesey"
+	else
+	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
+	fi
+    fi
     shift
 done
 
 # $Log$
+# Revision 1.10  2003/05/09 23:17:10  livesey
+# Bug fix.
+#
 # Revision 1.9  2003/05/08 22:57:53  livesey
 # Tried to make it more generic
 #
