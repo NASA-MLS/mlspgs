@@ -83,6 +83,12 @@ MODULE Hdf
         CHARACTER (LEN=*), INTENT (OUT) :: sds_name
         INTEGER, INTENT (IN), DIMENSION (:) :: dimsizes
       END FUNCTION sfgetinfo
+      INTEGER FUNCTION sfgdinfo(dim_id, dim_name, size, data_type, &
+      & num_attrs)      
+        INTEGER, INTENT (IN) :: dim_id
+        INTEGER, INTENT (OUT) :: size, data_type, num_attrs
+        CHARACTER (LEN=*), INTENT (OUT) :: dim_name
+      END FUNCTION sfgdinfo
 
    END INTERFACE
 
@@ -487,6 +493,9 @@ END MODULE Hdf
 !===============================================================================
 
 !# $Log$
+!# Revision 2.3  2000/12/04 21:50:24  pwagner
+!# Added sfgdinfo
+!#
 !# Revision 2.2  2000/12/02 00:05:22  pwagner
 !# Added sfgetinfo, sfrdata, sfn2index, sfselect
 !#
