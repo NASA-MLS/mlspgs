@@ -118,6 +118,7 @@ contains
 
     ! Executable code
     ! Clear out dying configs
+    if ( .not. associated ( database ) ) return
     do config = 1, size ( database )
       if ( .not. database(config)%globalConfig ) &
         & call DestroyOneForwardModelConfig ( database(config) )
@@ -525,6 +526,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.28  2003/02/05 21:57:27  livesey
+! Tidy up and added binSelectors, removed nameFragment
+!
 ! Revision 2.27  2003/01/30 22:01:30  livesey
 ! Tidy up of the logical array packing.
 !
