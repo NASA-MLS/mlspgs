@@ -91,7 +91,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationGrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, parameter :: F_LENGTH              = f_jacobian + 1
+  integer, parameter :: F_KSTAR               = f_jacobian + 1
+  integer, parameter :: F_LENGTH              = f_kStar + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
   integer, parameter :: F_MAXITERATIONS       = f_logBasis + 1
   integer, parameter :: F_MATRIX              = f_maxIterations + 1
@@ -147,7 +148,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VALUES              = f_versionrange + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, parameter :: FIELD_LAST = f_weight
+  integer, parameter :: F_XSTAR               = f_weight + 1
+  integer, parameter :: F_YSTAR               = f_xStar + 1
+  integer, parameter :: FIELD_LAST = f_yStar
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
@@ -218,9 +221,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
-  integer, parameter :: S_L2GP               = s_hgrid + 1
-  integer, parameter :: S_L2AUX              = s_l2gp + 1
-  integer, parameter :: S_MATRIX             = s_l2aux + 1
+  integer, parameter :: S_L2AUX              = s_hgrid + 1
+  integer, parameter :: S_L2GP               = s_l2aux + 1
+  integer, parameter :: S_L2PC               = s_l2gp + 1
+  integer, parameter :: S_MATRIX             = s_l2pc + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
@@ -393,6 +397,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
+    field_indices(f_kStar) =               add_ident ( 'kStar' )
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
@@ -450,6 +455,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_weight) =              add_ident ( 'weight' )
+    field_indices(f_xStar) =               add_ident ( 'xStar' )
+    field_indices(f_yStar) =               add_ident ( 'yStar' )
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -490,8 +497,9 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
-    spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
+    spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
+    spec_indices(s_l2pc) =                 add_ident ( 'l2pc' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
@@ -677,7 +685,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
-             ndp+n_spec_def /) )
+             ndp+n_spec_def, &
+      begin, s+s_l2pc, &    ! Must be after s_vector, s_matrix
+             begin, f+f_xStar, s+s_vector, n+n_field_spec, &
+             begin, f+f_yStar, s+s_vector, n+n_field_spec, &
+             begin, f+f_kStar, s+s_matrix, n+n_field_spec, &
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -821,7 +834,7 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
-      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
+      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_l2pc, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -834,6 +847,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.81  2001/04/24 20:05:07  livesey
+! Added l2pc joining
+!
 ! Revision 2.80  2001/04/23 23:45:01  vsnyder
 ! Add 'time' to MLSSignals, Spectroscopy, GlobalSettings and ChunkDivide
 ! sections.
