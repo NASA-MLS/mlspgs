@@ -60,6 +60,10 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
 
+# Currently MatrixModule_n compile only under Lahey's LF95
+# RettrievalModule needs MatrixModule_1.o
+RETRIEVAL_OBJS = RetrievalModule.o
+
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 
@@ -86,6 +90,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 l_specials = 
 
 # $Log$
+# Revision 1.6  2000/11/18 00:16:39  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.5  2000/11/16 22:55:21  pwagner
 # Looks for %.f9h in srclib
 #
