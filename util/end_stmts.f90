@@ -9,6 +9,11 @@ program END_STMTS
 ! When an END statement is found, add SUBROUTINE or FUNCTION as remembered,
 ! and the remembered name.
 
+!------------------------------- RCS Ident Info ------------------------------
+CHARACTER(LEN=130) :: id = & 
+   "$Id$"
+!-----------------------------------------------------------------------------
+
   integer :: I1, I2                     ! Begin and end of SUBROUTINE or
                                         ! FUNCTION in LINE_CAP, else zero.
   integer :: I3, I4                     ! Begin and end of name in LINE_IN.
@@ -71,3 +76,4 @@ contains
     end do
   end function CAPITALIZE
 end program END_STMTS
+! $Log$

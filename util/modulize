@@ -4,6 +4,7 @@
 # Fortran 90 modules corresponding to them, by using the end_stmts program
 # to change plain END statements to END SUBROUTINE or END FUNCTION statements.
 
+# "$Id$"
 foreach f ($*)
       set b=`basename $f .f`
       echo "      MODULE" $b"_m"         >$b"_m".f
@@ -11,3 +12,4 @@ foreach f ($*)
       end_stmts <$f                     >>$b"_m".f
       echo "      END MODULE" $b"_m"    >>$b"_m".f
 end
+# $Log$

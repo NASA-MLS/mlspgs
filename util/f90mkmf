@@ -12,6 +12,8 @@
 # Written by Michael Wester <wester@math.unm.edu> February 16, 1995
 # Cotopaxi (Consulting), Albuquerque, New Mexico
 #
+# "$Id$"
+
 open(MAKEFILE, "> Makefile");
 #
 print MAKEFILE "PROG =\t$ARGV[0]\n\n";
@@ -249,3 +251,4 @@ sub MakeDependsf90 {
          }
       }
    }
+# $Log$
