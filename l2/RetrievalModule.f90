@@ -583,7 +583,7 @@ contains
             call CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
                & measurements,MeasurementSD, state, OutputSD, Covariance, &
                & jacobian, chunk,maxJacobians,initlambda)
-            call add_to_retrieval_timing( 'low_retrieval', t1 )
+            call add_to_retrieval_timing( 'low_cloud', t1 )
           case ( l_newtonian ) 
             call newtonianSolver
           case default
@@ -2175,6 +2175,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.246  2003/05/14 23:40:51  dwu
+! a change in cloud retr
+!
 ! Revision 2.245  2003/05/14 23:38:15  dwu
 ! change in cloud retrieval
 !
