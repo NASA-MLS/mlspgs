@@ -47,6 +47,8 @@ include ../Makefile.dep
 #ALLOBJS = $(OBJS) $(LIB_OBJS) units.o
 ALLOBJS = $(OBJS)
 
+LIB_NAME=libfwdmdl.a
+
 #${OBJS}: $(LIB_OBJS) units.o
 
 l2_test.o: ${OBJS} 
@@ -82,10 +84,10 @@ ifdef LIB_BLAS
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
-   blas_message=Building forward model with externally-supplied BLAS
+   blas_message=Building $(LIB_NAME) with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building forward model with internally-supplied BLAS
+   blas_message=Building $(LIB_NAME) with internally-supplied BLAS
 endif
 
 ifdef LAPACK
@@ -95,10 +97,10 @@ ifdef LIB_LAPACK
 else
    lapack_linker_line=-L${LAPACK} -llapack
 endif
-   lapack_message=Building forward model with externally-supplied LAPACK
+   lapack_message=Building $(LIB_NAME) with externally-supplied LAPACK
 else
    lapack_linker_line=
-   lapack_message=Building forward model with internally-supplied LAPACK
+   lapack_message=Building $(LIB_NAME) with internally-supplied LAPACK
 endif
 
 ifdef HDF5
@@ -115,15 +117,16 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
-   hdf5_message=Building fwdmdl with hdf5
+   hdf5_message=Building $(LIB_NAME) with hdf5
 else
    hdf5_linker_line=
    hdfeos5_linker_line=
-   hdf5_message=Building fwdmdl without hdf5
+   hdf5_message=Building $(LIB_NAME) without hdf5
 endif
 
 # ========================================================================
-libfwdmdl.a: ${OBJS} 
+#libfwdmdl.a: ${OBJS} 
+$(LIB_NAME): ${OBJS} 
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -133,9 +136,7 @@ ifeq ($(delete_lib_first),yes)
 endif
 	ar ru $@ $?
 
-#l2_test: $(ALLOBJS) $(libdir)/libmls.a
-#	$(FC) -o l2_test $(ALLOBJS) \
-
+# The following target applies only if LIB_NAME is libfwdmdl.a
 l2_test: libfwdmdl.a l2_test.o $(libdir)/libmls.a
 	$(FC) $(LDOPTS) -o l2_test l2_test.o \
                       -L./ -lfwdmdl \
@@ -159,6 +160,7 @@ l2_test: libfwdmdl.a l2_test.o $(libdir)/libmls.a
 clean:
 	rm -f *.o *.mod l2_test
 
+# This target applies only if LIB_NAME is libfwdmdl.a
 tar:
 	rm -f fwdmdl.tgz
 	tar hcvzf fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
@@ -169,6 +171,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 2.2  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 2.1  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
