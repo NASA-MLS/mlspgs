@@ -8,7 +8,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use DirectWrite_m, only: DirectData_T
+  use DirectWrite_m, only: DirectData_T, dump
   use Hdf, only: DFACC_CREATE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
@@ -615,8 +615,8 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "Cant not unsplit dgg dw to existing file " // &
-            &trim(l2gpPhysicalFilename) )
+            & "Cannot unsplit dgg dw to existing file " // &
+            & trim(l2gpPhysicalFilename) )
         endif
         madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
@@ -657,12 +657,15 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "Must not unsplit dgg dw to " // trim(l2auxPhysicalFilename) )
+            &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
         endif
         madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
+          ! print *, 'About to try to convert array2List'
+          ! call dump(DirectDatabase(DB_index))
           call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
+          ! print *, 'result: ', trim(sdList)
           ! Not implemented yet
           if ( DEBUG ) then
             call output ( 'preparing to cp split dgm', advance='yes' )
@@ -675,9 +678,16 @@ contains ! =====     Public Procedures     =============================
           endif
           if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
           madeFile = .true.
-          call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
+          if ( sdList /= ' ' ) then
+            call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
+          else
+            ! Last-ditch effort if somehow sdNames empty or Array2List fails
+            call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
+            & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
+            & hdfVersion=HDFVERSION_5)
+          endif
         enddo
         ! Is metadata really needed for l2aux files?
         if ( TOOLKIT .and. madeFile ) then
@@ -954,6 +964,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.94  2004/03/03 19:23:48  pwagner
+! Master task never knows actual sdList to catenate; let cpL2AUXData figure it out
+!
 ! Revision 2.93  2004/02/19 23:57:47  pwagner
 ! Hopefully will not try to write metadata if no file exists
 !
