@@ -319,7 +319,8 @@ EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nog
 EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
 
 # The next 2 may be commented out if you're absolutely sure you won't need them
-tests_sub_dirs := $(shell echo tests/*)
+#tests_sub_dirs := $(shell echo tests/*)
+tests_sub_dirs := $(shell ${REECHO} -d -excl tests/CVS tests/*)
 sids_l1boa := sids/l1boa
   
 # This determines the command which MakeFC transmits to each of the
@@ -898,10 +899,12 @@ internalupdate: internalsaymake
 		;; \
 	 esac ; \
 		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc $$PLATFORMS \
-         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
+		../$(MLSBIN)/updatemf.sh -pc $$PLATFORMS \
+         -cf "../$(CONFDIR)/$(MLSCFILE)" $$m_option; \
 		cd .. ; \
 	done
+#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc $$PLATFORMS \
+#         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
 #	@$(MAKE) -f $(MakeFName) ghostbuster
 	@$(MAKE) -f $(MakeFName) internaldepends
 	@$(MAKE) -f $(MakeFName) internalmftests
@@ -922,8 +925,8 @@ internalmftests:
 			if [ -f MakeFC ] ; then \
 				$(LOOKS_LIKE_line) ;\
 			fi ; \
-		../../$(MLSBIN)/mlsconfigure -dc "../../$(CONFDIR)" -pc "$(PLATFORMS)" \
-         -cf "$(MLSCFILE)" -nc -nd; \
+		../../$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
+         -cf "../../$(CONFDIR)/$(MLSCFILE)" ; \
 	 		cd ../..; \
 		fi; \
 	done; \
@@ -931,6 +934,8 @@ internalmftests:
      cd "$(sids_l1boa)"; \
      $(MAKE) -f $(MakeFName) update; \
    fi
+#		../../$(MLSBIN)/mlsconfigure -dc "../../$(CONFDIR)" -pc "$(PLATFORMS)" \
+#         -cf "$(MLSCFILE)" -nc -nd; \
 
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
@@ -973,6 +978,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.73  2002/07/26 20:43:18  pwagner
+# Adds cutomblds to machines.tar
+#
 # Revision 1.72  2002/07/26 19:51:42  pwagner
 # Repaired faulty tar targets
 #
