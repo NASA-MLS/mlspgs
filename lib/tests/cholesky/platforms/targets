@@ -1,13 +1,17 @@
+#Where to find .o prerequisites that come from libmls.a
+dir1 = $(libdir)/
+
 include ../Makefile.dep
 
 # "$Id$"
 
 # ========================================================================
 PROG=test_cholesky
-$(PROG): $(OBJS) $(libdir)/libmls.a
-	$(FC) -o $(PROG) $(OBJS) \
+$(PROG): $(OBJS) $(blas_objs) $(libdir)/libmls.a
+	$(FC) -o $(PROG) $(OBJS) $(blas_objs)\
                       -L$(libdir) -lmls \
 	-L$(PGSTK) -lPGSTK  \
+	$(BLASLIB)  \
 # ========================================================================
 
 clean:
@@ -19,12 +23,6 @@ tar:
 
 # ========================================================================
 # $Log$
-# Revision 1.1  2000/10/24 21:01:00  pwagner
-# first commit
-#
-# Revision 1.1  2000/10/20 23:38:54  pwagner
-# first commit
-#
-# Revision 1.1  2000/10/18 22:07:30  pwagner
+# Revision 1.1  2000/11/09 17:28:36  pwagner
 # First commit
 #

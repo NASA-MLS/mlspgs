@@ -8,11 +8,29 @@ SHELL = /bin/sh
 # Path to source files:
 S = ..
 
+# Use the lib directory, too
+# Assume we in  mlspgs/lib/tests/test_cf_parser/$(MLSCONFG)
+# need to reach mlspgs/lib/$(MLSCONFG)
+libdir = ../../../$(MLSCONFG)
+
+# Use blas for this test
+# need to reach mlspgs/blas
+blas_srcdir = ../../../../blas
+
+# The following are any compiled sources from blas_srcdir you will need
+# to link this test program
+blas_objs = ddot.o
+
+# The following are any libraries, perhaps compiler-supplied,
+# to link this test program; e.g. BLASLIB = -L/path/ -lblas
+BLASLIB =
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
 vpath %.f90 ../
 vpath %.f9h ../
+vpath %.f $(blas_srcdir)
 
 FC = f95
 
@@ -30,20 +48,18 @@ DUSTY = -g -dusty -abi=n32
 # Beginning of path to HDFEOS  libraries:
 #E = /van1/opt/TOOLKIT
 
-# Use the lib directory, too
-# Assume we in  mlspgs/lib/tests/test_cf_parser/$(MLSCONFG)
-# need to reach mlspgs/lib/$(MLSCONFG)
-libdir = ../../../$(MLSCONFG)
-
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f
 .f90.o:
 	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
 
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+
+.f.o:
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -68,6 +84,9 @@ libdir = ../../../$(MLSCONFG)
 #GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
 
 # $Log$
+# Revision 1.1  2000/10/24 21:01:01  pwagner
+# first commit
+#
 # Revision 1.1  2000/10/20 23:38:54  pwagner
 # first commit
 #
