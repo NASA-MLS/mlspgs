@@ -29,8 +29,7 @@ contains
     Type(ELLIPSE), INTENT(IN OUT) :: elvar
 
     Real(r8), intent(in) :: REF_CORR(:), TAU(:)
-    Real(r8), intent(in) :: T_SCRIPT(:), PFA_DBETA_S(:), &
-   &                        SPSFUNC_S(:)
+    Real(r8), intent(in) :: T_SCRIPT(:), PFA_DBETA_S(:), SPSFUNC_S(:)
 !
     Type(spectro_param), intent(in) :: SPECTRO
 !
@@ -67,6 +66,9 @@ contains
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.7  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !
