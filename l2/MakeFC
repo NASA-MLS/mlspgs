@@ -24,7 +24,7 @@ MLSBIN=../util
 # where the platforms directory is
 PLATFORMS = .
 
-# This will set our MLS platfor, compiler. etc.
+# This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/.configure
 
@@ -36,7 +36,9 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 	exit
 
-.PHONY: configure depends clean
+.PHONY: configure depends clean tar
+
+tar: clean
 
 configure:
 #	echo "Target: configure"
@@ -73,7 +75,15 @@ clean:
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
+
+tar:
+	rm -f ../$(PROG).tgz
+	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+
 # $Log$
+# Revision 2.2  2000/10/24 21:07:43  pwagner
+# Added tar option
+#
 # Revision 2.1  2000/10/18 21:58:16  pwagner
 # First commit
 #
