@@ -146,7 +146,7 @@ contains
         end select
 
         do sv_i = 1, no_t
-          Rad(1:k) = k_temp(1:k,sv_i,nf)
+          Rad(1:k) = k_temp(1:k,sv_i,nf+WindowStart-1)
           Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
           do ptg = 1,j
             ind = channel+ radiance%template%noChans*(ptg-1)
@@ -275,6 +275,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.14  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
 ! Revision 1.13  2001/04/24 21:32:45  zvi
 ! fixing a dimension bug..
 !
