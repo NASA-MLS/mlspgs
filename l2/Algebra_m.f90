@@ -46,6 +46,7 @@ contains
     ! table, it has to be the right kind of thing-o:  We won't assign
     ! a vector to a matrix, etc.
 
+    use Chunks_m, only: MLSChunk_T
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
@@ -58,7 +59,7 @@ contains
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
       & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
-    use MLSCommon, only: R8, RV, MLSChunk_T
+    use MLSCommon, only: R8, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_M, only: Output
     use String_Table, only: Display_String
@@ -1389,6 +1390,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.13  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.12  2004/04/30 21:49:26  livesey
 ! Added DisjointEquations command
 !
