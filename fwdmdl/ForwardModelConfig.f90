@@ -44,6 +44,7 @@ module ForwardModelConfig
                                       ! l_cloudy_110rh_in_cloud,
                                       ! l_cloudy_nearside_only
     integer :: InstrumentModule       ! Module for scan model (actually a spec index)
+    integer :: LinearSideband         ! For hybrid model, which SB is linear?
     ! Now the other integers
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
@@ -65,6 +66,7 @@ module ForwardModelConfig
     logical :: Do_conv                ! Do convolution
     logical :: Do_freq_avg            ! Do Frequency averaging
     logical :: GlobalConfig           ! If set is shared between all chunks
+    logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
@@ -564,6 +566,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.39  2003/07/15 18:16:26  livesey
+! Added name to configuration
+!
 ! Revision 2.38  2003/06/30 22:55:01  cvuu
 ! Find mean, std dev timing of fullForwardModel calls
 !
