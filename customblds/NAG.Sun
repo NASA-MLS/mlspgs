@@ -155,7 +155,7 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 endif
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
-NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
@@ -295,7 +295,7 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 endif
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
-NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
@@ -311,6 +311,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.8  2003/02/01 00:01:35  pwagner
+# Changed for new l1 with 3 executables
+#
 # Revision 1.7  2002/11/08 01:18:22  pwagner
 # Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
 #
