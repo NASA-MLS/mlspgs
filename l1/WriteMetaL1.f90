@@ -6,6 +6,7 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   USE Hdf, ONLY: DFACC_RDWR
+  USE Intrinsic, ONLY: L_HDF
   USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   USE PCFHdr, ONLY: WriteInputPointer, h5_writeglobalattr
@@ -263,7 +264,7 @@ CONTAINS
     ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
     !     'See the PCF annotation to this file.')
     returnStatus = WriteInputPointer(groups(INVENTORY), attrName, &
-      & fileType='hdf')
+      & fileType=l_hdf)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
@@ -456,6 +457,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.11  2003/07/08 00:17:11  pwagner
+! fileType now a lit_name instead of a char string
+!
 ! Revision 2.10  2003/06/03 20:44:42  pwagner
 ! Writes global attributes
 !
