@@ -93,6 +93,9 @@ begin Construct
   surfaceType: Quantity, hGrid=hGridStandard, type = surfaceType
 
   ;; ----------------------------------------- Cloud Output
+  hGridFine: hGrid, type=height, height=0km, module=GHz, interpolationFactor=4.,$
+    origin=0 degrees, /forbidOverspill, /insetOverlaps
+
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
   cextFine:    Quantity, vGrid= vGridIWC, hGrid=hGridFine, type = cloudExtinction
