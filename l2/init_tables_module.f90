@@ -625,6 +625,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_precision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_precisionFactor, t+t_numeric, n+n_field_type, &
+             begin, f+f_profile, t+t_numeric, n+n_field_type, &
              begin, f+f_profileValues, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -949,6 +950,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.283  2003/02/13 21:43:50  livesey
+! Added f_profile to fill
+!
 ! Revision 2.282  2003/02/12 02:11:22  livesey
 ! Added extendedAverage
 !
