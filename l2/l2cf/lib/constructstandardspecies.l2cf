@@ -293,6 +293,8 @@ begin Construct
 
   ;; ----------------------------------------- Antenna terms
 
+  !ifdef(flagSkipLossTerms,{},{
+
   reflTempPrimary: Quantity, type=reflTemp, reflector=primary, module=GHz
   reflTempSecondary: Quantity, type=reflTemp, reflector=secondary, module=GHz
   reflTempTertiary: Quantity, type=reflTemp, reflector=tertiary, module=GHz
@@ -349,7 +351,8 @@ begin Construct
     !allReflReflSecondaries,!allReflTransSecondaries,!allReflSpillSecondaries, $
     !allReflReflTertiaries,!allReflTransTertiaries,!allReflSpillTertiaries, $
     !allReflTransCompletes,!allStrayRadiances})
-  
+})
+
   ;; ----------------------------------------- Retrieval diagnostics
   ;; Note no continuation lines allowed here, sorry!
   !define(allRetrievalDiagnostics,{dnwt_ajn, dnwt_axmax, dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, dnwt_fnmin, dnwt_fnorm, dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, jacobian_rows, jacobian_cols})
@@ -410,8 +413,7 @@ begin Construct
     !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, $
     !allUnfoldedNoiseBandwidths, $
-    !allElevs, $
-    !allAntennaLossTerms, $
+    !allElevs, !ifdef(flagSkipLossTerms,{},{!allAntennaLossTerms, }) $
     !lesserState ]
 
   measurementTemplate: VectorTemplate, quantities = [ $
