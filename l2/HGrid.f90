@@ -25,7 +25,7 @@ module HGrid                    ! Horizontal grid information
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, SWITCHES
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
   use UNITS, only: DEG2RAD, RAD2DEG
@@ -560,7 +560,7 @@ contains ! =====     Public Procedures     =============================
     chunk = chunks ( chunkNo )
 
     ! Setup the empircal geometry estimate of lon0
-    ! (it makes sure it's not done twice)
+    ! (it makes sure it's not done twice
     call ChooseOptimumLon0 ( l1bInfo, chunk )
 
     ! First we're going to work out the geodetic angle range
@@ -618,6 +618,22 @@ contains ! =====     Public Procedures     =============================
     do i = 1, hGrid%noProfs
       hGrid%phi(i) = first + (i-1)*spacing
     end do
+
+    if ( index ( switches, 'hgrid' ) /= 0 ) then
+      call output ( 'Constructing regular hGrid', advance='yes' )
+      call output ( 'minAngle: ' )
+      call output ( minAngle, format='(F7.2)' )
+      call output ( ' maxAngle: ' )
+      call output ( maxAngle, format='(F7.2)' )
+      call output ( ' nextAngle: ' )
+      call output ( nextAngle, format='(F7.2)', advance='yes' )
+      call output ( ' Spacing: ' )
+      call output ( spacing )
+      call output ( ' first: ' )
+      call output ( first )
+      call output ( ' last: ' )
+      call output ( last, advance='yes' )
+    end if
 
     ! Now fill the other geolocation information, first latitude
     ! Get orbital inclination
@@ -697,6 +713,13 @@ contains ! =====     Public Procedures     =============================
       hGrid%noProfsUpperOverlap = 0
     end if
 
+    if ( index ( switches, 'hgrid' ) /= 0 ) then
+      call output ( 'Initial overlaps: ' )
+      call output ( hGrid%noProfsLowerOverlap )
+      call output ( ', ' )
+      call output ( hGrid%noProfsUpperOverlap, advance='yes' )
+    end if
+
     ! Now, we want to ensure we don't spill beyond the processing time range
     if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
       call Hunt ( hGrid%time, processingRange%startTime, &
@@ -710,6 +733,13 @@ contains ! =====     Public Procedures     =============================
         & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
       hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
       if ( forbidOverspill ) call DeleteHGridOverlap ( hGrid, 1 )
+    end if
+
+    if ( index ( switches, 'hgrid' ) /= 0 ) then
+      call output ( 'Final overlaps: ' )
+      call output ( hGrid%noProfsLowerOverlap )
+      call output ( ', ' )
+      call output ( hGrid%noProfsUpperOverlap, advance='yes' )
     end if
 
     ! That's it
@@ -879,6 +909,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.26  2002/05/24 16:47:39  livesey
+! Added some diagnostics
+!
 ! Revision 2.25  2002/05/06 22:31:28  livesey
 ! Fixed nullify stuff
 !
