@@ -31,7 +31,10 @@ begin Output
 !stdprod(so2,SO2,)
 ;!stdprod(rhi,RHI,)
 
-Output, quantities=[ joined_ptanGHz, joined_ptanTHz, joined_phitanGHz, joined_phitanTHz ], $
+Output, quantities=[ $
+  joined_ptanGHz, joined_ptanTHz, $
+  joined_ptanGHz_precision, joined_ptanTHz_precision, $
+  joined_phitanGHz, joined_phitanTHz ], $
   type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'
 
 })
