@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,12 +7,12 @@ MODULE Radiances ! Determine radiances for the GHz module
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, &
-       DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, MaxMIFs, &
+       DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, &
        absZero_C, BandWidth, tau, LO1
   USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
-  USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx
-  USE Calibration, ONLY : CalWin, limb_time, limb_counts, space_interp, &
-       target_interp, space_err, target_err, space_weight, target_weight
+  USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
+  USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
+       space_err, target_err, Chi2
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
@@ -31,82 +31,11 @@ MODULE Radiances ! Determine radiances for the GHz module
 
 CONTAINS
 
-  SUBROUTINE BlueSkyGains (T1, T2, MIF0_offset)
-
-    USE Calibration, ONLY : target_counts
-
-!! Overwrite default gains for Blue Sky test
-
-    INTEGER :: MIF0_offset
-    REAL :: T1, T2
-
-    INTEGER :: bank, chan, radNum
-    REAL :: space_P, target_P
-
-! MIFs for doing gains (edit for blue sky test!!!)
-
-    INTEGER, PARAMETER :: T1_MIF(2) = (/ 136, 147 /), T2_MIF(2) = (/ 122, 133 /)
-    INTEGER :: n_target, n_space
-    INTEGER :: target_MIF(2), space_MIF(2)
-
-    n_space = T1_MIF(2) - T1_MIF(1) + 1
-    n_target = T2_MIF(2) - T2_MIF(1) + 1
-    space_MIF = T1_MIF + MIF0_offset
-    target_MIF = T2_MIF + MIF0_offset
-
-    DO bank = 1, GHzNum
-
-       radNum = FBrad(bank)%signal%radiometerNumber
-       space_P = radPwr (LO1(radNum), T1)
-       target_P = radPwr (LO1(radNum), T2)
-
-       DO chan = 1, FBchans
-          deflt_gain%FB(chan,bank) = &
-           (SUM(target_counts(target_MIF(1):target_MIF(2))%FB(chan,bank)) / &
-           n_target  - &
-           SUM(target_counts(space_MIF(1):space_MIF(2))%FB(chan,bank)) / &
-           n_space) / (target_P - space_P)
-       ENDDO
-
-    ENDDO
-
-    DO bank = 1, MBnum
-
-       radNum = MBrad(bank)%signal%radiometerNumber
-       space_P = radPwr (LO1(radNum), T1)
-       target_P = radPwr (LO1(radNum), T2)
-
-       DO chan = 1, MBchans
-          deflt_gain%MB(chan,bank) = &
-           (SUM(target_counts(target_MIF(1):target_MIF(2))%MB(chan,bank)) / &
-           n_target  - &
-           SUM(target_counts(space_MIF(1):space_MIF(2))%MB(chan,bank)) / &
-           n_space) / (target_P - space_P)
-       ENDDO
-
-    ENDDO
-
-    DO bank = 1, WFnum
-
-       radNum = WFrad(bank)%signal%radiometerNumber
-       space_P = radPwr (LO1(radNum), T1)
-       target_P = radPwr (LO1(radNum), T2)
-
-       DO chan = 1, WFchans
-          deflt_gain%WF(chan,bank) = &
-           (SUM(target_counts(target_MIF(1):target_MIF(2))%WF(chan,bank)) / &
-           n_target  - &
-           SUM(target_counts(space_MIF(1):space_MIF(2))%WF(chan,bank)) / &
-           n_space) / (target_P - space_P)
-       ENDDO
-
-    ENDDO
-
-  END SUBROUTINE BlueSkyGains
-
+!=============================================================================
   SUBROUTINE CalcRadiance (limb_counts, space_counts, target_counts, &
        zero_counts, sum_w2, sum_wg2, space_P, target_P, bandwidth, &
        rad, rad_err, deflt_gain, use_deflt_gain, Tsys, gain, dacs)
+!=============================================================================
 
     REAL(r8) :: limb_counts, space_counts, target_counts, zero_counts
     REAL(r8) :: sum_w2, sum_wg2
@@ -155,28 +84,19 @@ CONTAINS
 
   END SUBROUTINE CalcRadiance
 
-  SUBROUTINE CalcLimbRads
+!=============================================================================
+ SUBROUTINE CalcLimbRads
+!=============================================================================
 
     USE MLSL1Config, ONLY: MIFsGHz, L1Config
     USE MLSL1Common, ONLY: L1BFileInfo
 
     TYPE (Eng_MAF_T) :: EMAF
-    TYPE ValPrec_T
-       REAL :: value
-       REAL :: precision
-    END TYPE ValPrec_T
-    TYPE Rad_T
-       TYPE (ValPrec_T) :: FB(FBchans,GHzNum)          ! standard filter banks
-       TYPE (ValPrec_T) :: MB(MBchans,MBnum)          ! mid-band filter banks
-       TYPE (ValPrec_T) :: WF(WFchans,WFnum)          ! wide filters
-       TYPE (ValPrec_T) :: DACS(DACSchans,DACSnum)    ! DACS filters
-    END TYPE Rad_T
-    TYPE (Rad_T) :: Rad(0:MaxMIFs-1)
 
     CHARACTER(LEN=1) :: GHz_Cal_Type
-    INTEGER :: i, j, bank, chan, MIF_index, MIF_index_MAX, radNum
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
-    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain, temp
+    REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain
     REAL :: Scf, Tcf
     REAL :: space_P, target_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
@@ -296,7 +216,7 @@ print *, 'S/T temp: ', space_T, GHz_target_T
           IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
              DO chan = 1, FBchans
                 C_zero = deflt_zero%FB(chan,bank)
-                CALL CalcRadiance (limb_counts(time_index)%FB(chan,bank), &
+                CALL CalcRadiance (limb_cnts%FB(time_index,chan,bank), &
                      space_interp(MIF_index)%FB(chan,bank), &
                      target_interp(MIF_index)%FB(chan,bank), C_zero, &
                      space_err(MIF_index)%FB(chan,bank), &
@@ -323,7 +243,7 @@ print *, 'S/T temp: ', space_T, GHz_target_T
 
              DO chan = 1, MBchans
                 C_zero = deflt_zero%MB(chan,bank)
-                CALL CalcRadiance (limb_counts(time_index)%MB(chan,bank), &
+                CALL CalcRadiance (limb_cnts%MB(time_index,chan,bank), &
                      space_interp(MIF_index)%MB(chan,bank), &
                      target_interp(MIF_index)%MB(chan,bank), C_zero, &
                      space_err(MIF_index)%MB(chan,bank), &
@@ -347,7 +267,7 @@ print *, 'S/T temp: ', space_T, GHz_target_T
 
              DO chan = 1, WFchans
                 C_zero = deflt_zero%WF(chan,bank)
-                CALL CalcRadiance (limb_counts(time_index)%WF(chan,bank), &
+                CALL CalcRadiance (limb_cnts%WF(time_index,chan,bank), &
                      space_interp(MIF_index)%WF(chan,bank), &
                      target_interp(MIF_index)%WF(chan,bank), C_zero, &
                      space_err(MIF_index)%WF(chan,bank), &
@@ -375,7 +295,7 @@ print *, 'S/T temp: ', space_T, GHz_target_T
 
                 DO chan = 1, DACSchans
                    C_zero = 0
-                   CALL CalcRadiance (limb_counts(time_index)%DACS(chan,bank), &
+                   CALL CalcRadiance (limb_cnts%DACS(time_index,chan,bank), &
                         space_interp(MIF_index)%DACS(chan,bank), &
                         target_interp(MIF_index)%DACS(chan,bank), C_zero, &
                         space_err(MIF_index)%DACS(chan,bank), &
@@ -394,11 +314,16 @@ print *, 'S/T temp: ', space_T, GHz_target_T
        ENDIF
     ENDDO
 
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
+
 ! Write Diags
 
     WRITE (L1BFileInfo%DiagId) CalWin%MAFdata(windex)%SciPkt(0)%MAFno
     WRITE (L1BFileInfo%DiagId) Tsys%FB, Tsys%MB, Tsys%WF
     WRITE (L1BFileInfo%DiagId) Cgain%FB, Cgain%MB, Cgain%WF
+    WRITE (L1BFileInfo%DiagId) Chi2%FB, Chi2%MB, Chi2%WF
 
   END SUBROUTINE CalcLimbRads
 
@@ -407,6 +332,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.5  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
