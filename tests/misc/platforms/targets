@@ -99,6 +99,14 @@ else
    lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
 endif
 
+ifdef PGSTK
+   tk_message=Building mlslib with toolkit
+   tk_linker_line=-L${PGSTK} -lPGSTK
+else
+   tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
+   tk_linker_line=
+endif
+
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
@@ -127,7 +135,7 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
-		-L${PGSTK} -lPGSTK \
+		$(tk_linker_line) \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
 		-L${HDF} -lmfhdf \
@@ -166,6 +174,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
 # Revision 1.9  2002/04/18 20:55:28  pwagner
 # .configure now a prerequisite for executable
 #

@@ -73,10 +73,15 @@ INC_PATHS = $(EXTRA_PATHS) -I $S -I $(PGSINC)
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
+ifdef PGSTK
 #Special load libraries
 l_specials = -lPGSTK.sv3
+endif
 
 # $Log$
+# Revision 1.9  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
 # Revision 1.8  2002/02/13 17:27:45  pwagner
 # Removed excess stuff in defining BAD_MATCH
 #
