@@ -102,8 +102,10 @@ contains
       endif
     end if
 
-    !                             newHydros maf finished
-    fmStat = ForwardModelStatus_T(.true.,   0,  .false. )
+    fmStat%newHydros = .true.
+    fmStat%maf = 0
+    fmStat%finished = .false.
+    nullify ( fmStat%rows )
 
     ! Loop over mafs
     do while (.not. fmStat%finished )
@@ -154,6 +156,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.20  2001/04/19 23:56:01  livesey
+! New fmStat
+!
 ! Revision 2.19  2001/04/19 20:30:24  livesey
 ! Added call to DestroyForwardModelIntermediate
 !
