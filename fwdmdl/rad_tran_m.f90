@@ -225,7 +225,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
 !                                          element. (K)
 ! Internals
 !
-  INTEGER(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, n_sps
+  INTEGER(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, no_mol
   INTEGER(ip) :: n_path, p_i, no_to_gl, mid, n_tot
   INTEGER(ip), ALLOCATABLE :: inds(:),all_inds(:),more_inds(:)
 !
@@ -236,7 +236,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
 !
 ! Begin code
 !
-  n_sps = SIZE(Grids_f%no_z)
+  no_mol = SIZE(Grids_f%no_z)
   n_path = SIZE(tau)
   mid = n_path / 2
 !
@@ -246,12 +246,16 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
   sv_i = 0
   drad_df(:) = 0.0_rp
 !
-  DO sps_i = 1 , n_sps
+  DO sps_i = 1 , no_mol
 !
     n_tot = Grids_f%no_f(sps_i)*Grids_f%no_z(sps_i)*Grids_f%no_p(sps_i)
+
     DO sv_j = 1 , n_tot
 !
       sv_i = sv_i + 1
+!
+! Skip the masked derivatives, accordiong to the l2cf inputs
+!
       if(.NOT. Grids_f%deriv_flags(sv_i)) CYCLE
 
       i = 1
@@ -456,7 +460,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
 !                                          statevector element. (K)
 ! Internals
 !
-  INTEGER(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, n_sps
+  INTEGER(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, no_mol
   INTEGER(ip) :: n_path, p_i, no_to_gl, mid
   INTEGER(ip), ALLOCATABLE :: inds(:),all_inds(:),more_inds(:)
 !
@@ -467,7 +471,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
 !
 ! Begin code
 !
-  n_sps = SIZE(Grids_f%no_z)
+  no_mol = SIZE(Grids_f%no_z)
   n_path = SIZE(tau)
   mid = n_path / 2
 !
@@ -477,7 +481,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
   sv_i = 0
   drad_dx(:) = 0.0_rp
 
-  DO sps_i = 1 , n_sps
+  DO sps_i = 1 , no_mol
 !
     DO sv_j = 1 , Grids_f%no_z(sps_i) * Grids_f%no_p(sps_i)
 !
@@ -912,6 +916,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.3  2002/02/16 06:38:05  zvi
+! Some cosmetic changes..
+!
 ! Revision 2.2  2002/01/30 01:11:22  zvi
 ! Fix bug in user selectable coeff. code
 !
