@@ -84,6 +84,7 @@ mifs
 minutes
 
 none
+noiseBandwidth
 
 opticalDepth
 orbitInclination
@@ -136,6 +137,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.10  2002/05/07 20:02:46  livesey
+# Added noisebandwidth
+#
 # Revision 2.9  2002/04/10 17:41:12  pwagner
 # Added rhi-related lits
 #
