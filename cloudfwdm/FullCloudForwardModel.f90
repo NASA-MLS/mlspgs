@@ -174,6 +174,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: phi_fine  !fine resolution for phi 
     real(r8), dimension(:), pointer :: z_fine  !fine resolution for z
     real(r8), dimension(:), pointer :: ds_fine  !fine resolution for ds
+    real(r8) :: ds_tot     ! total length of all ds
 
     real(r8), dimension(:,:), pointer :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
@@ -695,6 +696,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ds_fine = (earthradius%values(1,maf)+ &
          & (ptan%values(mif,maf)+3.)*16.) / &
          & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8)**2
+        ! find the total length for this tangent height
+        ds_tot = sum(ds_fine)
         ! determine weights by the length inside each state domain
          do i = 1,noInstances  ! loop over profile
          do j = 1,noSurf       ! loop over surface
@@ -702,7 +705,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
            if(abs(z_fine(k) - stateQ%template%surfs(j,i)) < dz/2. &
            & .AND. abs(phi_fine(k) - stateQ%template%phi(j,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noInstances) = &
-           & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)
+           & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)/ds_tot
          end do
          end do
          end do 
@@ -901,6 +904,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.30  2001/09/24 23:16:40  dwu
+! add derivatives for high tangent height retrievals
+!
 ! Revision 1.29  2001/09/24 23:12:53  dwu
 ! add derivatives for high tangent height retrievals
 !
