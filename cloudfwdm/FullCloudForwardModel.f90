@@ -730,7 +730,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       ! we use 100 times better resolution to compute weighting functions
       !-------------------------------------------------------------------
       nfine = 100
-      nNear = 5
+      nNear = ForwardModelConfig%phiWindow         ! default = 5
       ! only nearest instances are mattered
         minInst = instance - (nNear-1)/2
         maxInst = instance + (nNear-1)/2
@@ -782,8 +782,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         s_fine = (earthradius%values(1,maf)+ zt(mif)) * &
          & sin((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad)
         ds_fine = 0._r8    ! initialize it
-        ds_fine(1:nfine*noInstances-1) = s_fine(2:nfine*noInstances) - &
-         & s_fine(1:nfine*noInstances-1)
+        ds_fine(1:nfine*nNear-1) = s_fine(2:nfine*nNear) - &
+         & s_fine(1:nfine*nNear-1)
 
          call InterpolateValues ( &
             & sLevl, &            ! Old X
@@ -802,7 +802,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         
          do i = minInst,maxInst             ! loop over closer profiles
          do j = 1,noCldSurf               ! loop over cloudQty surface
-         do k = 1,nfine*noInstances       ! sum up all the lengths
+         do k = 1,nfine*nNear             ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2._r8 &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2._r8) &
            & jBlock%values(mif,j+(i-1)*noCldSurf) = &
@@ -894,6 +894,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.79  2001/11/06 20:06:31  dwu
+! speed up Jacobian calculation for high tangent heights
+!
 ! Revision 1.78  2001/11/06 19:52:42  dwu
 ! speed up Jacobian calculation for high tangent heights
 !
