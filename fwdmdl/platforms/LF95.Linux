@@ -27,6 +27,14 @@ dir2 =
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../blas/$(MLSCONFG)
 
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -41,8 +49,9 @@ DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
-   -I $(blaslib)
+PATHS_PREFXD := $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -64,6 +73,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 2.2  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 2.1  2001/10/22 18:30:56  pwagner
 # Added l_special like l2
 #
