@@ -14,7 +14,7 @@ program MLSL2
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DO_LISTING, INUNIT
-  use TOGGLES, only: CON, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
+  use TOGGLES, only: CON, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, TOGGLE
   use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
@@ -76,12 +76,17 @@ program MLSL2
         case ( 'd' ); do_dump = .true.
         case ( 'g' )
           toggle(gen) = .true.
+          levels(gen) = 0
           if ( j < len(line) ) then
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               j = j + 1
               levels(gen) = ichar(line(j:j)) - ichar('0')
             end if
           end if
+        case ( 'G' )
+          toggle(gen) = .true.
+          switches = line(j+1:)
+      exit
         case ( 'h', 'H', '?' )     ! Describe command line usage
           call getarg ( 0+hp, line )
           print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
@@ -92,6 +97,8 @@ program MLSL2
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
+          print *, '  -Gstring: Trace "generation".  Characters in "string" ', &
+            &                   ' may control individual outputs.'
           print *, '  -l: Trace lexical analysis.'
           print *, '  -K: Capitalize identifiers.'
           print *, "  -k: Don't capitalize identifiers."
@@ -99,7 +106,9 @@ program MLSL2
           print *, '  -p: Trace parsing.'
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
-          print *, '  The above options can be concatenated after one hyphen.'
+          print *, '  The above options can be concatenated after one hyphen,'
+          print *, '  except that -G takes the rest of the option as its ', &
+            &         '"string".'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
           if ( pcf ) then
@@ -184,6 +193,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.15  2001/03/16 21:47:57  vsnyder
+! Add -G option
+!
 ! Revision 2.14  2001/03/14 18:59:03  vsnyder
 ! Add K and k options to control whether the lexer capitalizes identifiers
 !
