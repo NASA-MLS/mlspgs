@@ -150,7 +150,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type RC_Info
   ! Information about the row or column of a matrix
-    type(Vector_T), pointer :: Vec => NULL() ! Vector used to define the row
+    type(Vector_T) :: Vec               ! Vector used to define the row
       ! or column space of the matrix, if any.
     integer :: NB = 0              ! Number of blocks of rows or columns
     logical :: Extra = .false.     ! There is an extra row or column that is
@@ -348,8 +348,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that the matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( .not. associated(x%m%col%vec%template,z%m%col%vec%template) &
-      & .or. .not. associated(x%m%row%vec%template,z%m%row%vec%template) &
+    if ( x%m%col%vec%template%id /= z%m%col%vec%template%id &
+      & .or. x%m%row%vec%template%id /= z%m%row%vec%template%id &
       & .or. (x%m%col%instFirst .neqv. z%m%col%instFirst) &
       & .or. (x%m%row%instFirst .neqv. z%m%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -502,9 +502,9 @@ contains ! =====     Public Procedures     =============================
     &,                           Extra_Row, Extra_Col )
     type(Matrix_T), intent(out) :: Z    ! The matrix to create
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
-    type(Vector_T), target :: Row       ! Vector used to define the row
+    type(Vector_T), intent(in) :: Row       ! Vector used to define the row
       !                                   space of the matrix.
-    type(Vector_T), target :: Col       ! Vector used to define the column
+    type(Vector_T), intent(in) :: Col       ! Vector used to define the column
       !                                   space of the matrix.
     logical, intent(in), optional :: Row_Quan_First    ! True (default false)
       ! means the quantity is the major order of the rows of blocks and the
@@ -529,7 +529,7 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine DefineInfo ( RC, Vec, QuanFirst, extra )
       type(RC_Info), intent(out) :: RC
-      type(Vector_T), target :: Vec ! intent(in)
+      type(Vector_T), intent(in) :: Vec
       logical, intent(in), optional :: QuanFirst
       logical, intent(in), optional :: Extra
 
@@ -538,7 +538,7 @@ contains ! =====     Public Procedures     =============================
 
       rc%extra = .false.
       if ( present(extra) ) rc%extra = extra
-      rc%vec => vec
+      rc%vec = vec
       rc%instFirst = .true.
       if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
       rc%nb = vec%template%totalInstances
@@ -942,7 +942,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( .not. associated(x%row%vec%template,y%row%vec%template) .or. &
+    if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrices" )
@@ -973,7 +973,7 @@ contains ! =====     Public Procedures     =============================
     integer :: K, L, M, N     ! Subscripts
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
-    if ( .not. associated(a%row%vec%template, v%template) ) &
+    if ( a%row%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
@@ -1009,7 +1009,7 @@ contains ! =====     Public Procedures     =============================
     integer :: K, L, M, N     ! Subscripts
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
-    if ( .not. associated(a%col%vec%template, v%template) ) &
+    if ( a%col%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
@@ -1215,12 +1215,12 @@ contains ! =====     Public Procedures     =============================
     if ( present(transpose) ) my_transpose = transpose
     my_rhs => x
     if ( present(rhs) ) then
-      if ( .not. associated( x%template, rhs%template ) ) &
+      if ( x%template%id /= rhs%template%id ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "X and RHS not compatible in SolveCholesky_1" )
       my_rhs => rhs
     end if
-    if ( .not. associated( z%m%col%vec%template, my_rhs%template ) ) &
+    if ( z%m%col%vec%template%id /= my_rhs%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
@@ -1318,7 +1318,7 @@ contains ! =====     Public Procedures     =============================
     type(RC_info), intent(inout) :: A
     type(RC_info), intent(in) :: B
     call destroyRCInfo ( a )
-    a%vec => b%vec
+    a%vec = b%vec
     a%nb = b%nb
     call allocate_test ( a%nelts, size(b%nelts), "a%nelts in CopyRCInfo", &
       & moduleName )
@@ -1465,6 +1465,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.22  2001/04/28 01:28:36  livesey
+! Change in rcInfo_T, vec is now a copy of the parent vector, not a pointer.
+!
 ! Revision 2.21  2001/04/27 22:51:52  livesey
 ! Some changes/improvements to dump
 !
