@@ -679,6 +679,13 @@ while [ "$1" != "" ] ; do
 
 done
 
+if [ "$debugging" = "on" ] ; then
+	echo "get_confg=$get_confg"
+	echo "MLSCFILE=$MLSCFILE"
+	echo "add_FOPTS=$add_FOPTS"
+	echo "add_PVM_PATH=$add_PVM_PATH"
+fi
+
 write_confg="false"
 
 if [ $get_confg = "true" ] ; then
@@ -898,6 +905,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.14  2001/05/31 23:25:02  pwagner
+# Slightly more consistent messages
+#
 # Revision 1.13  2001/05/31 21:55:02  pwagner
 # Now includes HDF5 in .configure
 #
