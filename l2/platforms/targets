@@ -3,8 +3,20 @@ include ../Makefile.dep
 # "$Id$"
 
 # ========================================================================
-mlsl2: $(OBJS) $(libdir)/libmls.a
-	$(FC) -o mlsl2 $(OBJS) \
+#       The objects for the shared source files (in srclib)
+srclib_objs = getCF_m.o tree_checker.o
+
+# Add them to OBJS
+ALLOBJS = $(OBJS) $(srclib_objs)
+
+# Assert their dependence on init_tables_module
+# (Note: we are ignoring their dependence on other modules--may fix this later)
+getCF_m.o: getCF_m.f90 init_tables_module.o
+tree_checker.o: tree_checker.f90 init_tables_module.o
+
+# ========================================================================
+mlsl2: $(ALLOBJS) $(libdir)/libmls.a
+	$(FC) -o mlsl2 $(ALLOBJS) \
                       -L$(libdir) -lmls \
 	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
 	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
@@ -21,3 +33,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2000/10/18 22:07:30  pwagner
+# First commit
+#

@@ -8,15 +8,28 @@ SHELL = /bin/sh
 # Path to source files:
 S = ..
 
-# Use the lib directory, too
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
 libdir = ../../lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../srclib
+
+dir2 =
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../
+vpath %.f90 ../ $(srclib)
 vpath %.f9h ../
 
 FC = f95
@@ -68,6 +81,9 @@ DUSTY = -g -dusty
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
 
 # $Log$
+# Revision 1.2  2000/11/02 23:27:38  pwagner
+# Dependencies may cross directories
+#
 # Revision 1.1  2000/10/21 00:22:12  pwagner
 # First commit
 #
