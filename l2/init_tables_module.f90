@@ -583,6 +583,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lowerOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_upperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxOrbY, t+t_numeric, n+n_field_type, &
              begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
              begin, f+f_homeModule, t+t_module, n+n_field_type, &
              begin, f+f_homeGeodAngle, t+t_numeric, n+n_field_type, &
@@ -1277,6 +1278,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.381  2004/08/09 21:43:21  livesey
+! Added maxOrbY argument to ChunkDivide
+!
 ! Revision 2.380  2004/07/22 20:39:14  cvuu
 ! Now can fill ForwardModel time, mean and std_dev
 !
