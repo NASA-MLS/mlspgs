@@ -66,6 +66,7 @@ module MLSSignals_M
 ! GetSpectrometerTypeName         Place spectrometer name and number in string
 ! IsModuleSpacecraft              Returns true if the module is really the spacecraft
 ! MatchSignal                     Given an array Signals, find the matching one
+! MatchSignalPair                 Determine whether two signals match
 ! MLSSignals                      Process the MLSSignals section of the L2 configuration file
 
   private ! So as not to re-export everything accessed by USE association.
@@ -83,10 +84,15 @@ module MLSSignals_M
   public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
-  public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
+  public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal
+  public :: MatchSignalPair, MLSSignals
   public :: PVMPackSignal, PVMUnpackSignal
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
+
+  interface MatchSignal
+    module procedure MatchSignals, MatchSignalPair
+  end interface
 
   ! =====     Defined Operators and Generic Identifiers     ==============
   
@@ -1391,8 +1397,8 @@ oc:     do
     IsModuleSpacecraft = modules(thisModule)%spacecraft
   end function IsModuleSpacecraft
 
-  ! ------------------------------------------------  MatchSignal  -----
-  integer function MatchSignal ( Signals, Probe, sideband, channel, matchFlags, &
+  ! -----------------------------------------------  MatchSignals  -----
+  integer function MatchSignals ( Signals, Probe, sideband, channel, matchFlags, &
     & NoMatchFails, FromWhere, DSBSSB )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
@@ -1411,11 +1417,9 @@ oc:     do
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
-    logical :: Match                    ! Channels in probe are in signal
     integer :: NumChannelsMatch
     logical :: MyDSBSSB
     integer :: MySideband               ! Either sideband or probe%sideband
-    logical :: SidebandOK
 
     if ( present(matchFlags) ) matchFlags = .false.
 
@@ -1426,65 +1430,112 @@ oc:     do
     if ( present(DSBSSB) ) myDSBSSB = DSBSSB
 
     bestMatch = huge(bestMatch)
-    matchSignal = 0
+    matchSignals = 0
     do i = 1, size(signals)
-      ! First, the signal must have the same band, instrument module,
-      ! radiometer, spectrometer, spectrometer type and switch number as
-      ! the probe signal
-      sidebandOK = (signals(i)%sideband == mySideband) .or. &
-        &          myDSBSSB .and. (signals(i)%sideband * mySideband == 0)
-      if ( signals(i)%band /= probe%band .or. &
-        &  signals(i)%instrumentModule /= probe%instrumentModule.or. &
-        &  signals(i)%radiometer /= probe%radiometer .or. &
-        &  .not. sidebandOK .or. &
-        &  signals(i)%spectrometer /= probe%spectrometer .or. &
-        &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
-        &  signals(i)%switch /= probe%switch ) cycle
-      ! Now the channels in Probe all have to be present in Signals(i)
+      numChannelsMatch = matchSignalPair ( signals(i), probe, sideband, &
+        & channel, DSBSSB=DSBSSB )
+      if ( numChannelsMatch > 0 ) then
+        if ( present( matchFlags ) ) matchFlags(i) = .true.
+        if ( numChannelsMatch < bestMatch ) then
+          matchSignals = i
+          bestMatch = numChannelsMatch
+        end if
+      end if
+    end do
+    if ( present(noMatchFails) ) then
+      if ( noMatchFails .and. matchSignals == 0 ) then
+        if ( present(fromWhere) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'No match for requested signal from ' // trim(fromWhere) )
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'No match for requested signal' )
+        end if
+      end if
+    end if
+  end function MatchSignals
+
+  ! --------------------------------------------  MatchSignalPair  -----
+  integer function MatchSignalPair ( Signal, Probe, sideband, channel, &
+    & DSBSSB, NoMatchFails, FromWhere )
+    ! Given a Signal and a Probe, determine whether they match.
+    ! If Sideband or Channel are present they are used for the probe, instead
+    ! of the values in Probe.
+    ! The result is -1 if not, else the number of matching channels.
+
+    type(signal_T), intent(in) :: Signal, Probe
+    integer, intent(in), optional :: sideband     ! Use this instead of probe%sideband
+    integer, intent(in), optional :: CHANNEL      ! Just this channel
+    logical, intent(in), optional :: DSBSSB       ! OK if one DSB, one SSB
+    logical, intent(in), optional :: NoMatchFails ! Fail if no match
+    character(len=*), intent(in), optional :: FromWhere ! For an error message
+
+    logical :: Match
+    logical :: MyDSBSSB
+    integer :: MySideband               ! Either sideband or probe%sideband
+    logical :: SidebandOK
+
+    matchSignalPair = -1
+
+    mySideband = probe%sideband
+    if ( present(sideband) ) mySideband = sideband
+
+    myDSBSSB = .false.
+    if ( present(DSBSSB) ) myDSBSSB = DSBSSB
+
+    ! First, the signal must have the same band, instrument module,
+    ! radiometer, spectrometer, spectrometer type and switch number as
+    ! the probe signal
+    sidebandOK = (signal%sideband == mySideband) .or. &
+      &          myDSBSSB .and. (signal%sideband * mySideband == 0)
+    match = signal%band == probe%band .and. &
+      &  signal%instrumentModule == probe%instrumentModule.and. &
+      &  signal%radiometer == probe%radiometer .and. &
+      &  sidebandOK .and. &
+      &  signal%spectrometer == probe%spectrometer .and. &
+      &  signal%spectrometerType == probe%spectrometerType .and. &
+      &  signal%switch == probe%switch
+    if ( match ) then
+      ! Now the channels in Probe all have to be present in signal
       if (present(channel)) then        ! User asked for a specific channel
-        if ( associated(signals(i)%channels) ) then
-          if ( channel < lbound(signals(i)%channels,1) ) then
+        if ( associated(signal%channels) ) then
+          if ( channel < lbound(signal%channels,1) ) then
             match = .false.
-          else if ( channel > ubound(signals(i)%channels,1) ) then
+          else if ( channel > ubound(signal%channels,1) ) then
             match = .false.
           else
-            match = signals(i)%channels(channel)
+            match = signal%channels(channel)
           end if
         else
           match = .true.
         end if
       else
         match = (.not. associated(probe%channels)) .or. &
-          & (.not. associated(signals(i)%channels) )
+          & (.not. associated(signal%channels) )
         if ( .not. match ) match = all( (probe%channels .and. &
-          & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
+          & signal%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
           & .eqv. probe%channels )
       end if
       if ( match ) then
-        if ( present( matchFlags ) ) matchFlags(i) = .true.
-        if ( associated(signals(i)%channels) ) then
-          numChannelsMatch = count(signals(i)%channels)
+        if ( associated(signal%channels) ) then
+          matchSignalPair = count(signal%channels)
         else
-          numChannelsMatch = size( signals(i)%frequencies )
-        end if
-        if ( numChannelsMatch < bestMatch ) then
-          matchSignal = i
-          bestMatch = numChannelsMatch
+          matchSignalPair = size( signal%frequencies )
         end if
       end if
-      if ( present(noMatchFails) ) then
-        if ( noMatchFails .and. matchSignal == 0 ) then
-          if ( present(fromWhere) ) then
-            call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'No match for requested signal from ' // trim(fromWhere) )
-          else
-            call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'No match for requested signal' )
-          end if
+    end if
+    if ( .not. match .and. present(noMatchFails) ) then
+      if ( noMatchFails ) then
+        if ( present(fromWhere) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'No match for requested signal from ' // trim(fromWhere) )
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'No match for requested signal' )
         end if
       end if
-    end do
-  end function MatchSignal
+    end if
+  end function MatchSignalPair
 
   ! ----------------------------------------- AreSignalsSubset ----------
   integer function AreSignalsSuperset ( signals, probe, sideband, channel )
@@ -1664,6 +1715,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.75  2004/10/06 21:16:26  vsnyder
+! Add MatchSignalPair, use it for MatchSignals
+!
 ! Revision 2.74  2004/08/03 21:49:05  vsnyder
 ! Inching toward PFA
 !
