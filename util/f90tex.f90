@@ -276,4 +276,7 @@ contains
 
 end program F90TEX
 
-! $LOg: $
+! $Log$
+! Revision 1.1  2001/06/01 21:47:22 vsnyder
+! Initial commit
+!
