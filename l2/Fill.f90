@@ -2440,7 +2440,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     ! First check sanity
-    print*,'There'
     if ( .not. ValidateVectorQuantity ( quantity, &
       & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
       & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
@@ -3539,6 +3538,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.130  2002/06/18 20:00:36  livesey
+! Removed unwanted print
+!
 ! Revision 2.129  2002/06/14 16:40:00  livesey
 ! Orbital inclination can now be filled from l1b
 !
