@@ -1019,8 +1019,6 @@ contains ! =====     Public Procedures     =============================
         & vectorNameText='_Lmasked' ) 
       call ClearUnderMask ( Lmasked )
       
-      call Dump ( LMasked )
-
       ! Check the validity of the supplied vectors
       if ( covariance%m%row%vec%template%id /= &
         & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
@@ -2611,6 +2609,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.89  2001/10/18 23:07:40  livesey
+! Removed debug dump statement
+!
 ! Revision 2.88  2001/10/18 23:06:05  livesey
 ! Tidied up some bugs in transfer, must have been asleep or something!
 !
