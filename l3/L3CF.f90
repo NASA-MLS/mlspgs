@@ -74,7 +74,9 @@ MODULE L3CF
 
      ! Output section
 
-     INTEGER :: mcf				! PCF number for the MCF
+     CHARACTER (LEN=FileNameLen) :: mcfName	! MCF name
+
+     INTEGER :: mcfNum				! PCF number for the MCF
 
      CHARACTER (LEN=FileNameLen) :: fileTemplate	! file name from CF
 
@@ -123,9 +125,10 @@ CONTAINS
    END SUBROUTINE CalculateArray
 !-------------------------------
 
-!----------------------------------------------------------------------
-   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf)
-!----------------------------------------------------------------------
+!------------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, &
+                        logType)
+!------------------------------------------------------------------------
 ! Brief description of subroutine
 ! This subroutine checks the parser output and fills L3CFProd_T.
 
@@ -141,6 +144,8 @@ CONTAINS
 
       TYPE( L3CFProd_T ), POINTER  :: l3cf(:)
 
+      CHARACTER (LEN=*), INTENT(OUT) :: logType
+
 ! Parameters
 
 ! Functions
@@ -153,9 +158,9 @@ CONTAINS
       CHARACTER (LEN=10) :: l2Ver, l3Ver, label
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
-      CHARACTER (LEN=FileNameLen) :: match, mcfName
+      CHARACTER (LEN=FileNameLen) :: match
 
-      INTEGER :: err, i, iGlob, iLab, iMap, iOut, iVer, indx, j
+      INTEGER :: err, i, iGlob, iLab, iLog, iMap, iOut, iVer, indx, j
       INTEGER :: mlspcf_mcf, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
@@ -183,6 +188,13 @@ CONTAINS
       l3Ver = cf%Sections(iGlob)%Cells(iVer)%CharValue
       IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                                   'Output versions in the CF and PCF differ.')
+
+! Find/save the log type from the GlobalSettings section of the cf
+
+      iLog = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
+      IF (iLog == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                    &the CF for LogType.')
+      logType = cf%Sections(iGlob)%Cells(iLog)%CharValue
 
 ! Find the number of products for which L3 processing was requested
 
@@ -342,26 +354,26 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
 
-! Find the MCF file name
+! Find the MCF file name; save it in L3CFProd_T
 
        indx = LinearSearchStringArray( &
                           cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                               &keyword MCF in the Output section of the l3cf.')
-       mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+       l3cf(i)%mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
 ! Search for a match in the PCF
 
-       CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, &
+       CALL SearchPCFNames(l3cf(i)%mcfName, mlspcf_mcf_l3dm_start, &
                            mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
        IF (mlspcf_mcf == -1) THEN
-          msr = 'No match in the PCF for file ' // mcfName
+          msr = 'No match in the PCF for file ' // l3cf(i)%mcfName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
 
 ! Save the PCF number in L3CFProd_T
 
-       l3cf(i)%mcf = mlspcf_mcf
+       l3cf(i)%mcfNum = mlspcf_mcf
 
 ! Find the file template from Output; save it in L3CFProd_T
 
@@ -383,6 +395,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.6  2000/12/29 20:44:46  nakamura
+! Replaced USE of L3DMData with MLSL3Common; removed bpFlag, nGrids, quantities from L3CFProd_T.
+!
 ! Revision 1.5  2000/12/07 21:21:50  nakamura
 ! Changed negative return from SearchPCFNames to be a PCF number of -1.
 !
