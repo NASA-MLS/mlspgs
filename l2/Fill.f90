@@ -10,19 +10,20 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
-    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
-    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
+    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, F_ERROR, &
+    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS,F_ERROR, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
-    & F_MATRIX, F_METHOD, F_NOFINEGRID, F_PTANQUANTITY, F_QUANTITY, &
-    & F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MATRIX, F_MAXITERATIONS, &
+    & F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
+    & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, &
     & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
-  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_CHOLESKY, &
+  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_CHISQCHAN, &
+    & L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
@@ -196,6 +197,9 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: bndPressQty
     type (vectorValue_T), pointer :: colAbundQty
     type (vectorValue_T), pointer :: vmrQty
+    type (vectorValue_T), pointer :: measQty
+    type (vectorValue_T), pointer :: modelQty
+    type (vectorValue_T), pointer :: errorQty
 
     integer :: bndPressQtyIndex
     integer :: bndPressVctrIndex
@@ -279,6 +283,12 @@ contains ! =====     Public Procedures     =============================
     integer :: VGRIDINDEX               ! Index of sourceVGrid
     integer :: vmrQtyIndex
     integer :: vmrQtyVctrIndex
+    integer :: measQtyIndex
+    integer :: measVectorIndex
+    integer :: modelQtyIndex
+    integer :: modelVectorIndex
+    integer :: errorQtyIndex
+    integer :: errorVectorIndex
 
     ! Executable code
     timing = .false.
@@ -384,17 +394,79 @@ contains ! =====     Public Procedures     =============================
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_earthRadius ) ! For losGrid fill
+            earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
+            earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_error )   ! Only used for diagnostic special fills
+            fillMethod = l_special
+            errorVectorIndex = decoration(decoration(subtree(1,gson)))
+            errorQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_explicitValues ) ! For explicit fill
+            valuesNode=subtree(j,key)
+          case ( f_extinction ) ! For cloud extinction fill
+            if ( node_id(gson) == n_set_one ) then
+              extinction=.TRUE.
+            else
+              extinction = decoration(subtree(2,gson)) == l_true
+            end if
+          case ( f_geocAltitudeQuantity ) ! For hydrostatic
+            geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
+            geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_h2oQuantity ) ! For hydrostatic
+            h2oVectorIndex = decoration(decoration(subtree(1,gson)))
+            h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_integrationTime )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, badUnitsForIntegrationtime )
+            integrationTime = valueAsArray(1)
+          case ( f_interpolate ) ! For l2gp etc. fill
+            if ( node_id(gson) == n_set_one ) then
+              interpolate=.TRUE.
+            else
+              interpolate = decoration(subtree(2,gson)) == l_true
+            end if
+          case ( f_losQty ) ! For losGrid fill
+            losVectorIndex = decoration(decoration(subtree(1,gson)))
+            losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_maxIterations )      ! For hydrostatic fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
+              & call Announce_error ( key, badUnitsForMaxIterations )
+            maxIterations = valueAsArray(1)
+          case ( f_measurements )   ! Only used for diagnostic special fills
+            fillMethod = l_special
+            measVectorIndex = decoration(decoration(subtree(1,gson)))
+            measQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_method )   ! How are we going to fill it?
+            fillMethod = decoration(gson)
+          case ( f_model )   ! Only used for diagnostic special fills
+            fillMethod = l_special
+            modelVectorIndex = decoration(decoration(subtree(1,gson)))
+            modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_noFineGrid )      ! For cloud extinction fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
+              & call Announce_error ( key, badUnitsForMaxIterations )
+            noFineGrid = valueAsArray(1)
+          case ( f_PtanQuantity ) ! For losGrid fill
+            PtanVectorIndex = decoration(decoration(subtree(1,gson)))
+            PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_method )   ! How are we going to fill it?
-            fillMethod = decoration(gson)
+          case ( f_radianceQuantity )      ! For estimated noise
+            radianceVectorIndex = decoration(decoration(subtree(1,gson)))
+            radianceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_ratioQuantity )      ! For isotope ratio
+            ratioVectorIndex = decoration(decoration(subtree(1,gson)))
+            ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_refGPHQuantity ) ! For hydrostatic
+            refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
+            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_tngtECI )              ! For special fill of losVel
-            tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
-            tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -405,80 +477,30 @@ contains ! =====     Public Procedures     =============================
             l2auxIndex = decoration(decoration(gson))
           case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
             l2gpIndex=decoration(decoration(gson))
-          case ( f_temperatureQuantity ) ! For hydrostatic
-            temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
-            temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_h2oQuantity ) ! For hydrostatic
-            h2oVectorIndex = decoration(decoration(subtree(1,gson)))
-            h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_geocAltitudeQuantity ) ! For hydrostatic
-            geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
-            geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_ratioQuantity )      ! For isotope ratio
-            ratioVectorIndex = decoration(decoration(subtree(1,gson)))
-            ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_radianceQuantity )      ! For estimated noise
-            radianceVectorIndex = decoration(decoration(subtree(1,gson)))
-            radianceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_refGPHQuantity ) ! For hydrostatic
-            refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
-            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
-          case ( f_earthRadius ) ! For losGrid fill
-            earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
-            earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_losQty ) ! For losGrid fill
-            losVectorIndex = decoration(decoration(subtree(1,gson)))
-            losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_PtanQuantity ) ! For losGrid fill
-            PtanVectorIndex = decoration(decoration(subtree(1,gson)))
-            PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_explicitValues ) ! For explicit fill
-            valuesNode=subtree(j,key)
           case ( f_sourceGrid )
             gridIndex=decoration(decoration(gson))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
-          case ( f_vmrQuantity )     ! For special fill of columnAbundance
-            vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
-            vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_systemTemperature )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, badUnitsForSystemTemperature )
-            systemTemperature = valueAsArray(1)
-          case ( f_integrationTime )
-            call expr ( gson , unitAsArray, valueAsArray )
-            if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
-              call Announce_error ( key, badUnitsForIntegrationtime )
-            integrationTime = valueAsArray(1)
-          case ( f_maxIterations )      ! For hydrostatic fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
-            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
-              & call Announce_error ( key, badUnitsForMaxIterations )
-            maxIterations = valueAsArray(1)
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
             if ( node_id(gson) == n_set_one ) then
               spread=.TRUE.
             else
               spread = decoration(subtree(2,gson)) == l_true
             end if
-          case ( f_interpolate ) ! For l2gp etc. fill
-            if ( node_id(gson) == n_set_one ) then
-              interpolate=.TRUE.
-            else
-              interpolate = decoration(subtree(2,gson)) == l_true
-            end if
-          case ( f_extinction ) ! For cloud extinction fill
-            if ( node_id(gson) == n_set_one ) then
-              extinction=.TRUE.
-            else
-              extinction = decoration(subtree(2,gson)) == l_true
-            end if
-          case ( f_noFineGrid )      ! For cloud extinction fill
-            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
-            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
-              & call Announce_error ( key, badUnitsForMaxIterations )
-            noFineGrid = valueAsArray(1)
+          case ( f_systemTemperature )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, badUnitsForSystemTemperature )
+            systemTemperature = valueAsArray(1)
+          case ( f_tngtECI )              ! For special fill of losVel
+            tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
+            tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_temperatureQuantity ) ! For hydrostatic
+            temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
+            temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_vmrQuantity )     ! For special fill of columnAbundance
+            vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
+            vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           end select
         end do                  ! Loop over arguments to fill instruction
 
@@ -570,6 +592,48 @@ contains ! =====     Public Procedures     =============================
                 & vectors(vmrQtyVctrIndex), vmrQtyIndex)
               call FillColAbundance ( key, quantity, &
                 & bndPressQty, vmrQty )
+            endif
+          case ( l_chiSQChan )
+            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill chi^2 on channels'  )
+            else
+              measQty => GetVectorQtyByTemplateIndex( &
+                & vectors(measVectorIndex), measQtyIndex)
+              modelQty => GetVectorQtyByTemplateIndex( &
+                & vectors(modelVectorIndex), modelQtyIndex)
+              errorQty => GetVectorQtyByTemplateIndex( &
+                & vectors(errorVectorIndex), errorQtyIndex)
+              call FillChiSqChan ( key, quantity, &
+                & measQty, modelQty, errorQty )
+            endif
+          case ( l_chiSQMMaf )
+            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill chi^2 on MAFs'  )
+            else
+              measQty => GetVectorQtyByTemplateIndex( &
+                & vectors(measVectorIndex), measQtyIndex)
+              modelQty => GetVectorQtyByTemplateIndex( &
+                & vectors(modelVectorIndex), modelQtyIndex)
+              errorQty => GetVectorQtyByTemplateIndex( &
+                & vectors(errorVectorIndex), errorQtyIndex)
+              call FillChiSqMMaf ( key, quantity, &
+                & measQty, modelQty, errorQty )
+            endif
+          case ( l_chiSQMMif )
+            if ( .not. any(got( (/f_measurements, f_model, f_error/) )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill chi^2 on MIFs'  )
+            else
+              measQty => GetVectorQtyByTemplateIndex( &
+                & vectors(measVectorIndex), measQtyIndex)
+              modelQty => GetVectorQtyByTemplateIndex( &
+                & vectors(modelVectorIndex), modelQtyIndex)
+              errorQty => GetVectorQtyByTemplateIndex( &
+                & vectors(errorVectorIndex), errorQtyIndex)
+              call FillChiSqMMif ( key, quantity, &
+                & measQty, modelQty, errorQty )
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -941,6 +1005,54 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
   end subroutine FillLOSVelocity
+
+  ! ------------------------------------------- FillChiSqChan ---
+  subroutine FillChiSqChan ( key, qty, measQty, modelQty, errorQty, &
+  & firstInstance, lastInstance )
+    ! A special fill of chi squared 
+    ! broken out according to channels
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) ::    modelQty
+    type (VectorValue_T), intent(in) ::    measQty
+    type (VectorValue_T), intent(in) ::    errorQty
+    integer, intent(in), optional ::       firstInstance, lastInstance
+    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    ! is to be stored in qty
+
+  end subroutine FillChiSqChan
+
+  ! ------------------------------------------- FillChiSqMMaf ---
+  subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, errorQty, &
+  & firstInstance, lastInstance )
+    ! A special fill of chi squared 
+    ! broken out according to major frames
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) ::    modelQty
+    type (VectorValue_T), intent(in) ::    measQty
+    type (VectorValue_T), intent(in) ::    errorQty
+    integer, intent(in), optional ::       firstInstance, lastInstance
+    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    ! is to be stored in the qty
+
+  end subroutine FillChiSqMMaf
+
+  ! ------------------------------------------- FillChiSqMMif ---
+  subroutine FillChiSqMMif ( key, qty, measQty, modelQty, errorQty, &
+  & firstInstance, lastInstance )
+    ! A special fill of chi squared 
+    ! broken out according to channels
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) ::    modelQty
+    type (VectorValue_T), intent(in) ::    measQty
+    type (VectorValue_T), intent(in) ::    errorQty
+    integer, intent(in), optional ::       firstInstance, lastInstance
+    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    ! is to be stored in the qty
+
+  end subroutine FillChiSqMMif
 
   ! ------------------------------------------- FillColAbundance ---
   subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
@@ -1766,6 +1878,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.71  2001/09/14 23:34:13  pwagner
+! Now should allow special fill of chi^2..
+!
 ! Revision 2.70  2001/08/03 23:13:52  pwagner
 ! Began testing; at least now exits normally again
 !
