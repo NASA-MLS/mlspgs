@@ -6,8 +6,8 @@ module SPECTRO_DERIVATIVE_M
   use GET_DRAD_NOTDER_M, only: GET_DRAD_NOTDER
   use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
   use MLSCommon, only: I4, R8
-  use PATH_ENTITIES_M, only: PATH_VECTOR,PATH_DERIVATIVE,PATH_INT_VECTOR_2D
-  use PFA_DB_DELTA_M, only: PFA_DB_DELTA
+  use PATH_ENTITIES_M, only: PATH_VECTOR,PATH_DERIVATIVE
+  use SPECTRO_DELTA_INTEGRAL_M, only: SPECTRO_DELTA_INTEGRAL
   implicit NONE
   private
   public :: SPECTRO_DERIVATIVE
@@ -23,7 +23,7 @@ contains
  &           DHDZ_PATH,N_lvls,ref_corr,spsfunc_s,pfa_dbeta_s,    &
  &           tau,t_script,s_np,s_nz,ilo,ihi,spectro,frq_i,elvar, &
  &           midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,midval_delta, &
- &           Sps_zeta_loop, Sps_phi_loop, k_spect,ier)
+ &           k_spect,ier)
 !
     Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, ILO,   &
    &                           IHI, S_NP, S_NZ, NO_ELE, frq_i
@@ -31,7 +31,6 @@ contains
     Integer(i4), intent(in) :: no_midval_ndx,no_gl_ndx
     Integer(i4), intent(in) :: midval_ndx(:,:), gl_ndx(:,:)
 !
-    Type(path_int_vector_2d), intent(in) :: Sps_zeta_loop,Sps_phi_loop
     Type(path_vector), intent(in) :: z_path, h_path, phi_path, dhdz_path
 
     Type(ELLIPSE), INTENT(IN OUT) :: elvar
@@ -51,19 +50,30 @@ contains
     Real(r8) :: r, delta_s(2*(N_lvls+1))
     Real(r8) :: zeta_basis(s_nz), phi_basis(s_np)
 !
+    Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+!
     phi_basis(1:s_np)  = REAL(spectro%phi_basis(1:s_np),r8)
     zeta_basis(1:s_nz) = REAL(spectro%zeta_basis(1:s_nz),r8)
+!
+    ALLOCATE(Integrand(no_ele), STAT=ier)
+    IF(ier /= 0) THEN
+      Ier = 1
+      Print *,'** Error: ALLOCATION error in SPECTRO_DERIVATIVE ..'
+      Return
+    endif
+!
+!  Define the integrand array:
+!
+    integrand(1:no_ele) = pfa_dbeta_s(1:no_ele) * spsfunc_s(1:no_ele)
 !
     do iz = 1, s_nz
 !
       do ip = 1, s_np
 !
-        Call PFA_DB_DELTA (mid, brkpt, no_ele, z_path, h_path, phi_path, &
- &           dhdz_path, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
- &           zeta_basis, phi_basis, s_nz, s_np, iz, ip, elvar,           &
- &           midval_delta, midval_ndx, no_midval_ndx, gl_ndx, no_gl_ndx, &
- &           Sps_zeta_loop, Sps_phi_loop, delta_s, Ier)
-        if (Ier /= 0) Return
+        Call spectro_delta_integral(mid, brkpt, no_ele, z_path, h_path, &
+          &  phi_path,dhdz_path,N_lvls,ref_corr,zeta_basis,phi_basis,   &
+          &  s_nz,s_np,iz,ip,integrand,elvar,midval_ndx,no_midval_ndx,  &
+          &  gl_ndx,no_gl_ndx,midval_delta,delta_s)
 !
 ! Now assemble the spectral derivatives for this frequency:
 !
@@ -73,11 +83,16 @@ contains
       end do                   ! ip loop
 !
     end do                     ! iz loop
+
+    DEALLOCATE(Integrand, STAT=iz)
 !
     Return
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.11  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.10  2001/06/07 23:39:32  pwagner
 ! Added Copyright statement
 !

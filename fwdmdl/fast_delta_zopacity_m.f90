@@ -4,8 +4,8 @@
 module FAST_DELTA_ZOPACITY_M
   use MLSCommon, only: I4, R8
   use ELLIPSE_M, only: ELLIPSE
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_INT_VECTOR_2D
-  use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
+  use RAD_DELTA_INTEGRAL_M, only: RAD_DELTA_INTEGRAL
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   implicit NONE
   private
   public :: FAST_DELTA_ZOPACITY
@@ -22,10 +22,10 @@ contains
 !
 !  ** NOTE: This routine integrate in ZETA Space !
 !
-  Subroutine FAST_DELTA_ZOPACITY(mid,brkpt,no_ele,z_path,h_path,phi_path,&
+  Subroutine FAST_DELTA_ZOPACITY(mid,brkpt,no_ele,z_path,h_path,     &
  &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr, &
  &           elvar,midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,        &
- &           Sps_zeta_loop,Sps_phi_loop,midval_delta,del_opacity,Ier)
+ &           midval_delta,del_opacity,Ier)
 !
     Integer(i4), intent(in) :: N_SPS, N_LVLS, MID, BRKPT, NO_ELE
     Integer(i4), intent(in) :: midval_ndx(:,:), no_midval_ndx
@@ -42,28 +42,19 @@ contains
 
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 
-    Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, DHDZ_PATH
+    Type(path_vector), intent(in) :: Z_PATH, H_PATH, DHDZ_PATH
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
-
-    Type(path_int_vector_2d), intent(in) :: SPS_PHI_LOOP(:), &
-                                            SPS_ZETA_LOOP(:)
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: I, J, K
-!
-    Integer(i4), SAVE :: NZ=1, NP=1, IZ=1, IP=1
-!
-    Real(r8), SAVE :: FQ = 1.0
-    Real(r8), SAVE, DIMENSION(2) :: Z_BASIS = (/ -5.0, 5.0/)
-    Real(r8), SAVE, DIMENSION(2) :: PHI_BASIS = (/-50.0, 50.0/)
+    Integer(i4) :: I, J
 !
     Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
 !
 ! -----     Executable statements     ----------------------------------
 !
     Ier = 0
-    DEALLOCATE(Integrand, STAT=k)
+    DEALLOCATE(Integrand, STAT=i)
 !
     ALLOCATE(Integrand(no_ele), STAT=ier)
     IF(ier /= 0) THEN
@@ -80,18 +71,10 @@ contains
      &                      beta_path(j)%values(1:no_ele)
     end do
 !
-!  Go into the generic_delta with a ZERO value for: no_midval_ndx
-!  (Since we are going to compute the del_opacity for those outside
-!   the generic_delta routine ..).
+!  Integrate:
 !
-!  Also, set ZERO for the: check_sps_loop   variable since the
-!  Sps_zeta/phi_loop variables are not being used this time.
-!
-    Call generic_delta_integral(mid, brkpt, no_ele, z_path, h_path,   &
- &         phi_path, dhdz_path, N_lvls, ref_corr, integrand, z_basis, &
- &         phi_basis, nz, np, iz, ip, fq, elvar, midval_delta(1:,1),  &
- &         midval_ndx, 0, gl_ndx, no_gl_ndx, Sps_zeta_loop(1),        &
- &         Sps_phi_loop(1), 0, del_opacity, Ier)
+    Call rad_delta_integral(mid,brkpt,no_ele,z_path,h_path,dhdz_path,   &
+      &  N_lvls,ref_corr,integrand,elvar,gl_ndx,no_gl_ndx,del_opacity,Ier)
     IF(ier /= 0) goto 99
 !
 ! Now complete the del_opacity for the case of midval delta
@@ -103,14 +86,17 @@ contains
       end do
     endif
 
- 99  DEALLOCATE(Integrand, STAT=k)
+ 99  DEALLOCATE(Integrand, STAT=i)
 
     Return
-
+!
   End Subroutine FAST_DELTA_ZOPACITY
 !
-end module FAST_DELTA_ZOPACITY_M
+End module FAST_DELTA_ZOPACITY_M
 ! $Log$
+! Revision 1.1  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.6  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

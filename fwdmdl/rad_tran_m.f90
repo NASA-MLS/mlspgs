@@ -6,8 +6,7 @@ module RAD_TRAN_M
   use MLSCommon, only: I4, R8
   use EARTH_INTERSECTION_M, only: EARTH_INTERSECTION
   use ELLIPSE_M, only: ELLIPSE
-  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
-                             PATH_INT_VECTOR_2D
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA
   use DO_T_SCRIPT_M, only: DO_T_SCRIPT
   use FAST_DELTA_ZOPACITY_M, only: FAST_DELTA_ZOPACITY
   use SCRT_DN_M, only: SCRT_DN
@@ -25,10 +24,9 @@ contains
 ! This is the radiative transfer model, radiances only !
 
   Subroutine Rad_Tran(elvar,Frq,N_lvls,h_tan,n_sps,z_path,h_path,t_path, &
-    &        phi_path,dHdz_path,earth_ref,beta_path,spsfunc_path,ref_corr, &
+    &        dHdz_path,earth_ref,beta_path,spsfunc_path,ref_corr, &
     &        s_temp,brkpt,no_ele,mid,ilo,ihi,t_script,tau,midval_ndx,  &
-    &        no_midval_ndx,gl_ndx,no_gl_ndx,midval_delta,Sps_zeta_loop, &
-    &        Sps_phi_loop,Rad,Ier)
+    &        no_midval_ndx,gl_ndx,no_gl_ndx,midval_delta,Rad,Ier)
 !
     Integer(i4), intent(in) :: N_LVLS, N_SPS, BRKPT, NO_ELE
     Integer(i4), intent(in) :: gl_ndx(:,:),midval_ndx(:,:)
@@ -45,13 +43,9 @@ contains
 
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
-    Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
-                                  &  DHDZ_PATH
+    Type(path_vector), intent(in) :: Z_PATH,T_PATH,H_PATH,DHDZ_PATH
 
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
-
-    Type(path_int_vector_2d), intent(in) :: SPS_PHI_LOOP(:), &
-                                            SPS_ZETA_LOOP(:)
 
     Real(r8), intent(out) :: RAD
     Real(r8), intent(out) :: T_SCRIPT(:), TAU(:)
@@ -92,10 +86,10 @@ contains
     tau(1:) = 0.0
     del_opacity(1:) = 0.0
 !
-    Call FAST_DELTA_ZOPACITY(mid,brkpt,no_ele,z_path,h_path,phi_path, &
-   &     beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr,elvar, &
-   &     midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop, &
-   &     Sps_phi_loop,midval_delta,del_opacity,Ier)
+    Call FAST_DELTA_ZOPACITY(mid,brkpt,no_ele,z_path,h_path,     &
+ &       beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr, &
+ &       elvar,midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,        &
+ &       midval_delta,del_opacity,Ier)
     if (Ier /= 0) Return
 !
     Call Scrt_dn(t_script, N_lvls, cse, del_opacity, tau, Rad, mid, &
@@ -106,6 +100,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.10  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.9  2001/06/07 23:39:31  pwagner
 ! Added Copyright statement
 !

@@ -875,13 +875,12 @@ contains ! ================================ FullForwardModel routine ======
 !
             Call Rad_Tran ( ifm%elvar(maf), Frq,                         &
               &  fwdModelConf%integrationGrid%noSurfs,h_tan,noSpecies,   &
-              &  ifm%z_path(k,maf),ifm%h_path(k,maf),&
-              &  ifm%t_path(k,maf),ifm%phi_path(k,maf),                  &
+              &  ifm%z_path(k,maf),ifm%h_path(k,maf),ifm%t_path(k,maf),  &
               &  ifm%dHdz_path(k,maf),earthRefl%values(1,1),             &
               &  beta_path(:,frq_i),spsfunc_path(:,k),ref_corr(:,k),     &
               &  spaceRadiance%values(1,1),brkpt,no_ele,mid,ilo,ihi,     &
               &  t_script,tau,midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx, &
-              &  midval_delta,Sps_zeta_loop(:,k),Sps_phi_loop(:,k),Rad,Ier)
+              &  midval_delta,Rad,Ier)
             if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
               & 'rad_tran failed' )
 
@@ -1293,6 +1292,9 @@ contains ! ================================ FullForwardModel routine ======
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 1.4  2001/06/22 02:35:08  zvi
+! Fixing some memory leaks..
+!
 ! Revision 1.3  2001/06/21 15:05:42  livesey
 ! Gets tolerance from fwdModelConf
 !

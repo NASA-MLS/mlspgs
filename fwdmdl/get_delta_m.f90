@@ -112,7 +112,7 @@ contains
          &     f%template%surfs(:,1),Deg2Rad*f%template%phi(1,:),   &
          &     nco,npf,iz,ip,q,elvar,midval_delta(1:,j),midval_ndx, &
          &     no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop(j),     &
-         &     Sps_phi_loop(j),1,delta(1:,iz,ip,j),Ier)
+         &     Sps_phi_loop(j),delta(1:,iz,ip,j),Ier)
           IF(ier /= 0) goto 99
 !
         end do
@@ -129,6 +129,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.10  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.9  2001/05/03 22:19:36  vsnyder
 ! Insert copyright notice, some cosmetic changes
 !

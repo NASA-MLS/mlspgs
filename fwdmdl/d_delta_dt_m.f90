@@ -52,7 +52,7 @@ contains
     Real(r8) :: TP_GL(Ng,20) = 0.0, TP_ZS(20) = 0.0
     Real(r8) :: BETAxF_GL(Ng,20) = 0.0, BETAxF_ZS(20) = 0.0
 
-    Real(r8) :: H_GL(Ng), PHI_GL(Ng), T_GL(Ng), Z_GL(Ng)
+    Real(r8) :: H_GL(Ng), T_GL(Ng), Z_GL(Ng)
     Real(r8) :: DHDT_GL(Ng), GW_DHDZ(Ng), VETAP(Ng)
 
     Real(r8) :: ETANP_SING, DHDTH, DHDTL, HH, HL, HD, HTAN, HTAN2, &
@@ -144,6 +144,7 @@ contains
 ! Now, do the GL deltas:
 ! First, do the right hand side of the ray path:
 !
+    k = 0
     elvar%ps = -1.0
 !
     do j = 1, no_gl_ndx
@@ -180,6 +181,7 @@ contains
       ds = abs(sa-sb)
       if (ds < 0.05) EXIT
 !
+      k = j
       rc = ref_corr(h_i+1)
 !
       call define_gl_grid_entities
@@ -191,7 +193,6 @@ contains
 !
       call gauss_legendre
 !
-      k = j
       call add_singularities_back_in
 !
     end do
@@ -270,26 +271,26 @@ contains
 !
 ! Define the various GL grid entities for this sub-interval:
 !
-      integer :: I, J
-      real(r8) :: AYM, r
+      integer :: i
+      real(r8) :: AYM,phi,r,q
 !
       aym = 0.5_r8 * abs(zh - zl)
+      z_GL(1:Ng) = z_path%values(mp+1:mp+Ng)
+      t_GL(1:Ng) = t_path%values(mp+1:mp+Ng)
+      dhdt_GL(1:Ng) = dh_dt_path(mp+1:mp+Ng)
+      h_GL(1:Ng) = h_path%values(mp+1:mp+Ng) + elvar%RoC
+      Gw_dHdZ(1:Ng) = Gw(1:Ng) * dhdz_path%values(mp+1:mp+Ng) * aym
 !
-      j = mp
       do i = 1, Ng
-        j = j + 1
-        z_GL(i) = z_path%values(j)
-        t_GL(i) = t_path%values(j)
-        h_GL(i) = h_path%values(j)
-        phi_GL(i) = phi_path%values(j)
-        Gw_dHdZ(i) = Gw(i) * dhdz_path%values(j) * aym
-        dhdt_GL(i) = dh_dt_path(j)
-        Call get_one_eta(phi_GL(i),t_phi_basis,no_phi_t,ip,r)
-        vetap(i) = r
+        phi = phi_path%values(mp+i)
+        Call get_one_eta(phi,t_phi_basis,no_phi_t,ip,r)
+        Call get_one_eta(z_GL(i),t_z_basis,no_t,iz,q)
+        vetap(i) = r * q
       end do
-    end subroutine DEFINE_GL_GRID_ENTITIES
+
+    End subroutine DEFINE_GL_GRID_ENTITIES
 ! ----------------------------     COMPUTE_BETA_AND_TEMP_POWER     -----
-    subroutine COMPUTE_BETA_AND_TEMP_POWER ( FS, ZS )
+    Subroutine COMPUTE_BETA_AND_TEMP_POWER ( FS, ZS )
 !
       real(r8), intent(in) :: FS, ZS
 !
@@ -301,8 +302,7 @@ contains
 !
       do j = 1, n_sps
         tp_zs(j) = beta_path(j)%t_power(n)
-        betaxf_zs(j) = beta_path(j)%values(n) *  &
-                   &   spsfunc_path(j)%values(n)
+        betaxf_zs(j) = beta_path(j)%values(n) * spsfunc_path(j)%values(n)
         tp_GL(1:Ng,j) = beta_path(j)%t_power(mp+1:mp+Ng)
         betaxf_GL(1:Ng,j) = beta_path(j)%values(mp+1:mp+Ng) *  &
                         &   spsfunc_path(j)%values(mp+1:mp+Ng)
@@ -311,9 +311,8 @@ contains
       etanp_sing = 0.0
       Call get_one_eta(zs,t_z_basis,no_t,iz,etaz)
       if (etaz > 0.0) then
-        etanp_sing = etaz
         Call get_one_eta(fs,t_phi_basis,no_phi_t,ip,etap)
-        etanp_sing = etanp_sing * etap
+        etanp_sing = etaz * etap
       end if
 !
     end subroutine COMPUTE_BETA_AND_TEMP_POWER
@@ -326,23 +325,18 @@ contains
 ! factors':
 !
       Integer :: I, J
-      Real(r8) :: DS, ETANP, ETAZ, FV1, FV2, HD, HD2, HYD, Q, &
-     &            PHI,R,RZ
+      Real(r8) :: DS, ETANP, ETAZ, FV1, FV2, HD, HD2, HYD, Q, R
 
       sum1 = 0.0
       sum2 = 0.0
 !
       do i = 1, Ng
 !
-        rz = z_GL(i)
-        phi = phi_GL(i)
-!
-        Call get_one_eta(rz,t_z_basis,no_t,iz,etaz)
-        etanp = (etaz * vetap(i)) / t_GL(i)
+        etanp = vetap(i) / t_GL(i)
 !
 ! Compute the "Hydrostatic" contribution to the derivative:
 !
-        hd = h_GL(i) + elvar%RoC
+        hd = h_GL(i)
         hd2 = hd * hd
         hyd = dhdt_GL(i) * (2.0*hd2 - 3.0*htan2) + hd*htxdht
         r = hd2 - htan2
@@ -410,7 +404,7 @@ contains
       q = sum1 + sing1 * abs(sb-sa)
       r = sum2 + sing2 * dsdt * elvar%ps
 !
-      d_delta_dtnp(h_i) = (q + r) * rc       ! for (in,ip)
+      d_delta_dtnp(h_i) = (q + r) * rc       ! for (iz,ip)
 !
     end subroutine ADD_SINGULARITIES_BACK_IN
 !
@@ -418,6 +412,9 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.10  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.9  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !

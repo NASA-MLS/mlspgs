@@ -12,7 +12,6 @@ module RAD_TRAN_WD_M
                              PATH_INT_VECTOR_2D
   use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
   use GET_DELTA_M, only: GET_DELTA
-  use SPECTRO_DERIVATIVE_M, only: SPECTRO_DERIVATIVE
   use TEMPERATURE_DERIV_M, only: TEMPERATURE_DERIV
   use ZATMOS_DERIV_M, only: ZATMOS_DERIV
   implicit NONE
@@ -129,6 +128,9 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn,     &
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.14  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.13  2001/06/07 23:39:31  pwagner
 ! Added Copyright statement
 !

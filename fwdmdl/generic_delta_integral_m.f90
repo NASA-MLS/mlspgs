@@ -27,10 +27,10 @@ contains
  &           phi_path, dhdz_path, N_lvls, ref_corr, integrand, s_z_basis, &
  &           s_phi_basis,s_nz,s_np,iz,ip,fq,elvar,midval_delta,midval_ndx,&
  &           no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,   &
- &           check_sps_loop,delta,Ier)
+ &           delta,Ier)
 !
     Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, NO_ELE, S_NZ, S_NP, &
-   &             IZ, IP, no_midval_ndx,no_gl_ndx, check_sps_loop
+   &             IZ, IP, no_midval_ndx,no_gl_ndx
 !
    Integer(i4), intent(in) :: midval_ndx(:,:),gl_ndx(:,:)
 !
@@ -49,12 +49,12 @@ contains
 
     Integer(i4), intent(out) :: IER
 
-    Integer(i4) :: J, K, L, MP, NGP1, H_I, HEND, NZP
+    Integer(i4) :: J, K, L, MP, NGP1, H_I, HEND
 
-    Real(r8) :: H_GL(Ng), GW_DHDZ(Ng), INTEGRAND_GL(Ng), VETA(Ng)
+    Real(r8) :: H_GL(Ng),GW_DHDZ(Ng),INTEGRAND_GL(Ng),DS_DH(Ng),VETA(Ng)
 
-    Real(r8) :: INTEGRAND_ZS, ETANP_SING, DS_DH, ETAP, ETAZ, FS, ZH, ZL, &
-   &            ZS, HD, HH, HL, HTAN2, PH, PL, RC, SA, SB, SING, DS
+    Real(r8) :: ETAP, ETAZ, ZH, ZL, HD, HH, HL, HTAN2, PH, PL, RC, SA, &
+             &  SB, SING, DS
 !
     Ier = 0
 !
@@ -83,7 +83,6 @@ contains
     Ngp1 = Ng + 1
     elvar%ps = -1.0
     htan2 = elvar%ht2
-    nzp = s_nz * s_np * check_sps_loop
 !
     do j = 1, no_gl_ndx
 !
@@ -93,12 +92,10 @@ contains
       h_i = gl_ndx(j,1)
       if(h_i >= mid) EXIT
 !
-      if(nzp > 1) then
-        if(Sps_phi_loop%values(h_i,1) > ip  .or. &
-       &   Sps_phi_loop%values(h_i,2) < ip  .or. &
-       &   Sps_zeta_loop%values(h_i,1) > iz .or. &
-       &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
-      endif
+      if(Sps_phi_loop%values(h_i,1) > ip  .or. &
+     &   Sps_phi_loop%values(h_i,2) < ip  .or. &
+     &   Sps_zeta_loop%values(h_i,1) > iz .or. &
+     &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
 !
       zl = z_path%values(mp)
       hl = h_path%values(mp)
@@ -127,19 +124,12 @@ contains
 !  (This is done in order to eliminate the singularities. We call these
 !  the 'singularities factors')
 !
-      zs = zh
-      fs = ph
-      etanp_sing = 0.0
-      Call get_one_eta(zs,s_z_basis,s_nz,iz,etaz)
+      sing = 0.0
+      Call get_one_eta(zh,s_z_basis,s_nz,iz,etaz)
       if (etaz > 0.0) then
-        Call get_one_eta(fs,s_phi_basis,s_np,ip,etap)
-        etanp_sing = etaz * etap
+        Call get_one_eta(ph,s_phi_basis,s_np,ip,etap)
+        sing = etaz * etap * integrand(l)
       end if
-!
-! Define integrand on the Gauss-Legendre grid for the current sub-interval:
-!
-      integrand_zs = integrand(l)
-      sing = integrand_zs * etanp_sing
 !
 ! Define integrand on the Gauss-Legendre grid for the current sub-interval:
 !
@@ -173,12 +163,10 @@ contains
       h_i = gl_ndx(j,1)
       if(h_i >= hend) Return
 !
-      if(nzp > 1) then
-        if(Sps_phi_loop%values(h_i,1) > ip  .or. &
-       &   Sps_phi_loop%values(h_i,2) < ip  .or. &
-       &   Sps_zeta_loop%values(h_i,1) > iz .or. &
-       &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
-      endif
+      if(Sps_phi_loop%values(h_i,1) > ip  .or. &
+     &   Sps_phi_loop%values(h_i,2) < ip  .or. &
+     &   Sps_zeta_loop%values(h_i,1) > iz .or. &
+     &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
 !
       zl = z_path%values(mp)
       hl = h_path%values(mp)
@@ -205,17 +193,12 @@ contains
 !  (This is done in order to eliminate the singularities. We call these
 !  the 'singularities factors')
 !
-      zs = zl
-      fs = pl
-      etanp_sing = 0.0
-      Call get_one_eta(zs,s_z_basis,s_nz,iz,etaz)
+      sing = 0.0
+      Call get_one_eta(zl,s_z_basis,s_nz,iz,etaz)
       if (etaz > 0.0) then
-        Call get_one_eta(fs,s_phi_basis,s_np,ip,etap)
-        etanp_sing = etaz * etap
+        Call get_one_eta(pl,s_phi_basis,s_np,ip,etap)
+        sing = etaz * etap * integrand(mp)
       end if
-!
-      integrand_zs = integrand(mp)
-      sing = integrand_zs * etanp_sing
 !
 ! Define integrand on the Gauss-Legendre grid for the current sub-interval:
 !
@@ -233,62 +216,51 @@ contains
     Subroutine DEFINE_GL_GRID_ENTITIES
 !
     Integer :: i, j
-    Real(r8) :: aym, q, v, z, phi
+    Real(r8) :: aym, q, v
 !
 ! Define the various GL grid entities for this sub-interval:
 !
       aym = 0.5 * abs(zh - zl)
+      h_GL(1:Ng) = h_path%values(mp+1:mp+Ng) + elvar%RoC
+      DS_DH(1:Ng) = h_GL(1:Ng) / Sqrt(h_GL(1:Ng)**2-htan2)
+      Gw_dHdZ(1:Ng) = Gw(1:Ng) * dhdz_path%values(mp+1:mp+Ng) * aym
 !
       do i = 1, Ng
         j = mp + i
-        z = z_path%values(j)
-        phi = phi_path%values(j)
-        h_GL(i) = h_path%values(j)
-        Gw_dHdZ(i) = Gw(i) * dhdz_path%values(j) * aym
-        Call get_one_eta(z,s_z_basis,s_nz,iz,v)
-        Call get_one_eta(phi,s_phi_basis,s_np,ip,q)
+        Call get_one_eta(z_path%values(j),s_z_basis,s_nz,iz,v)
+        Call get_one_eta(phi_path%values(j),s_phi_basis,s_np,ip,q)
         veta(i) = v * q
       end do
+
     End subroutine DEFINE_GL_GRID_ENTITIES
 ! -----------------------------------------     GAUSS_LEGENDRE     -----
     Subroutine GAUSS_LEGENDRE
 !
-    Integer :: i
-    Real(r8) :: Sum, fv, q
+    Real(r8) :: fv, q
 !
 ! Now compute the Gauss-Legendre quadrature, subtructing the 'singularities
 ! factors':
 !
-      Sum = 0.0
-!
-      do i = 1, Ng
-!
-! Compute the "Hydrostatic" contribution to the derivative:
-!
-        hd = h_GL(i) + elvar%RoC
-        ds_dh = hd / Sqrt(hd*hd-htan2)
-!
-        q = integrand_GL(i) * veta(i)
-!
-! The final integrand:
-!
-        Sum = Sum + (q - sing) * ds_dh * Gw_dHdz(i)
-!
-      end do
+      q = SUM((integrand_GL(1:)*veta(1:)-sing)*DS_DH(1:)*Gw_dHdz(1:))
 !
 ! Now add the 'singularities factors' back in, multiplied by their
 ! respective analytical integral:
 !
-      fv = Sum + sing * ds
+      fv = q + sing * ds
 !
 ! And Finally - define the delta:
 !
       delta(h_i) = fv * rc * fq             ! for (iz,ip)
 !
     End subroutine GAUSS_LEGENDRE
+
   End Subroutine generic_delta_integral
+
 End module GENERIC_DELTA_INTEGRAL_M
 ! $Log$
+! Revision 1.7  2001/06/22 04:05:28  zvi
+! Fixing indexing error
+!
 ! Revision 1.6  2001/06/21 13:07:08  zvi
 ! Speed enhancement MAJOR update
 !
