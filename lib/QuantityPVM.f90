@@ -2,7 +2,6 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module QuantityPVM                      ! Send and receive vector quantities using pvm
-
   ! This module provides functionality for sending and receiving vectors
   ! through a pvm connection.
 
@@ -85,10 +84,7 @@ contains ! ================================== Module procedures ============
 
     call PVMIDLPack ( (/ q%template%noInstancesLowerOverlap, &
       & q%template%noInstancesUpperOverlap, q%template%sideband, &
-      & q%template%instrumentModule, q%template%radiometer, &
-      & q%template%quantityType, q%template%unit, q%template%frequencyCoordinate, &
-      & q%template%molecule, q%template%verticalCoordinate,&
-      & q%template%signal, q%template%name /), info )
+      & q%template%instrumentModule, q%template%radiometer /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
 
     ! Now pack some strings
@@ -97,10 +93,14 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantityType" )
     call PVMPackLitIndex ( q%template%verticalCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
-    call PVMPackLitIndex ( q%template%unit, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
     call PVMPackLitIndex ( q%template%frequencyCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
+    call PVMPackLitIndex ( q%template%unit, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
+    call PVMPackLitIndex ( q%template%molecule, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
+    call PVMPackStringIndex ( q%template%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing name" )
 
     ! Pack signal as a string
     if ( q%template%signal /= 0 ) then
@@ -238,7 +238,7 @@ contains ! ================================== Module procedures ============
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     integer :: I4(4)                    ! Unpacked stuff
-    integer :: I12(12)                  ! Unpacked stuff
+    integer :: I5(5)                    ! Unpacked stuff
     logical :: L2(2)                    ! Unpacked stuff
     logical :: L6(6)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
@@ -280,42 +280,28 @@ contains ! ================================== Module procedures ============
       & majorFrame   = l6(5) )
     qt%logBasis = l6(6)
 
-    call PVMIDLUnPack ( i12, info )
+    call PVMIDLUnPack ( i5, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking misc quantity stuff" )
-    qt%noInstancesLowerOverlap = i12(1)
-    qt%noInstancesUpperOverlap = i12(2)
-    qt%sideband                = i12(3)
-    qt%instrumentModule        = i12(4)
-    qt%radiometer              = i12(5)
-    qt%quantityType            = i12(6)
-    qt%unit                    = i12(7)
-    qt%frequencyCoordinate     = i12(8)
-    qt%molecule                = i12(9)
-    qt%verticalCoordinate      = i12(10)
-    qt%signal                  = i12(11)
-    qt%name                    = i12(12)
+    qt%noInstancesLowerOverlap = i5(1)
+    qt%noInstancesUpperOverlap = i5(2)
+    qt%sideband                = i5(3)
+    qt%instrumentModule        = i5(4)
+    qt%radiometer              = i5(5)
 
-    ! Now unpack some strings
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking quantityType" )
-    ! Just ignore it, we got it as an integer already
-
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking verticalCoordinate" )
-    ! Just ignore it, we got it as an integer already
-
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking unit" )
-    ! Just ignore it, we got it as an integer already
-
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking frequencyCoordiante" )
-    ! Just ignore it, we got it as an integer already
+    ! Now unpack literals etc.
+    call PVMUnpackLitIndex ( qt%quantityType, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking quantityType" )
+    call PVMUnpackLitIndex ( qt%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking verticalCoordinate" )
+    call PVMUnpackLitIndex ( qt%frequencyCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking frequencyCoordiante" )
+    call PVMUnpackLitIndex ( qt%unit, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking unit" )
+    call PVMUnpackLitIndex ( qt%molecule, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking molecule" )
+    call PVMUnpackStringIndex ( qt%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking name" )
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
@@ -445,10 +431,17 @@ contains ! ================================== Module procedures ============
     endif
 
     ! Skip the mask for the moment.
-    if ( .not. noMask .and. present(mask) ) then
-      call CreateMaskArray ( mask, values )
-      call PVMIDLUnpack ( mask, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
+    if ( present(mask) ) then
+      nullify ( mask )
+      if ( .not. noMask ) then
+        call CreateMaskArray ( mask, values )
+        call PVMIDLUnpack ( mask, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
+      endif
+    else
+      if ( .not. noMask ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Mask sent but no place to put it' )
     end if
 
   end subroutine PVMReceiveQuantity
@@ -460,6 +453,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.15  2003/05/13 04:46:55  livesey
+! Changed some integer packing to strings
+!
 ! Revision 2.14  2002/11/27 00:24:01  livesey
 ! Better handling of major frame quantities
 !
