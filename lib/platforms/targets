@@ -51,5 +51,9 @@ tar:
 L1BData.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L1BData.f90
 L2GPData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90# $Log$
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90
+
 # $Log$
+# Revision 1.1  2000/10/18 22:09:54  pwagner
+# First commit
+#
