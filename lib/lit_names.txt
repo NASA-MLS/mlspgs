@@ -61,6 +61,7 @@ emls
 
 false
 frequency
+full
 
 gauss
 geodAltitude
@@ -76,6 +77,7 @@ heightOffset
 hours
 hPa
 Hz
+hybrid
 
 IceDensity
 intermediatefrequency
@@ -93,6 +95,7 @@ km
 
 latitude
 limbSidebandFraction
+linear
 linewidth
 logp
 LOSTransFunc
@@ -182,6 +185,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.25  2003/07/15 22:09:05  livesey
+# Moved in forward model types from l2
+#
 # Revision 2.24  2003/07/07 23:45:46  pwagner
 # Added grid, hdf, hdfeos, and swath
 #
