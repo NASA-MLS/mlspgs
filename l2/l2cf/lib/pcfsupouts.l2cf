@@ -1,0 +1,24 @@
+!divert(-1)
+# You are free to change the following if you wish to 
+# put the support output files somewhere other than OUTPATH
+!define(SUPOUTPATH,{!OUTPATH})
+!divert!dnl
+#
+# Next line is default location for SUPPORT OUTPUT FILES
+!  !SUPOUTPATH
+#
+#
+# -----------------------------------------------------------------------
+# These files support the SMF log functionality. Each run will cause
+# status information to be written to 1 or more of the Log files. To
+# simulate DAAC operations, remove the 3 Logfiles between test runs.
+# Remember: all executables within a PGE will contribute status data to 
+# the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
+# -----------------------------------------------------------------------
+10100|LogStatus|!SUPOUTPATH||||1
+10101|MLS-Aura_L2LOG_V0-5|!SUPOUTPATH||||1
+10102|LogUser|!SUPOUTPATH||||1
+10103|TmpStatus|!SUPOUTPATH||||1
+10104|TmpReport|!SUPOUTPATH||||1
+10105|TmpUser|!SUPOUTPATH||||1
+10110|MailFile|!SUPOUTPATH||||1

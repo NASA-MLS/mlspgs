@@ -1,0 +1,25 @@
+; These are the chi^2 diagnostic quantities
+
+BEGIN Construct
+
+    csMAF_band3:    Quantity, type=chisqMMAF, signal='R2:190.B3F:N2O'
+    csMIF_band3:    Quantity, type=chisqMMIF, signal='R2:190.B3F:N2O'
+    csChan_band3:    Quantity, type=chisqChan, signal='R2:190.B3F:N2O'
+    csMAF_band4:    Quantity, type=chisqMMAF, signal='R2:190.B4F:HNO3'
+    csMIF_band4:    Quantity, type=chisqMMIF, signal='R2:190.B4F:HNO3'
+    csChan_band4:    Quantity, type=chisqChan, signal='R2:190.B4F:HNO3'
+    csMAF_band6:    Quantity, type=chisqMMAF, signal='R2:190.B6F:O3'
+    csMIF_band6:    Quantity, type=chisqMMIF, signal='R2:190.B6F:O3'
+    csChan_band6:    Quantity, type=chisqChan, signal='R2:190.B6F:O3'
+
+; and corresponding templates
+    diagMMAFTemplate: VectorTemplate, quantities= $
+      [ csMAF_band3,csMAF_band4,csMAF_band6 ]
+
+    diagMMIFTemplate: VectorTemplate, quantities= $
+      [ csMIF_band3,csMIF_band4,csMIF_band6 ]
+
+    diagChanTemplate: VectorTemplate, quantities= $
+      [ csChan_band3,csChan_band4,csChan_band6 ]
+
+END Construct

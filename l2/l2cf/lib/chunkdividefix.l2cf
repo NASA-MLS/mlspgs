@@ -1,0 +1,5 @@
+; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  ChunkDivide, method=fixed, maxLength=!MAXLENGTH, overlap=!OVERLAP, $
+    noChunks=!NUMBERCHUNKS
+end ChunkDivide

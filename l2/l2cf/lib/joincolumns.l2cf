@@ -1,0 +1,25 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment joins the column abundances
+
+  !define(columnJoin,{$1_column: l2gp, source=$2.column_$1, $
+    swath='$3 Column, !TropoName'})
+
+!divert!dnl
+  !columnJoin(bro,aColumn,BrO)
+  !columnJoin(ch3cn,aColumn,CH3CN)
+  !columnJoin(clo,aColumn,ClO)
+  !columnJoin(co,aColumn,CO)
+  !columnJoin(h2o,aColumn,H2O)
+  !columnJoin(hcl,aColumn,HCl)
+  !columnJoin(hcn,aColumn,HCN)
+  !columnJoin(hno3,aColumn,HNO3)
+  !columnJoin(ho2,aColumn,HO2)
+  !columnJoin(hocl,aColumn,HOCl)
+  !columnJoin(n2,aColumn,N2)
+  !columnJoin(n2o,aColumn,N2O)
+  !columnJoin(o2,aColumn,O2)
+  !columnJoin(o3,aColumn,O3)
+  !columnJoin(oh,aColumn,OH)
+  !columnJoin(so2,aColumn,SO2)

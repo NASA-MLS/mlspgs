@@ -1,0 +1,37 @@
+; ------------------------------------------------- Fill, tropopause -----
+
+begin Fill
+
+   ;; Fill the tropopause
+   Fill, quantity=aColumn.tpPressure, method=explicit, $
+    explicitValues=100mb, /spread
+ !define(TropoName, {wmo tropopause})
+
+end Fill
+
+; ------------------------------------------------- Fill, column abundances -----
+
+begin Fill
+
+  !define(columnFill,{
+   Fill, quantity=aColumn.column_$1, method=special, vmrQuantity=$2.$1, $
+      boundaryPressure=aColumn.$3!dnl
+})!dnl
+  !columnFill(bro,state,tpPressure)
+  !columnFill(ch3cn,state,tpPressure)
+  !columnFill(clo,state,tpPressure)
+  !columnFill(co,state,tpPressure)
+  !columnFill(h2o,state,tpPressure)
+  !columnFill(hcl,state,tpPressure)
+  !columnFill(hcn,state,tpPressure)
+  !columnFill(hno3,state,tpPressure)
+  !columnFill(ho2,state,tpPressure)
+  !columnFill(hocl,state,tpPressure)
+  !columnFill(n2,state,tpPressure)
+  !columnFill(n2o,state,tpPressure)
+  !columnFill(o2,state,tpPressure)
+  !columnFill(o3,state,tpPressure)
+  !columnFill(oh,state,tpPressure)
+  !columnFill(so2,state,tpPressure)
+
+end Fill

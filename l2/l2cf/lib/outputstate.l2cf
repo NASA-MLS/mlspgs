@@ -1,0 +1,40 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment outputs the species joined by joinstate.l2cf
+
+
+;; Only do the output if the output version has been defined
+!divert!dnl
+!ifdef(outputVersion,{
+
+;  This is good for the l2cf run with the toolkit panoply
+;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
+;    file='$2'})
+  !define(stdprod, {Output, $
+ quantities=!ifelse($3,{}, {joined_$1}, !dnl
+ {[joined_$1, $3_column]}), type=l2gp, $
+ file='!file$2'})
+
+;  This is good for the l2cf run w/o the toolkit panoply
+;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
+;    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
+
+!stdprod(temp,Temp,)
+!stdprod(gph,GPH,)
+!stdprod(bro,BrO,bro)
+!stdprod(clo,ClO,clo)
+!stdprod(co,CO,co)
+!stdprod(h2o,H2O,h2o)
+!stdprod(hcl,HCl,hcl)
+!stdprod(hcn,HCN,hcn)
+!stdprod(hno3,HNO3,hno3)
+!stdprod(ho2,HO2,ho2)
+!stdprod(hocl,HOCl,hocl)
+!stdprod(n2o,N2O,n2o)
+!stdprod(o3,O3,o3)
+!stdprod(oh,OH,oh)
+!stdprod(so2,SO2,so2)
+!stdprod(rhi,RHI,)
+
+})

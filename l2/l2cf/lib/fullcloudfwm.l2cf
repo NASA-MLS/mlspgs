@@ -1,0 +1,27 @@
+!divert(-1)
+;-----------------------------------------------------------------------------------
+; This is the call to Full Cloud Forward Model
+;-----------------------------------------------------------------------------------
+!divert!dnl
+    cldFwm1: ForwardModel, type= CloudFull,  $
+      signals          = [$
+            'R2:190.B2LF:H2O.C13:25',   $
+            'R2:190.B3LF:N2O.C25',  $
+            'R2:190.B4LF:HNO3.C25',  $
+            'R2:190.B5LF:CLO.C1',  $
+            'R2:190.B5LF:CLO.C25',  $
+            'R2:190.B6LF:O3.C1',  $
+            'R2:190.B6LF:O3.C25',$
+            'R3:240.B33LW:O3.C3',$
+            'R2:190.B2UF:H2O.C13' ],$
+      molecules        = [ h2o, o3 ],        $
+      ncloudspecies    = 2,                  $
+      nmodelsurfs      = 640,                $
+      NSCATTERINGANGLES= 16,                 $
+      NAZIMUTHANGLES   = 8,                  $
+      NABTERMS         = 50,                 $
+      NSIZEBINS        = 40,                 $
+      cloud_der        = 1,                  $
+      cloud_width      = 1,                  $        
+      cloud_fov        = 0                   ; 1=with FOV, 0=without FOV
+

@@ -1,0 +1,33 @@
+!divert(-1)
+# Note: MCFPATH is defined in pcfinfiles.m4
+# which must therefore appear before this file in the PCF.m4 template
+!divert!dnl
+10250|MCF|||||1
+10252|GetAttr.temp|!OUTPATH||||1
+10254|MCFWrite.temp|!OUTPATH||||1
+4000|ML2LOG.001.MCF|!theMCFPATH||||1
+# We might need the following 18 in general, 
+4001|ML2T.001.MCF|!theMCFPATH||||1
+4002|ML2Z.001.MCF|!theMCFPATH||||1
+4003|ML2CO.001.MCF|!theMCFPATH||||1
+4004|ML2O3.001.MCF|!theMCFPATH||||1
+4005|ML2OH.001.MCF|!theMCFPATH||||1
+4006|ML2BRO.001.MCF|!theMCFPATH||||1
+4007|ML2CLO.001.MCF|!theMCFPATH||||1
+4008|ML2H2O.001.MCF|!theMCFPATH||||1
+4009|ML2HCL.001.MCF|!theMCFPATH||||1
+4010|ML2HCN.001.MCF|!theMCFPATH||||1
+4011|ML2HO2.001.MCF|!theMCFPATH||||1
+4012|ML2ICE.001.MCF|!theMCFPATH||||1
+4013|ML2N2O.001.MCF|!theMCFPATH||||1
+4014|ML2OTH.001.MCF|!theMCFPATH||||1
+4015|ML2RHI.001.MCF|!theMCFPATH||||1
+4016|ML2SO2.001.MCF|!theMCFPATH||||1
+4017|ML2HNO3.001.MCF|!theMCFPATH||||1
+4018|ML2HOCL.001.MCF|!theMCFPATH||||1
+# CH3Cn is not yet a standard product--thus no MCF file for it
+#4019|ML2CH3CN.001.MCF|!theMCFPATH||||1
+#
+# The dgg and dgm are special
+4022|ML2DGG.001.MCF|!theMCFPATH||||1
+4023|ML2DGM.001.MCF|!theMCFPATH||||1

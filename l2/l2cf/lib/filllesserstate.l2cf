@@ -1,0 +1,68 @@
+; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
+
+BEGIN Fill
+
+    ;; Now the elevation offsets
+    Fill, quantity=apriori.r1aElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r1bElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r2Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r3Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r4Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r5hElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=apriori.r5vElev, method=explicit, explicitValues= 0.0 degrees
+
+    ;; Now the isotope ratios
+    
+    Fill, quantity=apriori.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
+    Fill, quantity=apriori.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
+    Fill, quantity=apriori.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
+    Fill, quantity=apriori.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
+    Fill, quantity=apriori.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
+    Fill, quantity=apriori.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
+    Fill, quantity=apriori.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
+    Fill, quantity=apriori.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
+    Fill, quantity=apriori.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
+    Fill, quantity=apriori.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
+    Fill, quantity=apriori.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
+    Fill, quantity=apriori.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
+    Fill, quantity=apriori.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
+;   Fill, quantity=apriori.c_12_o_18_ratio,    method=explicit,
+;   explicitValues= 0.98652
+    Fill, quantity=apriori.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
+    Fill, quantity=apriori.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
+    Fill, quantity=apriori.s_32_o2_ratio,      method=explicit, explicitValues= 0.94548
+
+    ;; Now the more minor stuff
+    Fill, quantity = apriori.earthReflectivity, $
+      method = explicit, explicitValues = 0.05
+    Fill, quantity = apriori.orbitInclination, $
+      method = explicit, explicitValues = 98.145 degrees
+    Fill, quantity = apriori.spaceRadiance, $
+      method =explicit, explicitValues = 2.735 K
+
+    Fill, quantity=apriori.scGeocAlt, method=l1b
+    Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+    Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
+
+    Fill, quantity=apriori.scECI, method = l1b
+    Fill, quantity=apriori.tngtECIGHz, method = l1b
+    Fill, quantity=apriori.tngtECITHz, method = l1b
+
+;    Fill, quantity=apriori.scVel, method = l1b
+;    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
+;    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
+ 
+    Fill, quantity=apriori.scVelECR, method = l1b
+    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
+    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
+ 
+    Fill, quantity = apriori.o2, method = explicit,  $
+      explicitValues = 0.2095 vmr , /spread
+    Fill, quantity = apriori.n2, method = explicit,  $
+      explicitValues = 0.805 vmr , /spread
+
+END Fill

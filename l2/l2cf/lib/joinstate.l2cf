@@ -1,0 +1,42 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment joins all the products
+
+  !define(l2gpJoin,{joined_$1: l2gp, source=state.$1, $
+    precision=outputPrecision.$1, swath='$2'})
+
+!divert!dnl
+  !l2gpJoin(temp,Temperature)
+  !l2gpJoin(gph,GPH)
+  !l2gpJoin(bro,BrO)
+  !l2gpJoin(ch3cn,CH3CN)
+  !l2gpJoin(clo,ClO)
+  !l2gpJoin(co,CO)
+  !l2gpJoin(h2o,H2O)
+  !l2gpJoin(hcl,HCl)
+  !l2gpJoin(hcn,HCN)
+  !l2gpJoin(hno3,HNO3)
+  !l2gpJoin(ho2,HO2)
+  !l2gpJoin(hocl,HOCl)
+  !l2gpJoin(n2o,N2O)
+  !l2gpJoin(o3,O3)
+  !l2gpJoin(oh,OH)
+  !l2gpJoin(so2,SO2)
+  !l2gpJoin(rhi,RHI)
+  !l2gpJoin(baselineR1A,baselineR1A)
+  !l2gpJoin(baselineR1B,baselineR1B)
+  !l2gpJoin(baselineR2,baselineR2)
+  !l2gpJoin(baselineR3,baselineR3)
+  !l2gpJoin(baselineR4,baselineR4)
+  !l2gpJoin(baselineR5H,baselineR5H)
+  !l2gpJoin(baselineR5V,baselineR5V)
+!define(l2auxJoin,!dnl
+{joined_$1: l2aux, source=state.$1, sdName='$2'
+ joined_$1_precision: l2aux, source=outputPrecision.$1, $
+  sdName='$2 precision'})
+
+!l2auxJoin(ptanGHz,ptanGHz)
+!l2auxJoin(ptanTHz,ptanTHz)
+!l2auxJoin(losVelGHz,losVelGHz)
+!l2auxJoin(losVelTHz,losVelTHz)

@@ -1,0 +1,15 @@
+; This fragment of an l2cf fills stuff from previously read climatology
+
+begin Fill
+  
+  Fill, quantity=apriori.temp, method=gridded, sourceGrid=gridTemperature
+  Fill, quantity=apriori.h2o, method=gridded, sourceGrid=gridH2O
+  Fill, quantity=apriori.o3, method=gridded, sourceGrid=gridO3
+  Fill, quantity=apriori.n2o, method=gridded, sourceGrid=gridN2O
+  Fill, quantity=apriori.hno3, method=gridded, sourceGrid=gridHNO3
+  Fill, quantity=apriori.hcl, method=gridded, sourceGrid=gridHCl
+  Fill, quantity=apriori.clo, method=gridded, sourceGrid=gridClO
+  Fill, quantity=apriori.ho2, method=gridded, sourceGrid=gridHO2
+  Fill, quantity=apriori.co, method=gridded, sourceGrid=gridCO
+
+end Fill

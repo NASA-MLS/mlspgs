@@ -1,0 +1,38 @@
+# ----------------------------------------------------------------
+# NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+#
+# This Level 2 Process Control File (PCF) has been generated
+# by make using ource files and a file of settings..  While it is
+# perfectly allowable to edit this file directly, it will probably
+# be more efficient to edit the source files or settings.
+# To learn more, go to /mlspgs/l2/l2cfs and type 'make help-pcf'
+# ----------------------------------------------------------------
+divert(-1)
+# These are the m4 definitions for pcf's
+# Change the quotes to braces
+changequote({,})
+# Insist all m4 stuff is prefixed with !
+changesyntax({@!})
+# No, don't change the comment to a semicolon
+# Make _ not a possible part of m4 names
+!changesyntax({O_})
+# Define a very simple for loop prototcol
+!define({forloop},
+  {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
+!define(forloopint,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})})
+# Redefine include to do fancy stuff for error checking.
+!undefine({include})
+!define(include,{!dnl
+{#}@0 $1
+!builtin(include,$1)!dnl
+{#}@!builtin(__line__) !builtin(__file__)}!dnl
+)
+# Define a year function that just returns the first four digits of
+# day, this one took a little thought!
+!define(year,{!substr(}$1{,0,4)})
+!define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
+!define(tai93start, {!TrimNL(!esyscmd(ccsdsbtotai93 !day))})
+!define(tai93end, {!TrimNL(!esyscmd(ccsdsbtotai93 -e !day ))})
+!define(home,!TrimNL(!esyscmd({echo $HOME})))
+!divert!dnl

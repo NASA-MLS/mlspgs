@@ -1,0 +1,37 @@
+; This partial l2cf fills isotope quantities
+
+BEGIN Fill
+    Fill, quantity=!vec.br_79_o,      ratioQuantity=apriori.br_79_o_ratio, $
+      sourceQuantity=!vec.bro, method=isotope
+    Fill, quantity=!vec.br_81_o,      ratioQuantity=apriori.br_81_o_ratio, $
+      sourceQuantity=!vec.bro, method=isotope
+    Fill, quantity=!vec.cl_35_o,      ratioQuantity=apriori.cl_35_o_ratio, $
+      sourceQuantity=!vec.clo, method=isotope
+    Fill, quantity=!vec.cl_37_o,      ratioQuantity=apriori.cl_37_o_ratio, $
+      sourceQuantity=!vec.clo, method=isotope
+    Fill, quantity=!vec.h2o_18,      ratioQuantity=apriori.h2o_18_ratio, $
+      sourceQuantity=!vec.h2o, method=isotope
+    Fill, quantity=!vec.hocl_35,      ratioQuantity=apriori.hocl_35_ratio, $
+      sourceQuantity=!vec.hocl, method=isotope
+    Fill, quantity=!vec.hocl_37,      ratioQuantity=apriori.hocl_37_ratio, $
+      sourceQuantity=!vec.hocl, method=isotope
+    Fill, quantity=!vec.o2_v1,      ratioQuantity=apriori.o2_v1_ratio, $
+      sourceQuantity=!vec.o2, method=isotope
+    Fill, quantity=!vec.o3_asym_o_18,$
+	      ratioQuantity=apriori.o3_asym_o_18_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_sym_o_18,$
+	      ratioQuantity=apriori.o3_sym_o_18_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_v1_3,      ratioQuantity=apriori.o3_v1_3_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o3_v2,      ratioQuantity=apriori.o3_v2_ratio, $
+      sourceQuantity=!vec.o3, method=isotope
+    Fill, quantity=!vec.o_18_o,      ratioQuantity=apriori.o_18_o_ratio, $
+      sourceQuantity=!vec.o2, method=isotope
+    Fill, quantity=!vec.hcl_35,      ratioQuantity=apriori.hcl_35_ratio, $
+      sourceQuantity=!vec.hcl, method=isotope
+    Fill, quantity=!vec.hcl_37,      ratioQuantity=apriori.hcl_37_ratio, $
+      sourceQuantity=!vec.hcl, method=isotope
+
+end Fill

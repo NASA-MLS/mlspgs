@@ -1,0 +1,14 @@
+; ----------------------------------------------- ReadApriori -----
+begin ReadApriori
+!define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
+       file='/bigdata/livesey/misc/emls_clim_v0-1.dat'})
+!readGrid(Temperature)
+!readGrid(H2O)
+!readGrid(O3)
+!readGrid(N2O)
+!readGrid(HNO3)
+!readGrid(HCl)
+!readGrid(ClO)
+!readGrid(HO2)
+!readGrid(CO)
+end ReadApriori

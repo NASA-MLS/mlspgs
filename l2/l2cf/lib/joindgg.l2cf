@@ -1,0 +1,47 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment joins the diagnostic products dgg
+
+  !define(l2dggJoin,{joined_$1: l2gp, source=state.$2, $
+    precision=outputPrecision.$2, swath='$3'})
+
+!divert!dnl
+  !l2dggJoin(temp_118_a,temp,Temperature-118-a)
+  !l2dggJoin(temp_118_b,temp,Temperature-118-b)
+  !l2dggJoin(temp_240,temp,Temperature-240)
+  !l2dggJoin(gph_118_a,gph,GPH-118-a)
+  !l2dggJoin(gph_118_b,gph,GPH-118-b)
+  !l2dggJoin(gph_240,gph,GPH-240)
+  !l2dggJoin(trop_h2o_118,h2o,H2O-TROP-118)
+  !l2dggJoin(trop_h2o_190,h2o,H2O-TROP-190)
+  !l2dggJoin(trop_h2o_240,h2o,H2O-TROP-240)
+  !l2dggJoin(trop_h2o_640,h2o,H2O-TROP-640)
+  !l2dggJoin(trop_h2o_25T,h2o,H2O-TROP-2.5T)
+  !l2dggJoin(o3_190,o3,O3-190)
+  !l2dggJoin(o3_240_4,o3,O3-240-4)
+  !l2dggJoin(o3_240_9,o3,O3-240-9)
+  !l2dggJoin(o3_640,o3,O3-640)
+  !l2dggJoin(clo_240,clo,ClO-240)
+  !l2dggJoin(clo_640,clo,ClO-640)
+  !l2dggJoin(n2o_190,n2o,N2O-190)
+  !l2dggJoin(n2o_640,n2o,N2O-640)
+  !l2dggJoin(oh_2514_h,oh,OH-2514-H)
+  !l2dggJoin(oh_2514_v,oh,OH-2514-V)
+  !l2dggJoin(oh_2510_h,oh,OH-2510-H)
+  !l2dggJoin(oh_2510_v,oh,OH-2510-V)
+  !l2dggJoin(ho2_650,ho2,HO2-650)
+  !l2dggJoin(ho2_660,ho2,HO2-660)
+  !l2dggJoin(bro_625,bro,BrO-625)
+  !l2dggJoin(bro_650,bro,BrO-650)
+  !l2dggJoin(so2_204,so2,SO2-204)
+  !l2dggJoin(so2_640,so2,SO2-640)
+  !define(Alldgg, {joined_temp_118_a,joined_temp_118_b,joined_temp_240,$
+	joined_gph_118_a,joined_gph_118_b,joined_gph_240,joined_trop_h2o_118,$
+	joined_trop_h2o_190,joined_trop_h2o_240,joined_trop_h2o_640,$
+	joined_trop_h2o_25T,joined_o3_190,joined_o3_240_4,joined_o3_240_9,$
+	joined_o3_640,joined_clo_240,joined_clo_640,joined_n2o_190,$
+	joined_n2o_640,joined_oh_2514_h,joined_oh_2514_v,joined_oh_2510_h,$
+	joined_oh_2510_v,joined_ho2_650,joined_ho2_660,joined_bro_625,$
+	joined_bro_650,joined_so2_204,joined_so2_640 $
+   } )!dnl

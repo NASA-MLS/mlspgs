@@ -1,0 +1,11 @@
+; ------------------------------------------------- Fill, rhi -----
+
+begin Fill
+
+   ;; Fill the rhi from the h2o
+   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
+    temperatureQuantity=state.temp, $
+    method=special, /dontMask
+ 
+
+end Fill

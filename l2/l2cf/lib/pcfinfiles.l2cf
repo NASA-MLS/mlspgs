@@ -1,0 +1,23 @@
+#
+# Next non-comment line is the default location for PRODUCT INPUT FILES
+# WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
+# data set files to the location specified by the new setting.
+!  !INPATH
+#
+#-----------------
+# Test input files
+#-----------------
+900|!PCFNAME|!thepcfpath||||1
+901|!L2CFNAME|!thel2cfpath||||1
+20000|!SIGNALSNOMEN|!thefwmpath||||1
+20001|!ANTENNAPATS|!thefwmpath/l2||||1
+20002|!FILTERSHAPES|!thefwmpath||||1
+20003|!POINTINGGRIDS|!thefwmpath||||1
+20004|!CLOUDBASE_01.dat|!thefwmpath||||1
+21040|!CLIMATOLOGY|!theclimpath||||1
+21041|!NCEPFILE|!theclimpath||||1
+21042|!DAOFILE|!theclimpath||||1
+21050|!L1BRADFBASE_!INPUTVERSION.!DATE|!thel1bradpath/||||1
+21051|!L1BRADDBASE_!INPUTVERSION.!DATE|!thel1bradpath/||||1
+21110|!L1BOABASE.!DATE|!thel1boapath/||||1
+22081|!UNUSEDENGDATA_!INPUTVERSION.!DATE|!thel1bradpath/||||1

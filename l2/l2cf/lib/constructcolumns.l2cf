@@ -1,0 +1,30 @@
+; This l2cf segment is useful for constructing `columns' species.
+
+BEGIN Construct
+   ;; pressure marking the tropopause
+  tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
+  !define(constructColumn,{
+   column_$1: Quantity, type=columnAbundance, molecule=$1,$
+	 hGrid=hGridStandard
+})
+  !constructColumn(bro)!dnl
+  !constructColumn(ch3cn)!dnl
+  !constructColumn(clo)!dnl
+  !constructColumn(co)!dnl
+  !constructColumn(h2o)!dnl
+  !constructColumn(hcl)!dnl
+  !constructColumn(hcn)!dnl
+  !constructColumn(hno3)!dnl
+  !constructColumn(ho2)!dnl
+  !constructColumn(hocl)!dnl
+  !constructColumn(n2)!dnl
+  !constructColumn(n2o)!dnl
+  !constructColumn(o2)!dnl
+  !constructColumn(o3)!dnl
+  !constructColumn(oh)!dnl
+  !constructColumn(so2)!dnl
+ !define(AllColumns, 
+  { column_bro,column_ch3cn,column_clo,column_co,column_h2o,column_hcl,$
+	column_hcn,column_hno3,column_ho2,column_hocl,column_n2,column_n2o,$
+	column_o2,column_o3,column_oh,column_so2 })
+END Construct
