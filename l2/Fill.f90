@@ -39,7 +39,7 @@ contains ! =====     Public Procedures     =============================
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_H2OQUANTITY, &
-      & F_IGNORENEGATIVE, F_IGNOREZERO, F_INTEGRATIONTIME, &
+      & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOSQTY, F_LSB, F_LSBFRACTION, &
       & F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
@@ -96,7 +96,7 @@ contains ! =====     Public Procedures     =============================
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
     use Molecules, only: L_H2O
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: QuantityTemplate_T
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure
@@ -272,6 +272,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
+    integer :: INSTANCESNODE            ! Tree node
     logical :: INVERT                   ! "Invert the specified covariance matrix"
     logical :: ISPRECISION              ! l1b precision, not radiances if TRUE
     integer :: KEY                      ! Definitely n_named
@@ -532,6 +533,8 @@ contains ! =====     Public Procedures     =============================
             ignoreZero = get_boolean ( gson )
           case ( f_ignoreNegative )
             ignoreNegative = get_boolean ( gson )
+          case ( f_instances )
+            instancesNode = subtree(j,key)
           case ( f_integrationTime )
             call expr ( gson , unitAsArray, valueAsArray )
             if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
@@ -812,8 +815,9 @@ contains ! =====     Public Procedures     =============================
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
             call Announce_error ( key, 0, 'profileValues not supplied' )
+          if ( .not. got ( f_instances ) ) instancesNode = 0
           call FillVectorQtyFromProfile ( key, quantity, valuesNode, &
-            & vectors(vectorIndex)%globalUnit, dontMask )
+            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask )
 
         case ( l_refract )              ! --------- refraction for phiTan -----
           if ( refract ) then 
@@ -1690,36 +1694,39 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------- FillVectorQuantityFromProfile --
     subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
-      & globalUnit, dontMask )
+      & instancesNode, globalUnit, dontMask )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
       integer, intent(in) :: KEY          ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: VALUESNODE   ! Tree node for values
+      integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
 
       ! Local variables
-      integer :: HEIGHTUNIT               ! Unit for height
-      integer :: NOPOINTS                 ! Number of points supplied
-      integer :: I                        ! Loop counter
-      integer :: TESTUNIT                 ! Unit for value
-      logical :: LOCALOUTHEIGHTS          ! Set if out heights is our own variable
+      integer :: C                      ! Channel loop counter
+      integer :: HEIGHTUNIT             ! Unit for height
+      integer :: NOPOINTS               ! Number of points supplied
+      integer :: I,J                    ! Loop counters / indices
+      integer :: S                      ! Surface loop counter
+      integer :: STATUS                 ! Flag
+      integer :: TESTUNIT               ! Unit for value
+      logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
       real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
       real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
+      logical, dimension(:), pointer :: INSTANCES ! Flags
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
       integer, dimension(2) :: EXPRUNIT   ! Unit for expression
 
-      intrinsic :: Spread                 ! Because there's a variable of
-                                          ! the same name in the host
       ! Executable code
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
-        & coherent=.true., frequencyCoordinate=(/l_none/) ) ) &
+        & coherent=.true. ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity is not amenable to a profile fill' )
 
@@ -1729,11 +1736,13 @@ contains ! =====     Public Procedures     =============================
 
       ! Set some stuff up
       noPoints = nsons ( valuesNode ) - 1
-      nullify ( heights, values, outHeights, outValues )
+      nullify ( heights, values, outHeights, outValues, instances )
       call Allocate_test ( heights, noPoints, 'heights', ModuleName )
       call Allocate_test ( values, noPoints, 'values', ModuleName )
-      call Allocate_test ( outValues, quantity%template%instanceLen, &
-        &'outValues', ModuleName )
+      call Allocate_test ( outValues, quantity%template%noSurfs, &
+        & 'outValues', ModuleName )
+      call Allocate_test ( instances, quantity%template%noInstances, &
+        & 'instances', ModuleName )
 
       ! Loop over the values
       do i = 1, noPoints
@@ -1772,23 +1781,42 @@ contains ! =====     Public Procedures     =============================
       ! Now do the interpolation for the first instance
       call InterpolateValues ( heights, values, outHeights, &
         & outValues, 'Linear', extrapolate='Constant' )
-      ! Spread it into the other instances, worry about the mask
-      if ( .not. associated ( quantity%mask ) ) then
-        quantity%values = spread ( &
-          & outValues, 2, quantity%template%noInstances )
-      else
-        do i = 1, quantity%template%noInstances
-          where ( iand ( ichar(quantity%mask(:,i)) , m_fill ) == 0 )
-            quantity%values(:,i) = outValues(:)
-          end where
-        end do
+
+      ! Work out what instances we're going to spread this to
+      instances = .true.
+      if ( instancesNode /= 0 ) then
+        call GetIndexFlagsFromList ( instancesNode, instances, &
+          & status, noError = .true. )
+        if ( status /= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to parse instances (wrong units?)' )
       end if
+
+      ! Spread it into the other instances, worry about the mask and instances
+      do i = 1, quantity%template%noInstances
+        if ( instances(i) ) then
+          j = 1
+          do s = 1, quantity%template%noSurfs
+            do c = 1, quantity%template%noChans
+              if ( associated(quantity%mask) ) then
+                if ( iand ( ichar(quantity%mask(j,i)), m_fill ) == 0 ) &
+                  & quantity%values(j,i) = outValues(s)
+              else
+                quantity%values(j,i) = outValues(s)
+              end if
+              j = j + 1
+            end do
+          end do
+        end if
+      end do
+
       ! Finish off
       if ( localOutHeights ) call Deallocate_test ( outHeights, &
         & 'outHeights', ModuleName )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
       call Deallocate_test ( outValues, 'outValues', ModuleName )
+      call Deallocate_test ( instances, 'instances', ModuleName )
     end subroutine FillVectorQtyFromProfile
 
     ! ------------------------------------------- FillLOSVelocity ---
@@ -3714,6 +3742,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.139  2002/08/26 20:01:09  livesey
+! Added instances argument to profile fill
+!
 ! Revision 2.138  2002/08/21 23:06:12  livesey
 ! Bug fix in profile fill
 !
