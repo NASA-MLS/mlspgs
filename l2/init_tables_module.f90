@@ -640,6 +640,8 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_makePFA, & ! Must be AFTER s_vGrid
+             begin, f+f_allLinesForRadiometer, t+t_boolean, nd+n_field_type, &
+             begin, f+f_allLinesInCatalog, t+t_boolean, nd+n_field_type, &
              begin, f+f_losvel, t+t_numeric, nrs+n_field_type, &
              begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
              begin, f+f_signals, t+t_string, nr+n_field_type, &
@@ -1327,6 +1329,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.396  2005/03/16 23:59:42  vsnyder
+! Add allLinesForRadiometer and allLinesInCatalog to makePFA
+!
 ! Revision 2.395  2005/03/15 01:27:31  vsnyder
 ! Allow Dump command in Retrieve section
 !
