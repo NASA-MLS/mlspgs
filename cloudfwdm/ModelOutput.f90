@@ -125,10 +125,14 @@ contains
 !     RADIANCE SENSITIVITY CALCULATIONS
 !==========================================================================
 
-         DO I=1,NT
+      TAUeff = 0._r8
+      SS = 0._r8
+      
+      DO I=1,NT
 
-            HT = ZT(I)   
-
+            HT = ZT(I)
+            if(HT .gt. yz(nh-1)) cycle    ! don't compute for large Zt  
+            
                do j=nh,2,-1
                   if (yz(j) .le. ht) then
                      iflag=j
@@ -141,7 +145,7 @@ contains
                C_EXT = 0._r8
                A_EXT = 0._r8
             
-               DO K=NH-1,iflag+1,-1
+               DO K=NH-1,iflag,-1
 
                      TGT=YZ(K-1)
                      IF(TGT .LT. HT)THEN
@@ -157,7 +161,7 @@ contains
 
                ENDDO
 
-               DO K=iflag+1,NH-1
+               DO K=iflag,NH-1
 
                      TGT=YZ(K-1)
                      IF(TGT .LT. HT)THEN
@@ -181,7 +185,7 @@ contains
                   SS(I)=0._r8
                endif
 
-         ENDDO
+      ENDDO
       
 
 !--------------------------------------------------------------------------
@@ -191,6 +195,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.11  2001/10/19 19:39:49  dwu
+! fix bug after changes
+!
 ! Revision 1.10  2001/10/19 19:25:25  dwu
 ! follow-on fixes
 !
