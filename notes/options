@@ -37,6 +37,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   -v: List the configuration file.
   The above options can be concatenated after one hyphen,
   except that -S takes the rest of the option as its "string"
+  --[n]cat: Do [not] cat the split dgg/dgm directwrite files after run completes
   --check: Just check l2cf and quit
   --chunk[ ]<chunk index> Run just the <chunk index> chunk
     (repeat for 1st and last chunks in a range: 
@@ -88,6 +89,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --submit "command": In conjunction with --master, use the command
     to submit the slave task to a batch queue system.
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
+  --[n]unlimdims: [Do not] Use unlimited dimensions
   --version: Print current version number
   --[n]wall: Use wall clock instead of CPU_TIME
 
@@ -115,6 +117,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.32  2004/01/07 20:44:36  pwagner
+ Correct, expand on patch option
+
  Revision 1.31  2003/12/11 22:57:29  pwagner
  idents option lets slave verify whether its version same as master
 
