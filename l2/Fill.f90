@@ -17,9 +17,7 @@ module Fill                     ! Create vectors and fill them.
   ! will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
-  use L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
-    & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
-    & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
+  use L2AUXData, only: L2AUXData_T, L2AUXRank
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSSignals_m, only: GetSignalName, GetModuleName
@@ -37,7 +35,8 @@ module Fill                     ! Create vectors and fill them.
     & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
-  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
+  use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
+    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
 
   implicit none
   private
@@ -796,21 +795,21 @@ contains ! =====     Public Procedures     =============================
     MAFDim = 0
     MIFDim = 0
     L2NVals = 1
-    do i=1, OldL2AUXData%noDimensionsUsed
+    do i=1, L2AUXRank
       L2NVals = L2NVals*OldL2AUXData%dimensions(i)%noValues
       select case(OldL2AUXData%dimensions(i)%dimensionFamily)
-      case(L2AUXDim_Channel)
+      case(L_Channel)
         ChanDim = i
         dim_order(1) = i
-      case(L2AUXDim_IntermediateFrequency)
+      case(L_IntermediateFrequency)
         IntFreqDim = i
-      case(L2AUXDim_USBFrequency)
+      case(L_USBFrequency)
         USBDim = i
-      case(L2AUXDim_LSBFrequency)
+      case(L_LSBFrequency)
         LSBDim = i
-      case(L2AUXDim_MIF)
+      case(L_MIF)
         MIFDim = i
-      case(L2AUXDim_MAF)
+      case(L_MAF)
         MAFDim = i
       case DEFAULT	! We are not yet interested in these dimensions
       end select
@@ -1207,6 +1206,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.26  2001/03/06 22:41:07  livesey
+! New L2AUX stuff
+!
 ! Revision 2.25  2001/03/06 00:34:46  livesey
 ! Regular commit.
 !
