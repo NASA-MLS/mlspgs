@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program TEST
 
 ! A test harness for the MLS CF parser.  It also illustrates how to use
@@ -88,6 +91,10 @@ program TEST
 end program TEST
 
 ! $Log$
+! Revision 2.3  2000/10/03 01:09:19  vsnyder
+! Add getting input and output files from command line, and telling the
+! parser to use them.
+!
 ! Revision 2.2  2000/10/03 00:54:44  vsnyder
 ! Revised to account for changing getL2CF_m.f90 to getCF_m.f90
 !
@@ -99,4 +106,3 @@ end program TEST
 !
 ! Revision 1.1  2000/07/06 01:43:12  vsnyder
 ! Initial check-in
-!
