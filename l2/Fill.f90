@@ -960,16 +960,100 @@ contains ! =====     Public Procedures     =============================
 
 
     ! Local variables
+    real (r8) :: AoverMg         ! A/(M g) from Appendix A
+    integer :: surface
+    integer :: instance
+    integer :: surfaceInstance
+    integer :: firstSurface
+    real (r8) :: columnSum
+    real (r8) :: Delta_p_plus    ! p[j+1] - p[j]
+    real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
+    real (r8) :: Delta_log_plus  ! ln p[j+1] - ln p[j]
+    real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
+    real (r8) :: Delta_p_0       ! p[j+1] - p[j]
+    real (r8) :: Delta_log_0     ! ln p[j+1] - ln p[j]
 
     ! Executable code
     ! First check that things are OK.
     if ( (qty%template%quantityType /= l_columnAbundance) .or. &
       &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
       &  (vmrQty%template%quantityType /= l_vmr) ) then
-              call Announce_error ( key, No_Error_code, &
+          call Announce_error ( key, No_Error_code, &
               & 'Wrong quantity type found while filling column abundance'  )
       return
+    elseif ( qty%template%molecule /= vmrQty%template%molecule) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Attempt to fill column abundance with different molecule'  )
+      return
+    elseif ( &
+    & .not. ( &
+    & DoHgridsMatch( qty, vmrQty ) &
+    & .and. &
+    & DoHgridsMatch( qty, bndPressQty ) &
+    & ) &
+    & ) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Attempt to fill column abundance with different HGrids'  )
+      return
+    elseif ( vmrQty%template%verticalCoordinate /= l_pressure) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Fill column abundance, but vmr not on pressure surfs.'  )
+      return
     end if
+
+   !    AoverMg = 4.12e25 / (2.687e20 * 0.192)
+   !    This assumes that
+   ! (1) p is in hPa
+   ! (2) f is in PHYQ_vmr (*not* ppmv)
+   AoverMg = 4.12e5 / (2.687 * 0.192)
+   do instance=1, vmrQty%template%noInstances
+      if(vmrQty%template%coherent) then
+         surfaceInstance=1
+      else
+         surfaceInstance=instance
+      endif
+
+      if(vmrQty%template%surfs(1, surfaceInstance) &
+         &  < bndPressQty%values(1, instance)) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Fill column abundance, but tropopause below VGrid'  )
+      endif
+
+   ! Find 1st surface at or above tropopause
+   ! (i.e., at a pressure equal to or less than boundaryPressure)
+      do surface=1, vmrQty%template%noSurfs
+         if(vmrQty%template%surfs(surface, surfaceInstance) &
+         &  <= bndPressQty%values(1, instance)) exit
+      enddo
+      firstSurface = surface
+      if(firstSurface > vmrQty%template%noSurfs-2) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Fill column abundance, but tropopause above VGrid'  )
+      endif
+   ! Do summation
+   ! Initialize sum, Deltas
+      columnSum = 0.
+      Delta_p_plus = vmrQty%template%surfs(firstSurface+1, surfaceInstance) - &
+      & vmrQty%template%surfs(firstSurface, surfaceInstance)
+      Delta_log_plus = log(vmrQty%template%surfs(firstSurface+1, surfaceInstance)) - &
+      & log(vmrQty%template%surfs(firstSurface, surfaceInstance))
+      do surface = firstSurface+1, vmrQty%template%noSurfs-1
+         Delta_p_minus = - Delta_p_plus
+         Delta_log_minus = - Delta_log_plus
+         Delta_p_plus = vmrQty%template%surfs(surface+1, surfaceInstance) - &
+         & vmrQty%template%surfs(surface, surfaceInstance)
+         Delta_log_plus = log(vmrQty%template%surfs(surface+1, surfaceInstance)) - &
+         & log(vmrQty%template%surfs(surface, surfaceInstance))
+         columnSum = columnSum + &
+         & vmrQty%values(surface, instance)* &
+         & ( &
+         & Delta_p_minus/Delta_log_minus &
+         & - &
+         & Delta_p_plus/Delta_log_plus &
+         & )          
+      enddo
+      qty%values(1, instance) = AoverMg * columnSum
+   enddo
 
   end subroutine FillColAbundance
 
@@ -1621,6 +1705,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.66  2001/07/31 23:24:17  pwagner
+! column abundance calculation more fleshed out--not tested
+!
 ! Revision 2.65  2001/07/30 23:28:38  pwagner
 ! Added columnAbundances scaffolding--needs fleshing out
 !
