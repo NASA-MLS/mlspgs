@@ -133,8 +133,10 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2AUXRANK=3     ! Dimensionality of L2AUXData_T%values
   logical, parameter :: DEEBUG = .false.
-  ! This datatype describes a dimension for an L2AUX quantity
+  ! Write phase and section names as file-level attributes? (only for hdf5)
+  logical, public, save :: PHASENAMEATTRIBUTES = .true.
 
+  ! This datatype describes a dimension for an L2AUX quantity
   type L2AUX_Dimension_T
      integer :: NOVALUES = 0    ! Length of this dimension
      integer :: DIMENSIONFAMILY ! What is this dimension
@@ -951,9 +953,11 @@ contains ! =====     Public Procedures     =============================
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
+  use HDF5, only: h5gclose_f, h5gopen_f
   use MLS_DataProducts, only: DATAPRODUCTS_T
   use MLSAuxData, only: BUILD_MLSAUXDATA
-  use MLSHDF5, only: SaveAsHDF5DS
+  use MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute, SaveAsHDF5DS
+  use MLSL2Timings, only: showTimingNames
   use PCFHdr, only: h5_writeglobalattr
 
     type (L2AUXData_T), intent(in) :: L2AUX
@@ -968,6 +972,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: returnStatus           ! 0 unless error
 
     ! Local variables
+    integer :: grp_id
     integer :: myNoMAFS, MAF
     integer, dimension(3) :: dims
     type(DataProducts_T) :: dataProduct
@@ -1019,6 +1024,19 @@ contains ! =====     Public Procedures     =============================
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
       endif
       call h5_writeglobalattr(l2FileHandle, skip_if_already_there=.false.)
+      ! Write phase and section names as file-level attributes?
+      if ( PHASENAMEATTRIBUTES ) then
+        call h5gopen_f(l2FileHandle, '/', grp_id, returnstatus)
+        if ( .not. &
+          & IsHDF5AttributePresent('/', l2FileHandle, 'Phase Names') ) &
+          & call MakeHDF5Attribute(grp_id, &
+          & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
+        if ( .not. &
+          & IsHDF5AttributePresent('/', l2FileHandle, 'Section Names') ) &
+          & call MakeHDF5Attribute(grp_id, &
+          & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
+        call h5gclose_f(grp_id, returnstatus)
+      endif
       if ( .not. myWriteCounterMAF ) return
     
       ! Now create and write bogus counterMAF array
@@ -1735,6 +1753,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.63  2004/06/29 18:05:26  pwagner
+! May write phase, section names as file-level attributes
+!
 ! Revision 2.62  2004/04/16 00:48:13  livesey
 ! Added singleChannelRadiance output
 !
