@@ -222,6 +222,9 @@ contains ! ================================== Module procedures ============
   ! ---------------------------------- PVMReceiveQuantity ---------------------
   subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack )
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
+    ! It's not inout, because then setupNewQuantityTemplate would deallocate
+    ! the pointer components.  But the actual argument is put into a database
+    ! using a shallow copy, so cleaning it up would clobber a database item.
     real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
     integer, intent(in), optional :: TID ! Task to get it from
     character, dimension(:,:), optional, pointer :: MASK ! Mask
@@ -411,6 +414,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.9  2002/07/01 23:50:46  vsnyder
+! Add an important comment about memory leakage
+!
 ! Revision 2.8  2002/02/05 02:39:59  vsnyder
 ! Change mask from 1-bit per to 8-bits per (using character)
 !
