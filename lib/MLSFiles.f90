@@ -91,7 +91,7 @@ contains
 
     ! Local variables
 
-    character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName
+    character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     integer                       ::     version, returnStatus
    logical ::                            debug
@@ -159,9 +159,9 @@ contains
           TryName = PhysicalName
         endif
         
-        call split_path_name(TryName, MatchPath, PhysicalName)
+        call split_path_name(TryName, MatchPath, NameOnly)
 
-        if ( index(PhysicalName, trim(MatchName)) /= 0 )then
+        if ( index(NameOnly, trim(MatchName)) /= 0 )then
           ErrType = 0
           exit
         endif
@@ -581,6 +581,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.14  2001/04/17 23:44:54  pwagner
+! Fixed bug with ExactName in getpc..
+!
 ! Revision 2.13  2001/04/17 22:10:55  pwagner
 ! getpcfromref takes optional path; otherwise matches only filename
 !
