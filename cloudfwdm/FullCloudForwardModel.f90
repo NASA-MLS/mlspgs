@@ -15,7 +15,7 @@ module FullCloudForwardModel
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use AntennaPatterns_m, only: ANTENNAPATTERNS
-  use CloudProfile, only: CLOUD_MODEL
+  use CloudSkyModule, only: CLOUD_MODEL
   use CloudySkyRadianceModel, only: CloudForwardModel
   use Hdf, only: DFACC_READ, DFACC_CREATE
   use HDFEOS, only: SWOPEN,     SWCLOSE
@@ -578,7 +578,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           endif
         enddo
 
-        CloudHeight = 18.e3_r8     ! m  as a default
+        CloudHeight = 18.e3_r8     ! meters  as a default
         if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
 
         call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
@@ -981,6 +981,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.49  2001/10/08 21:35:33  dwu
+! *** empty log message ***
+!
 ! Revision 1.48  2001/10/08 20:57:05  dwu
 ! change coljBlock finder
 !
