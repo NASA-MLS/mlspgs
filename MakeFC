@@ -135,7 +135,13 @@ SHELL = /bin/sh
 # all            -- all the sub-directories: $LEVELS + $OTHER_SUBDIRS + lib
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
-# blas           -- libmlspack.a; another prerequisite for the others and for lib
+# blas           -- libmlspack.a; prerequisite for the others and for lib
+# l1, l2, ..     -- pges named mlsl1, mlsl2, ..
+# lib--hdf5      -- a whittled-down set; minus the routines in he5lib
+# l1--hdf5       -- mlsl1 built using he5lib, too; can read/write hdf5 files
+# l2--hdf5 l3--hdf5 l3m--hdf5
+#                -- like l1--hdf5 but for mlsl2, mlsl3d, or mlsl3m
+# all--hdf5      -- like l1--hdf5 but for all the levels
 
 #                           (functional)
 # clean          -- deletes only *.o, *.mod from sub-subs
@@ -373,6 +379,37 @@ lib:
 
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
+
+# For now, these require he5lib
+lib--hdf5:
+	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
+	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS= ; \
+   $(MAKE) -f $(MakeFName) depends HDFVERSIONS=2; \
+   rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=2
+
+l1--hdf5:
+	$(MAKE) -f $(MakeFName) lib--hdf5; \
+	cd l1;\
+	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+
+l2--hdf5:
+	$(MAKE) -f $(MakeFName) lib--hdf5; \
+	cd l2;\
+	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+
+l3--hdf5:
+	$(MAKE) -f $(MakeFName) lib--hdf5; \
+	cd l3;\
+	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+
+l3m--hdf5:
+	$(MAKE) -f $(MakeFName) lib--hdf5; \
+	cd l3m;\
+	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
+
+all--hdf5:
+	$(MAKE) -f $(MakeFName) lib--hdf5; \
+	$(MAKE) -f $(MakeFName) l1 l2 l3 l3m HDFVERSIONS=2
 
 #              (functional targets)
 #              summoned by "make command"
@@ -843,7 +880,7 @@ internalmftests:
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
 
-#----------------------- Bare target dependenciess
+#----------------------- Bare target dependencies
 
 $(LEVELS): lib
 
@@ -869,18 +906,21 @@ update:
 
 .PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
-  all install levels configure_subdirs makefile update\
+  all install levels configure_subdirs makefile update ghostbuster\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
   firsthelp help--brief help--convert help--depends help--fopts\
   help--ghostbuster help--mlsconfigure help--Makefile help--platform help--pvm\
   help--reecho help--scripts help--toolkit \
   internalcleanup internaldepends internalmftests internalsaymake \
-  internaladd_copy internalreset_copy internalupdate\
-  show_copy ghostbuster\
+  internaladd_copy internalreset_copy show_copy internalupdate\
+  lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.67  2002/04/29 17:37:20  pwagner
+# Can build concealed utctotai library
+#
 # Revision 1.66  2002/04/18 20:16:30  pwagner
 # Tiny changes in comments
 #
