@@ -45,7 +45,7 @@ MODULE comp_eta_docalc_no_frq_m
 ! Internal declaritions
 !
   INTEGER(ip) :: n_p, n_z, npz
-  INTEGER(ip) :: sps_i,n_sps,n_path,sv_i,sv_z,sv_p,sv_j
+  INTEGER(ip) :: sps_i,no_mol,n_path,sv_i,sv_z,sv_p,sv_j
   INTEGER(ip) :: p_inda,z_inda,v_inda,p_indb,z_indb,v_indb
 
   REAL(rp), ALLOCATABLE :: eta_z(:,:),eta_p(:,:)
@@ -53,7 +53,7 @@ MODULE comp_eta_docalc_no_frq_m
 !
 ! Begin executable code:
 !
-  n_sps = SIZE(Grids_x%no_z)
+  no_mol = SIZE(Grids_x%no_z)
   n_path = SIZE(path_zeta)
 !
   eta_zp = 0.0
@@ -63,7 +63,7 @@ MODULE comp_eta_docalc_no_frq_m
   z_inda = 1
   v_inda = 1
 !
-  DO sps_i = 1 , n_sps
+  DO sps_i = 1 , no_mol
 !
     n_z = Grids_x%no_z(sps_i)
     n_p = Grids_x%no_p(sps_i)
@@ -114,6 +114,9 @@ MODULE comp_eta_docalc_no_frq_m
 END MODULE comp_eta_docalc_no_frq_m
 !
 ! $Log$
+! Revision 2.3  2002/06/04 10:28:01  zvi
+! rename n_sps to: no_mol, more correctly
+!
 ! Revision 2.2  2002/01/27 08:37:46  zvi
 ! Adding Users selected coefficients for derivatives
 !
