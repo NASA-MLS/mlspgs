@@ -557,6 +557,7 @@ contains ! =====     Public Procedures     =============================
         end select
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
+        invert = .false. ! Default if the field isn't present
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -1307,6 +1308,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.56  2001/06/13 20:41:35  vsnyder
+! Make sure 'invert' has a value
+!
 ! Revision 2.55  2001/05/30 23:56:39  livesey
 ! Changed for new L1BData
 !
