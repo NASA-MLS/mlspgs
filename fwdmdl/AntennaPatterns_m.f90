@@ -179,9 +179,12 @@ outer1: do
             ! Now nullify the channels we have.  Don't hose the main database!
             nullify ( antennaPatterns(i)%signals(k+l-1)%channels )
             call allocate_test ( antennaPatterns(i)%signals(k+l-1)%channels, &
-              & size(channels), 'antennaPatterns(?)%signals(?)%channels', &
+              & size(antennaPatterns(i)%signals(k+l-1)%frequencies), &
+              & 'antennaPatterns(?)%signals(?)%channels', &
               & moduleName )
-            antennaPatterns(i)%signals(k+l-1)%channels = channels
+            antennaPatterns(i)%signals(k+l-1)%channels = .false.
+            antennaPatterns(i)%signals(k+l-1)%channels ( &
+              & lbound(channels,1):ubound(channels,1) ) = channels
           end do
         end if
         k = k + size(sigInds)
@@ -280,6 +283,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
 ! Revision 1.18  2001/05/18 00:00:52  livesey
 ! Working version.  Still rewinds in the read, but I think
 ! the file format will have to dictate that for a while.
