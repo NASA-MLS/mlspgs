@@ -1116,6 +1116,69 @@ contains ! =====     Public Procedures     =============================
     if ( present(status) ) status = 0
   end subroutine DenseCholesky
 
+  ! ----------------------------------------------  DenseCyclicJacobi --
+  subroutine DenseCyclicJacobi ( A, V, eps, tol )
+    ! Implements the cyclic Jacobi algoritm (Golub and VanLoan 3rd ed.
+    ! Section 8.4.3).  Note that as we only store the lower triangle of A
+    ! some of the indices have been reversed from the above reference
+    real(rm), dimension(:,:), intent(inout) :: A ! Matrix to diagonalize, 
+              ! returned with eigen values on diagonal, ~0 off diagonal.
+    real(rm), dimension(:,:), intent(out) :: V ! Eigen vector matrix output
+    real(rm), optional, intent(in) :: EPS ! Smallest value to go for
+    real(rm), optional, intent(in) :: TOL ! Or as fraction of norm
+    ! Local variables
+    integer :: P, Q                     ! Row indices
+    integer :: N                        ! Size of A
+    real(rm) :: C, S, T                 ! Sine, Cosine and Tangent terms.
+    real(rm) :: myEps, myTol            ! Potential copies of eps and tol
+    real(rm) :: norm                    ! Norm to compute
+    ! Executable code
+    ! Do some setup
+    if ( present ( eps ) ) then
+      myEps = eps
+    else
+      myTol = sqrt ( tiny ( 0.0_rm ) )
+      if ( present ( tol ) ) myTol = tol
+      myEps = myTol * sum ( A ** 2 )
+    endif
+    n = size ( a, 1 )
+    ! Setup V
+    V = 0.0_rm
+    do p = 1, n
+      V ( p, p ) = 1.0_rm
+    end do
+    ! Now loop through the `sweeps'
+    do
+      norm = 0.0
+      do q = 2, n
+        norm = norm + sum ( a ( q, 1:q-1 ) ** 2 )
+      end do
+      ! Get out if sufficiently diagonal
+      if ( norm <= myEps ) exit
+      ! Otherwise walk through matrix
+      do q = 2, n
+        do p = 1, q-1
+          ! We're going to construct a notional J matrix
+          ! which is the identity except that it has
+          !   c s
+          !  -s c
+          ! embedded in it a rows/cols p and q
+          ! We then rotate A to A = J^T A J which makes Aqp=0 and
+          ! updates the diagonal of A.  Also change V to VJ
+          call SymSchur2 ( A, p, q, c, s, t )
+          ! Update A
+          t = t * A(q,p)
+          A(p,p) = A(p,p) - t
+          A(q,q) = A(q,q) + t
+          A(q,p) = 0.0_rm
+          ! Update V
+          V(p,:) =  V(p,:) * c + V(q,:) * s
+          V(q,:) = -V(p,:) * s + V(q,:) * c
+        end do
+      end do
+    end do
+  end subroutine DenseCyclicJacobi
+
   ! ----------------------------------------------------  DensifyA  -----
   subroutine DensifyA ( Z, B )
   ! Given a matrix block B, produce a full matrix Z, even if the matrix
@@ -2840,6 +2903,39 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( d, "D in Spill_0", ModuleName )
   end subroutine Spill_0
 
+  ! -------------------------------------------  SymSchur2 -------------
+  subroutine SymSchur2 ( A, p, q, c, s, t )
+    ! This subroutine works out the cosine(c) and sine(s) coefficients for a Jacobi
+    ! rotation of rows p and q of (1<=p<q<=n) of matrix A.  For more information see
+    ! Section 8.4.2 of Golub and VanLoan (3rd edition)
+    ! Dummy arguments.
+    real(rm), dimension(:,:), intent(in) :: A ! Symmetric matrix (lower triangle only)
+    integer, intent(in) :: P            ! First row to consider
+    integer, intent(in) :: Q            ! Second row to consider
+    real(rm), intent(out) :: C          ! Cosine term
+    real(rm), intent(out) :: S          ! Sine term
+    real(rm), intent(out) :: T          ! Tangent term
+    ! Local variables
+    real(rm) :: TAU                     ! Workspace
+    ! Executable code
+    ! Note that we only store the lower triangle of A, so sometimes Golub and VanLoan's
+    ! indices have been reversed
+    if ( A ( q, p ) /= 0.0_rm ) then 
+      tau =  ( A(q,q) - A(p,p)) / ( 2.0_rm * A(q,p) )
+      if ( tau >= 0.0_rm ) then
+        t =  1.0_rm / (  tau + sqrt ( 1.0_rm + tau**2 ) )
+      else
+        t = -1.0_rm / ( -tau + sqrt ( 1.0_rm + tau**2 ) )
+      end if
+      c = 1.0_rm / sqrt ( 1.0_rm + t**2 )
+      s = t * c
+    else
+      c = 1.0_rm
+      s = 0.0_rm
+      t = 0.0_rm
+    end if
+  end subroutine SymSchur2
+
   ! -------------------------------------------  TransposeMatrix_0 -----
   subroutine TransposeMatrix_0 ( Z, A )
     ! Given the matrix A, compute Z=M^T
@@ -3151,6 +3247,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.99  2004/01/28 01:56:48  livesey
+! Added the Cyclic Jacobi code.
+!
 ! Revision 2.98  2004/01/24 01:02:12  livesey
 ! Changed order of arguments in TransposeMatrix_0
 !
