@@ -5,8 +5,8 @@ module SYMBOL_TABLE
 
   use MACHINE, only: IO_ERROR
   use STRING_TABLE, only: ALLOCATE_CHAR_TABLE, ALLOCATE_STRING_TABLE, &
-                          DISPLAY_STRING, ADD_CHAR, LOOKUP_AND_INSERT, &
-                          STRING_TABLE_SIZE
+                          DISPLAY_STRING, ADD_CHAR, HOW_MANY_STRINGS, &
+                          LOOKUP_AND_INSERT, STRING_TABLE_SIZE
   use SYMBOL_TYPES, only: CASELESS_LOOK, FIRST_TYPE, INIT_TERMINAL, &
                           INIT_TYPE, LAST_TYPE, T_NULL, T_LAST_TERMINAL, &
                           TERM_TYPES
@@ -124,7 +124,7 @@ contains
     call display_string ( symbol, advance=advance )
     return
   end subroutine DUMP_1_SYMBOL
-  ! =====================================     DUMP_SYMBOL_CLASS     =====
+  ! ====================================     DUMP_SYMBOL_CLASS     =====
   subroutine DUMP_SYMBOL_CLASS ( SYM_CLASS, ADVANCE )
   ! Print the symbol text, given its class, e.g. T_IDENTIFIER
     integer, intent(in) :: SYM_CLASS
@@ -132,6 +132,14 @@ contains
     call display_string ( class_texts(sym_class), advance )
     return
   end subroutine DUMP_SYMBOL_CLASS
+  ! ====================================     DUMP_SYMBOL_TABLE     =====
+  subroutine DUMP_SYMBOL_TABLE
+  ! Print the entire symbol table, using DUMP_1_SYMBOL
+    integer :: I
+    do i = 1, how_many_strings()
+      call dump_1_symbol ( i, advance='yes' )
+    end do
+  end subroutine DUMP_SYMBOL_TABLE
   ! =====================================     DUMP_SYMBOL_TYPE     =====
   subroutine DUMP_SYMBOL_TYPE ( SYMTYP, ADVANCE )
   ! Print the symbol type, e.g. <reserved_word>.
@@ -174,6 +182,7 @@ contains
       if ( .not. found ) then; symbols(where) = t_null; end if
       type_texts(i) = where
     end do
+    symbols(how_many_strings()+1:) = t_null
   end subroutine INIT_SYMBOL_TABLE
   ! ===========================================     SET_SYMBOL     =====
   subroutine SET_SYMBOL ( STRING, CLASS )
@@ -237,6 +246,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.8  2003/05/14 01:42:25  vsnyder
+! Add Dump_Symbol_Table
+!
 ! Revision 2.7  2003/05/12 02:05:06  livesey
 ! Added optional case sensitivity to enter_terminal
 !
