@@ -5,7 +5,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
-  USE MLSFiles, only: WILDCARDHDFVERSION
+  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
   USE MLSMessageModule, only: MLSMSG_Error
 
   IMPLICIT NONE
@@ -62,7 +62,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
      
   ! Set the following to 1 before delivering to sips;                       
   ! when set to 0, it allows program to run w/o creating metadata           
-  integer            ::                         PENALTY_FOR_NO_METADATA = 0 
+  integer            ::                         PENALTY_FOR_NO_METADATA = 0
 
   ! Set the following to -2 before delivering to sips;                      
   ! (its possible values and their effects on normal output:                
@@ -86,10 +86,10 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! Assume hdf files w/o explicit hdfVersion field are this                 
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
-  integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4                        
+  integer, parameter :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
   ! on input                                                                
-  integer, parameter :: DEFAULT_HDFVERSION_READ = 4                         
+  integer, parameter :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
 
   ! Whether to manually collect garbage at end of each chunk                
   logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.                
@@ -100,6 +100,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.16  2002/03/14 23:38:28  pwagner
+! Gets HDFVERSION_4 and 5 from MLSFiles module
+!
 ! Revision 2.15  2002/02/12 00:25:25  pwagner
 ! New current_version_id parameter
 !
