@@ -789,12 +789,12 @@ contains ! =====     Public procedures     =============================
       begin, s+s_directWrite, &
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
-             begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
-             begin, f+f_sdname, t+t_string, n+n_field_type, &
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
-             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def /) )
+             begin, f+f_precision, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_file, t+t_string, ndr+n_field_type, &
+             begin, f+f_type, t+t_outputType, ndr+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
@@ -1066,6 +1066,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.323  2003/07/08 00:14:37  livesey
+! New version of directWrite command
+!
 ! Revision 2.322  2003/06/24 23:30:50  livesey
 ! Tidyups in directWrite and label
 !
