@@ -153,11 +153,11 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
     call dump(mr_f)
     call output('f%values is:')
     call dump(f%values)
+    jp = f%template%noInstances
+    kk = f%template%noSurfs
     DO l = 1, no_mmaf
       DO k = 1, no_tan_hts
         jj = ndx_path(k,l)%total_number_of_elements
-        jp = f%template%noInstances
-        kk = f%template%noSurfs
         DEALLOCATE(spsfunc_path(j,k,l)%values,STAT=i)
         ALLOCATE(spsfunc_path(j,k,l)%values(jj),STAT=ier)
         IF(ier /= 0) THEN
@@ -214,6 +214,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.6  2001/03/21 02:12:54  livesey
+! Interim version, got mr_f in but not working yet.
+!
 ! Revision 1.5  2001/03/21 01:09:42  livesey
 ! Commented out dh_dt_path to save memory
 !
