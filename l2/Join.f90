@@ -31,7 +31,7 @@ module Join                     ! Join together chunk based data.
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
-    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
+    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP, InsulateVector
   use Intrinsic, ONLY: L_NONE, L_CHANNEL, L_GEODANGLE, L_USBFREQUENCY, L_LSBFREQUENCY,&
        L_INTERMEDIATEFREQUENCY, L_MIF, L_MAF
 
@@ -207,7 +207,9 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_l2pc ) ! ------------------- L2PC Bins ------------------------
         thisL2PC%xStar = vectors(xStarIndex)
+        call InsulateVector(thisL2PC%xStar)
         thisL2PC%yStar = vectors(yStarIndex)
+        call InsulateVector(thisL2PC%yStar)
         call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
         thisL2PC%kStar = tmpKStar
         call decorate ( key, AddL2PCToDatabase ( l2pcDatabase, thisL2PC ) )
@@ -608,6 +610,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.23  2001/04/25 20:33:28  livesey
+! Minor improvements to Join l2pc stuff
+!
 ! Revision 2.22  2001/04/24 20:20:27  livesey
 ! L2PC moved to lib and word bin dropped from types etc.
 !
