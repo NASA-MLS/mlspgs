@@ -8,12 +8,12 @@ module Open_Init
   ! Creates and destroys the L1BInfo database
 
   use global_settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
-  use Hdf, only: DFACC_READ, SFSTART, SFEND
+  use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
   use L1BData, only: ReadL1BData, L1BData_T, &
     & DeallocateL1BData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
-!  use MLSFiles, only: mls_sfstart, mls_sfend
+  use MLSFiles, only: mls_sfstart, mls_sfend
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
   &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
   &                        PCF, CREATEMETADATA
@@ -88,8 +88,8 @@ contains ! =====     Public Procedures     =============================
          if(l1bInfo%L1BRADIDs(id) /= ILLEGALL1BRADID) then
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
-          STATUS = sfend(l1bInfo%L1BRADIDs(id))
-   !      STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
+  !      STATUS = sfend(l1bInfo%L1BRADIDs(id))
+         STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
 
          endif
       enddo
@@ -102,8 +102,8 @@ contains ! =====     Public Procedures     =============================
     if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
-      STATUS = sfend(l1bInfo%L1BOAID)
-  !   STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
+  !  STATUS = sfend(l1bInfo%L1BOAID)
+     STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
     endif
 
     if ( error /= 0 ) &
@@ -241,8 +241,8 @@ contains ! =====     Public Procedures     =============================
       endif
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
-        sd_id = sfstart(L1physicalFilename, DFACC_READ)
-  !     sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+  !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
+       sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
 
         if ( sd_id == -1 ) then
           call announce_error ( 0, &
@@ -255,7 +255,7 @@ contains ! =====     Public Procedures     =============================
           l1bInfo%L1BRADIDs(ifl1) = sd_id
           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
           if(index(switches, 'pro') /= 0) then  
-            call proclaim(L1physicalFilename, 'l1brad', &                   
+            call announce_success(L1physicalFilename, 'l1brad', &                   
             & hdfVersion=LEVEL1_HDFVERSION)                    
           endif
         end if
@@ -278,8 +278,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
-      sd_id = sfstart(L1physicalFilename, DFACC_READ)
-  !   sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+  !  sd_id = sfstart(L1physicalFilename, DFACC_READ)
+     sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
 
       if ( sd_id == -1 ) then
 
@@ -288,7 +288,7 @@ contains ! =====     Public Procedures     =============================
         l1bInfo%L1BOAID = sd_id
         l1bInfo%L1BOAFileName = L1physicalFilename
         if(index(switches, 'pro') /= 0) then  
-          call proclaim(L1physicalFilename, 'l1brad', &                     
+          call announce_success(L1physicalFilename, 'l1brad', &                     
           & hdfVersion=LEVEL1_HDFVERSION)                    
         endif
       end if
@@ -446,8 +446,8 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l1_type, hdfVersion )
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, l1_type, hdfVersion )
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l1_type
     integer, optional,  intent(in) :: hdfVersion
@@ -465,7 +465,7 @@ contains ! =====     Public Procedures     =============================
     call output ( 'name : ' )
     call blanks(8)
     call output ( trim(Name), advance='yes')
-  end subroutine proclaim
+  end subroutine announce_success
 
   ! ------------------------------------------  Dump_open_init  -----
   subroutine Dump_open_init ( Num_l1b_files, L1binfo, L2pcf, &
@@ -644,6 +644,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.61  2002/01/26 00:09:14  pwagner
+! Convert hdf routines to mlsfiles equivalents
+!
 ! Revision 2.60  2002/01/24 00:14:26  pwagner
 ! Proclaims level 1 files as input; comments concerning hdf5 conversion
 !
