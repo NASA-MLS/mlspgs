@@ -514,10 +514,10 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
-             l+l_extinction, l+l_gph, l+l_orbitIncline, l+l_ptan,&
-             l+l_radiance, l+l_refGPH, l+l_scVel, l+l_scGeocAlt, l+l_spaceRadiance,&
-             l+l_temperature, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_vmr, n+n_dt_def, &
+             l+l_extinction, l+l_gph, l+l_losVel, l+l_orbitIncline, l+l_ptan,&
+             l+l_radiance, l+l_refGPH, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
+             l+l_spaceRadiance, l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, &
+             l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
       begin, t+t_radiometer, l+l_r1a, l+l_r1b, l+l_r2, l+l_r3, l+l_r4, &
              l+l_r5h, l+l_r5v, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -783,6 +783,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.47  2001/03/15 18:40:21  livesey
+! Added some stuff for velocity, eci coordinates etc.
+!
 ! Revision 2.46  2001/03/14 02:47:26  vsnyder
 ! Cosmetic improvements
 !
