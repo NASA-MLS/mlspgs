@@ -960,7 +960,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
   subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE )
-  ! Z = A^T V if UPDATE is absent or false.
+  ! Z = A^T V if UPDATE is absent or false.  Z is first cloned from V.
   ! Z = Z + A^T V is UPDATE is present and true.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
@@ -981,14 +981,15 @@ contains ! =====     Public Procedures     =============================
         & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
-!???? Why is this here! call cloneVector ( z, v ) ! Copy characteristics, allocate values
-    do i = 1, a%col%nb
-      k = a%col%quant(i)
-      l = a%col%inst(i)
+    ! Copy characteristics, allocate values:
+    if ( .not. update ) call cloneVector ( z, v ) 
+    do j = 1, a%col%nb
+      k = a%col%quant(j)
+      l = a%col%inst(j)
       do_update = my_update
-      do j = 1, a%row%nb
-        m = a%row%quant(j)
-        n = a%row%inst(j)
+      do i = 1, a%row%nb
+        m = a%row%quant(i)
+        n = a%row%inst(i)
         call multiplyMatrixVector ( a%block(i,j), &
           & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
           & do_update )
@@ -999,7 +1000,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_1  -----
   subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE )
-  ! Z = A V if UPDATE is absent or false.
+  ! Z = A V if UPDATE is absent or false.  Z is first cloned from the
+  !     rows-labeling of A.
   ! Z = Z + A V if UPDATE is presend and true.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
@@ -1020,7 +1022,8 @@ contains ! =====     Public Procedures     =============================
         & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
-!??? Why is this here! call cloneVector ( z, v ) ! Copy characteristics, allocate values
+    ! Copy characteristics, allocate values:
+    if ( .not. update ) call cloneVector ( z, a%row%vec )
     do i = 1, a%row%nb
       m = a%row%quant(i)
       n = a%row%inst(i)
@@ -1471,6 +1474,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.25  2001/04/30 23:44:25  vsnyder
+! Correct/remove some incorrect size tests in MultiplyMatrixVectorNoT
+!
 ! Revision 2.24  2001/04/28 07:03:59  livesey
 ! Removed print statement
 !
