@@ -1,3 +1,12 @@
+; ----------------------------------------------------------------
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+;
+; This Level 2 Configuration File (l2cf) has been automatically
+; generated using the GNU m4 macro preprocessor.  While it is
+; perfectly allowable to edit this file directly, it will probably
+; be more efficient to edit the `source' files that went into m4.
+; ----------------------------------------------------------------
+;
 ; These are the m4 definitions for l2cf's
 ; Change the quotes to braces
 changequote({,})
