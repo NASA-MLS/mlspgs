@@ -357,6 +357,7 @@ contains ! =====     Public Procedures     =============================
     end do
     call createValues ( vector )
   end function CreateVector
+
   ! --------------------------------------  DestroyVectorDatabase  -----
   subroutine DestroyVectorDatabase ( database )
 
@@ -401,6 +402,22 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_deallocate // "vector%quantities" )
   end subroutine DestroyVectorInfo
+
+  ! ------------------------------------------  DestroyVectorMask  -----
+  subroutine DestroyVectorMask ( Vector )
+
+  ! This routine destroys the masks stored in the vector.
+
+    ! Dummy arguments
+    type (Vector_T), intent(inout) :: VECTOR
+
+    ! Local Variables:
+    integer :: I
+    do i = 1, size(vector%quantities)
+      call deallocate_test ( vector%quantities(i)%mask, &
+        & "vector%quantities(i)%mask", ModuleName )
+    end do
+  end subroutine DestroyVectorMask
 
   ! ------------------------------  DestroyVectorTemplateDatabase  -----
   subroutine DestroyVectorTemplateDatabase ( database )
@@ -518,41 +535,17 @@ contains ! =====     Public Procedures     =============================
   end subroutine DUMP_VECTOR_TEMPLATES
 
   ! ------------------------------------------  GetVectorQuantity  -----
-  function GetVectorQuantity ( vector, quantity, quantityIsName )
+  function GetVectorQuantity ( vector, quantity )
 
   ! This function returns a pointer to the information about one quantity
   ! within a vector.
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: Vector
-    integer, intent(in) :: Quantity                 ! Quantity index or name
-    ! If a Quantity index, it indexes the Quantities field of Vector_T,
-    ! not the quantities data base (which we don't have access to here,
-    ! anyway).
-    logical, intent(in), optional :: quantityIsName ! Quantity is Sub-rosa
+    integer, intent(in) :: Quantity                 ! Quantity index
 
     ! Result
     type(VectorValue_T), pointer :: GetVectorQuantity
-
-    ! Local variables
-    character(len=127) :: MSG
-    integer :: Search
-
-    ! Executable code
-    if ( present(quantityIsName) ) then
-      if ( quantityIsName ) then
-        do search = 1, size(vector%quantities)
-          if ( quantity == vector%quantities(search)%template%name ) then
-            GetVectorQuantity => vector%quantities(search)
-    return
-          end if
-        end do
-        call get_string ( quantity, msg )
-        msg(string_length(quantity)+2:) = 'is not a quantity in vector'
-        call get_string ( vector%name, msg(len_trim(msg)+2:) )
-        call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
-      end if
-    end if
 
     if ( quantity < 1 .or. quantity > size(vector%quantities) ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -560,6 +553,75 @@ contains ! =====     Public Procedures     =============================
     GetVectorQuantity => vector%quantities(quantity)
 
   end function GetVectorQuantity
+
+  ! -------------------------------  GetVectorQuantityIndexByName  -----
+  integer function GetVectorQuantityIndexByName ( vector, quantityName )
+
+  ! Given a quantity name's sub-rosa index, this function returns the index
+  ! of the quantity within the vector that has that name.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityName ! Quantity name sub-rosa index
+
+    ! Local variables
+    character(len=127) :: MSG
+    integer :: Search
+
+    ! Executable code
+    do search = 1, size(vector%quantities)
+      if ( quantityName == vector%quantities(search)%template%name ) then
+        GetVectorQuantityIndexByName = search
+    return
+      end if
+    end do
+    call get_string ( quantityName, msg )
+    msg(string_length(quantityName)+2:) = 'is not a quantity in vector'
+    call get_string ( vector%name, msg(len_trim(msg)+2:) )
+    call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
+
+  end function GetVectorQuantityIndexByName
+
+  ! -------------------------------  GetVectorQuantityIndexByType  -----
+  integer function GetVectorQuantityIndexByType ( vector, quantityType, &
+    & molecule, radiometer )
+
+  ! Given a quantity type index (l_...), this function returns the index
+  ! of the first quantity within the vector that has that type.  If
+  ! molecule and/or radiometer are supplied, the quantity that has the
+  ! specified type, as well as the specified molecule and/or radiometer
+  ! index, is returned.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
+    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
+    integer, intent(in), optional :: Radiometer   ! Radiometer index
+
+    ! Local variables
+    character(len=127) :: MSG
+    integer :: Search
+
+    ! Executable code
+    do search = 1, size(vector%quantities)
+      if ( quantityType == vector%quantities(search)%template%quantityType ) then
+        if ( present(molecule) ) then
+          if ( vector%quantities(search)%template%molecule /= molecule ) cycle
+        end if
+        if ( present(radiometer) ) then
+          if ( vector%quantities(search)%template%radiometerIndex /= &
+            &  radiometer ) cycle
+        end if
+        GetVectorQuantityIndexByType = search
+    return
+      end if
+    end do
+    msg = 'There is no quantity in vector '
+    call get_string ( vector%name, msg(len_trim(msg)+2:) )
+    msg = trim(msg) // ' that has the required type'
+    call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
+
+  end function GetVectorQuantityIndexByType
 
   !---------------------------------------------  MultiplyVectors  -----
   type (Vector_T) function MultiplyVectors ( X, Y ) result (Z)
@@ -669,6 +731,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.5  2000/12/04 23:43:59  vsnyder
+! Move more of addItemToDatabase into the include
+!
 ! Revision 2.4  2000/11/23 01:10:27  vsnyder
 ! Add "mask" field to specify columns to ignore when vector is row- or
 ! column-specifier for a matrix.
