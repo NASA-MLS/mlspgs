@@ -7,8 +7,7 @@ module Molecules
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use INTRINSIC ! Everything
 
   implicit NONE
   public
@@ -21,8 +20,13 @@ module Molecules
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+! Definitions of types:
+  integer, parameter :: FIRST_MOLECULE_TYPE = last_intrinsic_type + 1
+  integer, parameter :: T_MOLECULE =          first_molecule_type
+  integer, parameter :: LAST_MOLECULE_TYPE =  t_molecule
+
 ! Definitions of the literals:
-  integer, parameter :: FIRST_MOLECULE = 1
+  integer, parameter :: FIRST_MOLECULE = last_intrinsic_lit + 1
   integer, parameter :: L_AIR_CONT =     first_molecule
   integer, parameter :: L_BR_79_O =      l_air_cont + 1
   integer, parameter :: L_BR_81_O =      l_br_79_o + 1
@@ -142,8 +146,28 @@ module Molecules
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_MOLECULES  -----
-  subroutine Init_Molecules ( lit_indices )
+  subroutine Init_Molecules ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
+    & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
+
+    use TREE_TYPES, only: N_DT_DEF
+
+    integer, intent(inout) :: DATA_TYPE_INDICES(:)
+    integer, intent(inout) :: FIELD_INDICES(:)
     integer, intent(inout) :: LIT_INDICES(:)
+    integer, intent(inout) :: PARM_INDICES(:)
+    integer, intent(inout) :: SECTION_INDICES(:)
+    integer, intent(inout) :: SPEC_INDICES(:)
+
+    integer :: I    ! Loop inductor in an array constructor
+
+    ! Initialize the intrinsic types
+
+    call init_intrinsic ( data_type_indices, field_indices, lit_indices, &
+      & parm_indices, section_indices, spec_indices )
+
+    ! Put type names into the symbol table:
+
+    data_type_indices(t_molecule) =        add_ident ( 'molecule' )
 
     ! Put literals into the symbol table:
 
@@ -204,18 +228,26 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_oh) =           add_ident ( 'oh' )
     lit_indices(l_so2) =          add_ident ( 'so2' )
 
+    ! Create the type tree for the molecule type
+    call make_tree ( (/ &
+      begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
+             n+n_dt_def /) )
+
   contains
 
-    integer function ADD_IDENT ( TEXT )
-      character(len=*), intent(in) :: TEXT
-      add_ident = enter_terminal ( text, t_identifier )
-    end function ADD_IDENT
+    ! ------------------------------------------------  MAKE_TREE  -----
+    include "make_tree.f9h"
 
   end subroutine INIT_MOLECULES
 
 end module MOLECULES
 
 ! $Log$
+! Revision 2.5  2001/04/03 19:09:12  vsnyder
+! Change the order of initialization to intrinsic, Molecules, MLSSignals.
+! Use the revised make_tree.f9h, which requires revision of init...
+! calling sequences.
+!
 ! Revision 2.4  2001/04/03 01:17:48  vsnyder
 ! CVS stuff was still wrong
 !
