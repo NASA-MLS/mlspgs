@@ -112,7 +112,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
   integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
-  integer, parameter :: F_PHIWINDOW           = f_overlaps + 1
+  integer, parameter :: F_PERTURBATION        = f_overlaps + 1
+  integer, parameter :: F_PHIWINDOW           = f_perturbation + 1
   integer, parameter :: F_POINTINGGRIDS       = f_phiWindow + 1
   integer, parameter :: F_QUANTITIES          = f_pointingGrids + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
@@ -435,8 +436,9 @@ contains ! =====     Public procedures     =============================
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
     field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
-    field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
+    field_indices(f_perturbation) =        add_ident ( 'perturbation' )
     field_indices(f_phiWindow) =           add_ident ( 'phiWindow' )
+    field_indices(f_pointingGrids) =       add_ident ( 'pointingGrids' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
@@ -823,6 +825,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
+             begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -902,6 +905,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.95  2001/05/05 00:02:57  livesey
+! Added stuff for numerical derivatives
+!
 ! Revision 2.94  2001/05/04 19:54:08  pwagner
 ! Not sure why, but this one runs--unlike last one
 !
