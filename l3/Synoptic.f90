@@ -44,6 +44,7 @@ CONTAINS
 
 !-------------------------------------------------------------------------
    SUBROUTINE DailyCoreProcessing(cfDef, cfProd, pcf, l2Days, l2gp, avgPeriod, l3sp, &
+!     l3dm, dmA, dmD, l3r, residA, residD, flags)
      l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
 !-------------------------------------------------------------------------
 
@@ -87,7 +88,6 @@ CONTAINS
         INTEGER ::  rDays, pEndIndex, pStartIndex
 
         integer mis_l2Days, mis_l2Days_temp
-
         CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow), mis_Days_temp(maxWindow)
         CHARACTER (LEN=480) :: msr
 
@@ -177,6 +177,8 @@ CONTAINS
 
         numDays = cfProd%nDays
 
+        if (numDays .gt. 0) then
+
         ALLOCATE( l3dm(numDays), STAT=error )
         IF ( error /= 0 ) THEN
            msr = MLSMSG_Allocate // ' l3dm array.'
@@ -194,6 +196,8 @@ CONTAINS
            msr = MLSMSG_Allocate // ' dmD array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
         ENDIF
+
+        endif
 
 !!      Initialize Daily Map & Diagnostic
 
@@ -244,10 +248,13 @@ CONTAINS
 !!      Initialize Daily Map Residues
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+!          pcf%l3EndDay, rDays, l3r)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+!          pcf%l3EndDay, rDays, residA)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+!          pcf%l3EndDay, rDays, residD)
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
@@ -275,6 +282,8 @@ CONTAINS
         flags%writel3rCom  = .FALSE.
         flags%writel3rAsc  = .FALSE.
         flags%writel3rDes  = .FALSE.
+
+        if ( rDays .gt. 0) then 
  
         ALLOCATE( nc(rDays), STAT=error )
         IF ( error /= 0 ) THEN
@@ -306,6 +315,8 @@ CONTAINS
            msr = MLSMSG_Allocate // ' endTime array.'
            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
         ENDIF
+
+        endif
 
         DO I = 1, rDays 
 	    startTime(I) = l3r(I)%time(1)
@@ -394,8 +405,10 @@ CONTAINS
 		END IF
 
 		IF (cfProd%mode == 'com') THEN
-                   ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
 
+                  if (l3dm(1)%nLons .gt. 0) then 
+
+                   ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -456,21 +469,32 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+                   
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3rCom  = .TRUE.
 		   flags%writel3sp = .TRUE.
+
+                   endif
+
 		ELSE IF (cfProd%mode == 'asc') THEN
+
+                  if (dmA(1)%nLons .gt. 0) then 
+
+                   if ( associated(l3Result) ) then 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
                    CALL CordTransform(cfProd%mode)
 	   	   CALL FFSMA(l3sp(1), iP, J)
@@ -511,16 +535,25 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3rAsc  = .TRUE.
 		   flags%writel3sp = .TRUE.
+
+                   endif
+
 		ELSE IF (cfProd%mode == 'des') THEN
+
+                  if (dmD(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -566,16 +599,25 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
+
+                   endif
+
                 ELSE IF (cfProd%mode == 'ado') THEN
+
+                  if (dmA(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -623,16 +665,28 @@ CONTAINS
                         END IF
                       ENDDO
                    ENDDO
+
+                   if ( associated(l3Result) ) then 
                    DeAllocate(l3Result, STAT=error) 
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
                    flags%writel3dmAsc = .TRUE. 
                    flags%writel3rAsc  = .TRUE.
 
+                   endif
+
+                   if (dmD(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
+                   IF ( error /= 0 ) THEN
+                     msr = MLSMSG_Allocate // '  l3Result array.'
+                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                   ENDIF
+
                    CALL CordTransform('des')
                    CALL FFSMD(l3sp(3), iP, J)
                    DO iD = 1, cfProd%nDays
@@ -673,16 +727,25 @@ CONTAINS
                         END IF
                       ENDDO
                    ENDDO
+
+                   if ( associated(l3Result) ) then 
                    DeAllocate(l3Result, STAT=error) 
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
                    flags%writel3dmDes = .TRUE. 
                    flags%writel3rDes  = .TRUE.
                    flags%writel3sp = .TRUE.
+
+                   endif
+
 		ELSE IF (cfProd%mode == 'all') THEN
+
+                  if (l3dm(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -742,14 +805,21 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result,STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3rCom  = .TRUE.
+
+                   endif
+
+                   if (dmA(1)%nLons .gt. 0) then 
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
@@ -796,14 +866,21 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result,STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3rAsc  = .TRUE.
+
+                   endif
+
+                   if (dmD(1)%nLons .gt. 0) then 
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
@@ -850,15 +927,21 @@ CONTAINS
 			END IF
 		      ENDDO
 		   ENDDO
+
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result,STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
 
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
+
+                   endif
+
 		END IF
 
                 CALL ClearMemory()
@@ -869,6 +952,9 @@ CONTAINS
           !*** Sort into time ascending order according to l2gp format
           IF (cfProd%mode == 'com') THEN
                 DO iD = 1, rDays
+
+                  if (nc(iD) .gt. 0) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -910,29 +996,48 @@ CONTAINS
                         l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
                       
+                      if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
 
+                      if ( associated(pt)) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if ( nc(iD) .gt. 0 ) then 
+                      
                       ALLOCATE( pt(nc(iD)), STAT=error )
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_Allocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+
                       CALL DSORTP(-abs(l3r(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
                       DO i = 1, cfDef%N
                         l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -960,6 +1065,9 @@ CONTAINS
                 ENDDO
           ELSE IF (cfProd%mode == 'asc') THEN
                 DO iD = 1, rDays
+
+                  if ( nc(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -996,19 +1104,29 @@ CONTAINS
                       DO i = 1, nc(iD)
                         residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
 
+                      if ( associated(sortTemp)) then
+                      DeAllocate(sortTemp, STAT=error)
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      if ( associated(pt) ) then
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if ( nc(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1019,11 +1137,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1051,6 +1174,9 @@ CONTAINS
                 ENDDO
           ELSE IF (cfProd%mode == 'des') THEN
                 DO iD = 1, rDays
+
+                  if ( nc(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1087,19 +1213,29 @@ CONTAINS
                       DO i = 1, nc(iD)
                         residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
 
+                      if ( associated(sortTemp) ) then 
+                      DeAllocate(sortTemp, STAT=error)
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if (nc(iD) .gt. 0) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1110,11 +1246,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1142,6 +1283,8 @@ CONTAINS
                 ENDDO
           ELSE IF (cfProd%mode == 'ado') THEN
                 DO iD = 1, rDays
+
+                  if ( nca(iD) .gt. 0 ) then 
                       ALLOCATE( pt(nca(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1178,19 +1321,27 @@ CONTAINS
                       DO i = 1, nca(iD)
                         residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+                      if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
-
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+                      
+                      if ( nca(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nca(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1201,11 +1352,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1237,6 +1393,9 @@ CONTAINS
                 ENDDO
 
                 DO iD = 1, rDays
+
+                  if (ncd(iD) .gt. 0) then 
+                  
                       ALLOCATE( pt(ncd(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1273,19 +1432,28 @@ CONTAINS
                       DO i = 1, ncd(iD)
                         residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
 
+                      if ( associated(sortTemp) ) then 
+                      DeAllocate(sortTemp, STAT=error)
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if (ncd(iD) .gt. 0) then 
+
                       ALLOCATE( pt(ncd(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1296,11 +1464,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1328,6 +1501,9 @@ CONTAINS
                 ENDDO
           ELSE IF (cfProd%mode == 'all') THEN
                 DO iD = 1, rDays
+
+                  if (nca(iD) .gt. 0) then 
+
                       ALLOCATE( pt(nca(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1364,19 +1540,33 @@ CONTAINS
                       DO i = 1, nca(iD)
                         residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      if ( associated(sortTemp)) then 
+
                       DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+
+                      endif
+
+                      if ( associated(pt) ) then 
 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if (nca(iD) .gt. 0) then 
+
                       ALLOCATE( pt(nca(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1387,11 +1577,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1419,6 +1614,9 @@ CONTAINS
                 ENDDO
 
                 DO iD = 1, rDays
+
+                  if (ncd(iD) .gt. 0) then 
+
                       ALLOCATE( pt(ncd(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1455,19 +1653,27 @@ CONTAINS
                       DO i = 1, ncd(iD)
                         residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+                      if ( associated(sortTemp) ) then
                       DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
-
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if ( ncd(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(ncd(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1478,11 +1684,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1509,6 +1720,9 @@ CONTAINS
                 ENDDO
 
                 DO iD = 1, rDays
+
+                  if ( nc(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1545,19 +1759,29 @@ CONTAINS
                       DO i = 1, nc(iD)
                         l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      DeAllocate(sortTemp, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  sortTemp array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
 
+                      if ( associated(sortTemp) ) then 
+                      DeAllocate(sortTemp, STAT=error)
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  sortTemp array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !*** Calculate Maxmum Difference
+
+                      if ( nc(iD) .gt. 0 ) then 
+
                       ALLOCATE( pt(nc(iD)), STAT=error )
                       IF ( error /= 0 ) THEN
                         msr = MLSMSG_Allocate // ' pt array.'
@@ -1568,11 +1792,16 @@ CONTAINS
                       DO i = 1,cfDef%N
                         l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
+
+                      if ( associated(pt) ) then 
                       DeAllocate(pt, STAT=error)
-                   IF ( error /= 0 ) THEN
-                     msr = MLSMSG_DeAllocate // '  pt array.'
-                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-                   ENDIF
+                      IF ( error /= 0 ) THEN
+                        msr = MLSMSG_DeAllocate // '  pt array.'
+                        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                      ENDIF
+                      endif
+
+                      endif
 
                       !***Root-Sum-Square for each latitude, dimensioned (nLevels)
                       avg = 0.0
@@ -1607,7 +1836,6 @@ CONTAINS
 	iP = 0
 	DO kP = pStartIndex, pStartIndex 
 	  iP = iP + 1
-	print *, 'Residual Loop -- Processing Level =', kP
 
 	  DO J = 1, cfProd%nLats
        	     IF( anlats(J, iP) > 0 ) THEN
@@ -1651,6 +1879,9 @@ CONTAINS
 		END IF
 
 		IF (cfProd%mode == 'com') THEN
+
+                  if (l3dm(1)%nLons .gt. 0) then 
+                  
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -1668,13 +1899,20 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
 
 		ELSE IF (cfProd%mode == 'asc') THEN
+
+                  if (dmA(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -1692,13 +1930,20 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
 
 		ELSE IF (cfProd%mode == 'des') THEN
+
+                  if (dmD(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -1716,13 +1961,20 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
 
 		ELSE IF (cfProd%mode == 'ado') THEN
+
+                  if (dmA(1)%nLons .gt. 0) then 
+                  
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_Allocate // ' l3Result array.'
@@ -1740,11 +1992,17 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
+
+                   if (dmD(1)%nLons .gt. 0) then 
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
@@ -1763,14 +2021,26 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
 
 		ELSE IF (cfProd%mode == 'all') THEN
+
+                  if (l3dm(1)%nLons .gt. 0) then 
+
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
+                   IF ( error /= 0 ) THEN
+                     msr = MLSMSG_Allocate // '  l3Result array.'
+                     CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+                   ENDIF
+
                    CALL CordTransform('com')
 	   	   CALL FFSM(l3spPrec(1), iP, J)
                    DO iD = 1, cfProd%nDays
@@ -1782,11 +2052,17 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
+
+                   if (dmA(1)%nLons .gt. 0) then 
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
@@ -1805,11 +2081,17 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
+
+                   if (dmD(1)%nLons .gt. 0) then 
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    IF ( error /= 0 ) THEN
@@ -1827,11 +2109,15 @@ CONTAINS
 		      ENDDO
 		   ENDDO
 
+                   if ( associated(l3Result) ) then 
 		   DeAllocate(l3Result, STAT=error)
                    IF ( error /= 0 ) THEN
                      msr = MLSMSG_DeAllocate // '  l3Result array.'
                      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                    ENDIF
+                   endif
+
+                   endif
 
 		END IF
 
@@ -1842,101 +2128,133 @@ CONTAINS
 
 	ENDDO
 
+        if ( associated(l3spPrec) ) then 
 	DeAllocate(l3spPrec, STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_DeAllocate // '  l3spPrec array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(nc) ) then
 	DeAllocate(nc, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  nc array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(nca) ) then 
 	DeAllocate(nca, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  nca array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(ncd) ) then
 	DeAllocate(ncd, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  ncd array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(startTime)) then 
 	DeAllocate(startTime, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  startTime array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(endTime)) then
 	DeAllocate(endTime, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  endTime array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(alats) ) then
 	DeAllocate(alats, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  alats array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(dlats) ) then 
 	DeAllocate(dlats, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  dlats array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(alons)) then
 	DeAllocate(alons, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  alons array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(dlons)) then
 	DeAllocate(dlons, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  dlons array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(atimes)) then
 	DeAllocate(atimes, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  atimes array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(dtimes) ) then
 	DeAllocate(dtimes, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  dtimes array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(afields) ) then
 	DeAllocate(afields, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  afields array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(dfields) ) then
 	DeAllocate(dfields, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  dfields array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(aprec)) then 
 	DeAllocate(aprec, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  aprec array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(dprec)) then
 	DeAllocate(dprec, STAT=error)
           IF ( error /= 0 ) THEN
               msr = MLSMSG_DeAllocate // '  dprec array.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
@@ -1999,6 +2317,8 @@ CONTAINS
 
 !*** Allocate space for all the arrays
 
+        if ((nterms.gt.0).and.( (pEndIndex-pStartIndex).ge.0) ) then 
+
         ALLOCATE(l2Times(nterms, pEndIndex-pStartIndex+1), STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_Allocate // ' l2Times array.'
@@ -2044,6 +2364,10 @@ CONTAINS
              msr = MLSMSG_Allocate // ' l2Lons_new array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+
+          endif
+
+        if ( (cfProd%nLats.gt.0).and.( (pEndIndex-pStartIndex).ge.0).and.(nPd*l2Days.gt.0)  ) then 
 
         ALLOCATE(alons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
           IF ( error /= 0 ) THEN
@@ -2109,6 +2433,8 @@ CONTAINS
              msr = MLSMSG_Allocate // ' dprec_interp array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+
+          endif
 
 
 !*** Re-arrange the data into longitude order for each pressure level 
@@ -2309,51 +2635,67 @@ CONTAINS
 	  ENDDO
 	ENDDO
 
-!*** Deallocate intermidiate arrays 
+!*** Deallocate intermediate arrays 
 
+        if ((nterms.gt.0).and.( (pEndIndex-pStartIndex).ge.0) ) then 
 
+        if ( associated(l2Times) ) then
         DEALLOCATE(l2Times, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Times array.'
+              msr = MLSMSG_DeAllocate // '  l2Times pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Lons) ) then 
         DEALLOCATE(l2Lons, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Lons array.'
+              msr = MLSMSG_DeAllocate // '  l2Lons pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Lons_new) ) then
         DEALLOCATE(l2Lons_new, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Lons_new array.'
+              msr = MLSMSG_DeAllocate // '  l2Lons_new pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Lons_old) ) then
         DEALLOCATE(l2Lons_old, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Lons_old array.'
+              msr = MLSMSG_DeAllocate // '  l2Lons_old pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Lats) ) then
         DEALLOCATE(l2Lats, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Lats array.'
+              msr = MLSMSG_DeAllocate // '  l2Lats pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Values) ) then
         DEALLOCATE(l2Values, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Values array.'
+              msr = MLSMSG_DeAllocate // '  l2Values pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        if ( associated(l2Prec) ) then
         DEALLOCATE(l2Prec, STAT=error)
           IF ( error /= 0 ) THEN
-              msr = MLSMSG_DeAllocate // '  l2Prec array.'
+              msr = MLSMSG_DeAllocate // '  l2Prec pointer.'
               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
+        endif
 
+        endif
 
 !-----------------------------------
    END SUBROUTINE SortData
@@ -2385,6 +2727,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.23  2002/04/01 21:57:13  jdone
+! check division by zero
+!
 ! Revision 1.22  2002/03/27 22:45:17  jdone
 ! deallocate statements added
 !
