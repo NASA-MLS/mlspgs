@@ -33,18 +33,11 @@ begin Construct
 
   ;; ----------------------------------------- Temperature / refgph
 
-  !ifdef(flagOldTemperatureGrid,{!dnl
   temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   temperature_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, $
     type=temperature
   GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
   GPH_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=GPH
-  },{!dnl
-  temperature: Quantity, vGrid=vGridTemperature, hGrid=hGridStandard, type=temperature
-  temperature_HR: Quantity, vGrid=vGridTemperatureHiRes, hGrid=hGridStandard, $
-    type=temperature
-  GPH: Quantity, vGrid=vGridTemperature, hGrid=hGridStandard, type=GPH
-  GPH_HR: Quantity, vGrid=vGridTemperatureHiRes, hGrid=hGridStandard, type=GPH})
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
   
   ;; ----------------------------------------- Volume mixing ratios
