@@ -100,6 +100,25 @@ begin Construct
   !define(AllRadiometerBaselines, {baselineR1A, baselineR1B, baselineR2, $
     baselineR3, baselineR4, baselineR5H, baselineR5V })
 
+  ;; ----------------------------------------- Extinctions
+  extinctionR1A: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R1A, fGrid=fGridExtinctionR1A
+  extinctionR1B: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R1B, fGrid=fGridExtinctionR1B
+  extinctionR2: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R2, fGrid=fGridExtinctionR2
+  extinctionR3: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R3, fGrid=fGridExtinctionR3
+  extinctionR4: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R4, fGrid=fGridExtinctionR4
+  extinctionR5H: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+    type=extinction, radiometer=R5H, fGrid=fGridExtinctionR5H
+  extinctionR5V: Quantity, vGrid=vGridExtinction, hGrid=hGridStandard, $
+      type=extinction, radiometer=R5V, fGrid=fGridExtinctionR5V
+  
+  !define(AllRadiometerExtinctions, {extinctionR1A, extinctionR1B, extinctionR2, $
+    extinctionR3, extinctionR4, extinctionR5H, extinctionR5V })
+
   ;; ----------------------------------------- Isotope ratios
   br_79_o_ratio:      Quantity, type=isotopeRatio, molecule=br_79_o
   br_81_o_ratio:      Quantity, type=isotopeRatio, molecule=br_81_o
