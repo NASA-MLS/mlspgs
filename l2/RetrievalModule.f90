@@ -1911,9 +1911,6 @@ contains
           ! STOP
         end select
       ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
-        if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
-          & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
-          & jacobian_cols=jacobian_cols )
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
           call snoop ( key=snoopKey, vectorDatabase=vectorDatabase, &
@@ -1936,6 +1933,10 @@ contains
             call nwtdb ( aj, width=9 )
           end if
         end if
+
+      if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
+        & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
+        & jacobian_cols=jacobian_cols )
 
       ! Compute the covariance of the solution
       if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
@@ -3313,6 +3314,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.202  2002/10/29 20:51:27  livesey
+! Moved call to FillDiagVec
+!
 ! Revision 2.201  2002/10/25 23:56:04  livesey
 ! Bug fix in the diagnostics
 !
