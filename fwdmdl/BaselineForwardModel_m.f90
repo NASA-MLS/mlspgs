@@ -55,6 +55,7 @@ contains ! ======================================== BaselineForwardModel ======
 
     logical :: BSLINFIRST               ! Set if baseline in FwdModelIn
     logical :: PTANINFIRST              ! Set if ptan in FwdModelIn
+    logical :: MINORFRAMEBASIS          ! Set if baseline has a minor frame basis
 
     integer :: SIGINDEX                 ! Index into fwdModelConf%signals
     integer :: MAF                      ! Major frame index
@@ -148,8 +149,8 @@ contains ! ======================================== BaselineForwardModel ======
       end if
 
       ! Now check the validity of the quantities we've been given
-      if ( .not. ValidateVectorQuantity(baseline, stacked=.true., coherent=.true., &
-        & regular=.true., &
+      minorFrameBasis = baseline%template%minorFrame
+      if ( .not. ValidateVectorQuantity(baseline, regular=.true., &
         & frequencyCoordinate=(/ l_none, l_intermediateFrequency/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & InvalidQuantity//'baseline' )
@@ -166,27 +167,35 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( instWt0, noMIFs, 'instWt0', ModuleName )
       call Allocate_test ( instWt1, noMIFs, 'instWt1', ModuleName )
       
-      ! Unless phiWindow is exactly 0.0 then do 2D calculation
-      if ( fwdModelConf%phiWindow /= 0.0 ) then
-        call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
-        inst1 = min ( inst0+1, baseline%template%noInstances )
-        where ( inst1 /= inst0 )
-          instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
-            & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
-        elsewhere
+      if ( .not. minorFrameBasis ) then
+        ! Unless phiWindow is exactly 0.0 then do 2D calculation
+        if ( fwdModelConf%phiWindow /= 0.0 ) then
+          call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
+          inst1 = min ( inst0+1, baseline%template%noInstances )
+          where ( inst1 /= inst0 )
+            instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
+              & ( baseline%template%phi(1,inst1) - baseline%template%phi(1,inst0) ) 
+          elsewhere
+            instWt1 = 0.0
+          end where
+          instWt0 = 1 - instWt1
+          instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
+          instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+        else
+          ! 1D, choose closest instance
+          inst0(1) = FindOneClosestInstance ( baseline, ptan, maf )
+          ! Apply to all MIFs
+          inst0 = inst0(1)
+          inst1 = inst0
+          instWt0 = 1.0
           instWt1 = 0.0
-        end where
-        instWt0 = 1 - instWt1
-        instWt1 = max(min(instWt1,1.0_rp),0.0_rp)
-        instWt0 = max(min(instWt0,1.0_rp),0.0_rp)
+        end if
       else
-        ! 1D, choose closest instance
-        inst0(1) = FindOneClosestInstance ( baseline, ptan, maf )
-        ! Apply to all MIFs
-        inst0 = inst0(1)
-        inst1 = inst0
-        instWt0 = 1.0
-        instWt1 = 0.0
+        ! A minor frame baseline
+        inst0 = maf
+        inst1 = maf                     ! Don't use maf+1 to avoid array bounds problems
+        instWt0 = 1.0_rp
+        instWt1 = 0.0_rp
       end if
 
       ! Vertical coordinate ---------------------
@@ -197,19 +206,31 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( surfWt0, noMIFs, 'surfWt0', ModuleName )
       call Allocate_test ( surfWt1, noMIFs, 'surfWt1', ModuleName )
       
-      call Hunt ( baseline%template%surfs(:,1), ptan%values(:,maf), surf0 )
-      surf1 = min ( surf0+1, baseline%template%noSurfs )
-      where ( surf1 /= surf0 )
-        surfWt1 = ( ptan%values(:,maf) - baseline%template%surfs(surf0,1) ) / &
-          & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
-      elsewhere
-        surfWt1 = 0.0
-      end where
-      surfWt0 = 1 - surfWt1
-      surfWt1 = max(min(surfWt1,1.0_rp),0.0_rp)
-      surfWt0 = max(min(surfWt0,1.0_rp),0.0_rp)
-      surf0m = surf0 - 1
-      surf1m = surf1 - 1
+      if ( .not. minorFrameBasis ) then 
+        call Hunt ( baseline%template%surfs(:,1), ptan%values(:,maf), surf0 )
+        surf1 = min ( surf0+1, baseline%template%noSurfs )
+        where ( surf1 /= surf0 )
+          surfWt1 = ( ptan%values(:,maf) - baseline%template%surfs(surf0,1) ) / &
+            & ( baseline%template%surfs(surf1,1) - baseline%template%surfs(surf0,1) ) 
+        elsewhere
+          surfWt1 = 0.0
+        end where
+        surfWt0 = 1 - surfWt1
+        surfWt1 = max(min(surfWt1,1.0_rp),0.0_rp)
+        surfWt0 = max(min(surfWt0,1.0_rp),0.0_rp)
+        surf0m = surf0 - 1
+        surf1m = surf1 - 1
+      else
+        ! A minor frame basis baseline
+        do mif = 1, noMIFs
+          surf0(mif) = mif
+          surf1(mif) = mif              ! Don't use mif+1 to avoid array bounds problems.
+          surf0m(mif) = mif - 1
+          surf1m(mif) = mif - 1
+        end do
+        surfWt0 = 1.0_rp
+        surfWt1 = 0.0_rp
+      end if
 
       ! Frequency coordinate -------------------
       call Allocate_test ( chan0, noChans, 'chan0', ModuleName )
@@ -332,7 +353,7 @@ contains ! ======================================== BaselineForwardModel ======
 
       ! ---------------------------------------------------------------
       ! Now add some more terms to d[Radiance]/d[ptan] if appropriate
-      if (present(jacobian) .and. ptanInFirst) then
+      if (present(jacobian) .and. ptanInFirst .and. .not. minorFrameBasis) then
         ! Compute the derivative of surfWt[0/1] wrt. ptan
         call Allocate_test ( surfWt0Prime, noMIFs, 'surfWt0Prime', ModuleName )
         call Allocate_test ( surfWt1Prime, noMIFs, 'surfWt1Prime', ModuleName )
@@ -422,6 +443,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.20  2004/08/16 23:42:25  livesey
+! Added option for minor frame baseline
+!
 ! Revision 2.19  2004/07/07 19:42:11  vsnyder
 ! Use new Init argument of CreateBlock
 !
