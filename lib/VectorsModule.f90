@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+!Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS  RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -98,7 +98,6 @@ CONTAINS
     vectorTemplate%noSubVectors=SUM(quantities%noSubVectors)
     vectorTemplate%totalElements= &
          & SUM(quantities%noSubVectors*quantities%subVectorLen)
-    
     ! Allocate some arrays
 
     ALLOCATE(&
@@ -161,7 +160,7 @@ CONTAINS
     TYPE (VectorTemplate_T), INTENT(INOUT) :: vectorTemplate
 
     ! Local variables
-    INTEGER :: qty
+    INTEGER :: qty, status
 
     ! Executable code
 
@@ -169,13 +168,21 @@ CONTAINS
          & vectorTemplate%subVectorNoElements, &
          & vectorTemplate%subVectorFirstElement, &
          & vectorTemplate%subVectorQuantityNo, &
-         & vectorTemplate%subVectorProfileNo)
+         & vectorTemplate%subVectorProfileNo, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vectorTemplate%subVector")
 
     DO qty=1,vectorTemplate%noQuantities
-       DEALLOCATE(vectorTemplate%layout(qty)%entry)
+       DEALLOCATE(vectorTemplate%layout(qty)%entry, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vectorTemplate%layout(qty)%entry")
     END DO
-    DEALLOCATE(vectorTemplate%layout)
-    DEALLOCATE(vectorTemplate%quantities)
+    DEALLOCATE(vectorTemplate%layout, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vectorTemplate%layout")
+    DEALLOCATE(vectorTemplate%quantities, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vectorTemplate%quantities")
     
     vectorTemplate%noQuantities=0
     vectorTemplate%noSubVectors=0
@@ -217,7 +224,9 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vectorTemplate
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddVectorTemplateToDatabase
 
@@ -231,13 +240,15 @@ CONTAINS
     TYPE (VectorTemplate_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: l2gpIndex
+    INTEGER :: l2gpIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO l2gpIndex=1,SIZE(database)
           CALL DestroyVectorTemplateInfo(database(l2gpIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     ENDIF
   END SUBROUTINE DestroyVectorTemplateDatabase
 
@@ -254,7 +265,7 @@ CONTAINS
     TYPE (Vector_T), INTENT(OUT) :: vector
 
     ! Local variables
-    INTEGER :: status
+    INTEGER :: status, i
 
     ! Executable code
 
@@ -273,10 +284,13 @@ CONTAINS
 
     ! Dummy arguments
     TYPE (Vector_T) :: vector
-
+    ! Local Variables
+    INTEGER :: status
     ! Executable code
 
-    DEALLOCATE(vector%values)
+    DEALLOCATE(vector%values, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vector%values")
   END SUBROUTINE DestroyVectorInfo
 
   !---------------------------------------------------------------------------
@@ -312,7 +326,9 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vector
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddVectorToDatabase
 
@@ -326,13 +342,15 @@ CONTAINS
     TYPE (Vector_T),  DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: l2gpIndex
+    INTEGER :: l2gpIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO l2gpIndex=1,SIZE(database)
           CALL DestroyVectorInfo(database(l2gpIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     ENDIF
   END SUBROUTINE DestroyVectorDatabase
 
@@ -393,8 +411,9 @@ CONTAINS
   ! The array defaults to (noChans,noSurfs), but if the firstIndexChannel
   ! flag is set .FALSE., the indices are (noSurfs,noChans)
 
-  FUNCTION GetSubVectorAs2DArray(vector,quantity,profile,quantityName,&
+  SUBROUTINE GetSubVectorAs2DArray(vector,TwoDArray,quantity,profile,quantityName,&
        & firstIndexChannel)
+  
     
     ! Dummy arguments
     TYPE (Vector_T), INTENT(IN) :: vector
@@ -404,7 +423,7 @@ CONTAINS
     LOGICAL, INTENT(IN), OPTIONAL :: firstIndexChannel
 
     ! Result
-    REAL(r8), DIMENSION(:,:), POINTER :: GetSubVectorAs2DArray
+    REAL(r8), DIMENSION(:,:), POINTER :: TwoDArray
 
     ! Local variables
     LOGICAL :: useFirstIndexChannel
@@ -412,6 +431,7 @@ CONTAINS
     REAL(r8), DIMENSION(:,:), POINTER :: tmpResult
     INTEGER :: useQuantity,useProfile,surf,chan,status
     TYPE (QuantityTemplate_T), POINTER :: qty
+    REAL(R8), DIMENSION(1000):: pad
 
     ! Executable code
 
@@ -437,30 +457,26 @@ CONTAINS
     ELSE
        useProfile=1
     ENDIF
-
     values=>GetSubVectorPointer(vector,useQuantity,useProfile)
     qty=>vector%template%quantities(useQuantity)
-
+    
     IF (useFirstIndexChannel) THEN
-       ALLOCATE(tmpResult(qty%noChans,qty%noSurfs),STAT=status)
+       ALLOCATE(TwoDArray(qty%noChans,qty%noSurfs),STAT=status)
     ELSE
-       ALLOCATE(tmpResult(qty%noSurfs,qty%noChans),STAT=status)
+       ALLOCATE(TwoDArray(qty%noSurfs,qty%noChans),STAT=status)
     END IF
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
-         & "tmpResult")
-
+         & "TwoDArray")
     IF (useFirstIndexChannel.AND.qty%firstIndexChannel) THEN
-       tmpResult=RESHAPE(values,(/qty%noChans,qty%noSurfs/))
+       TwoDArray=RESHAPE(values,(/qty%noChans,qty%noSurfs/), pad)
     ELSE IF (useFirstIndexChannel.AND.(.NOT. qty%firstIndexChannel)) THEN
-       tmpResult=TRANSPOSE(RESHAPE(values,(/qty%noSurfs,qty%noChans/)))
+       TwoDArray=TRANSPOSE(RESHAPE(values,(/qty%noSurfs,qty%noChans/), pad))
     ELSE IF ((.NOT. useFirstIndexChannel).AND.(qty%firstIndexChannel)) THEN
-       tmpResult=TRANSPOSE(RESHAPE(values,(/qty%noChans,qty%noSurfs/)))
+       TwoDArray=TRANSPOSE(RESHAPE(values,(/qty%noChans,qty%noSurfs/), pad))
     ELSE
-       tmpResult=RESHAPE(values,(/qty%noSurfs,qty%noChans/))
+       TwoDArray=RESHAPE(values,(/qty%noSurfs,qty%noChans/), pad)
     END IF
-
-    GetSubVectorAs2DArray=>tmpResult
-  END FUNCTION GetSubVectorAs2DArray
+  END SUBROUTINE GetSubVectorAs2DArray
        
 
 !=============================================================================
@@ -469,6 +485,9 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.10  2000/05/18 00:04:15  lungu
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)".
+!
 ! Revision 1.9  2000/05/12 19:46:37  lungu
 ! Removed INTENT from declaration of dummy argument database in DestroyVectorDatabase.
 !
