@@ -748,7 +748,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type /) )
+             begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_allLinesForRadiometer, t+t_boolean, n+n_field_type, &
@@ -918,7 +919,7 @@ contains ! =====     Public procedures     =============================
                        s+s_negativePrecision, s+s_matrix, s+s_destroy, &
                        s+s_snoop, s+s_time, s+s_vector, s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
-                           s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
+                           s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
                            n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
@@ -937,6 +938,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.270  2003/01/11 01:23:12  livesey
+! Another bug fix in Dong's flagCloud
+!
 ! Revision 2.269  2003/01/11 01:04:21  livesey
 ! Bug fix for Dong's stuff
 !
