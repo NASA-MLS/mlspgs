@@ -174,6 +174,10 @@ ifeq ($(MLSF95),LF95)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -244,6 +248,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.44  2002/10/03 23:07:44  pwagner
+# l_specials for Lahey depend on gcc_version
+#
 # Revision 1.43  2002/09/04 18:10:22  pwagner
 # LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
 #
