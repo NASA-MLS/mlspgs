@@ -11,7 +11,6 @@ MODULE L3DMData
    USE MLSCommon
    USE L2GPData
    USE Hdf
-   USE OutputL2GP
    USE MLSPCF
    IMPLICIT NONE
    PUBLIC
@@ -39,6 +38,10 @@ MODULE L3DMData
 
 ! Parameters
 
+   CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
+   CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
+   CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
+                                             &field '
    CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
                                                &TAI to UTC.'
 
@@ -749,6 +752,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.2  2000/10/17 20:17:09  nakamura
+!# Added parameters used globally by L3; updated WriteMetaL3DM for new input.
+!#
 !# Revision 1.1  2000/10/05 19:11:07  nakamura
 !# Module for the L3DM data type.
 !#
