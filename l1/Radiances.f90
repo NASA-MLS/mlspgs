@@ -139,10 +139,9 @@ CONTAINS
     GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C
 !    print *, "GHzCntl avg: ", GHz_T2
     THz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%THzAmb) - absZero_C
-    if (finite(thz_t1)) print *, "THzAmb avg: ", THz_T1
 
-    IF (L1Config%Calib%TargetTemp > 0.0) THEN  ! Use the config input
-       GHz_target_T = L1Config%Calib%TargetTemp
+    IF (L1Config%Calib%GHzTargetTemp > 0.0) THEN  ! Use the config input
+       GHz_target_T = L1Config%Calib%GHzTargetTemp
     ELSE
        IF (GHz_Cal_Type == "P") THEN
           GHz_target_T = GHz_T1
@@ -154,11 +153,11 @@ CONTAINS
        ENDIF
     ENDIF
 
-    space_T = L1Config%Calib%SpaceTemp
+    space_T = L1Config%Calib%GHzSpaceTemp
 
 !! Special test config
 
-    IF (space_T < 0.0 .AND. L1Config%Calib%TargetTemp <= 0.0) THEN
+    IF (space_T < 0.0 .AND. L1Config%Calib%GHzTargetTemp <= 0.0) THEN
        GHz_target_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - &
             absZero_C
        space_T = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
@@ -343,6 +342,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2002/11/15 15:12:45  perun
+! Change space & target temps to GHz space & target temps
+!
 ! Revision 2.3  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
