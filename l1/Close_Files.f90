@@ -1,18 +1,20 @@
-!
 ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-!
+
 !=============================================================================
 MODULE Close_files ! Close the production files
 !=============================================================================
 
-  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo
+  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo, L1ProgType, THzType, LogType
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE WriteMetaL1
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: CloseFiles
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -22,16 +24,15 @@ MODULE Close_files ! Close the production files
 CONTAINS
 
 !=============================================================================
-  SUBROUTINE CloseFiles  ! Close production Level 1 files
+  SUBROUTINE CloseFiles   ! Close production Level 1 files
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
-    USE OpenInit, ONLY: antextPCF, antextCF
-    USE PCFHdr, ONLY: WritePCF2Hdr
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
-    USE MLSFiles, ONLY: mls_closeFile, HDFVERSION_4, HDFVERSION_5  
+    USE MLSFiles, ONLY: MLS_closeFile, HDFVERSION_5
+    USE L1BOutUtils, ONLY: WriteHdrAnnots
 
-    INTEGER :: i, returnStatus, error, hdfVersion
+    INTEGER :: i, returnStatus, error, HDFversion
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
@@ -57,62 +58,68 @@ CONTAINS
 
     ENDDO
 
-! Close HDF files
+    IF (L1ProgType == LogType) THEN
 
-    hdfVersion = L1Config%Output%HDFversion
+       returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%LogId)
 
-    ! Write Annotations and Close L1RAD D file
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BLOG file: '//l1BFileInfo%LogFileName)
 
-    IF (hdfVersion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
-       CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
+       RETURN
+
     ENDIF
 
-    CALL mls_closeFile (L1BFileInfo%RADDid, hdfVersion)
+! Close HDF files
 
+    HDFversion = L1Config%Output%HDFversion
+
+    IF (L1ProgType == THzType) THEN
+
+       ! Write Hdr Annotations and Close L1RAD T file
+
+       CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, L1BFileInfo%RADTid, &
+            HDFversion)
+       CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BRAD T file: '//L1BFileInfo%RADTFileName)
+
+       CALL WriteMetaData (IsTHz=.TRUE.)
+
+       RETURN
+
+    ENDIF
+
+    ! Write Hdr Annotations and Close L1RAD D file
+
+    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, L1BFileInfo%RADDid, &
+         HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
-    ! Write Annotations and Close L1RAD F file
+    ! Write Hdr Annotations and Close L1RAD F file
 
-    IF (hdfVersion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
-       CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
-    ENDIF
-
-    CALL mls_closeFile (L1BFileInfo%RADFid, hdfVersion)
-    
+    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, L1BFileInfo%RADFid, &
+         HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
-    ! Write Annotations and Close L1BOA file
+    ! Write Hdr Annotations and Close L1BOA file
 
-    IF (hdfVersion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
-       CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
-    ENDIF
-
-    CALL mls_closeFile (L1BFileInfo%OAid, hdfVersion)
-
+    CALL WriteHdrAnnots (L1BFileInfo%OAFileName, L1BFileInfo%OAid, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
 
     CALL WriteMetaData
 
     returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%EngId)
-    IF (returnStatus /= PGS_S_SUCCESS) THEN 
-          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-               "Calling PGS_IO_Gen_CloseF failed." )
-    ENDIF          
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BENG file: '//l1BFileInfo%EngFileName)
 
     returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%DiagId)
-    IF (returnStatus /= PGS_S_SUCCESS) THEN 
-          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-               "Calling PGS_IO_Gen_CloseF failed." )
-    ENDIF          
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BDIAG file: '//l1BFileInfo%DiagFileName)
@@ -124,13 +131,16 @@ CONTAINS
        IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Fortran HDF 5 API error on closing.")
     ENDIF
-       
+    
   END SUBROUTINE CloseFiles
 
 !=============================================================================
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.9  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.8  2002/11/20 17:50:27  perun
 ! Reinstated writing PCF annotations for HDF 4 files
 !

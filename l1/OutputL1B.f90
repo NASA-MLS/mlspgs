@@ -27,19 +27,21 @@ MODULE OutputL1B
   !------------------- RCS Ident Info -----------------------
   CHARACTER(LEN=130) :: Id = &
     "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
 CONTAINS
   !----------------------------------- OutputL1B_Create ----
-  SUBROUTINE OutputL1B_create (sdId)
+  SUBROUTINE OutputL1B_create (sdId, THz)
     ! This subroutine opens/creates the SD output files, and names the arrays
     ! and dimensions contained within them.
+
     ! Arguments
-    TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
+    TYPE (L1BFileInfo_T), INTENT(IN) :: sdId
+    LOGICAL :: THz
   
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
-       CALL OutputL1B_create_HDF4 (sdId)
-    ELSE
+       CALL OutputL1B_create_HDF4 (sdId, THz)
+    ELSE IF (.NOT. THz) THEN
        CALL OutputL1B_create_HDF5 (sdId)
     ENDIF
 
@@ -48,7 +50,7 @@ CONTAINS
   SUBROUTINE OutputL1B_index (noMAF, sd_id, index)
     ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file
     ! Arguments
-    TYPE( L1BOAindex_T), INTENT(IN) :: index
+    TYPE (L1BOAindex_T), INTENT(IN) :: index
     INTEGER, INTENT(IN) :: sd_id, noMAF
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
@@ -61,8 +63,9 @@ CONTAINS
   !------------------------------------------- OutputL1B_sc ------------
   SUBROUTINE OutputL1B_sc (noMAF, sd_id, sc)
     ! This subroutine writes the spacecraft quantities to the HDF-SD file.
+
     ! Arguments
-    TYPE( L1BOAsc_T ), INTENT(IN) :: sc
+    TYPE (L1BOAsc_T), INTENT(IN) :: sc
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
@@ -75,8 +78,9 @@ CONTAINS
   !-------------------------------------------- OutputL1B_GHz -------
   SUBROUTINE OutputL1B_GHz (noMAF, sd_id, tp)
     ! This subroutine writes the GHz tangent point quantities to the HDF-SD file
+
     ! Arguments
-    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+    TYPE (L1BOAtp_T), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
@@ -89,8 +93,9 @@ CONTAINS
   !-------------------------------------------- OutputL1B_THz --------------
   SUBROUTINE OutputL1B_THz (noMAF, sd_id, tp)
     ! This subroutine writes the THz tangent point quantities to the HDF-SD file
+
     ! Arguments
-    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+    TYPE (L1BOAtp_T), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
@@ -101,17 +106,24 @@ CONTAINS
 
   END SUBROUTINE OutputL1B_THz
   !-------------------------------------------------------- OutputL1B_rad
-  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, rad)
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, MAFStartTimeTAI, rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
+
     ! Arguments
-    TYPE( L1BFileInfo_T ) :: sdId
-    TYPE( Radiance_T ) :: rad(:)
+    TYPE (L1BFileInfo_T) :: sdId
+    TYPE (Radiance_T) :: rad(:)
     INTEGER, INTENT(IN) :: counterMAF, noMAF
+    REAL(r8), INTENT (IN) :: MAFStartTimeTAI
+    REAL(r8) :: MAFStartTimeGIRD
+
+    ! Convert TAI time to GIRD time
+
+    MAFStartTimeGIRD = MAFStartTimeTAI + 1104537627.0d00
 
     IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
-       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, rad)
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
     ELSE
-       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, rad)
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
     ENDIF
 
   END SUBROUTINE OutputL1B_rad
@@ -120,6 +132,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.8  2002/11/20 15:44:02  perun
 ! Use HDFversion instead of HDFVersionString & remove "default" calls
 !
