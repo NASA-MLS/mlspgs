@@ -659,7 +659,7 @@ contains
       beta_ratio = 1.0_rp   ! Allways, for single element (no grouping)
       do j = 1, noSpecies
         l = fwdModelConf%molecules(j)
-        if ( l == l_extinction ) CYCLE
+!        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
         beta_group(sv_i)%n_elements   = 1
         beta_group(sv_i)%cat_index(1) = j
@@ -677,7 +677,7 @@ contains
       do j = 1, noSpecies
         k = gl_inds(j)
         l = abs(k)
-        if ( l == l_extinction ) CYCLE
+!        if ( l == l_extinction ) CYCLE
         beta_ratio = 1.0_rp
         if(k > 0) then
           if(gl_inds(j+1) > 0) then
@@ -2493,6 +2493,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.81  2002/08/20 22:37:04  livesey
+! Moved uses inside routine
+!
 ! Revision 2.80  2002/08/02 00:12:07  bill
 ! just testing
 !
