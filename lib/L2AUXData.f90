@@ -52,7 +52,9 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
      REAL(r8), DIMENSION(:), POINTER :: values ! (noValues)
   END TYPE L2AUX_Dimension_T
 
-  ! This datatype describes an l2aux dimension.
+  ! This datatype describes an l2aux quantity itself.
+  ! The dimensions will typically be ordered as follows:
+  ! [Channel or frequency], MIF, [MAF or time or geodAngle]
 
   TYPE L2AUXData_T
 
@@ -195,6 +197,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.7  2000/01/07 23:53:34  livesey
+! Nearly integrated, just a few tweaks.
+!
 ! Revision 1.6  1999/12/18 01:06:28  livesey
 ! Added USE of MLSStrings
 !
