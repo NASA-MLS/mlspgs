@@ -85,6 +85,7 @@ begin Fill
     h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
     method=RHIPrecisionFromH2O, /dontMask
 ;  !include(fillcolumns.l2cf)
+  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
 end Fill
 begin Join
 !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
@@ -327,6 +328,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.34  2002/11/20 19:59:37  mjf
+; Fill columns to be added, but might break the retrieval, so commented
+; out for just now.
+;
 ; Revision 1.33  2002/10/25 23:56:45  livesey
 ; Minor changes in the diagnostics, added the offsetRadiances stuff
 ;
