@@ -569,7 +569,7 @@ contains
     ! Start sorting out stuff from state vector ------------------------------
 
     ! Identify the appropriate state vector components
-    ! VMRS are in sps%qtys, gotten by get_species_data
+    ! VMRS are in sps%beta_group%qty, gotten by get_species_data
     gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
     temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature, config=fwdModelConf )
@@ -628,8 +628,8 @@ contains
     maxNoFreqs = 0
     maxNoSurfs = 0
     do sps_i = 1, no_lbl
-      maxNoFreqs = max(maxNoFreqs, sps%qtys(sps_i)%qty%template%noChans)
-      maxNoSurfs = max(maxNoSurfs, sps%qtys(sps_i)%qty%template%noSurfs)
+      maxNoFreqs = max(maxNoFreqs, sps%beta_group(sps_i)%qty%qty%template%noChans)
+      maxNoSurfs = max(maxNoSurfs, sps%beta_group(sps_i)%qty%qty%template%noSurfs)
     end do
 
     MAF = fmStat%maf
@@ -722,15 +722,15 @@ contains
 ! Set up our temporary `state vector' like arrays ------------------------
 
     call load_sps_data ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,   &
-      & firstSignal%radiometer, sps%mol_cat_index, l_vmr, grids_f, sps%qtys, &
-      & h2o_ind, ext_ind )
+      & firstSignal%radiometer, sps%beta_group%mol_cat_index, l_vmr, grids_f, &
+      & sps%beta_group%qty, h2o_ind, ext_ind )
     if ( spect_der ) then
       call load_sps_data ( FwdModelConf, FwdModelIn, FwdModelExtra, maf, &
-        & firstSignal%radiometer, sps%mol_cat_index, l_dn, grids_dn )
+        & firstSignal%radiometer, sps%beta_group%mol_cat_index, l_dn, grids_dn )
       call load_sps_data ( FwdModelConf, FwdModelIn, FwdModelExtra, maf, &
-        & firstSignal%radiometer, sps%mol_cat_index, l_dv, grids_dv )
+        & firstSignal%radiometer, sps%beta_group%mol_cat_index, l_dv, grids_dv )
       call load_sps_data ( FwdModelConf, FwdModelIn, FwdModelExtra, maf, &
-        & firstSignal%radiometer, sps%mol_cat_index, l_dw, grids_dw )
+        & firstSignal%radiometer, sps%beta_group%mol_cat_index, l_dw, grids_dw )
     end if
 
 ! modify h2o mixing ratio if a special supersaturation is requested
@@ -790,7 +790,7 @@ contains
 
 ! Compute Gauss Legendre (GL) grid ---------------------------------------
 
-    call compute_GL_grid ( fwdModelConf, temp, sps%qtys, nlvl, maxVert, &
+    call compute_GL_grid ( fwdModelConf, temp, sps%beta_group%qty, nlvl, maxVert, &
       &                    p_glgrid, z_glgrid, tan_inds, tan_press )
 
 ! Allocate more GL grid stuff
@@ -1976,16 +1976,16 @@ contains
           !??? Which grids_... should give the windowStart:windowFinish to use here ???
           if ( .not. temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, sps%qtys, temp,ptan,      &
-               & thisRadiance, update, ptg_angles, Radiances(:,i),             &
+               & chanInd, windowStart, windowFinish, sps%beta_group%qty, temp, &
+               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
                & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
                & PTAN_DER=ptan_der )
           else if ( temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, sps%qtys, temp, ptan,     &
-               & thisRadiance, update, ptg_angles, Radiances(:,i),             &
+               & chanInd, windowStart, windowFinish, sps%beta_group%qty, temp, &
+               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
                & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -1994,8 +1994,8 @@ contains
                & DXDT_SURFACE=dxdt_surface, PTAN_DER=ptan_der )
           else if ( atmos_der .AND. .not. temp_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, sps%qtys, temp, ptan,     &
-               & thisRadiance, update, ptg_angles, Radiances(:,i),             &
+               & chanInd, windowStart, windowFinish, sps%beta_group%qty, temp, &
+               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
                & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2003,8 +2003,8 @@ contains
 !              & DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp)) )
           else
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
-               & chanInd, windowStart, windowFinish, sps%qtys, temp, ptan,     &
-               & thisRadiance, update, ptg_angles, Radiances(:,i),             &
+               & chanInd, windowStart, windowFinish, sps%beta_group%qty, temp, &
+               & ptan, thisRadiance, update, ptg_angles, Radiances(:,i),       &
                & tan_chi_out-thisElev, dhdz_out, dx_dh_out, thisFraction,      &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2024,31 +2024,31 @@ contains
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
               &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, sps%qtys, fmStat%rows, Jacobian, &
-              &  PTAN_DER=ptan_der)
+              &  Radiances(:,i), thisFraction, sps%beta_group%qty, fmStat%rows, &
+              &  Jacobian,  PTAN_DER=ptan_der)
           else if ( temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
               &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, sps%qtys, fmStat%rows, Jacobian, &
-              &  DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
+              &  Radiances(:,i), thisFraction, sps%beta_group%qty, fmStat%rows, &
+              &  Jacobian, DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
               &  PTAN_DER=ptan_der )
           else if ( atmos_der .AND. .not. temp_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
               &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, sps%qtys, fmStat%rows, Jacobian, &
-              &  DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
+              &  Radiances(:,i), thisFraction, sps%beta_group%qty, fmStat%rows, &
+              &  Jacobian, DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
 !             &  DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp) )
           else
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update,   &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev,       &
               &  dhdz_out, dx_dh_out, Grids_f,                                  &
-              &  Radiances(:,i), thisFraction, sps%qtys, fmStat%rows, Jacobian, &
-              &  DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
+              &  Radiances(:,i), thisFraction, sps%beta_group%qty, fmStat%rows, &
+              &  Jacobian, DI_DT=real(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/)),kind=rp), &
               &  DI_DF=real(k_atmos(i,:,:),kind=rp), PTAN_DER=ptan_der )
 !             &  DI_DF=real(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/)),kind=rp) )
           end if
@@ -2250,7 +2250,7 @@ contains
       if ( atmos_der ) then
 
         do k = 1, no_lbl
-          if ( fwdModelConf%moleculeDerivatives(sps%mol_cat_index(k)) ) then
+          if ( fwdModelConf%moleculeDerivatives(sps%beta_group(k)%mol_cat_index) ) then
             if ( fwdModelConf%do_freq_avg ) then
               ! Do DACs stuff for all DACs channels first
               do i = 1, noUsedDACS
@@ -2307,7 +2307,7 @@ contains
       if ( spect_der ) then
 
         do k = 1, no_lbl
-          if ( fwdModelConf%moleculeDerivatives(sps%mol_cat_index(k)) ) then
+          if ( fwdModelConf%moleculeDerivatives(sps%beta_group(k)%mol_cat_index) ) then
             !  *** dI/dW
             call dI_dSomething ( grids_dw, k_spect_dw_frq, k_spect_dw, k )
             !  *** dI/dN
@@ -3218,6 +3218,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.224  2004/10/06 21:27:41  vsnyder
+! More work on PFA -- seems to work now
+!
 ! Revision 2.223  2004/09/14 17:20:45  bill
 ! add mif dependent los vel correction-wgr
 !

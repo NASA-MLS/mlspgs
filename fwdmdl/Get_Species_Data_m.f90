@@ -12,22 +12,30 @@ module Get_Species_Data_M
   public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Catalog_Extract
   public :: Destroy_Species_Data, Dump
 
-! Beta group type declaration:
-  type, public :: Beta_Group_T
-    integer, pointer  :: Cat_Index(:) => NULL() ! 1:n_Elements
-    real(rp), pointer :: Ratio(:) => NULL()     ! 1:n_Elements
-  end type Beta_Group_T
-
 ! Species stuff
   type, public :: SPS_T
     integer :: No_Mol ! Size of several arrays == # molecule groups + # PFA
     integer :: No_LBL ! Number of Line-by-line molecule groups, <= no_mol
-    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_lbl
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_mol
     type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:noNonPFA
-    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol; indices
-      ! of elements of FwdModelConf%molecules that are positive.
-    type(qtyStuff_t), pointer :: Qtys(:) => NULL()         ! 1:no_mol
+      ! Catalog's second subscript comes from Beta_Group%Cat_Index for each
+      ! element of the beta group.  We do this indirectly so that the whole
+      ! catalog can be turned into gl_slabs data at once, and then the gl_slabs
+      ! can be indexed by Beta_Group%Cat_Index as well.
   end type SPS_T
+
+! Beta group type declaration.  Each entry in the Molecules list of the form
+! "m" has one of these with n_elements == 1, referring to "m".  Each entry
+! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
+! to m1,...mn (but not m).
+  type, public :: Beta_Group_T
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:n_Elements.  Index for
+                                      ! sps%catalog and gl_slabs.  Not for PFA.
+    integer :: Mol_Cat_Index          ! Index of leading (positive) element in
+                                      ! config's molecules for this beta group
+    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
+    real(rp), pointer :: Ratio(:) => NULL()     ! 1:n_Elements.  Isotope ratio.
+  end type Beta_Group_T
 
   interface Dump
     module procedure Dump_Beta_Group, Dump_Sps_Data
@@ -75,6 +83,7 @@ contains
 
     real(rp) :: Beta_Ratio
     logical :: DoThis                   ! Flag for lines in catalog item
+    integer, save :: DumpFwm = -1, DumpSps = -1, DumpStop = -1
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
@@ -95,6 +104,12 @@ contains
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T), pointer :: thisLine
 
+    if ( dumpSps < 0 ) then ! Done only once
+      dumpFwm = max(index(switches,'fwmg'),index(switches,'fwmG'))
+      dumpSps = max(index(switches,'sps'),index(switches,'spS'))
+      dumpStop = max(index(switches,'fwmG'),index(switches,'spS'))
+    end if
+
     if ( .not. associated ( catalog ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No spectroscopy catalog has been defined' )
@@ -108,11 +123,9 @@ contains
 
     if ( sps%no_mol == 0 ) return
 
-    allocate ( sps%beta_group(sps%no_lbl), stat=ier )
+    allocate ( sps%beta_group(sps%no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'sps%beta_group' )
-
-    call allocate_test ( sps%mol_cat_index, sps%no_mol, 'sps%mol_cat_index', moduleName )
 
     if ( noNonPFA == sps%no_lbl ) then ! No grouping, .eqv. sps%no_mol == noMol
 
@@ -123,11 +136,11 @@ contains
         l = fwdModelConf%molecules(j)
         !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
-        sps%mol_cat_index(sv_i) = j
         call allocate_test ( sps%beta_group(sv_i)%cat_index, 1, 'beta_group%cat_index', moduleName )
         call allocate_test ( sps%beta_group(sv_i)%ratio, 1, 'beta_group%ratio', moduleName )
-        sps%beta_group(sv_i)%cat_index(1) = j
-        sps%beta_group(sv_i)%ratio(1)     = beta_ratio
+        sps%beta_group(sv_i)%cat_index(1)  = j
+        sps%beta_group(sv_i)%ratio(1)      = beta_ratio
+        sps%beta_group(sv_i)%mol_cat_index = j
       end do
       noCat = sps%no_lbl
 
@@ -143,7 +156,6 @@ contains
         !        if ( abs(k) == l_extinction ) CYCLE
         if ( k > 0 ) then
           sv_i = sv_i + 1
-          sps%mol_cat_index(sv_i) = j
           ! Last element is a huge sentinel, not a molecule
           if ( fwdModelConf%molecules(j+1) > 0 ) then
             ! Two consecutive positive ones => not a group
@@ -174,12 +186,13 @@ contains
         if ( k > 0 ) then ! Beginning of a group or lonesome molecule
           i = 0
           sv_i = sv_i + 1
+          sps%beta_group(sv_i)%mol_cat_index = j
           ! Last element is a huge sentinel, not a molecule
           if ( fwdModelConf%molecules(j+1) > 0 ) then
             ! Two consecutive positive ones => first is lonesome molecule
             noCat = noCat + 1
-            sps%beta_group(sv_i)%cat_index(1) = noCat
-            sps%beta_group(sv_i)%ratio(1)     = beta_ratio
+            sps%beta_group(sv_i)%cat_index(1)  = noCat
+            sps%beta_group(sv_i)%ratio(1)      = beta_ratio
           end if
         else ! Negative one is group member
           i = i + 1
@@ -188,8 +201,8 @@ contains
             & quantityType=l_isotopeRatio, molecule=l, noError=.TRUE., &
             & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
-          sps%beta_group(sv_i)%cat_index(i) = noCat
-          sps%beta_group(sv_i)%ratio(i)     = beta_ratio
+          sps%beta_group(sv_i)%cat_index(i)  = noCat
+          sps%beta_group(sv_i)%ratio(i)      = beta_ratio
         end if
       end do
 
@@ -201,10 +214,10 @@ contains
       l = fwdModelConf%molecules(j)
       !        if ( l == l_extinction ) CYCLE
       sv_i = sv_i + 1
-      sps%mol_cat_index(sv_i) = j
+      sps%beta_group(sv_i)%mol_cat_index = j
     end do
 
-    ! Now that we have sps%mol_cat_index, we can go through
+    ! Now that we have sps%beta_group%mol_cat_index, we can go through
     ! FwdModelConf%forwardModelDerived%channels and fill in BetaIndex
     ! (there has to be a better way to do this...).
     do i = 1, size(fwdModelConf%forwardModelDerived%channels)
@@ -213,7 +226,7 @@ contains
       do j = 1, size(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules)
         do sv_i = sps%no_lbl+1, sps%no_mol
           if ( fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules(j) == &
-               fwdModelConf%molecules(sps%mol_cat_index(sv_i)) ) then
+               fwdModelConf%molecules(sps%beta_group(sv_i)%mol_cat_index) ) then
             fwdModelConf%forwardModelDerived%channels(i)%betaIndex(j) = sv_i
             exit
           end if
@@ -340,18 +353,17 @@ contains
     end do                              ! Loop over sidebands
 
     ! Get state vector quantities for species
-    allocate ( sps%qtys(sps%no_mol), stat = i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // 'sps%qtys' )
 
     do sv_i = 1 , sps%no_mol
-      sps%qtys(sv_i)%qty => GetQuantityForForwardModel(fwdmodelin, fwdmodelextra, &
-        &  quantitytype=l_vmr, molIndex=sps%mol_cat_index(sv_i), config=fwdModelConf, &
-        &  radiometer=radiometer, foundInFirst=sps%qtys(sv_i)%foundInFirst )
+      sps%beta_group(sv_i)%qty%qty => GetQuantityForForwardModel(fwdmodelin, &
+        &  fwdmodelextra, quantitytype=l_vmr, molIndex=sps%beta_group(sv_i)%mol_cat_index, &
+        &  config=fwdModelConf, radiometer=radiometer, &
+        &  foundInFirst=sps%beta_group(sv_i)%qty%foundInFirst )
     end do
 
-    if ( index(switches,'sps') /= 0 ) call dump ( sps )
-    if ( index(switches,'fwmg') /= 0 ) call dump ( fwdModelConf, 'Get_Species_Data' )
+    if ( dumpSps > 0 ) call dump ( sps )
+    if ( dumpFwm > 0 ) call dump ( fwdModelConf, 'Get_Species_Data' )
+    if ( dumpStop > 0 ) stop
 
   end subroutine Get_Species_Data
 
@@ -423,10 +435,6 @@ contains
     if ( species_data%no_mol == 0 ) return
     call destroy_beta_group ( species_data%beta_group )
     call destroy_catalog_extract ( species_data%catalog )
-    call deallocate_test ( species_data%mol_cat_index, 'Mol_Cat_Index', moduleName )
-    deallocate ( species_data%qtys, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'Species_Data%Qtys' )
 
   end subroutine Destroy_Species_Data
 
@@ -434,6 +442,7 @@ contains
   subroutine Dump_Beta_Group ( Beta_Group, Name )
 
     use Dump_0, only: Dump
+    use ForwardModelVectorTools, only: Dump
     use Output_m, only: Output
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
@@ -443,13 +452,15 @@ contains
 
     call output ( 'Beta group' )
     if ( present(name) ) call output ( ' ' // trim(name) )
-    call output ( ', SIZE = ' )
-    call output ( size(beta_group), advance='yes' )
+    call output ( size(beta_group), before=', SIZE = ', advance='yes' )
     do i = 1, size(beta_group)
-      call output ( 'Item ' )
-      call output ( i, advance='yes' )
-      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
-      call dump ( beta_group(i)%ratio, name='Ratio' )
+      call output ( i, before='Item ' )
+      call output ( beta_group(i)%mol_cat_index, before=', Mol_Cat_Index = ', &
+        & advance='yes' )
+      call dump ( beta_group(i)%qty )
+      if ( .not. associated(beta_group(i)%cat_index) ) cycle
+      call dump ( beta_group(i)%cat_index, name=' Cat_Index' )
+      call dump ( beta_group(i)%ratio, name=' Ratio' )
     end do
   end subroutine Dump_Beta_Group
 
@@ -459,7 +470,6 @@ contains
     use Dump_0, only: Dump
     use Output_m, only: NewLine, Output
     use SpectroscopyCatalog_m, only: Dump
-    use String_Table, only: Display_String
 
     type(sps_t), intent(in) :: Sps
     integer, intent(in), optional :: Details ! for dumping spectroscopy catalog
@@ -471,20 +481,7 @@ contains
     call output ( sps%no_lbl, before=', Line-by-line molecules = ', advance='yes' )
     call dump ( sps%beta_group )
     call dump ( sps%catalog, details=details )
-    call dump ( sps%mol_cat_index(:sps%no_lbl), name='Mol_Cat_Index (non-PFA)' )
-    call dump ( sps%mol_cat_index(sps%no_lbl+1:sps%no_mol), &
-      & name='Mol_Cat_Index (PFA)', lbound=sps%no_lbl+1 )
     call output ( 'QtyStuff:', advance='yes' )
-    do i = 1, size(sps%qtys)
-      call output ( ' Quantity ' )
-      if ( sps%qtys(i)%qty%template%name /= 0 ) then
-        call display_string ( sps%qtys(i)%qty%template%name )
-      else
-        call output ( '???' )
-      end if
-      if ( sps%qtys(i)%foundInFirst ) call output ( ', Found in first' )
-      call newLine
-    end do
 
   end subroutine Dump_Sps_Data
 
@@ -495,6 +492,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.16  2004/10/06 21:24:07  vsnyder
+! Some field names in Channels_T were changed
+!
 ! Revision 2.15  2004/09/01 01:48:13  vsnyder
 ! Closing in on PFA
 !
