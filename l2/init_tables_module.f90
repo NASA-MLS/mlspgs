@@ -360,7 +360,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
-      begin, t+t_method, l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
+      begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -806,6 +806,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.178  2001/10/22 22:21:52  dwu
+! add l_highcloud
+!
 ! Revision 2.177  2001/10/19 22:33:21  pwagner
 ! Can destroy a vector or a matrix in Fill
 !
