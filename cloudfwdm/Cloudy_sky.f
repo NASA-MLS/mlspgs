@@ -1,10 +1,12 @@
+
+      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm)
+
 C=======================================================
 C     >>>>>>>>CLOUDY-SKY RADIATION SCHEME<<<<<<<<<<
 C
-C      CALCULATE CLOUD SCATTERING AND EXTINCTION
+C     CALCULATE CLOUD SCATTERING AND EXTINCTION
+C     LATEST UPDATE: J.JIANG, MAY 20, 2001
 C=======================================================
-
-      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm)
       
       IMPLICIT NONE
       REAL PI

@@ -1,11 +1,13 @@
+
+      SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,SWIND,XZ,XP,XT,XQ,VMR,
+     >                     F,RS,U,T,TAU,Z,TAU100)
+
 C======================================================
 C     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
 C
 C     CALCULATE BACKGROUND ATMOSPHERIC RADIATION
+C     LATEST UPDATE, J.JIANG, MAY 18, 2001
 C======================================================
-
-      SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,SWIND,XZ,XP,XT,XQ,VMR,
-     >                     F,RS,U,T,TAU,Z,TAU100)
 
 C-------------------------------------------------
 C     ATMOSPHERIC PROFILE PARAMETERS
