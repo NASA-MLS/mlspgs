@@ -72,7 +72,7 @@ contains
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String, Get_String
     use Time_M, only: Time_Now
-    use Toggles, only: Gen, Switches, Toggle
+    use Toggles, only: Gen, Switches, Toggle, Levels
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
       & Subtree
@@ -275,9 +275,11 @@ contains
           end select
         end do
       case ( s_subset )
-        if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.subset", root )
         call SetupSubset ( key, vectorDatabase )
-        if ( toggle(gen) ) call trace_end ( "Retrieve.subset" )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.subset" )
       case ( s_retrieve )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
@@ -2950,6 +2952,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.186  2002/09/25 20:08:43  livesey
+! Made subset -g less verbose
+!
 ! Revision 2.185  2002/09/23 23:15:08  vsnyder
 ! Delete maxF
 !
