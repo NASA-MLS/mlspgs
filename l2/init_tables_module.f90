@@ -506,6 +506,7 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
+             begin, f+f_irregular, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
              begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
@@ -811,6 +812,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
              begin, f+f_regApriori, t+t_boolean, n+n_field_type, &
              begin, f+f_serial, t+t_boolean, n+n_field_type, &
+             begin, f+f_sparseQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -920,6 +922,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.266  2003/01/08 23:52:01  livesey
+! Added irregular and sparseQuantities
+!
 ! Revision 2.265  2003/01/07 23:58:33  livesey
 ! Typo!
 !
