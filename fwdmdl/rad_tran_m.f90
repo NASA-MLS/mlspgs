@@ -126,7 +126,7 @@ SUBROUTINE rad_tran(frq,s_temp,e_rflty,z_path_c,t_path_c,alpha_path_c, &
 !
 ! Begin code
 !
-  CALL two_d_t_script(t_path_c,s_temp,frq,t_script)
+  Call two_d_t_script(t_path_c,s_temp,frq,t_script)
   n_path = SIZE(z_path_c)
   no_to_gl = COUNT(do_gl)
   IF(no_to_gl > 0) THEN
@@ -154,7 +154,7 @@ SUBROUTINE rad_tran(frq,s_temp,e_rflty,z_path_c,t_path_c,alpha_path_c, &
       ENDIF
     ENDDO
 !
-    CALL path_opacity(del_zeta, &
+    Call path_opacity(del_zeta, &
               &  alpha_path_c(PACK((/(i,i=1,n_path)/),do_gl)), &
               &  alpha_path_gl(all_inds),ds_dh_gl(all_inds), &
               &  dh_dz_gl(all_inds),gl_delta)
@@ -169,7 +169,7 @@ SUBROUTINE rad_tran(frq,s_temp,e_rflty,z_path_c,t_path_c,alpha_path_c, &
 !
   incoptdepth = ref_cor * incoptdepth
 !
-  CALL scrt_dn(t_script,e_rflty,incoptdepth,tau,rad,i_stop)
+  Call scrt_dn(t_script,e_rflty,incoptdepth,tau,rad,i_stop)
 !
 END SUBROUTINE rad_tran
 !
@@ -318,7 +318,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f, &
               ENDIF
             ENDDO
 
-            CALL path_opacity(del_zeta, &
+            Call path_opacity(del_zeta, &
                  singularity(PACK((/(i,i=1,n_inds)/),do_gl(inds))), &
                  beta_path_f(all_inds,sps_i)*eta_zxp_f_f(all_inds,sv_i) &
                  * sps_path_f(all_inds,sps_i),ds_dh_gl(all_inds), &
@@ -372,7 +372,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f, &
               ENDIF
             ENDDO
 
-            CALL path_opacity(del_zeta, &
+            Call path_opacity(del_zeta, &
                  singularity(PACK((/(i,i=1,n_inds)/),do_gl(inds))), &
                  beta_path_f(all_inds,sps_i)*eta_zxp_f_f(all_inds,sv_i), &
                  ds_dh_gl(all_inds),dh_dz_gl(all_inds),gl_delta)
@@ -394,7 +394,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f, &
         DEALLOCATE(inds)
         DEALLOCATE(singularity)
 
-        CALL get_dscrt_no_t_dn(d_delta_df,t_script,tau,i_start,i_stop, &
+        Call get_dscrt_no_t_dn(d_delta_df,t_script,tau,i_start,i_stop, &
                             &  drad_df(sv_i))
 !
       ENDIF
@@ -548,7 +548,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
             ENDIF
           END DO
 
-          CALL path_opacity(del_zeta, &
+          Call path_opacity(del_zeta, &
               &  singularity(PACK((/(i,i=1,n_inds)/),do_gl(inds))),        &
               &  dbeta_path_f(all_inds,sps_i)*eta_zxp_f_f(all_inds,sv_i) * &
               &  sps_path_f(all_inds,sps_i),ds_dh_gl(all_inds),            &
@@ -569,7 +569,7 @@ SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
         DEALLOCATE(singularity)
         DEALLOCATE(inds)
 
-        CALL get_dscrt_no_t_dn(d_delta_dx,t_script,tau,i_start,i_stop, &
+        Call get_dscrt_no_t_dn(d_delta_dx,t_script,tau,i_start,i_stop, &
                             &  drad_dx(sv_i))
 !
       ENDIF
@@ -672,7 +672,7 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
 !
 ! compute the t_script derivative
 !
-  CALL dt_script_dt(t_path_c,eta_zxp_c,freq,dt_scr_dt)
+  Call dt_script_dt(t_path_c,eta_zxp_c,freq,dt_scr_dt)
 !
 ! compute the opacity derivative singularity value
 !
@@ -744,7 +744,7 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
            ENDIF
          ENDDO
 !
-         CALL path_opacity(del_zeta, &
+         Call path_opacity(del_zeta, &
            &  singularity(PACK((/(i,i=1,n_inds)/),do_gl(inds))), &
            &  alphaxn_path_f(all_inds)*eta_zxp_f(all_inds,sv_i) &
            &  / t_path_f(all_inds),ds_dh_gl(all_inds),dh_dz_gl(all_inds), &
@@ -820,8 +820,8 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
       ENDIF
 !
       IF(do_calc(mid+1)) THEN
-        fa = (h_path_c(mid+2)*dh_dt_path_c(mid+2,sv_i) &
-           - h_tan * dh_dt_tan(sv_i))/ del_s(mid+1)
+        fa = (h_path_c(mid+2)*dh_dt_path_c(mid+2,sv_i) - &
+            & h_tan * dh_dt_tan(sv_i))/ del_s(mid+1)
         d_delta_dt(mid+1) = d_delta_dt(mid+1) + alpha_path_c(mid+1) * fa
 !
 ! fb is 0.0
@@ -877,11 +877,12 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
 ! add special hydrostatic gl routine here
 ! the singularity point is alpha_path_c(more_inds)
 !
-         CALL hyd_opacity(del_zeta,alpha_path_c(more_inds), &
-              alpha_path_f(all_inds),h_path_f(all_inds), &
-              dh_dt_path_f(all_inds,sv_i),t_path_f(all_inds),h_tan, &
-              dh_dt_tan(sv_i),eta_zxp_f(all_inds,sv_i),ds_dh_gl(all_inds), &
-              dh_dz_gl(all_inds),gl_delta)
+         Call hyd_opacity(del_zeta,alpha_path_c(more_inds),                &
+            & alpha_path_f(all_inds),h_path_f(all_inds),                   &
+            & dh_dt_path_f(all_inds,sv_i),t_path_f(all_inds),h_tan,        &
+            & dh_dt_tan(sv_i),eta_zxp_f(all_inds,sv_i),ds_dh_gl(all_inds), &
+            & dh_dz_gl(all_inds),gl_delta)
+
          d_delta_dt(more_inds) = d_delta_dt(more_inds) + gl_delta
 !
          DEALLOCATE(more_inds)
@@ -900,7 +901,7 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
 ! correct the whole thing for path length refraction
 !
     d_delta_dt = ref_cor * d_delta_dt
-    CALL get_dscrt_dn(d_delta_dt,t_script,tau,dt_scr_dt(:,sv_i),i_start, &
+    Call get_dscrt_dn(d_delta_dt,t_script,tau,dt_scr_dt(:,sv_i),i_start, &
                    &  i_stop,drad_dt(sv_i))
 !
   ENDDO
@@ -914,6 +915,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.5  2002/06/13 22:38:40  bill
+! some variable name changes--wgr
+!
 ! Revision 2.4  2002/06/04 10:28:04  zvi
 ! rename n_sps to: no_mol, more correctly
 !

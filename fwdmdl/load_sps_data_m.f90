@@ -66,11 +66,11 @@ contains
     integer, intent(out) :: EXT_IND
 
     type (Grids_T), intent(out) :: Grids_f   ! All the coordinates
-    type (Grids_T), intent(out) :: Grids_dw  ! All the spectroscopy(W) 
+    type (Grids_T), intent(out) :: Grids_dw  ! All the spectroscopy(W)
 !                                              coordinates
-    type (Grids_T), intent(out) :: Grids_dn  ! All the spectroscopy(N) 
+    type (Grids_T), intent(out) :: Grids_dn  ! All the spectroscopy(N)
 !                                              coordinates
-    type (Grids_T), intent(out) :: Grids_dv  ! All the spectroscopy(V) 
+    type (Grids_T), intent(out) :: Grids_dv  ! All the spectroscopy(V)
 !                                              coordinates
 
     TYPE (VectorValue_T), POINTER :: temp
@@ -79,7 +79,7 @@ contains
     character(LEN=3), parameter :: WNV='+++'
 
 !   character(LEN=*), optional, intent(in) :: WNV
-!   type(Spect_der_T), optional, intent(in) :: Spect_Der(:)
+!   type(Spect_der_T), optional, intent(in) :: ZSpect_Der(:)
 
     ! Local variables:
 
@@ -99,14 +99,14 @@ contains
 
     no_mol = size( mol_cat_index )
 
-    CALL allocate_test ( Grids_f%no_z,no_mol,'Grids_f%no_z',modulename )
-    CALL allocate_test ( Grids_f%no_p,no_mol,'Grids_f%no_p',modulename )
-    CALL allocate_test ( Grids_f%no_f,no_mol,'Grids_f%no_f',modulename )
-    CALL allocate_test ( Grids_f%windowstart,no_mol,'Grids_f%windowstart', &
+    Call allocate_test ( Grids_f%no_z,no_mol,'Grids_f%no_z',modulename )
+    Call allocate_test ( Grids_f%no_p,no_mol,'Grids_f%no_p',modulename )
+    Call allocate_test ( Grids_f%no_f,no_mol,'Grids_f%no_f',modulename )
+    Call allocate_test ( Grids_f%windowstart,no_mol,'Grids_f%windowstart', &
                        & modulename )
-    CALL allocate_test ( Grids_f%windowfinish,no_mol,'Grids_f%windowfinish',&
+    Call allocate_test ( Grids_f%windowfinish,no_mol,'Grids_f%windowfinish',&
                        & modulename )
-    call Allocate_test ( Grids_f%lin_log, no_mol, 'lin_log', ModuleName )
+    Call Allocate_test ( Grids_f%lin_log, no_mol, 'lin_log', ModuleName )
 
     Grids_f%no_z = 0
     Grids_f%no_p = 0
@@ -138,7 +138,7 @@ contains
       else
         kf = f%template%noChans
       endif
-      CALL FindInstanceWindow(f,phitan,fmStat%maf,fwdModelConf%phiWindow, &
+      Call FindInstanceWindow(f,phitan,fmStat%maf,fwdModelConf%phiWindow, &
                             & wf1, wf2)
       Grids_f%windowStart(ii) = wf1
       Grids_f%windowFinish(ii) = wf2
@@ -162,15 +162,15 @@ contains
 !
 ! Allocate space for the zeta, phi & freq. basis componenets
 !
-    CALL allocate_test ( Grids_f%zet_basis,n_f_zet,'Grids_f%zet_basis', &
+    Call allocate_test ( Grids_f%zet_basis,n_f_zet,'Grids_f%zet_basis', &
                        & ModuleName)
-    CALL allocate_test ( Grids_f%phi_basis,n_f_phi,'Grids_f%phi_basis', &
+    Call allocate_test ( Grids_f%phi_basis,n_f_phi,'Grids_f%phi_basis', &
                        & ModuleName)
-    CALL allocate_test ( Grids_f%frq_basis,n_f_frq,'Grids_f%frq_basis', &
+    Call allocate_test ( Grids_f%frq_basis,n_f_frq,'Grids_f%frq_basis', &
                        & ModuleName)
-    CALL allocate_test ( Grids_f%values,f_len,'Grids_f%values', &
+    Call allocate_test ( Grids_f%values,f_len,'Grids_f%values', &
                        & ModuleName)
-    CALL allocate_test ( Grids_f%deriv_flags,f_len,'Grids_f%deriv_flags',&
+    Call allocate_test ( Grids_f%deriv_flags,f_len,'Grids_f%deriv_flags',&
                        & ModuleName)
 !
     j = 1
@@ -204,12 +204,12 @@ contains
       ENDIF
 !      if ( f%template%frequencyCoordinate /= l_none ) then
 !        if ( f%template%frequencyCoordinate /= l_frequency ) &
-!          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & Call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Inappropriate frequency coordinate for a species" )
 !        if ( associated(f%template%frequencies ) ) then
 !          Grids_f%frq_basis(s:m-1) = f%template%frequencies
 !        else
-!          call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          Call MLSMessage ( MLSMSG_Error, ModuleName, &
 !            & "Unable to deal with frequency coordinate for a species" )
 !        endif
 !      end if
@@ -227,7 +227,7 @@ contains
         Grids_f%values(f_len:r-1) = LOG(Grids_f%values(f_len:r-1))
       endif
 !
-! set do derivative flags
+! set 'do derivative' flags
 !
       IF (ASSOCIATED(f%mask)) THEN
         Grids_f%deriv_flags(f_len:r-1) = RESHAPE(( iand (M_FullDerivatives,&
@@ -250,47 +250,47 @@ contains
 !   Print *,' Grids_f%deriv_flags(1...f_len):'
 !   Print 932,Grids_f%deriv_flags(1:f_len)
 !932 format(37(1x,l1))
-!   if (f_len > 0) call MLSMessage(MLSMSG_Error,ModuleName,'DEBUG STOP' )
+!   if (f_len > 0) Call MLSMessage(MLSMSG_Error,ModuleName,'DEBUG STOP' )
 !*** END ZEBUG
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
-    !*** if (.not. associated(Spect_der) ) return
+    !*** if (.not. associated(ZSpect_der) ) return
     if(j > -10000) RETURN       ! *** ZEBUG, bypass Spectroscopy
 !
     if(index(WNV,'W') > 0) then
       allocate ( Grids_dw%no_z(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_z' )
       allocate ( Grids_dw%no_p(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_p' )
       allocate ( Grids_dw%no_f(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%no_f' )
     endif
 !
     if(index(WNV,'N') > 0) then
       allocate ( Grids_dn%no_z(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_z' )
       allocate ( Grids_dn%no_p(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_p' )
       allocate ( Grids_dn%no_f(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%no_f' )
     endif
 !
     if(index(WNV,'V') > 0) then
       allocate ( Grids_dv%no_z(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_z' )
       allocate ( Grids_dv%no_p(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_p' )
       allocate ( Grids_dv%no_f(no_mol), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%no_f' )
     endif
 !
@@ -310,15 +310,15 @@ contains
       Spectag = spec_tags(kk)
       do
         m = m + 1
-        !  *** if(Spect_Der(m)%Spectag == Spectag) exit
+        !  *** if(ZSpect_Der(m)%Spectag == Spectag) exit
         if(m > -100) exit    ! ** ZEBUG
         if(m == 3*no_mol) exit
       end do
-      !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
-      CA = '@' ! *** Spect_Der(m)%type
-      kz = 1   ! Spect_Der(m)%no_zeta_values
-      kp = 1   ! Spect_Der(m)%no_phi_values
-      kf = 1   ! Spect_Der(m)%no_frq_values
+      !  *** if(ZSpect_Der(m)%Spectag /= Spectag) cycle
+      CA = '@' ! *** ZSpect_Der(m)%type
+      kz = 1   ! ZSpect_Der(m)%no_zeta_values
+      kp = 1   ! ZSpect_Der(m)%no_phi_values
+      kf = 1   ! ZSpect_Der(m)%no_frq_values
       select case ( CA )
         case ( 'W' )
           Grids_dw%no_z(ii) = kz
@@ -346,37 +346,37 @@ contains
 !
     if(index(WNV,'W') > 0) then
       allocate ( Grids_dw%zet_basis(accum_z_dw), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%zet_basis' )
       allocate ( Grids_dw%phi_basis(accum_p_dw), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%phi_basis' )
       allocate ( Grids_dw%frq_basis(accum_f_dw), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%frq_basis' )
     endif
 !
     if(index(WNV,'N') > 0) then
       allocate ( Grids_dn%zet_basis(accum_z_dn), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%zet_basis' )
       allocate ( Grids_dn%phi_basis(accum_p_dn), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%phi_basis' )
       allocate ( Grids_dn%frq_basis(accum_f_dn), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%frq_basis' )
     endif
 !
     if(index(WNV,'V') > 0) then
       allocate ( Grids_dv%zet_basis(accum_z_dv), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%zet_basis' )
       allocate ( Grids_dv%phi_basis(accum_p_dv), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%phi_basis' )
       allocate ( Grids_dv%frq_basis(accum_f_dv), stat=j )
-      if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( j /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%frq_basis' )
     endif
 !
@@ -396,12 +396,12 @@ contains
       Spectag = spec_tags(kk)
       do
         m = m + 1
-        !  *** if(Spect_Der(m)%Spectag == Spectag) exit
+        !  *** if(ZSpect_Der(m)%Spectag == Spectag) exit
         if(m > -100) exit    ! ** ZEBUG
         if(m == 3*no_mol) exit
       end do
-      !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
-      CA = '@' ! *** Spect_Der(m)%type
+      !  *** if(ZSpect_Der(m)%Spectag /= Spectag) cycle
+      CA = '@' ! *** ZSpect_Der(m)%type
       select case ( CA )
         case ( 'W' )
           kz = Grids_dw%no_z(ii)
@@ -412,11 +412,11 @@ contains
             n = l_dw + kz
             j = s_dw + kf
       !     Grids_dw%zet_basis(l_dw:n-1) = &
-      !                         &  Spect_Der(m)%zeta_basis(1:kz)
+      !                         &  ZSpect_Der(m)%zeta_basis(1:kz)
       !     Grids_dw%phi_basis(j_dw:k-1) = &
-      !                         &  Spect_Der(m)%phi_basis(1:kp)
+      !                         &  ZSpect_Der(m)%phi_basis(1:kp)
       !     Grids_dw%frq_basis(s_dw:j-1) = &
-      !                         &  Spect_Der(m)%frq_basis(1:kf)
+      !                         &  ZSpect_Der(m)%frq_basis(1:kf)
             j_dw = k
             l_dw = n
             s_dw = j
@@ -430,11 +430,11 @@ contains
             n = l_dn + kz
             j = s_dn + kf
       !     Grids_dn%zet_basis(l_dn:n-1) = &
-      !                         &  Spect_Der(m)%zeta_basis(1:kz)
+      !                         &  ZSpect_Der(m)%zeta_basis(1:kz)
       !     Grids_dn%phi_basis(j_dn:k-1) = &
-      !                         &  Spect_Der(m)%phi_basis(1:kp)
+      !                         &  ZSpect_Der(m)%phi_basis(1:kp)
       !     Grids_dn%frq_basis(s_dn:j-1) = &
-      !                         &  Spect_Der(m)%frq_basis(1:kf)
+      !                         &  ZSpect_Der(m)%frq_basis(1:kf)
             j_dn = k
             l_dn = n
             s_dn = j
@@ -448,11 +448,11 @@ contains
             n = l_dv + kz
             j = s_dv + kf
       !     Grids_dv%zet_basis(l_dv:n-1) = &
-      !                         &  Spect_Der(m)%zeta_basis(1:kz)
+      !                         &  ZSpect_Der(m)%zeta_basis(1:kz)
       !     Grids_dv%phi_basis(j_dv:k-1) = &
-      !                         &  Spect_Der(m)%phi_basis(1:kp)
+      !                         &  ZSpect_Der(m)%phi_basis(1:kp)
       !     Grids_dv%frq_basis(s_dv:j-1) = &
-      !                         &  Spect_Der(m)%frq_basis(1:kf)
+      !                         &  ZSpect_Der(m)%frq_basis(1:kf)
             j_dv = k
             l_dv = n
             s_dn = j
@@ -466,22 +466,25 @@ contains
 !
   TYPE(Grids_T), intent(inout) :: Grids_x
 !
-  CALL deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
-  CALL deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
-  CALL deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
-  CALL deallocate_test(grids_x%values,'grids_x%values',modulename)
-  CALL deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
-  CALL deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
-  CALL deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
-  CALL deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
-  CALL deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
-  CALL deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
-  CALL deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
+  Call deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
+  Call deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
+  Call deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
+  Call deallocate_test(grids_x%values,'grids_x%values',modulename)
+  Call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
+  Call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
+  Call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
+  Call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
+  Call deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
+  Call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
+  Call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
 
  End subroutine Destroygrids_t
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.19  2002/06/19 11:00:34  zvi
+! Removing unused variables, some cosmetic changes
+!
 ! Revision 2.17  2002/06/13 22:39:12  bill
 ! fixed phi window selection--wgr
 !
