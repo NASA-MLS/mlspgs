@@ -144,7 +144,10 @@ contains
   !  $\mathbf{\tau}_i = \mathbf{P}_i \mathbf{P}_i^\dagger$.
 
     do i = 2, i_tan
-      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+  !Note: Indexing of deltau changes at the tangent point because it is a "layer quantity"
+  !      while P, Tau are defined at the boundary of a layer closest to the spacecraft  
+!      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i) )
       Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
     end do
 
@@ -213,6 +216,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.12  2003/08/12 23:05:30  vsnyder
+! Fix a bug at line 162
+!
 ! Revision 2.11  2003/08/12 19:34:53  michael
 ! Some futzing by Van.
 !
