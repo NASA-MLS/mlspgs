@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Init_MLSSignals_m
 
   use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, L, &
@@ -183,6 +186,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.15  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.14  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
