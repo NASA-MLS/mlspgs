@@ -252,7 +252,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SIGNAL             = s_sids + 1
   integer, parameter :: S_SNOOP              = s_signal + 1
   integer, parameter :: S_SPECTROMETERTYPE   = s_snoop + 1
-  integer, parameter :: S_SUBSET             = s_signal + 1
+  integer, parameter :: S_SUBSET             = s_spectrometertype + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TIME               = s_template + 1
   integer, parameter :: S_TPFILL             = s_time + 1
@@ -867,6 +867,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.40  2001/03/07 23:50:08  livesey
+! Bug fix, whoops!
+!
 ! Revision 2.39  2001/03/07 22:53:50  livesey
 ! Added snoop stuff
 !
