@@ -1554,9 +1554,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Now check that geodAngle's are a sufficient match
     if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
-      &         quantity%template%phi(1,:)) > tolerance) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+      &         quantity%template%phi(1,:)) > tolerance) ) then
+      call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
+      call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+    end if
 
     if (any(abs(l2gp%time(firstProfile:lastProfile)- &
       &         quantity%template%time(1,:)) > timeTol) ) &
@@ -3465,6 +3468,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.126  2002/05/28 17:08:42  livesey
+! More explicit error message still in l2gp fill.
+!
 ! Revision 2.125  2002/05/23 20:51:53  livesey
 ! Bug fix, checking wrong in special fill for los velocity.
 !
