@@ -1,109 +1,96 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
 module L1BData
-!===============================================================================
 
-  use Hdf, only: DFACC_READ, SFSTART
+  ! Reading and interacting with Level 1B data (HDF4)
+
+  use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, SFRDATA_f90, &
+    & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
+    & DFNT_FLOAT32
   use Lexer_Core, only: PRINT_SOURCE
-  use MLSCommon, only: R8, L1BInfo_T, FileNameLen
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-    & MLSMSG_L1Bread, MLSMSG_Warning
+  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+    & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use String_Table, only: Get_String
-  use TREE, only: NSONS, &
-    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
-  implicit none
-  public
+  use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
-!---------------------------- RCS Ident Info -------------------------------
+  implicit none
+  private
+
+  public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
+    & FINDL1BDATA, NAME_LEN
+
+  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
-       "$Id$"
+    "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-!---------------------------------------------------------------------------
+    "$RCSfile$"
+  !---------------------------------------------------------------------------
 
-! Contents:
+  ! Parameters
+  integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
 
-! Definition -- L1BData_T
-! subroutines -- ReadL1BData
-!                deallocateL1BData
-!                FindL1BData
-
-! Remarks:  This is a prototype module containing parameters, a derived type
-!           definition, and a subroutine for reading the L1B data.
-
-! Parameters
-
-   integer, parameter :: NAME_LEN = 64		! Max len of SDS array name
-
-! This data type is used to store quantities from an L1B data file.
+  ! This data type is used to store quantities from an L1B data file.
 
   type L1BData_T
-    character (LEN=NAME_LEN) :: L1BName        ! Name of field in file
-    integer :: FirstMAF                        ! First major frame read
-    integer :: NoMAFs                          ! # of MAFs read
-    integer :: MaxMIFs                 ! Max # of MIFs/MAF in SD array
-    integer :: NoAuxInds                       ! # of auxilliary indices
+    character (len=name_len) :: L1BName ! Name of field in file
+    integer :: FirstMAF                 ! First major frame read
+    integer :: NoMAFs                   ! # of MAFs read
+    integer :: MaxMIFs                  ! Max # of MIFs/MAF in SD array
+    integer :: NoAuxInds                ! # of auxilliary indices
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
 
     character, dimension(:,:,:), pointer :: CharField => NULL()
-    real(r8), dimension(:,:,:), pointer :: DpField => NULL()
-    integer, dimension(:,:,:), pointer :: IntField => NULL()
-		      ! dimensioned (noAuxInds,maxMIFs,noMAFs)
+    real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
+    integer,   dimension(:,:,:), pointer :: IntField => NULL()
+    ! all the above dimensioned (noAuxInds,maxMIFs,noMAFs)
   end type L1BData_T
 
-  private ::  announce_error
-  integer, private :: Error            ! Error level -- 0 = OK
+  integer :: Error            ! Error level -- 0 = OK
 
-contains
+contains ! ============================ MODULE PROCEDURES =======================
 
-  subroutine L1bradSetup ( Root, L1bInfo, F_FILE, &
-   & MAXNUML1BRADIDS, ILLEGALL1BRADID )
-!------------------------------------------------------------------------------
 
-! Brief description of subroutine
-! Take file name from l2cf, open, and store unit no. in l1bInfo
-
-! Arguments
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    integer, intent(in) :: Root         ! of the l1brad file specification.
-    !                                     Indexes a "spec_args" vertex.
+  ! ------------------------------------------- L1BRadSetup ------------
+  subroutine L1bradSetup ( Root, L1bInfo, F_File, MaxNumL1BRadIDs, illegalL1BRadID )
+    ! Take file name from l2cf, open, and store unit no. in l1bInfo
+    ! Dummy arguments
+    type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
+    integer, intent(in) :: ROOT         ! of the l1brad file specification.
     integer, intent(in) :: F_FILE
     integer, intent(in) :: MAXNUML1BRADIDS
     integer, intent(in) :: ILLEGALL1BRADID
 
+    ! Local variables
+    character(len=FileNameLen) :: FILENAME       ! Duh
+
     integer :: I                        ! Loop inductor, subscript
-    character(len=FileNameLen) :: FileName      ! Duh
-    integer :: Son                      ! Some subtree of root.
-    integer :: status, sd_id
-    integer, save :: ifl1=0             ! num. of L1brad files opened so far
+    integer :: SON                      ! Some subtree of root.
+    integer :: STATUS                   ! Flag
+    integer :: SD_ID                    ! ID from HDF
 
-    ! Error message codes
+    integer, save :: IFL1 = 0           ! num. of L1brad files opened so far
 
+    ! Exectuable code
     error = 0
 
     ! Collect data from the fields. (only one legal field: file='...')
-
     do i = 2, nsons(root)
-
       son = subtree(i,root)
-!      select case ( get_field_id(son) )
-
-!      case ( f_file )
       if(get_field_id(son) == f_file) then
-      
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         if(.NOT. associated(l1bInfo%L1BRADIDs)) then
           allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
           allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
           l1bInfo%L1BRADIDs = ILLEGALL1BRADID
           if ( status /= 0 ) &
-          & call announce_error ( son, 'Allocation failed for l1bInfo' )
+            & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
         sd_id = sfstart(Filename, DFACC_READ)
         if ( sd_id == -1 ) then
@@ -117,55 +104,38 @@ contains
           l1bInfo%L1BRADIDs(ifl1) = sd_id
           l1bInfo%L1BRADFileNames(ifl1) = Filename
         end if
-
-!      case default
       else
-          call announce_error ( son, &
-            & 'Unknown field specified in read l1brad' )
-        ! Can't get here if the type checker worked
-
-!      end select
+        call announce_error ( son, &
+          & 'Unknown field specified in read l1brad' )
       endif
-
     end do
 
-!----------------------------
   end subroutine L1bradSetup
-!----------------------------
 
-!------------------------------------------------------------------------------
+  !--------------------------------------------------- L1BOASetup --------------
   subroutine L1boaSetup ( root, l1bInfo, F_FILE )
-!------------------------------------------------------------------------------
+    ! Take file name from l2cf, open, and store unit no. in l1bInfo
 
-! Brief description of subroutine
-! Take file name from l2cf, open, and store unit no. in l1bInfo
+    ! Dummy arguments
+    type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
+    integer, intent(in) :: ROOT         ! of the l1brad file specification.
+    integer, intent(in) :: F_FILE       ! From init_tables_module
 
-! Arguments
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    integer, intent(in) :: Root         ! of the l1brad file specification.
-    !                                     Indexes a "spec_args" vertex.
-    integer, intent(in) :: F_FILE
+    ! Local variables
+
+    character(len=FileNameLen) :: FileName ! Duh
 
     integer :: I                        ! Loop inductor, subscript
-    character(len=FileNameLen) :: FileName      ! Duh
-    integer :: Son                      ! Some subtree of root.
-    integer :: status, sd_id
+    integer :: SON                      ! Some subtree of root.
+    integer :: STATUS                   ! Flag
+    integer :: SD_ID                    ! From HDF
 
-    ! Error message codes
-
+    ! Exectuable code
     error = 0
-
     ! Collect data from the fields. (only one legal field: file='...')
-
     do i = 2, nsons(root)
-
       son = subtree(i,root)
-!      select case ( get_field_id(son) )
-
-!      case ( f_file )
       if(get_field_id(son) == f_file) then
-
-!      case ( f_file )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         sd_id = sfstart(Filename, DFACC_READ)
         if ( sd_id == -1 ) then
@@ -175,367 +145,243 @@ contains
           l1bInfo%L1BOAID = sd_id
           l1bInfo%L1BOAFileName = Filename
         end if
-
-!      case default
       else
-          call announce_error ( son, &
-            & 'Unknown field specified in read l1boa' )
-        ! Can't get here if the type checker worked
-
+        call announce_error ( son, &
+          & 'Unknown field specified in read l1boa' )
       endif
-!      end select
-
     end do
-
-!----------------------------
   end subroutine L1boaSetup
-!----------------------------
 
-
-!------------------------------------------------------------------------------
+  !---------------------------------------------------- ReadL1BData -------------
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    &                       FirstMAF, LastMAF )
-!------------------------------------------------------------------------------
+    & FirstMAF, LastMAF )
+    
+    ! Dummy arguments
+    character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
+    integer, intent(in)            :: L1FILEHANDLE ! From HDF
+    integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
+    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    type(l1bdata_t), intent(out)   :: L1BDATA ! Result
+    integer, intent(out) :: FLAG        ! Error flag
+    integer, intent(out) :: NOMAFS      ! Number actually read
 
-! Brief description of subroutine
+    ! Local Parameters
+    character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
+    integer, parameter :: MAX_VAR_DIMS = 32
 
-! This is a prototype for the ReadL1BData subroutine in the Open/Init task.
+    ! Local Variables
 
-! Arguments
+    character (len=128) :: DUMMY        ! Dummy quantity name
 
-      character (len=*), intent(in) :: quantityName
+    integer :: ALLOC_ERR
+    integer :: DATA_TYPE
+    integer :: I
+    integer :: N_ATTRS
+    integer :: NUMMAFS
+    integer :: RANK
+    integer :: SDS1_ID
+    integer :: SDS2_ID
+    integer :: SDS_INDEX
+    integer :: STATUS
+    integer :: DIM_SIZES(MAX_VAR_DIMS)
 
-      integer, intent(in) :: L1FileHandle
+    integer, dimension(:), pointer :: EDGE
+    integer, dimension(:), pointer :: START
+    integer, dimension(:), pointer :: STRIDE
 
-      integer, intent(in), optional :: firstMAF, lastMAF
- 
-      type( l1bdata_t ), intent(out) :: l1bData
+    real(r4), pointer, dimension(:,:,:) :: tmpR4Field
 
-      integer, intent(out) :: flag, noMAFs
+    ! Executable code
+    nullify ( edge, start, stride, tmpR4Field )
+    flag = 0
 
-! Parameters
+    ! Find data sets for counterMAF & quantity by name
 
-      character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
+    sds_index = sfn2index(L1FileHandle, 'counterMAF')
+    if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to find index of counterMAF data set.')
 
-      integer, parameter :: MAX_VAR_DIMS = 32
+    sds1_id = sfselect(L1FileHandle, sds_index)
+    if ( sds1_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to find identifier of counterMAF data set.')
 
-! Functions
+    sds_index = sfn2index(L1FileHandle, quantityName)
+    if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to find index of quantity data set.')
 
-      integer, external :: sfginfo, sfn2index, sfselect, sfrdata, sfrcdata
-      integer, external :: sfendacc
+    sds2_id = sfselect(L1FileHandle, sds_index)
+    if ( sds2_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Failed to find identifier of data set matching the index.')
 
-! Variables
+    ! Find rank (# of dimensions), dimension sizes of quantity data set
+    status = sfginfo ( sds2_id, dummy, rank, dim_sizes, data_type, &
+      n_attrs )
 
-      character (len=480) :: msr
+    if ( status == -1) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      & 'Failed to find rank of data set.')
 
-      integer :: Alloc_err, Data_type, Dealloc_err, I, N_attrs, NumMAFs, Rank
-      integer :: Sds1_id, Sds2_id, Sds_index, Status
-      integer :: Dim_sizes(MAX_VAR_DIMS)
-      integer, allocatable :: Edge(:), Start(:), Stride(:)
+    ! allocate, based on above SD, dim info
 
-      logical :: FirstCheck, LastCheck
+    call allocate_test ( edge,   rank, 'edge',   ModuleName )
+    call allocate_test ( start,  rank, 'start',  ModuleName )
+    call allocate_test ( stride, rank, 'stride', ModuleName )
 
-      real, allocatable :: RealField(:,:,:)
+    ! Set "slab" dimensions
+    edge = dim_sizes(1:rank)
+    start = 0
+    stride = 1
 
-      flag = 0
+    ! Fill in "indexing" values of l1b object
 
-! Find data sets for counterMAF & quantity by name
+    l1bData%L1BName = quantityName
 
-      sds_index = sfn2index(L1FileHandle, 'counterMAF')
-      if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed &
-                                       &to find index of counterMAF data set.')
+    if ( rank < 2 ) then
+      l1bData%maxMIFs = 1
+    else if ( rank > 2 ) then
+      l1bData%maxMIFs = dim_sizes(2)
+    else
+      l1bData%maxMIFs = dim_sizes(1)
+    end if
 
-      sds1_id = sfselect(L1FileHandle, sds_index)
-      if ( sds1_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
-                                     &find identifier of counterMAF data set.')
+    if ( rank > 2 ) then
+      l1bData%noAuxInds = dim_sizes(1)
+    else
+      l1bData%noAuxInds = 1
+    end if
 
-      sds_index = sfn2index(L1FileHandle, quantityName)
-      if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed &
-                                         &to find index of quantity data set.')
+    ! Check input arguments, set noMAFs
 
-      sds2_id = sfselect(L1FileHandle, sds_index)
-      if ( sds2_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
-                             &find identifier of data set matching the index.')
+    numMAFs = dim_sizes(rank)
 
-! Find rank (# of dimensions), dimension sizes of quantity data set
+    if ( present ( firstMAF ) ) then
+      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) &
+        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & input_err // 'firstMAF' )
+      l1bData%firstMAF = firstMAF
+    else
+      l1bData%firstMAF = 0
+    end if
 
-      status = sfginfo(sds2_id, quantityName, rank, dim_sizes, data_type, &
-                       n_attrs)
-
-      if ( status == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
-                                                      &find rank of data set.')
-
-! allocate, based on above SD, dim info
-
-      allocate (edge(rank), start(rank), stride(rank), STAT=alloc_err)
-
-      if ( alloc_err /= 0 ) then
-         msr = MLSMSG_allocate // '  slab dimensions.'
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-
-! Set "slab" dimensions
-
-      DO i = 1, rank
-         edge(i) = dim_sizes(i)
-      end do
-      edge(rank) = 1
-
-      start = 0
-
-      stride = 1
-
-! Fill in "indexing" values of l1b object
-
-      l1bData%L1BName = quantityName
-
-      if ( rank < 2 ) then
-         l1bData%maxMIFs = 1
-      else if ( rank > 2 ) then
-         l1bData%maxMIFs = dim_sizes(2)
+    if ( present (lastMAF) ) then
+      if ( lastMAF < l1bData%firstMAF )  &
+        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & input_err // 'last' )
+      if ( lastMAF >= numMAFs ) then
+        l1bData%noMAFs = numMAFs - l1bData%firstMAF
       else
-         l1bData%maxMIFs = dim_sizes(1)
+        l1bData%noMAFs = lastMAF - l1bData%firstMAF + 1
       end if
+    else
+      l1bData%noMAFs = numMAFs - l1bData%firstMAF
+    end if
 
-      if ( rank > 2 ) then
-         l1bData%noAuxInds = dim_sizes(1)
-      else
-         l1bData%noAuxInds = 1
-      end if
+    noMAFs = l1bData%noMAFs
+    edge(rank) = l1bData%noMAFs
+    start(rank) = l1bData%firstMAF
 
-! Check input arguments, set noMAFs
+    ! allocate, read counterMAF
+    call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
+      & 'counterMAF', ModuleName )
+    status = sfrdata_f90(sds1_id,  start , stride, &
+      & edge, l1bData%counterMAF )
+    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_L1BRead // 'counterMAF.' )
 
-      numMAFs = dim_sizes(rank)
+    ! allocate, read according to field type; nullify unused pointers
+    select case ( data_type )
 
-      firstCheck = PRESENT(firstMAF)
-      lastCheck = PRESENT(lastMAF)
+    case ( DFNT_CHAR8 ) ! ----------------------- character
+      allocate ( l1bData%charField(l1bData%noAuxInds,l1bData%maxMIFs, &
+        & l1bData%noMAFs), STAT=alloc_err )
+      if ( alloc_err /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_allocate // ' charField pointer.' )
+      nullify (l1bData%intField, l1bData%dpField)
+      status = sfrcdata ( sds2_id, start, stride, edge, &
+        & l1bData%charField )
 
-      if ( firstCheck ) then
+    case ( DFNT_INT32 ) ! ------------------------------ integer
+      call allocate_test ( l1bData%intField, &
+        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
+        & 'l1bData%intField', ModuleName )
+      nullify ( l1bData%charField, l1bData%dpField )
+      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
+          l1bData%intField )
 
-          if ( (firstMAF >= numMAFs) .OR. (firstMAF < 0) ) then
-             msr = INPUT_ERR // 'firstMAF'
-             call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-          end if
+    case ( DFNT_FLOAT64 ) ! ------------------------------ real (r8)
+      call allocate_test ( l1bData%dpField, &
+        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
+        & 'l1bData%dpField', ModuleName )
+      nullify ( l1bData%charField, l1bData%intField )
+      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
+          l1bData%dpField )
 
-          l1bData%firstMAF = firstMAF
+    case ( DFNT_FLOAT32 ) ! ------------------------------ real (r4)
+      call allocate_test ( l1bData%dpField, &
+        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
+        & 'l1bData%dpField', ModuleName )
+      nullify ( l1bData%charField, l1bData%intField )
 
-      else
+      call allocate_test ( tmpr4Field, &
+        & l1bData%noAuxInds, l1bData%maxMIFs, l1bData%noMAFs, &
+        & 'tmpR4Field', ModuleName )
+      status = sfrdata_f90 ( sds2_id, start, stride, edge, &
+          tmpR4Field )
+      l1bData%dpField = tmpR4Field
+      
+      call deallocate_test ( tmpr4Field, 'tmpr4Field', ModuleName )
 
-          l1bData%firstMAF = 0
+    end select ! ----------------------------------------------------
 
-      end if
+    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_L1BRead // quantityName )
 
-      if ( lastCheck ) then
+    ! Terminate access to the data sets
+    status = sfendacc(sds1_id)
+    if ( status == -1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to terminate access to data sets.' )
+      flag = -1
+    end if
 
-          if ( lastMAF < l1bData%firstMAF ) then
-             msr = INPUT_ERR // 'lastMAF'
-             call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-          end if
+    status = sfendacc(sds2_id)
+    if ( status == -1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to terminate access to data sets.' )
+      flag = -1
+    end if
 
-          if ( lastMAF >= numMAFs ) then
-             l1bData%noMAFs = numMAFs - l1bData%firstMAF
-          else
-             l1bData%noMAFs = lastMAF - l1bData%firstMAF + 1
-          end if
+    ! deallocate local variables
+    call Deallocate_test ( edge,   'edge',   ModuleName )
+    call Deallocate_test ( start,  'start',  ModuleName )
+    call Deallocate_test ( stride, 'stride', ModuleName )
 
-      else
-
-         l1bData%noMAFs = numMAFs - l1bData%firstMAF
-
-      end if
-
-      noMAFs = l1bData%noMAFs
-
-! allocate, read counterMAF
-
-      allocate(l1bData%counterMAF(l1bData%noMAFs), STAT=alloc_err)
-      if ( alloc_err /= 0 ) then
-         msr = MLSMSG_allocate // '  counterMAF pointer.'
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-
-      status = sfrdata(sds1_id,  l1bData%firstMAF , stride, &
-        & l1bData%noMAFs, l1bData%counterMAF )
-      if ( status == -1 ) then
-         msr = MLSMSG_L1BRead // 'counterMAF.'
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-
-! allocate, read according to field type; nullify unused pointers
-
-      if ( data_type == 4 ) then
-
-! character (DFNT_CHAR8)
-
-         allocate ( l1bData%charField(l1bData%noAuxInds,l1bData%maxMIFs,&
-                   &l1bData%noMAFs), STAT=alloc_err )
-         if ( alloc_err /= 0 ) then
-            msr = MLSMSG_allocate // ' charField pointer.'
-            call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-         end if
-         nullify (l1bData%intField, l1bData%dpField)
-
-         DO i = 1, l1bData%noMAFs
-            start(rank) = l1bData%firstMAF + (i-1)
-            status = sfrcdata( sds2_id, start, stride, edge, &
-                               l1bData%charField(:,:,i) )
-            if ( status == -1 ) then
-               msr = MLSMSG_L1BRead // quantityName
-               call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-            end if
-         end do
-
-      else if ( data_type == 24 ) then
-
-! integer (DFNT_INT32)
-
-         allocate (l1bData%intField(l1bData%noAuxInds,l1bData%maxMIFs,&
-                  &l1bData%noMAFs), STAT=alloc_err)
-         if ( alloc_err /= 0 ) then
-            msr = MLSMSG_allocate // ' intField pointer.'
-            call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-         end if
-         nullify ( l1bData%charField, l1bData%dpField )
-
-         DO i = 1, l1bData%noMAFs
-            start(rank) = l1bData%firstMAF + (i-1)
-            status = sfrdata( sds2_id, start, stride, edge, &
-                              l1bData%intField(:,:,i) )
-            if ( status == -1 ) then
-               msr = MLSMSG_L1BRead // quantityName
-               call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-            end if
-         end do
-
-      else
-
-! float (REAL or DOUBLE PRECISION)
-
-         allocate ( l1bData%dpField(l1bData%noAuxInds,l1bData%maxMIFs,&
-                   & l1bData%noMAFs), STAT=alloc_err )
-         if ( alloc_err /= 0 ) then
-            msr = MLSMSG_allocate // ' dpField pointer.'
-            call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-         end if
-         nullify ( l1bData%charField, l1bData%intField )
-
-! If real (DFNT_FLOAT32), allocate real variable and then move to dp pointer
-
-         if ( data_type == 5 ) then
-
-            allocate ( realField(l1bData%noAuxInds,l1bData%maxMIFs,&
-                     & l1bData%noMAFs), STAT=alloc_err )
-            if ( alloc_err /= 0 ) then
-               msr = MLSMSG_allocate // ' realField pointer.'
-               call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-            end if
-
-            do i = 1, l1bData%noMAFs
-               start(rank) = l1bData%firstMAF + (i-1)
-               status = sfrdata( sds2_id, start, stride, edge, &
-                                realField(:,:,i) )
-               if ( status == -1 ) then
-                  msr = MLSMSG_L1BRead // quantityName
-                  call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-               end if
-            end do
-
-            l1bData%dpField = DBLE(realField)
-
-            deallocate ( realField, STAT=dealloc_err )
-            if ( dealloc_err /= 0 ) then
-               call MLSMessage ( MLSMSG_Warning, ModuleName, 'Failed &
-                                     &deallocation of local real variable.' )
-               flag = -1
-            end if
-
-
-         else
-
-! double precision (DFNT_FLOAT64)
-
-
-            do i = 1, l1bData%noMAFs
-               start(rank) = l1bData%firstMAF + (i-1)
-               status = sfrdata(sds2_id, start, stride, edge, &
-                                l1bData%dpField(:,:,i))
-               if ( status == -1 ) then
-                  msr = MLSMSG_L1BRead // quantityName
-                  call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-               end if
-            end do
-
-         end if
-
-      end if
-
-! Terminate access to the data sets
-
-      status = sfendacc(sds1_id)
-      status = sfendacc(sds2_id)
-      if ( status == -1 ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, 'Failed to terminate &
-                                                     &access to data sets.' )
-         flag = -1
-      end if
-
-! deallocate local variables
-
-      deallocate (edge, start, stride, STAT=dealloc_err )
-
-      if ( dealloc_err /= 0 ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, 'Failed deallocation of &
-                                                     &local variables.' )
-         flag = -1
-      end if
-
-!----------------------------
   end subroutine ReadL1BData
-!----------------------------
 
-!----------------------------------------------
-  subroutine DeallocateL1BData ( l1bData, flag )
-!----------------------------------------------
+  !---------------------------------------------------- DeallocateL1BData ----
+  subroutine DeallocateL1BData ( l1bData )
+    ! This should be called when an l1bData is finished with
+    type( L1BData_T ), intent(inout) :: L1bData
 
-! Brief description of subroutine
-! This subroutine deallocates the internal field pointers of the L1BData_T
-! derived type, after the calling program has finished with the data.
+    ! Local variables
+    integer :: DEALLOC_ERR              ! Flag
 
-! Arguments
-
-      type( L1BData_T ), intent(inout) :: L1bData
-
-      integer, intent(out) :: Flag
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      integer :: Dealloc_err
-
-      flag = 0
-
-      if ( associated(l1bData%counterMAF) ) deallocate ( l1bData%counterMAF, &
-        &                                               STAT=dealloc_err )
-      if ( associated(l1bData%charField) ) then
-         deallocate ( l1bData%charField, STAT=dealloc_err )
-      else if ( associated(l1bData%intField) ) then
-         deallocate ( l1bData%intField, STAT=dealloc_err )
-      else
-         deallocate ( l1bData%dpField, STAT=dealloc_err )
-      end if
-
-      if ( dealloc_err /= 0 ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, 'Failed deallocation of &
-                                                     &L1BData pointers.' )
-         flag = -1
-      end if
-
-!----------------------------------
+    ! Executable code
+    if ( associated(l1bData%counterMAF) ) &
+      call deallocate_test ( l1bData%counterMAF,&
+      & 'l1bData%counterMAF', ModuleName )
+    if ( associated(l1bData%charField) ) then
+      deallocate ( l1bData%charField, STAT=dealloc_err )
+      if ( dealloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'l1bData%charField' )
+    end if
+    if ( associated(l1bData%intField) ) &
+      call deallocate_test ( l1bData%intField,&
+      & 'l1bData%intField', ModuleName )
+    if ( associated(l1bData%dpField) ) &
+      call deallocate_test ( l1bData%dpField,&
+      & 'l1bData%dpField', ModuleName )
   end subroutine DeallocateL1BData
-!----------------------------------
 
   ! ------------------------------------------- FindL1BData ----
   integer function FindL1BData ( files, fieldName )
@@ -562,19 +408,19 @@ contains
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
     & error_number )
-  
-   ! Arguments
-  
+
+    ! Arguments
+
     integer, intent(in)    :: lcf_where
     character(LEN=*), intent(in)    :: full_message
     logical, intent(in), optional :: use_toolkit
     integer, intent(in), optional    :: error_number
     ! Local
-!    character (len=80) :: msg, mnemonic
-!    integer :: status
+    !    character (len=80) :: msg, mnemonic
+    !    integer :: status
     logical :: just_print_it
     logical, parameter :: default_output_by_toolkit = .true.
- 
+
     if ( present(use_toolkit) ) then
       just_print_it = .not. use_toolkit
     else if ( default_output_by_toolkit ) then
@@ -582,13 +428,13 @@ contains
     else
       just_print_it = .true.
     end if
- 
+
     if ( .not. just_print_it ) then
       error = max(error,1)
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
-          call print_source ( source_ref(lcf_where) )
+        call print_source ( source_ref(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       end if
@@ -616,16 +462,14 @@ contains
         print*, 'error number ', error_number
       end if
     end if
-
-!===========================
   end subroutine announce_error
-!===========================
 
-!=================
 end module L1BData
-!=================
 
 ! $Log$
+! Revision 2.8  2001/05/30 23:51:48  livesey
+! New version, uses new HDF, also cleaner
+!
 ! Revision 2.7  2001/05/06 20:53:47  pwagner
 ! Allocates l1binfo%filenames along with ids
 !
