@@ -11,13 +11,6 @@ module h5_griddeddata
 !     the working climatology for the retrieval is in HDF5 format instead
 !     of ASCII.
 
-!  PRIVATE :: id, ModuleName
-!------------------------------- RCS Ident Info ------------------------------
-CHARACTER(LEN=130) :: id = & 
-   "$Id$"
-CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
-!-------------------------------------------------------------------------------
-
 use l3ascii
 use hdf5
 implicit none
@@ -26,6 +19,14 @@ private
 
 public::h5_write_griddeddata!,h5_get_uars_clim
 integer, public, parameter :: MAX_RANK = 7
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 contains
 
@@ -99,6 +100,9 @@ end module h5_griddeddata
 
 
 ! $Log$
+! Revision 2.4  2002/10/01 22:03:55  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.3  2002/10/01 20:04:16  bwknosp
 ! Added Log Info
 !
