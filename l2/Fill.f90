@@ -2279,14 +2279,37 @@ contains ! =====     Public Procedures     =============================
         &   geocAltitudeQuantity%template%instrumentModule) )  then
         call Announce_Error ( key, nonConformingHydrostatic, &
           & "case l_ptan failed third test" )
-        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
-        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
-        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
-        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
-        print *, 'quantity%template%instrumentModule ', &
-        & quantity%template%instrumentModule
-        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
-        & geocAltitudeQuantity%template%instrumentModule
+!        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
+!        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
+!        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
+!        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
+!        print *, 'quantity%template%instrumentModule ', &
+!        & quantity%template%instrumentModule
+!        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
+!        & geocAltitudeQuantity%template%instrumentModule
+         call output('ValidateVectorQuantity(quantity, minorFrame=.true.) ')
+         call blanks(3)
+         call output( &
+         & ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.), &
+         & advance='yes')
+
+         call output('ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ')
+         call blanks(3)
+         call output( &
+         & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.), &
+         & advance='yes')
+
+         call output('quantity%template%instrumentModule ')
+         call blanks(3)
+         call output( &
+         & quantity%template%instrumentModule, &
+         & advance='yes')
+
+         call output('geocAltitudeQuantity%template%instrumentModule ')
+         call blanks(3)
+         call output( &
+         & geocAltitudeQuantity%template%instrumentModule, &
+         & advance='yes')
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -2852,6 +2875,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.101  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
 ! Revision 2.100  2001/12/06 23:45:07  livesey
 ! Dealt with move of Omega to Units
 !
