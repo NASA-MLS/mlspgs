@@ -67,6 +67,14 @@ begin Construct
     moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
     /atmos_der, /temp_der, /do_baseline, $
     phiWindow=100 profiles, /lockBins, $
+    binSelectors=[standardBin, latBin], $
+    xStar=r1aX, yStar=r1aY
+  advancedL2PCPLFwm$1: ForwardModel, type=polarLinear, signals=!signal($1), $
+    molecules=!moleculeFamilies(!radiometerForBand($1)), $
+    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
+    /atmos_der, /temp_der, /do_baseline, $
+    phiWindow=100 profiles, $
+    binSelectors=[polarBin, strengthBin, elevationBin, latBin], $
     xStar=r1aX, yStar=r1aY!nl})
 
   !makeAdvancedL2PCModel(1)
