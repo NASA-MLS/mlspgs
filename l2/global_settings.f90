@@ -37,6 +37,7 @@ module GLOBAL_SETTINGS
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   integer, private :: ERROR
@@ -662,9 +663,16 @@ contains
 
 ! =====     Private Procedures     =====================================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.59  2002/10/03 23:01:19  pwagner
+! gets the_hdf_version from l1b..setup
+!
 ! Revision 2.58  2002/09/25 20:09:14  livesey
 ! New global argument to ConstructForwardModelConfig
 !

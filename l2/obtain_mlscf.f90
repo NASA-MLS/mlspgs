@@ -21,6 +21,7 @@ module OBTAIN_MLSCF
   character(len=130) :: id = &
      "$id: obtain_mlscf.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
   character(len=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   integer, private :: ERROR
@@ -136,9 +137,16 @@ contains ! =====     Public Procedures     =============================
   end subroutine announce_error
 !===========================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.12  2002/02/20 00:27:15  pwagner
+! Now returns l2cf file name
+!
 ! Revision 2.11  2002/01/18 23:09:14  pwagner
 ! Added debugOption to subroutine args
 !

@@ -18,6 +18,7 @@ module TREE_WALKER
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
@@ -364,9 +365,16 @@ subtrees:   do while ( j <= howmany )
 
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.93  2002/10/05 00:44:29  livesey
+! Included the FWMParallel stuff
+!
 ! Revision 2.92  2002/09/25 20:09:32  livesey
 ! Changes to allow chunk based forwardModel configs
 !

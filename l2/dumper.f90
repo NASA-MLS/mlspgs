@@ -16,6 +16,7 @@ module DUMPER
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
 !-----------------------------------------------------------------------
 
   interface DUMP
@@ -214,9 +215,16 @@ contains ! =====     Private Procedures     ============================
       end if
     end do
   end subroutine DUMP_QUANTITY_TEMPLATES
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DUMPER
 
 ! $Log$
+! Revision 2.13  2002/08/22 01:22:20  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.12  2001/10/17 20:50:30  dwu
 ! a fix of cloud retrieval
 !

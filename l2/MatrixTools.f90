@@ -42,6 +42,7 @@ module MatrixTools                      ! Various tools for matrices
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains ! ================ Public procedures ================================
@@ -507,9 +508,16 @@ contains ! ================ Public procedures ================================
 
   end subroutine PVMSendMatrix
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MatrixTools
 
 ! $Log$
+! Revision 1.7  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 1.6  2001/09/13 00:54:06  livesey
 ! Fixed a bug with dump blocks dumping values when kind==m_absent
 !
