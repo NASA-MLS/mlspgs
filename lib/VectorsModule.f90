@@ -63,6 +63,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
+  use Intrinsic, only: Lit_Indices
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -1126,7 +1127,8 @@ contains ! =====     Public Procedures     =============================
       else
         msg(len_trim(msg)+2:) = '[unnamed]'
       end if
-      msg = trim(msg) // ' that has the required type'
+      msg = trim(msg) // ' that has type'
+      call get_string ( lit_indices(quantityType), msg(len_trim(msg)+2:) )
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
@@ -1505,6 +1507,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.61  2001/10/02 19:00:50  vsnyder
+! Add ClearVector subroutine
+!
 ! Revision 2.60  2001/10/01 20:32:27  vsnyder
 ! Handle word and bit indexing in mask consistently
 !
