@@ -63,6 +63,9 @@ SHELL = /bin/sh
 libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
 libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
 
+# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
+l2_NEEDS_fwdmdl = true
+
 #Where else to look for USEd and INCLUDED files to add to dependency list
 ifdef l2_NEEDS_fwdmdl
    depends_where=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
@@ -138,6 +141,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.14  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 2.13  2001/03/07 23:27:24  pwagner
 # Adds SnoopMLSL2 to Makefile.dep if PVM_ROOT defined
 #
