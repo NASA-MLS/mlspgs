@@ -8,10 +8,11 @@ program Convert_Spectroscopy
   integer, parameter :: R8 = kind(0.0d0)
 
   character(len=127) :: File       ! File names (from stdin)
-  integer :: I, J                  ! Loop inductors, subscripts
+  integer :: HowMuch               ! Current line width
+  integer :: I                     ! Loop inductor, subscript
   character(len=80) :: Line        ! of input
   integer, parameter :: Lun = 51   ! To read the "old" format database
-  character(len=8) :: Name         ! Of a catalog item
+  character(len=13) :: Name        ! Of a catalog item
   integer :: NL                    ! Number of lines
   real(r8) :: Qlog(3)
   integer :: Spectag
@@ -49,6 +50,7 @@ program Convert_Spectroscopy
     read ( lun, '(a)' ) line
     line = adjustl(line)
     if ( line(:7) == 'END_CAT' ) exit
+    if ( line(1:1) == '#' ) cycle
     read ( line, * ) name, spectag, nl, qlog
     do i = 1, len(name)
       if ( name(i:i) == '-' ) name(i:i) = '_'
@@ -91,19 +93,38 @@ program Convert_Spectroscopy
       call output ( qlog(i) )
       if ( i < 3 ) call output ( ', ' )
     end do
-    call output ( '], lines=[' )
+    if ( nl <= 1 ) then
+      call output ( '], lines=' )
+    else
+      call output ( '], $', advance='yes' )
+      call blanks ( len('spectra, ') )
+      call output ( 'lines=' )
+    end if
+    if ( nl > 1 ) call output ( '[' )
+    howMuch = len('spectra, lines=[')
     do i = 1, nl
+      howMuch = howMuch + len_trim(name) + 5
+      if ( howMuch > 80 ) then
+        call output ( '$', advance='yes' )
+        howMuch = len('spectra, lines=[')
+        call blanks ( howMuch )
+        howMuch = howMuch + len_trim(name) + 5
+      end if
       call output ( trim(name) )
       call output ( '_' )
       call output ( i )
       if ( i < nl ) call output ( ', ' )
     end do
-    call output ( ']', advance='yes' )
+    if ( nl > 1 ) call output ( ']' )
+    call output ( '', advance='yes' )
   end do
 99 close ( lun )
 end program Convert_Spectroscopy
 
 ! $Log$
+! Revision 1.2  2001/04/04 02:06:15  vsnyder
+! Repair CVS variables
+!
 ! Revision 1.1  2001/04/04 02:05:10  vsnyder
 ! Initial commit
 !
