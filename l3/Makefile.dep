@@ -1,38 +1,48 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-L2Interface.o    L3SPData.o  	  OpenInit.o  	   global_data.o  \
-L3CF.o  	 MLSL3.o  	  OutputClose.o    init_tables_module.o  \
-L3DMData.o  	 MLSL3Common.o    PCFModule.o  \
+DailyMapModule.o    L3DZData.o       MLSPCF3.o        PCFModule.o  \
+L2Interface.o       L3SPData.o       NumRecipes.o     Synoptic.o  \
+L3CF.o  	    MLSL3.o  	     OpenInit.o       global_data.o  \
+L3DMData.o  	    MLSL3Common.o    OutputClose.o    init_tables_module.o  \
  
 # using f90makedep.pl to calculate dependencies 
-global_data.o: global_data.f90 $(dir1)MLSCommon.o
+DailyMapModule.o: DailyMapModule.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o \
+	$(dir1)MLSCommon.o L2Interface.o L3CF.o L3DMData.o L3SPData.o \
+	MLSPCF3.o global_data.o
+global_data.o: global_data.f90 $(dir1)MLSCommon.o $(dir1)SDPToolkit.o
 init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
 	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
 	$(dir1)tree_types.o
 L2Interface.o: L2Interface.f90 $(dir1)Hdf.o $(dir1)L2GPData.o \
-	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
-	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o OpenInit.o
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o OpenInit.o
 L3CF.o: L3CF.f90 $(dir1)MLSCF.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSPCF.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o \
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o \
 	PCFModule.o
 L3DMData.o: L3DMData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)MLSStrings.o \
-	$(dir1)SDPToolkit.o MLSL3Common.o PCFModule.o
+	$(dir1)MLSMessageModule.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o \
+	MLSL3Common.o MLSPCF3.o OpenInit.o PCFModule.o
+L3DZData.o: L3DZData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSStrings.o L3CF.o MLSL3Common.o \
+	MLSPCF3.o OpenInit.o PCFModule.o
 L3SPData.o: L3SPData.f90 $(dir1)Hdf.o $(dir1)L2GPData.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o L3CF.o MLSL3Common.o \
-	PCFModule.o
+	$(dir1)MLSMessageModule.o L3CF.o MLSL3Common.o MLSPCF3.o PCFModule.o
 MLSL3.o: MLSL3.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o $(dir1)MLSMessageModule.o \
-	L2Interface.o L3CF.o L3DMData.o L3SPData.o OpenInit.o OutputClose.o
+	L2Interface.o L3CF.o L3DMData.o L3DZData.o L3SPData.o OpenInit.o \
+	OutputClose.o Synoptic.o
 OpenInit.o: OpenInit.f90 $(dir1)MLSCF.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)SDPToolkit.o \
-	$(dir1)dates_module.o $(dir2)getCF_m.o L3CF.o MLSL3Common.o
-OutputClose.o: OutputClose.f90 $(dir1)L2GPData.o $(dir1)MLSCommon.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)MLSStrings.o \
-	$(dir1)SDPToolkit.o L2Interface.o L3CF.o L3DMData.o L3SPData.o \
-	MLSL3Common.o OpenInit.o PCFModule.o
-PCFModule.o: PCFModule.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)SDPToolkit.o MLSL3Common.o
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o $(dir1)dates_module.o \
+	$(dir2)getCF_m.o L3CF.o MLSL3Common.o MLSPCF3.o PCFModule.o
+OutputClose.o: OutputClose.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
+	$(dir1)SDPToolkit.o L2Interface.o L3CF.o L3DMData.o L3DZData.o \
+	L3SPData.o MLSL3Common.o MLSPCF3.o OpenInit.o PCFModule.o
+PCFModule.o: PCFModule.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSL3Common.o MLSPCF3.o
+Synoptic.o: Synoptic.f90 $(dir1)L2GPData.o $(dir1)MLSCF.o $(dir1)MLSCommon.o \
+	DailyMapModule.o L2Interface.o L3CF.o L3DMData.o L3DZData.o MLSPCF3.o \
+	NumRecipes.o OpenInit.o OutputClose.o global_data.o
  
 #End of Makefile.dep
  
