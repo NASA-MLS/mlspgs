@@ -39,8 +39,8 @@ module DECLARATION_TABLE
     integer :: PRIOR          ! Index of previous declaration
   end type DECLS
 
-  integer, parameter :: NULL_DECL = 0 ! Index and type of the null
-                                              ! declaration
+  integer, parameter :: NULL_DECL = 0   ! Index and type of the null
+                                        ! declaration
 
 ! Values of the "type" field of "decls":
   integer, parameter :: EMPTY = 0       ! The "type" field of the sentinel
@@ -132,8 +132,10 @@ contains ! =====     Public Procedures     =============================
     if ( allocated(symbol_decl) ) deallocate( symbol_decl )
   end subroutine DEALLOCATE_DECL
 ! --------------------------------------------------  DECLARATION  -----
-  pure type(decls) function DECLARATION ( STRING )
+  type(decls) function DECLARATION ( STRING )
     integer, intent(in) :: STRING  ! String index for which declaration needed
+    if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
+      & call increase_symbol_decl
     declaration = decl_table(symbol_decl(string))
   end function DECLARATION
 ! ------------------------------------------------------  DECLARE  -----
@@ -146,7 +148,6 @@ contains ! =====     Public Procedures     =============================
 
     integer :: STAT
     type(decls), allocatable :: OLD_DECL(:)
-    integer, allocatable :: OLD_SYM(:)
 
     num_decls = num_decls + 1
     if ( num_decls > ubound(decl_table,1) ) then
@@ -168,27 +169,10 @@ contains ! =====     Public Procedures     =============================
       decl_table(0:ubound(old_decl,1)) = old_decl
       deallocate ( old_decl )
     end if
+    if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
+      & call increase_symbol_decl
     decl_table(num_decls) = decls ( value, type, units, tree, &
                                     symbol_decl(string) )
-    if ( string > string_table_size() ) then
-    ! Double size of string-to-declaration index table.
-      allocate ( old_sym(0:ubound(decl_table,1)), stat=stat )
-      if ( stat /= 0 ) then
-        call io_error &
-        ( 'DECLARATION_TABLE%DECLARE-E- Unable to allocate storage', stat )
-        stop
-      end if
-      old_sym = symbol_decl
-      deallocate ( symbol_decl )
-      allocate( symbol_decl(0:2*size(old_sym)), stat=stat )
-      if ( stat /= 0 ) then
-        call io_error &
-        ( 'DECLARATION_TABLE%DECLARE-E- Unable to allocate storage', stat )
-        stop
-      end if
-      symbol_decl(0:ubound(old_sym,1)) = old_sym
-      deallocate ( old_sym )
-    end if
     symbol_decl(string) = num_decls
     if ( toggle(tab) ) then
       call output ( 'Declare ' ); call display_string ( string )
@@ -199,8 +183,10 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DECLARE
 ! -----------------------------------------------------  DECLARED  -----
-  pure logical function DECLARED ( STRING )
+  logical function DECLARED ( STRING )
     integer, intent(in) :: STRING
+    if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
+      & call increase_symbol_decl
     declared = symbol_decl(string) /= null_decl
   end function DECLARED
 ! ----------------------------------------------------  DUMP_DECL  -----
@@ -216,6 +202,8 @@ contains ! =====     Public Procedures     =============================
   subroutine DUMP_1_DECL ( SYMBOL )
     integer, intent(in) :: SYMBOL  ! Index of symbol whose declaration to dump
     integer :: DECL                ! Index of decl of "symbol"
+    if ( symbol > ubound(symbol_decl,1) ) & ! Assume string_table is increased
+      & call increase_symbol_decl
     decl = symbol_decl(symbol)
     do while ( decl /= null_decl )
       call output ( decl, 4 )
@@ -302,6 +290,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: UNITS   ! Units of value -- index of units string
     integer, intent(in) :: TREE    ! Index of tree node of declaration
     integer :: PRIOR
+    if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
+      & call increase_symbol_decl
     prior = symbol_decl(string)
     do
       if ( prior == null_decl ) then
@@ -317,9 +307,47 @@ contains ! =====     Public Procedures     =============================
       prior = decl_table(prior)%prior
     end do
   end subroutine REDECLARE
+
+! =====     Private Procedures     =====================================
+! -----------------------------------------  Increase_Symbol_Decl  -----
+  subroutine Increase_Symbol_Decl ( Status )
+  ! Double the size of the Symbol_Decl table.
+    integer, intent(out), optional :: Status
+    integer, allocatable :: Old_Decl(:)
+    integer :: Stat
+
+    allocate ( old_decl(0:ubound(symbol_decl,1)), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error &
+      ( 'DECL_TABLE%Increase_Symbol_Decl-E- Unable to allocate storage', stat )
+      stop
+    end if
+    old_decl = symbol_decl
+    deallocate ( symbol_decl )
+    allocate ( symbol_decl(0:string_table_size()), stat=stat )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = stat
+        return
+      end if
+      call io_error &
+      ( 'DECL_TABLE%Increase_Symbol_Decl-E- Unable to allocate storage', stat )
+      stop
+    end if
+    symbol_decl(0:ubound(old_decl,1)) = old_decl
+    symbol_decl(ubound(old_decl,1)+1:) = null_decl
+    deallocate ( old_decl )
+  end subroutine Increase_Symbol_Decl
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.2  2001/04/05 01:28:06  vsnyder
+! Add 'increase the symbol declaration table size' code
+!
 ! Revision 2.1  2000/10/11 18:57:28  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
