@@ -532,8 +532,10 @@ contains ! =====     Public Procedures     =============================
       call output('About to write log file metadata' , advance='yes')
     end if
 
-    call writeMetaLog ( l2pcf, metadata_error )
-    error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+    if (CREATEMETADATA ) then
+      call writeMetaLog ( l2pcf, metadata_error )
+      error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+    endif
 
 ! Done with text of PCF file at last
 
@@ -592,6 +594,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.34  2001/05/04 23:22:13  pwagner
+! Detachable from Toolkit; created metafiles conditionally
+!
 ! Revision 2.33  2001/05/04 23:19:55  pwagner
 ! Detachable from Toolkit; created metafiles conditionally
 !
