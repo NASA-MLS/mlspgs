@@ -20,8 +20,9 @@ module ScanModelModule          ! Scan model and associated calculations
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
-  USE get_eta_matrix_m, only: get_eta_sparse
-  use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT, LN10, PI
+  use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
+    & G0, GM, J2, J4, OMEGA => W
+  USE Get_eta_matrix_m, only: get_eta_sparse
   use Init_Tables_Module, only: L_HEIGHT, L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION
@@ -37,17 +38,17 @@ module ScanModelModule          ! Scan model and associated calculations
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
   use Output_M, only: OUTPUT
-  USE piq_int_m, only: piq_int
-  USE refraction_m, only: refractive_index
+  USE Piq_int_m, only: piq_int
+  USE Refraction_m, only: Refractive_index, RefrAterm, RefrBterm
   use Toggles, only: EMIT, TOGGLE, SWITCHES
   use Trace_M, only: TRACE_BEGIN, TRACE_END
   USE VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  use Units, only: OMEGA, PHYQ_Length
+  use Units, only: LN10, PHYQ_Length, PI
   use QuantityTemplates, only: QuantityTemplate_T
 
-  implicit none
+  implicit NONE
 
   private
 
@@ -55,29 +56,17 @@ module ScanModelModule          ! Scan model and associated calculations
     & TwoDScanForwardModel, Get2DHydrostaticTangentPressure
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (LEN=130), private :: Id = &
+  character (len=*), parameter :: IdParm = &
     & "$Id$"
-  character (LEN=*), parameter, private :: ModuleName= &
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
   ! Define various constants etc.
-
-  ! First some constants to do with the earths dimensions and rotation
-
-  real (r8), parameter :: EARTHSURFACEGPH = 6387182.265D0 ! GPH at earth's surface m
-
-  ! Now some other constants to do with geopotentials and GPHs
   
-  real (r8), parameter :: J2=0.0010826256_r8 ! 2nd coefficient
-  real (r8), parameter :: J4=-0.0000023709122_r8 ! 4th coeficient.
-  real (r8), parameter :: GM=3.98600436D14 ! Big G times earth mass (m2s-2)
-  real (r8), parameter :: G0=9.80665    ! Nominal little g ms-2
+  ! Some terms to do with refraction
   
-  ! Now some terms to do with refraction
-  
-  real (r8), parameter :: REFRATERM = 0.0000776D0 ! First term
-  real (r8), parameter :: REFRBTERM = 4810.0D0 ! Second term
   real (r8), parameter :: MAXREFRACTION = 0.1_rp ! Don't allow stupidly large n.
   real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
   
@@ -1885,6 +1874,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.45  2002/09/26 20:38:19  vsnyder
+! Get some constants from Geometry and Units instead of declaring them, cosmetics
+!
 ! Revision 2.44  2002/06/27 00:20:43  livesey
 ! Typo!
 !
