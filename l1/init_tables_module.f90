@@ -14,19 +14,11 @@ module INIT_TABLES_MODULE
     ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
     ! here, but everything is included so that it can be gotten by
     ! USE INIT_TABLES_MODULE.
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
-  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-  use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-                        N_NAME_DEF, N_SECTION, N_SPEC_DEF, N_PLUS
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, BUILD_TREE, ENTER_TERMINAL, INIT_INTRINSIC
-  private :: MAKE_TREE, N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
-  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF, PUSH_PSEUDO_TERMINAL
-  private :: T_IDENTIFIER
+  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -115,6 +107,10 @@ module INIT_TABLES_MODULE
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
+
+    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
+         N_NAME_DEF, N_SECTION, N_SPEC_DEF, N_PLUS
+
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
 
@@ -238,73 +234,26 @@ contains ! =====     Public procedures     =============================
   end subroutine INIT_TABLES
 
 ! =====     Private procedures     =====================================
-  ! --------------------------------------------------  MAKE_TREE  -----
-  subroutine MAKE_TREE ( IDS )
-  ! Build a tree specified by the "ids" array.  "begin" marks the
-  ! beginning of a tree.  A tree-node marks the end of the corresponding
-  ! tree.  Pseudo-terminals are decorated with their indices.
-    integer, intent(in) :: IDS(:)
-
-    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-    integer :: DECOR, I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
-
-    callno = callno + 1
-    n_ids = size(ids)
-    m = 0
-    stack(0) = 0 ! just so it's defined, in case it gets incremented
-                 ! after build_tree
-    if ( ids(1) >= 0 ) then
-      m = 1
-      stack(1) = 0
-    end if
-    do i = 1, n_ids
-      if ( ids(i) == begin ) then
-        m = m + 1
-        stack(m) = 0
-      else
-        id = mod(ids(i), 1000)
-        which = mod(ids(i) / 1000, 1000)
-        decor = ids(i) / 1000000
-       select case ( which )
-       case ( f/1000 ) ! Fields
-         string = field_indices(id)
-       case ( l/1000 ) ! Enumeration literals
-         string = lit_indices(id)
-       case ( p/1000 ) ! Parameter names
-         string = parm_indices(id)
-       case ( s/1000 ) ! Specs
-         string = spec_indices(id)
-       case ( t/1000 ) ! Intrinsic data types
-         string = data_type_indices(id)
-       case ( z/1000 ) ! Sections
-         string = section_indices(id)
-       case ( n/1000 ) ! Tree nodes
-         call build_tree ( id, stack(m), decor )
-         m = m - 1
-         stack(m) = stack(m) + 1
-    cycle
-       end select
-       if ( string == 0 ) then
-         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
-           & i, ' of a list'
-         print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
-         stop
-       end if
-       call push_pseudo_terminal ( string, 0, decor = id )
-       stack(m) = stack(m) + 1
-      end if
-    end do
-
-  end subroutine MAKE_TREE
+  ! --------------------------------------------------  ADD_IDENT  -----
 
   integer function ADD_IDENT ( TEXT )
+
+    use SYMBOL_TABLE, only: ENTER_TERMINAL 
+    use SYMBOL_TYPES, only: T_IDENTIFIER
+
     character(len=*), intent(in) :: TEXT
     add_ident = enter_terminal ( text, t_identifier )
   end function ADD_IDENT
+    
+  ! --------------------------------------------------  MAKE_TREE  -----
+  include "make_tree.f9h"
 
-end module INIT_TABLES_MODULE
+end module INIT_TABLES_MODULE    
 
 ! $Log$
+! Revision 2.6  2001/03/05 16:46:37  perun
+! Use Van's include method
+!
 ! Revision 2.5  2001/02/23 19:05:40  perun
 ! *** empty log message ***
 !
