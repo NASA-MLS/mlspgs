@@ -138,7 +138,8 @@ contains
 
     type(band_T) :: Band                ! To be added to the database
     integer :: Channels                 ! subtree index of field
-    logical :: Deferred                 ! Set if frequencies/widths deferred
+    integer :: Deferred                 ! Set nonzero if frequencies/widths
+                                        ! deferred
     integer :: Error                    ! Error level seen so far
     integer :: Field                    ! Field index -- f_something
     integer :: First                    ! "first" field of "spectrometer"
@@ -314,7 +315,7 @@ contains
 
       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
         spectrometerType%name = sub_rosa(name)
-        deferred = .false.
+        deferred = 0
         first = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -329,7 +330,8 @@ contains
           case ( f_channels )
             channels = son
           case ( f_deferred )
-            deferred = get_boolean(son)
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
+            deferred = value(1)
           case ( f_first, f_last )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
@@ -390,13 +392,24 @@ contains
             end do ! k
           end if
         end if
-        if ( deferred ) then            ! For deferred types, wait till later
-          nullify(spectrometerType%frequencies)
-          nullify(spectrometerType%widths)
+        if ( deferred > 0 ) then        ! For deferred types, wait till later
+          if ( any(got( (/ f_channels, f_last, f_start, f_step, f_width /) )) ) &
+            & call announceError ( badMix, f_channels, &
+            & (/ f_last, f_start, f_step, f_width /) )
+          if ( error == 0 ) then
+            call allocate_test ( spectrometerType%frequencies, deferred, &
+              & 'spectrometerType%frequencies', moduleName )
+            call allocate_test ( spectrometerType%widths, deferred, &
+              & 'spectrometerType%widths', moduleName )
+            spectrometerType%frequencies = 0.0
+            spectrometerType%widths = 0.0
+          else
+            nullify(spectrometerType%frequencies)
+            nullify(spectrometerType%widths)
+          end if
         end if
-        if ( .not. any(got( (/ f_channels, f_start /) )) .and. &
-          & (.not. deferred) ) &
-          & call announceError ( atLeastOne, f_channels, (/ f_start /) )
+        if ( .not. any(got( (/ f_channels, f_deferred, f_start /) )) ) &
+          & call announceError ( atLeastOne, f_channels, (/ f_deferred, f_start /) )
         if ( error == 0 ) call decorate ( key, addSpectrometerTypeToDatabase ( &
           & spectrometerTypes, spectrometerType ) )
 
@@ -996,6 +1009,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.18  2001/04/11 18:31:04  vsnyder
+! Change 'deferred' from boolean to numeric
+!
 ! Revision 2.17  2001/04/10 23:20:05  livesey
 ! Added index field
 !
