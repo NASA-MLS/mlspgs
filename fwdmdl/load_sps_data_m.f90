@@ -307,6 +307,38 @@ contains
       f_len = r
 
       ! do the following only if i_supersat not equal to 0
+
+      IF ( i_supersat .ne. 0 ) THEN
+            select case ( i_supersat )
+            case ( -1 )
+              RHI=110.0_r8
+            case ( -2 )
+              RHI=1.0e-9_r8
+            end select  
+
+      call Hunt (Grids_x%zet_basis(1:n-1), -log(refPRESSURE), supersat_Index, &
+      & l, nearest=.true.)
+      
+      If (supersat_Index < 1) Then        
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Could not find value of Zeta in Grid_T; returned index too small' )
+      
+      Else If (supersat_Index > size(Grids_x%values) ) Then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Could not find value of Zeta in Grid_T; returned index too BIG' )
+      Else
+       do wf=wf1, wf2
+         do f_index=1, kf
+           do z_index=1, supersat_Index
+             values_index = f_len - 1 + f_index + kf*(z_index-1) + kf*kz*(wf-wf1)
+             Grids_x%values(values_index) = RHIFromH2O_Factor (temp_supersat(z_index), &
+              & grids_x%zet_basis(l+z_index-1), 0, .true.)*RHI
+           end do
+         end do
+       end do
+      Endif
+      ENDIF
+=======
 !??? The next line is almost surely wrong.  It is inconsistent with the
 !??? above comment, and it leads to using RHI without it having a value
 !??? about twenty lines down from here.
@@ -375,6 +407,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.35  2003/02/07 03:30:37  vsnyder
+! Correct i_supersat test?
+!
 ! Revision 2.34  2003/02/07 02:00:48  vsnyder
 ! Move some USE statements down
 !
