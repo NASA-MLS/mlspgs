@@ -579,7 +579,7 @@ contains ! =====     Public procedures     =============================
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
-      begin, s+s_module, n+n_spec_def, & !??? REMEMBER TO CHANGE TO NP+.. LATER NJL
+      begin, s+s_module, np+n_spec_def, &
       begin, s+s_band, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &
@@ -869,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.29  2001/02/28 17:13:10  livesey
+! Removed temporary work-around.
+!
 ! Revision 2.28  2001/02/28 01:15:36  livesey
 ! Reworked the signals stuff
 !
