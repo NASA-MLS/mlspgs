@@ -1,0 +1,37 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    if ( present(newx) ) then
+      z => newx
+      call copyBlock ( z, x )
+    else
+      z => x
+    end if
+    select case ( z%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, z%nCols
+        z%values(z%r2(i-1)+1:z%r2(i),1) = &
+          & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
+          & x%values(z%r2(i-1)+1:z%r2(i),1)
+      end do
+    case ( M_Column_Sparse )
+      do i = 1, z%nCols
+        z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
+          & x%values(z%r1(i-1)+1:z%r1(i),1)
+      end do
+    case ( M_Full )
+      do i = 1, z%nRows
+        z%values(i,:) = v(i) * x%values(i,:)
+      end do
+    end select
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!

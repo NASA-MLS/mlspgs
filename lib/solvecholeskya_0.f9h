@@ -1,0 +1,45 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    n = size(x)
+    
+    my_b => x
+    if ( present(b) ) my_b => b
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+      d = u(1,1)                                                           
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &    
+          & "U matrix in SolveCholeskyA_0 is singular" )                   
+      x(1) = my_b(1) / d                                                   
+      do i = 2, n                                                          
+        d = u(i,i)                                                         
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &  
+            & "U matrix in SolveCholeskyA_0 is singular" )                 
+        x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d              
+!       x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d          
+      end do ! i = 2, n                                                    
+    else             ! solve U X = B for X
+      d = u(n,n)
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
+        d = u(i,i)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+        x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
+!       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
+      end do ! i = n-1, 1, -1
+    end if ! my_t
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!

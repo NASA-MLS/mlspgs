@@ -1,0 +1,31 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
+    if ( size(x) < b%nRows )  call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r4
+    case ( M_Banded )
+      x = 0.0_r4
+      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
+        b%values(b%r2(column-1)+1:b%r2(column),column)
+    case ( M_Column_Sparse )
+      x = 0.0_r4
+      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
+        b%values(b%r1(column-1)+1:b%r1(column),column)
+    case ( M_Full )
+      x(1:b%nRows) = b%values(1:b%nRows,column)
+    end select
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!

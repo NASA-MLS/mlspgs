@@ -1,0 +1,60 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    nullify ( t )
+    n = min(a%nCols,a%nRows)
+    select case ( a%kind )
+    case ( m_absent )
+      nCols = a%nCols ! because createBlock destroys A before re-creating it
+      nRows = a%nRows
+      call createBlock ( a, nRows, nCols, m_banded, n )
+      do i = 1, n
+        a%r1(i) = i
+        a%r2(i) = i
+        a%values(i,1) = lambda
+      end do
+    case ( m_banded )
+      do i = 1, n
+        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
+          ! No diagonal element.  Make room for one by densify-update-sparsify
+          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+            & ModuleName )
+          call densify ( t, a )
+          call updateDenseDiagonal ( t, lambda, i )
+          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+          return
+        end if
+        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + lambda
+      end do
+    case ( m_column_sparse )
+      do i = 1, n
+        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
+          if ( a%r2(j) == i ) then
+            a%values(j,1) = a%values(j,1) + lambda
+          else if ( a%r2(j) > i ) then
+            ! No diagonal element.  Make room for one by densify-update-sparsify
+            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+              & ModuleName )
+            call densify ( t, a )
+            call updateDenseDiagonal ( t, lambda, i )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+            return
+          end if
+        end do
+      end do
+    case ( m_full )
+      call updateDenseDiagonal ( a%values, lambda, 1 )
+    end select
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!

@@ -1,0 +1,86 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
+    do j = 1, size(z,2)
+    ! zt(j) = maxval(abs(z(:,j)))
+    ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+    ! nnzc(j) = count(abs(z(:,j)) < zt(j))
+      zt(j) = 0.0_rm
+!     do i1 = 1, size(z,1)
+!       zt(j) = max(zt(j),abs(z(i1,j)))
+!     end do ! i1
+!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+      nnzc(j) = 0
+      do i1 = 1, size(z,1)
+        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
+      end do ! i1
+    end do ! j
+    nnz = sum(nnzc)
+    if ( nnz == 0 ) then ! Empty
+      call createBlock ( b, size(z,1), size(z,2), M_Absent )
+    else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
+      kind = M_Banded
+      do j = 1, size(z,2)
+        do i1 = 1, size(z,1)       ! Find row number of first nonzero
+          if ( abs(z(i1,j)) > zt(j) ) exit
+        end do
+        r1(j) = i1
+        do i2 = size(z,1), 1, -1   ! Find row number of last nonzero
+          if ( abs(z(i2,j)) > zt(j) ) exit
+        end do
+        if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
+          kind = M_Column_Sparse
+          do i1 = 1, j-1 ! I1 is a column number in this case
+            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
+          end do ! i1
+          exit
+        end if
+        nnzc(j) = max(i2 - i1 + 1,0)
+      end do ! j
+      if ( kind == M_Banded ) then
+        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
+        b%r1 = r1        ! Row number of first nonzero in the column
+        do j = 1, size(z,2)
+          b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
+                                        ! column
+          b%values(b%r2(j-1)+1:b%r2(j),1) = &
+            & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
+        end do
+      else
+        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
+        i1 = 0
+        do j = 1, size(z,2)
+          do i2 = 1, size(z,1)
+            if ( abs(z(i2,j)) > zt(j) ) then
+              i1 = i1 + 1
+              b%values(i1,1) = z(i2,j)
+              b%r2(i1) = i2
+            end if
+            b%r1(j) = i1
+          end do ! i2
+        end do ! j
+      end if
+    else ! full
+      call createBlock ( b, size(z,1), size(z,2), M_Full )
+      b%values = z
+    end if
+    if ( present(why) ) then
+      if ( present(callingModule) ) then
+        call deallocate_test ( z, why, callingModule )
+      else
+        call deallocate_test ( z, why, "No module specified" )
+      end if
+    else if ( present(callingModule) ) then
+      call deallocate_test ( z, "No variable specified", callingModule )
+    end if
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:46  livesey
+! First version, taken from MatrixModule_0
+!

@@ -1,0 +1,87 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of MatrixModule_0, used for r4 and r8 versions of routine of this name
+
+    n = u%nRows
+    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "U matrix in SolveCholeskyV_0 must be square" )
+    my_b => x
+    if ( present(b) ) my_b => b
+    if ( n /= size(my_b) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "B matrix not compatible with U matrix in SolveCholeskyV_0" )
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+      select case ( u%kind )
+      case ( M_Absent )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 must not be absent" )
+      case ( M_Banded )
+        do i = 1, n
+          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r2(i),1)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
+            &      u%values(u%r2(i-1)+1,1), 1, &
+            &      my_b(u%r1(i)), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product ( &
+!           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+!           &      my_b(u%r1(i):i-1)) ) / d
+        end do ! i = 1, n
+      case ( M_Column_Sparse )
+        do i = 1, n
+          if ( u%r2(u%r1(i)) /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r1(i),1)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          do h = u%r1(i-1)+1, u%r1(i)-1
+            x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
+          end do ! h = u%r1(i-1)+1, u%r1(i)-1
+          x(i) = x(i) / d
+        end do ! i = 1, n
+      case ( M_Full )
+        do i = 1, n
+          d = u%values(i,i)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product( u%values(1:i-1,i), x(1:i-1)) ) / d
+        end do ! i = 1, n
+      end select
+    else             ! solve U X = B for X
+      if ( u%kind == M_full ) then
+        ud => u%values
+      else
+        nullify ( ud )
+        call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
+        call densify ( ud, u )
+      end if
+      d = ud(n,n)
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
+        d = ud(i,i)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyV_0 is singular" )
+!       x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
+        x(i) = ( my_b(i) - dot_product(ud(i,i+1:n), x(i+1:n)) ) / d
+      end do ! i = 1, n
+      if ( u%kind /= M_Full ) &
+        & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
+    end if ! my_t
+
+! $Log$
+! Revision 2.1  2003/01/08 21:29:27  livesey
+! First version, extracted from MatrixModule_0
+!
