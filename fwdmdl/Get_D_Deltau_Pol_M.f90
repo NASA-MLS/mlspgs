@@ -196,13 +196,11 @@ contains
 ! $\frac{\partial \Delta \delta_{i \rightarrow i-1}^k}{\partial T_m}$
 ! and the {\tt dExDt} routine.
 
-  subroutine Get_D_Deltau_Pol_DT ( Frq, H, CT, STCP, STSP, &
-                & Beta_group, GL_slabs_M, GL_slabs_P, &
-                & T_Path_C, T_Path_M, T_Path_P, T_Path_F, &
-                & Beta_Path_C, Beta_Path_F, SPS_Path, &
+  subroutine Get_D_Deltau_Pol_DT ( CT, STCP, STSP, T_Path_F, &
                 & Alpha_Path_C, Alpha_Path_F, &
-                & Alpha_xn_path_C, Alpha_xn_path_F, &
-                & Eta_zxp, Eta_zxp_F, Del_S, Path_inds, GL_Inds, &
+                & dAlpha_dT_path_c, dAlpha_dT_path_f, &
+                & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
+                & Eta_zxp, Eta_zxp_F, Del_S, GL_Inds, &
                 & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
                 & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
@@ -210,7 +208,6 @@ contains
 
     use DExdT_m, only: dExdT
     use Get_Beta_Path_m, only: Get_Beta_Path_Polarized
-    use Get_Species_Data_m, only: Beta_Group_T
     use GLNP, only: NG
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
@@ -220,9 +217,6 @@ contains
 
   ! Arguments
     ! SVE == # of state vector elements
-    real(r8), intent(in) :: Frq             ! frequency in MHz
-    real(rp), intent(in) :: H(:)            ! Magnetic field component in
-                                            ! instrument polarization on the path
     real(rp), intent(in) :: CT(:)           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
     real(rp), intent(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
@@ -231,21 +225,13 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
-    type (beta_group_T), intent(in) :: Beta_group(:)
-    type (slabs_struct), intent(in) :: GL_slabs_m(:,:), GL_slabs_p(:,:) ! for T -/+ del_T
-    real(rp), intent(in) :: T_Path_c(:)     ! path temperatures on coarse grid
-    real(rp), intent(in) :: T_Path_m(:), T_Path_p(:) ! path temperatures -/+ del_temp
-    !                                         on fine grid -- index with path_inds
     real(rp), intent(in) :: T_Path_f(:)     ! path temperatures on GL grid
-    complex(rp), intent(in) :: Beta_Path_c(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
-                                            ! coarse path.  -1:1 x path x sps
-    complex(rp), intent(in) :: Beta_Path_f(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
-                                            ! GL path.  -1:1 x path x sps
-    real(rp), intent(in) :: SPS_Path(:,:)   ! species on whole path, path x sps
     complex(rp), intent(in) :: Alpha_Path_c(-1:,:) ! -1:1 x path on coarse grid
     complex(rp), intent(in) :: Alpha_Path_f(-1:,:) ! -1:1 x path on fine grid
-    real(rp) :: Alpha_xn_path_C(:)          ! nonpolarized alpha * N on coarse grid
-    real(rp) :: Alpha_xn_path_F(:)          ! nonpolarized alpha * N on fine grid
+    complex(rp), pointer :: dAlpha_dT_polarized_path_c(:,:) ! -1:1 x path
+    complex(rp), pointer :: dAlpha_dT_polarized_path_f(:,:) ! -1:1 x path
+    real(rp), intent(in) :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT
+    real(rp), intent(in) :: dAlpha_dT_path_f(:) ! nonpolarized dAlpha_dT
     real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
       !                                       on coarse grid.  path x sve
     real(rp), intent(in) :: Eta_zxp_f(:,:)  ! representation basis function
@@ -253,8 +239,6 @@ contains
     real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
       !                                       is for the whole coarse path, not
       !                                       just the part up to the black-out
-    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading coarse path
-      !                                       elements from gl_slabs and sps_path
     integer(ip), intent(in) :: GL_Inds(:)   ! indices for reading fine path
       !                                       elements from sps_path
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
@@ -306,151 +290,32 @@ contains
 
   ! Local variables
     integer :: A, B                  ! Indices for GL points
-    complex(rp) :: Alpha_Path_N(-1:1)       ! alpha_path_n * N at one path point
-    complex(rp) :: Alpha_Path_N_F(-1:1,NG)  ! alpha_path_n * N at one set of GL points
-    complex(rp) :: Alpha_Path_N_T(-1:1,size(path_inds)) ! Alpha * n/T on the
-                                     ! coarse path
-    complex(rp) :: Alpha_Path_N_T_F(-1:1,size(t_path_f)) ! Alpha * n/T on the
-                                     ! fine path
-    complex(rp) :: Beta_0(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
-      ! beta_path_c, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
-    complex(rp), dimension(-1:1,size(path_inds),size(beta_group)) :: &
-      & Beta_Path_M, &  ! At T_path_M on coarse path
-      & Beta_Path_P     ! At T_path_P on coarse path
-    complex(rp):: D_Alpha_DT_eta(-1:1,size(path_inds)) ! Singularity * Del_S
-    complex(rp) :: D_Incoptdepth_dT(2,2,size(path_inds))
-    logical :: Do_calc(1:size(path_inds)) ! do_calc_t_c .or. ( do_gl .and. any
+    complex(rp):: D_Alpha_DT_eta(-1:1,size(dAlpha_dT_path_c)) ! Singularity * Del_S
+    complex(rp) :: D_Incoptdepth_dT(2,2,size(dAlpha_dT_path_c))
+    logical :: Do_calc(1:size(dAlpha_dT_path_c)) ! do_calc_t_c .or. ( do_gl .and. any
                                      ! of the corresponding do_calc_t_f ).
     real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
                                      ! sigma +/- or pi.
     real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
                                      ! path segment
-    real(r8) :: FrqHK                ! 0.5 * Frq * H_Over_K
     integer :: H_Stop                ! Stop point for hydrostatic parts
     integer :: I_stop                ! Stop point, which may be before N_Path
-    integer :: J, K, L
-    real(rp) :: L_TTM, L_TPTM, L_TPT ! Logarithms of temperature ratios
+    integer :: L
     integer :: Mid                   ! tangent index along the path = N_Path/2
-    integer :: N_Path                ! Total coarse path length.
-    integer :: N_Sps                 ! Number of species
+    integer :: N_Path                ! Total coarse path length.    integer :: N_Sps                 ! Number of species
     logical :: NeedFA                ! Need FA in hydrostatic calculation
-    real(rp) :: NI(-1:1), NR(-1:1)   ! Exponents of (T/T_0) in real and imaginary
-               ! parts of approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
     integer :: P_i                   ! Index on the path
-    real(rp) :: RR0M(-1:1), RRPM(-1:1), RRP0(-1:1)  ! Beta ratios
     real(rp) :: S_Del_S              ! Sum of Del_S
-    complex(rp) :: Singularity(-1:1,size(path_inds)) ! n/T * Alpha * Eta on the
+    complex(rp) :: Singularity(-1:1,size(dAlpha_dT_path_c)) ! n/T * Alpha * Eta on the
                                      ! coarse path
     integer :: SV_i                  ! Index of state vector element
-    real(rp) :: Tanh_M, Tanh_P       ! for T -/+ del_T
 
-    frqhk = 0.5_r8 * Frq * H_Over_K
-    i_stop = size(path_inds)
+    i_stop = size(dAlpha_dT_path_c)
     n_path = size(del_zeta)
     mid = n_path / 2
-    n_sps = size(sps_path,2)
-
-    call get_beta_path_polarized ( frq, h, beta_group, gl_slabs_m, &
-      & path_inds, beta_path_m )
-    call get_beta_path_polarized ( frq, h, beta_group, gl_slabs_p, &
-      & path_inds, beta_path_p )
 
     a = 1
     b = 1 + ng
-    do p_i = 1, i_stop
-      alpha_path_n = (0.0_rp,0.0_rp)
-      alpha_path_n_f = (0.0_rp,0.0_rp)
-      k = path_inds(p_i) ! K is now index for coarse path
-
-      l_ttm = log(t_path_c(p_i)/t_path_m(k))
-      l_tptm = log(t_path_p(k)/t_path_m(k))
-      l_tpt = log(t_path_p(k)/t_path_c(p_i))
-
-      tanh_m = tanh( frqhk / t_path_m(k) )
-      tanh_p = tanh( frqhk / t_path_p(k) )
-
-      do j = 1, n_sps
-        !{ Assume $\beta = \beta_0 \left(\frac{T}{T_0}\right)^n$. We
-        ! solve for $n$ by computing $\beta$ at $T$, $T+\delta T$ and
-        ! $T-\delta T$, and assume $n$ is roughly constant over $\delta
-        ! T$. We don't know $\beta_0$ and $T_0$, but with two $\beta$'s
-        ! they cancel out.  We use three estimates to account for the
-        ! possibility that $n$ isn't really constant.
-        beta_0 = beta_path_c(:,p_i,j) ! * tanh1(p_i) done by caller
-        beta_m = beta_path_m(:,p_i,j) * tanh_m
-        beta_p = beta_path_p(:,p_i,j) * tanh_p
-
-        where ( real(beta_m) > 0.0 .and. real(beta_p) > 0.0 )
-          rrpm = log(real(beta_p)/real(beta_m)) / l_tptm
-          where ( real(beta_0) > 0.0 )
-            rr0m = log(real(beta_0)/real(beta_m)) / l_ttm
-            rrp0 = log(real(beta_p)/real(beta_0)) / l_tpt
-            nr = 0.25 * ( rr0m + 2.0 * rrpm + rrp0 )
-          elsewhere
-            nr = rrpm
-          end where
-        elsewhere ( real(beta_m) > 0.0 .and. real(beta_0) > 0.0 )
-          nr = log(real(beta_0)/real(beta_m)) / l_ttm
-        elsewhere ( real(beta_0) > 0.0 .and. real(beta_p) > 0.0 )
-          nr = log(real(beta_p)/real(beta_0)) / l_tpt
-        elsewhere
-          nr = 0.0
-        end where
-
-        where ( aimag(beta_m) > 0.0 .and. aimag(beta_p) > 0.0 )
-          rrpm = log(aimag(beta_p)/aimag(beta_m)) / l_tptm
-          where ( aimag(beta_0) > 0.0 )
-            rr0m = log(aimag(beta_0)/aimag(beta_m)) / l_ttm
-            rrp0 = log(aimag(beta_p)/aimag(beta_0)) / l_tpt
-            ni = 0.25 * ( rr0m + 2.0 * rrpm + rrp0 )
-          elsewhere
-            ni = rrpm
-          end where
-        elsewhere ( aimag(beta_m) > 0.0 .and. aimag(beta_0) > 0.0 )
-          ni = log(aimag(beta_0)/aimag(beta_m)) / l_ttm
-        elsewhere ( aimag(beta_0) > 0.0 .and. aimag(beta_p) > 0.0 )
-          ni = log(aimag(beta_p)/aimag(beta_0)) / l_tpt
-        elsewhere
-          ni = 0.0
-        end where
-
-        !{ Now that we have $n$, we can use $\frac{\partial \beta}{\partial T} =
-        ! \frac{n}{T}\beta$.  We weight each $\frac{n}{T}\beta$ with its mixing
-        ! ratio and add them up to get $\frac{\partial \alpha}{\partial T}$.
-
-        ! Not quite D alpha, because we haven't divided by T.  beta_path_c was
-        ! multiplied by tanh in FullForwardModel, so we don't need to do that
-        ! here.
-        alpha_path_n = alpha_path_n + &
-          & cmplx ( nr * real(beta_0), ni * aimag(beta_0) ) * sps_path(k,j)
-        ! Use the same N for the GL points.  Getting 3*NG more N's would cost
-        ! 6*NG more Beta's.  N varies slowly, so this is probably OK.
-        ! alpha_path_n_f is dimensioned (-1:1,NG).
-        if ( do_gl(p_i) ) then
-          do l = -1, 1
-            alpha_path_n_f(l,:) = alpha_path_n_f(l,:) +  &
-              & cmplx ( nr(l) * real(beta_path_f(l,a:b-1,j)), &
-              &         ni(l) * aimag(beta_path_f(l,a:b-1,j)) ) * &
-              & sps_path(gl_inds(a:b-1),j)
-          end do ! l
-        end if
-      end do ! j = 1, n_sps
-
-      !{ Now we divide by $T$ to get $\frac{\partial\alpha}{\partial T}$.
-      ! We wait until now because it's the same $T$ for every $\beta$.
-
-      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i) !?
-      alpha_path_n_t(:,p_i) = alpha_path_n / t_path_c(p_i)
-      if ( do_gl(p_i) ) then
-        do l = -1, 1
-          alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + &
-            & (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)
-            alpha_path_n_t_f(l,a:b-1) = alpha_path_n_f(l,:) / t_path_f(a:b-1)
-        end do
-        a = b
-        b = b + ng
-      end if
-    end do ! p_i = 1, i_stop
 
     do sv_i = 1, size(eta_zxp,2) ! state vector elements
       if ( .not. deriv_flags(sv_i)) then
@@ -472,7 +337,9 @@ contains
           !    \frac{\partial \alpha}{\partial T}
           !    \frac{\partial T}{\partial T_i} \text{d}s =
           !    \frac{\partial \alpha}{\partial T} \eta_i \text{d}s$
-          singularity(:,p_i) = alpha_path_n_t(:,p_i) * eta_zxp(p_i,sv_i)
+          singularity(:,p_i) = eta_zxp(p_i,sv_i) * &
+            & ( dAlpha_dT_polarized_path_c(:,p_i) + &
+            &   (/ 0.25, 0.50, 0.25 /) * dAlpha_dT_path_c(p_i) )
           d_alpha_dT_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
         else
           singularity(:,p_i) = 0.0_rp
@@ -486,7 +353,9 @@ contains
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                  & del_zeta(p_i) * &
-                 & sum( ( alpha_path_n_t_f(l,a:b-1) * eta_zxp_f(a:b-1,sv_i) - &
+                 & sum( ( ( dAlpha_dT_polarized_path_f(l,a:b-1) + &
+                 &          (0.5-0.25*abs(l)) * dAlpha_dT_path_f(a:b-1) ) * &
+                 &        eta_zxp_f(a:b-1,sv_i) - &
                  &        singularity(l,p_i) ) * f )
             end do ! l
           end if
@@ -633,6 +502,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.25  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.24  2004/04/02 01:00:20  vsnyder
 ! Inching toward analytic temperature derivatives
 !
