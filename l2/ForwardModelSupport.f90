@@ -10,7 +10,7 @@ module ForwardModelSupport
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
     & ForwardModelConfig_T
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR
+  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
     & F_FREQUENCY, F_FRQGAP, &
@@ -18,7 +18,8 @@ module ForwardModelSupport
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE, &
     & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
-    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, F_DF_spectroscopy
+    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
+    & F_DEFAULT_spectroscopy
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -249,7 +250,7 @@ contains ! =====     Public Procedures     =============================
     info%do_conv = .false.
     info%do_baseline = .false.
     info%do_freq_avg = .false.
-    info%DF_spectroscopy = .false.
+    info%DEFAULT_spectroscopy = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
@@ -282,18 +283,14 @@ contains ! =====     Public Procedures     =============================
         info%fwmType = decoration(subtree(2,son))
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
-      case ( f_cloud_der )
-!        info%cloud_der = get_boolean(son)
-      call expr ( subtree(2,son), units, value, type )
-        info%cloud_der = nint( value(1) )
       case ( f_do_conv )
         info%do_conv = get_boolean(son)
       case ( f_do_baseline )
         info%do_baseline = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
-      case ( f_DF_spectroscopy )
-        info%DF_spectroscopy = get_boolean(son)
+      case ( f_DEFAULT_spectroscopy )
+        info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
       case ( f_frqGap )
@@ -392,6 +389,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_nsizebins )
         call expr ( subtree(2,son), units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
+      case ( f_cloud_der )
+        call expr ( subtree(2,son), units, value, type )
+        info%cloud_der = nint( value(1) )
       case ( f_cloud_width )
         call expr ( subtree(2,son), units, value, type )
         info%cloud_width = nint( value(1) )
@@ -422,8 +422,10 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
-      ! Check parameters needed only for linear/scan are not included
-      !????
+    case ( l_cloudfull )
+
+      ! full cloud forward model
+
     case ( l_scan )
       ! Add 1d/2d method later probably !??? NJL
       if ( any(got( (/f_atmos_der, f_channels, f_do_conv, f_do_baseline, &
@@ -493,6 +495,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.17  2001/11/15 23:49:40  jonathan
+! rename DF_spectroscopy to default_spectroscopy
+!
 ! Revision 2.16  2001/11/15 20:55:55  jonathan
 ! add df_spectroscopy
 !
