@@ -1,6 +1,6 @@
 #!/bin/sh
 #    README.MakeFC        Instructions about building the mls software
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -23,7 +23,7 @@ it is mostly self-configuring. First, you will need:
  (4) perl (not needed if you plan only to build and run the software,
        not change it)
  (5) PVM--a library to emulate parallel virtual machines
- (6) FFTW--a library to accomplish fast Fourier tranforms
+ (6) FFTW--a library to accomplish fast Fourier transforms
 
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 lib, srclib, and util directories) simply type
@@ -47,14 +47,15 @@ III   INTRODUCTION
 IV    WHAT YOU NEED
 V     BUILDING THE SOFTWARE
 VI    BUILDING ONLY PARTS OF THE SOFTWARE
-VII   OTHER OPTIONS
-VIII  HOW IT WORKS
-IX    CALL TO ACTION
-X     ACTUAL BUGS
-XI    IMPERFECTIONS AND COMPLICATIONS
-XII   ADVANCED SETTINGS
-XIII  ASSORTED COMMENTS
-XIV  EXAMPLE OF A .configure FILE
+VII   MULTIPLE PLATFORMS
+VIII  OTHER OPTIONS
+IX    HOW IT WORKS
+X     CALL TO ACTION
+XI    ACTUAL BUGS
+XII   IMPERFECTIONS AND COMPLICATIONS
+XIII  ADVANCED SETTINGS
+XIV   ASSORTED COMMENTS
+XV    EXAMPLE OF A .configure FILE
 
 INTRODUCTION
 An attempt has been made to minimize the amount of editing and configuring each
@@ -117,7 +118,7 @@ them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
-The next set of questions will pertain to two speciaal libraries: PVM and FFTW.
+The next set of questions will pertain to two special libraries: PVM and FFTW.
 PVM is required only for level 2. FFTW is required only for level 3.
 
 The final two questions allow to set your own default compiler and loader
@@ -166,6 +167,64 @@ perhaps changing some of its modules, then while there you may use the simple
 and only libmls.a will be rebuilt. Again the same is true while in the other
 levels when only the software in that level will be built.
 
+MULTIPLE PLATFORMS
+If you wish to build the software on more than one platform, one reliable
+method is to keep multiple copies of the .configure file and alternately rename
+or hide them according to the machine and compiler in use at a particular time.
+
+Alternatively, let us first assume you have more than one .configure file
+already. If you don't, you may create multiple ones either by hand-editing them
+or by renaming the one you use for your current computer, say it is "pencil",
+to .configure-pencil. Then logon to the new platform and type  "make
+configure"  which after you answer all the questions with paths etc.
+appropriate to the new platform will leave you endowed with a new .configure.
+You might now rename it something like .configure-bugbegone, assuming your new
+platform is a machine answering to bugbegone.
+
+To find out your hostname, type
+        me/mlspgs:51%echo $HOST
+        bugbegone
+
+Now to choose this new .configure file to be used when building the software,
+you may invoke make with the following
+        make MLSCFILE=.configure-bugbegone
+or to do the update
+        make MLSCFILE=.configure-bugbegone update
+
+You may either develop the habit of typing this kind of long command every time
+you invoke make, or you may avail yourself of an environment variable to do
+this. That environment variable may even be able to keep track of which platform
+you are currently using and thus automatically direct MakeFC to the appropriate
+.configure file.
+
+If you use the c shell, you can set the variable HOSTMLSCFILE with
+        me/mlspgs:58%setenv HOSTMLSCFILE .configure-bugbegone
+        me/mlspgs:59%echo $HOSTMLSCFILE
+        .configure-bugbegone
+To automate this you can instead add the following lines to your .login file
+        if (-e ~/mlspgs/.configure-$HOST) then
+                setenv HOSTMLSCFILE .configure-$HOST
+        endif
+which will set this environment variable automatically.
+
+If you use the Bourne shell, you can set the variable with
+        bash$ HOSTMLSCFILE=.configure-bugbegone
+        bash$ export HOSTMLSCFILE
+        bash$ echo $HOSTMLSCFILE
+        .configure-bugbegone
+To automate this you can instead add the following lines to your .profile file
+        if [ -f ~/mlspgs/.configure-$HOST ]
+        then
+        HOSTMLSCFILE=.configure-bugbegone
+        export HOSTMLSCFILE
+        fi
+
+However you set your environment variable HOSTMLSCFILE, it will now be
+available to lift the burden of assigning which .configure file is used when
+you invoke make, so you can go back to simply typing "make". If you need to
+override the HOSTMLSCFILE, you can be assured that setting MLSCFILE on the line
+invoking make takes precedence for that invocation.
+
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
 the other levels.
@@ -195,7 +254,8 @@ makefile   makes a new symbolic link from MakeFC to Makefile
            at the top level as well as each of the subdirectories;
            useful for older archives before the link became automatic
 update     replaces Makefiles in subdirectories with latest versions after
-           recalculating dependencies; useful after a cvs update
+           recalculating dependencies; useful after a cvs update; also deletes
+           orphaned .o and .mod files left behind after sources removed
 
 (The following are more specialized)
 configure_pvm  reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
@@ -319,7 +379,8 @@ your configuration handy, copy it someplace, like ~/mls.configure, then copy it
 back whenever needed. As each MLSCONFG directory is uniquely named, you may
 build multiple versions of the mls software. For example, I built versions for
 both Sun and Linux platforms in my home directory. I can switch between versions
-by overwriting the current .configure with one saved for the other platform.
+by overwriting the current .configure with one saved for the other platform. See
+above for fuller explanation of how to easily handle multiple platforms.
 
 Sometimes after doing a cvs update, especially if there has been a lot of
 active coding and cvs committing, the next make will exit complaining about an
@@ -332,12 +393,15 @@ copy.
 
 PVMWrappers.c in lib is a c source requiring a c compiler. The default value
 for CC is cc. If you get an error along the lines of "cc: Command not found",
-try "make CC=gcc" or another path to a gnu-compatible c compiler.
+try "make CC=gcc" or another path to a gnu-compatible c compiler. Link errors
+complaining that pvm_ or usleep_ were not found may be traced to a failure to
+compile this or to link it into libmls.a.
 
 If you get link errors you might try adding more libraries to the link
 statement. One way to do this is to use the LDOPTS or LAFTER setting (see under
 Advanced Settings). E.g., Archie MacDonald was able to link only by using "make
-LDOPTS='-lsocket'".
+LDOPTS='-lsocket'". Fortunately this is now automatically added for Sun
+platforms.
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -348,9 +412,13 @@ make is invoked; e.g.
 	make target FOPTS="-gline -gc" LDOPTS="-gc"
 would compile and link for debugging and garbage collection, assuming use of
 NAG f95. Alternatively, the first five of the following can be set by
-configure_full or via enviroment variables.
+configure_full.
 
-Setting            Use
+make the_option SETTING=value
+(note that the left-hand side of the equal sign is UPPER-CASE)
+
+SETTING            Use
+-------            ---
 FOPTS              Override default compiler option; note that you must
                    use only legal options
 LDOPTS             Override default (blank) loader option; note that you must
@@ -378,6 +446,11 @@ FC                 Overrides the name by which the Fortran compiler is called
                    with Sun's own f95; then used "make FC=nagf95"
 CC                 Overrides the name by which the c compiler is called
                    e.g., to build on pencil, I used "make CC=gcc"
+MLSCFILE           Overrides the name of the .configure file
+PGSTK              Also mentioned below in connection with .configure,
+                   but if set to blank on the line invoking make, it will
+                   cause make to build a toolkit-free version of lib and l2;
+                   E.g., "make PGSTK="
 
 ASSORTED COMMENTS
 To create Makefile.dep the shell script util/makemakedep.sh is launched,
@@ -472,6 +545,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.16  2001/03/17 00:57:21  pwagner
+# Reordered sections; mentioned CC setting
+#
 # Revision 1.15  2001/03/13 19:01:00  pwagner
 # In line with new clean, tar; drops -f Makefile after first use
 #
