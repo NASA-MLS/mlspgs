@@ -25,6 +25,7 @@ MODULE L1BData
 ! Definition -- L1BData_T
 ! Subroutines -- ReadL1BData
 !                DeallocateL1BData
+!                FindL1BData
 
 ! Remarks:  This is a prototype module containing parameters, a derived type
 !           definition, and a subroutine for reading the L1B data.
@@ -396,11 +397,35 @@ CONTAINS
    END SUBROUTINE DeallocateL1BData
 !----------------------------------
 
+   ! ------------------------------------------- FindL1BData ----
+   integer function FindL1BData( files, fieldName )
+     integer, dimension(:), intent(in) :: files ! File handles
+     character (len=*), intent(in) :: fieldName ! Name of field
+     
+     ! Externals
+     integer, external :: SFN2INDEX
+
+     ! Local variables
+     integer :: i
+
+     ! Executable code
+     FindL1BData=0
+     do i=1,size(files)
+       if ( sfn2index(files(i),fieldName) /= -1) then
+         FindL1BData=files(i)
+         return
+       end if
+     end do
+   end function FindL1BData
+
 !=================
 END MODULE L1BData
 !=================
 
 ! $Log$
+! Revision 2.2  2001/03/03 00:06:23  livesey
+! Added FindL1BData
+!
 ! Revision 2.1  2000/10/04 01:27:34  vsnyder
 ! Put ONLY clauses into the USE statements
 !
