@@ -49,7 +49,7 @@ OBJS =	Allocate_Deallocate.o GriddedData.o HDF-EOS.o Hdf.o L1BData.o \
 
 all: libmls.a SDPToolkitSubstitute.a
 
-libmls.a: $(OBJS)
+libmls.a: $(OBJS) machine.o
 	ar ru $@ $?
 
 SDPToolkitSubstitute.a: SDPToolkitSubstitute.o
@@ -163,6 +163,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.11  2000/10/11 19:30:06  vsnyder
+# Incorporate lib/cf_parser into lib; insert copyright notice
+#
 # Revision 2.10  2000/10/10 23:11:56  vsnyder
 # Correct dependencies for test_sparsify and test_multiply
 #
