@@ -824,18 +824,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
-             begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
-             begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+             begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
@@ -1026,6 +1023,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.141  2001/07/19 00:00:14  dwu
+! make fewer continuous lines
+!
 ! Revision 2.140  2001/07/18 23:42:15  dwu
 ! add f_losQty f_earthradius
 !
