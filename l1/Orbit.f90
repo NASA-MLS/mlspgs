@@ -94,14 +94,23 @@ CONTAINS
 
 ! Get orbit metadata
 
+    print *, 'spacecraftId: ', spacecraftId
+    print *, 'num_points: ', num_points
+    print *, 'startTime: ', startTime
+    print *, 'offsets: ', offsets
     returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
          offsets, numOrbits, orbitNumber, orbitAscendTime, &
          orbitDescendTime, orbitDownLongitude)
 
+    print *,'return status: ', returnStatus
+!    print *, 'orbitNumber: ', orbitNumber
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        CALL Pgs_smf_getMsg (msg_stat, mnemonic, msg)
        msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
-       IF (returnStatus == PGSEPH_W_CORRUPT_METADATA) THEN
+       print *, 'msr: ', msr
+       IF (returnStatus == PGSEPH_W_CORRUPT_METADATA .OR. &
+             returnStatus == PGSEPH_W_DBLVALUE_METADATA) THEN
           CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
        ELSE
           numOrbits = 1
@@ -196,6 +205,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.8  2004/08/03 16:59:08  cvuu
+! Fix the problem of getting OrbitNumbers
+!
 ! Revision 2.7  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
