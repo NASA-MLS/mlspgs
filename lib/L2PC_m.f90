@@ -1384,6 +1384,8 @@ contains ! ============= Public Procedures ==========================
       ! Get the surfaces and phis
       call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( qId, 'phi', qt%phi )
+      if ( IsHDF5DSPresent ( qId, 'solarZenith' ) ) &
+        & call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
       ! Try to get the frequencies
       if ( IsHDF5DSPresent ( qId, 'frequencies' ) ) then
         call Allocate_test( qt%frequencies, qt%noChans, &
@@ -1507,6 +1509,7 @@ contains ! ============= Public Procedures ==========================
         ! Write out important coordinates
         call SaveAsHDF5DS ( qID, 'phi', qt%phi )
         call SaveAsHDF5DS ( qID, 'surfs', qt%surfs )
+        call SaveAsHDF5DS ( qID, 'solarZenith', qt%solarZenith )
         if ( associated ( qt%frequencies ) ) &
           & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
         ! Write out the values
@@ -1532,6 +1535,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.59  2003/02/06 01:34:21  livesey
+! Added writing of solarZenith, and reading if it is present.
+!
 ! Revision 2.58  2003/02/06 00:45:37  livesey
 ! Added name fragment to binSelector_t
 !
