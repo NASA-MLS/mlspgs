@@ -281,6 +281,7 @@ contains
       REAL(r8) :: YT (NZmodel)
       REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR(NS-1,NZmodel)            ! 1=O3 VOLUME MIXING RATIO
+                                               ! 2=N2O VOLUME MIXING RATIO
       REAL(r8) :: DDm(N,NZmodel-1)                         
 
 !----------------------------
@@ -505,7 +506,7 @@ contains
 
       IF ( doChannel(IFR) ) then
         
-        
+       
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
@@ -765,6 +766,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.39  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.38  2002/10/03 22:02:33  vsnyder
 ! Get Deg2Rad from Units instead of l2pc_file_parameters
 !
