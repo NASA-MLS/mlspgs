@@ -24,6 +24,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   character(len=len(idParm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
 !     c o n t e n t s
@@ -964,11 +965,18 @@ itemsloop:do
 !===========================
 
 !=============================================================================
-END MODULE L3ascii
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module L3ascii
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.21  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.20  2002/07/17 00:24:54  livesey
 ! Fixed another print statement
 !
