@@ -35,7 +35,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
-  public :: Dump_Struct, FindBlock, GetDiagonal
+  public :: Dump_Struct, FindBlock, GetActualMatrixFromDatabase, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
   public :: GetVectorFromColumn_1, InvertCholesky, InvertCholesky_1
@@ -974,6 +974,26 @@ contains ! =====     Public Procedures     =============================
     end do
     findBlock = 0
   end function FindBlock
+
+  ! ------------------------------------  GetActualMatrixFromDatabse ---
+  subroutine GetActualMatrixFromDatabase ( DatabaseElement, m )
+    ! Get POINTER to the actuall Matrix_T part of any kind of matrix
+    type ( matrix_database_t), intent(in) :: DatabaseElement
+    type ( matrix_t), pointer :: m
+
+    ! Executable code
+    if ( associated ( databaseElement%matrix ) ) then
+      m => databaseElement%matrix
+    else if ( associated ( databaseElement%cholesky ) ) then
+      m => databaseElement%cholesky%m
+    else if ( associated ( databaseElement%kronecker ) ) then
+      m => databaseElement%kronecker%m
+    else if ( associated ( databaseElement%spd ) ) then
+      m => databaseElement%spd%m
+    else
+      m => NULL()
+    end if
+  end subroutine GetActualMatrixFromDatabase
 
   ! ------------------------------------  GetCholeskyFromDatabase  -----
   subroutine GetCholeskyFromDatabase ( DatabaseElement, Cholesky )
@@ -2045,6 +2065,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.73  2002/08/03 20:41:51  livesey
+! Added GetActualMatrixFromDatabase
+!
 ! Revision 2.72  2002/07/22 03:26:37  livesey
 ! Added checkIntegrity
 !
