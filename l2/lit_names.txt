@@ -131,6 +131,7 @@ spd
 special
 splitSideband
 spreadChannel
+strat
 switchingMirror
 
 tikhonov
@@ -142,6 +143,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.42  2003/10/06 13:16:09  cvuu
+# add new description=strat to handle reading the ncep data file
+#
 # Revision 2.41  2003/08/14 20:10:25  pwagner
 # Added l2fwm
 #
