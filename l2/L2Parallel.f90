@@ -13,41 +13,41 @@ module L2Parallel
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Chunks_m, only: DUMP, MLSChunk_T
   use Dump_0, only: DUMP
+  use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
-    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & GETMACHINENAMEFROMTID, PVMFFREEBUF
-  use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
-  use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
-  use MLSCommon, only: R8, FINDFIRST
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
-    & CONSTRUCTVECTORTEMPLATE, &
-    & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
-    & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
-  use Machine, only: SHELL_COMMAND
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_Deallocate, MLSMSG_WARNING
-  use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
+  use L2GPData, only: L2GPDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
     & MACHINEFIXEDTAG, DIRECTWRITEREQUEST_T, DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
     & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP
+  use Machine, only: SHELL_COMMAND
+  use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+    & MLSMSG_Deallocate, MLSMSG_WARNING
+  use MLSSets, only: FINDFIRST
+  use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
+  use MoreTree, only: Get_Spec_ID
+  use Output_m, only: Output
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
+    & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
+    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
+    & GETMACHINENAMEFROMTID, PVMFFREEBUF
+  use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+  use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
     & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
     & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
-  use Toggles, only: Gen, Switches, Toggle
-  use Output_m, only: Output
+  use String_table, only: Display_String
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
-  use String_table, only: Display_String
-  use Init_Tables_Module, only: S_L2GP, S_L2AUX
-  use MoreTree, only: Get_Spec_ID
-  use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
-  use VectorsModule, only: CHECKINTEGRITY
+  use Toggles, only: Gen, Switches, Toggle
+  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
+    & CONSTRUCTVECTORTEMPLATE, &
+    & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
+    & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
 
   implicit none
   private
@@ -466,7 +466,7 @@ contains ! ================================ Procedures ======================
         endif
 
         ! Who did this come from
-        chunk = FindFirst ( chunkTids == slaveTid )
+        chunk = FindFirst ( chunkTids, slaveTid )
         if ( chunk == 0 .and. &
           &  (.not. usingSubmit .or. signal /= sig_register) ) then
           call output ( 'Signal is:' )
@@ -518,7 +518,7 @@ contains ! ================================ Procedures ======================
           if ( info /= 0 )  call PVMErrorMessage ( info, &
             & "unpacking direct write request node" )
           ! Is this a new file?
-          fileIndex = FindFirst ( directWriteFilenames(1:noDirectWriteFiles) == &
+          fileIndex = FindFirst ( directWriteFilenames(1:noDirectWriteFiles), &
             & requestedFile )
           if ( fileIndex == 0 ) then
             ! Clearly, if we don't know about this file it's new
@@ -566,7 +566,7 @@ contains ! ================================ Procedures ======================
           if ( info /= 0 ) call PVMErrorMessage ( info, &
             & "unpacking returned ticket" )
           ! Record that the chunk has finished direct write
-          requestIndex = FindFirst ( directWriteRequests%ticket == returnedTicket )
+          requestIndex = FindFirst ( directWriteRequests%ticket, returnedTicket )
 
           request => directWriteRequests(requestIndex)
           request%status = DW_Completed
@@ -696,7 +696,7 @@ contains ! ================================ Procedures ======================
         ! Now this may well be a legitimate exit, in which case, we won't
         ! know about this tid any more.  Otherwise we need to tidy up.
         if ( any ( chunkTids == deadTid ) ) then
-          deadChunk = FindFirst ( chunkTids == deadTid )
+          deadChunk = FindFirst ( chunkTids, deadTid )
 
           ! Now, to get round a memory management bug, we'll ignore this
           ! if, as far as we're concerned, the task was finished anyway.
@@ -1238,7 +1238,7 @@ contains ! ================================ Procedures ======================
     if ( seenThisBefore ) seenThisBefore = any (storedResults%key == key )
 
     if ( seenThisBefore ) then
-      thisResult => storedResults ( FindFirst ( storedResults%key == key ) )
+      thisResult => storedResults ( FindFirst ( storedResults%key, key ) )
     else
       ! We haven't seen this one before
       oneResult%key = key
@@ -1313,6 +1313,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.64  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.63  2004/05/19 19:16:11  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
