@@ -160,16 +160,10 @@ CONTAINS
 	INTEGER, PARAMETER :: KEYNOTFOUND=-1
 	INTEGER, PARAMETER :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
 	INTEGER :: elem
-    CHARACTER (LEN=1)                          :: Delim
-    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
+!    CHARACTER (LEN=1)                          :: Delim
+!    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
 
     ! Executable code
-
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
-	 ELSE
-	     Delim = COMMA
-	 ENDIF
 
 	elem = StringElementNum(keyList, key, countEmpty, inDelim)
 	hashInt = elem
@@ -541,7 +535,6 @@ CONTAINS
 
     ! Local variables
     INTEGER :: i           ! Loop counters
-    INTEGER :: elem, nextDelim
 	 LOGICAL :: lastWasNotDelim
 
     CHARACTER (LEN=1)               :: Delim
@@ -930,20 +923,13 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
 
     ! Local variables
-    INTEGER :: i           ! Loop counters
     INTEGER :: nElements
     INTEGER , PARAMETER :: MAXELEMENTLENGTH = 80
 
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
-    CHARACTER (LEN=1)                          :: Delim
-    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
+!    CHARACTER (LEN=1)                          :: Delim
+!    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
     ! Executable code
-
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
-	 ELSE
-	     Delim = COMMA
-	 ENDIF
 
 	nElements = NumStringElements(inList, countEmpty, inDelim)
 	
@@ -967,6 +953,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2001/03/14 17:34:00  pwagner
+! Removed some of the dross, left all of the gold
+!
 ! Revision 2.5  2001/03/02 19:33:14  pwagner
 ! Added GetIntHashElement
 !
