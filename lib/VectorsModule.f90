@@ -601,15 +601,6 @@ contains ! =====     Public Procedures     =============================
           & call output ( 'out' )
         call output ( ' mask', advance='yes' )
       end if
-      if ( associated(vector%quantities(j)%mask) ) then
-        if ( myDetails > 0 ) then
-          call dump ( vector%quantities(j)%mask, format='(z8)' )
-        else
-          call output ( '      With mask', advance='yes' )
-        end if
-      else
-        call output ( '      Without mask', advance='yes' )
-      end if
     end do ! j
   end subroutine DUMP_VECTOR
 
@@ -1170,6 +1161,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.41  2001/05/11 22:01:00  vsnyder
+! Simplify dumping just one vector
+!
 ! Revision 2.40  2001/05/10 23:29:59  livesey
 ! Added some arguments to ValidateVectorQuantity
 !
