@@ -2,35 +2,32 @@
 #
 # This is a Makefile for my test programs
 #
-
-include ../../lib/make.inc
-
 MODULEPATH=../../lib/
-LIB=../../lib/mlslib.a
-LIB_DEBUG=../../lib/mlslib.a_debug
+MLSPGS_LIB_PATH=../../lib
+TOOLKIT_LIB=../../SDPToolkitSubstitute/SDPToolkit.a
 
-TKSLIB=../../lib/SDPToolkitSubstitute.a
+include ${MLSPGS_LIB_PATH}/make.inc
 
-all:	testnomenclature testhunt testinterpolate
-debug:	testnomenclature_debug testhunt_debug testinterpolate_debug
+all:	testnomenclature
+debug:	testnomenclature_debug
 both:	all debug
 
-../../lib/SDPToolkitSubstitute.o:
-	cd ../../lib ; ${MAKE} SDPToolkitSubstitute.o
-../../lib/SDPToolkitSubstitute.o_debug:
-	cd ../../lib ; ${MAKE} SDPToolkitSubstitute.o_debug
 
-lib:	../../lib/mlslib.a
-	cd ../../lib ; ${MAKE} mlslib.a
-lib_debug: ../../lib/mlslib.a_debug
-	cd ../../lib ; ${MAKE} mlslib.a_debug
+testnomenclature: testnomenclature.o mlslib
+	${F90} -o $@ testnomenclature.o \
+	${MLSPGS_LIB_PATH}/mlslib.a \
+	${TOOLKIT_LIB}
 
-
-testnomenclature: lib testnomenclature.o 
-	${F90} -o $@ testnomenclature.o ${LIB} ${TKSLIB}
+testnomenclature.o: mlslib
 
 clean:
 	-rm *.o *.mod *.M
 
 allclean: clean
 	cd ../../lib ; ${MAKE} clean
+
+include ${MLSPGS_LIB_PATH}/makelibs.inc
+
+
+
+
