@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ConstructQuantityTemplates
@@ -240,7 +240,8 @@ contains ! ============= Public procedures ===================================
     ! First those that are fairly clear cut to check
     if ( got ( f_hGrid ) .neqv. properties ( p_hGrid ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
-      & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType )
+      & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType, &
+      & severity='nonfatal' )
     if ( got ( f_vGrid ) .neqv. properties ( p_vGrid ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_vGrid) ) ) // ' vGrid for quantity type ', quantityType )
@@ -780,10 +781,10 @@ contains ! ============= Public procedures ===================================
   ! ======================================= Private proceedures ========
   
   ! -----------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( where, message, extra )
+  subroutine Announce_Error ( where, message, extra, severity )
 
     use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT
     use TREE, only: SOURCE_REF
     use Intrinsic, only: LIT_INDICES
     use String_Table, only: DISPLAY_STRING
@@ -792,8 +793,21 @@ contains ! ============= Public procedures ===================================
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
     integer, intent(in), optional :: EXTRA
+    character(len=*), intent(in), optional :: SEVERITY ! 'nonfatal' or 'fatal'
+    character(len=8) :: mySeverity
 
-    call output ( '***** At ' )
+    mySeverity = 'fatal'
+    if ( present(severity) ) then
+      if (index('WwNn', severity(1:1)) > 0 ) mySeverity='warning'
+    endif
+    if ( mySeverity /= 'fatal' ) then
+      call blanks(5)
+      call output ( ' (warning) ' )
+    else
+      call blanks(5, fillChar='*')
+      call output ( ' (fatal) ' )
+    endif
+    call output ( 'At ' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
     else
@@ -803,7 +817,8 @@ contains ! ============= Public procedures ===================================
     call output ( message )
     if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
     call output ( '', advance='yes' )
-    call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in Construct' )
+    if ( mySeverity == 'fatal') &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem in Construct' )
   end subroutine Announce_Error
 
   ! -----------------------------------------------  AnyGoodSignalData  -----
@@ -1011,26 +1026,26 @@ contains ! ============= Public procedures ===================================
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
-      l_dnwt_ajn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_axmax, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_cait, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta /) )
+      l_dnwt_ajn, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_axmax, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_cait, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid /) )
 
     call DefineQtyTypes ( (/ &
-      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_diag, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_dxn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_flag, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_gdx, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_gfac, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_gradn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_sq, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_sqt, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_diag, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxn, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_flag, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_gdx, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_gfac, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_gradn, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_sq, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_sqt, phyq_dimensionless, p_vGrid, next, &
       l_earthRadius, phyq_length, p_hGrid, next, &
       l_earthRefl, phyq_dimensionless, none /) )
 
@@ -1046,8 +1061,8 @@ contains ! ============= Public procedures ===================================
       l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
-      l_jacobian_cols, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_jacobian_rows, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
+      l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
@@ -1198,6 +1213,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.111  2004/06/17 23:17:00  pwagner
+! Retrieval diagnostics freed from need to be l2gp
+!
 ! Revision 2.110  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
