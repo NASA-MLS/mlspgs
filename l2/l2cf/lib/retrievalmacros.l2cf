@@ -61,15 +61,9 @@ begin Fill
   Transfer, source=lowBound, destination=lb$1
   Transfer, source=highBound, destination=hb$1
   ;; Construct and fill state covariance
-  myCovariance$1: matrix, columns=a$1, type=spd
-  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert
-  ;; Construct averaging kernel matrix
-  !ifdef(flagGotAK,{!dnl
-  akOut$1: Matrix, columns=x$1, rows=x$1
-  !ifdef(flagGotAnyAKs,{!dnl
-  !divert(!AVKDivert), akOut$1!divert},{!dnl
-  !divert(!AVKDivert)akOut$1!divert})
-  !define(flagGotAnyAKs,{Yes})})
+  Sa$1: matrix, columns=a$1, type=spd
+  FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
+
   ;; Fill radiance related vectors
   Transfer, source=measurement, destination=y$1
   Transfer, source=measurementNoise, destination=yNoise$1
@@ -96,7 +90,8 @@ begin Fill
   ;; FM output will be turned on again, sometime, for the PEs
   !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
   ;; Clean up dead vectors and matrices
-  Destroy, matrix=myCovariance$1
+  Destroy, matrix=Sa$1
+  !ifdef(flagDontDestroyVectors,{},{
   Destroy, vector=x$1
   Destroy, vector=a$1
   Destroy, vector=vr$1
@@ -108,7 +103,7 @@ begin Fill
   Destroy, vector=y$1
   Destroy, vector=yNoise$1
   Destroy, vector=f$1
-  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})
+  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})})
   ;; Compute new full GPH profile
   Fill, quantity=state.gph, method=hydrostatic, $
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
@@ -150,14 +145,14 @@ end Fill})
 ;; These macros define the various diverts we're going to get going
 !define(joinedDGGDivert,1)
 !define(joinedDGMDivert,2)
-!define(AVKDivert,3)
+!define(matrixDivert,3)
 !define(directDGGDivert,4)
 !define(directDGMDivert,5)
 !define(directCloudDivert,6)
 
-;; This macro is used to note an averaging kernel to be output later
-!define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
-!define(flagGotAVKs,{Yes})!divert(!AVKDivert)$1!divert})
+;; This macro is used to note a matrix to be output later
+!define(noteMatrix,{!ifdef(flagGotMatrices,{!divert(!matrixDivert),!divert})!dnl
+!define(flagGotMatrices,{Yes})!divert(!matrixDivert)$1!divert})
 
 ;; These macros are used to note a new directWrite DGG or DGM at a
 ;; rather low level.
@@ -340,15 +335,15 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;;  will add FM output to PEs later
 !ifdef(flagPrecisionEstimates,{!dnl
   !define(retrievalArguments,{$
-  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+    state=x$1, fwdModelExtra=state, $
     measurements=y$1, measurementSD=yNoise$1, $
-    apriori=a$1, covariance=myCovariance$1, $
+    apriori=a$1, covariance=Sa$1, $
     outputSD=sdOut$1, $
     vRegWeightVec=vr$1, hRegWeightVec=hr$1})},!dnl
 { !define(retrievalArguments,{$
-  !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
+  state=x$1, fwdModelExtra=state, $
   measurements=y$1, measurementSD=yNoise$1, $
-  apriori=a$1, covariance=myCovariance$1, $
+  apriori=a$1, covariance=Sa$1, $
   outputSD=sdOut$1, fwdModelOut=f$1, $
   vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
@@ -360,6 +355,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.63  2003/07/24 22:13:28  livesey
+; Changed type for DGG file
+;
 ; Revision 1.62  2003/07/11 01:23:05  livesey
 ; Made it more backwards compatible
 ;

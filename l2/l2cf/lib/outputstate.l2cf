@@ -40,8 +40,8 @@ Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
 ;; statements
 
 ;; Now output any averaging kernel.
-!ifdef(flagGotAnyAKs,{
-Output,  quantities=[ !undivert(!AVKDivert) ], type=l2pc, $
-  file='!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5'})
+!ifdef(flagGotMatrices,{
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-Aura_L2MTX_!l2version_!day.h5'})
 
 end Output
