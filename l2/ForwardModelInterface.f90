@@ -609,32 +609,32 @@ contains
 !    Nptg = forwardModelConfig%tangentGrid%noSurfs
 
     ! Now we're going to create the many temporary arrays we need
-    allocate (ndx_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (ndx_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'ndx_path')
-    allocate (dhdz_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (dhdz_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'dhdz_path')
-    allocate (h_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (h_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'h_path')
-    allocate (n_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (n_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'n_path')
-    allocate (phi_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (phi_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'phi_path')
-    allocate (t_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (t_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'t_path')
-    allocate (z_path(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (z_path(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'z_path')
 
-    allocate (spsfunc_path(noSpecies,Nptg,radiance%template%noInstances), STAT=status)
+    allocate (spsfunc_path(noSpecies,Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'spsfunc_path')
-    allocate (eta_phi(Nptg,radiance%template%noInstances), STAT=status)
+    allocate (eta_phi(Nptg,noMAFs), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'eta_phi')
 
@@ -651,9 +651,9 @@ contains
     call allocate_test(e_rad, noMAFs, 'e_rad', ModuleName)
 
     ! Assert radiance%template%noInstances=temp%template%noInstances
-    if (temp%template%noInstances /= radiance%template%noInstances) &
+    if (temp%template%noInstances /= noMAFs) &
       & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
-    do maf = 1, radiance%template%noInstances
+    do maf = 1, noMAFs
       phi_tan = degToRad*temp%template%phi(1,maf) 
          ! ??? For the moment, change this soon.
       print*,'MAF ',maf,' phi_tan ',phi_tan
@@ -668,8 +668,7 @@ contains
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
     call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
-      &  radiance%template%noInstances, &
-      &  geoc_lat,refGPH%values(1,:)/1e3, &
+      &  noMAFs, geoc_lat,refGPH%values(1,:)/1.0e3, &
       &  refGPH%template%surfs(1,1), &
       &  ForwardModelConfig%integrationGrid%surfs, &
       &  temp%template%surfs(:,1),temp%values,z_glgrid,h_glgrid,t_glgrid, &
@@ -1380,6 +1379,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.62  2001/03/31 01:49:45  zvi
+! *** empty log message ***
+!
 ! Revision 2.61  2001/03/30 20:55:25  zvi
 ! Remove the need for COMMON BLOCK..(ELLIPSE)
 !
