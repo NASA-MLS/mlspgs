@@ -10,12 +10,14 @@ module SidsModule
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: dump
+  use Expr_M, only: EXPR
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelWrappers, only: ForwardModel
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
     & ForwardModelStatus_T, DestroyForwardModelIntermediate
   use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
-    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation
+    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
+  use Intrinsic, only: PHYQ_DIMENSIONLESS
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
@@ -57,6 +59,8 @@ contains
     type(MLSChunk_T), intent(in) :: chunk
 
     integer :: Error                    ! >= indicates an error occurred
+    integer :: EXPRUNITS(2)             ! From expr
+    real(r8) :: EXPRVALUE(2)            ! From expr
     integer :: Field                    ! Of the "sids" specification
     integer :: config                   ! Index for config loop
     integer, dimension(:), pointer :: Configs ! Forward model configs
@@ -85,6 +89,7 @@ contains
     integer :: ROW                      ! Row in jacobian
     integer :: ROWINSTANCE              ! From jacobian
     integer :: ROWQUANTITY              ! From jacobian
+    integer :: SINGLEMAF                ! From l2cf
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
@@ -97,6 +102,7 @@ contains
     integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
+    integer, parameter :: BadSingleMAF = PerturbationNotState + 1 ! Bad units for singleMAF
 
       if ( toggle(gen) ) call trace_begin ( "SIDS", root )
       call time_now ( t1 )
@@ -107,6 +113,7 @@ contains
     error = 0
     ixJacobian = 0
     destroyJacobian = .false.
+    singleMAF = -1
     fwdModelExtra => NULL()             ! Can be omitted
 
     do i = 2, nsons(root)
@@ -121,6 +128,10 @@ contains
         fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_perturbation )
         perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
+      case ( f_singleMAF ) 
+        call expr ( subtree(2,son), exprUnits, exprValue )
+        if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
+        singleMAF = exprValue(1)
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
       case ( f_destroyJacobian )
@@ -204,11 +215,16 @@ contains
         ! Loop over forward model configs
         do config = 1, size(configs)
           ! Work out the loop limits
-          maf1 = 1
-          maf2 = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
-          if (configDatabase(configs(config))%skipOverlaps) then
-            maf1 = maf1 + chunk%noMAFsLowerOverlap
-            maf2 = maf2 - chunk%noMAFsUpperOverlap
+          if ( singleMAF == -1 ) then
+            maf1 = 1
+            maf2 = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+            if (configDatabase(configs(config))%skipOverlaps) then
+              maf1 = maf1 + chunk%noMAFsLowerOverlap
+              maf2 = maf2 - chunk%noMAFsUpperOverlap
+            end if
+          else
+            maf1 = singleMAF
+            maf2 = singleMAF
           end if
             
           ! Loop over mafs
@@ -324,6 +340,8 @@ contains
       case ( perturbationNotState )
         call output ( 'The perturbation vector is not the same type as fwdModelIn.', &
           & advance='yes' )
+      case ( badSingleMAF )
+        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -336,6 +354,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.45  2004/03/31 03:59:43  livesey
+! Added singleMAF option
+!
 ! Revision 2.44  2003/09/11 23:16:36  livesey
 ! Now hands the vectors database to the forward model to support the
 ! linearized forward model's xStar / yStar capabilities.
