@@ -10,7 +10,7 @@ module ObtainDAO !provides subroutines to access DAO files
   use GriddedData, only: GriddedData_T
 ! use MLSCommon
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF, only: MLSPCF_L2DAO_END, MLSPCF_L2DAO_START
+  use MLSPCF2, only: MLSPCF_L2DAO_END, MLSPCF_L2DAO_START
 ! use MLSStrings
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
 ! use ???, only: Pgs_smf_getMsg
@@ -216,6 +216,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainDAO
 
 ! $Log$
+! Revision 2.2  2001/02/13 22:59:36  pwagner
+! l2 modules can only use MLSPCF2
+!
 ! Revision 2.1  2000/10/12 00:34:56  vsnyder
 ! Comment-out apparently unnecessary USEs; add "only" to the others
 !
