@@ -987,7 +987,7 @@ contains
         call output ( '(no lcf tree available)' )
       endif
 
-      call output("Caused the following error:", advance='yes', &
+      call output(" Caused the following error:", advance='yes', &
         & from_where=ModuleName)
       call output(trim(full_message), advance='yes', &
         & from_where=ModuleName)
@@ -1013,6 +1013,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.11  2001/04/12 22:04:47  vsnyder
+! Improve an error message
+!
 ! Revision 2.10  2001/04/10 20:05:30  livesey
 ! Tidied up
 !
