@@ -15,8 +15,8 @@ module Open_Init
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &                MLSPCF_L1B_RAD_START, &
     &                mlspcf_pcf_start, PENALTY_FOR_NO_METADATA
-  USE output_m, only: output
-  USE PCFHdr, only: CreatePCFAnnotation
+  use Output_m, only: Output
+  use PCFHdr, only: CreatePCFAnnotation
   use SDPToolkit, only: &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSTD_E_NO_LEAP_SECS
@@ -39,7 +39,7 @@ module Open_Init
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-    integer, parameter :: CCSDSLen=27
+  integer, parameter :: CCSDSLen = 27
   integer, private :: ERROR
 
 contains ! =====     Public Procedures     =============================
@@ -52,13 +52,12 @@ contains ! =====     Public Procedures     =============================
     if (associated(l1bInfo%L1BRADIDs)) then
        deallocate( l1bInfo%L1BRADIDs, stat=status )
        if ( status /= 0 ) then
-		 !	call MLSMessage ( MLSMSG_Error, ModuleName, &
+       ! call MLSMessage ( MLSMSG_Error, ModuleName, &
        !     & MLSMSG_DeAllocate // "l1bInfo" )
-		call announce_error(0, 'Error deallocating L1BRADIDs')
-    endif
-    endif
+         call announce_error ( 0, 'Error deallocating L1BRADIDs' )
+      end if
+    end if
   end subroutine DestroyL1BInfo
-
 
   ! ------------------------------------------  OpenAndInitialize  -----
   subroutine OpenAndInitialize ( processingRange, l1bInfo, l2pcf, anText )
@@ -72,9 +71,9 @@ contains ! =====     Public Procedures     =============================
 
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-	 type(PCFData_T) :: l2pcf
-    CHARACTER (LEN=1), POINTER :: anText(:)
-	 integer, external :: Pgs_pc_getFileSize
+    type(PCFData_T) :: l2pcf
+    character (len=1), pointer :: anText(:)
+    integer, external :: Pgs_pc_getFileSize
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
@@ -92,42 +91,41 @@ contains ! =====     Public Procedures     =============================
     integer :: sd_id
     integer :: STATUS, size ! From allocate
 
-      CHARACTER (LEN=FileNameLen) :: name
+    character (len=FileNameLen) :: name
 
-      INTEGER ::  indx, mlspcf_log, version
+    integer ::  indx, mlspcf_log, version
 
     integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
 
-	if(DEBUG) call announce_error(0, &
-	& 'Read the PCF into an annotation for file headers')
+    if(DEBUG) call announce_error(0, &
+      & 'Read the PCF into an annotation for file headers')
 
 ! Read the PCF into an annotation for file headers
 
-      version = 1
-      Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
-		if(Status == PGS_S_SUCCESS) then
-	      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
-		else
-			call announce_error(0, &
-			& DEFAULTANTEXT)
-			size = LEN(DEFAULTANTEXT) + 1
-     		 ALLOCATE(anText(size), STAT=Status)
-			anText(1:size-1) = DEFAULTANTEXT(1:size-1)
-         error=PENALTY_FOR_NO_METADATA
-		endif
+    version = 1
+    Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+    if ( Status == PGS_S_SUCCESS ) then
+      call createPCFAnnotation(mlspcf_pcf_start, anText)
+    else
+      call announce_error ( 0, DEFAULTANTEXT )
+      size = LEN(DEFAULTANTEXT) + 1
+      allocate ( anText(size), STAT=Status )
+      anText(1:size-1) = DEFAULTANTEXT(1:size-1)
+      error=PENALTY_FOR_NO_METADATA
+    end if
 
     ifl1 = 0
 
-	if(DEBUG) call announce_error(0, 'Opening L1 RAD files')
+    if(DEBUG) call announce_error(0, 'Opening L1 RAD files')
 
     ! Open L1 RAD files
     do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
-    ! Get the l1 file name from the PCF
-    L1_Version = 1
+      ! Get the l1 file name from the PCF
+      L1_Version = 1
 
       returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
         & L1physicalFilename)
@@ -161,7 +159,7 @@ contains ! =====     Public Procedures     =============================
     !if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & "Could not find any L1BRAD files" )
 
-	if(DEBUG) call announce_error(0, 'Opening LOA file')
+    if ( DEBUG ) call announce_error(0, 'Opening LOA file')
     ! Open L1OA File
 
     L1_Version = 1
@@ -193,77 +191,77 @@ contains ! =====     Public Procedures     =============================
 
     returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
     if ( returnstatus /= PGS_S_SUCCESS ) then
-	! call MLSMessage ( MLSMSG_Error, &
-   !   & ModuleName, "Could not get CCSDS Start Time" )
-			call announce_error(0, "Could not get CCSDS Start Time" )
-	endif
+      ! call MLSMessage ( MLSMSG_Error, &
+      !   & ModuleName, "Could not get CCSDS Start Time" )
+      call announce_error(0, "Could not get CCSDS Start Time" )
+    end if
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) then
-	!	call MLSMessage ( MLSMSG_Error, &
-   !   & ModuleName, "Could not convert UTC Start time to TAI" )
-			call announce_error(0, "Could not convert UTC Start time to TAI" )
-	endif
+    !	call MLSMessage ( MLSMSG_Error, &
+    !   & ModuleName, "Could not convert UTC Start time to TAI" )
+      call announce_error(0, "Could not convert UTC Start time to TAI" )
+    end if
 
     returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
     if ( returnstatus /= PGS_S_SUCCESS ) then
-	 !	call MLSMessage ( MLSMSG_Error, &
+    !	call MLSMessage ( MLSMSG_Error, &
     !  & ModuleName, "Could not get CCSDS End Time" )
-			call announce_error(0, "Could not get CCSDS End Time" )
-	endif
+      call announce_error(0, "Could not get CCSDS End Time" )
+    end if
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) then
-	!	call MLSMessage ( MLSMSG_Error, &
-   !   & ModuleName, "Could not convert UTC Start time to TAI" )
-			call announce_error(0, "Could not convert UTC End time to TAI" )
-	endif
+    !	call MLSMessage ( MLSMSG_Error, &
+    !   & ModuleName, "Could not convert UTC Start time to TAI" )
+      call announce_error ( 0, "Could not convert UTC End time to TAI" )
+    end if
 
-	! -- May need to change these if we have
-	!    configuration parameters introduced into PCF file
-	!    for now -- outputversion and cycle are hard-wired below
-	! --
+    ! -- May need to change these if we have
+    !    configuration parameters introduced into PCF file
+    !    for now -- outputversion and cycle are hard-wired below
+    ! --
 
-	! Here's where we define the components of l2pcf
+    ! Here's where we define the components of l2pcf
 
 !      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_OutputVersion, &
 !                                          l2pcf%outputVersion)
-	l2pcf%outputVersion = '1'
+    l2pcf%outputVersion = '1'
 	
-!      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
-	l2pcf%cycle = '1'
-	
-	l2pcf%startutc = CCSDSStartTime
-	l2pcf%endutc = CCSDSEndTime
+!   returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
+    l2pcf%cycle = '1'
+
+    l2pcf%startutc = CCSDSStartTime
+    l2pcf%endutc = CCSDSEndTime
 
 ! Get the name of the log file from the PCF
 
-      version = 1
-      mlspcf_log = 10101			! This seems to be hard-wired into PCF
+    version = 1
+    mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
-      returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
-      IF (returnStatus /= PGS_S_SUCCESS) then
-		!	CALL MLSMessage(MLSMSG_Error, &
-      !                  ModuleName, 'Error retrieving log file name from PCF.')
-			call announce_error(0, "Error retrieving log file name from PCF" )
-	endif
+    returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+    if (returnStatus /= PGS_S_SUCCESS) then
+    ! CALL MLSMessage(MLSMSG_Error, &
+    !                  ModuleName, 'Error retrieving log file name from PCF.')
+      call announce_error(0, "Error retrieving log file name from PCF" )
+    end if
 
-      indx = INDEX(name, '/', .TRUE.)
-      l2pcf%logGranID = name(indx+1:)
+    indx = INDEX(name, '/', .TRUE.)
+    l2pcf%logGranID = name(indx+1:)
  
     if (ERROR/=0 ) then
-	 	call MLSMessage(MLSMSG_Error,ModuleName, &
-      & 'Problem with open_init section')
-	end if
+      call MLSMessage(MLSMSG_Error,ModuleName, &
+        & 'Problem with open_init section')
+    end if
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
-        & call dump_L1B_database(ifl1, l1binfo, l2pcf, &
-  			& CCSDSEndTime, CCSDSStartTime)
+        & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
+  			& CCSDSEndTime, CCSDSStartTime )
       call trace_end ( "OpenAndInit" )
     end if
     return
@@ -272,125 +270,126 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------  dump_L1B_database  -----
   subroutine dump_L1B_database(num_l1b_files, l1binfo, l2pcf, &
-  & CCSDSEndTime, CCSDSStartTime)
-  
-  ! Dump info obtained during OpenAndInitialize:
-  ! L1B databse
-  ! L1OA file
-  ! Start and end times
-  ! output version
-  ! cycle number
-  ! logfile name
-  
-
-	! Arguments
-	integer, intent(in) :: num_l1b_files
+    & CCSDSEndTime, CCSDSStartTime)
+ 
+    ! Dump info obtained during OpenAndInitialize:
+    ! L1B databse
+    ! L1OA file
+    ! Start and end times
+    ! output version
+    ! cycle number
+    ! logfile name
+ 
+    ! Arguments
+    integer, intent(in) :: num_l1b_files
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-	 type(PCFData_T) :: l2pcf
+    type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
-	
-	! Local
+ 
+    ! Local
 
     character (LEN=FileNameLen) :: physicalFilename
-	integer :: i, returnStatus, version
+    integer :: i, returnStatus, version
 
-	! Begin
-	version = 1
+    ! Begin
+    version = 1
 
-  call output('L1B database:', advance='yes')
-  
-  do i=1, num_l1b_files
-    returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
+    call output('L1B database:', advance='yes')
+ 
+    do i=1, num_l1b_files
+      returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
         & physicalFilename)
-  	call output('fileid:   ')
-	call output(l1bInfo%L1BRADIDs(i), advance='yes')
-  	call output('name:   ')
-  	call output(TRIM(physicalFilename), advance='yes')
-  enddo
+      call output('fileid:   ')
+      call output(l1bInfo%L1BRADIDs(i), advance='yes')
+      call output('name:   ')
+      call output(TRIM(physicalFilename), advance='yes')
+    end do
 
-  call output('L1OA file:', advance='yes')
-  
+    call output('L1OA file:', advance='yes')
+ 
     returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
-        & physicalFilename)
-  	call output('fileid:   ')
-	call output(l1bInfo%L1BOAID, advance='yes')
-  	call output('name:   ')
-  	call output(TRIM(physicalFilename), advance='yes')
+      & physicalFilename)
+    call output('fileid:   ')
+    call output(l1bInfo%L1BOAID, advance='yes')
+    call output('name:   ')
+    call output(TRIM(physicalFilename), advance='yes')
 
-  	call output('Start Time:   ')
-	call output(CCSDSStartTime, advance='yes')
+    call output('Start Time:   ')
+    call output(CCSDSStartTime, advance='yes')
 
-  	call output('End Time:   ')
-	call output(CCSDSEndTime, advance='yes')
+    call output('End Time:   ')
+    call output(CCSDSEndTime, advance='yes')
 
-  	call output('Output version:   ')
-	call output(l2pcf%outputVersion, advance='yes')
+    call output('Output version:   ')
+    call output(l2pcf%outputVersion, advance='yes')
 
-  	call output('cycle:   ')
-	call output(l2pcf%cycle, advance='yes')
+    call output('cycle:   ')
+    call output(l2pcf%cycle, advance='yes')
 
-  	call output('Log file name:   ')
-  	call output(TRIM(l2pcf%logGranID), advance='yes')
+    call output('Log file name:   ')
+    call output(TRIM(l2pcf%logGranID), advance='yes')
 
   end subroutine dump_L1B_database
 
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
-  & error_number )
+    & error_number )
   
-   ! Arguments
+    ! Arguments
 	
-	integer, intent(in)    :: lcf_where
-	character(LEN=*), intent(in)    :: full_message
-	logical, intent(in), optional :: use_toolkit
-	integer, intent(in), optional    :: error_number
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
 
-	! Local
-  logical :: just_print_it
-  logical, parameter :: default_output_by_toolkit = .true.
+    ! Local
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
 	
-	if(present(use_toolkit)) then
-		just_print_it = use_toolkit
-	elseif(default_output_by_toolkit) then
-		just_print_it = .false.
-	else
-		just_print_it = .true.
-	endif
-	
-	if(.not. just_print_it) then
-    error = max(error,1)
-    call output ( '***** At ' )
+    if(present(use_toolkit)) then
+      just_print_it = use_toolkit
+    else if(default_output_by_toolkit) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    endif
 
-	if(lcf_where > 0) then
-	    call print_source ( source_ref(lcf_where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+    if(.not. just_print_it) then
+      error = max(error,1)
+      call output ( '***** At ' )
 
-    call output ( ': ' )
-    call output ( "The " );
-	if(lcf_where > 0) then
-    call dump_tree_node ( lcf_where, 0 )
-		else
-    call output ( '(no lcf tree available)' )
-		endif
+      if ( lcf_where > 0 ) then
+        call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
 
-		CALL output(" Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(error_number)) then
-			CALL output('error number ', advance='no')
-			CALL output(error_number, places=9, advance='yes')
-		endif
-	else
-		print*, '***Error in module ', ModuleName
-		print*, trim(full_message)
-		if(present(error_number)) then
-			print*, 'error number ', error_number
-		endif
-	endif
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
+
+      call output ( " Caused the following error:", advance='yes', &
+       & from_where=ModuleName)
+      call output(trim(full_message), advance='yes', &
+        & from_where=ModuleName)
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message) )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
 
 !===========================
   end subroutine announce_error
@@ -402,6 +401,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.33  2001/04/11 00:00:56  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.32  2001/04/10 23:00:29  pwagner
 ! Keeps track of whether to quit if no metadata
 !
