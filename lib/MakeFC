@@ -51,8 +51,8 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-#PROG=libmls.a
-PROG=all
+PROG=libmls.a
+#PROG=all
 
 #In case this is called with "make libmls.a"
 libmls.a: all
@@ -68,7 +68,7 @@ testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean alltests tar clean_objs
+.PHONY: configure depends clean alltests tar clean_objs all
 
 tar: clean
 
@@ -157,6 +157,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.14  2001/03/05 18:51:32  pwagner
+# libmls.a again automatic target
+#
 # Revision 2.13  2001/02/09 18:38:20  pwagner
 # Removed special treatment of Matrix_OBJS
 #
