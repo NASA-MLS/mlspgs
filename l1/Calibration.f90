@@ -32,24 +32,26 @@ MODULE Calibration ! Calibration data and routines
   !! Channel type (D, L, S, T, Z):
 
   TYPE Chan_type_T
-     CHARACTER(len=1) :: FB(FBchans,FBnum)          ! standard filter banks
-     CHARACTER(len=1) :: MB(MBchans,MBnum)          ! mid-band filter banks
-     CHARACTER(len=1) :: WF(WFchans,WFnum)          ! wide filters
-     CHARACTER(len=1) :: DACS(DACSchans,DACSnum)    ! DACS filters
+     CHARACTER(len=1) :: FB(FBchans,FBnum) = "D"       ! standard filter banks
+     CHARACTER(len=1) :: MB(MBchans,MBnum) = "D"       ! mid-band filter banks
+     CHARACTER(len=1) :: WF(WFchans,WFnum) = "D"       ! wide filters
+     CHARACTER(len=1) :: DACS(DACSchans,DACSnum) = "D" ! DACS filters
   END TYPE Chan_type_T
 
   !! Weights Flags type
 
   TYPE WeightsFlags_T
-     INTEGER :: MAFno
-     LOGICAL :: recomp_MAF, recomp_S, recomp_T
+     INTEGER :: MAFno = 0
+     LOGICAL :: recomp_MAF = .FALSE.
+     LOGICAL :: recomp_S = .FALSE.
+     LOGICAL :: recomp_T = .FALSE.
   END TYPE WeightsFlags_T
 
   !! Bright Objects type
 
   TYPE BrightObjects_T
-     LOGICAL :: MoonInFOV(0:MaxMIFs-1)
-     LOGICAL :: VenusInFOV(0:MaxMIFs-1)
+     LOGICAL :: MoonInFOV(0:MaxMIFs-1) = .FALSE.
+     LOGICAL :: VenusInFOV(0:MaxMIFs-1) = .FALSE.
   END TYPE BrightObjects_T
 
   !! Science and Engineering data for 1 MAF:
@@ -64,9 +66,9 @@ MODULE Calibration ! Calibration data and routines
      TYPE (BankInt_T) :: WallMIF       ! MIF for start of wall
      TYPE (BrightObjects_T) :: LimbView, SpaceView ! Bright Objects in FOV flags
      TYPE (WeightsFlags_T) :: WeightsFlags
-     INTEGER :: start_index, end_index  ! start & end indexes within cal vectors
-     INTEGER :: last_MIF
-     INTEGER :: BandSwitch(5)           ! band switch positions
+     INTEGER :: start_index = 0, end_index = 0  ! start/end within cal vectors
+     INTEGER :: last_MIF = 0
+     INTEGER :: BandSwitch(5) = 0          ! band switch positions
   END TYPE MAFdata_T
 
   !! Calibration window:
@@ -80,7 +82,7 @@ MODULE Calibration ! Calibration data and routines
      TYPE (MAFdata_T) :: MAFdata(WinMAFs)
   END TYPE CalWin_T
 
-  TYPE (CalWin_T), TARGET :: CalWin
+  TYPE (CalWin_T), TARGET, SAVE :: CalWin
   TYPE (MAFdata_T), POINTER :: CurMAFdata
 
   !! Space and Target calibration vectors:
@@ -745,6 +747,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.10  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

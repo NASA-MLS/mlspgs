@@ -33,13 +33,14 @@ CONTAINS
 
     USE MLSL1Config, ONLY: L1Config
     USE TkL1B, ONLY: Flag_Bright_Objects, LOG_ARR1_PTR_T
+    USE L1BOutUtils, ONLY: OutputL1BOA
 
     LOGICAL, INTENT (OUT) :: more_data
     LOGICAL, INTENT (OUT) :: CalWinFull
 
     INTEGER :: sci_MAFno, dif_MAFno, i, ios, windx
     INTEGER, SAVE :: prev_MAFno
-    TYPE (MAFdata_T) :: EmptyMAFdata
+    TYPE (MAFdata_T) :: EmptyMAFdata, MAFdata
     REAL(r8), SAVE :: prev_secTAI
     REAL :: MAF_dur, MIF_dur
     INTEGER :: nom_MIFs
@@ -74,6 +75,24 @@ CONTAINS
     READ (unit=L1BFileInfo%MAF_data_unit, iostat=ios) SciMAF
     more_data = (ios == 0)
     IF (.NOT. more_data) RETURN    !! Nothing more to do
+
+! Do L1BOA for all good data times:
+
+    IF (SciMAF(0)%secTAI >= L1Config%Input_TAI%startTime .AND. &
+         SciMAF(0)%secTAI<= L1Config%Input_TAI%endTime) THEN
+
+       MAFdata%SciPkt = SciMAF
+       MAFdata%EMAF = EngMAF
+
+!! Update MAFinfo from current MAF
+
+       MAFinfo%startTAI = SciMAF(0)%secTAI
+       MAFinfo%MIFsPerMAF = Nom_MIFs  ! need a fixed size for L1BOA uses
+       MAFinfo%MIF_dur = MIF_dur
+
+       CALL OutputL1BOA (MAFdata)
+
+    ENDIF
 
     sci_MAFno = SciMAF(0)%MAFno
 
@@ -621,6 +640,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.10  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -9,7 +9,7 @@ MODULE L1BOutUtils
 
   PRIVATE
 
-  PUBLIC :: OutputL1Bdata, WriteHdrAnnots
+  PUBLIC :: OutputL1Bdata, OutputL1BOA, WriteHdrAnnots
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -20,22 +20,52 @@ MODULE L1BOutUtils
 CONTAINS
 
 !=============================================================================
-  SUBROUTINE OutputL1Bdata
+  SUBROUTINE OutputL1BOA (CurMAFdata)
 !=============================================================================
 
     USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs
     USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb
     USE TkL1B, ONLY: L1BOA_MAF
-    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
-    USE MLSL1Rad, ONLY: L1Brad
-    USE EngTbls, ONLY: Reflec
     USE MLSL1Config, ONLY: L1Config
-    USE Calibration, ONLY: CalWin, MAFdata_T
+    USE Calibration, ONLY: MAFdata_T
 
+    TYPE (MAFdata_T) :: CurMAFdata
     INTEGER, SAVE :: MAFno = 0, counterMAF
     INTEGER :: i
     INTEGER, PARAMETER :: last_MIF_indx = MaxMIFs - 1
     REAL :: scAngleG(0:last_MIF_indx), scAngleT(0:last_MIF_indx)
+
+    IF (.NOT. L1Config%Globals%ProduceL1BOA) RETURN
+
+    counterMAF = CurMAFdata%EMAF%TotalMAF
+
+    MAFno = MAFno + 1
+
+    DO i = 0, last_MIF_indx
+       scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
+       scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
+       IF (i > 0) THEN  ! use previous until further notice
+          IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
+          IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
+       ENDIF
+    ENDDO
+
+    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
+
+  END SUBROUTINE OutputL1BOA
+
+!=============================================================================
+  SUBROUTINE OutputL1Bdata
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_diags
+    USE MLSL1Rad, ONLY: L1Brad
+    USE EngTbls, ONLY: Reflec
+    USE Calibration, ONLY: CalWin, MAFdata_T
+
+    INTEGER, SAVE :: MAFno = 0, counterMAF
     TYPE (MAFdata_T), POINTER :: CurMAFdata
 
     CurMAFdata => CalWin%MAFdata(CalWin%central)
@@ -43,26 +73,12 @@ CONTAINS
 
     MAFno = MAFno + 1
 
-    IF (L1Config%Globals%ProduceL1BOA) THEN
-
-       DO i = 0, last_MIF_indx
-          scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
-          scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
-          IF (i > 0) THEN  ! use previous until further notice
-             IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
-             IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
-          ENDIF
-       ENDDO
-
-       CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
-
-    ENDIF
+!    CALL OutputL1BOA (CurMAFdata)
 
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
          MAFinfo%startTAI, L1Brad)
 
-    CALL OutputL1B_diags (MAFno, L1BFileInfo%DiagId, counterMAF, &
+    CALL OutputL1B_diags (L1BFileInfo%DiagId, MAFno, counterMAF, &
          MAFinfo%startTAI)
 
     PRINT *, "outputting l1b for MAF no ", MAFno
@@ -90,6 +106,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.11  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.10  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
