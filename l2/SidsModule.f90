@@ -11,7 +11,7 @@ module SidsModule
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: dump
   use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelInterface, only: ForwardModel
+  use ForwardModelWrappers, only: ForwardModel
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
     & ForwardModelStatus_T, DestroyForwardModelIntermediate
   use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
@@ -157,6 +157,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.23  2001/04/26 19:48:11  livesey
+! Now uses ForwardModelWrappers
+!
 ! Revision 2.22  2001/04/26 00:57:20  vsnyder
 ! Deallocate fmStat%rows, cosmetic changes
 !
