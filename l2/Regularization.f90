@@ -73,7 +73,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, M_Full, &
+    use MatrixModule_0, only: CreateBlock, M_Banded, M_Full, &
       & MatrixElement_T, Sparsify
     use MatrixModule_1, only: Matrix_T
     use MLSCommon, only: R8
@@ -687,6 +687,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.35  2003/05/16 02:57:13  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.34  2003/01/10 02:46:40  livesey
 ! Various bug fixes, and now handles multi-channel quantities vertically
 ! (horizontally always worked, but made that clear in comments).
