@@ -18,9 +18,9 @@ module AntennaPatterns_m
 
   type, public :: AntennaPattern_T
     real(r8) :: Lambda
-    real(r8), dimension(:,:), pointer :: Aaap => NULL()
-    real(r8), dimension(:,:), pointer :: D1aap => NULL()
-    real(r8), dimension(:,:), pointer :: D2aap => NULL()
+    real(r8), dimension(:), pointer :: Aaap => NULL()
+    real(r8), dimension(:), pointer :: D1aap => NULL()
+    real(r8), dimension(:), pointer :: D2aap => NULL()
     character(len=MaxSigLen), pointer, dimension(:) :: Signals => NULL()
   end type AntennaPattern_T
 
@@ -81,7 +81,7 @@ contains
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
-    real(r8) :: V(6)                         ! To read a line from the file
+    real(r8) :: V(2)                         ! To read a line from the file
 
     if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File" )
 
@@ -127,11 +127,11 @@ outer1: do
     do i = 1, dataBaseSize
       call Allocate_Test ( antennaPatterns(i)%signals, howManySignals(i), &
         & "AntennaPatterns(?)%Signals", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), 3, &
+      call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%Aaap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), 3, &
+      call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%D1aap", moduleName )
-      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), 3, &
+      call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%D2aap", moduleName )
       do j = 1, howManySignals(i)
         read ( lun, '(a)', err=99, iostat=status ) antennaPatterns(i)%signals(j)
@@ -142,26 +142,18 @@ outer1: do
       do j = 1, howManyPoints(i)
         read ( lun, *, err=99, iostat=status ) v
         k = 2 * j - 1
-        antennaPatterns(i)%aaap(k:k+1,1) = v(1:2)
-        antennaPatterns(i)%aaap(k:k+1,2) = v(3:4)
-        antennaPatterns(i)%aaap(k:k+1,3) = v(5:6)
+        antennaPatterns(i)%aaap(k:k+1) = v(1:2)
 
         ! First derivative field:     i*Q * F(S), i = Sqrt(-1)
 
         q = (j-1) * lambdaX2Pi
-        antennaPatterns(i)%d1aap(k,1)    = -v(2) * q
-        antennaPatterns(i)%d1aap(k+1,1)  =  v(1) * q
-        antennaPatterns(i)%d1aap(k,2)    = -v(4) * q
-        antennaPatterns(i)%d1aap(k+1,2)  =  v(3) * q
-        antennaPatterns(i)%d1aap(k,3)    = -v(6) * q
-        antennaPatterns(i)%d1aap(k+1,3)  =  v(5) * q
+        antennaPatterns(i)%d1aap(k)    = -v(2) * q
+        antennaPatterns(i)%d1aap(k+1)  =  v(1) * q
 
         ! Second derivative field:    (i*Q)**2 * F(S), i = Sqrt(-1)
 
         q = -q * q
-        antennaPatterns(i)%d2aap(k:k+1,1)  =  v(1:2) * q
-        antennaPatterns(i)%d2aap(k:k+1,2)  =  v(3:4) * q
-        antennaPatterns(i)%d2aap(k:k+1,3)  =  v(5:6) * q
+        antennaPatterns(i)%d2aap(k:k+1)  =  v(1:2) * q
       end do ! j
     end do ! i
 
@@ -227,6 +219,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.9  2001/04/06 00:49:13  vsnyder
+! Remove unused variable declarations
+!
 ! Revision 1.8  2001/04/06 00:48:30  vsnyder
 ! And yet another typo
 !
