@@ -31,6 +31,7 @@
 # -s pattern    match source file suffixes against "%.pattern"
 # -o pattern    match object file suffixes against "%.pattern"
 # -h[elp]       print brief help message; exit
+# -nodep        skip tracing dependencies; stop after list of objects
 # dir1          search directory named by dir1 as well as cwd for files
 #
 #
@@ -118,13 +119,15 @@ extant_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #this version uses either of the two depmakers
-#to trace dependencies based on USEs and INCLUDEs:
+#to trace dependencies based on USEs and INCLUDEs (or none at all):
 #(1)  makedepf90 (a compiled program)
 #(2)  f90makedep.pl (a perl script)
+#(3)  none (skips tracing dependencies)
 #
 #which of (1) or (2) to use is set by the following line
 DEPMAKER=2
 #        ^  -- set this to 1 for makedepf90, 2 for f90makedep.pl
+# (option (3) is selected by 
 #
 #unless you have obtained and compiled makedepf90, you will almost
 #certainly need to set DEPMAKER to 2 in the above line
@@ -276,6 +279,10 @@ while [ "$more_opts" = "yes" ] ; do
        include_f77="no"
        include_c="no"
        ;;
+    -nodep )
+	    DEPMAKER=0
+       shift
+       ;;
     -o )
 	    o_pattern="$2"
        shift
@@ -363,7 +370,11 @@ fi
 
 echo " "  >> Makefile.dep
 #
-if [ $DEPMAKER = "1" ]
+if [ $DEPMAKER = "0" ]
+then
+  echo "#(Not tracing dependencies)" >> Makefile.dep
+  echo "#End of simplified Makefile.dep" >> Makefile.dep
+elif [ $DEPMAKER = "1" ]
 then
 	#
 	# use makedepf90 to calculate dependencies
@@ -488,6 +499,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.16  2002/04/09 19:38:00  pwagner
+# Changes allow it to compute m4 dependencies to make l2cf
+#
 # Revision 1.15  2001/11/06 00:19:26  pwagner
 # Turned off ACT_COURTEOUS
 #
