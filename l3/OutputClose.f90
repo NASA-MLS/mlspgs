@@ -10,11 +10,13 @@ MODULE OutputClose
    USE L2Interface
    USE L3CF
    USE L3DMData
+   USE L3DZData
    USE L3SPData
+   USE MLSCF
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE MLSStrings
    USE OpenInit
    USE PCFModule
@@ -34,6 +36,7 @@ MODULE OutputClose
 
 ! Definitions -- OutputFlags_T
 ! Subroutines -- WriteMetaLog
+!                OutputProd
 !                OutputAndClose
 
 ! Remarks:  This is a prototype module for the routines needed for the L3 Daily
@@ -55,6 +58,9 @@ MODULE OutputClose
      LOGICAL :: writel3rCom, writel3rAsc, writel3rDes
 	! L3Residual databases (for all output days)
 
+     LOGICAL :: writel3dzCom, writel3dzAsc, writel3dzDes
+	! daily zonal mean databases (for all output days)
+
      LOGICAL :: writel3sp
 	! L3SP database (for asc/des/com)
 
@@ -62,9 +68,9 @@ MODULE OutputClose
 
 CONTAINS
 
-!----------------------------------------
-   SUBROUTINE WriteMetaLog (pcf, logType)
-!----------------------------------------
+!-------------------------------
+   SUBROUTINE WriteMetaLog (pcf)
+!-------------------------------
 
 ! Brief description of subroutine
 ! This subroutine writes metadata for the log file to a separate ASCII file.
@@ -72,8 +78,6 @@ CONTAINS
 ! Arguments
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
-
-      CHARACTER (LEN=*), INTENT(IN) :: logType
 
 ! Parameters
 
@@ -104,9 +108,8 @@ CONTAINS
 
 ! Set PGE values
 
-      sval = TRIM(logType) // pcf%l3StartDay // ':' // pcf%l3EndDay
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
-                                 sval)
+                                 pcf%logGranID)
 
       CALL ExpandFileTemplate('$version-$cycle', sval, &
                               version=pcf%outputVersion, cycle=pcf%cycle)
@@ -149,10 +152,10 @@ CONTAINS
    END SUBROUTINE WriteMetaLog
 !-----------------------------
 
-!----------------------------------------------------------------------------
-   SUBROUTINE OutputAndClose (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, l3r, &
-                              residA, residD, flags)
-!----------------------------------------------------------------------------
+!---------------------------------------------------------------------------
+   SUBROUTINE OutputProd (pcf, l3cf, cfDef, anText, l3sp, l3dm, dmA, dmD, &
+                          l3r, residA, residD, dzs, dzA, dzD, flags, zFiles)
+!---------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Output/Close task in the MLSL3 program.
@@ -160,6 +163,8 @@ CONTAINS
 ! Arguments
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
+
+      TYPE( L3CFDef_T ), INTENT(IN) :: cfDef
 
       TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
 
@@ -169,9 +174,13 @@ CONTAINS
 
       TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
 
+      TYPE( L3DZData_T ), POINTER :: dzs(:), dza(:), dzd(:)
+
       TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
       CHARACTER (LEN=1), POINTER :: anText(:)
+
+      TYPE( L3DZFiles_T ), INTENT(INOUT) :: zFiles
 
 ! Parameters
 
@@ -212,6 +221,7 @@ CONTAINS
 
          files%nFiles = 0
          files%name = ''
+         files%date = ''
 
          IF (flags%writel3dmCom) THEN
             CALL OutputGrids(type, l3dm, files)
@@ -281,6 +291,34 @@ CONTAINS
 
       ENDIF
 
+! L3DZ -- if data exist, write them to the l3dz Standard file; keep track of
+!         which files have been created for later metadata annotation
+
+      IF (flags%writel3dzCom) THEN
+         CALL OutputL3DZ(cfDef%stdType, dzs, zFiles)
+      ELSE
+         msr = TRIM(l3cf%l3prodNameD) // ' DZ' // NOOUT_ERR
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+
+! If ascending map data for the product exist, write them to l3dm files
+
+      IF (flags%writel3dzAsc) THEN
+         CALL OutputL3DZ(cfDef%stdType, dza, zFiles)
+      ELSE
+         msr = TRIM(l3cf%l3prodNameD) // 'Ascending DZ' // NOOUT_ERR
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+
+! If descending map data for the product exist, write them to l3dm files
+
+      IF (flags%writel3dzDes) THEN
+         CALL OutputL3DZ(cfDef%stdType, dzd, zFiles)
+      ELSE
+         msr = TRIM(l3cf%l3prodNameD) // 'Descending DZ' // NOOUT_ERR
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+      ENDIF
+
 ! Deallocate the databases
 
       CALL DestroyL2GPDatabase(l3r)
@@ -293,6 +331,81 @@ CONTAINS
 
       CALL DestroyL3SPDatabase(l3sp)
 
+      CALL DestroyL3DZDatabase(dzs)
+      CALL DestroyL3DZDatabase(dza)
+      CALL DestroyL3DZDatabase(dzd)
+
+!---------------------------
+   END SUBROUTINE OutputProd
+!---------------------------
+
+!----------------------------------------------------------------------------
+   SUBROUTINE OutputAndClose (cf, pcf, cfProd, cfDef, avgPer, anText, zFiles)
+!----------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine performs final Output & Close tasks outside the product loop.
+
+! Arguments
+
+      TYPE( L3CFDef_T ), INTENT(IN) :: cfDef
+
+      TYPE( L3DZFiles_T ), INTENT(IN) :: zFiles
+
+      TYPE( PCFData_T ), INTENT(IN) :: pcf
+
+      TYPE( L3CFProd_T ), POINTER :: cfProd(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+      REAL(r8), POINTER :: avgPer(:)
+
+      TYPE( Mlscf_T ), INTENT(INOUT) :: cf
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: err
+
+! Write the metadata to any L3DZ files created
+
+      IF (zFiles%nStd == 0) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'No L3DZ Standard files &
+                                                               &were created.')
+      ELSE
+         CALL WriteMetaL3DZS(pcf, cfDef, zFiles, anText)
+      ENDIF
+
+      IF (zFiles%nDg == 0) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, 'No L3DZ Diagnostic &
+                                                         &files were created.')
+      ELSE
+         CALL WriteMetaL3DZD(pcf, cfDef, zFiles, anText)
+      ENDIF
+
+! Write the log file metadata
+
+      CALL WriteMetaLog(pcf)
+
+! Final deallocations
+ 
+      DEALLOCATE(cfProd, anText, avgPer, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  Open/Init quantities.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      DEALLOCATE (cf%Sections, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  cf section pointers.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
 !-------------------------------
    END SUBROUTINE OutputAndClose
 !-------------------------------
@@ -302,6 +415,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.6  2001/01/16 17:49:03  nakamura
+!Updated for new MCFs and annotation.
+!
 !Revision 1.5  2000/12/29 21:44:16  nakamura
 !Removed obsolete routines CheckOutputDate & FindDatabaseIndex; switched to one-product/all-days paradigm.
 !
