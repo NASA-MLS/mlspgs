@@ -123,7 +123,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2GP               = s_l2aux + 1
   integer, parameter :: S_MATRIX             = s_l2gp + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
-  integer, parameter :: S_OUTPUT             = s_merge + 1
+  integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
+  integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
   integer, parameter :: S_RETRIEVE           = s_quantity + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
@@ -290,6 +291,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
+    spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
@@ -664,6 +666,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
+      begin, s+s_negativePrecision, &
+             begin, f+f_precision, s+s_vector, nr+n_field_spec, &
+             begin, f+f_aprioriPrecision, s+s_vector, nr+n_field_spec, &
+             begin, f+f_precisionFactor, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
@@ -876,8 +884,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
-                       s+s_matrix, s+s_destroy, s+s_snoop, s+s_time, s+s_vector, &
-                       s+s_transfer, n+n_section, &
+                       s+s_negativePrecision, s+s_matrix, s+s_destroy, &
+                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
                            n+n_section, &
@@ -898,6 +906,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.260  2002/11/21 01:17:54  livesey
+! Added the negativePrecision command to fill (distinct from the
+! negativePrecision option to the fill command)
+!
 ! Revision 2.259  2002/11/15 01:33:31  livesey
 ! Added allLinesForRadiometer
 !
