@@ -99,6 +99,8 @@ contains
 
     ! First, read through the file and count how much stuff is there.
     read ( lun, '(a)', iostat=status ) line  ! Skip the first radiometer spec
+    if ( status < 0 ) go to 98
+    if ( status > 0 ) go to 99
     howManyRadiometers = 0
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
@@ -110,7 +112,7 @@ outer1: do
       do
         read ( lun, '(a)', iostat=status ) line
         if ( status < 0 ) exit outer1
-        if ( status > 0 ) go to 98
+        if ( status > 0 ) go to 99
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
         howManyGrids(howManyRadiometers) = howManyGrids(howManyRadiometers) + 1
         read ( line, *, err=99 ) height, numHeights
@@ -169,7 +171,7 @@ outer2: do
       do
         read ( lun, '(a)', iostat=status ) line
         if ( status < 0 ) exit outer2
-        if ( status > 0 ) go to 98
+        if ( status > 0 ) go to 99
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
         n = n + 1
         read ( line, *, iostat=status, err=99 ) & 
@@ -254,6 +256,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.8  2001/03/29 23:53:21  vsnyder
+! Use MaxSigLen parameter from MLSSignals
+!
 ! Revision 1.7  2001/03/28 00:42:37  livesey
 ! Got rid of obsolete routines.
 !
