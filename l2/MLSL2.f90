@@ -12,8 +12,9 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
-  USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
+  use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
+  use MLSHDF5, only: mls_h5open, mls_h5close
   use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
@@ -143,10 +144,10 @@ program MLSL2
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
-  call h5open_f(error)
+  call mls_h5open(error)
   if (error /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to h5_open_f" )
+        & "Unable to mls_open" )
   endif
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
@@ -704,10 +705,10 @@ program MLSL2
   call add_to_section_timing( 'main', t0 )
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
   if ( error == 0 ) then
-     call h5close_f(error)
+    call mls_h5close(error)
      if (error /= 0) then
        call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to h5_close_f" )
+        & "Unable to mls_close" )
      endif    
   endif    
   if(error /= 0) then
@@ -901,6 +902,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.115  2004/03/24 23:54:06  pwagner
+! Switched from h5_open/close_f to mls_open/close
+!
 ! Revision 2.114  2004/03/24 01:03:34  livesey
 ! Increased tree size.
 !
