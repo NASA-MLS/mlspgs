@@ -144,7 +144,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc 
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS)
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) ./machines/$(MLSCONFG)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
@@ -198,6 +198,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.31  2001/11/03 00:00:22  pwagner
+# Added machines/mlsconfg to dependency search path
+#
 # Revision 2.30  2001/10/04 22:24:49  pwagner
 # Limit suffix-based rules to (MLSCONFG)
 #
