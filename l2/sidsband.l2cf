@@ -4,9 +4,9 @@
 ; _day.
 
 
-ifdef(_band, ,define(_band,{1L}))
+ifdef(_band, ,define(_band,{12U}))
 define(_outpath,/nas/bigdata/livesey/misc/)
-define(_ver,test2)
+define(_ver,test3)
 define(_day,1996-051)
 define(_year,1996)
 define(_signal,_sigBand$1)
@@ -68,7 +68,7 @@ END GlobalSettings
 
 ; ------------------------------------------ Chunk divide  ----
 BEGIN ChunkDivide
-    IdealLength =             0.0416 orbits
+    IdealLength =             0.05 orbits
     overlap =                 3 MAFs
     HomeGeodAngle =           0 degrees
     HomeModule =              GHz
@@ -163,8 +163,8 @@ l2cfinc(fillsidebandratios.l2cf)
 
 BEGIN Retrieve
 
-;   sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=y,$
-;     forwardModel=[sidsFwm]
+  sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=y,$
+    forwardModel=[sidsFwm]
 
 END Retrieve
 
