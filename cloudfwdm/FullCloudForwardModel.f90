@@ -259,7 +259,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !--------------------------------------------
     ! Loop over signals
     !--------------------------------------------
-    do sigInd = 1, size(forwardModelConfig%signals)
+    DO sigInd = 1, size(forwardModelConfig%signals)
 
     ! -------------------------------------
     ! Identify the signal (band)
@@ -705,7 +705,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & "No sideband ratio supplied")
     end if
 
+   if ( toggle(emit) .and. levels(emit) > 0 ) then
+      call Trace_Begin ( 'FullCloudForwardModel.SidebandLoop' )
+    end if
+
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
+
+      if ( toggle(emit) .and. levels(emit) > 1 ) &
+        & call Trace_Begin ( 'FullCloudForwardModel.Sideband ', index=thisSideband )
 
     !-----------------------------
     ! Setup a sideband ratio array
@@ -856,10 +863,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 ! print*,maf,thissideband,a_clearSkyRadiance(:,25)
    ENDIF
 
+    if ( toggle(emit) .and. levels(emit) > 1 ) &
+      & call Trace_End ( 'FullCloudForwardModel.Sideband',index=thisSideband )
+
     !--------------------------------------------
     ! End of sideband loop 
     !--------------------------------------------
     enddo
+
+    if ( toggle(emit) .and. levels(emit) > 0 ) &      
+      & call Trace_End ( 'FullCloudForwardModel.SidebandLoop' )
 
     ! -----------------------------------------------------------------------------
     ! output L2GP quantities
@@ -1074,7 +1087,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     Deallocate (WC, stat=ier )
     Deallocate (PSD, stat=ier )
 
-    end do  ! End of signals
+    END DO  ! End of signals
 
     do i = 1, size(my_catalog)
       if ( associated ( my_catalog(i)%lines ) ) &
@@ -1102,6 +1115,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.123  2003/11/21 19:17:40  dwu
+! fix a bug from the last modification
+!
 ! Revision 1.122  2003/11/21 17:55:57  dwu
 ! add vGrid check for size distribution
 !

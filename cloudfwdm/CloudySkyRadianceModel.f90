@@ -19,9 +19,17 @@ module CloudySkyRadianceModel
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
-      USE Intrinsic,    only: l_clear, l_clear_0RH, l_clear_110RH_below_top, &
-         & l_clear_lowest_0_110RH, l_cloudy_110RH_below_top, &
-         & l_cloudy_110RH_in_cloud, l_cloudy_nearside_only, l_none
+      USE Intrinsic,               only: l_clear,                  &
+                                      &  l_clear_0RH,              &
+                                      &  l_clear_110RH_below_top,  &
+                                      &  l_clear_lowest_0_110RH,   &
+                                      &  l_cloudy_110RH_below_top, &
+                                      &  l_cloudy_110RH_in_cloud,  &
+                                      &  l_cloudy_nearside_only,   &
+                                      &  l_none
+
+      use Toggles, only: Emit, Levels, Switches, Toggle
+      use Trace_M, only: Trace_begin, Trace_end
 
       IMPLICIT NONE
       private
@@ -382,6 +390,8 @@ contains
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
+      if ( toggle(emit) ) call trace_begin ( 'Cloudy Sky Forward Model' )
+
 !      CALL HEADER(1)
 
 ! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
@@ -416,13 +426,17 @@ contains
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
-!     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
-!     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
+!     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID. IF NOT, 
+!     INTERPOLATE IT TO INTERNAL GRID. ALSO SET TANGENT PRESSURE (hPa) 
+!     TO TANGENT HEIGHT (km)
 !=========================================================================
+
+      if ( toggle(emit) .and. levels(emit) > 0 ) then
+           call trace_begin ( 'Build Internal Grids' )
+      endif
 
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
            &           WCin,IPSDin,YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD)
-
  
 !     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
@@ -500,16 +514,23 @@ contains
 !     COMPUTE CLEAR-SKY ABSORPTION COEFFICIENTS, INCLUDING DRY, WET 
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
+      if ( toggle(emit) .and. levels(emit) > 0 ) then
+         call Trace_End ( 'End Internal Grids' )
+      end if
+
 
       frequency_loop: do IFR=1, NF
 
       IF ( doChannel(IFR) ) then
                
-         CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
-              &         YZ,YP,YT,YQ,VMR,NS,                     &
-              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll, &
-              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
+      if ( toggle(emit) .and. levels(emit) > 0 ) then
+         call Trace_Begin ( 'Begin ClearSky' )
+      end if
 
+         CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,                   &
+              &         YZ,YP,YT,YQ,VMR,NS,                             &
+              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
+              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
 !         CALL HEADER(3)
 
        ! find various layer indices         
@@ -540,6 +561,7 @@ contains
             PH0      = 0._r8 
             W00      = 0._r8
             tau_clear = 0._r8
+
        IF (.not. isClear) then 
       
             select case (i_saturation)
@@ -553,28 +575,42 @@ contains
                
          model_layer_loop: do ILYR=1, NZmodel-1
  
-            RC0(1)=tau_clear(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
+            RC0(1)=tau_clear(ILYR)/Z(ILYR)  ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0._r8
-            RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
+            RC0(3)=RC0(1)                   ! CLEAR-SKY EXTINCTION COEFFICIENT
 
-            RC_TOT =RC0                ! initialized to clear-sky coeffs.
-            RC_TMP =0._r8              ! tmp for cloud coeffs
+            RC_TOT =RC0                     ! initialized to clear-sky coeffs.
+            RC_TMP =0._r8                   ! tmp for cloud coeffs
             cdepth = 0._r8
+
+            if ( toggle(emit) .and. levels(emit) > 0 ) then
+               call Trace_End ( 'End ClearSky' )
+            end if
+
             DO ISPI=1,N
                CWC = RATIO*WC(ISPI,ILYR)
                IF(CWC .ge. 1.e-9_r8) then           
               
+               if ( toggle(emit) .and. levels(emit) > 0 ) then
+                  call Trace_Begin ( 'Begin Clouds' )
+               end if
+
                   CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
-                       &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
+                       &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,       &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
-                  PHH(ISPI,:,ILYR)=P11          ! INTERGRATED PHASE FUNCTION
+                  PHH(ISPI,:,ILYR)=P11            ! INTERGRATED PHASE FUNCTION
                   CDEPTH(ISPI)=RC11(3)*Z(ILYR)
-                  RC_TMP(ISPI,:)=RC11        ! VOLUME EXT/SCAT/ABS COEFFS
-                  DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+                  RC_TMP(ISPI,:)=RC11             ! VOLUME EXT/SCAT/ABS COEFFS
+                  DDm(ISPI,ILYR)=DMA              ! MASS-MEAN-DIAMETER
+
+               if ( toggle(emit) .and. levels(emit) > 0 ) then
+                  call Trace_End ( 'End Clouds' )
+               end if
+
                ENDIF
                               
-               DO J=1,3                               ! ADD cloud COEFFICIENTS
+               DO J=1,3                           ! ADD cloud COEFFICIENTS
                   RC_TOT(J)=RC_TOT(J)+RC_TMP(ISPI,J)
                ENDDO
             
@@ -593,6 +629,10 @@ contains
 
 ! call radiative transfer calculations
       
+       if ( toggle(emit) .and. levels(emit) > 0 ) then
+            call Trace_Begin ( 'Begin Radiative Transfer' )
+       end if
+
        select case ( i_saturation )
        case ( l_clear )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
@@ -674,11 +714,19 @@ contains
          call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
        end select
  
+       if ( toggle(emit) .and. levels(emit) > 0 ) then
+          call Trace_End ( 'End Radiative Transfer' )
+       end if
+
 
 !========================================================================
 !     FOV case
 !========================================================================
        IF (IFOV) THEN       ! **** BEGIN FOV AVERAGING ****
+
+       if ( toggle(emit) .and. levels(emit) > 0 ) then
+          call Trace_Begin ( 'Begin FOV Averaging' )
+       end if
 
 !----------------------------------------------------------------------------
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
@@ -717,7 +765,7 @@ contains
          RT = 0.0_r8
          ptg_angle = 0.0_r8
 
-  	      DO I = 1, Multi
+  	    DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
                RT= ( ZZT1(I) + RE )
@@ -732,7 +780,7 @@ contains
             END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
 
-  	      END DO
+  	    END DO
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
@@ -759,11 +807,15 @@ contains
          CALL INTERPOLATEVALUES(ZZT1,SRad(:)-SRad0(:),ZZT,DTcir(:,IFR), &
               &                 method='Linear')
 
+         if ( toggle(emit) .and. levels(emit) > 0 ) then
+              call Trace_End ( 'End FOV Averaging' )
+         end if
+
 !========================================================================
 !    non-FOV case
 !========================================================================
 
-        ELSE      
+       ELSE      
 
          ! CLEAR-SKY BACKGROUND
          CALL INTERPOLATEVALUES(ZZT1, TT0(:,NZmodel), ZZT, TB0(:,IFR), &
@@ -774,7 +826,9 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
-         IF(doSensitivity) THEN
+       ENDIF                            ! END OF FOV 
+
+       IF(doSensitivity) THEN
 
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
@@ -786,8 +840,6 @@ contains
                IF(DTcir(I,IFR) .LT. 0. .AND. DTcir(I,IFR) .GT. -3.) &
                & SS(I,IFR) = -50.
                ENDDO
-         ENDIF
-
        ENDIF
 
       END IF                                 ! END IF doCHANNEL
@@ -801,6 +853,8 @@ contains
 !      RETURN
 !      END
 
+      if ( toggle(emit) ) call trace_end ( 'End Cloudy Sky Forward Model' )
+
       END SUBROUTINE CloudForwardModel
 
   logical function not_used_here()
@@ -810,6 +864,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.61  2003/07/22 23:49:52  jonathan
+! change dimension for RAD0 etc to NZmodel/8-1+Nsub
+!
 ! Revision 1.60  2003/05/14 23:12:29  dwu
 ! fix a dimension problem and modify the structure
 !
