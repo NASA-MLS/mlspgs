@@ -37,6 +37,8 @@ module MLSRandomNumber              ! Some random number-generating things
 
    ! (Just a "stub" until I clean up the f77 a little more)
 
+contains
+
       double precision function  DRANG ()
          DRANG=0.0
       end function  DRANG
@@ -50,6 +52,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.2  2001/09/24 17:27:07  pwagner
+! Fixed blunder
+!
 ! Revision 2.1  2001/09/24 17:22:08  pwagner
 ! First commit
 !
