@@ -86,7 +86,7 @@ omit_srcs := -d test_cholesky.f90 -d test_multiply.f90 \
 #PVM and PVMIDL require PVM_ROOT
 ifdef PVM_ROOT
 else
-   omit_srcs := $(omit_srcs) -d PVM.f90 -d PVMIDL.f90
+   omit_srcs := $(omit_srcs) -d PVM.f90 -d PVMIDL.f90 -d QuantityPVM.f90
 endif
 
 #Toolkit-free version requires SDPToolkitSubstitute
@@ -182,6 +182,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.26  2001/07/03 17:18:21  pwagner
+# Shield QuantityPVM from pvm-less lib
+#
 # Revision 2.25  2001/05/31 20:24:49  pwagner
 # ghostbuster called with -lib option
 #
