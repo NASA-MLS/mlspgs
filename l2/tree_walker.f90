@@ -17,7 +17,9 @@ module TREE_WALKER
   use MatrixModule_1, only: Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: MLSSignals
-  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
+!  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
+  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize
+  use ReadAPriori, only: read_apriori
   use OutputAndClose, only: Output_Close
   use QuantityTemplates, only: QuantityTemplate_T
   use RetrievalModule, only: Retrieve
@@ -81,7 +83,7 @@ contains ! ====     Public Procedures     ==============================
         call MLSSignals ( son )
       case ( z_readapriori )
         ! Read apriori here
-      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase)
+      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, aprioriData)
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -136,6 +138,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.10  2001/02/28 01:17:57  livesey
+! Removed obtain_ncep etc. These will later be in lower down modules
+!
 ! Revision 2.9  2001/02/27 17:38:07  livesey
 ! Tidied up arguments to MLSL2Join
 !
