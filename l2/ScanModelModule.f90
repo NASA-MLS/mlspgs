@@ -1750,7 +1750,7 @@ contains ! =============== Subroutines and functions ==========================
       WHERE(not_zero_p_h2o(:,sv_p) .AND. not_zero_z(:,sv_z))
         eta_zxp_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
         & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
-        not_zero_h2o(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
+        not_zero_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
         tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
         & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
       END WHERE
@@ -1799,7 +1799,7 @@ contains ! =============== Subroutines and functions ==========================
   & h2o_path = (/EXP(SUM(RESHAPE(eta_at_one_zeta,(/h2o%template%nosurfs/)) &
   & * SUM(LOG(max(h2o%values(:,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
   & * SPREAD(RESHAPE(eta_at_one_phi,(/windowfinish_h2o-windowstart_h2o+1/)), &
-  & 1,temp%template%nosurfs),dim=2)))/))
+  & 1,h2o%template%nosurfs),dim=2)))/))
   CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
   CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
   CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
@@ -2012,6 +2012,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.51  2002/10/25 22:24:54  livesey
+! Two bug fixes with the h2o stuff
+!
 ! Revision 2.50  2002/10/16 20:13:55  mjf
 ! Added GetGPHPrecision, based on GetBasisGPH.
 !
