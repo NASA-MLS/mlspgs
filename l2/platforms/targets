@@ -1,5 +1,13 @@
 mlsl2: MLSL2.o
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 include ../Makefile.dep
 
 # "$Id$"
@@ -156,6 +164,7 @@ tar:
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
    $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
@@ -191,6 +200,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.28  2001/08/28 18:27:53  pwagner
+# Passes (MAKE) to build_f90..
+#
 # Revision 1.27  2001/08/23 16:25:01  pwagner
 # Implemented init_gen build of init_tables_module.f90
 #
