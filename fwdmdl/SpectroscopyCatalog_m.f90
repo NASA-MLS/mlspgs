@@ -451,18 +451,29 @@ contains ! =====  Public Procedures  ===================================
         if ( j < 3 ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
+      call output ( '  continuum = [ ' )
+      do j = 1, MaxContinuum
+        call output ( catalog(i)%continuum(j) )
+        if ( j < MaxContinuum ) call output ( ', ' )
+      end do
+      call output ( ' ]', advance='yes' )
       call blanks ( 6 + int(log10(i+0.0)) )
       call output ( 'Lines:', advance='yes' )
-      do j = 1, size(catalog(i)%lines)
-        call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
-          & .false. )
-      end do
+      if ( associated(catalog(i)%lines ) ) then
+        do j = 1, size(catalog(i)%lines)
+          call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+            & .false. )
+        end do
+      end if
     end do ! i
   end subroutine Dump_SpectCat_Database
 
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.6  2001/10/15 18:10:37  livesey
+! Added continuum
+!
 ! Revision 2.5  2001/10/09 22:38:41  livesey
 ! Added stuff for ns
 !
