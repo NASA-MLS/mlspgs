@@ -207,6 +207,12 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(OUT) :: bufid
      end subroutine pvmfnrecv
      
+     subroutine pvmfrecv(tid, msgtag, bufid)
+       integer, intent(IN) :: tid
+       integer, intent(IN) :: msgtag
+       integer, intent(OUT) :: bufid
+     end subroutine pvmfrecv
+     
      integer function pvm_pkstr(line)
        character (LEN=*) :: line
      end function pvm_pkstr
@@ -386,6 +392,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.3  2001/03/15 05:21:52  livesey
+! Added pvmfrecv
+!
 ! Revision 2.2  2001/03/08 21:51:33  livesey
 ! Tidied stuff up
 !
