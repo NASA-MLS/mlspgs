@@ -88,7 +88,6 @@ contains ! =====     Public Procedures     =============================
     type(pfaData_t) :: PFADatum
     double precision :: Value(2)
     real(rk) :: VelLin
-    logical :: Write
 
     error = 0
     got = .false.
@@ -138,22 +137,18 @@ contains ! =====     Public Procedures     =============================
         pfaDatum%theSignal%sideband = sideband
         call deallocate_test ( signalIndices, 'SignalIndices', moduleName )
       case ( f_temperatures )
-        pfaDatum%tGrid => vgrids(decoration(decoration(subtree(2,son))))
+        pfaDatum%tGrid = vGrids(decoration(decoration(subtree(2,son))))
       case ( f_velLin )
         call expr ( subtree(2,son), units, value )
         if ( units(1) /= phyq_velocity ) &
           & call announce_error ( subtree(1,son), wrongUnits, 'Velocity' )
         velLin = value(1) / 1000.0 ! fundamental unit is m/s, fwdmdl wants km/s
       case ( f_vGrid )
-        pfaDatum%vGrid => vgrids(decoration(decoration(subtree(2,son))))
+        pfaDatum%vGrid = vGrids(decoration(decoration(subtree(2,son))))
         if ( pfaDatum%vGrid%verticalCoordinate /= l_zeta ) &
           & call announce_error ( subtree(1,son), notZeta )
       end select
     end do
-
-    write = got(f_file) .and. all( (/ &
-           & got(f_absorption), got(f_dAbsDnc), got(f_dAbsDnu), got(f_dAbsDwc), &
-           & got(f_molecules), got(f_velLin) /) )
 
     nPress = pfaDatum%vGrid%noSurfs
     nTemps = pfaDatum%tGrid%noSurfs
@@ -166,6 +161,7 @@ contains ! =====     Public Procedures     =============================
     call allocate_test ( pfaDatum%dAbsDnu,    nTemps, nPress, 'pfaDatum%dAbsDnu',    moduleName )
     call allocate_test ( pfaDatum%dAbsDwc,    nTemps, nPress, 'pfaDatum%dAbsDwc',    moduleName )
 
+    ! Got(file) and not any of the others means read PFAdata from file
     if ( got(f_file) .and. .not. any( (/  &
        & got(f_absorption), got(f_dAbsDnc), got(f_dAbsDnu), got(f_dAbsDwc), &
        & got(f_molecules), got(f_velLin) /) ) ) then
@@ -231,7 +227,7 @@ contains ! =====     Public Procedures     =============================
           call announce_error ( fileIndex, unsupportedFormat, fileType )
         end if
       end if
-    else
+    else ! Got(file) and not the others means write PFAData to file.
       if ( .not. all( (/ & ! Check that we have all required fields
            & got(f_absorption), got(f_dAbsDnc), got(f_dAbsDnu), got(f_dAbsDwc), &
            & got(f_molecules), got(f_velLin) /) ) ) &
@@ -414,7 +410,7 @@ contains ! =====     Public Procedures     =============================
     character(127) :: Signal
     integer, pointer :: SignalIndices(:)
     integer :: Stat
-    type(vGrid_T), pointer :: TGrid, VGrid
+    integer :: TGrid, VGrid ! Indices in vGrids database
     integer :: Units(2) ! of losVel
     double precision :: Values(2) ! of losVel
 
@@ -489,10 +485,10 @@ contains ! =====     Public Procedures     =============================
             & MLSMSG_DeAllocate // 'SignalsTemp' )
         end do ! j
       case ( f_temperatures )
-        tGrid => vgrids(decoration(decoration(subtree(2,son))))
+        tGrid = decoration(decoration(subtree(2,son)))
       case ( f_vGrid )
-        vGrid => vgrids(decoration(decoration(subtree(2,son))))
-        if ( vGrid%verticalCoordinate /= l_zeta ) &
+        vGrid = decoration(decoration(subtree(2,son)))
+        if ( vGrids(vGrid)%verticalCoordinate /= l_zeta ) &
           & call announce_error ( subtree(1,son), notZeta )
       end select
     end do ! i
@@ -500,7 +496,8 @@ contains ! =====     Public Procedures     =============================
     if ( error /= 0 ) return
 
     call decorate ( root, &
-      & create_PFAData ( molecules, mySignals, tGrid, vGrid, losVel, root ) )
+      & create_PFAData ( molecules, mySignals, vGrids(tGrid), vGrids(vGrid), &
+      & losVel, root ) )
 
   contains
 
@@ -535,13 +532,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine Make_PFAData
 
   ! -----------------------------------------------  Read_PFAData  -----
-  subroutine Read_PFAData ( Root )
+  subroutine Read_PFAData ( Root, VGrids )
 
     ! Read PFA data.  If the file= field is a range, the second element
     ! specifies the format.  Default is "UNFORMATTED".
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-    use Init_Tables_Module, only: F_AllPFA, F_File, F_Molecules, F_Signals
+    use Init_Tables_Module, only: F_File, F_Molecules, F_Signals
     use PFADataBase_m, only: Read_PFADatabase
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen
@@ -550,28 +547,26 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: Get_String
     use Tree, only: Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
+    use VGridsDatabase, only: VGrid_t
 
     integer, intent(in) :: Root ! of the MakePFA subtree, below name if any
+    type(vGrid_t), pointer :: VGrids(:) ! database of vgrids
 
-    logical :: AllPFA
     logical :: Error
     character(255) :: FileName, FileType ! HDF5(default), Unformatted
-    integer :: Gson, I, J
+    integer :: I, J
     character(31), pointer :: Molecules(:)
     character(maxSigLen), pointer :: Signals(:)
     integer :: Son
 
     integer, parameter :: BadFileType = 1 ! Neither HDF5 nor Unformatted
     integer, parameter :: NoRange = badFileType + 1 ! Range not allowed
-    integer, parameter :: NoSignals = noRange + 1   ! Need Signals or AllPFA
 
     error = .false.
     nullify ( molecules, signals )
     do i = 2, nsons(root)
       son = subtree(i,root)
       select case ( get_field_id(son) )
-      case ( f_allPFA )
-        allPFA = get_boolean(son)
       case ( f_file )
         j = subtree(2,son)
         fileType = 'HDF5'
@@ -591,16 +586,11 @@ contains ! =====     Public Procedures     =============================
     end do
     if ( .not. associated(molecules) ) &
       & call allocate_test ( molecules, 0, 'Molecules', moduleName )
-    if ( .not. associated(signals) ) then
-      if ( .not. allPFA ) then
-        call announce_error ( root, noSignals )
-      else
-        call allocate_test ( signals, 0, 'Signals', moduleName )
-      end if
-    end if
+    if ( .not. associated(signals) ) &
+      & call allocate_test ( signals, 0, 'Signals', moduleName )
     if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Error trying to read PFAData' )
-    call read_PFADatabase ( fileName, fileType, molecules, signals, allPFA )
+    call read_PFADatabase ( fileName, fileType, molecules, signals, vGrids )
     call deallocate_test ( molecules, 'Molecules', moduleName )
     call deallocate_test ( signals, 'Signals', moduleName )
 
@@ -614,11 +604,9 @@ contains ! =====     Public Procedures     =============================
       call startErrorMessage ( where )
       select case ( what )
       case ( badFileType )
-        call output ( 'Unsupported file type', advance='yes' )
+        call output ( 'Unsupported file type.', advance='yes' )
       case ( noRange )
-        call output ( 'Range not allowed', advance='yes' )
-      case ( noSignals )
-        call output ( 'Need either Signals or AllPFA=true', advance='yes' )
+        call output ( 'Range not allowed.', advance='yes' )
       end select
     end subroutine Announce_Error
 
@@ -736,6 +724,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.13  2005/01/12 03:18:22  vsnyder
+! Read and write PFAData in HDF5
+!
 ! Revision 2.12  2004/12/31 02:41:56  vsnyder
 ! Working on read/write PFA database
 !
