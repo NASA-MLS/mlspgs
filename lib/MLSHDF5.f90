@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MLSHDF5
@@ -10,18 +10,21 @@ module MLSHDF5
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
-    & H5S_SCALAR_F, H5S_SELECT_SET_F, &
+    & H5P_DATASET_CREATE_F, &
+    & H5SIS_SIMPLE_F, H5SOFFSET_SIMPLE_F, &
+    & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
     & H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
     & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, &
-    & HID_T, HSIZE_T
+    & HID_T, HSIZE_T, HSSIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, &
     & H5AREAD_F, H5AWRITE_F, &
-    & H5DCREATE_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
+    & H5DCREATE_F, H5DEXTEND_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
     & H5ESET_AUTO_F, &
     & H5FOPEN_F, H5FCLOSE_F, &
+    & H5PCREATE_F, H5PSET_CHUNK_F, &
     & H5SCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
@@ -723,79 +726,288 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_snglarr1
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr2
-  subroutine SaveAsHDF5DS_snglarr2 ( locID, name, value )
+  subroutine SaveAsHDF5DS_snglarr2 ( locID, name, value , &
+    & start, count, stride, block, may_add_to, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:,:)  ! The array itself
 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
     ! Local variables
+    integer(hid_t) :: cparms
+    integer(hsize_t), dimension(2) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for dataspace
+    integer :: memSpaceID               ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(2) :: SHP        ! Shape
+    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
+    integer :: test_rank
+    integer(hsize_t), dimension(7) :: test_dims, test_maxdims
+    integer(hssize_t), dimension(7) :: test_offset
+    logical :: test_issimple
 
     ! Executable code
+    style = 0  ! The default
+    if ( present(may_add_to) ) then
+      if ( may_add_to ) style = 1
+    endif
+    if ( present(adding_to) ) then
+      if ( adding_to ) style = 2
+    endif
+      
     ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D real array '//trim(name) )
+    maxdims = shp
+    dims = shp
+    chunk_dims = shp
     ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-      & status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D real array '//trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-      & int ( (/ shp, ones(1:5) /), hID_T ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to write to dataset for 2D real array '//trim(name) )
+    if (style == 0) then
+      call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataspace for 2D real array '//trim(name) )
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+        & status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for 2D real array '//trim(name) )
+    elseif (style == 1) then
+      maxdims(2) = H5S_UNLIMITED_F
+      dims(2) = max(1, shp(2))
+      chunk_dims(2) = 1
+      call h5screate_simple_f(2, dims, spaceID, status, maxdims)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataspace for 2D real array '//trim(name) )
+      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create property list for 2D real array '//trim(name) )
+      call h5pset_chunk_f(cparms, 2, chunk_dims, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to set chunking 2D real array '//trim(name) )
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+        & status, cparms )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for 2D real array '//trim(name) )
+    else
+      call h5dopen_f ( locID, trim(name), setID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset for 2D real array '//trim(name) )
+      ! print *, 'setID:   ', setID
+      call h5dget_space_f( setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for 2D real array '//trim(name) )
+      ! print *, 'spaceID:   ', spaceID
+      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get space rank for 2D real array '//trim(name) )
+      ! print *, 'rank:   ', test_rank
+      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+       &  test_maxdims(1:test_rank), status )
+      ! print *, 'status                  : ', status
+      ! print *, 'dims (before extending) : ', test_dims(1:test_rank)
+      ! print *, 'max_dims                : ', test_maxdims(1:test_rank)
+      ! Can't test on status--it's set to the test_rank
+      test_dims(2) = test_dims(2) + shp(2)
+      ! print *, 'dims (sfter extending)  : ', test_dims(1:test_rank)
+      call h5dextend_f( setID, test_dims, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dims for 2D real array '//trim(name) )
+      call h5dget_space_f( setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for 2D real array '//trim(name) )
+      ! print *, 'new spaceID             : ', spaceID
+    endif
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+!     Check before actually writing
+      ! print *, 'About to write'
+      ! space defined for data
+      ! print *, 'We received mem space (defined for data)', memspaceID
+      call h5sis_simple_f ( memspaceID, test_issimple, status )
+      call h5sget_simple_extent_ndims_f ( memspaceID, test_rank, status )
+      call h5sget_simple_extent_dims_f ( memspaceID, test_dims(1:test_rank), &
+        &  test_maxdims(1:test_rank), status )
+      call h5soffset_simple_f( memspaceID, test_offset(1:test_rank), status)
+      ! print *, 'Is simple? ', test_issimple
+      ! print *, 'rank    : ', test_rank
+      ! print *, 'dims    : ', test_dims(1:test_rank)
+      ! print *, 'max_dims: ', test_maxdims(1:test_rank)
+      ! print *, 'offsets : ', test_offset(1:test_rank)
+      ! space defined for file
+      ! print *, 'We received file space', spaceID
+      call h5sis_simple_f ( spaceID, test_issimple, status )
+      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+        &  test_maxdims(1:test_rank), status )
+      !if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !  & 'Unable to get space dims for 2D real array '//trim(name) )
+      call h5soffset_simple_f( spaceID, test_offset(1:test_rank), status)
+      ! print *, 'Is simple? ', test_issimple
+      ! print *, 'rank    : ', test_rank
+      ! print *, 'dims    : ', test_dims(1:test_rank)
+      ! print *, 'max_dims: ', test_maxdims(1:test_rank)
+      ! print *, 'offsets : ', test_offset(1:test_rank)
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+        & int ( (/ shp, ones(1:5) /), hID_T ), status, &
+        & memspaceID, spaceID )
+      ! print *, 'After writing mem space ', memspaceID
+    else
+      ! Write the data
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+        & int ( (/ shp, ones(1:5) /), hID_T ), status )
+    endif
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &   
+      & 'Unable to write to dataset for 2D real array '//trim(name) )  
     ! Close things
-    call h5dClose_F ( setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataset for 2D real array '//trim(name) )
+    ! print *, 'Before closing other, mem space ', memspaceID
+    ! print *, 'Attempting to close data space ', spaceID
     call h5sClose_F ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for 2D real array '//trim(name) )
+    if ( present(start) ) then
+      ! print *, 'Attempting to close mem space ', memspaceID
+      call h5sClose_F ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close mem dataspace for 2D real array '//trim(name) )
+    endif
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 2D real array '//trim(name) )
   end subroutine SaveAsHDF5DS_snglarr2
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr3
-  subroutine SaveAsHDF5DS_snglarr3 ( locID, name, value )
+  subroutine SaveAsHDF5DS_snglarr3 ( locID, name, value, &
+    & start, count, stride, block, may_add_to, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:,:,:)  ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
 
     ! Local variables
+    integer(hid_t) :: cparms
+    integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for dataspace
+    integer :: memSpaceID               ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(3) :: SHP        ! Shape
+    integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
+    integer :: test_rank
+    integer(hsize_t), dimension(7) :: test_dims, test_maxdims
+    integer(hssize_t), dimension(7) :: test_offset
+    logical :: test_issimple
 
     ! Executable code
+    style = 0  ! The default
+    if ( present(may_add_to) ) then
+      if ( may_add_to ) style = 1
+    endif
+    if ( present(adding_to) ) then
+      if ( adding_to ) style = 2
+    endif
+
     ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 3D real array '//trim(name) )
+    maxdims = shp
+    dims = shp
+    chunk_dims = shp
     ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-      & status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 3D real array '//trim(name) )
-    ! Write the data
-    call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
-      & int ( (/ shp, ones(1:4) /), hID_T ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to write to dataset for 3D real array '//trim(name) )
+    if (style == 0) then
+      call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataspace for 3D real array '//trim(name) )
+      ! Create the dataset
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+        & status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for 3D real array '//trim(name) )
+    elseif (style == 1) then
+      maxdims(3) = H5S_UNLIMITED_F
+      dims(2) = max(1, shp(3))
+      chunk_dims(3) = 1
+      call h5screate_simple_f(3, dims, spaceID, status, maxdims)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataspace for 3D real array '//trim(name) )
+      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create property list for 3D real array '//trim(name) )
+      call h5pset_chunk_f(cparms, 3, chunk_dims, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to set chunking 3D real array '//trim(name) )
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+        & status, cparms )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for 3D real array '//trim(name) )
+    else
+      call h5dopen_f ( locID, trim(name), setID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset for 3D real array '//trim(name) )
+      call h5dget_space_f( setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for 3D real array '//trim(name) )
+      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get space rank for 3D real array '//trim(name) )
+      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+       &  test_maxdims(1:test_rank), status )
+      ! Can't test on status--it's set to the test_rank
+      test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
+      call h5dextend_f( setID, test_dims, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dims for 3D real array '//trim(name) )
+      call h5dget_space_f( setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for 3D real array '//trim(name) )
+    endif
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+        & int ( (/ shp, ones(1:4) /), hID_T ), status, &
+        & memspaceID, spaceID )
+    else
+      ! Write the data
+      call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
+        & int ( (/ shp, ones(1:4) /), hID_T ), status )
+    endif
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &   
+      & 'Unable to write to dataset for 3D real array '//trim(name) )  
     ! Close things
-    call h5dClose_F ( setID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataset for 3D real array '//trim(name) )
     call h5sClose_F ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for 3D real array '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 3D real array '//trim(name) )
   end subroutine SaveAsHDF5DS_snglarr3
 
   ! ----------------------------------- LoadFromHDF5DS_intarr1
@@ -1309,38 +1521,38 @@ contains ! ======================= Public Procedures =========================
       & 'Impossible optional parameters pattern for dataset '//trim(name), &
       & 'status', (/status/) )
     value_rank = size(value_dims)
-!    print *, 'value_rank: ', value_rank
+    ! print *, 'value_rank: ', value_rank
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-!    print *, 'dataspace rank: ', rank
+    ! print *, 'dataspace rank: ', rank
     if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get rank for dataset '//trim(name) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
       &  status )
-!    print *, 'dataspace dims: ', dims(1:rank)
+    ! print *, 'dataspace dims: ', dims(1:rank)
     if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset '//trim(name) )
     call h5screate_simple_f(value_rank, &
       & int(value_dims(1:value_rank), hsize_t), memspaceID, &
       & status)
-!    print *, 'memspace id: ', memspaceID
+    ! print *, 'memspace id: ', memspaceID
     if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
       & 'Unable to create memspace for dataset '//trim(name) )
     if ( present(stride) ) then
-!      print *, 'trying to select hyperslab: ', &
-!        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
-!        & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
+      ! print *, 'trying to select hyperslab: ', &
+      ! & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
+      !  & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
       call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
         & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status, &
         & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t) )
     else
-!      print *, 'trying to select hyperslab: ', &
-!        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
+      ! print *, 'trying to select hyperslab: ', &
+      !  & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
       call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
         & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status )
     endif
     if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
       & 'Unable to set hyperslab for dataset '//trim(name) )
-
+    ! print *, 'Returning memspaceID ', memspaceID
   end subroutine mls_hyperslab
 
   subroutine my_message(severity, ModuleNameIn, Message, &
@@ -1396,6 +1608,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.16  2003/01/23 23:30:49  pwagner
+! May add to same 2d, 3d single-precision datasets
+!
 ! Revision 2.15  2002/12/07 00:24:40  pwagner
 ! Added SaveAsHDF5DS_snglarr3
 !
