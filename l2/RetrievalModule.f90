@@ -1151,6 +1151,7 @@ contains
             call time_now ( t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
+              if ( index ( switches, 'atb' ) /= 0 ) call dump ( v(aTb) )
             call add_to_retrieval_timing( 'form_normeq', t1 )
             call time_now ( t1 )
             update = .true.
@@ -3017,6 +3018,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.170  2002/09/06 00:46:18  livesey
+! Added dump of aTb
+!
 ! Revision 2.169  2002/09/05 23:08:22  livesey
 ! Gradient move handles mask 'correctly', though we might have been right
 ! from a philosophical point of view earlier.
