@@ -57,7 +57,7 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
-    use MLSFiles, only: GetPCFromRef
+    use MLSFiles, only: GetPCFromRef, split_path_name
     use MLSL2Options, only: TOOLKIT
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
@@ -158,11 +158,13 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: pcfCode
       character(len=*), intent(in) :: MSG ! in case of error
 
-      character(len=255) :: PCFFileName
+      character(len=255) :: PCFFileName, path
       integer :: returnStatus             ! non-zero means trouble
 
       call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
       if ( TOOLKIT ) then
+        PCFFileName = fileName
+        call split_path_name(PCFFileName, path, fileName)
         lun = GetPCFromRef(fileName, pcfCode, &
           & pcfCode, &
           & TOOLKIT, returnStatus, Version, DEBUG, &
@@ -796,6 +798,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.72  2003/07/18 22:54:35  pwagner
+! Ignores path in file names if TOOLKIT
+!
 ! Revision 2.71  2003/07/16 21:51:29  pwagner
 ! Uses mlspcf_dacsfltsh_start
 !
