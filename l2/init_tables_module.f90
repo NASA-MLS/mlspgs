@@ -326,11 +326,13 @@ contains ! =====     Public procedures     =============================
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_band) =                add_ident ( 'band' )
+    field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_compareOverlaps) =     add_ident ( 'compareoverlaps' )
     field_indices(f_coordinate) =          add_ident ( 'coordinate' )
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
+    field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_firstIndexChannel) =   add_ident ( 'f_firstindexchannel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -372,6 +374,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
     field_indices(f_versionRange) =        add_ident ( 'versionrange' )
     field_indices(f_template) =            add_ident ( 'template' )
+    field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_type) =                add_ident ( 'type' )
     field_indices(f_unit) =                add_ident ( 'unit' )
     field_indices(f_unpackOutput) =        add_ident ( 'unpackoutput' )
@@ -403,6 +406,7 @@ contains ! =====     Public procedures     =============================
     section_indices(z_mergeapriori) =      add_ident ( 'mergeapriori' )
     section_indices(z_output) =            add_ident ( 'output' )
     section_indices(z_readapriori) =       add_ident ( 'readapriori' )
+    section_indices(z_retrieve) =          add_ident ( 'retrieve' )
     ! Put spec names into the symbol table
     spec_indices(s_climatology) =          add_ident ( 'climatology' )
     spec_indices(s_create) =               add_ident ( 'create' )
@@ -589,11 +593,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              n+n_spec_def, &
-      begin, s+s_fill, &    ! Must be AFTER s_vector and s_matrix
+      begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_source, t+t_string, n+n_field_type, &
+             begin, f+f_source, t+t_string, s+s_climatology, n+n_field_type, &
              n+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, n+n_field_type, &
@@ -672,8 +676,10 @@ contains ! =====     Public procedures     =============================
   ! tree.  Pseudo-terminals are decorated with their indices.
     integer, intent(in) :: IDS(:)
 
+    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
     integer :: I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
 
+    callno = callno + 1
     n_ids = size(ids)
     m = 0
     stack(0) = 0 ! just so it's defined, in case it gets incremented
@@ -709,10 +715,11 @@ contains ! =====     Public procedures     =============================
     cycle
        end select
        if ( string == 0 ) then
-         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Element ', i, &
-           & ' of a list is undefined'
-           stop
-         end if
+         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
+           & i, ' of a list'
+         print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+         stop
+       end if
        call push_pseudo_terminal ( string, 0, decor = id )
        stack(m) = stack(m) + 1
       end if
@@ -727,6 +734,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.7  2001/01/18 02:00:35  vsnyder
+! Define strings for more field names that were overlooked.  Type checking for
+! "fill" is still wrong.
+!
 ! Revision 2.6  2001/01/17 01:29:51  vsnyder
 ! Define s_subset's string table entry
 !
