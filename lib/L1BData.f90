@@ -14,7 +14,7 @@ module L1BData
   ! use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+  use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
@@ -403,9 +403,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       son = subtree(i,root)
       if(get_field_id(son) == f_file) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        ! sd_id = sfstart(Filename, DFACC_READ)
+        the_hdf_version = mls_hdf_version(FileName)
+        if ( the_hdf_Version == FILENOTFOUND ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'File not found; make sure the name and path are correct' &
+            & // trim(fileName) )
         if ( present(hdfVersion) ) then
-          the_hdf_version = mls_hdf_version(FileName)
           sd_id = mls_io_gen_openF('hg', .true., error, &
             & record_length, DFACC_READ, &
             & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
@@ -467,9 +470,12 @@ contains ! ============================ MODULE PROCEDURES ======================
           if ( status /= 0 ) &
             & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
-        ! sd_id = sfstart(Filename, DFACC_READ)
+        the_hdf_version = mls_hdf_version(FileName)
+        if ( the_hdf_Version == FILENOTFOUND ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'File not found; make sure the name and path are correct' &
+            & // trim(fileName) )
         if ( present(hdfVersion) ) then
-          the_hdf_version = mls_hdf_version(FileName)
           sd_id = mls_io_gen_openF('hg', .true., error, &
             & record_length, DFACC_READ, &
             & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
@@ -1257,6 +1263,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.40  2003/04/02 23:52:34  pwagner
+! Checks for FILENOTFOUND
+!
 ! Revision 2.39  2003/04/02 00:38:09  pwagner
 ! Cater for L1B quantities of rank > 3
 !
