@@ -50,6 +50,7 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     real (r8) :: phiWindow            ! Window size for examining stuff
+    integer :: windowUnits          ! Either degrees or profiles
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
     logical :: Default_spectroscopy      !
@@ -183,8 +184,7 @@ contains
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_scattering_angles, config%num_azimuth_angles, &
       & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
-      & config%i_saturation, config%cloud_fov /), info )
-!      & config%cloud_width, config%cloud_fov /), info )
+      & config%i_saturation, config%cloud_fov, config%windowUnits /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
     call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
@@ -264,7 +264,7 @@ contains
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(12) :: l12       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
-    integer, dimension(11) :: i11       ! Temporary array
+    integer, dimension(12) :: i12       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -285,20 +285,20 @@ contains
     config%temp_der = l12(10)
     config%skipOverlaps = l12(11)
     config%default_spectroscopy = l12(12)
-    call PVMIDLUnpack ( i11, info )
+    call PVMIDLUnpack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
-    config%instrumentModule = i11(1)
-    config%surfaceTangentIndex = i11(2)
-    config%no_cloud_species = i11(3)
-    config%no_model_surfs = i11(4)
-    config%num_scattering_angles = i11(5)
-    config%num_azimuth_angles = i11(6)
-    config%num_ab_terms = i11(7)
-    config%num_size_bins = i11(8)
-    config%cloud_der = i11(9)
-!    config%cloud_width = i11(10)
-    config%i_saturation = i11(10)
-    config%cloud_fov = i11(11)
+    config%instrumentModule = i12(1)
+    config%surfaceTangentIndex = i12(2)
+    config%no_cloud_species = i12(3)
+    config%no_model_surfs = i12(4)
+    config%num_scattering_angles = i12(5)
+    config%num_azimuth_angles = i12(6)
+    config%num_ab_terms = i12(7)
+    config%num_size_bins = i12(8)
+    config%cloud_der = i12(9)
+    config%i_saturation = i12(10)
+    config%cloud_fov = i12(11)
+    config%windowUnits = i12(12)
     call PVMIDLUnpack ( r2, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
     config%phiWindow = r2(1)
@@ -500,6 +500,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.22  2003/01/17 00:01:44  livesey
+! Another bug fix in the packing/unpacking
+!
 ! Revision 2.21  2003/01/16 05:53:19  livesey
 ! Bug fix to Jonathans new configs
 !

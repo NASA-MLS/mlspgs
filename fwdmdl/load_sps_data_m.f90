@@ -193,7 +193,7 @@ contains
           kf = f%template%noChans
         end if
         call FindInstanceWindow ( f, phitan, fmStat%maf, FwdModelConf%phiWindow, &
-                                & wf1, wf2 )
+          & FwdModelConf%windowUnits, wf1, wf2 )
         Grids_x%windowStart(ii) = wf1
         Grids_x%windowFinish(ii) = wf2
         kp = wf2 - wf1 + 1
@@ -320,6 +320,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.30  2002/11/23 02:49:33  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.29  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -509,7 +509,7 @@ contains
 ! Work out the `window' stuff for temperature. Create the Grids_tmp structure:
 
     call findInstanceWindow ( temp, phitan, maf, fwdModelConf%phiWindow, &
-                            & windowStart, windowFinish )
+      & fwdModelConf%windowUnits, windowStart, windowFinish )
 
     no_sv_p_t = windowFinish-windowStart+1
     sv_t_len = n_t_zeta * no_sv_p_t
@@ -2430,6 +2430,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.109  2003/01/21 18:20:32  vsnyder
+! Put dimensions back onto actual arguments to path_contrib
+!
 ! Revision 2.108  2003/01/18 03:36:09  vsnyder
 ! Undo ill-advised cosmetic changes -- that weren't cosmetic
 !
