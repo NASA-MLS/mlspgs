@@ -122,6 +122,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(2) :: EXPR_VALUE
     integer :: Family
     integer :: FGridIndex
+    logical, save :: First = .true.
     integer :: FrequencyCoordinate
     integer :: HGridIndex
     integer :: I                        ! Loop counter
@@ -132,7 +133,7 @@ contains ! =====     Public Procedures     =============================
     logical :: LOGBASIS                 ! To place in quantity
     integer :: Molecule
     character(len=127) :: moleculeString
-    integer :: Natural_Units(first_lit:last_lit)
+    integer, save :: Natural_Units(first_lit:last_lit)
     integer :: NoInstances
     integer :: NoSurfs
     real(r8) :: MinValue                ! Minimumvalue
@@ -172,47 +173,51 @@ contains ! =====     Public Procedures     =============================
     minValue = -huge ( 0.0_r8 )
     molecule = 0
 
-    natural_units = 0
-    natural_units(l_baseline) =                PHYQ_Temperature
-    natural_units(l_boundaryPressure) =        PHYQ_Pressure
-    natural_units(l_chisqchan) =               PHYQ_Dimensionless
-    natural_units(l_chisqmmaf) =               PHYQ_Dimensionless
-    natural_units(l_chisqmmif) =               PHYQ_Dimensionless
-    natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
-    natural_units(l_cloudice) =                PHYQ_IceDensity
-    natural_units(l_cloudextinction) =         PHYQ_Dimensionless
-    natural_units(l_totalextinction) =         PHYQ_Dimensionless
-    natural_units(l_massmeandiameterice) =     PHYQ_Dimensionless
-    natural_units(l_earthRefl) =               PHYQ_Dimensionless
-    natural_units(l_elevOffset) =              PHYQ_Angle
-    natural_units(l_extinction) =              PHYQ_Extinction
-    natural_units(l_gph) =                     PHYQ_Length
-    natural_units(l_heightOffset ) =           PHYQ_Length
-    natural_units(l_losTransFunc) =            PHYQ_Dimensionless
-    natural_units(l_losVel) =                  PHYQ_Velocity
-    natural_units(l_orbitInclination) =        PHYQ_Angle
-    natural_units(l_noiseBandwidth) =          PHYQ_Frequency
-    natural_units(l_phitan) =                  PHYQ_Angle
-    natural_units(l_ptan) =                    PHYQ_Zeta
-    natural_units(l_radiance) =                PHYQ_Temperature
-    natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
-    natural_units(l_cloudradsensitivity) =     PHYQ_Temperature
-    natural_units(l_effectiveopticaldepth) =   PHYQ_Dimensionless
-    natural_units(l_earthradius) =             PHYQ_Length
-    natural_units(l_refGPH) =                  PHYQ_Length
-    natural_units(l_rhi) =                     PHYQ_PctRHI
-    natural_units(l_scGeocAlt ) =              PHYQ_Length
-    natural_units(l_scVel) =                   PHYQ_Velocity
-    natural_units(l_scVelECI) =                PHYQ_Velocity   
-    natural_units(l_scVelECR) =                PHYQ_Velocity   
-    natural_units(l_scanResidual ) =           PHYQ_Length
-    natural_units(l_spaceRadiance) =           PHYQ_Temperature
-    natural_units(l_systemTemperature) =       PHYQ_Temperature
-    natural_units(l_temperature) =             PHYQ_Temperature
-    natural_units(l_tngtGeocAlt) =             PHYQ_Length
-    natural_units(l_tngtGeodAlt) =             PHYQ_Length
-    natural_units(l_vmr) =                     PHYQ_Vmr
-    natural_units(l_magneticField) =           PHYQ_Gauss
+    if ( first ) then
+      ! Fill NATURAL_UNITS on first call only (it's a SAVE variable)
+      first = .false.
+      natural_units = 0
+      natural_units(l_baseline) =                PHYQ_Temperature
+      natural_units(l_boundaryPressure) =        PHYQ_Pressure
+      natural_units(l_chisqchan) =               PHYQ_Dimensionless
+      natural_units(l_chisqmmaf) =               PHYQ_Dimensionless
+      natural_units(l_chisqmmif) =               PHYQ_Dimensionless
+      natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
+      natural_units(l_cloudice) =                PHYQ_IceDensity
+      natural_units(l_cloudextinction) =         PHYQ_Dimensionless
+      natural_units(l_totalextinction) =         PHYQ_Dimensionless
+      natural_units(l_massmeandiameterice) =     PHYQ_Dimensionless
+      natural_units(l_earthRefl) =               PHYQ_Dimensionless
+      natural_units(l_elevOffset) =              PHYQ_Angle
+      natural_units(l_extinction) =              PHYQ_Extinction
+      natural_units(l_gph) =                     PHYQ_Length
+      natural_units(l_heightOffset ) =           PHYQ_Length
+      natural_units(l_losTransFunc) =            PHYQ_Dimensionless
+      natural_units(l_losVel) =                  PHYQ_Velocity
+      natural_units(l_orbitInclination) =        PHYQ_Angle
+      natural_units(l_noiseBandwidth) =          PHYQ_Frequency
+      natural_units(l_phitan) =                  PHYQ_Angle
+      natural_units(l_ptan) =                    PHYQ_Zeta
+      natural_units(l_radiance) =                PHYQ_Temperature
+      natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
+      natural_units(l_cloudradsensitivity) =     PHYQ_Temperature
+      natural_units(l_effectiveopticaldepth) =   PHYQ_Dimensionless
+      natural_units(l_earthradius) =             PHYQ_Length
+      natural_units(l_refGPH) =                  PHYQ_Length
+      natural_units(l_rhi) =                     PHYQ_PctRHI
+      natural_units(l_scGeocAlt ) =              PHYQ_Length
+      natural_units(l_scVel) =                   PHYQ_Velocity
+      natural_units(l_scVelECI) =                PHYQ_Velocity   
+      natural_units(l_scVelECR) =                PHYQ_Velocity   
+      natural_units(l_scanResidual ) =           PHYQ_Length
+      natural_units(l_spaceRadiance) =           PHYQ_Temperature
+      natural_units(l_systemTemperature) =       PHYQ_Temperature
+      natural_units(l_temperature) =             PHYQ_Temperature
+      natural_units(l_tngtGeocAlt) =             PHYQ_Length
+      natural_units(l_tngtGeodAlt) =             PHYQ_Length
+      natural_units(l_vmr) =                     PHYQ_Vmr
+      natural_units(l_magneticField) =           PHYQ_Gauss
+    end if
 
     noChans = 1
     quantitytype = 0
@@ -1073,6 +1078,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.86  2003/02/07 03:42:50  vsnyder
+! Fill NATURAL_UNITS on first call only -- it's a SAVE variable now
+!
 ! Revision 2.85  2003/02/07 03:38:05  vsnyder
 ! Cosmetic change
 !
