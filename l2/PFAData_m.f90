@@ -37,8 +37,9 @@ contains ! =====     Public Procedures     =============================
     use Molecules, only: T_Molecule
     use MoreTree, only: Get_Field_ID, GetLitIndexFromString
     use Parse_Signal_m, only: Parse_Signal
-    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, &
+    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, RK, &
       & Write_PFADatum
+    use Physics, only: SpeedOfLight
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Checker, only: Check_Type
@@ -66,6 +67,8 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: WrongUnits = wrongSize + 1
 
     integer :: AbsTree
+    integer, parameter :: CK = kind(speedOfLight)
+    real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
     logical, pointer :: Channels(:)
     integer :: dAbsDncTree, dAbsDnuTree, dAbsDwcTree
     integer :: Field, FileIndex ! Where in the tree is the filename?
@@ -81,6 +84,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Son, Units(2)
     type(pfaData_t) :: PFADatum
     double precision :: Value(2)
+    real(rk) :: VelLin
     logical :: Write
 
     error = 0
@@ -135,7 +139,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), units, value )
         if ( units(1) /= phyq_velocity ) &
           & call announce_error ( subtree(1,son), wrongUnits, 'Velocity' )
-        pfaDatum%velLin = value(1) / 1000.0 ! fundamental unit is m/s, fwdmdl wants km/s
+        velLin = value(1) / 1000.0 ! fundamental unit is m/s, fwdmdl wants km/s
       case ( f_vGrid )
         pfaDatum%vGrid => vgrids(decoration(decoration(subtree(2,son))))
         if ( pfaDatum%vGrid%verticalCoordinate /= l_zeta ) &
@@ -172,7 +176,7 @@ contains ! =====     Public Procedures     =============================
       else
         if ( capitalize(fileType) == 'UNFORMATTED' ) then ! Unformatted
           signalT = ''
-          read ( lun, iostat=iostat ) nTempsT, nPressT, nMolT, pfaDatum%velLin, &
+          read ( lun, iostat=iostat ) nTempsT, nPressT, nMolT, velLin, &
             & i, signalT(:i)
           if ( iostat /= 0 ) &
             & call announce_error ( fileIndex, cannotRead, fileName, iostat )
@@ -240,6 +244,7 @@ contains ! =====     Public Procedures     =============================
       ! Write it?
       if ( got(f_file) ) call write_PFADatum ( pfaDatum, fileName, fileType )
     end if
+    PFADatum%vel_cor = 1.0_ck - velLin / c ! Doppler correction factor
 
     if ( error == 0 ) then
       call decorate ( root, addPFADatumToDatabase ( pfaData, pfaDatum ) )
@@ -366,6 +371,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.7  2004/09/02 00:49:38  vsnyder
+! Replace velLin with vel_cor
+!
 ! Revision 2.6  2004/07/08 19:33:23  vsnyder
 ! Set up to read unformatted files
 !
