@@ -22,7 +22,7 @@ module L2ParInfo
   public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
   public :: SIG_DirectWriteFinished, SIG_NewSetup, SIG_RunMAF, SIG_SendResults
-  public :: NotifyTag, GetNiceTidString, SlaveArguments
+  public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
   public :: FWMSlaveGroup
@@ -41,6 +41,7 @@ module L2ParInfo
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
   integer, parameter :: NOTIFYTAG  = InfoTag + 1
+  integer, parameter :: GIVEUPTAG  = 999
 
   integer, parameter :: SIG_TOJOIN = 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
@@ -399,6 +400,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.23  2002/10/17 18:19:13  livesey
+! Added GiveupTag
+!
 ! Revision 2.22  2002/10/08 20:33:51  livesey
 ! Added notify stuff for FWMParallel
 !
