@@ -27,15 +27,18 @@ contains ! ====     Public Procedures     ==============================
     & COUNTCHUNKS, SINGLECHUNK, FILEDATABASE )
 
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
-    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
-    use Construct, only: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
+    use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
+      & ReduceChunkDatabase
+    use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
+      & ConstructMIFGeolocation
     use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
     use Dumper, only: Dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase
     use Fill, only: MLSL2Fill
     use FilterShapes_m, only: Destroy_Filter_Shapes_Database
-    use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase, &
+    use ForwardModelConfig, only: ForwardModelConfig_T, &
+      & DestroyFWMConfigDatabase, &
       & StripForwardModelConfigDatabase
     use ForwardModelSupport, only: printForwardModelTiming, &
       & resetForwardModelTiming
@@ -223,6 +226,9 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
+            if ( singleChunk /= 0 ) then
+              call ReduceChunkDatabase(chunks, singleChunk, singleChunk )
+            endif
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
@@ -466,6 +472,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.114  2003/08/21 21:24:39  cvuu
+! Change the output format for fullForwardModel Timing
+!
 ! Revision 2.113  2003/08/21 16:07:34  livesey
 ! Now calls FlushLockedBins automatically at the end of each chunk.
 !
