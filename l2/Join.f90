@@ -32,6 +32,7 @@ module Join                     ! Join together chunk based data.
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -110,7 +111,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
 
@@ -140,7 +141,7 @@ contains ! =====     Public Procedures     =============================
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
       end select
@@ -251,7 +252,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -703,6 +704,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.54  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.53  2001/10/30 01:45:21  livesey
 ! Some modifications/fixes to parallel join
 !
