@@ -17,8 +17,9 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, &
-    L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, L_SPACERADIANCE, &
+    L_HEIGHTOFFSET, L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, &
+    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
+    L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
@@ -137,6 +138,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
     natural_units(l_gph) =            PHYQ_Length
+    natural_units(l_heightOffset ) =  PHYQ_Length
     natural_units(l_losVel) =         PHYQ_Velocity
     natural_units(l_orbitIncline) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
@@ -144,6 +146,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_refGPH) =         PHYQ_Length
     natural_units(l_scGeocAlt ) =     PHYQ_Length
     natural_units(l_scVel) =          PHYQ_Velocity
+    natural_units(l_scanResidual ) =  PHYQ_Length
     natural_units(l_spaceRadiance) =  PHYQ_Temperature
     natural_units(l_temperature) =    PHYQ_Temperature
     natural_units(l_tngtGeocAlt) =    PHYQ_Length
@@ -216,7 +219,7 @@ contains ! =====     Public Procedures     =============================
     if ( family == 0 ) family = natural_units(quantityType)
     minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losVel/) )
+      & l_scVel, l_losVel, l_heightOffset, l_scanResidual/) )
 
     ! Set defaults for other parameters
     frequencyCoordinate = L_None
@@ -694,6 +697,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.30  2001/05/03 23:08:36  livesey
+! Added stuff to support scan model items.
+!
 ! Revision 2.29  2001/05/03 20:30:09  vsnyder
 ! Add a 'nullify' and some cosmetic changes
 !
