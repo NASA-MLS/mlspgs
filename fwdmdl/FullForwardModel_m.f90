@@ -2401,10 +2401,13 @@ contains
       ! it's simplest just to bail out (and is certainly preferable to
       ! the infinite loop in the convolution (Hunt on angles) that
       ! results otherwise).
-      do ptg_i = 2, no_tan_hts
+      do ptg_i = 2, no_tan_hts-1
+	! this is a temporary fix
         if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Pointing angles in wrong order, too much refraction?' )
+	   & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
+!        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
+!          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & 'Pointing angles in wrong order, too much refraction?' )
       end do
 
 !       ! EXTRA DEBUG FOR NATHANIEL/BILL ********************
@@ -2845,6 +2848,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.129  2003/02/20 23:29:54  livesey
+! Bug fix in -Srad for DACS.
+!
 ! Revision 2.128  2003/02/13 23:05:50  jonathan
 ! changes dimension for beta_path_cloud also delocate it
 !
