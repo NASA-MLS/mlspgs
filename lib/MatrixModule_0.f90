@@ -443,7 +443,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ClearRows_0 ( X, MASK )
   ! Clear the rows of X for which MASK has nonzero bits.
     type(MatrixElement_T), intent(inout) :: X
-    integer, dimension(0:), intent(in) :: MASK
+    integer, dimension(1:), intent(in) :: MASK
     integer :: I, J                ! Subscripts and row indices
     integer :: NB, NW              ! Indices of bit and word in MASK
     select case ( x%kind )
@@ -451,14 +451,14 @@ contains ! =====     Public Procedures     =============================
     case ( M_Banded )              ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j), x%r1(j) + x%r2(j) - x%r2(j-1) - 1 ! row numbers
-          if ( btest( mask(i/b), mod(i,b) ) ) &
+          if ( btest( mask(i/b+1), mod(i,b) ) ) &
             & x%values(x%r2(j-1) + i - x%r1(j) + 1, 1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
     case ( M_Column_Sparse )       ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j-1)+1, x%r1(j)
-          if ( btest( mask(x%r2(i)/b), mod(x%r2(i),b) ) ) &
+          if ( btest( mask(x%r2(i)/b+1), mod(x%r2(i),b) ) ) &
             & x%values(j,1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
@@ -2036,6 +2036,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.45  2001/09/24 23:01:11  vsnyder
+! Make consistent/correct lower bound calculation for MASK array
+!
 ! Revision 2.44  2001/07/19 17:54:59  vsnyder
 ! Correct blunders in banded matrix*matrix and matrix*vector.
 ! Handle "subtract" argument differently.
