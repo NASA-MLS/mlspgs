@@ -7,7 +7,7 @@ module MLSStrings               ! Some low level string handling stuff
   !implicit none
   private
   public:: ReadCompleteLineWithoutComments,SplitWords,GetUniqueStrings
-  public::Capitalize,depunctuate,LinearSearchStringArray
+  public::Capitalize,depunctuate,LinearSearchStringArray,count_words
 !------------------------------- RCS Ident Info ------------------------------
 character(len=130),private,parameter :: id = & 
    "$Id$"
@@ -21,9 +21,34 @@ character(len=*), private,parameter ::&
 
 contains
 
+  
+  function count_words(str) result (no_of_words)
+    ! This counts the number of words in a string 
+    ! For our purposes, words consist of any non-space characters
+    ! and are separated by one or more spaces
+    ! -----Added by HCP-------- 
+    !--------Argument--------!
+    character (len=*), intent(in) :: str
+    !---------result---------!
+    integer::no_of_words
+    !-----local-variables------!
+    integer::j
+    !-------Executable-code----!
+    if (str(1:1) /= " ") then
+       no_of_words=1
+    else
+       no_of_words=0
+    endif
+    do j=2,len(str)
+       if(str(j:j) /= " " .and. str(j-1:j-1) == " ") then
+          no_of_words=no_of_words+1
+       endif
+    enddo
+  end function count_words
+
+
   ! This one converts a string to all upper case (taken from HCP routine
   ! of same name) (Except that HCP can spell capitalise, that is. Fnord.)
-
   function Capitalize(str) result (outstr)
     ! takes a-z and replaces with A-Z 
     ! leaving other chars alone
@@ -418,6 +443,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 1.1  2000/01/28 14:37:13  pumphrey
+! Update sandbox to reflect various tinkerings
+!
 ! Revision 1.14  1999/12/08 20:33:18  pumphrey
 ! HCP Fixed tiny bug in ReadCompleteLineWithoutComments
 !
