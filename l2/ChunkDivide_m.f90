@@ -1343,15 +1343,15 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- notel1brad_changes -----
     subroutine notel1brad_changes ( obstructions, mafRange, l1bInfo )
-    use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
-      & GetRadiometerFromSignal, GetSignal, GetSignalName, &
-      & Signal_T, SIGNALS, MODULES
-    use MLSStrings, only: NumStringElements, GetStringElement
-    use Parse_signal_m, only: Parse_signal
+      use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
+        & GetRadiometerFromSignal, GetSignal, GetSignalName, &
+        & Signal_T, SIGNALS, MODULES
+      use MLSStrings, only: NumStringElements, GetStringElement
+      use Parse_signal_m, only: Parse_signal
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
-      type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+      type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
       type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
       integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
       type (L1BInfo_T), intent(in) :: L1BINFO
@@ -1366,8 +1366,8 @@ contains ! ===================================== Public Procedures =====
       logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
       integer :: critical_index
       integer :: critical_sub_index
-      integer, dimension(size(SIGNALS)) :: goods_after_gap
-      integer, dimension(size(SIGNALS)) :: goodness_changes
+      integer, pointer, dimension(:) :: goods_after_gap
+      integer, pointer, dimension(:) :: goodness_changes
       logical, dimension(size(SIGNALS)) :: good_after_maxgap
       logical, dimension(size(SIGNALS)) :: good_signals_now
       logical, dimension(size(SIGNALS)) :: good_signals_last
@@ -1383,7 +1383,6 @@ contains ! ===================================== Public Procedures =====
       integer :: num_goods_after_gap
       integer :: num_goodness_changes
       logical, dimension(:), pointer  :: or_valids_buffer
-      type(Signal_T) :: Signal
       integer :: Signal_index
       integer :: signal_end
       integer :: signal_start
@@ -1406,18 +1405,22 @@ contains ! ===================================== Public Procedures =====
       ! noting which ones are good, which not
       
       ! A wrinkle: only check center-band signals
-      nullify ( signals_buffer )
+      nullify ( signals_buffer, goods_after_gap, goodness_changes )
       call allocate_test( &
         & signals_buffer, mafRange(2) - mafRange(1) + 1 , size(SIGNALS), &
         & 'signals_buffer', ModuleName)
+      call allocate_test( goods_after_gap, mafRange(2) - mafRange(1) + 1,&
+        & 'goods_after_gap', ModuleName)
+      call allocate_test( goodness_changes, mafRange(2) - mafRange(1) + 1,&
+        & 'goodness_changes', ModuleName)
       good_signals_now = .false.   ! Initializing
       do Signal_index=1, size(SIGNALS)
-        if ( Signal%sideband == 0 ) then
+        if ( signals(signal_index)%sideband == 0 ) then
           if ( mafRange(2) - mafRange(1) + 1 <= MAXMAFSINSET ) then
             good_signals_now(Signal_index) = &
-              & any_good_signaldata ( Signal_index, Signal%sideband, &
-              & l1bInfo, mafRange(1), mafRange(2), &
-              & signals_buffer(:,Signal_index), mafRange )
+              & any_good_signaldata ( Signal_index, signals(signal_index)%sideband, &
+              &   l1bInfo, mafRange(1), mafRange(2), &
+              &   signals_buffer(:,Signal_index), mafRange )
           else
             nmafsets = (mafRange(2) - mafRange(1))/MAXMAFSINSET + 1
             mafset_end = mafRange(1) - 1   ! A trick--mafset_start is mafRange(1)
@@ -1427,13 +1430,14 @@ contains ! ===================================== Public Procedures =====
               signal_start = mafset_start + 1 - mafRange(1)
               signal_end = mafset_end + 1 - mafRange(1)
               good_signals_now(Signal_index) = &
-              & any_good_signaldata ( Signal_index, Signal%sideband, &
-              & l1bInfo, mafset_start, mafset_end, &
-              & signals_buffer(:,Signal_index), mafRange )
+                & any_good_signaldata ( Signal_index, signals(signal_index)%sideband, &
+                &   l1bInfo, mafset_start, mafset_end, &
+                &   signals_buffer(:,Signal_index), mafRange )
             enddo
           endif
         endif
       enddo
+      call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -1442,14 +1446,11 @@ contains ! ===================================== Public Procedures =====
       ! changes from nogood to good after a dead zone 
       ! lasting at least maxGap mafs
       num_goodness_changes = 0
+      num_goods_after_gap = 0
       howlong_nogood       = 0
       do maf = mafRange(1), mafRange(2)
         maf_index = maf - mafRange(1) + 1
         do Signal_index=1, size(SIGNALS)
-          Signal = SIGNALS(Signal_index)
-          ! good_signals_now(Signal_index) = &
-          !   & any_good_signaldata ( Signal_index, Signal%sideband, &
-          !  & l1bInfo, maf )
           good_signals_now(Signal_index) = signals_buffer(maf_index, Signal_index)
           if ( .not. good_signals_now(Signal_index) ) &
             & howlong_nogood(Signal_index) = howlong_nogood(Signal_index) + 1
@@ -1548,23 +1549,28 @@ contains ! ===================================== Public Procedures =====
         call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
         call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
       endif
-
+      
       ! Depending on sensitivity, add these to Obstructions database
+      print*,anyChangeIsObstruction, num_goodness_changes,num_goods_after_gap
       if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
         do mafset = 1, num_goodness_changes
           newObstruction%range = .false.
           newObstruction%mafs(1) = goodness_changes(mafset)
+          newObstruction%mafs(2) = 0    ! For overzelous Lahey uninitlized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
         enddo
       elseif ( num_goods_after_gap > 0 ) then
         do mafset = 1, num_goods_after_gap
           newObstruction%range = .false.
           newObstruction%mafs(1) = goods_after_gap(mafset)
+          newObstruction%mafs(2) = 0    ! For overzelous Lahey uninitlized checking
           call AddObstructionToDatabase ( obstructions, newObstruction )
         enddo
       endif
       ! OK, we have the mafs where the goodness changes, now what?
       call deallocate_test( signals_buffer, 'signals_buffer', ModuleName )
+      call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName)
+      call deallocate_test( goodness_changes, 'goodness_changes', ModuleName)
     end subroutine notel1brad_changes
 
     ! ----------------------------------------- PruneObstructions -----
@@ -1874,6 +1880,7 @@ contains ! ===================================== Public Procedures =====
       ! moment I'm letting paw code this (not tested yet). NJL.
       if ( .not. config%skipL1BCheck) &
         call notel1brad_changes ( obstructions, mafRange, l1bInfo ) 
+      call Dump ( obstructions )
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
@@ -1964,7 +1971,7 @@ contains ! ===================================== Public Procedures =====
 
     use Allocate_Deallocate, only: Deallocate_Test
     use L1BData, only: L1BData_T, READL1BDATA, &
-      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
+      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
     use MLSFiles, only: MLS_HDF_Version
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -1979,7 +1986,7 @@ contains ! ===================================== Public Procedures =====
     integer, optional, intent(in)                  :: maf2
     logical, dimension(:), optional, intent(inout) :: good_buffer
     integer, dimension(2), optional, intent(in)    :: MAFRANGE   ! Processing 
-  ! Private                                                   range in MAFs
+    ! Private                                                   range in MAFs
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
@@ -1988,45 +1995,62 @@ contains ! ===================================== Public Procedures =====
     integer :: the_maf
     integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
 
-  ! Executable
+    ! Executable
     answer = .false.
-    if ( .not. associated(l1bInfo%l1bRadIDs) ) return
     mymaf2 = maf
     if ( present(maf2) ) mymaf2 = maf2
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
-    call GetSignalName ( signal, nameString, &                   
-    & sideband=sideband, noChannels=.TRUE. )                     
-    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
-    nameString = trim(nameString) // PRECISIONSUFFIX
-    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
-    if ( fileID <= 0 ) then
-      answer = .false.
-      return
-    end if
-    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
-      & firstMAF=maf, lastMAF=mymaf2, &
-      & NeverFail= .true., hdfVersion=hdfVersion )
-    if ( flag /= 0 ) then
-      answer = .false.
-    elseif ( present(good_buffer) ) then
+
+    ! Set defaults for the good_buffer if present
+    if ( present(good_buffer) ) then
       if ( .not. present(mafrange) ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'mafRange must be supplied to any_good_signaldata' )
       endif
+      good_buffer ( maf - mafRange(1) + 1 : myMAF2 - mafRange(1) + 1 ) = .false.
+    end if
+
+    ! Quit if no l1b rad files.
+    if ( .not. associated(l1bInfo%l1bRadIDs) ) return
+
+    ! OK, try to find this item in an l1brad file
+    hdfVersion = mls_hdf_version ( trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION )
+    if ( hdfversion <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+    call GetSignalName ( signal, nameString, &                   
+      & sideband=sideband, noChannels=.TRUE. )                     
+    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
+    nameString = trim(nameString) // PRECISIONSUFFIX
+    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    ! If not found, exit appropriately
+    if ( fileID <= 0 ) then
+      answer = .false.
+      return
+    end if
+
+    ! OK, we've found it.  Read the data in.
+    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+      & firstMAF=maf, lastMAF=mymaf2, &
+      & NeverFail= .true., hdfVersion=hdfVersion )
+    ! Quit if the reading failed.
+    if ( flag /= 0 ) then
+      answer = .false.
+      return
+    end if
+
+    ! Give detailed or curt response
+    if ( present(good_buffer) ) then
       answer = .true.    ! This value should be ignored by the caller
       do the_maf = maf, mymaf2
         maf_index = the_maf - mafRange(1) + 1
         good_buffer(maf_index) = .not. &
           & all (my_l1bData%DpField(:,:, the_maf+1-maf) < 0._rk)
-      enddo
-      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
+      end do
     else
       answer = .not. all (my_l1bData%DpField < 0._rk)
-      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
     end if
+    call DeallocateL1bData ( my_l1bData )
+
   end function ANY_GOOD_SIGNALDATA
 
   logical function not_used_here()
@@ -2036,6 +2060,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.39  2003/08/21 22:49:22  livesey
+! Removed more print statements etc.
+!
 ! Revision 2.38  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
