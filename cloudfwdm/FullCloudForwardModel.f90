@@ -145,6 +145,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: NOLAYERS                 ! temp.noSurfs - 1
     integer :: NOFREQS                  ! Number of frequencies
     integer :: noSurf                   ! Number of pressure levels
+    integer :: noNonZero                ! Number of nonzero values in Jacobian
     character :: reply
     integer :: status                   ! allocation status 
     
@@ -694,12 +695,53 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
               Deallocate(TransOnS,stat=status)
 
+        case ( M_Banded )
+        
+        noNonZero = noSgrid*noMIFs
+        
+        call CreateBlock ( jBlock, &
+                         & noChans*noMIFs, noSgrid*noMIFs, &
+                         & M_Banded, noNonZero )
 
-              case ( M_Banded, M_Column_Sparse )
-                call MLSMessage( MLSMSG_Error, ModuleName, &
-                  & "Not written code for adding to non full blocks" )
-              case default
-              end select
+        allocate( TransOnS(noSgrid, noMIFs), stat=status )
+
+       ! Now fill the jacobian
+            
+          do chan = 1, noChans
+          if ( doChannel(chan) ) then
+          ! now, we define beta as transmission function in Sensitivity.f90
+          ! and we interpolate it onto Sgrid
+                    
+          call FindTransForSgrid (                                   &
+                      &     ptan%values(:,maf),                      &
+                      &     earthradius%values(1,maf)*1.e-3_r8,      &
+                      &     noMIFs,                                  &
+                      &     temp%template%noSurfs,                   &
+                      &     noSgrid,                                 &
+                      &     gph%template%Surfs,                      &
+                      &     a_trans(:,chan),               &
+                      &     stateQ%template%frequencies,             &
+                      &     TRANSonS )                
+
+            jBlock%values = 0.0_r8
+            jBlock%r2(0) = 0
+            
+            do i=1,noSgrid
+            do mif=1,noMIFs
+            jBlock%r1(i+(mif-1)*noSgrid) = noChans*(mif-1)
+            jBlock%r2(i+(mif-1)*noSgrid) = noChans*(i+(mif-1)*noSgrid)
+            jBlock%values(i+(mif-1)*noSgrid,1) = TransOnS(i,mif)
+            enddo
+            enddo
+
+         end if
+         end do
+
+              Deallocate(TransOnS,stat=status)
+         case default
+               call MLSMessage(MLSMSG_Error, ModuleName, &
+                 & "Invalid matrix block kind in CreateBlock")              
+         end select
                
       endif
 
@@ -778,6 +820,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.25  2001/09/04 15:59:44  jonathan
+! add cloud_fov, jonathan
+!
 ! Revision 1.24  2001/08/17 21:48:41  jonathan
 ! Added FOV average, Jonathan
 !
