@@ -14,7 +14,7 @@ module DumpCommand_M
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
+  character (len=len(idParm)), save :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -42,14 +42,15 @@ contains
       & F_AllQuantityTemplates, F_AllVectors, F_AllVectorTemplates, &
       & F_AllVGrids, F_AntennaPatterns, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_HGrid, F_PfaData, &
-      & F_PointingGrids, F_Quantity, F_Template, F_TGrid, F_Vector, &
-      & F_VGrid, S_Quantity, S_VectorTemplate
+      & F_PointingGrids, F_Quantity, F_Spectroscopy, F_Template, F_TGrid, &
+      & F_Vector, F_VGrid, S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
     use PFADataBase_m, only: Dump, Dump_PFADataBase, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
+    use SpectroscopyCatalog_m, only: Catalog, Dump
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
@@ -96,7 +97,7 @@ contains
       select case ( fieldIndex )
       case ( f_allForwardModels, f_allHGrids, f_allPFA, f_allQuantityTemplates, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids )
+        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids, f_spectroscopy )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allForwardModels )
@@ -145,6 +146,8 @@ contains
             call dump_filter_shapes_database ( son )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
+          case ( f_spectroscopy )
+            call dump ( catalog, details=details )
           end select
         end if
       case ( f_details )
@@ -274,6 +277,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.13  2004/10/30 00:26:46  vsnyder
+! Add 'spectroscopy' field to DumpCommand
+!
 ! Revision 2.12  2004/10/06 20:19:39  vsnyder
 ! Cannonball polishing
 !
