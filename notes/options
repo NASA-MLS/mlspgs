@@ -54,6 +54,10 @@ Note: use "-T2" and not "--T2" because T2 has one letter
     can list a machine more than once (e.g. for SMP slaves)
     One can also append, after a colon, a colon separated range
     of slaves within that file to use.
+  --maxFailuresPerChunk[ ]<amount> abandon any chunk after <amount> failures
+      scf default is 10; sips default is 1; 1 means allow no failures
+  --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
+      scf default is 1; sips default is 2; 1 means allow no failures
   --pge <commandname>: What to put on commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
   --recl[ ]<number>: set the max record length size for l2cf to <number>
@@ -103,6 +107,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.28  2003/11/14 23:42:21  pwagner
+ delay nnn option mentioned
+
  Revision 1.27  2003/11/05 21:29:11  pwagner
  Can enter range of chunks to be processed instead of single
 
