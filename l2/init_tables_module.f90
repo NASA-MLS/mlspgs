@@ -526,6 +526,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scanLowerLimit, t+t_numeric_range, n+n_field_type, &
              begin, f+f_scanUpperLimit, t+t_numeric_range, n+n_field_type, &
              begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
+             begin, f+f_criticalSignals, t+t_string, n+n_field_type, &
              begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
              begin, f+f_skipL1BCheck, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
@@ -1044,6 +1045,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.318  2003/06/05 22:13:35  pwagner
+! Added criticalSignals to ChunkDivide Orbital
+!
 ! Revision 2.317  2003/06/04 01:09:10  livesey
 ! Added flushL2PCBins
 !
