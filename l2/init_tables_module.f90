@@ -396,8 +396,9 @@ contains ! =====     Public procedures     =============================
              l+l_numF, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_sizedistribution, &
-             l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
-             l+l_sidebandRatio, l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
+             l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
+             l+l_scVelECR, l+l_scGeocAlt, l+l_sidebandRatio, &
+             l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -617,6 +618,8 @@ contains ! =====     Public procedures     =============================
             n+n_dot/))
      call acorn((/begin, f+f_resetSeed, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_seed, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -869,6 +872,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.207  2002/03/14 00:39:20  pwagner
+! Can fill scVelECI and scVelECR from l1b now
+!
 ! Revision 2.206  2002/03/13 22:02:31  livesey
 ! Changed from explicitFill to fill
 !
