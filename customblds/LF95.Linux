@@ -2,6 +2,9 @@
 
 #	special options for compiling some modules--override .f90 rules
 
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
 # split_path.sh can split off a file name from any prefixed paths
 SPLIT_PATH=$(UTILDIR)/split_path.sh
 
@@ -83,13 +86,6 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-# > init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
-# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
-# > 	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
-# > init_tables_module.o: init_tables_module.mod
-# > 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-# >    -T init_tables_module.o init_tables_module.mod 
-
 endif
 #	l3
 
@@ -146,6 +142,14 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -l last_intrinsic_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
 
 machine.mod:
 	rm -f machine.f90 ; \
@@ -253,9 +257,6 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-# > init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
-# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
-
 endif
 #	l3
 
@@ -302,6 +303,14 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
+$(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
+	sed -n '/---\*/, $$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+          $(INSTALLDIR)/init_gen \
+          -f "last_rxx_molecule+1" -l last_molecule -pl_ \
+          -j sps_cross_ref_table.txt \
+          $(S)/mol_parm.f9h $(S)/mol_add.f9h lit_indices
+
 machine.o: $(MACH_DIR)/machine.f90
 	rm -f machine.f90 ; \
 	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
@@ -338,6 +347,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.12  2003/02/01 00:01:35  pwagner
+# Changed for new l1 with 3 executables
+#
 # Revision 1.11  2002/11/08 01:18:22  pwagner
 # Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
 #
