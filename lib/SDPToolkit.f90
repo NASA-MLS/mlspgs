@@ -90,6 +90,58 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         CHARACTER(LEN=27), INTENT(OUT) :: asciiutc
       END FUNCTION PGS_TD_TAItoUTC
 
+      INTEGER FUNCTION PGS_PC_GetConfigData(param_id, param_val)
+        INTEGER, INTENT(IN) :: param_id
+         character (len=*), intent(out) :: param_val
+      END FUNCTION PGS_PC_GetConfigData
+
+! Metadata functions
+! In the following, groups or imd_group will be
+! character strings with length PGSd_MET_GROUP_NAME_L
+! which in the current toolkit version is 105
+! To see this value, execute "grep -i PGSd_MET_GROUP_NAME_L $PGSINC/*.h"
+!
+! groups will be an array of length PGSd_MET_NUM_OF_GROUPS
+! which in the current toolkit version is 20
+! To see this value, execute "grep -i PGSd_MET_NUM_OF_GROUPS $PGSINC/*.h"
+      INTEGER FUNCTION PGS_MET_Init(file_id,groups)
+        INTEGER, INTENT(IN) :: file_id
+         character (len = *), dimension(:) :: Groups
+      END FUNCTION PGS_MET_Init
+
+      INTEGER FUNCTION PGS_MET_Setattr_d(imd_group, attr_name, dval)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+        DOUBLE PRECISION, INTENT(IN) :: dval
+      END FUNCTION PGS_MET_Setattr_d
+
+      INTEGER FUNCTION PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+         character (len=*), intent(in) :: attr_value
+      END FUNCTION PGS_MET_Setattr_s
+
+      INTEGER FUNCTION PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+        DOUBLE PRECISION, INTENT(OUT), DIMENSION(:) :: dval_array
+      END FUNCTION PGS_MET_Getsetattr_d
+
+      INTEGER FUNCTION PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+         integer, intent(in) :: attr_value
+      END FUNCTION PGS_MET_Setattr_i
+
+      INTEGER FUNCTION PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: hdf_attr_name
+         integer, intent(in) :: sd_id
+      END FUNCTION PGS_MET_Write
+
+      INTEGER FUNCTION PGS_MET_Remove( )
+      END FUNCTION PGS_MET_Remove
+
    END INTERFACE
 
 !   INTEGER, EXTERNAL :: PGS_SMF_GenerateStatusReport
@@ -106,6 +158,11 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    REAL, PARAMETER :: Deg2Rad = 1.7453293E-02
    REAL, PARAMETER :: PI = 3.141592654
    REAL, PARAMETER :: Rad2Deg = 57.295780
+   
+! Use the SDP Toolkit for the above functions
+! (else must use a substitute or bypass calls)
+! (may be reset by main program)
+   LOGICAL :: UseSDPToolkit = .TRUE.
 
 !====================
 END MODULE SDPToolkit
@@ -113,6 +170,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.4  2001/05/07 23:22:20  pwagner
+! Added metadat functions
+!
 ! Revision 2.3  2000/09/27 15:01:08  pumphrey
 ! Reinstated "numbered" Toolkit include files now I understand
 ! where they come from. (Duh. Groan.)
