@@ -41,13 +41,13 @@ contains ! =====     Public Procedures     =============================
     & DirectDataBase, chunkNo, chunks )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
-    use MLSCommon, only: MLSCHUNK_T
     use MLSL2Options, only: CHECKPATHS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
@@ -280,6 +280,7 @@ contains ! =====     Public Procedures     =============================
     & chunkNo, chunks, makeRequest, create, theFile, noExtraWrites, namedFile )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
       & ExpandDirectDB, ExpandSDNames, FileNameToID
@@ -293,8 +294,7 @@ contains ! =====     Public Procedures     =============================
       & L_MAF, lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-    use MLSCommon, only: FindFirst, FindNext, &
-      & MLSCHUNK_T, R4, R8, RV, FileNameLen
+    use MLSCommon, only: FindFirst, FindNext, R4, R8, RV, FileNameLen
     use MLSFiles, only: HDFVERSION_5, NAMENOTFOUND, &
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
@@ -1158,6 +1158,7 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinQuantities ( node, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
 
+    use Chunks_m, only: MLSChunk_T
     use Expr_m, only: EXPR
     use INIT_TABLES_MODULE, only: &
       & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
@@ -1170,7 +1171,7 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXData_T
     use L2GPData, only: L2GPData_T
     use L2ParInfo, only: PARALLEL, SLAVEJOIN
-    use MLSCommon, only: MLSCHUNK_T, R8
+    use MLSCommon, only: R8
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_M, only: GetSignalName
@@ -1521,11 +1522,12 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
    & chunkNo, chunks, firstInstance, lastInstance )
 
+    use Chunks_m, only: MLSChunk_T
     use intrinsic, only: L_NONE, L_GEODANGLE, &
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
       & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
-    use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
+    use MLSCommon, only: R4, R8, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use OUTPUT_M, only: BLANKS, OUTPUT
     use String_Table, only: DISPLAY_STRING, GET_STRING
@@ -1835,6 +1837,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.112  2004/05/19 19:16:10  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.111  2004/04/27 23:56:17  pwagner
 ! SKIPDIRECTWRITES acts much like checkpaaths
 !
