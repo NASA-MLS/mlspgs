@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,7 +7,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
   use Allocate_Deallocate, only : Allocate_test, Deallocate_test
   use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
-  use MLSCommon, only : R4, R8, Rm
+  use MLSCommon, only : DEFAULTUNDEFINEDVALUE, R4, R8, Rm
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStrings, only: Capitalize
 
@@ -16,6 +16,7 @@ module MLSNumerics              ! Some low level numerical stuff
   private
   public :: EssentiallyEqual, Hunt, InterpolateArraySetup
   public :: InterpolateArrayTeardown, InterpolateValues
+  public :: IsFillValue
 
   type, public :: Coefficients_R4
     private
@@ -65,6 +66,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateValues            Interpolate for new y value(s): given old (x,y), new (x), method
 ! InterpolateArray             Interpolates for multiple values
 ! InterpolateScalar            Interpolates for just one
+! IsFillValue                  Returns true if argument is FillValue
 
   
   interface EssentiallyEqual
@@ -90,6 +92,12 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
     module procedure InterpolateScalarUsingSetup_r4, InterpolateScalarUsingSetup_r8
   end interface
+
+  interface IsFillValue
+    module procedure IsFillValue_r4, IsFillValue_r8
+  end interface
+  
+  real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
 
 contains
 
@@ -481,6 +489,29 @@ contains
 
   end subroutine InterpolateUsingSetup_r8
 
+! ------------------------------------------------- IsFillValue ---
+
+  ! This family of routines checks to see if an arg is a fillValue
+  elemental logical function IsFillValue_r4 ( A, FILLVALUE )
+    real(r4), intent(in) :: A
+    real(r4) ,intent(in), optional :: FILLVALUE
+    real(r4)  :: MYFILLVALUE
+    myFillValue = DEFAULTUNDEFINEDVALUE
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_r4 = &
+      & abs(a - myFillValue) < FILLVALUETOLERANCE
+  end function IsFillValue_r4
+
+  elemental logical function IsFillValue_r8 ( A, FILLVALUE )
+    real(r8), intent(in) :: A
+    real(r8) ,intent(in), optional :: FILLVALUE
+    real(r8)  :: MYFILLVALUE
+    myFillValue = DEFAULTUNDEFINEDVALUE
+    if ( present(fillValue) ) myFillValue = fillValue
+    IsFillValue_r8 = &
+      & abs(a - myFillValue) < Real(FILLVALUETOLERANCE, r8)
+  end function IsFillValue_r8
+
 !=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -491,6 +522,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.31  2004/09/28 23:14:24  pwagner
+! Added isFillValue function
+!
 ! Revision 2.30  2004/09/10 23:52:29  livesey
 ! Added the logSpace options for Hunt (not actually needed but never
 ! mind).
