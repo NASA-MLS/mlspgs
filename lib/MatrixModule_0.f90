@@ -1192,7 +1192,7 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_0', &
       & moduleName )
-    if ( beta < 0.5_r8 ) then
+    if ( abs(beta) < 0.5_r8 ) then
       z = 0.0_r8
     else
       call densify ( z, zb )
@@ -1259,7 +1259,7 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_T_0', &
       & moduleName )
-    if ( beta < 0.5_r8 ) then
+    if ( abs(beta) < 0.5_r8 ) then
       z = 0.0_r8
     else
       call densify ( z, zb )
@@ -2757,6 +2757,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.67  2002/02/23 02:59:51  vsnyder
+! Correct tests for 'don't update, don't subtract; fix LaTeX
+!
 ! Revision 2.66  2002/02/23 02:34:10  vsnyder
 ! Fix the LaTeX for InvertDenseCholesky
 !
