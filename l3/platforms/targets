@@ -35,9 +35,10 @@ endif
 endif
 
 include ../../customblds/$(MLSF95).$(MLSPLAT)
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 
 # where which_fftw.sh is stored
-MLSBIN=../../util
+#UTILDIR=../../util
 
 MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
@@ -144,7 +145,17 @@ endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
-   gcc_version=$(shell ${MLSBIN}/which_fftw.sh -gcc)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
@@ -161,7 +172,7 @@ else
    hdf5_message=Building mlsl3d without hdf5
 endif
 
-fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 #libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
 libmlsl3.a: $(ALLOBJS)
@@ -226,6 +237,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.31  2003/06/23 22:51:16  pwagner
+# Some fixes (I hope) to the prob of compiling in l3 twice from l3m
+#
 # Revision 1.30  2003/02/28 17:44:23  pwagner
 # Links utctotai library
 #

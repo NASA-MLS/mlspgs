@@ -56,7 +56,7 @@ ifndef INSTALLDIR
 endif
 endif
 
-
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 ALLOBJS = $(OBJS)
 
 PROG_NAME=test
@@ -141,6 +141,16 @@ ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
@@ -208,6 +218,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.21  2003/03/03 22:59:32  pwagner
+# Removed troublesome customblds includes
+#
 # Revision 1.20  2003/02/06 18:17:08  pwagner
 # Now links in utctotai library
 #

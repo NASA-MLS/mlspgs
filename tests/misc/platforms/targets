@@ -76,6 +76,7 @@ UTILDIR=../../../util
 # However we will be using it just to create lapack_linker_line 
 # where LIB_LAPACK may contain multiple libraries
 REECHO=$(UTILDIR)/reecho.sh
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -136,6 +137,16 @@ ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
    gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+ifdef STATIC_LINK
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
+endif
+endif
+ifeq ($(MLSF95),IFC)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
@@ -194,6 +205,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.16  2003/02/28 18:56:09  pwagner
+# May need at some point to define INSTALLDIR
+#
 # Revision 1.15  2002/11/25 21:21:02  pwagner
 # gcc_version to allow building with Lahey on gcc post 2.96
 #
