@@ -15,7 +15,8 @@ module L2PC_m
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T
-  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
+  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
+    & DESTROYMATRIX, MATRIX_T, DUMP
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -258,6 +259,7 @@ contains ! ============= Public Procedures ==========================
         stringIndex = enter_terminal ( trim(line), t_identifier )
         decl = get_decl ( stringIndex, type=enum_value )
         qt%quantityType = decl%units
+        qt%name = decl%units
 
         ! Write other info associated with type
         select case ( qt%quantityType )
@@ -266,6 +268,7 @@ contains ! ============= Public Procedures ==========================
           stringIndex = enter_terminal ( trim(line), t_identifier )
           decl = get_decl ( stringIndex, type=enum_value )
           qt%molecule = decl%units
+          qt%name = decl%units
         case (l_radiance)
           read (unit,*) line
           call Parse_Signal (line, sigInds, sideband=sideband)
@@ -360,7 +363,7 @@ contains ! ============= Public Procedures ==========================
         end select
       end do
     end do
-
+!    call dump ( l2pc%kStar, details = 2)
   end subroutine ReadOneL2PC
 
   ! ------------------------------------ open_l2pc_file ------------
@@ -427,6 +430,11 @@ contains ! ============= Public Procedures ==========================
     print*,'And further more:', &
       & associated(l2pcDatabase(1)%kStar%col%vec%template), &
       & associated(l2pcDatabase(1)%kStar%row%vec%template)
+    l2pcDatabase(1)%kStar%col%vec%template => tmpX
+    l2pcDatabase(1)%kStar%row%vec%template => tmpY
+    print*,'But having fixed it:',size(l2pcDatabase), &
+      & associated(l2pcDatabase(1)%xStar%template, l2pcDatabase(1)%kStar%col%vec%template), &
+      & associated(l2pcDatabase(1)%yStar%template, l2pcDatabase(1)%kStar%row%vec%template)
 
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
   end subroutine Read_l2pc_file
@@ -505,6 +513,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.14  2001/04/27 17:36:33  livesey
+! An interim version
+!
 ! Revision 2.13  2001/04/27 07:24:50  livesey
 ! Interim version.  Still loosing parts of kStar on add to database.
 ! Might this be a compiler bug?
