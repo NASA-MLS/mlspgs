@@ -1,7 +1,10 @@
 # $Id$
 
+# End of the path to this Makefile:
+ME = LF95
+
 # Fortran compiler:
-FC = lf95
+F90 = lf95
 
 # Compiler options:
 FOPTS = -g --chk --info
@@ -10,8 +13,11 @@ FOPTS = -g --chk --info
 # Path to source files:
 S = ..
 
+# Path to MLS library source files:
+MLS = $S/../lib
+
 # Path to .mod files:
-M = $(HOME)/mlspgs/lib/LF95
+M = $(MLS)/$(ME)
 
 # Option to specify path to .mod files:
 I = -I
@@ -23,16 +29,16 @@ TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
 HDFEOS = /van1/opt/TOOLKIT
 #HDFEOS = $(TOOLKIT)
 
-# Path to Configuration parser
-C = $(HOME)/mlspgs/lib/cf_parser/LF95
-
 # Platform (used within directory paths in ../Makefile.inc):
 PLATFORM = linux
 
 # Path to libPGSTK.a
-PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
+PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
 #PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
 
 include $S/Makefile.inc
 
 # $Log$
+# Revision 2.1  2000/10/10 20:33:32  vsnyder
+# Repairs to get rid of WVS pathnames
+#
