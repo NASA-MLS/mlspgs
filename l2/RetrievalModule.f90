@@ -980,7 +980,7 @@ contains
         & Dump, Multiply, operator(.DOT.), &
         & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
-        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT, GETNOSLAVES
+        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
@@ -1353,7 +1353,7 @@ contains
           if ( parallelMode ) then
             if ( index ( switches, 'mas' ) /= 0 ) &
               & call output ( "Triggering slave forward model runs", advance='yes' )
-            latestMAFStarted = min ( GetNoSlaves(), &
+            latestMAFStarted = min ( parallel%noFwmSlaves, &
               & chunk%lastMAFIndex-chunk%firstMAFIndex+1 )
             do t = 1, latestMAFStarted
               call TriggerSlaveRun ( v(x), t )
@@ -3327,6 +3327,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.208  2002/12/11 01:58:54  livesey
+! Changed detail of forward model parallel stuff
+!
 ! Revision 2.207  2002/12/06 18:41:24  livesey
 ! Slightly new approach to FWMParallel mode
 !
