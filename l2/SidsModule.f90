@@ -8,7 +8,8 @@ module SidsModule
   ! This module evaluates the radiative transfer equation, and maybe
   ! its derivatives.  It is used for SIDS and L2PC runs.
 
-  use ForwardModelInterface, only: ForwardModel, ForwardModelConfig_T
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use ForwardModelInterface, only: ForwardModel
   use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
     f_fwdModelOut, f_jacobian
   use Lexer_Core, only: Print_Source
@@ -131,6 +132,10 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.12  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.11  2001/03/30 00:07:24  livesey
 ! Removed FMC in call to forwardModel
 !

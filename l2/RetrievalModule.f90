@@ -14,7 +14,8 @@ module RetrievalModule
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
-  use ForwardModelInterface, only: ForwardModel, ForwardModelConfig_T
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use ForwardModelInterface, only: ForwardModel
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
     & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
     & f_forwardModel, f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
@@ -689,6 +690,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.12  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.11  2001/03/17 00:45:15  livesey
 ! Moved to new ForwardModelConfig_T
 !
