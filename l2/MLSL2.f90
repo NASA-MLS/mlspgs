@@ -154,6 +154,8 @@ program MLSL2
         toolkit = switch
       else if ( line(3+n:7+n) == 'ckbk ' ) then
         checkBlocks = .true.
+      else if ( line(3+n:8+n) == 'nckbk ' ) then
+        checkBlocks = .false.
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -435,6 +437,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.60  2001/11/09 18:12:38  livesey
+! Added --nckbk option.
+!
 ! Revision 2.59  2001/10/12 23:11:28  pwagner
 ! Clarified what Processing time means?
 !
