@@ -2196,7 +2196,6 @@ CONTAINS
       endif
 
       if (atmos_der) then
-         call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
          call Deallocate_test ( k_atmos_frq, 'k_atmos_frq', ModuleName )
       endif
 
@@ -2383,6 +2382,7 @@ CONTAINS
     endif
 
     if ( atmos_der ) then
+      call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
       call Deallocate_test ( dRad_df, 'dRad_df', ModuleName )
     end if
 
@@ -2422,6 +2422,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.67  2002/06/28 11:06:46  zvi
+! Now computing dI/dPtan using chain rule
+!
 ! Revision 2.66  2002/06/26 19:58:48  livesey
 ! Bug fix with DAC channel numbering
 !
