@@ -124,6 +124,10 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
+ifdef HDFVERSIONS
+   he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
+   he5lib_message=mlsl3d will support files with either hdf version
+endif
    hdf5_message=Building mlsl3d with hdf5
 else
    hdf5_linker_line=
@@ -154,10 +158,11 @@ mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE)
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
-#		@echo "$(fftw_message)"
+		@echo "$(he5lib_message)"
 		@cat fftw_link_message
 	$(FC) $(LDOPTS) -o mlsl3d $(l3_driver) \
                       -L./ -lmlsl3 \
+        $(he5lib_linker_line) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -196,6 +201,9 @@ L3DMDiag.o: $(S)/L3DMDiag.f90
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2002/05/02 22:35:17  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
 # Revision 1.19  2002/04/18 20:56:07  pwagner
 # .configure now a prerequisite for executable
 #
