@@ -66,6 +66,8 @@ BEGIN GlobalSettings
 
     AllowClimatologyOverloads=FALSE
 
+    l2load, bill=["bill1", "bill2"], $
+            zvi="zvi" ;???
 END GlobalSettings
 ;
 ; -----------------------------------------------------------------------------
@@ -74,7 +76,7 @@ END GlobalSettings
 ; quantities in from the climatology database.
 
 BEGIN ReadApriori
-time
+foobar: time
     ;;
     ;; Each line in this file describes one geophysical parameter
     ;; for which a priori information is needed from the
@@ -455,7 +457,7 @@ BEGIN Fill
     jacobian: matrix, rows=mainR1Radiances, columns=state, type=plain
 
     aprioriCovariance: matrix, type=SPD, rows=state
-      fill, matrix=aprioriCovariance, source="aprioriCovarianceFile"
+;;??? fill, matrix=aprioriCovariance, source="aprioriCovarianceFile"
 
 END Fill
 ;
@@ -520,20 +522,21 @@ BEGIN Output
     ;;
     ;; First the primary products
 
-    output, file='l2gp_temp', quantities=tempL2gp
-    output, file='l2gp_gph', quantities=gphL2gp
-    output, file='l2gp_h2o', quantities=h2oL2gp
-    output, file='l2gp_hno3', quantities=hno3L2gp
-    output, file='l2gp_o3', quantities=o3L2gp
-    output, file='l2gp_hcl', quantities=hclL2gp
-    output, file='l2gp_clo', quantities=cloL2gp
-    output, file='l2gp_n2o', quantities=n2oL2gp
-    output, file='l2gp_co', quantities=coL2gp
+    output, type=l2gp, file='l2gp_temp', quantities=tempL2gp
+    output, type=l2gp, file='l2gp_gph', quantities=gphL2gp
+    output, type=l2gp, file='l2gp_h2o', quantities=h2oL2gp
+    output, type=l2gp, file='l2gp_hno3', quantities=hno3L2gp
+    output, type=l2gp, file='l2gp_o3', quantities=o3L2gp
+    output, type=l2gp, file='l2gp_hcl', quantities=hclL2gp
+    output, type=l2gp, file='l2gp_clo', quantities=cloL2gp
+    output, type=l2gp, file='l2gp_n2o', quantities=n2oL2gp
+    output, type=l2gp, file='l2gp_co', quantities=coL2gp
 
     ;; Now the l2gp_others file contains the secondary l2gp quantities
     ;; and the overlaps from the primary products.
 
-    output, file='l2gp_others', quantities= [ o3_190L2gp, o3_640L2gp, $
+    output, type=l2gp, file='l2gp_others', $
+                                quantities= [ o3_190L2gp, o3_640L2gp, $
                                              n2o_190L2gp, n2o_640L2gp ],  $
                                 overlaps= [ tempL2gp, gphL2gp, h2oL2gp, $
                                            hno3L2gp, o3L2gp, hclL2gp, $
@@ -541,7 +544,8 @@ BEGIN Output
 
     ;; Now the l2aux file contains non l2gp data
 
-    output, file='l2aux_full', quantities= [ ptan118l2gp, ptan2t5hL2gp ], $
+    output, type=l2gp, file='l2aux_full', $
+                               quantities= [ ptan118l2gp, ptan2t5hL2gp ], $
                                overlaps= [ ptan118L2gp, ptan2t5hL2gp ]
 
     ;; In later versions there may be some lines dealing with metadata
@@ -554,6 +558,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.5  2001/02/01 23:52:31  vsnyder
+; Replace "radiometer" fields with radiometer literals instead of strings
+;
 ; Revision 1.4  2000/11/30 00:50:15  vsnyder
 ; Correct a missing comma
 ;
