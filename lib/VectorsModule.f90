@@ -180,12 +180,12 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------------------  AddVectorToDatabase  -----
   integer function AddVectorToDatabase ( DATABASE, ITEM )
 
-  ! This routine adds a vector template to a database of such templates, 
+  ! This routine adds a vector to a database of such vectors, 
   ! creating the database if necessary.
 
     ! Dummy arguments
     type (Vector_T), dimension(:), pointer :: DATABASE
-    type (Vector_T), intent(in) :: ITEM
+    type (Vector_T), intent(in) ::            ITEM
 
     ! Local variables
     type (Vector_T), dimension(:), pointer :: tempDatabase
@@ -194,6 +194,23 @@ contains ! =====     Public Procedures     =============================
 
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
+
+  !-----------------------------------------  rmVectorFromDatabase  -----
+  integer function rmVectorFromDatabase ( DATABASE, ITEM )
+
+  ! This routine removes a vector from a database of such vectors, 
+  ! deallocating the database if necessary.
+
+    ! Dummy arguments
+    type (Vector_T), dimension(:), pointer :: DATABASE
+    type (Vector_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (Vector_T), dimension(:), pointer :: tempDatabase
+    include "rmItemFromDatabase.f9h"
+
+    rmVectorFromDatabase = newSize
+  end function rmVectorFromDatabase
 
   !------------------------------------------------  AssignVector  -----
   subroutine AssignVector ( Z, X )
@@ -888,6 +905,31 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
+  ! -------------------------------  isVectorQtyMasked  -----
+  logical function isVectorQtyMasked ( vectorQty, Row, Column )
+
+  ! Is the mask for VectorQty set for address (Row, Column) ?
+  ! If TRUE, don't use vectorQty%values(Row, Column)
+  ! Otherwise, go ahead
+  
+  ! Formal args
+    type (VectorValue_T), intent(in) :: vectorQty
+    integer, intent(in) ::              ROW
+    integer, intent(in) ::              COLUMN
+    
+  ! Private
+    integer             ::              ROWW, ROWBIT
+
+    isVectorQtyMasked = .false.
+    if ( .not. associated(vectorQty%mask)) return
+    roww = row / b               ! will have to add mask starting index
+    rowbit = mod(row, b)
+    if ( ibits( vectorQty%mask(roww+1, column), rowbit, 1 ) /= 0 ) then
+      isVectorQtyMasked = .true.
+    endif
+
+  end function isVectorQtyMasked
+
   !---------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
   ! If Z is present, destroy Z and clone a new one from X, then
@@ -1224,6 +1266,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.50  2001/09/17 23:10:49  pwagner
+! New optional arg majorFrame in Validate..
+!
 ! Revision 2.49  2001/07/19 17:57:15  vsnyder
 ! Added 'Quant' and 'Inst' arguments to CopyVector and MultiplyVectors
 !
