@@ -1,0 +1,55 @@
+include ../Makefile.dep
+
+# "$Id$"
+# ========================================================================
+#          The three versions of libmls.a
+all: libmlsSub.a libmls.a libmlsSDPTK.a
+#
+#libmls.a      will contain all the OBJS except for 
+#	                SDPToolkit.o  and  SDPToolkitSubstitute.o
+#libmlsSDPTK.a will contain libmls.a plus SDPToolkit.o
+#libmlsSub.a   will contain libmls.a plus SDPToolkitSubstitute.o
+#
+#An arithmetic analogy for adding and subtracting objects from archives:
+#
+#libTemp = lib + SDP.o + Sub.o
+#libSub  = libTemp - SDP.o
+#lib     = libSub  - Sub.o
+#libSDP  = lib     + SDP.o
+#
+#The following just a temporary archive holding every *.o
+#libmlsTemp.a: ${OBJS}
+#	ar ru $@ $?
+#
+#libmlsSub.a: libmlsTemp.a
+#	mv libmlsTemp.a $@
+libmlsSub.a: ${OBJS}
+	ar ru $@ $?
+	ar d $@ SDPToolkit.o
+
+libmls.a: libmlsSub.a
+	cp libmlsSub.a $@
+	ar d $@ SDPToolkitSubstitute.o
+
+libmlsSDPTK.a: libmls.a
+	cp libmls.a $@
+	ar ru $@ SDPToolkit.o
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod *.a
+
+tar:
+	rm -f libmls.tgz
+	tar hcvzf libmls.tgz * --exclude \*.o --exclude \*.mod --exclude libmls.a
+
+# ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+
+L1BData.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L1BData.f90
+L2GPData.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90# $Log$
+# $Log$

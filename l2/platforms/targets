@@ -1,0 +1,23 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+mlsl2: $(OBJS) $(libdir)/libmls.a
+	$(FC) -o mlsl2 $(OBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
+	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
+	-L$(GCTP) -lGctp \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod mlsl2
+
+tar:
+	rm -f l2.tgz
+	tar hcvzf l2.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+
+# ========================================================================
+# $Log$
