@@ -7,7 +7,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
   use Hdf, only: DFACC_READ, DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-  use HDFEOS, only: SWATTACH, SWCREATE, SWDETACH, SWINQDIMS
+  use HDFEOS, only: SWATTACH, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
@@ -1189,7 +1189,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  OutputL2GP_createFile_hdf4  -----
   subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, swathName)
-  use MLSHDFEOS, only: mls_dfldsetup, mls_gfldsetup, mls_swdefdim
+  use MLSHDFEOS, only: mls_swcreate, mls_dfldsetup, mls_gfldsetup, mls_swdefdim
 
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -1222,7 +1222,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Create the swath within the file
 
-    swid = swcreate(L2FileHandle, TRIM(name))
+    swid = mls_swcreate(L2FileHandle, TRIM(name), hdfVersion=HDFVERSION_4)
     if ( swid == -1 ) then
        msr = 'Failed to create swath ' // TRIM(name) &
         & // ' (maybe has the same name as another swath in this file?)'
@@ -1554,11 +1554,11 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
   subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
 
-  use HDFEOS5, only: HE5_SWcreate, HE5_SWdetach, &
+  use HDFEOS5, only: HE5_SWdetach, &
     & HE5S_UNLIMITED_F, &
     & HE5T_NATIVE_CHAR, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_INT, HE5T_NATIVE_FLOAT
-  use MLSHDFEOS, ONLY : mls_dfldsetup, mls_gfldsetup, mls_swdefdim, &
-    & MLS_SWSETFILL
+  use MLSHDFEOS, ONLY : mls_swcreate, mls_dfldsetup, mls_gfldsetup, &
+    & mls_swdefdim, MLS_SWSETFILL
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -1604,7 +1604,7 @@ contains ! =====     Public Procedures     =============================
     
     ! Create the swath within the file
     ! print*,"Creating swath called ",name
-    swid = HE5_SWcreate(L2FileHandle, trim(name))
+    swid = mls_SWcreate(L2FileHandle, trim(name), hdfVersion=HDFVERSION_5)
     !print*,"Swath ",name,"has SW id :",swid
     if ( swid == -1 ) then
        msr = 'Failed to create swath ' // TRIM(name) &
@@ -2526,6 +2526,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.64  2003/04/21 19:34:59  pwagner
+! Restored reading/writing char-valued Status datafield
+!
 ! Revision 2.63  2003/04/17 23:07:02  pwagner
 ! Now uses MLSHDFEOS more thoroughly; can read HIRDLS L2GP files
 !
