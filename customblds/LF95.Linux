@@ -2,6 +2,13 @@
 
 #	special options for compiling some modules--override .f90 rules
 
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
 ifndef CASCADE
 #	l1
 
@@ -141,6 +148,28 @@ machine.o: machine.mod
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
+ifeq ($(FC_NAME),mark_as_uptodate.sh)
+
+# No custom builds if we're just marking targets as up to date
+l2gpdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+L2GPData.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2GPData.o l2gpdata.mod 
+
+l2pc_m.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+L2PC_m.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T L2PC_m.o l2pc_m.mod 
+
+mlsfiles.mod:
+	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+MLSFiles.o:
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T MLSFiles.o mlsfiles.mod 
+
+else
 # Custom builds for some modules needed to fool LF95 compiler
 # (for now anyway) so it won't take forever to finish
 # Use the obsolete directory to find hdf5-agnostic versions
@@ -178,6 +207,8 @@ MLSFiles.o:
 	mv mlsfiles.mod mlsfiles.mod-hdf4
 	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
 	mv mlsfiles.mod-hdf4 mlsfiles.mod
+
+endif
 
 endif
 
@@ -327,6 +358,21 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
+ifeq ($(FC_NAME),mark_as_uptodate.sh)
+
+# No custom builds if we're just marking targets as up to date
+# (though actually we should never get here anyway--why
+# mark as up to date if CASCADE=yes? But just in case ...)
+L2GPData.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+
+L2PC_m.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+
+MLSFiles.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+
+else
 # Custom builds for some modules needed to fool LF95 compiler
 # (for now anyway) so it won't take forever to finish
 # Use the obsolete directory to find hdf5-agnostic versions
@@ -355,6 +401,8 @@ MLSFiles.o:
 
 endif
 
+endif
+
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
@@ -380,6 +428,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.8  2002/07/22 22:07:49  pwagner
+# Removed custom builds for Lahey and LinearizedForwardModel
+#
 # Revision 1.7  2002/07/19 17:40:08  pwagner
 # Slow down LF95 build of LinearizedFM by custom build
 #
