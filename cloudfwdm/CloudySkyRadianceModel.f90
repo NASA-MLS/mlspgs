@@ -603,7 +603,7 @@ contains
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
          TT  = TT0	   ! so that dTcir=0
        case ( -1 )
-         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wet,RS,TS,&
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
          TT  = TT0	   ! so that dTcir=0
@@ -616,7 +616,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wet,RS,TS,&
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT,0,RE)                          !CLEAR-SKY
          TT0 = min(TT, TT0)
@@ -628,7 +628,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
               &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-       end select 
+       end select
  
          IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
 
@@ -769,6 +769,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.48  2003/01/30 23:48:17  dwu
+! add icon=-4 for min Tb and some clearups
+!
 ! Revision 1.47  2003/01/23 00:19:09  pwagner
 ! Some cosmetic only (or so I hope) changes
 !
