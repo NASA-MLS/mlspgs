@@ -43,17 +43,12 @@ module ForwardModelIntermediate
 
 contains
 
-  ! ------------------------------------------ DestroyForwardModelIntemediate ---
+  ! -----------------------------  DestroyForwardModelIntemediate  -----
   subroutine DestroyForwardModelIntermediate ( ifm )
 
     use Allocate_Deallocate, only: DEALLOCATE_TEST
 
     type (ForwardModelIntermediate_T), intent(inout) :: ifm
-
-    ! Local variables
-    integer :: i,j                      ! Loop counters
-    integer :: noMAFs, no_tan_hts       ! Dimensions
-    integer :: status                   ! Flag
 
     ! Exectuable code
 
@@ -70,6 +65,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.3  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2002/08/22 00:05:42  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
