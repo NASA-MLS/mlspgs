@@ -338,7 +338,7 @@ contains
        end do
       Endif
       ENDIF
-=======
+
 !??? The next line is almost surely wrong.  It is inconsistent with the
 !??? above comment, and it leads to using RHI without it having a value
 !??? about twenty lines down from here.
@@ -407,6 +407,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.36  2003/02/07 18:01:20  jonathan
+! change  IF ( i_supersat .eq. 0 ) to .ne. 0
+!
 ! Revision 2.35  2003/02/07 03:30:37  vsnyder
 ! Correct i_supersat test?
 !
