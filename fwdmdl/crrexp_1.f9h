@@ -1,0 +1,58 @@
+! $Id$
+
+    complex(rk) :: Z
+    real(rk), parameter :: ROUND = epsilon(1.0_rk)
+!---------------------------
+!     CI = 1/FACTORIAL(I + 2)
+!---------------------------
+    real(rk), parameter :: C1 = 1.0e0_rk/6.0e0_rk
+    real(rk), parameter :: C2 = c1/4.0e0_rk
+    real(rk), parameter :: C3 = c2/5.0e0_rk
+    real(rk), parameter :: C4 = c3/6.0e0_rk
+    real(rk), parameter :: C5 = c4/7.0e0_rk
+!---------------------------
+    real(rk), parameter :: A0 =  .248015873015873015873016e-04_rk
+    real(rk), parameter :: A1 = -.344452080605731005808147e-05_rk
+    real(rk), parameter :: A2 =  .206664230430046597475413e-06_rk
+    real(rk), parameter :: A3 = -.447300111094328162971036e-08_rk
+    real(rk), parameter :: A4 =  .114734027080634968083920e-11_rk
+
+    real(rk), parameter :: B1 = -.249994190011341852652396e+00_rk
+    real(rk), parameter :: B2 =  .249987228833107957725728e-01_rk
+    real(rk), parameter :: B3 = -.119037506846942249362528e-02_rk
+    real(rk), parameter :: B4 =  .228908693387350391768682e-04_rk
+!---------------------------
+    real(rk), parameter :: P1 =  .914041914819518e-09_rk
+    real(rk), parameter :: P2 =  .238082361044469e-01_rk
+    real(rk), parameter :: Q1 = -.499999999085958e+00_rk
+    real(rk), parameter :: Q2 =  .107141568980644e+00_rk
+    real(rk), parameter :: Q3 = -.119041179760821e-01_rk
+    real(rk), parameter :: Q4 =  .595130811860248e-03_rk
+!-----------------------
+    if ( abs(real(x)) <= 0.15e0_rk .and. abs(aimag(x)) <= 0.15e0_rk ) then
+       if ( round < 1.0e-14_rk ) then
+!
+!         Z is a minimax approximation of the series
+!
+!              C6 + C7*X + C8*X**2 + ....
+!
+!         This approximation is accurate to within
+!         1 unit of the 23-rd significant digit.
+!         The resulting value for crrexp is accurate to
+!         within 1 unit of the 33-rd significant
+!         digit.
+!
+          z = ((((a4*x + a3)*x + a2)*x + a1)*x + a0) / &
+            & ((((b4*x + b3)*x + b2)*x + b1)*x + 1.0e0_rk)
+          crrexp_1 = (((((((z*x + c5)*x + c4)*x + c3)*x + c2)*x + &
+            &         c1)*x + 0.5e0_rk)*x + 1.0e0_rk)
+          return
+       end if
+       crrexp_1 = (((p2*x + p1)*x + 1.0e0_rk)/((((q4*x + q3)*x + q2)*x + &
+         &         q1)*x + 1.0e0_rk))
+       return
+    end if
+!
+    crrexp_1 = ( (exp(x) - 0.5e0_rk) - 0.5e0_rk ) / x
+
+! 

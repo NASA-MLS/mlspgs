@@ -1,0 +1,24 @@
+! $Id$
+
+    real(rk) :: C, C1, S
+    real(rk) :: X, Y, ZABS ! zabs is really |z|**2
+
+    x = real(z)
+    y = aimag(z)
+    zabs = x**2 + y**2
+    if ( zabs == 0.0_rk ) then ! avoid dividing by zero
+      crrexp = 1.0_rk
+      return
+    end if
+
+    c = cos(y)
+    s = sin(y)
+    if ( c < 0.0_rk ) then
+      c1 = 1.0_rk - c
+    else ! avoid cancellation for small |y|
+      c1 = s**2 / ( 1.0_rk + c )
+    end if
+
+    crrexp = ( conjg(z) * ( cmplx(c,s) * rexp(x) + cmplx(-c1,s) ) ) / zabs
+
+! 
