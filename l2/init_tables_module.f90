@@ -474,7 +474,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_climatology, s+s_gridded, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
-             np+n_spec_def /) )
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
              begin, f+f_method, t+t_chunkDivideMethod, nr+n_field_type, &
@@ -620,7 +620,7 @@ contains ! =====     Public procedures     =============================
             n+n_dot/))
      call acorn((/begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec/))
      call acorn((/begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec/))
-     call acorn((/begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec/))
+     call acorn((/begin, f+f_sourceGrid, s+s_gridded, s+s_merge, n+n_field_spec/))
      call acorn((/begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_spread, t+t_boolean, n+n_field_type/))
@@ -861,6 +861,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.197  2002/01/26 00:10:03  livesey
+! Modified merge command
+!
 ! Revision 2.196  2002/01/24 00:58:16  livesey
 ! Got the mergeGrids stuff set up properly
 !
