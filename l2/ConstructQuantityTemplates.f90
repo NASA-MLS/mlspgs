@@ -70,12 +70,13 @@ contains ! ============= Public procedures ===================================
       & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: L1BInfo_T, RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
       & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES, IsModuleSpacecraft
     use OUTPUT_M, only: OUTPUT
     use Parse_Signal_m, only: PARSE_SIGNAL
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
+    use QuantityTemplates, only: QuantityTemplate_T, &
+      & DUMP, SetupNewQuantityTemplate, &
       & NullifyQuantityTemplate
     use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
     use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
@@ -291,6 +292,8 @@ contains ! ============= Public procedures ===================================
       frequencyCoordinate = fGrids(fGridIndex)%frequencyCoordinate
       qty%frequencies => fGrids(fGridIndex)%values
       noChans = fGrids(fGridIndex)%noChans
+      ! print *, '1st try: fGridIndex ', fGridIndex
+      ! print *, fGrids(fGridIndex)%values
     else if ( properties(p_xyz) ) then
       ! XYZ quantity (e.g. ECI/ECR stuff)
       frequencyCoordinate = l_xyz
@@ -378,15 +381,29 @@ contains ! ============= Public procedures ===================================
 
     ! Fill the frequency information if appropriate
     if ( got ( f_fGrid ) ) then
+      ! print *, 'About to: qty%GridIndex was ', qty%fGridIndex
+      ! print *, 'qty%sharedFGrid ', qty%sharedFGrid
+      ! print *, fGrids(fGridIndex)%values
       qty%fGridIndex = fGridIndex
       qty%frequencies => fGrids(fGridIndex)%values
+      if ( .not. qty%sharedFGrid ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName,&
+          & 'sharedFGrid needed to be reset' )
+        qty%sharedFGrid = .true.
+      endif
+      ! print *, '2nd try: fGridIndex ', fGridIndex
+      ! print *, 'qty%sharedFGrid ', qty%sharedFGrid
+      ! print *, fGrids(fGridIndex)%values
     end if
     if ( properties ( p_sGrid ) ) then
       qty%sharedFGrid = .false.
+      nullify(qty%frequencies) ! Lest we deallocate a database entry
       call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
         & ModuleName )
       qty%fGridIndex = -sGridIndex        ! Use -ve value to denote sGrid
       qty%frequencies = vGrids(sGridIndex)%surfs(:,1)
+      ! print *, 'Resetting: fGridIndex ', qty%fGridIndex
+      ! print *, qty%frequencies
     end if
 
     ! Set up the remaining stuff
@@ -440,6 +457,7 @@ contains ! ============= Public procedures ===================================
       call display_string ( lit_indices(qty%frequencyCoordinate), advance='yes' )
     end if
 
+    if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
@@ -1194,6 +1212,8 @@ contains ! ============= Public procedures ===================================
     ! Executable code
     qty%sharedHGrid = .false.
     qty%hGridIndex = 0
+    nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
+      & qty%solarZenith, qty%losAngle ) ! Lest we deallocate a database entry
     call Allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
     call Allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
     call Allocate_test ( qty%lon, 1, 1, 'qty%lon(1,1)', ModuleName )
@@ -1221,12 +1241,16 @@ contains ! ============= Public procedures ===================================
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
     qty%verticalCoordinate = l_none
+    nullify(qty%surfs) ! Lest we deallocate a database entry
     call Allocate_test ( qty%surfs, 1, 1, 'qty%surfs(1,1)', ModuleName )
   end subroutine SetupEmptyVGridForQuantity
 
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.115  2004/08/26 18:51:03  pwagner
+! Failsafe feature for shared fgrids
+!
 ! Revision 2.114  2004/08/16 23:42:54  livesey
 ! Added p_flexibleVHGrid in order to allow minor frame dependent
 ! baselines.
