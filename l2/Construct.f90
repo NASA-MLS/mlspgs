@@ -144,6 +144,8 @@ contains ! =====     Public Procedures     =============================
 
     call destroyHGridDatabase ( hGrids )
     call destroyVGridDatabase ( vGrids )
+    if ( timing ) call sayTIme
+
   contains
     subroutine SayTime
       call cpu_time ( t2 )
@@ -174,6 +176,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.4  2000/11/16 02:15:14  vsnyder
+! More work on timing.
+!
 ! Revision 2.3  2000/11/16 02:00:48  vsnyder
 ! Added timing.
 !
