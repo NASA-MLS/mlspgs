@@ -17,6 +17,7 @@ module UNITS
   real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
   real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
+  real(r8), parameter :: Omega = 7.292115D-5 ! Angular velocity of earth
 
   private :: DECLARE, NULL_TREE, UNITS_NAME ! Get them from the source
   ! But it's OK to get PHYQ_... from here
@@ -113,6 +114,10 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.12  2001/12/06 23:45:34  livesey
+! Moved Omega into here. Might be time to have a physical constants
+! module somehere?
+!
 ! Revision 2.11  2001/11/08 00:12:31  livesey
 ! Commented out extinction as it's now a molecule, and so not known yet.
 ! Perhaps we'll sort this out later.
