@@ -32,6 +32,8 @@ climatology
 cloud_der
 cloud_width
 cloud_fov
+cloudRadiance
+cloudRadianceCutOff
 colChannels
 colInstances
 colQuantity
@@ -273,6 +275,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.65  2003/01/10 23:58:08  dwu
+# add cloudRadiance cloudRadianceCutOff
+#
 # Revision 2.64  2003/01/08 23:50:57  livesey
 # Added irregular and sparseQuantities
 #
