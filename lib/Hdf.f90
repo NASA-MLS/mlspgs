@@ -14,6 +14,7 @@ module Hdf
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Contents: 
@@ -661,9 +662,16 @@ contains ! ============================= Local wrappers ======================
     sfwdata_r3 = sfwdata ( sds_id, start, stride, edges, data )
   end function sfwdata_r3
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Hdf
 
 ! $Log$
+! Revision 2.13  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/10/01 22:03:54  pwagner
 ! Fixed RCS Ident Block
 !

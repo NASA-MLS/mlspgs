@@ -31,6 +31,7 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   public :: PVMSendQuantity, PVMReceiveQuantity
@@ -435,9 +436,16 @@ contains ! ================================== Module procedures ============
 
   end subroutine PVMReceiveQuantity
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.13  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/10/06 01:08:53  livesey
 ! Put in the skipMIFGeolocation functionality
 !
