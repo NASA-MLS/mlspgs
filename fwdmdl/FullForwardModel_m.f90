@@ -1568,29 +1568,30 @@ contains
                     & sps_path(indices_c(j),:) )
                 end do
               else
-                ! don't need beta_path_polarized * tanh1_c
+                ! won't need beta_path_polarized * tanh1_c
                 do j = 1, npc
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
                     & sps_path(indices_c(j),:) ) * tanh1_c(j)
                 end do
               end if
 
-              !  adding contributions from nonpolarized molecules 1/4 1/2 1/4 here
+              !  Add contributions from nonpolarized molecules 1/4 1/2 1/4 here
               do j=1, npc
-                  alpha_path_polarized(-1,j)=alpha_path_polarized(-1,j) + 0.25 * alpha_path_c(j)
-                  alpha_path_polarized( 0,j)=alpha_path_polarized( 0,j) + 0.5 * alpha_path_c(j)
-                  alpha_path_polarized( 1,j)=alpha_path_polarized( 1,j) + 0.25 * alpha_path_c(j)
+                alpha_path_polarized(-1,j) = alpha_path_polarized(-1,j) + 0.25 * alpha_path_c(j)
+                alpha_path_polarized( 0,j) = alpha_path_polarized( 0,j) + 0.50 * alpha_path_c(j)
+                alpha_path_polarized( 1,j) = alpha_path_polarized( 1,j) + 0.25 * alpha_path_c(j)
               end do
-
-
 
               ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
 
-              ! Add unpolarized incremental optical depth to diagonal of
-              ! polarized incremental optical depth. 0.5 factors scalar
-              ! unpolarized "power absorption" to get "field absorption"
+              ! We don't add unpolarized incremental optical depth to diagonal
+              ! of polarized incremental optical depth because we added the
+              ! scalar alpha_path to the sigma-, pi and sigma+ parts of
+              ! alpha_path_polarized above.  If we did add it here, we would
+              ! need 0.5 factors to scale unpolarized "power absorption" to
+              ! get "field absorption"
 
               ! Do not trust the compiler to fuse loops
               do j = 1, npc
@@ -2618,6 +2619,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.165  2003/08/12 21:58:37  vsnyder
+! Use trapezoid instead of rectangle to integrate non-GL panels
+!
 ! Revision 2.164  2003/08/12 18:22:10  michael
 ! Contribution of scalar molecules to polarized absorption is now added to
 ! coarse grid alpha_path_polarized (1/4 1/2 1/4) instead of to diagonal of
