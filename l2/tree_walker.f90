@@ -15,7 +15,8 @@ module TREE_WALKER
   use Global_Settings, only: Set_Global_Settings
   use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase
   use HGrid, only: HGrid_T
-  use Init_Tables_Module, only: Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
+  use Init_Tables_Module, only: L_CHISQCHAN, &
+    & L_CHISQMMAF, L_CHISQMMIF, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
@@ -44,7 +45,8 @@ module TREE_WALKER
   use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
   use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
   use Tree, only: DECORATION, NSONS, SUBTREE
-  use VectorsModule, only: DestroyVectorDatabase, Vector_T, VectorTemplate_T
+  use VectorsModule, only: DestroyVectorDatabase, DUMP_VECTORS, &
+    & Vector_T, VectorTemplate_T
   use VGridsDatabase, only: DestroyVGridDatabase, VGrid_T
   use WriteMetadata, only: PCFData_T
 
@@ -157,6 +159,10 @@ subtrees:   do while ( j <= howmany )
               end select
               j = j + 1
             end do subtrees
+            if ( .not. (toggle(gen) .and. levels(gen) > 0 ) .and. &
+              & index(switches,'chi') /= 0 ) &
+              & call dump_vectors( vectors, details=1, &
+              & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( size(chunks) > 1) then
@@ -223,6 +229,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.59  2001/09/10 23:37:32  livesey
+! New GriddedData etc.
+!
 ! Revision 2.58  2001/08/06 18:34:59  pwagner
 ! Now dumps l2gp and l2aux databases when asked
 !
