@@ -8,33 +8,6 @@ module SidsModule
   ! This module evaluates the radiative transfer equation, and maybe
   ! its derivatives.  It is used for SIDS and L2PC runs.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Dump_0, only: dump
-  use Expr_M, only: EXPR
-  use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelWrappers, only: ForwardModel
-  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
-    & ForwardModelStatus_T, DestroyForwardModelIntermediate
-  use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
-    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
-  use Intrinsic, only: PHYQ_DIMENSIONLESS
-  use Lexer_Core, only: Print_Source
-  use MLSCommon, only: R8, MLSCHUNK_T
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-  use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
-    & MatrixElement_T
-  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
-    & FindBlock
-  use MLSL2Timings, only: add_to_retrieval_timing
-  use MoreTree, only: Get_Field_Id, Get_Boolean
-  use Output_M, only: Output
-  use Time_M, only: Time_Now
-  use Toggles, only: Gen, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-  use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
-
   implicit none
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -49,6 +22,34 @@ module SidsModule
 contains
 
   subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, chunk)
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Chunks_m, only: MLSChunk_T
+    use Dump_0, only: dump
+    use Expr_M, only: EXPR
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelWrappers, only: ForwardModel
+    use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+      & ForwardModelStatus_T, DestroyForwardModelIntermediate
+    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
+      f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation, f_singleMAF
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use Lexer_Core, only: Print_Source
+    use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
+      & MatrixElement_T
+    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+      GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
+      & FindBlock
+    use MLSL2Timings, only: add_to_retrieval_timing
+    use MoreTree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Output
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+    use VectorsModule, only: CopyVector, DestroyVectorInfo, Vector_T, operator(-)
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -354,6 +355,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.46  2004/05/19 19:16:12  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.45  2004/03/31 03:59:43  livesey
 ! Added singleMAF option
 !

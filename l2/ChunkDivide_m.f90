@@ -97,7 +97,7 @@ contains ! ===================================== Public Procedures =====
   !----------------------------------------  DestroyChunkDatabase  -----
   subroutine DestroyChunkDatabase ( chunks )
     use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use MLSCommon, only: MLSCHUNK_T
+    use Chunks_m, only: MLSCHUNK_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Warning
 
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
@@ -118,7 +118,7 @@ contains ! ===================================== Public Procedures =====
 
   !----------------------------------------  ReduceChunkDatabase  -----
   subroutine ReduceChunkDatabase ( chunks, firstChunk, lastChunk )
-    use MLSCommon, only: MLSCHUNK_T
+    use Chunks_m, only: MLSCHUNK_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
     type (MLSChunk_T), dimension(:), pointer :: chunks
@@ -145,7 +145,7 @@ contains ! ===================================== Public Procedures =====
   subroutine ChunkDivide ( root, processingRange, l1bInfo, chunks )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dumper, only: DUMP
+    use Chunks_m, only: DUMP, MLSCHUNK_T
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
     use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
@@ -159,7 +159,7 @@ contains ! ===================================== Public Procedures =====
     use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
       & AssembleL1BQtyName
     use Lexer_core, only: PRINT_SOURCE
-    use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, &
+    use MLSCommon, only: R8, RP, L1BINFO_T, TAI93_Range_T, &
       & FINDFIRST
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
       & mls_hdf_version
@@ -1980,9 +1980,10 @@ contains ! ===================================== Public Procedures =====
   ! Arguments
 
     use Allocate_Deallocate, only: Deallocate_Test
+    use Chunks_m, only: MLSChunk_T
     use L1BData, only: L1BData_T, READL1BDATA, &
       & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX, DEALLOCATEL1BDATA
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSCommon, only: L1BInfo_T, RK => R8
     use MLSFiles, only: MLS_HDF_Version
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -2070,6 +2071,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.46  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.45  2003/08/27 20:08:04  livesey
 ! Removed print statements
 !
