@@ -34,7 +34,7 @@ contains
     use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use Dump_0, only: Dump
     use Eval_Spect_Path_m, only: Eval_Spect_Path
-    use FilterShapes_m, only: FilterShapes, DACSFilterShapes
+    use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
       & DeriveFromForwardModelConfig, DestroyForwardModelDerived, &
       & ForwardModelConfig_t
@@ -1419,7 +1419,6 @@ contains
 
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
-
         if ( temp_der ) then
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
             &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
@@ -1575,11 +1574,9 @@ contains
 
     end if
 
-    !  **** End of Printing cycle ...
+    ! **** End of Printing cycle ...
 
     ! Now deallocate lots of stuff
-
-    call destroy_species_data ( fwdModelConf )
 
     call Deallocate_Test ( WC, 'WC', moduleName )
     call Deallocate_Test ( Scat_ang, 'Scat_ang', moduleName )
@@ -1589,8 +1586,8 @@ contains
 
     ! DESTROY THE SPS DATA STUFF
 
-    call deallocate_test ( z_glGrid, 'z_glGrid', moduleName )
-    call deallocate_test ( p_glGrid, 'z_glGrid', moduleName )
+    call deallocate_test ( z_glGrid,     'z_glGrid',     moduleName )
+    call deallocate_test ( p_glGrid,     'z_glGrid',     moduleName )
 
     call deallocate_test ( h_glgrid,     'h_glgrid',     moduleName )
     call deallocate_test ( t_glgrid,     't_glgrid',     moduleName )
@@ -2387,8 +2384,8 @@ contains
             & vel_rel, beta_path_c, t_der_path_flags,                            &
             & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
-          frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k T
-          tanh1_c = tanh( frqhk / t_path_c )
+          frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k
+          tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) dTanh_dT_c(:npc) = &
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
@@ -3184,6 +3181,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.228  2004/11/05 19:38:39  vsnyder
+! Got rid of DerivedFromForwardModel component of config
+!
 ! Revision 2.227  2004/11/01 20:26:35  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !
