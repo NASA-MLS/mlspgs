@@ -177,7 +177,11 @@ program MLSL2
       MLSMessageConfig%LogFileUnit = -2
    endif
 
-   if ( .not. toolkit ) pcf = .false.
+   if ( .not. toolkit ) then
+      pcf = .false.
+      OUTPUT_PRINT_UNIT = max(-1, OUTPUT_PRINT_UNIT)   ! stdout or Fortran unit
+      prunit = OUTPUT_PRINT_UNIT
+   endif
 
    UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
 
@@ -325,6 +329,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.40  2001/05/11 23:47:00  pwagner
+! (Re)Sets prunit depending on toolkit
+!
 ! Revision 2.39  2001/05/11 17:34:31  vsnyder
 ! Improve built-in usage display
 !
