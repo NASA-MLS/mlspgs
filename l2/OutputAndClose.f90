@@ -704,7 +704,9 @@ contains ! =====     Public Procedures     =============================
     end do  ! spec_no
 
     ! Write metadata for any directdata files
-    if ( associated ( directDatabase ) ) then
+    ! No--metadata has already been written
+    ! add_metadata called from Join module back when file was first created
+    if ( associated ( directDatabase )  .and. .FALSE. ) then
       if ( size(DirectDatabase) > 0 .and. TOOLKIT ) then
         meta_name = ' '
         do DB_index=1, size(DirectDatabase)
@@ -1120,6 +1122,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.85  2003/10/16 18:29:35  pwagner
+! Should not try to write metadata twice on DirectWrite files
+!
 ! Revision 2.84  2003/09/19 23:29:27  pwagner
 ! Should not be a metadata error when DirectWrite-ing CH3CN
 !
