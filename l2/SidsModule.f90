@@ -90,8 +90,6 @@ contains
       end select
     end do ! i = 2, nsons(root)
 
-    allocate(tfmi(1),fmi(1))
-    call l2_load(fmc, fmi(1), tfmi(1), i)
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
@@ -110,8 +108,6 @@ contains
       print*,'Got back from forward model'
     end if
     print*,'Done the forward model!!!'
-    stop
-    deallocate(fmi,tfmi)
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -135,6 +131,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.10  2001/03/28 23:47:33  livesey
+! Made it so it can run in a loop
+!
 ! Revision 2.9  2001/03/25 00:50:31  livesey
 ! Interim version, bug with frequency averaging
 !
