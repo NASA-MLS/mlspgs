@@ -1,22 +1,22 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-Allocate_Deallocate.o      VectorsModule.o  	    swapi.o  \
-GriddedData.o  		   dates_module.o  	    swapi_character_array.o  \
-HDF-EOS.o  		   declaration_table.o      swapi_character_scalar.o  \
-Hdf.o  			   dump_0.o  		    swapi_double.o  \
-L1BData.o  		   error_handler.o  	    swapi_integer.o  \
-L2GPData.o  		   expr_m.o  		    swapi_real.o  \
-MLSCF.o  		   gridded_data_module.o    symbol_table.o  \
-MLSCommon.o  		   hash.o  		    symbol_types.o  \
-MLSMessageModule.o  	   heights_module.o  	    table_dumper.o  \
-MLSNumerics.o  		   intrinsic.o  	    table_generator.o  \
-MLSPCF.o  		   io_stuff.o  		    toggles_core.o  \
-MLSSignalNomenclature.o    lexer_core.o  	    trace_m.o  \
-MLSStrings.o  		   lexer_m.o  		    tree.o  \
-QuantityTemplates.o  	   output_m.o  		    tree_types.o  \
-SDPToolkit.o  		   parser.o  		    units.o  \
-SDPToolkitSubstitute.o     string_table.o  \
+Allocate_Deallocate.o      SDPToolkitSubstitute.o    string_table.o  \
+GriddedData.o  		   VectorsModule.o  	     swapi.o  \
+HDF-EOS.o  		   dates_module.o  	     swapi_character_array.o  \
+Hdf.o  			   declaration_table.o       swapi_character_scalar.o  \
+L1BData.o  		   dump_0.o  		     swapi_double.o  \
+L2GPData.o  		   error_handler.o  	     swapi_integer.o  \
+MLSCF.o  		   expr_m.o  		     swapi_real.o  \
+MLSCommon.o  		   gridded_data_module.o     symbol_table.o  \
+MLSMessageModule.o  	   hash.o  		     symbol_types.o  \
+MLSNumerics.o  		   heights_module.o  	     table_dumper.o  \
+MLSPCF.o  		   intrinsic.o  	     table_generator.o  \
+MLSSignalNomenclature.o    io_stuff.o  		     toggles_core.o  \
+MLSStrings.o  		   lexer_core.o  	     trace_m.o  \
+Molecules.o  		   lexer_m.o  		     tree.o  \
+QuantityTemplates.o  	   output_m.o  		     tree_types.o  \
+SDPToolkit.o  		   parser.o  		     units.o  \
  
 # using f90makedep.pl to calculate dependencies 
 Allocate_Deallocate.o: Allocate_Deallocate.f90 MLSMessageModule.o
@@ -32,7 +32,7 @@ gridded_data_module.o: gridded_data_module.f90 MLSCommon.o MLSMessageModule.o \
 	MLSStrings.o dates_module.o
 Hdf.o: Hdf.f90 MLSCommon.o
 heights_module.o: heights_module.f90 MLSCommon.o MLSMessageModule.o
-intrinsic.o: intrinsic.f90 symbol_table.o symbol_types.o
+intrinsic.o: intrinsic.f90 Molecules.o symbol_table.o symbol_types.o
 L1BData.o: L1BData.f90 MLSCommon.o MLSMessageModule.o
 L2GPData.o: L2GPData.f90 Allocate_Deallocate.o HDF-EOS.o Hdf.o MLSCommon.o \
 	MLSMessageModule.o swapi.o addItemToDatabase.f9h
@@ -45,6 +45,7 @@ MLSNumerics.o: MLSNumerics.f90 MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSSignalNomenclature.o: MLSSignalNomenclature.f90 MLSCommon.o \
 	MLSMessageModule.o MLSStrings.o
 MLSStrings.o: MLSStrings.f90 MLSMessageModule.o
+Molecules.o: Molecules.f90 symbol_table.o symbol_types.o
 output_m.o: output_m.f90 MLSMessageModule.o
 parser.o: parser.f90 lexer_core.o lexer_m.o output_m.o symbol_table.o \
 	symbol_types.o toggles_core.o tree.o tree_types.o
