@@ -87,6 +87,7 @@ logarithmic
 lowcloud
 
 ncep
+negativeprecision
 newtonian
 norm
 numF # Number of function values used by the Newtonian solver
@@ -111,6 +112,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.12  2002/04/04 16:32:42  livesey
+# Added negative error bar stuff
+#
 # Revision 2.11  2002/03/13 22:01:12  livesey
 # Changed explicitFill to fill
 #
