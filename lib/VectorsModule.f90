@@ -214,18 +214,26 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 contains ! =====     Public Procedures     =============================
 
   !-------------------------------------------------  AddToVector  -----
-  subroutine AddToVector ( X, Y )  ! X = X + Y
+  subroutine AddToVector ( X, Y, Scale )  ! X = X + [Scale*] Y
     ! Dummy arguments:
     type(Vector_T), intent(inout) :: X
     type(Vector_T), intent(in) :: Y
+    real(r8), intent(in), optional :: Scale
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
-    do i = 1, size(x%quantities)
-      x%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
-    end do
+    if ( present(scale) ) then
+      do i = 1, size(x%quantities)
+        x%quantities(i)%values = x%quantities(i)%values + &
+          & scale * y%quantities(i)%values
+      end do
+    else
+      do i = 1, size(x%quantities)
+        x%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
+      end do
+    end if
   end subroutine AddToVector
 
   !--------------------------------------------------  AddVectors  -----
@@ -1775,6 +1783,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.80  2002/03/13 22:00:16  livesey
+! Changed m_explicitFill to m_fill
+!
 ! Revision 2.79  2002/03/08 08:06:32  livesey
 ! Added explicit fill mask
 !
