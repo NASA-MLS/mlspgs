@@ -20,7 +20,7 @@ module ForwardModelSupport
     & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
-    & F_DEFAULT_spectroscopy
+    & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Field_ID, GET_SPEC_ID
   use Parse_Signal_m, only: PARSE_SIGNAL
@@ -103,7 +103,8 @@ contains ! =====     Public Procedures     =============================
     if ( parallel%master ) return
 
     error = 0
-    if ( toggle(gen) ) call trace_begin ( 'ForwardModelGlobalSetup', root )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_begin ( 'ForwardModelGlobalSetup', root )
 
     ! "Root" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
@@ -199,7 +200,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( toggle(gen) ) call trace_end ( 'ForwardModelGlobalSetup' )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_end ( 'ForwardModelGlobalSetup' )
     any_errors = error
   end subroutine ForwardModelGlobalSetup
 
@@ -291,7 +293,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
-    & ( ROOT, VGRIDS ) result ( info )
+    & ( ROOT, VGRIDS, GLOBAL ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
@@ -306,6 +308,7 @@ contains ! =====     Public Procedures     =============================
     !                                     Indexes either a "named" or
     !                                     "spec_args" vertex. Local variables
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
+    logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: COMMONSIZE               ! Dimension
@@ -340,7 +343,8 @@ contains ! =====     Public Procedures     =============================
     nullify ( info%molecules, info%moleculeDerivatives, info%signals ) ! for Sun's rubbish compiler
 
     error = 0
-    if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_begin ( "ConstructForwardModelConfig", root )
     if ( node_id(root) == n_named ) then
       name = subtree(1, root)
       key = subtree(2, root)
@@ -350,6 +354,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Set sensible defaults
+    info%globalConfig = global
     info%do_conv = .false.
     info%do_baseline = .false.
     info%do_freq_avg = .false.
@@ -473,6 +478,12 @@ contains ! =====     Public Procedures     =============================
           call deallocate_test ( channels, 'channels', ModuleName )
           call deallocate_test ( signalInds, 'signalInds', ModuleName )
         end do                          ! End loop over listed signals
+      case  ( f_specificQuantities )
+        call Allocate_test ( info%specificQuantities, nsons(son)-1, &
+          & 'info%specificQuantities', ModuleName )
+        do j = 1, nsons(son) - 1
+          info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
+        end do
       case ( f_phiWindow )
         call expr ( subtree(2,son), units, value, type )
         info%phiWindow = value(1)
@@ -554,7 +565,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An error occured' )
-    if ( toggle(gen) ) call trace_end ( "ConstructForwardModelConfig" )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_end ( "ConstructForwardModelConfig" )
 
   contains
     recursive subroutine CountElements ( root, count )
@@ -653,6 +665,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.36  2002/09/25 20:08:26  livesey
+! Added globalConfig and specificQuantities
+!
 ! Revision 2.35  2002/08/21 23:31:52  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
