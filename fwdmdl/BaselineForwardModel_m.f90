@@ -10,10 +10,12 @@ module BaselineForwardModel_m
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
     & VALIDATEVECTORQUANTITY
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK
+  use MatrixModule_0, only: SPARSIFY
   use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSNumerics, only: HUNT
 
   ! This module contains a special forward model for baseline related effects.
 
@@ -80,6 +82,7 @@ contains ! ======================================== BaselineForwardModel ======
     real (rp), dimension(:), pointer :: INSTWT1 ! Weight for upper point
     real (rp), dimension(:), pointer :: SURFWT0 ! Weight for lower point
     real (rp), dimension(:), pointer :: SURFWT1 ! Weight for upper point
+    real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
     real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
@@ -150,7 +153,7 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( instWt0, noMIFs, 'instWt0', ModuleName )
       call Allocate_test ( instWt1, noMIFs, 'instWt1', ModuleName )
       
-      call Hunt ( baseline%template%phi, ptan%template%phi(:,maf), inst0 )
+      call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
       inst1 = min ( inst0+1, baseline%template%noInstances )
       where ( inst1 /= inst0 )
         instWt1 = ( ptan%template%phi(:,maf) - baseline%template%phi(1,inst0) ) / &
@@ -168,7 +171,7 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( surfWt0, noMIFs, 'surfWt0', ModuleName )
       call Allocate_test ( surfWt1, noMIFs, 'surfWt1', ModuleName )
       
-      call Hunt ( baseline%template%surfs, ptan%values(:,maf), surf0 )
+      call Hunt ( baseline%template%surfs(:,1), ptan%values(:,maf), surf0 )
       surf1 = min ( surf0+1, baseline%template%noSurfs )
       where ( surf1 /= surf0 )
         surfWt1 = ( ptan%values(:,maf) - baseline%template%surfs(surf0,1) ) / &
@@ -273,7 +276,8 @@ contains ! ======================================== BaselineForwardModel ======
         do instance = lbound(kBit,3), ubound(kBit,3)
           colBlock = FindBlock ( jacobian%col, baseline%index, instance )
           ! Don't have it deallocate kBit
-          call Sparsify ( kBit(:,:,instance), jacobian%block(rowBlock,colBlock) )
+          kBit2 => kBit(:,:,instance)
+          call Sparsify ( kBit2, jacobian%block(rowBlock,colBlock) )
         end do
 
         deallocate ( kBit, STAT=status )
@@ -300,6 +304,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.3  2001/10/02 20:20:46  livesey
+! First linkable version
+!
 ! Revision 2.2  2001/10/02 20:03:58  livesey
 ! First compilable version
 !
