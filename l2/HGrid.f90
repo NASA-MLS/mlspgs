@@ -42,6 +42,7 @@ contains ! =====     Public Procedures     =============================
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
     & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
+    use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID, &
       & ADDHGRIDTODATABASE
@@ -54,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
@@ -406,13 +407,14 @@ contains ! =====     Public Procedures     =============================
     ! This is part of ConstructHGridFromMLSCFInfo
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_m, only: MLSChunk_T
     use Dump_0, only: DUMP
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
     use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, &
       & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8
+    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
@@ -683,12 +685,13 @@ contains ! =====     Public Procedures     =============================
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_m, only: MLSChunk_T
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSCommon, only: L1BInfo_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -1082,10 +1085,11 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
     & instrumentModuleName, l1bInfo )
 
+    use Chunks_m, only: MLSChunk_T
     use HGridsDatabase, only: HGRID_T, NULLIFYHGRID, CREATEEMPTYHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
+    use MLSCommon, only: L1BInfo_T, NameLen, R8
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
     use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
@@ -1240,7 +1244,8 @@ contains ! =====     Public Procedures     =============================
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use MLSCommon, only: MLSCHUNK_T, L1BINFO_T, TAI93_RANGE_T
+    use Chunks_m, only: MLSChunk_T
+    use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T
     use L2GPData, only: L2GPDATA_T
     use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
     use MoreTree, only: GET_SPEC_ID
@@ -1356,7 +1361,7 @@ contains ! =====     Public Procedures     =============================
   ! This routine is CURRENTLY NOT USED!
   subroutine ComputeNextChunksHGridOffsets ( chunks, chunkNo, hGrids )
     use Allocate_Deallocate, only :ALLOCATE_TEST
-    use MLSCommon, only: MLSCHUNK_T
+    use Chunks_m, only: MLSChunk_T
     use HGridsDatabase, only: HGRID_T
     ! Dummy arguments
     type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
@@ -1437,6 +1442,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.61  2004/05/19 19:16:10  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.60  2004/03/24 17:55:19  livesey
 ! Just tidying up after myself
 !
