@@ -68,6 +68,7 @@ contains
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlock
     use MLSCommon, only: MLSCHUNK_T, R8, RV
+    use MLSL2Options, only: SKIPRETRIEVAL
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -316,6 +317,7 @@ contains
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.UpdateMask" )
       case ( s_retrieve )
+        if ( SKIPRETRIEVAL ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
         columnScaling = l_none
@@ -603,6 +605,7 @@ contains
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
+        if ( SKIPRETRIEVAL ) cycle
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
       case ( s_time )
@@ -2238,6 +2241,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.250  2003/09/05 23:24:09  pwagner
+! Skips calls to Retrieve, SIDS if SKIPRETRIEVAL
+!
 ! Revision 2.249  2003/07/09 23:49:13  vsnyder
 ! Remove numerous unreferenced USE names
 !
