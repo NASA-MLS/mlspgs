@@ -7,13 +7,14 @@ module MLSFiles               ! Utility file routines
   use Hdf, only: DFACC_CREATE, DFACC_READ, sfstart, sfend
   use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
   use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
-  use HDFEOS, only: gdclose, gdopen, swclose, swopen
-  use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath
+  use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
+  use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
+    & he5_gdopen, he5_gdclose
   use machine, only: io_error
   use MLSCommon, only: i4
   use MLSStrings, only: Capitalize, LowerCase, Reverse
   use output_m, only: blanks, output
-  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
+  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
     & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
     & PGSd_IO_Gen_WSeqFrm, PGSd_IO_Gen_WSeqUnf, & 
@@ -27,9 +28,12 @@ module MLSFiles               ! Utility file routines
 !   Until then, just declare them as external
 !    & PGS_MET_SFstart, PGS_MET_SFend, &
   implicit none
-  public
 
-  private :: ID
+  private 
+
+  public :: GetPCFromRef, mls_io_gen_openF, &
+  & mls_io_gen_closeF, split_path_name, &
+  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -53,21 +57,36 @@ module MLSFiles               ! Utility file routines
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
    integer, parameter :: DEFAULT_HDFVERSION = 5
+   
+  ! Given this hdfVersion, try to autorecognize hdfversion
+  ! then perform appropriate version of open/close; i.e., forgiving
+  ! (must *not* be 4 or 5)
+  integer, parameter, public :: WILDCARDHDFVERSION=9
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
   ! These are error codes that may be returned by GetPCFromRef
-  integer, parameter :: NAMENOTFOUND=-1
-  integer, parameter :: INVALIDPCRANGE=NAMENOTFOUND-1
+
+  integer, parameter, public :: NAMENOTFOUND=-1
+  integer, parameter, public :: INVALIDPCRANGE=NAMENOTFOUND-1
 
   ! These are error codes that may be returned by mls_io_gen_openF
-  integer, parameter :: UNKNOWNFILEACCESSTYPE=-999
-  integer, parameter :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
-  integer, parameter :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
-  integer, parameter :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
-  integer, parameter :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
 
+  integer, parameter, public :: UNKNOWNFILEACCESSTYPE=-999
+  integer, parameter, public :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
+  integer, parameter, public :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
+  integer, parameter, public :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+  integer, parameter, public :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
+  integer, parameter, public :: NOSUCHHDFVERSION=NOPCIFNOTOOLKIT+1
+
+  ! These are error codes that may be returned by mls_io_gen_openF
+  ! or by mls_hdf_version if you call it directly
+
+  integer, parameter, public :: MUSTSUPPLYFILENAME=NOSUCHHDFVERSION+1
+  integer, parameter, public :: ERRORINH5FFUNCTION=MUSTSUPPLYFILENAME+1
+  integer, parameter, public :: WRONGHDFVERSION=ERRORINH5FFUNCTION+1
+  
   ! Whether to use PGS_MET commands in mls_sf(start)(end)
   ! (The alternative is to use hdf5 calls directly)
   logical, parameter :: PGS_MET4MLS_SF = .true.
@@ -262,7 +281,8 @@ contains
 
     integer, optional, intent(in) :: hdfVersion
 
-    ! Local variables
+    ! Local
+    integer :: myhdfVersion
 
     logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
@@ -350,6 +370,13 @@ contains
       if(the_eff_mode == 'pg') the_eff_mode = 'op'
    endif
 
+   ! hdfVersion unimportant for 'pg' or 'op' operations
+   if (the_eff_mode == 'pg' .or. the_eff_mode == 'op' ) then
+     myhdfVersion = WILDCARDHDFVERSION
+   else
+     myhdfVersion = mls_hdf_version(trim(myName), hdfVersion, FileAccessType)             
+   endif
+
    if ( debug ) then
        call output('Arguments and options in call to mls_io_gen_openF', &
        & advance='yes')
@@ -373,6 +400,10 @@ contains
        call output(returnStatus, advance='yes')
    endif
 
+   if ( myhdfVersion < 0 ) then
+     ErrType = myhdfVersion
+     return
+   endif
     your_version = version
     select case (the_eff_mode)
 
@@ -385,47 +416,55 @@ contains
        endif
 
     case('sw')
-      if(returnStatus == 0) then
+      if(returnStatus /= 0) then
+        ErrType = returnStatus
+        return
+      elseif(myhdfVersion == 5) then
         theFileHandle = he5_swopen(trim(myName), &
           & hdf2hdf5_fileaccess(FileAccessType))
-        if(theFileHandle <= 0) then
-          ErrType = min(theFileHandle, -1)
-        else
-          ErrType = 0
-        endif
-        if ( debug ) then
-            call output('Args and results from he5_swopen', &
-            & advance='yes')
-            call output('File Name: ', advance='no')
-            call blanks(2)
-            call output(trim(myName), advance='yes')
-            call output('File Access: ', advance='no')
-            call blanks(2)
-            call output(hdf2hdf5_fileaccess(FileAccessType), advance='yes')
-            call output('theFileHandle: ', advance='no')
-            call blanks(2)
-            call output(theFileHandle, advance='yes')
-        endif
+      elseif(myhdfVersion == 4) then
+        theFileHandle = swopen(trim(myName), FileAccessType)
       else
-        ErrType = returnStatus
+        ErrType = NOSUCHHDFVERSION
+        return
       endif
+      if(theFileHandle <= 0) then                                          
+        ErrType = min(theFileHandle, -1)                                   
+      else                                                                 
+        ErrType = 0                                                        
+      endif                                                                
+      if ( debug ) then                                                    
+          call output('Args and results from he5_swopen', &                
+          & advance='yes')                                                 
+          call output('File Name: ', advance='no')                         
+          call blanks(2)                                                   
+          call output(trim(myName), advance='yes')                         
+          call output('File Access: ', advance='no')                       
+          call blanks(2)                                                   
+          call output(hdf2hdf5_fileaccess(FileAccessType), advance='yes')  
+          call output('theFileHandle: ', advance='no')                     
+          call blanks(2)                                                   
+          call output(theFileHandle, advance='yes')                        
+      endif                                                                
 
     case('gd')
-      if(returnStatus == 0) then
-        theFileHandle = gdopen(trim(myName), FileAccessType)
-
-!  (((((((( When we convert gridded data types to hdf5 ))))))
-!        theFileHandle = he5_gdopen(trim(myName), &
-!          & hdf2hdf5_fileaccess(FileAccessType))
-
-        if(theFileHandle <= 0) then
-          ErrType = min(theFileHandle, -1)
-        else
-          ErrType = 0
-        endif
-      else
+      if(returnStatus /= 0) then
         ErrType = returnStatus
+        return
+      elseif(myhdfVersion == 5) then
+        theFileHandle = he5_gdopen(trim(myName), &
+          & hdf2hdf5_fileaccess(FileAccessType))
+      elseif(myhdfVersion == 4) then
+        theFileHandle = gdopen(trim(myName), FileAccessType)
+      else
+        ErrType = NOSUCHHDFVERSION
+        return
       endif
+      if(theFileHandle <= 0) then         
+        ErrType = min(theFileHandle, -1)  
+      else                                
+        ErrType = 0                       
+      endif                               
 
     case('op')
       theFileHandle = FH_ON_ERROR
@@ -609,19 +648,25 @@ contains
 
   ! If must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
-  function mls_io_gen_closeF(toolbox_mode, theFileHandle, hdfVersion) &
+  function mls_io_gen_closeF(toolbox_mode, theFileHandle, &
+    & FileName, hdfVersion) &
     &  result (ErrType)
 
     ! Dummy arguments
     integer(i4)  :: ErrType
     integer(i4), intent(IN)  :: theFileHandle
     character (LEN=*), intent(IN)   :: toolbox_mode
+    character (LEN=*), optional, intent(IN)   :: FileName
 
     integer, optional, intent(in) :: hdfVersion
-    ! Local variables
+
+    ! Local
+    integer :: myhdfVersion
 
     logical, parameter :: PRINT_EVERY_CLOSE=.false.
     character (LEN=2) :: the_eff_mode
+
+    ! begin
 
    if(UseSDPToolkit) then
    ! Using Toolkit
@@ -632,16 +677,42 @@ contains
       if(the_eff_mode == 'pg') the_eff_mode = 'cl'
    endif
 
+   ! hdfVersion unimportant for 'pg' or 'cl' operations
+   if (the_eff_mode == 'pg' .or. the_eff_mode == 'cl' ) then
+     ErrType = 0
+   elseif ( present(FileName) ) then
+     myhdfVersion = mls_hdf_version(trim(FileName), hdfVersion, DFACC_READ)
+     if ( myhdfVersion < 0 ) then
+        ErrType = myhdfVersion
+        return
+     endif
+   elseif ( present(hdfVersion) ) then
+     myhdfVersion = hdfVersion
+   else
+     myhdfVersion = DEFAULT_HDFVERSION
+   endif
     select case (the_eff_mode)
 
     case('pg')
       ErrType = PGS_IO_Gen_CLoseF(theFileHandle)
 
     case('sw')
-      ErrType = he5_swclose(theFileHandle)
+      if(myhdfVersion == 5) then
+        ErrType = he5_swclose(theFileHandle)
+      elseif(myhdfVersion == 4) then
+        ErrType = swclose(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
 
     case('gd')
-      ErrType = gdclose(theFileHandle)
+      if(myhdfVersion == 5) then
+        ErrType = he5_gdclose(theFileHandle)
+      elseif(myhdfVersion == 4) then
+        ErrType = gdclose(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
 
     case('cl')
       close(unit=theFileHandle, iostat=ErrType)		
@@ -772,8 +843,24 @@ contains
       integer :: mls_inqswath
     integer, optional, intent(in) :: hdfVersion
 
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
+
     ! begin
-    mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
+    if(myhdfVersion == 5) then
+      mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
+    elseif(myhdfVersion == 4) then
+      mls_inqswath = swinqswath(FileName, swathList, strBufSize)
+    else                          
+      mls_inqswath = NOSUCHHDFVERSION  
+    endif                         
 
   end function mls_inqswath
 
@@ -866,37 +953,71 @@ contains
 
   ! ---------------------------------------------  mls_hdf_version  -----
 
-  ! This function returns a character string depending on hdf version:
-  ! hdf version         returned value
-  !    hdf4                 hdf4
-  !    hdf5                 hdf5
-  !  unknown                ????
+  ! This function returns the hdf version of the file:
+  ! hdf version         returned value   integer
+  !    hdf4                 hdf4           4
+  !    hdf5                 hdf5           5
+  !  unknown                ????      NOSUCHHDFVERSION
 
-  function mls_hdf_version(FileName)  result (hdf_version)
+  function mls_hdf_version(FileName, preferred_version, AccessType) &
+   & result (hdf_version)
 
     ! Arguments
 
-      character (len=*), intent(in) :: FILENAME
-      character (len=4)             :: hdf_version
+      character (len=*), intent(in)  :: FILENAME
+   !   character (len=4)             :: hdf_version
+      integer(i4), optional, intent(in)  :: PREFERRED_VERSION
+      integer(i4), optional, intent(in)  :: ACCESSTYPE
+      integer(i4)                        :: HDF_VERSION
 
       integer :: returnStatus
+      integer :: myPreferred_Version
+      integer :: myAccessType
       logical :: is_hdf5
+
     ! begin
-    returnStatus = 0
-    is_hdf5 = (DEFAULT_HDFVERSION == 5)
-!    if ( PGS_MET4MLS_SF ) then
-!      hdf_version = '????'
-!      return
-!    endif
-    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
-    if ( returnStatus /= 0 ) then
-      hdf_version = '????'
-    elseif ( is_hdf5 ) then
-      hdf_version = 'hdf5'
+
+    if (FileName == '') then
+      HDF_VERSION = MUSTSUPPLYFILENAME
+      return
+    endif
+    
+    if ( present(preferred_version) ) then
+      myPreferred_Version = preferred_version
     else
-      hdf_version = 'hdf4'
+      myPreferred_Version = WILDCARDHDFVERSION
+    endif
+    if ( present(accesstype) ) then
+      myAccessType = accesstype
+    else
+      myAccessType = DFACC_READ
     endif
 
+   ! If the file is being newly created, no way to find its hdf version yet
+    if ( myAccessType == DFACC_CREATE ) then
+      hdf_version = myPreferred_Version
+      return
+    endif
+    
+    returnStatus = 0
+    is_hdf5 = (DEFAULT_HDFVERSION == 5)
+    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
+    if ( returnStatus /= 0 ) then
+!      hdf_version = '????'
+      hdf_version = ERRORINH5FFUNCTION
+    elseif ( is_hdf5 ) then
+!      hdf_version = 'hdf5'
+      hdf_version = 5
+    else
+!      hdf_version = 'hdf4'
+      hdf_version = 4
+    endif
+
+   ! hdf_version ==  myPreferred_Version ?
+   if ( myPreferred_Version /= WILDCARDHDFVERSION &
+     & .and. &
+     & hdf_version /= myPreferred_Version ) &
+     & hdf_version = WRONGHDFVERSION
 
   end function mls_hdf_version
 
@@ -906,6 +1027,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.5  2002/01/26 00:14:47  pwagner
+! Accepts hdfVersion optional arg; restored hdf5 module use
+!
 ! Revision 1.4  2002/01/23 22:41:21  pwagner
 ! Handles optional hdfVersion parameter
 !
