@@ -1,6 +1,6 @@
 module CREATE_BETA_M
   use MLSCommon, only: R8, RP, IP
-  use ABS_CS_AIR_CONT_M, only: ABS_CS_AIR_CONT
+  use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
   use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
   use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
   implicit NONE
@@ -16,9 +16,9 @@ contains
 ! *****     Public Subroutine     **************************************
 ! --------------------------------------     Create_beta     -----
 !
-  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfaw, v0s,  &
-         &   x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,&
-         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,  &
+  Subroutine Create_beta (Spectag, cont, pressure, Temp, Fgr, nl, pfaw,  &
+         &   v0s, x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,  &
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,              &
          &   t_power, dbeta_dw, dbeta_dn, dbeta_dv)
 !
 !  For a given frequency and height, compute beta_value function.
@@ -26,6 +26,7 @@ contains
 !
 ! Inputs:
   INTEGER(ip), INTENT(in) :: SPECTAG ! molecule id tag
+  REAL(rp), INTENT(in) :: cont(:) ! continuum parameters
   REAL(rp), INTENT(in) :: pressure ! pressure in hPa
   REAL(rp), INTENT(in) :: temp ! temperature in K
   REAL(rp), INTENT(in) :: fgr ! frequency in MHz
@@ -84,12 +85,12 @@ contains
 !
     else if (spectag == 28964) then
 !
-!  Dry air contribution
+!  Dry air contribution (N2)
 !
-      beta_value = abs_cs_air_cont(Temp,Pressure,Fgr)
+      beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       IF (PRESENT(t_power)) THEN
         dw = Temp + 10.0_rp
-        ra = abs_cs_air_cont(dw,Pressure,Fgr)
+        ra = abs_cs_n2_cont(cont,dw,Pressure,Fgr)
         t_power = Log(ra/beta_value)/Log(dw/Temp)
       ENDIF
       Return
@@ -104,7 +105,7 @@ contains
 !
     end if
 !
-!  Check for anything but liquid water and dry air:
+!  Check for anything but liquid water and dry air (N2):
 !
     IF(PRESENT(DBETA_DW).OR.PRESENT(DBETA_DN).OR.PRESENT(DBETA_DV)) THEN
 !
@@ -206,6 +207,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.14.2.1  2001/09/10 10:02:32  zvi
 ! Cleanup..comp_path_entities_m.f90
 !

@@ -79,11 +79,10 @@ contains
     end do
     DO j = 1, n_path
       k = path_inds(j)
-      CALL create_beta(Spectag,p_path(k),t_path(k),Frq,no_of_lines, &
-        &  LineWidth,gl_slabs(k,i)%v0s,gl_slabs(k,i)%x1,            &
-        &  gl_slabs(k,i)%y,gl_slabs(k,i)%yi,gl_slabs(k,i)%slabs1,   &
-        &  bb,gl_slabs(k,i)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,    &
-        &  DBETA_DV=vm)
+      CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),t_path(k), &
+        &  Frq,no_of_lines,LineWidth,gl_slabs(k,i)%v0s,gl_slabs(k,i)%x1, &
+        &  gl_slabs(k,i)%y,gl_slabs(k,i)%yi,gl_slabs(k,i)%slabs1,bb,     &
+        &  gl_slabs(k,i)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm)
       beta_path(j,i) = bb
       if(PRESENT(dbeta_dw_path)) dbeta_dw_path(j,i) = v0
       if(PRESENT(dbeta_dn_path)) dbeta_dn_path(j,i) = vp
@@ -105,13 +104,13 @@ contains
       DO j = 1 , n_path
         k = path_inds(j)
         tm = t_path_m(k)
-        CALL create_beta(Spectag,p_path(k),tm,Frq,no_of_lines,            &
-        &    LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_m(k,i)%x1,            &
+        CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),tm,Frq,   &
+        &    no_of_lines,LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_m(k,i)%x1,&
         &    gl_slabs_m(k,i)%y,gl_slabs_m(k,i)%yi,gl_slabs_m(k,i)%slabs1, &
         &    bm,gl_slabs_m(k,i)%dslabs1_dv0)
         tp = t_path_p(k)
-        CALL create_beta(Spectag,p_path(k),tp,Frq,no_of_lines,            &
-        &    LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_p(k,i)%x1,            &
+        CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),tp,Frq,   &
+        &    no_of_lines,LineWidth,gl_slabs_m(k,i)%v0s,gl_slabs_p(k,i)%x1,&
         &    gl_slabs_p(k,i)%y,gl_slabs_p(k,i)%yi,gl_slabs_p(k,i)%slabs1, &
         &    bp,gl_slabs_p(k,i)%dslabs1_dv0)
         t  = t_path(k)
@@ -130,6 +129,9 @@ contains
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.22.2.1  2001/09/10 10:02:32  zvi
 ! Cleanup..comp_path_entities_m.f90
 !
