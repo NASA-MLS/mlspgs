@@ -13,6 +13,9 @@ begin Fill
   Transfer, source=stateCore, destination=r1aX
   Fill, quantity=r1aY.band1, method=l2aux, sourceL2AUX=b1CoreInput
   Fill, quantity=r1aY.band32, method=l2aux, sourceL2AUX=b32CoreInput
+
+  Fill, quantity=r1aY.band1, method=resetUnusedRadiances
+  Fill, quantity=r1aY.band32, method=resetUnusedRadiances
 end Fill
   
   
