@@ -147,6 +147,11 @@ contains
 !       &           1.0_rp/(y2 + (xa+gx)**2))
 
       ! 3pt hermite quadrature
+!     u = y * ( gw3(1) / (y2+x*x) + &
+!       &       gw3(2) * ( 1.0_rp / ( y2 + (xa-gx3)**2 ) +
+!       &                  1.0_rp / ( y2 + (xa+gx3)**2 ) ) )
+!     except we eliminate one divide by combining the last two terms
+
       f = y2 + x * x
       d1 = f + gx3_sq
       d2 = xa * gx3_2
@@ -267,7 +272,7 @@ contains
 
     ! For 2-pt Gauss-Hermite
 !   real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-!   real(rp), parameter :: GW = 0.88622692545277_rp / Pi
+!   real(rp), parameter :: GW = 0.5_rp / sqrtPi
 
     real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
     real(rp) :: P, Q, R, S, VV, XA, X2, Y2
@@ -281,19 +286,82 @@ contains
 ! I am assuming that the OR are evaluated sequentially until the first
 ! true is found. Also routines are ordered according to speed
 
-!    if ( y + 0.666666*xa > 100.0_rp ) then
-! NOTE: clorentz is not accurate enough for spectral derivative
-!       computations. This may be something for Van S. to investigate
-!       later.
+    if ( y + 0.666666*xa > 100.0_rp ) then
 
-!      uv = clorentz(xa,y)
+!{    clorentz is one term of the asymptotic expansion
+!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+!     This exactly cancels in the derivative
+!     $w^\prime(z) = \frac{2i}{\sqrt\pi} - 2 z w(z)$, and is therefore not
+!     accurate enough for derivative computations.
 
-!    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
+      if ( present(du) .or. present(dv) ) then
+        !{ Compute the derivative first using two terms of the asymptotic
+        ! expansion, then compute w(z) from it, to avoid cancellation
+        !%
+        ! Taking the first three terms,
+        ! $w(z) \approx \frac{i}{\sqrt{\pi}z}
+        !   \left( 1 + \frac1{2z^2}\right)$.
+        !%
+        ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
+        ! $w^\prime(z) \approx -\frac{i}{\sqrt{\pi}z^2}$.
+        !%
+        ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
+        ! gives
+        !%
+        ! $w^\prime(z) \approx a y_2 - i a x_2$.
+        !%
+        ! This is four multiplies and three adds cheaper than in the next
+        ! region inward.
 
-    if ( y + 0.6875_rp * xa > 11.0_rp ) then
+        r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
+        s = -y * r                  ! Im(1/z)
+        r = x * r                   ! Re(1/z)
+
+        x2 = ( r - s ) * ( r + s )  ! Re(1/z^2)
+        y2 = 2.0 * r * s            ! Im(1/z^2)
+
+        p = a * y2                  ! Re(w')
+        q = -a * x2                 ! Im(w')
+
+        !{ Writing $z^{-1} = r + i s$ and using
+        ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
+        ! we have
+        !
+        ! $w(z) \approx \frac12\left( -r p + s q \right) - a s +
+        !       i \left[\frac12\left( -r q - s p \right) + a r \right]$.
+
+        u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
+        if ( present(v) ) v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
+        if ( present(du) ) du = p
+        if ( present(dv) ) dv = q
+
+      else ! no derivatives; use one term.  This isn't quite as accurate.
+
+        ! uv = clorentz(xa,y) ! i/(\sqrt\pi z)
+        r = oneOvSpi / ( x*x + y*y )
+        u = y * r
+        v = x * r
+
+        ! If we need something more accurate, use two terms:
+        ! $w(z) ~ \frac{i}{\sqrt\pi} \left( 1 + \frac1{2 z^2} )$.
+
+!       r = 1.0_rp / ( x*x + y*y )  ! 1 / |z|
+!       s = -y * r                  ! Im(1/z)
+!       r = x * r                   ! Re(1/z)
+
+!       x2 = 1.0_rp + 0.5_rp * ( r - s ) * ( r + s )  ! 1 + Re(1/(2 z^2))
+!       y2 = r * s                  ! Im(1/(2 z^2))
+
+!       u = oneOvSpi * ( r * x2 - s * y2 )
+!       v = oneOvSpi * ( r * y2 + s * x2 )
+
+      end if
+
+    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
 
       !{Three terms of the asymptotic expansion get seven digits correct.
-      ! Compute the derivative first, then get $w(z)$ from it, because he
+      ! Compute the derivative first, then get $w(z)$ from it, because the
       ! first term of the asymptotic expansion cancels in the derivative:
       !%
       ! $w(z) \sim \frac{i}{\sqrt{\pi}z}
@@ -306,7 +374,7 @@ contains
       !%
       ! Applying $w^\prime(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$ we have
       ! $w^\prime(z) \approx
-      !  \frac{i}{\sqrt{\pi}z^2} \left( 1 + \frac3{2z^2} \right)$.
+      !  - \frac{i}{\sqrt{\pi}z^2} \left( 1 + \frac3{2z^2} \right)$.
       !%
       ! Substituting $z^{-2} = x_2 + i y_2$ and using $a = \frac1{\sqrt{\pi}}$
       ! and $b = \frac3{2\sqrt{\pi}}$ gives
@@ -329,14 +397,15 @@ contains
       p = x2*u + y2*vv  ! Re(w')
       q = -x2*vv + y2*u ! Im(w')
 
-      !{ Writing $z^{-1} = r + i s$ and solving for $w(z)$ from $w^\prime(z)$
+      !{ Writing $z^{-1} = r + i s$ and using
+      ! $w(z) = \frac1z \left( \frac{i}{\sqrt\pi} - \frac12 w^\prime(z)\right)$
       ! we have
       !
       ! $w(z) \approx \frac12\left( -r u + s v \right) - a s +
       !       i \left[\frac12\left( -r v - s u \right) + a r \right]$.
 
       u = 0.5 * ( s * q - r * p ) - s * a ! Re(w)
-      if ( present(v) ) v = sign(r * a - 0.5 * ( r * q + s * p ),x) ! Im(w)
+      if ( present(v) ) v = sign(r * a - 0.5 * ( r * q + s * p ), x) ! Im(w)
       if ( present(du) ) du = p
       if ( present(dv) ) dv = q
 
@@ -400,6 +469,10 @@ contains
 
   ! Internals
 
+!{ This is one term of the asymptotic expansion
+!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
+
     rlorentz = OneOvSPi * y / (y*y + x*x)
 
   end function RLorentz
@@ -413,6 +486,10 @@ contains
 !   Internals
 
     real(rp) :: denom
+
+!{ This is one term of the asymptotic expansion
+!     $w(z) \sim \frac{i}{z\sqrt{\pi}}
+!       \left(1 + \sum_{m=1}^\infty \frac{1 \cdot 3 \dots (2m-1)}{(2z^2)^m}\right)$.
 
     denom = OneOvSPi / (x*x + y*y)
     clorentz = CMPLX(y*denom,x*denom,KIND=rp)
@@ -868,6 +945,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.2  2004/04/26 22:07:12  vsnyder
+! Reinstate 1-term asymptotic expansion in non-derivative case in Simple_Voigt
+!
 ! Revision 2.1  2004/04/24 02:13:48  vsnyder
 ! Separate from slabs_sw_m, polish up some regions
 !
