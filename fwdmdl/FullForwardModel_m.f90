@@ -2009,9 +2009,9 @@ contains
 
           if ( atmos_der ) then
 
-            CALL drad_tran_df ( indices_c(1:npc), gl_inds, z_path, Grids_f,  &
-              &  beta_path_c(1:npc,:), eta_fzp, sps_path, do_calc_fzp, &
-              &  beta_path_f, do_gl(1:npc), del_s(1:npc), &
+            CALL drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), z_path, &
+              &  Grids_f, beta_path_c(1:npc,:), eta_fzp, sps_path, &
+              &  do_calc_fzp, beta_path_f, do_gl(1:npc), del_s(1:npc), &
               &  ref_corr(1:npc), path_dsdh, dhdz_path, &
               &  t_script(1:npc), tau(1:npc), i_stop, drad_df, ptg_i, frq_i)
 
@@ -2844,6 +2844,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.126  2003/02/11 00:48:18  jonathan
+! changes made after adding get_beta_path_cloud
+!
 ! Revision 2.125  2003/02/08 01:03:00  livesey
 ! Bug fix in call to rad_tran
 !
