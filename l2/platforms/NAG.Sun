@@ -99,9 +99,12 @@ endif
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
 
 #Special load libraries
-l_specials = -lnsl
+l_specials = -lnsl -lsocket
 
 # $Log$
+# Revision 1.11  2001/04/01 00:20:08  pwagner
+# Bug fixes plus allows untargeted make inside MLSCONFG
+#
 # Revision 1.10  2001/03/12 23:57:46  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #
