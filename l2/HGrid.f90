@@ -38,6 +38,7 @@ module HGrid                    ! Horizontal grid information
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module contains datatypes and routines for handling HGrid information
@@ -1109,11 +1110,18 @@ contains ! =====     Public Procedures     =============================
     end subroutine ANNOUNCE_ERROR
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module HGrid
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.38  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.37  2002/09/11 17:40:38  livesey
 ! Bug fix
 !

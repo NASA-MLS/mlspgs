@@ -20,6 +20,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & "$Id$"
   character(len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -236,11 +237,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2DeConstruct
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE Construct
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.38  2002/10/08 17:36:19  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.37  2002/10/05 00:43:47  livesey
 ! Split out ConstructMIFGeolocation
 !
