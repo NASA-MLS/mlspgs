@@ -21,6 +21,10 @@ MODULE MLSL3Common
 
 ! Parameters
 
+   CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
+ 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
@@ -42,6 +46,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.2  2001/01/16 17:46:18  nakamura
+!# Added parameter for metadata writing error.
+!#
 !# Revision 1.1  2000/12/29 20:52:48  nakamura
 !# Module for parameters common across L3 routines.
 !#
