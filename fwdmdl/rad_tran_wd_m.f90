@@ -2,7 +2,9 @@ module RAD_TRAN_WD_M
   use GL6P, only: NG
   use ELLIPSE_M, only: ELLIPSE
   use MLSCommon, only: I4, R8
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, SPECTRO_PARAM
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
   use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
   use GET_DELTA_M, only: GET_DELTA
@@ -22,23 +24,23 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model with derivatives
 
-Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
-      &    spect_der,z_path,h_path,t_path,phi_path,dHdz_path,atmospheric,&
-      &    beta_path,spsfunc_path,t_z_basis,f_basis,no_coeffs_f,mr_f, &
-      &    no_t, ref_corr, no_phi_f, phi_basis_f, no_phi_t, &
-      &    t_phi_basis, dh_dt_path, spect_atmos, spectroscopic, k_temp,&
-      &    k_atmos, k_spect_dw, k_spect_dn, k_spect_dnu,is_f_log,brkpt,&
-      &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
+Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+       &   elvar,frq_i,band,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
+       &   dHdz_path,beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,  &
+       &   no_phi_t,t_phi_basis,dh_dt_path,spect_atmos,spectroscopic, &
+       &   k_temp,k_atmos,k_spect_dw,k_spect_dn,k_spect_dnu,brkpt,    &
+       &   no_ele,mid,ilo,ihi,t_script,tau,max_zeta_dim,max_phi_dim,Ier)
+!
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
 !
     Type(ELLIPSE), INTENT(IN OUT) :: elvar
 
-    Logical, intent(in) :: temp_der,atmos_der,spect_der
-    Logical, intent(in) :: IS_F_LOG(:)
+    Integer(i4), intent(in) :: FRQ_I,NO_PHI_T,NO_T, BAND, &
+   &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI, &
+   &                           max_zeta_dim, max_phi_dim
 
-    Integer(i4), intent(in) :: FRQ_I,N_LVLS,NO_PHI_T,NO_T, BAND, &
-   &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI
-
-    Integer(i4), intent(in) :: NO_COEFFS_F(:), NO_PHI_F(:), SPECT_ATMOS(:)
+    Integer(i4), intent(in) :: SPECT_ATMOS(:)
 
     Integer(i4), intent(out) :: IER
 
@@ -49,11 +51,6 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
     Real(r8), intent(in) :: TAU(:)
     Real(r8), intent(in) :: T_SCRIPT(:)
     Real(r8), intent(in) :: REF_CORR(:)
-    Real(r8), intent(in) :: F_BASIS(:,:)
-    Real(r8), intent(in) :: PHI_BASIS_F(:,:)
-    Real(r8), intent(in) :: MR_F(:,:,:)
-
-    Type(atmos_comp), intent(in) :: ATMOSPHERIC(:)
 
     Type(spectro_param), intent(in) :: SPECTROSCOPIC(:)
 
@@ -71,63 +68,37 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 !
     CHARACTER (LEN=01) :: CA
 
-    Integer(i4) :: i, j, Ngp1, Spectag
+    Integer(i4) :: i, j, Ngp1, Spectag, N_lvls
     Integer(i4) :: nf, sa, s_np, s_nz
 
-! Real(r8), allocatable, dimension(:,:,:) :: dt_scrpt_dnp  ! N2lvl,mxco,mnp
-! Real(r8), allocatable, dimension(:,:,:,:) :: delta  ! N2lvl,mxco,mnp,Nsps
-
     Real(r8) :: dt_scrpt_dnp(size(tau),no_t,no_phi_t)
-    Real(r8) :: delta(size(tau),max(no_t,MAXVAL(no_coeffs_f)), &
-   &                  max(no_phi_t,MAXVAL(no_phi_f)),n_sps)
+    Real(r8) :: delta(size(tau),max_zeta_dim,max_phi_dim,n_sps)
 !
 !  Begin code:
 !
     Ngp1 = Ng + 1
+    N_lvls = ForwardModelConfig%integrationGrid%noSurfs
 
-!   sa = max(no_t,MAXVAL(no_coeffs_f))
-!   i = max(no_phi_t,MAXVAL(no_phi_f))
-!
-!   j = 2*(N_lvls+1)
-!   Allocate (delta(j,sa,i,n_sps),STAT=ier)
-!   if (Ier /= 0) then
-!     Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
-!     Print *,'          Allocation STAT error code: ',Ier
-!     Return
-!   endif
-
-    if(atmos_der) then
+    if(forwardModelConfig%atmos_der) then
 !
 !  Atmospheric derivatives:
 !
-      Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
-   &       beta_path,dHdz_path,n_sps,N_lvls,no_coeffs_f,   &
-   &       f_basis,ref_corr,no_phi_f, &
-   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,elvar,delta,Ier)
+      Call GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+   &       mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path, &
+   &       n_sps, N_lvls, ref_corr,spsfunc_path,elvar,delta,Ier)
       if (Ier /= 0) Return
-!     if (Ier /= 0) goto 99
 !
 ! Compute atmosperic derivatives for this channel
 !
-      Call zatmos_deriv(atmospheric,n_sps,band,frq_i, &
-   &              no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
-   &              no_phi_f,k_atmos,Ier)
+      Call ZATMOS_DERIV(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+     &       frq_i, mid, delta, t_script, tau, ilo, ihi, k_atmos,Ier)
       if (Ier /= 0) Return
-!     if (Ier /= 0) goto 99
 !
     endif
 !
 ! Compute temperature derivative for this channel (if requested)
 !
-    if (temp_der) then
-
-!     j = 2*(N_lvls+1)
-!     Allocate (dt_scrpt_dnp(j,no_t,no_phi_t),STAT=ier)
-!     if (Ier /= 0) then
-!       Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
-!       Print *,'          Allocation STAT error code: ',Ier
-!       goto 99
-!     endif
+    if (ForwardModelConfig%temp_der) then
 !
 ! Create the dt_scrpt_dnp arrays for all coefficients:
 !
@@ -146,7 +117,7 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 !
     end if
 !
-    if (spect_der) then
+    if (ForwardModelConfig%spect_der) then
 !
 !  ** Spectroscopic derivatives here:
 !
@@ -195,7 +166,6 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 !
           end if
 !
-!         if (Ier /= 0) goto 99
           if (Ier /= 0) Return
 !
           sa = sa + 1
@@ -207,13 +177,15 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 !
     end if                        ! on Derivatives 'if'
 !
-!99  Deallocate (delta,STAT=i)
-!    Deallocate (dt_scrpt_dnp,STAT=i)
 
     Return
+
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.7  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !

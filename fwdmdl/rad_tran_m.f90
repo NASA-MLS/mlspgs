@@ -50,21 +50,10 @@ contains
 
     Real(r8) :: CSE, RS
 
-!   Real(r8), allocatable, dimension(:) :: del_opacity     ! (N2lvl)
-!   Real(r8), allocatable, dimension(:,:) :: delta         ! (N2lvl,Nsps)
-
     Real(r8) :: del_opacity(2*(n_lvls+1))
     Real(r8) :: delta(2*(n_lvls+1),n_sps)
 !
 !  Begin code
-!
-!   i = 2 * (n_lvls + 1)
-!   ALLOCATE(del_opacity(i),delta(i,n_sps),STAT=ier)
-!   IF(ier /= 0) THEN
-!     PRINT *,'** ALLOCATION error in RAD_TRAN routine ..'
-!     PRINT *,'   Allocation STAT =',ier
-!     Return
-!   ENDIF
 !
 ! 'brkpt' is the index of the path break-point (when it change from
 !         incoming ray to outgoing ray)
@@ -97,7 +86,6 @@ contains
 !
     Call FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path, &
  &       dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr,elvar,delta,Ier)
-!   if (Ier /= 0) goto 99
     if (Ier /= 0) Return
 !
 ! Initialize the tau & del_opacity arrays:
@@ -110,12 +98,15 @@ contains
     Call Scrt_dn(t_script, N_lvls, cse, del_opacity, tau, Rad, mid, &
    &             ilo, ihi)
 !
-!99  DEALLOCATE(del_opacity,delta,STAT=i)
-
     Return
+
   End Subroutine RAD_TRAN
+
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.5  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !

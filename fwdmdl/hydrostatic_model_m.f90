@@ -61,7 +61,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   Ngp1 = Ng + 1
   N_lvls = Size(z_grid)
   no_t = Size(t_z_basis)
-  no_tan_hts = Size(tan_press) - si + 1 
+  no_tan_hts = Size(tan_press) - si + 1
 !
   j = -1
   do i = 1, no_tan_hts
@@ -150,7 +150,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
 !
   no_tan_hts = no_tan_hts + si - 1
 
-! Interpolate the hydrostatic grid for conv. grid heights 
+! Interpolate the hydrostatic grid for conv. grid heights
 ! for the values BELOW Earth surface only:
 
   h_grid(1:) = 0.0
@@ -381,6 +381,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.14  2001/04/06 23:58:46  zvi
+! Fix a bug LF95 was compalining about (tan_hts ..)
+!
 ! Revision 1.13  2001/04/06 20:54:21  zvi
 ! Fix a small bug concerning initialization of JLO in HUNT
 !

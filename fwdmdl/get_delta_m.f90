@@ -3,6 +3,10 @@ module GET_DELTA_M
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use Intrinsic, only: l_vmr
+  use Units, only: Deg2Rad
   implicit NONE
   private
   public :: GET_DELTA
@@ -18,20 +22,17 @@ contains
 !
 !  ** NOTE: This routine integrate in ZETA Space !
 !
-  Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,    &
- &           beta_path,dHdz_path,n_sps,N_lvls,ncoeffs,z_basis,  &
- &           ref_corr,no_phi_f,phi_basis,spsfunc_path,mr_f,    &
- &           is_f_log,elvar,delta,Ier)
-
-    Logical,     intent(in) :: IS_F_LOG(:)
-    Integer(i4), intent(in) :: N_SPS, N_LVLS
-    Integer(i4), intent(in) :: NCOEFFS(:), NO_PHI_F(:)
+  Subroutine GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+ &           mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path,&
+ &           n_sps,N_lvls,ref_corr,spsfunc_path,elvar,delta,Ier)
+!
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+!
+    Integer(i4), intent(in) :: n_sps, N_LVLS
     Integer(i4), intent(in) :: mid, brkpt, no_ele
 
     Real(r8), intent(in) :: REF_CORR(:)
-    Real(r8), intent(in) :: Z_BASIS(:,:)
-    Real(r8), intent(in) :: MR_F(:,:,:)
-    Real(r8), intent(in) :: PHI_BASIS(:,:)
 
     Real(r8), intent(inout) :: DELTA(:,:,:,:)
 
@@ -46,17 +47,16 @@ contains
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: J, K, IP, IZ, NCO, NPF
+    Integer(i4) :: j, ip, iz, nco, npf
 
     Real(r8) :: Q
-!
     Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+
+    type (VectorValue_T), pointer :: f
 !
 ! -----     Executable statements     ----------------------------------
 !
     Ier = 0
-    DEALLOCATE(Integrand, STAT=k)
-!
     ALLOCATE(Integrand(no_ele), STAT=ier)
     IF(ier /= 0) THEN
       Ier = 1
@@ -64,24 +64,23 @@ contains
       goto 99
     endif
 !
-!  Initialize all arrays:
+! Start delta array computations:
 !
-    k = 2 * N_lvls
-    do j = 1, n_sps
-      delta(1:k,1:ncoeffs(j),1:no_phi_f(j),j) = 0.0
-    end do
-!
+    delta = 0.0
     do j = 1, n_sps
 !
-      nco = ncoeffs(j)
-      npf = no_phi_f(j)
+      f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+     &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(j))
+
+      IF (.not. forwardModelConfig%moleculeDerivatives(j)) CYCLE
+!
+      nco = f%template%noSurfs
+      npf = f%template%noInstances
 !
       integrand(1:no_ele) = beta_path(j)%values(1:no_ele)
 !
-      if(is_f_log(j)) then
-        integrand(1:no_ele) = integrand(1:no_ele) *  &
-       &                      spsfunc_path(j)%values(1:no_ele)
-      endif
+      if (f%template%logBasis) integrand(1:no_ele) = &
+     &           integrand(1:no_ele) * spsfunc_path(j)%values(1:no_ele)
 !
 ! Loop over the specie's Phi's
 !
@@ -92,12 +91,12 @@ contains
         do iz = 1, nco
 !
           q = 1.0
-          if(is_f_log(j)) q = 1.0 / mr_f(iz,ip,j)
+          if (f%template%logBasis) q = 1.0 / f%values(iz,ip)
 !
-          Call generic_delta_integral(mid, brkpt, no_ele, z_path,   &
-         &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,       &
-         &     integrand, z_basis(1:,j), phi_basis(1:,j), nco, npf, &
-         &     iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
+          Call generic_delta_integral(mid, brkpt, no_ele, z_path, &
+         &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,integrand,&
+         &     f%template%surfs(:,1), Deg2Rad*f%template%phi(1,:), &
+         &     nco, npf, iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
           IF(ier /= 0) goto 99
 !
         end do
@@ -106,7 +105,7 @@ contains
 !
     end do
 !
- 99  DEALLOCATE(Integrand, STAT=k)
+ 99  DEALLOCATE(Integrand, STAT=j)
 !
     Return
 !
@@ -114,6 +113,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.6  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !
