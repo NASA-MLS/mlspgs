@@ -3,13 +3,17 @@
 
 # --------------- reecho.sh help
 # (Re)echoes the command line arguments, minus any that
-# (depending on option(s) selected
+# (depending on option(s) selected)
 # are not actual files (with special properties); or
 # are not directories; or
 # contain the glob character '*'
 # Useful to weed out formulas like *.c that
-# have no matching files and so stay just '*.f'
-# 'no stars => reecho (night)' is the mnemonic
+# have no matching files and so stay just '*.c'
+# rather than expanding into a list of matching files
+#
+# Optionally prefixes each with a specified prefix; e.g.
+# Given 'reecho -prefix=-I *-dir'
+# might echo '-I a-dir -I b-dir -I c-dir ..'
 #
 # Usage:
 # reecho.sh [opt] ..  [arg1 arg2 ..]
@@ -23,19 +27,25 @@
 # -[n]x         [don't] reecho args that exist and you have execute permission
 # -[n]glob      [don't] reecho any arg containing the glob character '*'
 # -h[elp]       print brief help message; exit
+# -prefix=xxx   reecho xxx in front of each arg (separated by a space)
+#               e.g. '-I a-dir -I b-dir -I c-dir ..'
+# -prefixn=xxx  reecho xxx in front of each arg (without a separating space)
+#               e.g. '-Ia-dir -Ib-dir -Ic-dir ..'
 # arg1          an arg that may or may not be reechoed
 #
 #
 # Note:
 # (1) The option(s) marked with "-", if present,
 #     must precede the args on the command line
-# (2) The options are mutually exclusive (for the present)
+# (2) The options [n](f d r w x glob) are mutually exclusive (for the present)
+#      i.e. don't try 'reecho.sh -d -w *' to get all directories you have 
+#      write permission to (though that is a logical improvement to make)
 # 
 # Result:
 # A filtered list of args, e.g. arg3 arg6 .. , that satisfy
 # the conditions set up by the options
 # Example:
-# Say you have a directory containingg the following files
+# Say you have a directory containing the following files
 #    a.b c.d/ e.d/ f.7*   
 # (where /~a directory, *~ an executable; none of which are parts of the names)
 # then
@@ -118,6 +128,8 @@ fi
 the_opt="-f"
 the_sense="yes"
 more_opts="yes"
+the_prefix=""
+separate="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
@@ -182,12 +194,20 @@ while [ "$more_opts" = "yes" ] ; do
        the_sense="no"
        shift
        ;;
+    -prefix=* )
+       the_prefix=`echo $1 | sed 's/-prefix=//'`
+       shift
+       ;;
+    -prefixn=* )
+       the_prefix=`echo $1 | sed 's/-prefixn=//'`
+       separate="no"
+       shift
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
-	;;
-
+       ;;
     * )
        more_opts="no"
        ;;
@@ -198,10 +218,31 @@ if [ $DEEBUG = "on" ]
 then
    echo "the_opt $the_opt"
    echo "the_sense $the_sense"
+   echo "the_prefix $the_prefix"
+   echo "separate? $separate"
    echo "remaining args $@"
 fi
 
 extant_files "$@"
-echo $extant_files_result
+if [ "$the_prefix" = "" ]
+then
+   # No prefix--just echo filtered args
+   echo $extant_files_result
+else
+   # prefix each filtered arg
+   prefixed_result=
+   if [ "$separate" = "yes" ]
+   then
+      the_prefix="$the_prefix "
+   fi
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result ${the_prefix}$file"
+   done
+   echo $prefixed_result
+fi
 exit
 # $Log$
+# Revision 1.1  2001/08/13 16:42:10  pwagner
+# First commit under this name; previous name was foolish
+#
