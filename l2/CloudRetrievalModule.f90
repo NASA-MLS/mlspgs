@@ -422,10 +422,23 @@ contains
                                                       ! last dimension is for mif
                                                       ! first two are (chan, s)
 ! ----- executable ----
+      nullify (xLosPtr, xExtPtr, xLosVar, xExtVar, outLosSD, outExtSD, ConstrainTcir, &
+         Tcir, Terr, PTAN, Tb0, Re, Slope)
       
-      p_lowcut = -2.5
+      p_lowcut = -2.3
       ! find how many MAFs        
       nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
+      ! find how many mifs from the first quantity        
+      nMifs = measurements%quantities(1)%template%noSurfs         
+
+      ! get ptan.  Warning: all signals must be in the same module as the first one
+      ptan => GetVectorQuantityByType ( fwdModelExtra,      &
+               & quantityType=l_ptan, instrumentModule = &
+               & measurements%quantities(1)%template%instrumentModule )
+               
+      ! get earthradius from forward model
+      Re => GetVectorQuantityByType ( fwdModelExtra,      &
+               & quantityType=l_earthradius)
             
       allocate(doMaf(nMAFs))
                
@@ -454,7 +467,7 @@ contains
         ConstrainTcir => GetVectorQuantityByType ( fwdModelExtra,     &
          & quantityType=l_cloudInducedRadiance)
         
-      ! find how many channels total in all models
+      ! quick check to find basic info needed for the retrieval
         doMaf = .false.
         nChans = 0
         do imodel = 1, size(configIndices)
@@ -469,17 +482,28 @@ contains
               Tcir => GetVectorQuantityByType ( Measurements,       &
                & quantityType=l_cloudInducedRadiance,             &
                & signal=signal%index, sideband=signal%sideband)
+              ! get the cloud radiance for constraining cloud top (must be one of Tcir)
+              ConstrainTcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+              if(associated(ConstrainTcir)) then
+                 nFreqs0 = size(signal%frequencies)
+                  do k=1,nFreqs0
+                     if(signal%channels(k)) ich0 = k
+                  end do
+              end if
+
               ! determine MAF flag (i.e., whether to call Forward Model for the MAF)
               do maf=1,nMAFs
-              if(any(iand(ichar(Tcir%mask(:, maf)), m_cloud) == 16)) doMaf(maf) = .true.
+              do mif=1,nMifs
+              if(any(iand(ichar(Tcir%mask(:, maf)), m_cloud) == 16) &
+               & ) doMaf(maf) = .true.
+              end do
               end do
 
         end do ! band signals
         end do ! configIndices or models
 
-      ! find how many mifs from the first quantity        
-        nMifs = measurements%quantities(1)%template%noSurfs
-               
       ! create covarianceDiag array
         call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
       ! get the inverted diagnonal elements of covariance of apriori
@@ -520,30 +544,18 @@ contains
             ! to save time, skip cloud sensitivity calculation if there is no cloud
             ! overwrite model configuration
 
-!            configDatabase(configIndices(imodel))%i_saturation=l_clear
-!            if(doMaf(maf)) configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
+            configDatabase(configIndices(imodel))%i_saturation=l_clear
+            if(doMaf(maf)) configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
                        
-            ! use the cloud radiance in last signal for cloud top indicator 
-            signal = configDatabase(configIndices(imodel))%signals(nSignal)
-
-              Tcir => GetVectorQuantityByType ( Measurements,       &
-               & quantityType=l_cloudInducedRadiance,             &
-               & signal=signal%index, sideband=signal%sideband )
-            
-!              ConstrainTcir%values = Tcir%values
- 
-              nFreqs0 = size(signal%frequencies)
-               do k=1,nFreqs0
-                  if(signal%channels(k)) ich0 = k
-               end do
-               
             ! estimate cloud top from the Tcir in previous scans
             ! (in simulation, now use the current scan)
               itop = 0
+              if(maf > 1) then
               do mif = 1, nMifs
-               if(ConstrainTcir%values(ich0+(mif-1)*nFreqs0,maf) .ne. 0._r8) &
+               if(iand(ichar(ConstrainTcir%mask(ich0+(mif-1)*nFreqs0, maf-1)), m_cloud) == 16) &
                 & itop = mif
               end do
+              end if
               
             ! call full cloud model for Jacobian and Sensitivity  
              call forwardModel ( configDatabase(configIndices(imodel)), &
@@ -558,15 +570,6 @@ contains
                & quantityType=l_radiance,                                      &
                & signal=signal%index, sideband=signal%sideband )
 
-              ! get ptan.  Warning: all signals must be in the same module
-              ptan => GetVectorQuantityByType ( fwdModelExtra,      &
-               & quantityType=l_ptan, instrumentModule = &
-               & Tb0%template%instrumentModule)
-
-              ! get earthradius from forward model
-              Re => GetVectorQuantityByType ( fwdModelExtra,      &
-               & quantityType=l_earthradius)
-          
               ! get sensitivity from forward model for this signal
               Slope => GetVectorQuantityByType ( fwdModelOut1,      &
                & quantityType=l_cloudRADSensitivity,                           &
@@ -622,6 +625,9 @@ contains
                      ! solve the relation one more time to refine teff and sensitivity
                      sensitivity = slope%values(k+nFreqs*(mif-1),maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
+                    
+                    else   ! for unflagged MAFs
+                        ! y is initialized to zero at the beginning
                     end if ! doMaf when sensitivity is calculated
 
                      ! in case we have small sensitivity or no cloud
@@ -926,6 +932,9 @@ contains
  end subroutine CloudRetrieval
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.6  2003/05/19 18:14:56  dwu
+! modify cloud top constraint in lowCloud
+!
 ! Revision 2.5  2003/05/16 18:55:10  dwu
 ! a working version
 !
