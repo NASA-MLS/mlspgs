@@ -60,6 +60,9 @@ elevOffset
 emls
 
 false
+fieldAzimuth
+fieldElevation
+fieldStrength
 frequency
 full
 
@@ -185,6 +188,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.26  2003/08/08 23:04:31  livesey
+# Added fieldAzimuth, fieldElevation and fieldStrength
+#
 # Revision 2.25  2003/07/15 22:09:05  livesey
 # Moved in forward model types from l2
 #
