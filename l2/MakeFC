@@ -108,10 +108,11 @@ $(PROG): $(PROG_prereqs)
 	esac 
 
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
+               $(CONFDIR)/.configure
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
@@ -181,6 +182,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.25  2001/05/01 18:32:56  pwagner
+# Added .configure to prereqs for lib, fwdmdl
+#
 # Revision 2.24  2001/05/01 17:07:44  pwagner
 # Now runs ghostbuster when updating
 #
