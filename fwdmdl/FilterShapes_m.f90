@@ -83,6 +83,7 @@ contains
     !                                          for each signal.
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
+    integer :: dummy                    ! Result of add to database
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(filterShape_T) :: thisShape
 
@@ -124,7 +125,7 @@ contains
         end do ! j
       end do ! i
 
-      call AddFilterShapeToDatabase ( filterShapes, thisShape )
+      dummy = AddFilterShapeToDatabase ( filterShapes, thisShape )
 
     end do
 
@@ -214,6 +215,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.14  2001/05/16 23:04:29  livesey
+! Bug fix.
+!
 ! Revision 1.13  2001/05/16 01:25:02  livesey
 ! New version.  Stores thing differently.
 !
