@@ -102,7 +102,7 @@ contains ! ====     Public Procedures     ==============================
       case ( z_chunkdivide )
         call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
-      case ( z_construct, z_fill, z_join )
+      case ( z_construct, z_fill, z_join, z_retrieve )
         do chunkNo = 1, size(chunks)
           j = i
 subtrees: do while ( j <= howmany )
@@ -153,6 +153,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.14  2001/03/08 18:21:11  vsnyder
+! Even more stuff for L2_Load
+!
 ! Revision 2.13  2001/03/08 03:23:10  vsnyder
 ! More stuff to work with L2_Load
 !
