@@ -71,7 +71,7 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl1
 
 tar:
 
@@ -127,6 +127,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.10  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
 # Revision 2.9  2001/03/13 19:07:59  pwagner
 # clean now removes executables, too
 #
