@@ -866,8 +866,7 @@ contains
     end if
     ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they will
     ! be (or already are) destroyed by destroyVGridDatabase.
-    call deallocate_test ( config%molecules, &
-      & "config%molecules", moduleName )
+    ! Don't deallocate config%molecules because it's a pointer into beta_group
     call Deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
@@ -1063,6 +1062,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.60  2004/11/01 20:18:23  vsnyder
+! Reorganization of representation for molecules and beta groups
+!
 ! Revision 2.59  2004/10/06 21:23:50  vsnyder
 ! More work on PFA data structures
 !
