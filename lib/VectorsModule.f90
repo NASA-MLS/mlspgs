@@ -34,6 +34,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
   end interface
 
+  interface Multiply
+    module procedure MultiplyVectors
+  end interface
+
   interface operator (+)
     module procedure AddVectors
   end interface
@@ -1162,6 +1166,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.44  2001/05/25 22:33:07  livesey
+! Changed a comment
+!
 ! Revision 2.43  2001/05/17 20:17:00  vsnyder
 ! Don't clobber Y argument of ScaleVector by making it intent(out) -- we
 ! need to check its template.
