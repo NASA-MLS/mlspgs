@@ -2382,9 +2382,8 @@ contains
           & Frq, eta_zp, do_calc_zp, sps_path, do_calc_fzp, eta_fzp, pfa )
 
         if ( pfa ) then
-          call get_beta_path_PFA ( frq, z_path, c_inds, t_path_c,                &
-            & channels(frq_i)%PFAIndex(thisSideband,:), channels(frq_i)%betaIndex, &
-            & vel_rel, beta_path_c, t_der_path_flags,                            &
+          call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c,  &
+            & beta_group%PFA(sx), vel_rel, beta_path_c, t_der_path_flags, &
             & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
           frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k
@@ -2552,10 +2551,10 @@ contains
             tt_path_c(j) =0.0
             w0_path_c(j) =0.0
           end do
+  
         end if ! end of check cld 
 
-        if ( pfa ) then ! do nothing -- we can't do GL or polarized
-        else if ( .not. fwdModelConf%polarized ) then
+        if ( .not. fwdModelConf%polarized ) then
           ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
 
           call path_contrib ( incoptdepth, e_rflty, fwdModelConf%tolerance, &
@@ -2615,11 +2614,18 @@ contains
               & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
         end do
 
-        if ( .not. pfa ) then
-          call get_GL_inds ( do_gl, gl_inds, cg_inds, ngl, ncg )
-          ! ngl is ng * count(do_gl)
+        call get_GL_inds ( do_gl, gl_inds, cg_inds, ngl, ncg )
+        ! ngl is ng * count(do_gl)
+        t_path_f(:ngl) = t_path(gl_inds(:ngl))
 
-          t_path_f(:ngl) = t_path(gl_inds(:ngl))
+        if ( pfa ) then
+
+          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl),  &
+            & beta_group%PFA(sx), vel_rel, beta_path_f(:ngl,:), t_der_path_flags, &
+            & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
+
+        else
+
           tanh1_f(1:ngl) = tanh( frqhk / t_path_f(:ngl) )
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) &
@@ -2636,12 +2642,13 @@ contains
             & gl_inds(:ngl), beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,&
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
-          do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
-                        ! to avoid path-length array temps
-            alpha_path_f(j) = dot_product( sps_path(gl_inds(j),:),  &
-                                         & beta_path_f(j,:) )
-          end do
         end if ! .not. pfa
+
+        do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
+                      ! to avoid path-length array temps
+          alpha_path_f(j) = dot_product( sps_path(gl_inds(j),:),  &
+                                       & beta_path_f(j,:) )
+        end do
 
         ! Needed by both rad_tran and rad_tran_pol
         call two_d_t_script ( t_path_c, tt_path_c, w0_path_c, &  
@@ -3184,6 +3191,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.231  2005/02/16 23:16:49  vsnyder
+! Revise data structures for split-sideband PFA
+!
 ! Revision 2.230  2004/12/28 00:28:02  vsnyder
 ! Remove unreferenced use name
 !
