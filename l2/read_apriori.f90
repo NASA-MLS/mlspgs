@@ -237,7 +237,15 @@ contains ! =====     Public Procedures     =============================
               & // trim(fileNameString) )
           elseif ( listSize < len(allSwathNames) ) then
             commaPos = index ( allSwathNames, ',' )
-            if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
+            if ( commaPos == 0 ) then
+              commaPos = len_trim(allSwathNames)
+            elseif ( commaPos == 1 ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Failed to determine swath name, allswathnames begin with , ' &
+              & // trim(fileNameString) )
+            else
+              commaPos = commaPos - 1
+            endif
             swathNameString = allSwathNames ( 1:commaPos )
           else
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -574,6 +582,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.44  2003/04/01 21:44:38  dwu
+! Fixed bad error with multiple swaths in file (pwagner)
+!
 ! Revision 2.43  2003/03/01 00:24:27  pwagner
 ! Added missingValue as filed to reading Gridded data
 !
