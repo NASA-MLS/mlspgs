@@ -79,7 +79,7 @@ contains
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type (L1BData_T) :: l1bField ! L1B data
     type(PCFData_T) :: l2pcf
-    
+
     integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
     integer :: I         ! Index of son of root
@@ -91,10 +91,12 @@ contains
     integer :: SON       ! Son of root
     integer :: sub_rosa_index
     logical :: TIMING    ! For S_Time
+    logical :: startTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2       ! For S_Time
     integer :: UNITS(2)  ! Units of expression
     real(r8) :: VALUE(2)   ! Value of expression
     real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
+
 
     character(LEN=NameLen) :: name_string
     character (len=name_len) :: QUANTITY
@@ -103,7 +105,9 @@ contains
     timing = section_times
     if ( timing ) call time_now ( t1 )
 
-   error = 0
+    error = 0
+    startTimeIsAbsolute = .false.
+    stopTimeIsAbsolute = .false.
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
@@ -138,18 +142,21 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for cycle number ***', &
             & just_a_warning = .true.)
-!        case ( p_ccsdsstarttime )
-!          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
-!        case ( p_ccsdsendtime )
-!          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
+          !        case ( p_ccsdsstarttime )
+          !          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
+          !        case ( p_ccsdsendtime )
+          !          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
         case ( p_starttime )
           got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           if ( index(name_string, ':') > 0 ) then
             start_time_from_1stMAF = hhmmss_value(name_string, error)
+            startTimeIsAbsolute = .false.
           else
-            call expr ( subtree(2,son), units, value )
-            start_time_from_1stMAF = value(1)
+!             call expr ( subtree(2,son), units, value )
+!             start_time_from_1stMAF = value(1)
+            read ( name_string, * ) start_time_from_1stMAF
+            startTimeIsAbsolute = .true.
           endif
           if ( pcf ) &
             & call announce_error(0, &
@@ -160,16 +167,19 @@ contains
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           if ( index(name_string, ':') > 0 ) then
             end_time_from_1stMAF = hhmmss_value(name_string, error)
+            stopTimeIsAbsolute = .false.
           else
-            call expr ( subtree(2,son), units, value )
-            end_time_from_1stMAF = value(1)
+!             call expr ( subtree(2,son), units, value )
+!             end_time_from_1stMAF = value(1)
+            read ( name_string, * ) end_time_from_1stMAF
+            stopTimeIsAbsolute = .true.
           endif
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for end time ***', &
             & just_a_warning = .true.)
         case default
-         call announce_error(son, 'unrecognized global settings parameter')
+          call announce_error(son, 'unrecognized global settings parameter')
         end select
       else
         if ( node_id(son) == n_named ) then
@@ -193,7 +203,7 @@ contains
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_l1brad )
           call l1bradSetup ( son, l1bInfo, F_FILE, &
-          & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+            & MAXNUML1BRADIDS, ILLEGALL1BRADID )
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
@@ -214,63 +224,72 @@ contains
             timing = .true.
           end if
         case default
-         call announce_error(son, 'unrecognized global settings spec')
+          call announce_error(son, 'unrecognized global settings spec')
         end select
       end if
     end do
 
-   ! add maf offsets to start, end times
-   ! This is optional way to define processingRange if using PCF
-   ! It becomes mandatory if not using PCF
-   if(got(1) .or. got(2) .or. .not. PCF) then
-   
-   ! 1st--check that have L1BOA
-     if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
-       call announce_error(son, &
-       & 'L1BOA file required by global data--but not set')
-     endif
-     quantity = 'MAFStartTimeTAI'
-     call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
-          & l1bFlag)
+    ! add maf offsets to start, end times
+    ! This is optional way to define processingRange if using PCF
+    ! It becomes mandatory if not using PCF
+    if(got(1) .or. got(2) .or. .not. PCF) then
+
+      ! 1st--check that have L1BOA
+      if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
+        call announce_error(son, &
+          & 'L1BOA file required by global data--but not set')
+      endif
+      quantity = 'MAFStartTimeTAI'
+      call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
+        & l1bFlag)
       if ( l1bFlag==-1) then
-            call announce_error(son, &
+        call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
-           minTime = 0.
-           maxTime = 0.
+        minTime = 0.
+        maxTime = 0.
       else
-           minTime = l1bField%dpField(1,1,1)
-           maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
+        minTime = l1bField%dpField(1,1,1)
+        maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
       endif
       call DeallocateL1BData ( l1bField )
-   endif
-   if(got(1)) then
-      processingrange%starttime = minTime + start_time_from_1stMAF
-   elseif(.not. PCF) then
-      processingrange%starttime = minTime
-   endif
+    endif
 
-   if(got(2)) then
-      processingrange%endtime = minTime + end_time_from_1stMAF
-   elseif(.not. PCF) then
-      processingrange%endtime = maxTime + 1.0
-   endif
+    if ( startTimeIsAbsolute ) then
+      processingRange%startTime = start_time_from_1stMAF
+    else
+      if(got(1)) then
+        processingrange%starttime = minTime + start_time_from_1stMAF
+      elseif(.not. PCF) then
+        processingrange%starttime = minTime
+      endif
+    end if
 
-   if ( index(switches, 'glo3') /= 0 ) then
-     Details = 1
-   elseif ( index(switches, 'glo2') /= 0 ) then
-     Details = 0
-   elseif ( index(switches, 'glo1') /= 0 ) then
-     Details = -1
-   else
-     Details = -2
-   endif
-   if( levels(gen) > 0 .or. &
-   & index(switches, 'glo') /= 0 ) &
-   & call dump_global_settings( l2pcf, processingRange, l1bInfo, details )
+    if ( stopTimeIsAbsolute ) then
+      processingRange%endTime = end_time_from_1stMAF
+    else
+      if(got(2)) then
+        processingrange%endtime = minTime + end_time_from_1stMAF
+      elseif(.not. PCF) then
+        processingrange%endtime = maxTime + 1.0
+      endif
+    end if
+
+    if ( index(switches, 'glo3') /= 0 ) then
+      Details = 1
+    elseif ( index(switches, 'glo2') /= 0 ) then
+      Details = 0
+    elseif ( index(switches, 'glo1') /= 0 ) then
+      Details = -1
+    else
+      Details = -2
+    endif
+    if( levels(gen) > 0 .or. &
+      & index(switches, 'glo') /= 0 ) &
+      & call dump_global_settings( l2pcf, processingRange, l1bInfo, details )
 
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & 'Problem with global settings section')
+      & 'Problem with global settings section')
 
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
@@ -531,6 +550,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.49  2001/12/10 20:22:22  livesey
+! Added code for EmpiricalGeometry
+!
 ! Revision 2.48  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
