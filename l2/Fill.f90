@@ -1921,8 +1921,8 @@ contains ! =====     Public Procedures     =============================
         end if
         do instance = 1, quantity%template%noInstances
           call InterpolateValues ( &
-            & -log10(l2gp%pressures), &  ! Old X
-            & l2gp%l2gpValue(1,:,firstProfile+instance-1), & ! OldY
+            & -log10(real(l2gp%pressures, r8)), &  ! Old X
+            & real(l2gp%l2gpValue(1,:,firstProfile+instance-1), r8), & ! OldY
             & outZeta, & ! New X
             & quantity%values(:,instance), & ! New Y
             & method='Linear', extrapolate='Clamp' )
@@ -4779,6 +4779,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.178  2003/01/15 23:29:41  pwagner
+! Compatible with adjustable data types L2GPData
+!
 ! Revision 2.177  2003/01/15 02:49:06  vsnyder
 ! Get SecPerYear from Geometry module
 !
