@@ -17,7 +17,7 @@ module MLSHDF5
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
   use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
-  use HDF5, only: H5F_ACC_RDONLY_F, &
+  use HDF5, only: H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
     & H5SIS_SIMPLE_F, H5SOFFSET_SIMPLE_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
@@ -46,12 +46,12 @@ module MLSHDF5
   implicit NONE
   private
 
-  public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
-    & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
-    & IsHDF5DSInFile, IsHDF5AttributeInFile, &
+  public :: CpHDF5Attribute, CpHDF5GlAttribute, GetHDF5Attribute, &
     & GetAllHDF5DSNames, GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
-    & mls_h5open, mls_h5close, &
-    & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, &
+    & IsHDF5AttributePresent, IsHDF5DSPresent, &
+    & IsHDF5DSInFile, IsHDF5AttributeInFile, &
+    & LoadFromHDF5DS, MakeHDF5Attribute, mls_h5open, mls_h5close, &
+    & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, SaveAsHDF5DS, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -67,6 +67,8 @@ module MLSHDF5
 !     c o n t e n t s
 !     - - - - - - - -
 
+! CpHDF5Attribute      Copies an attribute
+! CpHDF5GlAttribute    Copies a global attribute
 ! GetAllHDF5DSNames    Retrieves names of all DS in file (under group name)
 ! GetHDF5Attribute     Retrieves an attribute
 ! GetHDF5DSRank        How many dimensions in dataset
@@ -82,6 +84,10 @@ module MLSHDF5
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! CpHDF5Attribute (int fromitemID, int toitemID, char name, 
+!    [log skip_if_already_there]) 
+! CpHDF5GlAttribute (char fromFile, char toFile, char name, 
+!    [log skip_if_already_there]) 
 ! GetAllHDF5DSNames (file, char gname, char DSNames) 
 !     file can be one of:
 !    {char* filename, int fileID}
@@ -96,7 +102,8 @@ module MLSHDF5
 ! log IsHDF5DSPresent (int locID, char name) 
 ! LoadFromHDF5DS (int locID, char name, value,  
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] ) 
-! MakeHDF5Attribute (int itemID, char name, value) 
+! MakeHDF5Attribute (int itemID, char name, value,
+!       [log skip_if_already_there]) 
 ! SaveAsHDF5DS (int locID, char name, value) 
 !     value can be one of:
 !    {char* value, int value, r4 value, r8 value, 
@@ -123,6 +130,18 @@ module MLSHDF5
       & GetHDF5Attribute_string, GetHDF5Attribute_sngl, GetHDF5Attribute_dbl, &
       & GetHDF5Attribute_snglarr1, GetHDF5Attribute_intarr1, &
       & GetHDF5Attribute_dblarr1, GetHDF5Attribute_string_arr1
+  end interface
+
+  interface CpHDF5Attribute
+    ! module procedure CpHDF5Attribute_int, CpHDF5Attribute_logical
+    module procedure CpHDF5Attribute_string
+    ! module procedure CpHDF5Attribute_sngl, CpHDF5Attribute_dbl
+    ! module procedure CpHDF5Attribute_snglarr1, CpHDF5Attribute_intarr1
+    ! module procedure CpHDF5Attribut _dblarr1, CpHDF5Attribute_string_arr1
+  end interface
+
+  interface CpHDF5GlAttribute
+    module procedure CpHDF5GlAttribute_string
   end interface
 
   interface IsHDF5AttributePresent
@@ -173,6 +192,65 @@ contains ! ======================= Public Procedures =========================
     error = 0
     call h5open_f (error)
   end subroutine mls_h5open
+
+  ! ------------------------------------- CpHDF5Attribute_string
+  subroutine CpHDF5Attribute_string ( fromitemID, toitemID, name, &
+   & skip_if_already_there )
+    integer, intent(in)           :: FROMITEMID   ! Group etc. to Cp attr from
+    integer, intent(in)           :: TOITEMID   ! Group etc. to Cp attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: DSID                     ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! Type for string
+    logical :: my_skip
+    logical :: is_present
+    character (len=2000) :: value1
+    ! character (len=*), intent(in) :: VALUE ! Value of attribute
+ 
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    is_present = IsHDF5AttributePresent_in_DSID(fromitemID, name)
+    if ( .not. is_present ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to cp: attribute not found '//trim(name) )
+    is_present = IsHDF5AttributePresent_in_DSID(toitemID, name) 
+    if ( my_skip .and. is_present) return
+    call GetHDF5Attribute_string ( fromitemID, name, value1 )
+    call MakeHDF5Attribute_string ( toitemID, name, trim(value1), &
+      & skip_if_already_there )
+  end subroutine CpHDF5Attribute_string
+
+  ! ------------------------------------- CpHDF5GlAttribute_string
+  subroutine CpHDF5GlAttribute_string ( fromFileName, toFileName, name, &
+   & skip_if_already_there )
+    character (len=*), intent(in) :: FROMFILENAME       ! file name
+    character (len=*), intent(in) :: TOFILENAME       ! file name
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: fromfileID
+    integer :: fromgrpID
+    integer :: STATUS                   ! Flag
+    integer :: tofileID
+    integer :: togrpID
+    
+    ! Executable code
+    call h5fopen_f(trim(fromFilename), H5F_ACC_RDONLY_F, fromFileID, status)
+    call h5fopen_f(trim(toFilename), H5F_ACC_RDONLY_F, toFileID, status)
+    call h5gopen_f(fromFileID, '/', fromgrpid, status)
+    call h5gopen_f(toFileID, '/', togrpid, status)
+    call CpHDF5Attribute_string ( fromgrpID, togrpID, name, &
+      & skip_if_already_there )
+    call h5gclose_f(fromgrpid, status)
+    call h5gclose_f(togrpid, status)
+    call h5fclose_f(fromFileID, status)
+    call h5fclose_f(toFileID, status)
+  end subroutine CpHDF5GlAttribute_string
 
   ! ------------------------------------- GetAllHDF5DSNames_fileID
   subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames )
@@ -3577,6 +3655,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.45  2004/09/23 23:00:10  pwagner
+! Added CpHDF5GlAttribute, CpHDF5Attribute
+!
 ! Revision 2.44  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
