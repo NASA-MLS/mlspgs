@@ -21,6 +21,7 @@ module L1BData
   use MLSStringLists, only: NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
+  use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
@@ -88,9 +89,12 @@ module L1BData
 
   private
 
-  public :: L1BData_T, L1BRadSetup, L1BOASetup, DeallocateL1BData, DIFF, DUMP, &
-    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, ReadL1BData, &
-    & AssembleL1BQtyName, ReadL1BAttribute
+  public :: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
+    & allocateL1BData, AssembleL1BQtyName, ContractL1BData, cpL1bData, &
+    & DeallocateL1BData, DIFF, DUMP, &
+    & FINDL1BDATA, FindMaxMAF, &
+    & L1BRadSetup, L1BOASetup, PadL1BData, &
+    & ReadL1BAttribute, ReadL1BData
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -134,25 +138,29 @@ module L1BData
   ! (An early idea we later repented of)
   logical, parameter :: DROPTPSUBGROUP = .true.
 
-  ! Max number for Orbit Number and Orbit period
+  ! No MAF number can ever be this big
+  integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
   ! This data type is used to store quantities from an L1B data file.
 
   type L1BData_T
     character (len=name_len) :: L1BName ! Name of field in file
     character (len=16) :: data_type     ! 'character', 'double', or 'integer'
-    integer :: FirstMAF                 ! First major frame read
+    integer :: FirstMAF                 ! First major frame read (usu. 0)
+    integer :: FirstMAFCtr              ! depends on date
+    integer :: LastMAFCtr               ! depends on date
     integer :: NoMAFs                   ! # of MAFs read
     integer :: MaxMIFs                  ! Max # of MIFs/MAF in SD array
     integer :: NoAuxInds                ! # of auxilliary indices
     integer :: TrueRank                 ! # necessary indices (e.g., 1 for MAFs)
-    character (len=16) :: NameInst     
+    character (len=16) :: NameInst = ' '     
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
     character, dimension(:,:,:), pointer :: CharField => NULL()
     real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
     integer,   dimension(:,:,:), pointer :: IntField => NULL()
     ! all the above dimensioned (noAuxInds,maxMIFs,noMAFs)
+    ! logical :: mustPad                  ! Gaps in counterMAF
   end type L1BData_T
   
   integer :: Error            ! Error level -- 0 = OK
@@ -175,6 +183,93 @@ module L1BData
 
 contains ! ============================ MODULE PROCEDURES =======================
 
+  !-------------------------------------------  allocateL1BData  -----
+  subroutine allocateL1BData ( l1bData, &
+    & indims, trueRank, datatype, &
+    & L1bDataSibling )
+    ! Allocate arrays in l1bData type
+    type( L1BData_T ), intent(out) :: L1bData
+    integer, dimension(3), optional,  intent(in) :: indims
+    integer, optional, intent(in) :: trueRank
+    character(len=*), optional, intent(in) :: datatype
+    type( L1BData_T ), optional, intent(in) :: L1bDataSibling
+    ! Internal variables
+    integer :: noMAFs
+    character(len=16) :: myDataType
+    integer :: rank
+    integer, dimension(3) :: dims
+
+    ! Executable code
+    if ( present(datatype) ) then
+      myDataType = datatype
+      rank = trueRank
+      dims = indims
+      noMAFs = dims(3)
+    elseif( present(L1bDataSibling) ) then
+      myDataType = L1bDataSibling%data_type
+      rank = L1bDataSibling%trueRank
+      noMAFs = L1bDataSibling%noMAFs
+      if ( associated(L1bDataSibling%charField)) then
+        dims = shape(L1bDataSibling%charField)
+      elseif ( associated(L1bDataSibling%intField)) then
+        dims = shape(L1bDataSibling%intField)
+      elseif ( associated(L1bDataSibling%dpField)) then
+        dims = shape(L1bDataSibling%dpField)
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'allocatel1bData was passed L1bDataSibling w/o allocating it' )
+      endif
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'allocatel1bData must be passed either datatype or L1bDataSibling' )
+    endif
+    if ( present(indims) ) then
+      dims = indims
+      noMAFs = dims(3)
+    endif
+    ! print *, 'rank in allocatel1bdata ', rank
+    ! print *, 'dims in allocatel1bdata ', dims
+    ! print *, 'noMAFs in allocatel1bdata ', noMAFs
+    if ( any(dims < 1) ) then
+      call output('NoMAFs ', advance='no')
+      call output(NoMAFs , advance='yes')
+      call output('dims ', advance='no')
+      call output(dims , advance='yes')
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'allocatel1bData encountered illegal dims' )
+    endif
+    call allocate_test ( l1bData%counterMAF, noMAFs, 'l1bData%counterMAF', &
+      & ModuleName )
+    l1bData%counterMAF = int(DEFAULTUNDEFINEDVALUE)
+    l1bdata%data_type = myDataType
+    l1bdata%noMAFs = noMAFs
+    select case( myDataType(1:1) )
+    case ( 'c' ) ! character
+      call allocate_test ( l1bData%charField, dims(1), dims(2), dims(3), &
+        & 'l1bData%charField', ModuleName )
+      l1bData%charField = ''
+    case ( 'i' ) ! integer
+      call allocate_test ( l1bData%intField, dims(1), dims(2), dims(3), &
+        & 'l1bData%intField', ModuleName )
+      l1bData%intField = int(DEFAULTUNDEFINEDVALUE)
+    case ( 'd', 'r' ) ! double
+      call allocate_test ( l1bData%dpField, dims(1), dims(2), dims(3), &
+        & 'l1bData%dpField', ModuleName )
+      l1bData%dpField = DEFAULTUNDEFINEDVALUE
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'datatype not recognized in allocating l1bdata field' )
+    end select
+    if ( .not. present(L1bDataSibling) ) return
+    l1bData%L1BName                = l1bDataSibling%L1BName
+    l1bData%FirstMAF               = l1bDataSibling%firstMAF
+    l1bData%FirstMAFCtr            = l1bDataSibling%firstMAFCtr
+    l1bData%LastMAFCtr             = l1bDataSibling%LastMAFCtr
+    l1bData%MaxMIFs                = l1bDataSibling%MaxMIFs         
+    l1bData%NoAuxInds              = l1bDataSibling%NoAuxInds       
+    l1bData%TrueRank               = l1bDataSibling%TrueRank        
+    l1bData%NameInst               = l1bDataSibling%NameInst
+  end subroutine allocateL1BData
 
   !-------------------------------------------  AssembleL1BQtyName  -----
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
@@ -281,6 +376,94 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if                                         
   end function AssembleL1BQtyName
 
+  !-------------------------------------------------  ContractL1BData  -----
+  subroutine ContractL1BData ( L1BDataIn, L1BDataOut, noMAFs, firstMAF, lastMAF )
+    ! Contract full l1bdataIn to just those mafs
+    ! beginning with firstMAF (if present) and ending with lastMAF
+    ! Remember 1st maf of full l1bData is numbered 0 
+    ! (I disapprove, but nobody ever asks my opinion)
+    
+    ! Perhaps related to this source of confusion, is the following:
+    ! What do we do when the lastMAF blows past the end of l1bDataIn?
+    ! For now, we'll try to keep noMAFs correct, but scoot everything down
+    ! Dummy arguments
+    type(L1BData_T), intent(in)  :: L1BDataIn
+    type(L1BData_T), intent(out) :: L1BDataOut
+    integer, optional, intent(in):: firstMAF ! Remember, 1st of full set is 0
+    integer, optional, intent(in):: lastMAF
+    integer, intent(out)         :: NoMAFs
+    ! Internal variables
+    integer, dimension(3) :: dims
+    integer :: maf
+    integer :: mafOffSet
+    integer :: myFirstMAF
+    integer :: myLastMAF
+    integer :: rank
+    logical, parameter :: DEEBug = .false.
+    ! Executable
+    myFirstMAF = 0
+    if ( present(firstMAF) ) myFirstMAF = firstMAF
+    myLastMAF = l1bDataIn%NoMAFs - l1bDataIn%firstMAF - 1
+    if ( present(lastMAF) ) myLastMAF = lastMAF
+    if ( associated(l1bDataIn%charField)) then
+      dims = shape(l1bDataIn%charField)
+    elseif ( associated(l1bDataIn%intField)) then
+      dims = shape(l1bDataIn%intField)
+    elseif ( associated(l1bDataIn%dpField)) then
+      dims = shape(l1bDataIn%dpField)
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Contractl1bData was passed l1bDataIn w/o allocating it' )
+    endif
+    noMAFs = myLastMAF - myFirstMAF + 1
+    dims(3) = noMAFs
+    rank = l1bDataIn%trueRank
+    l1bDataOut%noMAFs = noMAFs
+    l1bDataOut%firstMAF = myFirstMAF
+    if ( DEEBug ) print *, 'Preparing to contract ', trim(l1bDataIn%L1BName)
+    if ( DEEBug ) print *, 'rank ', rank
+    if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
+    if ( DEEBug ) print *, 'l1b(in)NoMAFs ', l1bDataIn%NoMAFs
+    if ( DEEBug ) print *, 'dims ', dims
+    if ( DEEBug ) print *, 'min(counterMAF) ', myminval(l1bDataIn%counterMAF)
+    if ( DEEBug ) print *, 'min(dpField) ',minval(l1bDataIn%dpField(1,1,:))
+    if ( DEEBug ) print *, 'max(dpField) ',maxval(l1bDataIn%dpField(1,1,:))
+    call allocateL1BData ( l1bDataOut, dims, L1bDataSibling=l1bDataIn )
+    mafOffSet = firstMAF
+    if ( mafOffSet+NoMAFs > size(l1bDataIn%counterMAF) ) &
+      & mafOffSet = size(l1bDataIn%counterMAF) - NoMAFs
+    do maf=1, NoMAFs
+      l1bDataOut%counterMAF(maf) = l1bDataIn%counterMAF(mafOffSet+maf)
+      call cpField(l1bDataIn, mafOffSet+maf, l1bdataOut, maf)
+    enddo
+    l1bDataOut%firstMAFCtr = myminval(l1bDataOut%counterMAF)
+    l1bDataOut%lastMAFCtr = maxval(l1bDataOut%counterMAF)
+  end subroutine ContractL1BData
+
+  !-------------------------------------------  cpL1BData  -----
+  subroutine cpL1BData ( l1bData1, l1bData2, offsetMAF )
+    ! cp all components from l1bdata1 to l1bdata2
+    ! increment counterMAF by offsetMAF (if present)
+    type( L1BData_T ), intent(in)  :: L1bData1
+    type( L1BData_T ), intent(out) :: L1bData2
+    integer, optional, intent(in)  :: offsetMAF
+
+    ! Executable code
+    call allocatel1bdata ( l1bData2, L1bDataSibling=l1bData1 )
+    ! print *, 'l1bData1%counterMAF(1): ', l1bData1%counterMAF
+    if ( .not. present(offsetMAF) ) then
+      l1bData2%counterMAF = l1bData1%counterMAF
+    else
+      l1bData2%counterMAF = l1bData1%counterMAF + offsetMAF
+      l1bData2%FirstMAFCtr = l1bData1%FirstMAFCtr + offsetMAF
+      l1bData2%LastMAFCtr = l1bData1%LastMAFCtr + offsetMAF
+    endif
+    ! print *, 'l1bData2%counterMAF(1): ', l1bData2%counterMAF
+    if ( associated(l1bdata1%charField) ) l1bdata2%charField=l1bdata1%charField
+    if ( associated(l1bdata1%intField) ) l1bdata2%intField=l1bdata1%intField
+    if ( associated(l1bdata1%dpField) ) l1bdata2%dpField=l1bdata1%dpField
+  end subroutine cpL1BData
+
   !-------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
     ! This should be called when an l1bData is finished with
@@ -345,6 +528,18 @@ contains ! ============================ MODULE PROCEDURES ======================
       call output(' (2) Num of auxilliary indices = ', advance='no')
       call output(L1bData2%NoAuxInds, advance='yes')
     endif
+    if ( L1bData1%FirstMAFCtr /= L1bData2%FirstMAFCtr ) then
+      call output(' (1) First major frame counter = ', advance='no')
+      call output(L1bData1%FirstMAFCtr, advance='yes')
+      call output(' (2) First major frame counter = ', advance='no')
+      call output(L1bData2%FirstMAFCtr, advance='yes')
+    endif
+    if ( L1bData1%LastMAFCtr /= L1bData2%LastMAFCtr ) then
+      call output(' (1) Last major frame counter = ', advance='no')
+      call output(L1bData1%FirstMAFCtr, advance='yes')
+      call output(' (2) Last major frame counter = ', advance='no')
+      call output(L1bData2%LastMAFCtr, advance='yes')
+    endif
 
     if ( myDetails < 0 ) return
     if ( associated(l1bData1%counterMAF) .and. &
@@ -406,8 +601,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     myDetails = 1
     if ( present(details) ) myDetails = details
     
-    call output(trim(L1bData%NameInst), advance='yes')
-    call output('L1B rad quantity Name = ', advance='no')
+    if ( trim(L1bData%NameInst) /= ' ' ) &
+      & call output(trim(L1bData%NameInst), advance='yes')
+    call output('L1B rad/oa quantity Name = ', advance='no')
     call output(trim(L1bData%L1BName), advance='yes')
     if ( myDetails < -1 ) return
     call output('  First major frame read = ', advance='no')
@@ -418,6 +614,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     call output(L1bData%MaxMIFs, advance='yes')
     call output('  Num of auxilliary indices = ', advance='no')
     call output(L1bData%NoAuxInds, advance='yes')
+    call output('  First major frame counter = ', advance='no')
+    call output(L1bData%FirstMAFCtr, advance='yes')
+    call output('  Last major frame counter = ', advance='no')
+    call output(L1bData%LastMAFCtr, advance='yes')
 
     if ( myDetails < 0 ) return
     if ( associated(l1bData%counterMAF) ) then
@@ -434,13 +634,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
 
     if ( associated(l1bData%intField) ) then
-      call dump ( l1bData%intField, 'l1bData%intField' )
+      call dump ( l1bData%intField, 'l1bData%intField', &
+        & fillValue = int(DEFAULTUNDEFINEDVALUE) )
     else
       call output('(intField array not associated)', advance='yes')
     end if
 
     if ( associated(l1bData%dpField) ) then
-      call dump ( l1bData%dpField, 'l1bData%dpField' )
+      call dump ( l1bData%dpField, 'l1bData%dpField', &
+        & fillValue=DEFAULTUNDEFINEDVALUE*1.d0 )
     else
       call output('(dpField array not associated)', advance='yes')
     end if
@@ -484,6 +686,102 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
     end do
   end function FindL1BData
+
+  ! ------------------------------------------------  FindMaxMAF  -----
+  integer function FindMaxMAF ( files, hdfVersion, minMAF )
+  ! Find maximum MAF among files (using counterMAF arrays)
+
+  use MLSHDF5, only: IsHDF5DSPresent
+
+    integer, dimension(:), intent(in) :: files ! File handles
+    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(out) :: minMAF
+
+    ! Externals
+    integer, external :: SFN2INDEX
+
+    ! Local variables
+    integer :: i
+    integer :: myhdfVersion
+    character(len=*), parameter :: fieldname = 'counterMAF'
+    type(L1BData_T) :: l1bData
+    integer :: noMAFs
+    integer :: myMinMAF
+    integer :: status
+    logical :: haveCtrMAF
+    logical, parameter :: DEEBug = .false.
+    ! Executable code
+    if ( present(hdfVersion) ) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L1BDEFAULT_HDFVERSION
+    end if
+
+    FindMaxMAF=0
+    myMinMAF = BIGGESTMAFCTR
+    haveCtrMAF = .false.
+    do i = 1, size(files)
+      if ( myhdfVersion == HDFVERSION_4 ) then
+        haveCtrMAF = sfn2index(files(i),trim(fieldName)) /= -1
+        if ( haveCtrMAF ) then
+          call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            & hdfVersion=HDFVERSION_4, dontPad=.true.)
+        end if
+      else
+        haveCtrMAF = IsHDF5DSPresent(files(i),trim(fieldName))
+        if ( haveCtrMAF ) then
+          call ReadL1BData ( files(i), fieldName, L1bData, noMAFs, status, &
+            & hdfVersion=HDFVERSION_5, dontPad=.true.)
+        end if
+      end if
+      if ( haveCtrMAF ) then
+        FindMaxMAF = max(FindMaxMAF, maxval(l1bData%counterMAF))
+        myMinMAF = min(myMinMAF, myminval(l1bData%counterMAF))
+        if ( DEEBug ) print *, 'counterMAF ', l1bData%counterMAF
+        call deallocatel1bdata(L1bData)
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to find '//trim(fieldName)//' in l1b files')
+      endif
+    end do
+    if ( DEEBug ) print *, 'FindMaxMAF ', FindMaxMAF
+    if ( DEEBug ) print *, 'myMinMAF ', myMinMAF
+    if ( present(minMAF) ) minMAF = myMinMAF
+  end function FindMaxMAF
+
+  !--------------------------------------------------  IsL1BGappy  -----
+  logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
+    ! Look for gaps in l1bData, returning true if any found
+
+    ! Dummy arguments
+    type (L1BData_T), intent(in) :: l1bData
+    logical, optional, intent(in) :: ignoreGlobalAttrs  ! defaults to checking
+    ! Internal variables
+    logical :: skipGACHecks
+    integer :: i
+    integer :: nextMAF
+    integer :: maxCtrMAF
+    integer :: minCtrMAF
+    ! Executable
+    skipGACHecks = .false.
+    if ( present(ignoreGlobalAttrs) ) skipGACHecks = ignoreGlobalAttrs
+    IsL1BGappy = .false.
+    if ( .not. skipGACHecks ) then
+      maxCtrMAF = maxval(l1BData%counterMAF)
+      minCtrMAF = myminval(l1BData%counterMAF)
+      IsL1BGappy = (maxCtrMAF < GlobalAttributes%LastMAFCtr &
+        & .or. &
+        & minCtrMAF > GlobalAttributes%FirstMAFCtr)
+    endif
+    if ( IsL1BGappy ) return
+    ! Search for interior gaps
+    IsL1BGappy = .true. ! If exit from next loop prematurely, must be gappy
+    nextMAF = minCtrMAF
+    do i=1, size(l1BData%counterMAF)
+      if ( nextMAF /= l1BData%counterMAF(i)) return
+    enddo
+    IsL1BGappy = .false.
+  end function IsL1BGappy
 
   !--------------------------------------------------  L1BOASetup  -----
   subroutine L1boaSetup ( root, l1bInfo, F_FILE, hdfVersion )
@@ -724,9 +1022,135 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
   end subroutine ReadL1BAttribute_dblarr1
 
+  !-------------------------------------------------  PadL1BData  -----
+  subroutine PadL1BData ( L1BDataIn, L1BDataOut, FirstMAFCtr, NoMAFs, &
+    & PrecisionIn, PrecisionOut, force )
+    ! Pad l1bdataIn to fit NoMafs (assuming noMafs >= l1bdatain%NoMAFs)
+    ! beginning with 1st MAF number of day
+    ! (May need to pad at start, at end, or at both ends)
+    ! Return newly created padded object as l1bdataOut
+    ! If optionally supplied PrecisionIn it will return padded PrecisionOut  
+    ! where the padded values will all be cleverly set negative 
+    ! (meaning do not use)
+    ! Just as important, fill any gaps
+    ! where a gap is defined as a break in sequence in counterMAF array
+    ! .., p-2, p-1, [p], [p+1], .., p+gap-1, ..
+    ! such that the bracketed numbers above are absent from the counterMAF
+    ! Dummy arguments
+    type(L1BData_T), intent(in)  :: L1BDataIn
+    type(L1BData_T), intent(out) :: L1BDataOut
+    integer, intent(in)          :: FirstMAFCtr ! 1st MAF number of day
+    integer, intent(in)          :: NoMAFs
+    type(L1BData_T), optional, intent(in)  :: PrecisionIn
+    type(L1BData_T), optional, intent(out) :: PrecisionOut
+    logical, optional, intent(in) :: force   ! Relax assumption 
+    ! Internal variables
+    logical :: myForce
+    integer, dimension(3) :: dims
+    integer :: gap
+    integer :: i
+    integer :: indexOut
+    integer :: lastMAF
+    integer :: cmindex
+    integer :: current
+    integer :: maf
+    integer :: maxMAF
+    integer :: rank
+    logical, parameter :: DEEBug = .false.
+    ! Executable
+    myForce = .false.
+    if ( present(force) ) myForce = force
+    ! Check assumption that noMafs >= l1bdatain%NoMAFs
+    if ( .not. myForce .and. noMAFs < l1bdatain%NoMAFs ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'noMAFs requested smaller than number stored in input l1bData' )
+    elseif ( present(PrecisionOut) .and. .not. present(PrecisionIn) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Must have PrecisionIn to calculate PrecisionOut' )
+    endif
+    if ( associated(l1bDataIn%charField)) then
+      dims = shape(l1bDataIn%charField)
+    elseif ( associated(l1bDataIn%intField)) then
+      dims = shape(l1bDataIn%intField)
+    elseif ( associated(l1bDataIn%dpField)) then
+      dims = shape(l1bDataIn%dpField)
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Padl1bData was passed l1bDataIn w/o allocating it' )
+    endif
+    dims(3) = noMAFs
+    rank = l1bDataIn%trueRank
+    if ( DEEBug ) print *, 'Preparing to pad ', trim(l1bDataIn%L1BName)
+    if ( DEEBug ) print *, 'rank ', rank
+    if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
+    if ( DEEBug ) print *, 'l1b(in)NoMAFs ', l1bDataIn%NoMAFs
+    if ( DEEBug ) print *, 'dims ', dims
+    if ( DEEBug ) print *, 'min(counterMAF) ', myminval(l1bDataIn%counterMAF)
+    if ( DEEBug ) print *, 'min(dpField) ',minval(l1bDataIn%dpField(1,1,:))
+    if ( DEEBug ) print *, 'max(dpField) ',maxval(l1bDataIn%dpField(1,1,:))
+    call allocateL1BData ( l1bDataOut, dims, L1bDataSibling=l1bDataIn )
+    do maf=1, NoMAFs
+      l1bDataOut%counterMAF(maf) = FirstMAFCtr - 1 + maf
+      if ( present(PrecisionOut) ) &
+        & PrecisionOut%counterMAF(maf) = FirstMAFCtr - 1 + maf
+    enddo
+    ! Now hunt for missing MAFs
+    maf = FirstMAFCtr
+    lastmaf = maf - 1
+    indexOut = 0
+    if ( DEEBug ) print *, 'size(l1bDataOut%counterMAF) ', size(l1bDataOut%counterMAF)
+    do cmindex = 1, l1bDataIn%noMAFs
+      if ( DEEBug ) print *, 'l1bDataIn%counterMAF(cmindex) ', l1bDataIn%counterMAF(cmindex)
+      if ( DEEBug ) print *, 'maf ', maf
+      if ( DEEBug ) print *, 'indexOut ', indexOut
+      if ( l1bDataIn%counterMAF(cmindex) < maf ) then
+        ! counterMAF too small: must ignore (perhaps past end of array?)
+      elseif ( l1bDataIn%counterMAF(cmindex) == maf ) then
+        ! Found expected maf: no gap from last maf
+        indexOut = indexOut + 1
+        if ( DEEBug ) print *, 'Found expected maf: no gap from last maf'
+        l1bDataOut%counterMAF(indexOut) = maf
+        call cpField(l1bDataIn, cmindex, l1bdataOut, indexOut)
+        if ( present(PrecisionOut) ) &
+          &  call cpField(PrecisionIn, cmindex, PrecisionOut, indexOut)
+        maf = maf+1
+      else
+        current = l1bDataIn%counterMAF(cmindex)
+        if ( DEEBug ) print *, 'Found a greater maf than expected: gap from maf to ', current-1
+        ! Found a greater maf than expected: gap from maf to current-1
+        gap = current-maf
+        ! fill the gap with undefined
+        do i=1, gap
+          l1bDataOut%counterMAF(indexOut+i) = maf-1+i
+          call zeroField(l1bdataOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+          if ( present(PrecisionOut) ) &
+            & call zeroField(PrecisionOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+        enddo
+        if ( DEEBug ) print *, 'Now treat current normally ', current
+        ! Now treat current normally
+        indexOut = indexOut + gap + 1
+        l1bDataOut%counterMAF(indexOut) = current
+        call cpField(l1bDataIn, cmindex, l1bdataOut, indexOut)
+        if ( present(PrecisionOut) ) &
+          &  call cpField(PrecisionIn, cmindex, PrecisionOut, indexOut)
+        maf = current+1
+      endif
+    enddo
+    if ( maf > FirstMAFCtr + noMAFs - 1 ) return
+    gap = FirstMAFCtr + noMAFs - maf
+    ! Apparently, we end too soon, so must pad
+    if ( DEEBug ) print *, 'Apparently, we end too soon, so must pad ', gap, indexOut
+    do i=1, gap
+      l1bDataOut%counterMAF(indexOut+i) = maf-1+i
+      call zeroField(l1bdataOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+      if ( present(PrecisionOut) ) &
+        & call zeroField(PrecisionOut, indexOut+i, DEFAULTUNDEFINEDVALUE)
+    enddo
+  end subroutine PadL1BData
+
   !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion )
+    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad )
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -737,10 +1161,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
-    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in) :: HDFVERSION
+    logical, intent(in), optional  :: DONTPAD ! Don't try to pad even if gappy
 
     ! Local variables
     integer :: myhdfVersion
+    logical :: myDontPad
+    type(l1bdata_t) :: L1BDATATMP
+    logical :: isScalar
+    logical, parameter :: DEEBug = .false.
 
     ! Executable code
     if ( present(hdfVersion) ) then
@@ -749,6 +1178,9 @@ contains ! ============================ MODULE PROCEDURES ======================
       myhdfVersion = L1BDEFAULT_HDFVERSION
     end if
     ! print * 'hdfVersion: ', hdfVersion
+    myDontPad = .false.
+    if ( present(firstMAF) ) myDontPad = .true.
+    if ( present(dontPad) ) myDontPad = dontPad
 
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_hdf4 ( L1FileHandle, trim(QuantityName), L1bData, &
@@ -769,6 +1201,35 @@ contains ! ============================ MODULE PROCEDURES ======================
         & 'Failed to find '//trim(QuantityName)//' in l1b files')
       end if
     end if
+    isScalar = ( l1bData%noMAFs < 2 ) ! There may be a better way to decide
+    if ( myDontPad .or. flag /= 0 .or. isScalar ) return
+    if ( .not. IsL1BGappy(l1bData) ) return
+    ! Must pad l1bdata; so first copy to temp l1bData
+    if ( associated(l1bdata%dpField) .and. DEEBug ) then
+      print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
+      print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
+    endif
+    call cpL1bData(l1bdata, l1bdataTmp)
+    if ( associated(l1bdatatmp%dpField) .and. DEEBug ) then
+      print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
+      print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
+    endif
+    call deallocatel1bData(l1bdata)
+    if ( GlobalAttributes%LastMAFCtr > 0 ) &
+      & NoMAFs = GlobalAttributes%LastMAFCtr - GlobalAttributes%FirstMAFCtr + 1
+    if ( DEEBug ) print *, 'preparing to pad'
+    if ( DEEBug ) print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
+    if ( DEEBug ) print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
+    if ( DEEBug ) print *, 'NoMAFs ', NoMAFs
+    call PadL1BData(l1bdataTmp, l1bData, GlobalAttributes%FirstMAFCtr, NoMAFs)
+    call deallocatel1bData(l1bdataTmp)
+    if ( .not. present(firstMAF) .and. .not. present(lastMAF) ) return
+    ! Need to contract padded l1bdata to just those MAFs requested
+    call cpL1bData(l1bdata, l1bdataTmp)
+    call deallocatel1bData(l1bdata)
+    if ( DEEBug ) print *, 'preparing to contract'
+    call ContractL1BData(l1bdataTmp, l1bData, noMAFs, firstMAF, lastMAF)
+    call deallocatel1bData(l1bdataTmp)
   end subroutine ReadL1BData
 
   !--------------------------------------------  ReadL1BData_hdf4  -----
@@ -946,6 +1407,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       end do
     end if
 
+    l1bData%FirstMAFCtr = myminval(l1bData%counterMAF)
+    l1bData%LastMAFCtr = maxval(l1bData%counterMAF)
     ! allocate, read according to field type; nullify unused pointers
     select case ( data_type )
 
@@ -1075,13 +1538,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: MyNeverFail
     integer :: NUMMAFS
     integer :: RANK
+    integer :: CMRANK
     character(len=16) :: QTYPE
     integer :: SDS1_ID
     integer :: STATUS
 
-    ! integer, dimension(:), pointer :: COUNTERMAF_PTR
     integer(kind=hSize_t), dimension(:), pointer :: DIMS
     integer(kind=hSize_t), dimension(:), pointer :: MAXDIMS
+    integer(kind=hSize_t), dimension(:), pointer :: CMDIMS
+    integer(kind=hSize_t), dimension(:), pointer :: CMMAXDIMS
 
     logical, parameter           :: DEEBUG = .false.
 
@@ -1111,10 +1576,14 @@ contains ! ============================ MODULE PROCEDURES ======================
     allocate ( dims(rank), maxDims(rank) )
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
-    if ( DEEBUG) print *, 'rank ', rank
-    if ( DEEBUG) print *, 'maxDims ', maxDims
-    if ( DEEBUG) print *, 'dims ', dims
-    if ( DEEBUG) print *, 'Qtype ', Qtype
+    if ( DEEBug ) print *, 'L1FileHandle ', L1FileHandle
+    if ( DEEBug ) print *, 'QuantityName ', trim(QuantityName)
+    if ( DEEBug ) print *, 'rank ', rank
+    if ( DEEBug ) print *, 'maxDims ', maxDims
+    if ( DEEBug ) print *, 'dims ', dims
+    if ( DEEBug ) print *, 'Qtype ', Qtype
+    if ( present(firstMAF) .and. DEEBug ) print *, 'firstMAF ', firstMAF
+    if ( present(LastMAF) .and. DEEBug ) print *, 'LastMAF ', LastMAF
 
     l1bData%noAuxInds = product(dims(1:rank-2))
     l1bData%maxMIFs = 1
@@ -1152,23 +1621,25 @@ contains ! ============================ MODULE PROCEDURES ======================
       l1bData%noMAFs = numMAFs - l1bData%firstMAF
     end if
 
-    if ( DEEBUG) print *, 'l1bData%noMAFs ', l1bData%noMAFs
+    if ( DEEBug ) print *, 'l1bData%noMAFs ', l1bData%noMAFs
     l1bData%L1BName = quantityName
 
     noMAFs = l1bData%noMAFs
-    if ( DEEBUG)  print *, 'noMAFs ', noMAFs
+    if ( DEEBug ) print *, 'noMAFs ', noMAFs
 
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
       & 'counterMAF', ModuleName )
     ! Find data sets for counterMAF & quantity by name
 
-    if ( .not. IsHDF5DSPresent(L1FileHandle, 'CounterMAF') ) then
+    if ( .not. IsHDF5DSPresent(L1FileHandle, '/counterMAF') ) then
       if ( .not. JUSTLIKEL2AUX ) then
         flag = NOCOUNTERMAFINDX
         if ( MyNeverFail ) return
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Failed to find index of counterMAF data set.')
       else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Failed to find index of counterMAF data set.')
         sds1_id = SD_NO_COUNTERMAF
         ! Since we aren't reading these, just make them internally consistent
         do i = 1, l1bData%noMAFs
@@ -1176,23 +1647,50 @@ contains ! ============================ MODULE PROCEDURES ======================
         end do
       end if
     else
-
+      call GetHDF5DSRank(L1FileHandle, '/counterMAF', cmrank)
+      allocate ( cmdims(cmrank), cmmaxDims(cmrank) )
+      call GetHDF5DSDims(L1FileHandle, '/counterMAF', cmdims, cmmaxDims)
       ! allocate(countermaf_ptr(MAX_NOMAFS))
       ! countermaf_ptr = 0
       if ( present(FirstMAF) ) then
-        call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf, &
+        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf, &
           & (/MAFoffset/), (/l1bData%noMAFs/) )
+      elseif ( cmdims(1) /= l1bData%noMAFs ) then
+        flag = CANTREADCOUNTERMAF
+        if ( MyNeverFail ) then
+          deallocate(dims, maxDims, cmdims, cmmaxdims)
+          return
+        endif
+        call output('Quantity name: ', advance = 'no')
+        call output(Quantityname, advance = 'yes')
+        call output('Quantity rank: ', advance = 'no')
+        call output(rank, advance = 'yes')
+        call output('Quantity dims: ', advance = 'no')
+        call output(int(dims), advance = 'yes')
+        call output('Quantity noMAFs: ', advance = 'no')
+        call output(l1bData%noMAFs, advance = 'yes')
+        call output('counterMAF dims: ', advance = 'no')
+        call output(int(cmdims), advance = 'yes')
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Sorry--ReadL1BData_hdf5 says counterMaf sized differently from ' &
+          & // trim(QuantityName) )
       else
-        call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf)
+        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf)
       end if
+      deallocate(cmdims, cmmaxdims)
       if ( sds1_id == -1 ) then
         flag = NOCOUNTERMAFID
+        deallocate(dims, maxdims)
         if ( MyNeverFail ) return
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Failed to find identifier of counterMAF data set.')
       end if
     end if
 
+    l1bData%FirstMAFCtr = myminval(l1bData%counterMAF)
+    l1bData%LastMAFCtr = maxval(l1bData%counterMAF)
+    if ( DEEBUG) print *, 'l1bData%FirstMAFCtr ', l1bData%FirstMAFCtr
+    if ( DEEBUG) print *, 'l1bData%LastMAFCtr ', l1bData%LastMAFCtr
     if ( DEEBUG) print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
     if ( DEEBUG) print *, 'dims ', dims
     if ( DEEBUG) print *, 'noMAFs ', l1bData%noMAFs
@@ -1280,6 +1778,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     case default 
       l1bdata%data_type = 'unknown'
       flag = UNKNOWNDATATYPE
+      deallocate(dims, maxDims)
       if ( MyNeverFail ) return
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type: ' &
@@ -1422,6 +1921,108 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
   end subroutine Reshape_For_HDF4
 
+  ! ---------------------------------------------  cpField  -----
+  subroutine cpField(l1bDataIn, nIn, l1bdataOut, nOut, m)
+    ! copy data from l1bDataIn to l1bdataOut starting from index n(In, Out)
+    ! where the starting point may be different for the two
+    ! Optionally continue copying for m indices
+    ! (thus default is m==1)
+    ! Arguments
+    type (L1BData_T), intent(in)    :: l1bDataIn
+    type (L1BData_T), intent(inout) :: l1bDataOut
+    integer, intent(in)             :: nIn
+    integer, intent(in)             :: nOut
+    integer, optional, intent(in)   :: m
+    ! Internal variables
+    integer :: nn  ! number of indices to copy
+    ! Executable
+    nn = 0
+    if ( present(m) ) nn=m-1
+    ! print *, 'Copying from to ', nIn, nOut
+    if ( associated(l1BDataIn%charField) .and. &
+      & associated(l1BDataOut%charField) ) then
+        l1BDataOut%charField(:,:,nOut:nOut+nn) = &
+        & l1BDataIn%charField(:,:,nIn:nIn+nn)
+    endif
+    if ( associated(l1BDataIn%intField) .and. &
+      & associated(l1BDataOut%intField) ) then
+        l1BDataOut%intField(:,:,nOut:nOut+nn) = &
+        & l1BDataIn%intField(:,:,nIn:nIn+nn)
+    endif
+    if ( associated(l1BDataIn%dpField) .and. &
+      & associated(l1BDataOut%dpField) ) then
+        if ( nOut+nn > size(l1BDataOut%dpField, 3) ) then
+          call output('size(l1BDataOut%dpField, 3) ', advance='no')
+          call output(size(l1BDataOut%dpField, 3), advance='yes')
+          call output('nOut+nn ', advance='no')
+          call output(nOut+nn, advance='yes')
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Tried to copy past size of output field in cpField')
+        elseif ( nIn+nn > size(l1BDataIn%dpField, 3) ) then
+          call output('size(l1BDataIn%dpField, 3) ', advance='no')
+          call output(size(l1BDataIn%dpField, 3), advance='yes')
+          call output('nIn+nn ', advance='no')
+          call output(nIn+nn, advance='yes')
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Tried to copy past size of input field in cpField')
+        endif
+        l1BDataOut%dpField(:,:,nOut:nOut+nn) = &
+        & l1BDataIn%dpField(:,:,nIn:nIn+nn)
+    ! print *, l1BDataIn%dpField(1,1,nIn:nIn+nn)
+    endif
+  end subroutine cpField
+
+  ! ---------------------------------------------  zeroField  -----
+  subroutine zeroField(l1bData, n, value, m, chValue)
+    ! Set l1bData to zero starting from index n
+    ! Optionally continue zeroing for m indices
+    ! (thus default is m==1)
+    ! Arguments
+    type (L1BData_T), intent(inout)         :: l1bData
+    integer, intent(in)                     :: n
+    real, optional, intent(in)              :: value   ! default is 0.
+    integer, optional, intent(in)           :: m
+    character(len=1), optional, intent(in)  :: chValue ! default is ' '
+    ! Internal variables
+    real             :: zero
+    character(len=1) :: blank
+    integer          :: nn  ! number of indices to copy
+    ! Executable
+    nn = 0
+    if ( present(m) ) nn=m-1
+    zero = 0.
+    if ( present(value) ) zero = value
+    blank = ' '
+    if ( present(chValue) ) blank = chValue
+    if ( associated(l1BData%charField)  ) then
+        l1BData%charField(:,:,n:n+nn) = blank
+    endif
+    if ( associated(l1BData%intField)  ) then
+        l1BData%intField(:,:,n:n+nn) = int(zero)
+    endif
+    if ( associated(l1BData%dpField)  ) then
+        l1BData%dpField(:,:,n:n+nn) = zero
+    endif
+  end subroutine zeroField
+
+  ! ---------------------------------------------  myminval  -----
+  function myminval(ints) result(mymin)
+  ! find minimum value of integer array ints
+  ! subject to constraint that none is < 0
+  ! (so we avoid picking any undefined, i.e. -999)
+  ! Args
+  integer, dimension(:), intent(in)  :: ints
+  integer                            :: mymin
+  ! Internal variables
+  integer :: i
+  ! Executable
+  mymin= maxval(ints)
+  if ( size(ints) < 2 ) return
+  do i=1, size(ints)
+    if ( ints(i) > 0 ) mymin=min(mymin, ints(i))
+  enddo
+  end function myminval
+
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
     & error_number )
@@ -1488,6 +2089,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.47  2004/08/16 17:04:23  pwagner
+! Pads L1bData after reading gappy data
+!
 ! Revision 2.46  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
