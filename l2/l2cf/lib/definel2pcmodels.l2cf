@@ -4,21 +4,24 @@
 
 !ifdef(doBaseline,{},{!define(doBaseline,{true})})
 
+;; We choose 100.0 for the phiWindow to ensure we use the full l2pc
+;; information available.
+
 !define(l2pcF,{
 l2pcSidsFwm$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), do_baseline=!doBaseline
+  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=100.0
 l2pcSidsFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=1
+  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=0
 l2pcODFwm$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1)
+  molecules=!moleculeFamilies($1), phiWindow=100.0
 l2pcODFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), phiWindow=1
+  molecules=!moleculeFamilies($1), phiWindow=0
 l2pcRetFwm$1: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies($1), moleculeDerivatives=!moleculeFamilies($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0
 l2pcRetFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies($1), moleculeDerivatives=!moleculeFamilies($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=1})
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0})
 
 ;; Do all the 'standard' i.e. folded bands
 !forall({l2pcF},!allBands)
