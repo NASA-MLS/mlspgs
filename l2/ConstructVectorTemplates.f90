@@ -44,7 +44,6 @@ contains ! =====     Public Procedures     =============================
     integer :: nSelections    ! How many selections?
     integer, dimension(:), pointer :: SELECTED
     integer :: SON            ! Son of Root
-    integer :: STATUS         ! From allocate
 
     ! Executable code
 
@@ -97,6 +96,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.1  2000/11/16 02:01:03  vsnyder
+! Remove unused variable STATUS.
+!
 ! Revision 2.0  2000/09/05 18:57:02  ahanzel
 ! Changing file revision to 2.0.
 !
