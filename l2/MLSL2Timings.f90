@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -31,8 +31,9 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   integer, parameter                 :: num_section_times = 12
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
-    & 'forward_model,low_cloud,sids'
-  integer, parameter                 :: num_retrieval_times = 7
+    & 'full_fwm,fullcloud_fwm,scan_fwm,linear_fwm,' // &
+    & 'low_cloud,high_cloud,sids'
+  integer, parameter                 :: num_retrieval_times = 11
   real, dimension(num_section_times+num_retrieval_times), &
     & save                           :: section_timings = 0.
 
@@ -44,13 +45,16 @@ contains ! =====     Public Procedures     =============================
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the retrieval section_names
-    real, intent(in)            :: t1             ! Prior time_now 
+    real, optional, intent(in)  :: t1             ! Prior time_now 
 
   ! Private
     integer                     :: elem
     real                        :: t2
+    real, save                  :: myLastTime
 
   ! Executable
+      if ( present(t1) ) myLastTime = t1
+
       elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
       if ( elem < 1 .or. elem > num_retrieval_times ) then
         call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -59,8 +63,9 @@ contains ! =====     Public Procedures     =============================
       else
         call time_now ( t2 )
         section_timings(num_section_times+elem) = &
-          & section_timings(num_section_times+elem) + t2 - t1
+          & section_timings(num_section_times+elem) + t2 - myLastTime
       endif
+      myLastTime = t2
   end subroutine add_to_retrieval_timing
 
   ! -----------------------------------------------  add_to_section_timing  -----
@@ -213,6 +218,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.6  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
 ! Revision 2.5  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
