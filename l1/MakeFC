@@ -69,7 +69,7 @@ PROG=mlsl1
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl1
@@ -131,6 +131,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.13  2001/05/01 18:32:13  pwagner
+# Added .configure to prereqs for lib
+#
 # Revision 2.12  2001/05/01 17:07:43  pwagner
 # Now runs ghostbuster when updating
 #
