@@ -35,6 +35,7 @@ module ForwardModelConfig
   type, public :: ForwardModelConfig_T
     integer :: fwmType        ! l_linear, l_full or l_scan
     logical :: Atmos_Der      ! Do atmospheric derivatives
+    logical :: do_Baseline    ! Do a baseline computation
     logical :: Do_Conv        ! Do convolution
     logical :: Do_Freq_Avg    ! Do Frequency averaging
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
@@ -142,6 +143,8 @@ contains
         call output ( database(i)%atmos_der, advance='yes' )
         call output ( '  Do_conv:' )
         call output ( database(i)%do_conv, advance='yes' )
+        call output ( '  Do_Baseline:' )
+        call output ( database(i)%do_Baseline, advance='yes' )
         call output ( '  Do_freq_avg:' )
         call output ( database(i)%do_freq_avg, advance='yes' )
         call output ( '  frqGap:' )
@@ -177,6 +180,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
 ! Revision 1.15  2001/09/04 15:59:01  jonathan
 ! add cloud_fov, jonathan
 !
