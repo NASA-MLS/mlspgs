@@ -141,6 +141,8 @@ contains
     integer :: NPC                      ! Length of coarse path
     integer :: N_T_ZETA                 ! Number of zetas for temperature
     integer :: PTG_I                    ! Loop counter for the pointings
+    integer :: PTG_J                    ! Loop counter for patching the pointings
+    integer :: PTG_K                    ! Loop counter for patching the pointings
     integer :: SIDEBAND                 ! Either zero or from firstSignal
     integer :: SIGIND                   ! Signal index, loop counter
     integer :: SURFACETANGENTINDEX      ! Index in tangent grid of earth's
@@ -164,6 +166,7 @@ contains
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
+    logical :: PATCHEDAPTG              ! Used in patching the pointings
 
     character (len=32) :: SigName       ! Name of a Signal
     character (len=32) :: molName       ! Name of a molecule
@@ -214,6 +217,7 @@ contains
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
+    real(rp) :: DELTAPTG      ! Used for patching the pointings
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
@@ -1832,29 +1836,49 @@ contains
       if ( index(switches,'ptg') /= 0 ) then
         call Dump ( ptg_angles, 'ptg_angles (before any patch)', format='(1PG22.17)' )
       end if
-      do ptg_i = 2, no_tan_hts - 1
-        ! this is a temporary fix
-        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) ) then
-          ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
-          if ( index(switches,'ptg') /= 0 ) &
-            & call Dump ( ptg_angles, 'ptg_angles (after a patch)', format='(1PG22.17)' )
+      
+      ! This code is needed to ensure that the ptg_angles are monotonic (and not flat even)
+      ptg_i = 2
+      deltaPtg = 1e-3              ! Some starting value
+      patchedAPtg = .false.
+      do ptg_i = 2, no_tan_hts
+        if ( ptg_angles(ptg_i) <= ptg_angles(ptg_i-1) ) then
+          patchedAPtg = .true.
+          ! This one is at or below its predecessor, find the next one above
+          ptg_j = ptg_i + 2
+          patchPtgInnerLoop: do 
+            if ( ptg_j > no_tan_hts ) exit patchPtgInnerLoop
+            if ( ptg_angles(ptg_j) > ptg_angles(ptg_i) ) exit patchPtgInnerLoop
+            ptg_j = ptg_j + 1
+          end do patchPtgInnerLoop
+          ! Work out the spacing to fill in with
+          if ( ptg_j > no_tan_hts ) then
+            ! Fell off the end of the list, just use previous spacing
+            ptg_j = no_tan_hts
+          else
+            ! Didn't fall off, so work out spacing
+            deltaPtg = ( ptg_angles(ptg_j) - ptg_angles(ptg_i) ) / ( ptg_j - ptg_i )
+          end if
+          do ptg_k = ptg_i, ptg_j - 1
+            ptg_angles(ptg_k) = ptg_angles(ptg_i-1) + ( ptg_k - ptg_i + 1 ) * deltaPtg
+          end do
+          ! Don't worry about missing the last one here, it will get caught by the
+          ! next iteration of the outer loop
+        else
+          ! This value us above the previous one so compute a delta from it 
+          ! to use if needed later
+          deltaPtg = ptg_angles(ptg_i) - ptg_angles(ptg_i-1)
         end if
-!        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
-!          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!          & 'Pointing angles in wrong order, too much refraction?' )
-      end do ! pointing loop
-
-!       ! EXTRA DEBUG FOR NATHANIEL/BILL ********************
-!       call dump ( tan_temps, 'tan_temps' )
-!       call dump ( tan_press, 'tan_press' )
-!       call dump ( ptg_angles, 'ptg_angles' )
-!       call dump ( tan_hts, 'tan_hts' )
-!       call dump ( reqs, 'reqs' )
-!       call dump ( est_scgeocalt, 'est_scgeocalt' )
-!       call dump ( grids_f%values, 'grids_f' )
+      end do
+      
+      if ( patchedAPtg ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Had to patch some out of order ptg_angles' )
+        if ( index(switches,'ptg') /= 0 ) &
+          & call Dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
+      end if
 
       ! Work out which antenna patterns we're going to need ------------------
-
       do i = 1, noUsedChannels
         channel = channels(i)%used
         chanInd = channel + 1 - channels(i)%origin
@@ -3082,6 +3106,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.219  2004/08/06 01:40:39  livesey
+! Upgraded the precision of the ptg dump.
+!
 ! Revision 2.218  2004/08/06 01:24:55  livesey
 ! Typo!
 !
