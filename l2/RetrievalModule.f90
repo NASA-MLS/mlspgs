@@ -43,8 +43,9 @@ module RetrievalModule
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: CloneVector, CopyVector, DestroyVectorInfo, &
-    & DumpMask, GetVectorQuantityByType, Vector_T, VectorValue_T
+  use VectorsModule, only: AddVectorToDatabase, CloneVector, CopyVector, &
+    & DestroyVectorInfo, DestroyVectorDatabase, DumpMask, &
+    & GetVectorQuantityByType, Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -130,7 +131,8 @@ contains
                                         ! only l_Newtonian.
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
-    type(matrix_SPD_T), pointer :: OutputCovariance   ! Covariance of the sol'n
+    type(vector_T), dimension(:), pointer :: MyVectors ! database
+    type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     integer :: RegOrders                ! Regularization orders
     integer :: RegQuants                ! Regularization quantities
@@ -165,7 +167,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, state, outputSD )
+    nullify ( measurements, measurementSD, myVectors, state, outputSD )
     timing = section_times
     if ( timing ) call cpu_time ( t1 )
 
@@ -242,6 +244,8 @@ contains
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
           case ( f_measurements )
             measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
+            call cloneVector ( f, measurements, vectorNameText='_f', &
+              & database=myVectors )
           case ( f_measurementSD )
             measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
@@ -373,7 +377,6 @@ contains
             & call destroyMatrix ( outputCovariance%m )
         end if
         if ( got(f_fwdModelOut) ) call copyVector ( fwdModelOut, f )
-        call destroyVectorInfo ( f )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
@@ -388,6 +391,8 @@ contains
           timing = .true.
         end if
       end select
+
+    call destroyVectorDatabase ( myVectors )
 
     end do ! i = 2, nsons(root) - 1
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
@@ -529,21 +534,22 @@ contains
       ! Create the normal equations matrix
       call createEmptyMatrix ( normalEquations%m, 0, state, state )
       ! Create the vectors we need.
-      call cloneVector ( x, state, vectorNameText='_x' )
-      call copyVector ( x, state ) ! x := state
-      call cloneVector ( atb, state, vectorNameText='_ATb' )
-      call cloneVector ( reg_X_x, state, vectorNameText='_reg_X_x' )
-      call cloneVector ( f, measurements, vectorNameText='_f' )
-      call cloneVector ( f_rowScaled, measurements, vectorNameText='_f_rowScaled' )
-      call copyVector ( f_rowScaled, measurements, noValues=.true. ) ! mask only
-      call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
-      call cloneVector ( bestX, x, vectorNameText='_bestX' )
-      call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
-      call cloneVector ( dx, x, vectorNameText='_DX' )
-      call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled' )
-      call cloneVector ( gradient, x, vectorNameText='_gradient' )
+      call copyVector ( x, state, vectorNameText='_x', clone=.true., &
+        database=myVectors ) ! x := state
+      call cloneVector ( atb, x, vectorNameText='_ATb', database=myVectors )
+      call cloneVector ( bestGradient, x, vectorNameText='_bestGradient', database=myVectors )
+      call cloneVector ( bestX, x, vectorNameText='_bestX', database=myVectors )
+      call cloneVector ( candidateDX, x, vectorNameText='_candidateDX', database=myVectors )
+      call cloneVector ( covarianceDiag, x, vectorNameText='_covarianceDiag', database=myVectors )
+      call cloneVector ( dx, x, vectorNameText='_DX', database=myVectors )
+      call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled', database=myVectors )
+      call copyVector ( f_rowScaled, measurements, clone=.true., & ! mask only
+        & noValues=.true., vectorNameText='_f_rowScaled', database=myVectors )
+      call cloneVector ( gradient, x, vectorNameText='_gradient', database=myVectors )
+      call cloneVector ( reg_X_x, x, vectorNameText='_reg_X_x', database=myVectors )
       if ( got(f_measurementSD) ) then
-        call cloneVector ( weight, measurementSD )
+        call cloneVector ( weight, measurementSD, vectorNameText='_weight', &
+          & database=myVectors )
         do j = 1, measurementSD%template%noQuantities
           where ( measurementSD%quantities(j)%values <= 0.0 )
             weight%quantities(j)%values = 1.0
@@ -554,7 +560,8 @@ contains
         end do
       end if
       if ( columnScaling /= l_none ) &
-        call cloneVector ( columnScaleVector, x, vectorNameText='_ColumnScale' )
+        call cloneVector ( columnScaleVector, x, vectorNameText='_ColumnScale', &
+          & database=myVectors )
       if ( got(f_fuzz) ) then
         ! Add some fuzz to the state vector (for testing purposes):
         call cloneVector ( fuzzState, x )
@@ -1208,23 +1215,12 @@ contains
       call copyVector ( state, x )
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
-      ! Clean up the temporaries, so we don't have a memory leak
-      call destroyVectorInfo ( atb )
-      call destroyVectorInfo ( bestGradient )
-      call destroyVectorInfo ( bestX )
-      call destroyVectorInfo ( candidateDX )
-      if ( columnScaling /= l_none ) &
-        & call destroyVectorInfo ( columnScaleVector )
-      if ( diagonal ) call destroyVectorInfo ( covarianceDiag )
-      if ( got(f_apriori) ) call destroyVectorInfo ( covarianceXApriori )
-      call destroyVectorInfo ( dx )
-      call destroyVectorInfo ( dxUnscaled )
-      call destroyVectorInfo ( f_rowScaled )
-      if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
-      call destroyVectorInfo ( gradient )
-      if ( got(f_measurementSD) ) call destroyVectorInfo ( weight )
-      call destroyVectorInfo ( x )
+      ! Clean up the temporaries, so we don't have a memory leak.
+      ! Most of them are in the myVectors database, which is destroyed
+      ! upon exit from Retrieve.
       call destroyVectorInfo ( aprioriMinusX )
+      if ( got(f_apriori) ) call destroyVectorInfo ( covarianceXApriori )
+      if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -1719,6 +1715,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.84  2001/10/04 01:48:59  vsnyder
+! Move temporary vectors into 'myVectors' database, for snooping
+!
 ! Revision 2.83  2001/10/04 00:30:34  dwu
 ! fix coljBlock finding in Low Cloud
 !
