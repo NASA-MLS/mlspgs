@@ -332,7 +332,7 @@ contains
           case ( f_channels )
             channels = son
           case ( f_deferred )
-            deferred = get_boolean(gson)
+            deferred = get_boolean(son)
           case ( f_first, f_last )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
@@ -1004,6 +1004,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.22  2001/04/12 18:14:19  vsnyder
+! Get the right vertex for 'deferred'
+!
 ! Revision 2.21  2001/04/11 20:19:27  vsnyder
 ! Undo changes to 'deferred'
 !
