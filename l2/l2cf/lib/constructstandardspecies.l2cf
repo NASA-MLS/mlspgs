@@ -130,21 +130,41 @@ begin Construct
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
     type=massMeanDiameterWater
 
+  ;; Here we define the key band/channels for cloud flagging for each
+  ;; radiometer.
+  !define(cloudBandForR1,32) !define(cloudChannelForR1,1)
+  !define(cloudBandForR2,5)  !define(cloudChannelForR2,1)
+  !define(cloudBandForR3,33) !define(cloudChannelForR3,3)
+  !define(cloudBandForR4,10) !define(cloudChannelForR4,1)
+  !define(cloudBandForR5,15) !define(cloudChannelForR5,25)
+  ;; Some macros to invoke them
+  !define(cloudBandForRadNo,{!cloudBandForR$1})
+  !define(cloudChannelForRadNo,{!cloudChannelForR$1})
+
+  !define(makeOneRadDT,{dtR$1: Quantity, type=singleChannelRadiance, signal=!signal(!cloudBandForR$1)!nl})
+  !define(oneToFive,{1,2,3,4,5})
+  !forall(makeOneRadDT,!oneToFive)
+  !define(allRadDTs,{!makelist({dtR},{},!oneToFive)})
+
   ;; cloudMax quantities in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
-  cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
-  cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
-  !forall(constructCloudMinMax,!allBands)
-  !define(allCloudMinMax,{!makelist({cloudRadMin},{},!allBands), $
-    !makelist({cloudRadMax},{},!allBands)})
+  cloudRadMinR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
+  cloudRadMaxR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
+  !forall(constructCloudMinMax,!oneToFive)
+  !define(allCloudMinMax,{!makelist({cloudRadMinR},{},!oneToFive), $
+    !makelist({cloudRadMaxR},{},!oneToFive)})
 
   ;; More quality flag precursors
   !define(constructOneCloudSummary,{!dnl
-  lowCloudSummary$1:  Quantity, vGrid=vGridLowCloud$1, hGrid=hGridStandard, type=temperature
-  highCloudSummary$1: Quantity, vGrid=vGridHighCloud$1, hGrid=hGridStandard, type=temperature!nl})
-  !forall(constructOneCloudSummary,!allRadiometers)
-  !define(allCloudSummaries,{!makelist({lowCloudSummary},{},!allRadiometers), $
-    !makelist({highCloudSummary},{},!allRadiometers)})
+  lowCloudSummaryR$1:  Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+    vGrid=vGridLowCloudR$1, hGrid=hGridStandard
+  highCloudSummaryR$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandForR$1), $
+    vGrid=vGridHighCloudR$1, hGrid=hGridStandard!nl})
+  !forall(constructOneCloudSummary,!oneToFive)
+  !define(allCloudSummaries,{!makelist({lowCloudSummaryR},{},!oneToFive), $
+    !makelist({highCloudSummaryR},{},!oneToFive)})
 
   ;; ----------------------------------------- Baselines
   !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
@@ -409,6 +429,6 @@ begin Construct
     !allCloudSummaries ]
 
   cloudOutputTemplate: VectorTemplate, quantities = [ $
-    !allFoldedRadiances, !allDTs, !allCloudMinMax ]
+    !allFoldedRadiances, !allDTs, !allCloudMinMax, !allRadDTs ]
     
 end Construct
