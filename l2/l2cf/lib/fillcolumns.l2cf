@@ -1,6 +1,15 @@
 ; ------------------------------------------------- Fill, column abundances -----
 
+;; This set of macros fills the columns for the current contents of the
+;; state vector.
 begin Fill
+
+  ;; --------------------------------------------- tpPressure
+  Fill, quantity=state.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+    internalVgrid=vGridWMO
+
+  ;; --------------------------------------------- Now the columns
 
   !define(fillOneColumn,{!dnl
   Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
@@ -8,6 +17,6 @@ begin Fill
   Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
     boundaryPressure=state.tpPressure!nl})
 
-  !forall(fillOneColumn,BrO,CH3CN,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2)
+  !forall(fillOneColumn,!allStandardProductsWithColumns)
 
 end Fill

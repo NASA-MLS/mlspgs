@@ -9,6 +9,11 @@
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!makelist({},{U},!allBands)})
 
+; These macros define the MLS standard products
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
+!define(allStandardProducts,{!allStandardProductsWithColumns,!allStandardProductsWithoutColumns})
+
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
 !define(getBandNumber,{!regexp({$1},{[0-9]+},{\&})})
@@ -235,6 +240,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.45  2003/05/10 20:47:08  livesey
+; Bug fixes
+;
 ; Revision 1.44  2003/05/10 00:57:53  livesey
 ; More chi squared etc. stuff
 ;

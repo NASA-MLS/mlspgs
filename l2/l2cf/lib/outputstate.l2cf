@@ -1,42 +1,24 @@
 begin Output
 
-;; At some point we might want to optimize this for 'toolkit'
-;; orientated runs.
-
+;; Don't do anything if the l2version macro isn't define.  This is a
+;; short cut for testing to avoid treading on files.
 !ifdef(l2version,{
 
-!define(standardProduct, {Output, $
-  quantities=!ifelse($3,{}, {joined_$1}, !dnl
-  {[joined_$1, $3_column]}), type=l2gp, $
-  file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
 
-; !ifelse(!resolution,hiRes,{
-; !standardProduct(temperature!res,Temperature!swathRes,)
-; !standardProduct(gph!res,GPH!swathRes,)
-; !standardProduct(h2o!res,H2O!swathRes,h2o!res)
-; !standardProduct(o3!res,O3!swathRes,o3!res)
-; !standardProduct(rhi!res,RHI!swathRes,)
-; },{
-!standardProduct(temperature,Temperature,)
-!standardProduct(refgph,refGPH,)
-!standardProduct(gph,GPH,)
-!standardProduct(bro,BrO,bro)
-!standardProduct(ch3cn,CH3CN,ch3cn)
-!standardProduct(clo,ClO,clo)
-!standardProduct(co,CO,co)
-!standardProduct(h2o,H2O,h2o)
-!standardProduct(hcl,HCl,hcl)
-!standardProduct(hcn,HCN,hcn)
-!standardProduct(hno3,HNO3,hno3)
-!standardProduct(ho2,HO2,ho2)
-!standardProduct(hocl,HOCl,hocl)
-!standardProduct(n2o,N2O,n2o)
-!standardProduct(o3,O3,o3)
-!standardProduct(oh,OH,oh)
-!standardProduct(so2,SO2,so2)
-!standardProduct(rhi,RHI,)
-; }) ; end !ifelse(!resolution,hiRes
-;; Now output the DGG file
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; Now output the DGG file.
 !ifdef(flagGotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
@@ -46,11 +28,12 @@ Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
 Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
   file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
 
+;; Now output any averaging kernel.
+!ifdef(flagGotAnyAKs,{
+Output,  quantities=[ !undivert(!AVKDivert) ], type=l2pc, $
+  file='!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5'})
+
 ;; The forward model radiances have been output using direct writes
 })
-!ifdef(flagGotAnyAKs,{
-  output, file= $
-    '!outpathl2ak/MLS-Aura_L2AK_!l2version_!day.h5', $
-    quantities=[ !undivert(!AVKDivert) ], type=l2pc
-})
+
 end Output
