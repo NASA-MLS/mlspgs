@@ -19,6 +19,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
+  use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
   use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
     & G0, GM, J2, J4, OMEGA => W
   use Init_Tables_Module, only: L_REFGPH, L_ZETA
@@ -887,25 +888,27 @@ contains ! =============== Subroutines and functions ==========================
     if ( toggle ( emit ) ) call trace_begin ( 'ScanForwardModel' )
 
     ! Identify the vector quantities from state/extra
-    temp => GetVectorQuantityByType ( state, extra, &
-      & quantityType=l_temperature, foundInFirst=tempInState )
-    ptan => GetVectorQuantityByType ( state, extra, &
+    temp => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_temperature, config=fmConf, foundInFirst=tempInState )
+    ptan => getQuantityForForwardModel ( state, extra, &
       & quantityType=l_ptan, instrumentModule=fmConf%instrumentModule,&
-      & foundInFirst=ptanInState )
-    h2o => GetVectorQuantityByType ( state, extra, &
+      & config=fmConf, foundInFirst=ptanInState )
+    h2o => getQuantityForForwardModel ( state, extra, &
       & quantityType=l_vmr, molecule=l_h2o, &
-      & foundInFirst=h2oInState, noError=.true.)
-    refgph => GetVectorQuantityByType ( state, extra, &
-      & quantityType=l_refGPH, foundInFirst=refGPHInState )
-    l1Alt => GetVectorQuantityByType ( state, extra, &
-      & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule )
-    heightOffset => GetVectorQuantityByType ( state, extra, &
+      & config=fmConf, foundInFirst=h2oInState, noError=.true.)
+    refgph => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_refGPH, config=fmConf, foundInFirst=refGPHInState )
+    l1Alt => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule, &
+      & config=fmConf )
+    heightOffset => getQuantityForForwardModel ( state, extra, &
       & quantityType=l_heightOffset, instrumentModule=fmConf%instrumentModule, &
-      & noError=.true., foundInFirst=heightOffsetInState )
+      & config=fmConf, noError=.true., foundInFirst=heightOffsetInState )
 
     ! Identify the vector quantities from fwmOut
-    residual => GetVectorQuantityByType ( fwmOut, &
-      & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule )
+    residual => getQuantityForForwardModel ( fwmOut, &
+      & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule, &
+      & config=fmConf )
 
     ! Now check that they make sense
     if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
@@ -1582,25 +1585,28 @@ contains ! =============== Subroutines and functions ==========================
     & ratio4, ratio4_gph, red_phi_t, refgeomalt_denom, sinbeta, sinlat2,     &
     & sinphi2, tan_h2o, tan_refr_indx, tan_temp, temp_at_surf_phi ) 
 ! Identify the vector quantities from state/extra
-  orbIncline => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_orbitInclination )
-  temp => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_temperature, foundInFirst=tempInState )
-  ptan => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_ptan, instrumentModule=fmConf%instrumentModule,&
-    & foundInFirst=ptanInState )
-  phitan => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_phitan, instrumentModule=fmConf%instrumentModule)
-  h2o => GetVectorQuantityByType ( state, extra, &
+  orbIncline => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_orbitInclination, config=fmConf )
+  temp => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_temperature, config=fmConf, foundInFirst=tempInState )
+  ptan => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_ptan, instrumentModule=fmConf%instrumentModule, &
+    & config=fmConf, foundInFirst=ptanInState )
+  phitan => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_phitan, instrumentModule=fmConf%instrumentModule, &
+    & config=fmConf)
+  h2o => getQuantityForForwardModel ( state, extra, &
     & quantityType=l_vmr, molecule=l_h2o, &
-    & foundInFirst=h2oInState, noError=.true.)
-  refgph => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_refGPH, foundInFirst=refGPHInState )
-  l1Alt => GetVectorQuantityByType ( state, extra, &
-    & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule )
+    & config=fmConf, foundInFirst=h2oInState, noError=.true.)
+  refgph => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_refGPH, config=fmConf, foundInFirst=refGPHInState )
+  l1Alt => getQuantityForForwardModel ( state, extra, &
+    & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule, &
+    & config=fmConf)
 ! Identify the vector quantities from fwmOut
-  residual => GetVectorQuantityByType ( fwmOut, &
-      & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule )
+  residual => getQuantityForForwardModel ( fwmOut, &
+      & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule, &
+    & config=fmConf)
 ! get window
   CALL FindInstanceWindow(temp,phitan,fmStat%maf,FMConf%phiWindow, &
                             & windowstart_t, windowfinish_t)
@@ -2012,6 +2018,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.52  2002/11/22 12:22:41  mjf
+! Use getQuantityForForwardModel instead of GetVectorQuantityByType.
+!
 ! Revision 2.51  2002/10/25 22:24:54  livesey
 ! Two bug fixes with the h2o stuff
 !
