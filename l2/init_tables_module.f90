@@ -207,12 +207,15 @@ contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
 
-    ! This is here because "make depends" can't see it in make_tree
+    use Functions, only: Init_Functions
+    ! "Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
     use TREE, only:
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
+  ! Initialize the list of known functions
+    call init_functions
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
     & first_parm, last_parm, section_last, spec_last )
@@ -1111,6 +1114,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.347  2004/01/17 03:04:15  vsnyder
+! Provide for functions in expressions
+!
 ! Revision 2.346  2004/01/17 00:28:09  vsnyder
 ! Provide for Algebra section
 !
