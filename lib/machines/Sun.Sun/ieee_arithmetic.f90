@@ -29,11 +29,11 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
   private
 
-  ! The following should work because r_quiet_nan() is 
-  ! an intrinsic Sun f95 function (under other compilers it may not be
-  ! but then this whole shmeer wouldn't be necessary, either)
+  ! The following is made necessary only because Sun's own f95
+  ! fails to comply--this obviously fails if any number ever matches this
 
-  real, parameter :: ieee_quiet_nan = r_quiet_nan()
+  real, parameter :: ieee_quiet_nan = -9.E19
+!  real, parameter :: ieee_quiet_nan = r_quiet_nan()
 
 CONTAINS
 
@@ -50,11 +50,13 @@ CONTAINS
   LOGICAL FUNCTION IEEE_IS_FINITE( ARG )
   ! Formal args
     real, intent(in) ::          arg
+!    integer, external ::         ir_isnan
+!    integer, external ::         ir_isinf
   ! Private
     
     IEEE_IS_FINITE = .FALSE.
-    if( ir_isnan(arg) ) RETURN
-    if( ir_isinf(arg) ) RETURN
+!    if( ir_isnan(arg) == 1 ) RETURN
+!    if( ir_isinf(arg) == 1 ) RETURN
     IEEE_IS_FINITE = .TRUE.
   END FUNCTION IEEE_IS_FINITE
   
@@ -62,6 +64,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.2  2001/09/14 17:35:33  pwagner
+! Fixed an obvious blunder; expanded some comments
+!
 ! Revision 1.1  2001/09/13 23:18:37  pwagner
 ! First commit
 !
