@@ -584,6 +584,7 @@ m:              do j = 3, nsons(field)
     double precision, intent(out) :: VALUE   ! Expression value, if any
 
     type(decls) :: DECL            ! Declaration record for "root"
+    integer :: I                   ! Subtree index, loop inductor
     integer :: ME                  ! node_id(root)
     integer :: SON1, SON2          ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
@@ -626,6 +627,17 @@ m:              do j = 3, nsons(field)
         units = decl%units
         value = value * decl%value
       end if
+    case ( n_array )
+      son1 = subtree(1,root)
+      call expr ( son1, type, units, value )
+      do i = 2, nsons(root)
+        call expr ( son2, type2, units2, value2 )
+        if ( units /= units2 ) &
+          & call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+        if ( type /= type2 ) &
+          & call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
+      end do
+      value = 0.0d0
     case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
       son1 = subtree(1,root); son2 = subtree(2,root)
       call expr ( son1, type, units, value )
@@ -865,6 +877,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.10  2001/11/27 00:50:45  vsnyder
+! Implement (partially) open ranges
+!
 ! Revision 1.9  2001/06/07 21:56:55  pwagner
 ! Added Copyright statement
 !
