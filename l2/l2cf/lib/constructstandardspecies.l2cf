@@ -308,10 +308,11 @@ begin Construct
   scVelECR: quantity, type=scVelECR, module=SC
   losVelGHz: quantity, type=losVel, module=GHz
   losVelTHz: quantity, type=losVel, module=THz
+  ECRtoFOV: quantity, type=ECRtoFOV, module=GHz
 
   !define(lesserState, {magneticField, earthReflectivity, orbitInclination, spaceRadiance, $
     scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
-    scVelECR, scVelECI, losVelGHz, losVelTHz})
+    scVelECR, scVelECI, losVelGHz, losVelTHz, ECRtoFOV})
 
   ;; ------------------------------------------- Now define vector templates
 
