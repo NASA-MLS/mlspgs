@@ -33,7 +33,12 @@ tar:
 
 L3DMData.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90
+L2Interface.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2000/11/15 18:03:57  pwagner
+# First commit
+#
 #
