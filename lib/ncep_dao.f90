@@ -330,7 +330,7 @@ contains
     if(status /= 0) &
       & call announce_error(lcf_where, "failed to read field " &
       & //trim(actual_field_name))
-    ! The actual dimlist is this                    XDim,YDim,Height,TIME                                                                                                               
+    ! The actual dimlist is this                    XDim,YDim,Height,TIME
     ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
     if ( DEEBUG) then
       print *, 'dao Before reshaping'
@@ -660,7 +660,7 @@ contains
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
-    ! The dimlist as stacked up is this             Height,XDim,YDim                                                                                                              
+    ! The dimlist as stacked up is this             Height,XDim,YDim
     ! Need to reshape it so that the order becomes: Height,YDim,XDim
     if(DEEBUG) then
       print *, 'Before reshaping'
@@ -1528,6 +1528,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.31  2003/05/06 00:31:45  vsnyder
+! Delete trailing blanks from two too-long-to-be-standard lines
+!
 ! Revision 2.30  2003/04/04 18:34:22  pwagner
 ! Sets empty field if FILENOTFOUND
 !
