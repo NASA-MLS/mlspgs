@@ -288,7 +288,7 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL
     use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ATMOS_DER, &
-      & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, F_CLOUD_FOV, &
+      & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
       & F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, F_MOLECULESPOL, &
@@ -380,7 +380,6 @@ contains ! =====     Public Procedures     =============================
     info%phiwindow = 5
     info%windowUnits = phyq_profiles
     info%i_saturation = 0
-    info%cloud_fov = 1
 
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
@@ -530,14 +529,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_cloud_der )
         call expr ( subtree(2,son), expr_units, value, type )
         info%cloud_der = nint( value(1) )
-!      case ( f_cloud_width )
       case ( f_i_saturation )
         call expr ( subtree(2,son), expr_units, value, type )
-!        info%cloud_width = nint( value(1) )
         info%i_saturation = nint( value(1) )
-      case ( f_cloud_fov )
-        call expr ( subtree(2,son), expr_units, value, type )
-        info%cloud_fov = nint( value(1) )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -707,6 +701,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.58  2003/04/02 21:49:33  jonathan
+! remove cloud_fov
+!
 ! Revision 2.57  2003/03/07 03:16:45  livesey
 ! Moved some functionality into Expand_Signal_List in parse signals module
 !
