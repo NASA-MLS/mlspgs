@@ -47,6 +47,12 @@ module HDFEOS               ! F90 interface to HDF-EOS.
        character(len=*),intent(OUT)::DIMLIST
     end function GDFIELDINFO
 
+    integer function GDINQATTRS (GRIDID,ATTRLIST,STRINGBUFFERSIZE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::ATTRLIST
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDINQATTRS
+    
     integer function GDINQDIMS (GRIDID,DIMNAME,DIMS)
        integer,intent(in)::GRIDID
        character(len=*),intent(out)::DIMNAME
@@ -164,6 +170,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.9  2001/03/14 00:33:42  pwagner
+! Added gdinqattrs
+!
 ! Revision 2.8  2001/03/03 00:45:25  pwagner
 ! New grid interfaces--except for gdrdfld
 !
