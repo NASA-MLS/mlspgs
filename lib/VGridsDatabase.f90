@@ -22,7 +22,7 @@ module VGridsDatabase
     integer :: VerticalCoordinate  ! One of t_vGridCoordinate's literals, or
                                    ! 0 if empty
     integer :: NoSurfs             ! Number of surfaces
-    real(r8), dimension(:), pointer :: Surfs => NULL()  ! Array of surfaces
+    real(r8), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
                                    ! (actually dimensioned 1:noSurfs)
   end type VGrid_T
 
@@ -127,7 +127,7 @@ contains
       call output ( vgrids(i)%noSurfs )
       call output ( ' verticalCoordinate = ' )
       call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
-      if ( details > 0 ) call dump ( vgrids(i)%surfs, ' Surfs = ' )
+      if ( details > 0 ) call dump ( vgrids(i)%surfs(:,1), ' Surfs = ' )
     end do
   end subroutine Dump_VGrids
 
@@ -216,7 +216,7 @@ contains
 
     call PVMIDLUnpack ( vGrid%noSurfs, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid size' )
-    call Allocate_test ( vGrid%surfs, vGrid%noSurfs, 'vGrid%surfs', ModuleName )
+    call Allocate_test ( vGrid%surfs, vGrid%noSurfs, 1, 'vGrid%surfs', ModuleName )
     if ( vGrid%noSurfs > 0 ) then
       call PVMIDLUnpack ( vGrid%surfs, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid surfaces' )
@@ -240,6 +240,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.8  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.7  2002/11/22 12:55:12  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
