@@ -343,7 +343,7 @@ contains ! =====     Public Procedures     =============================
         & f_do_freq_avg, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
-    case ( l_linear) 
+    case ( l_linear)
       if ( .not. all(got( (/f_molecules, f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_atmos_der, f_do_conv, f_do_freq_avg, f_frequency /) )) ) &
@@ -486,7 +486,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:,:),   pointer :: REF_CORR    ! (n2lvl, no_tan_hts)
     real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
     real(r8), dimension(:),     pointer :: PTG_ANGLES  ! (no_tan_hts)
-    
+
     real(r4), dimension(:,:,:,:), pointer :: K_TEMP    ! (channel,Nptg,mxco,mnp)
     real(r4), dimension(:,:,:,:,:), pointer :: K_ATMOS ! (channel,Nptg,mxco,mnp,Nsps)
     real(r8), dimension(:,:), pointer :: Radiances     ! (Nptg,25)
@@ -573,7 +573,7 @@ contains ! =====     Public Procedures     =============================
     noSpecies = size(forwardModelConfig%molecules)
     !  Create a subset of the catalog composed only of those molecules to be
     !  used for this run
-    
+
     maxNoFSurfs = 0
     do specie = 1, noSpecies
       f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -581,7 +581,7 @@ contains ! =====     Public Procedures     =============================
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
 
-    allocate ( My_Catalog(noSpecies), stat=ier ) !??? deallocated ???
+    allocate ( My_Catalog(noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
 
@@ -595,16 +595,6 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
 !
-    ! *** DEBUG
-!
-!    ForwardModelConfig%temp_der = .true.
-!    ForwardModelConfig%atmos_der = .true.
-!    do j = 1, noSpecies
-!      forwardModelConfig%moleculeDerivatives(j) = .true.
-!    end do
-!
-    ! *** END DEBUG
-
     ! Get the max. dimension in zeta coeff. space and phi coeff. space
     ! (To be used later in rad_tran_wd, for automatic arrays asignement)
     max_phi_dim = 1
@@ -646,6 +636,7 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
+!   fmStat%maf = 3                      ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
@@ -663,47 +654,47 @@ contains ! =====     Public Procedures     =============================
 
       print*,'(re)computing hydrostatic stuff.'
       ! Now we're going to create the many temporary arrays we need
-      allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status ) !??? Deallocated ???
+      allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'ndx_path' )
-      allocate (ifm%dhdz_path(No_tan_hts,noMAFs), stat=status )!??? Deallocated ???
+      allocate (ifm%dhdz_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'dhdz_path' )
-      allocate (ifm%h_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
+      allocate (ifm%h_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'h_path' )
-      allocate (ifm%phi_path(No_tan_hts,noMAFs), stat=status ) !??? Deallocated ???
+      allocate (ifm%phi_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'phi_path' )
-      allocate (ifm%t_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
+      allocate (ifm%t_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'t_path' )
-      allocate (ifm%z_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
+      allocate (ifm%z_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'z_path' )
 
-      allocate (ifm%eta_phi(No_tan_hts,noMAFs), stat=status )  !??? Deallocated ???
+      allocate (ifm%eta_phi(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'eta_phi' )
 
-      allocate ( ifm%elvar(noMAFs), stat=status )              !??? Deallocated ???
+      allocate ( ifm%elvar(noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'elvar' )
 
-      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', moduleName )!??? Deallocated ???
-      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', moduleName )
+      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', moduleName )
 
-      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )!??? Deallocated ???
-      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )!??? Deallocated ???
-      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', moduleName )!??? Deallocated ???
-      call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &!??? Deallocated ???
+      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )
+      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 't_glgrid', moduleName )
+      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', moduleName )
+      call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &
         & temp%template%noSurfs,'dh_dt_glgrid', moduleName )
-      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', moduleName )!??? Deallocated ???
-      call allocate_test ( ifm%tan_hts, &                      !??? Deallocated ???
+      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', moduleName )
+      call allocate_test ( ifm%tan_hts, &
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
-      call allocate_test ( ifm%tan_temp, &                     !??? Deallocated ???
+      call allocate_test ( ifm%tan_temp, &
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
-      call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, &      !??? Deallocated ???
+      call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, &
         & temp%template%noSurfs, 'tan_dh_dt', moduleName )
 
       ! Setup for hydrostatic calculation
@@ -774,7 +765,7 @@ contains ! =====     Public Procedures     =============================
     ! This next part is more complex, and is performed within a global outer
     ! loop over major frame (maf)
 
-    ! First we need to identify the pointing grid we're going to be using. 
+    ! First we need to identify the pointing grid we're going to be using.
     ! I might as well go the whole way and deal with the multiple signals case
     ! while I'm about it.  The surrounding code can't yet support that though
 
@@ -783,13 +774,13 @@ contains ! =====     Public Procedures     =============================
       totalSignals = totalSignals + size(pointingGrids(i)%signals)
     end do
 
-    allocate (allSignals(totalSignals), STAT=status) 
+    allocate (allSignals(totalSignals), STAT=status)
     call allocate_test( signalsGrid,   totalSignals, 'signalsGrid',  &
       & ModuleName)
 
     totalSignals = 0
     do i = 1, size(pointingGrids)
-      print*,3,i
+!     print*,3,i
       sig0 = totalSignals + 1
       sig1 = totalSignals + size(pointingGrids(i)%signals)
       allSignals(sig0:sig1) = pointingGrids(i)%signals
@@ -823,7 +814,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
       & MLSMSG_DeAllocate//'allSignals')
     call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
-      
+
     if ( whichPointingGrid <= 0 ) &
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & "There is no pointing grid for the desired signal" )
@@ -898,7 +889,7 @@ contains ! =====     Public Procedures     =============================
         & forwardModelConfig%signals(1)%channels )
 !%%%%%%%%%%%%% DEBUG NJL
       print*,'Signal sideband:',signal%sideband
-signal%sideband=-1
+      signal%sideband=-1
 !%%%%%%%%%%%%%%
       select case ( signal%sideband )
       case ( -1 )
@@ -924,7 +915,7 @@ signal%sideband=-1
     end do
 
     ! Now allocate arrays this size
-    if ( forwardModelConfig%temp_der ) then 
+    if ( forwardModelConfig%temp_der ) then
       allocate ( k_temp_frq%values( maxNoFreqs, temp%template%noSurfs, &
         & windowStart:windowFinish), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
@@ -944,7 +935,7 @@ signal%sideband=-1
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
           & MLSMSG_Allocate//'k_atmos_frq' )
       end if
-      
+
     end do ! End loop over speices
 
     ! Now we can go ahead and loop over pointings
@@ -1276,36 +1267,12 @@ signal%sideband=-1
 
 913 format(a,a1,i2.2)
 
-    !     deallocate (ndx_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'ndx_path')
-    !     deallocate (dhdz_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'dhdz_path')
-    !     deallocate (h_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !      & MLSMSG_Deallocate//'h_path')
     deallocate ( n_path, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'n_path' )
-    !     deallocate (phi_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'phi_path')
-    !     deallocate (t_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'t_path')
-    !     deallocate (z_path, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'z_path')
     deallocate ( spsfunc_path, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'spsfunc_path' )
-    !     deallocate (eta_phi, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'eta_phi')
-    !     deallocate (elvar, stat=status )
-    !     if ( status /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName, &
-    !       & MLSMSG_Deallocate//'elvar')
 
     call deallocate_test ( dx_dt, 'dx_dt', moduleName )
     call deallocate_test ( d2x_dxdt, 'd2x_dxdt', moduleName )
@@ -1319,14 +1286,59 @@ signal%sideband=-1
     deallocate ( k_atmos_frq, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'k_atmos_frq' )
-
     deallocate ( k_temp, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'k_temp' )
     deallocate ( k_atmos, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'k_atmos' )
+    deallocate ( My_Catalog, stat=status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'My_catalog' )
+
     call deallocate_test ( radiances, 'Radiances', moduleName )
+
+    if ( fmStat%Finished ) then
+
+      deallocate (ifm%ndx_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'ndx_path' )
+      deallocate (ifm%dhdz_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'dhdz_path' )
+      deallocate (ifm%h_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'h_path' )
+      deallocate (ifm%phi_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'phi_path' )
+      deallocate (ifm%t_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'t_path' )
+      deallocate (ifm%z_path, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'z_path' )
+
+      deallocate (ifm%eta_phi, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'eta_phi' )
+
+      deallocate ( ifm%elvar, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'elvar' )
+
+      call deallocate_test ( ifm%geoc_lat, 'geoc_lat', moduleName )
+      call deallocate_test ( ifm%e_rad, 'e_rad', moduleName )
+
+      call deallocate_test ( ifm%h_glgrid, 'h_glgrid', moduleName )
+      call deallocate_test ( ifm%t_glgrid, 't_glgrid', moduleName )
+      call deallocate_test ( ifm%z_glgrid, 'z_glgrid', moduleName )
+      call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', moduleName )
+      call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', moduleName )
+      call deallocate_test ( ifm%tan_hts,'tan_hts', moduleName )
+      call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', moduleName )
+
+    end if
 
     ! ** DEBUG, Zvi
     !    if ( i > -22) Stop
@@ -1383,6 +1395,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.92  2001/04/17 09:16:12  zvi
+! Taking care of a whole buch of deallocation statements ..
+!
 ! Revision 2.91  2001/04/17 01:01:34  vsnyder
 ! Add ??? Deallocated ??? comments
 !
