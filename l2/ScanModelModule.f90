@@ -48,7 +48,8 @@ module ScanModelModule          ! Scan model and associated calculations
 
   private
 
-  public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel
+  public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel, &
+    & TwoDScanForwardModel
 
   !---------------------------- RCS Ident Info -------------------------------
   character (LEN=130), private :: Id = &
@@ -1297,6 +1298,7 @@ contains ! =============== Subroutines and functions ==========================
   NULLIFY(eta_zxp_t, eta_zxp_h2o, not_zero_z, not_zero_p_t, not_zero_p_h2o)
   NULLIFY(eta_piqxp, not_zero_t, not_zero_h2o) 
 ! Identify the vector quantities from state/extra
+  print*,'Hello I am Bills new scan model', present(jacobian)
   orbIncline => GetVectorQuantityByType ( state, extra, &
     & quantityType=l_orbitInclination )
   temp => GetVectorQuantityByType ( state, extra, &
@@ -1340,8 +1342,9 @@ contains ! =============== Subroutines and functions ==========================
   CALL ALLOCATE_TEST(refgeomalt_denom,ptan%template%nosurfs, &
   & 'refgeomalt_denom',modulename)
   earthradc = earthrada*earthradb / SQRT(earthrada**2 &
-  & * SIN(deg2rad*orbincline%values(:,fmStat%maf))**2 &
-  & + earthradb**2*COS(deg2rad*orbincline%values(:,fmStat%maf))**2) ! in meters
+  & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))**2 &
+  & + earthradb**2* COS(deg2rad*orbincline%values( &
+  &  1:ptan%template%noSurfs,fmStat%maf))**2) ! in meters
 ! rephase the phi
   red_phi_t = MODULO(deg2rad*phitan%values(:,fmStat%maf),2.0_rp*Pi)
   WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
@@ -1352,7 +1355,7 @@ contains ! =============== Subroutines and functions ==========================
   cosphi2 = 1.0_rp - sinphi2
   geoclats = ASIN(earthradc**2 * SIN(red_phi_t) &
   & / SQRT(earthrada**2*cosphi2 + earthradc**2*sinphi2)) &
-         & * SIN(deg2rad*orbincline%values(:,fmStat%maf))
+         & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
   sinlat2 = SIN(geoclats)**2
   coslat2 = 1.0_rp - sinlat2
   p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
@@ -1542,9 +1545,11 @@ contains ! =============== Subroutines and functions ==========================
       CALL DEALLOCATE_TEST(dscandz,'dscandz', modulename)
     end if
 ! Store refGPH derivatives
+    print*,'Hello, refGPHInState=',refGPHInState
     if ( refGPHInState ) then
       DO sv_p = windowstart_t, windowfinish_t
         col = FindBlock ( jacobian%col, refGPH%index, sv_p )
+        print*,'Loop:',sv_p, row, col
         block => jacobian%block(row,col)
         if ( fmConf%differentialScan ) then
           call DestroyBlock ( block )
@@ -1561,6 +1566,7 @@ contains ! =============== Subroutines and functions ==========================
           & - earth_radius) * eta_p_t(:,sv_p - windowstart_t + 1) &
           & / refgeomalt_denom
         end if
+        call dump ( block%values, 'Block%values' )
         if ( fmConf%differentialScan ) then
 ! ------------- Differential model
           block%values = EOSHIFT(block%values, &
@@ -1627,6 +1633,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.31  2002/06/24 18:27:02  livesey
+! Debugging
+!
 ! Revision 2.30  2002/06/24 17:55:41  bill
 ! added a two d scan model subroutine--wgr
 !
