@@ -3,9 +3,6 @@
 
 module RAD_TRAN_M
 
-  use MLSCommon, only: RP, IP
-  use GLNP, ONLY: Ng
-
   implicit NONE
   private
   public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
@@ -27,10 +24,11 @@ contains
 
   subroutine Rad_tran ( gl_inds, e_rflty, del_zeta, &
                      &  alpha_path_c, ref_cor, do_gl, incoptdepth, &
-                     &  alpha_path_gl, ds_dh, dh_dz, t_script, tau, &
-                     &  rad, i_stop )
+                     &  alpha_path_gl, ds_dz_gw, t_script, &
+                     &  tau, rad, i_stop )
 
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
+    use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: SCRT_DN
     use Where_M, only: Where
 
@@ -52,8 +50,7 @@ contains
   !                            it is the full integrated layer opacity.
     real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
   !                                            grid.
-    real(rp), intent(in) :: ds_dh(:)         ! path length wrt height derivative.
-    real(rp), intent(in) :: dh_dz(:)         ! path height wrt zeta derivative.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
     real(rp), intent(in) :: t_script(:)      ! differential temperatures (K)
   !                                            on coarse grid.
   ! outputs
@@ -86,7 +83,7 @@ contains
       !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
       !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
       !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt incoptdepth}.
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt incoptdepth}.
       !  In the second integral, $G(\zeta)$ is {\tt alpha\_path\_gl} --
       !  which has already been evaluated at the appropriate abscissae -- and
       !  $G(\zeta_i)$ is {\tt alpha\_path\_c}.  The weights are {\tt gw}.
@@ -95,9 +92,9 @@ contains
       do i = 1, size(more_inds)
         aa = gl_inds(a)
         incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
-          & 0.5_rp * del_zeta(more_inds(i)) * &
+          & del_zeta(more_inds(i)) * &
           & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
-               & ds_dh(aa:aa+ng-1) * dh_dz(aa:aa+ng-1) * gw ) 
+               & ds_dz_gw(aa:aa+ng-1) ) 
         a = a + ng
       end do ! i
 
@@ -113,14 +110,16 @@ contains
 
   subroutine Rad_tran_Pol ( gl_inds, e_rflty, del_zeta, alpha_path_c, ref_cor, &
                      &  do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
-                     &  ds_dh, dh_dz, ct, stcp, stsp, t_script, &
+                     &  ds_dz_gw, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
 
     ! Polarized radiative transfer.  Radiances only, no derivatives.
 
     use CS_Expmat_m, only: CS_Expmat
     use DO_DELTA_M, ONLY: POLARIZED_PATH_OPACITY
+    use GLNP, ONLY: Ng
     use MCRT_M, ONLY: MCRT
+    use MLSCommon, only: RP, IP
     use Opacity_m, only: Opacity
     use Where_M, only: Where
 
@@ -146,8 +145,7 @@ contains
   !                            2x2xPath
     complex(rp), intent(in) :: alpha_path_gl(-1:,:) ! absorption coefficient on
   !                                            gl grid.
-    real(rp), intent(in) :: ds_dh(:)         ! path length wrt height derivative.
-    real(rp), intent(in) :: dh_dz(:)         ! path height wrt zeta derivative.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
     real(rp), intent(in) :: CT(:)            ! Cos theta          for Mag field
     real(rp), intent(in) :: STCP(:)          ! Sin theta Cos Phi  for Mag field
     real(rp), intent(in) :: STSP(:)          ! Sin theta Sin Phi  for Mag field
@@ -185,7 +183,7 @@ contains
 
       call polarized_path_opacity ( del_zeta,    &
                  &  alpha_path_c, alpha_path_gl, &
-                 &  ds_dh, dh_dz,                &
+                 &  ds_dz_gw,                    &
                  &  gl_delta_polarized, more_inds, gl_inds )
 
       ! Turn sigma-, pi, sigma+ GL corrections  into 2X2 matrix of
@@ -230,17 +228,18 @@ contains
   99 p_stop = - p_stop - 1
 
   end subroutine Rad_tran_Pol
-!--------------------------------------------------  drad_tran_df  -----
+!--------------------------------------------------  DRad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
   subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
-                         &  beta_path_f, do_gl, del_s, ref_cor, ds_dh, &
-                         &  dh_dz, t_script, tau, &
+                         &  beta_path_f, do_gl, del_s, ref_cor, &
+                         &  ds_dz_gw, t_script, tau, &
                          &  i_stop, d_delta_df, drad_df )
 
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
     use Where_M, only: Where
 
@@ -266,8 +265,7 @@ contains
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
 !                                              length ratios.
     real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
-    real(rp), intent(in) ::  ds_dh(:)        ! path length wrt height derivative.
-    real(rp), intent(in) :: dh_dz(:)         ! path height wrt zeta derivative.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
     real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
     real(rp), intent(in) :: tau(:)           ! transmission function.
     integer(ip), intent(in) :: i_stop        ! path stop index
@@ -360,7 +358,7 @@ contains
       !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
       !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
       !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_df}.
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
       !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
       !  sps\_path} -- which have already been evaluated at the appropriate
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
@@ -370,13 +368,12 @@ contains
             do i = 1, no_to_gl
               aa = all_inds(a)
               d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
-                & 0.5_rp * del_zeta(i) * &
+                & del_zeta(more_inds(i)) * &
                 & sum( (beta_path_f(aa:aa+ng-1,sps_i) * &
                      &  eta_zxp_f(gl_inds(aa:aa+ng-1),sv_i) * &
                      &  sps_path(gl_inds(aa:aa+ng-1),sps_i) - &
                      &  singularity(more_inds(i))) * &
-                     & ds_dh(gl_inds(aa:aa+ng-1)) * dh_dz(gl_inds(aa:aa+ng-1)) * &
-                     & gw )
+                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
               a = a + ng
             end do
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) * &
@@ -400,7 +397,7 @@ contains
       !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
       !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
       !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_df}.
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}.
       !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f *
       !  eta\_zxp\_f}~-- which have already been evaluated at the appropriate
       !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
@@ -410,12 +407,11 @@ contains
             do i = 1, no_to_gl
               aa = all_inds(a)
               d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
-                & 0.5_rp * del_zeta(i) * &
+                & del_zeta(more_inds(i)) * &
                 & sum( (beta_path_f(aa:aa+ng-1,sps_i) * &
                      &  eta_zxp_f(gl_inds(aa:aa+ng-1),sv_i) - &
                      &  singularity(more_inds(i))) * &
-                     & ds_dh(gl_inds(aa:aa+ng-1)) * dh_dz(gl_inds(aa:aa+ng-1)) * &
-                     & gw )
+                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
               a = a + ng
             end do
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
@@ -441,11 +437,12 @@ contains
 
   subroutine DRad_tran_dx ( del_zeta, Grids_f, dbeta_path_c, eta_zxp_f_c, &
                          &  sps_path_c, do_calc_f_c, dbeta_path_f, eta_zxp_f_f, &
-                         &  sps_path_f, do_calc_f_f, do_gl, del_s, ref_cor,     &
-                         &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx )
+                         &  sps_path_f, do_calc_f_f, do_gl, gl_inds, del_s, &
+                         &  ref_cor, ds_dz_gw, t_script, tau, i_stop, drad_dx )
 
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
     use Where_M, only: Where
 
@@ -473,13 +470,12 @@ contains
 !                                              not zero on main grid.
     logical, intent(in) :: do_gl(:)          ! A logical indicating where to
 !                                              do rec_tan_inds gl integrations
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
 !                                              length ratios.
     real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
-    real(rp), intent(in) ::  ds_dh_gl(:)     ! path length wrt height derivative
-!                                              on gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:)      ! path height wrt zeta derivative
-!                                              on gl grid.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw
+!                                              on entire grid.
     real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
     real(rp), intent(in) :: tau(:)           ! transmission function.
     integer(ip), intent(in) :: i_stop        ! path stop index
@@ -564,7 +560,7 @@ contains
       !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
       !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
       !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_dx}.
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_dx}.
       !  In the second integral, $G(\zeta)$ is {\tt dbeta\_path\_f *
       !  eta\_zxp\_f\_f * sps\_path\_f}~-- which have already been evaluated at
       !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
@@ -574,12 +570,12 @@ contains
             do i = 1, no_to_gl
               aa = all_inds(a)
               d_delta_dx(more_inds(i)) = d_delta_dx(more_inds(i)) + &
-                & 0.5_rp * del_zeta(i) * &
+                & del_zeta(more_inds(i)) * &
                 & sum( (dbeta_path_f(aa:aa+ng-1,sps_i) * &
                      &  eta_zxp_f_f(aa:aa+ng-1,sv_i) * &
                      &  sps_path_f(aa:aa+ng-1,sps_i) - &
                      &  singularity(more_inds(i))) * &
-                     & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
+                     & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
               a = a + ng
             end do
 
@@ -608,13 +604,14 @@ contains
   subroutine DRad_tran_dt ( del_zeta, h_path_c, t_path_c, dh_dt_path_c, &
                          &  alpha_path_c, alphaxn_path_c, eta_zxp_c, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
-                         &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
+                         &  do_gl, gl_inds, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
-                         &  ds_dh_gl, dh_dz_gl, t_script, dt_scr_dt, &
+                         &  ds_dh, dh_dz_gw, ds_dz_gw, t_script, dt_scr_dt, &
                          &  tau, i_stop, deriv_flags, d_delta_dt, drad_dt )
 
     use DO_DELTA_M, ONLY: HYD_OPACITY
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
+    use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: GET_DSCRT_DN
     use Where_M, only: Where
 
@@ -645,6 +642,7 @@ contains
 !                                             temperature at the tangent (km/K).
     logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
 !                                             to do gl integrations.
+    integer, intent(in) :: GL_Inds(:)       ! Where is do_gl true?
     real(rp), intent(in) :: h_path_f(:)     ! path heights + req on gl grid km.
     real(rp), intent(in) :: t_path_f(:)     ! path temperature(K) on gl grid.
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
@@ -656,10 +654,12 @@ contains
 !                                             gl grid.
     logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
 !                    representation basis function is not zero on gl grid.
-    real(rp), intent(in) ::  ds_dh_gl(:)    ! path length wrt height derivative
-!                                             on gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:)     ! path height wrt zeta derivative
-!                                             on gl grid.
+    real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
+!                                             on complete grid.
+    real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw
+!                                             on complete grid.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw
+!                                             on complete grid.
     real(rp), intent(in) :: t_script(:)     ! differential temperatures (K).
     real(rp), intent(in) :: dt_scr_dt(:,:)  ! d t_script / d T * d T / d eta.
     real(rp), intent(in) :: tau(:)          ! transmission function.
@@ -757,7 +757,7 @@ contains
       !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
       !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
       !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_dt}.
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_dt}.
       !  In the second integral, $G(\zeta)$ is {\tt alphaxn\_path\_f *
       !  eta\_zxp\_f / t\_path\_f}~-- which have already been evaluated at
       !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
@@ -767,12 +767,12 @@ contains
           do i = 1, no_to_gl
             aa = all_inds(a)
             d_delta_dt(more_inds(i),sv_i) = d_delta_dt(more_inds(i),sv_i) + &
-              & 0.5_rp * del_zeta(more_inds(i)) * &
+              & del_zeta(more_inds(i)) * &
               & sum( (alphaxn_path_f(aa:aa+ng-1) * &
                    &  eta_zxp_f(aa:aa+ng-1,sv_i) / &
                    &  t_path_f(aa:aa+ng-1) - &
                    &  singularity(more_inds(i))) * &
-                   & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
+                   & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
             a = a + ng
           end do
 
@@ -818,7 +818,7 @@ contains
           else
             s_del_s = s_del_s - del_s(p_i)
           end if
-        end do
+        end do ! p_i
 
 ! special processing at tangent.  fb is zero
 
@@ -860,7 +860,7 @@ contains
           else
             s_del_s = s_del_s + del_s(p_i)
           end if
-        end do
+        end do ! p_i
 
         no_to_gl = count(do_gl(inds))
         if ( no_to_gl > 0 ) then
@@ -879,8 +879,8 @@ contains
           call hyd_opacity ( del_zeta, alpha_path_c,         &                 
              & alpha_path_f, h_path_f,                       &
              & dh_dt_path_f(:,sv_i), t_path_f, h_tan,        &
-             & dh_dt_tan(sv_i), eta_zxp_f(:,sv_i), ds_dh_gl, &
-             & dh_dz_gl, more_inds, all_inds(::ng), gl_delta )
+             & dh_dt_tan(sv_i), eta_zxp_f(:,sv_i), ds_dh,    &
+             & dh_dz_gw, gl_inds, more_inds, all_inds(::ng), gl_delta )
 
           d_delta_dt(more_inds,sv_i) = d_delta_dt(more_inds,sv_i) + gl_delta
 
@@ -938,10 +938,11 @@ contains
   ! flags are set.
 
     use GLNP, ONLY: Ng
+    use MLSCommon, only: IP
 
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
-    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
-    integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for find grid
+    integer(ip), intent(in) :: C_Inds(:)  ! Indices in Do_Calc_All for coarse grid
+    integer(ip), intent(in) :: F_Inds(:)  ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
 
@@ -965,7 +966,7 @@ contains
     ! All_Inds are the corresponding places in the GL-extracted fine path.
 
     use GLNP, ONLY: Ng
-    use MLSCommon, only: RP
+    use MLSCommon, only: IP
 
     implicit NONE
 
@@ -975,8 +976,8 @@ contains
     logical, intent(in) :: Do_Calc(:)
 
   ! Outputs
-    integer, intent(out) :: More_Inds(:)
-    integer, intent(out) :: All_Inds(:)
+    integer(ip), intent(out) :: More_Inds(:)
+    integer(ip), intent(out) :: All_Inds(:)
 
     integer :: I, J, K, L, P_I
 
@@ -1005,6 +1006,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.28  2003/10/30 20:36:41  vsnyder
+! Get del_zeta from FullForwardModel
+!
 ! Revision 2.27  2003/10/16 23:06:09  vsnyder
 ! Polish up some comments
 !
