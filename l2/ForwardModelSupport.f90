@@ -338,7 +338,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
     !                                     Indexes either a "named" or
     !                                     "spec_args" vertex. Local variables
-    type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
+    type (vGrid_T), dimension(:), pointer :: vGrids ! vGrid database
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
@@ -987,6 +987,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.100  2004/10/13 02:24:56  livesey
+! Bug fix, vGrids now pointer in case none defined
+!
 ! Revision 2.99  2004/10/06 21:14:37  vsnyder
 ! Require Molecules or PFAMolecules
 !
