@@ -9,7 +9,7 @@ module ObtainNCEP !provides subroutines to access NCEP files
   use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
   use Hdf, only: DFACC_RDONLY, FAIL, SUCCEED
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD
-! use MLSCommon
+  use MLSCommon, only: R8
   use MLSPCF2, only: MLSPCF_L2NCEP_END, MLSPCF_L2NCEP_START
   use MLSStrings, only: GetStringElement, NumStringElements
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -19,7 +19,7 @@ module ObtainNCEP !provides subroutines to access NCEP files
 
   implicit none
   private
-  public :: Obtain_NCEP
+  public :: Obtain_NCEP, READ_NCEP
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = & 
@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 
     ! Local Variables
-    real :: DATA_ARRAY(xdim, ydim, zdim)
+    real(R8) :: DATA_ARRAY(xdim, ydim, zdim)
 !   integer :: I
     character (len=80) :: MSG, MNEMONIC
     integer :: NCEPFileHandle, NCEP_Version
@@ -108,8 +108,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine Obtain_NCEP
 !===========================
 
-! =====     Private Procedures     =====================================
-
   ! --------------------------------------------------  READ_NCEP  -----
   SUBROUTINE READ_NCEP ( fname, data_array )
   ! --------------------------------------------------
@@ -119,15 +117,15 @@ contains ! =====     Public Procedures     =============================
 
   ! Arguments
 
-  character*(*), intent(in) :: fname
-  real ::  data_array(:,:,:)
+  character*(*), intent(in) :: fname			! Physical file name
+  real(R8) ::  data_array(:,:,:)
 
   ! - - - local declarations - - -
   integer :: edges(4)
   integer :: file_id, gd_id
   integer :: inq_success
   integer :: i
-  integer :: nentries, ngrids
+  integer :: nentries, ngrids, ndims, nfields
   integer :: strbufsize
   character (len=80) :: msg, mnemonic
   integer :: start(4)
@@ -135,14 +133,18 @@ contains ! =====     Public Procedures     =============================
   integer :: stride(4)
 
   integer, parameter :: GRIDORDER=1				! What order grid written to file
-  integer, parameter :: GRIDLISTLENGTH=80		! Max length list of grid names
-  character (len=GRIDLISTLENGTH) :: gridlist
-  integer, parameter :: GRIDNAMELENGTH=16		! Max length of grid name
-  character (len=GRIDNAMELENGTH) :: gridname
+  integer, parameter :: MAXLISTLENGTH=80		! Max length list of grid names
+  integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
+  character (len=MAXLISTLENGTH) :: gridlist
+  character (len=MAXLISTLENGTH) :: dimlist
+  character (len=MAXLISTLENGTH) :: fieldlist
+  integer, parameter :: MAXNAMELENGTH=16		! Max length of grid name
+  character (len=MAXNAMELENGTH) :: gridname
+  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType
   ! External functions
   integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
-  integer, external :: gdinqgrid, gdnentries
-  logical, parameter :: KOUNTEMPTY=.TRUE.
+  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  logical, parameter :: COUNTEMPTY=.TRUE.
  
   ! - - - begin - - -
 
@@ -163,17 +165,17 @@ contains ! =====     Public Procedures     =============================
   END IF
 
 ! Find grid name corresponding to the GRIDORDER'th one
-	ngrids = NumStringElements(gridlist, .FALSE.)
+	ngrids = NumStringElements(gridlist, COUNTEMPTY)
 	
 	IF(ngrids <= 0) THEN
     CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"NumStringElements of gridlist = 0")
+              &"NumStringElements of gridlist <= 0")
 	ELSEIF(ngrids < GRIDORDER) THEN
     CALL MLSMessage (MLSMSG_Error, ModuleName, &
               &"NumStringElements of gridlist < GRIDORDER")
 	ENDIF
 	
-	CALL GetStringElement(gridlist, gridname, GRIDORDER, KOUNTEMPTY)
+	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
 
   gd_id = gdattach(file_id, gridname)
   IF (gd_id /= SUCCEED) THEN
@@ -184,6 +186,34 @@ contains ! =====     Public Procedures     =============================
 
 ! Now find dimsize(), dimname(), etc.
 	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+
+	IF(nentries <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nentries of gd_id <= 0")
+	ELSEIF(nentries > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nentries of gd_id > NENTRIESMAX")
+	ENDIF
+
+	ndims = gdinqdims(gd_id, dimlist, dims)
+
+	IF(ndims <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"ndims of gd_id <= 0")
+	ELSEIF(ndims > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"ndims of gd_id > NENTRIESMAX")
+	ENDIF
+
+	nfields = gdinqflds(gd_id, fieldlist, rank, numberType)
+
+	IF(nfields <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nfields of gd_id <= 0")
+	ELSEIF(nfields > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nfields of gd_id > NENTRIESMAX")
+	ENDIF
 
   start(1) = 0
   start(2) = 0
@@ -240,9 +270,14 @@ contains ! =====     Public Procedures     =============================
   RETURN
   END SUBROUTINE read_ncep
 
+! =====     Private Procedures     =====================================
+
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.6  2001/03/03 00:11:29  pwagner
+! Began transformations to act like L2GPData module for Gridded data
+!
 ! Revision 2.5  2001/02/23 17:44:50  pwagner
 ! Corrected num of args to GetStringElement
 !
