@@ -4,44 +4,44 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
-!=============================================================================
+module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
+  !=============================================================================
 
 
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
-  & v_is_gph, v_is_theta
+    & v_is_gph, v_is_theta
   use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
-  & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
-  & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
+    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
+    & gdinqgrid, gdnentries, gdinqdims, gdinqflds, gddiminfo
   use Hdf, only: SUCCEED, DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  USE MLSCommon, only: R8, LineLen, NameLen
-  USE MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
-  & MLSMSG_Deallocate, MLSMSG_Warning
-  USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-  & GetIntHashElement, LowerCase
+  use MLSCommon, only: R8, LineLen, NameLen
+  use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+    & MLSMSG_Deallocate, MLSMSG_Warning
+  use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
+    & GetIntHashElement, LowerCase
   use OUTPUT_M, only: OUTPUT
-  USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
-  & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
+  use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
+    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
-  IMPLICIT NONE
-  PUBLIC
+  implicit none
+  public
 
-  PRIVATE :: Id,ModuleName
+  private :: Id,ModuleName
   !------------------------------- RCS Ident Info ------------------------------
-  CHARACTER(LEN=130) :: id = & 
-       "$Id$"
-  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  character(LEN=130) :: id = & 
+    "$Id$"
+  character(LEN=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
- 
+
 
   public::SetupNewGridTemplate, DestroyGridTemplateContents, &
-	&   AddGridTemplateToDatabase, DestroyGridTemplateDatabase, &
-	& Dump_Gridded_Database, source_file_already_read
+    &   AddGridTemplateToDatabase, DestroyGridTemplateDatabase, &
+    & Dump_Gridded_Database, source_file_already_read
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::ReadGriddedData
   private::announce_error
@@ -51,24 +51,24 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   ! First we'll define some global parameters and data types.
 
-   CHARACTER (len=*), PARAMETER :: DEFAULTFIELDNAME = 'TMPU'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Height'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'Time'
+  character (len=*), parameter :: DEFAULTFIELDNAME = 'TMPU'
+  character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
+  character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
+  character (len=*), parameter :: GEO_FIELD3 = 'Height'
+  character (len=*), parameter :: GEO_FIELD4 = 'Time'
 
-   CHARACTER (len=*), PARAMETER :: lit_dao = 'dao'
-   CHARACTER (len=*), PARAMETER :: lit_ncep = 'ncep'
-   CHARACTER (len=*), PARAMETER :: lit_clim = 'clim'
+  character (len=*), parameter :: lit_dao = 'dao'
+  character (len=*), parameter :: lit_ncep = 'ncep'
+  character (len=*), parameter :: lit_clim = 'clim'
 
-! This datatype stores a single gridded atmospheric quantity.  For example
-! temperature, if an uncertainty field is also required, this is stored in a
-! separate quantity.
+  ! This datatype stores a single gridded atmospheric quantity.  For example
+  ! temperature, if an uncertainty field is also required, this is stored in a
+  ! separate quantity.
 
 
   ! --------------------------------------------------------------------------
 
-  CONTAINS
+contains
 
   ! Now we have some subroutines to deal with these quantitites
 
@@ -76,409 +76,409 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
 
-  SUBROUTINE SetupNewGridTemplate(qty, source, noHeights, noLats, noLons, noLsts, noSzas, noDates)
+  subroutine SetupNewGridTemplate(qty, source, noHeights, noLats, noLons, noLsts, noSzas, noDates)
 
     ! Dummy arguments
-    TYPE (GriddedData_T), INTENT(OUT) :: qty ! Result
+    type (GriddedData_T), intent(OUT) :: qty ! Result
 
-    TYPE (GriddedData_T), OPTIONAL, INTENT(IN) :: source ! Template
+    type (GriddedData_T), optional, intent(IN) :: source ! Template
 
-    INTEGER, OPTIONAL, INTENT(IN) :: noHeights, noLats, noLons, noLsts, noSzas, noDates
+    integer, optional, intent(IN) :: noHeights, noLats, noLons, noLsts, noSzas, noDates
 
     ! Local variables
-    INTEGER :: status           ! Status from allocates etc.
+    integer :: status           ! Status from allocates etc.
 
     ! Executable code
 
     ! First, if we have a template setup according to that
-    IF (PRESENT(source)) THEN
-       qty%noHeights=source%noHeights
-       qty%noLats=source%noLats
-       qty%noLons=source%noLons
-       qty%noLsts=source%noLsts
-       qty%noSzas=source%noSzas
-       qty%noDates=source%noDates
+    if (present(source)) then
+      qty%noHeights=source%noHeights
+      qty%noLats=source%noLats
+      qty%noLons=source%noLons
+      qty%noLsts=source%noLsts
+      qty%noSzas=source%noSzas
+      qty%noDates=source%noDates
 
-      
-    ELSE ! We have no template, setup a very bare quantity
-       qty%noHeights=1
-       qty%noLats=1
-       qty%noLons=1
-       qty%noLsts=1
-       qty%noSzas=1
-       qty%noDates=1
 
-    ENDIF
+    else ! We have no template, setup a very bare quantity
+      qty%noHeights=1
+      qty%noLats=1
+      qty%noLons=1
+      qty%noLsts=1
+      qty%noSzas=1
+      qty%noDates=1
+
+    endif
 
     ! Now, see if the user asked for modifications to this
-    IF (PRESENT(noHeights)) qty%noHeights=noHeights
-    IF (PRESENT(noLats)) qty%noLats=noLats
-    IF (PRESENT(noLons)) qty%noLons=noLons
-    IF (PRESENT(noLsts)) qty%noLsts=noLsts
-    IF (PRESENT(noSzas)) qty%noSzas=noSzas
-    IF (PRESENT(noDates)) qty%noDates=noDates
+    if (present(noHeights)) qty%noHeights=noHeights
+    if (present(noLats)) qty%noLats=noLats
+    if (present(noLons)) qty%noLons=noLons
+    if (present(noLsts)) qty%noLsts=noLsts
+    if (present(noSzas)) qty%noSzas=noSzas
+    if (present(noDates)) qty%noDates=noDates
     ! First the vertical coordinates
 
-    ALLOCATE (qty%heights(qty%noHeights),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"heights")
+    allocate (qty%heights(qty%noHeights),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"heights")
 
     ! Now the geolocation coordinates
-    ALLOCATE (qty%lats(qty%noLats),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"lats")
+    allocate (qty%lats(qty%noLats),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"lats")
 
-    ALLOCATE (qty%lons(qty%noLons),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"lons")
+    allocate (qty%lons(qty%noLons),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"lons")
 
-    ALLOCATE (qty%lsts(qty%noLsts),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"lsts")
+    allocate (qty%lsts(qty%noLsts),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"lsts")
 
-    ALLOCATE (qty%szas(qty%noSzas),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"szas")
+    allocate (qty%szas(qty%noSzas),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"szas")
 
     !Now the temporal coordinates
-    ALLOCATE (qty%DateStarts(qty%noDates),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"DateStarts")
+    allocate (qty%DateStarts(qty%noDates),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"DateStarts")
 
-    ALLOCATE (qty%DateEnds(qty%noDates),STAT=status)
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"DateEnds")
+    allocate (qty%DateEnds(qty%noDates),STAT=status)
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"DateEnds")
 
     !Now the data itself
-    ALLOCATE(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
-             qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
+    allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
+      qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_Allocate//"field")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_Allocate//"field")
 
 
-  END SUBROUTINE SetupNewGridTemplate
+  end subroutine SetupNewGridTemplate
 
   ! --------------------------------------------------------------------------
 
   ! This subroutine destroys a quantity template
 
-  SUBROUTINE DestroyGridTemplateContents(qty)
+  subroutine DestroyGridTemplateContents(qty)
 
     ! Dummy argument
-    TYPE (GriddedData_T), INTENT(INOUT) :: qty
+    type (GriddedData_T), intent(INOUT) :: qty
     ! Local variables
-    INTEGER status
+    integer status
 
     ! Executable code
 
-    DEALLOCATE (qty%heights, STAT=status)
+    deallocate (qty%heights, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"heights")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"heights")
 
-    DEALLOCATE (qty%lats, STAT=status)
+    deallocate (qty%lats, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"lats")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"lats")
 
-    DEALLOCATE (qty%lons, STAT=status)
+    deallocate (qty%lons, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"lons")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"lons")
 
-    DEALLOCATE (qty%lsts, STAT=status)
+    deallocate (qty%lsts, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"lsts")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"lsts")
 
-    DEALLOCATE (qty%szas, STAT=status)
+    deallocate (qty%szas, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"szas")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"szas")
 
-    DEALLOCATE (qty%DateStarts, STAT=status)
+    deallocate (qty%DateStarts, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"DateStarts")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"DateStarts")
 
-    DEALLOCATE (qty%DateEnds, STAT=status)
+    deallocate (qty%DateEnds, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"DateEnds")
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"DateEnds")
 
-    DEALLOCATE (qty%field, STAT=status)
+    deallocate (qty%field, STAT=status)
 
-    IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"field")    
+    if (status /= 0) call announce_error(0,  &
+      & MLSMSG_DeAllocate//"field")    
 
 
-  END SUBROUTINE DestroyGridTemplateContents
+  end subroutine DestroyGridTemplateContents
 
   ! --------------------------------------------------------------------------
 
   ! This subroutine adds a quantity template to a database, or creates the
   ! database if it doesn't yet exist
 
-!  SUBROUTINE AddGridTemplateToDatabase(database,qty)
-  INTEGER FUNCTION AddGridTemplateToDatabase(database,item)
+  !  SUBROUTINE AddGridTemplateToDatabase(database,qty)
+  integer function AddGridTemplateToDatabase(database,item)
 
     ! Dummy arguments
-    TYPE (GriddedData_T), DIMENSION(:), POINTER :: database
-    TYPE (GriddedData_T), INTENT(IN) :: item
-!    TYPE (GriddedData_T), INTENT(IN) :: qty
+    type (GriddedData_T), dimension(:), pointer :: database
+    type (GriddedData_T), intent(IN) :: item
+    !    TYPE (GriddedData_T), INTENT(IN) :: qty
 
     ! Local variables
-    TYPE (GriddedData_T), DIMENSION(:), POINTER :: tempDatabase
-!    INTEGER :: newSize,status
+    type (GriddedData_T), dimension(:), pointer :: tempDatabase
+    !    INTEGER :: newSize,status
 
     ! Executable code
 
-!    IF (ASSOCIATED(database)) THEN
-       ! Check we don't already have one of this name
-!       IF (LinearSearchStringArray(database%quantityName, qty%quantityName, &
-!            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
-!            & ModuleName,MLSMSG_Duplicate//qty%quantityName)
-!       newSize=SIZE(database)+1
-!    ELSE
-!       newSize=1
-!    ENDIF
-!    ALLOCATE(tempDatabase(newSize),STAT=status)
-!    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-!         & "Allocation failed for tempDatabase")
+    !    IF (ASSOCIATED(database)) THEN
+    ! Check we don't already have one of this name
+    !       IF (LinearSearchStringArray(database%quantityName, qty%quantityName, &
+    !            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+    !            & ModuleName,MLSMSG_Duplicate//qty%quantityName)
+    !       newSize=SIZE(database)+1
+    !    ELSE
+    !       newSize=1
+    !    ENDIF
+    !    ALLOCATE(tempDatabase(newSize),STAT=status)
+    !    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    !         & "Allocation failed for tempDatabase")
 
-!    IF (newSize>1) tempDatabase(1:newSize-1)=database
-!    tempDatabase(newSize)=qty
-!    IF (ASSOCIATED(database)) THEN
-!       DEALLOCATE(database, STAT=status)
-!       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-!         & MLSMSG_DeAllocate//"database")
-!    end if
-!    database=>tempDatabase
+    !    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    !    tempDatabase(newSize)=qty
+    !    IF (ASSOCIATED(database)) THEN
+    !       DEALLOCATE(database, STAT=status)
+    !       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    !         & MLSMSG_DeAllocate//"database")
+    !    end if
+    !    database=>tempDatabase
 
     include "addItemToDatabase.f9h"
     AddGridTemplateToDatabase = newSize
 
-  END FUNCTION AddGridTemplateToDatabase
+  end function AddGridTemplateToDatabase
 
   ! --------------------------------------------------------------------------
 
   ! This subroutine destroys a quantity template database
 
-  SUBROUTINE DestroyGridTemplateDatabase(database)
+  subroutine DestroyGridTemplateDatabase(database)
 
     ! Dummy argument
-    TYPE (GriddedData_T), DIMENSION(:), POINTER :: database
+    type (GriddedData_T), dimension(:), pointer :: database
 
     ! Local variables
-    INTEGER :: qtyIndex, status
+    integer :: qtyIndex, status
 
-    IF (ASSOCIATED(database)) THEN
-       DO qtyIndex=1,SIZE(database)
-          CALL DestroyGridTemplateContents(database(qtyIndex))
-       ENDDO
-       DEALLOCATE(database, stat=status)
-       IF (status /= 0) call announce_error(0,  &
-         & MLSMSG_DeAllocate//"database")
-    ENDIF
-  END SUBROUTINE DestroyGridTemplateDatabase
+    if (associated(database)) then
+      do qtyIndex=1,size(database)
+        call DestroyGridTemplateContents(database(qtyIndex))
+      enddo
+      deallocate(database, stat=status)
+      if (status /= 0) call announce_error(0,  &
+        & MLSMSG_DeAllocate//"database")
+    endif
+  end subroutine DestroyGridTemplateDatabase
 
 
-!----------------- Beginning of Paul's code ------------------
+  !----------------- Beginning of Paul's code ------------------
 
-    !---------------------------- ReadGriddedData ---------------------
-  SUBROUTINE ReadGriddedData(FileName, lcf_where, description, v_type, &
-  & the_g_data, GeoDimList, fieldName)
+  !---------------------------- ReadGriddedData ---------------------
+  subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
+    & the_g_data, GeoDimList, fieldName)
     !------------------------------------------------------------------------
 
     ! This routine reads a Gridded Data file, returning a filled data structure and the !
-	! appropriate for 'ncep' or 'dao'
+    ! appropriate for 'ncep' or 'dao'
 
-	! FileName and the_g_data are required args
-	! GeoDimList, if present, should be the Dimensions' short names
-	! as a comma-delimited character string in the order:
-	! longitude, latitude, vertical level, time
-	
-	! fieldName, if present, should be the rank 3 or higher object
-	! like temperature
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 3 or higher object
+    ! like temperature
 
     ! Arguments
 
-    CHARACTER (LEN=*), INTENT(IN) :: FileName ! Name of the file containing the grid(s)
-    INTEGER, INTENT(IN) :: lcf_where			! node of the lcf that provoked me
-    INTEGER, INTENT(IN) :: v_type			! vertical coordinate; an 'enumerated' type
-     TYPE( GriddedData_T ), INTENT(OUT) :: the_g_data ! Result
-    CHARACTER (LEN=*), INTENT(IN) :: description ! e.g., 'dao'
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: GeoDimList ! Comma-delimited dim names
-	 CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: fieldName ! Name of gridded field
+    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    integer, intent(IN) :: lcf_where			! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    character (LEN=*), intent(IN) :: description ! e.g., 'dao'
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
 
-  integer :: edges(4)
-  integer :: file_id, gd_id
-  integer :: inq_success
-  integer :: i
-  integer :: nentries, ngrids, ndims, nfields
-  integer :: strbufsize
-!  character (len=80) :: msg, mnemonic
-!  integer :: status
+    integer :: edges(4)
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: i
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    !  character (len=80) :: msg, mnemonic
+    !  integer :: status
 
-    LOGICAL,  PARAMETER       :: CASESENSITIVE = .FALSE.
-  integer, parameter :: GRIDORDER=1				! What order grid written to file
-  integer, parameter :: MAXLISTLENGTH=LineLen		! Max length list of grid names
-  integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
-  character (len=MAXLISTLENGTH) :: gridlist
-  character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
-  character (len=MAXLISTLENGTH), DIMENSION(1) :: dimlists
-  character (len=MAXLISTLENGTH) :: fieldlist
-  integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
-  character (len=MAXNAMELENGTH) :: gridname, actual_field_name, the_dim
-  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberTypes, start, stride
-  INTEGER                        :: our_rank, size, numberType
-	!                                  These start out initialized to one
-  INTEGER                        :: nlon=1, nlat=1, nlev=1, ntime=1
-  INTEGER, PARAMETER             :: i_longitude=1
-  INTEGER, PARAMETER             :: i_latitude=i_longitude+1
-  INTEGER, PARAMETER             :: i_vertical=i_latitude+1
-  INTEGER, PARAMETER             :: i_time=i_vertical+1
-  ! External functions
-!  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
-!  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
-  INTEGER, EXTERNAL :: GDRDFLD
-  logical, parameter :: COUNTEMPTY=.TRUE.
-  logical            :: descrpt_is_legal
-  logical            :: descrpt_is_misplcd
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
+    integer, parameter :: NENTRIESMAX=20 ! Max num of entries
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=MAXLISTLENGTH) :: fieldlist
+    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    character (len=MAXNAMELENGTH) :: gridname, actual_field_name, the_dim
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes, start, stride
+    integer                        :: our_rank, size, numberType
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    ! External functions
+    !  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
+    !  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
+    integer, external :: GDRDFLD
+    logical, parameter :: COUNTEMPTY=.true.
+    logical            :: descrpt_is_legal
+    logical            :: descrpt_is_misplcd
 
-  ! - - - begin - - -
+    ! - - - begin - - -
 
-! Check if description is legal
-	descrpt_is_legal = (lowercase(description(:len(lit_dao))) == lit_dao) &
-	& .or. &
-	& (lowercase(description(:len(lit_ncep))) == lit_ncep) &
-	& .or. &
-	& (lowercase(description(:len(lit_clim))) == lit_clim)
+    ! Check if description is legal
+    descrpt_is_legal = (lowercase(description(:len(lit_dao))) == lit_dao) &
+      & .or. &
+      & (lowercase(description(:len(lit_ncep))) == lit_ncep) &
+      & .or. &
+      & (lowercase(description(:len(lit_clim))) == lit_clim)
 
-	descrpt_is_misplcd = lowercase(description(:len(lit_clim))) == lit_clim
-	
-	if(descrpt_is_misplcd) THEN
-		call announce_error(lcf_where, 'READGriddedData called with climatology' &
-		& // ' description')
-		return
-	elseif(.NOT. descrpt_is_legal) then
-		call announce_error(lcf_where, 'READGriddedData called with unknown' &
-		& // ' description: ' // description)
-		return
-	endif
-	
+    descrpt_is_misplcd = lowercase(description(:len(lit_clim))) == lit_clim
+
+    if(descrpt_is_misplcd) then
+      call announce_error(lcf_where, 'READGriddedData called with climatology' &
+        & // ' description')
+      return
+    elseif(.not. descrpt_is_legal) then
+      call announce_error(lcf_where, 'READGriddedData called with unknown' &
+        & // ' description: ' // description)
+      return
+    endif
+
     error = 0
-  file_id = gdopen(FileName, DFACC_RDONLY)
+    file_id = gdopen(FileName, DFACC_RDONLY)
 
-  IF (file_id < 0) THEN
-	CALL announce_error(lcf_where, "Could not open "// FileName)
-  END IF
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// FileName)
+    end if
 
-! Find list of grid names on this file
-  inq_success = gdinqgrid(FileName, gridlist, strbufsize)
-  IF (inq_success < 0) THEN
-	CALL announce_error(lcf_where, "Could not inquire gridlist "// FileName)
-  END IF
+    ! Find list of grid names on this file
+    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
+    end if
 
-! Find grid name corresponding to the GRIDORDER'th one
-	ngrids = NumStringElements(gridlist, COUNTEMPTY)
-	
-	IF(ngrids <= 0) THEN
-		CALL announce_error(lcf_where, "NumStringElements of gridlist <= 0")
-	ELSEIF(ngrids /= inq_success) THEN
-		CALL announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
-	ELSEIF(ngrids < GRIDORDER) THEN
-		CALL announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
-	ENDIF
-	
-	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
+    ! Find grid name corresponding to the GRIDORDER'th one
+    ngrids = NumStringElements(gridlist, COUNTEMPTY)
 
-  gd_id = gdattach(file_id, gridname)
-  IF (gd_id < 0) THEN
-		CALL announce_error(lcf_where, "Could not attach "//FileName)
-  END IF
+    if(ngrids <= 0) then
+      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
+    elseif(ngrids /= inq_success) then
+      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
+    elseif(ngrids < GRIDORDER) then
+      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
+    endif
 
-! Now find dimsize(), dimname(), etc.
-	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
 
-	IF(nentries <= 0) THEN
-		CALL announce_error(lcf_where, "nentries of gd_id <= 0")
-	ELSEIF(nentries > NENTRIESMAX) THEN
-		CALL announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
-	ENDIF
+    gd_id = gdattach(file_id, gridname)
+    if (gd_id < 0) then
+      call announce_error(lcf_where, "Could not attach "//FileName)
+    end if
 
-	ndims = gdinqdims(gd_id, dimlist, dims)
+    ! Now find dimsize(), dimname(), etc.
+    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
 
-	IF(ndims <= 0) THEN
-		CALL announce_error(lcf_where, "ndims of gd_id <= 0")
-	ELSEIF(ndims > NENTRIESMAX) THEN
-		CALL announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
-	ENDIF
+    if(nentries <= 0) then
+      call announce_error(lcf_where, "nentries of gd_id <= 0")
+    elseif(nentries > NENTRIESMAX) then
+      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
+    endif
 
-	nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
+    ndims = gdinqdims(gd_id, dimlist, dims)
 
-	IF(nfields <= 0) THEN
-		CALL announce_error(lcf_where, "nfields of gd_id <= 0")
-	ELSEIF(nfields > NENTRIESMAX) THEN
-		CALL announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
-	ENDIF
-	
-	IF(.NOT. CASESENSITIVE) THEN
-		fieldlist = Capitalize(fieldlist)
-	ENDIF
+    if(ndims <= 0) then
+      call announce_error(lcf_where, "ndims of gd_id <= 0")
+    elseif(ndims > NENTRIESMAX) then
+      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
+    endif
 
-	IF(PRESENT(fieldName)) THEN
-		actual_field_name=fieldName
-	ELSE
-		actual_field_name=DEFAULTFIELDNAME
-	ENDIF
+    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
 
-	IF(PRESENT(GeoDimList)) THEN
-		actual_dim_list=GeoDimList
-	ELSE
-		actual_dim_list=GEO_FIELD1 // ',' // &
-		& GEO_FIELD2 // ',' // &
-		& GEO_FIELD3 // ',' // &
-		& GEO_FIELD4
-	ENDIF
+    if(nfields <= 0) then
+      call announce_error(lcf_where, "nfields of gd_id <= 0")
+    elseif(nfields > NENTRIESMAX) then
+      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
+    endif
 
-	! Now find the rank of our field
-	
-	inq_success = gdfldinfo(gd_id, TRIM(actual_field_name), our_rank, dims, &
-	& numbertype, dimlists(1))
+    if(.not. CASESENSITIVE) then
+      fieldlist = Capitalize(fieldlist)
+    endif
 
-	dimlist = TRIM(dimlists(1))
+    if(present(fieldName)) then
+      actual_field_name=fieldName
+    else
+      actual_field_name=DEFAULTFIELDNAME
+    endif
 
-	nlon = dims(1)
-	nlat = dims(2)
-	nlev = dims(3)
-	ntime = dims(4)
-		  
-	the_g_data%quantityName = actual_field_name
-	the_g_data%description = description
-	the_g_data%verticalCoordinate = v_type
-	  
-	the_g_data%noLons = nlon
-	the_g_data%noLats = nlat
-	the_g_data%noHeights = nlev
-	the_g_data%noLsts = ntime
+    if(present(GeoDimList)) then
+      actual_dim_list=GeoDimList
+    else
+      actual_dim_list=GEO_FIELD1 // ',' // &
+        & GEO_FIELD2 // ',' // &
+        & GEO_FIELD3 // ',' // &
+        & GEO_FIELD4
+    endif
 
-  !-----------------------------
-  END SUBROUTINE ReadGriddedData
+    ! Now find the rank of our field
+
+    inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
+      & numbertype, dimlists(1))
+
+    dimlist = trim(dimlists(1))
+
+    nlon = dims(1)
+    nlat = dims(2)
+    nlev = dims(3)
+    ntime = dims(4)
+
+    the_g_data%quantityName = actual_field_name
+    the_g_data%description = description
+    the_g_data%verticalCoordinate = v_type
+
+    the_g_data%noLons = nlon
+    the_g_data%noLats = nlat
+    the_g_data%noHeights = nlev
+    the_g_data%noLsts = ntime
+
+    !-----------------------------
+  end subroutine ReadGriddedData
   !-----------------------------
 
   ! ------------------------------------------------  OBTAIN_CLIM  -----
   !=====================================================================
   subroutine OBTAIN_CLIM ( aprioriData, root, &
-  & mlspcf_l2clim_start, mlspcf_l2clim_end )
-  !=====================================================================
+    & mlspcf_l2clim_start, mlspcf_l2clim_end )
+    !=====================================================================
 
-	! An atavism--
-	! a throwback to when ncep files were opened
-	! independently of being required by the lcf
+    ! An atavism--
+    ! a throwback to when ncep files were opened
+    ! independently of being required by the lcf
 
     !Arguments 
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
@@ -492,331 +492,331 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     character (LEN=256) :: msg, mnemonic
     integer:: CliUnit, processCli, returnStatus, version
 
-    logical :: end_of_file = .FALSE.
+    logical :: end_of_file = .false.
 
     do CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
 
-!     Open one Climatology file as a generic file for reading
+      !     Open one Climatology file as a generic file for reading
       version = 1
       returnStatus = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
-                                        processCli, version )
+        processCli, version )
       if ( returnStatus == PGS_S_SUCCESS ) then
 
-      do while (.NOT. end_of_file)
+        do while (.not. end_of_file)
 
-        call l3ascii_read_field ( processCli, qty, end_of_file)
-        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+          call l3ascii_read_field ( processCli, qty, end_of_file)
+          returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
 
-		  nullify (qty%lats)
-		  nullify (qty%lons)
-		  nullify (qty%lsts)
-		  nullify (qty%szas)
-		  nullify (qty%dateStarts)
-		  nullify (qty%dateEnds)
-		  nullify (qty%field)
-! No, this is a bad idea (according to njl)
-!        call DestroyGridTemplateContents ( qty )
+          nullify (qty%lats)
+          nullify (qty%lons)
+          nullify (qty%lsts)
+          nullify (qty%szas)
+          nullify (qty%dateStarts)
+          nullify (qty%dateEnds)
+          nullify (qty%field)
+          ! No, this is a bad idea (according to njl)
+          !        call DestroyGridTemplateContents ( qty )
 
-      end do !(.not. end_of_file)
-		
-		end_of_file = .FALSE.
+        end do !(.not. end_of_file)
+
+        end_of_file = .false.
 
       end if
 
     end do ! CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
 
-  return
-  !============================
+    return
+    !============================
   end subroutine OBTAIN_CLIM
   !============================
 
 
   ! --------------------------------------------------  READ_CLIMATOLOGY  -----
-  SUBROUTINE READ_CLIMATOLOGY ( fname, root, aprioriData, &
-  & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
-  ! --------------------------------------------------
-  ! Brief description of program
-  ! This subroutine reads a l3ascii file and returns
-  ! the data_array to the caller
+  subroutine READ_CLIMATOLOGY ( fname, root, aprioriData, &
+    & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
+    ! --------------------------------------------------
+    ! Brief description of program
+    ! This subroutine reads a l3ascii file and returns
+    ! the data_array to the caller
 
-  ! Arguments
+    ! Arguments
 
-  character*(*), intent(in) :: fname			! Physical file name
+    character*(*), intent(in) :: fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-	 INTEGER, OPTIONAL, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
-    LOGICAL, OPTIONAL, intent(in) :: echo_data        ! echo climatology quantity name
-    LOGICAL, OPTIONAL, intent(in) :: dump_data        ! dump climatology data
-	 
-	 ! Local
-	 INTEGER, PARAMETER :: version=1
+    integer, optional, intent(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+    logical, optional, intent(in) :: echo_data        ! echo climatology quantity name
+    logical, optional, intent(in) :: dump_data        ! dump climatology data
 
-	! These determine how much extra to output
-	 LOGICAL, PARAMETER :: debug=.FALSE.
-	 LOGICAL, PARAMETER :: ECHO_GRIDDED_QUANTITIES=.FALSE.	! echo_data overrides
-	 LOGICAL, PARAMETER :: DUMP_GRIDDED_QUANTITIES=.FALSE.	! dump_data overrides
+    ! Local
+    integer, parameter :: version=1
 
-	 LOGICAL :: end_of_file
+    ! These determine how much extra to output
+    logical, parameter :: debug=.false.
+    logical, parameter :: ECHO_GRIDDED_QUANTITIES=.false.	! echo_data overrides
+    logical, parameter :: DUMP_GRIDDED_QUANTITIES=.false.	! dump_data overrides
+
+    logical :: end_of_file
     type (GriddedData_T)        :: gddata 
-	 INTEGER :: ErrType
-	 LOGICAL :: echo
-	 LOGICAL :: dump
+    integer :: ErrType
+    logical :: echo
+    logical :: dump
     integer:: processCli, CliUnit, record_length
-	 
-	! begin
-	end_of_file=.FALSE.
-	if(present(echo_data)) then
-		echo = echo_data
-	ELSE
-		echo = ECHO_GRIDDED_QUANTITIES
-	ENDIF
-	
-	if(present(dump_data)) then
-		dump = dump_data
-	ELSE
-		dump = DUMP_GRIDDED_QUANTITIES
-	ENDIF
-	
-	! use PCF
 
-	if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+    ! begin
+    end_of_file=.false.
+    if(present(echo_data)) then
+      echo = echo_data
+    else
+      echo = ECHO_GRIDDED_QUANTITIES
+    endif
 
-	 CliUnit = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
-  & .TRUE., ErrType, version)
-  
-  IF(ErrType /= 0) THEN
-!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!              &"Climatology file name unmatched in PCF")
-    CALL announce_error (ROOT, &
-              &"Climatology file name " // fname // " unmatched in PCF")
-	RETURN
-  ENDIF
+    if(present(dump_data)) then
+      dump = dump_data
+    else
+      dump = DUMP_GRIDDED_QUANTITIES
+    endif
 
-      ErrType = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
-                                        processCli, version )
+    ! use PCF
 
-	! use Fortran open
-	else
-	
-		if(debug) call output('opening ' // fname, advance = 'yes')
+    if (present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
 
-		CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
+      processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
+        & .true., ErrType, version)
+
+      if(ErrType /= 0) then
+        !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+        !              &"Climatology file name unmatched in PCF")
+        call announce_error (ROOT, &
+          &"Climatology file name " // trim(fname) // " unmatched in PCF")
+        return
+      endif
+
+      ErrType = Pgs_io_gen_openF ( processCli, PGSd_IO_Gen_RSeqFrm, 0, &
+        cliUnit, version )
+
+    else
+      ! use Fortran open
+
+      if(debug) call output('opening ' // fname, advance = 'yes')
+
+      CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
 	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
-	
-	endif
 
-	if(debug) then
-		if(.NOT. end_of_file) then
-			call output('Not yet eof on io unit', advance = 'yes')
-		else
-			call output('Starting at eof on io unit', advance = 'yes')
-		endif
-	endif
+    endif
+
+    if(debug) then
+      if(.not. end_of_file) then
+        call output('Not yet eof on io unit', advance = 'yes')
+      else
+        call output('Starting at eof on io unit', advance = 'yes')
+      endif
+    endif
 
 
-      if ( ErrType == PGS_S_SUCCESS ) then
+    if ( ErrType == PGS_S_SUCCESS ) then
 
-      do while (.NOT. end_of_file)
+      do while (.not. end_of_file)
 
-			if(debug) call output('reading l3ascii file', advance = 'yes')
+        if(debug) call output('reading l3ascii file', advance = 'yes')
 
         call l3ascii_read_field ( CliUnit, gddata, end_of_file, ErrType)
 
-			if(ErrType == 0) then
-		  		if(debug) then
-					call output('adding to grid database', advance='yes')
-					call output('adding grid template to database ', advance='yes')
-				endif
-		 	 if(echo .OR. debug) then
-				call output('quantity name ' // gddata%quantityName, advance='yes')
-				call output('description ' // gddata%description, advance='yes')
-				call output('units ' // gddata%units, advance='yes')
-			endif
+        if(ErrType == 0) then
+          if(debug) then
+            call output('adding to grid database', advance='yes')
+            call output('adding grid template to database ', advance='yes')
+          endif
+          if(echo .or. debug) then
+            call output('quantity name ' // gddata%quantityName, advance='yes')
+            call output('description ' // gddata%description, advance='yes')
+            call output('units ' // gddata%units, advance='yes')
+          endif
 
-		  if(dump) then
-			call Dump_Gridded_Data(gddata, root)
-			endif
+          if(dump) then
+            call Dump_Gridded_Data(gddata, root)
+          endif
 
-        ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
-		  
-		  nullify (gddata%lats)
-		  nullify (gddata%lons)
-		  nullify (gddata%lsts)
-		  nullify (gddata%szas)
-		  nullify (gddata%dateStarts)
-		  nullify (gddata%dateEnds)
-		  nullify (gddata%field)
-		  
+          ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
 
-			if(debug) call output('Destroying our grid template', advance='yes')
-			
-		endif
-! No, this a bad idea according to njl--see nullify statements above
-!        call DestroyGridTemplateContents ( gddata )
+          nullify (gddata%lats)
+          nullify (gddata%lons)
+          nullify (gddata%lsts)
+          nullify (gddata%szas)
+          nullify (gddata%dateStarts)
+          nullify (gddata%dateEnds)
+          nullify (gddata%field)
+
+
+          if(debug) call output('Destroying our grid template', advance='yes')
+
+        endif
+        ! No, this a bad idea according to njl--see nullify statements above
+        !        call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
-		
-	! ok, done with this file and unit number
-	if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
-      ErrType = Pgs_io_gen_CloseF ( CliUnit )
+
+      ! ok, done with this file and unit number
+      if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+        ErrType = Pgs_io_gen_CloseF ( CliUnit )
 
 	! use Fortran close
-	else
-	
-		if(debug) call output('closing ' // fname, advance = 'yes')
-		ErrType = mls_io_gen_CloseF ('close', CliUnit )
-		
-	endif
+      else
 
-	if(ErrType /= 0) then
-    		CALL announce_error (ROOT, &
-              &"Error closing " // fname, error_number=ErrType)
-	endif
-	
-		else
+        if(debug) call output('closing ' // fname, advance = 'yes')
+        ErrType = mls_io_gen_CloseF ('close', CliUnit )
 
-    		CALL announce_error (ROOT, &
-              &"Error opening " // fname, error_number=ErrType)
-		endif
+      endif
 
-	END SUBROUTINE READ_CLIMATOLOGY
+      if(ErrType /= 0) then
+        call announce_error (ROOT, &
+          &"Error closing " // fname, error_number=ErrType)
+      endif
+
+    else
+
+      call announce_error (ROOT, &
+        &"Error opening " // fname, error_number=ErrType)
+    endif
+
+  end subroutine READ_CLIMATOLOGY
 
   ! -------------------------------------------------  OBTAIN_DAO  -----
   subroutine OBTAIN_DAO ( aprioriData, root, &
-  & mlspcf_l2dao_start, mlspcf_l2dao_end )
- 
-	! An atavism--
-	! a throwback to when ncep files were opened
-	! independently of being required by the lcf
+    & mlspcf_l2dao_start, mlspcf_l2dao_end )
+
+    ! An atavism--
+    ! a throwback to when ncep files were opened
+    ! independently of being required by the lcf
 
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     ! Input a priori database
     integer, intent(in) :: ROOT        ! Root of L2CF abstract syntax tree
-	 INTEGER, INTENT(IN) :: mlspcf_l2dao_start, mlspcf_l2dao_end
+    integer, intent(IN) :: mlspcf_l2dao_start, mlspcf_l2dao_end
 
-! Local Variables
+    ! Local Variables
 
-!    real(R8) :: data_array(XDIM, YDIM, ZDIM)
+    !    real(R8) :: data_array(XDIM, YDIM, ZDIM)
     integer :: DAOFileHandle, DAO_Version
     character (LEN=132) :: DAOphysicalFilename
     character (len=256) :: mnemonic, msg
     type (GriddedData_T):: qty
     integer :: returnStatus
-!   integer :: sd_id
+    !   integer :: sd_id
     character (LEN=80) :: vname
 
-!    ALLOCATE (data_array(XDIM, YDIM, ZDIM), stat=returnStatus)
+    !    ALLOCATE (data_array(XDIM, YDIM, ZDIM), stat=returnStatus)
 
     DAO_Version = 1
     vname = "TMPU" ! for now
 
 
-! Get the DAO file name from the PCF
+    ! Get the DAO file name from the PCF
 
     do DAOFileHandle = mlspcf_l2dao_start, mlspcf_l2dao_end
 
       returnStatus = Pgs_pc_getReference ( DAOFileHandle, DAO_Version, &
-                                           DAOphysicalFilename )
+        DAOphysicalFilename )
 
       if ( returnStatus == PGS_S_SUCCESS ) then
 
-! Open the HDF-EOS file and read gridded data
+        ! Open the HDF-EOS file and read gridded data
         returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
 
-!        call read_dao ( DAOphysicalFilename, vname, data_array )
-			IF(returnStatus > 0) THEN
-				call ReadGriddedData ( DAOphysicalFilename, root, &
-				& 'dao', v_is_pressure, aprioriData(returnStatus) )
-			ENDIF
+        !        call read_dao ( DAOphysicalFilename, vname, data_array )
+        if(returnStatus > 0) then
+          call ReadGriddedData ( DAOphysicalFilename, root, &
+            & 'dao', v_is_pressure, aprioriData(returnStatus) )
+        endif
 
       end if
 
     end do ! DAOFileHandle = mlspcf_l2_dao_start, mlspcf_l2_dao_end
 
-!===========================
+    !===========================
   end subroutine Obtain_DAO
-!===========================
+  !===========================
 
   ! ------------------------------------------------  Obtain_NCEP  -----
   subroutine Obtain_NCEP ( aprioriData, root, &
-  & mlspcf_l2ncep_start, mlspcf_l2ncep_end )
+    & mlspcf_l2ncep_start, mlspcf_l2ncep_end )
 
-	! An atavism--
-	! a throwback to when ncep files were opened
-	! independently of being required by the lcf
+    ! An atavism--
+    ! a throwback to when ncep files were opened
+    ! independently of being required by the lcf
 
-	    ! Arguments
+    ! Arguments
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     ! Input a priori database
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-	 INTEGER, INTENT(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
+    integer, intent(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
 
     ! Local Variables
-!    character (len=80) :: MSG, MNEMONIC
+    !    character (len=80) :: MSG, MNEMONIC
     integer :: NCEPFileHandle, NCEP_Version
     character (len=132) :: NCEPphysicalFilename
     type (GriddedData_T):: QTY
     integer :: RETURNSTATUS
-!    character (len=80) :: VNAME
+    !    character (len=80) :: VNAME
 
-!   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
+    !   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
 
     NCEP_Version = 1
-!    vname = "TMP_3" ! for now
-! Get the NCEP file name from the PCF
+    !    vname = "TMP_3" ! for now
+    ! Get the NCEP file name from the PCF
 
     do NCEPFileHandle = mlspcf_l2ncep_start, mlspcf_l2ncep_end
 
       returnStatus = Pgs_pc_getReference ( NCEPFileHandle, NCEP_Version, &
-                                           NCEPphysicalFilename )
+        NCEPphysicalFilename )
 
       if ( returnStatus == PGS_S_SUCCESS ) then
 
-! Open the HDF-EOS file and read gridded data
+        ! Open the HDF-EOS file and read gridded data
 
         returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
 
-!        call read_ncep ( NCEPphysicalFilename, data_array )
-			IF(returnStatus > 0) THEN
-				call ReadGriddedData ( NCEPphysicalFilename, root, &
-				& 'ncep', v_is_pressure, aprioriData(returnStatus) )
-			ENDIF
+        !        call read_ncep ( NCEPphysicalFilename, data_array )
+        if(returnStatus > 0) then
+          call ReadGriddedData ( NCEPphysicalFilename, root, &
+            & 'ncep', v_is_pressure, aprioriData(returnStatus) )
+        endif
 
       end if
 
     end do ! NCEPFileHandle = mlspcf_l2_ncep_start, mlspcf_l2_ncep_end
-!===========================
+    !===========================
   end subroutine Obtain_NCEP
-!===========================
+  !===========================
 
   ! --------------------------------  Dump_Gridded_Database  -----
   subroutine Dump_Gridded_Database(GriddedData, root)
     use Dump_0, only: Dump
 
-	! Imitating what dump_pointing_grid_database does, but for gridded data
-	! which may come from climatology, ncep, dao
-	
+    ! Imitating what dump_pointing_grid_database does, but for gridded data
+    ! which may come from climatology, ncep, dao
+
     type (GriddedData_T), dimension(:), pointer :: GriddedData 
 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 
     ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .FALSE.
-	 integer            :: i
+    logical, parameter :: MAYDUMPFIELDVALUES = .false.
+    integer            :: i
 
-	if ( .NOT. associated(GriddedData)) then
-		call announce_error(ROOT, 'Gridded database still null')
-		return
-	endif
+    if ( .not. associated(GriddedData)) then
+      call announce_error(ROOT, 'Gridded database still null')
+      return
+    endif
 
     call output ( 'database: a priori grids: SIZE = ' )
     call output ( size(GriddedData), advance='yes' )
     do i = 1, size(GriddedData)
 
-    call output ( 'item number ' )
-    call output ( i, advance='yes' )
+      call output ( 'item number ' )
+      call output ( i, advance='yes' )
 
-		call Dump_Gridded_Data(GriddedData(i), root)
+      call Dump_Gridded_Data(GriddedData(i), root)
     end do ! i
   end subroutine Dump_Gridded_Database
 
@@ -824,190 +824,198 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   subroutine Dump_Gridded_Data(GriddedData, root)
     use Dump_0, only: Dump
 
-	! Imitating what dump_pointing_grid_database does, but for gridded data
-	! which may come from climatology, ncep, dao
-	
+    ! Imitating what dump_pointing_grid_database does, but for gridded data
+    ! which may come from climatology, ncep, dao
+
     type (GriddedData_T) :: GriddedData 
 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 
     ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .FALSE.
+    logical, parameter :: MAYDUMPFIELDVALUES = .false.
 
-			call output('quantity name ' // GriddedData%quantityName, advance='yes')
-			call output('description ' // GriddedData%description, advance='yes')
-			call output('units ' // GriddedData%units, advance='yes')
+    call output('quantity name ' // GriddedData%quantityName, advance='yes')
+    call output('description ' // GriddedData%description, advance='yes')
+    call output('units ' // GriddedData%units, advance='yes')
 
-      call output ( ' ************ Geometry ********** ' ,advance='yes')
+    call output ( ' ************ Geometry ********** ' ,advance='yes')
 
-      call output ( ' Vertical coordinate = ' )
-      call output ( GriddedData%verticalCoordinate, advance='yes' )
-      call output ( ' No. of heights = ' )
-      call output ( GriddedData%noHeights, advance='yes' )
-        call dump ( GriddedData%heights, &
-          & '    Heights =' )
+    call output ( ' Vertical coordinate = ' )
+    call output ( GriddedData%verticalCoordinate, advance='yes' )
+    call output ( ' No. of heights = ' )
+    call output ( GriddedData%noHeights, advance='yes' )
+    call dump ( GriddedData%heights, &
+      & '    Heights =' )
 
-      call output ( ' Equivalent latitude = ' )
-      call output ( GriddedData%equivalentLatitude, advance='yes' )
-      call output ( ' No. of latitudes = ' )
-      call output ( GriddedData%noLats, advance='yes' )
-        call dump ( GriddedData%lats, &
-          & '    latitudes =' )
+    call output ( ' Equivalent latitude = ' )
+    call output ( GriddedData%equivalentLatitude, advance='yes' )
+    call output ( ' No. of latitudes = ' )
+    call output ( GriddedData%noLats, advance='yes' )
+    call dump ( GriddedData%lats, &
+      & '    latitudes =' )
 
-      call output ( ' No. of longitudes = ' )
-      call output ( GriddedData%noLons, advance='yes' )
-        call dump ( GriddedData%lons, &
-          & '    longitudes =' )
+    call output ( ' No. of longitudes = ' )
+    call output ( GriddedData%noLons, advance='yes' )
+    call dump ( GriddedData%lons, &
+      & '    longitudes =' )
 
-      call output ( ' No. of local times = ' )
-      call output ( GriddedData%noLsts, advance='yes' )
-        call dump ( GriddedData%lsts, &
-          & '    local times =' )
+    call output ( ' No. of local times = ' )
+    call output ( GriddedData%noLsts, advance='yes' )
+    call dump ( GriddedData%lsts, &
+      & '    local times =' )
 
-      call output ( ' No. of solar zenith angles = ' )
-      call output ( GriddedData%noSzas, advance='yes' )
-        call dump ( GriddedData%szas, &
-          & '    solar zenith angles =' )
+    call output ( ' No. of solar zenith angles = ' )
+    call output ( GriddedData%noSzas, advance='yes' )
+    call dump ( GriddedData%szas, &
+      & '    solar zenith angles =' )
 
-      call output ( ' No. of dates = ' )
-      call output ( GriddedData%noDates, advance='yes' )
-        call dump ( GriddedData%dateStarts, &
-          & '    starting dates =' )
-        call dump ( GriddedData%dateEnds, &
-          & '    ending dates =' )
+    call output ( ' No. of dates = ' )
+    call output ( GriddedData%noDates, advance='yes' )
+    call dump ( GriddedData%dateStarts, &
+      & '    starting dates =' )
+    call dump ( GriddedData%dateEnds, &
+      & '    ending dates =' )
 
-		if(MAYDUMPFIELDVALUES) then
-     	 call output ( ' ************ tabulated field values ********** ' ,advance='yes')
+    if(MAYDUMPFIELDVALUES) then
+      call output ( ' ************ tabulated field values ********** ' ,advance='yes')
 
-	! No dump for 6-dimensional double arrays yet, anyway
-   !     call dump ( GriddedData%field, &
-    !      & '    gridded field values =' )
-		endif
+      ! No dump for 6-dimensional double arrays yet, anyway
+      !     call dump ( GriddedData%field, &
+      !      & '    gridded field values =' )
+    endif
 
   end subroutine Dump_Gridded_Data
 
   ! --------------------------------  source_file_already_read  -----
   function source_file_already_read(GriddedDataBase, source_file, field_name &
-  & ) result (already)
-  ! check if source file among those already read to form database
-  ! returns .TRUE. if already read, .FALSE. if not or if database is empty
-  
-  ! optionally checks that field name is also matched for that partcilar
-  ! source file
-  
-  ! Arguments
-  !   
+    & ) result (already)
+    ! check if source file among those already read to form database
+    ! returns .TRUE. if already read, .FALSE. if not or if database is empty
+
+    ! optionally checks that field name is also matched for that partcilar
+    ! source file
+
+    ! Arguments
+    !   
     type (GriddedData_T), dimension(:), pointer :: GriddedDataBase
-	 character (LEN=*), intent(in) :: source_file
-	 character (LEN=*), optional, intent(in) :: field_name
-	 logical :: already
-	 
-	 ! Local
-	 integer :: i
-	 
-	 ! Begin
-	 already = .FALSE.
+    character (LEN=*), intent(in) :: source_file
+    character (LEN=*), optional, intent(in) :: field_name
+    logical :: already
 
-	 if(.NOT. associated(GriddedDataBase)) then
-	 	return
-	elseif(LEN(source_file) == 0) then
-		return
-	elseif(SIZE(GriddedDataBase) == 0) then
-		return
-	endif
-	
-	do i=1, SIZE(GriddedDataBase)
+    ! Local
+    integer :: i
 
-		if(adjustl(source_file) == adjustl(GriddedDataBase(i)%sourceFileName)) then
-			already = .TRUE.
-			exit
-		endif
-		
-	enddo
-	
-	if(present(field_name) .AND. already) then
-		
-		if(adjustl(field_name) == adjustl(GriddedDataBase(i)%quantityName)) then
-			already = .TRUE.
-		else
-			already = .FALSE.
-		endif
+    ! Begin
+    already = .false.
 
-	endif
+    if(.not. associated(GriddedDataBase)) then
+      return
+    elseif(len(source_file) == 0) then
+      return
+    elseif(size(GriddedDataBase) == 0) then
+      return
+    endif
+
+    print*,'Database, filenames:',GriddedDatabase%sourceFilename
+    print*,'Database, fieldNames:',GriddedDatabase%quantityName
+    print*,'Source file:',source_file
+    print*,'field_name:',field_name
+
+    do i=1, size(GriddedDataBase)
+
+      if(trim(adjustl(source_file)) == trim(adjustl(GriddedDataBase(i)%sourceFileName))) then
+        already = .true.
+        exit
+      endif
+
+    enddo
+
+    if(present(field_name) .and. already) then
+
+      if(trim(adjustl(field_name)) == trim(adjustl(GriddedDataBase(i)%quantityName))) then
+        already = .true.
+      else
+        already = .false.
+      endif
+
+    endif
 
   end function source_file_already_read
 
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
-  & error_number )
-  
-   ! Arguments
-	
-	integer, intent(in)    :: lcf_where
-	character(LEN=*), intent(in)    :: full_message
-	logical, intent(in), optional :: use_toolkit
-	integer, intent(in), optional    :: error_number
-	! Local
-!  character (len=80) :: msg, mnemonic
-!  integer :: status
-  logical :: just_print_it
-  logical, parameter :: default_output_by_toolkit = .true.
-	
-	if(present(use_toolkit)) then
-		just_print_it = use_toolkit
-	elseif(default_output_by_toolkit) then
-		just_print_it = .false.
-	else
-		just_print_it = .true.
-	endif
-	
-	if(.not. just_print_it) then
-!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-!    CALL MLSMessage (level, ModuleName, &
-!              &trim(full_message)//" "//mnemonic//" "//msg)
-    error = max(error,1)
-    call output ( '***** At ' )
+    & error_number )
 
-	if(lcf_where > 0) then
-	    call print_source ( source_ref(lcf_where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+    ! Arguments
 
-    call output ( ': ' )
-    call output ( "The " );
-	if(lcf_where > 0) then
-    call dump_tree_node ( lcf_where, 0 )
-		else
-    call output ( '(no lcf tree available)' )
-		endif
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
+    ! Local
+    !  character (len=80) :: msg, mnemonic
+    !  integer :: status
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
 
-		CALL output("Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(error_number)) then
-			CALL output('error number ', advance='no')
-			CALL output(error_number, places=9, advance='yes')
-		endif
-	else
-		print*, '***Error in module ', ModuleName
-		print*, trim(full_message)
-		if(present(error_number)) then
-			print*, 'error number ', error_number
-		endif
-	endif
+    if(present(use_toolkit)) then
+      just_print_it = use_toolkit
+    elseif(default_output_by_toolkit) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    endif
 
-!===========================
+    if(.not. just_print_it) then
+      !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+      !    CALL MLSMessage (level, ModuleName, &
+      !              &trim(full_message)//" "//mnemonic//" "//msg)
+      error = max(error,1)
+      call output ( '***** At ' )
+
+      if(lcf_where > 0) then
+        call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      endif
+
+      call output ( ': ' )
+      call output ( "The " );
+      if(lcf_where > 0) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      endif
+
+      call output("Caused the following error:", advance='yes', &
+        & from_where=ModuleName)
+      call output(trim(full_message), advance='yes', &
+        & from_where=ModuleName)
+      if(present(error_number)) then
+        call output('error number ', advance='no')
+        call output(error_number, places=9, advance='yes')
+      endif
+    else
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+      if(present(error_number)) then
+        print*, 'error number ', error_number
+      endif
+    endif
+
+    !===========================
   end subroutine announce_error
-!===========================
+  !===========================
 
-!=============================================================================
-END MODULE ncep_dao
+  !=============================================================================
+end module ncep_dao
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.10  2001/04/10 20:05:30  livesey
+! Tidied up
+!
 ! Revision 2.9  2001/03/30 00:26:19  pwagner
 ! Added source_file_already_read
 !
