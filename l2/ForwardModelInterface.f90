@@ -440,22 +440,22 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer :: SPACERADIANCE ! Space radiance
     type (VectorValue_T), pointer :: TEMP          ! Temperature quantity
 
-    integer :: WHICHPOINTINGGRID        ! Index of poiting grid
-    integer :: MIF                      ! Loop counter
     integer :: CHANNEL                  ! Loop counter
+    integer :: INSTANCE                 ! Loop counter
     integer :: MAFTINSTANCE             ! Temperature instance closest to this MAF
     integer :: MAXNOFREQS               ! Used for sizing arrays
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
-    integer :: MAXPATH                  ! Number of points on longest path
-    integer :: NLVL                     ! Size of tangent grid
+    integer :: MAXVERT                  ! Number of points in gl grid
+    integer :: MIF                      ! Loop counter
     integer :: N2LVL                    ! Twice size of tangent grid
-    integer :: NOUSEDCHANNELS           ! Number of channels to output
+    integer :: NAMELEN                  ! Length of string
+    integer :: NLVL                     ! Size of tangent grid
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
     integer :: NOMIFS                   ! Number of minor frames
-    integer :: NO_PHI_T                 ! No. of Temp. profiles in the chunk
     integer :: NOSPECIES                ! Number of molecules we're considering
-    integer :: NAMELEN                  ! Length of string
+    integer :: NOUSEDCHANNELS           ! Number of channels to output
+    integer :: NO_PHI_T                 ! No. of Temp. profiles in the chunk
     integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
     integer :: SIDEBANDSTART            ! Loop limit
     integer :: SIDEBANDSTEP             ! Loop step
@@ -463,11 +463,11 @@ contains ! =====     Public Procedures     =============================
     integer :: SIG0                     ! Lower part of signal range
     integer :: SIG1                     ! Upper part of signal range
     integer :: SPECIE                   ! Loop counter
-    integer :: SURFACE                  ! Loop counter
     integer :: STATUS                   ! From allocates etc.
+    integer :: SURFACE                  ! Loop counter
     integer :: THISSIDEBAND             ! Loop counter
     integer :: TOTALSIGNALS             ! Used when hunting for pointing grids
-    integer :: INSTANCE                 ! Loop counter
+    integer :: WHICHPOINTINGGRID        ! Index of poiting grid
     integer :: WINDOWFINISH             ! Range of window
     integer :: WINDOWSTART              ! Range of window
 
@@ -644,7 +644,7 @@ contains ! =====     Public Procedures     =============================
     noMIFs = radiance%template%noSurfs
     no_phi_t = temp%template%noInstances
     no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
-    maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
+    maxVert = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
     nlvl=size(ForwardModelConfig%integrationGrid%surfs)
     n2lvl=2*nlvl
     phiWindow = ForwardModelConfig%phiWindow
@@ -652,7 +652,7 @@ contains ! =====     Public Procedures     =============================
     print*,'noMAFs:',noMAFs
     print*,'no_phi_t:',no_phi_t
     print*,'no_tan_hts:',no_tan_hts
-    print*,'maxPath:',maxPath
+    print*,'maxVert:',maxVert
     print*,'nlvl:',nlvl
     print*,'n2lvl:',n2lvl
     print*,'phiWindow:',phiWindow
@@ -708,14 +708,14 @@ contains ! =====     Public Procedures     =============================
       call allocate_test ( ifm%geoc_lat, no_phi_t, 'geoc_lat', ModuleName )
       call allocate_test ( ifm%e_rad, no_phi_t, 'e_rad', ModuleName )
 
-      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName )
-      call allocate_test ( ifm%h_glgrid, maxPath, no_phi_t, 'h_glgrid', &
+      call allocate_test ( ifm%z_glgrid, maxVert/2, 'z_glgrid', ModuleName )
+      call allocate_test ( ifm%h_glgrid, maxVert, no_phi_t, 'h_glgrid', &
                         &  ModuleName )
-      call allocate_test ( ifm%t_glgrid, maxPath, no_phi_t, 't_glgrid', &
+      call allocate_test ( ifm%t_glgrid, maxVert, no_phi_t, 't_glgrid', &
                         &  ModuleName )
-      call allocate_test ( ifm%dh_dt_glgrid, maxPath, no_phi_t, &
+      call allocate_test ( ifm%dh_dt_glgrid, maxVert, no_phi_t, &
         & temp%template%noSurfs,'dh_dt_glgrid', ModuleName )
-      call allocate_test ( ifm%dhdz_glgrid, maxPath, no_phi_t, &
+      call allocate_test ( ifm%dhdz_glgrid, maxVert, no_phi_t, &
                         &  'dhdz_glgrid', ModuleName )
       call allocate_test ( ifm%tan_hts, &
         & size(ForwardModelConfig%tangentGrid%surfs), no_phi_t, 'tan_hts', &
@@ -1438,6 +1438,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.114  2001/04/25 00:50:33  livesey
+! Changed maxPath to maxVert, better name
+!
 ! Revision 2.113  2001/04/25 00:09:48  vsnyder
 ! Use 'levels(emit)' to control output detail
 !
