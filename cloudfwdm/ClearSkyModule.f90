@@ -153,14 +153,13 @@ contains
            !---------------------------------
            ! Using default spectroscopy data
            ! --------------------------------
-           IF (ICON .eq. 0) then             ! save time for clear sky
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
 !               &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
-           Else
+           IF (ICON .ne. 0) then             ! save time for clear sky
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
 !               &        MOL,NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
@@ -168,9 +167,9 @@ contains
            tau_wet(I)=DR*Z(I)
          
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        NMOL,NCNT,T(I),P,F,1.e-3_r8,VMR1,DR,NS ) 
-!               &        MOL,NMOL,NCNT,T(I),P,F,1.e-3_r8,VMR1,DR,NS ) 
-                                             ! HERE DQ IS RELATIVE HUMIDITY!
+                &        NMOL,NCNT,T(I),P,F,0.0_r8,VMR1,DR,NS ) 
+!               &        MOL,NMOL,NCNT,T(I),P,F,0.0_r8,VMR1,DR,NS ) 
+                                             ! HERE DQ IS vmr
            tau_dry(I)=DR*Z(I)
            Endif
          
@@ -178,17 +177,16 @@ contains
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
-           IF (ICON .eq. 0) then            ! save time for clear sky
            call get_beta_bill (T(I), P, F, DQ, VMR1, &
             & NS, DR, Catalog, LosVel)           
            TAU(I)=DR*Z(I)
            
-           Else
+           IF (ICON .ne. 0) then            ! save time for clear sky
            call get_beta_bill (T(I), P, F, 110._r8, VMR1, &
             & NS, DR, Catalog, LosVel)
            tau_wet(I)=DR*Z(I)
 
-           call get_beta_bill (T(I), P, F, 1.e-3_r8, VMR1, &
+           call get_beta_bill (T(I), P, F, 0.0_r8, VMR1, &
             & NS, DR, Catalog, LosVel)
            tau_dry(I)=DR*Z(I)
            Endif
@@ -205,6 +203,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.21  2003/01/30 23:48:02  dwu
+! add icon=-4 for min Tb and some clearups
+!
 ! Revision 1.20  2003/01/23 00:19:09  pwagner
 ! Some cosmetic only (or so I hope) changes
 !

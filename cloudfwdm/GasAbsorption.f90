@@ -52,7 +52,8 @@ contains
       REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
-      REAL(r8) :: RH                          ! Relative Humidity
+      REAL(r8) :: RH                          ! Relative Humidity if values > 1
+					      ! or H2O vmr if values < 1
       REAL(r8) :: ABSC                        ! ABSORPTION COEFFICIENT (1/m)
                                               ! 1-O2
                                               ! 2-H2O
@@ -77,13 +78,13 @@ contains
 
 !------------------------------------------------------------------------
 
-      IF(RH .NE. 100._r8) THEN
+      IF(RH .LT. 1._r8) THEN	       ! RH IS WATER VAPOR MIXING RATIO
 
-         VMR_H2O = RH                  ! PH IS WATER VAPOR MIXING RATIO
+         VMR_H2O = RH                  
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
 
-      ELSE IF (RH .EQ. 100._r8) THEN   ! RH HERE IS 100% RELATIVE HUMIDITY 
+      ELSE IF (RH .GE. 1._r8) THEN   ! RH HERE IS RELATIVE HUMIDITY 
 
 !         CALL RHtoEV(T,100._r8,VP)    
 !         P = PB-VP
@@ -356,6 +357,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.16  2003/01/30 18:03:20  jonathan
+! switch to use Bill's RHIFromH2O
+!
 ! Revision 1.15  2003/01/23 00:19:09  pwagner
 ! Some cosmetic only (or so I hope) changes
 !
