@@ -55,6 +55,11 @@ BEGIN GlobalSettings
     L2Ver="V0-05"    
     OutputVersionString="V0-05"
     ;;
+    ;; Template for the fixed, "collection" portion of the Log file name
+    ;; (without version, cycle, date, or ".dat")
+    ;;
+    LogType="MLS-Aura_L3LOG_Daily_"
+    ;;
     ;; Max Size of Level 2 Data Gap Allowed --
     ;; We can specify this in minutes, MAFs or orbits (the output of the parser
     ;; will be in the time default of seconds).
@@ -162,22 +167,25 @@ BEGIN Output
     ;;
     ;; First the daily map files
     ;;
-    CLOL3DM: output, mcf = "ML3DCLO.001.MCF", file="$level_ClO_"
-    ZL3DM: output, mcf = "ML3DZ.001.MCF", file="$level_Z_"
-    H2OL3DM: output, mcf = "ML3DH2O.001.MCF", file="$level_H2O_"
-    HCLL3DM: output, mcf = "ML3DHCL.001.MCF", file="$level_HCl_"
-    HCNL3DM: output, mcf = "ML3DHCN.001.MCF", file="$level_HCN_"
-    HNO3L3DM: output, mcf = "ML3DHNO3.001.MCF", file="$level_HNO3_"
-    N2OL3DM: output, mcf = "ML3DN2O.001.MCF", file="$level_N2O_"
-    O3L3DM: output, mcf = "ML3DO3.001.MCF", file="$level_O3_"
-    OHL3DM: output, mcf = "ML3DOH.001.MCF", file="$level_OH_"
-    TL3DM: output, mcf = "ML3DT.001.MCF", file="$level_T_"
+    CLOL3DM: output, mcf = "ML3DCLO.001.MCF", file="MLS-Aura_$level_ClO_"
+    ZL3DM: output, mcf = "ML3DZ.001.MCF", file="MLS-Aura_$level_Z_"
+    H2OL3DM: output, mcf = "ML3DH2O.001.MCF", file="MLS-Aura_$level_H2O_"
+    HCLL3DM: output, mcf = "ML3DHCL.001.MCF", file="MLS-Aura_$level_HCl_"
+    HCNL3DM: output, mcf = "ML3DHCN.001.MCF", file="MLS-Aura_$level_HCN_"
+    HNO3L3DM: output, mcf = "ML3DHNO3.001.MCF", file="MLS-Aura_$level_HNO3_"
+    N2OL3DM: output, mcf = "ML3DN2O.001.MCF", file="MLS-Aura_$level_N2O_"
+    O3L3DM: output, mcf = "ML3DO3.001.MCF", file="MLS-Aura_$level_O3_"
+    OHL3DM: output, mcf = "ML3DOH.001.MCF", file="MLS-Aura_$level_OH_"
+    TL3DM: output, mcf = "ML3DT.001.MCF", file="MLS-Aura_$level_T_"
     ;;
 END Output
 ;
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2000/12/29 21:47:51  nakamura
+; New name for l3d_cf.v0-05
+;
 ; Revision 1.2  2000/12/29 19:45:27  nakamura
 ; Removed quantities from Output Section.
 ;
