@@ -403,7 +403,7 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
-             l+l_numF, l+l_numJ, l+l_opticalDepth, &
+             l+l_noiseBandwidth, l+l_numF, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -687,6 +687,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              begin, f+f_metaName, t+t_string, n+n_field_type, &
+             begin, f+f_writeCounterMAF, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -892,6 +893,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.218  2002/05/07 20:25:59  livesey
+! Added writeCounterMAF option for l2aux
+!
 ! Revision 2.217  2002/05/07 01:01:25  vsnyder
 ! Change regWeight to regWeights
 !
