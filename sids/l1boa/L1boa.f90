@@ -61,7 +61,7 @@ contains
     allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
       sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
-      sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
       tp%scanRate(nV), STAT=alloc_err)
     if ( alloc_err /= 0 ) then
@@ -149,7 +149,7 @@ contains
 
     ! Deallocate the MIF quantities
     deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
-      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
       tp%scanRate, STAT=dealloc_err)
     if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -193,7 +193,7 @@ contains
     allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
       sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
-      sc%scVel(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
       tp%scanRate(nV), STAT=alloc_err)
     if ( alloc_err /= 0 ) then
@@ -281,7 +281,7 @@ contains
     ! Deallocate the MIF quantities
 
     deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
-      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVel, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
       tp%scanRate, STAT=dealloc_err)
     if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -292,6 +292,9 @@ contains
 end module L1boa
 
 ! $Log$
+! Revision 1.4  2001/10/12 22:11:46  livesey
+! Tidied up
+!
 ! Revision 1.3  2001/10/11 23:27:23  livesey
 ! Tried to change the chmod stuff
 !
