@@ -117,6 +117,7 @@ contains ! =====     Public Procedures     =============================
     ! Gets the start and end times from the PCF
 
     use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
+    use L2ParInfo, only: parallel
     use MLSFiles, only: mls_io_gen_openF, mls_hdf_version
     use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
       &                   PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
@@ -132,7 +133,7 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_param_spec_keys, &
       &                MLSPCF_L2_param_spec_hash, &
       &                MLSPCF_L2_param_switches, &
-      &                MLSPCF_PCF_start
+      &                MLSPCF_PCF_start, mlspcf_l2parsf_start
     use MLSStrings, only: LowerCase
     use PCFHdr, only: CreatePCFAnnotation, FillTAI93Attribute
     use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
@@ -452,6 +453,17 @@ contains ! =====     Public Procedures     =============================
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
     call FillTAI93Attribute
+    
+    ! Get name of Parallel Staging file
+    version = 1
+
+    returnStatus = Pgs_pc_getReference(mlspcf_l2parsf_start, version, &
+      & parallel%stagingFile)
+    if ( returnStatus /= PGS_S_SUCCESS .and. parallel%master ) then
+      call announce_error ( 0, &
+        & "Error retrieving parallel staging file name from PCF" )
+    endif
+        
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
@@ -713,6 +725,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.71  2003/05/29 17:55:23  pwagner
+! Can get name of parallel%stagingFile from PCF
+!
 ! Revision 2.70  2003/02/27 21:55:14  pwagner
 ! Calls FillTAI93Attribute
 !
