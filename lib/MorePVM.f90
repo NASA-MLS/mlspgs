@@ -22,50 +22,54 @@ module MorePVM                          ! Additional PVM stuff
 contains
 
   ! ------------------------------------------ PVMPackLitIndex ---
-  subroutine PVMPackLitIndex ( index, info )
+  subroutine PVMPackLitIndex ( index, info, msg )
     use Intrinsic, only: Lit_indices
     use PVMIDL, only: PVMIDLPack
     ! Dummy arguments
-    integer, intent(in) :: INDEX        ! lit index
-    integer, intent(out) :: INFO        ! Flag from pvm
+    integer, intent(in) :: INDEX                  ! lit index
+    integer, intent(out), optional :: INFO        ! Flag from pvm
+    character(len=*), intent(in), optional :: MSG ! In case of error
 
     ! Executable code
-    if ( index == 0 ) then
-      call PVMIDLPack ( '', info )
-    else
-      call PVMPackStringIndex ( lit_indices ( index ), info )
-    end if
+    call PVMPackStringIndex ( index, info, msg, lit_indices )
   end subroutine PVMPackLitIndex
 
   ! ------------------------------------------ PVMPackStringIndex --
-  subroutine PVMPackStringIndex ( index, info )
+  subroutine PVMPackStringIndex ( index, info, msg, array )
     use PVMIDL, only: PVMIDLPack
     use String_table, only: Get_string
     ! Dummy arguments
-    integer, intent(in) :: INDEX        ! String index
-    integer, intent(out) :: INFO        ! Flag from pvm
+    integer, intent(in) :: INDEX                  ! String index
+    integer, intent(out), optional :: INFO        ! Flag from pvm
+    character(len=*), intent(in), optional :: MSG ! In case of error
+    integer, intent(in), optional :: ARRAY(:)     ! Use ARRAY(INDEX)
     ! Local variables
     character (len=4096) :: WORD
     ! Executable code
     if ( index == 0 ) then
-      call PVMIDLPack ( '', info )
+      call PVMIDLPack ( '', info, msg )
     else
-      call get_string ( index, word, strip=.true., noError=.true. )
-      call PVMIDLPack ( trim(word), info )
+      if ( present(array) ) then
+        call get_string ( array(index), word, strip=.true., noError=.true. )
+      else
+        call get_string ( index, word, strip=.true., noError=.true. )
+      end if
+      call PVMIDLPack ( trim(word), info, msg )
     end if
   end subroutine PVMPackStringIndex
 
   ! ------------------------------------------ PVMUnpackLitIndex ---
-  subroutine PVMUnpackLitIndex ( index, info )
+  subroutine PVMUnpackLitIndex ( index, info, msg )
     use PVMIDL, only: PVMIDLUnpack
     use MoreTree, only: GetLitIndexFromString
     ! Dummy arguments
-    integer, intent(out) :: INDEX        ! String index
-    integer, intent(out) :: INFO        ! Flag from pvm
+    integer, intent(out) :: INDEX                 ! String index
+    integer, intent(out), optional :: INFO        ! Flag from pvm
+    character(len=*), intent(in), optional :: MSG ! In case of error
     ! Local variables
     character (len=4096) :: WORD
     ! Executable code
-    call PVMIDLUnpack ( word, info )
+    call PVMIDLUnpack ( word, info, msg )
     if ( info == 0 ) then
       if ( len_trim ( word ) > 0 ) then
         index = GetLitIndexFromString ( trim(word) )
@@ -76,18 +80,18 @@ contains
   end subroutine PVMUnpackLitIndex
 
   ! ------------------------------------------ PVMUnpackStringIndex ---
-  subroutine PVMUnpackStringIndex ( index, info, outWord )
+  subroutine PVMUnpackStringIndex ( index, info, outWord, msg )
     use PVMIDL, only: PVMIDLUnpack
     use MoreTree, only: GetStringIndexFromString
     ! Dummy arguments
-    integer, intent(out) :: INDEX        ! String index
-    integer, intent(out) :: INFO        ! Flag from pvm
+    integer, intent(out) :: INDEX                 ! String index
+    integer, intent(out), optional :: INFO        ! Flag from pvm
     character (len=*), intent(out), optional :: OUTWORD
+    character(len=*), intent(in), optional :: MSG ! In case of error
     ! Local variables
     character (len=4096) :: WORD
     ! Executable code
-    call PVMIDLUnpack ( word, info )
-    ! print *, 'word in PVMUnpackStringIndex: ', trim(word)
+    call PVMIDLUnpack ( word, info, msg )
     if ( present(outWord) ) outWord=word
     if ( info == 0 ) then
       if ( len_trim ( word ) > 0 ) then
@@ -105,6 +109,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.8  2004/10/19 22:59:34  vsnyder
+! Add optional 'msg' argument and internal error processing
+!
 ! Revision 2.7  2004/01/22 00:46:35  pwagner
 ! Enforces case sensitivity in PVMUnpackStringIndex; optional outWord from PVMUnpackStringIndex
 !
