@@ -79,7 +79,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: GetPCFromRef
     use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
-      &          MLSPCF_ptggrids_start
+      &          MLSPCF_ptggrids_start, mlspcf_l2pc_start, mlspcf_l2pc_end
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
 
@@ -174,19 +174,18 @@ contains ! =====     Public Procedures     =============================
       case ( f_l2pc )
         do j = 2, nsons(son)
           call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
-! l2pc files not in PCF (yet)
-!           if ( PCF ) then
-!             lun = GetPCFromRef(fileName, mlspcf_ptggrids_start, &
-!               & mlspcf_ptggrids_start, &
-!               & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
-!               & exactName=PCFFileName)
-!             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
-!               call AnnounceError(0, son, &
-!                 & extraMessage='Pointing Grids File not found in PCF')
-!             elseif( returnStatus == 0) then
-!               fileName = PCFFileName
-!             endif
-!           endif
+          if ( PCF ) then
+            lun = GetPCFromRef(fileName, mlspcf_l2pc_start, &
+              & mlspcf_l2pc_end, &
+              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & exactName=PCFFileName)
+            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+              call AnnounceError(0, son, &
+                & extraMessage='L2PC File not found in PCF')
+            elseif( returnStatus == 0) then
+              fileName = PCFFileName
+            endif
+          endif
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
             call read_l2pc_file ( lun )
@@ -672,6 +671,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.42  2003/01/03 21:03:02  pwagner
+! l2pc filenames now inputtable via PCF
+!
 ! Revision 2.41  2002/11/22 12:20:13  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
