@@ -72,8 +72,18 @@ program MLSL2
       else if ( line(3:9) == 'master ' ) then
         parallel%master = .true.
       else if ( line(3:7) == 'slave' ) then
-        parallel%slave = .true. 
-        read ( line(8:), * ) parallel%masterTid
+        parallel%slave = .true.
+        if ( line(8:) /= ' ' ) then
+          line(:7) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+        end if
+        read ( line(8:), *, iostat=status ) parallel%masterTid
+        if ( status /= 0 ) then
+          call io_error ( "After --slave option", status, line )
+          stop
+        end if
       else if ( line(3:7) == 'npcf ' ) then
         pcf = .false.
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
@@ -138,10 +148,9 @@ program MLSL2
           print *, '  except that -S takes the rest of the option as its ', &
             &         '"string".'
           print *, '  --master: This is the master task in a pvm setup'
-          print *, '  --slave<master-tid>: This is a slave, <master-tid>'
-          print *, '  is the id of the master, note there is no space between these.'
-          print *, '  This option is set by a master task and not recommneded'
-          print *, '  for manual invocations.'
+          print *, '  --slave[ ]<master-tid>: This is a slave, <master-tid>'
+          print *, '    is the id of the master.  This option is set by a master'
+          print *, '    task and is not recommneded for manual invocations.'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
           if ( pcf ) then
@@ -254,6 +263,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.30  2001/05/03 01:58:52  vsnyder
+! Add error checking for --slave option
+!
 ! Revision 2.29  2001/05/02 23:22:48  livesey
 ! Added parallel stuff
 !
