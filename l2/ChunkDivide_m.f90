@@ -1339,6 +1339,8 @@ contains ! ===================================== Public Procedures =====
       integer :: mafset
       integer :: num_goods_after_gap
       integer :: num_goodness_changes
+      ! Won't check if there are no radiances
+      if ( .not. associated(l1bInfo%l1bRadIDs) ) return
       ! Here we will loop over the signals database
       ! Searching for 
       ! (1) mafs where there is no good data for any of the signals
@@ -1779,6 +1781,8 @@ contains ! ===================================== Public Procedures =====
     integer :: hdfVersion
 
   ! Executable
+    answer = .false.
+    if ( .not. associated(l1bInfo%l1bRadIDs) ) return
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     if ( hdfversion <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1810,6 +1814,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.31  2003/04/30 22:06:04  pwagner
+! Shouldnt check for good signals if there arent any
+!
 ! Revision 2.30  2003/04/28 23:07:00  pwagner
 ! Fleshed out notel1brad_changes; not yet tested where needed
 !
