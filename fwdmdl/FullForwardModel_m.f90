@@ -40,7 +40,7 @@ contains
                                     &   ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg
-    use Geometry, only: EarthRadA, EarthRadB
+    use Geometry, only: EarthRadA, EarthRadB, SpeedOfLight
     use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
@@ -347,7 +347,6 @@ contains
     ! place, and doesn't want to write comments for
 
     ! Local storage places for derivatives..(Temporary..)
-    real(r8), allocatable :: PrtRad(:)
     real(r4), dimension(:,:,:,:)  , pointer :: K_TEMP
     real(r4), dimension(:,:,:), pointer :: K_ATMOS
     real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DW
@@ -363,9 +362,6 @@ contains
     integer, dimension(:), pointer :: mol_cat_index
 
     type (beta_group_T), dimension(:), pointer :: beta_group
-
-!   real(rp) :: Q       ! ** ZEBUG, for dumping purposes (creating 'seez' file)
-!   Integer :: L1, L2   ! ** ZEBUG, for dumping purposes (creating 'seez' file)
 
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
@@ -435,39 +431,39 @@ contains
     ! Start sorting out stuff from state vector ------------------------------
 
     ! Identify the appropriate state vector components, save vmrs for later
-    temp => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature, config=fwdModelConf )
-    ptan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule, &
       & foundInFirst=ptan_der, config=fwdModelConf )
-    phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule, &
       & config=fwdModelConf )
-    elevOffset => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    elevOffset => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_elevOffset, radiometer=firstSignal%radiometer, &
       & config=fwdModelConf )
-    orbIncline => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_orbitInclination, config=fwdModelConf )
-    spaceRadiance => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_spaceRadiance, config=fwdModelConf )
-    earthRefl => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_earthRefl, config=fwdModelConf )
-    refGPH => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_refGPH, config=fwdModelConf )
-    losVel => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule, &
       & config=fwdModelConf )
-    scGeocAlt => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+    scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
-    ! vmr => GetQuantityforForwardModel (fwdModelIn, fwdModelExtra, &
+    ! vmr => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
     !   quantityType=l_vmr, molecule=fwdModelConf.molecules(i))
 
-    ! Now we're going to validate the quantities we've been given, don't forget
-    ! we already know what their quantityType's are as that's how we found them
-    !, so we don't need to check that.
+    ! Now we're going to validate the quantities we've been given; don't
+    ! forget we already know what their quantityType's are as that's how we
+    ! found them, so we don't need to check that.
     if ( .not. ValidateVectorQuantity(temp, stacked=.TRUE., coherent=.TRUE., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'temperature' )
@@ -517,7 +513,7 @@ contains
 
     MAF = fmStat%maf
 
-    Vel_Cor = 1.0_rp - losvel%values(1,maf)/299792458.3_rp
+    Vel_Cor = 1.0_rp - losvel%values(1,maf) / speedOfLight
 
 ! Sort out a remaining flag
     ptan_der = ptan_der .and. present ( jacobian )
@@ -609,7 +605,7 @@ contains
     do specie = 1, noSpecies
       l = fwdModelConf%molecules(specie)
       if ( l > 0 ) then
-        f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+        f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molIndex=specie, config=fwdModelConf, &
           & radiometer=firstSignal%radiometer )
         maxNoFFreqs = max(maxNoFFreqs, f%template%noChans)
@@ -676,7 +672,7 @@ contains
           end if
         else
           if ( gl_inds(j-1) > 0) sv_i = sv_i + 1
-          f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+          f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
               & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
@@ -890,7 +886,7 @@ contains
 
     DO sps_i = 1 , no_mol
 
-      f => GetQuantityforForwardModel(fwdmodelin,fwdmodelextra, &
+      f => GetQuantityForForwardModel(fwdmodelin,fwdmodelextra, &
           &  quantitytype = l_vmr, molIndex=mol_cat_index(sps_i), config=fwdModelConf, &
           &  radiometer = firstsignal%radiometer )
 
@@ -2131,11 +2127,11 @@ contains
         chanInd = channel + 1 - channelOrigins(i)
         sigInd = usedSignals(i)
         thisRadiance =>  &
-          GetQuantityforForwardModel (fwdModelOut, quantityType=l_radiance, &
+          GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=fwdModelConf%signals(sigInd)%sideband )
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
-          sidebandRatio => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+          sidebandRatio => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
             & sideband=thisSideband, config=fwdModelConf )
           thisRatio = sidebandRatio%values(chanInd,1)
@@ -2278,9 +2274,11 @@ contains
 
     !  **** DEBUG Printing cycle ...
 
-! *** To create *seez* file for "nasty" purposes, include the following:
+! *** Create *seez* file for "nasty" purposes:
 
-!   Include 'dump_print_code.f9h'
+    if ( index(switches,'seez') /= 0 ) then
+      include 'dump_print_code.f9h'
+    end if
 
 ! *** End of include
 
@@ -2306,37 +2304,22 @@ contains
       else
         Frq = Frequencies(1)
         print *,'Frequency Averaging: OFF'
-        print '(A,f12.4,a)', ' (All computations done at Frq =',Frq,')'
+        print '(a,f12.4,a)', ' (All computations done at Frq =',Frq,')'
       end if
 
-      print *
       k = ptan%template%noSurfs
-      print 901, k
-      Print 902,Ptan%values(1:k,maf)
-
-901   format ( 'ptan\ ',i3.3)
-902   format ( 4(3x, f11.7))
-
-      allocate ( PrtRad(k), STAT=i )
+      print "( /'ptan\ ',i3.3)", k
+      Print "( 4(3x, f11.7) )", Ptan%values(1:k,maf)
 
       Print *
       do i = 1, noUsedChannels
-        PrtRad(:) = 0.0
         channel = usedChannels(i)
-        print 903, channel, char(92), k
-        do ptg_i = 1, k
-          j = channel + thisRadiance%template%noChans*(ptg_i-1)
-          PrtRad(ptg_i) = thisRadiance%values(j,maf )
-        end do
-        print 905, PrtRad(1:ptan%template%noSurfs)
+        print "(/, 'ch', i2.2, '_pfa_rad\ ', i3.3 )", channel, k
+        j = thisRadiance%template%noChans
+        print "( 4(2x, 1pg15.8) )", &
+          & thisRadiance%values(channel:channel+j*(k-1):j, maf)
       end do
       Print *
-
-903   format (/, 'ch', i2.2, '_pfa_rad', a1, i3.3 )
-905   format ( 4(2x, 1pg15.8) )
-906   format ( 5(1x, f14.4))
-
-      deallocate ( PrtRad, STAT=i )
 
     end if
 
@@ -2485,6 +2468,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.90  2002/09/26 18:02:49  livesey
+! Now uses GetQuantityForForwardModel.
+!
 ! Revision 2.89  2002/09/10 17:05:38  livesey
 ! New update arguments to convolve/noconvole
 !
