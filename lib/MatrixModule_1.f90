@@ -422,7 +422,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                ! Subscripts and row indices
     do i = 1, x%row%nb
       do j = 1, x%col%nb
-        call destroyBlock ( x%block(i,j) )
+        if ( associated(x%block(i,j)) ) call destroyBlock ( x%block(i,j) )
       end do ! j
     end do ! i
   end subroutine ClearMatrix
@@ -449,29 +449,35 @@ contains ! =====     Public Procedures     =============================
   subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
   !                                matrix represented by a vector and Z is X
   !                                or NEWX.
+  !                                Any "extra" row or column is not scaled.
     type (Matrix_T), intent(inout), target :: X
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(out), target, optional :: NEWX 
 
     integer :: I, J      ! Subscripts for [XZ]%Block
+    integer :: NC, NR    ! Number of columns and rows
 
+    nc = x%col%nb
+    if ( x%col%extra ) nc = nc - 1
+    nr = x%row%nb
+    if ( x%row%extra ) nr = nr - 1
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
-      do j = 1, x%col%nb
-        do i = 1, x%row%nb
-        end do ! i = x%row%nb
+      do j = 1, nc
+        do i = 1, nr
           call ColumnScale ( x%block(i,j), &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & newx%block(i,j) )
-      end do ! j = x%col%nb
+        end do ! i = nr
+      end do ! j = nc
     else
-      do j = 1, x%col%nb
-        do i = 1, x%row%nb
-        end do ! i = x%row%nb
+      do j = 1, nc
+        do i = 1, nr
           call ColumnScale ( x%block(i,j), &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)) )
-      end do ! j = x%col%nb
+        end do ! i = nr
+      end do ! j = nc
     end if
   end subroutine ColumnScale_1
 
@@ -1241,30 +1247,36 @@ contains ! =====     Public Procedures     =============================
   subroutine RowScale_1 ( V, X, NEWX ) ! Z = V X where V is a diagonal
   !                                matrix represented by a vector and Z is X
   !                                or NEWX.
+  !                                An "extra" row or column is not scaled.
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(inout), target :: X
     type (Matrix_T), intent(out), target, optional :: NEWX 
 
     integer :: I, J      ! Subscripts for [XZ]%Block
+    integer :: NC, NR    ! Numbers of columns and rows.
 
+    nc = x%col%nb
+    if ( x%col%extra ) nc = nc - 1
+    nr = x%row%nb
+    if ( x%row%extra ) nr = nr - 1
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
-      do j = 1, x%col%nb
-        do i = 1, x%row%nb
-        end do ! i = x%row%nb
+      do j = 1, nc
+        do i = 1, nr
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j), newx%block(i,j) )
-      end do ! j = x%col%nb
+        end do ! i = nr
+      end do ! j = nc
     else
-      do j = 1, x%col%nb
-        do i = 1, x%row%nb
-        end do ! i = x%row%nb
+      do j = 1, nc
+        do i = 1, nr
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j) )
-      end do ! j = x%col%nb
+        end do ! i = nr
+      end do ! j = nc
     end if
   end subroutine RowScale_1
 
@@ -1534,7 +1546,7 @@ contains ! =====     Public Procedures     =============================
           call output ( ' [absent]', advance='yes' )
         else
           call output ( '', advance='yes' )
-          call dump ( matrix%block(i,j), details=my_details>1 )
+          call dump ( matrix%block(i,j), details=my_details )
         end if
       end do
     end do
@@ -1665,6 +1677,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.34  2001/05/12 01:07:19  vsnyder
+! Some repairs in RowScale and ColumnScale
+!
 ! Revision 2.33  2001/05/10 22:54:34  vsnyder
 ! Get CholeskyFactor_1 to work.  Add Dump_L1 and Dump_Struct.
 !
