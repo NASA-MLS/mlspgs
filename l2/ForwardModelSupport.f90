@@ -302,7 +302,7 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: HUNT
     use MLSSignals_M, only: Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
-    use Parse_Signal_m, only: PARSE_SIGNAL
+    use Parse_Signal_m, only: EXPAND_SIGNAL_LIST
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -317,7 +317,6 @@ contains ! =====     Public Procedures     =============================
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
-    logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -328,9 +327,6 @@ contains ! =====     Public Procedures     =============================
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
-    integer :: SIDEBAND                 ! Returned from Parse_Signal
-    integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
-    character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     integer :: Son                      ! Some subtree of root.
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
@@ -339,13 +335,13 @@ contains ! =====     Public Procedures     =============================
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
+    logical :: ERRORFLAG                ! Set if problem
 
     ! Error message codes
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
 
-    nullify ( channels, signalInds )
     call NullifyForwardModelConfig ( info ) ! for Sun's rubbish compiler
 
     error = 0
@@ -491,39 +487,8 @@ contains ! =====     Public Procedures     =============================
           end do                          ! End loop over listed species
         end if
       case ( f_signals )
-        allocate ( info%signals (nsons(son)-1), stat = status )
-        if ( status /= 0 ) call announceError( AllocateError, key )
-        do j = 1, nsons(son)-1
-          call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
-            & strip=.true.)
-          call parse_Signal ( signalString, signalInds, &
-            & tree_index=son, sideband=sideband, channels=channels )
-          if ( .not. associated(signalInds) ) then ! A parse error occurred
-            error = max(error,1)
-            exit
-          end if
-          ! Later on choose the `right' one from the match
-          ! For the moment choose first !????
-          wanted=1
-          info%signals(j) = signals(signalInds(wanted))
-          info%signals(j)%sideband = sideband
-          ! Don't hose channels in database, though shouldn't be an issue
-          nullify ( info%signals(j)%channels ) 
-
-          call allocate_Test ( info%signals(j)%channels, &
-            & size(info%signals(j)%frequencies), 'info%signals%channels', &
-            & ModuleName )
-          if ( associated(channels) ) then
-            info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
-            info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
-              channels
-            info%signals(j)%channels(ubound(channels,1)+1:) = .false.
-          else
-            info%signals(j)%channels = .true.
-          end if
-          call deallocate_test ( channels, 'channels', ModuleName )
-          call deallocate_test ( signalInds, 'signalInds', ModuleName )
-        end do                          ! End loop over listed signals
+        call Expand_Signal_List ( son, info%signals, errorFlag )
+        if ( errorFlag ) call announceError ( 0, key )
       case  ( f_specificQuantities )
         call Allocate_test ( info%specificQuantities, nsons(son)-1, &
           & 'info%specificQuantities', ModuleName )
@@ -742,6 +707,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.57  2003/03/07 03:16:45  livesey
+! Moved some functionality into Expand_Signal_List in parse signals module
+!
 ! Revision 2.56  2003/02/08 05:28:47  vsnyder
 ! Squash a bug (looking at type before evaluating the expression).
 ! Move USE statements from module scope to procedure scope, so as not to
