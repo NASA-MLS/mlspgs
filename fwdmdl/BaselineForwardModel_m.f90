@@ -3,22 +3,6 @@
  
 module BaselineForwardModel_m
 
-  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
-  use MLSCommon, only: RP, RM
-  use MLSSignals_m, only: SIGNALS, SIGNAL_T
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
-    & VALIDATEVECTORQUANTITY
-  use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-  use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
-  use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
-  use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use MLSNumerics, only: HUNT
-  use Dump_0, only: DUMP
-
   ! This module contains a special forward model for baseline related effects.
 
   implicit none
@@ -37,6 +21,22 @@ contains ! ======================================== BaselineForwardModel ======
 
   subroutine BaselineForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
     & FwdModelOut, oldIFM, fmStat, jacobian )
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: DUMP
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED
+    use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
+    use MLSCommon, only: RP, RM
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
+      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+    use MLSSignals_m, only: SIGNALS, SIGNAL_T
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
+      & VALIDATEVECTORQUANTITY
+    use MLSNumerics, only: HUNT
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
@@ -144,7 +144,7 @@ contains ! ======================================== BaselineForwardModel ======
       if (present(jacobian) .and. (bslInFirst .or. ptanInFirst) ) then
         rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
         fmStat%rows(rowBlock) = .true.
-      endif
+      end if
 
       ! Now check the validity of the quantities we've been given
       if ( .not. ValidateVectorQuantity(baseline, stacked=.true., coherent=.true., &
@@ -234,7 +234,7 @@ contains ! ======================================== BaselineForwardModel ======
         end where
       else
         chanWt1 = 0.0
-      endif
+      end if
       chanWt0 = 1 - chanWt1
       chanWt1 = max(min(chanWt1,1.0_rp),0.0_rp)
       chanWt0 = max(min(chanWt0,1.0_rp),0.0_rp)
@@ -271,10 +271,10 @@ contains ! ======================================== BaselineForwardModel ======
         instHi = maxval(inst1)
         allocate ( kBit(radiance%template%instanceLen, &
           & baseline%template%instanceLen, &
-          & instLow:instHi), stat=status )
-        kBit = 0.0_rp
+          & instLow:instHi), stat=status ) ! Notice the explicit low bound
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'kBit' )
+        kBit = 0.0_rp
 
         do mif = 1, noMIFs
           mm1 = mif - 1
@@ -314,9 +314,7 @@ contains ! ======================================== BaselineForwardModel ======
           call Sparsify ( kBit2, jacobian%block(rowBlock,colBlock) )
         end do
 
-        deallocate ( kBit, STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate//'kBit' )
+        call deallocate_test ( kBit, 'kBit', moduleName )
       end if
 
       ! ---------------------------------------------------------------
@@ -403,6 +401,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.11  2002/09/13 22:02:30  vsnyder
+! Move USEs from module scope to procedure scope
+!
 ! Revision 2.10  2002/09/11 17:43:39  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
