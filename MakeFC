@@ -100,6 +100,8 @@ MLSBIN=util
 # "." means for l2 it is l2/platforms
 # also where each uniquely-named sub-sub will be created:
 # "." means for l2 it is l2/NAG.Linux
+# This is mostly true
+# The exceptions are he5lib, which we must handle, and sids/l1boa
 PLATFORMS = .
 
 # This is the default name of the configure file
@@ -353,7 +355,8 @@ endif
 # Automatic targets
 
 levels:
-	 @for dir in blas lib $(LEVELS); do \
+#	 @for dir in blas lib $(LEVELS); do \  
+	 @for dir in $(LEVELS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
 	done
 
@@ -846,13 +849,25 @@ internalsaymake:
 
 internalupdate: internalsaymake
 	@echo "Updating the Makefile in $(SUBDIRS)"; \
-    m_option="-machine" ; \
 	 for dir in $(SUBDIRS); do \
+	 case "$$dir" in \
+	 "he5lib") \
+			PLATFORMS=../fwdmdl ; \
+         m_option="" ; \
+		;; \
+	 "lib") \
+			PLATFORMS=$(PLATFORMS) ; \
+         m_option="-machine" ; \
+		;; \
+	 *) \
+			PLATFORMS=$(PLATFORMS) ; \
+         m_option="" ; \
+		;; \
+	 esac ; \
 		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc $$PLATFORMS \
          -cf "$(MLSCFILE)" -nc -nd $$m_option; \
 		cd .. ; \
-      m_option="" ; \
 	done
 #	@$(MAKE) -f $(MakeFName) ghostbuster
 	@$(MAKE) -f $(MakeFName) internaldepends
@@ -925,6 +940,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.69  2002/05/13 17:59:45  pwagner
+# lib--hdf4 restores to lib stuff lost to l2--hdf5
+#
 # Revision 1.68  2002/05/10 20:29:28  pwagner
 # New targets xxx--hdf5 simplify building hdf5-savvy pges
 #
