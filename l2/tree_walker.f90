@@ -280,7 +280,6 @@ subtrees:   do while ( j <= howmany )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
-        call DestroyL1BInfo ( l1bInfo )
         if ( index(switches,'grid') /= 0 .and. .not. parallel%slave &
          & .and. associated(griddedDataBase) ) then
           call Dump(griddedDataBase)
@@ -320,6 +319,7 @@ subtrees:   do while ( j <= howmany )
     call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
     call destroyFGridDatabase ( fGrids )
+    call DestroyL1BInfo ( l1bInfo, l2pcf )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
 
@@ -355,6 +355,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.88  2002/08/22 01:26:00  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.87  2002/08/21 19:05:04  livesey
 ! Removed calls to H5Open/close as they are now done in MLSL2.
 !
