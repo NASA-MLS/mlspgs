@@ -9,7 +9,7 @@ module Fill                     ! Create vectors and fill them.
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
-  use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
+  use INIT_TABLES_MODULE, only: F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
     & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
     & F_MATRIX, F_METHOD, F_QUANTITY, F_RADIANCEQUANTITY, &
@@ -26,7 +26,7 @@ module Fill                     ! Create vectors and fill them.
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_SNOOP, &
-    & S_TIME, S_VECTOR
+    & S_TIME, S_TRANSFER, S_VECTOR
   ! Now some arrays
   use Intrinsic, only: Field_Indices, Lit_Indices
   use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
@@ -185,6 +185,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ColVector                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: Decay                    ! Index of decay-rate vector in database
+    integer :: DESTINATIONVECTORINDEX   ! For transfer commands
     !                                     -- for FillCovariance
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
@@ -590,6 +591,25 @@ contains ! =====     Public Procedures     =============================
           & invert=invert )
 
       ! End of fill operations
+
+      case ( s_transfer ) ! ===============================  Transfer ==
+        ! Here we're on a transfer instruction
+        ! Loop over the instructions
+        do j = 2, nsons(key)
+          gson = subtree(j,key)  ! The argument
+          fieldIndex = get_field_id(gson)
+          gson = subtree(2,gson) ! Now the value of said argument
+          select case ( fieldIndex )
+          case ( f_source )
+            sourceVectorIndex = decoration(gson)
+          case ( f_destination )
+            destinationVectorIndex = decoration(gson)
+          case default ! Can't get here if type checker worked
+          end select
+        end do
+
+        call TransferVectors ( vectors(sourceVectorIndex), &
+          & vectors(destinationVectorIndex) )
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -1163,6 +1183,30 @@ contains ! =====     Public Procedures     =============================
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
   end subroutine FillVectorQuantityFromL1B
 
+  ! ---------------------------------------------- TRANSFERVECTORS -----
+  subroutine TransferVectors ( source, dest )
+    ! Copy common items in source to those in dest
+    type (Vector_T), intent(in) :: SOURCE
+    type (Vector_T), intent(inout) :: DEST
+
+    ! Local variables
+    integer :: DUMMY                    ! Dummy integer
+    type (VectorValue_T), POINTER :: DQ ! Destination quantity
+    integer :: SQI                      ! Quantity index in source
+
+    ! Executable code
+
+    ! First copy those things in source, loop over them
+    do sqi = 1, size ( source%quantities )
+      ! Try to find this in dest
+      dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
+      if ( associated ( dq ) ) then
+        dq%values = source%quantities(sqi)%values
+        ! Think about mask later !??? NJL
+      end if
+    end do
+  end subroutine TransferVectors
+
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
     integer, intent(in) :: where   ! Tree node where error was noticed
@@ -1308,6 +1352,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.57  2001/06/22 05:37:27  livesey
+! First version of transfer command
+!
 ! Revision 2.56  2001/06/13 20:41:35  vsnyder
 ! Make sure 'invert' has a value
 !
