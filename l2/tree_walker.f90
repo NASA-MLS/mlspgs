@@ -260,7 +260,7 @@ subtrees:   do while ( j <= howmany )
 
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
-            if ( size(chunks) > 1) then
+            if ( size(chunks) > 1 .and. singleChunk == 0 ) then
               call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
@@ -284,7 +284,7 @@ subtrees:   do while ( j <= howmany )
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
-        if ( size(chunks) == 1) then
+        if ( size(chunks) == 1 .or. singleChunk /= 0 ) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
@@ -374,6 +374,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.96  2002/11/21 18:38:34  livesey
+! Bug fix in canWriteL2PC flag passed to output_close
+!
 ! Revision 2.95  2002/10/08 17:41:50  livesey
 ! Various bug fixes associated with FWMParallel
 !
