@@ -167,19 +167,21 @@ end Fill})
 ;; other arguments can be optionally present (e.g. prefix signal) and
 ;; are applied to the label command
 !define(directWriteDGG,{!dnl
-Label, quantity=state.$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
 ;; This macro is similar to the above except for the case where there
 ;; is no precision quantity, and the vector name should be included in $1
 !define(directWriteDGGNoPrecision,{!dnl
-Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+Label, quantity=$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGG({source=$1})})
 
 ;; This macro is used to write one DGM species.  The quantity is in $1
 ;; (including the vector), and the label is in $2
 !define(directWriteDGM,{!dnl
-Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
-!noteDirectDGM({source=$1})})
+Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})
+Label, quantity=outputPrecision.$1, $
+  label='$2 precision'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGM({source=state.$1,source=outputPrecision.$1})})
 
 ;; This macro is used to write one Cloud species.  The quantity is in $1
 ;; (including the vector), and the label is in $2
@@ -346,6 +348,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.66  2003/08/27 22:23:58  livesey
+; Moved error messages in joining
+;
 ; Revision 1.65  2003/08/14 20:26:34  livesey
 ; Removed tropH2O stuff
 ;
