@@ -18,6 +18,7 @@ module ScanDivide
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, R8
 !  use MLSStrings, only: MLSMSG_L1BRead
+  use MoreTree, only: Get_Spec_ID
   use Output_M, only: Output
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: Display_String
@@ -1274,46 +1275,54 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section identifiers
       son = subtree(i,root)
-      if ( node_id(son) == n_named ) son = subtree(2,son)
-      key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
-      got(key) = .true.
-      if ( node_id(root) == n_equal ) &
-        & call expr ( subtree(2,son), units, value )
+      if ( node_id(son) == n_equal ) then
+        key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+        got(key) = .true.
+        call expr ( subtree(2,son), units, value )
 
-      select case ( key )
-      case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
-        orbLen = value(1)
-      case ( p_overlap ) ! ...........................  P_OVERLAP  .....
-        overlap = value(1)
-      case ( p_home_geod_angle ) ! ...........  P_HOME_GEOD_ANGLE  .....
-        home = value(1)
-      case ( p_home_module ) ! ...................  P_HOME_MODULE  .....
-        modHome = value(1)
-      case ( p_scan_lower_limit ) ! .........  P_SCAN_LOWER_LIMIT  .....
-        if ( units(1) /= phyq_Length) &
-          & call announce_error ( son, notLength, key )
-        llb = value(1)
-        lub = value(2)
-      case ( p_scan_upper_limit ) ! .........  P_SCAN_UPPER_LIMIT  .....
-        if ( units(1) /= phyq_Length) &
-          & call announce_error ( son, notLength, key )
-        ulb = value(1)
-        uub = value(2)
-      case ( p_critical_scanning_modules ) ! P_CRITICAL_SCANNING_MODULES
-        modCritical = value(1)
-      case ( p_critical_bands ) ! .............  P_CRITICAL_BANDS  .....
-        bands = value(1)
-      case ( p_max_gap ) ! ...........................  P_MAX_GAP  .....
-        maxGap = value(1)
-        unitsGap = units(1)
-      case ( s_time ) ! .................................  S_TIME  .....
-        if ( timing ) then
-          call sayTime
-        else
-          call cpu_time ( t1 )
-          timing = .true.
-        end if
-      end select
+        select case ( key )
+        case ( p_ideal_length ) ! .................  P_IDEAL_LENGTH  .....
+          orbLen = value(1)
+        case ( p_overlap ) ! ...........................  P_OVERLAP  .....
+          overlap = value(1)
+        case ( p_home_geod_angle ) ! ...........  P_HOME_GEOD_ANGLE  .....
+          home = value(1)
+        case ( p_home_module ) ! ...................  P_HOME_MODULE  .....
+          modHome = value(1)
+        case ( p_scan_lower_limit ) ! .........  P_SCAN_LOWER_LIMIT  .....
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          llb = value(1)
+          lub = value(2)
+        case ( p_scan_upper_limit ) ! .........  P_SCAN_UPPER_LIMIT  .....
+          if ( units(1) /= phyq_Length) &
+            & call announce_error ( son, notLength, key )
+          ulb = value(1)
+          uub = value(2)
+        case ( p_critical_scanning_modules ) ! P_CRITICAL_SCANNING_MODULES
+          modCritical = value(1)
+        case ( p_critical_bands ) ! .............  P_CRITICAL_BANDS  .....
+          bands = value(1)
+        case ( p_max_gap ) ! ...........................  P_MAX_GAP  .....
+          maxGap = value(1)
+          unitsGap = units(1)
+        case default
+          ! Can't get here if the type checker worked
+        end select
+      else
+        if ( node_id(son) == n_named ) son = subtree(2,son)
+        select case ( get_spec_id(son) )
+        case ( s_time ) ! .................................  S_TIME  .....
+          if ( timing ) then
+            call sayTime
+          else
+            call cpu_time ( t1 )
+            timing = .true.
+          end if
+        case default
+          ! Can't get here if the type checker worked
+        end select
+      end if
 
     end do
 
@@ -1374,6 +1383,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.9  2001/04/24 00:39:33  vsnyder
+!# REALLY finish adding 'time' command
+!#
 !# Revision 2.8  2001/04/23 23:57:12  vsnyder
 !# Finish adding 'time' command
 !#
