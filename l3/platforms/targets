@@ -172,14 +172,15 @@ endif
 # endif
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
-libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
+#libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
+libmlsl3.a: $(ALLOBJS)
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
 	ar ru $@ $?
 	ar d $@ $(l3_driver)
 
-mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES)
+mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
@@ -236,6 +237,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.23  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.22  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #
