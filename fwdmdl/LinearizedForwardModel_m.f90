@@ -13,7 +13,7 @@ module LinearizedForwardModel_m
     & FORWARDMODELINTERMEDIATE_T
   use Intrinsic, only: LIT_INDICES
   use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-    & L_SIDEBANDRATIO, L_ZETA
+    & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH
   use L2PC_m, only: L2PCDATABASE, BINSELECTORS
   use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -107,6 +107,7 @@ contains ! =====     Public Procedures     =============================
 
     real (r8), dimension(:), pointer :: lowerWeight ! For interpolation
     real (r8), dimension(:), pointer :: upperWeight ! For interpolation
+    real (r8), dimension(:), pointer :: tangentTemperature ! For optical depth
     real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
 
     real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
@@ -128,6 +129,7 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: RADINL2PC ! The relevant radiance part of yStar
     type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
     type(VectorValue_T), pointer :: PTAN ! Tangent pressure quantity
+    type(VectorValue_T), pointer :: TEMP ! Temperature quantity
     type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
     type(VectorValue_T), pointer :: SIDEBANDRATIO ! From the state vector
@@ -139,6 +141,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( dense, mifPointingsLower, mifPointingsUpper )
     nullify ( lowerWeight, upperWeight )
     nullify ( thisRatio, doChannel )
+    nullify ( tangentTemperature )
 
     ! Identify the band/maf we're looking for
 
@@ -154,7 +157,23 @@ contains ! =====     Public Procedures     =============================
 
     signal = forwardModelConfig%signals(1)
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal= signal%index, sideband=signal%sideband )
+      & signal=signal%index, sideband=signal%sideband, noError=.true. )
+
+    ! Now, it's possible we're really being asked to deal with optical depth, not
+    ! radiance.
+    if ( .not. associated ( radiance ) ) then
+      radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
+      & signal=signal%index, sideband=signal%sideband, noError=.true. )
+    end if
+
+    ! Now, some possible error messages
+    if ( .not. associated ( radiance ) ) call MLSMessage ( &
+      & MLSMSG_Error, ModuleName, &
+      & 'Unable to find a radiance or optical depth quantity for this signal' )
+    if ( radiance%template%quantityType == l_opticalDepth .and. &
+      & present(jacobian)  ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Not appropriate to ask for derivatives for optical depth' )
 
     ! Set some dimensions
     noChans = radiance%template%noChans
@@ -587,6 +606,31 @@ contains ! =====     Public Procedures     =============================
           end if                        ! First/second sideband
         end if                          ! Folding
       end if                            ! Want ptan derivatives
+
+      ! Now think about optical depth
+      if ( radiance%template%quantityType == l_opticalDepth ) then
+        ! Get temperature and interpolate to tangent points
+        temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_temperature )
+        closestInstance = FindOneClosestInstance ( temp, radiance, mif )
+        call Allocate_test ( tangentTemperature, noMIFs, &
+          & 'tangentTemperature', ModuleName )
+        call InterpolateValues ( &
+          & temp%template%surfs(:,1), &
+          & temp%values(:,closestInstance), &
+          & ptan%values(:,maf), &
+          & tangentTemperature, &
+          & 'Spline', extrapolate='Allow' )
+        ! Now convert radiance to optical depth
+        radiance%values(:,mif) = 1.0 - &
+          & radiance%values(:,mif) / reshape ( spread ( &
+          & tangentTemperature, 1, noChans ), (/ radiance%template%instanceLen /) )
+        where ( radiance%values(:,mif) > 0.0 )
+          radiance%values(:,mif) = -log( radiance%values(:,mif) )
+        elsewhere
+          radiance%values(:,mif) = 1.0e5 ! Choose a suitable large value
+        end where
+      end if
       
       call DestroyVectorInfo ( xP )
       call DestroyVectorInfo ( deltaX )
@@ -721,6 +765,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.8  2002/02/08 22:51:00  livesey
+! Working (hopefully) version of bin selection
+!
 ! Revision 2.7  2002/02/06 01:34:20  livesey
 ! Changed to use FindOneClosestInstance
 !
