@@ -1,63 +1,72 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-module FREQ_AVG_M
-  use D_CSPLINE_M, only: CSPLINE
-  use DSIMPSON_MODULE, only: SIMPS
-  use D_HUNT_M, only: HUNT
-  use MLSCommon, only: I4, R8
+module Freq_Avg_m
+
   implicit NONE
   private
   public :: Freq_Avg
-!---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-       "$RCSfile$"
-!---------------------------------------------------------------------------
-contains
-!
-  Subroutine Freq_Avg(F_grid,F_grid_fltr,Fltr_func,Rad,n,nfp,Avg)
-!
-    Real(r8), intent(in) :: Fltr_func(:)
-    Real(r8), intent(in) :: F_grid(:), Rad(:), F_grid_fltr(:)
 
-    Integer(i4), intent(IN) :: n, nfp
-!
-    Real(r8), intent(OUT)   :: Avg
-!
-    Integer(i4) :: klo,khi,i
-    Real(r8) :: rxf(nfp), tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
-!
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    &  "$RCSfile$"
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, N, Nfp, Avg )
+
+    use D_CSPLINE_M, only: CSPLINE
+    use DSIMPSON_MODULE, only: SIMPS
+    use D_HUNT_M, only: HUNT
+    use MLSCommon, only: I4, R8, RP
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
+    real(rp), intent(in) :: Rad(:)
+
+    integer(i4), intent(in) :: M, Nfp
+
+    real(rp), intent(out)   :: Avg
+
+    integer(i4) :: Klo, Khi, I
+    real(r8) :: Rxf(nfp), Tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
+
     i = nfp / 2
     dF = F_grid_fltr(i+1) - F_grid_fltr(i)
-    if(dF > 0.0_r8) then
+    if ( dF > 0.0_r8 ) then
       Fmin = F_grid_fltr(001)
       Fmax = F_grid_fltr(nfp)
     else
       dF = -dF
       Fmin = F_grid_fltr(nfp)
       Fmax = F_grid_fltr(001)
-    endif
+    end if
 
     klo = -1
-    Call Hunt(Fmin,F_grid,n,klo,i)
-    Call Hunt(Fmax,F_grid,n,i,khi)
-!
-    Rmin = MINVAL(Rad(klo:khi))
-    Rmax = MAXVAL(Rad(klo:khi))
-!
-    Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax)
+    call Hunt ( Fmin, F_grid, n, klo, i )
+    call Hunt ( Fmax, F_grid, n, i, khi )
+
+    rmin = minval(Rad(klo:khi))
+    rmax = maxval(Rad(klo:khi))
+
+    call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
 
     rxf(1:nfp) = tmpary(1:nfp) * Fltr_func(1:nfp)
-    Call Simps (rxf, dF, nfp, Avg)
+    call Simps ( rxf, dF, nfp, Avg )
 
-    RETURN
+    return
 
-  End Subroutine Freq_Avg
+  end subroutine Freq_Avg
 
-end module FREQ_AVG_M
+end module Freq_Avg_m
+
 ! $Log$
+! Revision 2.2  2002/05/08 08:53:46  zvi
+! Modify to accomodate cspline.f9h
+!
 ! Revision 2.1  2002/04/18 10:46:26  zvi
 ! Better spline use
 !
