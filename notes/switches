@@ -32,6 +32,7 @@ Switches (set by -S option in mlsl2's command line):
   neq =>    Normal equations during retriever iterations
   ngc =>    Show how many times garbage collected during each chunk
   nwt =>    Action flag at each return from Newton solver
+  opt[n] => Print command line options [higher the n, more the info]
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
   pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
@@ -74,6 +75,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.19  2002/02/05 00:40:31  pwagner
+ garbage collecting switch
+
  Revision 1.18  2002/01/24 00:16:13  pwagner
  pro scope widened to include input files, too
 
