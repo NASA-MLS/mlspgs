@@ -795,22 +795,25 @@ contains ! =====     Public Procedures     =============================
   end subroutine CopyMatrixValue
 
   ! ----------------------------------------------  CreateBlock_1  -----
-  subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros, BandHeight )
+  subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros, BandHeight, &
+    &                        Init )
   ! Create the matrix block Z%Block(RowNum,ColNum), which sprang into
   ! existence with kind M_Absent.  Create it with the specified Kind.
   ! See MatrixModule_0 for a list of the kinds.  If the Kind is
   ! M_Banded or M_ColumnSparse, the number of nonzeroes is needed.
   ! If Kind == M_Banded and BandHeight is present, the band height is
-  !   assumed to be uniform, and the R1 and R2 components are filled to
-  !   reflect that assumption.
+  ! assumed to be uniform, and the R1 and R2 components are filled to
+  ! reflect that assumption.  If Init is present the Values field is
+  ! filled from Init.
     integer, intent(in), optional :: BandHeight
     type(matrix_T), intent(inout) :: Z       ! The matrix having the block
     integer, intent(in) :: RowNum, ColNum    ! Row and column of the block
     integer, intent(in) :: Kind         ! Kind of block, see MatrixModule_0
     integer, intent(in), optional :: NumNonzeros  ! Number of nonzeros
+    real(rm), intent(in), optional :: Init   ! Initial value
     call createBlock ( z%block(rowNum,colNum), &
       & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros, &
-      & bandHeight=bandHeight )
+      & bandHeight=bandHeight, init=init )
   end subroutine CreateBlock_1
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
@@ -2527,6 +2530,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.101  2004/07/07 19:34:30  vsnyder
+! Add Init argument to CreateBlock
+!
 ! Revision 2.100  2004/04/03 05:43:43  livesey
 ! Moved the DumpSize functionality into Dump_0
 !
