@@ -91,8 +91,8 @@ contains ! ======================================== BaselineForwardModel ======
     real (rp), dimension(:), pointer :: SURFWT1 ! Weight for upper point
     real (rp), dimension(:), pointer :: SURFWT0PRIME ! d[SurfWt0]/d[ptan]
     real (rp), dimension(:), pointer :: SURFWT1PRIME ! d[SurfWt1]/d[ptan]
-    real (rp), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
-    real (rp), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
+    real (rm), dimension(:,:,:), pointer :: KBIT ! Part of derivatives
+    real (rm), dimension(:,:), pointer :: KBIT2 ! Part of derivatives
 
     type (VectorValue_T), pointer :: RADIANCE ! The radiance quantity
     type (VectorValue_T), pointer :: BASELINE ! The baseline quantity
@@ -421,6 +421,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.15  2002/11/18 19:27:23  pwagner
+! KBIT and KBIT2 now rm instead of rp
+!
 ! Revision 2.14  2002/11/13 17:07:06  livesey
 ! Bug fix, was stomping on pre-existing d[Radiance]/d[Basline] blocks in
 ! K.
