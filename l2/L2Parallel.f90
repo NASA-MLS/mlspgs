@@ -381,11 +381,11 @@ contains ! ================================ Procedures ======================
         machine = FindFirst ( slaveTids == slaveTid )
         if ( machine == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Got a message from an unknown slave")
-        
         ! Unpack the first integer in the buffer
         call PVMF90Unpack ( signal, info )
         if ( info /= 0 ) then
           call PVMErrorMessage ( info, "unpacking signal" )
+        else
           select case (signal) 
           case ( sig_tojoin )
           case ( sig_finished )
