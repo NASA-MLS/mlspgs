@@ -22,7 +22,9 @@
   ! to be linked to the _real_ SDP Toolkit library PGSTK.a. They are in here
   ! to satisfy some F90 compilers which check that a routine exists if it
   ! has an interface block defined in another module, even if it is not
-  ! called in a particular case of USEing that module. There shoulld be a 
+  ! called in a particular case of USEing that module. 
+  
+  ! There should be a corresponding
   ! routine in here for every SDP routine that has an interface in 
   ! SDPToolkit.f90
 
@@ -61,7 +63,6 @@
         Pgs_pc_getReference=-99
       END FUNCTION Pgs_pc_getReference
 
-
       subroutine Pgs_smf_getMsg ( CODE, MNEMONIC, MSG )
         integer, intent(out) :: CODE              ! Previously stored code
         character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
@@ -75,12 +76,71 @@
         PGS_TD_TAItoUTC=-99
       END FUNCTION PGS_TD_TAItoUTC
 
+      INTEGER FUNCTION PGS_PC_GetConfigData(param_id, param_val)
+        INTEGER, INTENT(IN) :: param_id
+         character (len=*), intent(out) :: param_val
+         param_val = "Use the Real PGSTK"
+         PGS_PC_GetConfigData=-99
+      END FUNCTION PGS_PC_GetConfigData
+
+! Metadata functions
+
+      INTEGER FUNCTION PGS_MET_Init(file_id,groups)
+        INTEGER, INTENT(IN) :: file_id
+         character (len = *), dimension(:) :: Groups
+         PGS_MET_Init=-99
+      END FUNCTION PGS_MET_Init
+
+      INTEGER FUNCTION PGS_MET_Setattr_d(imd_group, attr_name, dval)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+        DOUBLE PRECISION, INTENT(IN) :: dval
+         PGS_MET_Setattr_d=-99
+      END FUNCTION PGS_MET_Setattr_d
+
+      INTEGER FUNCTION PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+         character (len=*), intent(in) :: attr_value
+         PGS_MET_Setattr_s=-99
+      END FUNCTION PGS_MET_Setattr_s
+
+      INTEGER FUNCTION PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+        DOUBLE PRECISION, INTENT(OUT), DIMENSION(:) :: dval_array
+        if(size(dval_array) > 0) then
+            dval_array = 0.
+         endif
+         PGS_MET_Getsetattr_d=-99
+      END FUNCTION PGS_MET_Getsetattr_d
+
+      INTEGER FUNCTION PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: attr_name
+         integer, intent(in) :: attr_value
+         PGS_MET_Setattr_i=-99
+      END FUNCTION PGS_MET_Setattr_i
+
+      INTEGER FUNCTION PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
+         character (len = *) :: imd_group
+         character (len=*), intent(in) :: hdf_attr_name
+         integer, intent(in) :: sd_id
+         PGS_MET_Write=-99
+      END FUNCTION PGS_MET_Write
+
+      INTEGER FUNCTION PGS_MET_Remove( )
+         PGS_MET_Remove=-99
+      END FUNCTION PGS_MET_Remove
 !=============================================================================
 !END MODULE SDPToolkitSubstitute
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.3  2001/05/07 23:22:20  pwagner
+! Added metadat functions
+!
 ! Revision 2.2  2000/11/08 10:21:04  pumphrey
 ! Added return values to functions to prevent compile errors
 !
