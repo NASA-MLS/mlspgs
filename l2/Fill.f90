@@ -33,6 +33,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
+    use Geometry, only: OMEGA => W
     use GriddedData, only: GriddedData_T
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
@@ -110,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED, N_SET_ONE
-    use UNITS, only: Omega, PI
+    use UNITS, only: PI
     use VectorsModule, only: AddVectorToDatabase, &
       & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
       & DestroyVectorInfo, Dump, &
@@ -3899,6 +3900,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.149  2002/09/26 20:41:04  vsnyder
+! Get Omega from Geometry instead of Units -- that's where it really belongs
+!
 ! Revision 2.148  2002/09/25 20:08:14  livesey
 ! Made -g less verbose
 !
