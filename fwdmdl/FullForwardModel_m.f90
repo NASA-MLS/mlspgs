@@ -1420,8 +1420,16 @@ contains
             ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4), then
             ! normalize mag_path(j,1:3).
             mag_path(j,4) = sqrt(sum(mag_path(j,1:3)**2))
-            mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
           end do
+          WHERE (mag_path(:,4) /= 0.0_rp) 
+            mag_path(:,1) = mag_path(:,1) / mag_path(:,4)
+            mag_path(:,2) = mag_path(:,2) / mag_path(:,4)
+            mag_path(:,3) = mag_path(:,3) / mag_path(:,4)
+          ELSEWHERE
+            mag_path(:,1) = 0.0_rp
+            mag_path(:,2) = 0.0_rp
+            mag_path(:,3) = 0.0_rp
+          ENDWHERE
 
           !??? The second subscript depends on the ordering of the rotation matrix ???
           ct => mag_path(1:no_ele,3)   ! cos(theta)
@@ -1777,7 +1785,8 @@ alpha_path_f = 0.0
               call get_d_deltau_pol_dT ( frq, npc/2, h, ct, stcp, stsp,       &
                 & my_catalog, beta_group, gl_slabs_m, gl_slabs_p,             &
                 & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
-                & beta_path_polarized(:,1:p_stop,:), sps_path,                &
+                & beta_path_polarized(:,1:p_stop,:), tanh1_c(1:p_stop),       &
+                & sps_path,                                                   &
                 & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
                 & del_s(1:npc), indices_c(1:p_stop),                          &
                 & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
@@ -2624,6 +2633,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.143  2003/06/09 20:52:37  vsnyder
+! More work on polarized derivatives
+!
 ! Revision 2.142  2003/06/09 17:38:47  livesey
 ! Use GetQuantityForForwardModel in more places
 !
