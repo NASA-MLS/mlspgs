@@ -193,7 +193,6 @@ contains ! ====     Public Procedures     ==============================
           if ( parallel%master .and. .not. parallel%fwmParallel ) &
             & call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           if ( parallel%slave .and. parallel%fwmParallel ) then
-            print*,'Single chunk is:', singleChunk
             call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
               & chunks, singleChunk ) 
             call L2FWMSlaveTask ( mifGeolocation )
@@ -373,6 +372,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.101  2002/12/05 19:45:20  pwagner
+! Moved MLSFile_T from MLSFiles to MLSCommon
+!
 ! Revision 2.100  2002/12/04 01:18:21  pwagner
 ! First halting steps toward using filedatabase
 !
