@@ -408,7 +408,7 @@ contains ! =====     Public Procedures     =============================
           call GetModuleName( l2aux%instrumentModule, dimName)
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
         else
-          call get_string (l2aux%name, dimName )
+          call get_string (l2aux%name, dimName, strip=.true. )
           if (len_trim(dimName) < len(dimName)) dimName=TRIM(dimName)//'.'
         endif
         call get_string (lit_indices(l2aux%dimensions(dimensionInData)%dimensionFamily), &
@@ -445,6 +445,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.8  2001/03/15 18:42:29  livesey
+! Removed quotes from dimension name prefixes
+!
 ! Revision 2.7  2001/03/08 02:20:12  livesey
 ! Added strip argument to a call to get_string
 !
