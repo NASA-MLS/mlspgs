@@ -38,11 +38,12 @@ module ForwardModelSupport
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
   integer, parameter :: NeedBothXYStar         = LinearSidebandHasUnits + 1
   integer, parameter :: Nested                 = NeedBothXYStar + 1
-  integer, parameter :: NoBetaGroup            = Nested + 1
+  integer, parameter :: NoArray                = Nested + 1
+  integer, parameter :: NoBetaGroup            = NoArray + 1
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
-  integer, parameter :: PFAAndNotPFA           = NoMolecule + 1
-  integer, parameter :: PFANotMolecule         = PFAAndNotPFA + 1
-  integer, parameter :: PFATwice               = PFANotMolecule + 1
+  integer, parameter :: PFANotMolecule         = NoMolecule + 1
+  integer, parameter :: PFASSB                 = PFANotMolecule + 1
+  integer, parameter :: PFATwice               = PFASSB + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
   integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
@@ -336,7 +337,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_String
-    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Null_Tree, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array
@@ -351,8 +352,6 @@ contains ! =====     Public Procedures     =============================
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
-    integer :: DumpFwm = -1             ! -1 = not called yet, 0 = no dumps,
-                                        ! 1 = dump, 2 = dump and stop
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -375,12 +374,6 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
-    if ( dumpFwm < 0 ) then ! done only once
-      dumpFwm = 0
-      if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
-      if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
-    end if
-
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
 
@@ -394,6 +387,7 @@ contains ! =====     Public Procedures     =============================
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
     info%allLinesInCatalog = .false.
+    info%anyLBL = .false.
     info%anyPFA = .false.
     info%atmos_der = .false.
     info%cloud_der = l_none
@@ -425,6 +419,7 @@ contains ! =====     Public Procedures     =============================
     info%spect_der = .false.
     info%switchingMirror= .false.
     info%temp_der = .false.
+    info%where = root
     info%windowUnits = phyq_profiles
     info%xStar = 0
     info%yStar = 0
@@ -480,7 +475,6 @@ contains ! =====     Public Procedures     =============================
         info%lockBins = get_boolean(son)
       case ( f_lsbPFAMolecules )
         PFATrees(1) = son
-        info%anyPFA = .true.
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_moleculeDerivatives )
@@ -509,7 +503,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
         if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
-          call AnnounceError ( WrongUnitsForWindow, root )
+          & call AnnounceError ( WrongUnitsForWindow, son )
         info%windowUnits = expr_units(1)
       case ( f_polarized )
         info%polarized = get_boolean(son)
@@ -517,10 +511,10 @@ contains ! =====     Public Procedures     =============================
         allocate ( info%signals (nsons(son)-1), stat = status )
         if ( status /= 0 ) call announceError( AllocateError, root )
         do j = 1, nsons(son)-1
-          call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
-            & strip=.true.)
+          gson = subtree(j+1,son)
+          call get_string ( sub_rosa(gson), signalString, strip=.true.)
           call parse_Signal ( signalString, signalInds, &
-            & tree_index=son, sideband=sideband, channels=channels )
+            & tree_index=gson, sideband=sideband, channels=channels )
           if ( .not. associated(signalInds) ) then ! A parse error occurred
             error = max(error,1)
             exit
@@ -572,7 +566,6 @@ contains ! =====     Public Procedures     =============================
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbPFAMolecules )
         PFATrees(2) = son
-        info%anyPFA = .true.
       case ( f_xStar )
         info%xStar = decoration ( decoration ( subtree ( 2, son ) ) )
       case ( f_yStar )
@@ -642,13 +635,17 @@ contains ! =====     Public Procedures     =============================
     end if
     info%molecules => info%beta_group%molecule
 
-    ! Now the BPFAMolecules lists
+    ! Now the PFAMolecules lists
     do s = 1, 2
       if ( pfaTrees(s) /= null_tree ) then
         ! Verify that the PFA molecules are all listed molecules.  Mark the
         ! ones that are PFA.
 o:      do j = 2, nsons(PFATrees(s))
           son = subtree( j, PFATrees(s) )
+          if ( node_id(son) == n_array ) then
+            call announceError ( NoArray, son )
+            cycle
+          end if
           thisMolecule = decoration( son )
           do i = 1, size(info%beta_group)
             do k = 1, size(info%beta_group(i)%lbl(s)%molecules)
@@ -678,7 +675,11 @@ o:      do j = 2, nsons(PFATrees(s))
           info%beta_group(i)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
           call deallocate_test ( tempLBL, 'TempLBL', moduleName )
           call deallocate_test ( tempPFA, 'TempPFA', moduleName )
+          if ( numLBL /= 0 ) info%anyLBL(s) = .true.
+          if ( numPFA /= 0 ) info%anyPFA(s) = .true.
         end do ! i
+      else
+        info%anyLBL(s) = .true.
       end if
 
       ! Now the cat_index and isotope ratio fields
@@ -739,6 +740,10 @@ o:      do j = 2, nsons(PFATrees(s))
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
 
+      if ( info%sidebandStart == 1 .and. info%anyPFA(1) .or. &
+         & info%sidebandStop == -1 .and. info%anyPFA(2) ) &
+         & call AnnounceError ( PFASSB, root )
+
       ! Cannot specify allLinesInCatalog and polarized
       if ( info%allLinesInCatalog .and. info%polarized ) &
         & call AnnounceError ( PolarizedAndAllLines, root )
@@ -773,13 +778,11 @@ o:      do j = 2, nsons(PFATrees(s))
       end if
     end if
 
-    if ( dumpFwm > 0 .or. error /= 0 ) then
+    if ( error /= 0 ) then
       call dump ( info, 'ConstructForwardModelConfig' )
-      if ( dumpFwm > 1 .and. error == 0 ) stop ! error message will stop later
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'An error occured' )
     end if
 
-    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'An error occured' )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_end ( "ConstructForwardModelConfig" )
 
@@ -984,7 +987,7 @@ o:      do j = 2, nsons(PFATrees(s))
   subroutine AnnounceError ( Code, where, extraMessage, what, warn )
 
     use Intrinsic, only: Lit_Indices
-    use Lexer_Core, only: PRINT_SOURCE
+    use MoreTree, only: StartErrorMessage
     use Output_M, only: Output
     use String_Table, only: Display_String
     use Tree, only: Decoration, Source_Ref
@@ -996,8 +999,7 @@ o:      do j = 2, nsons(PFATrees(s))
     logical, optional, intent(in) :: Warn ! Warning if present, no matter what value
 
     if ( .not. present(warn) ) error = max(error,1)
-    call output ( '***** At ' )
-    call print_source ( source_ref ( where ) )
+    call startErrorMessage ( where )
     call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
     case ( AllocateError )
@@ -1046,20 +1048,21 @@ o:      do j = 2, nsons(PFATrees(s))
         & advance='yes' )
     case ( Nested )
       call output ( 'Group within group is not allowed', advance='yes' )
+    case ( NoArray )
+      call output ( "I'm not set up to have a nested array in [LU]SBPFAMolecules", advance='yes' )
     case ( NoBetaGroup )
       call output ( 'Beta grouping allowed only for full clear-sky model', &
         & advance='yes' )
     case ( NoMolecule )
       call output ( 'A bin selector of type vmr must have a molecule', &
         & advance='yes' )
-    case ( PFAAndNotPFA )
-      call output ( 'Molecule ' )
-      call display_string ( lit_indices(decoration(where)) )
-      call output ( ' listed for both PFA and non-PFA', advance='yes' )
     case ( PFANotMolecule )
       call output ( 'PFA requested for ' )
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' but it is not in the molecule list', advance='yes' )
+    case ( PFASSB )
+      call output ( 'Signal is SSB, but PFA is requested for the other sideband', &
+        & advance='yes' )
     case ( PFATwice )
       call output ( 'Molecule ' )
       call display_string ( lit_indices(decoration(where)) )
@@ -1095,6 +1098,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.110  2005/03/28 20:29:09  vsnyder
+! Better error checking and reporting, some PFA stuff
+!
 ! Revision 2.109  2005/02/17 02:34:41  vsnyder
 ! Fix a blunder in PFA setup
 !
