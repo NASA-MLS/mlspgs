@@ -127,6 +127,7 @@ module MLSSignals_M
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
     integer :: Name                     ! Sub_rosa index of declaration's label
     logical :: Deferred=.false.         ! "Frequencies/widths are deferred"
+    logical :: DACS                     ! Set if this spectrometer is a DACS
   end type SpectrometerType_T
 
   ! This is the key type; it describes a complete signal (one band, or a
@@ -142,6 +143,7 @@ module MLSSignals_M
     !                                   element is true for "real" signals).
 
     integer :: Band                     ! Index in Bands database
+    logical :: DACS = .false.           ! This signal is a DACS
     logical :: Deferred = .false.       ! "Frequencies/widths are deferred"
     integer :: Direction                ! +1 Channel 1 closest to lo, -1 reverse.
     integer :: Index                    ! Index into master signals database
@@ -188,6 +190,7 @@ contains
 
     type(band_T) :: Band                ! To be added to the database
     integer :: Channels                 ! subtree index of field
+    logical :: DACS                     ! This spectrometer type is a DACS
     logical :: Deferred                 ! "Frequencies/widths are deferred"
     integer :: Error                    ! Error level seen so far
     integer :: Field                    ! Field index -- f_something
@@ -344,6 +347,7 @@ contains
         signal%singleSideband = radiometers(signal%radiometer)%singleSideband
         signal%centerFrequency = bands(signal%band)%centerFrequency
         signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
+        signal%dacs = spectrometerTypes(signal%spectrometerType)%dacs
         if ( signal%deferred .neqv. got(f_channels) ) &
           & call announceError ( deferredChannels )
         ! For the wide filters, we specify frequency etc. here.
@@ -376,6 +380,7 @@ contains
       case ( s_spectrometerType ) ! ...........  SPECTROMETERTYPE  .....
         spectrometerType%name = name
         deferred = .false.
+        dacs = .false.
         first = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -391,6 +396,8 @@ contains
             channels = son
           case ( f_deferred )
             deferred = get_boolean(son)
+          case ( f_dacs )
+            dacs = get_boolean(son)
           case ( f_first, f_last )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
@@ -465,6 +472,7 @@ contains
           & call announceError ( atLeastOne, f_channels, (/ f_deferred, f_start /) )
         if ( error == 0 ) call decorate ( key, addSpectrometerTypeToDatabase ( &
           & spectrometerTypes, spectrometerType ) )
+        spectrometerType%dacs = dacs
 
         ! Nullify pointers to temporary stuff so it doesn't get hosed later
         nullify ( spectrometerType%frequencies )
@@ -1514,6 +1522,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.58  2003/07/18 20:23:34  livesey
+! Added DACS flag
+!
 ! Revision 2.57  2003/05/16 02:44:18  vsnyder
 ! Removed USE's for unreferenced symbols
 !
