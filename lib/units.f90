@@ -89,6 +89,9 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_khz, 1.0d-3, phyq_frequency )
     call declare_unit ( l_hz, 1.0d-6, phyq_frequency )
 
+    call declare_unit ( l_ms, 1.0d0, phyq_velocity )
+    call declare_unit ( l_kms, 1.0d3, phyq_velocity )
+
     call declare_unit ( l_zeta, 1.0d0, phyq_zeta )
     call declare_unit ( l_logp, 1.0d0, phyq_zeta )
 !   this is = 1/meters 
@@ -125,6 +128,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.25  2004/06/03 22:58:20  vsnyder
+! Add ms and kms units
+!
 ! Revision 2.24  2004/03/26 01:31:24  vsnyder
 ! Add sqrtln2 constant
 !
