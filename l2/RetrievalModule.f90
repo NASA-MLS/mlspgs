@@ -1040,7 +1040,7 @@ contains
                  ! Store what we've just got in v(f) ie fwdModelOut
                 call copyVector ( v(f), v(f_rowScaled), & ! v(f) := v(f_rowScaled)
                   & quant=jacobian%row%quant(rowBlock), &
-                  & inst=jacobian%row%inst(rowBlock), noMask=.true. )
+                  & inst=jacobian%row%inst(rowBlock) )
                 call subtractFromVector ( v(f_rowScaled), measurements, &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock) ) ! f - y
@@ -2959,6 +2959,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.184  2002/09/23 20:21:21  livesey
+! Now copies mask from f_rowScaled to f.  Only important for snooping.
+!
 ! Revision 2.183  2002/09/21 00:33:34  vsnyder
 ! Don't take a getJ iteration if TOLF convergence occurs
 !
