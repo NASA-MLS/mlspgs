@@ -5,18 +5,20 @@
 MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
+  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
+  USE MLSL2Options, only: SECTIONTIMINGUNITS
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
   USE MLSStrings, only: GetStringElement, LowerCase, StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
-  use Time_M, only: Time_Now
+  use Time_M, only: Time_Now, Use_Wall_Clock
 
   IMPLICIT NONE
 
   public :: SECTION_TIMES, TOTAL_TIMES, &
     & add_to_directwrite_timing, add_to_phase_timing, &
     & add_to_retrieval_timing, add_to_section_timing, &
-    & dump_section_timings
+    & dump_section_timings, run_start_time
   private
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -65,6 +67,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   character(len=PHASENAMESLEN), save :: phaseNames = ' '
   integer, save :: num_phases = 0
   real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
+  real, save :: run_start_time = 0.
 
 contains ! =====     Public Procedures     =============================
 
@@ -222,8 +225,22 @@ contains ! =====     Public Procedures     =============================
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
     logical                         :: Unknown_nonzero
     integer                         :: num_elems
+    integer                         :: timeDivisor
 
   ! Executable
+    select case ( sectionTimingUnits )
+    case ( l_seconds )
+      timeDivisor = 1
+    case ( l_minutes )
+      timeDivisor = 60
+    case ( l_hours )
+      timeDivisor = 3600
+    case default
+      call output ( 'Unrecognized section timing unit : ', advance='no' )
+      call output ( sectionTimingUnits, advance='yes' )
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Should be among list l_(seconds, minutes, hours)' )
+    end select
     Unknown_nonzero = .false.  ! (section_timings(unknown_section) > 0.)
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
@@ -247,10 +264,17 @@ contains ! =====     Public Procedures     =============================
 
     total = sum(section_timings(1:num_section_times)) ! + &
      ! & section_timings(unknown_section)
+
+    ! Another trick:
+    ! The DirectWrite section doesn't automatically include the waiting time
+    ! (due to lazy coding in Join) so add it in now
+    elem = StringElementNum(directwrite_names, 'waiting', countEmpty)
+    section_timings(dwElem) = section_timings(dwElem) + &
+      & section_timings(num_section_times+num_retrieval_times+elem)
     call time_now ( final )
-    final = max(final, total)
-    if ( final <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
-    if ( final < 0.5 .or. final > 99999.99 ) then
+    final = max(final-run_start_time, total)
+    if ( final/timeDivisor <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
+    if ( final/timeDivisor < 0.5 .or. final/timeDivisor > 99999.99 ) then
       TIMEFORM = TIMEFORMBIG
     else
       TIMEFORM = TIMEFORMSMALL
@@ -271,7 +295,7 @@ contains ! =====     Public Procedures     =============================
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     enddo
@@ -280,14 +304,14 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 2, advance='no' )
     call output ( '(subtotal)', advance='no' )
     call blanks ( 5, advance='no' )
-    call output ( total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call output ( total/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     percent = 100 * (final-total) / final
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
     call blanks ( 6, advance='no' )
-    call output ( final-total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call output ( (final-total)/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     call output ( '==========================================', advance='yes' )
@@ -295,7 +319,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 4, advance='no' )
     call output ( '(final)', advance='no' )
     call blanks ( 6, advance='no' )
-    call output ( final, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call output ( final/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='no' )
     call blanks ( 4, advance='no' )
@@ -345,14 +369,14 @@ contains ! =====     Public Procedures     =============================
         percent = 100 * elem_time / retrFinal
         call output ( section_name, advance='no' )
         call blanks ( 2, advance='no' )
-        call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+        call output ( elem_time/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
         call blanks ( 2, advance='no' )
         call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
       enddo
       call blanks ( 3, advance='no' )
       call output ( '(others)', advance='no' )
       call blanks ( 6, advance='no' )
-      call output ( retrFinal-retrTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+      call output ( (retrFinal-retrTotal)/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( 100*(retrFinal-retrTotal)/retrFinal, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     endif
@@ -391,7 +415,7 @@ contains ! =====     Public Procedures     =============================
         percent = 100 * elem_time / dwFinal
         call output ( section_name, advance='no' )
         call blanks ( 2, advance='no' )
-        call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
+        call output ( elem_time/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
           & advance='no' )
         call blanks ( 2, advance='no' )
         call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
@@ -399,7 +423,7 @@ contains ! =====     Public Procedures     =============================
       call blanks ( 3, advance='no' )
       call output ( '(others)', advance='no' )
       call blanks ( 6, advance='no' )
-      call output ( dwFinal-dwTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
+      call output ( (dwFinal-dwTotal)/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
         & advance='no' )
       call blanks ( 2, advance='no' )
       call output ( 100*(dwFinal-dwTotal)/dwFinal, FORMAT=PCTFORM, &
@@ -429,7 +453,7 @@ contains ! =====     Public Procedures     =============================
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='no' )
       if ( PRINTCHUNKNUMWITHPHASES ) then
@@ -442,7 +466,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
     call blanks ( 6, advance='no' )
-    call output ( final-phaseTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call output ( (final-phaseTotal)/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( 100*(final-phaseTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
 
@@ -471,6 +495,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.19  2003/12/05 00:50:44  pwagner
+! Numerous small bugixes related to wall clock time use
+!
 ! Revision 2.18  2003/10/23 22:20:16  pwagner
 ! A few bugfixes in dump_section_timings
 !
