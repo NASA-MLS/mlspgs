@@ -55,6 +55,7 @@ CONTAINS
     qty%solarTime(1,:)=hGrid%solarTime
     qty%solarZenith(1,:)=hGrid%solarZenith
     qty%losAngle(1,:)=hGrid%losAngle
+    qty%subVectorIndex=hGrid%profileIndices
 
   END SUBROUTINE CopyHGridInfoIntoQuantity
     
@@ -122,7 +123,7 @@ CONTAINS
     TYPE (L1BData_T) :: l1bField
     CHARACTER (LEN=NameLen) :: l1bItemName
 
-    INTEGER :: noMAFs,l1bFlag,l1bItem
+    INTEGER :: noMAFs,l1bFlag,l1bItem,mafIndex
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -152,6 +153,7 @@ CONTAINS
        qty%solarZenith=>MIFGeolocation(instrumentModule)%solarZenith
        qty%solarTime=>  MIFGeolocation(instrumentModule)%solarTime
        qty%losAngle=>   MIFGeolocation(instrumentModule)%losAngle
+       qty%subVectorIndex=> MIFGeolocation(instrumentModule)%subVectorIndex
     ELSE
        ! We have no geolocation information, we have to read it ourselves
        ! from the l1boa file.
@@ -175,6 +177,9 @@ CONTAINS
 
        qty%verticalCoordinate=VC_Altitude
        qty%surfs=l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
+       DO mafIndex=chunk%firstMAFIndex,chunk%lastMAFIndex
+          qty%subVectorIndex(mafIndex-chunk%firstMAFIndex+1)=mafIndex
+       END DO
 
        ! Now we're going to fill in the hGrid information
 
@@ -407,6 +412,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.4  2000/01/12 21:44:05  livesey
+! Modified to include the handling of the minorFrame flag.
+!
 ! Revision 1.3  2000/01/11 22:51:34  livesey
 ! Dealt with ramifications of change from read_parse_l2cf to MLSCF
 !
