@@ -190,6 +190,7 @@ contains
           ! What if one config set finished but others still had more to do?
           ! Ermmm, think of this next time.
           fmStat%maf = fmStat%maf + 1
+          fmstat%rows = .false. ! Just so it's not undefined
           do config = 1, size(configs)
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
@@ -296,6 +297,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.31  2001/05/09 01:50:31  vsnyder
+! Make sure fmstat%rows is defined (even though it's not used)
+!
 ! Revision 2.30  2001/05/08 21:33:56  livesey
 ! Removed some print statements
 !
