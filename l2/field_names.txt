@@ -126,6 +126,7 @@ outputSD
 overlaps
 
 perturbation
+phaseName
 phiWindow
 pointingGrids
 precision
@@ -196,6 +197,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.15  2001/10/31 22:00:28  livesey
+# Added phaseName
+#
 # Revision 2.14  2001/10/31 19:17:41  livesey
 # Added fGrid stuff
 #
