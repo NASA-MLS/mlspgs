@@ -422,6 +422,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
       begin, s+s_gridded, &
+             begin, f+f_dimList, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_field, t+t_string, n+n_field_type, &
              begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
@@ -952,6 +953,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.286  2003/02/20 21:26:21  pwagner
+! Lets you read field dimList=x,y,.. w/ griddeddata
+!
 ! Revision 2.285  2003/02/18 23:58:53  livesey
 ! Added phiWindow to fill for hydrostatic ptan
 !
