@@ -22,10 +22,11 @@ module L2PC_m
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE, &
     & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-    & MATRIXELEMENT_T
+    & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MLSHDF5, only: MakeHDF5Attribute, GetHDF5Attribute, SaveAsHDF5DS, LoadFromHDF5DS
-  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F, &
-    & H5GCLOSE_F, H5GCREATE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
+  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F, H5F_ACC_RDONLY_F, &
+    & H5FOPEN_F, H5GCLOSE_F, H5GCREATE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
+    & H5GN_MEMBERS_F
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
@@ -44,7 +45,7 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
-  public :: OutputHDF5L2PC
+  public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -71,6 +72,14 @@ module L2PC_m
   end type BinSelector_T
 
   type(BinSelector_T), dimension(:), pointer, save :: BINSELECTORS => NULL()
+
+  type L2PCInfo_T
+    integer :: fileID     ! What is the HDF5 file ID
+    integer :: binID      ! What is the groupID for the bin
+    integer :: blocksID   ! What is the groupID for the blocks
+    integer, dimension(:,:), pointer :: BLOCKID => NULL()
+  end type L2PCINFO_T
+  type ( L2PCInfo_T), dimension(:), pointer, save :: L2PCINFO => NULL()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -184,7 +193,36 @@ contains ! ============= Public Procedures ==========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_deallocate // "l2pcDatabase" )
     end if
+
+    ! Also destroy the info database (i.e. close files)
+    call DestroyL2PCInfoDatabase
   end subroutine DestroyL2PCDatabase
+
+  ! ------------------------------------ FlushL2PCBins -------------
+  subroutine FlushL2PCBins
+    ! Local variables
+    integer :: BIN              ! Loop counter
+    integer :: BLOCKROW         ! Loop counter
+    integer :: BLOCKCOL         ! Loop counter
+
+    type ( Matrix_T ), pointer :: L2PC
+    type ( MatrixElement_T), pointer :: M0
+
+    ! Executable code
+    if ( .not. associated ( l2pcDatabase ) ) return
+    do bin = 1, size ( l2pcDatabase )
+      l2pc => l2pcDatabase ( bin )
+      do blockRow = 1, l2pc%row%NB
+        do blockCol = 1, l2pc%col%NB
+          m0 => l2pc%block ( blockRow, blockCol )
+          if ( m0%kind /= m_absent ) then
+            call DestroyBlock ( m0 )
+            m0%kind = M_Unknown
+          end if
+        end do
+      end do
+    end do
+  end subroutine FlushL2PCBins
 
   ! ------------------------------------ open_l2pc_file ------------
   subroutine Open_L2PC_File ( Filename, Lun )
@@ -545,6 +583,48 @@ contains ! ============= Public Procedures ==========================
 
   ! ======================================= PRIVATE PROCEDURES ====================
 
+  ! ------------------------------------ AddBinSelectorToDatabase --
+  integer function AddL2PCInfoToDatabase ( database, item )
+    type (L2PCInfo_T), dimension(:), pointer :: DATABASE
+    type (L2PCInfo_T) :: item
+    ! Local variables
+    type (L2PCInfo_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "addItemToDatabase.f9h"
+    AddL2PCInfoToDatabase = newSize
+  end function AddL2PCInfoToDatabase
+
+  ! ------------------------------------ DestroyL2PCInfoDatabase ----
+  subroutine DestroyL2PCInfoDatabase
+    ! Local variables
+    integer :: I                ! Loop counter
+    integer :: STATUS           ! Flag from HDF
+
+    ! Executable code
+
+    if ( .not. associated(l2pcInfo) ) return
+    do i = 1, size ( l2pcInfo )
+      call h5gClose_f ( l2pcInfo(i)%blocksID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close Blocks group' )
+      call h5gClose_f ( l2pcInfo(i)%binID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close matrix group' )
+      ! Close the file?
+      if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 ) then
+        ! We're the only one (left?) with this file, close it.
+        call h5fClose_f ( l2pcInfo(i)%fileID, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to hdf5 l2pc file' )
+      else
+        l2pcInfo(i)%fileID = 0
+      end if
+    end do
+    deallocate ( l2pcInfo, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'l2pcInfo' )
+  end subroutine DestroyL2PCInfoDatabase
+
   ! ----------------------------------- MakeMatrixPackMap -----------
   subroutine MakeMatrixPackMap ( m, rowPack, colPack )
     ! This subroutine fills the boolean arrays rowPack, colPack
@@ -587,6 +667,60 @@ contains ! ============= Public Procedures ==========================
       end do
     end do
   end subroutine MakeMatrixPackMap
+
+  ! --------------------------------------- Populate L2PCBin --------
+  subroutine PopulateL2PCBin ( bin )
+    integer, intent(in) :: BIN ! The bin index to populate
+
+    ! Local variables
+    type ( Matrix_T ), pointer :: L2PC  ! This l2pc
+    type ( L2PCInfo_T ), pointer :: INFO ! Info for this l2pc
+    type ( MatrixElement_T ), pointer :: M0 
+    integer :: BLOCKROW  ! Loop counter
+    integer :: BLOCKCOL  ! Loop counter
+    character ( len=64 ) :: NAME ! Name of a block
+    integer :: BLOCKID   ! Group ID for a block
+    integer :: STATUS    ! Flag from HDF5
+    integer :: KIND      ! Kind for this block
+    integer :: NOVALUES  ! Number of values for this block
+    ! Executable code
+
+    l2pc => l2pcDatabase ( bin )
+    if ( .not. any ( l2pc%block%kind == m_unknown ) ) return
+    info => l2pcInfo ( bin )
+
+    do blockRow = 1, l2pc%row%NB
+      do blockCol = 1, l2pc%col%NB
+        ! Skip blocks we know about or are absent
+        m0 => l2pc%block ( blockRow, blockCol )
+        if ( m0%kind /= m_unknown ) cycle
+        ! Access this block
+        write ( name, * ) 'Block', blockRow, blockCol
+        call h5gOpen_f ( info%blocksId, trim(name), blockId, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to open group for l2pc matrix block '//trim(name) )
+
+        ! Get kind of block
+        call GetHDF5Attribute ( blockID, 'kind', kind )
+        if ( kind == m_banded .or. kind == m_column_sparse ) then
+          call GetHDF5Attribute ( blockID, 'noValues', noValues )
+          call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
+          m0 => l2pc%block ( blockRow, blockCol )
+          call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
+          call LoadFromHDF5DS ( blockId, 'r1', m0%r2 )
+        else
+          call CreateBlock ( l2pc, blockRow, blockCol, kind )
+          m0 => l2pc%block ( blockRow, blockCol )
+        end if
+        if ( kind /= m_absent ) &
+          call LoadFromHDF5DS ( blockID, 'values', m0%values )
+        call h5gClose_f ( blockId, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to close group for l2pc matrix block '//trim(name) )
+      end do
+    end do
+    if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc, 'Populated l2pc bin' )
+  end subroutine PopulateL2PCBin
 
   ! --------------------------------------- WriteL2PC ---------------
   subroutine ReadOneASCIIL2PC ( L2pc, Unit, Eof )
@@ -869,11 +1003,59 @@ contains ! ============= Public Procedures ==========================
     end do
   end subroutine ReadOneVectorFromASCII
 
+  ! --------------------------------------- ReadCompleteHDF5L2PC -------
+  subroutine ReadCompleteHDF5L2PCFile ( filename )
+    character (len=*), intent(in) :: FILENAME
+
+    ! Local variables
+    integer :: FILEID          ! From hdf5
+    type (L2PCInfo_T) :: INFO  ! Info for one bin
+    type (Matrix_T) :: L2PC    ! The l2pc read from one bin
+    integer :: STATUS          ! Flag from HDF5
+    integer :: NOBINS          ! Number of bins
+    integer :: BIN             ! Loop counter
+    integer :: DUMMY           ! Ignored return from AddToDatabase
+
+    ! Executable code
+    call H5Open_F ( status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open hdf5 system' )
+
+    call h5fopen_f ( filename, H5F_ACC_RDONLY_F, fileID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open hdf5 l2pc file:'//trim(filename) )
+
+    ! Get the number of bins
+    call h5gn_members_f ( fileID, '/', noBins, status ) 
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get number of bins from file:'//trim(filename) )
+    
+    ! Don't forget HDF5 numbers things from zero
+    do bin = 0, noBins-1
+      call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
+        & shallow=.true., info=Info )
+      dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
+      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
+
+      ! Now nullify the pointers in l2pc so we don't clobber the one we've written
+      nullify ( l2pc%block )
+      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
+      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
+      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
+      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
+      dummy = AddL2PCInfoToDatabase ( l2pcInfo, Info )
+    end do
+    
+    ! Don't close the file, we're keeping it open to read blocks from it later
+  end subroutine ReadCompleteHDF5L2PCFile
+
   ! --------------------------------------- ReadOneHDF5L2PC ------------
-  subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, index )
+  subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, index, shallow, info )
     type ( Matrix_T ), intent(out), target :: L2PC
     integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: INDEX        ! Index of l2pc entry to read
+    logical, optional, intent(in) :: SHALLOW ! Don't read blocks
+    type ( L2PCInfo_T), intent(out), optional :: INFO ! Information output
 
     ! Local variables
     integer :: BLOCKCOL                 ! Loop counter
@@ -885,17 +1067,24 @@ contains ! ============= Public Procedures ==========================
     integer :: NOVALUES                 ! For banded or column sparse cases
     integer :: OBJTYPE                  ! From HDF5
     integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGINDEX              ! Index of string
     integer :: XSTAR                    ! Linearisation state vector index
     integer :: YSTAR                    ! Radiances for xStar vector index
 
     logical :: COLINSTANCEFIRST         ! Flag for matrix
     logical :: ROWINSTANCEFIRST         ! Flag for matrix
+    logical :: MYSHALLOW                ! Value of shallow
 
     type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
     character ( len=64 ) :: MATRIXNAME  ! Name for matrix
     character ( len=64 ) :: NAME        ! Name for block group
+    type (Decls) :: Decl                ! From tree
+
 
     ! Executable code
+    myShallow = .false.
+    if ( present ( shallow ) ) myShallow = shallow
+
     call h5gGet_obj_info_idx_f ( fileID, '/', index, matrixName, &
       & objType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -915,10 +1104,20 @@ contains ! ============= Public Procedures ==========================
     call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
 
+    stringIndex = enter_terminal ( trim(matrixName), t_identifier )
+    decl = get_decl ( stringIndex, type=enum_value )
+
     ! Create the matrix
-    call CreateEmptyMatrix ( l2pc, 0, l2pcVs(yStar), l2pcVs(xStar), &
+    call CreateEmptyMatrix ( l2pc, stringIndex, l2pcVs(yStar), l2pcVs(xStar), &
       & row_quan_first = .not. rowInstanceFirst,&
       & col_quan_first = .not. colInstanceFirst )
+
+    ! Fill up the information
+    if ( present ( info ) ) then
+      info%fileID = fileID
+      info%binID = matrixID
+      info%blocksID = blocksID
+    end if
 
     ! Loop over blocks and read them
     do blockRow = 1, l2pc%row%NB
@@ -930,32 +1129,38 @@ contains ! ============= Public Procedures ==========================
           & 'Unable to open group for l2pc matrix block '//trim(name) )
         ! Could check it's the block we're expecting but I think I'll be lazy
         call GetHDF5Attribute ( blockID, 'kind', kind )
-        if ( kind == m_banded .or. kind == m_column_sparse ) then
-          call GetHDF5Attribute ( blockID, 'noValues', noValues )
-          call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
-          m0 => l2pc%block ( blockRow, blockCol )
-          call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
-          call LoadFromHDF5DS ( blockId, 'r1', m0%r2 )
-
-        else
+        if ( myShallow .or. kind == m_absent ) then
+          if ( kind /= m_absent ) kind = m_unknown
           call CreateBlock ( l2pc, blockRow, blockCol, kind )
-          m0 => l2pc%block ( blockRow, blockCol )
+        else
+          if ( kind == m_banded .or. kind == m_column_sparse ) then
+            call GetHDF5Attribute ( blockID, 'noValues', noValues )
+            call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
+            m0 => l2pc%block ( blockRow, blockCol )
+            call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
+            call LoadFromHDF5DS ( blockId, 'r1', m0%r2 )
+          else
+            call CreateBlock ( l2pc, blockRow, blockCol, kind )
+            m0 => l2pc%block ( blockRow, blockCol )
+          end if
+          if ( kind /= m_absent ) &
+            call LoadFromHDF5DS ( blockID, 'values', m0%values )
+          call h5gClose_f ( blockId, status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to close group for l2pc matrix block '//trim(name) )
         end if
-        if ( kind /= m_absent ) &
-          call LoadFromHDF5DS ( blockID, 'values', m0%values )
-        call h5gClose_f ( blockId, status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to close group for l2pc matrix block '//trim(name) )
-      end do
+        end do
     end do
     
-    ! Finish up
-    call h5gClose_f ( blocksID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close Blocks group' )
-    call h5gClose_f ( matrixID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close matrix group' )
+    ! Finish up, though if in shallow mode, then keep the groups open
+    if ( .not. myShallow ) then
+      call h5gClose_f ( blocksID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close Blocks group' )
+      call h5gClose_f ( matrixID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close matrix group' )
+    endif
 
   end subroutine ReadOneHDF5L2PCRecord
 
@@ -992,7 +1197,6 @@ contains ! ============= Public Procedures ==========================
     type ( Vector_T ) :: V              ! The vector
     type ( Decls ) :: DECL              ! From tree
 
-
     ! Executable code
     nullify ( sigInds, qtInds )
 
@@ -1003,11 +1207,12 @@ contains ! ============= Public Procedures ==========================
 
     ! Get the number of quantities
     call GetHDF5Attribute ( vId, 'noQuantities', noQuantities )
+    call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
     ! Work out the order of the quantities
     nullify ( quantityNames )
     call Allocate_test ( quantityNames, noQuantities, 'quantityNames', ModuleName )
     do quantity = 1, noQuantities
-      call h5gget_obj_info_idx_f ( location, name, quantity, thisName, &
+      call h5gget_obj_info_idx_f ( location, name, quantity-1, thisName, &
         & objType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to acces a quantity within '//trim(name) )
@@ -1060,7 +1265,7 @@ contains ! ============= Public Procedures ==========================
       case default
       end select
 
-      ! Now read the dimensions fo rhte quantity
+      ! Now read the dimensions for the quantity
       call GetHDF5Attribute ( qID, 'noInstances', qt%noInstances )
       call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
       call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
@@ -1074,7 +1279,9 @@ contains ! ============= Public Procedures ==========================
 
       ! This creates a rather minimal quantity template, it seems to be, but
       ! I'm modeling it after the ASCII version.  I wonder why I didn't use
-      ! ConstructQuantityTemplte? 
+      ! ConstructQuantityTemplate?
+      qt%regular = .true.
+      qt%instanceLen = qt%noChans* qt%noSurfs
       
       if (qt%coherent) then
         noInstancesOr1 = 1
@@ -1157,7 +1364,7 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group for vector ' // trim(name) )
     call MakeHDF5Attribute ( vID, 'noQuantities', count(packInfo) )
-    do quantity = 1, size(vector%quantities )
+    do quantity = 1, size ( vector%quantities )
       if ( packInfo(quantity) ) then
         qt => vector%quantities(quantity)%template
         ! Create a group for the quantity
@@ -1207,10 +1414,12 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine WriteVectorAsHDF5
 
-
 end module L2PC_m
 
 ! $Log$
+! Revision 2.37  2002/07/17 06:00:21  livesey
+! Got hdf5 l2pc reading stuff working
+!
 ! Revision 2.36  2002/07/11 22:21:00  pwagner
 ! These hdf5-savvy versions transferred from he5lib
 !
