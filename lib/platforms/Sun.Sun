@@ -20,7 +20,7 @@ blaslib = ../../blas
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG)
+vpath %.f90 ../ ../machines/$(MLSCONFG) $(blaslib)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../ $(PGSINC) $(blaslib)
 vpath %.c ../
@@ -55,6 +55,10 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.2  2001/09/10 11:20:47  pumphrey
+# Removed spaces in INC_PATHS which caused space between "-I" and the
+# directory being included and in turn caused a total failure to compile.
+#
 # Revision 1.1  2001/09/05 20:50:32  pwagner
 # First commit
 #

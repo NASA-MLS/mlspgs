@@ -20,7 +20,7 @@ blaslib = ../../blas
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG)
+vpath %.f90 ../ ../machines/$(MLSCONFG) $(blaslib)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../ $(PGSINC) $(blaslib)
 vpath %.c ../
@@ -54,6 +54,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.12  2001/09/05 20:51:08  pwagner
+# Deleted refs to MATRIX_OBJS
+#
 # Revision 1.11  2001/08/15 21:03:28  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #

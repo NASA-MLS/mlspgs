@@ -93,11 +93,24 @@ else
 endif
 
 ifdef BLAS
-   blas_message=Building mlslib without internal blas support
-   blas_objs =
+   blas_message=Building mlslib with external blas support
+   blas_objs :=
+else
+ifeq ($(LIB_BLAS),f95)
+   blas_message=Building mlslib with blas supplied by f95 intrinsics
+   blas_objs := dot_intrinsic.o
 else
    blas_message=Building mlslib with internal blas support
-   blas_objs = sdot.o ddot.o
+   blas_objs := sdot.o ddot.o
+endif
+endif
+
+ifdef LAPACK
+   lapack_message=Building mlslib with external lapack support
+   lapack_objs := gemm_external.o
+else
+   lapack_message=Building mlslib with lapack supplied by f95 intrinsics
+   lapack_objs := gemm_intrinsic.o
 endif
 
 ifdef PGSTK
@@ -110,9 +123,10 @@ endif
 ${OBJS}: ${MACH_OBJS}
 
 #libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
-libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs}
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs} ${lapack_objs}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
 		@echo "$(tk_message)"
 ifeq ($(delete_lib_first),yes)
 		rm -f $@
@@ -176,6 +190,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.33  2001/10/15 17:20:09  pwagner
+# Uses new -j option in init_gen
+#
 # Revision 1.32  2001/10/04 19:57:57  pwagner
 # New custom build command for intrinsic
 #
