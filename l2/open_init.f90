@@ -253,6 +253,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                 ! Index of n_spec_args in the AST
     type (L2AUXData_T) :: L2AUX
     type (L2GPData_T) :: L2GP
+    integer :: l2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     character (LEN=480) :: msr     ! Error message if can't find file
     type (Vector_T) :: newVector
@@ -262,10 +263,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                 ! Of root, an n_spec_args or a n_named
     integer :: sourceName          ! Sub-rosa index of name in source='name'
     character(len=FileNameLen) :: SourceNameString ! actual literal source name
-    integer :: templateIndex       ! In the template database
     integer :: vectorIndex         ! In the vector database
 
-    ! Toolkit Functions
+    ! HDFEOS Functions
 
     integer, external :: SWCLOSE, SWOPEN
 
@@ -326,17 +326,17 @@ contains ! =====     Public Procedures     =============================
         call SetupNewL2GPRecord ( l2gp )
         l2gp%nameIndex = l2Name
 
-        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
+!        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
 
         ! That's the end of the create operation
 
 ! ??? Should "vectorIndex" be "decoration(key)" ???
 ! ??? If so, do something like
-! ???   l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
-! ???   call decorate ( key, l2Index )
-! ???   call ReadL2GPData ( ... L2GPDataBase(l2Index) ... )
+        l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
+        call decorate ( key, l2Index )
+! ???        call ReadL2GPData ( ... L2GPDataBase(l2Index) ... )
         call ReadL2GPData ( fileHandle, sourceNameString, &
-          & L2GPDatabase(vectorIndex), numProfs )
+          & L2GPDatabase(l2Index), numProfs )
 
           fileHandle = swclose(fileHandle)
           if (fileHandle == -1) THEN
@@ -358,19 +358,21 @@ contains ! =====     Public Procedures     =============================
         ! Create the l2aux, and add it to the database.
 ! This doesn't match the interface in module L2AUXData
 !       CALL SetupNewL2AUXRecord ( l2aux )
+! It has been relocated to READL2AUXData
+
         l2aux%name = l2Name
 
-        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
+!        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
 
         ! That's the end of the create operation
         
 ! ??? Should "vectorIndex" be "decoration(key)" ???
 ! ??? If so, do something like
-! ???   l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
-! ???   call decorate ( key, l2Index )
-! ???   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
+   l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
+   call decorate ( key, l2Index )
+!   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
 ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-           CALL ReadL2AUXData(sd_id, sourceNameString, L2GPDatabase(vectorIndex),&
+           CALL ReadL2AUXData(sd_id, sourceNameString, L2GPDatabase(l2Index),&
            & numProfs)
 
       case default ! Can't get here if tree_checker worked correctly
@@ -387,6 +389,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.10  2000/12/04 21:47:46  pwagner
+! Uses parser better
+!
 ! Revision 2.9  2000/12/02 01:11:59  pwagner
 ! Added ReadL2AUXData
 !
