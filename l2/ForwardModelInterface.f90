@@ -14,15 +14,18 @@ module ForwardModelInterface
   use Declaration_Table, only: NUM_VALUE, RANGE
   use Dump_0, only: DUMP
   use Expr_M, only: EXPR
-  ! We're going to use lots of things from init_tables_module, so lets sort
+  use FilterShapes_m, only: Close_Filter_Shapes_File, &
+    & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
+  ! We're going to use lots of things from init_tables_module, so let's sort
   ! them into some sort of order
   ! First admin stuff
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
     & LIT_INDICES, SPEC_INDICES
   ! Now fields
-  use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
-    F_FREQUENCY, F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, &
-    F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
+  use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, &
+    & F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_INTEGRATIONGRID, &
+    & F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, F_POINTINGGRIDS, &
+    & F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_FOLDED, &
     & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -37,11 +40,10 @@ module ForwardModelInterface
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
   use MLSNumerics, only: Hunt
-  use MLSSignals_m, only: GetSignal, Signal_T, GetSignalName
+  use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
-    & Dump_Pointing_Grid_Database, &
     & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
@@ -119,10 +121,11 @@ contains
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
-    ! Indexes a "spec_args" vertex.
+    !                                     Indexes a "spec_args" vertex.
 
-    integer :: Lun                      ! Unit number for pointing grid file
-    character(len=80) :: PointingGridsFile   ! Duh
+    integer :: I                        ! Loop inductor, subscript
+    integer :: Lun                      ! Unit number for reading a file
+    character(len=255) :: FileName      ! Duh
     integer :: Son                      ! Some subtree of root.
 
     ! Error message codes
@@ -134,15 +137,23 @@ contains
     ! parser users' guide" for pictures of the trees being analyzed.
     ! Collect data from the fields.
 
-    ! The only field so far is the PointingGrids field, and it is required.
-    son = subtree(2,root)
-    call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile, strip=.true. )
-
-    ! The ExtraHeights and PointingGrids fields are required, so we don't
-    ! need to verify that they were provided.
-    call open_pointing_grid_file ( pointingGridsFile, lun )
-    call read_pointing_grid_file ( lun, spec_indices )
-    call close_pointing_grid_file ( lun )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      select case ( get_field_id(son) )
+      case ( f_filterShapes )
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        call open_filter_shapes_file ( fileName, lun )
+        call read_filter_shapes_file ( lun, spec_indices )
+        call close_filter_shapes_file ( lun )
+      case ( f_pointingGrids )
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        call open_pointing_grid_file ( fileName, lun )
+        call read_pointing_grid_file ( lun, spec_indices )
+        call close_pointing_grid_file ( lun )
+      case default
+      ! Can't get here if the type checker worked
+      end select
+    end do
 
     if ( toggle(gen) ) call trace_end ( "ForwardModelGlobalSetup" )
   end subroutine ForwardModelGlobalSetup
@@ -154,10 +165,9 @@ contains
     ! to the database
 
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
+    !                                     Indexes either a "named" or
+    !                                     "spec_args" vertex. Local variables
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
-    ! Indexes either a "named" or
-    ! "spec_args" vertex.
-    ! Local variables
 
     type (Signal_T) :: thisSignal ! A signal
     type (ForwardModelSignalInfo_T), pointer :: thisFWMSignal=>NULL() ! A signal
@@ -206,7 +216,7 @@ contains
     do i = 2, nsons(key)
       son = subtree(i,key)
       field = get_field_id(son)
-      if ( got(field) .and. (field /= f_channels) )&
+      if ( got(field) .and. (field /= f_channels) ) &
         &  call AnnounceError( DuplicateField, key, field)
       got(field) = .true.
       select case ( field )
@@ -368,6 +378,7 @@ contains
     use D_LINTRP_M, only: LINTRP
     use D_HUNT_M, only: hunt_zvi => HUNT
 
+    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
     ! Dummy arguments --------------------------------------------------------
 
@@ -1257,8 +1268,8 @@ contains
     type (ForwardModelConfig_T), dimension(:), pointer :: database
 
     ! Local variables
-    integer :: I,J                      ! Loop counters
-    character (len=80) :: signalName    ! A line of text
+    integer :: I, J                          ! Loop counters
+    character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     if ( associated(database) ) then
@@ -1336,6 +1347,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.54  2001/03/29 23:42:55  vsnyder
+! Add 'filterShapes' field to forwardModelGlobal
+!
 ! Revision 2.53  2001/03/29 22:07:16  livesey
 ! Added phiWindow
 !
