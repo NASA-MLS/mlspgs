@@ -83,10 +83,10 @@
       print *
       print *, ' *** Dumping grounds ***'
       j = noUsedchannels
-      Frq = fwdModelConf%signals(usedSignals(j))%centerFrequency
-      r = fwdModelConf%signals(usedSignals(j))%frequencies(usedChannels(j))
+      Frq = fwdModelConf%signals(channels(j)%signal)%centerFrequency
+      r = fwdModelConf%signals(channels(j)%signal)%frequencies(channels(j)%used)
       print *, 'Side Band =', fwdModelConf%sidebandStart
-      print *, 'Channel =', usedChannels(j)
+      print *, 'Channel =', channels(j)%used
       print 973, 'Radiometer (L.O.) Freq. =', firstSignal%lo
       print 973, '    Band (Center) Freq. =', Frq
       print 973, '          Channel Freq. =', r
@@ -107,6 +107,9 @@
 !     Call MLSMessage ( MLSMSG_Error, ModuleName, "End of DUMP print cycle")
 !
 ! $Log$
+! Revision 2.5  2004/02/03 02:50:11  vsnyder
+! Changes induced by DACs frequency convolution
+!
 ! Revision 2.4  2003/09/15 17:44:33  livesey
 ! Cosmetic changes for fussy (and wrong) intel compiler
 !
