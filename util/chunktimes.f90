@@ -19,7 +19,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSStats1, only: STAT_T, &
      & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
-     & NumStringElements
+     & NumStringElements, StringElementNum
    use MLSStrings, only: lowercase
    use output_m, only: blanks, newline, output, output_date_and_time
    use PCFHdr, only: GlobalAttributes
@@ -52,6 +52,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: showQManager = .false.    ! show QManager performance
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
+    character(len=255) :: details= ' '              ! prnt only detailed params
+                                                    ! E.g., 'NumCompletedChunks'
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 10           ! phase number ~ total
@@ -90,15 +92,14 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   real        :: tFile
   real(r4), parameter :: UNDEFINEDVALUE = -999.99
   integer, dimension(MAXCHUNKS) :: which
+  logical :: showTimings
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
-  call output_date_and_time(msg='starting chunktimes', &
-    & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   CALL mls_h5open(error)
-  if ( status /= 0 ) then
-    print *, 'Sorry--unable to allocate timings'
+  if ( error /= 0 ) then
+    print *, 'Sorry--unable to start hdf5'
   endif
   n_filenames = 0
   do      ! Loop over filenames
@@ -112,6 +113,9 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      n_filenames = n_filenames + 1
      filenames(n_filenames) = filename
   enddo
+  showTimings = (options%details == ' ')
+  if ( showTimings ) call output_date_and_time(msg='starting chunktimes', &
+    & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   if ( NumStringElements(trim(options%binopts), .true. ) > 0 ) then
     read(trim(options%binopts), *) statistic%nbins, statistic%bounds
     statistic%nbins = max(statistic%nbins, 2)
@@ -166,50 +170,53 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       fileID = mls_sfstart ( trim(filenames(i)), fileAccess, &
            &                               hdfVersion=options%hdfVersion )
       call GetHDF5DSDims(fileID, trim(options%DSname), dims, maxDims)
-      ! print *, 'dims ', dims
-      ! print *, 'maxdims ', maxdims
-      ! stop
-      allocate(l2auxValue(dims(1), dims(2), dims(3)), stat=status)
-      allocate(timings(dims(3)), stat=status)
-      l2auxValue = UNDEFINEDVALUE
-      call LoadFromHDF5DS (fileID, trim(options%DSname), l2auxValue)
-      select case (lowercase(options%convert))
-      case ('s2h')
-        where (l2auxValue > 0.0)
-          l2auxValue = l2auxValue / 3600
-        elsewhere
-          l2auxValue = UNDEFINEDVALUE
-        end where
-      case ('h2s')
-        where (l2auxValue > 0.0)
-          l2auxValue = l2auxValue * 3600
-        elsewhere
-          l2auxValue = UNDEFINEDVALUE
-        end where
-      case default
-        where (l2auxValue <= 0.0)
-          l2auxValue = UNDEFINEDVALUE
-        end where
-      end select
-      timings = l2auxValue(1, options%finalPhase, :)
-      if ( options%tabulate ) &
-        & call tabulate(l2auxValue(1, 1:options%finalPhase, :))
-      if ( options%showQManager ) &
-        & alltimings(1:dims(3), i) = timings
-      if ( .not. options%merge ) statistic%count=0
-      call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
-      if ( options%longChunks > 0._r4 ) then
-        call FindAll((timings > options%longChunks), which, how_many=how_many)
-        if ( how_many > 0 ) then
-          tempChunkList = catLists(longChunkList, which(1:how_many))
-          call GetUniqueList(tempChunkList, longChunkList, how_many, COUNTEMPTY)
+      if ( showTimings ) then
+        ! print *, 'dims ', dims
+        ! print *, 'maxdims ', maxdims
+        ! stop
+        allocate(l2auxValue(dims(1), dims(2), dims(3)), stat=status)
+        allocate(timings(dims(3)), stat=status)
+        l2auxValue = UNDEFINEDVALUE
+        call LoadFromHDF5DS (fileID, trim(options%DSname), l2auxValue)
+        select case (lowercase(options%convert))
+        case ('s2h')
+          where (l2auxValue > 0.0)
+            l2auxValue = l2auxValue / 3600
+          elsewhere
+            l2auxValue = UNDEFINEDVALUE
+          end where
+        case ('h2s')
+          where (l2auxValue > 0.0)
+            l2auxValue = l2auxValue * 3600
+          elsewhere
+            l2auxValue = UNDEFINEDVALUE
+          end where
+        case default
+          where (l2auxValue <= 0.0)
+            l2auxValue = UNDEFINEDVALUE
+          end where
+        end select
+        timings = l2auxValue(1, options%finalPhase, :)
+        if ( options%tabulate ) &
+          & call tabulate(l2auxValue(1, 1:options%finalPhase, :))
+        if ( options%showQManager ) &
+          & alltimings(1:dims(3), i) = timings
+        if ( .not. options%merge ) statistic%count=0
+        call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
+        if ( options%longChunks > 0._r4 ) then
+          call FindAll((timings > options%longChunks), which, how_many=how_many)
+          if ( how_many > 0 ) then
+            tempChunkList = catLists(longChunkList, which(1:how_many))
+            call GetUniqueList(tempChunkList, longChunkList, how_many, COUNTEMPTY)
+          endif
         endif
-      endif
-      if ( .not. options%merge ) then
-        if ( options%showStats) call dumpstat(statistic)
-        if ( options%longChunks > 0._r4 ) &
-          & call dump(longChunkList, 'list of long chunks')
-        longChunkList = ' '
+        if ( .not. options%merge ) then
+          if ( options%showStats) call dumpstat(statistic)
+          if ( options%longChunks > 0._r4 ) &
+            & call dump(longChunkList, 'list of long chunks')
+          longChunkList = ' '
+        endif
+        deallocate(l2auxValue, timings, stat=status)
       endif
       if ( options%showFailed ) then
         call dumpFailedChunks(fileID)
@@ -228,7 +235,6 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         status = mls_sfend( oldfileID,hdfVersion=options%hdfVersion )
       endif
       status = mls_sfend( fileID,hdfVersion=options%hdfVersion )
-      deallocate(l2auxValue, timings, stat=status)
       if ( options%verbose )  call sayTime('reading this file', tFile)
     enddo
     if ( options%merge ) then
@@ -242,7 +248,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       deallocate(alltimings, stat=status)
     endif
   endif
-  call output_date_and_time(msg='ending chunktimes', &
+  if ( showTimings ) call output_date_and_time(msg='ending chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
   call mls_h5close(error)
 contains
@@ -272,6 +278,10 @@ contains
         i = i + 1
       elseif ( filename(1:2) == '-b' ) then
         call getarg ( i+1+hp, options%binopts )
+        i = i + 1
+        ! exit
+      elseif ( filename(1:6) == '-detai' ) then
+        call getarg ( i+1+hp, options%details )
         i = i + 1
         ! exit
       elseif ( filename(1:5) == '-hdf ' ) then
@@ -364,41 +374,52 @@ contains
   character(len=*), parameter :: NUMFAILATTRIBUTENAME = 'NumFailedChunks'
   character(len=*), parameter :: FAILATTRIBUTENAME = 'FailedChunks'
   character(len=*), parameter :: MACHATTRIBUTENAME = 'FailedMachines'
+  logical :: showAll
+  logical :: showThis
   ! Executable
+  showAll = (options%details == ' ')
   number = -1
   call h5gopen_f(fileId, '/', grp_id, returnStatus)
-  call output(NUMCOMPLETEATTRIBUTENAME, advance='no')
+  showThis = showAll .or. &
+    & StringElementNum(options%details, NUMCOMPLETEATTRIBUTENAME, COUNTEMPTY) > 0
+  if ( showThis ) call output(NUMCOMPLETEATTRIBUTENAME, advance='no')
   if ( IsHDF5AttributePresent(grp_id, NUMCOMPLETEATTRIBUTENAME) ) then
     call GetHDF5Attribute (grp_ID, NUMCOMPLETEATTRIBUTENAME, number)
-    call blanks(4)
-    call output(number, advance='yes')
+    if ( showThis ) call blanks(4)
+    if ( showThis ) call output(number, advance='yes')
   else
-    call output(' attribute not found', advance='yes')
+    if ( showThis ) call output(' attribute not found', advance='yes')
   endif
 
-  call output(NUMFAILATTRIBUTENAME, advance='no')
+  showThis = showAll .or. &
+    & StringElementNum(options%details, NUMFAILATTRIBUTENAME, COUNTEMPTY) > 0
+  if ( showThis ) call output(NUMFAILATTRIBUTENAME, advance='no')
   if ( IsHDF5AttributePresent(grp_id, NUMFAILATTRIBUTENAME) ) then
     call GetHDF5Attribute (grp_ID, NUMFAILATTRIBUTENAME, number)
-    call blanks(4)
-    call output(number, advance='yes')
+    if ( showThis ) call blanks(4)
+    if ( showThis ) call output(number, advance='yes')
   else
-    call output(' attribute not found', advance='yes')
+    if ( showThis ) call output(' attribute not found', advance='yes')
   endif
 
+  showThis = showAll .or. &
+    & StringElementNum(options%details, FAILATTRIBUTENAME, COUNTEMPTY) > 0
   if ( IsHDF5AttributePresent(grp_id, FAILATTRIBUTENAME) ) then
     call GetHDF5Attribute (grp_ID, FAILATTRIBUTENAME, failedChunks)
-    call dump(trim(failedChunks), FAILATTRIBUTENAME)
+    if ( showThis ) call dump(trim(failedChunks), FAILATTRIBUTENAME)
   else
-    call output(FAILATTRIBUTENAME, advance='no')
-    call output(' attribute not found', advance='yes')
+    if ( showThis ) call output(FAILATTRIBUTENAME, advance='no')
+    if ( showThis ) call output(' attribute not found', advance='yes')
   endif
 
+  showThis = showAll .or. &
+    & StringElementNum(options%details, MACHATTRIBUTENAME, COUNTEMPTY) > 0
   if ( IsHDF5AttributePresent(grp_id, MACHATTRIBUTENAME) ) then
     call GetHDF5Attribute (grp_ID, MACHATTRIBUTENAME, failedChunks)
-    call dump(trim(failedChunks), MACHATTRIBUTENAME)
+    if ( showThis ) call dump(trim(failedChunks), MACHATTRIBUTENAME)
   else
-    call output(MACHATTRIBUTENAME, advance='no')
-    call output(' attribute not found', advance='yes')
+    if ( showThis ) call output(MACHATTRIBUTENAME, advance='no')
+    if ( showThis ) call output(' attribute not found', advance='yes')
   endif
 
   call h5gclose_f(grp_id, returnStatus)
@@ -427,6 +448,9 @@ contains
       write (*,*) '                         X1,X2  => lower,upper bounds'
       write (*,*) '                         the first bin will contain chunks < X1'
       write (*,*) '                         the last bin will contain chunks > X2'
+      write (*,*) '          -details "details" ("")'
+      write (*,*) '                         in form "param1,param2,..", where'
+      write (*,*) '                         print only the value[s] of param1[..]'
       write (*,*) '          -hdf m      => hdfVersion is m (5)'
       write (*,*) '          -l t        => show chunks that took longer than t'
       write (*,*) '          -n n        => use phase number n (10)'
@@ -631,6 +655,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.5  2005/03/04 18:50:15  pwagner
+! Can simulate l2q performance
+!
 ! Revision 1.4  2004/09/28 23:13:18  pwagner
 ! Added -l, -nstat options; may deduce failed chunks
 !
