@@ -67,6 +67,7 @@ contains
 
     ! Error message codes
     integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
+    integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
 
@@ -94,18 +95,19 @@ contains
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
+      if ( .not. associated(jacobian) ) call announceError ( notPlain )
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                   Jacobian, FwdModelOut=FwdModelOut, &
-        &                   FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+        &                 Jacobian, FwdModelOut=FwdModelOut, &
+        &                 FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
       !     &                  FMI=FMI,TFMI=TFMI) !??? Last line temporary
     else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
       print*,'Calling forward model without derivatives'
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                   FwdModelOut=FwdModelOut, &
-        &                   FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
-      !     &               FMI=FMI,TFMI=TFMI) !??? Last line temporary
+        &                 FwdModelOut=FwdModelOut, &
+        &                 FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &             FMI=FMI,TFMI=TFMI) !??? Last line temporary
       print*,'Got back from forward model'
     end if
     print*,'Done the forward model!!!'
@@ -124,6 +126,9 @@ contains
       case ( needJacobian )
         call output ( 'A Jacobian is required if derivatives are requested.', &
           & advance='yes' )
+      case ( notPlain )
+        call output ( 'The Jacobian matrix is not a "plain" matrix.', &
+          & advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -132,6 +137,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.13  2001/04/10 00:24:30  vsnyder
+! Add an error message if Jacobian isn't 'plain'
+!
 ! Revision 2.12  2001/04/07 01:50:49  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.
