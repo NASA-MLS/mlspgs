@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -201,7 +201,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! and fortran as an int fun with 0 args
 ! (see $PGSHOME/src/MET/tools/PGS_MET_Remove.c and 
 !  $PGSHOME/src/MET/tools/PGS_METbindFORTRAN.c)
-   LOGICAL, PARAMETER :: WARNIFCANTPGSMETREMOVE = .TRUE.  
+   LOGICAL, PARAMETER :: WARNIFCANTPGSMETREMOVE = .FALSE.  
    
 ! Use the SDP Toolkit for the above functions
 ! (else must use a substitute or bypass calls)
@@ -219,6 +219,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.16  2004/02/05 23:30:24  pwagner
+! Flipped WARNIFCANTPGSMETREMOVE to FALSE
+!
 ! Revision 2.15  2003/03/15 00:14:15  pwagner
 ! Added WARNIFCANTPGSMETREMOVE and explanation
 !
