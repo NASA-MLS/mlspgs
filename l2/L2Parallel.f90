@@ -394,7 +394,7 @@ contains ! ================================ Procedures ======================
           end if
         else ! ----------------------------------------- Start job using pvmspawn
           machine = FindFirst(machineFree .and. machineOK)
-          commandLine = 'mlsl2'
+          commandLine = trim(parallel%pgeName)   ! was 'mlsl2'
           if ( index(switches,'slv') /= 0 ) then
             call PVMFCatchOut ( 1, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
@@ -402,6 +402,16 @@ contains ! ================================ Procedures ======================
           info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
             & trim(machineNames(machine)), &
             & 1, tidarr )
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Tried to spawn ' )
+            call output ( trim(commandLine), advance='yes' )
+            call output ( 'PvmTaskHost ' )
+            call output ( PvmTaskHost, advance='yes' )
+            call output ( 'on machine ' )
+            call output ( trim(machineNames(machine)), advance='yes' )
+            call output ( 'result was ' )
+            call output ( info, advance='yes' )
+          end if
 
           ! Did this launch work
           if ( info == 1 ) then
@@ -1280,6 +1290,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.56  2003/08/01 20:28:05  pwagner
+! Spawns slave tasks with parallel%pgeName as command
+!
 ! Revision 2.55  2003/07/11 21:50:02  livesey
 ! Bug fix in a diagnostic message
 !
