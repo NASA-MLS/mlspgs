@@ -77,7 +77,7 @@ module MLSSignals_M
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
-  public :: GetModuleIndex, GetSignalIndex
+  public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
@@ -1168,6 +1168,41 @@ contains
 
   end subroutine GetRadiometerName
 
+  ! --------------------------------------------------- GetSidebandLoop --
+  subroutine GetSidebandLoop ( signal, sideband, split, &
+    & sidebandStart, sidebandStop, sidebandStep )
+    ! This routine gets the loop limits for a loop over sidebands
+    integer, intent(in) :: SIGNAL       ! Index into signals
+    integer, intent(in) :: SIDEBAND     ! -1,0,1
+    logical, intent(in) :: SPLIT        ! If set do a split sideband loop for folded
+    integer, intent(out) :: SIDEBANDSTART ! Loop lower limit
+    integer, intent(out) :: SIDEBANDSTOP ! Loop upper limit
+    integer, intent(out) :: SIDEBANDSTEP ! Loop step
+
+    ! Executable code
+    if ( sideband == 0 ) then
+      if ( split ) then
+        if ( signals(signal)%singleSideband /= 0 ) then
+          sidebandStart = signals(signal)%singleSideband
+          sidebandStop = sidebandStart
+          sidebandStep = 1
+        else
+          sidebandStart = -1
+          sidebandStop = 1
+          sidebandStep = 2
+        endif
+      else
+        sidebandStart = 0
+        sidebandStop = sidebandStart
+        sidebandStep = 1
+      end if
+    else
+      sidebandStart = sideband
+      sidebandStop = sidebandStart
+      sidebandStep = 1
+    end if
+  end subroutine GetSidebandLoop
+
   ! --------------------------------------------------- GetSignal ------
   type (Signal_T) function GetSignal(signal)
     ! Given the database index, this routine returns the signal data structure
@@ -1358,6 +1393,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.49  2002/07/17 06:00:40  livesey
+! Added GetSidebandLoop routine
+!
 ! Revision 2.48  2002/05/15 17:29:48  livesey
 ! Fixed channels related bug in MatchSignal
 !
