@@ -7,7 +7,8 @@ module ReadAPriori
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Hdf, only: DFACC_READ, SFSTART
-  use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
+  use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_HDFVERSION, &
+    & F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, S_L2AUX, S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
@@ -17,7 +18,7 @@ module ReadAPriori
   use MLSCommon, only: FileNameLen
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & split_path_name, mls_InqSwath
-  use MLSL2Options, only: PCF
+  use MLSL2Options, only: DEFAULT_HDFVERSION, PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
@@ -79,6 +80,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GriddedOrigin            ! From tree
     integer :: GridIndex           ! In the griddeddata database
     logical :: GotAlready               ! Do we need to reread this file?
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: LastClimPCF
@@ -126,6 +128,7 @@ contains ! =====     Public Procedures     =============================
     lastClimPCF = mlspcf_l2clim_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
+      hdfVersion = DEFAULT_HDFVERSION
       got = .false.
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -158,6 +161,8 @@ contains ! =====     Public Procedures     =============================
           fieldName = sub_rosa(subtree(2,field))
         case ( f_origin )
           griddedOrigin = decoration(subtree(2,subtree(j,key)))
+        case ( f_hdfVersion )           
+          hdfVersion = subtree(2,field)  
         end select
       end do
 
@@ -180,7 +185,8 @@ contains ! =====     Public Procedures     =============================
         if ( len_trim(swathNameString) == 0 ) then
 !          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
           allSwathNames = ''
-          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize )
+          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
+           & hdfVersion=hdfVersion)
           if ( listSize < len(allSwathNames) ) then
             commaPos = index ( allSwathNames, ',' )
             if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
@@ -195,24 +201,29 @@ contains ! =====     Public Procedures     =============================
 !        fileHandle = swopen(FileNameString, DFACC_READ)
         fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
              & record_length, DFACC_READ, FileName=FileNameString, &
-             & debugOption=.false. )
+             & hdfVersion=hdfVersion, debugOption=.false. )
         if ( fileHandle < 0 ) then
           call announce_error ( son, &
             & 'Failed to open swath file ' // trim(FileNameString) )
         end if
 
         ! Read the swath
-        call ReadL2GPData ( fileHandle, swathNameString, l2gp )
+        call ReadL2GPData ( fileHandle, swathNameString, l2gp, &
+         & hdfVersion=hdfVersion )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( l2gp, details=details )
 
         ! Close the file
 !        fileHandle = swclose(fileHandle)
-        fileHandle = mls_io_gen_closeF('swclose', fileHandle)
+        fileHandle = mls_io_gen_closeF('swclose', fileHandle, &
+         & hdfVersion=hdfVersion)
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
             & 'Failed to close swath file ' // trim(FileNameString) )
+        elseif(index(switches, 'pro') /= 0) then                            
+           call proclaim(FilenameString, 'l2gp', &                    
+           & swathNameString, hdfVersion=hdfVersion)    
         end if
 
         ! Add this l2gp to the database, decorate this key with index
@@ -350,6 +361,34 @@ contains ! =====     Public Procedures     =============================
     end subroutine SayTime
   end subroutine read_apriori
 
+! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( Name, l2_type, quantityName, hdfVersion )
+    character(LEN=*), intent(in)   :: Name
+    character(LEN=*), intent(in)   :: l2_type
+    integer, optional,  intent(in) :: hdfVersion
+    character(LEN=*), intent(in) :: quantityName
+
+    call output ( 'Level 2 apriori product type : ' )
+    call output ( trim(l2_type), advance='no')
+    if ( present(hdfVersion) ) then
+      call blanks(4)
+      call output ( 'hdf ' )
+      call output ( hdfVersion, advance='yes')
+    else
+      call output ( ' ', advance='yes')
+    endif
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+
+    call output ( 'quantity', advance='yes')           
+    call blanks(5)                                        
+    call output ( trim(quantityName), advance='yes')      
+  end subroutine proclaim
+
   ! ------------------------------------------------  announce_error  -----
   subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
     & error_number )
@@ -418,6 +457,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.32  2002/01/23 23:09:46  pwagner
+! Handles optional hdfVersion field; proclaims files input
+!
 ! Revision 2.31  2002/01/23 22:35:47  livesey
 ! Added ReadGloriaFile stuff
 !
