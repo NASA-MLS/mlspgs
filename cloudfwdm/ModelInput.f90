@@ -26,7 +26,7 @@ module ModelInput
 contains
 
       SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,  &
-                 &           N, WCin, IPSDin,                        &
+                 &           NcloudType, WCin, IPSDin,               &
                  &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD )
 
 !========================================================================C
@@ -46,7 +46,7 @@ contains
 
       INTEGER, intent(in) :: NZ                ! NO. OF L2 ATMOSPHERIC LEVELS
       INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
-      INTEGER, intent(in) :: N
+      INTEGER, intent(in) :: NcloudType
       INTEGER, intent(in) :: NH                ! MODEL ATMOSPHERIC LEVELS
       REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
       REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
@@ -54,7 +54,7 @@ contains
       REAL(r8), intent(in) :: VMR(NS,NZ)       ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3
 
-      REAL(r8), intent(in) :: WCin(N,NZ)             
+      REAL(r8), intent(in) :: WCin(NcloudType,NZ)             
       INTEGER, intent(in) :: IPSDin(NZ)
       
 !----------------------------------------------
@@ -66,7 +66,7 @@ contains
       REAL(r8), intent(out) :: YT(NH)          ! TEMPERATURE PROFILE
       REAL(r8), intent(out) :: YQ(NH)          ! RELATIVE HUMIDITY (%)
       REAL(r8), intent(out) :: VMR1(NS-1,NH)   ! 1=O3 VOLUME MIXING RATIO
-      REAL(r8), intent(out) :: WC(N,NH)
+      REAL(r8), intent(out) :: WC(NcloudType,NH)
       INTEGER, intent(out) :: IPSD(NH)
       REAL(r8), intent(out) :: CHK_CLD(NH)     ! CLOUD CHECKER
 
@@ -75,7 +75,6 @@ contains
 !----------------------------------------------------------
       REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH), zvmr(nh)
       REAL(r8) :: eta                          ! Interpolating fraction;
-      INTEGER :: NcloudType		! number of cloud types
       INTEGER :: I,JM,J, K                     !  0 < eta < 1
 !--------------------------------------------------------------------------
 
@@ -99,7 +98,6 @@ contains
 !     PRODUCE MODEL ATMOSPHERIC PROFILES
 !==========================================
 
-      NcloudType = size(WCin(:,1))
          DO J=1,NH
 
             CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
@@ -123,8 +121,8 @@ contains
             DO K=1,NcloudType
               WC(K,J) = eta*WCin(K,JM) + (1-eta)*WCin(K,JM+1)
             ENDDO
-
-            CHK_CLD(J) = WC(1,J) + WC(2,J)
+            
+              CHK_CLD(J) = Sum(WC(1:NcloudType,J))
 
             IPSD(J) = IPSDin(1)     
 
@@ -147,6 +145,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.13  2003/05/07 23:18:40  jonathan
+! some clean-ups
+!
 ! Revision 1.12  2003/04/09 08:16:53  dwu
 ! Fix the bug associated with number of cloud types dimension
 !
