@@ -1032,7 +1032,7 @@ contains
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
       ! Set options for NWT
-      foundBetterState = .false.
+      foundBetterState = ( maxJacobians == 0 )
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
       call nwt ( nwt_flag, nwt_xopt, nwt_opt )
@@ -3325,6 +3325,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.205  2002/11/22 00:11:16  livesey
+! Better handling of foundBetterState
+!
 ! Revision 2.204  2002/11/20 21:05:55  livesey
 ! More informative dump for Tikhonov
 !
