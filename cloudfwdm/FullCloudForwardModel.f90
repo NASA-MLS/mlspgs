@@ -263,8 +263,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------------------
     doHighZt = .false.
     doLowZt  = .false.
-    if (forwardModelConfig%cloud_der == 0) doHighZt = .true.
-    if (forwardModelConfig%cloud_der == 1) doLowZt  = .true.
+    if (forwardModelConfig%cloud_der == 1) doHighZt = .true.
+    if (forwardModelConfig%cloud_der == 2) doLowZt  = .true.
 
     !--------------------------------------------
     ! Loop over signals
@@ -735,7 +735,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
     !---------------------------------------------
-
+!print*,instance,maxval(wc)
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
@@ -1072,6 +1072,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.112  2003/04/03 22:38:05  dwu
+! change the way vmr and molecule are handled
+!
 ! Revision 1.111  2003/04/03 01:18:41  dwu
 ! allow molecules in random order
 !
