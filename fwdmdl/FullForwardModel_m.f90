@@ -38,7 +38,8 @@ contains
     use ForwardModelConfig, only: Channels_T, DeriveFromForwardModelConfig, &
       & DestroyForwardModelDerived, ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
-                                    &   ForwardModelStatus_t
+                                    &   ForwardModelStatus_t, &
+                                    &   B_Metrics, B_Ptg_Angles, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg, Freq_Avg_DACS
     use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
@@ -471,6 +472,8 @@ contains
 
     if ( e_stop > 0.0_rp ) e_stop = log(epsilon(0.0_rp)) ! only once
 
+    fmStat%flags = 0 ! Assume no errors
+
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
@@ -531,13 +534,22 @@ contains
 
     ! Work out what we've been asked to do -----------------------------------
 
+    call deriveFromForwardModelConfig ( fwdModelConf )
+    channels => fwdModelConf%forwardModelDerived%channels
+    DACsStaging => fwdModelConf%forwardModelDerived%DACsStaging
+    usedDACSSignals => fwdModelConf%forwardModelDerived%usedDACSSignals
+    noUsedChannels = size(channels)
+    noUsedDacs = size(usedDACSSignals)
+
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
     firstSignal => fwdModelConf%signals(1) ! Config has verified that signals
       ! are all for same radiometer (actually LO), module and sideband
     sideband = merge ( 0, firstSignal%sideband, fwdModelConf%forceFoldedOutput )
 
-    ! Create the data structures for the species
+    ! Create the data structures for the species.  This has to be done
+    ! AFTER deriveFromForwardModelConfig to get the indices for the
+    ! PFA calculations.
 
     call get_species_data ( fwdModelConf, fwdModelIn, fwdModelExtra, &
       & firstSignal%radiometer, sps )
@@ -620,12 +632,6 @@ contains
       & call load_one_item_grid ( grids_mag, magfield, phitan, maf, &
         & fwdModelConf, .false. )
 
-    call deriveFromForwardModelConfig ( fwdModelConf )
-    channels => fwdModelConf%forwardModelDerived%channels
-    DACsStaging => fwdModelConf%forwardModelDerived%DACsStaging
-    usedDACSSignals => fwdModelConf%forwardModelDerived%usedDACSSignals
-    noUsedChannels = size(channels)
-    noUsedDacs = size(usedDACSSignals)
     ! Check that we have radiances for the channels that are used
     do sigInd = 1, size(fwdModelConf%signals)
       ! This just emits an error message and stops if we don't have a radiance.
@@ -1208,7 +1214,7 @@ contains
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
-              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID=one_tan_ht, TAN_PHI_T_GRID=one_tan_temp,     &
               &  NEG_H_TAN = (/neg_tan_ht/),                                 &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
@@ -1228,7 +1234,7 @@ contains
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad,                           &
               &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
-              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  NEG_H_TAN = (/neg_tan_ht/) )
           end if
@@ -1243,7 +1249,7 @@ contains
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
-              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
               &  DDHTDHTDTL0 = tan_d2h_dhdt, DHIDTLM = dh_dt_glgrid,         &
@@ -1262,10 +1268,11 @@ contains
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
               &  orbIncline%values(1,maf)*Deg2Rad,                           &
               &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
-              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
+              &  t_path(1:no_ele), dhdz_path(1:no_ele), Req, ier,            &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
         end if
+        if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_metrics)
 !       dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
         do i = 1, nglMax, ng ! Avoid a temp for (/ ( gw, i = 1, nglMax/ng ) /)
           dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
@@ -1406,7 +1413,8 @@ contains
         n_path(1:npc) = n_path(1:npc) + 1.0_rp
 
         call comp_refcor ( h_path_c(1:npc), n_path(1:npc), &
-                      &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
+                      &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc), ier )
+        if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
         path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
           & ( sqrt( h_path(f_inds(:nglMax))**2 - (Req+one_tan_ht(1))**2 ) )
@@ -1874,6 +1882,7 @@ contains
       if ( patchedAPtg ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Had to patch some out of order ptg_angles' )
+        fmStat%flags = ior(fmStat%flags,b_ptg_angles)
         if ( index(switches,'ptg') /= 0 ) &
           & call Dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
       end if
@@ -2272,7 +2281,7 @@ contains
       use CS_Expmat_m, only: CS_Expmat
       use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
-        & Get_Beta_Path_Polarized
+        & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
       use Mcrt_m, only: Mcrt_der
       use Opacity_m, only: Opacity
@@ -2349,9 +2358,13 @@ contains
           & Frq, eta_zp, do_calc_zp, sps_path, do_calc_fzp, eta_fzp )
 
         if ( pfa ) then
+          call get_beta_path_PFA ( frq, p_path, c_inds, t_path,                  &
+            & channels(frq_i)%PFAData(thisSideband,:), channels(frq_i)%PFAIndex, &
+            & vel_cor, beta_path_c, t_der_path_flags,                            &
+            & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
-          call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                 &
-            &  sps%beta_group(sps_1:sps_n), fwdModelConf%polarized, gl_slabs,  &
+          call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                   &
+            &  sps%beta_group(sps_1:sps_n), fwdModelConf%polarized, gl_slabs,    &
             &  c_inds, beta_path_c(:,sps_1:sps_n), t_der_path_flags, dTanh_dT_c, &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         end if
@@ -3106,6 +3119,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.220  2004/08/06 22:40:17  livesey
+! Better patch for ptg_angles
+!
 ! Revision 2.219  2004/08/06 01:40:39  livesey
 ! Upgraded the precision of the ptg dump.
 !
