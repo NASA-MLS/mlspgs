@@ -10,7 +10,7 @@ MODULE L2Interface
    USE MLSMessageModule
    USE MLSCommon
    USE MLSL3Common
-   USE L2GPData
+   USE L2GPData, ONLY: L2GPData_T, ReadL2GPData
    USE Hdf
    USE MLSPCF3
    USE MLSStrings
@@ -39,6 +39,10 @@ MODULE L2Interface
 
 ! Parameters
 
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD3 = 'Status'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELD4 = 'Quality'
    CHARACTER (LEN=*), PARAMETER :: DATA_FIELD5 = 'L3Residual'
 
 CONTAINS
@@ -657,6 +661,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.4  2001/02/21 20:37:18  nakamura
+!# Changed MLSPCF to MLSPCF3.
+!#
 !# Revision 1.3  2000/12/29 20:40:04  nakamura
 !# Changed ReadL2GPProd to take start & end days as input; modified ResidualOutput for the one-product/all-days paradigm.
 !#
