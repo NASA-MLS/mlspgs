@@ -168,58 +168,45 @@ contains
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
-! Compute d(Radiance)/d(Whatever) given T_script (aka Delta_B),
-! D_T_script (aka D_Delta_B), D_E (d(Deltau)/d(Whatever)), Prod
-! (product of E's), and Tau (P * P^*).
+! Compute d(Radiance)/d(Whatever) given T_script (aka Delta_B), E,
+! D_E (d(Deltau)/d(x)), Prod (product of E's), Tau (P * P^*) and
+! D_T_script (aka D_Delta_B).  E and D_E are layer quantities, which
+! means that after the tangent point, we use the previous one instead
+! of the current one.  T_script, Prod and Tau are boundary quantities.
 
   !{\begin{equation*}
   ! \begin{split}
-  !  \frac{\partial \bf I}{\partial x} = &\sum_{i=1}^n
-  !   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
-  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}
+  !  \frac{\partial \mathbf{I}}{\partial x} = &\sum_{i=1}^n
+  !   \left [ \frac{\partial \mathbf{\tau}_i}{\partial x} \Delta B_i +
+  !           \mathbf{\tau}_i \frac{\partial \Delta B_i}{\partial x}
   !   \right ],\text{ where}
   !\\
-  !  \frac{\partial {\bf \tau}_i}{\partial x} = &
-  !   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x}
-  !\\
-  !  = & \sum_{k=2}^{i} \left [ {\bf E}_2 \dots {\bf E}_{k-1}
-  !       \frac{\partial {\bf E}_k}{\partial x} {\bf E}_{k+1} \dots
-  !       {\bf E}_i {\bf P}_i^\dagger +
-  !       {\bf P}_i {\bf E}_i^\dagger \dots {\bf E}_{k+1}
-  !       \frac{\partial {\bf E}_k^\dagger}{\partial x}
-  !       {\bf E}_{k-1}^\dagger \dots {\bf E}_2^\dagger \right ]
-  !\\
-  !  = & \sum_{k=2}^{i} \left [ {\bf P}_{k-1}
-  !       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1} {\bf \tau}_i
-  !     + {\bf \tau}_i^\dagger {\bf P}_k^{-\dagger}
-  !       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_{k-1}^\dagger \right ]
+  !  \frac{\partial \mathbf{\tau}_i}{\partial x} = &
+  !   \frac{\partial \mathbf{P}_i \mathbf{P}_i^\dagger}{\partial x}
+  != \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger +
+  !  \mathbf{P}_i \frac{\partial\mathbf{P}_i^\dagger}{\partial x}
+  != \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger +
+  !  \left( \frac{\partial\mathbf{P}_i}{\partial x}\mathbf{P}_i^\dagger \right )^\dagger
+  !  \text{.}
   ! \end{split}
   ! \end{equation*}
-  ! Notice that $\tau = \tau^\dagger$ by construction (see {\tt MCRT}).  Then
+  !
+  ! Writing $\mathbf{P}_i = \mathbf{P}_{i-1} \mathbf{E}_i$ instead of
+  ! $\mathbf{P}_i = \prod_{k=2}^i \mathbf{E}_k$, we have
   ! \begin{equation*}
-  ! \begin{split}
-  !  \frac{\partial {\bf I}}{\partial x} =& \sum_{i=1}^n
-  !    \mathcal{Q}_i {\bf \tau}_i + {\bf \tau}_i^\dagger \mathcal{Q}_i^\dagger
-  !    \text{, where}
-  !\\
-  !  \mathcal{Q}_i =& \frac12 \frac{\partial \Delta B_i}{\partial x} \mathbf{1} +
-  !    \Delta B_i \mathcal{W}_i \text{ and}
-  !\\
-  !  \mathcal{W}_i =& \sum_{k=2}^i {\bf P}_{k-1}
-  !                     \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1}
-  ! \end{split}
+  !  \frac{\partial\mathbf{P}_i}{\partial x} =
+  !   \frac{\partial\mathbf{P}_{i-1}}{\partial x} \mathbf{E}_i +
+  !   \mathbf{P}_{i-1} \frac{\partial\mathbf{E}_i}{\partial x}
   ! \end{equation*}
-  ! {\bf 1} is the identity matrix (we're using ${\bf I}$ for the radiance
-  ! matrix).
 
     use MLSCommon, only: Rk => Rp
 
     ! SVE == state_vector_elements
-    real(rk), intent(in) :: T_script(:)     ! sve.  Called Delta B above
+    real(rk), intent(in) :: T_script(:)     ! Path.  Called Delta B above
     real(rk), intent(in) :: Sqrt_earth_ref
     complex(rk), intent(in) :: E(:,:,:)     ! 2 x 2 x path.  Deltau
     complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.
-                                            ! D (deltau) / D (Whatever)
+                                            ! D (deltau) / D (x)
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
@@ -228,83 +215,63 @@ contains
     ! T script or Delta B depends only on temperature and frequency, so it's
     ! only needed for temperature derivatives.
 
+    complex(rk) :: DPDx(2,2)                ! D (P_i) / D (x)
+    complex(rk) :: DTauDx(2,2)              ! D (Tau_i) / D (x)
     integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
     integer :: I_Tan                        ! Tangent point
-    complex(rk) :: PDET                     ! Det(P_{k+1})
-    complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
-!   real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
-      ! PTOL = sqrt(tiny(0.0_rk))
-    real(rk), parameter :: PTOL = epsilon(0.0_rk) ! defines "PDET is too small"
-    complex(rk) :: Q(2,2)
-    complex(rk) :: Q_Tau(2,2)               ! Q x Tau
-    integer :: NP                           ! Index of first PINV not computed
-    complex(rk) :: W(2,2)
 
     i_tan = size(t_script) / 2
 
-    ! Compute the P_{k+1}^{-1} matrices, but only up to where det(P_{k+1})
-    ! becomes small.  We can get away with this for two reasons.  First, we
-    ! use P_{k+1}^{-1} \tau_i to get \prod{j=k+1}^{i-1} E_j.  Second,
-    ! because |P| <= 1.0, a product of P's is smaller than any of them.
-
-    do np = 2, p_stop
-      pdet = prod(1,1,np)*prod(2,2,np) - prod(1,2,np)*prod(2,1,np)
-      if ( abs(pdet) <= ptol ) & ! getting too small
-    exit
-      pinv(:,:,np) = reshape( (/ prod(2,2,np), -prod(2,1,np), &
-                &               -prod(1,2,np),  prod(1,1,np) /), (/2,2/) ) / &
-                &    pdet
-    end do
-    ! NP-1 is the index of the last computed PINV
-
-    d_radiance = 0.0_rk
+    ! dTauDx is Hermitian, so if we calculated the elements explicitly we
+    ! could save eight multiplies on the diagonals (where we know the imaginary
+    ! part is zero).  We also would only need to compute one off-diagonal.
+    ! BUT... the profiler says we're not spending any time here, so just keep
+    ! it simple.
 
     if ( present(d_t_script) ) then
       do i_sv = 1, size(d_radiance,3)      ! state vector elements
-        d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! W(1)=0 and Tau(1)=Ident
+        d_radiance(1,1,i_sv) = d_t_script(1,i_sv) ! Tau(1)=Ident
+        d_radiance(1,2,i_sv) = 0.0_rk             ! D(Tau(1)) / D(x) = 0
+        d_radiance(2,1,i_sv) = 0.0_rk
         d_radiance(2,2,i_sv) = d_t_script(1,i_sv)
-        w = 0.0_rk
         i_pp = 2
-        do i_p = 2, np - 1                 ! path elements
-          ! w = w + P_k DE_k P_{k+1}^{-1}
-          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
-            w = w + matmul ( matmul ( &
-            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
-            &       pinv(:,:,i_p) )
-          else
-            i_pp = i_p - 1
-          end if
-          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
-          q(1,2) =                              t_script(i_p) * w(1,2)
-          q(2,1) =                              t_script(i_p) * w(2,1)
-          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
-          q_tau = matmul(q,tau(1:2,1:2,i_p))
+        dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
+        do i_p = 2, p_stop                 ! path elements
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
           d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-                                   &   q_tau + conjg(transpose(q_tau))
-          i_pp = i_pp + 1
+                                   & dTauDx * t_script(i_p) + &
+                                   & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
+          if ( i_p < p_stop ) then
+            if ( i_p /= i_tan + 1 ) then
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
+              i_pp = i_pp + 1
+            else
+              dPdx = sqrt_earth_ref * dPdx
+            end if
+          end if
         end do ! i_p
       end do ! i_sv
     else
       do i_sv = 1, size(d_radiance,3)      ! state vector elements
-        w = 0.0_rk
+        d_radiance(1:2,1:2,i_sv) = 0.0_rk
         i_pp = 2
-        do i_p = 2, np - 1                 ! path elements
-          ! w = w + P_k DE_k P_{k+1}^{-1}
-          if ( i_p /= i_tan + 1 ) then ! Skip adding to W at the tangent point
-            w = w + matmul ( matmul ( &
-            &                prod(1:2,1:2,i_p-1), d_e(1:2,1:2,i_pp,i_sv) ), &
-            &       pinv(:,:,i_p) )
-          else
-            i_pp = i_p - 1
-          end if
-          q(1,1) = t_script(i_p) * w(1,1)
-          q(1,2) = t_script(i_p) * w(1,2)
-          q(2,1) = t_script(i_p) * w(2,1)
-          q(2,2) = t_script(i_p) * w(2,2)
-          q_tau = matmul(q,tau(1:2,1:2,i_p))
+        dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
+        do i_p = 2, p_stop                 ! path elements
+          dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          dTauDx = dTauDx + conjg(transpose(dTauDx))
           d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-                                   &   q_tau + conjg(transpose(q_tau))
-          i_pp = i_pp + 1
+                                   & dTauDx * t_script(i_p)
+          if ( i_p < p_stop ) then
+            if ( i_p /= i_tan + 1 ) then
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
+              i_pp = i_pp + 1
+            else
+              dPdx = sqrt_earth_ref * dPdx
+            end if
+          end if
         end do ! i_p
       end do ! i_sv
     end if
