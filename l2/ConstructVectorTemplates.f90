@@ -7,7 +7,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
 
   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
   use INIT_TABLES_MODULE, only: F_QUANTITIES, FIELD_FIRST, FIELD_LAST, &
-    & F_ADOPTROWS, F_ADOPTCOLUMNS, L_ROWS, L_COLUMNS
+    & F_ADOPT, L_ROWS, L_COLUMNS, F_SOURCE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
@@ -47,11 +47,13 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
 
     ! Local variables
-    integer :: I, J, K        ! Loop inductors
-    integer :: NOQUANTITIES    ! How many selections?
+    integer :: I, J, K                  ! Loop inductors
+    integer :: NOQUANTITIES             ! How many selections?
     integer, dimension(:), pointer :: QUANTITIES
-    integer :: SON            ! Son of Root
-    integer :: KEY            ! Son of son
+    integer :: SON                      ! Son of Root
+    integer :: KEY                      ! Son of son
+    integer :: ADOPTBIN                 ! Name of l2pc bin to adopt
+    integer :: SOURCE                   ! l_rows or l_columns
     logical, dimension(field_first:field_last) :: GOT ! Fields
         
     ! Executable code
@@ -70,12 +72,10 @@ contains ! =====     Public Procedures     =============================
       key = subtree(1,son)
       got ( decoration(key) ) = .true.
       select case ( decoration(key) )
-      case ( f_adoptColumns )
-        vectorTemplate = AdoptVectorTemplate ( sub_rosa(subtree(2,son)), quantityTemplates, &
-          & source=l_columns )
-      case ( f_adoptRows )
-        vectorTemplate = AdoptVectorTemplate ( sub_rosa(subtree(2,son)), quantityTemplates, &
-          & source=l_rows )
+      case ( f_adopt )
+        adoptBin = sub_rosa(subtree(2,son))
+      case ( f_source )
+        source = decoration ( subtree(2,son) )
       case ( f_quantities )
         noQuantities = nsons(son) - 1
         call allocate_test ( quantities, noQuantities, "quantities", ModuleName )
@@ -91,23 +91,27 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( (  got ( f_adoptColumns ) .or. got ( f_adoptRows ) ) .and. &
-      & .not. associated ( vectorTemplate%quantities ) ) call Announce_Error ( key, &
-      & 'No such l2pc bin to adopt' )
-
-    if ( got ( f_quantities ) ) then
-      if ( got ( f_adoptColumns ) .or. got ( f_adoptRows ) ) &
-        & call Announce_Error ( key, 'Cannot supply both quantities and adoptRows/Columns' )
+    if ( got ( f_adopt ) .or. got ( f_source) ) then
+      ! Adoption requested
+      if ( got ( f_quantities ) ) call Announce_Error ( key, &
+        & 'Cannot supply both quantities and adopt/source' )
+      if ( .not. got ( f_source ) ) call Announce_Error ( key, &
+        & 'Must supply source=rows/columns for adoption' )
+      vectorTemplate = AdoptVectorTemplate ( adoptBin, quantityTemplates, source=source )
+      if ( .not. associated ( vectorTemplate%quantities ) ) call Announce_Error ( key, &
+        & 'No such l2pc bin to adopt' )
+    else if ( got ( f_quantities ) ) then
+      ! Not an adoption, just a regular template construction
       call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
         & vectorTemplate )
       call deallocate_test ( quantities, "quantities", ModuleName )
+    else
+      ! User didn't give appropriate command
+      call Announce_Error ( key, 'Must supplier either quantity list or adoption' )
     end if
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
-
-    if ( got ( f_adoptColumns ) .and. got ( f_adoptRows ) ) &
-      & call Announce_Error ( key, 'Cannot supply both adoptColumns and adoptRows' )
 
   end function CreateVecTemplateFromMLSCfInfo
 
@@ -149,6 +153,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.10  2004/01/23 19:08:44  livesey
+! Changes / improvements to the adoption.
+!
 ! Revision 2.9  2004/01/23 05:47:38  livesey
 ! Added the adoption stuff
 !
