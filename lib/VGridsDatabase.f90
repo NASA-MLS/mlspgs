@@ -108,7 +108,7 @@ contains
   subroutine Dump_a_VGrid ( VGrid, Details )
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_Indices
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: NEWLINE, OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
     type(vGrid_T), intent(in) :: VGrid
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
@@ -123,7 +123,11 @@ contains
     call output ( vgrid%noSurfs )
     call output ( ' Coordinate = ' )
     call display_string ( lit_indices(vgrid%verticalCoordinate) )
-    if ( myDetails > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+    call newline
+    if ( myDetails > 0 ) then
+      call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+      call newline
+    endif
   end subroutine Dump_a_VGrid
 
 
@@ -152,10 +156,11 @@ contains
     end if
   end subroutine Dump_VGrids
 
-  ! ------------------------------------------------  GetUnitForVGrid  -----
+  ! ----------------------------------  GetUnitForVerticalCoordinate  -----
   integer function GetUnitForVerticalCoordinate ( coordinate )
-    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
-      & L_PRESSURE, L_THETA, L_ZETA, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_INTEGER, L_NONE, &
+      & L_PRESSURE, L_THETA, L_ZETA, &
+      & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
       & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
     integer, intent(in) :: coordinate
     ! Excutable code
@@ -164,6 +169,8 @@ contains
       GetUnitForVerticalCoordinate = PHYQ_Angle
     case ( l_geodAltitude, l_gph )
       GetUnitForVerticalCoordinate = PHYQ_Length
+    case ( l_integer )
+      GetUnitForVerticalCoordinate = PHYQ_Dimensionless
     case ( l_none )
       GetUnitForVerticalCoordinate = PHYQ_Invalid
     case ( l_pressure ) 
@@ -255,6 +262,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.14  2004/06/17 22:35:10  pwagner
+! Added new integer type for vertical coordinate
+!
 ! Revision 2.13  2004/06/03 22:57:48  vsnyder
 ! Cosmetic changes to account for using VGrid struct for TGrids too
 !
