@@ -87,8 +87,10 @@ module MLSHDF5
   interface MakeHDF5Attribute
     module procedure MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
       & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
+      & MakeHDF5Attribute_string_arr1, &
       & MakeHDF5AttributeDSN_int, &
-      & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1
+      & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
+      & MakeHDF5AttributeDSN_st_arr1
   end interface
 
   interface GetHDF5Attribute
@@ -215,13 +217,13 @@ contains ! ======================= Public Procedures =========================
     call h5sCreate_F ( h5s_scalar_f, dsID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for attribute '//trim(name) )
-    print *, 'itemID: ', itemID
-    print *, 'stringtype: ', stringtype
-    print *, 'dsID: ', dsID
-    print *, 'name: ', trim(name)
+    ! print *, 'itemID: ', itemID
+    ! print *, 'stringtype: ', stringtype
+    ! print *, 'dsID: ', dsID
+    ! print *, 'name: ', trim(name)
     call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
-    print *, 'attrID: ', attrID
-    print *, 'status: ', status
+    ! print *, 'attrID: ', attrID
+    ! print *, 'status: ', status
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create attribute '//trim(name) )
     ! Write
@@ -240,6 +242,62 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype '//trim(name) )
   end subroutine MakeHDF5Attribute_string
+
+  ! ------------------------------------- MakeHDF5Attribute_string_arr1
+  subroutine MakeHDF5Attribute_string_arr1 ( itemID, name, value , &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    character (len=*), dimension(:), intent(in) :: VALUE ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: DSID                     ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: STRINGTYPE               ! Type for string
+    logical :: my_skip
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    ! Setup
+    shp = shape(value)
+    ! Create a data type for this string
+    call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create stringtype for array'//trim(name) )
+    call h5tset_size_f(stringtype, len_trim(value(1)), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to set size for stringtype '//trim(name) )
+    ! Create dataspace and attribute
+    ! call h5sCreate_F ( h5s_simple_f, dsID, status )
+    call h5sCreate_simple_f ( 1, int(shp, hSize_T), dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for attribute '//trim(name) )
+    call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create attribute '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, stringtype, value, &
+      & ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write attribute '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute '//trim(name) )
+    call h5sClose_f ( dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute dataspace '//trim(name) )
+    call h5tClose_f ( stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close stringtype '//trim(name) )
+  end subroutine MakeHDF5Attribute_string_arr1
 
   ! ------------------------------------- MakeHDF5Attribute_snglarr1
   subroutine MakeHDF5Attribute_snglarr1 ( itemID, name, value , &
@@ -380,6 +438,37 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close data '//trim(dataName) )
 
   end subroutine MakeHDF5AttributeDSN_string
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_st_arr1
+  subroutine MakeHDF5AttributeDSN_st_arr1 ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    character (len=*), dimension(:), intent(in) :: VALUE ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_string_arr1( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_st_arr1
 
   ! ------------------------------------- MakeHDF5AttributeDSN_snglarr1
   subroutine MakeHDF5AttributeDSN_snglarr1 ( fileID, &
@@ -1897,6 +1986,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.18  2003/01/30 00:56:01  pwagner
+! Added string arrays as possible attributes (untested)
+!
 ! Revision 2.17  2003/01/27 21:38:44  pwagner
 ! May make 1d s.p. array attributes; may make attributes with sdname attrname call
 !
