@@ -129,10 +129,10 @@ contains
     call create_grids_2 ( Grids_x )
 
     do ii = 1, no_mol
-
       ! Fill the zeta, phi, freq. basis and value components.
       call fill_grids_2 ( grids_x, ii, qtyStuff(ii)%qty, &
-        & fwdModelConf%moleculeDerivatives(mol) .and. qtyStuff(ii)%foundInFirst )
+        & fwdModelConf%moleculeDerivatives(mol_cat_index(ii)) .and. &
+        & qtyStuff(ii)%foundInFirst )
 
     end do
 
@@ -482,6 +482,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.49  2003/05/06 23:36:59  dwu
+! fix a bug in modify_h2o
+!
 ! Revision 2.48  2003/05/06 20:35:34  livesey
 ! Another bug fix
 !
