@@ -487,6 +487,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
+             begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
              begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
@@ -822,6 +823,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.183  2001/10/31 19:07:35  livesey
+! Hooked fGrids into quantity templates
+!
 ! Revision 2.182  2001/10/31 18:36:50  livesey
 ! Added fGrids stuff
 !
