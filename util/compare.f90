@@ -21,6 +21,8 @@ program COMPARE
 
   use Machine, only: IO_Error
 
+  implicit NONE
+
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
@@ -31,8 +33,9 @@ program COMPARE
   logical :: All = .false.   ! Show nonzero differences for all quantities
   real :: AMAX               ! Maximum absolute difference for one R1, R2 pair
   real :: AMAXG = 0.0        ! Global maximum of all values of AMAX
+  real :: AbsAtRmaxG         ! Absolute error at maximum relative error
   logical :: AnyNaN(3) = .false. ! R1, R2 or a relative difference has a NaN
-  real :: AVG(2)
+  real :: AVG(2), AVGSR(2), AVGSA(2)
   logical :: CONT = .false.  ! Continue even if control lines differ
   logical :: DoStats = .false. ! -s option specified
   logical :: END
@@ -41,16 +44,19 @@ program COMPARE
   integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
   logical :: LOUD = .true.   ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
+  logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
   integer :: N
   real, allocatable, dimension(:) :: R1, R2  ! Inputs
   real, allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
+  real :: RelAtAmaxG
   real :: RMAX               ! Maximum relative difference for one R1, R2 pair
   real :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
   real :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
   integer :: Status
-  real :: STDEV(2)
+  real :: STDEV(2), STDEVR(2), STDEVA(2)
   logical :: Zero = .false.  ! If ( all ), show zero differences, too.
 
+  read ( (/"NaN","NaN"/), * ) AbsAtRmaxG, RelAtAmaxG
   i = 1
   do
     call getarg ( i, line1 )
@@ -97,7 +103,7 @@ program COMPARE
   end if
 
   if ( all ) then
-    print *, '  Absolute           Relative            Relative'
+    print *, '  Max Absolute       Max Relative        Max Relative'
     print *, '  Difference     At  Difference      At  Epsilons      After'
   end if
 
@@ -136,7 +142,7 @@ program COMPARE
       exit
     end if
 
-    allocate ( ad(n), r1(n), r2(n), rd(n) )
+    allocate ( ad(n), r1(n), r2(n), rd(n), m(n) )
 
     if ( n == 1 ) then
       read ( line1(i1+1:), *, iostat=status ) n, r1
@@ -165,13 +171,20 @@ program COMPARE
     lamax = maxloc(ad,1)
     amax = ad(lamax)
     if ( amax > 0.0 .or. all .and. zero .or. doStats ) then
-      rd = 2.0 * ad / abs(r1 + r2)
-      lrmax = maxloc(rd,1)
-      rmax = rd(lrmax)
+      rd = abs(r1 + r2)
+      m = rd > 0.0
+      rd = 2.0 * ad / rd
+      if ( any(m) ) then
+        lrmax = maxloc(rd,1,mask=abs(r1 + r2)/=0.0)
+        rmax = rd(lrmax)
+      else
+        lrmax = -1
+        rmax = 0.0
+      end if
       rmaxe = rmax / epsilon(rd)
       if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
-        print '(1pg14.8,i6,1pg14.8,i6,1pg15.8,1x,a)', &
+        print '(1pg14.7,i6,1pg14.7,i6,1pg15.7,1x,a)', &
           & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
 !       print *, 'After ', trim(line1), ', Maximum difference =', amax, ' at', lamax
 !       print *, 'Relative =', rmax, ' =', rmaxe, ' epsilons', ' at', lrmax
@@ -179,20 +192,37 @@ program COMPARE
       if ( doStats ) then
         call stats ( r1, avg(1), stdev(1) )
         call stats ( r2, avg(2), stdev(2) )
-        print '(a,1p,2g14.8,a,2g14.8)', 'Averages =', avg, ' Std. Devs. =', stdev
+        if ( all ) print '(a,1p,2g14.7,a,2g14.7)', 'Averages =', avg, ' Std. Devs. =', stdev
       end if
     end if
-    rmaxg = max(rmaxe,rmaxg)
-    amaxg = max(amax,amaxg)
+    if ( rmaxe > rmaxg ) then
+      rmaxg = rmaxe
+      absAtRmaxG = amax
+      if ( doStats ) then
+        avgsr = avg
+        stdevr = stdev
+      end if
+    end if
+    if ( amax > amaxg ) then
+      amaxg = amax
+      relAtAmaxG = rmaxe
+      if ( doStats ) then
+        avgsa = avg
+        stdeva = stdev
+      end if
+    end if
 
-    deallocate ( ad, r1, r2, rd )
+    deallocate ( ad, r1, r2, rd, m )
 
   end do
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
-    print *, 'Maximum relative difference anywhere =', rmaxg, 'epsilons =', &
-      & rmaxg*epsilon(rmaxg)
-    print *, 'Maximum absolute difference anywhere =', amaxg
+    print *, 'MaxRel =', rmaxg, &
+      & 'epsilons =', rmaxg*epsilon(rmaxg),'where MaxAbs =', absAtRmaxG
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsr, ' Std. Devs. =', stdevr
+    print *, 'MaxAbs =', amaxg, &
+      & 'where MaxRel =', relAtAmaxG,'epsilons =', relAtAmaxG*epsilon(relAtAmaxG)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsa, ' Std. Devs. =', stdeva
   end if
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
@@ -241,6 +271,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.7  2003/10/07 23:19:45  vsnyder
+! Handle one-element dumps
+!
 ! Revision 1.6  2003/10/07 02:04:03  vsnyder
 ! Show NaN relative differences differently
 !
