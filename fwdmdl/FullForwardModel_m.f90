@@ -894,7 +894,7 @@ contains ! ================================ FullForwardModel routine ======
 
       call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
 
-      t_deriv_flag(1:sv_t_len) = .true.   ! ** initialize values to .TRUE.
+      t_deriv_flag(1:sv_t_len) = .TRUE.   ! ** initialize values to .TRUE.
 
 ! ** ZEBUG *** Loading the Temp. derivative coeff. flag from file ***
       Spectag = 10000     ! Temperature's 'Spectag'
@@ -1085,14 +1085,14 @@ contains ! ================================ FullForwardModel routine ======
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
+! *** This is where we will interpolate Phi_tan
+
         phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
 
         if (ptg_i < surfaceTangentIndex) then
           neg_tan_ht = temp%values(1,mafTInstance) * &
             &  (tan_press(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
-
-          ! *** This is where we will interpolate Phi_tan
 
           if(FwdModelConf%temp_der) then
             ! Set up temperature representation basis stuff
@@ -2088,6 +2088,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.29  2002/02/07 00:36:31  zvi
+! Fix a bug - phi_tan non defined..
+!
 ! Revision 2.28  2002/02/05 21:54:29  zvi
 ! Fix a bug ..
 !
