@@ -635,7 +635,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
-             begin, f+f_temperaturePrecisionQuantity, s+s_vector, f+f_template, &
+             begin, f+f_tempPrecisionQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_usb, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -879,6 +879,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.247  2002/10/03 13:44:53  mjf
+! Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
+! names < 31 long.
+!
 ! Revision 2.246  2002/10/02 23:20:54  livesey
 ! Changed regQuants to quantity templates rather than types
 !
