@@ -219,14 +219,17 @@ outer1: do
       call output ( ' Lambda = ' )
       call output ( antennaPatterns(i)%lambda, advance='yes' )
       call dump ( antennaPatterns(i)%aaap, name='Aaap' )
-      call dump ( antennaPatterns(i)%aaap, name='D1aap' )
-      call dump ( antennaPatterns(i)%aaap, name='D2aap' )
+      call dump ( antennaPatterns(i)%d1aap, name='D1aap' )
+      call dump ( antennaPatterns(i)%d2aap, name='D2aap' )
     end do ! i
   end subroutine Dump_Antenna_Patterns_Database
 
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.6  2001/04/06 00:21:32  vsnyder
+! Fix a typo
+!
 ! Revision 1.5  2001/04/05 22:54:12  vsnyder
 ! Make array components of AntennaPatterns_T 2-D
 !
