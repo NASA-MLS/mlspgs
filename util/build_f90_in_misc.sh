@@ -68,7 +68,7 @@
 # Function to mkdir each step or subpath along a path
 #
 
-mkdir_cascade()
+mkpath()
 {
 
    # Does path start with "/" or not?
@@ -470,7 +470,7 @@ cd $args_dir
 # Check whether the final directory exists yet; if not make it
 if [ ! -d "$prog_path" -a "$BUILD" = "on" ]
 then
-   mkdir_cascade $prog_path
+   mkpath $prog_path
 fi
 
 if [ -x "$test_dir_path/$test_dir_name/$MLSCONFG/$target_name" -a "$BUILD" = "on" ]
@@ -481,6 +481,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.13  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
 # Revision 1.12  2002/05/03 18:02:56  pwagner
 # Fix bug (but who created it?)
 #

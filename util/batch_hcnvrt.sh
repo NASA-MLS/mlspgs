@@ -47,7 +47,7 @@
 # Function to mkdir each step or subpath along a path
 #
 
-mkdir_cascade()
+mkpath()
 {
 
    # Does path start with "/" or not?
@@ -228,7 +228,7 @@ fi
 # Does the destination directory exist?
 if [ ! -d "$dpath" ]
 then
-   mkdir_cascade $dpath
+   mkpath $dpath
 fi
 # Do we have write permission to it?
 if [ ! -w "$dpath" ]
@@ -300,3 +300,6 @@ done
 exit 0
 
 # $Log$
+# Revision 1.1  2002/01/22 21:42:37  pwagner
+# First commit
+#
