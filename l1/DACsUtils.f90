@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -9,9 +9,12 @@ MODULE DACsUtils
 
   IMPLICIT NONE
 
+  PRIVATE
+
+  PUBLIC :: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata, InitDACS_FFT
+
   INTEGER :: plan129
 
-  PRIVATE :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -20,7 +23,9 @@ MODULE DACsUtils
 
 CONTAINS
 
+!=============================================================================
   SUBROUTINE InitDACS_FFT
+!=============================================================================
 
 ! FFTW Parameters
 
@@ -41,13 +46,15 @@ CONTAINS
 
   END SUBROUTINE InitDACS_FFT
 
-  SUBROUTINE ExtractDACSdata (rawdata, K, D, TP, DIO, LO, nchans)
+!=============================================================================
+  SUBROUTINE ExtractDACSdata (rawdata, K, D, TP, DIO, LO)
+!=============================================================================
 
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN) :: rawdata
     INTEGER, DIMENSION(:), INTENT(OUT) :: K
-    INTEGER, INTENT(OUT) :: D(4), TP, DIO, LO, nchans
+    INTEGER, INTENT(OUT) :: D(4), TP, DIO, LO
 
-    INTEGER :: i, offset
+    INTEGER :: i, nchans, offset
 
     K = 0
 
@@ -78,19 +85,22 @@ CONTAINS
 
   END SUBROUTINE ExtractDACSdata
 
-  SUBROUTINE UncompressDACSdata (rawdata)
+!=============================================================================
+  SUBROUTINE UncompressDACSdata (rawdata, C, D, TP, DIO, LO, Zlag)
+!=============================================================================
 
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN) :: rawdata
+    INTEGER, INTENT(OUT) :: C(*), D(4), TP, DIO, Zlag, LO
 
-    INTEGER :: C(128), D(4), TP, DIO, Zlag, LO
     INTEGER :: i, i12, i8, rindx
 
 !! Masks for extending sign bits:
 
-    INTEGER, PARAMETER :: bitmask7 = z'80'
-    INTEGER, PARAMETER :: signmask7 = z'FFFFFF00'
-    INTEGER, PARAMETER :: bitmask11 = z'800'
-    INTEGER, PARAMETER :: signmask11 = z'FFFFF000'
+    INTEGER :: bitmask7, signmask7, bitmask11, signmask11
+    DATA bitmask7 / z'80' /
+    DATA signmask7 / z'FFFFFF00' /
+    DATA bitmask11 / z'800' /
+    DATA signmask11 / z'FFFFF000' /
 
 ! Get the 12 bit quantities
 
@@ -147,17 +157,229 @@ CONTAINS
 
   END SUBROUTINE UncompressDACSdata
 
-  SUBROUTINE ProcessDACSdata (D, DACS_K, nchans, TP, DACS_dat)
+!=============================================================================
+  SUBROUTINE ProcessDACSdata
+!=============================================================================
+
+    USE MLSL1Common, ONLY: DACSnum, DACSchans, MaxMIFs
+    USE L0_sci_tbls, ONLY: DACS_MAF, SciMAF
+
+    INTEGER :: DACSno, MIFno, nchans
+    LOGICAL :: GoodDACS
+    REAL :: R2a(DACSchans)
+
+    CALL FixLostCarryBits  ! fix state counters for the MAF
+
+    DO MIFno = 0, (MaxMIFs - 1)
+       DO DACSno = 1, DACSnum
+          GoodDACS = (SUM (DACS_MAF(MIFno)%D(:,DACSno)) > 0)
+          IF (GoodDACS) THEN
+             nchans = 129
+             IF ((.NOT. DACS_MAF(MIFno)%Compressed) .AND. &
+                  (MOD (DACSno, 2) == 0)) nchans = 82
+             CALL UnpackDACSdata (DACS_MAF(MIFno)%C_K(:,DACSno), &
+                  DACS_MAF(MIFno)%D(:,DACSno), DACS_MAF(MIFno)%Compressed, &
+                  nchans, R2a)
+             CALL ProcessUnpackedDACS (DACS_MAF(MIFno)%D(:,DACSno), R2a, &
+                  nchans, DACS_MAF(MIFno)%TP(DACSno), &
+                  SciMAF(MIFno)%DACS(:,DACSno))
+          ENDIF
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE ProcessDACSdata
+
+!=============================================================================
+  SUBROUTINE FixLostCarryBits
+!=============================================================================
+
+    USE MLSL1Common, ONLY: DACSnum, MaxMIFs
+    USE L0_sci_tbls, ONLY: DACS_MAF
+    USE Sort_M
+
+    INTEGER :: DACSno, MIFno, Median, BitNo, IntBit1(4), Ndif(4), NumZmatch
+    INTEGER :: i, imin(1), mindx(2)
+    INTEGER :: Ntot(0:(MaxMIFs-1)), NtotSort(0:(MaxMIFs-1))
+    INTEGER :: E                         ! error from median
+    INTEGER :: Ebit, EbitVal             ! error to nearest log 2 (bit & value)
+    INTEGER, PARAMETER :: E_thold = 48   ! error threshold
+
+    LOGICAL :: Zmatch(4)
+
+    DO DACSno = 1, DACSnum
+
+! Sum D and find median of sum:
+
+       DO MIFno = 0, (MaxMIFs-1)
+          Ntot(MIFno) = SUM (DACS_MAF(MIFno)%D(:,DACSno))
+       ENDDO
+
+       NtotSort = Ntot
+       CALL Sort (NtotSort, 1, MaxMIFs)
+       Median = NtotSort(MaxMIFs/2)
+
+! Find error conditions:
+
+       DO MIFno = 0, (MaxMIFs-1)
+
+          IF (Ntot(MIFno) > 0) THEN
+             E = Median - Ntot(MIFno)
+             IF (E > E_thold) THEN
+
+                Ebit = NINT (LOG (REAL(E)) / LOG (2.0))
+                EbitVal = 2**Ebit
+
+! Check lowest bit number set to 1
+
+                Zmatch = .FALSE.   ! no match of trailing Zeros yet
+                DO i = 1, 4
+                   BitNo = 0
+                   DO
+                      IF (BTEST (DACS_MAF(MIFno)%D(i,DACSno), BitNo)) EXIT
+                      BitNo = BitNo + 1
+                   ENDDO
+                   IntBit1(i) = 2**BitNo   ! Value of lowest bit set to 1
+                   Zmatch(i) = (IntBit1(i) >= EbitVal)   ! match if error
+                ENDDO
+
+                NumZmatch = COUNT (Zmatch)
+
+                IF (NumZmatch == 1) THEN   ! Adjust only one counter
+
+                   WHERE (Zmatch)
+                      DACS_MAF(MIFno)%D(:,DACSno) = &
+                           DACS_MAF(MIFno)%D(:,DACSno) + EbitVal
+                   END WHERE
+
+                ELSE IF (NumZmatch > 1) THEN   ! Adjust when multiple counters
+
+                   IF (MIFno == 0) THEN
+                      mindx = (/ 1, 1 /)    ! Can't use previous MIF
+                   ELSE
+                      mindx = (/ -1, 1 /)   ! Use both previous and next MIF
+                   ENDIF
+
+                   Ndif = HUGE (Ndif)     ! Init for comparisons
+                   WHERE (Zmatch)
+                      Ndif = DACS_MAF(MIFno)%D(:,DACSno) - &
+                           (DACS_MAF(MIFno+mindx(1))%D(:,DACSno) + &
+                           DACS_MAF(MIFno+mindx(2))%D(:,DACSno)) / 2
+                   END WHERE
+                   imin = MINLOC (Ndif)
+                   DACS_MAF(MIFno)%D(imin(1):,DACSno) = &
+                        DACS_MAF(MIFno)%D(imin(1):,DACSno) + EbitVal
+
+                ELSE
+
+                   EbitVal = 2**(Ebit-1)   ! Reset value to previous bit
+                   Zmatch = .FALSE.
+                   DO i = 1, 4
+                      Zmatch(i) = (IntBit1(i) >= EbitVal)   ! match if error
+                   ENDDO
+                   NumZmatch = COUNT (Zmatch)
+
+                   IF (NumZmatch == 2) THEN  ! Only if exactly 2 match
+                      WHERE (Zmatch)
+                         DACS_MAF(MIFno)%D(:,DACSno) = &
+                              DACS_MAF(MIFno)%D(:,DACSno) + EbitVal
+                      END WHERE
+                   ELSE
+                      DACS_MAF(MIFno)%D(:,DACSno) = 0   ! Clear for discard
+                   ENDIF
+                ENDIF
+
+!!$                write (66, *) 'DACSno, mifno, e, ebitvntot, median: ', &
+!!$                     DACSno, MIFno, E, EbitVal, Ntot(MIFno), median
+!!$                write (66, *) "D(curr): ", DACS_MAF(MIFno)%D(:,DACSno)
+!!$                write (66, *) "D(prev): ", DACS_MAF(MIFno-1)%D(:,DACSno)
+!!$                write (66, *) "D(next): ", DACS_MAF(MIFno+1)%D(:,DACSno)
+!!$                write (66, "(i6, ':', B20)") (DACS_MAF(MIFno)%D(i,DACSno), &
+!!$                     DACS_MAF(MIFno)%D(i,DACSno),i=1,4)
+!!$                write (66, *) "IntBit1: ", IntBit1
+!!$                write (66, *) "Zmatch: ", Zmatch
+!!$                write (66, *) "NumZmatch: ", NumZmatch
+
+             ENDIF
+          ENDIF
+       ENDDO
+
+    ENDDO
+
+
+  END SUBROUTINE FixLostCarryBits
+
+!=============================================================================
+  SUBROUTINE UnpackDACSdata (C_K, D, Compressed, nchans, R2a)
+!=============================================================================
+
+    INTEGER :: C_K(*), D(4), nchans
+    LOGICAL :: Compressed
+    REAL :: R2a(*)
+
+    REAL :: Ntot3
+
+    IF (Compressed) THEN
+       CALL UnpackCompDACS (C_K, R2a)  ! C array type
+    ELSE
+       Ntot3 = SUM(D) * 3.0
+       IF (Ntot3 > 0) CALL UnpackUncompDACS (C_K, Ntot3, nchans, R2a)  ! K array
+    ENDIF
+
+  END SUBROUTINE UnpackDACSdata
+
+!=============================================================================
+  SUBROUTINE UnpackCompDACS (C, R2a)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: DACS_const
+
+    INTEGER :: C(*)
+    REAL :: R2a(*)
+
+    INTEGER :: i
+    REAL :: L
+
+    L = DACS_const%L    ! convert to REAL
+
+    R2a(1) = 1.0
+    DO i = 2, 129
+       R2a(i) = (C(i-1) + DACS_const%A(i-1)) / L
+    ENDDO
+
+  END SUBROUTINE UnpackCompDACS
+
+!=============================================================================
+  SUBROUTINE UnpackUncompDACS (K, Ntot3, nchans, R2a)
+!=============================================================================
+
+    INTEGER :: K(*), nchans
+    REAL :: R2a(*), Ntot3
+
+    INTEGER :: i
+
+    R2a(1:129) = 0.0
+    IF (K(1) == NINT (Ntot3)) RETURN
+
+    R2a(1) = 1.0
+    DO i = 2, nchans
+       R2a(i) = (K(i) - Ntot3) / (K(1) - Ntot3)
+    ENDDO
+
+  END SUBROUTINE UnpackUncompDACS
+
+!=============================================================================
+  SUBROUTINE ProcessUnpackedDACS (D, R2a, nchans, TP, DACS_dat)
+!=============================================================================
 
     USE MLSL1Common, ONLY: r8, DACSchans
     USE MathUtils, ONLY: derfi
     
-    INTEGER :: DACS_K(DACSchans)
+    REAL :: R2a(DACSchans)
     INTEGER :: D(4), TP, nchans
     REAL :: DACS_dat(DACSchans)
 
-    INTEGER :: Dtot, DIO, LO, i
-    REAL(r8) :: lag0, offset, rho_hat, rho(DACSchans), P_thold, N_thold, Z_thold
+    INTEGER :: Dtot, i
+    REAL(r8) :: rho(DACSchans), P_thold, N_thold, Z_thold
     REAL(r8) :: A, M, R(256), R_FFT(256)
     REAL(r8), PARAMETER :: sqrt2 = 1.41421356237d0
     REAL(r8), PARAMETER :: C(14) = (/ 0.97523849075787, -0.02380608085090, &
@@ -166,17 +388,14 @@ CONTAINS
          0.18410829607653, 0.36609324008142, -0.37590450311119, &
          2.65674351163174, 2.53926887918654, 5.41351505425882 /)
 
-    offset = 3.0 * SUM (D)
     rho = 0.0
     rho(1) = 1.0
-    lag0 = DACS_K(1) - offset
 
     Dtot = SUM (D)
     IF (Dtot > 0.0) THEN
        P_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * D(1) / Dtot)
        N_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * D(4) / Dtot)
        Z_thold = sqrt2 * derfi (1.0d0 - 2.0d0 * (D(1) + D(2))/ Dtot)
-!PRINT *, "P/N/Z_thold: ", REAL(P_thold), REAL(N_thold), REAL(Z_thold)
     ELSE
        P_thold = 0.0
        N_thold = 0.0
@@ -186,24 +405,14 @@ CONTAINS
     M = (P_thold + N_thold) / 2.0 - 0.9
 
     DO i = 2, nchans
-       IF (lag0 /= 0.0) THEN
-          rho_hat = (DACS_K(i) - offset) / lag0
-       ELSE
-          rho_hat = 0.0
-       ENDIF
-       rho(i) = C(1) * rho_hat + C(2) * rho_hat**3 + C(3) * rho_hat**5 + &
-            C(4) * rho_hat**7 + C(5) * SIN(rho_hat * C(12)) * M + &
-            C(6) * SIN(rho_hat * C(13)) * M**2 &
-            + C(7) * SIN(rho_hat * C(14)) * M + C(8) * A**2 + &
-            C(9) * A**2 * rho_hat + C(10) * Z_thold**2 * rho_hat + &
+       rho(i) = C(1) * R2a(i) + C(2) * R2a(i)**3 + C(3) * R2a(i)**5 + &
+            C(4) * R2a(i)**7 + C(5) * SIN(R2a(i) * C(12)) * M + &
+            C(6) * SIN(R2a(i) * C(13)) * M**2 + C(7) * SIN(R2a(i)*C(14)) * M + &
+            C(8) * A**2 + C(9) * A**2 * R2a(i) + C(10) * Z_thold**2*R2a(i) + &
             C(11) * Z_thold * A
     ENDDO
 
 ! Apodize here?
-
-
-!  rho = rho * TP
-! print *, 'rho: ', rho
 
 ! Prepare for FFT
 
@@ -215,15 +424,15 @@ CONTAINS
   CALL rfftw_f77_one (plan129, R, R_FFT)
 
   DACS_dat = R_FFT(1:129) * TP
-!!$    if (d(1) == 48303 .and. d(2) == 81510) then
-!!$       print *, DACS_dat
-!!$    endif
 
-  END SUBROUTINE ProcessDACSdata
+  END SUBROUTINE ProcessUnpackedDACS
 
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.2  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.1  2002/03/29 20:20:16  perun
 ! Version 1.0 commit
 !
