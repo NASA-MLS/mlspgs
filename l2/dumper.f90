@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMPER
@@ -8,6 +8,19 @@ module DUMPER
   use OUTPUT_M, only: OUTPUT
   implicit NONE
   private
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+! dump                   Dump the various user-defined types of mlsl2  
+! === (end of toc) ===                                                   
+! === (start of api) ===
+! dump (type arg ) or     
+! dump (type args(:), [int details] )      
+!    where arg(s) may be among the following types:
+!      { MLSChunk_t, hGrid_T, QuantityTemplates }      
+! === (end of api) ===
 
   public :: DUMP
 
@@ -46,6 +59,16 @@ contains ! =====     Private Procedures     ============================
       call output ( chunks(i)%noMAFsLowerOverlap )
       call output ( ' noMAFsUpperOverlap = ' )
       call output ( chunks(i)%noMAFsUpperOverlap, advance='yes' )
+      call output ( '      1st non-overlap chunk = ' )
+      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap )
+      call output ( '      last non-overlap chunk = ' )
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
+        & advance='yes' )
+      call output ( '      chunk size= ' )
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex )
+      call output ( '      non-overlap chunk size= ' )
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
+        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1)
       call output ( '      accumulatedMAFs = ' )
       call output ( chunks(i)%accumulatedMAFs, advance='yes' )
     end do
@@ -222,6 +245,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.14  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.13  2002/08/22 01:22:20  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
