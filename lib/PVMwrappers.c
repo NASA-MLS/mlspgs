@@ -19,5 +19,5 @@ FCALLSCFUN3(INT, pvm_upkdouble, PVM_UPKDOUBLE, pvm_upkdouble, PDOUBLE,
 
 FCALLSCFUN3(INT, pvm_upkint, PVM_UPKINT, pvm_upkint, PINT, INT, INT);
 
-
+FCALLSCSUB1(usleep, USLEEP, usleep, INT)
 
