@@ -53,6 +53,7 @@ module ForwardModelConfig
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
     integer :: WindowUnits            ! Either degrees or profiles
+    integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
     ! Now the logicals
     logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
     logical :: Atmos_der              ! Do atmospheric derivatives
@@ -73,6 +74,8 @@ module ForwardModelConfig
     ! Now the reals
     real (r8) :: PhiWindow            ! Window size for examining stuff
     real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
+    real :: sum_DeltaTime = 0.0	      ! sum of delta time calling FullForwardModel 
+    real :: sum_squareDeltaTime = 0.0 ! sum of the square of delta times calling FullForwardModel 
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
@@ -560,6 +563,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.37  2003/06/18 01:58:01  vsnyder
+! Add SidebandStart and SidebandStop fields
+!
 ! Revision 2.36  2003/05/29 16:37:02  livesey
 ! Added switchingMirror
 !
