@@ -385,7 +385,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
-             l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
+             l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
@@ -1020,6 +1020,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.307  2003/05/07 01:01:50  livesey
+! Added chiSqBinned
+!
 ! Revision 2.306  2003/05/05 23:00:34  livesey
 ! Merged in feb03 newfwm branch
 !
