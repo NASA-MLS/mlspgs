@@ -7,14 +7,16 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
+  use Expr_m, only: EXPR
   use INIT_TABLES_MODULE, only: &
-    & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
+    & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, &
-    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
-  use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
-    & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
+    & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME
+  use intrinsic, only: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
+    & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY, &
+    & PHYQ_DIMENSIONLESS
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
@@ -22,12 +24,13 @@ module Join                     ! Join together chunk based data.
   use L2ParInfo, only: PARALLEL, SLAVEJOIN
   use LEXER_CORE, only: PRINT_SOURCE
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-  use MLSCommon, only: MLSChunk_T         ! , R8 (not used???)
+  use MLSCommon, only: MLSChunk_T,R8
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
+  use OutputAndClose, only: DIRECTWRITE
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
@@ -52,7 +55,7 @@ module Join                     ! Join together chunk based data.
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
+  logical, parameter, private :: DEEBUG = .false.           ! Usually FALSE
 
   ! Parameters for Announce_Error
 
@@ -84,7 +87,9 @@ contains ! =====     Public Procedures     =============================
     logical :: COMPAREOVERLAPS
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
+    integer :: FILE                 ! Name of output file for direct write
     integer :: GSON                     ! Son of Key
+    integer :: HDFVERSION               ! Version of hdf for directwrite
     integer :: HDFNAMEINDEX             ! Name of swath/sd
     logical :: IS_SWATHNAME_CASESENSITIVE
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
@@ -101,6 +106,8 @@ contains ! =====     Public Procedures     =============================
     integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
     logical :: TIMING
+    integer :: EXPRUNITS(2)                 ! From expr
+    real (r8) :: EXPRVALUE(2)               ! From expr
 
     real :: T1, T2     ! for timing
 
@@ -150,10 +157,11 @@ contains ! =====     Public Procedures     =============================
 
       got_field = .false.
       source = null_tree
-      compareOverlaps = .FALSE.
-      outputOverlaps = .FALSE.
+      compareOverlaps = .false.
+      outputOverlaps = .false.
       hdfNameIndex=name
       prefixSignal = .false.
+      hdfVersion = 4
 
       ! Loop over the fields of the mlscf line
 
@@ -176,6 +184,12 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           precVectorIndex = decoration(decoration(subtree(1,source)))
           precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_hdfVersion )
+          call expr ( subtree(2,gson), exprUnits, exprValue )
+          if ( exprUnits(1) /= phyq_dimensionless ) &
+            & call Announce_error ( gson, NO_ERROR_CODE, &
+            & 'No units allowed for hdfVersion: just integer 4 or 5')
+          hdfVersion = exprValue(1)
         case ( f_prefixSignal )
           prefixSignal= value == l_true
         case ( f_compareoverlaps )
@@ -187,17 +201,26 @@ contains ! =====     Public Procedures     =============================
         case ( f_sdName )
           hdfNameIndex = sub_rosa(subtree(2,gson))
         case ( f_file )
-          call announce_error(key,NotAllowed,FIELDINDEX=field_index)
+          file = sub_rosa(subtree(2,gson))
         case default ! Can't get here if tree_checker worked properly
         end select
       end do
 
+      ! Some final checks
+      if ( any ( get_spec_id(key) == (/ s_l2gp, s_l2aux /) ) ) then
+        if ( any ( got_field ( (/ f_file, f_hdfVersion /) ) ) ) &
+          & call Announce_Error ( key, NO_ERROR_CODE, &
+          & 'File or hdfVersion not appropriate arguments for l2aux/l2gp' )
+      end if
+
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
 
-      select case ( get_spec_id(key) )
-      case ( s_l2gp, s_l2aux ) ! ------------- L2GP and L2AUX Data     ------------
+      ! Now, for commands other than timing, do more complicated stuff.
+      if ( get_spec_id(key) /= s_time ) then
+        ! Identify the quantity
         quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+        ! Get the precision quantity too perhaps
         if ( got_field ( f_precision ) ) then
           precisionQuantity => &
             & GetVectorQtyByTemplateIndex(vectors(precVectorIndex),precQtyIndex)
@@ -208,6 +231,7 @@ contains ! =====     Public Procedures     =============================
           precisionQuantity => NULL()
         endif
 
+        ! Establish a swath/sd name for this quantity.
         hdfName = ''
         if ( prefixSignal ) &
           & call GetSignalName ( quantity%template%signal, hdfName, &
@@ -217,17 +241,26 @@ contains ! =====     Public Procedures     =============================
         ! and seize upon its first invocation as the one to use
         !  (although the question why is a natural one to ask)
         if ( .not. is_swathname_casesensitive) &
-         & hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
+          & hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
 
-        ! For slave tasks in a PVM system, simply ship this vector off
-        ! Otherwise, do a join.
-        if ( parallel%slave ) then
+        ! Now three possible cases, a direct write (either parallel or not), a
+        ! parallel slave join, or a manual join
+        if ( get_spec_id(key) == s_directWrite ) then
+          ! For the direct write command, call some special code
+          if ( .not. ValidateVectorQuantity ( quantity, minorFrame=.true. ) ) &
+            & call Announce_Error ( key, NO_ERROR_CODE, &
+            & 'Invalid quantity for direct write, must be minor frame' )
+          call DirectWrite ( quantity, hdfNameIndex, file, hdfVersion, &
+            & chunkNo, chunks )
+        else if ( parallel%slave ) then
+          ! For slave tasks in a PVM system, simply ship this vector off
+          ! Otherwise, do a join.
           call SlaveJoin ( quantity, precisionQuantity, &
             & hdfName, key )
         else
           ! Now, depending on the properties of the source we deal with the
           ! vector quantity appropriately.
-          if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
+          if (ValidateVectorQuantity(quantity,coherent=.true.,stacked=.true.,regular=.true.,&
             & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
             ! Coherent, stacked, regular quantities on pressure surfaces, or
             ! with no vertical coordinate system go in l2gp files.
@@ -243,10 +276,7 @@ contains ! =====     Public Procedures     =============================
               & l2auxDatabase, chunkNo, chunks )
           end if
         end if
-
-      case default ! Timing
-      end select
-
+      end if
     end do
 
    if ( ERROR /= 0 ) then
@@ -265,7 +295,7 @@ contains ! =====     Public Procedures     =============================
         call blanks ( 4, advance = 'no' )
       endif
       call output ( "Timing for MLSL2Join =" )
-      call output ( DBLE(t2 - t1), advance = 'yes' )
+      call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
 
@@ -274,10 +304,10 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  Announce_Error  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage, FIELDINDEX )
-    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX )
+    integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
-    integer, intent(in), OPTIONAL :: FIELDINDEX ! Extra information for msg
+    integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
     character (LEN=*), intent(in), optional :: ExtraMessage
 
     error = max(error,1)
@@ -317,7 +347,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
     integer, intent(in) :: NAME         ! For the swath
     type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
-    type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
+    type (VectorValue_T), pointer :: precision ! Optional vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
@@ -340,7 +370,7 @@ contains ! =====     Public Procedures     =============================
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
-    l2gpDataIsNew = (.NOT. associated(l2gpDatabase))
+    l2gpDataIsNew = (.not. associated(l2gpDatabase))
     if ( .not. l2gpDataIsNew ) then
       index = decoration(key)
       l2gpDataIsNew = (index>=0)
@@ -348,13 +378,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Work out what to do with the first and last instance information
     
-    if ( PRESENT(firstInstance) ) then
+    if ( present(firstInstance) ) then
       useFirstInstance = firstInstance
     else
       useFirstInstance = quantity%template%noInstancesLowerOverlap+1
     end if
 
-    if ( PRESENT(lastInstance) ) then
+    if ( present(lastInstance) ) then
       useLastInstance = lastInstance
     else
       useLastInstance = quantity%template%noInstances- &
@@ -440,12 +470,12 @@ contains ! =====     Public Procedures     =============================
     ! and quality will come later too (probably 0.5, but maybe 1.0)
 
     thisL2GP%l2gpValue(:,:,firstProfile:lastProfile) = &
-         RESHAPE(quantity%values(:,useFirstInstance:useLastInstance),&
-         (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+         reshape(quantity%values(:,useFirstInstance:useLastInstance),&
+         (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
     if (associated(precision)) then
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = &
-      RESHAPE(precision%values(:,useFirstInstance:useLastInstance),&
-         (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+      reshape(precision%values(:,useFirstInstance:useLastInstance),&
+         (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
     else
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
     end if
@@ -513,20 +543,21 @@ contains ! =====     Public Procedures     =============================
     ! If this is the first chunk, we have to setup the l2aux quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
 
-    l2auxDataIsNew = (.NOT. associated(l2auxDatabase))
-    if ( .NOT. l2auxDataIsNew ) then
+    l2auxDataIsNew = (.not. associated(l2auxDatabase))
+    if ( .not. l2auxDataIsNew ) then
       index = decoration(key)
       l2auxDataIsNew = (index>=0)
     end if
+    print*,'L2AUXDataIsNew:',l2auxDataIsNew
     ! Work out what to do with the first and last Instance information
     
-    if ( PRESENT(firstInstance) ) then
+    if ( present(firstInstance) ) then
       useFirstInstance = firstInstance
     else
       useFirstInstance = quantity%template%noInstancesLowerOverlap+1
     end if
 
-    if ( PRESENT(lastInstance) ) then
+    if ( present(lastInstance) ) then
       useLastInstance = lastInstance
     else
       useLastInstance = quantity%template%noInstances- &
@@ -549,9 +580,9 @@ contains ! =====     Public Procedures     =============================
       ! If the quantity is a minor frame quantity, then we deal with it 
       ! as such.  Otherwise we output it as a geodAngle based quantity
 
-      if ( (quantity%template%noChans/=1) .AND. &
+      if ( (quantity%template%noChans/=1) .and. &
         & (quantity%template%frequencyCoordinate == L_None) ) &
-        & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Quantity has multiple channels but no frequency coordinate" )
 
       auxFamily=quantity%template%frequencyCoordinate
@@ -590,7 +621,7 @@ contains ! =====     Public Procedures     =============================
         ! in Init_Tables_Module.
 
         if ( quantity%template%verticalCoordinate /= l_None ) &
-          & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Cannot currently output L2AUX quantities with obscure "// &
           & "vertical coordinates, sorry!" )
 
@@ -608,6 +639,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Now we setup the new quantity
+      print*,'Setting up l2aux'
       call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
         & dimensionStarts, newL2AUX )
       newL2AUX%minorFrame=quantity%template%minorFrame
@@ -661,8 +693,10 @@ contains ! =====     Public Procedures     =============================
       ! For minor frame quantities we don't need to expand, as they're created
       ! at full size from the start.
       if ( .not. &
-        & (quantity%template%minorFrame .or. quantity%template%majorFrame) ) &
-        & call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
+        & (quantity%template%minorFrame .or. quantity%template%majorFrame) ) then
+        print*,'Expanding l2aux'
+        call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
+      end if
     end if
 
     ! Now we are ready to fill up the l2aux quantity with the new data.
@@ -716,6 +750,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.59  2002/05/22 00:48:52  livesey
+! Added direct write stuff
+!
 ! Revision 2.58  2002/05/16 22:36:46  livesey
 ! Fixed a bug with joining minor frame quantities with overlaps.
 !
