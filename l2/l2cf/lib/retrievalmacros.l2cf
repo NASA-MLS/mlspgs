@@ -151,7 +151,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 
 ;; This macro defines a set of full forward models under a given name
 ;; $1, for band $2, signal $3.
-!define(makeFwm,{!dnl
+!define(makeSimpleFwm,{!dnl
   $1: ForwardModel, type=full, $
     signals=$3, $
     phiWindow=4.0, $
@@ -184,8 +184,44 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /atmos_der, /do_baseline})
+!define(makeFwm,{!dnl
+  $1: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=4.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.24  2002/10/03 21:36:00  livesey
+; Changed forward models to use simplerMolecules lists
+;
 ; Revision 1.23  2002/10/03 16:18:24  livesey
 ; Changed temperaturePrecisionQuantity to tempPrecisionQuantity for Mark
 ;
