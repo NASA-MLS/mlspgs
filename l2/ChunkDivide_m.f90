@@ -450,6 +450,15 @@ contains ! =================================== Public Procedures==============
     call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
     call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
 
+    ! Now delete any chunks that are nothing but overlap
+    allOverlapChunks: do
+      chunk = FindFirst ( &
+        & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
+        & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) )
+      if ( chunk == 0 ) exit allOverlapChunks
+      call DeleteChunk ( chunks, chunk )
+    end do allOverlapChunks
+
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Now think about the obstructions
 
@@ -1154,6 +1163,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.18  2001/12/17 23:09:18  livesey
+! Now deletes chunks that are nothing but overlap
+!
 ! Revision 2.17  2001/12/16 00:56:43  livesey
 ! Added dump option
 !
