@@ -38,7 +38,7 @@ module L2PC_m
   
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
-  public :: BinSelectors
+  public :: BinSelectors, DestroyBinSelectorDatabase
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -722,6 +722,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.25  2002/01/22 18:14:29  livesey
+! Fixed typo.
+!
 ! Revision 2.24  2002/01/21 23:11:49  livesey
 ! Completed BinSelectors support
 !
