@@ -54,7 +54,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=80), dimension(:), pointer :: sdNames => null()
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
   end type DirectData_T
-  logical, parameter :: DEEBUG = .true.
+  logical, parameter :: DEEBUG = .false.
   ! For Announce_Error
   integer :: ERROR
 
@@ -231,13 +231,16 @@ contains ! ======================= Public Procedures =========================
     TotNumProfs = myLastProf
     offset = myFirstProf - 1
     if ( .not. present(firstprof) ) offset=quantity%template%instanceOffset
-    if ( myLastProf > quantity%template%grandTotalInstances ) then
+    if ( myLastProf > quantity%template%grandTotalInstances .and. &
+      & quantity%template%grandTotalInstances > 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'last profile > grandTotalInstances for ' // trim(sdName))
-      call output('last profile: ', advance='no')
-      call output(myLastProf, advance='yes')
-      call output('grandTotalInstances: ', advance='no')
-      call output(quantity%template%grandTotalInstances, advance='yes')
+      if (DEEBUG) then
+        call output('last profile: ', advance='no')
+        call output(myLastProf, advance='yes')
+        call output('grandTotalInstances: ', advance='no')
+        call output(quantity%template%grandTotalInstances, advance='yes')
+      endif
     endif
     call vectorValue_to_l2gp(quantity, Quantity_precision, l2gp, &
       & sdname, chunkNo, offset=0, &
@@ -458,9 +461,17 @@ contains ! ======================= Public Procedures =========================
     integer :: START(3)                 ! HDF array starting position
     integer :: STRIDE(3)                ! HDF array stride
     integer :: total_DS_size
+    logical, parameter :: MAYCOLLAPSEDIMS = .false.
 
     ! executable code
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
+
+    if ( quantity%template%frequencyCoordinate == L_None &
+      & .and. MAYCOLLAPSEDIMS) then
+      noDims = 2
+    else
+      noDims = 3
+    end if
 
     ! Create or access the SD
     already_there = IsHDF5DSPresent(fileID, trim(sdName))
@@ -469,12 +480,6 @@ contains ! ======================= Public Procedures =========================
       sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
       sizes(noDims-1) = quantity%template%noSurfs
       if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-    end if
-
-    if ( quantity%template%frequencyCoordinate == L_None ) then
-      noDims = 2
-    else
-      noDims = 3
     end if
 
     ! What exactly will be our contribution
@@ -531,8 +536,9 @@ contains ! ======================= Public Procedures =========================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Number of 2d array elements to write > number stored in qty values' )
       call SaveAsHDF5DS( fileID, trim(sdName), &
-        & real(quantity%values(:,first_maf:last_maf)), &
-        & start, sizes, may_add_to=.true., adding_to=already_there)
+        & real( &
+        &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:2)) &
+        & ), start, sizes, may_add_to=.true., adding_to=already_there)
     endif
 
     ! Now some attribute stuff
@@ -727,6 +733,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.9  2003/07/15 23:41:47  pwagner
+! l2aux always rank 3 unless MAYCOLLAPSEDIMS; disabled most printing
+!
 ! Revision 2.8  2003/07/09 21:49:53  pwagner
 ! Tries to figure out in advance whether to create swath
 !
