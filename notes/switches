@@ -34,8 +34,9 @@ Switches (set by -S option in mlsl2's command line):
   log =>    Log file messages
   mas =>    Activities of the PVM master task
   msk =>    Mask set up by subset command in Retrieve
-  ndb =>    Dump the Newton method's internal variables after every SOLVE step
-  NDB =>    Dump the Newton method's internal variables before every call
+  ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
+  Ndb =>    Dump all the Newton method's internal variables after every SOLVE step
+  NDB =>    Dump all the Newton method's internal variables before every call
   neq =>    Normal equations during retriever iterations
   ngc =>    Show how many times garbage collected during each chunk
   nwt =>    Action flag at each return from Newton solver
@@ -86,6 +87,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.29  2002/10/02 23:07:50  vsnyder
+ Added 'seez' switch
+
  Revision 1.28  2002/09/14 02:48:47  vsnyder
  Added NDB
 
