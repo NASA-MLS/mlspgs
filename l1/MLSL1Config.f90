@@ -6,7 +6,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
   USE MLSCommon, ONLY: TAI93_Range_T
-  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands
+  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands, BandChanBad
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE Intrinsic, ONLY: parm_indices
@@ -344,7 +344,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
            f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
-           p_thzspaceangle, f_s, f_bandno, p_MoonToSpaceAngle, p_MoonToLimbAngle
+           p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
+           p_MoonToSpaceAngle, p_MoonToLimbAngle
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -356,7 +357,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
       CHARACTER(LEN=1), POINTER :: scan_use
       CHARACTER(LEN=80) :: identifier
-      INTEGER :: i, j, k, son, key, spec, swno, bandno
+      INTEGER :: i, j, k, son, key, spec, swno, bandno, channo
       INTEGER :: expr_units(2)
       DOUBLE PRECISION :: expr_value(2)
       LOGICAL :: GHz_mod, sec_tgt
@@ -657,6 +658,36 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
                BandSwitch(swno) = bandno
 
+            CASE (s_markchanbad)
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_chan)
+
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     channo = expr_value(1)
+                     
+                  CASE (f_bandno)
+                     CALL Expr (subtree (2, son), expr_units, expr_value)
+                     bandno = expr_value(1)
+
+                  END SELECT
+
+               ENDDO
+
+               IF (bandno < 1 .OR. bandno > NumBands) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'Bandno number out of range!')
+               ENDIF
+               IF (channo < 1 .OR. channo > BandChanBad%MaxChan(bandno)) THEN
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       'ChanNo number out of range!')
+               ENDIF
+               BandChanBad%Sign(bandno,channo) = -1.0  ! Mark as "Bad"
             CASE DEFAULT
 
                PRINT *, 'unknown spec!'
@@ -704,6 +735,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.15  2004/11/10 15:39:17  perun
+! Add case to set BandChanBad value based on user input
+!
 ! Revision 2.14  2004/08/12 13:51:50  perun
 ! Version 1.44 commit
 !
