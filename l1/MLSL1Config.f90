@@ -32,14 +32,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   TYPE Globals_T
      CHARACTER(LEN=80) :: OutputVersionString
-     CHARACTER(LEN=80) :: VersionComment
      LOGICAL :: ProduceL1BOA = .TRUE.
-     LOGICAL :: SimOA = .TRUE.
+     LOGICAL :: SimOA = .FALSE.
   END TYPE Globals_T
 
   TYPE Calib_T
      INTEGER :: CalWindow
      INTEGER :: MIFsPerMAF
+     INTEGER :: DACSwindow
      REAL :: GHzSpaceTemp, GHzTargetTemp
      REAL :: THzSpaceTemp, THzTargetTemp
      REAL :: THzSpaceAngle, THzMaxBias
@@ -207,8 +207,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
     SUBROUTINE Set_globalsettings (root)
 !=============================================================================
 
-      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, &
-           p_version_comment, p_produce_l1boa, p_simoa
+      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, p_produce_l1boa, &
+           p_simoa
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MoreTree, ONLY: Get_Boolean
 
@@ -228,11 +228,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             CALL Get_string (Sub_rosa (Subtree(2,son)), &
                  L1Config%Globals%OutputVersionString, strip=.TRUE.)
-
-         CASE (p_version_comment)
-
-            CALL Get_string (Sub_rosa (Subtree(2,son)), &
-                 L1Config%Globals%VersionComment, strip=.TRUE.)
 
          CASE (p_produce_l1boa)
 
@@ -345,7 +340,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
            p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
-           p_MoonToSpaceAngle, p_MoonToLimbAngle
+           p_MoonToSpaceAngle, p_MoonToLimbAngle, p_DACSwindow
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -498,6 +493,16 @@ MODULE MLSL1Config  ! Level 1 Configuration
                   CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_dacswindow)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%DACSwindow = expr_value(1)
+               IF (expr_units(1) /= phyq_mafs) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as MAFs')
                ENDIF
 
             CASE (p_mif_duration)
@@ -735,6 +740,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.16  2004/12/01 17:10:07  perun
+! Remove VersionComment and add DACSwindow
+!
 ! Revision 2.15  2004/11/10 15:39:17  perun
 ! Add case to set BandChanBad value based on user input
 !
