@@ -2,7 +2,7 @@
 !     .  All rights reserved.  U. S. Government sponsorship under
 !     .  NASA contract NAS7-918 is acknowledged.
 
-      integer M, N
+      integer, intent(in) :: M, N
 
 !     *****     Local Variables     ************************************
 
@@ -109,13 +109,16 @@
    60    if ( a(cl-1) > partn ) then
             a(cl) = a(cl-1)
             cl = cl-1
-            if ( cl > m) go to 60
+            if ( cl > m ) go to 60
          end if
          a(cl) = partn
       end do
       return
 
 ! $Log$
+! Revision 2.4  2003/06/20 00:18:10  vsnyder
+! Add intents for M and N, futzing
+!
 ! Revision 2.3  2002/10/02 16:50:21  pwagner
 ! Removed RCS Ident Block
 !
