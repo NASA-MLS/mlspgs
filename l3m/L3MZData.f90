@@ -27,7 +27,8 @@ MODULE L3MZData
 
 ! Contents:
 
-! Definition -- L3MZData_T
+! Definitions -- L3MZData_T
+!                L3MZDiag_T
 ! Subroutines -- OutputL3MZ
 !                WriteMetaL3MZ
 !                AllocateL3MZ
@@ -53,11 +54,11 @@ MODULE L3MZData
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
-     REAL(r8), DIMENSION(:), POINTER :: pressure   ! dimensioned (nLevels)
+     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
 
      ! Now the horizontal geolocation information and time:
 
-     REAL(r8), DIMENSION(:), POINTER :: latitude    ! dimensioned (nLats)
+     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
 
      REAL(r8), DIMENSION(:,:), POINTER :: localSolarTime
      REAL(r8), DIMENSION(:,:), POINTER :: localSolarZenithAngle
@@ -68,11 +69,38 @@ MODULE L3MZData
 
      ! Now the data fields:
 
-     REAL(r8), DIMENSION(:,:), POINTER :: l3mzValue       ! Field value
-     REAL(r8), DIMENSION(:,:), POINTER :: l3mzPrecision   ! Field precision
+     REAL(r8), DIMENSION(:,:), POINTER :: l3mzValue		! Field value
+     REAL(r8), DIMENSION(:,:), POINTER :: l3mzPrecision		! Field precision
         ! dimensioned as (nLevels, nLats)
 
    END TYPE L3MZData_T
+
+! This data type is used to store the l3 monthly zonal mean diagnostics.
+
+   TYPE L3MZDiag_T
+
+     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
+
+     INTEGER :: nLevels         ! Total number of surfaces
+     INTEGER :: nLats           ! Total number of latitudes
+
+     ! Now we store the geolocation fields.  First, the vertical one:
+
+     REAL(r8), DIMENSION(:), POINTER :: pressure        ! dimensioned (nLevels)
+
+     ! Now the horizontal geolocation information and time:
+
+     REAL(r8), DIMENSION(:), POINTER :: latitude        ! dimensioned (nLats)
+
+     ! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+     REAL(r8), DIMENSION(:,:), POINTER :: latRss
+
+     ! Missing points (percentage), dimensioned (nLevels, nLats)
+
+     INTEGER, DIMENSION(:,:), POINTER :: perMisPoints
+
+   END TYPE L3MZDiag_T
 
 CONTAINS
 
@@ -914,6 +942,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.3  2001/10/04 18:25:04  nakamura
+! Removed lev as dim for local solar fields.
+!
 ! Revision 1.2  2001/09/26 19:47:03  nakamura
 ! Added local solar ancillary fields.
 !
