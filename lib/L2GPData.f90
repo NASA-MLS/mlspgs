@@ -215,7 +215,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end type L2GPData_T
 
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .true.  
+  logical, parameter :: DEEBUG = .false.  
 
 contains ! =====     Public Procedures     =============================
 
@@ -868,7 +868,7 @@ contains ! =====     Public Procedures     =============================
 
     !  After reading, detach from swath interface
 
-    status = swdetach(swid)
+    status = mls_swdetach(swid, hdfVersion=HDFVERSION_4)
     if ( status == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Failed to detach from swath interface after reading.' )
 
@@ -943,7 +943,7 @@ contains ! =====     Public Procedures     =============================
     !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
     
-    print *, 'Trying to read he5_swattach to read'
+    ! print *, 'Trying to read he5_swattach to read'
     select case (HMOT)
     case ('H')
       swid = mls_SWattach(L2FileHandle, 'HIRDLS', hdfVersion=HDFVERSION_5)
@@ -1186,7 +1186,7 @@ contains ! =====     Public Procedures     =============================
 
     !  After reading, detach from HE5_SWath interface
 
-    status = HE5_SWdetach(swid)
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &detach from swath interface after reading.')
     !print*," leaving readl2gpdata_hdf5: first/last/read=",&
@@ -1242,8 +1242,8 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Create the swath within the file
 
-    print *, 'About to sw_create ', TRIM(name)
-    if ( present(filename)) print *, 'file name ', TRIM(filename)
+    ! print *, 'About to sw_create ', TRIM(name)
+    ! if ( present(filename)) print *, 'file name ', TRIM(filename)
     swid = mls_swcreate(L2FileHandle, TRIM(name), &
       & filename=filename, hdfVersion=HDFVERSION_4)
     if ( swid == -1 ) then
@@ -1367,7 +1367,7 @@ contains ! =====     Public Procedures     =============================
     ! file and must be done before writing or reading data to or from the
     ! swath.
 
-    status = swdetach(swid)
+    status = mls_swdetach(swid, hdfVersion=HDFVERSION_4)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to detach from swath interface after definition.' )
@@ -1419,8 +1419,8 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     end if
 
-    print *, 'Trying to swattach to write'
-    print *, l2FileHandle, trim(name)
+    ! print *, 'Trying to swattach to write'
+    ! print *, l2FileHandle, trim(name)
     swid = mls_swattach (l2FileHandle, trim(name), hdfVersion=HDFVERSION_4)
 
     ! Write data to the fields
@@ -1429,11 +1429,11 @@ contains ! =====     Public Procedures     =============================
     start(1) = myOffset
     edge(1) = l2gp%nTimes
 
-    print *, 'Writing geolocation fields'
-    print *, 'start', start
-    print *, 'stride', stride
-    print *, 'edge', edge
-    print *, 'shape(Latitude)', shape(l2gp%latitude)
+    ! print *, 'Writing geolocation fields'
+    ! print *, 'start', start
+    ! print *, 'stride', stride
+    ! print *, 'edge', edge
+    ! print *, 'shape(Latitude)', shape(l2gp%latitude)
     call dump ( l2gp%latitude, 'latitude' )
 
     status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
@@ -1476,7 +1476,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Detach from the swath interface.  
 
-    status = swdetach(swid)
+    status = mls_swdetach(swid, hdfVersion=HDFVERSION_4)
 
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1539,7 +1539,7 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    print *, 'Trying to swattach to write data'
+    ! print *, 'Trying to swattach to write data'
     swid = mls_swattach (l2FileHandle, name, hdfVersion=HDFVERSION_4)
     if(DEEBUG) print *, 'swath name: ', trim(name)
     if(DEEBUG) print *, 'swath id: ', swid
@@ -1593,7 +1593,7 @@ contains ! =====     Public Procedures     =============================
 
     !     Detach from the swath interface.
 
-    status = swdetach(swid)
+    status = mls_swdetach(swid, hdfVersion=HDFVERSION_4)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
@@ -1659,8 +1659,8 @@ contains ! =====     Public Procedures     =============================
     ! Create the swath within the file
     ! print*,"Creating swath called ",name
 
-    print *, 'About to sw_create ', TRIM(name)
-    if ( present(filename) ) print *, 'file name ', TRIM(filename)
+    ! print *, 'About to sw_create ', TRIM(name)
+    ! if ( present(filename) ) print *, 'file name ', TRIM(filename)
     swid = mls_SWcreate(L2FileHandle, trim(name), &
       & filename=filename, hdfVersion=HDFVERSION_5)
     !print*,"Swath ",name,"has SW id :",swid
@@ -1845,7 +1845,7 @@ contains ! =====     Public Procedures     =============================
     ! file and must be done before writing or reading data to or from the
     ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
     ! 
-    status = HE5_SWdetach(swid)
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to detach from swath interface after definition.' )
@@ -1894,7 +1894,7 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     endif
 
-    print *, 'Trying to he5_swattach to write geo'
+    ! print *, 'Trying to he5_swattach to write geo'
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
 
     ! Write data to the fields
@@ -1902,11 +1902,11 @@ contains ! =====     Public Procedures     =============================
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
-    print *, 'Writing geolocation fields'
-    print *, 'start', start
-    print *, 'stride', stride
-    print *, 'edge', edge
-    print *, 'shape(Latitude)', shape(l2gp%latitude)
+    ! print *, 'Writing geolocation fields'
+    ! print *, 'start', start
+    ! print *, 'stride', stride
+    ! print *, 'edge', edge
+    ! print *, 'shape(Latitude)', shape(l2gp%latitude)
 
     status = mls_SWwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=HDFVERSION_5)
@@ -1948,7 +1948,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Detach from the swath interface.  
 
-    status = HE5_SWdetach(swid)
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach from swath interface' )
@@ -2012,7 +2012,7 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    print *, 'Trying to he5_swattach to write data'
+    ! print *, 'Trying to he5_swattach to write data'
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
@@ -2049,7 +2049,7 @@ contains ! =====     Public Procedures     =============================
 
     !     Detach from the swath interface.
 
-    status = HE5_SWdetach(swid)
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if(DEEBUG) print *, 'Detached from swid ', swid
     if(DEEBUG) print *, 'file handle ', l2FileHandle
     if(DEEBUG) print *, 'status ', status
@@ -2157,7 +2157,7 @@ contains ! =====     Public Procedures     =============================
     ! if(DEEBUG) print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
-    print *, 'Trying to he5_swattach to write attributes'
+    ! print *, 'Trying to he5_swattach to write attributes'
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
@@ -2282,7 +2282,7 @@ contains ! =====     Public Procedures     =============================
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
     
-    status = HE5_SWdetach(swid)
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
@@ -2318,7 +2318,7 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    print *, 'Trying to he5_swattach to set alias'
+    ! print *, 'Trying to he5_swattach to set alias'
     sw_id = mls_swattach(l2FileHandle, trim(name), hdfVersion=HDFVERSION_5)
     if ( sw_id < 1 ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
@@ -2337,7 +2337,7 @@ contains ! =====     Public Procedures     =============================
         & "Error in setting alias from " // TYPE2PRECISIONNAME // &
           & ' to ' // trim(name) // ' Precision' )
     end if
-    returnStatus = he5_SWdetach(sw_id)
+    returnStatus = mls_SWdetach(sw_id, hdfVersion=HDFVERSION_5)
     if ( returnStatus /= PGS_S_SUCCESS ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & "Error in detaching swath for setting alias." )
@@ -2433,9 +2433,9 @@ contains ! =====     Public Procedures     =============================
     
     if ( present(createSwath) ) then
       swath_exists = .not. createSwath
-      print *, 'createSwath: ', createSwath
+      ! print *, 'createSwath: ', createSwath
     else
-      print *, 'Uh-oh, calling mls_swattach'
+      ! print *, 'Uh-oh, calling mls_swattach'
       swathid = mls_swattach(L2FileHandle, trim(myswathName), &
         & hdfVersion=myhdfVersion, DONTFAIL=.true.)
       swath_exists = ( swathid > 0 )
@@ -2728,6 +2728,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.72  2003/07/10 22:18:49  livesey
+! More minor bug fixes, but lots of print statements.
+!
 ! Revision 2.71  2003/07/09 21:49:06  pwagner
 ! Wont try swattaching just to see if swath already there
 !
