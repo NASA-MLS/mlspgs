@@ -465,9 +465,9 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       i = 0
       do nw = lbound(mask,1), ubound(mask,1)
-        i = i + 1
-        if ( i > x%nrows ) return
         do nb = 0, b-1
+          i = i + 1
+          if ( i > x%nrows ) return
           if ( btest( mask(nw), nb ) ) then
               x%values(i,:) = 0.0_r8
           end if
@@ -2144,6 +2144,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.50  2001/10/01 23:35:38  vsnyder
+! Correct blunder in ClearRows_0
+!
 ! Revision 2.49  2001/10/01 20:32:27  vsnyder
 ! Handle word and bit indexing in mask consistently
 !
