@@ -7,11 +7,13 @@
 # are not actual files (with special properties); or
 # are not directories; or
 # contain the glob character '*'
-# Useful to weed out formulas like *.c that
+# Useful 
+# (1) to weed out formulas like *.c that
 # have no matching files and so stay just '*.c'
 # rather than expanding into a list of matching files
+# (2) to construct link or include lines inside Makefiles
 #
-# Optionally prefixes each with a specified prefix; e.g.
+# Optionally pre- or suffixes each with a specified pre- or suffix; e.g.
 # Given 'reecho -prefix=-I *-dir'
 # might echo '-I a-dir -I b-dir -I c-dir ..'
 #
@@ -26,13 +28,18 @@
 # -[n]w         [don't] reecho args that exist and you have write permission
 # -[n]x         [don't] reecho args that exist and you have execute permission
 # -[n]glob      [don't] reecho any arg containing the glob character '*'
+# -dir "dir"    cd to "dir" before filtering
+# -lib          filter each arg "x" based on the file "libx.a" exists or ...
 # -h[elp]       print brief help message; exit
 # -prefix=xxx   reecho xxx in front of each arg (separated by a space)
 #               e.g. '-I a-dir -I b-dir -I c-dir ..'
 # -prefixn=xxx  reecho xxx in front of each arg (without a separating space)
 #               e.g. '-Ia-dir -Ib-dir -Ic-dir ..'
+# -suffix=xxx   reecho xxx after each arg (separated by a space)
+#               e.g. 'a plop b plop c plop ...'
+# -suffixn=xxx  reecho xxx after each arg (without a separating space)
+#               e.g. 'Xshabam Yshabam Zshabam ..'
 # arg1          an arg that may or may not be reechoed
-#
 #
 # Note:
 # (1) The option(s) marked with "-", if present,
@@ -56,8 +63,13 @@
 #    `reecho -glob *.7`     returns "" 
 #    `reecho -glob *.8`     returns "*.8" 
 # 
+# More practical examples:
+#  67%reecho.sh -lib -dir /usr/lib -prefixn=-l dfftw drfftw
+#     -ldfftw -ldrfftw
+#  69%util/reecho.sh -lib -dir /usr/lib -prefixn=lib -suffixn=.a dfftw drfftw
+#     libdfftw.a libdrfftw.a
 # --------------- End reecho.sh help
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -80,28 +92,35 @@ extant_files()
    # Trivial case ($# = 0)
    if [ "$1" != "" ]
    then
-      for file
+      for arg
       do
+         if [ "$as_lib" = "yes" ]
+         then
+            file="lib${arg}.a"
+         else
+            file=$arg
+         fi
+         
          if [ $the_opt = "-glob" ]
          then
             check=`echo $file | grep -i '\*'`
-            if [ $the_sense = "yes" -a $check != "" ]
+            if [ $the_sense = "yes" -a "$check" != "" ]
             then
-                  extant_files_result="$extant_files_result $file"
-            elif [ $the_sense = "no" -a $check = "" ]
+                  extant_files_result="$extant_files_result $arg"
+            elif [ $the_sense = "no" -a "$check" = "" ]
             then
-                  extant_files_result="$extant_files_result $file"
+                  extant_files_result="$extant_files_result $arg"
             fi
          elif [ $the_sense = "yes" ]
          then
             if [ $the_opt "$file" ]
             then
-                  extant_files_result="$extant_files_result $file"
+                  extant_files_result="$extant_files_result $arg"
             fi
          else
             if [ ! $the_opt "$file" ]
             then
-                  extant_files_result="$extant_files_result $file"
+                  extant_files_result="$extant_files_result $arg"
             fi
          fi
       done
@@ -125,11 +144,15 @@ then
    echo "with args $@"
 fi
 
+new_dir=""
+as_lib="no"
 the_opt="-f"
 the_sense="yes"
 more_opts="yes"
 the_prefix=""
-separate="yes"
+the_suffix=""
+separate_prefix="yes"
+separate_suffix="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
@@ -200,13 +223,31 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -prefixn=* )
        the_prefix=`echo $1 | sed 's/-prefixn=//'`
-       separate="no"
+       separate_prefix="no"
+       shift
+       ;;
+    -suffix=* )
+       the_suffix=`echo $1 | sed 's/-suffix=//'`
+       shift
+       ;;
+    -suffixn=* )
+       the_suffix=`echo $1 | sed 's/-suffixn=//'`
+       separate_suffix="no"
        shift
        ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
+       ;;
+    -dir )
+       shift
+       new_dir="$1"
+       shift
+       ;;
+    -lib )
+       as_lib="yes"
+       shift
        ;;
     * )
        more_opts="no"
@@ -219,30 +260,84 @@ then
    echo "the_opt $the_opt"
    echo "the_sense $the_sense"
    echo "the_prefix $the_prefix"
-   echo "separate? $separate"
+   echo "separate_prefix? $separate_prefix"
+   echo "the_suffix $the_suffix"
+   echo "separate_suffix? $separate_suffix"
+   echo "as lib? $as_lib"
+   echo "new_dir $new_dir"
    echo "remaining args $@"
 fi
 
-extant_files "$@"
-if [ "$the_prefix" = "" ]
+if [ "$new_dir" = "" ]
+then
+   extant_files "$@"
+else
+   old_dir=`pwd`
+   cd "$new_dir"
+#  Since we changed directories, args which failed to glob
+#  in old_dir may glob successfully in new_dir
+   extant_files "$@"
+#   Ahh, but this didn't work; not sure why. Worry about it later
+#   new_args=`echo $@`
+#   if [ $DEEBUG = "on" ]
+#   then
+#      pwd
+#      echo "new_args $new_args"
+#   fi
+#   extant_files "$new_args"
+   cd "$old_dir"
+fi
+
+if [ "$separate_suffix" = "yes" ]   
+then                                
+   the_suffix=" $the_suffix"        
+fi                                  
+if [ "$separate_prefix" = "yes" ]   
+then                                
+   the_prefix="$the_prefix "        
+fi                                  
+
+if [ $DEEBUG = "on" ]          
+then                           
+   echo "Before pre-suffixing: $extant_files_result"   
+fi                             
+
+if [ "$the_prefix" = "" -a "$the_suffix" = "" ]
 then
    # No prefix--just echo filtered args
    echo $extant_files_result
-else
+elif [ "$the_suffix" = "" ]
+then
    # prefix each filtered arg
    prefixed_result=
-   if [ "$separate" = "yes" ]
-   then
-      the_prefix="$the_prefix "
-   fi
    for file in $extant_files_result
    do
       prefixed_result="$prefixed_result ${the_prefix}$file"
    done
    echo $prefixed_result
+elif [ "$the_prefix" = "" ]
+then
+   # suffix each filtered arg
+   prefixed_result=
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result $file${the_suffix}"
+   done
+   echo $prefixed_result
+else
+   # prefix and suffix each filtered arg
+   prefixed_result=
+   for file in $extant_files_result
+   do
+      prefixed_result="$prefixed_result ${the_prefix}$file${the_suffix}"
+   done
+   echo $prefixed_result
 fi
 exit
 # $Log$
+# Revision 1.2  2001/08/16 18:14:35  pwagner
+# Added -prefix=xxx stuff
+#
 # Revision 1.1  2001/08/13 16:42:10  pwagner
 # First commit under this name; previous name was foolish
 #
