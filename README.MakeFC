@@ -3,7 +3,7 @@
 #  Lost? Type 'make -f MakeFC help' from the directory where you see this file
 #
 #    README.MakeFC        Instructions about building the mls software
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -12,16 +12,24 @@
 # related documents:
 #  mlspgs.tgz        an archive containing this file and mls software sources
 #  BEFORE.mls        a self-reading guide to prerequisites to the software
+#  build-nag         a script to build all prerequisite libraries and mls 
+#                     software; also build-lahey, build-ifc, etc.
 
         more << EOF
 MakeFC--A configurable Makefile in mlspgs
+
+NOTE
+It is possible that you won't need to read this document. If you obtained the
+mls software as part of a shrinkwrap package, look there for the files
+build-xxx (where xxx might be "nag"), env.linux, and f90. After judiciously
+editing these, just cd to their directory and type "build-xxx".
 
 SUMMARY
 To build the mls software, on many different combinations of compiler/
 platform/OS, minimizing the changes most users will need to make. Therefore
 it is mostly self-configuring. First, you will need:
  (1) f95 compiler (either NAG, Lahey, or Sun)
- (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+ (2) Installed SDP Toolkit (PGSTK, HDFEOS(5), HDF(5))
  (3) mls software (probably where you're reading this)
  (4) perl
  (5) PVM--a library to emulate parallel virtual machines
@@ -134,11 +142,9 @@ them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
-Note whether you have the latest version of the toolkit (currently 5.2.8v1.00)
+Note whether you have the latest version of the toolkit (currently 5.2.9.D)
 or an earlier one. The latest version includes version 5 of both the HDF and
-HDFEOS libraries, and so their paths need to be set. For earlier versions,
-leave their paths blank. Note that a future release of the mlspgs software will
-require 5.2.8 or above and versions 5 of the HDF/HDFEOS libraries.
+HDFEOS libraries, and so their paths need to be set.
 
 The next set of questions will pertain to four special libraries: BLAS, LAPACK,
 PVM and FFTW. BLAS and LAPACK are completely optional, with the understanding
@@ -484,6 +490,13 @@ directory. I can switch between versions by overwriting the current .configure
 with one saved for the other platform. See above for fuller explanation of how
 to easily handle multiple platforms or named configurations.
 
+When should you "make clean"? Never say "never", but let's say "hardly ever".
+If "make update" has been conscientiously and regularly done, make has never
+been interrupted in the midst of a recompilation, and the os version,  compiler
+version, or compiler options never changed, then you should never have to do a
+"make clean". If any of the conditions above are violated, then the answer
+changes from "never" to "it depends".
+
 Sometimes after doing a cvs update, especially if there has been a lot of
 active coding and cvs committing, the next make will exit complaining about an
 illegal separator.  This is usually the result of cvs "merging" your copy of
@@ -521,7 +534,8 @@ To revert to the simpler, sturdier Makefiles of bygone days put the CASCADE
 setting to "yes", or in fact to anything other than its blank default. This
 throwback applies each time it is used, but is good for that time only; i.e.,
 if the next make is issued without the setting, make will resume checking for
-differences in the .mod files.
+differences in the .mod files. As this will cause more and more frequent
+compilations, it is recommended only if anomalous behavior has been noted.
 
 Also available but not recommended is a third system that requires more care on
 the user's part. If in addition to the CASCADE setting, you put the NOCASCADE
@@ -570,6 +584,14 @@ If you add a new module to one of the levels, make sure that neither the module
 name nor the file name duplicate names of a module already in a lineal
 directory. Two directories are lineal if one is a prerequisite of the other.
 E.g., l1 and srclib are lineal, while l3 and fwdmdl are not.
+
+Not mentioned above are two extra directories: customblds and 
+lib/machines/MLSCONFG. The first contains custom build instructions for various
+modules, i.e. modules for which the default ".f.o" rules won't work. The second
+contains at least one file, machine.f90, with compiler/platform-specific
+information about command-line  arguments and other features. Sometimes other
+files may accompany machine.f90, e.g. to compensate for missing ieee-arithmetic
+support in the case of Lahey or Sun.
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -678,10 +700,10 @@ the .configure file, yet may be overridden on the command line. These should be
 used with care, however.
 
 EVERYTHING         All the directories to be tarred up by "make tar"
-HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
-                    if non-blank (but see l1--hdf5, l2--hdf5, etc.)
 INSTALLDIR         Destination where install moves mlsl1log, etc. 
                     (see also MLSINSTALLDIR)
+L2PARALLEL         Install l2 parallel executables
+                     if non-blank and target is l2-install
 LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
 MLSCFILE           Overrides the name of the .configure file
                     (see also HOSTMLSCFILE)
@@ -689,6 +711,8 @@ OMIT               The names of any source files to be excluded; e.g.
                      make update OMIT="wont_compile.f90 never_would.f90"
 TAR                Overrides name of tar command; e.g. path to GNU tar 
                    in case your tar won't gzip for targets *targ
+PVM_EP             Where to install parallel executables
+                    if non-blank; default is HOME/pvm3/bin/LINUX
 
 The following are environmental settings
 HOSTMLSCFILE       Get all the mls settings from this file instead of 
@@ -743,10 +767,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2003-May-01
+-pw                           2000-Oct-24 to 2004-March-31
 EOF
 exit
 # $Log$
+# Revision 1.36  2003/05/01 23:34:36  pwagner
+# Reflects option allowing update at any level; removed mention of depends; added warning of duplicate names
+#
 # Revision 1.35  2003/03/03 18:39:43  pwagner
 # install now works within each mlslevel, l1 holds 3 executables, blah--hdf4/5 dropped
 #

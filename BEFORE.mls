@@ -3,7 +3,7 @@
 #  Lost? Type 'make -f MakeFC help' from the directory where you see this file
 #
 #    BEFORE.mls        Prerequisites for building the mls software
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -14,16 +14,20 @@
 #  README.MakeFC     a self-reading guide to building the software
 
         more << EOF
+NOTE
+It is possible that you won't need to read this document. If you obtained the
+mls software as part of a shrinkwrap package, look there for the files
+build-xxx (where xxx might be "nag"), env.linux, and f90. After judiciously
+editing these, just cd to their directory and type "build-xxx".
+
 SUMMARY
-Before building the mls software you will need the following (absolutely
-mandatory items are marked with a *; the others may be in fact required for
-building certain levels of the mls software, except for BLAS)
- *(1) f95 compiler (NAG, Lahey, or Sun)
+Before building the mls software you will need the following
+ (1) f95 compiler (NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit libraries:
     (a) PGSTK
-    *(b) HDFEOS
-    *(c) HDF
- *(3) mls software (probably where you're reading this)
+    (b) HDFEOS
+    (c) HDF
+ (3) mls software (probably where you're reading this)
  (4) PVM--a library to emulate parallel virtual machines
  (5) FFTW--a library to accomplish fast Fourier tranforms
  (6) BLAS and LAPACK--libraries to speed up linear algebra
@@ -153,11 +157,14 @@ You have to choose one of the two options:
 
 Note that (b) will always be available, and is the built-in default
 
--pw                           2001-Feb-28 to 2001-Nov-07
+-pw                           2001-Feb-28 to 2004-Mar-31
 EOF
 
 exit
 # $Log$
+# Revision 1.5  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
 # Revision 1.4  2001/11/06 00:22:51  pwagner
 # BLAS, LAPACK usage explained
 #
