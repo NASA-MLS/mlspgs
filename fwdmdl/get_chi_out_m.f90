@@ -11,6 +11,7 @@ module Get_Chi_Out_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
 
@@ -166,8 +167,15 @@ contains
 
   end subroutine Get_Chi_Out
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Get_Chi_Out_m
 ! $Log$
+! Revision 2.11  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.10  2002/10/03 22:25:13  vsnyder
 ! Move USE statements from module scope to procedure scope.  Convert some
 ! allocated arrays to automatic arrays.  Cosmetic changes.
