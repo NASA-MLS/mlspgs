@@ -70,6 +70,7 @@ contains
             &    no_mol, n_path
   REAL(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm
   REAL(rp), allocatable, dimension(:) :: LineWidth
+  REAL(rp), allocatable, dimension(:) :: betam, betap
 !
 ! begin the code
 !
@@ -113,11 +114,13 @@ contains
 !
   IF(PRESENT(dbeta_dt_path)) THEN
 
+    Allocate(betam(n_path),betap(n_path))
+
     dbeta_dt_path = 0.0
 !
     DO i = 1, no_mol
-      bm = 0.0_rp
-      bp = 0.0_rp
+      betam = 0.0
+      betap = 0.0
       nbe = beta_group(i)%n_elements
       do n = 1, nbe
         ratio = beta_group(i)%ratio(n)
@@ -136,19 +139,23 @@ contains
           &    no_of_lines,LineWidth,gl_slabs_m(k,ib)%v0s,gl_slabs_m(k,ib)%x1,&
           &    gl_slabs_m(k,ib)%y,gl_slabs_m(k,ib)%yi,gl_slabs_m(k,ib)%slabs1,&
           &    vm,gl_slabs_m(k,ib)%dslabs1_dv0)
-          bm = bm + vm * ratio
+          betam(j) = betam(j) + vm * ratio
           tp = t_path_p(k)
           CALL create_beta(Spectag,Catalog(ib)%continuum,p_path(k),tp,Frq,    &
           &    no_of_lines,LineWidth,gl_slabs_m(k,ib)%v0s,gl_slabs_p(k,ib)%x1,&
           &    gl_slabs_p(k,ib)%y,gl_slabs_p(k,ib)%yi,gl_slabs_p(k,ib)%slabs1,&
           &    vp,gl_slabs_p(k,ib)%dslabs1_dv0)
-          bp = bp + vp * ratio
+          betap(j) = betap(j) + vp * ratio
         END DO
         DeAllocate(LineWidth)
       end do
       DO j = 1 , n_path
         k = path_inds(j)
         t  = t_path(k)
+        tm = t_path_m(k)
+        tp = t_path_p(k)
+        bm = betam(j)
+        bp = betap(j)
         bb = beta_path(j,i)
         if ( bp > 0.0 .and. bb > 0.0 .and. bm > 0.0 ) then
           vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
@@ -174,6 +181,7 @@ contains
         dbeta_dt_path(j,i) = (vp + 2.0 * v0 + vm) / 4.0  ! Weighted Average
       END DO
     ENDDO
+    DeAllocate(betam,betap)
   ENDIF
 !
  END SUBROUTINE get_beta_path
@@ -181,6 +189,9 @@ contains
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.6  2001/12/14 23:43:15  zvi
+! Modification for Grouping concept
+!
 ! Revision 2.5  2001/11/15 01:22:01  zvi
 ! Remove Extiction debug
 !
