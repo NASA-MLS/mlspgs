@@ -61,7 +61,8 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
     use MoreTree, only: GET_BOOLEAN
-    use STRING_TABLE, only: GET_STRING
+    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+    use Output_M, only: OUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -1095,6 +1096,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use OUTPUT_M, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
 
     type (HGrid_T), intent(in) :: HGRID
     type (L1BInfo_T), intent(in) :: L1BINFO
@@ -1138,6 +1140,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
+    call output ( "Dumping geometry for HGrid: " )
+    if ( hGrid%name /= 0 ) then
+      call display_string ( hGrid%name, strip=.true., advance='yes' )
+    else
+      call output ( "<no-name>", advance='yes' )
+    end if
+
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     if ( hdfversion <= 0 ) &                                            
       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
@@ -1153,8 +1162,10 @@ contains ! =====     Public Procedures     =============================
 
     phiMin = minval ( mifPhi )
     phiMax = maxval ( mifPhi )
-    phiMin = min ( phiMin, hGrid%phi(1,1) )
-    phiMax = max ( phiMax, hGrid%phi(1,hGrid%noProfs) )
+    if ( hGrid%noProfs > 0 ) then
+      phiMin = min ( phiMin, hGrid%phi(1,1) )
+      phiMax = max ( phiMax, hGrid%phi(1,hGrid%noProfs) )
+    end if
 
     ! Now setup the text to print
     noBins = ( phiMax - phiMin ) / binSize
@@ -1442,6 +1453,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.62  2004/06/14 20:00:36  livesey
+! A bit more helpful information in dumping and geometry dumping
+!
 ! Revision 2.61  2004/05/19 19:16:10  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
