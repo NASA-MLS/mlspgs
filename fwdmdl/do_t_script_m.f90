@@ -65,7 +65,7 @@ contains
     real(rp), intent(in) :: t_space   ! farside boundary temperature
     !                                   usually cosmic space (2.7K).
 
-    real(rp) :: t_tmp(size(t_grid)) ! path temperatures modified by scattering
+!    real(rp) :: t_tmp(size(t_grid)) ! path temperatures modified by scattering
 
 ! Outputs:
 
@@ -75,20 +75,21 @@ contains
 
     integer :: n_path
     real(rp) :: a, b
-    real(rp) :: V1(size(t_grid))
+    real(rp) :: V1(size(t_grid)), Tb(size(t_grid))
 
 ! get path information
 
     n_path = size(t_grid)
-
-    t_tmp = (1.0_rp-w0) * t_grid + w0 * t_scat
-
+  
 !    V1 = stat_temp(t_grid,nu)
 !    b = -stat_temp(t_grid(1),nu)
 !    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
-    V1 = stat_temp(t_tmp,nu)
-    b = -stat_temp(t_tmp(1),nu)
-    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_tmp(n_path),nu)
+!    t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
+
+    Tb=stat_temp(t_grid,nu)                  !clear-sky Tb
+    V1 = (1.0_rp-w0) * Tb + w0 * t_scat      !(1-w0)*Tb + W0*Tscat
+    b = -stat_temp(t_grid(1),nu)
+    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
 
     t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
 
@@ -101,6 +102,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.8  2004/03/30 00:45:09  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.7  2004/03/27 01:36:56  jonathan
 ! now cloud effects are included
 !
