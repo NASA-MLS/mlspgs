@@ -42,17 +42,19 @@ PROGRAM sids_l1boa ! End-to-end check on subroutines
    CHARACTER (LEN=27), ALLOCATABLE :: scanTimes(:,:)
 
    INTEGER :: alloc_err, dealloc_err, i, lenMAF, lenMIF, mifG, mifRate, mifT
-   INTEGER :: minSC, nPhaseG, nPhaseT, numOrb, offsetMAF, opd, orbPerDay
+   INTEGER :: minSC, nPhaseG, nPhaseT, offsetMAF, opd, orbPerDay
+!   INTEGER :: minSC, nPhaseG, nPhaseT, numOrb, offsetMAF, opd, orbPerDay
    INTEGER :: postMAF, preMAF, returnStatus, scansPerOrb, sd_id, status
    INTEGER :: SD_VERSION
-   INTEGER :: orbitNumber(max_orbits)
+!   INTEGER :: orbitNumber(max_orbits)
    INTEGER, ALLOCATABLE :: numMIFs(:), nV(:)
    INTEGER, ALLOCATABLE :: numValues(:,:)
 
    REAL, ALLOCATABLE :: scRate(:), scRateT(:)
 
-   REAL(r8) :: altG, altT, homeAlt, homeLat, mfps, orbIncline, spm
-   REAL(r8) :: ascTAI(max_orbits), dscTAI(max_orbits)
+   REAL(r8) :: homeAlt, homeLat, mfps, spm
+!   REAL(r8) :: altG, altT, homeAlt, homeLat, mfps, orbIncline, spm
+!   REAL(r8) :: ascTAI(max_orbits), dscTAI(max_orbits)
    REAL(r8), ALLOCATABLE :: mafTAI(:), offsets(:), postTAI(:), preTAI(:)
    REAL(r8), ALLOCATABLE :: scanTAI(:,:)
 
@@ -240,6 +242,9 @@ END PROGRAM sids_l1boa
 !=====================
 
 !# $Log$
+!# Revision 1.2  2000/12/04 18:36:36  pumphrey
+!# fixed a tiny bug
+!#
 !# Revision 1.1  2000/11/30 16:34:27  nakamura
 !# The SIDS L1BOA program.
 !#
