@@ -6,7 +6,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
   use Machine, only: Exit_with_status
-  use SDPToolkit, only: PGS_SMF_GenerateStatusReport
+  use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
 
   implicit none
 
@@ -133,7 +133,8 @@ contains
        ! Log the message using the toolkit routine
 
        if ( my_adv ) then
-         if( MLSMessageConfig%useToolkit ) dummy = PGS_SMF_GenerateStatusReport&
+         if( MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
+         & dummy = PGS_SMF_GenerateStatusReport&
          & (TRIM(MLSMessageConfig%prefix)// &
               & TRIM(line))
 
@@ -148,6 +149,7 @@ contains
          end select
 
          line_len = 0
+         line = ' '
        end if
 
     end if
@@ -211,6 +213,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.9  2001/05/11 23:42:27  pwagner
+! Prevented unwanted double printing
+!
 ! Revision 2.8  2001/05/09 23:30:13  pwagner
 ! Detachable from toolkit
 !
