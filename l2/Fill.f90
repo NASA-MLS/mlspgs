@@ -254,7 +254,6 @@ contains ! =====     Public Procedures     =============================
           if (.not. got(f_explicitValues)) call Announce_Error(key, &
             & noExplicitValuesGiven)
           call ExplicitFillVectorQuantity(quantity,valuesNode,spread)
-          call dump(vectors(vectorIndex:vectorIndex))
         case default
           call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
         end select
@@ -427,6 +426,17 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
+    if ( quantity%template%noSurfs /= l2gp%nLevels ) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
+    if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
+      & LOG10(l2gp%pressures)) > TOLERANCE)) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
     ! Attempt to match up the first location
     firstProfileAsArray=MINLOC(ABS(quantity%template%phi(1,1)-l2gp%geodAngle))
     firstProfile=firstProfileAsArray(1)
@@ -441,6 +451,12 @@ contains ! =====     Public Procedures     =============================
     ! Now check that geodAngle's are a sufficient match
     if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
       &         quantity%template%phi(1,:)) > tolerance)) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
+    if (any(abs(l2gp%time(firstProfile:lastProfile)- &
+      &         quantity%template%time(1,:)) > tolerance)) then
       errorCode=vectorWontMatchL2GP
       return
     end if
@@ -714,8 +730,7 @@ contains ! =====     Public Procedures     =============================
         ! Get value from tree
         call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
         ! Check unit OK
-        print*,unitAsArray(1), quantity%template%unit, PHYQ_Dimensionless
-        if ( (unitAsArray(1) /= quantity%template%unit) .and. &
+       if ( (unitAsArray(1) /= quantity%template%unit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error(valuesNode,badUnitsForExplicit)
         ! Store value
@@ -983,6 +998,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.17  2001/02/23 18:16:26  livesey
+! Regular commit
+!
 ! Revision 2.16  2001/02/21 01:07:34  livesey
 ! Got the explicit fill to work.
 !

@@ -25,6 +25,8 @@ module Open_Init
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
   use String_Table, only: L2CFUnit => INUNIT, GET_STRING
+  use TOGGLES, only: GEN, TOGGLE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     &             SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT
@@ -260,6 +262,9 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: SwathNameString ! actual literal swath name
     integer :: vectorIndex         ! In the vector database
 
+
+    if ( toggle (gen) ) call trace_begin( "read_apriori", root )
+
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -356,6 +361,8 @@ contains ! =====     Public Procedures     =============================
 
     end do
 
+    if (toggle(gen) ) call trace_end("read_apriori")
+
   end subroutine read_apriori
 
 
@@ -364,6 +371,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.17  2001/02/23 18:17:35  livesey
+! Added trace calls
+!
 ! Revision 2.16  2001/02/23 00:53:07  vsnyder
 ! Correct an error message
 !
