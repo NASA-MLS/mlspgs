@@ -913,7 +913,8 @@ contains ! =====     Public Procedures     =============================
   ! matches our requirements
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
-    & minorFrame, verticalCoordinate, quantityType, molecule)
+    & minorFrame, verticalCoordinate, frequencyCoordinate, &
+    & noInstances, quantityType, molecule)
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
@@ -923,6 +924,8 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(IN) :: MINORFRAME ! .TRUE.,.FALSE. or not present
 
     integer, optional, dimension(:), intent(IN) :: VERTICALCOORDINATE
+    integer, optional, dimension(:), intent(IN) :: FREQUENCYCOORDINATE
+    integer, optional, dimension(:), intent(IN) :: NOINSTANCES
     integer, optional, dimension(:), intent(IN) :: QUANTITYTYPE
     integer, optional ,dimension(:), intent(IN) :: MOLECULE
 
@@ -964,6 +967,16 @@ contains ! =====     Public Procedures     =============================
       if (.not. ValidateVectorQuantity) return
     end if
 
+    if (present(frequencyCoordinate)) then
+      ValidateVectorQuantity=any(quantity%template%frequencyCoordinate == frequencyCoordinate)
+      if (.not. ValidateVectorQuantity) return
+    end if
+
+    if (present(noInstances)) then
+      ValidateVectorQuantity=any(quantity%template%noInstances == noInstances)
+      if (.not. ValidateVectorQuantity) return
+    end if
+
     if (present(quantityType)) then
       ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
       if (.not. ValidateVectorQuantity) return
@@ -996,6 +1009,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.18  2001/03/16 18:17:49  livesey
+! Added second vector argument and more conditions to GetVectorQuantityByType
+!
 ! Revision 2.17  2001/03/05 00:53:59  livesey
 ! Added molecule argument to ValidateVectorQuantity
 !
