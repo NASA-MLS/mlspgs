@@ -341,7 +341,7 @@ contains
         ! uv = clorentz(xa,y) ! i/(\sqrt\pi z)
         r = oneOvSpi / ( x*x + y*y )
         u = y * r
-        v = x * r
+        if ( present(v) ) v = x * r
 
         ! If we need something more accurate, use two terms:
         ! $w(z) ~ \frac{i}{\sqrt\pi} \left( 1 + \frac1{2 z^2} )$.
@@ -944,6 +944,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.4  2004/12/13 20:45:06  vsnyder
+! Don't set V in Simple_Voigt if it's not present
+!
 ! Revision 2.3  2004/06/12 00:07:10  pwagner
 ! Removed redundant USE statement (because NAF4.2 complained)
 !
