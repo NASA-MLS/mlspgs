@@ -3,6 +3,7 @@ module TREE_WALKER
 ! Traverse the tree output by the parser and checked by the tree checker.
 ! Perform the actions of the MLS L2 processing in the order indicated.
 
+! use Test_Parse_Signals_m, only: Test_Parse_Signals ! Uncomment to test Parse_Signals
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use DUMPER, only: DUMP
   use FILL, only: MLSL2Fill
@@ -93,7 +94,8 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son, fwdModelInfo, &
           & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
-        call MLSSignals ( son, field_indices, spec_indices )
+        call MLSSignals ( son, field_indices )
+!       call test_parse_signals  ! Uncomment this to test Parse_Signals
       case ( z_readapriori )
         ! Read apriori here
       	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, aprioriData)
@@ -153,6 +155,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.16  2001/03/14 02:04:53  vsnyder
+! Moved MLSSignals_m to mlspgs/lib
+!
 ! Revision 2.15  2001/03/09 19:57:48  vsnyder
 ! Add 'z_retrieve' to a case branch
 !
