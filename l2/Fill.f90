@@ -54,8 +54,8 @@ contains ! =====     Public Procedures     =============================
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
-      & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
-      & F_INTERNALVGRID, &
+      & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
+      &	F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
@@ -334,6 +334,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
+    logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua 
     integer :: INTERNALVGRIDINDEX       ! Index for internal vgrid (wmoTrop)
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
@@ -472,6 +473,7 @@ contains ! =====     Public Procedures     =============================
       got= .false.
       ignoreZero = .false.
       ignoreNegative = .false.
+      ignoreGeolocation = .false.
       interpolate = .false.
       invert = .false.
       isPrecision = .false.
@@ -685,6 +687,8 @@ contains ! =====     Public Procedures     =============================
             dontMask = get_boolean ( gson )
           case ( f_ignoreZero )
             ignoreZero = get_boolean ( gson )
+          case ( f_ignoreGeolocation ) ! For l2gp etc. fill
+            ignoreGeolocation =get_boolean ( gson )
           case ( f_ignoreNegative )
             ignoreNegative = get_boolean ( gson )
           case ( f_instances )
@@ -1038,7 +1042,7 @@ contains ! =====     Public Procedures     =============================
           if ( .NOT. got(f_sourceL2GP) ) &
             & call Announce_Error ( key, noSourceL2GPGiven )
           call FillVectorQuantityFromL2GP &
-            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode )
+            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode, ignoreGeolocation )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
@@ -2119,7 +2123,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================== FillVectorQuantityFromL2GP ==========
     subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, profile, &
-      & errorCode )
+      & errorCode, ignoreGeolocation )
       use MLSNumerics, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
         & INTERPOLATEARRAYTEARDOWN
 
@@ -2132,6 +2136,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: interpolate  ! Flag
       integer, intent(in) :: profile    ! Single profile to use or -1 for default
       integer, intent(out) :: errorCode ! Error code
+      logical, intent(in) :: ignoreGeolocation  ! Flag
 
       ! Local parameters
       real(r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
@@ -2184,7 +2189,9 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Skip the position checks if we're forcing in a particular profile.
-      if ( profile == -1 ) then
+      firstProfile = 1
+      lastProfile=firstProfile+quantity%template%noInstances-1
+      if ( (profile == -1) .and. (.not. ignoreGeolocation)) then
         ! Attempt to match up the first location
         firstProfileAsArray=minloc(abs(quantity%template%phi(1,1)-l2gp%geodAngle))
         firstProfile=firstProfileAsArray(1)
@@ -6022,6 +6029,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.243  2003/10/07 15:44:27  cvuu
+! add new flag ignoreGeolocation in subroutine FillVectorQuantityFromL2GP
+!
 ! Revision 2.242  2003/09/25 16:41:12  michael
 ! magnetic field Elevation angle is constrained to 0-90 degrees.
 !
