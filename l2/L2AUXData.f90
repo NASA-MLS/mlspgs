@@ -379,7 +379,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_L2AUX
     
   !------------------------------------------------ ReadL2AUXData ------------
-  subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf)
+  subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf, &
+    & checkDimNames)
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
@@ -390,6 +391,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
+    logical, optional, intent(in) :: checkDimNames
 
     ! Parameters
 
@@ -400,7 +402,7 @@ contains ! =====     Public Procedures     =============================
       &field:'
     integer, parameter :: MAXRANK = 3
     integer, parameter :: MAXDIMSIZES = 300
-    logical, parameter :: CHECKDIMSIZES = .true.	! .TRUE. only while debugging
+    logical            :: myCHECKDIMNAMES	! .TRUE. only for actual l2auxfiles
 
     ! Functions
 
@@ -423,6 +425,8 @@ contains ! =====     Public Procedures     =============================
     logical :: firstCheck, lastCheck
     real (r4), dimension(:,:,:), pointer :: TMPVALUES
 
+    myCHECKDIMNAMES = .false.
+    if ( present(checkDimNames) ) myCHECKDIMNAMES = checkDimNames
     ! Attach to the file for reading
 
     ! find SD data set identifier
@@ -481,8 +485,13 @@ contains ! =====     Public Procedures     =============================
             dim_families(3) = l_maf
             data_dim_sizes(3) = dim_size1
           case default
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unrecognized dimension in l2aux:'//trim(dim_name) )
+            if ( myCHECKDIMNAMES ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unrecognized dimension in l2aux:'//trim(dim_name) )
+            else
+              dim_families(1) = l_channel
+              data_dim_sizes(1) = dim_size1
+            endif
           end select
         endif
       endif
@@ -865,6 +874,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.37  2002/12/02 23:42:12  pwagner
+! Optional param checkDimNames to ReadL2AUXData; defaults to FALSE
+!
 ! Revision 2.36  2002/12/02 19:11:13  pwagner
 ! Corrected data types of counterMAF and dimensions
 !
