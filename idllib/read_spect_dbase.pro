@@ -1,11 +1,13 @@
 ; program to read spectroscopy database
-  PRO read_spect_dbase,mol_file,line_file,species,sps_data
+PRO read_spect_dbase,mol_file,line_file,species,sps_data, $
+                     molID=molID, lineID=lineID, readID=readID
 ; inputs
 ; mol_file = input file name for molecular data
 ; line_file = input file name for line data
 ; species = string array of species wanted or blank for all of them
 ; sps_data = a structure array of molecular data
 ; find out what user wants
+  readID='$Id$'
   buff = ''
   buff1 = ''
   buff2 = ''
@@ -26,7 +28,11 @@
   qv = FLTARR(3)
   contv = FLTARR(6)
   OPENR,lu1,mol_file,/GET_LUN
+  molID=''
+  readf, lu1, molID
   OPENR,lu2,line_file,/GET_LUN
+  lineID=''
+  readf, lu2, lineID
 ; first line is a spacer
   READF,lu2,buff1
   IF SCALARIZE(species) EQ '' THEN BEGIN
