@@ -30,6 +30,11 @@ PLATFORMS = .
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/.configure
 
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
 SHELL = /bin/sh
 
 #--------------- Target definitions
@@ -65,7 +70,19 @@ testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
 #----------------------- Build instructions
 
+#$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+#	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+	@case "$(MLSCONFG)" in \
+	"") \
+		echo "Sorry--your configuration is not yet defined" ; \
+		echo "Try make -f MakeFC configure_full" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 .PHONY: configure depends clean alltests tar clean_objs all
@@ -117,7 +134,7 @@ clean_objs:
 
 tar:
 	rm -f ../lib.tgz
-	tar hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
+	$(TAR) hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
 
 #================= For testing purposes only =============
 #alltests: $(testsubdirs)
@@ -128,6 +145,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.16  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
 # Revision 2.15  2001/03/06 18:17:57  pwagner
 # clean more amitious--rms * from MLSCONFGl[13]/MakeFC
 #
