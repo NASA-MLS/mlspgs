@@ -652,7 +652,7 @@ contains ! =====     Public procedures     =============================
              l+l_cloudExtinction, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
-             l+l_losVel, &
+             l+l_losTransFunc,l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
@@ -784,7 +784,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    nr+n_dot, &
+                    n+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
@@ -1014,6 +1014,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.132  2001/07/13 18:13:04  dwu
+! add quantity losTransFunc
+!
 ! Revision 2.131  2001/07/13 16:22:58  livesey
 ! Really a merge of 2.129 and 2.130.  The checkin of 2.130 was
 ! done incorrectly.
