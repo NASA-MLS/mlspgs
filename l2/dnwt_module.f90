@@ -117,6 +117,7 @@ module DNWT_MODULE
   private
   public :: RK, DNWT, DNWTA, DNWTDB, DNWTOP
   public :: NWT, NWT_T, NWTA, NWTDB, NWTOP
+  public :: FlagName
 
   type NWT_T             ! Stuff about the problem, neatly packaged.  This
                          ! is the type of the AJ argument of NWTA.  Unless
@@ -483,7 +484,8 @@ contains
 
 ! Re-enter after evaluating F.
 
-  160 fn = aj%fnorm
+  160 iter = iter + 1
+      fn = aj%fnorm
 
 ! Test if a retreat to a previous -- best -- X should be made
 
@@ -929,9 +931,52 @@ contains
 
     write (*,dnwtdb_out)
   end subroutine DNWTDB
+
+! ***********************************************     FlagName     *****
+
+  subroutine FlagName ( NFlag, ItsName )
+  ! Return the name of *NWTA's flag
+    integer, intent(in) :: NFlag
+    character(len=*), intent(out) :: ItsName
+    select case ( nflag )
+    case ( NF_EVALF )
+      itsName = 'EVALF'
+    case ( NF_EVALJ )
+      itsName = 'EVALJ'
+    case ( NF_SOLVE )
+      itsName = 'SOLVE'
+    case ( NF_NEWX )
+      itsName = 'NEWX'
+    case ( NF_GMOVE )
+      itsName = 'GMOVE'
+    case ( NF_BEST )
+      itsName = 'BEST'
+    case ( NF_AITKEN )
+      itsName = 'AITKEN'
+    case ( NF_DX )
+      itsName = 'DX'
+    case ( NF_DX_AITKEN )
+      itsName = 'AITKEN'
+    case ( NF_TOLX )
+      itsName = 'TOLX'
+    case ( NF_TOLX_BEST )
+      itsName = 'TOLX_BEST'
+    case ( NF_TOLF )
+      itsName = 'TOLF'
+    case ( NF_TOO_SMALL )
+      itsName = 'TOO_SMALL'
+    case ( NF_FANDJ )
+      itsName = 'What???'
+    case default
+    end select
+  end subroutine FlagName
+
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.7  2001/05/12 01:10:24  vsnyder
+! Correct 'iter' calculation, add 'FlagName' subroutine
+!
 ! Revision 2.6  2001/05/03 02:00:39  vsnyder
 ! Insert copyright notice
 !
