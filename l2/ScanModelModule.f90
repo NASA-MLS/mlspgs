@@ -45,7 +45,7 @@ module ScanModelModule          ! Scan model and associated calculations
   USE VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  use Units, only: LN10, PHYQ_Length, PI
+  use Units, only: Deg2Rad, LN10, PHYQ_Length, PI
   use QuantityTemplates, only: QuantityTemplate_T
 
   implicit NONE
@@ -249,15 +249,14 @@ contains ! =============== Subroutines and functions ==========================
     call Allocate_test ( earthRadius, &
       & ptan%template%noSurfs, ptan%template%noInstances, &
       & 'geocLat', ModuleName )
-    geocLat=GeodToGeocLat(ptan%template%geodLat)
-    earthRadius= earthRadA*earthRadB/sqrt(&
-      & (earthRadA*sin(geocLat))**2+ &
-      & (earthRadB*cos(geocLat))**2)
+    geocLat = GeodToGeocLat(ptan%template%geodLat)
+    earthRadius = earthRadA*earthRadB/sqrt( &
+      & (earthRadA**2-earthRadB**2)*sin(geocLat)**2 + earthRadB**2)
     ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
     if ( index ( switches, 'pguess' ) /= 0 ) &
       & call dump ( ptan%values, 'Initial ptan guess' )
-    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
     call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
+    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
 
     fmConf%phiWindow = 4.0
     fmConf%instrumentModule = ptan%template%instrumentModule
@@ -480,7 +479,7 @@ contains ! =============== Subroutines and functions ==========================
     tempBasis => temp%template%surfs(:,1)
     h2oBasis => h2o%template%surfs(:,1)
 
-    do maf=1,ptan%template%noInstances
+    do maf = 1, ptan%template%noInstances
       ! Setup pointers for this maf
       ptanVals => ptan%values(:,maf)
       tempVals => temp%values(:,closestTempProfiles(maf))
@@ -490,9 +489,9 @@ contains ! =============== Subroutines and functions ==========================
       ! Get a really simple first guess, assuming a uniform log scale height of
       ! 16km
       geocLat=GeodToGeocLat(ptan%template%geodLat(:,maf))
-      earthRadius= earthRadA*earthRadB/sqrt(&
-        & (earthRadA*sin(geocLat))**2+ &
-        & (earthRadB*cos(geocLat))**2)
+      s2=sin(geocLat)**2
+      earthRadius = earthRadA*earthRadB/sqrt(&
+        & (earthRadA**2-earthRadB**2)*s2 + earthRadB**2)
 
       ptanVals = -3.0+(geocAlt%values(:,maf) - &
         & earthRadius)/16e3 ! Do a better job later !???
@@ -500,12 +499,11 @@ contains ! =============== Subroutines and functions ==========================
       ! particularly worthy of note. We're doing the geometricGPH
       ! in a 2D manner (apart from refraction effects).  The hydrostatic GPH is
       ! being done 2D.
-      s2=sin(geocLat)**2
       p2=0.5*(3*s2-1)
       p4=0.125*(35*(s2**2)-30*s2+3)
 
       ! Now we have an iteration loop where we try to fit the tangent pressure
-      do iteration=1,maxIterations
+      do iteration = 1, maxIterations
         ! The first stage is to refract the tangent point altitudes, for this we
         ! need the refractive index, which is dependent on temperature, pressure
         ! and water vapor concentration for the given altitude.
@@ -533,11 +531,11 @@ contains ! =============== Subroutines and functions ==========================
           ratio2=(earthRadA/refractedGeocAlt)**2
           ratio4=ratio2**2
 
-          geometricGPH= -(GM/(refractedGeocAlt*g0))*&
+          geometricGPH = -(GM/(refractedGeocAlt*g0))*&
             &              (1-j2*p2*ratio2- j4*p4*ratio4) - &
             ((omega*refractedGeocAlt*cos(geocLat))**2)/(2*g0)+earthSurfaceGPH
         elsewhere
-          n=0.0
+          n = 0.0
         end where
 
         ! Now, we're effectively going to compare this with a hydrostatic
@@ -1382,15 +1380,15 @@ contains ! =============== Subroutines and functions ==========================
   INTEGER :: row                   ! Block row in jacobian
   INTEGER :: col                   ! Block col in jacobian
 !
-  REAL(rp), PARAMETER :: deg2rad = pi / 180.0_rp ! degree to radians
   REAL(rp), PARAMETER :: boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
   REAL(rp) :: z_surf
   REAL(rp) :: surf_temp
   REAL(rp) :: surf_refr_indx(1)
 !
-  REAL(rp), POINTER :: earthradc(:)  ! minor axis of earth ellipsoid in orbit
-!                              plane projected system
+  REAL(rp), POINTER :: earthradc(:)  ! square of minor axis of earth ellipsoid
+!                              in orbit plane projected system
   REAL(rp), POINTER :: red_phi_t(:)
+  REAL(rp), POINTER :: sinbeta(:)
   REAL(rp), POINTER :: sinphi2(:)
   REAL(rp), POINTER :: cosphi2(:)
   REAL(rp), POINTER :: geoclats(:)
@@ -1431,13 +1429,13 @@ contains ! =============== Subroutines and functions ==========================
   LOGICAL, POINTER :: not_zero_t(:,:)
   LOGICAL, POINTER :: not_zero_h2o(:,:)
 ! nullify all pointers
-  NULLIFY(earthradc, red_phi_t, sinphi2, cosphi2, geoclats, sinlat2, coslat2)
-  NULLIFY(p2, p4, ratio2, ratio4, tan_temp, tan_h2o, tan_refr_indx, l1altrefr)
-  NULLIFY(earth_radius, eff_earth_radius, g_ref, refgeomalt_denom, l1refalt)
-  NULLIFY(mass_corr, dgphdr, dscandz, eta_z, eta_p_t, eta_p_h2o, piq)
-  NULLIFY(eta_zxp_t, eta_zxp_h2o, not_zero_z, not_zero_p_t, not_zero_p_h2o)
-  NULLIFY(eta_piqxp, not_zero_t, not_zero_h2o, ratio2_gph, ratio4_gph) 
-  NULLIFY(eta_at_one_phi, eta_at_one_zeta, temp_at_surf_phi) 
+  NULLIFY ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
+    & eff_earth_radius, eta_at_one_phi, eta_at_one_zeta, eta_p_h2o,          &
+    & eta_piqxp, eta_p_t, eta_z, eta_zxp_h2o, eta_zxp_t, geoclats,           &
+    & g_ref, l1altrefr, l1refalt, mass_corr, not_zero_h2o, not_zero_p_h2o,   &
+    & not_zero_p_t, not_zero_t, not_zero_z, p2, p4, piq, ratio2, ratio2_gph, &
+    & ratio4, ratio4_gph, red_phi_t, refgeomalt_denom, sinbeta, sinlat2,     &
+    & sinphi2, tan_h2o, tan_refr_indx, tan_temp, temp_at_surf_phi ) 
 ! Identify the vector quantities from state/extra
   orbIncline => GetVectorQuantityByType ( state, extra, &
     & quantityType=l_orbitInclination )
@@ -1475,6 +1473,7 @@ contains ! =============== Subroutines and functions ==========================
   CALL ALLOCATE_TEST(cosphi2,ptan%template%nosurfs,'cosphi2',modulename)
   CALL ALLOCATE_TEST(sinlat2,ptan%template%nosurfs,'sinlat2',modulename)
   CALL ALLOCATE_TEST(coslat2,ptan%template%nosurfs,'coslat2',modulename)
+  CALL ALLOCATE_TEST(sinbeta,ptan%template%nosurfs,'sinbeta',modulename)
   CALL ALLOCATE_TEST(geoclats,ptan%template%nosurfs,'geoclats',modulename)
   CALL ALLOCATE_TEST(p2,ptan%template%nosurfs,'p2',modulename)
   CALL ALLOCATE_TEST(p4,ptan%template%nosurfs,'p4',modulename)
@@ -1483,28 +1482,28 @@ contains ! =============== Subroutines and functions ==========================
   CALL ALLOCATE_TEST(l1refalt,ptan%template%nosurfs,'l1refalt',modulename)
   CALL ALLOCATE_TEST(refgeomalt_denom,ptan%template%nosurfs, &
   & 'refgeomalt_denom',modulename)
-  earthradc = earthrada*earthradb / SQRT(earthrada**2 &
-  & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))**2 &
-  & + earthradb**2* COS(deg2rad*orbincline%values( &
-  &  1:ptan%template%noSurfs,fmStat%maf))**2) ! in meters
+  sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
+  earthradc = (earthrada*earthradb)**2 / &
+  & ( (earthRada**2 - earthRadb**2) * sinbeta**2 + earthRadb**2) ! in meters
 ! rephase the phi
   red_phi_t = MODULO(deg2rad*phitan%values(:,fmStat%maf),2.0_rp*Pi)
-  WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
-              &  red_phi_t = Pi - red_phi_t
-  WHERE(red_phi_t > 1.5_rp*Pi) red_phi_t = red_phi_t - 2.0_rp*Pi
+  WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi)
+    red_phi_t = Pi - red_phi_t
+  ELSEWHERE(red_phi_t > 1.5_rp*Pi)
+    red_phi_t = red_phi_t - 2.0_rp*Pi
+  ENDWHERE
 ! compute sin^2(phi) and cos^2(phi)
-  sinphi2 = SIN(red_phi_t)**2
+  sinphi2 = sin(red_phi_t)**2
   cosphi2 = 1.0_rp - sinphi2
-  geoclats = ASIN(earthradc**2 * SIN(red_phi_t) &
-  & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf)) &
-  & / SQRT(earthrada**4*cosphi2 + earthradc**4*sinphi2))
+  geoclats = asin(earthradc * sin(red_phi_t) * sinbeta / &
+  & sqrt(earthrada**4*cosphi2 + earthradc**2*sinphi2))
   sinlat2 = SIN(geoclats)**2
   coslat2 = 1.0_rp - sinlat2
   p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
   p4=0.125_rp * (35.0_rp*sinlat2**2 - 30.0_rp*sinlat2 + 3.0_rp)
 ! compute the local gravitational acceleration at the surface
-  earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**4*sinphi2) &
-               / (earthrada**2*cosphi2 + earthradc**2*sinphi2))
+  earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**2*sinphi2) &
+               / (earthrada**2*cosphi2 + earthradc*sinphi2))
   ratio2=(earthRadA/earth_radius)**2
   ratio4=ratio2**2
   g_ref =  GM * (1.0_rp - 3.0_rp*j2*p2*ratio2 - 5.0_rp*j4*p4*ratio4) &
@@ -1520,6 +1519,7 @@ contains ! =============== Subroutines and functions ==========================
   CALL DEALLOCATE_TEST(cosphi2,'cosphi2',modulename)
   CALL DEALLOCATE_TEST(sinlat2,'sinlat2',modulename)
   CALL DEALLOCATE_TEST(geoclats,'geoclats',modulename)
+  CALL DEALLOCATE_TEST(sinbeta,'sinbeta',modulename)
 ! compute temperature function
   CALL allocate_test(eta_z,ptan%template%nosurfs,temp%template%nosurfs, &
                   & 'eta_z',ModuleName)
@@ -1874,6 +1874,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.46  2002/09/26 23:48:21  vsnyder
+! Avoid computing sine and cosine of the same angle
+!
 ! Revision 2.45  2002/09/26 20:38:19  vsnyder
 ! Get some constants from Geometry and Units instead of declaring them, cosmetics
 !
