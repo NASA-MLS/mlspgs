@@ -55,6 +55,11 @@ begin Join
     source=state.iwc, precision=outputPrecision.iwc, $
     source=state.iwcFine, precision=outputPrecision.iwcFine
 
+  ;; Also put tpPressure in the temperature file
+  ;; Let it keep the label it got already
+  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+    file='!l2gpFileName(Temperature)', source=state.tpPressure
+
   !flushDGGDGMFiles
 })})
 end Join
