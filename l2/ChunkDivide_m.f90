@@ -144,9 +144,6 @@ contains ! =================================== Public Procedures==============
         & 'Unexpected problem with ChunkDivide' )
     end select
 
-    call Dump ( chunks )
-    stop
-
     ! Tidy up
     if ( associated(obstructions) ) then
       deallocate ( obstructions, stat=status )
@@ -223,7 +220,6 @@ contains ! =================================== Public Procedures==============
     overlap = nint ( config%overlap )
     noNonOverlap = maxLength - 2 * overlap
     do i = 1, config%noChunks
-      print*,'Doing:',i,noNonOverlap, maxLength, overlap
       chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - overlap, 0 )
       chunks(i)%lastMAFIndex = i*maxLength + overlap - 1
       chunks(i)%noMAFsUpperOverlap = overlap
@@ -302,7 +298,6 @@ contains ! =================================== Public Procedures==============
     maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
     minTime = minval ( taiTime%dpField(1,1,m1:m2) )
     maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
-    print*,'Angle range:',minAngle, maxAngle
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! First try to locate the last MAF before the homeGeodAngle
@@ -326,7 +321,6 @@ contains ! =================================== Public Procedures==============
         homeMAF = m1
         exit homeHuntLoop
       end if
-      print*,'Test angle:',testAngle
       ! Find MAF which starts before this test angle
       call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
         & allowTopValue = .true. )
@@ -337,8 +331,6 @@ contains ! =================================== Public Procedures==============
       ! Otherwise, keep looking
       testAngle = testAngle + angleIncrement
     end do homeHuntLoop
-
-    print*,'Home MAF is:', homeMAF, tpGeodAngle%dpField(1,1,home)
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! OK, now we have a home MAF, get a first cut for the chunks
@@ -367,7 +359,6 @@ contains ! =================================== Public Procedures==============
     else
       ! For angle and time, they are similar enough we'll just do some stuff
       ! with pointers to allow us to use common code to sort them out
-      print*,'M1,M2', m1, m2
       select case ( config%maxLengthFamily )
       case ( PHYQ_Angle )
         field => tpGeodAngle%dpField(1,1,:)
@@ -380,7 +371,6 @@ contains ! =================================== Public Procedures==============
       case ( PHYQ_MAFs)
       end select
       homeV = field(home)
-      print*,'HomeV is:', homeV
 
       noChunks = int ( ( homeV - minV ) / config%maxLength )
       if ( homeV > minV ) noChunks = noChunks + 1
@@ -400,23 +390,16 @@ contains ! =================================== Public Procedures==============
       do chunk = 1, noChunks
         boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * config%maxLength
       end do
-      call dump ( boundaries, 'boundaries' )
       call Hunt ( field, boundaries, chunks%lastMAFIndex, &
         & allowTopValue=.true., nearest=.true. )
       call Deallocate_test ( boundaries, 'boundaries', ModuleName )
     end if
 
-    print*,'noChunks is:', noChunks
-    print*,'noChunksBelowHome is:', noChunksBelowHome
-    call dump ( chunks%lastMAFIndex,'lastMAFIndex' )
-
     ! Now deduce the chunk starts from the ends of their predecessors
     chunks(2:noChunks)%firstMAFIndex = chunks(1:noChunks-1)%lastMAFIndex + 1
     chunks(1)%firstMAFIndex = 1
-    call dump ( chunks%firstMAFIndex,'firstMAFIndex' )
     
     ! Now offset these to the index in the file not the array
-    print*,'mafRange(1) is:', mafRange(1)
     chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
     chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
 
@@ -703,6 +686,8 @@ contains ! =================================== Public Procedures==============
   subroutine DealWithObstructions ( chunks, obstructions )
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
     type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
+    ! This routine modifies the chunks according to the information
+    ! given in the obstructions.
 
     ! Local variables
     type (MLSChunk_T) :: NEWCHUNK       ! A chunk to create
@@ -917,8 +902,8 @@ contains ! =================================== Public Procedures==============
         innerLoop: do
           j = j + 1
           if ( j > size(obstructions) ) exit innerLoop
-          ! --------------------------- ( Range, range )
           if ( all ( obstructions((/i,j/))%range ) ) then
+            ! --------------------------- ( Range, range )
             if ( obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) ) then
               ! Combine overlapping range obstructions
               newObs%range = .true.
@@ -932,8 +917,8 @@ contains ! =================================== Public Procedures==============
               foundOne = .true.
               exit middleLoop
             end if
-            ! --------------------------- ( Range, wall )
           else if ( obstructions(i)%range .and. .not. obstructions(j)%range ) then
+            ! --------------------------- ( Range, wall )
             if ( obstructions(j)%mafs(1) >= obstructions(i)%mafs(1) .and. &
               &  obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) ) then
               ! Delete wall obstruction inside range
@@ -941,8 +926,10 @@ contains ! =================================== Public Procedures==============
               foundOne = .true.
               exit middleLoop
             end if
-            ! --------------------------- ( Wall, range ) or ( Wall, wall )
           else
+            ! --------------------------- ( Wall, range ) or ( Wall, wall )
+            ! Becuase the obstructions are in order, we know in the wall, range
+            ! case that the wall must be at the start of the range, not inside it.
             if ( obstructions(i)%mafs(1) == obstructions(j)%mafs(1) ) then
               ! Delete wall obstruction at start of a range or at another wall
               call DeleteObstruction ( obstructions, i )
@@ -950,6 +937,9 @@ contains ! =================================== Public Procedures==============
               exit MiddleLoop
             end if
           end if
+          ! I'm pretty sure this covers all the possibilities.  It might seem
+          ! not at first glance, but I think the fact that I always re-sort the
+          ! obstructions into order means that the above code does catch everything.
 
         end do innerLoop
       end do middleLoop 
@@ -1120,6 +1110,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.12  2001/11/15 17:43:46  livesey
+! Tidied up, more comments etc.
+!
 ! Revision 2.11  2001/11/14 22:33:40  livesey
 ! This version seems pretty good.
 !
