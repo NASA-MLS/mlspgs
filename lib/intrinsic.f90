@@ -103,7 +103,8 @@ module INTRINSIC
   integer, public, parameter :: L_TANGENTHEIGHT = l_sidebandratio + 1
   integer, public, parameter :: L_TEMPERATURE   = l_tangentheight + 1
   integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
-  integer, public, parameter :: L_THZ           = l_temperature_prec + 1
+  integer, public, parameter :: L_THETA         = l_temperature_prec + 1
+  integer, public, parameter :: L_THZ           = l_theta + 1
   integer, public, parameter :: L_TRUE          = l_thz + 1
   integer, public, parameter :: L_VMR           = l_true + 1
   integer, public, parameter :: L_ZETA          = l_vmr + 1
@@ -177,6 +178,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_tangentheight) =         add_ident ( 'tangentHeight' )
     lit_indices(l_temperature) =           add_ident ( 'temperature' )
     lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
+    lit_indices(l_theta) =                 add_ident ( 'theta' )
     lit_indices(l_thz) =                   add_ident ( 'THz' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
@@ -208,6 +210,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.6  2001/02/08 21:11:13  vsnyder
+! Move "theta" from init_tables_module to intrinsic.
+!
 ! Revision 2.5  2001/02/05 21:18:57  vsnyder
 ! Add parameters for type checking rules.
 !
