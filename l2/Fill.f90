@@ -1207,13 +1207,13 @@ contains ! =====     Public Procedures     =============================
           if (.not. ValidateVectorQuantity(quantity, &
             & quantityType=(/l_ptan/), &
             & frequencyCoordinate=(/l_none/) ) ) &
-            & call MLSMessage ( MLSMSG_Error,ModuleName,&
+            & call Announce_Error ( key, No_Error_code, &
             &   'vGrids can only be used to fill ptan quantities' )
           if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
-            & call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & call Announce_Error ( key, No_Error_code, &
             &  'Vertical coordinate in vGrid is not zeta' )
           if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
-            & call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & call Announce_Error ( key, No_Error_code, &
             &  'VGrid is not of the same size as the quantity' )
           do instance = 1, quantity%template%noInstances
             quantity%values(:,instance) = vGrids(vGridIndex)%surfs
@@ -4787,6 +4787,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.181  2003/01/29 01:59:19  livesey
+! Changed some MLSMessages to Announce_Errors to get a line number.
+!
 ! Revision 2.180  2003/01/28 21:53:07  pwagner
 ! RHI H2O conversions moved to fwdmdl from l2/Fill
 !
