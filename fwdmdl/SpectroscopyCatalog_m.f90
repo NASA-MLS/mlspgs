@@ -99,7 +99,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: Son                      ! Of root or key
     integer :: Key                      ! Index of spec_arg
     integer :: Name                     ! Index of name in string table
-    integer :: BandsNode                ! Tree node for emls/umls bands
+    integer :: SignalsNode                ! Tree node for emls/umls bands
     logical :: TIMING                   ! For S_Time
     real :: T1, T2                      ! For S_Time
     integer :: NOSIGNALS                ! For the bands part
@@ -129,7 +129,7 @@ contains ! =====  Public Procedures  ===================================
       select case ( get_spec_id(key) )
       case ( s_line ) ! ...................................  LINE  .....
         oneLine%line_Name = name
-        bandsNode = 0
+        signalsNode = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
@@ -154,39 +154,46 @@ contains ! =====  Public Procedures  ===================================
           case ( f_w )
             call expr_check ( subtree(2,son), oneLine%w, phyq_dimless )
           case ( f_emlsSignals )
-            if ( instrument == l_emls ) bandsNode = son
+            if ( instrument == l_emls ) signalsNode = son
           case ( f_umlsSignals )
-            if ( instrument == l_umls ) bandsNode = son
+            if ( instrument == l_umls ) signalsNode = son
           case default
             ! Can't get here if the type checker worked
           end select
         end do
-        if ( bandsNode /= 0 ) then
+        if ( signalsNode /= 0 ) then
           ! First work out how many signals we're dealing with
           noSignals = 0
           nullify ( sigInds )
-          do j = 2, nsons(bandsNode)    ! Skip name
-            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+          do j = 2, nsons(signalsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
               & sigName, strip=.true. )
-            call Parse_Signal ( sigName, sigInds, bandsNode, onlyCountEm=thisMany )
+            call Parse_Signal ( sigName, sigInds, signalsNode, onlyCountEm=thisMany )
             noSignals = noSignals + thisMany
           end do
 
           ! Compile list of all the bands/sidebands named
-          call Allocate_test ( oneLine%signals, noSignals, 'bands', ModuleName )
+          call Allocate_test ( oneLine%signals, noSignals, 'signals', ModuleName )
           call Allocate_test ( oneLine%sidebands, noSignals, 'sidebands', ModuleName )
           nullify ( sigInds )
           k = 1
-          do j = 2, nsons(bandsNode)    ! Skip name
-            call get_string ( sub_rosa ( subtree (j, bandsNode) ), &
+          do j = 2, nsons(signalsNode)    ! Skip name
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
               & sigName, strip=.true. )
-            call Parse_Signal ( sigName, sigInds, bandsNode, sideband=sideband )
+            call Parse_Signal ( sigName, sigInds, signalsNode, sideband=sideband )
+            if ( .not. associated(sigInds) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Invalid signal in spectroscopy' )
+            
             oneLine%signals ( k:k+size(sigInds)-1 ) = sigInds
             oneLine%sidebands ( k:k+size(sigInds)-1 ) = sideband
+            k = k + size(sigInds)
             call Deallocate_test ( sigInds, 'sigInds', ModuleName )
           end do
         endif
         call decorate ( key, addLineToDatabase ( lines, oneLine ) )
+        ! Now nullify signals and sidebands so they don't get clobbered
+        ! by the next call to Allocate_test
+        nullify ( oneLine%signals, oneLine%sidebands )
       case ( s_spectra ) ! .............................  SPECTRA  .....
         nullify(oneSpecies%lines) ! So that Allocate_Test doesn't deallocate
         ! the most recently filled one
@@ -432,6 +439,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.3  2001/09/18 01:25:48  livesey
+! Changed emls/umls bands to emls/umls signals
+!
 ! Revision 2.2  2001/09/18 01:23:34  livesey
 ! Changed bands to signals
 !

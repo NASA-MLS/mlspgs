@@ -34,13 +34,14 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
+  use String_table, only: GET_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
-    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH
+    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, LIT_INDICES
   use Units, only: Deg2Rad
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
-    & MLSMSG_Error
+    & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HUNT
   use Toggles, only: Emit, Gen, Levels, Switches, Toggle
   use Molecules, only: spec_tags
@@ -150,6 +151,7 @@ contains ! ================================ FullForwardModel routine ======
     integer :: WHICHPATTERN             ! Index of antenna pattern
 
     logical :: DOTHIS                   ! Flag for lines
+    character (len=32) :: molName       ! Name of a molecule
 
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
@@ -484,7 +486,7 @@ contains ! ================================ FullForwardModel routine ======
         thisLine => lines(thisCatalogEntry%lines(k))
         do sigInd = 1, size(fwdModelConf%signals)
           if ( associated(thisLine%signals) ) then
-            doThis = any (fwdModelConf%signals%index == thisLine%signals(sigInd) )
+            doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
             ! If we're only doing one sideband, maybe we can remove some more lines
             if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
               & any( ( thisLine%sidebands == sidebandStart ) .or. &
@@ -497,6 +499,12 @@ contains ! ================================ FullForwardModel routine ======
       end do ! End loop over lines
       My_Catalog(j) = thisCatalogEntry
       nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+      ! Check we have at least one line for this
+      if ( count(lineFlag) == 0 ) then
+        call get_string ( lit_indices(fwdModelConf%molecules(j)), molName )
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No relevant lines for '//trim(molName) )
+      endif
       call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
         & 'my_catalog(?)%lines', ModuleName )
       my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
@@ -1671,11 +1679,16 @@ contains ! ================================ FullForwardModel routine ======
     !  **** End of Printing cycle ...
 
     ! Now deallocate lots of stuff
-    call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
-    call Deallocate_test ( usedSignals, 'usedSignals', ModuleName )
+    do i = 1, size(my_catalog)
+      call Deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
+        & ModuleName )
+    end do
     deallocate ( my_catalog, stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'my_catalog' )
+
+    call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
+    call Deallocate_test ( usedSignals, 'usedSignals', ModuleName )
     call Deallocate_test ( one_tan_ht, 'one_tan_ht', ModuleName )
     call Deallocate_test ( one_tan_temp, 'one_tan_temp', ModuleName )
 
@@ -1789,6 +1802,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.2  2001/09/18 02:04:38  livesey
+! Bug fix with signals/spectroscopy interaction
+!
 ! Revision 2.1  2001/09/18 01:23:19  livesey
 ! Added band discrimination for lines catalog.  Not tested yet.
 !
