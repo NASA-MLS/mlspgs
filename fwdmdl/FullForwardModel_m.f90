@@ -778,7 +778,6 @@ contains ! ================================ FullForwardModel routine ======
 ! We are going to over-writing the user's Tangent Grid specifications ..
 ! (Replacing "fwdModelConf%tangentGrid%surfs" with: "tan_press")
 
-    tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
     j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
     no_tan_hts = Nlvl + j
     call allocate_test (tan_inds, no_tan_hts, 'tan_inds', ModuleName )
@@ -2088,6 +2087,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.27  2002/02/04 22:44:40  zvi
+! Fixing some bugs in the automatic grid selection process
+!
 ! Revision 2.26  2002/02/02 11:20:17  zvi
 ! Code to overwrite the l2cf integration & tanget grids
 !
