@@ -82,7 +82,7 @@ CONTAINS
 
         CHARACTER (LEN=480) :: msr
 
-	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths
+	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays
 
         integer i, j, k, ctype, iP, iD
         real(r8), Dimension(nlons) :: xlon, result
@@ -190,6 +190,22 @@ CONTAINS
 
         ENDDO
 
+!!      Initialize Daily Map Residues
+
+        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, l3r)
+        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, residA)
+        CALL ReadL2GPProd(cfProd, pcf%l3StartDay, pcf%l3EndDay, rDays, residD)
+
+        l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
+        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+
+        DO j = 1, rDays
+           l3r(j)%l2gpValue    = 0.0
+           residA(j)%l2gpValue = 0.0
+           residD(j)%l2gpValue = 0.0
+        ENDDO
+ 
 
 !*** Calculate average orbital period (day)
 
@@ -681,6 +697,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.1  2001/02/27 20:51:28  ybj
+! Daily Map Core Processing
+!
 ! Revision 1.1  2000/10/05 18:38:48  nakamura
 ! Program split from synoptic.f90 and modified to be more like the standard template.
 !
