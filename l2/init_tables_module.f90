@@ -381,7 +381,8 @@ contains ! =====     Public procedures     =============================
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
              l+l_vector, l+l_special, l+l_fold, &
              l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
-      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
+      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
+             l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_fill, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
@@ -917,6 +918,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.225  2002/06/24 18:27:17  livesey
+! Added 2D scan model
+!
 ! Revision 2.224  2002/06/12 17:57:04  livesey
 ! Added ascii field for l2pc
 !
