@@ -307,6 +307,9 @@
                                                ! (a subset OF YT)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
+      REAL(r8) :: ZVT1(NZmodel/8-1) 
+      REAL(r8) :: ZNT1(NZmodel/8-1) 
+
       REAL(r8) :: ptg_angle(NZmodel/8-1)       ! POINTING ANGLES CORRESPONDING TO ZZT1
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
@@ -328,6 +331,10 @@
       REAL(r8) :: BC(3,NR)                     ! SINGLE PARTICLE ABS/SCAT/EXT 
                                                ! COEFFS
       REAL(r8) :: DZ(NZ-1)
+
+      REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
+      REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
+
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
@@ -360,21 +367,25 @@
       MULTI=NZmodel/8-1
 
       IF (IFOV .EQ. 0) THEN       
-      DO I=1, Multi
-         ZZT1(I)=YZ(I*8)
-         ZPT1(I)=YP(I*8)
-         ZTT1(I)=YT(I*8)         
-      ENDDO
+         DO I=1, Multi
+            ZZT1(I)=YZ(I*8-7)
+         ENDDO
       ENDIF
 
       IF (IFOV .EQ. 1) THEN 
-      DO I=1, Multi
-        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
-        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
-      ENDDO
-
-      CALL GET_TAN_PRESS ( YP, YZ, YT, NZmodel,    &
-           &               ZPT1, ZZT1, ZTT1, Multi )
+         DO I=1, Multi
+            ZZT1(I)=YZ(I*8-7)
+            ZPT1(I)=YP(I*8-7)
+            ZTT1(I)=YT(I*8-7)
+            ZVT1(I)=YQ(I*8-7)
+         ENDDO
+!      DO I=1, Multi
+!        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
+!        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
+!      ENDDO
+!
+!      CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
+!           &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
       ENDIF
 
 !-----------------------------------------------
@@ -561,28 +572,20 @@
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
 	 Ier = 0
-	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
-!	 Rs_eq = h_obs
+!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+	 Rs_eq = h_obs
 
-!         print*,h_obs, Rs_eq
-!         stop
+         znt1 = const1 * zpt1 / ztt1
+         znt1 = znt1*(1.0_r8 + const2*zvt1/ztt1)
+
 !---------------------------------------------------------------------------
 !	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
 !---------------------------------------------------------------------------
 
   	 DO I = 1, Multi
-!            brkpt = minloc(abs(YZ(:)-zzt1(i)))
-!            print*, brkpt, zzt1(i)
-!            ti = 1.0_r8 / ztt1(i)
-!            n_r = 7.76e-5 * zpt1(i) * ti
-!            n_r = n_r * (1.0_r8 + 4810.0_r8 * vmr * ti)            
 
-            if (zzt1(i) .lt. 5000.0) then
-              schi = (ZZT1(I)*1.2 + RE) / Rs_eq    ! approximition account for 
-            else                                   ! refractive effect
-              schi = (ZZT1(I) + RE) / Rs_eq
-            endif
-
+            schi = (1+znt1(i))*(ZZT1(I) + RE) / Rs_eq    ! approximition account for 
+                                                         ! refractive effect
     	    IF(ABS(schi) > 1.0) THEN
       	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
                PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
