@@ -352,14 +352,14 @@
         STOP
       ENDIF
 
+      ! DEFINE INTERNAL TANGENT PRESSURES 
       MULTI=NZmodel/8-1
-
       DO I=1, Multi
         ZZT1(I)=YZ(I*8)
         ZPT1(I)=YP(I*8)
         ZTT1(I)=YT(I*8)
       ENDDO
-     
+ 
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 !-----------------------------------------------
@@ -545,8 +545,8 @@
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
 	 Ier = 0
-!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
-	 Rs_eq = h_obs
+	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+!	 Rs_eq = h_obs
 
 !---------------------------------------------------------------------------
 !	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
@@ -562,7 +562,8 @@
     	    ptg_angle(i) = Asin(schi) + elev_offset
   	 END DO
 
-	 center_angle = ptg_angle(1)
+!	 center_angle = ptg_angle(1)
+	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
@@ -579,7 +580,7 @@
          RAD(1:Multi)=TT(1:Multi,NZmodel)
 
          fft_angles=0.0
-         fft_angles(1:Multi) = ptg_angle(1:Multi)             ! Multi = No. of tangent heights
+         fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
 	
          Call fov_convolve ( fft_angles, RAD0, center_angle, 1, Multi,   &
               &              fft_pts, AntennaPattern, Ier )
