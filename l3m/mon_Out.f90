@@ -189,6 +189,7 @@ CONTAINS
 
       IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
          CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
+         CALL OutputMMDiags(pcf%msName, mm)
       ENDIF
       CALL DeallocateL3MM(mm)
 
@@ -196,6 +197,7 @@ CONTAINS
 
       IF ( INDEX(mode,'a') /= 0) THEN
          CALL OutputMMGrids(pcf%msName, mmA, flag%createMS)
+         CALL OutputMMDiags(pcf%msName, mmA)
       ENDIF
       CALL DeallocateL3MM(mmA)
 
@@ -203,6 +205,7 @@ CONTAINS
 
       IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
          CALL OutputMMGrids(pcf%msName, mmD, flag%createMS)
+         CALL OutputMMDiags(pcf%msName, mmD)
       ENDIF
       CALL DeallocateL3MM(mmD)
 
@@ -215,7 +218,7 @@ CONTAINS
 !--------------------------------------------------------------------------------
 
 ! Brief description of subroutine
-! This subroutine performs the Output/Close task within the standard product loop of
+! This subroutine performs the Output/Close task within the diagnostic product loop of
 ! the L3 Monthly subprogram.
 
 ! Arguments
@@ -240,7 +243,7 @@ CONTAINS
 
 ! Variables
 
-! Deallocate unused MM databases
+! Deallocate unused databases
 
       CALL DeallocateL3MM(mmA)
       CALL DeallocateL3MM(mmD)
@@ -264,6 +267,7 @@ CONTAINS
 ! Output the monthly map (combined mode)
 
       CALL OutputMMGrids(pcf%mdName, mm, flag%createMD)
+      CALL OutputMMDiags(pcf%mdName, mm)
       CALL DeallocateL3MM(mm)
 
 !-------------------------
@@ -382,6 +386,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.4  2001/09/26 19:49:13  nakamura
+!Removed com ZM output; added cfDg deallocate.
+!
 !Revision 1.3  2001/09/06 18:51:45  nakamura
 !Added subroutine OutputDg; moved database deallocation back down into Output subroutines.
 !
