@@ -322,7 +322,7 @@ contains ! ==================================================================
     call output ('Number of machines alive: ', advance='no')
     call output (count(machines%OK), advance='yes')
     call output ('Number of machines free: ', advance='no')
-    call output (count(machines%free), advance='yes')
+    call output (count(machines%free .and. machines%OK), advance='yes')
     if ( myDetails < 1 ) return
     do i = 1, size(machines)
       call dump_machine(machines(i))
@@ -741,6 +741,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.42  2005/01/13 00:01:31  pwagner
+! Dumping machineDB shows only free machines that are still alive
+!
 ! Revision 2.41  2005/01/07 17:27:21  pwagner
 ! Details an optional arg to dump_machine_database to bypass dumping each machine
 !
