@@ -4,6 +4,9 @@
 module DUMP_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
+! Should handle most combinations of rank and type
+! Behavior depends on optional parameters
+! Actual output device determined by output_m module
 
   use MLSSets, only: FindAll
   use MLSStrings, only: GetStringElement, NumStringElements
@@ -48,6 +51,9 @@ module DUMP_0
   character, parameter :: AfterSub = '#'
   logical, public, save ::   STATSONONELINE = .true.
   logical, parameter ::   DEEBUG = .false.
+  logical :: myStats, myRMS, myWholeArray
+  integer :: numNonFill, numFill
+  real :: pctNonFill, pctFill
 
   character(*), parameter :: MyFormatDefault = '(1pg14.6)'
   character(*), parameter :: MyFormatDefaultCmplx = &
@@ -184,14 +190,17 @@ contains
   end subroutine DUMP_1D_DCOMPLEX
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
-  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, WIDTH, FORMAT, STATS )
+  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
 
     logical :: MyClean
     integer :: J, K, MyWidth
@@ -200,12 +209,7 @@ contains
     character(len=64) :: MyFormat
     integer :: NumZeroRows
 
-    logical :: MyStats
-    integer :: numNonFill, numFill
-    real :: pctNonFill, pctFill
     ! Executable
-    myStats=.false.
-    if ( present(stats) ) myStats=stats
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -252,27 +256,25 @@ contains
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, WIDTH, STATS )
+  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WIDTH, WHOLEARRAY, STATS, RMS )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    logical, intent(in), optional :: WHOLEARRAY
     logical, intent(in), optional :: STATS
+    logical, intent(in), optional :: RMS
 
     integer :: J, K
     logical :: MyClean
     integer :: MyWidth
     integer :: NumZeroRows
 
-    logical :: MyStats
-    integer :: numNonFill, numFill
-    real :: pctNonFill, pctFill
     integer :: myFillValue
     ! Executable
-    myStats=.false.
-    if ( present(stats) ) myStats=stats
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -347,14 +349,17 @@ contains
   end subroutine DUMP_1D_LOGICAL
 
   ! -----------------------------------------------  DUMP_1D_REAL  -----
-  subroutine DUMP_1D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, WIDTH, FORMAT, STATS )
+  subroutine DUMP_1D_REAL ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, WIDTH, FORMAT, WHOLEARRAY, STATS, RMS )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
 
     logical :: myClean
     integer :: J, K, MyWidth
@@ -362,13 +367,8 @@ contains
     character(len=64) :: MyFormat
     integer :: NumZeroRows
 
-    logical :: MyStats
-    integer :: numNonFill, numFill
-    real :: pctNonFill, pctFill
     real :: myFillValue
     ! Executable
-    myStats=.false.
-    if ( present(stats) ) myStats=stats
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -766,12 +766,16 @@ contains
   end subroutine DUMP_2D_LOGICAL
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
-  subroutine DUMP_2D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
+  subroutine DUMP_2D_REAL ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
 
     logical :: myClean
     integer :: I, J, K
@@ -784,6 +788,7 @@ contains
 
     myFillValue = 0.0e0
     if ( present(FillValue) ) myFillValue = FillValue
+    include 'dumpstats.f9h'
 
     myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
@@ -908,13 +913,16 @@ contains
   end subroutine DUMP_3D_CHAR
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, STATS )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
 
     logical :: myClean
     integer :: I, J, K, L
@@ -922,12 +930,7 @@ contains
     double precision :: myFillValue
     character(len=64) :: myFormat
 
-    logical :: MyStats
-    integer :: numNonFill, numFill
-    real :: pctNonFill, pctFill
     ! Executable
-    myStats=.false.
-    if ( present(stats) ) myStats=stats
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dumpstats.f9h'
@@ -1042,25 +1045,23 @@ contains
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, STATS )
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, &
+    & FILLVALUE, CLEAN, FORMAT, WHOLEARRAY, STATS, RMS )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: WHOLEARRAY
     logical, optional, intent(in) :: STATS
+    logical, intent(in), optional :: RMS
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
 
-    logical :: MyStats
-    integer :: numNonFill, numFill
-    real :: pctNonFill, pctFill
     ! Executable
-    myStats=.false.
-    if ( present(stats) ) myStats=stats
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myClean = .false.
@@ -1436,6 +1437,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.38  2004/07/21 19:57:21  pwagner
+! New rms, wholeArray options to some dumps
+!
 ! Revision 2.37  2004/06/11 19:04:29  pwagner
 ! which_ints_are_it renamed findAll, moved MLSSets.f90
 !
