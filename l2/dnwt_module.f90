@@ -495,6 +495,7 @@ contains
       condai = c0
       dxnl = c1
       aj%dxnl = c1
+      fnb = sqrt(huge(fnb))
       fnl = c0
       inc = -1
       iter = 0
@@ -712,6 +713,7 @@ contains
       condai = min(cgdx,gradn/(dxn*ajn**2),diag/ajn)
       fnxe = fnmin**2
       if (sq /= c0) fnxe = fnxe-(spl*ajn*dxn)**2
+      if ( fnxe > fnb**2 ) go to 222
       tp = dxinc
       if (inc < 0) then
         if (dxn <= dxinc) then
@@ -725,6 +727,7 @@ contains
         if (tp*tp1 > dxnl) tp = dxnl/tp1
         if (dxn <= tp .or. sp >= 1.0e12_rk) then
           if ( inc == 0 ) go to 200
+      if ( fnxe > fnb**2 ) go to 222
           cait = cbig
           go to 755
         end if
@@ -737,7 +740,7 @@ contains
  3001    format(' DXN=',1PG10.3,'  CDXDXL=',G10.3,'  SPL=', &
      &          G10.3,'  SQ=',G10.3,'  CGDX=',G10.3,        &
      &          '  CI=',G10.3,'  I,K=',I2,',',I2)
-      call output(trim(output_line), advance='yes')
+        call output(trim(output_line), advance='yes')
       end if
       spinc = sp
       sp = c4*spl+min(condai+condai,min(cp125,condai)*(dxn-tp)/tp)
@@ -807,7 +810,6 @@ contains
 
   770 dxnl = dxn
       aj%dxnl = dxnl
-      if ( fnxe > fnb**2 ) go to 222
       ! Come here after returning from a gradient move
   775 fnl = fn
       frzl = frz
@@ -1209,8 +1211,8 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
-! Revision 2.28  2002/09/14 00:36:13  vsnyder
-! FNXE is the square of the norm.  Compare it to FNB**2
+! Revision 2.29  2002/09/14 02:46:00  vsnyder
+! Move test for retreat-to-best, some housecleaning
 !
 ! Revision 2.27  2002/09/11 23:41:53  vsnyder
 ! Correct improved test for retreating to best X
