@@ -108,7 +108,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: CLOUDEXTINCTION            ! Profiles
-    type (VectorValue_T), pointer :: CLOUDINDUCEDRADIANCE       ! Like radiance
+    type (VectorValue_T), pointer :: modelCLOUDRADIANCE         ! modelled cloud radiance
+    type (VectorValue_T), pointer :: obsCLOUDRADIANCE           ! observed cloud radiance
     type (VectorValue_T), pointer :: CLOUDRADSENSITIVITY        ! Like radiance
     type (VectorValue_T), pointer :: EFFECTIVEOPTICALDEPTH      ! Quantity
     type (VectorValue_T), pointer :: GPH                        ! Geop height
@@ -228,8 +229,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Nullify all the pointers
     !--------------------------
 
-    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE,    &
-             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH,                &
+    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, modelCLOUDRADIANCE,    &
+             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, obsCLOUDRADIANCE,GPH, &
              MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,               &
              RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,           &
              TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,          &
@@ -273,7 +274,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         radiance => GetVectorQuantityByType ( fwdModelOut,                 &
           & quantityType=l_radiance,                                       &
           & signal=signal%index, sideband=signal%sideband )
-        cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
+        modelCloudRadiance => GetVectorQuantityByType ( fwdModelOut,     &
           & quantityType=l_cloudInducedRadiance,                           &
           & signal=signal%index, sideband=signal%sideband )
         cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
@@ -300,6 +301,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_temperature )
         gph => GetVectorQuantityByType ( fwdModelExtra,       &
           & quantityType=l_gph )
+        obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
+          & quantityType=l_cloudInducedRadiance, noerror=.true.,  &
+          & signal=signal%index, sideband=signal%sideband )
         cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
           & quantityType=l_cloudIce )
         cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
@@ -578,9 +582,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       ! find cloud top index from Tcir, threshold to be determined
       !     for high Zt, use Tcir(maf)
       !     for low Zt, use Tcir(maf-2)
+      if(.not. associated(effectiveOpticalDepth)) then
+         call MLSMessage( MLSMSG_Error, ModuleName,                             &
+                      'Need cloud radiances to estimate cloud top in retrieval' )
+      else
        iCloudHeight = 0
        do i = 1, noMifs
-         if(cloudInducedRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
+         if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
        enddo
 
        CloudHeight = 18.e3_r8     ! meters
@@ -588,7 +596,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       ! set up artificial cloud profile for retrieval use only
        call CLOUD_MODEL (CloudType, CloudHeight, gph%values(:,instance), noSurf, WC)
-
+      end if
+      
     ENDIF
 
     !------------------------------------------
@@ -651,8 +660,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     do mif=1, noMIFs
     radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(mif,i) 
 
-    if(associated(cloudInducedRadiance)) &
-      & cloudInducedRadiance%values (i+(mif-1)*noFreqs, maf ) = &
+    modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) = &
       & a_cloudInducedRadiance(mif,i)
 
     if(associated(effectiveOpticalDepth)) &
@@ -906,6 +914,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.75  2001/11/06 00:29:38  dwu
+! set up cloud height estimation using DTcir
+!
 ! Revision 1.74  2001/11/05 22:39:57  dwu
 ! high Zt Jacobian
 !
