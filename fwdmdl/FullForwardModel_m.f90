@@ -3047,9 +3047,9 @@ contains
     end do
 
     call interpolateValues ( z_path, p_path, tan_press(j+1:no_tan_hts), &
-      &  tan_phi(j+1:no_tan_hts), METHOD = 'L' )
+      &  tan_phi(j+1:no_tan_hts), METHOD = 'L', EXTRAPOLATE='C' )
     call interpolateValues ( z_path, t_path, tan_press(j+1:no_tan_hts), &
-       & est_scgeocalt(j+1:no_tan_hts), METHOD='L' )
+       & est_scgeocalt(j+1:no_tan_hts), METHOD='L', EXTRAPOLATE='C' )
 
     tan_phi = tan_phi * deg2rad
 
@@ -3063,6 +3063,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.212  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.211  2004/06/10 00:59:56  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
