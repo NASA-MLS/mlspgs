@@ -3723,7 +3723,6 @@ contains
                   &     what=maskBit )
                   end if                   ! do this channel
                end do                   ! Channel loop
-               print*,height,doThisHeight, isCloud
              end do                   ! height loop
       end do                            ! Instance loop
 
@@ -3742,6 +3741,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.236  2003/02/25 21:12:48  dwu
+! clean up FlagCloud
+!
 ! Revision 2.235  2003/02/25 19:04:43  dwu
 ! fix another bug in FlagCloud
 !
