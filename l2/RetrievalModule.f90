@@ -1285,6 +1285,10 @@ contains
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
             ! C ( a - x_n ) \right ] }$
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
+            if ( index ( switches, 'fnorm' ) /= 0 ) then
+              call output ( 'A priori contribution to | F | = ' )
+              call output ( aj%fnorm, advance='yes' )
+            end if
 
             !{ Using Apriori requires adding equations of the form ${\bf F
             !  x}_{n+1} \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky
@@ -1311,6 +1315,9 @@ contains
             end if
           else
             aj%fnorm = 0.0_r8
+            if ( index ( switches, 'fnorm' ) /= 0 ) then
+              call output ( 'No a priori so setting | F | to zero.', advance='yes' )
+            end if
             call clearMatrix ( normalEquations%m ) ! start with zero
             call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
@@ -1361,6 +1368,14 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+              if ( index ( switches, 'fnorm' ) /= 0 ) then
+                if ( t == 1 ) then
+                  call output ( 'Vertical Regularization contribution to | F | = ' )
+                else
+                  call output ( 'Horizontal Regularization contribution to | F | = ' )
+                end if
+                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
+              end if
               ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
@@ -1480,6 +1495,10 @@ contains
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
+          if ( index ( switches, 'fnorm' ) /= 0 ) then
+            call output ( 'Measurement contribution to | F | = ' )
+            call output ( v(f_rowScaled) .mdot. v(f_rowScaled), advance='yes' )
+          end if
 
           ! Add Tikhonov regularization if requested.  We do it here instead
           ! of before adding the Jacobian so that we can scale it up by the
@@ -1550,6 +1569,14 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+              if ( index ( switches, 'fnorm' ) /= 0 ) then
+                if ( t == 1 ) then
+                  call output ( 'Vertical Regularization contribution to | F | = ' )
+                else
+                  call output ( 'Horizontal Regularization contribution to | F | = ' )
+                end if
+                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
+              end if
               ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
@@ -3651,6 +3678,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.226  2003/01/29 22:43:46  livesey
+! Added the fnorm switch to dump contributions to fnorm
+!
 ! Revision 2.225  2003/01/18 02:15:43  vsnyder
 ! Change names of global loop inductors "I" and "J" to something more clever,
 ! i.e., I_Sons and I_Key.  It's too easy to use "I" and "J" in internal
