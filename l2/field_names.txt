@@ -84,6 +84,7 @@ file
 filterShapes
 forbidOverspill
 force
+forceSidebandFraction
 formula
 forwardModel
 fraction
@@ -137,6 +138,7 @@ lambda
 length
 lengthScale
 level
+linearSideband
 lockBins
 logBasis
 logSpace
@@ -308,6 +310,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.100  2003/07/15 22:11:28  livesey
+# Added stuff for hybrid forward model
+#
 # Revision 2.99  2003/06/23 18:07:03  pwagner
 # Added metaDataOnly
 #
