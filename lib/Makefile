@@ -6,11 +6,11 @@ include make.inc
 MLSPGS_LIB_PATH=.
 
 OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
-	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o \
+	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o MLSCF.o\
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
 	ConstructVectorTemplates.o gridded_data_module.o \
-	dates_module.o MLSPCF.o MLSCF.o GriddedData.o HDF-EOS.o
+	dates_module.o MLSPCF.o GriddedData.o HDF-EOS.o
 
 OBJS_DEBUG= 	MLSStrings.dbg.o MLSSignalNomenclature.dbg.o \
 		VerticalCoordinate.dbg.o QuantityTemplates.dbg.o \
@@ -45,7 +45,7 @@ clean:
 # Here we list manually dependencies present through USE statements.
 # Later on we may try to adapt Hugh's script to deal with these
 #
-
+SDPToolkit.o: MLSCommon.o
 MLSCF.o: SDPToolkit.o Hdf.o MLSMessageModule.o
 gridded_data_module.o: MLSCommon.o MLSStrings.o MLSMessageModule.o \
 	dates_module.o
@@ -90,6 +90,9 @@ ConstructVectorTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o VectorsMo
 	QuantityTemplates.dbg.o
 
 # $Log$
+# Revision 1.27  2000/06/19 23:41:18  lungu
+# Added HDF-EOS.
+#
 # Revision 1.26  2000/02/23 20:33:48  perun
 # Changed .o_debug to .dbg.o for SunOS
 #
