@@ -142,7 +142,7 @@ while [ -n "$(echo $1)" ]; do
 		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
 	esac
     fi
-    if [ $1 == "--l1breal" ]; then
+    if [ $1 == "--l1bvsp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
 		echo "/data1/$MYUSER";;
@@ -189,6 +189,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.39  2004/09/21 00:37:32  livesey
+# Moved the l2pcs and other tidy ups.
+#
 # Revision 1.38  2004/09/16 00:40:38  livesey
 # Better L1B handling
 #
