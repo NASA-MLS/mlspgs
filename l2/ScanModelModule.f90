@@ -471,9 +471,6 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Local variables
 
-    integer :: BASIS                    ! Index
-    integer :: BASISMINUS               ! Index
-    integer :: BASISPLUS                ! Index
     integer :: BELOWREF                 ! Returned from getBasisGPH
     integer :: COL                      ! Block col in jacobian
     integer :: H2OINST                  ! H2O Instance for this MAF
@@ -496,6 +493,10 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), target :: ZERO=0.0_r8    ! Need this if no heightOffset
     real (r8), pointer :: HTOFF         ! HeightOffset%values or zero
     real (r8) :: USEPTAN                ! A tangent pressure
+    real (r8) :: UPPERWEIGHT            ! A weight
+    real (r8) :: BASIS                    ! Index
+    real (r8) :: BASISMINUS               ! Index
+    real (r8) :: BASISPLUS                ! Index
 
     ! All these will be dimensioned noMIFs.
     real (r8), dimension(:), pointer :: BASISGPH ! From ifm
@@ -580,7 +581,7 @@ contains ! =============== Subroutines and functions ==========================
       & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule )
     heightOffset => GetVectorQuantityByType ( state, extra, &
       & quantityType=l_heightOffset, instrumentModule=fmConf%instrumentModule, &
-      & noError=.true. )
+      & noError=.true., foundInFirst=heightOffsetInState )
 
     ! Identify the vector quantities from fwmOut
     residual => GetVectorQuantityByType ( fwmOut, &
@@ -921,12 +922,15 @@ contains ! =============== Subroutines and functions ==========================
         usePtan = refGPH%template%surfs(1,1)
         lower = belowRef
         upper = belowRef + 1
+        print*,'refGPH term:',usePtan,belowRef
       else
         usePtan = ptanVals(i)
         lower = pointTempLayer(i)
         upper = lower+1
       endif
-      do j = 1,noTemps
+      
+      ! Now do the main bulk of the temperature bases
+      do j = 1, noTemps
 
       ! Loop over temperature basis surfaces
         A(i,j) = 0.0_r8          ! Set to zero to start
@@ -934,36 +938,40 @@ contains ! =============== Subroutines and functions ==========================
         ! Now do nothing for bad ptans
         if ( usePtan /= ptan%template%badValue ) then
           basis = tempBasis(j)
-          basisPlus =  tempBasis( min(j+1,noTemps) )
-          basisMinus = tempBasis( max(J-1,1) )
-          
-          ! Points where ptan is within bottom half of basis
-          if ( (basisMinus < usePtan) .and. (usePtan <= basis) ) then
-            A(i,j) = ((usePtan-basisMinus)**2) / &
-              & (2*(basis-basisMinus))
-          endif
-          
-          ! Points where ptan is within top half of basis
-          if ( (basis < usePtan) .and. (usePtan <= basisPlus) ) then 
-            A(i,j)=(basis-basisMinus)/2.0+&
-              & ((usePtan-basis)/2)*(1+(basisPlus-usePtan) / &
-              & (basisPlus-basis))
-          endif
-          
-          !Points where ptan is above the top of the basis function
-          if ( usePtan > basisPlus ) then 
-            A(i,j) = (basisPlus-basisMinus)/2
-          endif
-        endif                       ! Good ptan
-      enddo                         ! Loop over temp basis
-    enddo                           ! Loop over ptans
+          basisPlus =  tempBasis( min(j+1,noTemps))
+          basisMinus = tempBasis( max(j-1,1) )
+          if ( j /= noTemps ) then
+            upperWeight = (usePtan - basis) / (basisPlus - basis)
+          else
+            upperWeight = 1.0
+          end if
+
+          ! I'm listing these cases in the order given in the geopotential ATBD.
+
+          if ( j < lower ) then         ! Basis triangles completely below ptan
+            A(i,j) = basisPlus - basisMinus
+
+          else if ( j == lower  ) then  ! Basis triangles with ptan in the top half
+            A(i,j) = ( basis - basisMinus ) + &
+              & ( usePtan - basis ) * &
+              & ( 2 * basisPlus - basis - usePtan ) / &
+              & (basisPlus - basis)
+
+          else if ( j == lower+1 ) then ! Basis triangles with ptan in the bottom half
+            A(i,j) = ( ( usePtan - basisMinus )**2 ) / &
+              & (basis - basisMinus)
+
+          endif                         ! Basis triangles completely above ptan, no impact
+        endif                           ! Good ptan
+      enddo                             ! Loop over temp basis
+    enddo                               ! Loop over ptans
     
     ! Now use this to get temperature derivatives
     do i = 1, noMIFs
       if ( ptanVals(i) /= ptan%template%badValue ) then
         do j = 1, noTemps
-          dHydrosGPHByDTemp(i,j) = (A(i,j) - A(noMIFs+1,j))*&
-            & ifm%R(j)*LN10
+          dHydrosGPHByDTemp(i,j) = ( A(i,j) - A(noMIFs+1,j) ) * &
+            & (ifm%R(j)*ln10) / (2*g0)
         enddo
       endif
     enddo
@@ -971,9 +979,9 @@ contains ! =============== Subroutines and functions ==========================
     ! Now get dHydrosGPHByDPtan
     do i= 1, noMIFs
       if ( ptanVals(i) /= ptan%template%badValue ) then
-        dHydrosGPHByDPtan(i)= &
-          & rt(pointTempLayer(i)) * tempUpperWeight(i)+ &
-          & rt(pointTempLayer(i)+1) * tempLowerWeight(i)
+        dHydrosGPHByDPtan(i)= (ln10/g0) * ( &
+          & rt(pointTempLayer(i)) * tempLowerWeight(i)+ &
+          & rt(pointTempLayer(i)+1) * tempUpperWeight(i) )
       else
         dHydrosGPHByDPtan(i)=0.0
       endif
@@ -1046,12 +1054,12 @@ contains ! =============== Subroutines and functions ==========================
         endif
         call CreateBlock ( jacobian, row, col, M_Full )
         block%values = - dHydrosGPHByDTemp
-        do i = 1, noMIFs
-          block%values(i,pointTempLayer(i)) = &
-            & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-          block%values(i,pointTempLayer(i)+1) = &
-            & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-        end do
+!         do i = 1, noMIFs
+!           block%values(i,pointTempLayer(i)) = &
+!             & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+!           block%values(i,pointTempLayer(i)+1) = &
+!             & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+!         end do
       end if
 
     end if
@@ -1116,6 +1124,10 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.17  2001/05/05 00:03:30  livesey
+! Close to working.  One last part of the temperature derivatives that disagrees with
+! numerical calculation.
+!
 ! Revision 2.16  2001/05/04 05:41:26  livesey
 ! Added some more conditions for derivative calculation
 !
