@@ -1056,11 +1056,11 @@ contains
               if ( t == 1 ) then
                 if ( .not. got(f_vRegOrders) ) cycle
                 call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
-                  & vRegWeightVec, tikhonovRows )
+                  & vRegWeightVec, tikhonovRows, horiz=.false. )
               else
                 if ( .not. got(f_hRegOrders) ) cycle
                 call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
-                  & hRegWeightVec, tikhonovRows )
+                  & hRegWeightVec, tikhonovRows, horiz=.true. )
               end if
               if ( got(f_regApriori) ) then
                 call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
@@ -1189,11 +1189,11 @@ contains
               if ( t == 1 ) then
                 if ( .not. got(f_vRegOrders) ) cycle
                 call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
-                  & vRegWeightVec, tikhonovRows )
+                  & vRegWeightVec, tikhonovRows, horiz=.false. )
               else
                 if ( .not. got(f_hRegOrders) ) cycle
                 call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
-                  & hRegWeightVec, tikhonovRows )
+                  & hRegWeightVec, tikhonovRows, horiz=.true. )
               end if
 
               ! Get the column scale vector.
@@ -3009,6 +3009,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.167  2002/08/28 00:51:04  vsnyder
+! Correct more blunders in Tikhonov regularization
+!
 ! Revision 2.166  2002/08/26 20:01:59  livesey
 ! Made subset us the GetIndexFlagsFromList routine to get channel flags
 !
