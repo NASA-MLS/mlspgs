@@ -486,7 +486,7 @@ contains ! =====     Public procedures     =============================
              l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
              l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def, &
       begin, t+t_vgridcoord, l+l_angle, l+l_geodAltitude, l+l_gph, l+l_none, &
-             l+l_pressure, l+l_theta, l+l_zeta, n+n_dt_def, &
+             l+l_pressure, l+l_theta, l+l_zeta, l+l_integer, n+n_dt_def, &
       begin, t+t_vgridtype, l+l_explicit, l+l_linear, l+l_logarithmic, &
              l+l_l2gp, n+n_dt_def /) )
 
@@ -1272,6 +1272,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.377  2004/06/17 22:48:48  pwagner
+! integer now a possible coord type for a VGrid
+!
 ! Revision 2.376  2004/06/16 23:42:44  vsnyder
 ! Make molecules field of pfaData optional
 !
