@@ -35,14 +35,12 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: T_USE            = last_signal_type+1
   integer, public, parameter :: T_UNITS          = t_use+1
   integer, public, parameter :: T_LAST           = t_units
-  integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 
 ! Field indices:
 
   integer, public, parameter :: F_MIFS = last_Signal_Field + 1
   integer, public, parameter :: F_USE = f_mifs + 1
   integer, public, parameter :: FIELD_LAST = f_use
-  integer, public :: FIELD_INDICES(field_first:field_last)
 
 ! Enumeration literals:
 
@@ -50,7 +48,6 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_MASK = l_expected + 1
   integer, public, parameter :: L_OVERRIDE = l_mask + 1
   integer, public, parameter :: LAST_LIT = l_override
-  integer, public :: LIT_INDICES(first_lit:last_lit)
 
 ! Section identities:
 
@@ -58,14 +55,12 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: Z_CALIBRATION = 2
   integer, public, parameter :: SECTION_FIRST = z_globalSettings, &
                                 SECTION_LAST = z_Calibration
-  integer, public :: SECTION_INDICES(section_first:section_last)
 
 ! Specification indices:
 
   integer, public, parameter :: S_SPACEMIFS = last_Signal_Spec + 1
   integer, public, parameter :: S_TARGETMIFS = s_spacemifs + 1
   integer, public, parameter :: SPEC_LAST = s_targetMIFs
-  integer, public :: SPEC_INDICES(spec_first:spec_last)
 
 ! Parameter names:
 
@@ -80,7 +75,6 @@ module INIT_TABLES_MODULE
 
   integer, public, parameter :: FIRST_PARM = P_OUTPUT_VERSION_STRING
   integer, public, parameter :: LAST_PARM = P_CALWINDOW
-  integer, public :: PARM_INDICES(first_parm:last_parm)
 
 ! Table for section ordering:
 
@@ -105,8 +99,8 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
 
-    call init_MLSSignals (Data_Type_Indices, Field_Indices, Lit_Indices, &
-    & Parm_Indices, Section_Indices, Spec_Indices)
+     call init_MLSSignals ( t_last, field_last, last_lit, &
+     & first_parm, last_parm, section_last, spec_last )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
 
@@ -225,6 +219,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE    
 
 ! $Log$
+! Revision 2.10  2001/04/27 14:01:14  perun
+! For the latest parser version.
+!
 ! Revision 2.9  2001/04/05 14:43:56  perun
 ! Another change to init_MLSSignals
 !
