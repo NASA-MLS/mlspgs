@@ -12,7 +12,7 @@ module DFFT_M
     & "$Id$"
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
-       & "$RCSfile$"
+    & "$RCSfile$"
   private :: not_used_here
   !---------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ contains
       use ERMSG_M, only: ERM1, ERMSG
 
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(*), S(*)
+      DOUBLE PRECISION A(:), S(:)
       INTEGER          M, MS
       CHARACTER        MODE
 
@@ -92,10 +92,10 @@ contains
 !  reserved by the user in any way that works.
 
 ! MODE  Selects Synthesis or Analysis.
-!  If MODE = 'A' or 'a', do Fourier analysis, which amounts to setting
+!  if MODE = 'A' or 'a', do Fourier analysis, which amounts to setting
 !  C(k) = sum for j=0 to N-1 of X(j)*T(M,j,k), for k = 0, N/2
 !  with  T(M,j,k) = (1/N) * W ** (-j*k).
-!  If MODE = 'S' or 's', do Fourier synthesis, which amounts to setting
+!  if MODE = 'S' or 's', do Fourier synthesis, which amounts to setting
 !  X(j) = sum for k=0 to N-1 of C(k)*T(M,j,k), for j = 0, N - 1
 !  with  T(M,j,k) = W ** (j*k)
 !  (Recall that C(N-k) is the conjugate of C(k).)
@@ -104,22 +104,22 @@ contains
 !  number of points must satisfy 1 <= N <= 2**21.
 !  M = 0 gives an immediate return.
 
-! MS gives the state of the sine table.  If MS > 0, there are NT =
+! MS gives the state of the sine table.  if MS > 0, there are NT =
 !    2 ** (MS-2 ) good entries in the sine table.  On the initial call,
 !    MS must be set to 0, and when the return is made, it will be set
 !    to M, which is the value of MS required for computing a
-!    transform of size N.  If MS = -1, the sine table will be computed
+!    transform of size N.  if MS = -1, the sine table will be computed
 !    as for the case MS = 0, and then a return to the user will be made
 !    with MS set as before, but no transform will be computed.  This
 !    option is useful if the user would like access to the sine table
 !    before computing the FFT.
 !    On detected errors the error message subrs are called and
-!    execution stops.  If the user overrides the stop to cause
+!    execution stops.  if the user overrides the stop to cause
 !    continuation, then this subr will return with MS = -2.
 
 ! S() is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
 !  NT is defined in the description of MS above.  S is computed by the
-!  subroutine if M > MS.  (If S is altered, set MS=0 so that S
+!  subroutine if M > MS.  (if S is altered, set MS=0 so that S
 !  is recomputed.)
 
 !     ------------------------------------------------------------------
@@ -203,8 +203,8 @@ contains
             KEE(L+1) = KEE(L) / 2
          end do ! L
 
-         call DFFT (A(IR), A(II), S)
-!                              end of computing complex transform
+         call DFFT (A(IR:), A(II:), S)
+!                              End of computing complex transform
 
          if ( .NOT. ANAL ) return
 
@@ -281,7 +281,7 @@ contains
 !     Pasadena, Calif.   August 1, 1969.
 !     Revised by Krogh at JPL -- January 19, 1988 -- For portability
 
-      DOUBLE PRECISION AR(*), AI(*), S(*)
+      DOUBLE PRECISION AR(:), AI(:), S(:)
 !     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
 !     and NT are module variables.
 
@@ -301,20 +301,21 @@ contains
       DOUBLE PRECISION T, T1, T1I, T2, T2I, T3, T3I, THETA
       DOUBLE PRECISION TI, TP, TP1, TP1I, TPI
       DOUBLE PRECISION WI1, WI2, WI3, WR1, WR2, WR3
+      LOGICAL SPCASE
 
 !     -----------------------------------------------------------------
 
-      if ( NEEDST ) then
+      if (NEEDST) then
 !                      Compute the sine table
          NEEDST = .FALSE.
          MTC = MT
          NT = 2**MTC
-         if ( MTC > 0 ) then
+         if (MTC > 0) then
 !                            SET FOR L=1
             J = NT
             JJ = J / 2
             S(JJ) = SPI4
-            if ( MTC > 1 ) then
+            if (MTC > 1) then
                THETA = PI4
                do L = 2, MTC
                   THETA = HALF * THETA
@@ -326,7 +327,7 @@ contains
                   L1 = NT - JJ
                   S(L1) = COS(THETA)
                   LL = NT - K
-                  if ( LL >= J ) then
+                  if (LL >= J) then
                      do I = J, LL, J
                         I1 = NT - I
                         I2 = I + JJ
@@ -339,18 +340,18 @@ contains
       else
 !                      Compute the transform
 !                           Scramble A
-
+!
          IJ = 1
          JI = 1
          L1 = KS
-         if ( MM > 1 ) then
+         if (MM > 1) then
    30       IJ = IJ + L1
             do I = 1, MM
                JI = JI + KE(I)
                KE(I) = -KE(I)
-               if ( KE(I) < 0 ) then
-                  if ( IJ < JI ) then
-!                       INTERCHANGE THE IJ-TH COEFFICIENT WITH THE JI-TH
+               if (KE(I) < 0) then
+                  if (IJ < JI) then
+!                       Interchange the IJ-th coefficient with the JI-th
                      T = AR(IJ)
                      AR(IJ) = AR(JI)
                      AR(JI) = T
@@ -360,12 +361,12 @@ contains
                   end if
                   go to 30
                end if
-            end do ! I
+            end do
          end if
-!                          end OF SCRAMBLING A
+!                          End of scrambling A
          JDIF = NT
-         if ( MOD(MM, 2) /= 0 ) then
-!                    SPECIAL CASE -- L = 1,  MM ODD  (RADIX 2 ALGORITHM)
+         if (MOD(MM, 2) /= 0) then
+!                    Special case -- L = 1,  MM odd  (radix 2 algorithm)
             L1 = L1 + L1
             do I = 1, ILAST, L1
                KSI = I + KS
@@ -375,77 +376,74 @@ contains
                T = AI(I)
                AI(I) = T + AI(KSI)
                AI(KSI) = T - AI(KSI)
-            end do ! I
+            end do
             JDIF = JDIF / 2
          end if
-
+!
          do L = 2, MM, 2
             L4 = 4 * L1
             LJ = L1 / 2
+            SPCASE = .TRUE.
             J = 0
             JI = 0
-
-!           ASSIGN 70 TO JGO
-            JGO = 70
-
-!           START OF I LOOP  (RADIX 4 ALGORITHM)
-            do
+!
+!           Start of I loop  (radix 4 algorithm)
+ij_l:       do
               IJ = J + 1
               do I = IJ, ILAST, L4
                  I1 = I + L1
                  I2 = I1 + L1
                  I3 = I2 + L1
-
-!                go to JGO, (70, 80, 90)
-
-                 if ( JGO == 70 ) then ! SPECIAL CASE -- J = 0
-                   T = AR(I) + AR(I1)
-                   T1 = AR(I) - AR(I1)
-                   TI = AI(I) + AI(I1)
-                   T1I = AI(I) - AI(I1)
-                   T2 = AR(I2) + AR(I3)
-                   T3 = AR(I2) - AR(I3)
-                   T2I = AI(I2) + AI(I3)
-                   T3I = AI(I2) - AI(I3)
+                 if (SPCASE) then
+                    if (J == 0) then
+!                                     Special case -- J = 0
+                       T = AR(I) + AR(I1)
+                       T1 = AR(I) - AR(I1)
+                       TI = AI(I) + AI(I1)
+                       T1I = AI(I) - AI(I1)
+                       T2 = AR(I2) + AR(I3)
+                       T3 = AR(I2) - AR(I3)
+                       T2I = AI(I2) + AI(I3)
+                       T3I = AI(I2) - AI(I3)
+                       go to 110
+                    end if
+!                                     Special case -- J = L1 / 2
+                    T2 = SPI4 * AR(I2)
+                    T2I = SPI4 * AI(I2)
+                    T3 = SPI4 * AR(I3)
+                    T3I = SPI4 * AI(I3)
+                    TP = T2 - T2I
+                    TPI = T2 + T2I
+                    TP1 = -T3 - T3I
+                    TP1I = T3 - T3I
+                    T = AR(I) - AI(I1)
+                    T1 = AR(I) + AI(I1)
+                    TI = AI(I) + AR(I1)
+                    T1I = AI(I) - AR(I1)
                  else
-                   if ( JGO == 80 ) then ! SPECIAL CASE -- J = L1 / 2
-                     T2 = SPI4 * AR(I2)
-                     T2I = SPI4 * AI(I2)
-                     T3 = SPI4 * AR(I3)
-                     T3I = SPI4 * AI(I3)
-                     TP = T2 - T2I
-                     TPI = T2 + T2I
-                     TP1 = -T3 - T3I
-                     TP1I = T3 - T3I
-                     T = AR(I) - AI(I1)
-                     T1 = AR(I) + AI(I1)
-                     TI = AI(I) + AR(I1)
-                     T1I = AI(I) - AR(I1)
-                   else if ( JGO == 90 ) then
-                     ! USUAL CASE -- J /= 0  AND  J /= L1 / 2
-
-                     ! WRK AND WIK (K = 1, 2, 3) ARE THE REAL AND IMAGINARY PART
-                     ! RESP. OF EXP(SQRT(-1) * PI * K*(2**(-L-MOD(MM, 2)))*J/KS)
-                     !                =EXP(SQRT(-1) * PI * K * (J / (4 * L1)))
-
-                     T2 = WR2 * AR(I1) - WI2 * AI(I1)
-                     T2I = WI2 * AR(I1) + WR2 * AI(I1)
-                     T = AR(I) + T2
-                     T1 = AR(I) - T2
-                     TI = AI(I) + T2I
-                     T1I = AI(I) - T2I
-                     TP = WR1 * AR(I2) - WI1 * AI(I2)
-                     TPI = WI1 * AR(I2) + WR1 * AI(I2)
-                     TP1 = WR3 * AR(I3) - WI3 * AI(I3)
-                     TP1I = WI3 * AR(I3) + WR3 * AI(I3)
-                   end if
-                   T2 = TP + TP1
-                   T3 = TP - TP1
-                   T2I = TPI + TP1I
-                   T3I = TPI - TP1I
+!
+!                Usual case -- J /= 0  and  J /= L1 / 2
+!
+!                WRK and WIK (K = 1, 2, 3) are the real and imaginary part
+!                resp. of exp(sqrt(-1) * PI * K*(2**(-L-MOD(MM, 2)))*J/KS)
+!                               = exp(sqrt(-1) * PI * K * (J / (4 * L1)))
+!
+                    T2 = WR2 * AR(I1) - WI2 * AI(I1)
+                    T2I = WI2 * AR(I1) + WR2 * AI(I1)
+                    T = AR(I) + T2
+                    T1 = AR(I) - T2
+                    TI = AI(I) + T2I
+                    T1I = AI(I) - T2I
+                    TP = WR1 * AR(I2) - WI1 * AI(I2)
+                    TPI = WI1 * AR(I2) + WR1 * AI(I2)
+                    TP1 = WR3 * AR(I3) - WI3 * AI(I3)
+                    TP1I = WI3 * AR(I3) + WR3 * AI(I3)
                  end if
-
-                 AR(I) = T + T2
+                 T2 = TP + TP1
+                 T3 = TP - TP1
+                 T2I = TPI + TP1I
+                 T3I = TPI - TP1I
+  110            AR(I) = T + T2
                  AI(I) = TI + T2I
                  AR(I1) = T1 - T3I
                  AI(I1) = T1I + T3
@@ -454,15 +452,17 @@ contains
                  AR(I3) = T1 + T3I
                  AI(I3) = T1I - T3
               end do ! I
-
-              if ( J < LJ ) then
-                 if ( J == 0 ) then
-!                   ASSIGN 90 TO JGO
-                    JGO = 90
+!             End of I loop
+!
+              if (J <= LJ) then
+                 if (SPCASE) then
+                    if (J /= 0) &
+            exit ij_l
                     J = KS
+                    SPCASE = .FALSE.
                  else
                     J = L1 - J
-!                   COMPUTE WR-S AND WI-S FOR J REPLACED BY L1 - J
+!                   Compute WR-S and WI-S for J replaced by L1 - J
                     T = WI1
                     WI1 = WR1
                     WR1 = T
@@ -470,15 +470,13 @@ contains
                     T = -WI3
                     WI3 = -WR3
                     WR3 = T
-                    cycle
+            cycle ij_l
                  end if
-              else if ( J == LJ ) then
-                 exit
               else
                  J = L1 - J + KS
               end if
-              if ( J < LJ ) then
-!                                COMPUTE WR-S AND WI-S
+              if (J < LJ) then
+!                                Compute WR-S and WI-S
                  JI = JI + JDIF
                  JR = NT - JI
                  WR1 = S(JR)
@@ -488,30 +486,30 @@ contains
                  JR = NT - JI2
                  WR2 = S(JR)
                  JI2 = JI + JI2
-                 if ( JI2 <= NT ) then
+                 if (JI2 <= NT) then
                     JR = NT - JI2
                     WR3 = S(JR)
                     WI3 = S(JI2)
-                 else
-                    JR = JI2 - NT
-                    JI2 = NT - JR
-                    WI3 = S(JI2)
-                    WR3 = -S(JR)
+            cycle ij_l
                  end if
-              else if ( J == LJ ) then
-!                                      SET FOR J = L1 / 2
-!                ASSIGN 80 TO JGO
-                 JGO = 80
+                 JR = JI2 - NT
+                 JI2 = NT - JR
+                 WI3 = S(JI2)
+                 WR3 = -S(JR)
+            cycle ij_l
+              else if (J == LJ) then
+                 SPCASE = .TRUE.
+            cycle ij_l
               end if
-!             end OF COMPUTING WR-S AND WI-S
-            end do
-
+            exit ij_l
+            end do ij_l
+!           End of computing WR-S and WI-S
+!
             L1 = L4
             JDIF = JDIF / 4
          end do ! L
+!        End of L loop
       end if
-
-      return
 
       end subroutine DFFT
 
@@ -537,7 +535,7 @@ contains
       use ERMSG_M, only: ERM1, ERMSG
 
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(*), S(*)
+      DOUBLE PRECISION A(:), S(:)
       INTEGER   ND, M(ND), MS
       CHARACTER*(*) TCS, MODE
 
@@ -567,7 +565,7 @@ contains
 !         =COS(j*k*PI/N(L))        if k IS EVEN  (k = 2, 4, ..., N(L)-2)
 !         =SIN(j*(k-1)*PI/N(L))    if k IS ODD   (k = 3, 5, ..., N(L)-1)
 !                    and if MODE(L:L) = 'A', T(L,j,k)
-!         = (4/N) * (value of T(L,k,j) defined above)   If j<2
+!         = (4/N) * (value of T(L,k,j) defined above)   if j<2
 !         = (2/N) * (value of T(L,k,j) defined above)   Otherwise
 
 !       if TCS(L:L) = 'C' and MODE(L:L) = 'S', T(L,j,k)
@@ -617,22 +615,22 @@ contains
 ! ND is the dimension of (i.e. the number of subscripts in) the
 !    array A.  ND must satisfy 1 <= ND <= 6.
 
-! MS gives the state of the sine table.  If MS > 0, there are NT =
+! MS gives the state of the sine table.  if MS > 0, there are NT =
 !    2 ** (MS-2 ) good entries in the sine table.  On the initial call,
 !    MS must be set to 0, and when the return is made, it will be set
 !    to MX, which is the value of MS required for computing a
-!    transform of size N.  If MS = -1, the sine table will be computed
+!    transform of size N.  if MS = -1, the sine table will be computed
 !    as for the case MS = 0, and then a return to the user will be made
 !    with MS set as before, but no transform will be computed.  This
 !    option is useful if the user would like access to the sine table
 !    before computing the FFT.
 !    On detected errors the error message subrs are called and
-!    execution stops.  If the user overrides the stop to cause
+!    execution stops.  if the user overrides the stop to cause
 !    continuation, then this subr will return with MS = -2.
 
 ! S() is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
 !  NT is defined in the description of MS above.  S is computed by the
-!  subroutine if MX > MS.  (If S is altered, set MS=0 so that S
+!  subroutine if MX > MS.  (if S is altered, set MS=0 so that S
 !  is recomputed.)
 !     -----------------------------------------------------------------
 !                Notes on local variables
@@ -888,7 +886,7 @@ ii_l:      do
              II = IR + KDR
 
 !            Compute a one-dimensional complex Fourier transform
-  110        call DFFT (A(IR), A(II), S)
+  110        call DFFT (A(IR:), A(II:), S)
              if ( MI < 0 ) go to 80
              if ( MI /= 0 ) go to 140
   120        if ( ITCSK == 1 ) go to 140
@@ -957,6 +955,9 @@ ii_l:      do
 end module DFFT_M
 
 ! $Log$
+! Revision 2.7  2004/01/29 01:57:10  vsnyder
+! Replace DFFT subroutine with version from Math77.6.1
+!
 ! Revision 2.6  2004/01/16 01:50:01  vsnyder
 ! Remove superfluous declaration for I from DRFT1
 !
