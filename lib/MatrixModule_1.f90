@@ -10,14 +10,14 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, &
-    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, &
-    & DestroyBlock, Dump, GetDiagonal, GetMatrixElement, GetVectorFromColumn, &
-    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &
-    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XY, &
-    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &
-    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
-    & Spill, TransposeMatrix, UpdateDiagonal
+  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
+    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, & 
+    & DestroyBlock, Dump, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
+    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &            
+    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XY, &       
+    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &              
+    & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
+    & Spill, TransposeMatrix, UpdateDiagonal                                    
   use MLSCommon, only: RM, RV, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -241,6 +241,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private not_used_here
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -2124,9 +2125,16 @@ contains ! =====     Public Procedures     =============================
       minDiag_1 = min(minDiag_1,minDiag(a%block(i,i)))
     end do
   end function MinDiag_1
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.84  2002/10/07 23:24:43  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.83  2002/09/21 00:00:51  vsnyder
 ! Handle the UseMask flag in NormalEquations completely
 !
