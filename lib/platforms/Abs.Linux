@@ -42,7 +42,7 @@ libdir = ../../lib/$(MLSCONFG)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
- -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
+ -I$(PGSINC) -I$(srclib) -I$S -I$(blaslib)
 
 # Define some suffix rules
 
@@ -65,6 +65,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
 MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o 
 
 # $Log$
+# Revision 1.7  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.6  2001/11/02 01:03:30  pwagner
 # Added stuff for lapack, inrinsic BLAS
 #

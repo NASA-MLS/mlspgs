@@ -58,8 +58,8 @@ dir4 = $(clouddir)/
 INC_PATHS = $(EXTRA_PATHS) \
      -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
      -p $(fwdmdldir) -p $(clouddir) -p $(blaslib) \
-     -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
-     -I $(fwdmdldir) -I $(clouddir) -I $(blaslib)
+     -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
+     -I$(fwdmdldir) -I$(clouddir) -I$(blaslib)
 
 # Define some suffix rules
 
@@ -85,6 +85,9 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials = 
 
 # $Log$
+# Revision 1.8  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.7  2001/08/15 21:03:28  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #

@@ -47,8 +47,8 @@ dir3 = $(libmlsl3dir)/
 
 INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
      -p $(libmlsl3dir) \
-     -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
-     -I $(libmlsl3dir)
+     -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
+     -I$(libmlsl3dir)
 
 # Define some suffix rules
 
@@ -70,6 +70,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
 l_specials = 
 
 # $Log$
+# Revision 1.2  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.1  2001/07/19 23:59:48  pwagner
 # Fiest commit
 #
