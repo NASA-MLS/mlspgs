@@ -212,7 +212,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CREATE             = s_apriori + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
-  integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1 !???
+  integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
   integer, parameter :: S_L2GP               = s_hgrid + 1
@@ -712,21 +712,21 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &
-             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, s+s_signal, n+n_field_spec, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
-             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
-             begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
-             np+n_spec_def, &      
-      begin, s+s_forwardModelGlobal, &                                 !???
+            ndp+n_spec_def, &      
+      begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
-             nadp+n_spec_def /) )                                      !???
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
@@ -820,6 +820,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.67  2001/04/06 21:53:20  vsnyder
+! Specify 'no duplicate fields' for s_forwardModel
+!
 ! Revision 2.66  2001/04/04 18:01:46  vsnyder
 ! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
 ! (because of the "include").
