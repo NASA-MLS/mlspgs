@@ -39,7 +39,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
   public :: MinDiag_SPD, MultiplyMatrices, MultiplyMatrixVector
-  public :: MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
+  public :: MultiplyMatrixVector_1
+  public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
+  public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
   public :: NewMultiplyMatrixVector, NormalEquations, operator(.TX.)
   public :: operator(+), RC_Info, RowScale, RowScale_1, ScaleMatrix
@@ -109,6 +111,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface MultiplyMatrixVector   ! A^T V
     module procedure MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
+  end interface
+
+  interface MultiplyMatrixVectorNoT   ! A V
+    module procedure MultiplyMatrixVectorNoT_1
   end interface
 
   interface Negate
@@ -986,6 +992,42 @@ contains ! =====     Public Procedures     =============================
     end do ! j = 1, a%col%nb
   end subroutine MultiplyMatrixVector_1
 
+  ! ----------------------------------  MultiplyMatrixVectorNoT_1  -----
+  subroutine MultiplyMatrixVectorNoT_1 ( A, V, Z, UPDATE )
+  ! Z = A V if UPDATE is absent or false.
+  ! Z = Z + A V if UPDATE is presend and true.
+    type(Matrix_T), intent(in) :: A
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: Z
+    logical, intent(in), optional :: UPDATE
+
+    logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVectorNoT
+    !                           whether to clear an element of Z, or add to it
+    integer :: I, J           ! Subscripts and loop inductors
+    integer :: K, L, M, N     ! Subscripts
+    logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
+
+    if ( .not. associated(a%row%vec%template, v%template) ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    call cloneVector ( z, v ) ! Copy characteristics, allocate values
+    do i = 1, a%row%nb
+      m = a%row%quant(i)
+      n = a%row%inst(i)
+      do_update = my_update
+      do j = 1, a%col%nb
+        k = a%col%quant(j)
+        l = a%col%inst(j)
+        call multiplyMatrixVectorNoT ( a%block(i,j), &
+          & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
+          & do_update )
+        do_update = .true.
+      end do ! i = 1, a%row%nb
+    end do ! j = 1, a%col%nb
+  end subroutine MultiplyMatrixVectorNoT_1
+
   ! ----------------------------------  MultiplyMatrixVectorSPD_1  -----
   subroutine MultiplyMatrixVectorSPD_1 ( A, V, Z, UPDATE )
   ! Z = A V if UPDATE is absent or false.
@@ -1421,6 +1463,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.18  2001/04/25 00:50:25  vsnyder
+! Provide MultiplyMatrixNoT
+!
 ! Revision 2.17  2001/04/24 22:35:56  vsnyder
 ! Maybe this time elements of matrixDatabase are destroyed coimpletely
 !
