@@ -60,7 +60,8 @@ contains
     type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
     real(rp), intent(in) :: t_path_p(:) ! path temperatures for gl_slabs_p
-    LOGICAL, intent(in) :: t_der_path_flags(:) ! indicies where temperature
+    LOGICAL, pointer :: t_der_path_flags(:)
+!                                   indicies where temperature
 ! derivatives are needed. Only useful for subsetting.
 
 ! outputs
@@ -353,6 +354,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.36  2003/06/18 14:44:53  bill
+! added subsetting feature for T-ders
+!
 ! Revision 2.35  2003/06/02 22:41:33  vsnyder
 ! Remove unused symbols
 !

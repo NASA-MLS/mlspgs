@@ -1514,7 +1514,7 @@ contains
             &  gl_slabs, indices_c(1:npc), beta_path_c(1:npc,:),  &    
             &  gl_slabs_m, t_path_m(1:no_ele),                    &
             &  gl_slabs_p, t_path_p(1:no_ele),                    &
-            &  t_der_path_flags(1:no_ele),                        &
+            &  t_der_path_flags,                                  &
             &  dbeta_dt_path_c, dbeta_dw_path_c,                  &    
             &  dbeta_dn_path_c, dbeta_dv_path_c )                    
 
@@ -1625,7 +1625,7 @@ contains
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
             & gl_slabs_m, t_path_m(1:no_ele),                         &
             & gl_slabs_p, t_path_p(1:no_ele),                         &
-            & t_der_path_flags(1:no_ele),                             &
+            & t_der_path_flags,                                       &
             & dbeta_dt_path_f, dbeta_dw_path_f,                       &
             & dbeta_dn_path_f, dbeta_dv_path_f )
 
@@ -2602,6 +2602,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.147  2003/06/18 14:54:04  bill
+! added subsetting feature for T-ders
+!
 ! Revision 2.146  2003/06/18 01:59:20  vsnyder
 ! Move checking that all signals in config are for same radiometer, module
 ! and sideband, and computation of sidebandStart and sidebandStop, to
