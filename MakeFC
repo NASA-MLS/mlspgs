@@ -83,7 +83,7 @@ endif
 #   mark_as_uptodate.sh    Marks files uptodate to forestall recompilations
 #   missing_ident.sh       (1) Prints files missing $id, $rcs lines
 #                          (2) Those not appearing in executable's ident id/rcs
-#   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
+#   mkpath.sh       Creates a directory, and any yet uncreated parents
 #   mlsconfigure           Configures Makefiles for building mlks software
 #   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
 #   newAifBdiff.sh         Precompiler to forestall recompilations
@@ -589,7 +589,7 @@ help--toolkit:
 install:
 	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkdir_cascade.sh $(INSTALLDIR) ; \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
 	for dir in $(LEVELS); do \
 	case "$$dir" in \
@@ -1057,6 +1057,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.82  2003/05/06 20:38:51  pwagner
+# Fixed make update in tests sub dir
+#
 # Revision 1.81  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #
@@ -1169,7 +1172,7 @@ update:
 # Added builds for all util/.f90 and util/.c
 #
 # Revision 1.44  2001/08/14 22:39:59  pwagner
-# There was no mkdir_cascade
+# There was no mkpath
 #
 # Revision 1.43  2001/08/11 00:10:33  pwagner
 # More housekeeping

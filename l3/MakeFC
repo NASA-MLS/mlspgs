@@ -303,7 +303,7 @@ internalupdate: internalsaymake
 install: $(PROG)
 	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkdir_cascade.sh $(INSTALLDIR) ; \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl3d ] ; then \
 	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
@@ -335,6 +335,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.45  2003/05/21 20:52:13  pwagner
+# Added PROG to .PHONY list as appropriate
+#
 # Revision 1.44  2003/05/20 18:39:23  pwagner
 # Uses DONTBUILDPREQS to stop some hunting
 #
