@@ -9,7 +9,8 @@
 # The intent is that you can sort the file, and it will produce the
 # statements in parameter-name order.
 
-# Blank lines don't count.
+# Blank lines don't count.  You can put comments anywhere (including
+# on a line with names) after # or !.
 
 # $Id$
 
@@ -173,6 +174,7 @@ ratioQuantity
 refGPHquantity
 refract
 regAfter
+regApriori               ! Regularization is to apriori, not zero
 regOrders
 regQuants
 regWeights
@@ -242,6 +244,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.45  2002/08/22 00:06:51  vsnyder
+# Implement regularize-to-apriori
+#
 # Revision 2.44  2002/08/15 03:52:14  livesey
 # Added stuff for profile fill
 #
