@@ -26,6 +26,7 @@ program MLSL2
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
+  use Time_M, only: Time_Now, Use_Wall_Clock
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
@@ -103,7 +104,7 @@ program MLSL2
 
   !---------------- Task (1) ------------------
 
-  call cpu_time ( t0 )
+  call time_now ( t0 )
 
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
@@ -142,20 +143,12 @@ program MLSL2
       end if
       if ( line(3+n:8+n) == 'cfpcf ' ) then
         pcf_for_input = switch
+      else if ( line(3+n:7+n) == 'ckbk ' ) then
+        checkBlocks = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
-      else if ( line(3+n:8+n) == 'snoop ' ) then
-        snoopingActive = .true.
       else if ( line(3+n:7+n) == 'meta ' ) then
         createMetadata = switch
-      else if ( line(3+n:6+n) == 'pcf ' ) then
-        pcf = switch
-      else if ( line(3+n:5+n) == 'tk ' ) then
-        toolkit = switch
-      else if ( line(3+n:7+n) == 'ckbk ' ) then
-        checkBlocks = .true.
-      else if ( line(3+n:8+n) == 'nckbk ' ) then
-        checkBlocks = .false.
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -170,6 +163,8 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call NextPVMArg(trim(word)//' ')
+      else if ( line(3+n:6+n) == 'pcf ' ) then
+        pcf = switch
       else if ( line(3+n:7+n) == 'slave' ) then
         copyArg=.false.
         parallel%slave = .true.
@@ -185,6 +180,12 @@ program MLSL2
           call io_error ( "After --slave option", status, line )
           stop
         end if
+      else if ( line(3+n:8+n) == 'snoop ' ) then
+        snoopingActive = .true.
+      else if ( line(3+n:5+n) == 'tk ' ) then
+        toolkit = switch
+      else if ( line(3+n:7+n) == 'wall ' ) then
+        use_wall_clock = switch
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
@@ -311,7 +312,7 @@ program MLSL2
     end if
   end if
   error = status
-  call cpu_time ( t1 )
+  call time_now ( t1 )
 
   !---------------- Task (5) ------------------
   if (error == 0) then
@@ -347,7 +348,7 @@ program MLSL2
 
     ! Check that supra-syntactic conditions are met, e.g. correct
     ! types for fields of commands, correct command order, etc.
-    call cpu_time ( t1 )
+    call time_now ( t1 )
     call check_tree ( root, error, first_section )
    if(error /= 0) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -366,7 +367,7 @@ program MLSL2
   !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
-      call cpu_time ( t1 )
+      call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section )
       if ( timing ) then
@@ -376,7 +377,7 @@ program MLSL2
     end if
   end if
 
-  call cpu_time ( t0 )
+  call time_now ( t0 )
   t1 = t0
   !---------------- Task (8) ------------------
   call destroy_char_table
@@ -400,7 +401,7 @@ program MLSL2
 contains
   subroutine SayTime ( What )
     character(len=*), intent(in) :: What
-    call cpu_time ( t2 )
+    call time_now ( t2 )
     if ( total_times ) then
       call output ( "Total time = " )
       call output ( dble(t2), advance = 'no' )
@@ -437,6 +438,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.61  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.60  2001/11/09 18:12:38  livesey
 ! Added --nckbk option.
 !
