@@ -17,25 +17,27 @@ module ScanModelModule          ! Scan model and associated calculations
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
-  use Geometry, only: EARTHRADA, EARTHRADB, PI, LN10, GEODTOGEOCLAT
-  use Init_Tables_Module, only: L_ZETA, L_TEMPERATURE, L_REFGPH, L_HEIGHT
-  use intrinsic, only: L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEOCALT, &
-    & L_HEIGHTOFFSET, L_NONE, L_SCANRESIDUAL
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
+    & ForwardModelStatus_T
+  use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT, LN10, PI
+  use Init_Tables_Module, only: L_HEIGHT, L_REFGPH, L_TEMPERATURE, L_ZETA
+  use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
+    & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR
   use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
+  use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, M_BANDED, &
+    & M_FULL, UpdateDiagonal
+  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+  use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
        MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
   use Output_M, only: OUTPUT
-  use VectorsModule, only : VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
-    &  VALIDATEVECTORQUANTITY
-  use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
-  use MatrixModule_0, only: MATRIXELEMENT_T, M_ABSENT, M_BANDED, M_FULL, DESTROYBLOCK
-  use ForwardModelConfig, only: ForwardModelConfig_T
-  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
-  use Toggles, only: TOGGLE, GEN
+  use Toggles, only: GEN, TOGGLE
   use Trace_M, only: TRACE_BEGIN, TRACE_END
-  use MLSCommon, only: r8
+  use VectorsModule, only : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
+    & VECTOR_T, VECTORVALUE_T
 
   implicit none
 
@@ -164,7 +166,7 @@ contains ! =============== Subroutines and functions ==========================
     ! reference surface is within.
 
     refLogP = refGPH%template%surfs(1,1)
-    call Hunt( logP, refLogP, myBelowRef)
+    call Hunt( logP, refLogP, myBelowRef )
 
     ! Get weights
     basisGap = logP(myBelowRef+1) - logP(myBelowRef)
@@ -185,19 +187,19 @@ contains ! =============== Subroutines and functions ==========================
        gph(surf,:) = gph(surf,:) + correction
     end do
     ! Put back intermediate data if wanted.
-    if (present(R)) then
+    if ( present(R) ) then
        R=>myR
     else
-       deallocate(myR)
-    endif
+       deallocate ( myR )
+    end if
 
-    if (present(rt)) then
+    if ( present(rt) ) then
        rt=>myRT
     else
-       deallocate(myRT)
-    endif
+       deallocate ( myRT )
+    end if
 
-    if (present(belowRef)) belowRef = myBelowRef
+    if ( present(belowRef) ) belowRef = myBelowRef
          
     ! That's it  
   end subroutine GetBasisGPH
@@ -290,48 +292,48 @@ contains ! =============== Subroutines and functions ==========================
       &   'Inappropriate temp/refGPH/h2o quantity' )
 
     ! Allocate temporary arrays
-    call Allocate_Test(basisGPH,temp%template%noSurfs,temp%template%noInstances,&
-      & "basisGPH", ModuleName)
-    call Allocate_Test(earthRadius,ptan%template%noSurfs, &
-      "earthRadius",ModuleName)
-    call Allocate_Test(geocLat,ptan%template%noSurfs, &
-      "geocLat",ModuleName)
-    call Allocate_Test(s2,ptan%template%noSurfs, "s2",ModuleName)
-    call Allocate_Test(p2,ptan%template%noSurfs, "p2",ModuleName)
-    call Allocate_Test(p4,ptan%template%noSurfs, "p4",ModuleName)
-    call Allocate_Test(aCoeff,ptan%template%noSurfs,"aCoeff",ModuleName)
-    call Allocate_Test(rtLower,ptan%template%noSurfs,"rtLower",ModuleName)
-    call Allocate_Test(rtUpper,ptan%template%noSurfs,"rtUpper",ModuleName)
-    call Allocate_Test(basisLower,ptan%template%noSurfs,"basisLower",ModuleName)
-    call Allocate_Test(basisUpper,ptan%template%noSurfs,"basisUpper",ModuleName)
-    call Allocate_Test(basisSpacing,ptan%template%noSurfs,"basisSpacing",ModuleName)
-    call Allocate_Test(bCoeff,ptan%template%noSurfs,"bCoeff",ModuleName)
-    call Allocate_Test(cCoeff,ptan%template%noSurfs,"cCoeff",ModuleName)
-    call Allocate_Test(deltaRT,ptan%template%noSurfs,"deltaRT",ModuleName)
-    call Allocate_Test(geometricGPH,ptan%template%noSurfs, &
-      "geometricGPH",ModuleName)
-    call Allocate_Test(n,ptan%template%noSurfs,"n",ModuleName)
-    call Allocate_Test(pointingH2O,ptan%template%noSurfs,"pointingH2O",ModuleName)
-    call Allocate_Test(pointingpres,ptan%template%noSurfs,"pointingpres",ModuleName)
-    call Allocate_Test(pointingTemp,ptan%template%noSurfs,"pointingTemp",ModuleName)
-    call Allocate_Test(ratio2,ptan%template%noSurfs,"ratio2",ModuleName)
-    call Allocate_Test(ratio4,ptan%template%noSurfs,"ratio4",ModuleName)
-    call Allocate_Test(refractedGeocAlt,ptan%template%noSurfs,"refractedGeocAlt",ModuleName)
-
-    call Allocate_Test(closestTempProfiles,ptan%template%noInstances,&
-      "closestTempProfiles", ModuleName)
-    call Allocate_Test(closestH2OProfiles,ptan%template%noInstances,&
-      "closestH2OProfiles", ModuleName)
-    call Allocate_Test(lower,ptan%template%noSurfs,"lower",ModuleName)
-    call Allocate_Test(upper,ptan%template%noSurfs,"upper",ModuleName)
+    call Allocate_Test ( basisGPH, temp%template%noSurfs, temp%template%noInstances, &
+      & "basisGPH", ModuleName )
+    call Allocate_Test ( earthRadius, ptan%template%noSurfs, &
+      "earthRadius", ModuleName )
+    call Allocate_Test ( geocLat, ptan%template%noSurfs, &
+      "geocLat", ModuleName )
+    call Allocate_Test ( s2, ptan%template%noSurfs, "s2", ModuleName )
+    call Allocate_Test ( p2, ptan%template%noSurfs, "p2", ModuleName )
+    call Allocate_Test ( p4, ptan%template%noSurfs, "p4", ModuleName )
+    call Allocate_Test ( aCoeff, ptan%template%noSurfs, "aCoeff", ModuleName )
+    call Allocate_Test ( rtLower, ptan%template%noSurfs, "rtLower", ModuleName )
+    call Allocate_Test ( rtUpper, ptan%template%noSurfs, "rtUpper", ModuleName )
+    call Allocate_Test ( basisLower, ptan%template%noSurfs, "basisLower", ModuleName )
+    call Allocate_Test ( basisUpper, ptan%template%noSurfs, "basisUpper", ModuleName )
+    call Allocate_Test ( basisSpacing, ptan%template%noSurfs, "basisSpacing", ModuleName )
+    call Allocate_Test ( bCoeff, ptan%template%noSurfs, "bCoeff", ModuleName )
+    call Allocate_Test ( cCoeff, ptan%template%noSurfs, "cCoeff", ModuleName )
+    call Allocate_Test ( deltaRT, ptan%template%noSurfs, "deltaRT", ModuleName )
+    call Allocate_Test ( geometricGPH, ptan%template%noSurfs, &
+      "geometricGPH", ModuleName )
+    call Allocate_Test ( n, ptan%template%noSurfs, "n", ModuleName )
+    call Allocate_Test ( pointingH2O, ptan%template%noSurfs, "pointingH2O", ModuleName )
+    call Allocate_Test ( pointingpres, ptan%template%noSurfs, "pointingpres", ModuleName )
+    call Allocate_Test ( pointingTemp, ptan%template%noSurfs, "pointingTemp", ModuleName )
+    call Allocate_Test ( ratio2, ptan%template%noSurfs, "ratio2", ModuleName )
+    call Allocate_Test ( ratio4, ptan%template%noSurfs, "ratio4", ModuleName )
+    call Allocate_Test ( refractedGeocAlt, ptan%template%noSurfs, &
+      & "refractedGeocAlt", ModuleName )
+    call Allocate_Test ( closestTempProfiles, ptan%template%noInstances, &
+      "closestTempProfiles", ModuleName )
+    call Allocate_Test ( closestH2OProfiles, ptan%template%noInstances, &
+      "closestH2OProfiles", ModuleName )
+    call Allocate_Test ( lower, ptan%template%noSurfs, "lower", ModuleName )
+    call Allocate_Test ( upper, ptan%template%noSurfs, "upper", ModuleName )
 
     ! Now precompute the basis geopotential height
-    call GetBasisGPH(temp,refGPH,basisGPH,rt=rt)
+    call GetBasisGPH ( temp, refGPH, basisGPH, rt=rt )
 
     ! Find the closest temperature and h2o profiles to each MAF.  Note that
     ! this makes this calculation 1D
-    call FindClosestInstances(temp,ptan,closestTempProfiles)
-    call FindClosestInstances(h2o,ptan,closestH2OProfiles)
+    call FindClosestInstances ( temp, ptan, closestTempProfiles )
+    call FindClosestInstances ( h2o, ptan, closestH2OProfiles )
 
     ! Rather than try to be too clever and do this all with 2D arrays, we'll
     ! loop over major frame.
@@ -370,13 +372,13 @@ contains ! =============== Subroutines and functions ==========================
         ! and water vapor concentration for the given altitude.
 
         ! Note here an assumption that temp and h2o are coherent.
-        call InterpolateValues( tempBasis, tempVals, ptanVals, &
-          pointingTemp, "Linear", extrapolate='Clamp')
-        call InterpolateValues( h2oBasis, h2oVals, ptanVals, &
-          pointingH2O, "Linear", extrapolate='Clamp')
+        call InterpolateValues ( tempBasis, tempVals, ptanVals, &
+          pointingTemp, "Linear", extrapolate='Clamp' )
+        call InterpolateValues ( h2oBasis, h2oVals, ptanVals, &
+          pointingH2O, "Linear", extrapolate='Clamp' )
 
         pointingH2O = max(pointingH2O, 0.0_r8)
-        where(geocAlt%values(:,maf) /= geocAlt%template%badValue)
+        where ( geocAlt%values(:,maf) /= geocAlt%template%badValue )
 
           pointingpres = min(10**(-ptanVals), maxPressure)
 
@@ -402,7 +404,7 @@ contains ! =============== Subroutines and functions ==========================
         ! Now, we're effectively going to compare this with a hydrostatic
         ! calculation.
 
-        call Hunt(thisBasisGPH, geometricGPH, lower)
+        call Hunt ( thisBasisGPH, geometricGPH, lower )
         upper=lower+1
         basisLower= tempBasis(lower)
         basisUpper= tempBasis(upper)
@@ -411,16 +413,16 @@ contains ! =============== Subroutines and functions ==========================
         rtUpper = rt(upper, closestTempProfiles(maf))
         deltaRT = rtUpper - rtLower
 
-        where (geocAlt%values(:,maf) == geocAlt%template%badValue)
+        where ( geocAlt%values(:,maf) == geocAlt%template%badValue )
           ptanVals = ptan%template%badValue
 
           ! Below the bottom
-        elsewhere ( geometricGPH < thisBasisGPH(1) )
+        else where ( geometricGPH < thisBasisGPH(1) )
           ptanVals = tempBasis(1) - (thisBasisGPH(1) - geometricGPH) * &
             & (g0 / (ln10*rtLower))
 
           ! Above the top
-        elsewhere ( geometricGPH >= thisBasisGPH(temp%template%noSurfs) )
+        else where ( geometricGPH >= thisBasisGPH(temp%template%noSurfs) )
           ptanVals = tempBasis(temp%template%noSurfs) + &
             & (geometricGPH-thisBasisGPH(upper)) * &
             & (g0 / (ln10*rtUpper))
@@ -442,36 +444,36 @@ contains ! =============== Subroutines and functions ==========================
     end do                              ! Major frame loop
 
     ! Deallocate all the various things
-    call Deallocate_Test(basisGPH,"basisGPH", ModuleName)
-    call Deallocate_Test(aCoeff,"aCoeff",ModuleName)
-    call Deallocate_Test(rtLower,"rtLower",ModuleName)
-    call Deallocate_Test(rtUpper,"rtUpper",ModuleName)
-    call Deallocate_Test(basisLower,"basisLower",ModuleName)
-    call Deallocate_Test(basisUpper,"basisUpper",ModuleName)
-    call Deallocate_Test(basisSpacing,"basisSpacing",ModuleName)
-    call Deallocate_Test(bCoeff,"bCoeff",ModuleName)
-    call Deallocate_Test(cCoeff,"cCoeff",ModuleName)
-    call Deallocate_Test(deltaRT,"deltaRT",ModuleName)
-    call Deallocate_Test(earthRadius,"earthRadisu",ModuleName)
-    call Deallocate_Test(geocLat,"geocLat",ModuleName)
-    call Deallocate_Test(p2,"p2",ModuleName)
-    call Deallocate_Test(p4,"p4",ModuleName)
-    call Deallocate_Test(s2,"s2",ModuleName)
-    call Deallocate_Test(geometricGPH,"geometricGPH",ModuleName)
-    call Deallocate_Test(n,"n",ModuleName)
-    call Deallocate_Test(pointingH2O,"pointingH2O",ModuleName)
-    call Deallocate_Test(pointingpres,"pointingpres",ModuleName)
-    call Deallocate_Test(pointingTemp,"pointingTemp",ModuleName)
-    call Deallocate_Test(ratio2,"ratio2",ModuleName)
-    call Deallocate_Test(ratio4,"ratio4",ModuleName)
-    call Deallocate_Test(refractedGeocAlt,"refractedGeocAlt",ModuleName)
+    call Deallocate_Test ( basisGPH, "basisGPH", ModuleName )
+    call Deallocate_Test ( aCoeff, "aCoeff", ModuleName )
+    call Deallocate_Test ( rtLower, "rtLower", ModuleName )
+    call Deallocate_Test ( rtUpper, "rtUpper", ModuleName )
+    call Deallocate_Test ( basisLower, "basisLower", ModuleName )
+    call Deallocate_Test ( basisUpper, "basisUpper", ModuleName )
+    call Deallocate_Test ( basisSpacing, "basisSpacing", ModuleName )
+    call Deallocate_Test ( bCoeff, "bCoeff", ModuleName )
+    call Deallocate_Test ( cCoeff, "cCoeff", ModuleName )
+    call Deallocate_Test ( deltaRT, "deltaRT", ModuleName )
+    call Deallocate_Test ( earthRadius, "earthRadisu", ModuleName )
+    call Deallocate_Test ( geocLat, "geocLat", ModuleName )
+    call Deallocate_Test ( p2, "p2", ModuleName )
+    call Deallocate_Test ( p4, "p4", ModuleName )
+    call Deallocate_Test ( s2, "s2", ModuleName )
+    call Deallocate_Test ( geometricGPH, "geometricGPH", ModuleName )
+    call Deallocate_Test ( n, "n", ModuleName )
+    call Deallocate_Test ( pointingH2O, "pointingH2O", ModuleName )
+    call Deallocate_Test ( pointingpres, "pointingpres", ModuleName )
+    call Deallocate_Test ( pointingTemp, "pointingTemp", ModuleName )
+    call Deallocate_Test ( ratio2, "ratio2", ModuleName )
+    call Deallocate_Test ( ratio4, "ratio4", ModuleName )
+    call Deallocate_Test ( refractedGeocAlt, "refractedGeocAlt", ModuleName )
 
-    call Deallocate_Test(closestTempProfiles,"closestTempProfiles", ModuleName)
-    call Deallocate_Test(closestH2OProfiles,"closestH2OProfiles", ModuleName)
-    call Deallocate_Test(lower,"lower",ModuleName)
-    call Deallocate_Test(upper,"upper",ModuleName)
+    call Deallocate_Test ( closestTempProfiles, "closestTempProfiles", ModuleName )
+    call Deallocate_Test ( closestH2OProfiles, "closestH2OProfiles", ModuleName )
+    call Deallocate_Test ( lower, "lower", ModuleName )
+    call Deallocate_Test ( upper, "upper", ModuleName )
 
-    call Deallocate_Test(rt,"rt",ModuleName) ! Was allocated in GetBasisGPH
+    call Deallocate_Test ( rt, "rt", ModuleName ) ! Was allocated in GetBasisGPH
 
     if ( toggle(gen) ) call trace_end ('GetHydrostaticTangentPressure' )
 
@@ -639,7 +641,7 @@ contains ! =============== Subroutines and functions ==========================
         & frequencyCoordinate=(/l_none/),&
         & noInstances=(/1/) ) ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, InvalidQuantity//'heightOffset' )
-    endif
+    end if
 
     ! Now setup some standard dimensions etc.
     maf = fmStat%maf
@@ -755,8 +757,8 @@ contains ! =============== Subroutines and functions ==========================
 
     ! This could maybe be store in ifm, but for the moment, we'll do it each
     ! time
-    call FindClosestInstances(temp,ptan,closestTempProfiles)
-    call FindClosestInstances(h2o,ptan,closestH2OProfiles)
+    call FindClosestInstances ( temp, ptan, closestTempProfiles )
+    call FindClosestInstances ( h2o, ptan, closestH2OProfiles )
 
     ! Make some pointers to save time
     tempInst = closestTempProfiles ( maf )
@@ -771,7 +773,7 @@ contains ! =============== Subroutines and functions ==========================
       htOff => heightOffset%values(1,1)
     else
       htOff => zero
-    endif
+    end if
 
     ! Do some preamble calcaulations
     geocLat = GeodToGeocLat( ptan%template%geodLat(:,maf) )
@@ -921,7 +923,7 @@ contains ! =============== Subroutines and functions ==========================
       call GetBasisGPH ( temp, refGPH, ifm%basisGPH, &
         & ifm%R, ifm%RT, belowRef=belowRef )
       fmStat%newScanHydros = .false.
-    endif
+    end if
 
     rt => ifm%rt(:, closestTempProfiles(maf) )
     basisGPH => ifm%basisGPH (:, closestTempProfiles(maf) )
@@ -953,7 +955,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Unlike the code above, I think I'll do this in a loop to make life easier
 
     do i = 1, noMIFs + 1
-      if ( i == noMIFs+1) then
+      if ( i == noMIFs+1 ) then
         usePtan = refGPH%template%surfs(1,1)
         lower = belowRef
         upper = belowRef + 1
@@ -961,7 +963,7 @@ contains ! =============== Subroutines and functions ==========================
         usePtan = ptanVals(i)
         lower = pointTempLayer(i)
         upper = lower+1
-      endif
+      end if
 
       ! Now do the main bulk of the temperature bases
       do j = 1, noTemps
@@ -1002,14 +1004,14 @@ contains ! =============== Subroutines and functions ==========================
               & (basisPlus - basis)
 
             ! Basis triangles with ptan in the bottom half (not when ptan below bottom)
-          else if ( j == lower+1 .and. usePtan >= tempBasis(1)) then
+          else if ( j == lower+1 .and. usePtan >= tempBasis(1) ) then
             A(i,j) = ( ( usePtan - basisMinus )**2 ) / &
               & (basis - basisMinus)
 
-          endif                         ! Basis triangles completely above ptan, no impact
-        endif                           ! Good ptan
-      enddo                             ! Loop over temp basis
-    enddo                               ! Loop over ptans
+          end if                         ! Basis triangles completely above ptan, no impact
+        end if                           ! Good ptan
+      end do                             ! Loop over temp basis
+    end do                               ! Loop over ptans
     
     ! Now use this to get temperature derivatives
     do i = 1, noMIFs
@@ -1017,9 +1019,9 @@ contains ! =============== Subroutines and functions ==========================
         do j = 1, noTemps
           dHydrosGPHByDTemp(i,j) = ( A(i,j) - A(noMIFs+1,j) ) * &
             & (ifm%R(j)*ln10) / (2*g0)
-        enddo
-      endif
-    enddo
+        end do
+      end if
+    end do
     
     ! Now get dHydrosGPHByDPtan
     do i= 1, noMIFs
@@ -1029,8 +1031,8 @@ contains ! =============== Subroutines and functions ==========================
           & rt(pointTempLayer(i)+1) * tempUpperWeight(i) )
       else
         dHydrosGPHByDPtan(i)=0.0
-      endif
-    enddo
+      end if
+    end do
 
     ! -----------------------------------------------------------------------
     ! Now we calculate the residual, which is defined as the difference of the
@@ -1054,13 +1056,8 @@ contains ! =============== Subroutines and functions ==========================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Found a prexisting d(residual)/d(ptan), removing' )
           call DestroyBlock ( block )
-        endif
-        call CreateBlock ( jacobian, row, col, M_Banded, noMIFs )
-        do i = 1, noMIFs
-          block%r1(i) = i
-          block%r2(i) = i
-        end do
-        block%values(:,1) = dL1GPHByDPtan-dHydrosGPHByDPtan
+        end if
+        call updateDiagonal ( block, dL1GPHByDPtan-dHydrosGPHByDPtan )
       end if
 
       ! Store refGPH derivatives
@@ -1071,20 +1068,20 @@ contains ! =============== Subroutines and functions ==========================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Found a prexisting d(residual)/d(refGPH), removing' )
           call DestroyBlock ( block )
-        endif
+        end if
         call CreateBlock ( jacobian, row, col, M_Full )
         block%values = -1.0
-      endif
+      end if
         
       ! Store heightOffset derivatives if any
-      if ( associated (heightOffset) .and. heightOffsetInState) then
+      if ( associated (heightOffset) .and. heightOffsetInState ) then
         col = FindBlock ( jacobian%col, heightOffset%index, maf )
         block => jacobian%block(row,col)
         if ( block%kind /= M_Absent ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Found a prexisting d(residual)/d(heightOffset), removing' )
           call DestroyBlock ( block )
-        endif
+        end if
         call CreateBlock ( jacobian, row, col, M_Full )
         block%values(:,1) = dL1GPHByDHeightOffset
       end if
@@ -1097,7 +1094,7 @@ contains ! =============== Subroutines and functions ==========================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Found a prexisting d(residual)/d(temp), removing' )
           call DestroyBlock ( block )
-        endif
+        end if
         call CreateBlock ( jacobian, row, col, M_Full )
         block%values = - dHydrosGPHByDTemp
         do i = 1, noMIFs
@@ -1170,6 +1167,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.20  2001/05/09 17:43:44  vsnyder
+! Use UpdateDiagonal to store PTAN derivatives; cosmetic changes
+!
 ! Revision 2.19  2001/05/08 19:43:57  livesey
 ! Pretty stable version.  Pressure now converges better.  Caught a few
 ! more gremlins in d(residual)/dT.
