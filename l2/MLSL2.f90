@@ -10,8 +10,7 @@ program MLSL2
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
   & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
-  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, ECHO_GLOBAL_STNGS, &
-  & LOG_TO_STDOUT
+  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit
   use MLSPCF2, only: MLSPCF_L2CF_START
@@ -81,10 +80,6 @@ program MLSL2
         pcf_for_input = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
-      else if ( line(3+n:7+n) == 'echo ' ) then
-        LOG_TO_STDOUT = switch
-      else if ( line(3+n:9+n) == 'global ' ) then
-        ECHO_GLOBAL_STNGS = switch
       else if ( line(3+n:7+n) == 'meta ' ) then
         createMetadata = switch
       else if ( line(3+n:6+n) == 'pcf ' ) then
@@ -171,10 +166,10 @@ program MLSL2
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
-   if( LOG_TO_STDOUT ) then
-!   MLSMessageConfig%LogFileUnit = -1     ! the default in MLSMessageModule
+   if( index(switches, 'log') /= 0 ) then
+      MLSMessageConfig%LogFileUnit = -1
    else
-      MLSMessageConfig%LogFileUnit = -2
+      MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
    endif
 
    if ( .not. toolkit ) then
@@ -305,8 +300,8 @@ contains
         &      'Default: --ncfpcf'
     end if
     print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
-    print *, '  --[n]echo: [Do not]Echo logged error messages to stdout'
-    print *, '  --[n]global: [Do not]Show global settings in log'
+!    print *, '  --[n]echo: [Do not]Echo logged error messages to stdout'
+!    print *, '  --[n]global: [Do not]Show global settings in log'
     print *, '  --[n]meta: [Do not] Create metadata files.'
     print *, '  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.'
     print *, '    (--npcf sets --nmeta and --ncfpcf.)'
@@ -329,6 +324,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.41  2001/05/15 23:46:07  pwagner
+! Removed 2 settings from MLSL2Opts; now in switches
+!
 ! Revision 2.40  2001/05/11 23:47:00  pwagner
 ! (Re)Sets prunit depending on toolkit
 !
