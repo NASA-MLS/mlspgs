@@ -29,7 +29,7 @@ module L2Parallel
     & MLSMSG_Deallocate
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
-  use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
+  use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES
@@ -545,6 +545,10 @@ contains ! ================================ Procedures ======================
         end if
       end do receiveInfoLoop
 
+      ! Listen out for any message telling us to quit now
+      call PVMFNRecv ( -1, GiveUpTag, bufferID )
+      if ( bufferID > 0 ) exit masterLoop
+
       ! Listen out for any message that a slave task has died
       call PVMFNRecv ( -1, NotifyTAG, bufferID )
       if ( bufferID > 0 ) then
@@ -998,6 +1002,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.40  2002/10/17 18:19:24  livesey
+! Added the GiveUp signal capability.
+!
 ! Revision 2.39  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
