@@ -15,10 +15,10 @@ contains
 ! ===========================================     FOV_CONVOLVE     =====
 ! This subprogram adds the effects of antenna smearing to the radiance.
 !
-  SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, MBAND, &
- &                        M, AntennaPattern, IAS, IER )
+  SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
+ &                        M, AntennaPattern, IER )
 !
-    Integer(i4), intent(in) :: ITYPE, NP, MBAND, M, IAS
+    Integer(i4), intent(in) :: ITYPE, NP, M
 
     Real(r8), intent(inout) :: EIL_ANGLE(:)
     Real(r8), intent(inout) :: RADIANCE(:)
@@ -27,8 +27,9 @@ contains
 
     Integer(i4), intent(out) :: IER
 
-    Integer(i4) :: I, J, IND, NTR
-    real(r8) :: X
+    Integer(i4) :: I, J, IND, NTR, IAS
+
+    ias = size(antennaPattern%aaap)/2
 !
     ntr = 2**m
     call ftgrid(eil_angle,radiance,delta0,antennaPattern%lambda,np,ntr)
@@ -706,6 +707,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.10  2001/04/09 23:32:29  zvi
+! Correcting a small error in radiances folding code
+!
 ! Revision 1.9  2001/04/06 01:37:58  zvi
 ! Put (*) (Assume size) status on CONVOLVE & DFFT arrays..
 !
