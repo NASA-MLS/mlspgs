@@ -163,6 +163,22 @@ begin Fill
   Fill, quantity=length.temperature, method=explicit, /spread, $
     explicitValues= !standardLength
 
+  ;; Now do the same for extinction
+  Fill, quantity=aprioriPrecision.extinctionR1A, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR1B, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR2, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR3, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR4, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR5H, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionR5V, method=explicit, /spread, $
+    explicitValues=1.0
+
   ;; Now do the same for baseline
   !define(baselinePrecision, 5 K )
   !ifdef(precisionEstimates,{
