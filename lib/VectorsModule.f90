@@ -1331,10 +1331,10 @@ contains ! =====     Public Procedures     =============================
   subroutine Dump_Vector_Quantity ( Qty, Details, Name, Clean )
 
     type (VectorValue_T), intent(in) :: QTY
-    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
-    !                                        ! -1 Skip quantity details beyond names
-    !                                        ! -2 Skip all quantity details
-    !                                        ! >0 Do dump quantity values
+    integer, intent(in), optional :: DETAILS ! <0  => Name only
+    !                                        ! <-1 => No newline after name
+    !                                        ! =0  => No values
+    !                                        ! >0  => Dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
@@ -1347,14 +1347,15 @@ contains ! =====     Public Procedures     =============================
     if ( present(name) ) then
       call output ( name ); call output ( ', ' )
     end if
+    call output ( ' Qty_Template_Name = ' )
     if ( qty%template%name /= 0 ) then
-      call output ( ' Qty_Template_Name = ' )
       call display_string ( qty%template%name )
+    else
+      call output ( ' <none given>' )
     end if
-    if ( myDetails < 0 ) then
-      call output(' ', advance='yes')
-      return
-    end if
+    if ( myDetails < -1 ) return
+    call newLine
+    if ( myDetails < 0 ) return
     call output ( ' noChans = ' )
     call output ( qty%template%noChans, advance='no' )
     call output ( ' noSurfs = ' )
@@ -2274,6 +2275,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.112  2004/06/16 22:31:28  vsnyder
+! Account for mask in DivideVectors, exchange order of first two arguments
+!
 ! Revision 2.111  2004/06/16 01:18:39  vsnyder
 ! Add DivideVectors, incomplete comments in TOC about other routines
 !
