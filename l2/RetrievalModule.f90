@@ -42,7 +42,8 @@ contains
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
       & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
-      & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
+      & F_mask, F_maxJ, F_maxValue, F_measurements, &
+      & F_measurementSD, F_method, F_minValue, F_muMin, &
       & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
       & F_regAfter, F_regApriori, F_reset, F_serial, F_SparseQuantities, &
@@ -2959,14 +2960,18 @@ contains
       integer :: SCANDIRECTION          ! +/-1 for up or down
       integer :: SON                    ! Tree node
       integer :: STATUS                 ! Flag
+      integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
       integer :: VECTORINDEX            ! Index
+      integer :: MINUNIT                ! Units for minValue
+      integer :: MAXUNIT                ! Units for maxValue
 
       real(r8) :: HeightMin, HeightMax
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
       real(r8) :: VALUE(2)              ! Value returned by expr
       real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
+      real(r8) :: MAXVALUE, MINVALUE    ! Cutoff ranges
       type (VectorValue_T), pointer :: QTY ! The quantity to mask
       type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
       type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
@@ -3029,6 +3034,18 @@ contains
           if ( units(1) /= phyq_dimensionless ) &
             & call announceError ( wrongUnits, f_opticalDepthCutoff, string='no' )
           opticalDepthCutoff = value(1)
+        case ( f_maxValue )
+          call expr ( subtree (2, son), units, value, type )
+          if ( type /= num_value ) call announceError ( &
+            & rangeNotAppropriate, f_opticalDepthCutoff )
+          maxUnit = units(1)
+          maxValue = value(1)
+        case ( f_minValue )
+          call expr ( subtree (2, son), units, value, type )
+          if ( type /= num_value ) call announceError ( &
+            & rangeNotAppropriate, f_opticalDepthCutoff )
+          minUnit = value(1)
+          minValue = value(1)
         case ( f_ignore )
           ignore = Get_Boolean ( son )
         case ( f_reset )
@@ -3050,6 +3067,16 @@ contains
           &  qty%template%sideband /= opticalDepth%template%sideband ) &
           & call AnnounceError ( badOpticalDepthSignal, key )
       endif
+      
+      if ( vectors(vectorIndex)%globalUnit /= phyq_dimensionless ) then
+        testUnit = vectors(vectorIndex)%globalUnit
+      else
+        testUnit = qty%template%unit
+      end if
+      if ( got ( f_minValue ) .and. ( minUnit /= testUnit ) ) &
+        & call AnnounceError ( WrongUnits, key )
+      if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
+        & call AnnounceError ( WrongUnits, key )
 
       ! Process the channels field.
       if ( qty%template%frequencyCoordinate /= l_none ) then
@@ -3245,12 +3272,18 @@ contains
                     !??? Make sure mask bit numbers begin at 1, even when
                     !??? channel numbers don't.
                     ind = channel + qty%template%noChans*(height-1)
-                    
-                    if ( associated( opticalDepth ) ) then
-                      if ( scanDirection * ( height - odCutoffHeight ) > 0 ) &
-                        & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
-                    else
-                      call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                    doThisHeight = .true.
+                    if ( got ( f_minValue ) ) doThisHeight = doThisHeight .and. &
+                        & qty%values( ind, instance ) > minValue
+                    if ( got ( f_maxValue ) ) doThisHeight = doThisHeight .and. &
+                        & qty%values( ind, instance ) < maxValue
+                    if ( doThisHeight ) then
+                      if ( associated( opticalDepth ) ) then
+                        if ( scanDirection * ( height - odCutoffHeight ) > 0 ) &
+                          & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                      else
+                        call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
+                      end if
                     end if
                   end do                ! Height loop
                 else
@@ -3276,6 +3309,10 @@ contains
                       doThisHeight = doThisHeight .and. &
                         & scanDirection * ( height - odCutoffHeight ) > 0
                     end if
+                    if ( got ( f_minValue ) ) doThisHeight = doThisHeight .and. &
+                        & qty%values( ind, instance ) > minValue
+                    if ( got ( f_maxValue ) ) doThisHeight = doThisHeight .and. &
+                        & qty%values( ind, instance ) < maxValue
                     if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
                         & (/ ind /), what=maskBit )
                   end do                ! Height loop
@@ -3368,6 +3405,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.211  2003/01/11 01:02:50  livesey
+! Added max and min value to subset
+!
 ! Revision 2.210  2003/01/08 23:52:38  livesey
 ! Added the sparsify stuff according to sparseQuantities
 !
