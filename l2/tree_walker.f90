@@ -221,19 +221,25 @@ subtrees:   do while ( j <= howmany )
               end select
               j = j + 1
             end do subtrees
-            if ( .not. (toggle(gen) .and. levels(gen) > 0 ) .and. &
-              & index(switches,'chi') /= 0 ) then
-              call output('Here is a minor frame example', advance='yes')
-              call dump_vectors( vectors, details=1, &
-              & quantityTypes = (/l_Ptan/) )
-              call GetSignalIndex('R2:190.B3F:N2O', signal_index)
-              call output('Here is one that is not minor frame', advance='yes')
-              call output('R2:190.B3F:N2O index: ', advance='no')
-              call output(signal_index, advance='yes')
-              call dump_vectors( vectors, details=1, &
-              & quantityTypes = (/l_radiance/), signal_ids = (/signal_index/), &
-              & thenditchafterdump=.true. )
-              call output('Here are our diagnostics', advance='yes')
+            if ( index(switches,'chi1') /= 0 .and. chunkNo > 1) then
+              ! Dumps nothing after 1st chunk
+            elseif ( index(switches,'chi') /= 0 ) then
+            !if ( .not. (toggle(gen) .and. levels(gen) > 0 ) .and. &
+            !  & index(switches,'chi') /= 0 ) then
+              ! Dumps every chunk
+              
+              !call output('Here is a minor frame example', advance='yes')
+              !call dump_vectors( vectors, details=1, &
+              !& quantityTypes = (/l_Ptan/) )
+              !call GetSignalIndex('R2:190.B3F:N2O', signal_index)
+              !call output('Here is one that is not minor frame', advance='yes')
+              !call output('R2:190.B3F:N2O index: ', advance='no')
+              !call output(signal_index, advance='yes')
+              !call dump_vectors( vectors, details=1, &
+              !& quantityTypes = (/l_radiance/), signal_ids = (/signal_index/), &
+              !& thenditchafterdump=.true. )
+              call output('Here are our diagnostics for chunk ', advance='no')
+              call output(chunkNo, advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
             endif
@@ -344,6 +350,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.81  2002/02/05 00:44:03  pwagner
+! Added garbage collection stuff
+!
 ! Revision 2.80  2002/01/24 00:58:28  livesey
 ! Now calls MergeGrids at the appropriate time
 !
