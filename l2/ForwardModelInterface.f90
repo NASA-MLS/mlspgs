@@ -719,7 +719,7 @@ print*,'(re)computing hydrostatic stuff.'
         &  ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts, no_tan_hts, ifm%z_path, &
         &  ifm%h_path, ifm%t_path, &
         &  ifm%phi_path, ifm%dhdz_path, ifm%eta_phi, temp%template%noInstances, &
-        &  temp%template%phi(1,:)*Deg2Rad, noMAFs, ifm%elvar, Ier )
+        &  temp%template%phi(1,:)*Deg2Rad, noMAFs, phiWindow, ifm%elvar, Ier )
       if ( ier /= 0 ) goto 99
 
       fmStat%newHydros = .false.
@@ -1313,6 +1313,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.86  2001/04/12 16:55:08  livesey
+! Fixed arguments to comp_path_entities
+!
 ! Revision 2.85  2001/04/12 01:50:02  vsnyder
 ! Explicitly nullify instead of =>NULL()
 !
