@@ -60,6 +60,7 @@ fixed
 fractional
 full
 
+gloria
 gridded
 
 height
@@ -107,6 +108,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.8  2002/01/23 22:35:31  livesey
+# Added 'gloria'
+#
 # Revision 2.7  2001/12/12 01:00:33  livesey
 # Added stuff for regular hGrids
 #
