@@ -97,6 +97,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: chunkNo
 
     ! Local variables
+    integer :: GSON                ! Descendant of Son
     integer :: I, J                ! Loop indices for section, spec
     integer :: IERR                ! 0 unless error; returned by called routines
     LOGICAL :: is_l2gp, is_l2aux, is_prev_vec
@@ -178,26 +179,28 @@ contains ! =====     Public Procedures     =============================
           ! e.g., Fill, state.quantity, source=oldState.quantity
 
         if ( nsons(key) < 3 ) call announce_error ( son, wrong_number )
-        IF(node_id(subtree(2, key)) /= n_dot) then
+        gson = subtree(2,key) ! First positional argument
+        IF(node_id(gson) /= n_dot) then
            ! In case dotless
-           vectorIndex = decoration(decoration(subtree(2,subtree(2,key))))
+           vectorIndex = decoration(decoration(gson))
            quantityName=0
         ELSE
            ! Assume form : x.y
-           J = subtree(2, subtree(2, key))
-           vectorName=sub_rosa(subtree(2, J))     ! x
-           quantityName=sub_rosa(subtree(3, J))   ! y
-           vectorIndex = decoration(subtree(2, J))
+           vectorName=sub_rosa(subtree(1, gson))     ! x
+           quantityName=sub_rosa(subtree(2, gson))   ! y
+           vectorIndex = decoration(decoration(subtree(1, gson)))
         ENDIF
 
-        DO J=3, nsons(key)
-           SELECT CASE( decoration(subtree(1,decoration(subtree(J,key)))) )
+        DO j=3, nsons(key)
+           gson = subtree(j,key) ! Now indexes n_assign
+           SELECT CASE( decoration(subtree(1,gson)) )
               CASE(f_source)
                  ! source=vector.quantity
-                 sourceName=sub_rosa(subtree(J, subtree(2, key)))
-                 sourceIndex = decoration(subtree(2, J))
+                 gson = subtree(2, gson) ! now indexes n_dot
+                 sourceName=sub_rosa(subtree(1, gson))      ! vector
+                 sourceIndex = decoration(subtree(1, gson))
                  IF(quantityName==0) THEN
-                    quantityName=sub_rosa(subtree(3, subtree(J, key)))   ! y
+                    quantityName=sub_rosa(subtree(2, gson)) ! quantity
                  ENDIF
 !              CASE(f_method)
 !              CASE(f_other)
@@ -1091,6 +1094,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.15  2001/02/08 01:17:41  vsnyder
+! Simplify access to abstract syntax tree.
+!
 ! Revision 2.14  2001/01/26 00:11:12  pwagner
 ! Can fill from prev. defd. vector
 !
