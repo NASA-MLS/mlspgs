@@ -694,13 +694,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Get dimension
       noSurf = state_ext%template%noSurfs
       
+      colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf )
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
-      colJBlock = 0
-      do while (colJBlock <= jacobian%col%nb .and. &
-           jacobian%col%inst(colJBlock) /= maf)
-           colJBlock = colJBlock +1 
-      end do
+!      colJBlock = 0
+!      do while (colJBlock <= jacobian%col%nb .and. &
+!           jacobian%col%inst(colJBlock) /= maf)
+!           colJBlock = colJBlock +1 
+!      end do
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
@@ -788,7 +789,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! Get dimension
         noSgrid=state_los%template%noChans
 
-        colJBlock = FindBlock ( Jacobian%col, ptan%index, maf )
+        colJBlock = FindBlock ( Jacobian%col, state_los%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
         fmStat%rows(rowJBlock) = .true.
 
@@ -980,6 +981,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.47  2001/10/08 20:46:26  dwu
+! add default cloudheight as 18km
+!
 ! Revision 1.46  2001/10/08 20:34:18  dwu
 ! *** empty log message ***
 !
