@@ -564,6 +564,8 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
@@ -631,6 +633,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_systemTemperature, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_temperaturePrecisionQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_usb, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -873,6 +877,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.243  2002/10/01 18:29:40  mjf
+! Added new quantitites for new Fill for RHi precision including T
+! error.
+!
 ! Revision 2.242  2002/09/25 20:07:19  livesey
 ! Added specificQuantities to s_forwardModel.  Allowed s_forwardModel
 ! inside z_construct
