@@ -43,6 +43,7 @@ module ForwardModelConfig
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
     integer :: instrumentModule         ! Module for scan model
     logical :: differentialScan         ! Differential scan model
+    logical :: LockBins                 ! Use same l2pc bin for whole chunk
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
@@ -62,6 +63,7 @@ module ForwardModelConfig
     integer :: cloud_der            ! Compute cloud sensitivity in cloud models.
     integer :: cloud_width          ! Flag for cloud horizontal extend.
     integer :: cloud_fov            ! Flag for cloud model field-of-view averaging.
+    integer :: NameFragment         ! For e.g. restricting bins in l2pc
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -182,6 +184,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.7  2002/06/12 17:00:49  livesey
+! Changed phiWindow to float
+!
 ! Revision 2.6  2002/03/07 17:17:49  livesey
 ! Removed frqGap
 !
