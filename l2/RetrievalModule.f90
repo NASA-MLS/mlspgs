@@ -519,8 +519,8 @@ contains
           ! Do the retrieval
           jacobian_Cols = 0
           jacobian_Rows = 0
-          if ( got(f_lowBound) ) call getInBounds ( v(x), lowBound, 'low' )
-          if ( got(f_highBound) ) call getInBounds ( v(x), highBound, 'high' )
+          if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
+          if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
           select case ( method )
           case ( l_newtonian )
             call newtonianSolver
@@ -673,8 +673,8 @@ contains
       if ( which == 'low' ) then
         do iq = 1, size(x%quantities)
           if ( associated(x%quantities(iq)%mask) ) then
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
                   if ( x%quantities(iq)%values(ivx,ivy) + &
                     &  mu * dx%quantities(iq)%values(ivx,ivy) < &
@@ -686,8 +686,8 @@ contains
               end do
             end do
           else
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( x%quantities(iq)%values(ivx,ivy) + &
                   &  mu * dx%quantities(iq)%values(ivx,ivy) < &
                   &  bound%quantities(iq)%values(ivx,ivy) ) &
@@ -701,8 +701,8 @@ contains
       else if ( which == 'high' ) then
         do iq = 1, size(x%quantities)
           if ( associated(x%quantities(iq)%mask) ) then
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
                   if ( x%quantities(iq)%values(ivx,ivy) + &
                     &  mu * dx%quantities(iq)%values(ivx,ivy) > &
@@ -714,8 +714,9 @@ contains
               end do
             end do
           else
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            print*,'Doing unmasked high bound'
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( x%quantities(iq)%values(ivx,ivy) + &
                   &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                   &  bound%quantities(iq)%values(ivx,ivy) ) &
@@ -730,8 +731,12 @@ contains
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Come on! In BoundMove, it has to be a low bound or a high bound!' )
       end if
-      if ( mu < 0.0_rv ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        &  'How did mu get to be negative?' )
+      if ( mu < 0.0_rv ) then
+        call output ( 'mu=' )
+        call output ( mu, advance='yes' )
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          &  'How did mu get to be negative?' )
+      end if
     end subroutine BoundMove
 
     ! ----------------------------------------------  FillDiagVec  -----
@@ -761,8 +766,8 @@ contains
       if ( which == 'low' ) then
         do iq = 1, size(x%quantities)
           if ( associated(x%quantities(iq)%mask) ) then
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) /= 0 ) &
                   & x%quantities(iq)%values(ivx,ivy) = &
                     & max(x%quantities(iq)%values(ivx,ivy), &
@@ -770,8 +775,8 @@ contains
               end do
             end do
           else
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 x%quantities(iq)%values(ivx,ivy) = &
                   & max(x%quantities(iq)%values(ivx,ivy), &
                   &     bound%quantities(iq)%values(ivx,ivy) )
@@ -782,8 +787,8 @@ contains
       else if ( which == 'high' ) then
         do iq = 1, size(x%quantities)
           if ( associated(x%quantities(iq)%mask) ) then
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) /= 0 ) &
                 & x%quantities(iq)%values(ivx,ivy) = &
                     & min(x%quantities(iq)%values(ivx,ivy), &
@@ -791,8 +796,8 @@ contains
               end do
             end do
           else
-            do ivy = 1, size(x%quantities(iq)%values,1)
-              do ivx = 1, size(x%quantities(iq)%values,2)
+            do ivy = 1, size(x%quantities(iq)%values,2)
+              do ivx = 1, size(x%quantities(iq)%values,1)
                 x%quantities(iq)%values(ivx,ivy) = &
                   & min(x%quantities(iq)%values(ivx,ivy), &
                   &     bound%quantities(iq)%values(ivx,ivy) )
@@ -3170,6 +3175,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.194  2002/10/19 18:49:17  livesey
+! Various bug fixes in bounds stuff
+!
 ! Revision 2.193  2002/10/19 01:52:21  livesey
 ! Added serial option and associated flags.
 !
