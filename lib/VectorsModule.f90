@@ -779,7 +779,13 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  Dump_Vector  -----
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
     & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
-    & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
+    & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
+    & THENDITCHAFTERDUMP )
+
+    ! dump quantities in vector according to whether they match
+    ! all of the optional args: name, ..,majorframe
+    ! if thenditchafterdump is present and TRUE,
+    ! dump only first matching quantity
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
@@ -794,11 +800,19 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional                :: REGULAR
     logical, intent(in), optional                :: MINORFRAME
     logical, intent(in), optional                :: MAJORFRAME
+    logical, intent(in), optional                :: THENDITCHAFTERDUMP
 
     ! Local parameters
     integer :: J    ! Loop inductor, subscript
     integer :: MyDetails
     logical :: dumpThisQty
+    logical :: myditchafterdump
+    
+    if ( present(thenditchafterdump) ) then
+      myditchafterdump = thenditchafterdump
+    else
+      myditchafterdump = .false.
+    endif
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( present(name) ) then
@@ -851,13 +865,17 @@ contains ! =====     Public Procedures     =============================
         call output ( vector%quantities(j)%template%id, advance='yes' )
         call output ( '    signal: ')
         if ( vector%quantities(j)%template%signal < 1 ) then
-          call output ( '    (none for this quantity) ', advance='yes')
+          call output ( '    (no database entry for this quantity) ', advance='yes')
+        elseif ( signals(vector%quantities(j)%template%signal)%name < 1 ) then
+          call output ( '    (no name in the database for this quantity) ', advance='yes')
         else
           call display_string ( signals(vector%quantities(j)%template%signal)%name, advance='yes' )
         endif
         call output ( '    instrumentmodule: ')
         if ( vector%quantities(j)%template%instrumentModule < 1 ) then
-          call output ( '    (none for this quantity) ', advance='yes')
+          call output ( '    (no database entry for this quantity) ', advance='yes')
+        elseif ( vector%quantities(j)%template%instrumentModule < 1 ) then
+          call output ( '    (no name in the database for this quantity) ', advance='yes')
         else
           call display_string ( modules(vector%quantities(j)%template%instrumentModule)%name, advance='yes' )
         endif
@@ -888,6 +906,7 @@ contains ! =====     Public Procedures     =============================
             & call output ( 'out' )
           call output ( ' mask', advance='yes' )
         end if
+        if ( myditchafterdump ) return
       end if
     end do ! j
   end subroutine Dump_Vector
@@ -895,7 +914,12 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  Dump_Vectors  -----
   subroutine Dump_Vectors ( VECTORS, DETAILS, NAME, &
     & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
-    & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
+    & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
+    & THENDITCHAFTERDUMP )
+    ! dump all vectors according to whether their quantities match
+    ! all of the optional args: name, ..,majorframe
+    ! if thenditchafterdump is present and TRUE,
+    ! dump only first matching vector
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
@@ -910,13 +934,20 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional                :: REGULAR
     logical, intent(in), optional                :: MINORFRAME
     logical, intent(in), optional                :: MAJORFRAME
+    logical, intent(in), optional                :: THENDITCHAFTERDUMP
 
     ! Local parameters
     integer :: I
     logical :: dumpThisQty
     logical :: dumpThisVector
     integer :: J
+    logical :: myditchafterdump
 
+    if ( present(thenditchafterdump) ) then
+      myditchafterdump = thenditchafterdump
+    else
+      myditchafterdump = .false.
+    endif
     if ( size(vectors) > 1 ) then
       call output ( 'VECTORS: SIZE = ' )
       call output ( size(vectors), advance='yes' )
@@ -953,7 +984,9 @@ contains ! =====     Public Procedures     =============================
         call output ( ': ' )
         call dump_vector ( vectors(i), details, name, &
         & quantitytypes, instrumentmodules, signal_ids, &
-        & coherent, stacked, regular, minorframe, majorframe )
+        & coherent, stacked, regular, minorframe, majorframe, &
+        & thenditchafterdump )
+        if ( myditchafterdump ) return
       endif
     end do ! i
   end subroutine Dump_Vectors
@@ -1585,6 +1618,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.67  2001/10/09 23:43:42  pwagner
+! Some further improvements in dumping vectors
+!
 ! Revision 2.66  2001/10/08 23:40:49  pwagner
 ! Improved dump routines
 !
