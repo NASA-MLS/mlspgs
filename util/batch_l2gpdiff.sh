@@ -14,7 +14,7 @@
 #                          (Otherwise replace any existing file)
 #    -unique              Save results to a uniquely-named new file
 #    -l2gpdiff command    Use command instead of l2gpdiff
-#  (and all the normal l2gpdiff options)
+#  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
 #
 # Note:
 # (1) Each option is preceded by a dash
@@ -29,6 +29,10 @@
 #     $HOME/mlspgs/bin/LF95.Linux
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
+# (3) It would be convenient to have some helpful short string that
+#      is translated into all the standard species
+# (4) Why don't you just make "-rms -ignore" the default options, either
+#      here or in l2gpdiff itself?
 # --------------- End batch_l2gpdiff.sh help
 # Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -213,10 +217,9 @@ then
 elif [ ! -d "$dir2" ]
 then
   echo "Sorry--dir2 must also be a directory"
-fi
 elif [ ! -x "$L2GPDIFF" ]
-  echo "Sorry--L2GPDIFF must exist and be executable"
 then
+  echo "Sorry--L2GPDIFF must exist and be executable"
 fi
 for i in $list
 do
@@ -261,3 +264,6 @@ do
 done
 exit
 # $Log$
+# Revision 1.1  2004/12/29 22:26:03  pwagner
+# First commit
+#
