@@ -19,13 +19,16 @@ module TREE_TYPES
   integer, parameter :: N_CF =         n_asg +1        ! A spec (config)
   integer, parameter :: N_CFS =        n_cf +1         ! All the configs
   integer, parameter :: N_COLON =      n_cfs + 1       ! A range
-  integer, parameter :: N_DIV =        n_colon + 1
+  integer, parameter :: N_COLON_LESS = n_colon + 1
+  integer, parameter :: N_DIV =        n_colon_less + 1
   integer, parameter :: N_DOT =        n_div + 1
   integer, parameter :: N_DT_DEF =     n_dot + 1       ! Data type definition
   integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
   integer, parameter :: N_FIELD_SPEC = n_equal + 1
   integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
-  integer, parameter :: N_MINUS =      n_field_type + 1
+  integer, parameter :: N_LESS_COLON = n_field_type + 1
+  integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1
+  integer, parameter :: N_MINUS =      n_less_colon_less + 1
   integer, parameter :: N_MULT =       n_minus + 1
   integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
@@ -68,12 +71,15 @@ contains
     case ( n_Cf );         call add_char ( 'cf' )
     case ( n_Cfs );        call add_char ( 'cfs' )
     case ( n_Colon );      call add_char ( 'colon' )
+    case ( n_Colon_less ); call add_char ( 'colon_less' )
     case ( n_Div );        call add_char ( 'div' )
     case ( n_Dot );        call add_char ( 'dot' )
     case ( n_DT_Def );     call add_char ( 'dt_def' )
     case ( n_Equal );      call add_char ( 'equal' )
     case ( n_Field_Spec ); call add_char ( 'field_spec' )
     case ( n_Field_Type ); call add_char ( 'field_type' )
+    case ( n_Less_colon ); call add_char ( 'less_colon' )
+    case ( n_Less_colon_less ); call add_char ( 'less_colon_less' )
     case ( n_Minus );      call add_char ( 'minus' )
     case ( n_Mult );       call add_char ( 'mult' )
     case ( n_Name_def );   call add_char ( 'name_def' )
@@ -94,6 +100,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.2  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
