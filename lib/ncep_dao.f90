@@ -31,6 +31,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character(LEN=130) :: id = & 
     "$Id$"
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   public:: source_file_already_read
@@ -780,9 +781,16 @@ contains
 
   end subroutine announce_error
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ncep_dao
 
 ! $Log$
+! Revision 2.20  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.19  2002/02/05 04:13:43  livesey
 ! Minor bug fix
 !

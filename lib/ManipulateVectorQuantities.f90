@@ -21,6 +21,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
     & "$Id$"
   character (LEN=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   private
@@ -293,9 +294,16 @@ contains
 
   end function DoQtysDescribeSameThing
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.20  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.19  2002/09/19 00:30:36  pwagner
 ! Added AnyGoodDataInQty; set DoQtysDescribeSameThing at its start
 !
