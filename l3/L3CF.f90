@@ -12,6 +12,8 @@ MODULE L3CF
    USE MLSStrings
    USE MLSMessageModule
    USE SDPToolkit
+   USE PCFModule
+   USE MLSPCF
    IMPLICIT NONE
    PUBLIC
 
@@ -28,14 +30,12 @@ MODULE L3CF
 ! Definition -- L3CFProd_T
 ! Subroutines -- CalculateArray
 !                FillL3CF
-!                ReadParseMLSCF
 
 ! Remarks:  This module defines a data type to hold L3CF input and contains
 !           subroutines used to process these data into forms used by L3.
 
 ! Parameters
 
-   INTEGER, PARAMETER :: GridNameLen = 64
    INTEGER, PARAMETER :: maxGridPoints = 500
 
 ! This data type is used to store cf input needed to process l3dm data.
@@ -70,11 +70,11 @@ MODULE L3CF
 
      INTEGER, DIMENSION(2) :: rangWavenumber	! min, max of wave # range
 
-     CHARACTER (LEN=3) :: mode				! asc/des/com/all
+     CHARACTER (LEN=3) :: mode			! asc/des/com/all
 
      ! Output section
 
-     CHARACTER (LEN=FileNameLen) :: mcf			! MCF file name in CF
+     INTEGER :: mcf				! PCF number for the MCF
 
      CHARACTER (LEN=FileNameLen) :: fileTemplate	! file name from CF
 
@@ -160,9 +160,10 @@ CONTAINS
       CHARACTER (LEN=10) :: l2Ver, l3Ver, label
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
+      CHARACTER (LEN=FileNameLen) :: mcfName
 
-      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j
-      INTEGER :: numProds, returnStatus
+      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j, match
+      INTEGER :: mlspcf_mcf, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
 
@@ -348,13 +349,26 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
 
-! Find/save the MCF file name
+! Find the MCF file name
 
        indx = LinearSearchStringArray( &
                           cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                               &keyword MCF in the Output section of the l3cf.')
-       l3cf(i)%mcf = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+       mcfName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Search for a match in the PCF
+
+       CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, &
+                           mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
+       IF (match == 0) THEN
+          msr = 'No match in the PCF for file ' // mcfName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Save the PCF number in L3CFProd_T
+
+       l3cf(i)%mcf = mlspcf_mcf
 
 ! Find the file template, bypass flag from Output; save them in L3CFProd_T
 
@@ -393,515 +407,14 @@ CONTAINS
    END SUBROUTINE FillL3CF
 !-------------------------
 
-!---------------------------------------
-   SUBROUTINE ReadParseMLSCF (pcfId, cf)
-!---------------------------------------
-
-! Brief description of subroutine
-! This subroutine simulates the running of the parser in the delivery
-! environment.
-
-! Arguments
-
-      INTEGER, INTENT(IN) :: pcfId
-
-      TYPE( Mlscf_T ), INTENT(OUT) :: cf
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      CHARACTER (LEN=480) :: msr
-
-      INTEGER :: err
-
-      cf%NoSections = 3
-
-      ALLOCATE (cf%Sections(cf%NoSections), STAT=err )
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' Section structures for L3CF.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      cf%Sections(1)%MlscfSectionName = 'GlobalSettings'
-      cf%Sections(1)%NoSectionDefs = 2
-      cf%Sections(1)%Cells(1)%Keyword = 'L2Ver'
-      cf%Sections(1)%Cells(1)%CharValue = 'v0-05'
-      cf%Sections(1)%Cells(2)%Keyword = 'OutputVersionString'
-      cf%Sections(1)%Cells(2)%CharValue = 'v0-05'
-
-      cf%Sections(2)%MlscfSectionName = 'DailyMap'
-      cf%Sections(2)%NoSectionEntries = 10
-      cf%Sections(2)%Entries(1)%MlscfEntryName = 'mapSpec'
-      cf%Sections(2)%Entries(1)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(1)%Cells(1)%CharValue = 'ClO'
-      cf%Sections(2)%Entries(1)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(1)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(1)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(1)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(1)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(1)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(1)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(1)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(1)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(1)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(1)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(1)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(1)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(1)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(1)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(1)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(1)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(1)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(1)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(1)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(1)%Cells(10)%RealValue = 1.0
-      cf%Sections(2)%Entries(1)%Cells(10)%RangeUpperBound =100.0
-      cf%Sections(2)%Entries(1)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(1)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(1)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(1)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(1)%Cells(12)%CharValue = 'all'
-      cf%Sections(2)%Entries(1)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(1)%Cells(13)%CharValue = 'CLOL3DM'
-      cf%Sections(2)%Entries(2)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(2)%Cells(1)%CharValue = 'GeopotentialHeight'
-      cf%Sections(2)%Entries(2)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(2)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(2)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(2)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(2)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(2)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(2)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(2)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(2)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(2)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(2)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(2)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(2)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(2)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(2)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(2)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(2)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(2)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(2)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(2)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(2)%Cells(10)%RealValue = 0.01
-      cf%Sections(2)%Entries(2)%Cells(10)%RangeUpperBound =464.0
-      cf%Sections(2)%Entries(2)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(2)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(2)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(2)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(2)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(2)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(2)%Cells(13)%CharValue = 'ZL3DM'
-      cf%Sections(2)%Entries(3)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(3)%Cells(1)%CharValue = 'H2O'
-      cf%Sections(2)%Entries(3)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(3)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(3)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(3)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(3)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(3)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(3)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(3)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(3)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(3)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(3)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(3)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(3)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(3)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(3)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(3)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(3)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(3)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(3)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(3)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(3)%Cells(10)%RealValue = 0.01
-      cf%Sections(2)%Entries(3)%Cells(10)%RangeUpperBound =464.0
-      cf%Sections(2)%Entries(3)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(3)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(3)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(3)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(3)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(3)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(3)%Cells(13)%CharValue = 'H2OL3DM'
-      cf%Sections(2)%Entries(4)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(4)%Cells(1)%CharValue = 'HCl'
-      cf%Sections(2)%Entries(4)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(4)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(4)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(4)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(4)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(4)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(4)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(4)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(4)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(4)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(4)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(4)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(4)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(4)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(4)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(4)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(4)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(4)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(4)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(4)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(4)%Cells(10)%RealValue = 1.0
-      cf%Sections(2)%Entries(4)%Cells(10)%RangeUpperBound =100.0
-      cf%Sections(2)%Entries(4)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(4)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(4)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(4)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(4)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(4)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(4)%Cells(13)%CharValue = 'HCLL3DM'
-      cf%Sections(2)%Entries(5)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(5)%Cells(1)%CharValue = 'HCN'
-      cf%Sections(2)%Entries(5)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(5)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(5)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(5)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(5)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(5)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(5)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(5)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(5)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(5)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(5)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(5)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(5)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(5)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(5)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(5)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(5)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(5)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(5)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(5)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(5)%Cells(10)%RealValue = 22.0
-      cf%Sections(2)%Entries(5)%Cells(10)%RangeUpperBound =100.0
-      cf%Sections(2)%Entries(5)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(5)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(5)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(5)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(5)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(5)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(5)%Cells(13)%CharValue = 'HCNL3DM'
-      cf%Sections(2)%Entries(6)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(6)%Cells(1)%CharValue = 'HNO3'
-      cf%Sections(2)%Entries(6)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(6)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(6)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(6)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(6)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(6)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(6)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(6)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(6)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(6)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(6)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(6)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(6)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(6)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(6)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(6)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(6)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(6)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(6)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(6)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(6)%Cells(10)%RealValue = 1.0
-      cf%Sections(2)%Entries(6)%Cells(10)%RangeUpperBound =100.0
-      cf%Sections(2)%Entries(6)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(6)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(6)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(6)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(6)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(6)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(6)%Cells(13)%CharValue = 'HNO3L3DM'
-      cf%Sections(2)%Entries(7)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(7)%Cells(1)%CharValue = 'N2O'
-      cf%Sections(2)%Entries(7)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(7)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(7)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(7)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(7)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(7)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(7)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(7)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(7)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(7)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(7)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(7)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(7)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(7)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(7)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(7)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(7)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(7)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(7)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(7)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(7)%Cells(10)%RealValue = 1.0
-      cf%Sections(2)%Entries(7)%Cells(10)%RangeUpperBound =215.0
-      cf%Sections(2)%Entries(7)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(7)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(7)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(7)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(7)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(7)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(7)%Cells(13)%CharValue = 'N2OL3DM'
-      cf%Sections(2)%Entries(8)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(8)%Cells(1)%CharValue = 'O3'
-      cf%Sections(2)%Entries(8)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(8)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(8)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(8)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(8)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(8)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(8)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(8)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(8)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(8)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(8)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(8)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(8)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(8)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(8)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(8)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(8)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(8)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(8)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(8)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(8)%Cells(10)%RealValue = 0.01
-      cf%Sections(2)%Entries(8)%Cells(10)%RangeUpperBound =316.0
-      cf%Sections(2)%Entries(8)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(8)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(8)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(8)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(8)%Cells(12)%CharValue = 'all'
-      cf%Sections(2)%Entries(8)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(8)%Cells(13)%CharValue = 'O3L3DM'
-      cf%Sections(2)%Entries(9)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(9)%Cells(1)%CharValue = 'OH'
-      cf%Sections(2)%Entries(9)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(9)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(9)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(9)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(9)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(9)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(9)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(9)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(9)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(9)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(9)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(9)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(9)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(9)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(9)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(9)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(9)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(9)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(9)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(9)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(9)%Cells(10)%RealValue = 0.1
-      cf%Sections(2)%Entries(9)%Cells(10)%RangeUpperBound =10.0
-      cf%Sections(2)%Entries(9)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(9)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(9)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(9)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(9)%Cells(12)%CharValue = 'all'
-      cf%Sections(2)%Entries(9)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(9)%Cells(13)%CharValue = 'OHL3DM'
-      cf%Sections(2)%Entries(10)%Cells(1)%Keyword = 'l3prodNameD'
-      cf%Sections(2)%Entries(10)%Cells(1)%CharValue = 'Temperature'
-      cf%Sections(2)%Entries(10)%Cells(2)%Keyword = 'timeD'
-      cf%Sections(2)%Entries(10)%Cells(2)%CharValue = '12:00:00'
-      cf%Sections(2)%Entries(10)%Cells(3)%Keyword = 'intpMethod'
-      cf%Sections(2)%Entries(10)%Cells(3)%CharValue = 'lin'
-      cf%Sections(2)%Entries(10)%Cells(4)%Keyword = 'latGridMap'
-      cf%Sections(2)%Entries(10)%Cells(4)%RealValue = -82.0
-      cf%Sections(2)%Entries(10)%Cells(4)%RangeUpperBound = 82.0
-      cf%Sections(2)%Entries(10)%Cells(5)%Keyword = 'dLat'
-      cf%Sections(2)%Entries(10)%Cells(5)%RealValue = 2.0
-      cf%Sections(2)%Entries(10)%Cells(6)%Keyword = 'longGrid'
-      cf%Sections(2)%Entries(10)%Cells(6)%RealValue = -180.0
-      cf%Sections(2)%Entries(10)%Cells(6)%RangeUpperBound = 180.0
-      cf%Sections(2)%Entries(10)%Cells(7)%Keyword = 'dLon'
-      cf%Sections(2)%Entries(10)%Cells(7)%RealValue = 4.0
-      cf%Sections(2)%Entries(10)%Cells(8)%Keyword = 'rangFrequency'
-      cf%Sections(2)%Entries(10)%Cells(8)%RealValue = 0.1
-      cf%Sections(2)%Entries(10)%Cells(8)%RangeUpperBound =1.0
-      cf%Sections(2)%Entries(10)%Cells(9)%Keyword = 'dF'
-      cf%Sections(2)%Entries(10)%Cells(9)%RealValue = 0.25
-      cf%Sections(2)%Entries(10)%Cells(10)%Keyword = 'l3presLvl'
-      cf%Sections(2)%Entries(10)%Cells(10)%RealValue = 0.01
-      cf%Sections(2)%Entries(10)%Cells(10)%RangeUpperBound =464.0
-      cf%Sections(2)%Entries(10)%Cells(11)%Keyword = 'rangWavenumber'
-      cf%Sections(2)%Entries(10)%Cells(11)%RealValue = 1.0
-      cf%Sections(2)%Entries(10)%Cells(11)%RangeUpperBound =15.0
-      cf%Sections(2)%Entries(10)%Cells(12)%Keyword = 'mode'
-      cf%Sections(2)%Entries(10)%Cells(12)%CharValue = 'com'
-      cf%Sections(2)%Entries(10)%Cells(13)%Keyword = 'label'
-      cf%Sections(2)%Entries(10)%Cells(13)%CharValue = 'TL3DM'
-
-      cf%Sections(3)%MlscfSectionName = 'Output'
-      cf%Sections(3)%NoSectionEntries = 10
-      cf%Sections(3)%Entries(1)%MlscfLabelName = 'CLOL3DM'
-      cf%Sections(3)%Entries(1)%MlscfEntryName = 'output'
-      cf%Sections(3)%Entries(1)%MlscfEntryNoKeys = 6
-      cf%Sections(3)%Entries(1)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(1)%Cells(1)%CharValue = 'ClO'
-      cf%Sections(3)%Entries(1)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(1)%Cells(2)%CharValue = 'ClOAscending'
-      cf%Sections(3)%Entries(1)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(1)%Cells(3)%CharValue = 'ClODescending'
-      cf%Sections(3)%Entries(1)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(1)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(1)%Cells(4)%CharValue = &
-                                            '/duke/nakamura/L1BOA/META/MCF.clo'
-      cf%Sections(3)%Entries(1)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(1)%Cells(5)%CharValue = &
-                   '/duke/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat'
-!     cf%Sections(3)%Entries(1)%Cells(6)%Keyword = 'bypassPCF'
-!     cf%Sections(3)%Entries(1)%Cells(6)%RealValue = 1.0
-      cf%Sections(3)%Entries(2)%MlscfLabelName = 'ZL3DM'
-      cf%Sections(3)%Entries(2)%MlscfEntryNoKeys = 5
-      cf%Sections(3)%Entries(2)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(2)%Cells(1)%CharValue = 'GeopotentialHeight'
-      cf%Sections(3)%Entries(2)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(2)%Cells(2)%CharValue = &
-                                                  'GeopotentialHeightAscending'
-      cf%Sections(3)%Entries(2)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(2)%Cells(3)%CharValue = &
-                                                 'GeopotentialHeightDescending'
-      cf%Sections(3)%Entries(2)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(2)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(2)%Cells(4)%CharValue = &
-                                              '/duke/nakamura/L1BOA/META/MCF.z'
-      cf%Sections(3)%Entries(2)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(2)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(3)%MlscfLabelName = 'H2OL3DM'
-      cf%Sections(3)%Entries(3)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(3)%Cells(1)%CharValue = 'H2O'
-      cf%Sections(3)%Entries(3)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(3)%Cells(2)%CharValue = 'H2OAscending'
-      cf%Sections(3)%Entries(3)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(3)%Cells(3)%CharValue = 'H2ODescending'
-      cf%Sections(3)%Entries(3)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(3)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(3)%Cells(4)%CharValue = &
-                                            '/duke/nakamura/L1BOA/META/MCF.h2o'
-      cf%Sections(3)%Entries(3)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(3)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(4)%MlscfLabelName = 'HCLL3DM'
-      cf%Sections(3)%Entries(4)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(4)%Cells(1)%CharValue = 'HCl'
-      cf%Sections(3)%Entries(4)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(4)%Cells(2)%CharValue = 'HClAscending'
-      cf%Sections(3)%Entries(4)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(4)%Cells(3)%CharValue = 'HClDescending'
-      cf%Sections(3)%Entries(4)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(4)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(4)%Cells(4)%CharValue = &
-                                            '/duke/nakamura/L1BOA/META/MCF.hcl'
-      cf%Sections(3)%Entries(4)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(4)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(5)%MlscfLabelName = 'HCNL3DM'
-      cf%Sections(3)%Entries(5)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(5)%Cells(1)%CharValue = 'HCN'
-      cf%Sections(3)%Entries(5)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(5)%Cells(2)%CharValue = 'HCNAscending'
-      cf%Sections(3)%Entries(5)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(5)%Cells(3)%CharValue = 'HCNDescending'
-      cf%Sections(3)%Entries(5)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(5)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(5)%Cells(4)%CharValue = &
-                                            '/duke/nakamura/L1BOA/META/MCF.hcn'
-      cf%Sections(3)%Entries(5)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(5)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(6)%MlscfLabelName = 'HNO3L3DM'
-      cf%Sections(3)%Entries(6)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(6)%Cells(1)%CharValue = 'HNO3'
-      cf%Sections(3)%Entries(6)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(6)%Cells(2)%CharValue = 'HNO3Ascending'
-      cf%Sections(3)%Entries(6)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(6)%Cells(3)%CharValue = 'HNO3Descending'
-      cf%Sections(3)%Entries(6)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(6)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(6)%Cells(4)%CharValue = &
-                                          '/duke/nakamura/L1BOA/META/MCF.hno3'
-      cf%Sections(3)%Entries(6)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(6)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(7)%MlscfLabelName = 'N2OL3DM'
-      cf%Sections(3)%Entries(7)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(7)%Cells(1)%CharValue = 'N2O'
-      cf%Sections(3)%Entries(7)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(7)%Cells(2)%CharValue = 'N2OAscending'
-      cf%Sections(3)%Entries(7)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(7)%Cells(3)%CharValue = 'N2ODescending'
-      cf%Sections(3)%Entries(7)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(7)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(7)%Cells(4)%CharValue = &
-                                            '/duke/nakamura/L1BOA/META/MCF.n2o'
-      cf%Sections(3)%Entries(7)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(7)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(8)%MlscfLabelName = 'O3L3DM'
-      cf%Sections(3)%Entries(8)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(8)%Cells(1)%CharValue = 'O3'
-      cf%Sections(3)%Entries(8)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(8)%Cells(2)%CharValue = 'O3Ascending'
-      cf%Sections(3)%Entries(8)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(8)%Cells(3)%CharValue = 'O3Descending'
-      cf%Sections(3)%Entries(8)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(8)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(8)%Cells(4)%CharValue = &
-                                             '/duke/nakamura/L1BOA/META/MCF.o3'
-      cf%Sections(3)%Entries(8)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(8)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(9)%MlscfLabelName = 'OHL3DM'
-      cf%Sections(3)%Entries(9)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(9)%Cells(1)%CharValue = 'OH'
-      cf%Sections(3)%Entries(9)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(9)%Cells(2)%CharValue = 'OHAscending'
-      cf%Sections(3)%Entries(9)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(9)%Cells(3)%CharValue = 'OHDescending'
-      cf%Sections(3)%Entries(9)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(9)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(9)%Cells(4)%CharValue = &
-                                             '/duke/nakamura/L1BOA/META/MCF.oh'
-      cf%Sections(3)%Entries(9)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(9)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat'
-      cf%Sections(3)%Entries(10)%MlscfLabelName = 'TL3DM'
-      cf%Sections(3)%Entries(10)%Cells(1)%Keyword = 'quantities'
-      cf%Sections(3)%Entries(10)%Cells(1)%CharValue = 'Temperature'
-      cf%Sections(3)%Entries(10)%Cells(1)%More = 2
-      cf%Sections(3)%Entries(10)%Cells(2)%CharValue = 'TemperatureAscending'
-      cf%Sections(3)%Entries(10)%Cells(2)%More = 1
-      cf%Sections(3)%Entries(10)%Cells(3)%CharValue = 'TemperatureDescending'
-      cf%Sections(3)%Entries(10)%Cells(3)%More = 0
-      cf%Sections(3)%Entries(10)%Cells(4)%Keyword = 'mcf'
-      cf%Sections(3)%Entries(10)%Cells(4)%CharValue = &
-                                              '/duke/nakamura/L1BOA/META/MCF.t'
-      cf%Sections(3)%Entries(10)%Cells(5)%Keyword = 'file'
-      cf%Sections(3)%Entries(10)%Cells(5)%CharValue = &
-                  '/duke/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat'
-
-!-------------------------------
-   END SUBROUTINE ReadParseMLSCF
-!-------------------------------
-
 !==============
 END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.2  2000/10/24 19:18:03  nakamura
+! Removed temporary subroutine ReadParseMLSCF; added PCF number for MCF to L3CFProd_T.
+!
+! Revision 1.1  2000/10/17 20:20:04  nakamura
+! Module for customizing the CF parser output to L3.
+!
