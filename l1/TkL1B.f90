@@ -69,31 +69,35 @@ CONTAINS
   END  SUBROUTINE Init_L1BOAsc
 
 !=============================================================================
-  SUBROUTINE Init_L1BOAtp (tp)
+  SUBROUTINE Init_L1BOAtp (tp, MIFbad)
 !=============================================================================
 
     TYPE (L1BOAtp_T) :: tp
+    LOGICAL, OPTIONAL, INTENT(IN) :: MIFbad(:)
 
-    tp%encoderAngle = HUGE_F
-    tp%scAngle = HUGE_F
-    tp%scanAngle = HUGE_F
-    tp%scanRate = HUGE_F
-    tp%tpECI = HUGE_F
-    tp%tpECR = HUGE_F
-    tp%tpECRtoFOV = HUGE_F
-    tp%tpGeodAlt = HUGE_F
-    tp%tpGeocAlt = HUGE_F
-    tp%tpOrbY = HUGE_F
-    tp%tpGeocLat = HUGE_F
-    tp%tpGeocAltRate = HUGE_F
-    tp%tpGeodLat = HUGE_F
-    tp%tpGeodAltRate = HUGE_F
-    tp%tpLon = HUGE_F
-    tp%tpGeodAngle = HUGE_F
-    tp%tpSolarTime = HUGE_F
-    tp%tpSolarZenith = HUGE_F
-    tp%tpLosAngle = HUGE_F
-    tp%tpLosVel = HUGE_F
+    LOGICAL :: badindx (SIZE(tp%tpLon))  ! Indexes for "bad" MIFs
+
+    IF (PRESENT (MIFbad)) THEN
+       badindx = MIFbad
+    ELSE
+       badindx = .TRUE.
+    ENDIF
+
+    WHERE (badindx)
+       tp%tpGeodAlt = UNDEFINED_VALUE
+       tp%tpGeocAlt = UNDEFINED_VALUE
+       tp%tpOrbY = UNDEFINED_VALUE
+       tp%tpGeocLat = UNDEFINED_VALUE
+       tp%tpGeocAltRate = UNDEFINED_VALUE
+       tp%tpGeodLat = UNDEFINED_VALUE
+       tp%tpGeodAltRate = UNDEFINED_VALUE
+       tp%tpLon = UNDEFINED_VALUE
+       tp%tpGeodAngle = UNDEFINED_VALUE
+       tp%tpSolarTime = UNDEFINED_VALUE
+       tp%tpSolarZenith = UNDEFINED_VALUE
+       tp%tpLosAngle = UNDEFINED_VALUE
+       tp%tpLosVel = UNDEFINED_VALUE
+    ENDWHERE
 
   END SUBROUTINE Init_L1BOAtp
 
@@ -119,7 +123,7 @@ CONTAINS
     CHARACTER (LEN=480) :: msg, msr
     INTEGER :: i, j, returnStatus
     INTEGER :: qualityFlags(2, numValues)
-    REAL(r8) :: ecrVec(3)
+    REAL(r8) :: ecrVec(3), eulerangles(3,numValues)
     REAL(r8) :: radC(numValues), radD(numValues), radL(numValues)
     REAL(r8), TARGET :: attitQuat(4,numValues)
     REAL(r8) :: eciV(6,numValues), ecrV(6,numValues)
@@ -136,7 +140,13 @@ CONTAINS
 
     returnStatus = Pgs_eph_ephemAttit (spacecraftId, numValues, asciiUTC,  &
          offsets, pgs_true, pgs_true, qualityFlags, sc%scECI, sc%scVelECI, &
-         sc%ypr, sc%yprRate, attitQuat)
+         eulerangles, sc%yprRate, attitQuat)
+
+! save YPR:
+
+    sc%ypr(1,:) = eulerangles(1,:)
+    sc%ypr(2,:) = eulerangles(3,:)
+    sc%ypr(3,:) = eulerangles(2,:)
 
 ! Trap any bad attitQuat data
 
@@ -229,21 +239,25 @@ CONTAINS
 
   !------------------------------------------------------TkL1B_tp ----
   SUBROUTINE TkL1B_tp (asciiTAI, asciiUTC, lenG, numValues, offsets, posECR, &
-    posECI, velECI, scAngle, tp, ecrtosc)
+    posECI, velECI, scAngle, encoderAngle, tp, ecrtosc, GroundToFlightMounts, &
+    ScToGroundMounts, gtindx)
     ! This subroutine fills the tangent point record.
 
     USE FOV, ONLY: CalcMountsToFOV
-    USE SDPToolkit, ONLY: PGSCSC_W_LOOK_AWAY 
+    USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSCSC_W_LOOK_AWAY, PGSCSC_W_HIT_EARTH 
 
     ! Arguments
     TYPE (L1BOAtp_T) :: tp
     CHARACTER (LEN=27), INTENT(IN) :: asciiUTC
-    INTEGER, INTENT(IN) :: lenG, numValues
-    REAL, INTENT(IN) :: scAngle(numValues)
+    INTEGER, INTENT(IN) :: lenG, numValues, gtindx
+    REAL, INTENT(IN) :: scAngle(numValues), encoderAngle(numValues)
     REAL(r8), INTENT(IN) :: asciiTAI
     REAL(r8), INTENT(IN) :: offsets(numValues)
     REAL(r8), INTENT(IN) :: posECR(3,lenG), posECI(3,lenG), velECI(3,lenG)
-    REAL, INTENT(IN), OPTIONAL :: ecrtosc(3,3,numValues)
+    REAL, INTENT(IN) :: ecrtosc(3,3,numValues)
+
+    REAL(r8), INTENT(IN) :: GroundToFlightMounts(3,3)
+    REAL(r8), INTENT(IN) :: ScToGroundMounts(3,3)
 
     ! Functions
     INTEGER :: Pgs_cbp_sat_cb_vector, Pgs_cbp_solarTimeCoords
@@ -254,6 +268,7 @@ CONTAINS
     ! Variables
     CHARACTER (LEN=27) :: time
     INTEGER :: flag, flagQ, i, returnStatus
+    LOGICAL :: MIFbad(lenG)
     REAL(r8) :: declination, deltaAlt, deltaLat, deltaLon
     REAL(r8) :: greenwich, localApparent, rightAscension, tai
     REAL(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
@@ -263,10 +278,11 @@ CONTAINS
     REAL(r8) :: posSurf(3,lenG), sc_frame_vector(3,lenG), sc_sun(3,lenG)
     REAL(r8) :: sc_tp(3,lenG), tp_sun(3,lenG), tpOrb(3,lenG), unitAlt(3,lenG)
     REAL(r8) :: unitLat(3,lenG), unitLon(3,lenG), vECR(3,lenG)
-    REAL(r8) :: angleSc(3,numValues), angleOrb(3,numValues)
+    REAL(r8) :: fov_sc(3,numValues), fov_orb(3,numValues)
     REAL(r8) :: eciV(6,lenG), ecrV(6,lenG)
     REAL(r8) :: tngtVel(3), los_vec(3)
     REAL(r8) :: MountsToFOV(3,3), ECRtoFOV(3,3)
+    REAL(r8) :: GroundMountsToFOV(3,3), ScToFOV(3,3)
     CHARACTER (LEN=32) :: mnemonic
     CHARACTER (LEN=480) :: msg, msr
 
@@ -275,22 +291,34 @@ CONTAINS
     deltaLat = 0.1
     deltaLon = 0.1
     deltaAlt = 1000.0
+    tp%encoderAngle = encoderAngle
+
+    ! Determine ECR to FOV
+
+    DO i = 1, numValues
+
+       CALL CalcMountsToFOV (scAngle(i), gtindx, MountsToFOV)
+
+       GroundMountsToFOV = MATMUL (MountsToFOV, GroundToFlightMounts)
+       ScToFOV = MATMUL (GroundMountsToFOV, ScToGroundMounts)
+       ECRtoFOV = MATMUL (ScToFOV, ecrtosc(:,:,i))
+
+       IF (i <= lenG) tp%tpECRtoFOV(:,i) = RESHAPE (ECRtoFOV, (/ 9 /))
+       
+       fov_sc(1,i) = ScToFOV(3,1)
+       fov_sc(2,i) = ScToFOV(3,2)
+       fov_sc(3,i) = ScToFOV(3,3)
 
     ! Put sc angle
 
-    DO i = 1, numvalues
-       tp%scAngle(i) = scAngle(i)
+       tp%scAngle(i) = 90.0 - &
+            ACOS (MAX (MIN(fov_sc(3,i), 1.0d0), -1.0d0)) * Rad2Deg
     ENDDO
 
-    ! Put angle in s/c coordinates
-    angleRad = Deg2Rad * tp%scAngle
-    angleSc(1,:) = COS(angleRad)
-    angleSc(2,:) = 0.0
-    angleSc(3,:) = SIN(angleRad)
-
     ! Convert s/c vector to Orb vector/angle/degrees
+
     returnStatus = Pgs_csc_scToOrb (spacecraftId, numValues, asciiUTC, &
-      offsets, angleSc, angleOrb)
+      offsets, fov_sc, fov_orb)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
        msr = 'Routine scToOrb, ' // mnemonic // ':  ' // msg
@@ -302,32 +330,22 @@ CONTAINS
        RETURN
     ENDIF
 
-    tp%scanAngle = Rad2Deg * ACOS (angleOrb(1,:))
+    tp%scanAngle = 90.0 - ACOS (MAX (MIN (fov_orb(3,:), 1.0d0), -1.0d0)) * &
+         Rad2Deg
+    tp%azimAngle = ATAN2 (fov_orb(2,:), fov_orb(1,:)) * Rad2Deg
 
     ! Convert s/c vector to ECR
     returnStatus = Pgs_csc_scToECI (spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), angleSc(:,1:lenG), eci)
+      offsets(1:lenG), fov_sc(:,1:lenG), eci)
     eciV(1:3,:) = eci
     eciV(4:6,:) = 0.0
     returnStatus = Pgs_csc_eciToECR (lenG, asciiUTC, offsets(1:lenG), eciV, &
          ecrV)
     ecr = ecrV(1:3,:)
 
-    ! Determine ECR to FOV, if requested
-
-    IF (PRESENT (ecrtosc)) THEN
-       DO i = 1, lenG
-
-          CALL CalcMountsToFOV (scAngle(i), MountsToFOV)
-
-          ECRtoFOV = MATMUL (MountsToFOV, ecrtosc(:,:,i))
-          tp%tpECRtoFOV(:,i) = RESHAPE (ECRtoFOV, (/ 9 /))
-
-       ENDDO
-
-    ENDIF
-
     ! For each scanning MIF
+
+    MIFbad = .FALSE.
     DO i = 1, lenG
 
       ! Calculate tangent point (geodetic & ECR)
@@ -335,13 +353,15 @@ CONTAINS
            latD(i), lon(i), tp%tpGeodAlt(i), &
            slantRange(i), tp%tpECR(:,i), posSurf(:,i))
 
-      IF (returnStatus == PGSCSC_W_LOOK_AWAY) THEN  ! looking away
-         latD(i) = HUGE_F
-         lon(i) = HUGE_F
-         tp%tpGeodAlt(i) = HUGE_F
-         slantRange(i) = HUGE_F
-         tp%tpECR(:,i) = HUGE_F
-         posSurf(:,i) = HUGE_F
+      IF (returnStatus /= PGS_S_SUCCESS .AND. &
+           returnStatus /= PGSCSC_W_HIT_EARTH) THEN  ! success or "hit" earth
+         latD(i) = 0.0 ! HUGE_F
+         lon(i) = 0.0 ! HUGE_F
+         tp%tpGeodAlt(i) = 0.0 ! HUGE_F
+         slantRange(i) = 0.0 ! HUGE_F
+         tp%tpECR(:,i) = 0.0 ! HUGE_F
+         posSurf(:,i) = 0.0 ! HUGE_F
+         MIFbad(i) = .TRUE.
       ENDIF
 
       ! Create ECR unit vector quantities -- lat=1, lon=2, alt=3
@@ -436,7 +456,7 @@ CONTAINS
     ENDDO
 
     ! Calculate dummy values
-    tp%encoderAngle = tp%scAngle
+
     DO i = 2, lenG
       tp%tpGeocAltRate(i-1) = (tp%tpGeocAlt(i) - tp%tpGeocAlt(i-1)) &
            / offsets(2)
@@ -445,6 +465,11 @@ CONTAINS
     ENDDO
     tp%tpGeocAltRate(lenG) = tp%tpGeocAltRate(lenG-1)
     tp%tpGeodAltRate(lenG) = tp%tpGeodAltRate(lenG-1)
+
+    IF (ANY (MIFbad)) THEN
+       CALL Init_L1BOAtp (tp, MIFbad)
+       print *, 'some bad MIFs...'
+    ENDIF
 
   END SUBROUTINE TkL1B_tp
 
@@ -467,7 +492,7 @@ CONTAINS
     CHARACTER (LEN=480) :: msg, msr
     INTEGER :: returnStatus
     REAL(r8) :: del, geoMinus, geoPlus
-    REAL(r8) :: ecrMinus(3), ecrPlus(3), vec(3)
+    REAL(r8) :: ecrMinus(3), ecrPlus(3), vec(3), vecSqrtSum
 
     ! Exectuable code
 
@@ -511,8 +536,9 @@ CONTAINS
     ENDIF
 
     vec = ecrPlus - ecrMinus
-    IF (SUM (vec) > 0.0) THEN
-       unitQ = vec / SQRT (vec(1)**2 + vec(2)**2 + vec(3)**2)
+    vecSqrtSum = SQRT (vec(1)**2 + vec(2)**2 + vec(3)**2)
+    IF (vecSqrtSum > 0.0) THEN
+       unitQ = vec / vecSqrtSum
     ELSE
        unitQ = 0.0
     ENDIF
@@ -521,17 +547,21 @@ CONTAINS
 
   !-------------------------------------------------- L1BOA_MAF ----------------
   SUBROUTINE L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, L1FileHandle, &
-       MAFinfo, noMAF, numOrb, scAngleG, scAngleT)
+       MAFinfo, noMAF, MIFsPerMAF, numOrb, scAngleG, scAngleT, encAngleG, &
+       encAngleT)
 
     ! This subroutine creates the SIDS L1BOA MAF records, and writes them to an
     ! HDF output file.
 
     USE MLSL1Config, ONLY: L1Config
+    USE FOV, ONLY: GroundToFlightMountsGHz, GroundToFlightMountsTHz, &
+         ScToGroundMountsGHz,ScToGroundMountsTHz
 
     ! Arguments
     TYPE (MAFinfo_T) :: MAFinfo
-    INTEGER, INTENT(IN) :: L1FileHandle, counterMAF, noMAF, numOrb
+    INTEGER, INTENT(IN) :: L1FileHandle, counterMAF, noMAF, numOrb, MIFsPerMAF
     REAL, INTENT(INOUT) :: scAngleG(:), scAngleT(:)
+    REAL, INTENT(IN) :: encAngleG(:), encAngleT(:)  ! encoder Angles
     REAL(r8), INTENT(IN) :: altG, altT
     REAL(r8), INTENT(IN) :: ascTAI(:), dscTAI(:)
 
@@ -544,7 +574,7 @@ CONTAINS
     TYPE( L1BOAtp_T ) :: tp
     CHARACTER (LEN=27) :: mafTime
     CHARACTER (LEN=480) :: msr
-    INTEGER :: error, i, nV, returnStatus, oastat
+    INTEGER :: error, i, nV, returnStatus, oastat, gtindx
     REAL(r8) :: mafTAI
     REAL(r8) :: initRay(3), q(3,MAFinfo%MIFsPerMAF)
     REAL(r8) :: offsets(MAFinfo%MIFsPerMAF)
@@ -564,7 +594,7 @@ CONTAINS
     returnStatus = Pgs_td_taiToUTC (mafTAI, mafTime)
     index%MAFStartTimeUTC = mafTime
     index%MAFStartTimeTAI = mafTAI
-    index%noMIFs = nV
+    index%noMIFs = MIFsPerMAF
     index%counterMAF = counterMAF
 
     CALL OutputL1B_index (noMAF, L1FileHandle, index)
@@ -655,6 +685,14 @@ CONTAINS
        ALLOCATE (tp%scanAngle(nV), STAT=error)
        IF (error /= 0) THEN
           msr = MLSMSG_Allocate // '  s/c scan angle quantities.'
+          CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(tp%azimAngle)) THEN
+       ALLOCATE (tp%azimAngle(nV), STAT=error)
+       IF (error /= 0) THEN
+          msr = MLSMSG_Allocate // '  s/c azim angle quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -876,17 +914,21 @@ CONTAINS
 
     ! Calculate GHZ tan pt record
 
+    gtindx = 1
     CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp, ecrtosc)
+         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, tp, &
+         ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp)
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
+            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp, ecrtosc)
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, encAngleG, &
+            tp, ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, gtindx)
     ENDIF
 
     ! Compute GHz master coordinate
@@ -918,17 +960,21 @@ CONTAINS
 
     ! Calculate THz tan pt record
 
+    gtindx = 2
     CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
+         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, tp, &
+         ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, encAngleT, &
+            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenT), &
-            sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, tp)
+            sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, encAngleT, &
+            tp, ecrtosc, GroundToFlightMountsTHz, ScToGroundMountsTHz, gtindx)
     ENDIF
 
     ! Compute THz master coordinate
@@ -1231,7 +1277,7 @@ CONTAINS
     REAL(r8) :: a, asciiTAI, b, cSq, equatRad_a, orbRad, polarRad_c
     REAL(r8) :: cosPhi(nV), gamma(nV), phi(nV), sinPhi(nV)
     REAL(r8) :: s(3,nV)
-    REAL(r8) :: orbInclineNow
+    REAL(r8) :: orbInclineNow, DvecSqrtSum
 
     ! Executable code
 
@@ -1250,8 +1296,13 @@ CONTAINS
        ENDIF
 
        ! Get a unit ECR vector to the point.
-       s(:,i) = dotVec(:,i) / SQRT(dotVec(1,i)**2 + dotVec(2,i)**2 + &
+       DvecSqrtSum = SQRT(dotVec(1,i)**2 + dotVec(2,i)**2 + &
             dotVec(3,i)**2)
+       IF (DvecSqrtSum == 0.0) THEN
+          phi(i) = UNDEFINED_VALUE / Rad2Deg
+          CYCLE
+       ENDIF
+       s(:,i) = dotVec(:,i) / DvecSqrtSum
 
        ! Calculate the geocentric angle as a number of radians between 0 and PI
        gamma(i) = ACOS( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
@@ -1320,17 +1371,19 @@ CONTAINS
   END SUBROUTINE TkL1B_mc
 
 !=============================================================================
-  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, SpaceView, LimbView)
+  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, LimbView, SpaceView)
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
 
     REAL(r8) :: TAI(:)
     REAL :: ScAngle(0:)
-    TYPE (LOG_ARR1_PTR_T) :: SpaceView(:), LimbView(:)
+    TYPE (LOG_ARR1_PTR_T) :: LimbView(:)
+    TYPE (LOG_ARR1_PTR_T), OPTIONAL :: SpaceView(:)
 
     CHARACTER (LEN=27) :: asciiUTC
     INTEGER :: i, MIF, returnStatus
+    LOGICAL :: HasSpaceView
     REAL :: limb_angle, space_angle
     REAL(r8) :: offset (SIZE(TAI))
     REAL(r8) :: sc_frame_vector(3,0:(lenG-1))  ! start at MIF 0
@@ -1346,6 +1399,8 @@ CONTAINS
 
     INTEGER, EXTERNAL :: PGS_TD_taiToUTC, PGS_CBP_Sat_CB_Vector
 
+    HasSpaceView = PRESENT (SpaceView)
+
 ! Get Moon tolerances from CF inputs:
 
     space_tol(1) = L1Config%Calib%MoonToSpaceAngle
@@ -1355,7 +1410,7 @@ CONTAINS
     offset = TAI - TAI(1)   ! offset (secs) from start TAI
 
     DO i = 1, 2
-       SpaceView(i)%ptr = .FALSE.
+       IF (HasSpaceView) SpaceView(i)%ptr = .FALSE.
        LimbView(i)%ptr = .FALSE.
        returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
             offset(1:lenG), BO_defs(i), sc_frame_vector)
@@ -1368,8 +1423,10 @@ CONTAINS
 
 ! Space port angle check
 
-          space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
-          SpaceView(i)%ptr(MIF) = (space_angle < space_tol(i))
+          IF (HasSpaceView) THEN
+             space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
+             SpaceView(i)%ptr(MIF) = (space_angle < space_tol(i))
+          ENDIF
 
 ! Limb port angle check
 
@@ -1388,6 +1445,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.19  2004/11/10 15:32:05  perun
+! Add encoder values; latest FOVs; correct YPR values order
+!
 ! Revision 2.18  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !
