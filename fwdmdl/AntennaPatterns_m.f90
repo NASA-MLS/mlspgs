@@ -90,6 +90,7 @@ contains
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: SIDEBAND                      ! From parse_signal
     integer :: Status                        ! From read or allocate
+    integer :: DummyInt                 ! Dummy integer to read
     integer, dimension(:), pointer :: SIGINDS ! From parseSignal
     integer :: SignalCount
     integer, pointer, dimension(:) :: Signal_Indices => NULL() ! From Parse_Signal, q.v.
@@ -123,7 +124,7 @@ outer1: do
         howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + signalCount
         read ( lun, '(a)', end=98, err=99, iostat=status ) sigName
       end do
-      read ( sigName, *, err=99, iostat=status ) lambda
+      read ( sigName, *, err=99, iostat=status ) dummyInt, lambda
       howManyPoints(dataBaseSize) = 0
       do ! Count how many points in the pattern
         read ( lun, '(a)', err=99, iostat=status ) sigName
@@ -187,7 +188,7 @@ outer1: do
         call deallocate_test ( sigInds, 'sigInds', ModuleName )
         call deallocate_test ( channels, 'channels', ModuleName )
       end do ! j
-      read ( lun, *, err=99, iostat=status ) lambda
+      read ( lun, *, err=99, iostat=status ) dummyInt, lambda
       antennaPatterns(i)%lambda = lambda
       lambdaX2Pi = pi2 * lambda
       do j = 1, howManyPoints(i)
@@ -279,6 +280,10 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.17  2001/05/17 19:59:38  livesey
+! Now pads the arrays to next power of two with zeros after the end
+! of the input data.
+!
 ! Revision 1.16  2001/05/16 23:04:20  livesey
 ! New version, now uses Signal_T, instead of a string
 !
