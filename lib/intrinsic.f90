@@ -36,7 +36,8 @@ module INTRINSIC
   integer, parameter :: T_STRING            = t_numeric_range + 1
 ! Enumeration types:
   integer, parameter :: T_BOOLEAN           = t_string + 1
-  integer, parameter :: LAST_INTRINSIC_TYPE = t_boolean
+  integer, parameter :: T_INSTRUMENT        = t_boolean + 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_instrument
 
 ! We don't define any fields here, but here's the first index:
   integer, parameter :: Field_First = 1
@@ -82,7 +83,8 @@ module INTRINSIC
   integer, parameter :: L_EARTHREFL     = l_dobsonunits + 1
   integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
-  integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
+  integer, parameter :: L_EMLS          = l_elevOffset + 1
+  integer, parameter :: L_EXTINCTION    = l_emls + 1
   integer, parameter :: L_FALSE         = l_extinction + 1
   integer, parameter :: L_FREQUENCY     = l_false + 1
   integer, parameter :: L_GEODALTITUDE  = l_frequency + 1
@@ -148,8 +150,9 @@ module INTRINSIC
   integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
   integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
   integer, parameter :: L_TOTALEXTINCTION =  l_tngtgeodalt + 1
-  integer, parameter :: L_TRUE         =  l_totalExtinction + 1
-  integer, parameter :: L_USBFREQUENCY  = l_true + 1
+  integer, parameter :: L_TRUE          =  l_totalExtinction + 1
+  integer, parameter :: L_UMLS          = l_true + 1
+  integer, parameter :: L_USBFREQUENCY  = l_umls + 1
   integer, parameter :: L_VMR           = l_usbfrequency + 1
   integer, parameter :: L_XYZ           = l_vmr + 1
   integer, parameter :: L_ZETA          = l_xyz + 1
@@ -244,6 +247,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
+    lit_indices(l_emls) =                  add_ident ( 'emls' )
     lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
     lit_indices(l_frequency) =             add_ident ( 'frequency' )
@@ -311,6 +315,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
     lit_indices(l_totalExtinction) =       add_ident ( 'totalExtinction' )
     lit_indices(l_true) =                  add_ident ( 'true' )
+    lit_indices(l_umls) =                  add_ident ( 'UMLS')
     lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
     lit_indices(l_xyz) =                   add_ident ( 'xyz' )
@@ -366,6 +371,8 @@ contains ! =====     Public procedures     =============================
     ! Define the enumerated types
     call make_tree ( (/ &
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def /) )
+    call make_tree ( (/ &
+      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def /) )
 
   contains
     ! ................................................  MAKE_TREE  .....
@@ -394,6 +401,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.36  2001/09/17 22:53:23  livesey
+! Added t_instrument, l_emls and l_umls
+!
 ! Revision 2.35  2001/07/30 23:28:38  pwagner
 ! Added columnAbundances scaffolding--needs fleshing out
 !
