@@ -456,6 +456,9 @@ lib--hdf4:
 	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
 	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=
 
+l1--itm:
+	$(MAKE) -f $(MakeFName) l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
+
 #              (functional targets)
 #              summoned by "make command"
 mostlyclean:
@@ -763,12 +766,12 @@ killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main killmaster.c
 
-l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90
+l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90
+l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
@@ -779,7 +782,7 @@ machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main machineok.c
 
-MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1
+MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
@@ -1106,7 +1109,8 @@ update:
   install install-l1 install-l2 install-l3 install-l3d install-l3m \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate levels\
-  lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5 lib--hdf4\
+  lib--hdf5 l1--hdf5 l1--itm l2--hdf5 l2gpcat l2gpdiff l3--hdf5 l3m--hdf5 \
+  all--hdf5 lib--hdf4\
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
   CondenseLeakLog end_stmts f90tex heconvert init_gen h5subset h5cat \
@@ -1114,6 +1118,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.90  2004/07/22 19:54:25  pwagner
+# May now build l2gpdiff
+#
 # Revision 1.89  2004/06/03 18:28:19  pwagner
 # Avoided buggy install of parallels; print reminder to scp them
 #
