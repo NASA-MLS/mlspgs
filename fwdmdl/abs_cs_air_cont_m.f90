@@ -19,8 +19,10 @@ contains
     real(rk), intent(in) :: PRESSURE    ! in mbar
     real(rk), intent(in) :: FREQUENCY   ! in MegaHertz
 !
-    real(rk), Parameter :: BETA=1.90E-19_RK, FPWR=-1.85E-12_RK, &
-                           PPWR=2.0_RK, TPWR=2.79_RK
+! Set numbers to the LAb numbers (fits for EOS for now ..)
+!
+    real(rk), Parameter :: BETA=1.07E-19_RK, FPWR=-1.85E-12_RK, &
+                           PPWR=2.0_RK, TPWR=3.63_RK
 !
     real(rk) :: THETA, FSQR
 !
