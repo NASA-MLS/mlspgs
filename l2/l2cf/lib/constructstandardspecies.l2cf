@@ -112,11 +112,11 @@ begin Construct
   !define(constructLinearVMR,{$1: Quantity, vGrid=vGridStandard, $
     hGrid=hGridStandard, type=vmr, molecule=$1!nl})
   !define(constructLogVMR,{$1: Quantity, vGrid=vGridStandard, $
-    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis!nl})
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis, minValue=1 ppmv!nl})
   !define(constructHiResLinearVMR,{$1{_HR}: Quantity, vGrid=vGridHiRes, $
     hGrid=hGridStandard, type=vmr, molecule=$1!nl})
   !define(constructHiResLogVMR,{$1{_HR}: Quantity, vGrid=vGridHiRes, $
-    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis!nl})
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis, minValue=1 ppmv!nl})
 
   ;; Define the 'standard' vmrs
   !forall( {constructLinearVMR}, !allLinearMolecules )
