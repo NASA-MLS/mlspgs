@@ -73,7 +73,7 @@ contains
 
 ! Internal stuff
 
-    integer :: n_path, i
+    integer :: n_path
     real(rp) :: a, b
     real(rp) :: V1(size(t_grid))
 
@@ -101,6 +101,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.7  2004/03/27 01:36:56  jonathan
+! now cloud effects are included
+!
 ! Revision 2.6  2004/03/20 01:25:06  jonathan
 ! minor changes
 !
