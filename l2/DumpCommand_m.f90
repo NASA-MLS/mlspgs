@@ -86,7 +86,8 @@ contains
     integer, parameter :: NoVG = noVectors + 1
     integer, parameter :: NoVT = noVG + 1
     integer, parameter :: Numeric = noVT + 1
-    integer, parameter :: Unknown = numeric + 1 ! Unknown template
+    integer, parameter :: Stop = numeric + 1
+    integer, parameter :: Unknown = stop + 1 ! Unknown template
 
     details = 0
     do j = 2, nsons(root)
@@ -161,6 +162,7 @@ contains
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
+            call announceError ( son, stop )
             stop
           end select
         end if
@@ -305,6 +307,8 @@ contains
         call output ( "Can't dump Vector Templates here." )
       case ( numeric )
         call output ( "The details field is not numeric." )
+      case ( stop )
+        call output ( "Program stopped by /stop field on DUMP statement." )
       case ( unknown )
         call output ( "Can't figure out what kind of template it is." )
       end select
@@ -322,6 +326,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.20  2005/03/26 01:34:00  vsnyder
+! Add stop message
+!
 ! Revision 2.19  2005/03/15 01:36:08  vsnyder
 ! Add newline after error messages
 !
