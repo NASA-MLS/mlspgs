@@ -22,25 +22,29 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, NU, NUA, NAB, NR, NC, TSCAT )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
 
-      use Cloud_extinction, only: Get_beta_cloud
-      use CRREXP_m,         only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
-      use Interpack,        only: LOCATE
-      use MLSCommon,        only: RK => R8 ! working REAL kind
-      use Physics,          only: H_OVER_K ! h/k in Kelvin/MHz
-      use ScatteringAngle,  only: Angle
-      use Units,            only: Pi
+      use Cloud_extinction,    only: Get_beta_cloud
+      use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
+      use Interpack,           only: LOCATE
+      use MLSCommon,           only: RK => R8 ! working REAL kind
+      use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
+      use ScatteringAngle,     only: Angle
+      use Units,               only: Pi
 
     ! Arguments
       real(rk), intent(in) :: Temp_Air(:) ! MEAN AIR TEMPERATURES, Kelvin
       real(rk), intent(in) :: Freq        ! FREQUENCY, MHz
       real(rk), intent(in) :: Z(:)        ! Model height (meters)
+
       integer, intent(in) :: NU           ! Number of scattering angles
       integer, intent(in) :: NUA          ! Number of azimuth angles
       integer, intent(in) :: NAB          ! Number of AB terms
       integer, intent(in) :: NR           ! Number of size bins
       integer, intent(in) :: NC           ! Number of cloud species
+      integer, intent(in) :: NS           ! Number of chemical species
+      real(rk), intent(in) :: VMRin(NS, size(Z) )        ! VMR
+      
       real(rk), intent(out) :: TScat(:,:) ! TB FROM SCATTERING PHASE FUNCTION
 
     ! Local variables
@@ -126,6 +130,7 @@ contains
       WC(1,11) = 0.01   !test only
       dtau =0.0
 
+!         under construction
 !         CALL CLEAR_SKY(L-1,NU,TS,S,LORS,SWIND,                         &
 !              &         YZ,YP,YT,YQ,VMR,NS,                             &
 !              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
@@ -277,6 +282,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.3  2003/10/29 17:22:35  jonathan
+! fix bug
+!
 ! Revision 2.2  2003/10/28 22:06:37  jonathan
 ! add Z as input variable for later use
 !
