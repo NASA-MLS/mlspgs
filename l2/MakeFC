@@ -2,7 +2,7 @@
 #
 #  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -124,7 +124,9 @@ libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c \
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
-
+machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
+machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
+  $(machinelib)/*.f90)
 
 depends_where:=$(libmls_sources) $(srclib) \
    $(libfwdmdl_sources) $(libcloud_sources)
@@ -143,7 +145,7 @@ endif
 ifndef DONTBUILDPREQS
 BLAS_PREQS := $(blaslib_f) $(libblas_objs)
 LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(machine_f) \
    $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)
 FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a $(libfwdmdl_objs)
 CLD_LIB_prereqs=$(libcloud_f90) $(libfwdmdl_objs)/libfwdmdl.a $(libcloud_objs)
@@ -387,6 +389,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.63  2004/03/30 00:21:50  pwagner
+# Take care that lib is rebuilt after changes in machines directory
+#
 # Revision 2.62  2003/08/01 20:01:41  pwagner
 # (Re)Uses install target at root level to install
 #
