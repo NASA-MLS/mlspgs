@@ -5,42 +5,16 @@
 MODULE Construct                ! The construct module for the MLS L2 sw.
 !=============================================================================
 
-  use Allocate_Deallocate, only: Deallocate_test
-  use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
-    & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
-  use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
-  use Dumper, only: Dump
-  use FGrid, only: FGrid_T
-  use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
-    & DestroyHGridDatabase, HGrid_T
-  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
-    & S_VECTORTEMPLATE
-  use Intrinsic, ONLY: L_None
-  use L2GPData, only: L2GPDATA_T
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-  use MLSSignals_m, only: Modules
-  use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
-    & DestroyQuantityTemplateDatabase, QuantityTemplate_T
-  use String_Table, ONLY: GET_STRING
-  use Time_M, only: Time_Now
-  use TOGGLES, only: GEN, LEVELS, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
-    & SUBTREE
-  use TREE_TYPES, only: N_NAMED
-  use VectorsModule, only: AddVectorTemplateToDatabase, &
-    & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
-  use VGridsDatabase, only: VGrid_T
+  ! This module performs the `construct' task for the level 2 software.  This
+  ! task involves constructing templates for vector quantities, vectors and
+  ! matrices.
 
   implicit none
 
-  public
+  private
 
-  private :: Id, IdParm, ModuleName
+  public :: MLSL2Construct, MLSL2DeConstruct
+  
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
     & "$Id$"
@@ -48,18 +22,43 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   character (len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  ! This module performs the `construct' task for the level 2 software.  This
-  ! task involves constructing templates for vector quantities, vectors and
-  ! matrices.
-
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
-       & quantityTemplates, vectorTemplates, FGrids, VGrids, HGrids, &
+       & quantityTemplatesBase, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
+
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
+      & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
+    use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
+    use Dumper, only: Dump
+    use FGrid, only: FGrid_T
+    use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, HGrid_T
+    use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
+      & S_VECTORTEMPLATE
+    use Intrinsic, ONLY: L_None
+    use L2GPData, only: L2GPDATA_T
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSSignals_m, only: Modules
+    use MoreTree, only: Get_Spec_ID
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+      & QuantityTemplate_T
+    use Time_M, only: Time_Now
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
+      & SUBTREE
+    use TREE_TYPES, only: N_NAMED
+    use VectorsModule, only: AddVectorTemplateToDatabase, Dump, &
+      & VectorTemplate_T
+
+    use VGridsDatabase, only: VGrid_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
@@ -67,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T), intent(in) :: processingRange
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in) :: chunkNo
-    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (FGrid_T), dimension(:), pointer :: fGrids
     type (VGrid_T), dimension(:), pointer :: vGrids
@@ -114,8 +113,8 @@ contains ! =====     Public Procedures     =============================
       else
         mifGeolocation%noSurfs = 0
         mifGeolocation%noInstances = 0
-      endif
-    endif
+      end if
+    end if
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -141,11 +140,11 @@ contains ! =====     Public Procedures     =============================
           & processingRange, chunks, chunkNo ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
-          & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
+          & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
             & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
-          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
+          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -161,8 +160,8 @@ contains ! =====     Public Procedures     =============================
       if (  levels(gen) > 0 ) then
         if (associated(hGrids) ) &
           & call dump ( hgrids )
-        if (associated(quantityTemplates) ) &
-          & call dump ( quantityTemplates, details=levels(gen)-1 )
+        if (associated(quantityTemplatesBase) ) &
+          & call dump ( quantityTemplatesBase, details=levels(gen)-1 )
         if (associated(vectorTemplates) ) &
           & call dump ( vectorTemplates, details=levels(gen)-1 )
       end if
@@ -178,7 +177,7 @@ contains ! =====     Public Procedures     =============================
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for MLSL2Construct = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -186,18 +185,23 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Construct
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
-  subroutine MLSL2DeConstruct ( quantityTemplates, vectorTemplates, &
+  subroutine MLSL2DeConstruct ( quantityTemplatesBase, vectorTemplates, &
     &                           mifGeolocation, hGrids )
 
   ! DeConstruct the Quantity and Vector template databases.
 
-    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
+    use HGrid, only: DestroyHGridDatabase, HGrid_T
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
+      & QuantityTemplate_T
+    use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
+
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (HGrid_T), dimension(:), pointer :: hGrids
 
     call destroyVectorTemplateDatabase ( vectorTemplates )
-    call destroyQuantityTemplateDatabase ( quantityTemplates, &
+    call destroyQuantityTemplateDatabase ( quantityTemplatesBase, &
       & ignoreMinorFrame=.true., ignoreMajorFrame=.true. )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
     call destroyHGridDatabase ( hGrids )
@@ -209,6 +213,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.33  2002/08/20 22:43:37  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.32  2001/12/16 00:57:00  livesey
 ! Now takes all chunks as argument as HGrid needs them
 !
