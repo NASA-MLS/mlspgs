@@ -80,24 +80,28 @@ contains
     return
   end subroutine BLANKS
 
-  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE )
+  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
+    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=3) :: MY_ADV
     character(len=len(chars)+1) :: my_chars
     integer :: n_chars
+    logical :: my_dont_log
     !
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
+    my_dont_log = .false.
+    if ( present(dont_log) ) my_dont_log = dont_log
     my_adv = Advance_is_yes_or_no(my_adv)
     my_chars = chars // ' '
     n_chars = max(len(chars), 1)
     if ( my_adv == 'no' ) n_chars = len(chars)+1
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
-    if ( prunit < -1 ) then
+    if ( prunit < -1 .and. .not. my_dont_log ) then
       if ( present(from_where) ) then
         call MLSMessage ( MLSMSG_Level, from_where, my_chars(1:n_chars), &
           & advance=my_adv )
@@ -183,7 +187,8 @@ contains
         write ( prunit, Format, advance=my_adv ) value
       end if
     else
-      call output ( line(:k), advance=my_adv )
+      call output ( line(:k), advance=my_adv, dont_log = .true. )
+      ! return   ! But this prevented use of LogFormat
     end if
 
     if ( prunit >= -1 ) return
@@ -411,6 +416,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.19  2003/03/20 19:20:17  pwagner
+! Changes to prevent double-logging when using MLSMessage
+!
 ! Revision 2.18  2003/02/27 18:35:30  pwagner
 ! Appends trailing spaces to improve appearance with MLSMessage
 !
