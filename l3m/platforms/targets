@@ -137,6 +137,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -233,6 +236,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.11  2002/07/01 23:21:56  pwagner
+# Fixed mistaken short_name assignments
+#
 # Revision 1.10  2002/07/01 17:32:22  pwagner
 # No longer compiles some sources twice
 #

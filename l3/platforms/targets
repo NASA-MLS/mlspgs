@@ -138,6 +138,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -231,6 +234,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.25  2002/08/22 23:33:59  pwagner
+# Made ready for hdf5
+#
 # Revision 1.24  2002/07/09 17:12:13  pwagner
 # Fixed embedded archive problem
 #

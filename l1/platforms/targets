@@ -136,6 +136,9 @@ else
 endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),LF95)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+endif
 else
    hdfeos5_linker_line=
 endif
@@ -205,6 +208,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.22  2002/07/01 17:32:21  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.21  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #
