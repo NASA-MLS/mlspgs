@@ -12,7 +12,7 @@ module Geometry
   private
 
   public :: Earth_Axis_Ratio_Squared, EarthRadA, EarthRadB, EarthSurfaceGPH
-  public :: GM, G0, J2, J4, SecPerYear, W
+  public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
   public :: GeodToGeocLat
 
@@ -44,6 +44,9 @@ module Geometry
   ! Laskar.  See http://scienceworld.wolfram.com/astronomy/TropicalYear.html
 
   real(r8), parameter :: SecPerYear = 365.242190_r8 * 86400.0_r8
+
+  ! This is the maximum amount of refraction allowed
+  real(r8), parameter :: MaxRefraction = 0.0004 ! Add one to get refractive index
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -84,6 +87,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.13  2003/01/16 23:13:10  livesey
+! Added maxRefraction
+!
 ! Revision 2.12  2003/01/15 02:45:50  vsnyder
 ! Make SecPerYear public (oops!)
 !
