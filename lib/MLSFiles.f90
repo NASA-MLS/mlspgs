@@ -8,6 +8,7 @@ module MLSFiles               ! Utility file routines
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use machine, only: io_error
   use MLSCommon, only: i4, NameLen, BareFNLen
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
@@ -24,19 +25,22 @@ module MLSFiles               ! Utility file routines
 
   private 
 
-  public :: GetPCFromRef, mls_io_gen_openF, &
+  PUBLIC :: GetPCFromRef, get_free_lun, mls_io_gen_openF, &
   & mls_io_gen_closeF, split_path_name, &
   & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
     "$Id$"
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile$"
   !----------------------------------------------------------
 
 !     c o n t e n t s
 !     - - - - - - - -
 
 ! GetPCFromRef       Turns a FileName into the corresponding PC
+! get_free_lun       Gets a free logical unit number
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
@@ -255,6 +259,21 @@ contains
 
     Deallocate(nameArray, intArray)
   end function GetPCFromRef
+
+! ---------------------------------------------- get_free_lun ------
+
+! This function returns a free logical unit number
+
+  INTEGER(i4) FUNCTION get_free_lun()
+  LOGICAL :: exist                    ! Flag from inquire
+  LOGICAL :: opened                   ! Flag from inquire
+  DO get_free_lun = bottom_unit_num, top_unit_num
+    INQUIRE(UNIT=get_free_lun, EXIST=exist, OPENED=opened)
+    IF(exist .and. .not. opened) EXIT
+  END DO
+  IF (opened .or. .not. exist) CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+     "No logical unit numbers available" )
+  END FUNCTION get_free_lun
 
   ! ---------------------------------------------  mls_io_gen_openF  -----
 
@@ -890,6 +909,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.32  2002/06/04 18:11:39  bill
+! added a get free lun module--wgr
+!
 ! Revision 2.31  2002/03/14 23:31:45  pwagner
 ! HDFVERSION_4 and 5 now public
 !
