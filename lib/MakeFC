@@ -117,6 +117,27 @@ endif
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+#CAN_AVOID="NAG.Linux LF95.Linux"
+CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=Hdf.f90 string_table.f90 ncep_dao.f90
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -138,6 +159,9 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+	   if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
 		;; \
 	esac 
 
@@ -150,6 +174,9 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		;; \
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+	   if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate ;\
+         fi ; \
 		;; \
 	esac 
 
@@ -181,16 +208,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) \
-           ./machines/$(MLSCONFG) $(srclib)
-#   Unfortunately, we are unable to use this currently because we can't yet
-#   teach makemakedep.sh to selectively ignore files in other directories
-#   the same way it can in its home directory
-#   so adding bogus ones from $(libblas_sources)
-#   will not have the desired effect
-#   $(srclib) $(libblas_sources)
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -p Makefile.nodep -nodep $(OMIT_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) ./machines/$(MLSCONFG) $(srclib) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) ./machines/$(MLSCONFG) $(srclib)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -247,6 +275,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.38  2002/06/21 00:15:28  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 2.37  2002/05/02 00:16:32  pwagner
 # depends now creates Makefile.nodep, too
 #
