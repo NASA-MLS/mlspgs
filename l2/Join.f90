@@ -32,7 +32,7 @@ module Join                     ! Join together chunk based data.
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
-    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP, InsulateVector
+    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
   use Intrinsic, ONLY: L_NONE, L_CHANNEL, L_GEODANGLE, L_USBFREQUENCY, L_LSBFREQUENCY,&
        L_INTERMEDIATEFREQUENCY, L_MIF, L_MAF
 
@@ -213,7 +213,7 @@ contains ! =====     Public Procedures     =============================
         thisL2PC%xStar = vectors(xStarIndex)
         thisL2PC%yStar = vectors(yStarIndex)
         call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
-        thisL2PC%kStar = tmpKStar
+        thisL2PC%kStar=tmpKStar
         call decorate ( key, AddL2PCToDatabase ( l2pcDatabase, thisL2PC ) )
         
       case default ! Timing
@@ -612,6 +612,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.26  2001/04/26 00:07:16  livesey
+! Insulate vector is gone
+!
 ! Revision 2.25  2001/04/25 21:54:22  livesey
 ! Added candol2pc flag
 !
