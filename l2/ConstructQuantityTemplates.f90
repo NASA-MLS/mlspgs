@@ -1001,7 +1001,7 @@ contains ! ============= Public procedures ===================================
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
+      L_L1BMAFBASELINE, L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
@@ -1092,6 +1092,7 @@ contains ! ============= Public procedures ===================================
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
       l_jacobian_cols, phyq_dimensionless, p_vGrid, next, &
       l_jacobian_rows, phyq_dimensionless, p_vGrid, next, &
+      l_l1bMAFBaseline, phyq_temperature, p_majorFrame, p_signal, next, &
       l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
@@ -1248,6 +1249,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.116  2004/09/27 20:11:05  livesey
+! Added L1BMAFBaseline
+!
 ! Revision 2.115  2004/08/26 18:51:03  pwagner
 ! Failsafe feature for shared fgrids
 !
