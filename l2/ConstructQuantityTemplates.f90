@@ -7,19 +7,22 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   ! This module has various functionality for constructing quantity templates.
 
+  use Allocate_Deallocate, only: Allocate_Test
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_INSTRUMENTMODULE, &
-    F_MOLECULE, F_RADIOMETER, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
+  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_MODULE, &
+    F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
     L_BASELINE, L_EARTHREFL, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_ORBITINCLINE, &
-    L_PTAN, L_RADIANCE, L_REFGPH, L_SCVEL, L_SPACERADIANCE, L_TEMPERATURE, &
+    L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_SCVEL, L_SPACERADIANCE, L_TEMPERATURE, &
     L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE, L_VMR, PHYQ_ANGLE, &
     PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH, PHYQ_TEMPERATURE, &
     PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
-  use L1BData, only: L1BData_T, READL1BDATA
+  use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
-  use MLSSignals_m, only: Modules
+  use MLSSignals_m, only:  GetAllModules, IsModuleSpacecraft, GetModuleIndex, &
+    & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
+    & GetRadiometerName, GetRadiometerFromSignal, GetSignalName
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
   use STRING_TABLE, only: GET_STRING
@@ -44,6 +47,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   integer, parameter :: NeedGrid = 3
   integer, parameter :: NoQuantityType = 4
   integer, parameter :: UnnecessaryGrid = 5
+  integer, parameter :: noModule=6
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=256) :: Id = &
@@ -70,15 +74,16 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & mifGeolocation
+    CHARACTER (LEN=80) :: str
 
     ! Local variables
 
     logical :: BADUNIT
-    integer :: BAND           ! String index of BAND= value
+    integer :: BAND                     ! Tree index
     integer :: FAMILY
     integer :: HGRIDINDEX
-    integer :: I              ! Loop counter
-    integer :: INSTRUMENTMODULE         ! Index into modules
+    integer :: I                        ! Loop counter
+    integer :: INSTRUMENTMODULE         ! Tree index
     integer :: KEY            ! Field name, F_... from Init_Tables_Module
     character(len=127) :: LIT_TEXT
     integer :: MOLECULE
@@ -88,8 +93,9 @@ contains ! =====     Public Procedures     =============================
     logical :: minorFrame               ! Is a minor frame quantity
     integer :: NOCHANS
     integer :: QUANTITYTYPE
-    integer :: RADIOMETER               ! Index into radiometers database
+    integer :: RADIOMETER               ! Tree index
     real(r8) :: SCALEFACTOR
+    integer :: SIGNAL                   ! Tree index
     integer :: SON                      ! A Son of Root -- an n_assign node
     integer :: TYPE_FIELD               ! Index in subtree of "type"
     integer :: VALUE                    ! Node index of value of field of spec
@@ -128,6 +134,7 @@ contains ! =====     Public Procedures     =============================
     quantitytype = 0
     radiometer = 0
     instrumentModule= 0
+    signal = 0
     scaleFactor = 1.0
 
     ! First we'll loop over the MLSCF keys.
@@ -152,11 +159,17 @@ contains ! =====     Public Procedures     =============================
         type_field = son
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
-      case ( f_radiometer );        radiometer = decoration(decoration(subtree(2,son)))
-      case ( f_instrumentmodule);   instrumentModule = decoration(decoration(subtree(2,son)))
-      case ( f_band );              band = decoration(subtree(2,son))
+      case ( f_radiometer )
+        radiometer = subtree(2,son)
+        instrumentModule = GetModuleFromRadiometer(radiometer)
+      case ( f_module);             instrumentModule = subtree(2,son)
+      case ( f_signal )
+        signal = subtree(2,son)
+        instrumentModule = GetModuleFromSignal(signal)
+        radiometer = GetRadiometerFromSignal(signal)
       end select
     end do
+
 
     ! Now we know what the user asked for, try to make sense of it.
     ! First see that the `type' has been defined
@@ -167,25 +180,8 @@ contains ! =====     Public Procedures     =============================
     ! first order.
 
     if ( family == 0 ) family = natural_units(quantityType)
-    select case ( quantityType )
-    case ( l_Baseline )
-      minorFrame=.FALSE.
-    case ( l_Extinction )
-      ! ??? Need to think about a family here
-      minorFrame=.FALSE.
-    case ( l_Gph )
-      ! ??? Need to think about a family here
-      minorFrame=.FALSE.
-    case ( l_Ptan )
-      minorFrame=.TRUE.
-    case ( l_Radiance )
-      minorFrame=.TRUE.
-    case ( l_Temperature )
-      minorFrame=.FALSE.
-    case ( l_Vmr )
-      minorFrame=.FALSE.
-    case default ! Can't get here if tree_walker works correctly
-    end select
+    minorFrame=any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
+      & l_tngtGeodAlt, l_tngtGeocAlt, l_scGeocAlt /) )
 
     ! Here the code splits, for minor frame quantities, we take the information
     ! from the previously constructed MIFGeolocation information.  Otherwise,
@@ -194,21 +190,16 @@ contains ! =====     Public Procedures     =============================
     if ( minorFrame ) then
 
       ! This is a minor frame type quantity.
-      if ( (hGridIndex/=0) .OR. (vGridIndex/=0)) &
-        &  call announce_error ( root, unnecessaryGrid )
-
-      select case ( quantityType )
-      case ( l_Ptan )
-
-      case ( l_Radiance )
-      case default
-        call announce_error ( type_field, inappropriateQuantity )
-      end select
+      if ( (hGridIndex/=0) .OR. (vGridIndex/=0)) then
+        call announce_error ( root, unnecessaryGrid )
+      end if
+      if ( instrumentModule==0 ) then 
+        call announce_error ( root, noModule )
+      end if
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
-
     else
 
       ! This is not a minor frame quantity, set it up from VGrids and HGrids
@@ -260,6 +251,7 @@ contains ! =====     Public Procedures     =============================
     qty%quantityType = quantityType
     qty%instrumentmodule= instrumentmodule
     qty%radiometer = radiometer
+    qty%signal = signal
     qty%scaleFactor = scaleFactor
     
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
@@ -289,11 +281,13 @@ contains ! =====     Public Procedures     =============================
       call output ( "No quantity type specified.", advance='yes' )
     case ( unnecessaryGrid )
       call output ( "Quantity has an unnecessary vGrid or hGrid.", advance='yes' )
+    case ( noModule )
+      call output ( "No module given or deducible.", advance='yes' )
     end select
   end subroutine ANNOUNCE_ERROR
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
-  subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModuleIndex, &
+  subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
   ! This routine constructs a minor frame based quantity.
@@ -301,7 +295,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (L1BInfo_T), intent(in) :: l1bInfo ! File handles for l1bdata
     type (MLSChunk_T), intent(in) :: chunk ! The chunk under consideration
-    integer, intent(in) :: instrumentModuleIndex ! Index into mifGeolocation
+    integer, intent(in) :: instrumentModule ! Instrument module
     type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
@@ -331,8 +325,7 @@ contains ! =====     Public Procedures     =============================
 
     type (L1BData_T) :: l1bField
     character (len=NameLen) :: l1bItemName
-
-    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex
+    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, instrumentModuleIndex
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -342,7 +335,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(mifGeolocation) ) then
 
       ! We have geolocation information, setup the quantity as a clone of that.
-
+      instrumentModuleIndex=GetModuleIndex(instrumentModule)
       call SetupNewQuantityTemplate ( qty, &
         & source=mifGeolocation(instrumentModuleIndex), &
         & noChans=noChans,  regular=regular, instanceLen=instanceLen )
@@ -373,88 +366,112 @@ contains ! =====     Public Procedures     =============================
 
       ! First we read tpGeodalt to get the size of the quantity.
 
-      CALL Get_String(modules(instrumentModuleIndex)%name,l1bItemName)
-      l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
-      
-      call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-      if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_L1BRead//l1bItemName )
-
-      ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
-
-      call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
-        & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
-        & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
-        & minorFrame=.TRUE. )
-
-      qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
-      qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
-
-      ! Now we're going to deal with a VGrid for this quantity
-
-      qty%verticalCoordinate = l_geodAltitude
-      qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
-      qty%mafCounter = l1bField%counterMAF
-      do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
-        qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
-      end do
-
-      ! Now we're going to fill in the hGrid information
-
-      do l1bItem = 1, NoL1BItemsToRead
-        ! Get the name of the item to read
-        l1bItemName=l1bItemsToRead(l1bItem)
-        if ( l1bItem>=TransitionToModularItems ) then
-          call Get_String(modules(instrumentModuleIndex)%name,l1bItemName)
-          l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
-        else
-          l1bItemName=l1bItemsToRead(l1bItem)
-        endif
-
-        ! Read it from the l1boa file
+      if (IsModuleSpacecraft(instrumentModule)) then
+        l1bItemName='scGeocAlt' ! For some reason crashes NAG if use quoted string
         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMafIndex, &
-          & lastMAF=chunk%lastMafIndex )
-        if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
+        
+        ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
+        call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
+          & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
+          & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
+          & minorFrame=.TRUE. )
+        
+        qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+        qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+        ! Later we'll put something here for lat/lon etc.
 
-        ! Now we have to save this field in the quantity data.
-        ! This is rather a kludgy way of doing it but this worked out the
-        ! least boring way to write the code.  See the definition of
-        ! L1BItemsToRead above for reference.
+        call DeallocateL1BData(l1bfield, l1bFlag)
+        
+      else                                    ! For THz/GHz things
+        CALL GetModuleName(instrumentModule,l1bItemName)
+        l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
+        
+        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        
+        ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
+        
+        call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
+          & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
+          & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
+          & minorFrame=.TRUE. )
+        
+        qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
+        qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+        
+        ! Now we're going to deal with a VGrid for this quantity
+        
+        qty%verticalCoordinate = l_geodAltitude
+        qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
+        qty%mafCounter = l1bField%counterMAF
+        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
+          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
+        end do
+        call DeallocateL1BData(l1bfield, l1bFlag)
 
-        select case(l1bItem)
-        case(1)
-          ! For time we have to do something a little more complicated.
-          ! ******* This is a real kludge, and we have to find a way
-          ! to do it better in 0.5. Probably simply have time as a minor
-          ! frame quantity in L1, or MIF duration.
-          !
-          do mafIndex = 1, noMAFs
-            do mifIndex = 1, l1bField%maxMIFs
-              qty%time(mifIndex,mafIndex) = &
-                & l1bField%dpField(1,1,mafIndex) + &
-                & (mifIndex-1) * sixth
+        ! Now we're going to fill in the hGrid information
+        
+        do l1bItem = 1, NoL1BItemsToRead
+          ! Get the name of the item to read
+          l1bItemName=l1bItemsToRead(l1bItem)
+          if ( l1bItem>=TransitionToModularItems ) then
+            call GetModuleName(instrumentModule,l1bItemName)
+            l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
+          else
+            l1bItemName=l1bItemsToRead(l1bItem)
+          endif
+          
+          ! Read it from the l1boa file
+          call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+            & l1bFlag, firstMAF=chunk%firstMafIndex, &
+            & lastMAF=chunk%lastMafIndex )
+          if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_L1BRead//l1bItemName )
+          
+          ! Now we have to save this field in the quantity data.
+          ! This is rather a kludgy way of doing it but this worked out the
+          ! least boring way to write the code.  See the definition of
+          ! L1BItemsToRead above for reference.
+          
+          select case(l1bItem)
+          case(1)
+            ! For time we have to do something a little more complicated.
+            ! ******* This is a real kludge, and we have to find a way
+            ! to do it better in 0.5. Probably simply have time as a minor
+            ! frame quantity in L1, or MIF duration.
+!
+            do mafIndex = 1, noMAFs
+              do mifIndex = 1, l1bField%maxMIFs
+                qty%time(mifIndex,mafIndex) = &
+                  & l1bField%dpField(1,1,mafIndex) + &
+                  & (mifIndex-1) * sixth
+              end do
             end do
-          end do
-        case(2)
-          qty%geodLat=l1bField%dpField(1,:,:)
-        case(3)
-          qty%lon=l1bField%dpField(1,:,:)
-        case(4)
-          qty%phi=l1bField%dpField(1,:,:)
-        case(5)
-          qty%solarZenith=l1bField%dpField(1,:,:)
-        case(6)
-          qty%solarTime=l1bField%dpField(1,:,:)
-        case(7)
-          qty%losAngle=l1bField%dpField(1,:,:)
-        end select
-      end do                      ! Loop over l1b quantities
-    endif
+          case(2)
+            qty%geodLat=l1bField%dpField(1,:,:)
+          case(3)
+            qty%lon=l1bField%dpField(1,:,:)
+          case(4)
+            qty%phi=l1bField%dpField(1,:,:)
+          case(5)
+            qty%solarZenith=l1bField%dpField(1,:,:)
+          case(6)
+            qty%solarTime=l1bField%dpField(1,:,:)
+          case(7)
+            qty%losAngle=l1bField%dpField(1,:,:)
+          end select
 
+          call DeallocateL1BData(l1bField, l1bFlag)
+        end do                      ! Loop over l1b quantities
+      end if
+    end if
     qty%frequencyCoordinate = L_None
+    qty%instrumentModule = instrumentModule
 
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
@@ -520,6 +537,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.8  2001/03/03 00:08:09  livesey
+! Lots of changes mostly with minor frame quantities
+!
 ! Revision 2.7  2001/03/02 01:28:23  livesey
 ! New quantity types etc.
 !
