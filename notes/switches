@@ -42,6 +42,7 @@ Switches (set by -S option in mlsl2's command line):
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
   tps =>    Test_Parse_Signals
+  vir =>    Dump 'virgin' matrix (before forming KTK)
   xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
 
@@ -71,6 +72,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.16  2001/11/09 23:40:27  vsnyder
+ OOPS! --wall is an option, not a switch
+
  Revision 1.15  2001/11/09 23:35:53  vsnyder
  Add 'wall' switch
 
