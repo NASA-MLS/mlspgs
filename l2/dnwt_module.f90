@@ -184,6 +184,9 @@ module DNWT_MODULE
   integer, parameter, public :: NF_TOO_SMALL = nf_tolf+1
   !      F and J appear not to be consistent:
   integer, parameter, public :: NF_FANDJ = nf_too_small+1
+  !      In case you want to add some flags of your own...
+  integer, parameter, public :: NF_BIGGEST_FLAG = NF_FANDJ
+  integer, parameter, public :: NF_SMALLEST_FLAG = NF_DX_AITKEN
   character(LEN=80), private :: output_line
 
   interface NWT; module procedure DNWT; end interface
@@ -1062,6 +1065,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.21  2002/02/14 21:53:10  vsnyder
+! Add parameters for largest and smallest nwt_flag values
+!
 ! Revision 2.20  2002/01/09 00:00:04  pwagner
 ! Replaced write or print statements with calls to output
 !
