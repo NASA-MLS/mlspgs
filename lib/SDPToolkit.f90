@@ -95,6 +95,17 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
          character (len=*), intent(out) :: param_val
       END FUNCTION PGS_PC_GetConfigData
 
+      INTEGER FUNCTION PGS_PC_GetFileSize(pcf_id, file_version, size)
+        INTEGER, INTENT(IN) :: pcf_id
+        INTEGER, INTENT(INOUT) :: file_version
+        INTEGER, INTENT(INOUT) :: size
+      END FUNCTION PGS_PC_GetFileSize
+
+      INTEGER FUNCTION pgs_td_utctotai(time, dtime)
+        character(len = *), INTENT(IN) :: time
+        DOUBLE PRECISION, INTENT(out) :: dtime
+      END FUNCTION pgs_td_utctotai
+
 ! Metadata functions
 ! In the following, groups or imd_group will be
 ! character strings with length PGSd_MET_GROUP_NAME_L
@@ -173,6 +184,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.6  2001/05/09 23:26:35  pwagner
+! Added new functions
+!
 ! Revision 2.5  2001/05/08 23:29:33  pwagner
 ! Sorry-bad metadata function interfaces
 !
