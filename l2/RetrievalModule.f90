@@ -419,6 +419,8 @@ contains
         !    call add_to_retrieval_timing( 'low_cloud', t1 )
         !    call cpu_time ( t1 )
             call LowCloudRetrieval
+          case ( l_highcloud )
+!            call HighCloudRetrieval
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -2078,6 +2080,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.102  2001/10/22 22:25:17  dwu
+! prepare for high cloud retrieval
+!
 ! Revision 2.101  2001/10/22 20:52:00  dwu
 ! renaming some cloud functions
 !
