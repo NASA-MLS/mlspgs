@@ -8,8 +8,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! This module provides a block matrix type including operations for matrix
 ! quantities in MLS Level 2 software, and related programs.
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MatrixModule_0, only: CholeskyFactor, ColumnScale, CreateBlock, &
-    & DestroyBlock, M_Absent, MatrixElement_T, operator(+), operator(.TX.), &
+    & DestroyBlock, M_Absent, MatrixElement_T, MultiplyMatrixVector, &
+    & MultiplyMatrixVectorNoT, operator(+), operator(.TX.), &
     & RowScale, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -19,12 +21,11 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   implicit NONE
   private
   public :: AddMatrices, CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1
-  public :: ColumnScale, ColumnScale_1, Dump
-  public :: FindBlock
+  public :: ColumnScale, ColumnScale_1, Dump, FindBlock
 ! public :: LevenbergUpdateCholesky
-  public :: Matrix_T, Matrix_Cholesky_T
-  public :: Matrix_Kronecker_T, Matrix_SPD_T, MultiplyMatrices
-  public :: MultiplyMatrixVector, MultiplyMatrixVector_1
+  public :: Matrix_T, Matrix_Cholesky_T, Matrix_Kronecker_T, Matrix_SPD_T
+  public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
+  public :: MultiplyMatrixVectorSPD_1
   public :: NewMultiplyMatrixVector, NormalEquations
   public :: operator(.TX.), operator(+), RC_Info, RowScale, RowScale_1
   public :: SolveCholesky, SolveCholesky_1
@@ -45,7 +46,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
-    module procedure MultiplyMatrixVector_1
+    module procedure MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
   end interface
 
   interface operator (+)
@@ -397,8 +398,8 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout) :: Z
     logical, optional, intent(in) :: UPDATE
 
-    logical :: DO_UPDATE      ! Tells multiply_Matrix_Vector whether to
-    !                           clear an element of Z, or add to it
+    logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVector
+    !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
@@ -416,13 +417,41 @@ contains ! =====     Public Procedures     =============================
       do i = 1, a%row%nb
         m = a%row%quant(i)
         n = a%row%inst(i)
-        call multiply_Matrix_Vector ( a%block(i,j), &
+        call multiplyMatrixVector ( a%block(i,j), &
           & v%quantities(m)%values(:,n), z%quantities(k)%values(:,l), &
           & do_update )
         do_update = .true.
       end do ! i = 1, a%row%nb
     end do ! j = 1, a%col%nb
   end subroutine MultiplyMatrixVector_1
+
+  ! ----------------------------------  MultiplyMatrixVectorSPD_1  -----
+  subroutine MultiplyMatrixVectorSPD_1 ( A, V, Z, UPDATE )
+  ! Z = A V if UPDATE is absent or false.
+  ! Z = Z + A V is UPDATE is present and true.
+  ! Remember that for SPD, only the upper triangle is stored, so we need
+  ! Z = A^T V + A V except don't do the diagonal twice.
+    type(Matrix_SPD_T), intent(in) :: A
+    type(Vector_T), intent(in) :: V
+    type(Vector_T), intent(inout) :: Z
+    logical, optional, intent(in) :: UPDATE
+
+    integer :: I, J           ! Subscripts and loop inductors
+    integer :: K, L, M, N     ! Subscripts
+
+    call MultiplyMatrixVector ( a%m, v, z, update ) ! A^T V
+    do j = 1, a%m%col%nb
+      k = a%m%col%quant(j)
+      l = a%m%col%inst(j)
+      do i = 1, j
+        m = a%m%row%quant(i)
+        n = a%m%row%inst(i)
+        call multiplyMatrixVectorNoT ( a%m%block(i,j), &
+          & v%quantities(k)%values(:,l), z%quantities(m)%values(:,n), &
+          & update=.true., doDiag = i /= j )
+      end do ! i = 1, a%m%row%nb
+    end do ! j = 1, a%m%col%nb
+  end subroutine MultiplyMatrixVectorSPD_1
 
   ! ------------------------------------  NewMultiplyMatrixVector  -----
   function NewMultiplyMatrixVector ( A, V ) result ( Z ) ! Z = A^T V
@@ -590,6 +619,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.2  2000/11/10 00:28:13  vsnyder
+! Added multiply untransposed matrix * vector
+!
 ! Revision 2.1  2000/11/09 01:23:23  vsnyder
 ! Initial entry -- still under construction
 !
