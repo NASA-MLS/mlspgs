@@ -32,20 +32,22 @@ module Allocate_Deallocate
 
   interface ALLOCATE_TEST
     module procedure ALLOCATE_TEST_CHARACTER_1D
-    module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
-    module procedure ALLOCATE_TEST_REALR8_3D
     module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
+    module procedure ALLOCATE_TEST_LOGICAL_1D
     module procedure ALLOCATE_TEST_REALR4_1D, ALLOCATE_TEST_REALR4_2D
     module procedure ALLOCATE_TEST_REALR4_3D
+    module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
+    module procedure ALLOCATE_TEST_REALR8_3D
   end interface
 
   interface DEALLOCATE_TEST
     module procedure DEALLOCATE_TEST_CHARACTER_1D
-    module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
-    module procedure DEALLOCATE_TEST_REALR8_3D
     module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
+    module procedure DEALLOCATE_TEST_LOGICAL_1D
     module procedure DEALLOCATE_TEST_REALR4_1D, DEALLOCATE_TEST_REALR4_2D
     module procedure DEALLOCATE_TEST_REALR4_3D
+    module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
+    module procedure DEALLOCATE_TEST_REALR8_3D
   end interface
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -141,6 +143,21 @@ contains ! =====     Private Procedures     ============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name )
   end subroutine Allocate_Test_Integer_2d
+  ! -----------------------------------  Allocate_Test_Logical_1d  -----
+  subroutine Allocate_Test_Logical_1d ( To_Allocate, Dim1, Its_Name, &
+    & ModuleName, LowBound )
+    logical, pointer, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    integer :: MY_LOW, STATUS
+    call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
+    my_low = 1
+    if ( present(lowBound) ) my_low = lowBound
+    allocate ( To_Allocate(my_low:dim1), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // Its_Name )
+  end subroutine Allocate_Test_Logical_1d
   ! --------------------------------------  Allocate_Test_RealR4_1d  -----
   subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
     & LowBound )
@@ -268,6 +285,20 @@ contains ! =====     Private Procedures     ============================
       end if
     end if
   end subroutine Deallocate_Test_Integer_2d
+  ! ---------------------------------  Deallocate_Test_Logical_1d  -----
+  subroutine Deallocate_Test_Logical_1d ( To_Deallocate, Its_Name, ModuleName )
+    logical, pointer, dimension(:) :: To_Deallocate
+    character(len=*) :: Its_Name, ModuleName
+    integer :: STATUS
+    if ( associated(To_Deallocate) ) then
+      deallocate ( To_Deallocate, stat=status )
+      if ( status /= 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & MLSMSG_DeAllocate // Its_Name )
+        dealloc_status = max(dealloc_status, status)
+      end if
+    end if
+  end subroutine Deallocate_Test_Logical_1d
   ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
   subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, Its_Name, ModuleName )
     real (r4), pointer, dimension(:) :: To_Deallocate
@@ -314,6 +345,9 @@ contains ! =====     Private Procedures     ============================
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.5  2001/04/02 20:50:27  vsnyder
+! Add logical 1-D
+!
 ! Revision 2.4  2001/03/24 23:25:57  livesey
 ! Added real(r4) 3d, and renamed routines
 !
