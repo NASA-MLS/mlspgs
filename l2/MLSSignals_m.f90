@@ -12,13 +12,13 @@ module MLSSignals_M
     & f_last, f_lo, f_module, f_radiometer, f_spacecraft, f_spectrometer, &
     & f_spectrometerType, f_start, f_step, f_suffix, f_switch, &
     & f_width, f_widths, field_first, field_indices, field_last, &
-    & s_band,  s_module, s_radiometer, s_spectrometerType, s_validSignal
+    & s_band,  s_module, s_radiometer, s_signal, s_spectrometerType
   use Intrinsic, only: L_TRUE
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
              & MLSMSG_Error
   use Output_M, only: Output
-  use String_Table, only: Display_String
+  use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle, Levels
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
@@ -36,6 +36,7 @@ module MLSSignals_M
 
   ! This boring type defines a module
   type Module_T
+    integer :: Node                     ! Node of tree where module declared
     integer :: Name                     ! Sub_rosa index
     logical :: spaceCraft               ! Set if `module' is in fact s/c
   end type Module_T
@@ -75,7 +76,6 @@ module MLSSignals_M
   type Signal_T
     integer :: Band                     ! Tree index
     integer :: InstrumentModule         ! Tree index
-    integer :: ParentSignal             ! Tree index of parent if derived, else 0
     integer :: Radiometer               ! Tree index
     integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
     integer :: Spectrometer             ! Just a spectrometer number
@@ -86,7 +86,6 @@ module MLSSignals_M
     real(r8) :: CenterFrequency         ! Band local oscillator
     real(r8), POINTER, DIMENSION(:) :: Frequencies=>NULL() ! Mainly a shallow copy
     real(r8), POINTER, DIMENSION(:) :: Widths=>NULL() ! Mainly a shallow copy
-    logical, POINTER, DIMENSION(:) :: Selected ! A bit field, or absent==all.
   end type Signal_T
 
   ! Now some databases, the first are fairly obvious.
@@ -193,6 +192,7 @@ contains
       case ( s_module ) ! .............................. MODULE ........
         thisModule%name = sub_rosa(name)
         thisModule%spaceCraft = .false.
+        thisModule%node = decoration(name)
         do j = 2,nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -205,9 +205,9 @@ contains
           select case ( field )
           case (f_spaceCraft)
             if (node_id(son) == n_set_one) then
-              deferred=.true.
+              thisModule%spacecraft=.true.
             else
-              deferred=decoration(gson) == l_true
+              thisModule%spacecraft=decoration(gson) == l_true
             endif
           case default
             ! Shouldn't get here if parser worked
@@ -237,7 +237,7 @@ contains
         call decorate ( key, addRadiometerToDatabase ( radiometers, radiometer ) )
 
 
-      case ( s_validSignal ) ! ..........................  VALIDSIGNAL  .....
+      case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -262,7 +262,6 @@ contains
         end do ! i = 2, nsons(key)
         ! Set default values for remaining parameters
         signal%sideband=0
-        signal%parentSignal=0
         signal%radiometer=bands( &
           & decoration(decoration(signal%band)))%radiometer
         signal%lo=radiometers( &
@@ -273,7 +272,6 @@ contains
           & decoration(decoration(signal%band)))%spectrometerType
         signal%centerFrequency=bands( &
           & decoration(decoration(signal%band)))%centerFrequency
-        nullify(signal%selected)
         ! For the wide filters, we specify frequency etc. here.
         if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
           & allOrNone, f_frequencies, (/ f_widths /) )
@@ -302,7 +300,6 @@ contains
         ! Now nullify pointers so they don't get hosed later
         nullify ( signal%frequencies )
         nullify ( signal%widths )
-        nullify ( signal%selected )
 
 
       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
@@ -586,6 +583,11 @@ contains
   subroutine DestroySignalDatabase ( Signals )
     type(signal_T), dimension(:), pointer :: Signals
     integer :: Status
+
+    ! Local variables
+    integer :: i
+
+    ! Executable code
     if ( associated(signals) ) then
       deallocate ( signals, stat = status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -667,6 +669,7 @@ contains
   subroutine DUMP_SIGNALS ( SIGNALS )
     type (signal_T), intent(in) :: SIGNALS(:)
     integer :: i
+    character (len=80) :: str
     call output ( 'SIGNALS: SIZE = ')
     call output ( size(signals), advance='yes' )
     do i = 1, size(signals)
@@ -676,15 +679,17 @@ contains
       call output ( ' - ' )
       call display_string ( sub_rosa(signals(i)%instrumentModule), advance='yes' )
       call output ( '   Radiometer: ')
-      call output ( decoration( signals(i)%radiometer ) )
+      call output ( decoration(decoration(signals(i)%radiometer)) )
       call output ( ' - ' )
-      call display_string ( sub_rosa(signals(i)%radiometer), advance='yes' )
+      call getRadiometerName(signals(i)%radiometer,str)
+      call output ( TRIM(str) )
       call output ( '   First LO: ')
       call output ( signals(i)%lo, advance='yes')
       call output ( '   Band: ')
       call output ( decoration(signals(i)%band ) )
       call output (' - ')
-      call display_string ( sub_rosa(signals(i)%band),advance='yes' )
+      call getBandName ( signals(i)%band, str )
+      call output ( TRIM(str) )
       call output ( '   Band center frequency: ')
       call output ( signals(i)%centerFrequency, advance='yes')
       call output ( '   SpectrometerType: ')
@@ -699,12 +704,6 @@ contains
       call dump ( signals(i)%frequencies )
       call output ( '   Widths:', advance='yes' )
       call dump ( signals(i)%widths )
-      if (associated ( signals(i)%selected) ) then
-        call output ( '   Channel selected flags:', advance='yes' )
-        call dump ( signals(i)%selected )
-      else
-        call output ( '   All channels selected.', advance='yes' )
-      end if
     end do
   end subroutine DUMP_SIGNALS
 
@@ -732,9 +731,219 @@ contains
       end if
     end do
   end subroutine DUMP_SPECTROMETERTYPES
+
+  ! ---------------------------------------------- GetAllModules -------
+  subroutine GetAllModules(moduleNodes)
+    ! Return tree nodes for all modules
+    integer, dimension(:), pointer :: moduleNodes
+    
+    call Allocate_Test(moduleNodes, size(modules), 'ModuleNodes', ModuleName)
+    moduleNodes=modules%node
+  end subroutine GetAllModules
+
+  ! --------------------------------------- GetModuleFromRadiometer ----
+  integer function GetModuleFromRadiometer(radiometer)
+    ! Returns module field from given radiometer given as tree index
+    integer, intent(in) :: radiometer
+    GetModuleFromRadiometer=radiometers(decoration(decoration(radiometer)))%instrumentModule
+  end function GetModuleFromRadiometer
+
+  ! --------------------------------------- GetModuleFromSignal ----
+  integer function GetModuleFromSignal(signal)
+    ! Returns module field from given signal given as tree index
+    integer, intent(in) :: signal
+    GetModuleFromSignal=signals(decoration(decoration(signal)))%instrumentModule
+  end function GetModuleFromSignal
+
+  ! --------------------------------------- GetModuleIndex -----
+  integer function GetModuleIndex(thisModule)
+    ! Returns module field from given radiometer given as tree index
+    integer, intent(in) :: thisModule
+    integer :: i
+    GetModuleIndex=0
+    do i=1,size(modules)
+      if (modules(i)%node==thisModule) GetModuleIndex=i
+    end do
+  end function GetModuleIndex
+
+  ! --------------------------------------- GetModuleName -----
+  subroutine GetModuleName(instrumentModule, string_text)
+    ! Returns module name in mixed case
+    integer, intent(in) :: instrumentModule
+    character (len=*), intent(out) :: string_text
+    call Get_String(modules(decoration(decoration(instrumentModule)))%name, string_text)
+  end subroutine GetModuleName
+
+  ! --------------------------------------- GetRadiometerName ------
+  subroutine GetBandName(band, string_text, sideband, noSuffix)
+    ! Place band name in string
+    integer, intent(in) :: BAND   ! Tree index
+    character(len=*), intent(out) :: STRING_TEXT ! Result
+    integer, intent(in), optional :: SIDEBAND ! -1, 0 or 1
+    logical, intent(in), optional :: NOSUFFIX ! Omit suffix if set
+
+    ! Local variables
+    logical :: MY_NOSUFFIX
+    integer :: MY_SIDEBAND
+    character (len=1) :: SB_CHAR        ! U/L for sideband
+
+    ! Executable code
+    my_noSuffix = .false.
+    my_sideband = 0
+    if (present(noSuffix)) my_noSuffix = noSuffix
+    if (present(sideband)) my_sideband = sideband
+
+    select case ( my_sideband )
+    case ( 0 ) ! Do nothing
+    case ( 1 );  sb_char = 'U'
+    case ( -1 ); sb_char = 'L'
+    case default
+      call MLSMessage(MLSMSG_Error,ModuleName,'Illegal sideband')
+    end select
+    
+    call get_string(sub_rosa(band), string_text, cap=.true.)
+    if ( (.not. my_noSuffix) .and. &
+      &  (len_trim(string_text) < len(string_text)) ) then
+      string_text=TRIM(string_text)//':'
+      call get_string(bands(decoration(decoration(band)))%suffix,&
+        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true.)
+      if (my_sideband /= 0) then        ! Do surgery to add sideband
+        string_text=string_text(1:LEN_TRIM(string_text)-1)//sb_char// &
+          & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
+      end if
+    endif
+
+  end subroutine GetBandName
+
+  ! -------------------------------------- GetRadiometerFromSignal ---
+  integer function GetRadiometerFromSignal(signal)
+    ! Returns radiometer field from given signal given as tree index
+    integer, intent(in) :: signal
+    GetRadiometerFromSignal=signals(decoration(decoration(signal)))%radiometer
+  end function GetRadiometerFromSignal
+
+  ! --------------------------------------- GetRadiometerName --------
+  subroutine GetRadiometerName(radiometer, string_text, noSuffix)
+    ! Place radiometer name in string
+    integer, intent(in) :: RADIOMETER   ! Tree index
+    character(len=*), intent(out) :: STRING_TEXT ! Result
+    logical, intent(in), optional :: NOSUFFIX ! Omit suffix if set
+
+    ! Local variables
+    logical :: MY_NOSUFFIX
+
+    ! Executable code
+    my_noSuffix = .false.
+    if (present(noSuffix)) my_noSuffix = noSuffix
+
+    call get_string(sub_rosa(radiometer), string_text, cap=.true., strip=.true.)
+    if ( (.not. my_noSuffix) .and. &
+      &  (len_trim(string_text) < len(string_text)) ) then
+      string_text=TRIM(string_text)//':'
+      call get_string(radiometers(decoration(decoration(radiometer)))%suffix,&
+        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true.)
+    endif
+
+  end subroutine GetRadiometerName
+
+  ! ------------------------------------ GetSignalName ---------
+
+  subroutine GetSignalName(signal, string_text, noRadiometer, noBand, &
+    & noSwitch, noSpectrometer, noChannels, noSuffix)
+    ! This routine constructs a full signal name
+    integer, intent(in) :: SIGNAL
+    character(len=*), intent(inout) :: STRING_TEXT
+    logical, intent(in), optional :: NORADIOMETER
+    logical, intent(in), optional :: NOBAND
+    logical, intent(in), optional :: NOSWITCH
+    logical, intent(in), optional :: NOSPECTROMETER
+    logical, intent(in), optional :: NOCHANNELS
+    logical, intent(in), optional :: NOSUFFIX
+
+    ! Local variables
+    logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
+    logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
+    type (signal_T), pointer :: sig
+    character (len=8) :: word
+
+    ! Executable code
+    sig => signals(decoration(decoration(signal)))
+    string_text       = ''
+    my_noRadiometer   = .false.
+    my_noBand         = .false.
+    my_noSwitch       = .false.
+    my_noSpectrometer = .false.
+    my_noChannels     = .false.
+
+    if (present(noRadiometer))   my_noRadiometer =   noRadiometer
+    if (present(noBand))         my_noBand =         noBand
+    if (present(noSwitch))       my_noSwitch =       noSwitch
+    if (present(noSpectrometer)) my_noSpectrometer = noSpectrometer
+    if (present(noChannels))     my_noChannels =     noChannels
+
+    if (.not. my_noRadiometer) &
+      & call GetRadiometerName(sig%radiometer, string_text, noSuffix=noSuffix)
+
+    if (.not. my_noBand) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)<len(string_text)) ) &
+        &  string_text=TRIM(string_text)//'.'
+      call GetBandName(sig%band, &
+        & string_text(LEN_TRIM(string_text)+1:),noSuffix=noSuffix)
+    end if
+
+    if (.not. my_noSwitch) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)+1<len(string_text)) ) &
+        &  string_text=TRIM(string_text)//'.S'
+      write (word,'(I8)') sig%switch
+      word=adjustl(word)
+      if ( len_trim(string_text)+len_trim(word) < len(string_text) )&
+        & string_text=TRIM(string_text)//TRIM(word)
+    end if
+
+    if (.not. my_noSpectrometer) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)<len(string_text)) ) &
+        &  string_text=TRIM(string_text)//'.'
+      call GetSpectrometerTypeName(sig%spectrometerType, sig%spectrometer, &
+        & string_text(LEN_TRIM(string_text)+1:))
+    end if
+  end subroutine GetSignalName
+
+  ! -------------------------------------- GetSpectrometerName -----
+  subroutine GetSpectrometerTypeName(spectrometerType, number, string_text)
+    ! Place spectrometer name and number in string
+    integer, intent(in) :: SPECTROMETERTYPE
+    integer, intent(in) :: NUMBER
+    character (len=*), intent(out) :: STRING_TEXT
+
+    ! Local variables
+    character (len=8) :: word
+
+    ! Executable code
+    call get_string(sub_rosa(spectrometerType), string_text)
+    if (len_trim(string_text) < len(string_text) ) &
+      & string_text = TRIM(string_text) // '-'
+    write(word,'(I8)') number
+    word=adjustl(word)
+    if (len_trim(string_text)+len_trim(word) < len(string_text)) &
+      & string_text = TRIM(string_text) // TRIM(word)
+  end subroutine GetSpectrometerTypeName
+
+  ! ----------------------------------------- IsModuleSpacecraft ----
+  logical function IsModuleSpacecraft(thisModule)
+    ! Returns true if the module is really the spacecraft
+    integer, intent(in) :: thisModule
+    IsModuleSpacecraft=modules(decoration(decoration(thisModule)))%spacecraft
+  end function IsModuleSpacecraft
+
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.11  2001/03/03 00:08:23  livesey
+! Minor changes to module_t
+!
 ! Revision 2.10  2001/03/02 01:29:31  livesey
 ! Added option of spacecraft module
 !
