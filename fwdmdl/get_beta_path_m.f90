@@ -4,7 +4,7 @@
 module GET_BETA_PATH_M
 
   use MLSCommon, only: RP, R8
-  
+  use RHIFromH2O, only: RHIFromH2O_Factor
   implicit NONE
   private
   public :: get_beta_path
@@ -29,7 +29,7 @@ contains
 ! separate versions of these.
 
   ! ----------------------------------------------  Get_Beta_Path  -----
-  subroutine Get_Beta_Path ( frq, p_path, t_path, Catalog, beta_group, gl_slabs, &
+  subroutine Get_Beta_Path ( frq, p_path, t_path, z_path, Catalog, beta_group, gl_slabs, &
         & path_inds, beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p, &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON )
 
@@ -44,6 +44,7 @@ contains
     real(r8), intent(in) :: Frq ! frequency in MHz
     real(rp), intent(in) :: T_path(:) ! path temperatures
     real(rp), intent(in) :: P_path(:) ! path pressures in hPa!
+    real(rp), intent(in) :: Z_path(:) ! =-log(p_path)
     type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
@@ -106,10 +107,13 @@ contains
 
           ! mask 100%RH below 100mb
           IF(Spectag .EQ. SP_H2O .AND. ICON .EQ.-1 .and. p_path(k).GE. 100.)THEN
-             CALL RHtoEV(t_path(k),100._r8,Vapor_P)
-             P = p_path(k)-Vapor_P
-             ratio = Vapor_P/(max(1.e-9_r8, P)) ! define new mixing ratio for 
-                                                ! water vapor saturated below 100mb
+
+!             CALL RHtoEV(t_path(k),100._r8,Vapor_P)
+!             P = p_path(k)-Vapor_P
+!             ratio = Vapor_P/(max(1.e-9_r8, P)) ! define new mixing ratio for 
+!                                                ! water vapor saturated below 100mb
+            ratio = RHIFromH2O_Factor (t_path(k), z_path(k), 0, .true.)*100._r8
+
           ENDIF                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
@@ -219,6 +223,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.12  2003/01/14 21:49:33  jonathan
+! option for saturation below 100mb
+!
 ! Revision 2.11  2003/01/08 00:17:29  vsnyder
 ! Use "associated" instead of "present" to control optional computations
 !
