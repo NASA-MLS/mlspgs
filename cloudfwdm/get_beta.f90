@@ -1,6 +1,6 @@
 
       SUBROUTINE GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2, &
-                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC)
+                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS)
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -11,6 +11,7 @@
       IMPLICIT NONE
       INCLUDE 'spectra.f9h' 
 
+      INTEGER :: NS
       REAL(r8) :: QTP(3)                      ! TEMPERATURE ON WHICH QLG ARE GIVEN
       DATA QTP /300.0,225.0,150.0/
 
@@ -20,7 +21,7 @@
       REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
       REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
       REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-      REAL(r8) :: VMR(5)                      ! MINOR SPECIES 1-O3
+      REAL(r8) :: VMR(NS)                      ! MINOR SPECIES 1-O3
       REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
@@ -38,7 +39,7 @@
       REAL :: PI
       PARAMETER (PI=3.1415926)
       REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
-      INTEGER :: I, J, IMOL                
+      INTEGER :: I, J, IMOL
 
       REAL(r8) :: MYSHAPE, FF
       EXTERNAL MYSHAPE

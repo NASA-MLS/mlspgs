@@ -10,7 +10,7 @@
 	return
 	endif
 
-	if(x .gt. xx(n)) then
+	if(x .gt. xx(n) ) then
 	j = n-1
 	return
 	endif

@@ -319,9 +319,11 @@
 !----------------------------------
 
       LORS  = ISURF          
-      TS    = 288.
-      S     = 35.
-      SWIND = 0.
+!      lors=0
+
+      TS    = 288._r8
+      S     = 35._r8
+      SWIND = 0._r8
       NIWC  = 10
 
       IF (ISWI .EQ. 0) THEN                  
@@ -352,7 +354,7 @@
        DO 2000 IFR=1, NF
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
-              &         YZ,YP,YT,YQ,VMR,                        &
+              &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
          CALL HEADER(3)
@@ -484,10 +486,10 @@
             DTcir(I,IFR)=TT(I,NZmodel)-TT0(I,NZmodel)  ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &            delTAU,delTAUc,TAUeff,SS,               &
-              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
-              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+!         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+!              &            delTAU,delTAUc,TAUeff,SS,               &
+!              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
+!              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 

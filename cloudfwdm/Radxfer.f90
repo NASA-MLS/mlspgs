@@ -189,7 +189,7 @@
       DO 1100 I=NU/2+1,NU
          X2 = U(I)*U(I)
          UEFF = ABS(U(I))
-         DO 1100 K=L,1,-1
+         DO 1100 K=L-1,1,-1
             WK=0.
             WW0=0.
             DO ISPI=1,N
@@ -199,10 +199,12 @@
 
             wwk=0.
             www0=0.
+!            if (k+1 .le. L) then         !no L+1 levels for w0
             DO ISPI=1,N
                wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
                www0=www0+W0(ISPI,K+1)
             ENDDO
+!            endif
 
          tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
 
@@ -226,7 +228,7 @@
       DO 1200 I=1,NU/2
         X2 = U(I)*U(I)
         UEFF = ABS(U(I))
-        DO 1200 K=1,L
+        DO 1200 K=1,L-1
            WK=0.
            WW0=0.
            DO ISPI=1,N
@@ -236,11 +238,12 @@
 
            wwk=0.
            www0=0.
+!           if (k+1 .le. L) then         !no K+1 for W0
            DO ISPI=1,N
               wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
               www0=www0+W0(ISPI,K+1)
            ENDDO
-
+!           endif
            tsource=(((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk))*0.5
 
            TB(I,K+1)=TB(I,K)*EXP(-TAU(K)/UEFF)+      &
@@ -277,8 +280,8 @@
 !     INTEGRATION FROM TOP TO BOTTOM
 !-----------------------------------------------------------
       DO 2000 ITT=1,NT
-      DO 2000 K=1,L-LMIN(ITT)+1
-         K1=L+1-K
+      DO 2000 K=1,L-LMIN(ITT)
+         K1=L-K
          UU(ITT)=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT) 
          CALL LOCATE(U1,NU/2,NU0,-UU(ITT),JM) ! INTERPOLATE TSCAT ONTO UU(ITT)
          WK=0.
@@ -294,6 +297,7 @@
          UU(ITT)=UAVE(ITT,K1+1) 
          wwk=0.
          www0=0. 
+!         if (k1+1 .le. L) then   !no L+1 level for W0
          DO ISPI=1,N
             wwk1=W0(ISPI,K1+1)*                                     &
      &          ( (TSCAT(ISPI,JM+NU/2+1,K1+1)*(UU(ITT)-U(JM))+      &
@@ -302,6 +306,7 @@
             wwk=wwk+wwk1
             www0=www0+W0(ISPI,K1+1)
          END DO
+!         endif
 
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
 
@@ -336,7 +341,7 @@
 !     NOW INTEGRATION TT FROM BOTTOM UP
 !-----------------------------------------
       DO 3000 ITT=1,NT
-      DO 3000 K=LMIN(ITT),L
+      DO 3000 K=LMIN(ITT),L-1
          UU(ITT)=uave(ITT,K)
          CALL LOCATE(U1,NU/2,NU0,UU(ITT),JM)      ! INTERPOLATE TSCAT ONTO UU
          WK=0.
@@ -351,12 +356,15 @@
          UU(ITT)=uave(ITT,K+1)
          wwk=0.
          www0=0.
+
+!         if (k+1 .le. L) then
          DO ISPI=1,N
             wwk1=W0(ISPI,K+1)*(TSCAT(ISPI,JM+1,K+1)*(UU(ITT)-U(JM))+ &
      &          TSCAT(ISPI,JM,K+1)*(U(JM+1)-UU(ITT)))/(U(JM+1)-U(JM)) 
             wwk=wwk+wwk1
             www0=www0+W0(ISPI,K+1)
          END DO
+!         endif
 
          tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
 
@@ -371,12 +379,17 @@
       DO K=1,L
 	TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
       ENDDO
+
+      do i=1,nt+1
+        tt(i,L+1)=tt(i,L)
+      enddo
 !---------------------------------------------------------------------
  
       RETURN
       END
 
 ! $Log: Radxfer.f,v      
+
 
 
 

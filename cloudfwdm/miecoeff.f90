@@ -6,7 +6,7 @@
 	real(r8) :: f 		                ! frequency in GHz
 	real(r8) :: t 		                ! Temperature in K 
 	real(r8) :: wl 	                        ! wavelength in meters
-        integer(r8) :: nr	                ! no of particle size
+        integer :: nr	                ! no of particle size
 	integer :: nab	                        ! no of a/b terms
 	real (r8) :: r(nr)	                ! particle radius
 	integer :: nabr(nr)	                ! truncation number for a and b

@@ -19,8 +19,8 @@
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
 
-      REAL(r8) :: BETA(NZ,NF)                       ! TOTAL EXTINCTION
-      REAL(r8) :: BETAc(NZ,NF)                      ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: BETA(NZ-1,NF)                     ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ-1,NF)                    ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
       REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
@@ -46,7 +46,7 @@
 
       DO J=1,NZ-1
       
-         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
+         CALL LOCATE (ZH,NH-1,NZ-1,ZA(J),JM)
          
          BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
      &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             

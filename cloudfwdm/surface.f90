@@ -18,6 +18,8 @@
 	real(r8) :: X(NP)	! scattering angles
 	real(r8) :: RH(NP)	! reflectivity for horizontal polarization
 	real(r8) :: RV(NP)	! reflectivity for vertical polarization
+        real(r8) :: F, TS, S, W
+        integer :: IS
 
        if (IS.eq.0) then
 !         call ASSEA1(F,TS,S,W,X,N,NP,RH,RV)
@@ -166,6 +168,10 @@
 !       3 = snow,S---0: Wet, 1: Dry, 2: Refrozen
        use MLSCommon, only: r8
        REAL(r8) :: X(NP),RH(NP),RV(NP),CICE(4,3),CSNOW(4,3)
+        real(r8) :: F, TS, S, W
+        integer :: IS
+
+
        save CICE,CSNOW
        DATA CICE/0.95,0.95,99,0,   &
      &           0.93,0.83,31,2,   &

@@ -56,7 +56,7 @@
 !--------------------------------------------------------------------------
 
       PTOP = (80./16.-3.)*1._r8    ! TOP OF THE MODEL
-      PBOTTOM=-LOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
+      PBOTTOM=-LOG10(PRESSURE(1))  ! BOTTOM OF THE MODEL
       DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
 
       DO I=1,NH
@@ -64,7 +64,7 @@
       END DO
 
       DO I=1,NZ
-         ZA(I)=-LOG10(PRESSURE(I))
+         ZA(I)=-LOG10( PRESSURE(I) )
          HEIGHT(I)= MAX ( 0._r8, HEIGHT(I) )
       END DO
 
@@ -74,10 +74,15 @@
 !     PRODUCE MODEL ATMOSPHERIC PROFILES
 !==========================================
 
+
          DO J=1,NH
 
-            CALL LOCATE (ZA,NZ,NH,ZH(J),JM)             
-         
+            CALL LOCATE (ZA,NZ,NH,ZH(J),JM)              
+
+            if (jm .eq. 0) then
+                jm=1                               ! since there is no pressure(0)
+            endif
+
             YP(J)=((ZA(JM+1)-ZH(J))*PRESSURE(JM)+(ZH(J)-ZA(JM))*  &
      &            PRESSURE(JM+1))/(ZA(JM+1)-ZA(JM))             
 
@@ -129,8 +134,11 @@
 !==========================================
 
       DO I=1,NT
-         ZZ(I)=-LOG10(ZT(I))
+!        print*, ZT(I)
+         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
       END DO
+
+!      stop
 
       DO J=1,NT      
          CALL LOCATE (ZA,NZ,NT,ZZ(J),JM)
