@@ -29,8 +29,11 @@ PLATFORMS = .
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
 
-# where sources (but not OBJS) shared with l3, etc. are stored
-blaslib=../blas
+# where sources for the forward model are stored
+libblas_sources=../blas
+
+# where forward model objects and libfwdmdl.a are stored
+libblas_objs=$(libblas_sources)/$(MLSCONFG)
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
@@ -47,6 +50,10 @@ endif
 # All the implicit pattern-matching involving suffixes
 # will be done in the uniquely-named sub-directories, not here--so
 .SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -74,6 +81,7 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
+libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f $(libblas_sources)/*.f90)
 PROG=libmls.a
 #PROG=all
 
@@ -111,7 +119,8 @@ endif
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+         $(libblas_objs)/libmlspack.a
 	@case "$(MLSCONFG)" in \
 	"") \
 		echo "Sorry--your configuration is not yet defined" ; \
@@ -135,6 +144,13 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		;; \
 	esac 
 
+$(libblas_objs)/libmlspack.a: $(libblas_f90) \
+   $(libblas_objs)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(libblas_objs)/libmlspack.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libmlspack.a -C $(libblas_sources)
+
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
 	all libmls.a ghostbuster
 
@@ -156,11 +172,18 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) ./machines/$(MLSCONFG)
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) ./machines/$(MLSCONFG) \
+   $(srclib)
+#   Unfortunately, we are unable to use this currently because we can't yet
+#   teach makemakedep.sh to selectively ignore files in other directories
+#   the same way it can in its home directory
+#   so adding bogus ones from $(libblas_sources)
+#   will not have the desired effect
+#   $(srclib) $(libblas_sources)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
-           $(blaslib) ./machines/$(MLSCONFG)
+           ./machines/$(MLSCONFG)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -212,6 +235,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.34  2001/11/15 00:09:24  pwagner
+# Rebuilds on changes to mlspgs/blas
+#
 # Revision 2.33  2001/11/09 21:52:10  pwagner
 # Dropped testdir from targets automatically cleaned
 #
