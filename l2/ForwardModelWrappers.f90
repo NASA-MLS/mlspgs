@@ -51,8 +51,12 @@ contains ! ============= Public Procedures ==========================
     case ( l_full )
       call FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_linear )
       call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_scan )
       call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
@@ -67,6 +71,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.7  2001/10/02 16:53:18  livesey
+! Added call to BaselineForwardModel for Full and Linearized forward models.
+!
 ! Revision 2.6  2001/07/17 22:36:32  jonathan
 ! add cloud_width, jonathan/paul
 !
