@@ -119,6 +119,7 @@ refract
 regular
 RHIFromH2O
 RHIPrecisionFromH2O
+rotateField
 
 scaleOverlaps
 scan
@@ -140,6 +141,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.40  2003/08/08 23:06:03  livesey
+# Added rotateField
+#
 # Revision 2.39  2003/07/15 22:11:54  livesey
 # Added stuff for linear model
 #
