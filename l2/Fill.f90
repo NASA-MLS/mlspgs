@@ -90,6 +90,7 @@ contains ! =====     Public Procedures     =============================
 
 !    INTEGER :: OL2FileHandle
     INTEGER :: qtiesStart
+    CHARACTER (LEN=LineLen) ::              msr
     double precision :: T1, T2     ! for timing
     logical :: TIMING
 
@@ -102,8 +103,8 @@ contains ! =====     Public Procedures     =============================
 !    OL2FileHandle = mlspcf_ol2gp_start
 
     ! starting quantities number for *this* vector; what if we have more?
-    qtiesStart = 1
-
+!    qtiesStart = 1
+!   Calculate qtiesStart for the specific quantity below
 
     error = 0
     templateIndex = -1
@@ -182,7 +183,16 @@ contains ! =====     Public Procedures     =============================
 !          vectorIndex=LinearSearchStringArray(vectors%name,&
 !               & vectorName,caseInsensitive=.FALSE.)
 
+         ! compute what quantity number the vector quantity corresponds to
+         qtiesStart = whatQuantityNumber(vectorName, quantityName, &
+         & vectors(vectorIndex)%Template)
 
+         IF(qtiesStart < 0) THEN
+              msr = 'Quantity Name ' // quantityNameString // &
+              & ' not found among quantities assoc. with ' // vectorNameString
+              CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                     & msr)
+         ENDIF
 ! Is our source of type l2gp or l2aux?
          is_l2gp = .FALSE.
          is_l2aux = .FALSE.
@@ -206,7 +216,7 @@ contains ! =====     Public Procedures     =============================
                     l2Index = l2Index + 1
                 ENDDO
          ENDIF
-         
+
 ! Fill
          IF(is_l2gp) THEN
                 CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
@@ -603,6 +613,35 @@ ENDIF
 
 END FUNCTION nearby
 
+!=============================== whatQuantityNumber ==========================
+FUNCTION whatQuantityNumber(x, y, xVectorTemplate)
+!=============================== whatQuantityNumber ==========================
+! This functions returns the quantity number of quantity y in vector x
+! where x and y are sub-rosa indexes of their actual names;
+! i.e., they are specified in the cf as name[x].name[y]
+! where name[x] = get_char(x), name[y] = get_char[y]
+!
+! If the quantity is not found, it returns FAILED (-1)
+INTEGER, INTENT(IN) ::               x, y
+type (VectorTemplate_T)  ::          xVectorTemplate
+
+! result
+INTEGER ::                           whatQuantityNumber
+
+! Private
+INTEGER, PARAMETER ::                FAILED=-1
+INTEGER              ::              qty
+
+whatQuantityNumber = FAILED
+DO qty = 1, xVectorTemplate%NoQuantities
+    IF(xVectorTemplate%Name == y) THEN
+        whatQuantityNumber = qty
+        EXIT
+    ENDIF
+ENDDO
+
+END FUNCTION whatQuantityNumber
+
 !=============================== squeeze ==========================
 SUBROUTINE squeeze(IERR, source, sink, source_order)
 !=============================== squeeze ==========================
@@ -728,6 +767,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.9  2000/12/07 00:41:46  pwagner
+! added whatquantitynumber
+!
 ! Revision 2.8  2000/12/06 00:01:20  pwagner
 ! Completed FillOL2AUXData; changed squeeze, nearby
 !
