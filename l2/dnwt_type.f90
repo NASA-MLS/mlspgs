@@ -7,17 +7,26 @@ module DNWT_TYPE
 ! the interface body for FANDJ
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  CHARACTER (LEN=256),private :: Id = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  CHARACTER (LEN=*), private, PARAMETER :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   integer, public, parameter :: RK = kind(0.0d0)
 
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DNWT_TYPE
 
 ! $Log$
+! Revision 2.5  2002/10/07 23:43:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2001/06/07 21:58:28  pwagner
 ! Added Copyright statement
 !
