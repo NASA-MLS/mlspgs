@@ -505,9 +505,8 @@ contains ! ================================ Procedures ======================
 
           if ( index ( switches, 'mas' ) /= 0 ) then
             call output ( 'Direct write request from ' )
-            call output ( ' from ' )
             if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ' ' )
+              & call output ( trim(machineNames(machine)) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
             call output ( chunk, advance='yes' )
@@ -554,7 +553,7 @@ contains ! ================================ Procedures ======================
             call output ( chunk )
             call output ( ' ticket ' )
             call output ( directWriteTicket(chunk), advance='yes' )
-            call display_string ( directWriteStatus(requestedFile), strip=.true., &
+            call display_string ( -directWriteStatus(chunk), strip=.true., &
               & advance='yes' )
           end if
           directWriteStatus ( chunk ) = 0
@@ -569,10 +568,9 @@ contains ! ================================ Procedures ======================
           directWriteStatus(chunk) = 0
           directWriteTicket(chunk) = 0
           if ( index ( switches, 'mas' ) /= 0 ) then
-            call output ( 'Direct write finished on by ' )
-            call output ( ' by ' )
+            call output ( 'Direct write finished from ' )
             if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ' ' )
+              & call output ( trim(machineNames(machine)) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
             call output ( chunk, advance='yes')
@@ -1260,6 +1258,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.51  2003/07/02 00:54:10  livesey
+! Various tidy ups and bug fixes
+!
 ! Revision 2.50  2003/07/01 16:30:52  livesey
 ! Changed error to warning.
 !
