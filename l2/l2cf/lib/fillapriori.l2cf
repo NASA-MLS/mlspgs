@@ -228,9 +228,7 @@ begin Fill
   })
 
   ;; Setup the low and high bounds for stuff that needs them.
-  ;; Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
-  Fill, quantity=lowBound.h2o, method=profile, $
-    profileValues=[ 1000mb : 0.1ppmv, 101mb : 0.1ppmv, 100mb : -1.0e6 ppmv ]
+  Fill, quantity=lowBound.tropH2O, method=explicit, explicitValues=0.1ppmv, /spread
 
 end Fill
 
