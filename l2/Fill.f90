@@ -1181,13 +1181,14 @@ contains ! =====     Public Procedures     =============================
           call ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
 
         case ( l_fold ) ! --------------- Fill by sideband folding -----
-          lsb => GetVectorQtyByTemplateIndex ( &
+          nullify ( lsb, lsbFraction, usb, usbFraction )
+          if ( got ( f_lsb ) ) lsb => GetVectorQtyByTemplateIndex ( &
             & vectors(lsbVectorIndex), lsbQuantityIndex )
-          lsbFraction => GetVectorQtyByTemplateIndex ( &
+          if ( got ( f_lsbFraction ) ) lsbFraction => GetVectorQtyByTemplateIndex ( &
             & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
-          usb => GetVectorQtyByTemplateIndex ( &
+          if ( got ( f_usb ) ) usb => GetVectorQtyByTemplateIndex ( &
             & vectors(usbVectorIndex), usbQuantityIndex )
-          usbFraction => GetVectorQtyByTemplateIndex ( &
+          if ( got ( f_usbFraction ) ) usbFraction => GetVectorQtyByTemplateIndex ( &
             & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
           call FillFoldedRadiance ( quantity, lsb, usb, lsbFraction, usbFraction, key )
 
@@ -3811,10 +3812,10 @@ contains ! =====     Public Procedures     =============================
     subroutine FillFoldedRadiance ( radiance, lsb, usb, &
       & lsbFraction, usbFraction, key )
       type (VectorValue_T), intent(inout) :: RADIANCE
-      type (VectorValue_T), intent(in) :: USB
-      type (VectorValue_T), intent(in) :: LSB
-      type (VectorValue_T), intent(in) :: USBFRACTION
-      type (VectorValue_T), intent(in) :: LSBFRACTION
+      type (VectorValue_T), pointer :: USB
+      type (VectorValue_T), pointer :: LSB
+      type (VectorValue_T), pointer :: USBFRACTION
+      type (VectorValue_T), pointer :: LSBFRACTION
       integer, intent(in) :: KEY
 
       ! Local variables
@@ -3827,27 +3828,43 @@ contains ! =====     Public Procedures     =============================
       if ( .not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
         & sideband=(/0/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
-      if ( .not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
-        & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
-      if ( .not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
-        & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
-      if ( .not. ValidateVectorQuantity ( lsbFraction, &
-        & quantityType=(/l_limbSidebandFraction/), &
-        & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
-      if ( .not. ValidateVectorQuantity ( usbFraction, &
-        & quantityType=(/l_limbSidebandFraction/), &
-        & signal=(/radiance%template%signal/), sideband=(/1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+      if ( ( associated ( lsb ) .neqv. associated ( lsbFraction ) ) .or. &
+        &  ( associated ( usb ) .neqv. associated ( usbFraction ) ) ) then
+        call Announce_Error ( key, 0, 'Must supply sidebands and fractions together' )
+        return
+      end if
+      if ( associated ( lsb ) ) then 
+        if ( .not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
+          & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+          & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
+        if ( .not. ValidateVectorQuantity ( lsbFraction, &
+          & quantityType=(/l_limbSidebandFraction/), &
+          & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+          & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+      end if
+      if ( associated ( usb ) ) then
+        if ( .not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
+          & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+          & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
+        if ( .not. ValidateVectorQuantity ( usbFraction, &
+          & quantityType=(/l_limbSidebandFraction/), &
+          & signal=(/radiance%template%signal/), sideband=(/1/) ) ) &
+          & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+      end if
+
+      if ( .not. associated ( lsb ) .and. .not. associated ( usb ) ) &
+        & call Announce_Error ( key, 0, 'Must supply one or both of lsb/usb' )
 
       ! Now do the work
+      ! Note that this is a very inefficient loop, but I don't really care as it's
+      ! Never used in routine processing.
       i = 1                               ! Use i as a composit mif,channel index
       do mif = 1, radiance%template%noSurfs
         do c = 1, radiance%template%noChans
-          radiance%values(i,:) = &
-            & lsbFraction%values(c,1) * lsb%values(i,:) + &
+          radiance%values(i,:) = 0.0
+          if ( associated ( lsb ) ) radiance%values(i,:) = radiance%values(i,:) + &
+            & lsbFraction%values(c,1) * lsb%values(i,:)
+          if ( associated ( usb ) ) radiance%values(i,:) = radiance%values(i,:) + &
             & usbFraction%values(c,1) * usb%values(i,:)
           i = i + 1
         end do
@@ -6999,6 +7016,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.296  2004/11/30 01:41:58  livesey
+! Make folded sideband fill cope with absence of one sideband (for R1A
+! case).
+!
 ! Revision 2.295  2004/11/29 21:53:33  livesey
 ! Bug fix for reading L1B data when no radiances files specified.
 ! Also, added (a+b)/2 manipulation and changed definition of quality to be
