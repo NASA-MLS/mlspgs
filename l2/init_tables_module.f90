@@ -359,8 +359,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_binMax, l+l_binMin, l+l_binTotal, &
              l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
-             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
-             l+l_magneticModel, &
+             l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
+             l+l_manipulate, l+l_magneticModel, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
@@ -1026,6 +1026,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.312  2003/05/20 23:30:12  dwu
+! add iwcfromextinction
+!
 ! Revision 2.311  2003/05/19 20:14:59  vsnyder
 ! Remove private declarations for module entities accessed without using
 ! an "only" clause.  These cause NAG to issue a message that the name is
