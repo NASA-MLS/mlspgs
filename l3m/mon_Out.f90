@@ -149,15 +149,15 @@ CONTAINS
 ! Arguments
 
 
-      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
-
-      TYPE( L3MMData_T ), INTENT(IN) :: mm, mmA, mmD
-
-      TYPE( L3MZData_T ), INTENT(IN) :: mz, mzA, mzD
-
       TYPE( PCFMData_T ), INTENT(IN) :: pcf
 
       CHARACTER (LEN=*), INTENT(IN) :: mode, type
+
+      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+
+      TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
+
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mz, mzA, mzD
 
       TYPE( OutputFiles_T ), INTENT(OUT) :: sFiles
 
@@ -172,36 +172,116 @@ CONTAINS
 ! Daily Zonal Mean output
 
       CALL OutputL3DZ(type, dz, sFiles)
+      CALL DestroyL3DZDatabase(dz)
+
       CALL OutputL3DZ(type, dzA, sFiles)
+      CALL DestroyL3DZDatabase(dzA)
+
       CALL OutputL3DZ(type, dzD, sFiles)
+      CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
 
       CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
+      CALL DeallocateL3MZ(mz)
+
       CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS)
+      CALL DeallocateL3MZ(mzA)
+
       CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS)
+      CALL DeallocateL3MZ(mzD)
 
 ! If required for this mode, output the monthly map
 
       IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
          CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
       ENDIF
+      CALL DeallocateL3MM(mm)
 
-! Ascending -- sort, dz, mz, mm
+! Ascending
 
       IF ( INDEX(mode,'a') /= 0) THEN
          CALL OutputMMGrids(pcf%msName, mmA, flag%createMS)
       ENDIF
+      CALL DeallocateL3MM(mmA)
 
 ! Descending
 
       IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
          CALL OutputMMGrids(pcf%msName, mmD, flag%createMS)
       ENDIF
+      CALL DeallocateL3MM(mmD)
 
 !--------------------------
    END SUBROUTINE OutputStd
 !--------------------------
+
+!------------------------------------------------------------------------------------
+   SUBROUTINE OutputDg(pcf, type, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, dFiles, &
+                       flag)
+!------------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine performs the Output/Close task within the standard product loop of
+! the L3 Monthly subprogram.
+
+! Arguments
+
+      TYPE( PCFMData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+
+      TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
+
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mz, mzA, mzD
+
+      TYPE( OutputFiles_T ), INTENT(OUT) :: dFiles
+
+      TYPE( CreateFlags_T ), INTENT(OUT) :: flag
+
+! Parameters
+
+! Functions
+
+! Variables
+
+! Deallocate unused MM databases
+
+      CALL DeallocateL3MM(mmA)
+      CALL DeallocateL3MM(mmD)
+
+! Daily Zonal Mean output
+
+      CALL OutputL3DZ(type, dz, dFiles)
+      CALL DestroyL3DZDatabase(dz)
+      
+      CALL OutputL3DZ(type, dzA, dFiles)
+      CALL DestroyL3DZDatabase(dzA)
+
+      CALL OutputL3DZ(type, dzD, dFiles)
+      CALL DestroyL3DZDatabase(dzD)
+
+! Monthly Zonal Mean output
+
+      CALL OutputL3MZ(pcf%zdName, mz, flag%createZD)
+      CALL DeallocateL3MZ(mz)
+
+      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD)
+      CALL DeallocateL3MZ(mzA)
+
+      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD)
+      CALL DeallocateL3MZ(mzD)
+
+! Output the monthly map (combined mode)
+
+      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD)
+      CALL DeallocateL3MM(mm)
+
+!-------------------------
+   END SUBROUTINE OutputDg
+!-------------------------
 
 !-----------------------------------------------------------------------
    SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cf, anText)
@@ -315,6 +395,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.2  2001/08/01 18:30:03  nakamura
+!Added OutputStd subroutine; updated WriteMetaLogM for separation from Daily.
+!
 !Revision 1.1  2001/07/18 15:44:27  nakamura
 !Module for the Monthly Output/Close task.
 !
