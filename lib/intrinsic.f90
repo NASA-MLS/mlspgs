@@ -7,13 +7,8 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use MOLECULES ! everything, in particular FIRST_MOLECULE, INIT_MOLECULES,
-  !               and LAST_MOLECULE.  There is no "only" clause so as to
-  !               make all of the literals, e.g. l_h2o, available here, too.
-
   implicit NONE
   public
-  private :: ENTER_TERMINAL, T_IDENTIFIER
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -32,13 +27,13 @@ module INTRINSIC
   integer, parameter :: REQ_FLD = 1       ! Required field
 
 ! Data types that don't have enumerated literals:
-  integer, parameter :: T_FIRST          = 1
-  integer, parameter :: T_NUMERIC        = t_first
-  integer, parameter :: T_NUMERIC_RANGE  = t_numeric + 1
-  integer, parameter :: T_STRING         = t_numeric_range + 1
+  integer, parameter :: T_FIRST             = 1
+  integer, parameter :: T_NUMERIC           = t_first
+  integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
+  integer, parameter :: T_STRING            = t_numeric_range + 1
 ! Enumeration types:
-  integer, parameter :: T_BOOLEAN        = t_string + 1
-  integer, parameter :: T_LAST_INTRINSIC = t_boolean
+  integer, parameter :: T_BOOLEAN           = t_string + 1
+  integer, parameter :: LAST_INTRINSIC_TYPE = t_boolean
 
 ! Abstract physical quantities:
   integer, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
@@ -59,8 +54,8 @@ module INTRINSIC
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
-  integer, parameter :: FIRST_LIT       = first_molecule
-  integer, parameter :: L_BASELINE      = last_molecule+1
+  integer, parameter :: FIRST_LIT       = 1
+  integer, parameter :: L_BASELINE      = first_lit
   integer, parameter :: L_CHANNEL       = l_baseline + 1
   integer, parameter :: L_DAYS          = l_channel + 1
   integer, parameter :: L_DEG           = l_days + 1
@@ -147,15 +142,17 @@ module INTRINSIC
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
-  subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, LIT_INDICES )
+  subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
+    & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
+
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(inout) :: DATA_TYPE_INDICES(:)
+    integer, intent(inout) :: FIELD_INDICES(:)
     integer, intent(inout) :: LIT_INDICES(:)
-
-  ! Put molecules into the symbol table.
-
-    call init_molecules ( lit_indices )
+    integer, intent(inout) :: PARM_INDICES(:)
+    integer, intent(inout) :: SECTION_INDICES(:)
+    integer, intent(inout) :: SPEC_INDICES(:)
 
   ! Put intrinsic predefined identifiers into the symbol table.
 
@@ -281,71 +278,7 @@ contains ! =====     Public procedures     =============================
 
   contains
     ! ------------------------------------------------  MAKE_TREE  -----
-
-    subroutine MAKE_TREE ( IDS )
-    ! Build a tree specified by the "ids" array.  "begin" marks the
-    ! beginning of a tree.  A tree-node marks the end of the corresponding
-    ! tree.  Pseudo-terminals are decorated with their indices.
-      use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-      implicit NONE
-
-      integer, intent(in) :: IDS(:)
-
-      integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-      integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
-
-      callno = callno + 1
-      n_ids = size(ids)
-      m = 0
-      stack(0) = 0 ! just so it's defined, in case it gets incremented
-                   ! after build_tree
-      if ( ids(1) >= 0 ) then
-        m = 1
-        stack(1) = 0
-      end if
-      do i = 1, n_ids
-        if ( ids(i) == begin ) then
-          m = m + 1
-          if ( m > ubound(stack,1) ) then
-            print *, 'INTRINSIC%MAKE_TREE-E- Stack overflow!'
-            print *, 'Your tree is taller than ', ubound(stack,1), &
-              &      '.  Detected while'
-            print *, 'processing element ', i, ' of the list for call ', callno
-            stop
-          end if
-          stack(m) = 0
-        else
-          item = mod(ids(i), 1000)
-          which = mod(ids(i) / 1000, 1000)
-          decor = ids(i) / 1000000
-          select case ( which )
-          case ( l/1000 ) ! Enumeration literals
-            string = lit_indices(item)
-          case ( t/1000 ) ! Intrinsic data types
-            string = data_type_indices(item)
-          case ( n/1000 ) ! Tree nodes
-            call build_tree ( item, stack(m), decor )
-            m = m - 1
-            if ( m < lbound(stack,1) ) then
-              print *, 'INTRINSIC%MAKE_TREE-E- Stack underflow!'
-              print *, 'You probably forgot a "begin" somewhere.  Detected while'
-              print *, 'processing element ', i, ' of the list for call ', callno
-              stop
-            end if
-            stack(m) = stack(m) + 1
-      cycle
-          end select
-          if ( string == 0 ) then
-            print *, 'INTRINSIC%MAKE_TREE-E- The string for element ', &
-              & i, ' of a list'
-            print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
-            stop
-          end if
-          call push_pseudo_terminal ( string, 0, decor = item )
-          stack(m) = stack(m) + 1
-        end if
-      end do
-    end subroutine MAKE_TREE
+    include "make_tree.f9h"
 
   end subroutine INIT_INTRINSIC
 
@@ -360,6 +293,11 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.16  2001/04/03 19:09:12  vsnyder
+! Change the order of initialization to intrinsic, Molecules, MLSSignals.
+! Use the revised make_tree.f9h, which requires revision of init...
+! calling sequences.
+!
 ! Revision 2.15  2001/03/17 02:23:40  livesey
 ! Bug fix, defined phyq_indices(phyq_velocity)
 !
