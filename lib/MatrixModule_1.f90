@@ -646,14 +646,33 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated(d) ) return
     do i = 1, size(d)
-      if ( associated(d(i)%matrix) ) call destroyMatrix ( d(i)%matrix )
-      if ( associated(d(i)%cholesky) ) call destroyMatrix ( d(i)%cholesky%m )
-      if ( associated(d(i)%kronecker) ) call destroyMatrix ( d(i)%kronecker%m )
-      if ( associated(d(i)%spd) ) call destroyMatrix ( d(i)%spd%m )
+      if ( associated(d(i)%matrix) ) then
+        call destroyMatrix ( d(i)%matrix )
+        call deallocateMatrix ( d(i)%matrix )
+      end if
+      if ( associated(d(i)%cholesky) ) then
+        call destroyMatrix ( d(i)%cholesky%m )
+        call destroyMatrix ( d(i)%cholesky%m )
+      end if
+      if ( associated(d(i)%kronecker) ) then
+        call destroyMatrix ( d(i)%kronecker%m )
+        call destroyMatrix ( d(i)%kronecker%m )
+      end if
+      if ( associated(d(i)%spd) ) then
+        call destroyMatrix ( d(i)%spd%m )
+        call destroyMatrix ( d(i)%spd%m )
+      end if
     end do
     deallocate ( d, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_DeAllocate // "D in DestroyMatrixDatabase" )
+  contains
+    subroutine DeallocateMatrix ( M )
+      type(matrix_t), pointer :: M
+      deallocate ( m, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & MLSMSG_DeAllocate // "D%matrix in DestroyMatrixDatabase" )
+    end subroutine DeallocateMatrix
   end subroutine DestroyMatrixDatabase
 
   ! -----------------------------------------------  FillExtraCol  -----
@@ -1402,6 +1421,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.17  2001/04/24 22:35:56  vsnyder
+! Maybe this time elements of matrixDatabase are destroyed coimpletely
+!
 ! Revision 2.16  2001/04/21 02:11:02  vsnyder
 ! Fix a memory leak
 !
