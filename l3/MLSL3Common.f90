@@ -22,15 +22,22 @@ MODULE MLSL3Common
 ! Parameters
 
    CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
-   CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
                                              &field '
+   CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata &
                                                 &attribute '
+   CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = ' data expected but not found &
+                                                &for output.'
    CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
                                                &TAI to UTC.'
    CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
@@ -38,8 +45,10 @@ MODULE MLSL3Common
 
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
+   INTEGER, PARAMETER :: GCTP_GEO = 0
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
    INTEGER, PARAMETER :: GridNameLen = 64
+   INTEGER, PARAMETER :: maxGridPoints = 500
    INTEGER, PARAMETER :: maxWindow = 30
 
 !=====================
@@ -47,6 +56,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.4  2001/02/21 20:52:21  nakamura
+!# Added SZ_ERR parameter.
+!#
 !# Revision 1.3  2001/02/09 19:18:33  nakamura
 !# Added some dimension parameters.
 !#
