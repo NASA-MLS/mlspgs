@@ -5,7 +5,7 @@ program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
+  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS, LIT_INDICES
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
@@ -13,7 +13,6 @@ program MLSL2
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
-  !    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
   use MLSL2Options, only: CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
@@ -24,7 +23,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: GetUniqueList, lowerCase, RemoveElemFromList
+  use MLSStrings, only: GetUniqueList, lowerCase, RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -137,6 +136,8 @@ program MLSL2
 
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
   type (MLSFile_T)                        ::     theFile
+  character(len=2) :: quotes
+  quotes = char(34) // char(39)   ! {'"}
   nullify (filedatabase)
   !---------------- Task (1) ------------------
 
@@ -249,6 +250,11 @@ program MLSL2
       !  garbage_collection_by_chunk = switch
       ! else if ( line(3+n:7+n) == 'gcdt ' ) then
       !  garbage_collection_by_dt = switch
+      else if ( line(3+n:9+n) == 'idents ' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
       else if ( line(3+n:6+n) == 'l1b=' ) then
@@ -496,9 +502,9 @@ program MLSL2
    call switch_usage
   end if
   ! Remove any quote marks from switches array
-  call GetUniqueList(switches, tempSwitches, numSwitches, countEmpty=.true., &
+  tempSwitches = unquote(switches, quotes=quotes, stripany=.true.)
+  call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
-  switches = tempSwitches
   if ( parallel%slave ) then
   ! Don't dump all the chunks agagin and again for each slave's chunk
     call RemoveElemFromList(switches, tempSwitches, 'chu')
@@ -789,7 +795,7 @@ contains
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%fwmParallel, advance='yes')
-      call output(' Avoid creating file on first directWrite?:                ', advance='no')
+      call output(' Avoid creating file on first directWrite?:      ', advance='no')
       call blanks(4, advance='no')
       call output(patch, advance='yes')
       call output(' Is this the master task in pvm?:                ', advance='no')
@@ -837,7 +843,8 @@ contains
       call output(use_wall_clock, advance='yes')
       call output(' Summarize time in what units?:                   ', advance='no')
       call blanks(4, advance='no')
-      call display_string ( sectionTimingUnits, strip=.true., advance='yes' )
+      call display_string ( lit_indices(sectionTimingUnits), &
+        &             strip=.true., advance='yes' )
       call output(' Number of switches set:                         ', advance='no')
       call blanks(4, advance='no')
       call output(numSwitches, advance='yes')
@@ -875,6 +882,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.110  2003/12/11 22:56:04  pwagner
+! Transmits --idents option to slaves; unquotes switches
+!
 ! Revision 2.109  2003/12/07 23:06:29  pwagner
 ! Should not dump all the chunks agagin and again for each slaves chunk
 !
