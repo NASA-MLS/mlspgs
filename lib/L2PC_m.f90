@@ -329,6 +329,8 @@ contains ! ============= Public Procedures ==========================
     integer :: AdjustedIndex            ! Index into quantities not skipped
     integer :: STATUS                   ! Error flag
 
+    integer, dimension(l2pc%row%nb) :: ROWBLOCKMAP
+    integer, dimension(l2pc%col%nb) :: COLBLOCKMAP
     logical, dimension(l2pc%row%vec%template%noQuantities), target :: ROWPACK
     logical, dimension(l2pc%col%vec%template%noQuantities), target :: COLPACK
     logical, dimension(:), pointer :: THISPACK
@@ -347,10 +349,16 @@ contains ! ============= Public Procedures ==========================
 
     ! Work out which quantities we can skip
     if ( myPacked ) then
-      call MakeMatrixPackMap ( l2pc, rowPack, colPack )
+      call MakeMatrixPackMap ( l2pc, rowPack, colPack, rowBlockMap, colBlockMap )
     else
       rowPack = .true.
       colPack = .true.
+      do blockRow = 1, l2pc%row%nb
+        rowBlockMap(blockRow) = blockRow
+      end do
+      do blockCol = 1, l2pc%col%nb
+        colBlockMap(blockCol) = blockCol
+      end do
     end if
 
     ! First create the group for this.
@@ -381,7 +389,7 @@ contains ! ============= Public Procedures ==========================
           ! Identify the block
           m0 => l2pc%block(blockRow, blockCol)
           ! Get a name for this group for the block
-          write ( name, * ) 'Block', blockRow, blockCol
+          write ( name, * ) 'Block', rowBlockMap(blockRow), colBlockMap(blockCol)
           ! Create a grop for this block
           call h5gCreate_f ( blocksGroupID, trim(name), blockGroupID, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -466,7 +474,9 @@ contains ! ============= Public Procedures ==========================
 
     ! Work out which quantities we can skip
     if ( myPacked ) then
-      call MakeMatrixPackMap ( l2pc, rowPack, colPack )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Cannot pack ASCII L2PC files any more (never worked anyway!)' ) 
+      ! call MakeMatrixPackMap ( l2pc, rowPack, colPack )
     else
       rowPack = .true.
       colPack = .true.
@@ -621,7 +631,7 @@ contains ! ============= Public Procedures ==========================
   end subroutine DestroyL2PCInfoDatabase
 
   ! ----------------------------------- MakeMatrixPackMap -----------
-  subroutine MakeMatrixPackMap ( m, rowPack, colPack )
+  subroutine MakeMatrixPackMap ( m, rowPack, colPack, rowBlockMap, colBlockMap )
     ! This subroutine fills the boolean arrays rowPack, colPack
     ! (each length row/col%noQuantities) with a flag set true
     ! if the quantity has any derivatives at all
@@ -630,6 +640,8 @@ contains ! ============= Public Procedures ==========================
     type (Matrix_T), intent(in) :: M
     logical, intent(out), dimension(M%row%vec%template%noQuantities) :: ROWPACK
     logical, intent(out), dimension(M%col%vec%template%noQuantities) :: COLPACK
+    integer, intent(out), dimension(M%row%NB) :: ROWBLOCKMAP
+    integer, intent(out), dimension(M%col%NB) :: COLBLOCKMAP
 
     ! Local variables
     integer :: ROWQ                     ! Loop counter
@@ -638,6 +650,8 @@ contains ! ============= Public Procedures ==========================
     integer :: COLI                     ! Loop counter
     integer :: ROWBLOCK                 ! Block index
     integer :: COLBLOCK                 ! Block index
+    logical, dimension(M%row%NB) :: ROWBLOCKFLAG ! Flags per row block
+    logical, dimension(M%col%NB) :: COLBLOCKFLAG ! Flags per row block
 
     ! Executable code
 
@@ -661,6 +675,17 @@ contains ! ============= Public Procedures ==========================
         end do
       end do
     end do
+
+    ! Now work out the block mappings
+    rowBlockFlag = rowPack ( m%row%quant )
+    do rowBlock = 1, m%row%nb
+      rowBlockMap ( rowBlock ) = count ( rowBlockFlag ( 1:rowBlock ) )
+    end do
+    colBlockFlag = colPack ( m%col%quant )
+    do colBlock = 1, m%col%nb
+      colBlockMap ( colBlock ) = count ( colBlockFlag ( 1:colBlock ) )
+    end do
+    
   end subroutine MakeMatrixPackMap
 
   ! --------------------------------------- Populate L2PCBin --------
@@ -1136,7 +1161,7 @@ contains ! ============= Public Procedures ==========================
             call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
             m0 => l2pc%block ( blockRow, blockCol )
             call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
-            call LoadFromHDF5DS ( blockId, 'r1', m0%r2 )
+            call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
           else
             call CreateBlock ( l2pc, blockRow, blockCol, kind )
             m0 => l2pc%block ( blockRow, blockCol )
@@ -1427,6 +1452,7 @@ contains ! ============= Public Procedures ==========================
     character ( len=32 ) :: QNAME       ! Name of quantity
     integer :: STATUS                   ! Flag from HDF5
     integer :: QUANTITY                 ! Index
+    integer :: QINDEX                   ! Quantity index
     integer :: QID                      ! HDF5 ID for quantity group
     integer :: VID                      ! HDF5 ID for vector group
     type (QuantityTemplate_T), pointer :: QT ! The template
@@ -1437,8 +1463,10 @@ contains ! ============= Public Procedures ==========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group for vector ' // trim(name) )
     call MakeHDF5Attribute ( vID, 'noQuantities', count(packInfo) )
+    qIndex = 0
     do quantity = 1, size ( vector%quantities )
       if ( packInfo(quantity) ) then
+        qIndex = qIndex + 1
         qt => vector%quantities(quantity)%template
         ! Create a group for the quantity
         call get_string ( qt%name, qName )
@@ -1447,7 +1475,7 @@ contains ! ============= Public Procedures ==========================
           & 'Unable to create group for quantity ' // trim(qName) )
 
         ! Write quantity type and index
-        call MakeHDF5Attribute ( qID, 'index', quantity )
+        call MakeHDF5Attribute ( qID, 'index', qIndex )
         call get_string ( lit_indices(qt%quantityType), line )
         call MakeHDF5Attribute ( qID, 'type', trim(line) )
         ! Write other info as appropriate
@@ -1502,6 +1530,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.52  2002/11/20 21:06:25  livesey
+! Various bug fixes to make the packed storage work.
+!
 ! Revision 2.51  2002/10/08 00:09:10  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
