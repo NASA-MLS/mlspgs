@@ -275,7 +275,6 @@ contains ! ================================== Module procedures ============
     qt%radiometer              = i7(5)
     qt%instanceOffset          = i7(6)
     qt%grandTotalInstances     = i7(7)
-    print*,'Got instance offset as:', qt%instanceOffset
 
     ! Now unpack literals etc.
     call PVMUnpackLitIndex ( qt%quantityType, info )
@@ -424,6 +423,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.18  2003/07/07 20:28:53  livesey
+! Removed a print statement
+!
 ! Revision 2.17  2003/07/07 20:22:00  livesey
 ! Transfers additional stuff from quantity template
 !
