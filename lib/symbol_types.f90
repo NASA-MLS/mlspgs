@@ -81,7 +81,7 @@ module SYMBOL_TYPES
 ! It must be defined.
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
   !  t_null    (         )         [         ]         +         -
-  (/ object,   def_pun,  def_pun,  def_op,   def_op,   def_op,   def_op,   &
+  (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
   !  *         /         .         :         =         ,         begin
      def_op,   def_op,   def_op,   def_op,   def_op,   def_pun,  res_word, &
   !  end       and       or        <eof>     <eos>     <ident>   <numcon>
@@ -170,6 +170,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.3  2000/11/30 00:31:12  vsnyder
+! Make [] punctuators instead of operators.
+!
 ! Revision 2.2  2000/11/30 00:23:10  vsnyder
 ! Implement [] syntax for arrays
 !
