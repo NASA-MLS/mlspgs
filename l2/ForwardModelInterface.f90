@@ -219,7 +219,7 @@ contains
 
     Integer(i4) :: i, j, k, kk, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
                    m, prev_npf, ier, mmaf, si, ptg_i, &
-                   frq_i, io, klo, jj, l, n, brkpt, no_ele, mid, ilo, ihi, &
+                   frq_i, io, klo, l, n, brkpt, no_ele, mid, ilo, ihi, &
                    k_info_count, gl_count, ld
 
     Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
@@ -310,19 +310,14 @@ contains
 !
     thbs(1:) = 0.0
     si = FMI%Surface_index
+    no_tan_hts = FMC%no_tan_hts
     thbs(1:si-1) = FMI%Tan_hts_below_surface(1:si-1)
     Call hydrostatic_model(si,FMC%N_lvls,TFMI%no_t,FMC%no_mmaf,FMC%t_indx, &
-         FMC%no_tan_hts,geoc_lat,TFMI%Href,TFMI%Zref,FMI%z_grid,thbs, &
+         no_tan_hts,geoc_lat,TFMI%Href,TFMI%Zref,FMI%z_grid,thbs, &
          TFMI%t_zeta_basis, TFMI%t_coeff, z_glgrid, h_glgrid, t_glgrid, &
          dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
          gl_count, Ier)
     IF(ier /= 0) goto 99
-!
-    jj = -1
-    Zeta = -1.666667
-    no_tan_hts = FMC%no_tan_hts
-    Call Hunt(Zeta,FMI%tan_press,no_tan_hts,jj,i)
-    IF(ABS(Zeta-FMI%tan_press(i)) < ABS(Zeta-FMI%tan_press(jj))) jj = i
 !
 ! Compute all path entities for all mmafs and tanget pointings
 !
@@ -809,6 +804,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.15  2001/03/13 00:23:41  zvi
+! Correction to no_tan_hts for hydrostatic_model repeating calls
+!
 ! Revision 2.14  2001/03/09 02:46:15  vsnyder
 ! Make sure "io" has a value
 !
