@@ -20,7 +20,7 @@ module RetrievalModule
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, &
     & F_ignore, F_jacobian, F_lambda, F_Level, F_maxF, F_maxJ, F_measurements, &
     & F_measurementSD, F_method, F_opticalDepth, F_outputCovariance, &
-    & F_outputSD, F_ptanQuantity, F_quantity, F_regOrders, F_regQuants, &
+    & F_outputSD, F_phaseName, F_ptanQuantity, F_quantity, F_regOrders, F_regQuants, &
     & F_regWeight, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
     & L_apriori, L_covariance, &
@@ -139,6 +139,7 @@ contains
     type(vector_T), dimension(:), pointer :: MyVectors ! database
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
+    character(len=127) :: PhaseName     ! To pass to snoopers
     integer :: RegOrders                ! Regularization orders
     integer :: RegQuants                ! Regularization quantities
     real(r8) :: RegWeight               ! Weight of regularization conditions
@@ -239,6 +240,8 @@ contains
           select case ( field )
           case ( f_comment )
             call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
+          case ( f_phaseName )
+            call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
           case ( f_level )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -1269,6 +1272,7 @@ contains
           call snoop ( key=snoopKey, vectorDatabase=vectorDatabase, &
             & anotherVectorDatabase=v, &
             & anotherComment=trim(snoopComment) // ': ' // trim(theFlagName), &
+            & anotherPhaseName=trim(phaseName), &
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
@@ -2398,6 +2402,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.109  2001/10/31 21:59:56  livesey
+! Added phaseName to snooper
+!
 ! Revision 2.108  2001/10/30 16:57:43  dwu
 ! fixed a bug in LowCloudREtrieval
 !
