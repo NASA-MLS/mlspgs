@@ -35,7 +35,7 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
-  use MATRIXMODULE_0, only: CHECKBLOCKS
+  use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
 
   ! Main program for level 2 processing
   ! (It is assumed that mlsl1 has already been run successfully)
@@ -230,6 +230,15 @@ program MLSL2
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
         snoopingActive = .true.
+      else if ( line(3+n:11+n) == 'subblock ' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        read ( line, *, iostat=status ) subBlockLength
+        if ( status /= 0 ) then
+          call io_error ( "After --subblock option", status, line )
+          stop
+        end if
       else if ( line(3+n:9+n) == 'submit ' ) then
         copyArg = .false.
         i = i + 1
@@ -597,6 +606,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.80  2002/08/29 21:47:51  livesey
+! Added subblock option
+!
 ! Revision 2.79  2002/08/21 18:22:26  vsnyder
 ! Revise processing of Lahey/Fujitsy runtime (-Wl) options
 !
