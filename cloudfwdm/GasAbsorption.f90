@@ -143,7 +143,7 @@ contains
                 NPS  = 1.375_r8 
               END IF
             end select
-            v01(i) = 0.0_r8                     | Pressure Shift effects
+            v01(i) = 0.0_r8                     ! Pressure Shift effects
             V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's
 
             IF(T .LE. QTP(2)) THEN
@@ -331,6 +331,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.22  2003/05/07 23:23:39  jonathan
+! some clean-ups
+!
 ! Revision 1.21  2003/04/03 17:13:40  dwu
 ! changes: N2O mass is 44; HNO3 mass is 63
 !
