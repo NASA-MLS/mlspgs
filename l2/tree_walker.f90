@@ -81,7 +81,7 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son )
       case ( z_readapriori )
         ! Read apriori here
-      	CALL read_apriori ( son )
+      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase)
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -135,6 +135,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.3  2000/11/29 00:27:54  pwagner
+! Began changes to open old l2gp
+!
 ! Revision 2.2  2000/10/10 00:37:46  vsnyder
 ! Added $Log for CVS at end.
 !
