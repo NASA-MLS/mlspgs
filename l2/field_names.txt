@@ -107,6 +107,7 @@ interpolate
 interpolationFactor
 intrinsic
 invert
+irregular
 isPrecision
 iterations
 
@@ -229,6 +230,7 @@ sourceQuantity
 sourcesGrid
 sourcevGrid
 spacing
+sparseQuantities
 species
 spect_der
 specificQuantities
@@ -271,6 +273,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.64  2003/01/08 23:50:57  livesey
+# Added irregular and sparseQuantities
+#
 # Revision 2.63  2003/01/07 23:46:14  livesey
 # Added reset for subset, and stuff for magnetic model
 #
