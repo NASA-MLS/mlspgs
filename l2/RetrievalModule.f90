@@ -34,7 +34,6 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use BitStuff, only: CountBits
-    use Dump_0, only: Dump
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
@@ -58,13 +57,13 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
-      & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
+      & S_dumpBlocks, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
+      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix
     use MatrixTools, only: DumpBlock
     use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
@@ -79,11 +78,11 @@ contains
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
       & Subtree
-    use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+    use Tree_Types, only: N_colon_less, N_less_colon, &
       & N_less_colon_less, N_named
-    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearMask, ClearUnderMask, &
+    use VectorsModule, only: ClearMask, ClearUnderMask, &
       & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
-      & DestroyVectorInfo, DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
+      & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
       & M_Tikhonov, Vector_T, VectorValue_T
 
@@ -154,7 +153,6 @@ contains
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
-    type(vector_T), dimension(:), pointer :: MyVectors ! database
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
@@ -229,7 +227,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, myVectors, state, outputSD )
+    nullify ( measurements, measurementSD, state, outputSD )
     phaseName = ' '              ! Default in case there's no field
     snoopComment = ' '           ! Ditto
     snoopKey = 0
@@ -968,18 +966,18 @@ contains
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
         & ForwardModelStatus_T
       use MatrixModule_1, only: AddToMatrix, CholeskyFactor, ClearMatrix, &
-        & ColumnScale, CopyMatrix, CopyMatrixValue, CreateEmptyMatrix, &
-        & DestroyMatrix, dump_Linf, dump_struct, &
+        & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
+        & DestroyMatrix, Dump, Dump_Linf, Dump_struct, &
         & FormNormalEquations => NormalEquations, &
-        & GetDiagonal, InvertCholesky, Matrix_T, Matrix_Database_T, &
+        & GetDiagonal, InvertCholesky, Matrix_T, &
         & Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, MinDiag, Multiply, &
-        & MultiplyMatrix_XY_T,  Negate, RowScale, ScaleMatrix, SolveCholesky, &
+        & MultiplyMatrix_XY_T,  RowScale, ScaleMatrix, SolveCholesky, &
         & UpdateDiagonal
       use Regularization, only: Regularize
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
-        & DestroyVectorValue, Dump, Multiply, operator(.DOT.), &
+        & Dump, Multiply, operator(.DOT.), &
         & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
         & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
@@ -2020,8 +2018,6 @@ contains
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak.
-      ! Most of the vectors are in the myVectors database, which is
-      ! destroyed upon exit from Retrieve.
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( kTkSep%m )
@@ -2035,8 +2031,7 @@ contains
       use Intrinsic, only: L_PTAN, L_RADIANCE,                           &
                      & L_CLOUDINDUCEDRADIANCE,                           &
                      & L_CLOUDEXTINCTION,                                &
-                     & L_CLOUDRADSENSITIVITY,                            &
-                     & L_EARTHRADIUS
+                     & L_CLOUDRADSENSITIVITY
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
       use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal
       use MLSSignals_m, only: SIGNAL_T
@@ -2775,7 +2770,6 @@ contains
 
     use UNITS
     use MLSNumerics, only: InterpolateValues
-    use MLSStrings, only: Capitalize
     ! Dummy arguments
     type (VectorValue_T), intent(in) :: LOS ! LOS quantity
     type (VectorValue_T), intent(in) :: vLOS ! variance of LOS
@@ -2908,7 +2902,7 @@ contains
     ! -------------------------------------------------- SetupSubset ---
     subroutine SetupSubset ( key, vectors )
 
-      use Declaration_table, only: NUM_VALUE, RANGE
+      use Declaration_table, only: NUM_VALUE
       use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
       use VectorsModule, only: ClearMask, CreateMask, &
         & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T
@@ -3325,6 +3319,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.206  2002/11/23 00:07:13  vsnyder
+! Delete some unused symbols
+!
 ! Revision 2.205  2002/11/22 00:11:16  livesey
 ! Better handling of foundBetterState
 !
