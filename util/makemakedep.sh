@@ -30,6 +30,8 @@
 # -d file_name  exclude file_name from both targets and prereqs
 # -db file_name  
 #               no build commands below target file_name if .mod style
+# -do file_name  
+#               exclude file_name from OBJS=.. list, but allow in dependencies
 # -p file_name  
 #               name dependency file file_name instead of Makefile.dep
 # -s pattern    match source file suffixes against "%.pattern"
@@ -275,9 +277,13 @@ o_pattern="o"
 dep_file="Makefile.dep"
 me="$0"
 my_name=makemakedep.sh
+I=makemakedep
+# $reecho is reecho with me's path prepended
+reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 
 wrong_list=""
 dont_build_list=""
+excl_from_objs_list=""
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -328,6 +334,11 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -do )
+       excl_from_objs_list="-excl $2 $excl_from_objs_list"
+       shift
+	    shift
+       ;;
     -p )
        dep_file="$2"
        shift
@@ -373,6 +384,8 @@ then
    echo " include_c: $include_c "  
    echo " orthodox: $orthodox "  
    echo " wrong list: $wrong_list "  
+   echo " dont_build_list list: $dont_build_list "  
+   echo " excl_from_objs_list list: $excl_from_objs_list "  
    echo " s_pattern: $s_pattern "  
    echo " o_pattern: $o_pattern "  
    echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
@@ -427,26 +440,32 @@ then
 	fi
 	echo "include ../Makefile.mac"  >> $dep_file
 fi
-#
+
+#  Now write the OBJS list
+#  (excluding any named either by -do or by -d options)
 echo "OBJS = \\"  >> $dep_file
 
 if [ "$include_f90" = "yes" ] ; then
-   extant_files *.f90
+   # extant_files *.f90
+   extant_files_result="`$reecho $excl_from_objs_list *.f90`"
    (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$include_f77" = "yes" ] ; then
-   extant_files *.f
+   # extant_files *.f
+   extant_files_result="`$reecho $excl_from_objs_list *.f`"
    (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$include_c" = "yes" ] ; then
-   extant_files *.c
+   # extant_files *.c
+   extant_files_result="`$reecho $excl_from_objs_list *.c`"
    (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> $dep_file
 fi
 
 if [ "$orthodox" != "yes" ] ; then
-   extant_files *.$s_pattern
+   # extant_files *.$s_pattern
+   extant_files_result="`$reecho $excl_from_objs_list *.$s_pattern`"
    (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> $dep_file
 fi
 
@@ -586,6 +605,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.21  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
 # Revision 1.20  2002/06/21 00:10:13  pwagner
 # First commit
 #
