@@ -18,6 +18,7 @@ module Join                     ! Join together chunk based data.
   use MLSCommon, only: MLSChunk_T, R8
 ! use MLSL2Common
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_TD_TAItoUTC, PGSTD_E_NO_LEAP_SECS
@@ -109,7 +110,7 @@ contains ! =====     Public Procedures     =============================
       ! Node_id(key) is now n_spec_args.
 
       ! ??? Does this need to do anything somewhere ???
-      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      select case( get_spec_id(key) )
       case ( s_l2aux )
       case ( s_l2gp )
       case ( s_time )
@@ -560,6 +561,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.18  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.17  2001/03/06 22:40:41  livesey
 ! New L2AUX stuff
 !
