@@ -570,13 +570,12 @@ contains
 ! Compute all path entities for all mmafs and tanget pointings
 !
     Call comp_path_entities(FMC%n_lvls,TFMI%no_t,gl_count,ndx_path, &
-         z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,        &
-         TFMI%atmospheric,TFMI%f_zeta_basis,TFMI%mr_f,            &
-         TFMI%no_coeffs_f,tan_hts,no_tan_hts,FMI%n_sps,             &
-         TFMI%no_phi_f,TFMI%f_phi_basis,z_path,h_path,t_path,      &
-         phi_path,n_path,dhdz_path,dh_dt_path,TFMI%no_phi_t,        &
-         TFMI%t_phi_basis,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,  &
-         FMC%phi_tan_mmaf,Ier)
+   &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,       &
+   &     TFMI%atmospheric,TFMI%f_zeta_basis,TFMI%mr_f,              &
+   &     TFMI%no_coeffs_f,tan_hts,no_tan_hts,FMI%n_sps,             &
+   &     TFMI%no_phi_f,TFMI%f_phi_basis,z_path,h_path,t_path,       &
+   &     phi_path,n_path,dhdz_path,dh_dt_path,TFMI%no_phi_t,        &
+   &     TFMI%t_phi_basis,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,Ier)
     IF(ier /= 0) goto 99
 
 !
@@ -587,20 +586,6 @@ contains
 !   DO l = 1, radiance%template%noInstances   ! ** DEBUG, only one mmaf
 !
       phi_tan = fmc%phi_tan_mmaf(l)
-!
-      TFMI%t_phi_basis(1:TFMI%no_phi_t) = &
-                      TFMI%T_PHI_BASIS_COPY(1:TFMI%no_phi_t) + phi_tan
-
-      DO j = 1, FMI%n_sps
-        k = TFMI%no_phi_f(j)
-        TFMI%f_phi_basis(1:k,j) = TFMI%F_PHI_BASIS_COPY(1:k,j) + phi_tan
-      end do
-
-      k = FMI%mfi + 2
-      do j = 1, FMI%no_spectro
-        FMI%spectroscopic(j)%PHI_BASIS(1:k) = &
-       &                TFMI%S_PHI_BASIS_COPY(1:k,j) + phi_tan
-      end do
 !
 ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
 ! of chi w.r.t to T and other parameters
@@ -1013,7 +998,7 @@ contains
       write(*,903) ch,char(92),kk
       write(*,905) (i_star_all(i,k),k=1,kk)
     end do
-903 format('ch',i2.2,'_avg_conv_pfa_rad',a1,i2.2)
+903 format('ch',i2.2,'_avg_conv_pfa_rad',a1,i3.3)
 905 format(4(2x,1pg15.8))
 !
     if(.not. ANY((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
@@ -1190,6 +1175,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.27  2001/03/20 11:03:43  zvi
+! Fixing code, increase dim. etc.
+!
 ! Revision 2.26  2001/03/20 02:28:58  livesey
 ! Interim version, gets same numbers as Zvi
 !
