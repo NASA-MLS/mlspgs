@@ -52,8 +52,8 @@ contains ! =====     Public Procedures     =============================
       & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
-      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
-      & F_H2OPRECISIONQUANTITY, &
+      & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
+      & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
       &	F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
@@ -121,7 +121,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R8, RM, RV, FindFirst
+    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R4, R8, RM, RV, FindFirst
     use MLSFiles, only: mls_hdf_version, HDFVERSION_5, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -320,6 +320,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FILLMETHOD               ! How will we fill this quantity
     logical :: FORCE                    ! Bypass checks on some operations
     integer :: FRACTION                 ! Index of fraction vector in database
+    logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
     integer :: GPHQUANTITYINDEX         ! In the source vector
@@ -473,6 +474,7 @@ contains ! =====     Public Procedures     =============================
       dontMask = .false.
       extinction = .false.
       force = .false.
+      fromPrecision = .false.
       got= .false.
       ignoreZero = .false.
       ignoreNegative = .false.
@@ -700,6 +702,8 @@ contains ! =====     Public Procedures     =============================
             fieldECRQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_force )
             force = get_boolean ( gson )
+          case ( f_fromPrecision )
+            fromPrecision = get_boolean ( gson )
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
             geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
             geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1071,7 +1075,8 @@ contains ! =====     Public Procedures     =============================
           if ( .NOT. got(f_sourceL2GP) ) &
             & call Announce_Error ( key, noSourceL2GPGiven )
           call FillVectorQuantityFromL2GP &
-            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode, ignoreGeolocation )
+            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode, &
+            & ignoreGeolocation, fromPrecision  )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
@@ -2160,7 +2165,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================== FillVectorQuantityFromL2GP ==========
     subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, profile, &
-      & errorCode, ignoreGeolocation )
+      & errorCode, ignoreGeolocation, fromPrecision )
       use MLSNumerics, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
         & INTERPOLATEARRAYTEARDOWN
 
@@ -2169,11 +2174,12 @@ contains ! =====     Public Procedures     =============================
 
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
+      type (L2GPData_T), intent(in), target :: L2GP ! L2GP to fill from
       logical, intent(in) :: interpolate  ! Flag
       integer, intent(in) :: profile    ! Single profile to use or -1 for default
       integer, intent(out) :: errorCode ! Error code
       logical, intent(in) :: ignoreGeolocation  ! Flag
+      logical, intent(in) :: fromPrecision ! Flag
 
       ! Local parameters
       real(r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
@@ -2188,6 +2194,7 @@ contains ! =====     Public Procedures     =============================
       integer :: THISPROFILE            ! Index
       type (Coefficients_R8) :: COEFFS  ! For interpolation
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
+      real (r4), dimension(:,:,:), pointer :: SOURCE
 
       errorCode=0
       ! Make sure this quantity is appropriate
@@ -2267,16 +2274,23 @@ contains ! =====     Public Procedures     =============================
           & 'Illegal profile request in l2gp fill' )
       end if
 
+      ! OK, things seem to be OK, so start getting the data
+      if ( fromPrecision ) then
+        source => l2gp%l2gpPrecision
+      else
+        source => l2gp%l2gpValue
+      end if
+
       ! OK, now do the filling, it's easier if we don't have to interpolate
       if (.not. interpolate) then
         if ( profile == -1 ) then
           ! Not forcing a particular profile to all instances
-          quantity%values=reshape(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
+          quantity%values=reshape(source(:,:,firstProfile:lastProfile),&
             & (/quantity%template%noChans*quantity%template%noSurfs,&
             &   quantity%template%noInstances/))
         else
           ! Spread one profile onto all instances
-          quantity%values = spread ( reshape ( l2gp%l2gpValue(:,:,profile), &
+          quantity%values = spread ( reshape ( source(:,:,profile), &
             &   (/ quantity%template%noChans*quantity%template%noSurfs/) ), &
             & 2, quantity%template%noInstances )
         end if
@@ -2300,7 +2314,7 @@ contains ! =====     Public Procedures     =============================
           ! at least makes it more efficient.
           call InterpolateValues ( coeffs, &
             & -log10(real(l2gp%pressures, r8)), &  ! Old X
-            & real(l2gp%l2gpValue(1,:,thisProfile), r8), & ! OldY
+            & real(source(1,:,thisProfile), r8), & ! OldY
             & outZeta, & ! New X
             & quantity%values(:,instance), & ! New Y
             & method='Linear', extrapolate='Clamp' )
@@ -6091,6 +6105,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.248  2003/12/04 22:19:32  livesey
+! Added ability to fill from l2gpPrecision field
+!
 ! Revision 2.247  2003/11/25 21:54:47  livesey
 ! Made the column filling algorithm much less fussy.
 !
