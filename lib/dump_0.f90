@@ -1,22 +1,27 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMP_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
 
-  use OUTPUT_M, only: OUTPUT
+  use MLSStrings, only: GetStringElement
+  use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit NONE
   private
-  public :: AfterSub, DUMP
+  public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS
 
-  interface DUMP
+  interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
     module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
     module procedure DUMP_3D_INTEGER
     module procedure DUMP_1D_CHAR, DUMP_2D_CHAR, DUMP_3D_CHAR
     module procedure DUMP_1D_REAL, DUMP_2D_REAL
+  end interface
+  interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
+    module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
+    module procedure DUMP_NAME_V_PAIRS_REAL
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -1079,6 +1084,124 @@ contains
     end if
   end subroutine DUMP_3D_INTEGER
 
+  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
+  subroutine DUMP_NAME_V_PAIRS_DOUBLE ( values, NAMES, CLEAN, FORMAT, WIDTH )
+    double precision, intent(in)                         :: values(:)
+    character(len=*), intent(in), optional :: NAMES
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
+    
+    integer :: J, K, L
+    logical :: MyClean
+    integer :: MyWidth
+    character(len=24) :: myName
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    MyWidth = 1
+    if ( present(width) ) myWidth = max(width, 1)
+    if ( size(values) < 1 ) return
+    if ( myClean ) call output(' ', advance='yes')
+    l = 0
+    do j=1, size(values), MyWidth
+      do k=1, MyWidth
+        call blanks(3, advance='no')
+        l = l + 1
+        if ( l <= size(values) ) then
+          if ( present (names) ) then
+            call GetStringElement(names, myName, l, .true.)
+          else
+            write(myName, *) 'double # ', l, ': '
+          endif
+          call output(myName,  advance='no')
+          call blanks(3, advance='no')
+          call output(values(l), format, advance='no')
+        endif
+      enddo
+      call output(' ', advance='yes')
+    enddo
+
+  end subroutine DUMP_NAME_V_PAIRS_DOUBLE
+
+  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_INTEGER  -----
+  subroutine DUMP_NAME_V_PAIRS_INTEGER ( values, NAMES, CLEAN, FORMAT, WIDTH )
+    integer, intent(in)                         :: values(:)
+    character(len=*), intent(in), optional :: NAMES
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
+    
+    integer :: J, K, L
+    logical :: MyClean
+    integer :: MyWidth
+    character(len=24) :: myName
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    MyWidth = 1
+    if ( present(width) ) myWidth = max(width, 1)
+    if ( size(values) < 1 ) return
+    if ( myClean ) call output(' ', advance='yes')
+    l = 0
+    do j=1, size(values), MyWidth
+      do k=1, MyWidth
+        call blanks(3, advance='no')
+        l = l + 1
+        if ( l <= size(values) ) then
+          if ( present (names) ) then
+            call GetStringElement(names, myName, l, .true.)
+          else
+            write(myName, *) 'integer # ', l, ': '
+          endif
+          call output(myName,  advance='no')
+          call blanks(3, advance='no')
+          call output(values(l), format=format, advance='no')
+        endif
+      enddo
+      call output(' ', advance='yes')
+    enddo
+
+  end subroutine DUMP_NAME_V_PAIRS_INTEGER
+
+  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_REAL  -----
+  subroutine DUMP_NAME_V_PAIRS_REAL ( values, NAMES, CLEAN, FORMAT, WIDTH )
+    real, intent(in)                         :: values(:)
+    character(len=*), intent(in), optional :: NAMES
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
+    
+    integer :: J, K, L
+    logical :: MyClean
+    integer :: MyWidth
+    character(len=24) :: myName
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    MyWidth = 1
+    if ( present(width) ) myWidth = max(width, 1)
+    if ( size(values) < 1 ) return
+    if ( myClean ) call output(' ', advance='yes')
+    l = 0
+    do j=1, size(values), MyWidth
+      do k=1, MyWidth
+        call blanks(3, advance='no')
+        l = l + 1
+        if ( l <= size(values) ) then
+          if ( present (names) ) then
+            call GetStringElement(names, myName, l, .true.)
+          else
+            write(myName, *) 'single # ', l, ': '
+          endif
+          call output(myName,  advance='no')
+          call blanks(3, advance='no')
+          call output(values(l), format, advance='no')
+        endif
+      enddo
+      call output(' ', advance='yes')
+    enddo
+
+  end subroutine DUMP_NAME_V_PAIRS_REAL
+
+  ! ---------------------------------------------  ilog10  -----
   integer function ilog10(int)
     integer, intent(in) :: int
     ilog10=nint(log10(real(int)))
@@ -1170,6 +1293,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.20  2002/12/02 23:34:14  pwagner
+! Now can dump name/value pairs
+!
 ! Revision 2.19  2002/10/08 00:09:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
