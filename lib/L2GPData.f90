@@ -220,6 +220,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
+  logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
 
 contains ! =====     Public Procedures     =============================
 
@@ -1474,15 +1475,6 @@ contains ! =====     Public Procedures     =============================
     call List2Array(GeolocationUnits, theUnits, .true.)
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
-    ! swid = HE5_SWattach (l2FileHandle, name)
-    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
-    !status = he5_swwrattr(swid, 'Instrument Name', H5T_NATIVE_CHARACTER, &
-    !  & 1, 'MLS Aura')
-    ! if ( status == -1 ) then
-    !   call MLSMessage ( MLSMSG_Warning, ModuleName, &
-    !        & 'Failed to write swath attribute' )
-    !     Detach from the swath interface.
-    ! call sw_writeglobalattr(swid)
     ! if(DEEBUG) print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
@@ -1496,7 +1488,8 @@ contains ! =====     Public Procedures     =============================
     field_name = 'Pressure'
     status = mls_swwrattr(swid, 'VerticalCoordinate', HE5T_NATIVE_SCHAR, 1, &
       & field_name)
-    status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
+    if ( SWATHLEVELMISSINGVALUE ) &
+      & status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
       & (/ real(l2gp%MissingValue, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
@@ -1660,11 +1653,11 @@ contains ! =====     Public Procedures     =============================
           & ' to ' // trim(name) )
     end if
     returnStatus = he5_SWsetalias(sw_id, TYPE2PRECISIONNAME, &
-     & trim(name) // ' Precision')
+     & trim(name) // 'Precision')
     if ( returnStatus /= PGS_S_SUCCESS ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & "Error in setting alias from " // TYPE2PRECISIONNAME // &
-          & ' to ' // trim(name) // ' Precision' )
+          & ' to ' // trim(name) // 'Precision' )
     end if
     returnStatus = mls_SWdetach(sw_id, hdfVersion=HDFVERSION_5)
     if ( returnStatus /= PGS_S_SUCCESS ) then 
@@ -2056,6 +2049,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.81  2003/10/28 00:39:00  pwagner
+! Fixed bug where character-vlaued attributes were only 1 char long
+!
 ! Revision 2.80  2003/09/09 23:03:46  livesey
 ! More rigorous 'empty l2gp' check in append.
 !
