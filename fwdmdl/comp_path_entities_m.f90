@@ -113,8 +113,8 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
       ALLOCATE(z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
                t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
                dhdz_path(k,l)%values(khi), STAT=j)
-      IF(j == 0) &
-     &     ALLOCATE(dh_dt_path(k,l)%values(khi,no_phi_t,no_t),STAT=j)
+!      IF(j == 0) &
+!     &     ALLOCATE(dh_dt_path(k,l)%values(khi,no_phi_t,no_t),STAT=j)
       IF(j /= 0) THEN
         ier = j
         PRINT *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
@@ -128,8 +128,8 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
       h_path(k,l)%values(1:khi) = hpath(1:khi)
       phi_path(k,l)%values(1:khi) = ppath(1:khi)
       dhdz_path(k,l)%values(1:khi) = dhdzp(1:khi)
-      dh_dt_path(k,l)%values(1:khi,1:no_phi_t,1:no_t) = &
-     &                              dhdtp(1:khi,1:no_phi_t,1:no_t)
+!      dh_dt_path(k,l)%values(1:khi,1:no_phi_t,1:no_t) = &
+!     &                              dhdtp(1:khi,1:no_phi_t,1:no_t)
     END DO
   END DO
 
@@ -201,6 +201,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.4  2001/03/20 11:03:15  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.3  2001/03/05 21:37:20  zvi
 ! New filter format
 !
