@@ -1,18 +1,4 @@
 ; This l2cf fragment is for defining the fGrids for extinciton
-fGridExtinctionR1A: fGrid, coordinate=IntermediateFrequency, $
-  values = [ 4 GHz, 13 GHz ]
-fGridExtinctionR1B: fGrid, coordinate=IntermediateFrequency, $
-  values = [ 4 GHz, 13 GHz ]
-fGridExtinctionR2: fGrid, coordinate=IntermediateFrequency, $
-  values = [ 7 GHz, 11.5 GHz, 11.6 GHz, 13.3 GHz, 13.4 GHz, 16 GHz ]
-fGridExtinctionR3:  fGrid, coordinate=IntermediateFrequency, $
-  values = [ 2 GHz, 6.8 GHz, 6.9 GHz, 11 GHz ]
-fGridExtinctionR4:  fGrid, coordinate=IntermediateFrequency, $
-  values = [ 5 GHz, 8.5 GHz, 8.6 GHz, 11.5 GHz, 15 GHz, 20 GHz ]
-fGridExtinctionR5H: fGrid, coordinate=IntermediateFrequency, $
-  values = [ 6 GHz, 10 GHz, 12 GHz, 14 GHz, 19 GHz, 22 GHz ]
-fGridExtinctionR5V: fGrid, coordinate=IntermediateFrequency, $
-  values = [ 6 GHz, 10 GHz, 12 GHz, 14 GHz, 19 GHz, 22 GHz ]
 fGridExtinctionConstant: fGrid, coordinate=IntermediateFrequency, $
   values = [ 0 GHz ]
 
