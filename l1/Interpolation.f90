@@ -5,7 +5,7 @@
 MODULE Interpolation   ! Interpolation routines
 !=============================================================================
 
-  USE MLSL1Common
+  USE MLSL1Common, ONLY: r8
 
   IMPLICIT NONE
 
@@ -113,6 +113,9 @@ END MODULE Interpolation
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.1  2001/02/23 20:46:27  perun
 ! Version 0.5 commit
 !

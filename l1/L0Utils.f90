@@ -8,9 +8,9 @@ MODULE L0Utils ! Utilities to read L0 data
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: L0FileInfo
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSIO_W_L0_END_OF_VIRTUAL_DS, &
-       PGSIO_M_L0_HEADER_CHANGED
+       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference
   USE OpenInit, ONLY: OpenL0File
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, MLSMSG_Error
 
   IMPLICIT NONE
 
@@ -71,10 +71,11 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:) :: scipkt
     LOGICAL :: OK
 
-    INTEGER :: i, returnStatus
+    INTEGER :: i, returnStatus, version
     REAL(r8) :: TAI93
     INTEGER :: ret_len
     LOGICAL :: EOD
+    CHARACTER(len=132) :: filename
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
@@ -89,13 +90,23 @@ CONTAINS
        ENDIF
 
        IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
-EOD = .FALSE.       
+          EOD = .FALSE.       
           returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(i))
 
           CALL MLSMessage (MLSMSG_Info, ModuleName, &
                & 'Closed L0 Science file: '//L0FileInfo%SciFileName(i))
 
           L0FileInfo%sci_pcf(i) = L0FileInfo%sci_pcf(i) + 1  ! Next entry
+          version = 1
+          returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(i), version, &
+               filename)
+          IF (returnStatus /= PGS_S_SUCCESS) THEN
+             CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                  & 'No next L0 Sci File')
+             OK = .FALSE.
+             RETURN
+          ENDIF
+
           CALL OpenL0File (L0FileInfo%sci_pcf(i), L0FileInfo%sci_unit(i), &
                L0FileInfo%SciFilename(i), "Science")
        ENDIF
@@ -106,48 +117,76 @@ EOD = .FALSE.
 
   END SUBROUTINE ReadL0Sci
 
-  SUBROUTINE ReadL0Eng (engpkt, MAFno, OK)
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, OK)
 
     USE MLSL1Utils, ONLY: BigEndianStr
 
     CHARACTER(LEN=*), DIMENSION(:) :: engpkt
-    INTEGER :: MAFno
+    INTEGER :: MAFno, TotalMAF, MIFsPerMAF
     LOGICAL :: OK
 
-    INTEGER :: i, returnStatus, MAF(6)
-    REAL(r8) :: TAI93
+    INTEGER :: i, returnStatus, MAF(6), version
+    REAL(r8) :: TAI93, engtime
     INTEGER :: ret_len
     LOGICAL :: EOD
+    CHARACTER(len=132) :: filename
+
+! For Version 3.0:
+
+    INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 253, 253, 17, 19, 17 /)
 
 ! For Version 2.4:
 
-    INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 241, 252, 19, 19, 17 /)
+    ! INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 241, 252, 19, 19, 17 /)
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
     DO i = 1, 6
 
-       ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
-            engpkt(i), TAI93, EOD)
+       DO
 
-       IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
+          ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
+               engpkt(i), TAI93, EOD)
 
-          returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
+          IF (i == 1) engtime = TAI93   ! Save time from packet #1 for comparisons
 
-          CALL MLSMessage (MLSMSG_Info, ModuleName, &
-               & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
+          IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
 
-          L0FileInfo%eng_pcf(i) = L0FileInfo%eng_pcf(i) + 1  ! Next entry
-          CALL OpenL0File (L0FileInfo%eng_pcf(i), L0FileInfo%eng_unit(i), &
-               L0FileInfo%EngFilename(i), "Engineering")
-       ENDIF
+             returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
+
+             CALL MLSMessage (MLSMSG_Info, ModuleName, &
+                  & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
+
+             L0FileInfo%eng_pcf(i) = L0FileInfo%eng_pcf(i) + 1  ! Next entry
+             version = 1
+             returnStatus = PGS_PC_getReference (L0FileInfo%eng_pcf(i), version, &
+                  filename)
+             IF (returnStatus /= PGS_S_SUCCESS) THEN
+                CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+                     & 'No next L0 Eng File')
+                OK = .FALSE.
+                RETURN
+             ENDIF
+
+             CALL OpenL0File (L0FileInfo%eng_pcf(i), L0FileInfo%eng_unit(i), &
+                  L0FileInfo%EngFilename(i), "Engineering")
+          ENDIF
+
+          IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
+
+       ENDDO
+
        MAF(i) = BigEndianStr (EngPkt(i)(MAF_offset(i):MAF_offset(i)+1))
 
     ENDDO
 
+    MIFsPerMAF = BigEndianStr (EngPkt(6)(244:245))
+    TotalMAF = BigEndianStr (EngPkt(6)(246:249))
+
     OK = .TRUE.
 
     MAFno = MAF(1)
+
     DO i = 2, 6
        IF (MAF(i) /= MAFno) THEN  ! All must be the same MAF number
           OK = .FALSE.
@@ -162,6 +201,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.1  2001/02/23 20:48:47  perun
 ! Version 0.5 commit
 !

@@ -5,10 +5,10 @@
 MODULE MLSL1Rad              ! Radiance data types for the MLSL1 program
 !=============================================================================
 
-  USE MLSL1Common
-  USE MLSSignalNomenclature
-  USE MLSMessageModule
-  USE MLSStrings
+  USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, R4, &
+       DACSnum, DACSchans, Chan_R_T
+  USE MLSSignalNomenclature !, ONLY: ParseMLSSignalRequest, MLSSignal_T
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
   IMPLICIT NONE
 
@@ -26,10 +26,11 @@ MODULE MLSL1Rad              ! Radiance data types for the MLSL1 program
 
   TYPE Radiance_T
      TYPE (MLSSignal_T) :: signal
-     REAL(r4), DIMENSION (:,:), POINTER :: value, precision
+     REAL(r4), DIMENSION (:,:), POINTER :: value, PRECISION
   END TYPE Radiance_T
 
-  TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad
+  TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad, &
+       DACSrad
 
 CONTAINS
 
@@ -37,19 +38,19 @@ CONTAINS
   SUBROUTINE InitRad
 !=============================================================================
 
-    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+    USE MLSL1Config, ONLY: L1Config, MIFsGHz, MIFsTHz
+    USE MLSL1Common, ONLY: BandSwitch
 
     ! Arguments
 
     ! Local
 
-    INTEGER :: i, status,RADMIFs
+    INTEGER :: i, status, BandNo, RADMIFs
     TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
-    CHARACTER (LEN=3) :: bandNo
+    CHARACTER (LEN=11) :: request
+    INTEGER, PARAMETER :: DACSbandNo(4) = (/ 25, 23, 24, 22 /)
 
-    ! For this version, allocate for only standard and mid-band filter banks
-
-    ALLOCATE (L1Brad(FBnum+MBnum+WFnum), STAT=status)
+    ALLOCATE (L1Brad(FBnum+MBnum+WFnum+DACSnum), STAT=status)
     IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
          & MLSMSG_Allocate//"L1BRad")
 
@@ -68,8 +69,23 @@ CONTAINS
        ALLOCATE (L1Brad(i)%precision(FBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"FBprecision")
-       WRITE (bandNo, '("B",i2.2)') i
-       CALL ParseMLSSignalRequest (bandNo, signal, .false.)
+
+       SELECT CASE (i)
+       CASE (3)
+          BandNo = BandSwitch(2)
+       CASE (8)
+          BandNo = BandSwitch(3)
+       CASE (12)
+          BandNo = BandSwitch(4)
+       CASE (15)
+          BandNo = BandSwitch(5)
+       CASE DEFAULT
+          BandNo = i
+       END SELECT
+
+       WRITE (request, '("B",i2.2,".FB25-",i2)') BandNo, i
+       request = request(1:9)//ADJUSTL(request(10:11))
+       CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i)%signal = signal(1)
        DEALLOCATE (signal)
 
@@ -89,8 +105,8 @@ CONTAINS
        ALLOCATE (L1BRad(i+FBnum)%precision(MBchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"MBprecision")
-       WRITE (bandNo, '("B",i2.2)') (i+26)   ! start at band 27
-       CALL ParseMLSSignalRequest (bandNo, signal, .false.)
+       WRITE (request, '("B",i2.2,".MB11-",i1)') (i+26), i
+       CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+FBnum)%signal = signal(1)
        DEALLOCATE (signal)
 
@@ -108,8 +124,8 @@ CONTAINS
        ALLOCATE (L1BRad(i+FBnum+MBnum)%precision(WFchans,RADMIFs), STAT=status)
        IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
             & MLSMSG_Allocate//"WFprecision")
-       WRITE (bandNo, '("B",i2.2)') (i+31)   ! start at band 32
-       CALL ParseMLSSignalRequest (bandNo, signal, .false.)
+       WRITE (request, '("B",i2.2,".WF4-",i1)') (i+31), i
+       CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+FBnum+MBnum)%signal = signal(1)
        DEALLOCATE (signal)
 
@@ -117,9 +133,86 @@ CONTAINS
 
     WFrad => L1Brad(FBnum+MBnum+1:FBnum+MBnum+WFnum)  ! Point to WF data
 
+    ! Allocate and initialize for the DACS filter banks
+
+    DO i = 1, DACSnum
+
+       ALLOCATE (L1BRad(i+FBnum+MBnum+WFnum)%value(DACSchans,RADMIFs), &
+            STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"DACSvalue")
+       ALLOCATE (L1BRad(i+FBnum+MBnum+WFnum)%precision(DACSchans,RADMIFs), &
+            STAT=status)
+       IF (status /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName,&
+            & MLSMSG_Allocate//"DACSprecision")
+       IF (i == 1) THEN
+          BandNo = BandSwitch(1)
+       ELSE
+          BandNo = DACSbandNo(i)
+       ENDIF
+       WRITE (request, '("B",i2.2,".DACS-",i1)') BandNo, i
+       CALL ParseMLSSignalRequest (request, signal, .FALSE.)
+       L1Brad(i+FBnum+MBnum+WFnum)%signal = signal(1)
+       DEALLOCATE (signal)
+
+    END DO
+
+    DACSrad => L1Brad(FBnum+MBnum+WFnum+1:FBnum+MBnum+WFnum+DACSnum)
+
     RETURN
 
-  END Subroutine InitRad
+  END SUBROUTINE InitRad
+
+!=============================================================================
+  SUBROUTINE UpdateRadSignals (BandSwitch)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: SwitchBank
+
+    INTEGER :: BandSwitch(5)
+
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
+    CHARACTER (LEN=11) :: request
+    INTEGER :: i
+
+!! DACS first
+
+    IF (BandSwitch(1) > 0) THEN
+       WRITE (request, '("B",i2.2,".DACS-1")') BandSwitch(1)
+       CALL ParseMLSSignalRequest (request, signal, .FALSE.)
+       L1Brad(1+FBnum+MBnum+WFnum)%signal = signal(1)
+       DEALLOCATE (signal)
+    ENDIF
+    
+!! FB's next
+
+    DO i = 2, 5
+       IF (BandSwitch(i) > 0) THEN
+          WRITE (request, '("B",i2.2,".FB25-",i2)') BandSwitch(i), SwitchBank(i)
+          request = request(1:9)//ADJUSTL(request(10:11))
+          CALL ParseMLSSignalRequest (request, signal, .FALSE.)
+          L1Brad(SwitchBank(i))%signal = signal(1)
+          DEALLOCATE (signal)
+       ENDIF
+    ENDDO
+
+  END SUBROUTINE UpdateRadSignals
+
+  SUBROUTINE BandToBanks (band, bank)
+
+    TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
+    INTEGER :: band, bank(2)
+    CHARACTER(LEN=3) :: request
+
+    bank = 0   ! nothing yet
+    WRITE (request, '("B", i2.2)') band
+    CALL ParseMLSSignalRequest (request, signal, .FALSE.)
+    bank(1) = minval (signal%spectrometernumber)
+    bank(2) = maxval (signal%spectrometernumber)
+
+    DEALLOCATE (signal)
+
+  END SUBROUTINE BandToBanks
 
 !=============================================================================
 END MODULE MLSL1Rad
@@ -127,6 +220,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.1  2001/02/23 18:26:11  perun
 ! Version 0.5 commit
 !

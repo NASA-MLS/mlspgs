@@ -11,7 +11,7 @@ MODULE MLSL1Utils              ! Common utilities for the MLSL1 program
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSFile:$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSFile: $"
   !---------------------------------------------------------------------------
 
   ! This module contains utility routines for the MLSL1 program
@@ -31,6 +31,7 @@ CONTAINS
     INTEGER :: i, slen
 
     slen = MIN (LEN (str), 4)   ! allow only 4 chars MAX
+
     number = 0
     DO i = 1, slen
        number = number + factor**(slen-i) * ICHAR (str(i:i))
@@ -85,7 +86,7 @@ CONTAINS
 
   FUNCTION QNan () RESULT (xnan)
 
-    USE ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
+    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_value, ieee_quiet_nan
 
     !! Return a quiet NaN for marking missing/undefined data
 
@@ -97,7 +98,7 @@ CONTAINS
 
   FUNCTION Finite (x) RESULT (is_finite)
 
-    USE ieee_arithmetic, ONLY: ieee_is_finite
+    USE, INTRINSIC :: ieee_arithmetic, ONLY: ieee_is_finite
 
     !! Return whether or not input number is finite
 
@@ -147,6 +148,9 @@ END MODULE MLSL1Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.1  2001/02/23 20:52:08  perun
 ! Version 0.5 commit
 !
