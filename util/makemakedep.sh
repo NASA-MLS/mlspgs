@@ -23,10 +23,16 @@ fi
 echo "OBJS = \\"  >> Makefile.dep
 (ls -C *.f90 | sed 's/.f90/.o  /g; s/$/\\/') >> Makefile.dep
 echo " "  >> Makefile.dep
-makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+#makedepf90 *.f90 | sed 's/^makedepf90/#makedepf90/' >> Makefile.dep
+#
+#This to overcome an apparent bug in makedepf90
+makedepf90 *.f90 | sed 's/\.f90\.o/\.o/g' >> Makefile.dep
 echo " "  >> Makefile.dep
 echo "#End of Makefile.dep" >> Makefile.dep
 echo " "  >> Makefile.dep
 
 # $Log$
+# Revision 1.1  2000/10/16 18:31:49  pwagner
+# first commit
+#
 
