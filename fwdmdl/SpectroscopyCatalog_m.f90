@@ -12,6 +12,7 @@ module SpectroscopyCatalog_m
     & MLSMSG_Error
   use MLSSignals_m, only: MaxSigLen, Signals
   use Output_m, only: Blanks, Output
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Parse_Signal_m, only: PARSE_SIGNAL
@@ -242,7 +243,7 @@ contains ! =====  Public Procedures  ===================================
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
       end select
@@ -304,7 +305,7 @@ contains ! =====  Public Procedures  ===================================
 
     ! ..................................................  SayTime  .....
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       call output ( "Timing for Spectroscopy = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -471,6 +472,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.7  2001/10/18 23:53:03  livesey
+! Tidied up dump, added new stuff
+!
 ! Revision 2.6  2001/10/15 18:10:37  livesey
 ! Added continuum
 !

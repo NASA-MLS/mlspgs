@@ -28,6 +28,7 @@ module GLOBAL_SETTINGS
   use MoreTree, only: GET_SPEC_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: Get_String
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
@@ -99,7 +100,7 @@ contains
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
    error = 0
 
@@ -207,7 +208,7 @@ contains
           if ( timing ) then
             call sayTime
           else
-            call cpu_time ( t1 )
+            call time_now ( t1 )
             timing = .true.
           end if
         case default
@@ -280,7 +281,7 @@ contains
 
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -528,6 +529,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.47  2001/10/31 18:36:42  livesey
+! Added fGrids stuff
+!
 ! Revision 2.46  2001/10/30 00:37:09  pwagner
 ! Now can dump more l1b data
 !

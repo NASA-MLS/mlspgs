@@ -45,6 +45,7 @@ module TREE_WALKER
   use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
     & Destroy_SpectCat_Database, Spectroscopy
   use Test_Parse_Signals_m, only: Test_Parse_Signals
+  use Time_M, only: Time_Now
   use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
   use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
   use Tree, only: DECORATION, NSONS, SUBTREE
@@ -109,14 +110,14 @@ contains ! ====     Public Procedures     ==============================
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
-    call cpu_time ( t1 )
+    call time_now ( t1 )
     call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
     do while ( i <= howmany )
       son = subtree(i,root)
-      call cpu_time ( t1 )
+      call time_now ( t1 )
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
@@ -164,7 +165,7 @@ contains ! ====     Public Procedures     ==============================
             endif
             j = i
 subtrees:   do while ( j <= howmany )
-              call cpu_time ( t1 )
+              call time_now ( t1 )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
@@ -279,6 +280,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.68  2001/10/31 19:07:52  livesey
+! Hooked fGrids into quantity templates
+!
 ! Revision 2.67  2001/10/31 18:36:58  livesey
 ! Added fGrids stuff
 !
