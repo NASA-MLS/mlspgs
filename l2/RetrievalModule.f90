@@ -40,7 +40,7 @@ module RetrievalModule
     & Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: CloneVector, CopyVector, DestroyVectorInfo, &
-    & Vector_T
+    & Vector_T, DumpMask
 
   implicit NONE
   private
@@ -414,27 +414,6 @@ contains
         call output ( ' field shall be unitless' )
       end select
     end subroutine AnnounceError
-
-    ! -------------------------------------------------  DumpMask  -----
-    subroutine DumpMask ( mask, n )
-      integer, intent(in), dimension(:) :: MASK
-      integer, intent(in) :: N
-   
-      ! Local variables
-      integer :: I
-      integer :: B
-
-      ! Executable code
-      b = bit_size (mask)
-      do i = 1, n
-        if ( btest(mask(i/b+1), mod (i,b) ) ) then
-          call output ( '1' )
-        else
-          call output ( '0' )
-        end if
-      end do
-      call output ( '', advance='yes' )
-    end subroutine DumpMask
 
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
@@ -1354,6 +1333,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.63  2001/09/25 17:49:59  livesey
+! More updates, and fixes to subset
+!
 ! Revision 2.62  2001/09/25 05:57:36  livesey
 ! Removed call to destroyVectorMask, and the erroneous .not. doThis
 !
