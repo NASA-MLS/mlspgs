@@ -111,7 +111,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MAXJ                = f_maxIterations + 1
   integer, parameter :: F_MATRIX              = f_maxJ + 1
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
-  integer, parameter :: F_METHOD              = f_measurements + 1
+  integer, parameter :: F_MEASUREMENTSD       = f_measurements + 1
+  integer, parameter :: F_METHOD              = f_measurementSD + 1
   integer, parameter :: F_MIF                 = f_method + 1
   integer, parameter :: F_MOLECULEDERIVATIVES = f_MIF + 1
   integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
@@ -172,8 +173,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VERSIONRANGE        = f_unit + 1
   integer, parameter :: F_VALUES              = f_versionrange + 1
   integer, parameter :: F_VGRID               = f_values + 1
-  integer, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, parameter :: FIELD_LAST = f_weight
+  integer, parameter :: FIELD_LAST = f_vGrid
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
@@ -453,6 +453,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_maxJ) =                add_ident ( 'maxJ' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
+    field_indices(f_measurementSD) =       add_ident ( 'measurementSD' )
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
     field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
@@ -514,7 +515,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
-    field_indices(f_weight) =              add_ident ( 'weight' )
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -870,13 +870,13 @@ contains ! =====     Public procedures     =============================
              begin, f+f_maxF, t+t_numeric, n+n_field_type, &
              begin, f+f_maxJ, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
+             begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
-             begin, f+f_weight, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
@@ -965,6 +965,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.108  2001/05/18 23:18:42  vsnyder
+! Replace 'weight' field of 'retrieve' by 'measurementSD'
+!
 ! Revision 2.107  2001/05/18 19:51:09  livesey
 ! Added interpolate option for l2gp fills
 !
