@@ -14,6 +14,9 @@ it is mostly self-configuring. You will need:
   f95 compiler (either NAG or Lahey)
   Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
   mls software (probably where you're reading this)
+  perl (unless it or an alias is at /usr/bin/perl you may need to edit
+     the first line of f90makedep.pl before recalculating dependencies;
+     do this only if you plan to modify the software)
 Then, from the "top" level (where you see this file, as well as the l2,
 lib, and util directories) simply type
   make -f MakeFC
@@ -23,13 +26,14 @@ be made. You may quit out of this now and try it out, perhaps coming
 back later if you are curious or if something  goes wrong.
 
 INTRODUCTION
-An attempt has been made to minimize the amount of editing and
-configuring each user must perform in building the mls software.
-Specially named Makefiles and two new shell scripts are now available to
-guide the new user through an initial query driven configuration which
-creates a file named .configure. It contains information about the
-compiler, platform/OS, and paths to relevant libraries. Subsequent uses
-of make automatically make use of this configuration.
+An attempt has been made to minimize the amount of editing and configuring each
+user must perform in building the mls software. "User" in this context means
+either someone who will actively modify the software, or someone who wishes
+simply to use it. Specially named Makefiles and a few shell scripts are
+available to guide the new user through an initial query driven configuration
+which creates a file named .configure. It contains information about the
+compiler, platform/OS, and paths to relevant libraries. Subsequent uses of make
+automatically use this configuration.
 
 The mls software should be buildable by different users at sites remote
 from each other, and using whatever compiler and platform/OS combination
@@ -40,7 +44,7 @@ leave it up to the user to figure out how to put it together, probably
 by reading parts of it, using an automated make utility or a Makefile
 that worked for someone else, and trial and error. An alternative is to
 create a configurable Makefile or series of such files that will work,
-at least most of the time.
+at least most of the time. This is what has been done with mls software.
 
 The configurable Makefile for the lib and l2 mls software is MakeFC. It
 is found in the mlspgs directory. The name MakeFC was chosen as unlikely
@@ -55,11 +59,11 @@ You may begin when you checkout a fresh copy of the mlspgs archive. If
 you already have an archive with some changes you wish to keep but not
 share yet, make sure you update the following files and directories:
 
-mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
-------      ------------       ----------        -----------
-MakeFC      mlsconfigure         MakeFC            MakeFC
-            makemakedep.sh     Makefile.dep      Makefile.dep
-                                platforms/*       platforms/*
+   mlspgs/     mlspgs/util/       mlspgs/l2/        mlspgs/lib/
+   ------      ------------       ----------        -----------
+   MakeFC      mlsconfigure         MakeFC            MakeFC
+README.MakeFC  makemakedep.sh     Makefile.dep      Makefile.dep
+               f90makedep.pl      platforms/*       platforms/*
 
 BUILDING THE SOFTWARE
 Then to make the mls software, both the lib and mlsl2, from the top
@@ -131,9 +135,11 @@ clean      removes all binaries created during compilation and linking
 depends    recalculates dependencies;
            typically done only after adding new module, or adding a
            "USE ..." line to an existing module;
-           currently requires makedepf90
+           may require editing first line of f90makedep.pl
 configure  change configuration: compiler, (less often) platform/OS,
-paths
+           paths
+tar        bind up the current directory (or lib and l2 if at top) for
+           distribution
 
 HOW IT WORKS
 Each time make is called, it finds mlspgs/.configure among the list of
@@ -191,13 +197,32 @@ those it finds in the same directory.
 
 It would be desirable to list Makefile.dep among the prerequisites and
 force it to be updated on any change to the source files. Instead, the
-only way to change it is by the explicit command "make -f MakeFC
-depends". This is because currently the only way to create Makefile.dep
-is by the shell script utility/makemakedep.sh, and it in turn uses
-makedepf90. The latter is available from
-        http://www.helsinki.fi/~eedelman/makedepf90.html
+only way to change it is by the explicit command 
+	"make -f MakeFC depends". 
+To create Makefile.dep the shell script util/makemakedep.sh is launched,
+and it in turn uses  one of the following:
+ f90makedep.pl   the default; found in util; assumes perl or an alias
+                 is at /usr/bin/perl
+ makedepf90      a c++ program; not supplied with mls;
+                 may need to be compiled
 
+The latter is available from
+        http://www.helsinki.fi/~eedelman/makedepf90.html
 in binary form for linux, or as c++ sources that need to be compiled.
+
+If for some reason you do not wish to rely on a perl script, or lack
+perl, the shell script makemakedep.sh in util may be edited to switch it
+to launching makedepf90. The line
+        DEP_MAKER=2
+is clearly marked. Change the "2" to a "1". Of course you will need to
+obtain makedepf90, too.
+
+The perl script f90makedep.pl assumes your perl, or an alias to it, is
+/usr/bin/perl. This assumption is embodied in line 1 of the script. If
+your perl is elsewhere, edit this line to show the true path. A possible
+future refinement would be for makemakedep.sh to 
+	"sed 's/path_to_perl/'`which perl`''" 
+the perl script before running it.
 
 CALL TO ACTION
 This is useable now. Please try it out and inform me of any bugs you
@@ -218,15 +243,36 @@ obtain correct ones. This will be moot when newer versions are made
 available.
 
 IMPERFECTIONS
-Among the current shortcomings is the reliance on makedepf90, as noted
-above. Using an alternate perl-based utility looks promising.
+The dependencies calculated by f90makedep.pl currently check only among files
+in the same directory as the source files. A consequence of this is that it
+does not show dependencies of files in l2 on files in lib. A consequence of
+this is that after changes to source files in lib, files in l2 may not be
+recompiled, even when they should be. 
 
-The only combinations of compiler.platform/OS I provided for so far are
-Unknown.None
-NAG.(pc)Linux
-LF95.(pc)Linux
-NAG.Sun
-NAG.SGI
+Dependencies in l2/Makefile.dep do not include any of the lib sources, even if
+they are mentioned in "USE ..." statements. Therefore, when a source in lib is
+changed and recompiled, the l2 source that USEs it does not automatically get
+recompiled.  This can be  convenient if none of the interface elements were
+changed. But it can be misleading if any of the interface elements were
+changed, and in such a way as to break the l2 source. Forcing the l2 source to
+be recompiled would disclose the broken interface, while in the current
+situation the problem could remain hidden until some other circumstance causes
+it emerge.
+
+One easy fix would be to add a dependency line to each file in l2
+claiming it depends on all the files in lib. This "worst-case" scenario
+will work, but at the cost of frequent, unnecessary recompilations.
+
+The smart fix is to f90makedep.pl, perhaps giving it a list of
+directories as arguments. Then in lib, it could know to check only in
+lib, but in l2 it could check both in lib and l2.
+
+The only combinations of compiler.platform/OS provided for so far are
+  Unknown.None
+  NAG.(pc)Linux
+  LF95.(pc)Linux
+  NAG.Sun
+  NAG.SGI
 The last assumes abi=32. To compile for a 64 bit kernel, we could
 (1) add platforms/NAG.SGI64 with altered flags
 (2) allow adding extra compiler settings (see below)
@@ -234,18 +280,8 @@ To use these, 64 bit versions of the libraries HDFEOS, etc. would have
 to available, too.
 
 If you have a different combination, contact me. Even better, if you
-have a different combination and already get it to work, "cvs commit".
-
-A semi-bug results from the split of sources between lib and l2.
-Dependencies in l2/Makefile.dep do not include any of the lib sources,
-even if they are mentioned in "USE ..." statements. Therefore, when a
-source in lib is changed and recompiled, the l2 source that USEs it does
-not automatically get recompiled. This can be convenient if none of the
-interface elements were changed. But it can be misleading if any of the
-interface elements were changed, and in such a way as to break the l2
-source. Forcing the l2 source to be recompiled would disclose the broken
-interface, while in the current situation the problem could remain
-hidden until some other circumstance causes it emerge.
+have a different combination and already get it to work, send it to me,
+or "cvs commit".
 
 The sources currently must reside directly under lib or l2, and this
 fact is "hard-wired" into the Makefiles. It may become desirable to
@@ -255,14 +291,9 @@ to accomplish this. In general, replacing "hard-wired" directory paths
 with variable ones, set in either .configure or set in a more permanent
 file, seems like a good idea.
 
-Adding a "make -f MakeFC tar" option would allow the l2 and lib parts of
-the archive to be conveniently bound up for distribution. A start has
-been made in this direction.
-
 Under the lib directory is a lib/tests subdirectory containing three
-test programs. Only test_cf_parser has been successfully adapted to use
-MakeFC so far. multiply and sparsify still lack MakeFC files and
-platforms directories.
+test programs. They were used to test progress during development. It
+is possible they may no longer work, or even compile and link properly.
 
 Another wrinkle in the lib directory is the versions of machine.f90
 which lurk under platforms with names like NAG.Linux.machine. They are
@@ -287,9 +318,12 @@ to suppress warning messages.
 
 If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the other levels of mls. By design it remains an
-optional way to build, and coexisting in parallel with other ways.
+optional way to build, coexisting in parallel with other ways.
 
 -pw                           2000-Oct-24
 EOF
 exit
 # $Log$
+# Revision 1.1  2000/10/24 21:50:02  pwagner
+# first commit
+#
