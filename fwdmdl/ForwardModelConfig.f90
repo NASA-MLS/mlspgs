@@ -21,11 +21,13 @@ module ForwardModelConfig
     module procedure Dump_ForwardModelConfigs
   end interface Dump
 
-  public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump
+  public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump, &
+    & StripForwardModelConfigDatabase
 
   ! Public Types:
 
   type, public :: ForwardModelConfig_T
+    logical :: globalConfig   ! If set is shared between all chunks
     integer :: fwmType        ! l_linear, l_full or l_scan
     logical :: Atmos_Der      ! Do atmospheric derivatives
     logical :: do_Baseline    ! Do a baseline computation
@@ -42,6 +44,7 @@ module ForwardModelConfig
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
+    integer, dimension(:), pointer :: specificQuantities=>NULL() ! Specific quantities to use
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     real (r8) :: phiWindow            ! Window size for examining stuff
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
@@ -90,6 +93,40 @@ contains
     AddForwardModelConfigToDatabase = newSize
   end function AddForwardModelConfigToDatabase
 
+  ! --------------------------  StripForwardModelConfigDatabase --------
+  subroutine StripForwardModelConfigDatabase ( database )
+    ! This routine removes the non-global forward model configs from the database
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_Deallocate, MLSMSG_Error
+
+    ! Dummy arguments
+    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
+    integer :: CONFIG                   ! Loop counter
+    integer :: STATUS
+
+    ! Executable code
+    ! Clear out dying configs
+    do config = 1, size ( database )
+      if ( .not. database(config)%globalConfig ) &
+        & call DestroyOneForwardModelConfig ( database(config) )
+    end do
+
+    ! Create new database in tmp space, pack old one into
+    allocate ( tmpDatabase ( count ( database%globalConfig ) ), STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // 'tmpDatabase' )
+    tmpDatabase = pack ( database, database%globalConfig )
+
+    ! Destroy old database, then point to new one
+    deallocate ( database, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate // 'database' )
+    database => tmpDatabase
+  end subroutine StripForwardModelConfigDatabase
+
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database )
 
@@ -107,21 +144,7 @@ contains
 
     if ( associated(database) ) then
       do config = 1, size(database)
-        if ( associated(database(config)%signals) ) then
-          do signal = 1, size(database(config)%signals)
-            call destroySignal ( database(config)%signals(signal), &
-              & justChannels=.true. )
-          end do
-          deallocate ( database(config)%signals, stat=status )
-          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_Deallocate // "database%signals" )
-        end if
-        ! Don't destroy integrationGrid and tangentGrid.  Assume they will
-        ! be (or already are) destroyed by destroyVGridDatabase.
-        call deallocate_test ( database(config)%molecules, &
-          & "database(config)%molecules", moduleName )
-        call deallocate_test ( database(config)%moleculeDerivatives, &
-          & "database(config)%moleculeDerivatives", moduleName )
+        call DestroyOneForwardModelConfig ( database(config) )
       end do
 
       deallocate ( database, stat=status )
@@ -131,7 +154,41 @@ contains
   end subroutine DestroyFWMConfigDatabase
 
   ! =====     Private Procedures     =====================================
-  ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
+
+  ! ------------------------------------ DestroyOneForwardModelConfig --
+  subroutine DestroyOneForwardModelConfig ( config )
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSSignals_M, only: DestroySignal
+    use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
+
+    ! Dummy arguments
+    type ( ForwardModelConfig_T), intent(inout) :: config
+
+    ! Local variables
+    integer :: SIGNAL                   ! Loop counter
+    integer :: STATUS                   ! Flag from allocate etc.
+
+    ! Executable code
+    if ( associated(config%signals) ) then
+      do signal = 1, size(config%signals)
+        call destroySignal ( config%signals(signal), &
+          & justChannels=.true. )
+      end do
+      deallocate ( config%signals, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate // "database%signals" )
+    end if
+    ! Don't destroy integrationGrid and tangentGrid.  Assume they will
+    ! be (or already are) destroyed by destroyVGridDatabase.
+    call deallocate_test ( config%molecules, &
+      & "config%molecules", moduleName )
+    call deallocate_test ( config%moleculeDerivatives, &
+      & "config%moleculeDerivatives", moduleName )
+    call Deallocate_test ( config%specificQuantities, &
+      & "config%specificQuantities", ModuleName )
+  end subroutine DestroyOneForwardModelConfig
+
+  ! ------------------------------------  Dump_FowardModelConfigs  -----
   subroutine Dump_ForwardModelConfigs ( Database )
 
     use Dump_0, only: DUMP
@@ -192,6 +249,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.9  2002/08/21 23:53:57  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.8  2002/07/17 06:02:13  livesey
 ! New config elements for hdf5 l2pcs
 !
