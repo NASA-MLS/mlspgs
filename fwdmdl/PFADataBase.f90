@@ -26,17 +26,20 @@ module PFADataBase_m
   integer, parameter :: RK = r4 ! Kind of real fields in PFAData_t
 
   type PFAData_T
-    integer :: Name = 0                            ! of the pfaData spec
-    integer :: FilterFile = 0                      ! Index in string table
-    integer :: Molecule                            ! Molecule index
-    character(len=maxSigLen) :: Signal             ! The signal string
-    integer :: SignalIndex                         ! in Signals database
-    integer :: SpectroscopyFile = 0                ! Index in string table
-    type(signal_t) :: TheSignal                    ! The signal, with channels
-                                                   ! and sidebands added
+    integer :: Name = 0                ! of the pfaData spec                  
+    integer :: FilterFile = 0          ! Index in string table                
+    integer :: Molecule                ! Molecule index                       
+    character(len=maxSigLen) :: Signal ! The signal string                    
+    integer :: SignalIndex             ! in Signals database                  
+    integer :: SpectroscopyFile = 0    ! Index in string table                
+    type(signal_t) :: TheSignal        ! The signal, with channels            
+                                       ! and sidebands added                  
     type(vGrid_t) :: TGrid ! shallow copy from VGrids database of Log temperatures
     type(vGrid_t) :: VGrid ! shallow copy from VGrids database of vertical grid
     real(rk) :: Vel_Rel                            ! vel_lin / c
+    integer :: WhichLines = 0          ! 0 = Lines for channel only,
+                                       ! 1 = AllLinesInCatalog,
+                                       ! 2 = AllLinesForRadiometer,
     real(rk), pointer :: Absorption(:,:) => NULL() ! Ln Absorption data, T x P
     real(rk), pointer :: dAbsDwc(:,:) => NULL()    ! d Ln Absorption / d wc data
     real(rk), pointer :: dAbsDnc(:,:) => NULL()    ! d Ln Absorption / d nc data
@@ -147,6 +150,10 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: CK = kind(speedOfLight)
     real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
     integer :: MyDetails
+    character(len=*), parameter :: WhichLines(0:2) = &
+      (/ 'Channel   ', &
+       & 'Radiometer', &
+       & 'Catalog   ' /)
 
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -178,7 +185,9 @@ contains ! =====     Public Procedures     =============================
       & strip=.true., advance='yes' )
 
     call output ( real(pfaDatum%vel_rel*c,rk), before=' Velocity linearization: ', &
-      & after='kms', advance='yes' )
+      & after='kms, all lines for ' )
+
+    call output ( trim(whichLines(pfaDatum%whichLines)), advance='yes' )
 
     if ( pfaDatum%tGrid%name /= 0 ) then
       call display_string ( pfaDatum%tGrid%name, before=' TGrid: ' )
@@ -410,6 +419,12 @@ contains ! =====     Public Procedures     =============================
         else
           PFAData(iPFA)%filterFile = 0
         end if
+        if ( isHDF5AttributePresent(groupID, 'spectroscopyFile') ) then
+          call getHDF5Attribute ( groupID, 'spectroscopyFile', line )
+          PFAData(iPFA)%spectroscopyFile = getStringIndexFromString ( trim(line), .true. )
+        else
+          PFAData(iPFA)%spectroscopyFile = 0
+        end if
         call getHDF5Attribute ( groupID, 'molecule', molecule )
         k = getLitIndexFromString ( trim(molecule) )
         if ( k < first_molecule .or. k > last_molecule ) call MLSMessage ( &
@@ -426,6 +441,9 @@ contains ! =====     Public Procedures     =============================
           ! in next iteration of the loop
         call getHDF5Attribute ( groupID, 'sideband', PFAData(iPFA)%theSignal%sideband )
         call getHDF5Attribute ( groupID, 'vel_rel', PFAData(iPFA)%vel_rel )
+        PFAData(iPFA)%whichLines = 0
+        if ( isHDF5AttributePresent(groupID, 'whichLines') ) &
+          & call getHDF5Attribute ( groupID, 'whichLines', PFAData(iPFA)%whichLines )
         tGrid%name = 0
         nullify ( tGrid%surfs, vGrid%surfs )
         tGrid%verticalCoordinate = l_theta
@@ -628,10 +646,16 @@ contains ! =====     Public Procedures     =============================
         call MakeHDF5Attribute ( groupID, 'filterFile', &
           & attrib(:string_length(pfaDatum%filterFile)) )
       end if
+      if ( pfaDatum%spectroscopyFile /= 0 ) then
+        call get_string ( pfaDatum%spectroscopyFile, attrib )
+        call MakeHDF5Attribute ( groupID, 'spectroscopyFile', &
+          & attrib(:string_length(pfaDatum%spectroscopyFile)) )
+      end if
       call MakeHDF5Attribute ( groupID, 'molecule', molecule )
       call MakeHDF5Attribute ( groupID, 'signal', pfaDatum%signal )
       call MakeHDF5Attribute ( groupID, 'sideband', pfaDatum%theSignal%sideband )
       call MakeHDF5Attribute ( groupID, 'vel_rel', pfaDatum%vel_rel )
+      call MakeHDF5Attribute ( groupID, 'whichLines', pfaDatum%whichLines )
       call MakeHDF5Attribute ( groupID, 'nTemps', pfaDatum%tGrid%noSurfs )
       call MakeHDF5Attribute ( groupID, 'tStart', pfaDatum%tGrid%surfs(1,1) )
       call MakeHDF5Attribute ( groupID, 'tStep', &
@@ -671,6 +695,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.21  2005/03/28 20:25:31  vsnyder
+! Add WhichLines, SpectroscopyFile metadata
+!
 ! Revision 2.20  2005/03/17 01:32:26  vsnyder
 ! Put spectroscopy file's string index in PFAData structure
 !
