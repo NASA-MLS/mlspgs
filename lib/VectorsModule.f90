@@ -463,6 +463,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( vector%template%quantities )
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
+    call destroyVectorMask ( vector )
     deallocate ( vector%quantities, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_deallocate // "vector%quantities" )
@@ -1166,6 +1167,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.46  2001/06/26 20:32:31  vsnyder
+! Simplify mask handling by using zero origin for first dimension
+!
 ! Revision 2.45  2001/06/01 01:04:22  vsnyder
 ! Add 'Multiply' generic
 !
