@@ -3,7 +3,7 @@
 
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
-  use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
+  use INIT_TABLES_MODULE, only: INIT_TABLES
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
@@ -23,7 +23,6 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
-  use UNITS, only: INIT_UNITS
 
   implicit NONE
 
@@ -58,7 +57,6 @@ program MLSL2
   call allocate_decl ( ndecls=1000 )
   call allocate_tree ( n_tree=15000 )
   call init_tables
-  call init_units ( lit_indices )
 
   i = 1+hp
   do ! Process the command line options to set toggles
@@ -244,6 +242,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.25  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.24  2001/04/24 23:04:42  vsnyder
 ! Add -f[digit] to set toggle(emit) and levels(emit)
 !
