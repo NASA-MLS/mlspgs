@@ -134,7 +134,8 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV
+    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV, &
+      & DEFAULTUNDEFINEDVALUE
     use MLSFiles, only: mls_hdf_version, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -264,7 +265,8 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: MissingDataInGrid = BadRefractFill + 1
     integer, parameter :: EmptyGridForFill = MissingDataInGrid + 1
 
-    real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
+    ! -999.99 ! Same as %template%badvalue
+    real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE 
 
     ! Local variables
 
@@ -6891,6 +6893,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.278  2004/08/03 18:01:14  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.277  2004/07/30 00:17:22  livesey
 ! Changed some errors to warnings
 !
