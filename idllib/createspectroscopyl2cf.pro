@@ -250,9 +250,10 @@ else array = emlsMolecules
 array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
 printf, unit, '; ----------------------------------------- Molecules per band'
 printf, unit, ''
-;; Make H2O and N2 used everywhere.
+;; Make H2O, N2 and extinction used everywhere.
 array(*,*,where(niceNames eq 'H2O')) = 1
 array(*,*,where(niceNames eq 'N2')) = 1
+array(*,*,where(niceNames eq 'EXTINCTION')) = 1
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
 ;; Make the H2O_<radiometer> species used where appropriate
