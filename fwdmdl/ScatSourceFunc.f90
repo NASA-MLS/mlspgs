@@ -138,8 +138,8 @@ contains
       cld_ext=0.0
       W0=0.0_rk
       Cloud_ext =0.0_rk
-      WC(1,10) = 0.01   !test only
-      WC(1,11) = 0.01   !test only
+      WC(1,7) = 0.01   !test only
+      WC(1,8) = 0.01   !test only
       dtau =0.0
       ext_air=0.0
 
@@ -392,6 +392,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.10  2004/03/20 01:15:47  jonathan
+! w0 and cext now has extra dimention
+!
 ! Revision 2.9  2003/12/08 17:53:28  jonathan
 ! add tt_path in convert_grid
 !
