@@ -22,7 +22,6 @@ module TREE_WALKER
   use MatrixModule_1, only: Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: MLSSignals
-!  use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize, read_apriori
   use ncep_dao, only: DestroyGridTemplateDatabase
   use OPEN_INIT, only: DestroyL1BInfo, OpenAndInitialize
   use ReadAPriori, only: read_apriori
@@ -57,6 +56,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
+    CHARACTER (LEN=1), POINTER :: anText(:)
     type (GriddedData_T), dimension(:), pointer :: griddedData => NULL() 
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS => NULL() ! of data
@@ -90,7 +90,7 @@ contains ! ====     Public Procedures     ==============================
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
-    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
+    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf, anText )
 
     i = first_section
     howmany = nsons(root)
@@ -142,7 +142,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf )
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf, anText )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
@@ -165,6 +165,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.25  2001/04/02 23:41:09  pwagner
+! Now keeps l2pcf and transmits as needed
+!
 ! Revision 2.24  2001/03/29 19:13:03  livesey
 ! Renamed apriorDatabase to griddedData
 !
