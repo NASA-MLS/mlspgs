@@ -874,6 +874,9 @@ contains ! ============= Public Procedures ==========================
       ! Set defaults for coordinates, radiance is the later exception
       qt%verticalCoordinate = l_zeta
       qt%frequencyCoordinate = l_none
+      qt%noInstancesLowerOverlap = 0
+      qt%noInstancesUpperOverlap = 0
+      qt%regular = .true.
 
       ! Read other info associated with type
       select case ( qt%quantityType )
@@ -1454,6 +1457,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.40  2002/07/25 15:53:40  mjf
+! Initialised some elements of qt in ReadOneVectorFromASCII (already
+! done in ReadOneVectorFromHDF5)
+!
 ! Revision 2.39  2002/07/22 03:29:23  livesey
 ! Bug fix
 !
