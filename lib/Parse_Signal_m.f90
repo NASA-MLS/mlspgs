@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Parse_Signal_M
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -439,6 +442,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.11  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.10  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

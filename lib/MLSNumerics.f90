@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 !=============================================================================
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
@@ -540,6 +543,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.11  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.10  2001/05/08 23:25:58  livesey
 ! Added a nullify for oldSecond (how did I miss that?)
 !
