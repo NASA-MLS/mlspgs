@@ -64,6 +64,7 @@ full_derivatives
 
 gloria
 gridded
+gphPrecision
 
 H2OFromRHI
 height
@@ -120,6 +121,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.23  2002/10/16 20:18:53  mjf
+# Added GPH precision.
+#
 # Revision 2.22  2002/10/02 23:04:48  pwagner
 # RHI now separate fill methods
 #
