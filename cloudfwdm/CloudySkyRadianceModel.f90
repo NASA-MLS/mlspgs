@@ -226,7 +226,9 @@ contains
 !-------------------------------
 
       REAL :: PI
+      integer :: Nsub
       PARAMETER (PI=3.1415926)
+      PARAMETER (Nsub=5)  !Below surface tangent grids
       
       INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
       INTEGER :: NUA                           ! NO. OF SCAT. AZIMUTH ANGLES
@@ -260,10 +262,10 @@ contains
       REAL(r8) :: TAU0(NZmodel-1)              ! CLEAR-SKY OPTICAL DEPTH
       REAL(r8) :: TEMP(NZmodel-1)              ! MEAN LAYER TEMPERATURE (K)
 
-      REAL(r8) :: TT(NZmodel/8,NZmodel)        ! CLOUDY-SKY TB AT TANGENT 
+      REAL(r8) :: TT(NZmodel/8+Nsub,NZmodel)        ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL(r8) :: TT0(NZmodel/8,NZmodel)       ! CLEAR-SKY TB AT TANGENT
+      REAL(r8) :: TT0(NZmodel/8+Nsub,NZmodel)       ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 !---------------------------------------------
@@ -309,6 +311,7 @@ contains
       INTEGER :: I100_TOP                      ! 100 mb index
       INTEGER :: MY_NIWC
       INTEGER :: L
+      INTEGER :: n1, n2
 
       REAL(r8) :: DMA
       REAL(r8) :: RATIO
@@ -320,22 +323,22 @@ contains
       REAL(r8) :: CHK_CLD(NZmodel)                        
       REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHTS (meters)
 
-      REAL(r8) :: ZZT1(NZmodel/8-1)            ! TANGENT HEIGHTS (meters) FOR CALCULATION 
+      REAL(r8) :: ZZT1(NZmodel/8-1+Nsub)       ! TANGENT HEIGHTS (meters) FOR CALCULATION 
                                                ! (a subset OF YZ)
                                                ! THE RESULT WILL BE INTERPOLATED TO ZZT
 
-      REAL(r8) :: ZPT1(NZmodel/8-1)            ! TANGENT PRESSURE (mb) FOR CALCULATION 
+      REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)            ! TANGENT PRESSURE (mb) FOR CALCULATION 
                                                ! (a subset OF YP)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
-      REAL(r8) :: ZTT1(NZmodel/8-1)            ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
+      REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)            ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
                                                ! (a subset OF YT)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
-      REAL(r8) :: ZVT1(NZmodel/8-1) 
-      REAL(r8) :: ZNT1(NZmodel/8-1) 
+      REAL(r8) :: ZVT1(NZmodel/8-1+Nsub) 
+      REAL(r8) :: ZNT1(NZmodel/8-1+Nsub) 
 
-      REAL(r8) :: ptg_angle(NZmodel/8-1)       ! POINTING ANGLES CORRESPONDING TO ZZT1
+      REAL(r8) :: ptg_angle(NZmodel/8-1+Nsub)       ! POINTING ANGLES CORRESPONDING TO ZZT1
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
@@ -407,17 +410,29 @@ contains
 ! DEFINE INTERNAL TANGENT PRESSURES 
 ! ----------------------------------
 
-      MULTI=NZmodel/8-1
+      MULTI=NZmodel/8-1+Nsub
 
+      n1=0
+      Do i=1,NZmodel
+      IF(YZ(i) .le. 28000.0_r8) n1=n1+1
+      enddo
+      n1=n1*2/(multi-nsub)
+      n2=0
+      Do i=1,NZmodel
+      IF(YZ(i) .gt. 28000.0_r8) n2=n2+1
+      enddo
+      n2=n2*2/(multi-nsub)
+     
 ! ---------------The following sets first 5 tangent heights below zero
 
       DO I=1, Multi
-
-         if (i .le. 5) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
-         if (i .gt. 5) then
-            if(i .le. (multi-5)/2) zzt1(i) = YZ( (I-5)*4-3)
-            if(i .gt. (multi-5)/2) zzt1(i) = YZ( (I-5)*8-7-(multi-5)/2*8)
+         if (i .le. Nsub) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
+         if (i .gt. Nsub) then
+            if(i .le. (multi-Nsub)/2+Nsub) zzt1(i) = YZ( (I-Nsub)*n1-n1+1 )
+            if(i .gt. (multi-Nsub)/2+Nsub) zzt1(i) = &
+          &                   YZ( (I-Nsub)*n2-n2+1+((multi-Nsub)/2)*(n1-n2) )
          endif
+
 
          ZPT1(I) = 0._r8    
          ZTT1(I) = 0._r8
@@ -790,6 +805,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.33  2002/08/08 22:46:15  jonathan
+! newly improved version
+!
 ! Revision 1.32  2002/06/17 17:49:41  bill
 ! changed fov_convolve to fov_convolve_old--wgr
 !
