@@ -60,7 +60,7 @@ contains ! =====     Public Procedures     =============================
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_OFFSETAMOUNT, &
       & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
-      & F_PROFILEVALUES, F_PTANQUANTITY, &
+      & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
       & F_RHIQUANTITY, F_Rows, &
@@ -353,6 +353,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
     integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
     integer :: PRECISIONVECTORINDEX     ! In the vector database
+    integer :: PROFILE                  ! A single profile
     integer :: PTANVECTORINDEX          ! In the vector database
     integer :: PTANQUANTITYINDEX        ! In the quantities database
     integer :: QUANTITYINDEX            ! Within the vector
@@ -377,7 +378,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
-    logical :: SPREAD                   ! Do we spread values accross instances in explict
+    logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
@@ -446,12 +447,13 @@ contains ! =====     Public Procedures     =============================
       isPrecision = .false.
       resetSeed = .false.
       refract = .false.
-      spread = .false.
+      spreadFlag = .false.
       switch2intrinsic = .false.
       seed = 0
       noFineGrid = 1
       precisionFactor = 0.5
       offsetAmount = 1000.0             ! Default to 1000K
+      profile = -1
 
       ! Node_id(key) is now n_spec_args.
 
@@ -681,6 +683,11 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( key, No_Error_code, &
               & 'Bad units for precisionFactor' )
             precisionFactor = valueAsArray(1)
+          case ( f_profile )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all (unitAsArray /= (/PHYQ_Dimensionless, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, 0, 'Bad units for profile' )
+            profile = valueAsArray(1)
           case ( f_profileValues )
             valuesNode = subtree(j,key)
           case ( f_PtanQuantity ) ! For losGrid fill
@@ -738,9 +745,9 @@ contains ! =====     Public Procedures     =============================
             vGridIndex=decoration(decoration(gson))
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
             if ( node_id(gson) == n_set_one ) then
-              spread=.TRUE.
+              spreadFlag = .true.
             else
-              spread = decoration(subtree(2,gson)) == l_true
+              spreadFlag = decoration(subtree(2,gson)) == l_true
             end if
           case ( f_systemTemperature )
             sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
@@ -1215,11 +1222,8 @@ contains ! =====     Public Procedures     =============================
           if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
             & call Announce_Error ( key, No_Error_code, &
             &  'VGrid is not of the same size as the quantity' )
-          do instance = 1, quantity%template%noInstances
-            quantity%values(:,instance) = vGrids(vGridIndex)%surfs
-          end do
-          !quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
-          !  & quantity%template%noInstances )
+          quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
+            & quantity%template%noInstances )
 
         case ( l_fold ) ! --------------- Fill by sideband folding -----
           lsb => GetVectorQtyByTemplateIndex ( &
@@ -1243,7 +1247,7 @@ contains ! =====     Public Procedures     =============================
           if ( .NOT. got(f_sourceL2GP) ) &
             & call Announce_Error ( key, noSourceL2GPGiven )
           call FillVectorQuantityFromL2GP &
-            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, errorCode )
+            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
@@ -1305,7 +1309,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
-          call ExplicitFillVectorQuantity ( quantity, valuesNode, spread, &
+          call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
             & vectors(vectorIndex)%globalUnit, dontmask )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
@@ -1821,7 +1825,10 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillVectorQuantityFromGrid
 
     !=============================== FillVectorQuantityFromL2GP ==========
-    subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, errorCode )
+    subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, profile, &
+      & errorCode )
+      use MLSNumerics, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
+        & INTERPOLATEARRAYTEARDOWN
 
       ! If the times, pressures, and geolocations match, fill the quantity with
       ! the appropriate subset of profiles from the l2gp
@@ -1830,6 +1837,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
       logical, intent(in) :: interpolate  ! Flag
+      integer, intent(in) :: profile    ! Single profile to use or -1 for default
       integer, intent(out) :: errorCode ! Error code
 
       ! Local parameters
@@ -1841,8 +1849,9 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer ::    FIRSTPROFILE, LASTPROFILE
       integer, dimension(1) :: FIRSTPROFILEASARRAY
-      integer :: INSTANCE                 ! Loop counter 
-
+      integer :: INSTANCE               ! Loop counter 
+      integer :: THISPROFILE            ! Index
+      type (Coefficients_R8) :: COEFFS  ! For interpolation
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
 
       errorCode=0
@@ -1881,53 +1890,80 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-      ! Attempt to match up the first location
-      firstProfileAsArray=MINLOC(ABS(quantity%template%phi(1,1)-l2gp%geodAngle))
-      firstProfile=firstProfileAsArray(1)
+      ! Skip the position checks if we're forcing in a particular profile.
+      if ( profile == -1 ) then
+        ! Attempt to match up the first location
+        firstProfileAsArray=minloc(abs(quantity%template%phi(1,1)-l2gp%geodAngle))
+        firstProfile=firstProfileAsArray(1)
+        
+        ! Well, the last profile has to be noInstances later, check this would be OK
+        lastProfile=firstProfile+quantity%template%noInstances-1
+        if (lastProfile > l2gp%nTimes ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity has profiles beyond the end of the l2gp' )
 
-      ! Well, the last profile has to be noInstances later, check this would be OK
-      lastProfile=firstProfile+quantity%template%noInstances-1
-      if (lastProfile > l2gp%nTimes ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Quantity has profiles beyond the end of the l2gp' )
+        ! Now check that geodAngle's are a sufficient match
+        if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
+          &         quantity%template%phi(1,:)) > tolerance) ) then
+          call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
+          call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+        end if
 
-      ! Now check that geodAngle's are a sufficient match
-      if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
-        &         quantity%template%phi(1,:)) > tolerance) ) then
-        call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
-        call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+        ! Now check that the times match
+        if (any(abs(l2gp%time(firstProfile:lastProfile)- &
+          &         quantity%template%time(1,:)) > timeTol) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity has profiles that mismatch l2gp in time' )
+        
+        ! Currently the code cannot interpolate in 3 dimensions, wouldn't
+        ! be hard to code up, but no need as yet.
+        if (interpolate .and. quantity%template%noChans /= 1) then
+          errorCode=cantInterpolate3D
+          return
+        end if
       end if
 
-      if (any(abs(l2gp%time(firstProfile:lastProfile)- &
-        &         quantity%template%time(1,:)) > timeTol) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Quantity has profiles that mismatch l2gp in time' )
-
-      if (interpolate .and. quantity%template%noChans /= 1) then
-        errorCode=cantInterpolate3D
-        return
-      end if
-
+      ! OK, now do the filling, it's easier if we don't have to interpolate
       if (.not. interpolate) then
-        quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
-          & (/quantity%template%noChans*quantity%template%noSurfs,&
-          &   quantity%template%noInstances/))
+        if ( profile == -1 ) then
+          ! Not forcing a particular profile to all instances
+          quantity%values=reshape(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
+            & (/quantity%template%noChans*quantity%template%noSurfs,&
+            &   quantity%template%noInstances/))
+        else
+          ! Spread one profile onto all instances
+          quantity%values = spread ( reshape ( l2gp%l2gpValue(:,:,profile), &
+            &   (/ quantity%template%noChans*quantity%template%noSurfs/) ), &
+            & 2, quantity%template%noInstances )
+        end if
       else
         if ( quantity%template%verticalCoordinate == l_pressure ) then
           outZeta = -log10 ( quantity%template%surfs(:,1) )
         else
           outZeta = quantity%template%surfs(:,1)
         end if
+        ! Setup the interpolation we'll be doing.
+        call InterpolateArraySetup ( -log10(real(l2gp%pressures, r8)), &
+          & outZeta, 'Linear', coeffs, extrapolate='Clamp' )
         do instance = 1, quantity%template%noInstances
-          call InterpolateValues ( &
+          if ( profile == -1 ) then
+            thisProfile = firstProfile + instance - 1
+          else
+            thisProfile = profile
+          end if
+          ! Guess I don't really need the loop here, but it
+          ! does make the spread stuff much easier, and the setup/teardown
+          ! at least makes it more efficient.
+          call InterpolateValues ( coeffs, &
             & -log10(real(l2gp%pressures, r8)), &  ! Old X
-            & real(l2gp%l2gpValue(1,:,firstProfile+instance-1), r8), & ! OldY
+            & real(l2gp%l2gpValue(1,:,thisProfile), r8), & ! OldY
             & outZeta, & ! New X
             & quantity%values(:,instance), & ! New Y
             & method='Linear', extrapolate='Clamp' )
         end do
+        call InterpolateArrayTeardown ( coeffs )
       end if
 
     end subroutine FillVectorQuantityFromL2GP
@@ -3950,7 +3986,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillVectorQtyFromIsotope
 
     !=============================================== ExplicitFillVectorQuantity ==
-    subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, globalUnit, &
+    subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spreadFlag, globalUnit, &
       & dontmask)
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
@@ -3959,7 +3995,7 @@ contains ! =====     Public Procedures     =============================
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
       integer, intent(in) :: VALUESNODE   ! Tree node
-      logical, intent(in) :: SPREAD       ! One instance given, spread to all
+      logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
 
@@ -3974,7 +4010,7 @@ contains ! =====     Public Procedures     =============================
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
-      if (spread) then      ! 1 instance/value given, spread to all instances
+      if (spreadFlag) then ! 1 instance/value given, spread to all instances
 
         ! Check we have the right number of values
         if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
@@ -4011,7 +4047,7 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
 
-      else                  ! Not spread, fill all values
+      else                              ! Not spread, fill all values
 
         ! Check we have the right number of values
         if (nsons(valuesNode)-1 /= &
@@ -4787,6 +4823,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.182  2003/02/13 21:42:12  livesey
+! Added specific profile stuff to fill from l2gp.
+!
 ! Revision 2.181  2003/01/29 01:59:19  livesey
 ! Changed some MLSMessages to Announce_Errors to get a line number.
 !
