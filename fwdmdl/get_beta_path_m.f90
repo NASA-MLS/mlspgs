@@ -511,7 +511,7 @@ contains
           if ( polarized(ln_i) ) cycle
         end if
 
-        dNu = Fgr - v0(ln_i)
+        dNu = Fgr - slabs_0%v0s(ln_i)
 
         if ( abs(slabs_0%y(ln_i))+0.666666_rp*abs(slabs_0%x1(ln_i)*dNu) &
         & > 100.0_rp ) then
@@ -745,7 +745,7 @@ contains
 
             if ( polarized(ln_i) ) cycle
 
-            dNu = Fgr - v0(ln_i)
+            dNu = Fgr - slabs_0(k)%v0s(ln_i)
 
             if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
             & > 100.0_rp ) then
@@ -771,7 +771,7 @@ contains
 
           do ln_i = 1, nl
 
-            dNu = Fgr - v0(ln_i)
+            dNu = Fgr - slabs_0(k)%v0s(ln_i)
 
             if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
             & > 100.0_rp ) then
@@ -983,6 +983,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.51  2004/03/19 00:47:02  vsnyder
+! Use line center instead of pressure-shifted line center in a few places
+!
 ! Revision 2.50  2004/02/27 22:47:32  bill
 ! fixed bug in n2 continuum calc
 !
