@@ -100,13 +100,20 @@ what_diff_opt()
 diff_fun()
 {
    the_diff="0"
-	if [ $# -gt "1" ]
+	if [ $# -lt "2" ]
+	then
+      echo "Too few args to diff_fun"
+      exit 1
+	elif [ -f "$1" -a -f "$2" ]
 	then
       rm -f temp1 temp2
       od -t c "$1" > temp1
       od -t c "$2" > temp2
       the_diff=`diff temp1 temp2 | wc -l`
       rm -f temp1 temp2
+   else
+      echo "diff_fun: file not found"
+      exit 1
    fi
 }
 
@@ -239,6 +246,7 @@ if [ "$oldBExists" = "no" ]; then
   "$the_command" "$@"
   return_status=`expr $?`
   the_status="new"
+  diff_fun $old_B $old_B
 elif [ "$ASameAsB" = "yes" ]; then
 # A and B the same, so check if new A diff from old
   mv "$old_A" "$old_A.1"
@@ -264,6 +272,7 @@ elif [ "$oldAExists" = "no" ]; then
   return_status=`expr $?`
     message="There is no old A => automatically need new A"
     the_status="new"
+  diff_fun $old_A $old_A
 else
 # Most general case
   mv "$old_A" "$old_A.1"
@@ -312,6 +321,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.5  2002/06/26 19:03:04  pwagner
+# Passes exit status from command back to whoever called
+#
 # Revision 1.4  2002/06/25 18:04:17  pwagner
 # Relies on octal dump routine instead of -a option to diff
 #
