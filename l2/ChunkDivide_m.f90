@@ -389,16 +389,21 @@ contains ! ===================================== Public Procedures =====
       ! Executable code
 
       ! Read in the data we're going to need
-      call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
+      call get_string ( lit_indices(config%homeModule), modNameStr, &
+        & strip=.true. )
       if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
         l1b_hdf_version = LEVEL1_HDFVERSION
       else
         l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+        if ( l1b_hdf_version <= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
       endif
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
-      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
-        .false. )
+      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+        & l1b_hdf_version, &
+        & .false. )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
@@ -535,11 +540,15 @@ contains ! ===================================== Public Procedures =====
         l1b_hdf_version = LEVEL1_HDFVERSION
       else
         l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+        if ( l1b_hdf_version <= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
       endif
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
-      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
-        .false. )
+      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+        & l1b_hdf_version, &
+        & .false. )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
@@ -1491,6 +1500,9 @@ contains ! ===================================== Public Procedures =====
         l1b_hdf_version = LEVEL1_HDFVERSION
       else
         l1b_hdf_version = mls_hdf_version(trim(l1bInfo%L1BOAFileName))
+        if ( l1b_hdf_version <= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
       endif
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
@@ -1625,6 +1637,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.28  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
 ! Revision 2.27  2002/12/06 01:08:33  pwagner
 ! Less likely to bomb on single chunks
 !
