@@ -506,7 +506,7 @@ contains ! =====     Public Procedures     =============================
         if ( quantity%template%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L_None, L_MIF, L_MAF/)
           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
-          dimensionStarts = (/1, quantity%template%noSurfs, firstMAF /)
+          dimensionStarts = (/1, 1, firstMAF /)
         else
           dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
           dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
@@ -632,6 +632,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.38  2001/05/14 22:23:53  livesey
+! Embarassing bug fix, to do with renumbering of minor frame L2AUX quantities.
+!
 ! Revision 2.37  2001/05/12 00:18:17  livesey
 ! Tidied up array bounds for L2AUX/MAF.
 !
