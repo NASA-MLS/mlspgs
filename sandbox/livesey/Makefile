@@ -4,7 +4,7 @@
 #
 MODULEPATH=../../lib/
 MLSPGS_LIB_PATH=../../lib
-TOOLKIT_LIB=../../SDPToolkitSubstitute/SDPToolkit.a
+TOOLKIT_LIB=../../lib/SDPToolkitSubstitute.a
 
 include ${MLSPGS_LIB_PATH}/make.inc
 
@@ -12,8 +12,7 @@ all:	testnomenclature
 debug:	testnomenclature_debug
 both:	all debug
 
-
-testnomenclature: testnomenclature.o mlslib
+testnomenclature: testnomenclature.o mlslib #SDPToolkitSubstitue
 	${F90} -o $@ testnomenclature.o \
 	${MLSPGS_LIB_PATH}/mlslib.a \
 	${TOOLKIT_LIB}

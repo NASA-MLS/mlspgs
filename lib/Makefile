@@ -6,17 +6,19 @@ include make.inc
 MLSPGS_LIB_PATH=.
 
 OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
-	VectorQuantities.o MLSNumerics.o MLSMessageModule.o
+	VectorQuantities.o MLSNumerics.o MLSMessageModule.o \
+	SDPToolkit.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug VectorQuantities.o_debug \
-		MLSNumerics.o_debug MLSMessageModule.o_debug
+		MLSNumerics.o_debug MLSMessageModule.o_debug \
+		SDPToolkit.o_debug
 
 LIBPATH=.
-MODULEPATH=../SDPToolkit/
+MODULEPATH=.
 
-all: toolkit toolkitsubstitute mlslib.a
-debug: toolkit_debug toolkitsubstitute_debug mlslib.a_debug 
+all:	mlslib.a SDPToolkitSubstitute.a
+debug:	mlslib.a_debug SDPToolkitSubstitute.a_debug
 both: all debug
 
 mlslib.a: ${OBJS}
@@ -24,15 +26,10 @@ mlslib.a: ${OBJS}
 mlslib.a_debug: ${OBJS_DEBUG}
 	ar ru $@ $?
 
-toolkit:
-	cd ../SDPToolkit/ ; ${MAKE}
-toolkit_debug:
-	cd ../SDPToolkit/ ; ${MAKE} debug
-
-toolkitsubstitute:
-	cd ../SDPToolkitSubstitute/ ; ${MAKE}
-toolkitsubstitute_debug:
-	cd ../SDPToolkitSubstitite/ ; ${MAKE} debug
+SDPToolkitSubstitute.a: SDPToolkitSubstitute.o
+	ar ru $@ $?
+SDPToolkitSubstitute.a_debug: SDPToolkitSubstitute.o_debug
+	ar ru $@ $?
 
 clean:
 	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
@@ -40,11 +37,13 @@ clean:
 # Here we list manually dependencies present through USE statements.
 # Later on we may try to adapt Hugh's script to deal with these
 #
+MLSMessageModule.o: SDPToolkit.o
 MLSStrings.o: MLSMessageModule.o
 MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o
 VectorQuantities.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
 MLSNumerics.o: MLSMessageModule.o
 
+MLSMessageModule.o_debug: SDPToolkit.o_debug
 MLSStrings.o_debug: MLSMessageModule.o_debug
 MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug
 VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
@@ -52,6 +51,9 @@ VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
 MLSNumerics.o_debug: MLSMessageModule.o_debug
 #
 # $Log$
+# Revision 1.13  1999/12/03 00:14:18  livesey
+# Nightly checkin
+#
 # Revision 1.12  1999/12/02 01:56:11  livesey
 # Changed filenames to mixed case, redid makefiles.
 #
