@@ -145,7 +145,6 @@ contains
 
     use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
-    use MLSSignals_M, only: DestroySignal
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -443,7 +442,7 @@ contains
   ! ------------------------------------ DestroyOneForwardModelConfig --
   subroutine DestroyOneForwardModelConfig ( config, deep )
     use Allocate_Deallocate, only: Deallocate_Test
-    use MLSSignals_M, only: DestroySignal
+    use MLSSignals_M, only: DestroySignalDatabase
     use MLSMessageModule, only: MLSMSG_Deallocate, MLSMSG_Error, MLSMessage
 
     ! Dummy arguments
@@ -458,15 +457,8 @@ contains
     ! Executable code
     myDeep = .false.
     if ( present ( deep ) ) myDeep = deep
-    if ( associated(config%signals) ) then
-      do signal = 1, size(config%signals)
-        call destroySignal ( config%signals(signal), &
-          & justChannels=.not. myDeep )
-      end do
-      deallocate ( config%signals, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate // "config%signals" )
-    end if
+    if ( associated(config%signals) ) &
+      & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
     if ( myDeep ) then
       if ( associated ( config%integrationGrid ) ) then
         call DestroyVGridContents ( config%integrationGrid )
@@ -562,6 +554,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.30  2003/02/06 22:04:25  vsnyder
+! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+!
 ! Revision 2.29  2003/02/06 20:16:23  livesey
 ! Minor bug fix in the database deallocation
 !
