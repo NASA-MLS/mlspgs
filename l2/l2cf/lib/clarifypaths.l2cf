@@ -2,7 +2,11 @@
 
 ; Go through the file types by level.
 ; ------------------------------------------ Calibration files
+!ifdef(edinburgh,{
+!ifdef(calpath,{},{!define(calpath,{!inpath/l2cal})})
+},{
 !ifdef(calpath,{},{!define(calpath,{/data/emls/l2cal})})
+})
 ; ------------------------------------------ Level 1 files
 !ifdef(inpathl1boa,{},{!define(inpathl1boa,!inpath)})
 !ifdef(inpathl1brad,{},{!define(inpathl1brad,!inpath)})
