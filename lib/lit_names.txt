@@ -103,6 +103,7 @@ KHz
 km
 kms # km/s
 
+l1bMAFBaseline
 latitude
 limbSidebandFraction
 linear
@@ -204,6 +205,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.37  2004/09/27 20:10:18  livesey
+# Added L1BMAFBaseline
+#
 # Revision 2.36  2004/06/17 22:33:41  pwagner
 # Added integer
 #
