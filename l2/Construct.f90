@@ -147,9 +147,12 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 ) then
-        call dump ( hgrids )
-        call dump ( quantityTemplates, details=levels(gen)-1 )
-        call dump ( vectorTemplates, details=levels(gen)-1 )
+        if (associated(hGrids) ) &
+          & call dump ( hgrids )
+        if (associated(quantityTemplates) ) &
+          & call dump ( quantityTemplates, details=levels(gen)-1 )
+        if (associated(vectorTemplates) ) &
+          & call dump ( vectorTemplates, details=levels(gen)-1 )
       end if
       call trace_end ( "MLSL2Construct" )
     end if
@@ -188,6 +191,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.24  2001/05/12 00:16:55  livesey
+! Big fix, only dump hGrids etc. if they exist.
+!
 ! Revision 2.23  2001/05/10 00:43:12  livesey
 ! Moved ownership of hGrids into tree walker to allow multiple calls
 !
