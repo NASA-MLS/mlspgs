@@ -16,8 +16,9 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSFiles, only: FILENOTFOUND, &
     & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
     & split_path_name
-  use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-    & List2Array, LowerCase, ReplaceSubString
+  use MLSStrings, only: Capitalize, LowerCase
+  use MLSStringLists, only: GetStringElement, NumStringElements, &
+    & List2Array, ReplaceSubString
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
@@ -1772,6 +1773,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.37  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.36  2004/08/03 17:59:35  pwagner
 ! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
 !
