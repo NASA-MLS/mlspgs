@@ -14,13 +14,14 @@ module L1BData
   use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
   use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
-  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
+  use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN, NameLen
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
+  use MLSStrings, only: CompressString
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
   use String_Table, only: Get_String
@@ -38,6 +39,7 @@ module L1BData
 ! PRECISIONSUFFIX                 Suffix stuck on end of array name if precision
 
 !     (subroutines and functions)
+! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
 ! DeallocateL1BData               Called when an l1bData is finished with
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
@@ -56,6 +58,8 @@ module L1BData
 !             ) 
 
 !     (subroutines and functions)
+! char*32 AssembleL1BQtyName (char name, int hdfVersion, log isTngtQty,
+!                         [char InstrumentName] ) 
 ! DeallocateL1BData (l1bData_T l1bData) 
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char filedName, [int hdfVersion]) 
@@ -69,8 +73,9 @@ module L1BData
 
   private
 
-  public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
-    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, Dump
+  public :: Dump, L1BData_T, L1BRadSetup, L1BOASetup, DeallocateL1BData, &
+    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, ReadL1BData, &
+    & AssembleL1BQtyName
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -134,6 +139,45 @@ module L1BData
 
 contains ! ============================ MODULE PROCEDURES =======================
 
+
+  !-------------------------------------------  DeallocateL1BData  -----
+  function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, InstrumentName ) &
+    & result(QtyName)
+    ! Returns a QtyName to be found in the L1b file
+    character(len=*), intent(in) :: name        ! bare name; e.g. SolarZenith
+    integer, intent(in)          :: hdfVersion
+    logical, intent(in)          :: isTngtQty   ! T or F
+    character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
+    character(len=NameLen)       :: QtyName
+
+    ! Private
+    character(len=1) :: head
+    character(len=1) :: instr_tail
+    character(len=1) :: tp_tail
+    ! Executable code
+    if ( hdfVersion == HDFVERSION_5 ) then
+      head = '/'
+      instr_tail = '/'
+      tp_tail = '/'
+    else
+      head = ''
+      instr_tail = '.'
+      if ( present(InstrumentName) ) then
+        if ( trim(InstrumentName) == 'sc' ) instr_tail = ''
+      endif
+      tp_tail = ''
+    endif
+    if ( present(InstrumentName) ) then
+      QtyName = head // trim(InstrumentName) // instr_tail
+    else
+      QtyName = head
+    endif
+    if ( isTngtQty ) then
+      QtyName = trim(QtyName) // 'tp' // tp_tail
+    endif
+    QtyName = trim(QtyName) // trim(name)
+    QtyName = CompressString(QtyName)
+  end function AssembleL1BQtyName
 
   !-------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
@@ -683,7 +727,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: ALLOC_ERR
     integer :: DATA_TYPE
     integer :: I
-    type(MLSAuxData_T) :: MLSAuxData
+! > >      type(MLSAuxData_T) :: MLSAuxData
     logical :: MyNeverFail
     integer :: N_ATTRS
     integer :: NUMMAFS
@@ -720,22 +764,22 @@ contains ! ============================ MODULE PROCEDURES ======================
     allocate(dims(rank), maxDims(rank))
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
-    nullify(MLSAuxData%RealField, MLSAuxData%DpField, &
-      & MLSAuxData%IntField, MLSAuxData%CharField)
-    select case (trim(Qtype))
-    case ('real')
-      allocate( MLSAuxData%RealField(dims(1),dims(2),dims(3)),stat=status)
-      MLSAuxData%RealField = UNDEFINED_VALUE
-    case ('double')    
-      allocate( MLSAuxData%DpField(dims(1),dims(2),dims(3)),stat=status)
-      MLSAuxData%DpField = UNDEFINED_VALUE
-    case ('integer')  
-      allocate( MLSAuxData%IntField(dims(1),dims(2),dims(3)),stat=status)
-      MLSAuxData%IntField = int(UNDEFINED_VALUE)
-    case ('character') 
-      allocate( MLSAuxData%CharField(dims(1),dims(2),dims(3)),stat=status)
-      MLSAuxData%CharField = '(undefined)'
-    end select
+! > >     nullify(MLSAuxData%RealField, MLSAuxData%DpField, &
+! > >       & MLSAuxData%IntField, MLSAuxData%CharField)
+! > >     select case (trim(Qtype))
+! > >     case ('real')
+! > >       allocate( MLSAuxData%RealField(dims(1),dims(2),dims(3)),stat=status)
+! > >       MLSAuxData%RealField = UNDEFINED_VALUE
+! > >     case ('double')    
+! > >       allocate( MLSAuxData%DpField(dims(1),dims(2),dims(3)),stat=status)
+! > >       MLSAuxData%DpField = UNDEFINED_VALUE
+! > >     case ('integer')  
+! > >       allocate( MLSAuxData%IntField(dims(1),dims(2),dims(3)),stat=status)
+! > >       MLSAuxData%IntField = int(UNDEFINED_VALUE)
+! > >     case ('character') 
+! > >       allocate( MLSAuxData%CharField(dims(1),dims(2),dims(3)),stat=status)
+! > >       MLSAuxData%CharField = '(undefined)'
+! > >     end select
 
     ! Check input arguments, set noMAFs
 
@@ -792,7 +836,12 @@ contains ! ============================ MODULE PROCEDURES ======================
 
       ! allocate(countermaf_ptr(MAX_NOMAFS))
       ! countermaf_ptr = 0
-      call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf)
+      if ( present(FirstMAF) ) then
+        call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf, &
+          & (/0/), (/l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf)
+      endif
       if ( sds1_id == -1) then
         flag = NOCOUNTERMAFID
         if ( MyNeverFail ) return
@@ -801,25 +850,56 @@ contains ! ============================ MODULE PROCEDURES ======================
       endif
     endif
 
-    call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
-      & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
+!    print *, 'About to use Read_MLSAuxData to read ', trim(QuantityName)
+!    call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
+!      & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
+    print *, 'About to use LoadFromHDF5DS to read ', trim(QuantityName)
     select case (trim(Qtype))
     case ('real')
-      allocate( l1bData%DpField(dims(1),dims(2),dims(3)),stat=status)
-      l1bData%DpField = MLSAuxData%RealField
+      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
+          & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
+      endif                                                                  
+!      l1bData%DpField = MLSAuxData%RealField
     case ('double')    
-      allocate( l1bData%DpField(dims(1),dims(2),dims(3)),stat=status)
-      l1bData%DpField = MLSAuxData%DpField
+      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
+      if ( present(FirstMAF) ) then                                          
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
+          & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+      else                                                                   
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
+      endif                                                                  
+!      l1bData%DpField = MLSAuxData%DpField
     case ('integer')  
-      allocate( l1bdata%IntField(dims(1),dims(2),dims(3)),stat=status)
-      l1bdata%IntField = MLSAuxData%IntField
+! > >       allocate( l1bdata%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
+! > >       if ( present(FirstMAF) ) then                                          
+! > >         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField, &
+! > >           & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+! > >       else                                                                   
+! > >         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)  
+! > >       endif                                                                  
+! > !      l1bdata%IntField = MLSAuxData%IntField
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).')
     case ('character') 
-      allocate ( l1bData%charField(dims(1),dims(2),dims(3)), STAT=alloc_err )
-      l1bData%charField = MLSAuxData%CharField
+! > >       allocate ( l1bData%charField(dims(1),dims(2),dims(3)), STAT=alloc_err )
+! > >       if ( present(FirstMAF) ) then                                          
+! > >         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%CharField, &
+! > >           & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+! > >       else                                                                   
+! > >         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%CharField)  
+! > >       endif                                                                  
+!      l1bData%charField = MLSAuxData%CharField
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
     end select
     
     ! Avoid memory leaks
-    call Deallocate_MLSAuxData(MLSAuxData)
+    deallocate(dims, maxDims)
+! > >      call Deallocate_MLSAuxData(MLSAuxData)
   end subroutine ReadL1BData_hdf5
 
   ! ---------------------------------------------  announce_error  -----
@@ -889,6 +969,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.26  2002/10/10 23:50:57  pwagner
+! Passed 1st tests to read l1bdata from hdf5
+!
 ! Revision 2.25  2002/10/09 00:05:02  pwagner
 ! Added trim function to fieldName
 !
