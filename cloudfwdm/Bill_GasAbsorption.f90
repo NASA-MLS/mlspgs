@@ -35,10 +35,10 @@ contains
     REAL(r8), INTENT(IN) :: F               ! FREQUENCY IN GHz
     REAL(r8) :: FF                          ! FREQUENCY IN MHz
     REAL(r8), INTENT(IN) :: T               ! TEMPERATURE (K)
-    REAL(r8) :: P               ! DRY AIR PARTIAL PRESSURE (hPa)
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-    REAL(r8), INTENT(IN) :: PB                          ! TOTAL AIR PRESSURE (hPa)
-    REAL(r8), INTENT(IN) :: VMR_O3          ! MINOR SPECIES 1-O3
+    REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
+    REAL(r8) :: VMR_O3                      ! MINOR SPECIES 1-O3
     REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO OR RELATIVE HUMIDITY
 
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
@@ -62,7 +62,7 @@ contains
 
     Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp, losVel
     REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT
     
 !-----------------------------------------------------------------------------
@@ -77,9 +77,11 @@ contains
        VMR_H2O = VP/(max(1.e-9_r8, P))
     END IF
 
+!    VMR_H2O    = MAX(1.e-29_r8, VMR_H2O)
+!    VMR_O3     = MAX(1.e-29_r8, VMR_O3)
     VMR_O2     = 0.209476_r8
-    VMR_O_18_O = VMR_O2*0.00409524 
-    VMR_H2O_18 = VMR_H2O*0.00204 
+    VMR_O_18_O = VMR_O2*0.00409524_r8 
+    VMR_H2O_18 = VMR_H2O*0.00204_r8
 
     B=0._r8
     FF = F*1000._r8
@@ -98,7 +100,9 @@ contains
     pp(1) = p
     tt(1) = t
     del_temp = 0.0_rp
-    call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),0.0_rp,gl_slabs,1,del_temp)
+    losVel=-6.8_rp
+    call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,1,del_temp)
+
 
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
@@ -106,10 +110,9 @@ contains
       Allocate(LineWidth(no_of_lines))
       do k = 1, no_of_lines
         m = Catalog(i)%Lines(k)
-        print*, i,  Spectag
         LineWidth(k) = Lines(m)%W
       end do
-      call AllocateOneSlabs ( gl_slabs(1, i), no_of_lines )
+
       CALL create_beta(Spectag, Catalog(i)%continuum, PB, T,                 &
         &  FF, no_of_lines, LineWidth, gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1,  &
         &  gl_slabs(1,i)%y, gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1,  bb,     &
@@ -128,10 +131,13 @@ contains
       ENDIF
 
       B = B + VMR*bb
+
       DEAllocate(LineWidth)
     ENDDO
 
-    B=B/1000._r8     ! convert km-1 to m-1
+    ABSC=B/1000._r8     ! convert km-1 to m-1
+
+!    print*, B
 
     DEAllocate(gl_slabs)
     DEAllocate(pp)
@@ -142,6 +148,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.2  2001/11/14 00:40:11  jonathan
+! first working version
+!
 ! Revision 1.1  2001/11/09 22:07:38  jonathan
 ! using Bill Read's new spec data
 !
