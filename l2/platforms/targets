@@ -63,16 +63,9 @@ include $(srclib)/Makefile.dep
 ALLOBJS = $(OBJS) $(srclib_objs)
 
 CONFDIR=../..
-UTILDIR=../../util
 TESTSDIR=../../tests
 
 mlspack_dir=../../blas/$(MLSCONFG)
-
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
 
 ifdef MLSINSTALLDIR
    INSTALLDIR:=$(MLSINSTALLDIR)
@@ -150,6 +143,10 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
+ifdef HDFVERSIONS
+   he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
+   he5lib_message=mlsl2 will support files with either hdf version
+endif
    hdf5_message=Building mlsl2 with hdf5
 else
    hdf5_linker_line=
@@ -163,11 +160,13 @@ mlsl2: $(mlsl2_prereqs)
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
+		@echo "$(he5lib_message)"
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
+        $(he5lib_linker_line) \
                       -L${libdir} -lmls \
 		$(tk_linker_line) \
         -L${HDFEOS} -lhdfeos \
@@ -256,6 +255,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.34  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.33  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #

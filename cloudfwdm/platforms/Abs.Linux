@@ -33,6 +33,13 @@ dir2 =
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../blas/$(MLSCONFG)
 
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -50,7 +57,9 @@ DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) \
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefix=-p $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
  -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) -p $(libfwdmdl) -p $(blaslib) \
  -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(libfwdmdl) -I$(blaslib)
 
@@ -74,6 +83,9 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials = 
 
 # $Log$
+# Revision 1.5  2001/11/20 00:08:47  pwagner
+# Small changes to work better--or go farther before failing
+#
 # Revision 1.4  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #

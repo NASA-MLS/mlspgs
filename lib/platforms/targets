@@ -112,11 +112,16 @@ else
    tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
 endif
 
+ifdef HDFVERSIONS
+   he5lib_message=mlslib will support files with either hdf version
+endif
+
 libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(tk_message)"
+		@echo "$(he5lib_message)"
 ifeq ($(delete_lib_first),yes)
 		rm -f $@
 endif
@@ -172,6 +177,9 @@ ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.41  2002/01/23 21:55:13  livesey
+# Add stuff so lf95 doesn't do unassigned checking on ncep_dao.f90
+#
 # Revision 1.40  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #

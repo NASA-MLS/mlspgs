@@ -27,6 +27,13 @@ dir2 =
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../blas/$(MLSCONFG)
 
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -55,8 +62,10 @@ dir4 = $(clouddir)/
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefix=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+     -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
      -M$(fwdmdldir) -M$(clouddir) -M$(blaslib) \
      -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
      -I$(fwdmdldir) -I$(clouddir) -I$(blaslib)
@@ -77,14 +86,13 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
-# Currently MatrixModule_n compile only under Lahey's LF95
-# RettrievalModule needs MatrixModule_1.o
-#RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
-
 #Special load libraries
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.2  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.1  2001/09/10 18:39:07  pwagner
 # First commit
 #

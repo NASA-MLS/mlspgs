@@ -27,6 +27,13 @@ dir2 =
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../blas/$(MLSCONFG)
 
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -54,8 +61,9 @@ dir4 = $(clouddir)/
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-
-INC_PATHS = $(EXTRA_PATHS) \
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefix=-p $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
      -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
      -p $(fwdmdldir) -p $(clouddir) -p $(blaslib) \
      -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) \
@@ -77,14 +85,13 @@ INC_PATHS = $(EXTRA_PATHS) \
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
-# Currently MatrixModule_n compile only under Lahey's LF95
-# RettrievalModule needs MatrixModule_1.o
-#RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
-
 #Special load libraries
 l_specials = -lU77
 
 # $Log$
+# Revision 1.10  2001/11/20 00:56:49  pwagner
+# l_specials allow us to use unix comptaibility library libU77.a
+#
 # Revision 1.9  2001/11/20 00:08:47  pwagner
 # Small changes to work better--or go farther before failing
 #
