@@ -7,7 +7,7 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use Hdf, only: DFACC_READ, SFSTART
+  use Hdf, only: DFACC_READ, SFSTART, SFEND
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
@@ -49,6 +49,8 @@ module Open_Init
   !-----------------------------------------------------------------------------
 
   integer, parameter :: CCSDSLen=27
+  integer, parameter :: ILLEGALL1BRADID=-1      ! something sfstart should catch
+  integer, parameter :: MAXNUML1BRADIDS=10      ! In case more than one
   integer, private :: ERROR
   
 contains ! =====     Public Procedures     =============================
@@ -57,14 +59,30 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyL1BInfo ( L1BInfo )
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
+    integer :: id
     error = 0
+    if ( toggle(gen) ) call trace_begin ( "DESTROYL1BInfo" )
+
     if ( associated(l1bInfo%L1BRADIDs) ) then
+      do id=1, SIZE(l1bInfo%L1BRADIDs)
+         if(l1bInfo%L1BRADIDs(id) /= ILLEGALL1BRADID) then
+          STATUS = sfend(l1bInfo%L1BRADIDs(id))
+         endif
+      enddo
       deallocate( l1bInfo%L1BRADIDs, stat=status )
       if ( status /= 0 ) then
         ! call MLSMessage ( MLSMSG_Error, ModuleName, &
         !   & MLSMSG_DeAllocate // "l1bInfo" )
         call announce_error ( 0, 'Error deallocating L1BRADIDs' )
       end if
+    end if
+    
+    if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
+      STATUS = sfend(l1bInfo%L1BOAID)
+    endif
+
+    if ( toggle(gen) ) then
+      call trace_end ( "DESTROYL1BInfo" )
     end if
   end subroutine DestroyL1BInfo
 
@@ -144,12 +162,14 @@ contains ! =====     Public Procedures     =============================
 
         ! Open the HDF file and initialize the SD interface
 
-        ! Allocate L1BRADIDs
+        ! Allocate L1BRADIDs, initialize them to illegal values
 
-        allocate ( l1bInfo%L1BRADIDs(10), stat=status )
+      if(.NOT. associated(l1bInfo%L1BRADIDs)) then
+        allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
+        l1bInfo%L1BRADIDs = ILLEGALL1BRADID
         if ( status /= 0 ) &
           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
-
+      endif
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
         if ( sd_id == -1 ) then
           call announce_error ( 0, &
@@ -166,6 +186,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Open L1OA File
 
+    l1bInfo%L1BOAID = ILLEGALL1BRADID
     L1_Version = 1
     returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
       & L1physicalFilename)
@@ -444,6 +465,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.42  2001/04/20 18:16:29  pwagner
+! Added sfend on L1B files to DESTROYL1BInfo
+!
 ! Revision 2.41  2001/04/19 23:51:40  pwagner
 ! Moved anText to become component of PCFData_T
 !
